@@ -143,9 +143,16 @@ func (s VendorContactService) Create(
 		UpdatedAt: now,
 	}
 
-	err := s.svc.pg.WithConn(
+	err := s.svc.pg.WithTx(
 		ctx,
 		func(conn pg.Conn) error {
+			vendor := &coredata.Vendor{}
+			if err := vendor.LoadByID(ctx, conn, s.svc.scope, req.VendorID); err != nil {
+				return fmt.Errorf("cannot load vendor: %w", err)
+			}
+
+			vendorContact.OrganizationID = vendor.OrganizationID
+
 			if err := vendorContact.Insert(ctx, conn, s.svc.scope); err != nil {
 				return fmt.Errorf("cannot insert vendor contact: %w", err)
 			}

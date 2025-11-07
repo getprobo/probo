@@ -17,6 +17,10 @@ resolver:
 autobind: []
 call_argument_directives_with_null: true
 
+directives:
+  mustBeAuthorized:
+    skip_runtime: false
+
 models:
   ID:
     model:

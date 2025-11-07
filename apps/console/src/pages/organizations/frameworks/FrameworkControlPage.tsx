@@ -27,6 +27,7 @@ import { promisifyMutation } from "@probo/helpers";
 import type { FrameworkGraphControlNodeQuery } from "/hooks/graph/__generated__/FrameworkGraphControlNodeQuery.graphql";
 import { frameworkControlNodeQuery } from "/hooks/graph/FrameworkGraph";
 import type { FrameworkDetailPageFragment$data } from "./__generated__/FrameworkDetailPageFragment.graphql";
+import { Authorized } from "/permissions";
 
 const attachMeasureMutation = graphql`
   mutation FrameworkControlPageAttachMutation(
@@ -235,24 +236,28 @@ export default function FrameworkControlPage({ queryRef }: Props) {
           </div>
         </div>
         <div className="flex gap-2">
-          <FrameworkControlDialog
-            frameworkId={framework.id}
-            connectionId={connectionId}
-            control={control}
-          >
-            <Button icon={IconPencil} variant="secondary">
-              {__("Edit control")}
-            </Button>
-          </FrameworkControlDialog>
-          <ActionDropdown variant="secondary">
-            <DropdownItem
-              icon={IconTrashCan}
-              variant="danger"
-              onClick={onDelete}
+          <Authorized entity="Control" action="updateControl">
+            <FrameworkControlDialog
+              frameworkId={framework.id}
+              connectionId={connectionId}
+              control={control}
             >
-              {__("Delete")}
-            </DropdownItem>
-          </ActionDropdown>
+              <Button icon={IconPencil} variant="secondary">
+                {__("Edit control")}
+              </Button>
+            </FrameworkControlDialog>
+          </Authorized>
+          <Authorized entity="Control" action="deleteControl">
+            <ActionDropdown variant="secondary">
+              <DropdownItem
+                icon={IconTrashCan}
+                variant="danger"
+                onClick={onDelete}
+              >
+                {__("Delete")}
+              </DropdownItem>
+            </ActionDropdown>
+          </Authorized>
         </div>
       </div>
 

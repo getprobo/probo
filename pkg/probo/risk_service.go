@@ -221,9 +221,10 @@ func (s RiskService) CreateDocumentMapping(
 			}
 
 			riskDocument := &coredata.RiskDocument{
-				RiskID:     risk.ID,
-				DocumentID: document.ID,
-				CreatedAt:  time.Now(),
+				RiskID:         risk.ID,
+				DocumentID:     document.ID,
+				OrganizationID: risk.OrganizationID,
+				CreatedAt:      time.Now(),
 			}
 
 			return riskDocument.Insert(ctx, conn, s.svc.scope)
@@ -288,9 +289,10 @@ func (s RiskService) CreateMeasureMapping(
 			}
 
 			riskMeasure := &coredata.RiskMeasure{
-				RiskID:    risk.ID,
-				MeasureID: measure.ID,
-				CreatedAt: time.Now(),
+				RiskID:         risk.ID,
+				MeasureID:      measure.ID,
+				OrganizationID: risk.OrganizationID,
+				CreatedAt:      time.Now(),
 			}
 
 			return riskMeasure.Insert(ctx, conn, s.svc.scope)
@@ -324,9 +326,10 @@ func (s RiskService) DeleteMeasureMapping(
 			}
 
 			riskMeasure := &coredata.RiskMeasure{
-				RiskID:    riskID,
-				MeasureID: measureID,
-				CreatedAt: time.Now(),
+				RiskID:         riskID,
+				MeasureID:      measureID,
+				OrganizationID: risk.OrganizationID,
+				CreatedAt:      time.Now(),
 			}
 
 			return riskMeasure.Delete(ctx, conn, s.svc.scope, risk.ID, measure.ID)
@@ -360,9 +363,10 @@ func (s RiskService) CreateObligationMapping(
 			}
 
 			riskObligation := &coredata.RiskObligation{
-				RiskID:       risk.ID,
-				ObligationID: obligation.ID,
-				CreatedAt:    time.Now(),
+				RiskID:         risk.ID,
+				ObligationID:   obligation.ID,
+				OrganizationID: risk.OrganizationID,
+				CreatedAt:      time.Now(),
 			}
 
 			return riskObligation.Insert(ctx, conn, s.svc.scope)

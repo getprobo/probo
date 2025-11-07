@@ -42,6 +42,7 @@ import { Link } from "react-router";
 import { useState, useEffect, useRef } from "react";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import type { MeetingsPage_UpdateSummaryMutation } from "./__generated__/MeetingsPage_UpdateSummaryMutation.graphql";
+import { Authorized } from "/permissions";
 
 const meetingsFragment = graphql`
   fragment MeetingsPageListFragment on Organization
@@ -217,13 +218,15 @@ export default function MeetingsPage(props: Props) {
               <h3 className="text-sm font-semibold text-txt-secondary">
                 {__("Summary")}
               </h3>
-              <Button
-                variant="quaternary"
-                icon={IconPencil}
-                onClick={() => setIsEditing(true)}
-              >
-                {__("Edit")}
-              </Button>
+              <Authorized entity="Meeting" action="updateMeeting">
+                <Button
+                  variant="quaternary"
+                  icon={IconPencil}
+                  onClick={() => setIsEditing(true)}
+                >
+                  {__("Edit")}
+                </Button>
+              </Authorized>
             </div>
             <div className="w-full">
               {displayedSummary ? (
@@ -245,9 +248,11 @@ export default function MeetingsPage(props: Props) {
           "Track and manage your organization's meetings and their minutes."
         )}
       >
-        <CreateMeetingDialog connectionId={connectionId}>
-          <Button icon={IconPlusLarge}>{__("Add meeting")}</Button>
-        </CreateMeetingDialog>
+        <Authorized entity="Organization" action="createMeeting">
+          <CreateMeetingDialog connectionId={connectionId}>
+            <Button icon={IconPlusLarge}>{__("Add meeting")}</Button>
+          </CreateMeetingDialog>
+        </Authorized>
       </PageHeader>
       {meetingNodes.length > 0 ? (
         <SortableTable {...pagination}>
@@ -365,17 +370,19 @@ function MeetingRow({
           </span>
         )}
       </Td>
-      <Td noLink width={50} className="text-end w-18">
-        <ActionDropdown>
-          <DropdownItem
-            variant="danger"
-            icon={IconTrashCan}
-            onClick={handleDelete}
-          >
-            {__("Delete")}
-          </DropdownItem>
-        </ActionDropdown>
-      </Td>
+      <Authorized entity="Meeting" action="deleteMeeting">
+        <Td noLink width={50} className="text-end w-18">
+          <ActionDropdown>
+            <DropdownItem
+              variant="danger"
+              icon={IconTrashCan}
+              onClick={handleDelete}
+            >
+              {__("Delete")}
+            </DropdownItem>
+          </ActionDropdown>
+        </Td>
+      </Authorized>
     </Tr>
   );
 }

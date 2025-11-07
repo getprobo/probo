@@ -20,17 +20,18 @@ import (
 	"maps"
 	"time"
 
-	"go.probo.inc/probo/pkg/gid"
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/gid"
 )
 
 type (
 	RiskMeasure struct {
-		RiskID    gid.GID      `db:"risk_id"`
-		MeasureID gid.GID      `db:"measure_id"`
-		TenantID  gid.TenantID `db:"tenant_id"`
-		CreatedAt time.Time    `db:"created_at"`
+		RiskID         gid.GID      `db:"risk_id"`
+		MeasureID      gid.GID      `db:"measure_id"`
+		OrganizationID gid.GID      `db:"organization_id"`
+		TenantID       gid.TenantID `db:"tenant_id"`
+		CreatedAt      time.Time    `db:"created_at"`
 	}
 
 	RiskMeasures []*RiskMeasure
@@ -46,22 +47,25 @@ INSERT INTO
     risks_measures (
         risk_id,
         measure_id,
+        organization_id,
         tenant_id,
         created_at
     )
 VALUES (
     @risk_id,
     @measure_id,
+    @organization_id,
     @tenant_id,
     @created_at
 );
 `
 
 	args := pgx.StrictNamedArgs{
-		"risk_id":    rm.RiskID,
-		"measure_id": rm.MeasureID,
-		"tenant_id":  scope.GetTenantID(),
-		"created_at": rm.CreatedAt,
+		"risk_id":         rm.RiskID,
+		"measure_id":      rm.MeasureID,
+		"organization_id": rm.OrganizationID,
+		"tenant_id":       scope.GetTenantID(),
+		"created_at":      rm.CreatedAt,
 	}
 	_, err := conn.Exec(ctx, q, args)
 	return err

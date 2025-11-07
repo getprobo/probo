@@ -21,23 +21,24 @@ import (
 	"maps"
 	"time"
 
-	"go.probo.inc/probo/pkg/gid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/gid"
 )
 
 type (
 	File struct {
-		ID         gid.GID    `db:"id"`
-		BucketName string     `db:"bucket_name"`
-		MimeType   string     `db:"mime_type"`
-		FileName   string     `db:"file_name"`
-		FileKey    string     `db:"file_key"`
-		FileSize   int64      `db:"file_size"`
-		CreatedAt  time.Time  `db:"created_at"`
-		UpdatedAt  time.Time  `db:"updated_at"`
-		DeletedAt  *time.Time `db:"deleted_at"`
+		ID             gid.GID    `db:"id"`
+		OrganizationID gid.GID    `db:"organization_id"`
+		BucketName     string     `db:"bucket_name"`
+		MimeType       string     `db:"mime_type"`
+		FileName       string     `db:"file_name"`
+		FileKey        string     `db:"file_key"`
+		FileSize       int64      `db:"file_size"`
+		CreatedAt      time.Time  `db:"created_at"`
+		UpdatedAt      time.Time  `db:"updated_at"`
+		DeletedAt      *time.Time `db:"deleted_at"`
 	}
 
 	Files []*File
@@ -68,6 +69,7 @@ func (f *File) LoadByID(
 	q := `
 SELECT
     id,
+    organization_id,
     bucket_name,
     mime_type,
     file_name,
@@ -119,6 +121,7 @@ INSERT INTO
     files (
         id,
         tenant_id,
+        organization_id,
         bucket_name,
         mime_type,
         file_name,
@@ -131,6 +134,7 @@ INSERT INTO
 VALUES (
     @file_id,
     @tenant_id,
+    @organization_id,
     @bucket_name,
     @mime_type,
     @file_name,
@@ -143,16 +147,17 @@ VALUES (
 `
 
 	args := pgx.StrictNamedArgs{
-		"file_id":     f.ID,
-		"tenant_id":   scope.GetTenantID(),
-		"bucket_name": f.BucketName,
-		"mime_type":   f.MimeType,
-		"file_name":   f.FileName,
-		"file_key":    f.FileKey,
-		"file_size":   f.FileSize,
-		"created_at":  f.CreatedAt,
-		"updated_at":  f.UpdatedAt,
-		"deleted_at":  f.DeletedAt,
+		"file_id":         f.ID,
+		"tenant_id":       scope.GetTenantID(),
+		"organization_id": f.OrganizationID,
+		"bucket_name":     f.BucketName,
+		"mime_type":       f.MimeType,
+		"file_name":       f.FileName,
+		"file_key":        f.FileKey,
+		"file_size":       f.FileSize,
+		"created_at":      f.CreatedAt,
+		"updated_at":      f.UpdatedAt,
+		"deleted_at":      f.DeletedAt,
 	}
 	_, err := conn.Exec(ctx, q, args)
 

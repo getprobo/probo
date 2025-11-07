@@ -29,10 +29,11 @@ import (
 
 type (
 	ControlDocument struct {
-		ControlID  gid.GID      `db:"control_id"`
-		DocumentID gid.GID      `db:"document_id"`
-		TenantID   gid.TenantID `db:"tenant_id"`
-		CreatedAt  time.Time    `db:"created_at"`
+		ControlID      gid.GID      `db:"control_id"`
+		DocumentID     gid.GID      `db:"document_id"`
+		OrganizationID gid.GID      `db:"organization_id"`
+		TenantID       gid.TenantID `db:"tenant_id"`
+		CreatedAt      time.Time    `db:"created_at"`
 	}
 
 	ControlDocuments []*ControlDocument
@@ -57,22 +58,25 @@ INSERT INTO
     controls_documents (
         control_id,
         document_id,
+        organization_id,
         tenant_id,
         created_at
     )
 VALUES (
     @control_id,
     @document_id,
+    @organization_id,
     @tenant_id,
     @created_at
 );
 `
 
 	args := pgx.StrictNamedArgs{
-		"control_id":  cp.ControlID,
-		"document_id": cp.DocumentID,
-		"tenant_id":   scope.GetTenantID(),
-		"created_at":  cp.CreatedAt,
+		"control_id":      cp.ControlID,
+		"document_id":     cp.DocumentID,
+		"organization_id": cp.OrganizationID,
+		"tenant_id":       scope.GetTenantID(),
+		"created_at":      cp.CreatedAt,
 	}
 	_, err := conn.Exec(ctx, q, args)
 

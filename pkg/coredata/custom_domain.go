@@ -22,17 +22,18 @@ import (
 	"maps"
 	"time"
 
-	"go.probo.inc/probo/pkg/crypto/cipher"
-	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/page"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/crypto/cipher"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 )
 
 type (
 	CustomDomain struct {
 		ID                     gid.GID               `db:"id"`
+		OrganizationID         gid.GID               `db:"organization_id"`
 		Domain                 string                `db:"domain"`
 		HTTPChallengeToken     *string               `db:"http_challenge_token"`
 		HTTPChallengeKeyAuth   *string               `db:"http_challenge_key_auth"`
@@ -159,6 +160,7 @@ func (cd *CustomDomain) LoadByID(
 	q := `
 SELECT
 	id,
+	organization_id,
 	domain,
 	http_challenge_token,
 	http_challenge_key_auth,
@@ -211,6 +213,7 @@ func (cd *CustomDomain) LoadByIDForUpdate(
 	q := `
 SELECT
 	id,
+	organization_id,
 	domain,
 	http_challenge_token,
 	http_challenge_key_auth,
@@ -263,6 +266,7 @@ func (cd *CustomDomain) LoadByDomain(
 	q := `
 SELECT
 	id,
+	organization_id,
 	domain,
 	http_challenge_token,
 	http_challenge_key_auth,
@@ -320,6 +324,7 @@ func (cd *CustomDomain) Insert(
 INSERT INTO custom_domains (
 	id,
 	tenant_id,
+	organization_id,
 	domain,
 	http_challenge_token,
 	http_challenge_key_auth,
@@ -337,6 +342,7 @@ INSERT INTO custom_domains (
 ) VALUES (
 	@id,
 	@tenant_id,
+	@organization_id,
 	@domain,
 	@http_challenge_token,
 	@http_challenge_key_auth,
@@ -357,6 +363,7 @@ INSERT INTO custom_domains (
 	args := pgx.NamedArgs{
 		"id":                        cd.ID,
 		"tenant_id":                 scope.GetTenantID(),
+		"organization_id":           cd.OrganizationID,
 		"domain":                    cd.Domain,
 		"http_challenge_token":      cd.HTTPChallengeToken,
 		"http_challenge_key_auth":   cd.HTTPChallengeKeyAuth,
@@ -487,6 +494,7 @@ func (cd *CustomDomain) LoadByHTTPChallengeToken(
 	q := `
 SELECT
 	id,
+	organization_id,
 	domain,
 	http_challenge_token,
 	http_challenge_key_auth,
@@ -537,6 +545,7 @@ func (domains *CustomDomains) ListDomainsForRenewal(
 	q := `
 SELECT
 	id,
+	organization_id,
 	domain,
 	http_challenge_token,
 	http_challenge_key_auth,
@@ -589,6 +598,7 @@ func (domains *CustomDomains) ListDomainsWithPendingHTTPChallenges(
 	q := `
 SELECT
 	id,
+	organization_id,
 	domain,
 	http_challenge_token,
 	http_challenge_key_auth,
@@ -644,6 +654,7 @@ func (domains *CustomDomains) LoadActiveCertificates(
 	q := `
 SELECT
 	id,
+	organization_id,
 	domain,
 	http_challenge_token,
 	http_challenge_key_auth,
@@ -693,6 +704,7 @@ func (domains *CustomDomains) ListStaleProvisioningDomains(
 	q := `
 SELECT
 	id,
+	organization_id,
 	domain,
 	http_challenge_token,
 	http_challenge_key_auth,

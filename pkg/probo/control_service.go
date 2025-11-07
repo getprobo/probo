@@ -54,13 +54,12 @@ type (
 func (ccr *CreateControlRequest) Validate() error {
 	v := validator.New()
 
-	v.Check(ccr.ID, "id", validator.Required(), validator.GID(coredata.ControlEntityType))
 	v.Check(ccr.FrameworkID, "framework_id", validator.Required(), validator.GID(coredata.FrameworkEntityType))
 	v.Check(ccr.Name, "name", validator.Required(), validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(ccr.Description, "description", validator.Required(), validator.SafeText(ContentMaxLength))
 	v.Check(ccr.SectionTitle, "section_title", validator.Required(), validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(ccr.Status, "status", validator.Required(), validator.OneOfSlice(coredata.ControlStatuses()))
-	v.Check(ccr.ExclusionJustification, "exclusion_justification", validator.Required(), validator.SafeText(TitleMaxLength))
+	v.Check(ccr.ExclusionJustification, "exclusion_justification", validator.SafeText(TitleMaxLength))
 
 	return v.Error()
 }
@@ -367,13 +366,6 @@ func (s ControlService) CreateMeasureMapping(
 	controlID gid.GID,
 	measureID gid.GID,
 ) (*coredata.Control, *coredata.Measure, error) {
-	controlMeasure := &coredata.ControlMeasure{
-		ControlID: controlID,
-		MeasureID: measureID,
-		TenantID:  s.svc.scope.GetTenantID(),
-		CreatedAt: time.Now(),
-	}
-
 	control := &coredata.Control{}
 	measure := &coredata.Measure{}
 
@@ -386,6 +378,14 @@ func (s ControlService) CreateMeasureMapping(
 
 			if err := measure.LoadByID(ctx, conn, s.svc.scope, measureID); err != nil {
 				return fmt.Errorf("cannot load measure: %w", err)
+			}
+
+			controlMeasure := &coredata.ControlMeasure{
+				ControlID:      controlID,
+				MeasureID:      measureID,
+				OrganizationID: control.OrganizationID,
+				TenantID:       s.svc.scope.GetTenantID(),
+				CreatedAt:      time.Now(),
 			}
 
 			return controlMeasure.Upsert(ctx, conn, s.svc.scope)
@@ -454,10 +454,11 @@ func (s ControlService) CreateDocumentMapping(
 			}
 
 			controlDocument := &coredata.ControlDocument{
-				ControlID:  control.ID,
-				DocumentID: document.ID,
-				TenantID:   s.svc.scope.GetTenantID(),
-				CreatedAt:  time.Now(),
+				ControlID:      control.ID,
+				DocumentID:     document.ID,
+				OrganizationID: control.OrganizationID,
+				TenantID:       s.svc.scope.GetTenantID(),
+				CreatedAt:      time.Now(),
 			}
 
 			if err := controlDocument.Insert(ctx, conn, s.svc.scope); err != nil {
@@ -515,12 +516,6 @@ func (s ControlService) CreateAuditMapping(
 	controlID gid.GID,
 	auditID gid.GID,
 ) (*coredata.Control, *coredata.Audit, error) {
-	controlAudit := &coredata.ControlAudit{
-		ControlID: controlID,
-		AuditID:   auditID,
-		CreatedAt: time.Now(),
-	}
-
 	control := &coredata.Control{}
 	audit := &coredata.Audit{}
 
@@ -533,6 +528,13 @@ func (s ControlService) CreateAuditMapping(
 
 			if err := audit.LoadByID(ctx, conn, s.svc.scope, auditID); err != nil {
 				return fmt.Errorf("cannot load audit: %w", err)
+			}
+
+			controlAudit := &coredata.ControlAudit{
+				ControlID:      controlID,
+				AuditID:        auditID,
+				OrganizationID: control.OrganizationID,
+				CreatedAt:      time.Now(),
 			}
 
 			if err := controlAudit.Upsert(ctx, conn, s.svc.scope); err != nil {
@@ -620,12 +622,6 @@ func (s ControlService) CreateSnapshotMapping(
 	controlID gid.GID,
 	snapshotID gid.GID,
 ) (*coredata.Control, *coredata.Snapshot, error) {
-	controlSnapshot := &coredata.ControlSnapshot{
-		ControlID:  controlID,
-		SnapshotID: snapshotID,
-		CreatedAt:  time.Now(),
-	}
-
 	control := &coredata.Control{}
 	snapshot := &coredata.Snapshot{}
 
@@ -634,6 +630,13 @@ func (s ControlService) CreateSnapshotMapping(
 		func(conn pg.Conn) error {
 			if err := control.LoadByID(ctx, conn, s.svc.scope, controlID); err != nil {
 				return fmt.Errorf("cannot load control: %w", err)
+			}
+
+			controlSnapshot := &coredata.ControlSnapshot{
+				ControlID:      controlID,
+				SnapshotID:     snapshotID,
+				OrganizationID: control.OrganizationID,
+				CreatedAt:      time.Now(),
 			}
 
 			if err := snapshot.LoadByID(ctx, conn, s.svc.scope, snapshotID); err != nil {
@@ -751,6 +754,7 @@ func (s ControlService) Create(
 			}
 
 			control.FrameworkID = framework.ID
+			control.OrganizationID = framework.OrganizationID
 
 			return control.Insert(ctx, conn, s.svc.scope)
 		},

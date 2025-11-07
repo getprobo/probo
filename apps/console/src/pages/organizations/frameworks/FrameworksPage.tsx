@@ -29,6 +29,8 @@ import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { useState, type ChangeEventHandler } from "react";
 import { FrameworkLogo } from "/components/FrameworkLogo";
 import { FrameworkFormDialog } from "./dialogs/FrameworkFormDialog";
+import { Authorized } from "/permissions";
+import { isAuthorized } from "/permissions";
 
 type Props = {
   queryRef: PreloadedQuery<FrameworkGraphListQuery>;
@@ -118,6 +120,9 @@ export default function FrameworksPage(props: Props) {
 
   const isLoading = isUploading || isImporting;
 
+  const hasAnyAction = isAuthorized(data.organization.id!, "Framework", "updateFramework") ||
+    isAuthorized(data.organization.id!, "Framework", "deleteFramework");
+
   return (
     <div className="space-y-6">
       <FrameworkFormDialog
@@ -129,18 +134,20 @@ export default function FrameworksPage(props: Props) {
         title={__("Frameworks")}
         description={__("Manage your compliance frameworks")}
       >
-        <FileButton
-          variant="secondary"
-          icon={IconFolderUpload}
-          onChange={handleUpload}
-          disabled={isLoading}
-        >
-          {__("Import")}
-        </FileButton>
-        <FrameworkSelector
-          onSelect={importNamedFramework}
-          disabled={isLoading}
-        />
+        <Authorized entity="Organization" action="createFramework">
+          <FileButton
+            variant="secondary"
+            icon={IconFolderUpload}
+            onChange={handleUpload}
+            disabled={isLoading}
+          >
+            {__("Import")}
+          </FileButton>
+          <FrameworkSelector
+            onSelect={importNamedFramework}
+            disabled={isLoading}
+          />
+        </Authorized>
       </PageHeader>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -150,6 +157,7 @@ export default function FrameworksPage(props: Props) {
             connectionId={connectionId}
             key={framework.id}
             framework={framework}
+            hasAnyAction={hasAnyAction}
           />
         ))}
       </div>
@@ -169,6 +177,7 @@ type FrameworkCardProps = {
   organizationId: string;
   connectionId: string;
   framework: FrameworksPageCardFragment$key;
+  hasAnyAction: boolean;
 };
 
 function FrameworkCard(props: FrameworkCardProps) {
@@ -189,23 +198,29 @@ function FrameworkCard(props: FrameworkCardProps) {
       />
       <div className="flex justify-between mb-3">
         <FrameworkLogo {...framework} />
-        <ActionDropdown className="z-10 relative">
-          <DropdownItem
-            icon={IconPencil}
-            onClick={() => {
-              dialogRef.current?.open();
-            }}
-          >
-            {__("Edit")}
-          </DropdownItem>
-          <DropdownItem
-            icon={IconTrashCan}
-            onClick={() => deleteFramework()}
-            variant="danger"
-          >
-            {__("Delete")}
-          </DropdownItem>
-        </ActionDropdown>
+        {props.hasAnyAction && (
+          <ActionDropdown className="z-10 relative">
+            <Authorized entity="Framework" action="updateFramework">
+              <DropdownItem
+                icon={IconPencil}
+                onClick={() => {
+                  dialogRef.current?.open();
+                }}
+              >
+                {__("Edit")}
+              </DropdownItem>
+            </Authorized>
+            <Authorized entity="Framework" action="deleteFramework">
+              <DropdownItem
+                icon={IconTrashCan}
+                onClick={() => deleteFramework()}
+                variant="danger"
+              >
+                {__("Delete")}
+              </DropdownItem>
+            </Authorized>
+          </ActionDropdown>
+        )}
       </div>
       <h2 className="text-xl font-medium">
         <Link

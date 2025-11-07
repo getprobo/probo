@@ -19,20 +19,19 @@ import (
 	"fmt"
 )
 
-type Role string
+type MembershipRole string
 
 const (
-	RoleOwner  Role = "OWNER"
-	RoleAdmin  Role = "ADMIN"
-	RoleMember Role = "MEMBER"
-	RoleViewer Role = "VIEWER"
+	MembershipRoleOwner  MembershipRole = "OWNER"
+	MembershipRoleAdmin  MembershipRole = "ADMIN"
+	MembershipRoleViewer MembershipRole = "VIEWER"
 )
 
-func (r Role) String() string {
+func (r MembershipRole) String() string {
 	return string(r)
 }
 
-func (r *Role) Scan(value any) error {
+func (r *MembershipRole) Scan(value any) error {
 	var s string
 	switch v := value.(type) {
 	case string:
@@ -40,24 +39,22 @@ func (r *Role) Scan(value any) error {
 	case []byte:
 		s = string(v)
 	default:
-		return fmt.Errorf("unsupported type for Role: %T", value)
+		return fmt.Errorf("unsupported type for MembershipRole: %T", value)
 	}
 
 	switch s {
 	case "OWNER":
-		*r = RoleOwner
+		*r = MembershipRoleOwner
 	case "ADMIN":
-		*r = RoleAdmin
-	case "MEMBER":
-		*r = RoleMember
+		*r = MembershipRoleAdmin
 	case "VIEWER":
-		*r = RoleViewer
+		*r = MembershipRoleViewer
 	default:
-		return fmt.Errorf("invalid Role value: %q", s)
+		return fmt.Errorf("invalid MembershipRole value: %q", s)
 	}
 	return nil
 }
 
-func (r Role) Value() (driver.Value, error) {
+func (r MembershipRole) Value() (driver.Value, error) {
 	return r.String(), nil
 }

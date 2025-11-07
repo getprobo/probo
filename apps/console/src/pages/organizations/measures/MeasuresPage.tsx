@@ -48,6 +48,8 @@ import { useOrganizationId } from "/hooks/useOrganizationId";
 import { Link, useParams } from "react-router";
 import MeasureFormDialog from "./dialog/MeasureFormDialog";
 import { usePageTitle } from "@probo/hooks";
+import { Authorized } from "/permissions";
+import { isAuthorized } from "/permissions";
 
 type Props = {
   queryRef: PreloadedQuery<MeasureGraphListQuery>;
@@ -113,6 +115,9 @@ export default function MeasuresPage(props: Props) {
   const importFileRef = useRef<HTMLInputElement>(null);
   usePageTitle(__("Measures"));
 
+  const hasAnyAction = isAuthorized(organization.id, "Measure", "updateMeasure") ||
+    isAuthorized(organization.id, "Measure", "deleteMeasure");
+
   const handleImport: ChangeEventHandler<HTMLInputElement> = (event) => {
     const file = event.target.files?.[0];
     if (!file) {
@@ -143,19 +148,21 @@ export default function MeasuresPage(props: Props) {
           "Measures are actions taken to reduce the risk. Add them to track their implementation status."
         )}
       >
-        <FileButton
-          ref={importFileRef}
-          variant="secondary"
-          icon={IconFolderUpload}
-          onChange={handleImport}
-        >
-          {__("Import")}
-        </FileButton>
-        <MeasureFormDialog connection={connectionId}>
-          <Button variant="primary" icon={IconPlusLarge}>
-            {__("New measure")}
-          </Button>
-        </MeasureFormDialog>
+        <Authorized entity="Organization" action="createMeasure">
+          <FileButton
+            ref={importFileRef}
+            variant="secondary"
+            icon={IconFolderUpload}
+            onChange={handleImport}
+          >
+            {__("Import")}
+          </FileButton>
+          <MeasureFormDialog connection={connectionId}>
+            <Button variant="primary" icon={IconPlusLarge}>
+              {__("New measure")}
+            </Button>
+          </MeasureFormDialog>
+        </Authorized>
       </PageHeader>
       <MeasureImplementation measures={measures} className="my-10" />
       {objectKeys(measuresPerCategory)
@@ -166,6 +173,7 @@ export default function MeasuresPage(props: Props) {
             category={category}
             measures={measuresPerCategory[category]}
             connectionId={connectionId}
+            hasAnyAction={hasAnyAction}
           />
         ))}
     </div>
@@ -176,6 +184,7 @@ type CategoryProps = {
   category: string;
   measures: NodeOf<MeasuresPageFragment$data["measures"]>[];
   connectionId: string;
+  hasAnyAction: boolean;
 };
 
 function Category(props: CategoryProps) {
@@ -219,7 +228,7 @@ function Category(props: CategoryProps) {
               <Tr>
                 <Th>{__("Measure")}</Th>
                 <Th>{__("State")}</Th>
-                <Th></Th>
+                {props.hasAnyAction && <Th></Th>}
               </Tr>
             </Thead>
             <Tbody>
@@ -228,6 +237,7 @@ function Category(props: CategoryProps) {
                   key={measure.id}
                   measure={measure}
                   connectionId={props.connectionId}
+                  hasAnyAction={props.hasAnyAction}
                 />
               ))}
             </Tbody>
@@ -251,6 +261,7 @@ function Category(props: CategoryProps) {
 type MeasureRowProps = {
   measure: NodeOf<MeasuresPageFragment$data["measures"]>;
   connectionId: string;
+  hasAnyAction: boolean;
 };
 
 function MeasureRow(props: MeasureRowProps) {
@@ -292,24 +303,30 @@ function MeasureRow(props: MeasureRowProps) {
         <Td width={120}>
           <MeasureBadge state={props.measure.state} />
         </Td>
-        <Td noLink width={50} className="text-end">
-          <ActionDropdown>
-            <DropdownItem
-              icon={IconPencil}
-              onClick={() => dialogRef.current?.open()}
-            >
-              {__("Edit")}
-            </DropdownItem>
-            <DropdownItem
-              onClick={onDelete}
-              disabled={isDeleting}
-              variant="danger"
-              icon={IconTrashCan}
-            >
-              {__("Delete")}
-            </DropdownItem>
-          </ActionDropdown>
-        </Td>
+        {props.hasAnyAction && (
+          <Td noLink width={50} className="text-end">
+            <ActionDropdown>
+              <Authorized entity="Measure" action="updateMeasure">
+                <DropdownItem
+                  icon={IconPencil}
+                  onClick={() => dialogRef.current?.open()}
+                >
+                  {__("Edit")}
+                </DropdownItem>
+              </Authorized>
+              <Authorized entity="Measure" action="deleteMeasure">
+                <DropdownItem
+                  onClick={onDelete}
+                  disabled={isDeleting}
+                  variant="danger"
+                  icon={IconTrashCan}
+                >
+                  {__("Delete")}
+                </DropdownItem>
+              </Authorized>
+            </ActionDropdown>
+          </Td>
+        )}
       </Tr>
     </>
   );

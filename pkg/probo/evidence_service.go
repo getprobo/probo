@@ -126,6 +126,7 @@ func (s EvidenceService) UploadMeasureEvidence(
 				return fmt.Errorf("cannot upload or file: %w", err)
 			}
 
+			evidence.OrganizationID = measure.OrganizationID
 			evidence.EvidenceFileId = &file.ID
 			evidence.MeasureID = req.MeasureID
 

@@ -21,6 +21,7 @@ import {
 } from "/hooks/graph/TrustCenterReferenceGraph";
 import { TrustCenterReferenceDialog, type TrustCenterReferenceDialogRef } from "./TrustCenterReferenceDialog";
 import { DeleteTrustCenterReferenceDialog } from "./DeleteTrustCenterReferenceDialog";
+import { Authorized } from "/permissions";
 
 type Props = {
   trustCenterId: string;
@@ -111,12 +112,14 @@ export function TrustCenterReferencesSection({ trustCenterId }: Props) {
             {__("Showcase your customers and partners on your trust center")}
           </p>
         </div>
-        <Button
-          icon={IconPlusLarge}
-          onClick={handleCreate}
-        >
-          {__("Add Reference")}
-        </Button>
+        <Authorized entity="TrustCenter" action="createTrustCenterReference">
+          <Button
+            icon={IconPlusLarge}
+            onClick={handleCreate}
+          >
+            {__("Add Reference")}
+          </Button>
+        </Authorized>
       </div>
 
       <Table>
@@ -228,21 +231,25 @@ function ReferenceRow({
             icon={IconArrowLink}
             onClick={onVisitWebsite}
           />
-          <Button
-            variant="secondary"
-            icon={IconPencil}
-            onClick={onEdit}
-          />
-          <DeleteTrustCenterReferenceDialog
-            referenceId={reference.id}
-            referenceName={reference.name}
-            connectionId={connectionId}
-          >
+          <Authorized entity="TrustCenterReference" action="updateTrustCenterReference">
             <Button
-              variant="danger"
-              icon={IconTrashCan}
+              variant="secondary"
+              icon={IconPencil}
+              onClick={onEdit}
             />
-          </DeleteTrustCenterReferenceDialog>
+          </Authorized>
+          <Authorized entity="TrustCenterReference" action="deleteTrustCenterReference">
+            <DeleteTrustCenterReferenceDialog
+              referenceId={reference.id}
+              referenceName={reference.name}
+              connectionId={connectionId}
+            >
+              <Button
+                variant="danger"
+                icon={IconTrashCan}
+              />
+            </DeleteTrustCenterReferenceDialog>
+          </Authorized>
         </div>
       </Td>
     </Tr>

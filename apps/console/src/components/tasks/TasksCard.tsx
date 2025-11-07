@@ -26,6 +26,8 @@ import TaskFormDialog, {
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { Link, useLocation, useParams } from "react-router";
 import { promisifyMutation } from "@probo/helpers";
+import { Authorized } from "/permissions";
+import { isAuthorized } from "/permissions";
 import type { TaskFormDialogFragment$key } from "./__generated__/TaskFormDialogFragment.graphql";
 import { updateStoreCounter } from "/hooks/useMutationWithIncrement";
 
@@ -49,6 +51,7 @@ type Props = {
 
 export default function TasksCard({ tasks, connectionId }: Props) {
   const { __ } = useTranslate();
+  const organizationId = useOrganizationId();
   const hash = useLocation().hash.replace("#", "");
 
   const hashes = [
@@ -66,6 +69,9 @@ export default function TasksCard({ tasks, connectionId }: Props) {
   const filteredTasks = tasksPerHash.get(hash) ?? [];
 
   usePageTitle(__("Tasks"));
+
+  const hasAnyAction = isAuthorized(organizationId, "Task", "updateTask") ||
+    isAuthorized(organizationId, "Task", "deleteTask");
 
   return (
     <div className="space-y-6">
@@ -100,6 +106,7 @@ export default function TasksCard({ tasks, connectionId }: Props) {
                           key={task.id}
                           task={task}
                           connectionId={connectionId}
+                          hasAnyAction={hasAnyAction}
                         />
                       ))}
                     </Fragment>
@@ -110,6 +117,7 @@ export default function TasksCard({ tasks, connectionId }: Props) {
                     key={task.id}
                     task={task}
                     connectionId={connectionId}
+                    hasAnyAction={hasAnyAction}
                   />
                 ))}
           </div>
@@ -122,6 +130,7 @@ export default function TasksCard({ tasks, connectionId }: Props) {
 type TaskRowProps = {
   task: ItemOf<Props["tasks"]> & TaskFormDialogFragment$key;
   connectionId: string;
+  hasAnyAction: boolean;
 };
 
 const deleteMutation = graphql`
@@ -221,21 +230,27 @@ function TaskRow(props: TaskRowProps) {
               <Avatar name={props.task.assignedTo?.fullName ?? ""} />
             </Link>
           )}
-          <ActionDropdown>
-            <DropdownItem
-              icon={IconPencil}
-              onClick={() => dialogRef.current?.open()}
-            >
-              {__("Edit")}
-            </DropdownItem>
-            <DropdownItem
-              variant="danger"
-              icon={IconTrashCan}
-              onClick={onDelete}
-            >
-              {__("Delete")}
-            </DropdownItem>
-          </ActionDropdown>
+          {props.hasAnyAction && (
+            <ActionDropdown>
+              <Authorized entity="Task" action="updateTask">
+                <DropdownItem
+                  icon={IconPencil}
+                  onClick={() => dialogRef.current?.open()}
+                >
+                  {__("Edit")}
+                </DropdownItem>
+              </Authorized>
+              <Authorized entity="Task" action="deleteTask">
+                <DropdownItem
+                  variant="danger"
+                  icon={IconTrashCan}
+                  onClick={onDelete}
+                >
+                  {__("Delete")}
+                </DropdownItem>
+              </Authorized>
+            </ActionDropdown>
+          )}
         </div>
       </div>
     </>

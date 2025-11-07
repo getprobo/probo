@@ -18,11 +18,11 @@ import (
 	"fmt"
 	"net/http"
 
+	"go.gearno.de/kit/httpserver"
 	authsvc "go.probo.inc/probo/pkg/auth"
 	"go.probo.inc/probo/pkg/authz"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
-	"go.gearno.de/kit/httpserver"
 )
 
 type (
@@ -106,9 +106,21 @@ func ListOrganizationsHandler(authSvc *authsvc.Service, authzSvc *authz.Service)
 		user := UserFromContext(ctx)
 		sess := SessionFromContext(ctx)
 
-		organizations, err := authzSvc.GetAllUserOrganizations(ctx, user.ID)
-		if err != nil {
-			panic(fmt.Errorf("cannot list organizations for user: %w", err))
+		var organizations coredata.Organizations
+		var err error
+
+		roleFilter := r.URL.Query().Get("role")
+		if roleFilter != "" {
+			role := coredata.MembershipRole(roleFilter)
+			organizations, err = authzSvc.GetUserOrganizationsWithRole(ctx, user.ID, role)
+			if err != nil {
+				panic(fmt.Errorf("cannot list organizations for user with role: %w", err))
+			}
+		} else {
+			organizations, err = authzSvc.GetAllUserOrganizations(ctx, user.ID)
+			if err != nil {
+				panic(fmt.Errorf("cannot list organizations for user: %w", err))
+			}
 		}
 
 		orgIDs := make([]gid.GID, len(organizations))

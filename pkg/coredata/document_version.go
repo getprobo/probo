@@ -21,16 +21,17 @@ import (
 	"maps"
 	"time"
 
-	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/page"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 )
 
 type (
 	DocumentVersion struct {
 		ID             gid.GID                `db:"id"`
+		OrganizationID gid.GID                `db:"organization_id"`
 		DocumentID     gid.GID                `db:"document_id"`
 		Title          string                 `db:"title"`
 		OwnerID        gid.GID                `db:"owner_id"`
@@ -81,6 +82,7 @@ func (p *DocumentVersions) LoadByDocumentID(
 	q := `
 SELECT
 	id,
+	organization_id,
 	document_id,
 	title,
 	owner_id,
@@ -140,6 +142,7 @@ func (p *DocumentVersion) LoadByID(
 	q := `
 SELECT
 	id,
+	organization_id,
 	document_id,
 	title,
 	owner_id,
@@ -190,6 +193,7 @@ func (p DocumentVersion) Insert(
 INSERT INTO document_versions (
 	tenant_id,
 	id,
+	organization_id,
 	document_id,
 	title,
 	owner_id,
@@ -204,6 +208,7 @@ INSERT INTO document_versions (
 VALUES (
 	@tenant_id,
 	@id,
+	@organization_id,
 	@document_id,
 	@title,
 	@owner_id,
@@ -217,18 +222,19 @@ VALUES (
 )
 `
 	args := pgx.StrictNamedArgs{
-		"tenant_id":      scope.GetTenantID(),
-		"id":             p.ID,
-		"document_id":    p.DocumentID,
-		"title":          p.Title,
-		"owner_id":       p.OwnerID,
-		"version_number": p.VersionNumber,
-		"classification": p.Classification,
-		"content":        p.Content,
-		"changelog":      p.Changelog,
-		"status":         p.Status,
-		"created_at":     p.CreatedAt,
-		"updated_at":     p.UpdatedAt,
+		"tenant_id":       scope.GetTenantID(),
+		"id":              p.ID,
+		"organization_id": p.OrganizationID,
+		"document_id":     p.DocumentID,
+		"title":           p.Title,
+		"owner_id":        p.OwnerID,
+		"version_number":  p.VersionNumber,
+		"classification":  p.Classification,
+		"content":         p.Content,
+		"changelog":       p.Changelog,
+		"status":          p.Status,
+		"created_at":      p.CreatedAt,
+		"updated_at":      p.UpdatedAt,
 	}
 
 	_, err := conn.Exec(ctx, q, args)
@@ -264,6 +270,7 @@ func (p *DocumentVersion) LoadByDocumentIDAndVersionNumber(
 	q := `
 SELECT
 	id,
+	organization_id,
 	document_id,
 	title,
 	owner_id,
@@ -316,6 +323,7 @@ func (p *DocumentVersion) LoadLatestVersion(
 	q := `
 SELECT
 	id,
+	organization_id,
 	document_id,
 	title,
 	owner_id,
@@ -366,6 +374,7 @@ func (p *DocumentVersion) LoadLatestPublishedVersion(
 	q := `
 SELECT
 	id,
+	organization_id,
 	document_id,
 	title,
 	owner_id,

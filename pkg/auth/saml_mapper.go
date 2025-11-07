@@ -77,9 +77,9 @@ func ExtractEmailDomain(email string) (string, error) {
 	return domain, nil
 }
 
-func MapSAMLRoleToSystemRole(samlRole string) *coredata.Role {
+func MapSAMLRoleToSystemRole(samlRole string) *coredata.MembershipRole {
 	if samlRole != "" && isValidRole(samlRole) {
-		role := coredata.Role(samlRole)
+		role := coredata.MembershipRole(samlRole)
 		return &role
 	}
 
@@ -88,7 +88,7 @@ func MapSAMLRoleToSystemRole(samlRole string) *coredata.Role {
 
 func isValidRole(role string) bool {
 	switch role {
-	case "OWNER", "ADMIN", "MEMBER", "VIEWER":
+	case "OWNER", "ADMIN", "VIEWER":
 		return true
 	default:
 		return false

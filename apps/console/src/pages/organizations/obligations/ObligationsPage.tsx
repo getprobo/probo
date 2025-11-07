@@ -31,6 +31,8 @@ import { deleteObligationMutation } from "../../../hooks/graph/ObligationGraph";
 import { promisifyMutation, getObligationStatusVariant, getObligationStatusLabel, formatDate } from "@probo/helpers";
 import { SnapshotBanner } from "/components/SnapshotBanner";
 import type { ObligationsPageQuery } from "./__generated__/ObligationsPageQuery.graphql";
+import { Authorized } from "/permissions";
+import { isAuthorized } from "/permissions";
 import type {
   ObligationsPageFragment$key,
   ObligationsPageFragment$data,
@@ -117,6 +119,11 @@ export default function ObligationsPage({ queryRef }: ObligationsPageProps) {
   const connectionId = obligationsData?.obligations?.__id || "";
   const obligations: Obligation[] = obligationsData?.obligations?.edges?.map((edge) => edge.node) ?? [];
 
+  const hasAnyAction = !isSnapshotMode && (
+    isAuthorized(organizationId, "Obligation", "updateObligation") ||
+    isAuthorized(organizationId, "Obligation", "deleteObligation")
+  );
+
   return (
     <div className="space-y-6">
       {isSnapshotMode && snapshotId && (
@@ -129,9 +136,11 @@ export default function ObligationsPage({ queryRef }: ObligationsPageProps) {
         )}
       >
         {!snapshotId && (
-          <CreateObligationDialog organizationId={organizationId} connection={connectionId}>
-            <Button icon={IconPlusLarge}>{__("Add obligation")}</Button>
-          </CreateObligationDialog>
+          <Authorized entity="Organization" action="createObligation">
+            <CreateObligationDialog organizationId={organizationId} connection={connectionId}>
+              <Button icon={IconPlusLarge}>{__("Add obligation")}</Button>
+            </CreateObligationDialog>
+          </Authorized>
         )}
       </PageHeader>
 
@@ -156,7 +165,7 @@ export default function ObligationsPage({ queryRef }: ObligationsPageProps) {
                 <Th>{__("Status")}</Th>
                 <Th>{__("Owner")}</Th>
                 <Th>{__("Due Date")}</Th>
-                <Th>{__("Actions")}</Th>
+                {hasAnyAction && <Th>{__("Actions")}</Th>}
               </Tr>
             </Thead>
             <Tbody>
@@ -166,6 +175,7 @@ export default function ObligationsPage({ queryRef }: ObligationsPageProps) {
                   obligation={obligation}
                   connectionId={connectionId}
                   snapshotId={snapshotId}
+                  hasAnyAction={hasAnyAction}
                 />
               ))}
             </Tbody>
@@ -192,10 +202,12 @@ function ObligationRow({
   obligation,
   connectionId,
   snapshotId,
+  hasAnyAction,
 }: {
   obligation: Obligation;
   connectionId: string;
   snapshotId?: string;
+  hasAnyAction: boolean;
 }) {
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
@@ -246,19 +258,21 @@ function ObligationRow({
           <span className="text-txt-tertiary">{__("No due date")}</span>
         )}
       </Td>
-      <Td noLink width={50} className="text-end">
-        {!isSnapshotMode && (
+      {hasAnyAction && (
+        <Td noLink width={50} className="text-end">
           <ActionDropdown>
-            <DropdownItem
-              icon={IconTrashCan}
-              variant="danger"
-              onSelect={handleDelete}
-            >
-              {__("Delete")}
-            </DropdownItem>
+            <Authorized entity="Obligation" action="deleteObligation">
+              <DropdownItem
+                icon={IconTrashCan}
+                variant="danger"
+                onSelect={handleDelete}
+              >
+                {__("Delete")}
+              </DropdownItem>
+            </Authorized>
           </ActionDropdown>
-        )}
-      </Td>
+        </Td>
+      )}
     </Tr>
   );
 }

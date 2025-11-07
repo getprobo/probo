@@ -10,8 +10,8 @@ import type { PropsWithChildren } from "react";
 import { RelayEnvironmentProvider } from "react-relay";
 
 export class UnAuthenticatedError extends Error {
-  constructor() {
-    super("UNAUTHENTICATED");
+  constructor(message?: string) {
+    super(message || "UNAUTHENTICATED");
     this.name = "UnAuthenticatedError";
   }
 }
@@ -45,9 +45,16 @@ export class AuthenticationRequiredError extends Error {
 }
 
 export class UnauthorizedError extends Error {
-  constructor() {
-    super("UNAUTHORIZED");
+  constructor(message?: string) {
+    super(message || "UNAUTHORIZED");
     this.name = "UnauthorizedError";
+  }
+}
+
+export class ForbiddenError extends Error {
+  constructor(message?: string) {
+    super(message || "FORBIDDEN");
+    this.name = "ForbiddenError";
   }
 }
 
@@ -80,6 +87,9 @@ const hasAuthenticationRequiredError = (error: GraphQLError) =>
 
 const hasUnauthorizedError = (error: GraphQLError) =>
   error.extensions?.code == "UNAUTHORIZED";
+
+const hasForbiddenError = (error: GraphQLError) =>
+  error.extensions?.code == "FORBIDDEN";
 
 const fetchRelay: FetchFunction = async (
   request,
@@ -147,8 +157,9 @@ const fetchRelay: FetchFunction = async (
   if (json.errors) {
     const errors = json.errors as GraphQLError[];
 
-    if (errors.find(hasUnauthenticatedError)) {
-      throw new UnAuthenticatedError();
+    const unauthenticatedError = errors.find(hasUnauthenticatedError);
+    if (unauthenticatedError) {
+      throw new UnAuthenticatedError(unauthenticatedError.message);
     }
 
     const authRequiredError = errors.find(hasAuthenticationRequiredError);
@@ -163,8 +174,14 @@ const fetchRelay: FetchFunction = async (
       });
     }
 
-    if (errors.find(hasUnauthorizedError)) {
-      throw new UnauthorizedError();
+    const unauthorizedError = errors.find(hasUnauthorizedError);
+    if (unauthorizedError) {
+      throw new UnauthorizedError(unauthorizedError.message);
+    }
+
+    const forbiddenError = errors.find(hasForbiddenError);
+    if (forbiddenError) {
+      throw new ForbiddenError(forbiddenError.message);
     }
   }
 

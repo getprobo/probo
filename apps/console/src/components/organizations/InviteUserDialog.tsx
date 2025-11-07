@@ -5,6 +5,8 @@ import {
   DialogFooter,
   Field,
   Checkbox,
+  Select,
+  Option,
   useDialogRef,
 } from "@probo/ui";
 import type { PropsWithChildren } from "react";
@@ -15,6 +17,8 @@ import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { z } from "zod";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { Controller } from "react-hook-form";
+import { Suspense } from "react";
+import { getAssignableRoles } from "/permissions";
 
 const inviteMutation = graphql`
   mutation InviteUserDialogMutation(
@@ -40,6 +44,7 @@ const inviteMutation = graphql`
 const schema = z.object({
   email: z.string().email(),
   fullName: z.string(),
+  role: z.enum(["OWNER", "ADMIN", "FULL", "VIEWER"]).default("VIEWER"),
   createPeople: z.boolean().default(false),
 });
 
@@ -48,16 +53,17 @@ type Props = PropsWithChildren & {
   onRefetch: () => void;
 };
 
-export function InviteUserDialog({ children, connectionId, onRefetch }: Props) {
+function InviteUserDialogContent({ children, connectionId, onRefetch }: Props) {
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
+  const assignableRoles = getAssignableRoles(organizationId);
   const [inviteUser, isInviting] = useMutationWithToasts(inviteMutation, {
     successMessage: __("Invitation sent successfully"),
     errorMessage: __("Failed to send invitation"),
   });
   const { register, handleSubmit, formState, reset, control } = useFormWithSchema(
     schema,
-    { defaultValues: { createPeople: false } },
+    { defaultValues: { role: "VIEWER", createPeople: false } },
   );
 
   const dialogRef = useDialogRef();
@@ -69,6 +75,7 @@ export function InviteUserDialog({ children, connectionId, onRefetch }: Props) {
           organizationId,
           email: data.email,
           fullName: data.fullName,
+          role: data.role,
           createPeople: data.createPeople,
         },
         connections: connectionId ? [connectionId] : ["SettingsPageInvitations_invitations"],
@@ -107,6 +114,32 @@ export function InviteUserDialog({ children, connectionId, onRefetch }: Props) {
             {...register("fullName")}
             error={formState.errors.fullName?.message}
           />
+          <Field label={__("Role")} required>
+            <Controller
+              name="role"
+              control={control}
+              render={({ field }) => (
+                <>
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    {assignableRoles.includes("OWNER") && <Option value="OWNER">{__("Owner")}</Option>}
+                    {assignableRoles.includes("ADMIN") && <Option value="ADMIN">{__("Admin")}</Option>}
+                    {assignableRoles.includes("VIEWER") && <Option value="VIEWER">{__("Viewer")}</Option>}
+                  </Select>
+                  <div className="mt-2 text-sm text-txt-tertiary">
+                    {field.value === "OWNER" && (
+                      <p>{__("Full access to everything")}</p>
+                    )}
+                    {field.value === "ADMIN" && (
+                      <p>{__("Full access except organization setup and API keys")}</p>
+                    )}
+                    {field.value === "VIEWER" && (
+                      <p>{__("Read-only access")}</p>
+                    )}
+                  </div>
+                </>
+              )}
+            />
+          </Field>
           <div className="space-y-2">
             <div className="flex items-center space-x-3">
               <Controller
@@ -140,5 +173,13 @@ export function InviteUserDialog({ children, connectionId, onRefetch }: Props) {
         </DialogFooter>
       </form>
     </Dialog>
+  );
+}
+
+export function InviteUserDialog(props: Props) {
+  return (
+    <Suspense fallback={props.children}>
+      <InviteUserDialogContent {...props} />
+    </Suspense>
   );
 }

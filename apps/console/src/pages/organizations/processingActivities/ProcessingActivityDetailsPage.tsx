@@ -41,6 +41,7 @@ import {
 } from "../../../components/form/ProcessingActivityEnumOptions";
 
 import type { ProcessingActivityGraphNodeQuery } from "/hooks/graph/__generated__/ProcessingActivityGraphNodeQuery.graphql";
+import { Authorized } from "/permissions";
 
 const updateProcessingActivitySchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -170,11 +171,13 @@ export default function ProcessingActivityDetailsPage(props: Props) {
           ]}
         />
         {!isSnapshotMode && (
-          <ActionDropdown>
-            <DropdownItem onClick={deleteActivity} variant="danger">
-              {__("Delete")}
-            </DropdownItem>
-          </ActionDropdown>
+          <Authorized entity="ProcessingActivity" action="deleteProcessingActivity">
+            <ActionDropdown>
+              <DropdownItem onClick={deleteActivity} variant="danger">
+                {__("Delete")}
+              </DropdownItem>
+            </ActionDropdown>
+          </Authorized>
         )}
       </div>
 
@@ -407,13 +410,15 @@ export default function ProcessingActivityDetailsPage(props: Props) {
 
             {!isSnapshotMode && (
               <div className="flex justify-end pt-4">
-                <Button
-                  type="submit"
-                  variant="primary"
-                  disabled={formState.isSubmitting}
-                >
-                  {formState.isSubmitting ? __("Saving...") : __("Save Changes")}
-                </Button>
+                <Authorized entity="ProcessingActivity" action="updateProcessingActivity">
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    disabled={formState.isSubmitting}
+                  >
+                    {formState.isSubmitting ? __("Saving...") : __("Save Changes")}
+                  </Button>
+                </Authorized>
               </div>
             )}
           </form>

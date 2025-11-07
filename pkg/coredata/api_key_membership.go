@@ -47,13 +47,14 @@ func (a *UserAPIKeyMembership) Insert(
 ) error {
 	q := `
 INSERT INTO
-    authz_api_keys_memberships (id, tenant_id, auth_user_api_key_id, membership_id, role, created_at, updated_at)
+    authz_api_keys_memberships (id, tenant_id, auth_user_api_key_id, membership_id, role, organization_id, created_at, updated_at)
 VALUES (
     @id,
     @tenant_id,
     @auth_user_api_key_id,
     @membership_id,
     @role,
+    @organization_id,
     @created_at,
     @updated_at
 )
@@ -65,6 +66,7 @@ VALUES (
 		"auth_user_api_key_id": a.UserAPIKeyID,
 		"membership_id":        a.MembershipID,
 		"role":                 a.Role,
+		"organization_id":      a.OrganizationID,
 		"created_at":           a.CreatedAt,
 		"updated_at":           a.UpdatedAt,
 	}
@@ -127,6 +129,133 @@ ORDER BY akm.created_at DESC
 	return nil
 }
 
+// LoadRoleByAPIKeyAndEntityID loads an API key's role by querying any entity to extract its organization_id
+func (a *UserAPIKeyMembership) LoadRoleByAPIKeyAndEntityID(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	apiKeyID gid.GID,
+	entityID gid.GID,
+) error {
+	entityType := entityID.EntityType()
+
+	// For organization, the entity ID is the organization ID
+	if entityType == OrganizationEntityType {
+		return a.LoadByAPIKeyIDAndOrganizationID(ctx, conn, scope, apiKeyID, entityID)
+	}
+
+	tableName, ok := EntityTable(entityType)
+	if !ok {
+		return fmt.Errorf("unsupported entity type for API key role lookup: %d", entityType)
+	}
+
+	query := fmt.Sprintf(`
+SELECT
+	akm.id,
+	akm.auth_user_api_key_id,
+	akm.membership_id,
+	akm.role,
+	akm.created_at,
+	akm.updated_at
+FROM
+	authz_api_keys_memberships akm
+	INNER JOIN authz_memberships m ON m.id = akm.membership_id
+	INNER JOIN %s e ON e.id = @entity_id
+WHERE
+	%s
+	AND akm.auth_user_api_key_id = @api_key_id
+	AND m.organization_id = e.organization_id
+LIMIT 1;
+`, tableName, scope.SQLFragment())
+
+	args := pgx.NamedArgs{
+		"api_key_id": apiKeyID,
+		"entity_id":  entityID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, query, args)
+	if err != nil {
+		return fmt.Errorf("cannot query API key membership by entity: %w", err)
+	}
+	defer rows.Close()
+
+	if !rows.Next() {
+		return fmt.Errorf("API key membership not found for key %s and entity %s", apiKeyID, entityID)
+	}
+
+	var membership UserAPIKeyMembership
+	err = rows.Scan(
+		&membership.ID,
+		&membership.UserAPIKeyID,
+		&membership.MembershipID,
+		&membership.Role,
+		&membership.CreatedAt,
+		&membership.UpdatedAt,
+	)
+
+	if err != nil {
+		return fmt.Errorf("cannot scan API key membership: %w", err)
+	}
+
+	*a = membership
+	return nil
+}
+
+func (a *UserAPIKeyMembership) LoadByAPIKeyIDAndOrganizationID(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	apiKeyID gid.GID,
+	organizationID gid.GID,
+) error {
+	q := `
+SELECT
+    akm.id,
+    akm.auth_user_api_key_id,
+    akm.membership_id,
+    akm.role,
+    akm.created_at,
+    akm.updated_at,
+    m.organization_id,
+    o.name as organization_name
+FROM
+    authz_api_keys_memberships akm
+JOIN
+    authz_memberships m ON akm.membership_id = m.id
+JOIN
+    organizations o ON m.organization_id = o.id
+WHERE
+    akm.auth_user_api_key_id = @api_key_id
+    AND m.organization_id = @organization_id
+    AND m.%s
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"api_key_id":      apiKeyID,
+		"organization_id": organizationID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query user api key membership: %w", err)
+	}
+
+	membership, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[UserAPIKeyMembership])
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return fmt.Errorf("API key does not have access to organization")
+		}
+		return fmt.Errorf("cannot collect user api key membership: %w", err)
+	}
+
+	*a = membership
+	return nil
+}
+
 func (a *UserAPIKeyMembership) Delete(
 	ctx context.Context,
 	conn pg.Conn,
@@ -151,6 +280,56 @@ WHERE
 	if err != nil {
 		return fmt.Errorf("cannot delete user api key membership: %w", err)
 	}
+
+	return nil
+}
+
+func (a *UserAPIKeyMemberships) LoadByMembershipID(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	membershipID gid.GID,
+) error {
+	q := `
+SELECT
+    akm.id,
+    akm.auth_user_api_key_id,
+    akm.membership_id,
+    akm.role,
+    akm.created_at,
+    akm.updated_at,
+    m.organization_id,
+    o.name as organization_name
+FROM
+    authz_api_keys_memberships akm
+JOIN
+    authz_memberships m ON akm.membership_id = m.id
+JOIN
+    organizations o ON m.organization_id = o.id
+WHERE
+    akm.membership_id = @membership_id
+    AND m.%s
+ORDER BY akm.created_at DESC
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"membership_id": membershipID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query user api key memberships by membership id: %w", err)
+	}
+
+	memberships, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[UserAPIKeyMembership])
+	if err != nil {
+		return fmt.Errorf("cannot collect user api key memberships: %w", err)
+	}
+
+	*a = memberships
 
 	return nil
 }

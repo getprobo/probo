@@ -59,6 +59,7 @@ func NewProcessingActivity(par *coredata.ProcessingActivity) *ProcessingActivity
 	return &ProcessingActivity{
 		ID:                             par.ID,
 		SnapshotID:                     par.SnapshotID,
+		SourceID:                       par.SourceID,
 		Name:                           par.Name,
 		Purpose:                        par.Purpose,
 		DataSubjectCategory:            par.DataSubjectCategory,

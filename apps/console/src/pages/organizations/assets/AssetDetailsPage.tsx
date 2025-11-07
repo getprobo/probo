@@ -28,6 +28,7 @@ import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import z from "zod";
 import { getAssetTypeVariant, validateSnapshotConsistency } from "@probo/helpers";
 import { SnapshotBanner } from "/components/SnapshotBanner";
+import { Authorized } from "/permissions";
 
 const updateAssetSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -114,15 +115,17 @@ export default function AssetDetailsPage(props: Props) {
           </Badge>
         </div>
         {!isSnapshotMode && (
-          <ActionDropdown variant="secondary">
-            <DropdownItem
-              variant="danger"
-              icon={IconTrashCan}
-              onClick={deleteAsset}
-            >
-              {__("Delete")}
-            </DropdownItem>
-          </ActionDropdown>
+          <Authorized entity="Asset" action="deleteAsset">
+            <ActionDropdown variant="secondary">
+              <DropdownItem
+                variant="danger"
+                icon={IconTrashCan}
+                onClick={deleteAsset}
+              >
+                {__("Delete")}
+              </DropdownItem>
+            </ActionDropdown>
+          </Authorized>
         )}
       </div>
 
@@ -178,9 +181,11 @@ export default function AssetDetailsPage(props: Props) {
 
         <div className="flex justify-end">
           {formState.isDirty && !isSnapshotMode && (
-            <Button type="submit" disabled={formState.isSubmitting}>
-              {formState.isSubmitting ? __("Updating...") : __("Update")}
-            </Button>
+            <Authorized entity="Asset" action="updateAsset">
+              <Button type="submit" disabled={formState.isSubmitting}>
+                {formState.isSubmitting ? __("Updating...") : __("Update")}
+              </Button>
+            </Authorized>
           )}
         </div>
       </form>

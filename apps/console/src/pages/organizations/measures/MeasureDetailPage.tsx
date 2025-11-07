@@ -43,6 +43,7 @@ import {
   sprintf,
 } from "@probo/helpers";
 import MeasureFormDialog from "./dialog/MeasureFormDialog";
+import { Authorized } from "/permissions";
 
 type Props = {
   queryRef: PreloadedQuery<MeasureGraphNodeQuery>;
@@ -135,29 +136,33 @@ export default function MeasureDetailPage(props: Props) {
       />
 
       <PageHeader title={measure.name} description={measure.description}>
-        <MeasureFormDialog measure={measure}>
-          <Button variant="secondary" icon={IconPencil}>
-            {__("Edit")}
-          </Button>
-        </MeasureFormDialog>
-        <Select
-          disabled={isUpdating}
-          onValueChange={onStateChange}
-          name="state"
-          placeholder={__("Select state")}
-          className="rounded-full"
-          value={measure.state}
-        >
-          {measureStates.map((state) => (
-            <Option key={state} value={state}>
-              {getMeasureStateLabel(__, state)}
-            </Option>
-          ))}
-        </Select>
+        <Authorized entity="Measure" action="updateMeasure">
+          <MeasureFormDialog measure={measure}>
+            <Button variant="secondary" icon={IconPencil}>
+              {__("Edit")}
+            </Button>
+          </MeasureFormDialog>
+          <Select
+            disabled={isUpdating}
+            onValueChange={onStateChange}
+            name="state"
+            placeholder={__("Select state")}
+            className="rounded-full"
+            value={measure.state}
+          >
+            {measureStates.map((state) => (
+              <Option key={state} value={state}>
+                {getMeasureStateLabel(__, state)}
+              </Option>
+            ))}
+          </Select>
+        </Authorized>
         <ActionDropdown variant="secondary">
-          <DropdownItem variant="danger" icon={IconTrashCan} onClick={onDelete}>
-            {__("Delete")}
-          </DropdownItem>
+          <Authorized entity="Measure" action="deleteMeasure">
+            <DropdownItem variant="danger" icon={IconTrashCan} onClick={onDelete}>
+              {__("Delete")}
+            </DropdownItem>
+          </Authorized>
         </ActionDropdown>
       </PageHeader>
 

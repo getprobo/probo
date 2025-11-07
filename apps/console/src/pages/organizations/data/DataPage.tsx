@@ -35,6 +35,8 @@ import type {
 import type { DataListQuery } from "./__generated__/DataListQuery.graphql";
 import { SortableTable } from "/components/SortableTable";
 import { SnapshotBanner } from "/components/SnapshotBanner";
+import { Authorized } from "/permissions";
+import { isAuthorized } from "/permissions";
 
 const paginatedDataFragment = graphql`
   fragment DataPageFragment on Organization
@@ -119,6 +121,10 @@ export default function DataPage(props: Props) {
 
   usePageTitle(__("Data"));
 
+  const hasAnyAction = !isSnapshotMode && (    isAuthorized(organizationId, "Datum", "updateDatum") ||
+    isAuthorized(organizationId, "Datum", "deleteDatum")
+  );
+
   return (
     <div className="space-y-6">
       {isSnapshotMode && snapshotId && (
@@ -131,13 +137,15 @@ export default function DataPage(props: Props) {
         )}
       >
         {!snapshotId && (
-          <CreateDatumDialog
-            connection={connectionId}
-            organizationId={organizationId}
-            onCreated={() => pagination.refetch({ snapshotId })}
-          >
-            <Button icon={IconPlusLarge}>{__("Add data")}</Button>
-          </CreateDatumDialog>
+          <Authorized entity="Organization" action="createDatum">
+            <CreateDatumDialog
+              connection={connectionId}
+              organizationId={organizationId}
+              onCreated={() => pagination.refetch({ snapshotId })}
+            >
+              <Button icon={IconPlusLarge}>{__("Add data")}</Button>
+            </CreateDatumDialog>
+          </Authorized>
         )}
       </PageHeader>
       <SortableTable
@@ -150,12 +158,12 @@ export default function DataPage(props: Props) {
             <Th>{__("Classification")}</Th>
             <Th>{__("Owner")}</Th>
             <Th>{__("Vendors")}</Th>
-            <Th></Th>
+            {hasAnyAction && <Th></Th>}
           </Tr>
         </Thead>
         <Tbody>
           {dataEntries.map((entry) => (
-            <DataRow key={entry.id} entry={entry} connectionId={connectionId} snapshotId={snapshotId} />
+            <DataRow key={entry.id} entry={entry} connectionId={connectionId} snapshotId={snapshotId} hasAnyAction={hasAnyAction} />
           ))}
         </Tbody>
       </SortableTable>
@@ -167,10 +175,12 @@ function DataRow({
   entry,
   connectionId,
   snapshotId,
+  hasAnyAction,
 }: {
   entry: DataEntry;
   connectionId: string;
   snapshotId?: string;
+  hasAnyAction: boolean;
 }) {
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
@@ -215,18 +225,21 @@ function DataRow({
           <span className="text-txt-secondary text-sm">{__("None")}</span>
         )}
       </Td>
-      <Td noLink width={50} className="text-end">
-      {!snapshotId && (<ActionDropdown>
-            <DropdownItem
-              onClick={deleteDatum}
-              variant="danger"
-              icon={IconTrashCan}
-            >
-              {__("Delete")}
-            </DropdownItem>
+      {hasAnyAction && (
+        <Td noLink width={50} className="text-end">
+          <ActionDropdown>
+            <Authorized entity="Datum" action="deleteDatum">
+              <DropdownItem
+                onClick={deleteDatum}
+                variant="danger"
+                icon={IconTrashCan}
+              >
+                {__("Delete")}
+              </DropdownItem>
+            </Authorized>
           </ActionDropdown>
-        )}
-      </Td>
+        </Td>
+      )}
     </Tr>
   );
 }

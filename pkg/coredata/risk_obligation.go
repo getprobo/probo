@@ -27,9 +27,10 @@ import (
 
 type (
 	RiskObligation struct {
-		RiskID       gid.GID   `db:"risk_id"`
-		ObligationID gid.GID   `db:"obligation_id"`
-		CreatedAt    time.Time `db:"created_at"`
+		RiskID         gid.GID   `db:"risk_id"`
+		ObligationID   gid.GID   `db:"obligation_id"`
+		OrganizationID gid.GID   `db:"organization_id"`
+		CreatedAt      time.Time `db:"created_at"`
 	}
 
 	RiskObligations []*RiskObligation
@@ -44,21 +45,24 @@ func (ro RiskObligation) Insert(
 INSERT INTO risks_obligations (
 	risk_id,
 	obligation_id,
+	organization_id,
 	tenant_id,
 	created_at
 ) VALUES (
 	@risk_id,
 	@obligation_id,
+	@organization_id,
 	@tenant_id,
 	@created_at
 )
 `
 
 	args := pgx.StrictNamedArgs{
-		"risk_id":       ro.RiskID,
-		"obligation_id": ro.ObligationID,
-		"tenant_id":     scope.GetTenantID(),
-		"created_at":    ro.CreatedAt,
+		"risk_id":         ro.RiskID,
+		"obligation_id":   ro.ObligationID,
+		"organization_id": ro.OrganizationID,
+		"tenant_id":       scope.GetTenantID(),
+		"created_at":      ro.CreatedAt,
 	}
 
 	_, err := conn.Exec(ctx, q, args)

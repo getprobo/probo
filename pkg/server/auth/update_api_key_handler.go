@@ -22,6 +22,7 @@ import (
 
 	"go.gearno.de/kit/httpserver"
 	authsvc "go.probo.inc/probo/pkg/auth"
+	"go.probo.inc/probo/pkg/authz"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 )
@@ -32,7 +33,7 @@ type UpdateUserAPIKeyRequest struct {
 	Organizations []UserAPIKeyOrganizationMembershipRequest `json:"organizations"`
 }
 
-func UpdateUserAPIKeyHandler(authSvc *authsvc.Service) http.HandlerFunc {
+func UpdateUserAPIKeyHandler(authSvc *authsvc.Service, authzSvc *authz.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		user := UserFromContext(ctx)
@@ -96,6 +97,22 @@ func UpdateUserAPIKeyHandler(authSvc *authsvc.Service) http.HandlerFunc {
 				if err != nil {
 					httpserver.RenderJSON(w, http.StatusBadRequest, map[string]string{
 						"error": "invalid organization id",
+					})
+					return
+				}
+
+				// Check if user is an OWNER for this organization
+				tenantAuthzSvc := authzSvc.WithTenant(orgID.TenantID())
+				role, err := tenantAuthzSvc.GetUserRoleInOrganization(ctx, user.ID, orgID)
+				if err != nil {
+					httpserver.RenderJSON(w, http.StatusForbidden, map[string]string{
+						"error": "user does not have access to this organization",
+					})
+					return
+				}
+				if role != coredata.MembershipRoleOwner {
+					httpserver.RenderJSON(w, http.StatusForbidden, map[string]string{
+						"error": "only owners can update API keys for this organization",
 					})
 					return
 				}

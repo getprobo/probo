@@ -16,6 +16,7 @@ import (
 	pgx "github.com/jackc/pgx/v5"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.probo.inc/probo/pkg/auth"
+	"go.probo.inc/probo/pkg/authz"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
@@ -27,6 +28,8 @@ import (
 
 // Owner is the resolver for the owner field.
 func (r *assetResolver) Owner(ctx context.Context, obj *types.Asset) (*types.People, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetOwner)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	asset, err := prb.Assets.Get(ctx, obj.ID)
@@ -52,6 +55,8 @@ func (r *assetResolver) Owner(ctx context.Context, obj *types.Asset) (*types.Peo
 
 // Vendors is the resolver for the vendors field.
 func (r *assetResolver) Vendors(ctx context.Context, obj *types.Asset, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorOrderBy) (*types.VendorConnection, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListVendors)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.VendorOrderField]{
@@ -77,6 +82,8 @@ func (r *assetResolver) Vendors(ctx context.Context, obj *types.Asset, first *in
 
 // AssetType is the resolver for the assetType field.
 func (r *assetResolver) AssetType(ctx context.Context, obj *types.Asset) (coredata.AssetType, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetAssetType)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	asset, err := prb.Assets.Get(ctx, obj.ID)
@@ -93,13 +100,20 @@ func (r *assetResolver) AssetType(ctx context.Context, obj *types.Asset) (coreda
 
 // Organization is the resolver for the organization field.
 func (r *assetResolver) Organization(ctx context.Context, obj *types.Asset) (*types.Organization, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetOrganization)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
-	if obj.Organization == nil {
-		panic(fmt.Errorf("cannot get organization"))
+	asset, err := prb.Assets.Get(ctx, obj.ID)
+	if err != nil {
+		var errNotFound *coredata.ErrAuditNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, gqlutils.NotFound(errNotFound)
+		}
+		panic(fmt.Errorf("cannot load audit: %w", err))
 	}
 
-	org, err := prb.Organizations.Get(ctx, obj.Organization.ID)
+	org, err := prb.Organizations.Get(ctx, asset.OrganizationID)
 	if err != nil {
 		var errNotFound *coredata.ErrOrganizationNotFound
 		if errors.As(err, &errNotFound) {
@@ -113,6 +127,8 @@ func (r *assetResolver) Organization(ctx context.Context, obj *types.Asset) (*ty
 
 // TotalCount is the resolver for the totalCount field.
 func (r *assetConnectionResolver) TotalCount(ctx context.Context, obj *types.AssetConnection) (int, error) {
+	r.MustBeAuthorized(ctx, obj.ParentID, authz.ActionTotalCount)
+
 	prb := r.ProboService(ctx, obj.ParentID.TenantID())
 
 	switch obj.Resolver.(type) {
@@ -134,6 +150,8 @@ func (r *assetConnectionResolver) TotalCount(ctx context.Context, obj *types.Ass
 
 // Organization is the resolver for the organization field.
 func (r *auditResolver) Organization(ctx context.Context, obj *types.Audit) (*types.Organization, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetOrganization)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	audit, err := prb.Audits.Get(ctx, obj.ID)
@@ -159,6 +177,8 @@ func (r *auditResolver) Organization(ctx context.Context, obj *types.Audit) (*ty
 
 // Framework is the resolver for the framework field.
 func (r *auditResolver) Framework(ctx context.Context, obj *types.Audit) (*types.Framework, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetFramework)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	audit, err := prb.Audits.Get(ctx, obj.ID)
@@ -184,6 +204,8 @@ func (r *auditResolver) Framework(ctx context.Context, obj *types.Audit) (*types
 
 // Report is the resolver for the report field.
 func (r *auditResolver) Report(ctx context.Context, obj *types.Audit) (*types.Report, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionReport)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	audit, err := prb.Audits.Get(ctx, obj.ID)
@@ -209,11 +231,13 @@ func (r *auditResolver) Report(ctx context.Context, obj *types.Audit) (*types.Re
 
 // ReportURL is the resolver for the reportUrl field.
 func (r *auditResolver) ReportURL(ctx context.Context, obj *types.Audit) (*string, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionReportUrl)
 
 	if obj.Report == nil {
 		return nil, nil
 	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	url, err := prb.Audits.GenerateReportURL(ctx, obj.ID, 15*time.Minute)
 	if err != nil {
@@ -225,6 +249,8 @@ func (r *auditResolver) ReportURL(ctx context.Context, obj *types.Audit) (*strin
 
 // Controls is the resolver for the controls field.
 func (r *auditResolver) Controls(ctx context.Context, obj *types.Audit, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) (*types.ControlConnection, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListControls)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.ControlOrderField]{
@@ -255,6 +281,8 @@ func (r *auditResolver) Controls(ctx context.Context, obj *types.Audit, first *i
 
 // TotalCount is the resolver for the totalCount field.
 func (r *auditConnectionResolver) TotalCount(ctx context.Context, obj *types.AuditConnection) (int, error) {
+	r.MustBeAuthorized(ctx, obj.ParentID, authz.ActionTotalCount)
+
 	prb := r.ProboService(ctx, obj.ParentID.TenantID())
 
 	count, err := prb.Audits.CountForOrganizationID(ctx, obj.ParentID)
@@ -266,6 +294,8 @@ func (r *auditConnectionResolver) TotalCount(ctx context.Context, obj *types.Aud
 
 // Organization is the resolver for the organization field.
 func (r *continualImprovementResolver) Organization(ctx context.Context, obj *types.ContinualImprovement) (*types.Organization, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetOrganization)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	continualImprovement, err := prb.ContinualImprovements.Get(ctx, obj.ID)
@@ -287,6 +317,8 @@ func (r *continualImprovementResolver) Organization(ctx context.Context, obj *ty
 
 // Owner is the resolver for the owner field.
 func (r *continualImprovementResolver) Owner(ctx context.Context, obj *types.ContinualImprovement) (*types.People, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetOwner)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	continualImprovement, err := prb.ContinualImprovements.Get(ctx, obj.ID)
@@ -308,6 +340,8 @@ func (r *continualImprovementResolver) Owner(ctx context.Context, obj *types.Con
 
 // TotalCount is the resolver for the totalCount field.
 func (r *continualImprovementConnectionResolver) TotalCount(ctx context.Context, obj *types.ContinualImprovementConnection) (int, error) {
+	r.MustBeAuthorized(ctx, obj.ParentID, authz.ActionTotalCount)
+
 	prb := r.ProboService(ctx, obj.ParentID.TenantID())
 
 	switch obj.Resolver.(type) {
@@ -329,6 +363,8 @@ func (r *continualImprovementConnectionResolver) TotalCount(ctx context.Context,
 
 // Framework is the resolver for the framework field.
 func (r *controlResolver) Framework(ctx context.Context, obj *types.Control) (*types.Framework, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetFramework)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	control, err := prb.Controls.Get(ctx, obj.ID)
@@ -354,6 +390,8 @@ func (r *controlResolver) Framework(ctx context.Context, obj *types.Control) (*t
 
 // Measures is the resolver for the measures field.
 func (r *controlResolver) Measures(ctx context.Context, obj *types.Control, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy, filter *types.MeasureFilter) (*types.MeasureConnection, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListMeasures)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.MeasureOrderField]{
@@ -384,6 +422,8 @@ func (r *controlResolver) Measures(ctx context.Context, obj *types.Control, firs
 
 // Documents is the resolver for the documents field.
 func (r *controlResolver) Documents(ctx context.Context, obj *types.Control, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy, filter *types.DocumentFilter) (*types.DocumentConnection, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListDocuments)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.DocumentOrderField]{
@@ -414,6 +454,8 @@ func (r *controlResolver) Documents(ctx context.Context, obj *types.Control, fir
 
 // Audits is the resolver for the audits field.
 func (r *controlResolver) Audits(ctx context.Context, obj *types.Control, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AuditOrderBy) (*types.AuditConnection, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListAudits)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.AuditOrderField]{
@@ -439,6 +481,8 @@ func (r *controlResolver) Audits(ctx context.Context, obj *types.Control, first 
 
 // Snapshots is the resolver for the snapshots field.
 func (r *controlResolver) Snapshots(ctx context.Context, obj *types.Control, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.SnapshotOrderBy) (*types.SnapshotConnection, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListSnapshots)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.SnapshotOrderField]{
@@ -466,6 +510,7 @@ func (r *controlResolver) Snapshots(ctx context.Context, obj *types.Control, fir
 // TotalCount is the resolver for the totalCount field.
 func (r *controlConnectionResolver) TotalCount(ctx context.Context, obj *types.ControlConnection) (int, error) {
 	prb := r.ProboService(ctx, obj.ParentID.TenantID())
+	r.MustBeAuthorized(ctx, obj.ParentID, authz.ActionTotalCount)
 
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
@@ -505,6 +550,8 @@ func (r *controlConnectionResolver) TotalCount(ctx context.Context, obj *types.C
 
 // Owner is the resolver for the owner field.
 func (r *datumResolver) Owner(ctx context.Context, obj *types.Datum) (*types.People, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetOwner)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	data, err := prb.Data.Get(ctx, obj.ID)
@@ -526,6 +573,8 @@ func (r *datumResolver) Owner(ctx context.Context, obj *types.Datum) (*types.Peo
 
 // Vendors is the resolver for the vendors field.
 func (r *datumResolver) Vendors(ctx context.Context, obj *types.Datum, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorOrderBy) (*types.VendorConnection, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListVendors)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.VendorOrderField]{
@@ -551,9 +600,11 @@ func (r *datumResolver) Vendors(ctx context.Context, obj *types.Datum, first *in
 
 // Organization is the resolver for the organization field.
 func (r *datumResolver) Organization(ctx context.Context, obj *types.Datum) (*types.Organization, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetOrganization)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
-	org, err := prb.Organizations.Get(ctx, obj.Organization.ID)
+	org, err := prb.Organizations.Get(ctx, obj.OrganizationID)
 	if err != nil {
 		var errNotFound *coredata.ErrOrganizationNotFound
 		if errors.As(err, &errNotFound) {
@@ -567,6 +618,8 @@ func (r *datumResolver) Organization(ctx context.Context, obj *types.Datum) (*ty
 
 // TotalCount is the resolver for the totalCount field.
 func (r *datumConnectionResolver) TotalCount(ctx context.Context, obj *types.DatumConnection) (int, error) {
+	r.MustBeAuthorized(ctx, obj.ParentID, authz.ActionTotalCount)
+
 	prb := r.ProboService(ctx, obj.ParentID.TenantID())
 
 	switch obj.Resolver.(type) {
@@ -588,6 +641,8 @@ func (r *datumConnectionResolver) TotalCount(ctx context.Context, obj *types.Dat
 
 // Owner is the resolver for the owner field.
 func (r *documentResolver) Owner(ctx context.Context, obj *types.Document) (*types.People, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetOwner)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	document, err := prb.Documents.Get(ctx, obj.ID)
@@ -614,6 +669,8 @@ func (r *documentResolver) Owner(ctx context.Context, obj *types.Document) (*typ
 
 // Organization is the resolver for the organization field.
 func (r *documentResolver) Organization(ctx context.Context, obj *types.Document) (*types.Organization, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetOrganization)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	document, err := prb.Documents.Get(ctx, obj.ID)
@@ -639,6 +696,8 @@ func (r *documentResolver) Organization(ctx context.Context, obj *types.Document
 
 // Versions is the resolver for the versions field.
 func (r *documentResolver) Versions(ctx context.Context, obj *types.Document, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentVersionOrderBy, filter *types.DocumentVersionFilter) (*types.DocumentVersionConnection, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListVersions)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.DocumentVersionOrderField]{
@@ -664,6 +723,8 @@ func (r *documentResolver) Versions(ctx context.Context, obj *types.Document, fi
 
 // Controls is the resolver for the controls field.
 func (r *documentResolver) Controls(ctx context.Context, obj *types.Document, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) (*types.ControlConnection, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListControls)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.ControlOrderField]{
@@ -694,8 +755,9 @@ func (r *documentResolver) Controls(ctx context.Context, obj *types.Document, fi
 
 // TotalCount is the resolver for the totalCount field.
 func (r *documentConnectionResolver) TotalCount(ctx context.Context, obj *types.DocumentConnection) (int, error) {
-	prb := r.ProboService(ctx, obj.ParentID.TenantID())
+	r.MustBeAuthorized(ctx, obj.ParentID, authz.ActionTotalCount)
 
+	prb := r.ProboService(ctx, obj.ParentID.TenantID())
 	switch obj.Resolver.(type) {
 	case *controlResolver:
 		count, err := prb.Documents.CountForControlID(ctx, obj.ParentID, obj.Filters)
@@ -722,6 +784,8 @@ func (r *documentConnectionResolver) TotalCount(ctx context.Context, obj *types.
 
 // Document is the resolver for the document field.
 func (r *documentVersionResolver) Document(ctx context.Context, obj *types.DocumentVersion) (*types.Document, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionDocument)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	documentVersion, err := prb.Documents.GetVersion(ctx, obj.ID)
@@ -743,6 +807,8 @@ func (r *documentVersionResolver) Document(ctx context.Context, obj *types.Docum
 
 // Owner is the resolver for the owner field.
 func (r *documentVersionResolver) Owner(ctx context.Context, obj *types.DocumentVersion) (*types.People, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetOwner)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	documentVersion, err := prb.Documents.GetVersion(ctx, obj.ID)
@@ -764,6 +830,8 @@ func (r *documentVersionResolver) Owner(ctx context.Context, obj *types.Document
 
 // Signatures is the resolver for the signatures field.
 func (r *documentVersionResolver) Signatures(ctx context.Context, obj *types.DocumentVersion, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentVersionSignatureOrder, filter *types.DocumentVersionSignatureFilter) (*types.DocumentVersionSignatureConnection, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionSignatures)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.DocumentVersionSignatureOrderField]{
@@ -795,6 +863,8 @@ func (r *documentVersionResolver) Signatures(ctx context.Context, obj *types.Doc
 
 // DocumentVersion is the resolver for the documentVersion field.
 func (r *documentVersionSignatureResolver) DocumentVersion(ctx context.Context, obj *types.DocumentVersionSignature) (*types.DocumentVersion, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionDocumentVersion)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	documentVersionSignature, err := prb.Documents.GetVersionSignature(ctx, obj.ID)
@@ -812,6 +882,8 @@ func (r *documentVersionSignatureResolver) DocumentVersion(ctx context.Context, 
 
 // SignedBy is the resolver for the signedBy field.
 func (r *documentVersionSignatureResolver) SignedBy(ctx context.Context, obj *types.DocumentVersionSignature) (*types.People, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionSignedBy)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	documentVersionSignature, err := prb.Documents.GetVersionSignature(ctx, obj.ID)
@@ -833,6 +905,8 @@ func (r *documentVersionSignatureResolver) SignedBy(ctx context.Context, obj *ty
 
 // File is the resolver for the file field.
 func (r *evidenceResolver) File(ctx context.Context, obj *types.Evidence) (*types.File, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetFile)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	evidence, err := prb.Evidences.Get(ctx, obj.ID)
@@ -858,6 +932,8 @@ func (r *evidenceResolver) File(ctx context.Context, obj *types.Evidence) (*type
 
 // Task is the resolver for the task field.
 func (r *evidenceResolver) Task(ctx context.Context, obj *types.Evidence) (*types.Task, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetTask)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	evidence, err := prb.Evidences.Get(ctx, obj.ID)
@@ -883,6 +959,8 @@ func (r *evidenceResolver) Task(ctx context.Context, obj *types.Evidence) (*type
 
 // Measure is the resolver for the measure field.
 func (r *evidenceResolver) Measure(ctx context.Context, obj *types.Evidence) (*types.Measure, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetMeasure)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	evidence, err := prb.Evidences.Get(ctx, obj.ID)
@@ -904,6 +982,8 @@ func (r *evidenceResolver) Measure(ctx context.Context, obj *types.Evidence) (*t
 
 // TotalCount is the resolver for the totalCount field.
 func (r *evidenceConnectionResolver) TotalCount(ctx context.Context, obj *types.EvidenceConnection) (int, error) {
+	r.MustBeAuthorized(ctx, obj.ParentID, authz.ActionTotalCount)
+
 	prb := r.ProboService(ctx, obj.ParentID.TenantID())
 
 	switch obj.Resolver.(type) {
@@ -926,6 +1006,8 @@ func (r *evidenceConnectionResolver) TotalCount(ctx context.Context, obj *types.
 
 // DownloadURL is the resolver for the downloadUrl field.
 func (r *fileResolver) DownloadURL(ctx context.Context, obj *types.File) (string, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionDownloadUrl)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	downloadUrl, err := prb.Files.GenerateFileTempURL(ctx, obj.ID, 60*time.Second)
@@ -938,6 +1020,8 @@ func (r *fileResolver) DownloadURL(ctx context.Context, obj *types.File) (string
 
 // Organization is the resolver for the organization field.
 func (r *frameworkResolver) Organization(ctx context.Context, obj *types.Framework) (*types.Organization, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetOrganization)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	framework, err := prb.Frameworks.Get(ctx, obj.ID)
@@ -963,6 +1047,8 @@ func (r *frameworkResolver) Organization(ctx context.Context, obj *types.Framewo
 
 // Controls is the resolver for the controls field.
 func (r *frameworkResolver) Controls(ctx context.Context, obj *types.Framework, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) (*types.ControlConnection, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListControls)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.ControlOrderField]{
@@ -993,10 +1079,12 @@ func (r *frameworkResolver) Controls(ctx context.Context, obj *types.Framework, 
 
 // TotalCount is the resolver for the totalCount field.
 func (r *frameworkConnectionResolver) TotalCount(ctx context.Context, obj *types.FrameworkConnection) (int, error) {
-	prb := r.ProboService(ctx, obj.ParentID.TenantID())
+	r.MustBeAuthorized(ctx, obj.ParentID, authz.ActionTotalCount)
 
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
+		prb := r.ProboService(ctx, obj.ParentID.TenantID())
+
 		count, err := prb.Frameworks.CountForOrganizationID(ctx, obj.ParentID)
 		if err != nil {
 			panic(fmt.Errorf("cannot count frameworks: %w", err))
@@ -1009,9 +1097,11 @@ func (r *frameworkConnectionResolver) TotalCount(ctx context.Context, obj *types
 
 // Organization is the resolver for the organization field.
 func (r *invitationResolver) Organization(ctx context.Context, obj *types.Invitation) (*types.Organization, error) {
-	authz := r.AuthzService(ctx, obj.ID.TenantID())
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetOrganization)
 
-	organization, err := authz.GetOrganizationByInvitationID(ctx, obj.ID)
+	authzSvc := r.AuthzService(ctx, obj.ID.TenantID())
+
+	organization, err := authzSvc.GetOrganizationByInvitationID(ctx, obj.ID)
 	if err != nil {
 		panic(fmt.Errorf("cannot load organization: %w", err))
 	}
@@ -1021,6 +1111,8 @@ func (r *invitationResolver) Organization(ctx context.Context, obj *types.Invita
 
 // TotalCount is the resolver for the totalCount field.
 func (r *invitationConnectionResolver) TotalCount(ctx context.Context, obj *types.InvitationConnection) (int, error) {
+	r.MustBeAuthorized(ctx, obj.ParentID, authz.ActionTotalCount)
+
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
 		invitationFilter := coredata.NewInvitationFilter(nil)
@@ -1041,6 +1133,8 @@ func (r *invitationConnectionResolver) TotalCount(ctx context.Context, obj *type
 
 // Evidences is the resolver for the evidences field.
 func (r *measureResolver) Evidences(ctx context.Context, obj *types.Measure, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.EvidenceOrderBy) (*types.EvidenceConnection, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListEvidences)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.EvidenceOrderField]{
@@ -1066,6 +1160,8 @@ func (r *measureResolver) Evidences(ctx context.Context, obj *types.Measure, fir
 
 // Tasks is the resolver for the tasks field.
 func (r *measureResolver) Tasks(ctx context.Context, obj *types.Measure, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TaskOrderBy) (*types.TaskConnection, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListTasks)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.TaskOrderField]{
@@ -1091,6 +1187,8 @@ func (r *measureResolver) Tasks(ctx context.Context, obj *types.Measure, first *
 
 // Risks is the resolver for the risks field.
 func (r *measureResolver) Risks(ctx context.Context, obj *types.Measure, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskOrderBy, filter *types.RiskFilter) (*types.RiskConnection, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListRisks)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.RiskOrderField]{
@@ -1121,6 +1219,8 @@ func (r *measureResolver) Risks(ctx context.Context, obj *types.Measure, first *
 
 // Controls is the resolver for the controls field.
 func (r *measureResolver) Controls(ctx context.Context, obj *types.Measure, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) (*types.ControlConnection, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListControls)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.ControlOrderField]{
@@ -1151,6 +1251,8 @@ func (r *measureResolver) Controls(ctx context.Context, obj *types.Measure, firs
 
 // TotalCount is the resolver for the totalCount field.
 func (r *measureConnectionResolver) TotalCount(ctx context.Context, obj *types.MeasureConnection) (int, error) {
+	r.MustBeAuthorized(ctx, obj.ParentID, authz.ActionTotalCount)
+
 	prb := r.ProboService(ctx, obj.ParentID.TenantID())
 
 	switch obj.Resolver.(type) {
@@ -1257,6 +1359,7 @@ func (r *membershipResolver) AuthMethod(ctx context.Context, obj *types.Membersh
 
 // TotalCount is the resolver for the totalCount field.
 func (r *membershipConnectionResolver) TotalCount(ctx context.Context, obj *types.MembershipConnection) (int, error) {
+	r.MustBeAuthorized(ctx, obj.ParentID, authz.ActionTotalCount)
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
 		authz := r.AuthzService(ctx, obj.ParentID.TenantID())
@@ -1302,7 +1405,7 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input types.C
 		ctx,
 		currentUser.ID,
 		organization.ID,
-		coredata.RoleMember,
+		coredata.MembershipRoleOwner,
 	)
 	if err != nil {
 		panic(fmt.Errorf("cannot add user to organization: %w", err))
@@ -1340,6 +1443,8 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input types.C
 
 // UpdateOrganization is the resolver for the updateOrganization field.
 func (r *mutationResolver) UpdateOrganization(ctx context.Context, input types.UpdateOrganizationInput) (*types.UpdateOrganizationPayload, error) {
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionUpdateOrganization)
+
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
 	req := probo.UpdateOrganizationRequest{
@@ -1400,6 +1505,8 @@ func (r *mutationResolver) UpdateOrganizationContext(ctx context.Context, input 
 
 // DeleteOrganizationHorizontalLogo is the resolver for the deleteOrganizationHorizontalLogo field.
 func (r *mutationResolver) DeleteOrganizationHorizontalLogo(ctx context.Context, input types.DeleteOrganizationHorizontalLogoInput) (*types.DeleteOrganizationHorizontalLogoPayload, error) {
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionDeleteOrganizationHorizontalLogo)
+
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
 	organization, err := prb.Organizations.DeleteHorizontalLogo(ctx, input.OrganizationID)
@@ -1414,6 +1521,8 @@ func (r *mutationResolver) DeleteOrganizationHorizontalLogo(ctx context.Context,
 
 // DeleteOrganization is the resolver for the deleteOrganization field.
 func (r *mutationResolver) DeleteOrganization(ctx context.Context, input types.DeleteOrganizationInput) (*types.DeleteOrganizationPayload, error) {
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionDeleteOrganization)
+
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
 	err := prb.Organizations.Delete(ctx, input.OrganizationID)
@@ -1428,6 +1537,8 @@ func (r *mutationResolver) DeleteOrganization(ctx context.Context, input types.D
 
 // UpdateTrustCenter is the resolver for the updateTrustCenter field.
 func (r *mutationResolver) UpdateTrustCenter(ctx context.Context, input types.UpdateTrustCenterInput) (*types.UpdateTrustCenterPayload, error) {
+	r.MustBeAuthorized(ctx, input.TrustCenterID, authz.ActionUpdateTrustCenter)
+
 	prb := r.ProboService(ctx, input.TrustCenterID.TenantID())
 
 	trustCenter, file, err := prb.TrustCenters.Update(ctx, &probo.UpdateTrustCenterRequest{
@@ -1445,6 +1556,8 @@ func (r *mutationResolver) UpdateTrustCenter(ctx context.Context, input types.Up
 
 // UploadTrustCenterNda is the resolver for the uploadTrustCenterNDA field.
 func (r *mutationResolver) UploadTrustCenterNda(ctx context.Context, input types.UploadTrustCenterNDAInput) (*types.UploadTrustCenterNDAPayload, error) {
+	r.MustBeAuthorized(ctx, input.TrustCenterID, authz.ActionUploadTrustCenterNDA)
+
 	prb := r.ProboService(ctx, input.TrustCenterID.TenantID())
 
 	trustCenter, file, err := prb.TrustCenters.UploadNDA(ctx, &probo.UploadTrustCenterNDARequest{
@@ -1463,6 +1576,8 @@ func (r *mutationResolver) UploadTrustCenterNda(ctx context.Context, input types
 
 // DeleteTrustCenterNda is the resolver for the deleteTrustCenterNDA field.
 func (r *mutationResolver) DeleteTrustCenterNda(ctx context.Context, input types.DeleteTrustCenterNDAInput) (*types.DeleteTrustCenterNDAPayload, error) {
+	r.MustBeAuthorized(ctx, input.TrustCenterID, authz.ActionDeleteTrustCenterNDA)
+
 	prb := r.ProboService(ctx, input.TrustCenterID.TenantID())
 
 	trustCenter, file, err := prb.TrustCenters.DeleteNDA(ctx, input.TrustCenterID)
@@ -1477,6 +1592,8 @@ func (r *mutationResolver) DeleteTrustCenterNda(ctx context.Context, input types
 
 // CreateTrustCenterAccess is the resolver for the createTrustCenterAccess field.
 func (r *mutationResolver) CreateTrustCenterAccess(ctx context.Context, input types.CreateTrustCenterAccessInput) (*types.CreateTrustCenterAccessPayload, error) {
+	r.MustBeAuthorized(ctx, input.TrustCenterID, authz.ActionCreateTrustCenterAccess)
+
 	prb := r.ProboService(ctx, input.TrustCenterID.TenantID())
 
 	access, err := prb.TrustCenterAccesses.Create(ctx, &probo.CreateTrustCenterAccessRequest{
@@ -1499,6 +1616,8 @@ func (r *mutationResolver) CreateTrustCenterAccess(ctx context.Context, input ty
 
 // UpdateTrustCenterAccess is the resolver for the updateTrustCenterAccess field.
 func (r *mutationResolver) UpdateTrustCenterAccess(ctx context.Context, input types.UpdateTrustCenterAccessInput) (*types.UpdateTrustCenterAccessPayload, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionUpdateTrustCenterAccess)
+
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
 	access, err := prb.TrustCenterAccesses.Update(ctx, &probo.UpdateTrustCenterAccessRequest{
@@ -1520,6 +1639,8 @@ func (r *mutationResolver) UpdateTrustCenterAccess(ctx context.Context, input ty
 
 // DeleteTrustCenterAccess is the resolver for the deleteTrustCenterAccess field.
 func (r *mutationResolver) DeleteTrustCenterAccess(ctx context.Context, input types.DeleteTrustCenterAccessInput) (*types.DeleteTrustCenterAccessPayload, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionDeleteTrustCenterAccess)
+
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
 	err := prb.TrustCenterAccesses.Delete(ctx, input.ID)
@@ -1534,6 +1655,8 @@ func (r *mutationResolver) DeleteTrustCenterAccess(ctx context.Context, input ty
 
 // CreateTrustCenterReference is the resolver for the createTrustCenterReference field.
 func (r *mutationResolver) CreateTrustCenterReference(ctx context.Context, input types.CreateTrustCenterReferenceInput) (*types.CreateTrustCenterReferencePayload, error) {
+	r.MustBeAuthorized(ctx, input.TrustCenterID, authz.ActionCreateTrustCenterReference)
+
 	prb := r.ProboService(ctx, input.TrustCenterID.TenantID())
 
 	reference, err := prb.TrustCenterReferences.Create(ctx, &probo.CreateTrustCenterReferenceRequest{
@@ -1559,6 +1682,8 @@ func (r *mutationResolver) CreateTrustCenterReference(ctx context.Context, input
 
 // UpdateTrustCenterReference is the resolver for the updateTrustCenterReference field.
 func (r *mutationResolver) UpdateTrustCenterReference(ctx context.Context, input types.UpdateTrustCenterReferenceInput) (*types.UpdateTrustCenterReferencePayload, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionUpdateTrustCenterReference)
+
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
 	req := &probo.UpdateTrustCenterReferenceRequest{
@@ -1590,6 +1715,8 @@ func (r *mutationResolver) UpdateTrustCenterReference(ctx context.Context, input
 
 // DeleteTrustCenterReference is the resolver for the deleteTrustCenterReference field.
 func (r *mutationResolver) DeleteTrustCenterReference(ctx context.Context, input types.DeleteTrustCenterReferenceInput) (*types.DeleteTrustCenterReferencePayload, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionDeleteTrustCenterReference)
+
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
 	err := prb.TrustCenterReferences.Delete(ctx, input.ID)
@@ -1604,6 +1731,8 @@ func (r *mutationResolver) DeleteTrustCenterReference(ctx context.Context, input
 
 // CreateTrustCenterFile is the resolver for the createTrustCenterFile field.
 func (r *mutationResolver) CreateTrustCenterFile(ctx context.Context, input types.CreateTrustCenterFileInput) (*types.CreateTrustCenterFilePayload, error) {
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionCreateTrustCenterFile)
+
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
 	file, err := prb.TrustCenterFiles.Create(ctx, &probo.CreateTrustCenterFileRequest{
@@ -1629,6 +1758,8 @@ func (r *mutationResolver) CreateTrustCenterFile(ctx context.Context, input type
 
 // UpdateTrustCenterFile is the resolver for the updateTrustCenterFile field.
 func (r *mutationResolver) UpdateTrustCenterFile(ctx context.Context, input types.UpdateTrustCenterFileInput) (*types.UpdateTrustCenterFilePayload, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionUpdateTrustCenterFile)
+
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
 	file, err := prb.TrustCenterFiles.Update(ctx, &probo.UpdateTrustCenterFileRequest{
@@ -1648,6 +1779,7 @@ func (r *mutationResolver) UpdateTrustCenterFile(ctx context.Context, input type
 
 // GetTrustCenterFile is the resolver for the getTrustCenterFile field.
 func (r *mutationResolver) GetTrustCenterFile(ctx context.Context, input types.GetTrustCenterFileInput) (*types.GetTrustCenterFilePayload, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionGetTrustCenterFile)
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
 	file, err := prb.TrustCenterFiles.Get(ctx, input.ID)
@@ -1662,6 +1794,8 @@ func (r *mutationResolver) GetTrustCenterFile(ctx context.Context, input types.G
 
 // DeleteTrustCenterFile is the resolver for the deleteTrustCenterFile field.
 func (r *mutationResolver) DeleteTrustCenterFile(ctx context.Context, input types.DeleteTrustCenterFileInput) (*types.DeleteTrustCenterFilePayload, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionDeleteTrustCenterFile)
+
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
 	err := prb.TrustCenterFiles.Delete(ctx, input.ID)
@@ -1687,8 +1821,16 @@ func (r *mutationResolver) ConfirmEmail(ctx context.Context, input types.Confirm
 
 // InviteUser is the resolver for the inviteUser field.
 func (r *mutationResolver) InviteUser(ctx context.Context, input types.InviteUserInput) (*types.InviteUserPayload, error) {
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionInviteUser)
+
+	user := UserFromContext(ctx)
+	apiKey := UserAPIKeyFromContext(ctx)
 	authzSvc := r.AuthzService(ctx, input.OrganizationID.TenantID())
-	invitation, err := authzSvc.InviteUserToOrganization(ctx, input.OrganizationID, input.Email, input.FullName, coredata.RoleMember)
+	if err := authzSvc.CanAssignRole(ctx, user, apiKey, input.OrganizationID, input.Role); err != nil {
+		panic(err)
+	}
+
+	invitation, err := authzSvc.InviteUserToOrganization(ctx, input.OrganizationID, input.Email, input.FullName, input.Role)
 	if err != nil {
 		panic(fmt.Errorf("cannot invite user to organization: %w", err))
 	}
@@ -1730,7 +1872,10 @@ func (r *mutationResolver) AcceptInvitation(ctx context.Context, input types.Acc
 
 // DeleteInvitation is the resolver for the deleteInvitation field.
 func (r *mutationResolver) DeleteInvitation(ctx context.Context, input types.DeleteInvitationInput) (*types.DeleteInvitationPayload, error) {
+	r.MustBeAuthorized(ctx, input.InvitationID, authz.ActionDeleteInvitation)
+
 	authzSvc := r.AuthzService(ctx, input.InvitationID.TenantID())
+
 	err := authzSvc.DeleteInvitation(ctx, input.InvitationID)
 	if err != nil {
 		panic(fmt.Errorf("cannot delete invitation: %w", err))
@@ -1743,6 +1888,8 @@ func (r *mutationResolver) DeleteInvitation(ctx context.Context, input types.Del
 
 // RemoveMember is the resolver for the removeMember field.
 func (r *mutationResolver) RemoveMember(ctx context.Context, input types.RemoveMemberInput) (*types.RemoveMemberPayload, error) {
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionRemoveMember)
+
 	authzSvc := r.AuthzService(ctx, input.OrganizationID.TenantID())
 	err := authzSvc.RemoveMemberFromOrganization(ctx, input.OrganizationID, input.MemberID)
 	if err != nil {
@@ -1752,8 +1899,32 @@ func (r *mutationResolver) RemoveMember(ctx context.Context, input types.RemoveM
 	return &types.RemoveMemberPayload{DeletedMemberID: input.MemberID}, nil
 }
 
+// UpdateMembership is the resolver for the updateMembership field.
+func (r *mutationResolver) UpdateMembership(ctx context.Context, input types.UpdateMembershipInput) (*types.UpdateMembershipPayload, error) {
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionUpdateMembership)
+
+	user := UserFromContext(ctx)
+	apiKey := UserAPIKeyFromContext(ctx)
+	authzSvc := r.AuthzService(ctx, input.OrganizationID.TenantID())
+
+	if err := authzSvc.CanAssignRole(ctx, user, apiKey, input.OrganizationID, input.Role); err != nil {
+		return nil, err
+	}
+
+	membership, err := authzSvc.UpdateMembershipRole(ctx, input.OrganizationID, input.MemberID, input.Role)
+	if err != nil {
+		return nil, fmt.Errorf("cannot update membership: %w", err)
+	}
+
+	return &types.UpdateMembershipPayload{
+		Membership: types.NewMembership(membership),
+	}, nil
+}
+
 // CreatePeople is the resolver for the createPeople field.
 func (r *mutationResolver) CreatePeople(ctx context.Context, input types.CreatePeopleInput) (*types.CreatePeoplePayload, error) {
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionCreatePeople)
+
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
 	people, err := prb.Peoples.Create(ctx, probo.CreatePeopleRequest{
@@ -1782,6 +1953,8 @@ func (r *mutationResolver) CreatePeople(ctx context.Context, input types.CreateP
 
 // UpdatePeople is the resolver for the updatePeople field.
 func (r *mutationResolver) UpdatePeople(ctx context.Context, input types.UpdatePeopleInput) (*types.UpdatePeoplePayload, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionUpdatePeople)
+
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
 	people, err := prb.Peoples.Update(ctx, probo.UpdatePeopleRequest{
@@ -1805,6 +1978,8 @@ func (r *mutationResolver) UpdatePeople(ctx context.Context, input types.UpdateP
 
 // DeletePeople is the resolver for the deletePeople field.
 func (r *mutationResolver) DeletePeople(ctx context.Context, input types.DeletePeopleInput) (*types.DeletePeoplePayload, error) {
+	r.MustBeAuthorized(ctx, input.PeopleID, authz.ActionDeletePeople)
+
 	prb := r.ProboService(ctx, input.PeopleID.TenantID())
 
 	err := prb.Peoples.Delete(ctx, input.PeopleID)
@@ -1819,6 +1994,8 @@ func (r *mutationResolver) DeletePeople(ctx context.Context, input types.DeleteP
 
 // CreateVendor is the resolver for the createVendor field.
 func (r *mutationResolver) CreateVendor(ctx context.Context, input types.CreateVendorInput) (*types.CreateVendorPayload, error) {
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionCreateVendor)
+
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
 	vendor, err := prb.Vendors.Create(
@@ -1860,6 +2037,8 @@ func (r *mutationResolver) CreateVendor(ctx context.Context, input types.CreateV
 
 // UpdateVendor is the resolver for the updateVendor field.
 func (r *mutationResolver) UpdateVendor(ctx context.Context, input types.UpdateVendorInput) (*types.UpdateVendorPayload, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionUpdateVendor)
+
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
 	vendor, err := prb.Vendors.Update(ctx, probo.UpdateVendorRequest{
@@ -1896,6 +2075,8 @@ func (r *mutationResolver) UpdateVendor(ctx context.Context, input types.UpdateV
 
 // DeleteVendor is the resolver for the deleteVendor field.
 func (r *mutationResolver) DeleteVendor(ctx context.Context, input types.DeleteVendorInput) (*types.DeleteVendorPayload, error) {
+	r.MustBeAuthorized(ctx, input.VendorID, authz.ActionDeleteVendor)
+
 	prb := r.ProboService(ctx, input.VendorID.TenantID())
 
 	err := prb.Vendors.Delete(ctx, input.VendorID)
@@ -1910,6 +2091,8 @@ func (r *mutationResolver) DeleteVendor(ctx context.Context, input types.DeleteV
 
 // CreateVendorContact is the resolver for the createVendorContact field.
 func (r *mutationResolver) CreateVendorContact(ctx context.Context, input types.CreateVendorContactInput) (*types.CreateVendorContactPayload, error) {
+	r.MustBeAuthorized(ctx, input.VendorID, authz.ActionCreateVendorContact)
+
 	prb := r.ProboService(ctx, input.VendorID.TenantID())
 
 	req := probo.CreateVendorContactRequest{
@@ -1932,6 +2115,8 @@ func (r *mutationResolver) CreateVendorContact(ctx context.Context, input types.
 
 // UpdateVendorContact is the resolver for the updateVendorContact field.
 func (r *mutationResolver) UpdateVendorContact(ctx context.Context, input types.UpdateVendorContactInput) (*types.UpdateVendorContactPayload, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionUpdateVendorContact)
+
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
 	req := probo.UpdateVendorContactRequest{
@@ -1954,6 +2139,8 @@ func (r *mutationResolver) UpdateVendorContact(ctx context.Context, input types.
 
 // DeleteVendorContact is the resolver for the deleteVendorContact field.
 func (r *mutationResolver) DeleteVendorContact(ctx context.Context, input types.DeleteVendorContactInput) (*types.DeleteVendorContactPayload, error) {
+	r.MustBeAuthorized(ctx, input.VendorContactID, authz.ActionDeleteVendorContact)
+
 	prb := r.ProboService(ctx, input.VendorContactID.TenantID())
 
 	err := prb.VendorContacts.Delete(ctx, input.VendorContactID)
@@ -1968,6 +2155,8 @@ func (r *mutationResolver) DeleteVendorContact(ctx context.Context, input types.
 
 // CreateVendorService is the resolver for the createVendorService field.
 func (r *mutationResolver) CreateVendorService(ctx context.Context, input types.CreateVendorServiceInput) (*types.CreateVendorServicePayload, error) {
+	r.MustBeAuthorized(ctx, input.VendorID, authz.ActionCreateVendorService)
+
 	prb := r.ProboService(ctx, input.VendorID.TenantID())
 
 	req := probo.CreateVendorServiceRequest{
@@ -1988,6 +2177,8 @@ func (r *mutationResolver) CreateVendorService(ctx context.Context, input types.
 
 // UpdateVendorService is the resolver for the updateVendorService field.
 func (r *mutationResolver) UpdateVendorService(ctx context.Context, input types.UpdateVendorServiceInput) (*types.UpdateVendorServicePayload, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionUpdateVendorService)
+
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
 	req := probo.UpdateVendorServiceRequest{
@@ -2008,6 +2199,8 @@ func (r *mutationResolver) UpdateVendorService(ctx context.Context, input types.
 
 // DeleteVendorService is the resolver for the deleteVendorService field.
 func (r *mutationResolver) DeleteVendorService(ctx context.Context, input types.DeleteVendorServiceInput) (*types.DeleteVendorServicePayload, error) {
+	r.MustBeAuthorized(ctx, input.VendorServiceID, authz.ActionDeleteVendorService)
+
 	prb := r.ProboService(ctx, input.VendorServiceID.TenantID())
 
 	err := prb.VendorServices.Delete(ctx, input.VendorServiceID)
@@ -2022,6 +2215,8 @@ func (r *mutationResolver) DeleteVendorService(ctx context.Context, input types.
 
 // CreateFramework is the resolver for the createFramework field.
 func (r *mutationResolver) CreateFramework(ctx context.Context, input types.CreateFrameworkInput) (*types.CreateFrameworkPayload, error) {
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionCreateFramework)
+
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
 	framework, err := prb.Frameworks.Create(ctx, probo.CreateFrameworkRequest{
@@ -2039,6 +2234,8 @@ func (r *mutationResolver) CreateFramework(ctx context.Context, input types.Crea
 
 // UpdateFramework is the resolver for the updateFramework field.
 func (r *mutationResolver) UpdateFramework(ctx context.Context, input types.UpdateFrameworkInput) (*types.UpdateFrameworkPayload, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionUpdateFramework)
+
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
 	framework, err := prb.Frameworks.Update(ctx, probo.UpdateFrameworkRequest{
@@ -2057,6 +2254,8 @@ func (r *mutationResolver) UpdateFramework(ctx context.Context, input types.Upda
 
 // ImportFramework is the resolver for the importFramework field.
 func (r *mutationResolver) ImportFramework(ctx context.Context, input types.ImportFrameworkInput) (*types.ImportFrameworkPayload, error) {
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionImportFramework)
+
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
 	req := probo.ImportFrameworkRequest{}
@@ -2088,6 +2287,8 @@ func (r *mutationResolver) ImportFramework(ctx context.Context, input types.Impo
 
 // DeleteFramework is the resolver for the deleteFramework field.
 func (r *mutationResolver) DeleteFramework(ctx context.Context, input types.DeleteFrameworkInput) (*types.DeleteFrameworkPayload, error) {
+	r.MustBeAuthorized(ctx, input.FrameworkID, authz.ActionDeleteFramework)
+
 	prb := r.ProboService(ctx, input.FrameworkID.TenantID())
 
 	err := prb.Frameworks.Delete(ctx, input.FrameworkID)
@@ -2102,6 +2303,8 @@ func (r *mutationResolver) DeleteFramework(ctx context.Context, input types.Dele
 
 // GenerateFrameworkStateOfApplicability is the resolver for the generateFrameworkStateOfApplicability field.
 func (r *mutationResolver) GenerateFrameworkStateOfApplicability(ctx context.Context, input types.GenerateFrameworkStateOfApplicabilityInput) (*types.GenerateFrameworkStateOfApplicabilityPayload, error) {
+	r.MustBeAuthorized(ctx, input.FrameworkID, authz.ActionGenerateFrameworkStateOfApplicability)
+
 	prb := r.ProboService(ctx, input.FrameworkID.TenantID())
 
 	soa, err := prb.Frameworks.StateOfApplicability(ctx, input.FrameworkID)
@@ -2119,7 +2322,10 @@ func (r *mutationResolver) GenerateFrameworkStateOfApplicability(ctx context.Con
 
 // ExportFramework is the resolver for the exportFramework field.
 func (r *mutationResolver) ExportFramework(ctx context.Context, input types.ExportFrameworkInput) (*types.ExportFrameworkPayload, error) {
+	r.MustBeAuthorized(ctx, input.FrameworkID, authz.ActionExportFramework)
+
 	prb := r.ProboService(ctx, input.FrameworkID.TenantID())
+
 	user := UserFromContext(ctx)
 
 	err, exportJobID := prb.Frameworks.RequestExport(
@@ -2139,6 +2345,8 @@ func (r *mutationResolver) ExportFramework(ctx context.Context, input types.Expo
 
 // CreateControl is the resolver for the createControl field.
 func (r *mutationResolver) CreateControl(ctx context.Context, input types.CreateControlInput) (*types.CreateControlPayload, error) {
+	r.MustBeAuthorized(ctx, input.FrameworkID, authz.ActionCreateControl)
+
 	prb := r.ProboService(ctx, input.FrameworkID.TenantID())
 
 	control, err := prb.Controls.Create(ctx, probo.CreateControlRequest{
@@ -2164,6 +2372,8 @@ func (r *mutationResolver) CreateControl(ctx context.Context, input types.Create
 
 // UpdateControl is the resolver for the updateControl field.
 func (r *mutationResolver) UpdateControl(ctx context.Context, input types.UpdateControlInput) (*types.UpdateControlPayload, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionUpdateControl)
+
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
 	control, err := prb.Controls.Update(ctx, probo.UpdateControlRequest{
@@ -2196,7 +2406,6 @@ func (r *mutationResolver) DeleteControl(ctx context.Context, input types.Delete
 	if err != nil {
 		panic(fmt.Errorf("cannot delete control: %w", err))
 	}
-
 	return &types.DeleteControlPayload{
 		DeletedControlID: input.ControlID,
 	}, nil
@@ -2204,6 +2413,8 @@ func (r *mutationResolver) DeleteControl(ctx context.Context, input types.Delete
 
 // // CreateMeasure is the resolver for the createMeasure field.
 func (r *mutationResolver) CreateMeasure(ctx context.Context, input types.CreateMeasureInput) (*types.CreateMeasurePayload, error) {
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionCreateMeasure)
+
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
 	measure, err := prb.Measures.Create(ctx, probo.CreateMeasureRequest{
@@ -2227,6 +2438,8 @@ func (r *mutationResolver) CreateMeasure(ctx context.Context, input types.Create
 
 // UpdateMeasure is the resolver for the updateMeasure field.
 func (r *mutationResolver) UpdateMeasure(ctx context.Context, input types.UpdateMeasureInput) (*types.UpdateMeasurePayload, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionUpdateMeasure)
+
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
 	measure, err := prb.Measures.Update(ctx, probo.UpdateMeasureRequest{
@@ -2247,6 +2460,8 @@ func (r *mutationResolver) UpdateMeasure(ctx context.Context, input types.Update
 
 // ImportMeasure is the resolver for the importMeasure field.
 func (r *mutationResolver) ImportMeasure(ctx context.Context, input types.ImportMeasureInput) (*types.ImportMeasurePayload, error) {
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionImportMeasure)
+
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
 	var req probo.ImportMeasureRequest
@@ -2271,6 +2486,8 @@ func (r *mutationResolver) ImportMeasure(ctx context.Context, input types.Import
 
 // DeleteMeasure is the resolver for the deleteMeasure field.
 func (r *mutationResolver) DeleteMeasure(ctx context.Context, input types.DeleteMeasureInput) (*types.DeleteMeasurePayload, error) {
+	r.MustBeAuthorized(ctx, input.MeasureID, authz.ActionDeleteMeasure)
+
 	prb := r.ProboService(ctx, input.MeasureID.TenantID())
 
 	err := prb.Measures.Delete(ctx, input.MeasureID)
@@ -2285,6 +2502,8 @@ func (r *mutationResolver) DeleteMeasure(ctx context.Context, input types.Delete
 
 // CreateControlMeasureMapping is the resolver for the createControlMeasureMapping field.
 func (r *mutationResolver) CreateControlMeasureMapping(ctx context.Context, input types.CreateControlMeasureMappingInput) (*types.CreateControlMeasureMappingPayload, error) {
+	r.MustBeAuthorized(ctx, input.ControlID, authz.ActionCreateControlMeasureMapping)
+
 	prb := r.ProboService(ctx, input.MeasureID.TenantID())
 
 	control, measure, err := prb.Controls.CreateMeasureMapping(ctx, input.ControlID, input.MeasureID)
@@ -2300,6 +2519,8 @@ func (r *mutationResolver) CreateControlMeasureMapping(ctx context.Context, inpu
 
 // CreateControlDocumentMapping is the resolver for the createControlDocumentMapping field.
 func (r *mutationResolver) CreateControlDocumentMapping(ctx context.Context, input types.CreateControlDocumentMappingInput) (*types.CreateControlDocumentMappingPayload, error) {
+	r.MustBeAuthorized(ctx, input.ControlID, authz.ActionCreateControlDocumentMapping)
+
 	prb := r.ProboService(ctx, input.DocumentID.TenantID())
 
 	control, document, err := prb.Controls.CreateDocumentMapping(ctx, input.ControlID, input.DocumentID)
@@ -2319,6 +2540,8 @@ func (r *mutationResolver) CreateControlDocumentMapping(ctx context.Context, inp
 
 // DeleteControlMeasureMapping is the resolver for the deleteControlMeasureMapping field.
 func (r *mutationResolver) DeleteControlMeasureMapping(ctx context.Context, input types.DeleteControlMeasureMappingInput) (*types.DeleteControlMeasureMappingPayload, error) {
+	r.MustBeAuthorized(ctx, input.ControlID, authz.ActionDeleteControlMeasureMapping)
+
 	prb := r.ProboService(ctx, input.MeasureID.TenantID())
 
 	control, measure, err := prb.Controls.DeleteMeasureMapping(ctx, input.ControlID, input.MeasureID)
@@ -2334,6 +2557,8 @@ func (r *mutationResolver) DeleteControlMeasureMapping(ctx context.Context, inpu
 
 // DeleteControlDocumentMapping is the resolver for the deleteControlDocumentMapping field.
 func (r *mutationResolver) DeleteControlDocumentMapping(ctx context.Context, input types.DeleteControlDocumentMappingInput) (*types.DeleteControlDocumentMappingPayload, error) {
+	r.MustBeAuthorized(ctx, input.ControlID, authz.ActionDeleteControlDocumentMapping)
+
 	prb := r.ProboService(ctx, input.DocumentID.TenantID())
 
 	control, document, err := prb.Controls.DeleteDocumentMapping(ctx, input.ControlID, input.DocumentID)
@@ -2349,6 +2574,8 @@ func (r *mutationResolver) DeleteControlDocumentMapping(ctx context.Context, inp
 
 // CreateControlAuditMapping is the resolver for the createControlAuditMapping field.
 func (r *mutationResolver) CreateControlAuditMapping(ctx context.Context, input types.CreateControlAuditMappingInput) (*types.CreateControlAuditMappingPayload, error) {
+	r.MustBeAuthorized(ctx, input.ControlID, authz.ActionCreateControlAuditMapping)
+
 	prb := r.ProboService(ctx, input.AuditID.TenantID())
 
 	control, audit, err := prb.Controls.CreateAuditMapping(ctx, input.ControlID, input.AuditID)
@@ -2364,6 +2591,8 @@ func (r *mutationResolver) CreateControlAuditMapping(ctx context.Context, input 
 
 // DeleteControlAuditMapping is the resolver for the deleteControlAuditMapping field.
 func (r *mutationResolver) DeleteControlAuditMapping(ctx context.Context, input types.DeleteControlAuditMappingInput) (*types.DeleteControlAuditMappingPayload, error) {
+	r.MustBeAuthorized(ctx, input.ControlID, authz.ActionDeleteControlAuditMapping)
+
 	prb := r.ProboService(ctx, input.AuditID.TenantID())
 
 	control, audit, err := prb.Controls.DeleteAuditMapping(ctx, input.ControlID, input.AuditID)
@@ -2379,6 +2608,8 @@ func (r *mutationResolver) DeleteControlAuditMapping(ctx context.Context, input 
 
 // CreateControlSnapshotMapping is the resolver for the createControlSnapshotMapping field.
 func (r *mutationResolver) CreateControlSnapshotMapping(ctx context.Context, input types.CreateControlSnapshotMappingInput) (*types.CreateControlSnapshotMappingPayload, error) {
+	r.MustBeAuthorized(ctx, input.ControlID, authz.ActionCreateControlSnapshotMapping)
+
 	prb := r.ProboService(ctx, input.SnapshotID.TenantID())
 
 	control, snapshot, err := prb.Controls.CreateSnapshotMapping(ctx, input.ControlID, input.SnapshotID)
@@ -2394,6 +2625,8 @@ func (r *mutationResolver) CreateControlSnapshotMapping(ctx context.Context, inp
 
 // DeleteControlSnapshotMapping is the resolver for the deleteControlSnapshotMapping field.
 func (r *mutationResolver) DeleteControlSnapshotMapping(ctx context.Context, input types.DeleteControlSnapshotMappingInput) (*types.DeleteControlSnapshotMappingPayload, error) {
+	r.MustBeAuthorized(ctx, input.ControlID, authz.ActionDeleteControlSnapshotMapping)
+
 	prb := r.ProboService(ctx, input.SnapshotID.TenantID())
 
 	control, snapshot, err := prb.Controls.DeleteSnapshotMapping(ctx, input.ControlID, input.SnapshotID)
@@ -2409,6 +2642,8 @@ func (r *mutationResolver) DeleteControlSnapshotMapping(ctx context.Context, inp
 
 // CreateTask is the resolver for the createTask field.
 func (r *mutationResolver) CreateTask(ctx context.Context, input types.CreateTaskInput) (*types.CreateTaskPayload, error) {
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionCreateTask)
+
 	prb := r.ProboService(ctx, input.MeasureID.TenantID())
 
 	task, err := prb.Tasks.Create(ctx, probo.CreateTaskRequest{
@@ -2434,6 +2669,8 @@ func (r *mutationResolver) CreateTask(ctx context.Context, input types.CreateTas
 
 // UpdateTask is the resolver for the updateTask field.
 func (r *mutationResolver) UpdateTask(ctx context.Context, input types.UpdateTaskInput) (*types.UpdateTaskPayload, error) {
+	r.MustBeAuthorized(ctx, input.TaskID, authz.ActionUpdateTask)
+
 	prb := r.ProboService(ctx, input.TaskID.TenantID())
 
 	task, err := prb.Tasks.Update(ctx, probo.UpdateTaskRequest{
@@ -2455,6 +2692,8 @@ func (r *mutationResolver) UpdateTask(ctx context.Context, input types.UpdateTas
 
 // DeleteTask is the resolver for the deleteTask field.
 func (r *mutationResolver) DeleteTask(ctx context.Context, input types.DeleteTaskInput) (*types.DeleteTaskPayload, error) {
+	r.MustBeAuthorized(ctx, input.TaskID, authz.ActionDeleteTask)
+
 	prb := r.ProboService(ctx, input.TaskID.TenantID())
 
 	err := prb.Tasks.Delete(ctx, input.TaskID)
@@ -2497,6 +2736,8 @@ func (r *mutationResolver) UnassignTask(ctx context.Context, input types.Unassig
 
 // CreateRisk is the resolver for the createRisk field.
 func (r *mutationResolver) CreateRisk(ctx context.Context, input types.CreateRiskInput) (*types.CreateRiskPayload, error) {
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionCreateRisk)
+
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
 	risk, err := prb.Risks.Create(
@@ -2530,6 +2771,8 @@ func (r *mutationResolver) CreateRisk(ctx context.Context, input types.CreateRis
 
 // UpdateRisk is the resolver for the updateRisk field.
 func (r *mutationResolver) UpdateRisk(ctx context.Context, input types.UpdateRiskInput) (*types.UpdateRiskPayload, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionUpdateRisk)
+
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
 	risk, err := prb.Risks.Update(
@@ -2559,6 +2802,8 @@ func (r *mutationResolver) UpdateRisk(ctx context.Context, input types.UpdateRis
 
 // DeleteRisk is the resolver for the deleteRisk field.
 func (r *mutationResolver) DeleteRisk(ctx context.Context, input types.DeleteRiskInput) (*types.DeleteRiskPayload, error) {
+	r.MustBeAuthorized(ctx, input.RiskID, authz.ActionDeleteRisk)
+
 	prb := r.ProboService(ctx, input.RiskID.TenantID())
 
 	err := prb.Risks.Delete(ctx, input.RiskID)
@@ -2573,6 +2818,8 @@ func (r *mutationResolver) DeleteRisk(ctx context.Context, input types.DeleteRis
 
 // CreateRiskMeasureMapping is the resolver for the createRiskMeasureMapping field.
 func (r *mutationResolver) CreateRiskMeasureMapping(ctx context.Context, input types.CreateRiskMeasureMappingInput) (*types.CreateRiskMeasureMappingPayload, error) {
+	r.MustBeAuthorized(ctx, input.RiskID, authz.ActionCreateRiskMeasureMapping)
+
 	prb := r.ProboService(ctx, input.RiskID.TenantID())
 
 	risk, measure, err := prb.Risks.CreateMeasureMapping(ctx, input.RiskID, input.MeasureID)
@@ -2588,6 +2835,8 @@ func (r *mutationResolver) CreateRiskMeasureMapping(ctx context.Context, input t
 
 // DeleteRiskMeasureMapping is the resolver for the deleteRiskMeasureMapping field.
 func (r *mutationResolver) DeleteRiskMeasureMapping(ctx context.Context, input types.DeleteRiskMeasureMappingInput) (*types.DeleteRiskMeasureMappingPayload, error) {
+	r.MustBeAuthorized(ctx, input.RiskID, authz.ActionDeleteRiskMeasureMapping)
+
 	prb := r.ProboService(ctx, input.RiskID.TenantID())
 
 	risk, measure, err := prb.Risks.DeleteMeasureMapping(ctx, input.RiskID, input.MeasureID)
@@ -2603,6 +2852,8 @@ func (r *mutationResolver) DeleteRiskMeasureMapping(ctx context.Context, input t
 
 // CreateRiskDocumentMapping is the resolver for the createRiskDocumentMapping field.
 func (r *mutationResolver) CreateRiskDocumentMapping(ctx context.Context, input types.CreateRiskDocumentMappingInput) (*types.CreateRiskDocumentMappingPayload, error) {
+	r.MustBeAuthorized(ctx, input.RiskID, authz.ActionCreateRiskDocumentMapping)
+
 	prb := r.ProboService(ctx, input.RiskID.TenantID())
 
 	risk, document, err := prb.Risks.CreateDocumentMapping(ctx, input.RiskID, input.DocumentID)
@@ -2618,6 +2869,8 @@ func (r *mutationResolver) CreateRiskDocumentMapping(ctx context.Context, input 
 
 // DeleteRiskDocumentMapping is the resolver for the deleteRiskDocumentMapping field.
 func (r *mutationResolver) DeleteRiskDocumentMapping(ctx context.Context, input types.DeleteRiskDocumentMappingInput) (*types.DeleteRiskDocumentMappingPayload, error) {
+	r.MustBeAuthorized(ctx, input.RiskID, authz.ActionDeleteRiskDocumentMapping)
+
 	prb := r.ProboService(ctx, input.RiskID.TenantID())
 
 	risk, document, err := prb.Risks.DeleteDocumentMapping(ctx, input.RiskID, input.DocumentID)
@@ -2633,6 +2886,8 @@ func (r *mutationResolver) DeleteRiskDocumentMapping(ctx context.Context, input 
 
 // CreateRiskObligationMapping is the resolver for the createRiskObligationMapping field.
 func (r *mutationResolver) CreateRiskObligationMapping(ctx context.Context, input types.CreateRiskObligationMappingInput) (*types.CreateRiskObligationMappingPayload, error) {
+	r.MustBeAuthorized(ctx, input.RiskID, authz.ActionCreateRiskObligationMapping)
+
 	prb := r.ProboService(ctx, input.RiskID.TenantID())
 
 	risk, obligation, err := prb.Risks.CreateObligationMapping(ctx, input.RiskID, input.ObligationID)
@@ -2648,6 +2903,8 @@ func (r *mutationResolver) CreateRiskObligationMapping(ctx context.Context, inpu
 
 // DeleteRiskObligationMapping is the resolver for the deleteRiskObligationMapping field.
 func (r *mutationResolver) DeleteRiskObligationMapping(ctx context.Context, input types.DeleteRiskObligationMappingInput) (*types.DeleteRiskObligationMappingPayload, error) {
+	r.MustBeAuthorized(ctx, input.RiskID, authz.ActionDeleteRiskObligationMapping)
+
 	prb := r.ProboService(ctx, input.RiskID.TenantID())
 
 	risk, obligation, err := prb.Risks.DeleteObligationMapping(ctx, input.RiskID, input.ObligationID)
@@ -2663,6 +2920,8 @@ func (r *mutationResolver) DeleteRiskObligationMapping(ctx context.Context, inpu
 
 // DeleteEvidence is the resolver for the deleteEvidence field.
 func (r *mutationResolver) DeleteEvidence(ctx context.Context, input types.DeleteEvidenceInput) (*types.DeleteEvidencePayload, error) {
+	r.MustBeAuthorized(ctx, input.EvidenceID, authz.ActionDeleteEvidence)
+
 	prb := r.ProboService(ctx, input.EvidenceID.TenantID())
 
 	err := prb.Evidences.Delete(ctx, input.EvidenceID)
@@ -2677,6 +2936,8 @@ func (r *mutationResolver) DeleteEvidence(ctx context.Context, input types.Delet
 
 // UploadMeasureEvidence is the resolver for the uploadMeasureEvidence field.
 func (r *mutationResolver) UploadMeasureEvidence(ctx context.Context, input types.UploadMeasureEvidenceInput) (*types.UploadMeasureEvidencePayload, error) {
+	r.MustBeAuthorized(ctx, input.MeasureID, authz.ActionUploadMeasureEvidence)
+
 	prb := r.ProboService(ctx, input.MeasureID.TenantID())
 
 	evidence, err := prb.Evidences.UploadMeasureEvidence(
@@ -2702,6 +2963,8 @@ func (r *mutationResolver) UploadMeasureEvidence(ctx context.Context, input type
 
 // UploadVendorComplianceReport is the resolver for the uploadVendorComplianceReport field.
 func (r *mutationResolver) UploadVendorComplianceReport(ctx context.Context, input types.UploadVendorComplianceReportInput) (*types.UploadVendorComplianceReportPayload, error) {
+	r.MustBeAuthorized(ctx, input.VendorID, authz.ActionUploadVendorComplianceReport)
+
 	prb := r.ProboService(ctx, input.VendorID.TenantID())
 
 	vendorComplianceReport, err := prb.VendorComplianceReports.Upload(
@@ -2725,6 +2988,8 @@ func (r *mutationResolver) UploadVendorComplianceReport(ctx context.Context, inp
 
 // DeleteVendorComplianceReport is the resolver for the deleteVendorComplianceReport field.
 func (r *mutationResolver) DeleteVendorComplianceReport(ctx context.Context, input types.DeleteVendorComplianceReportInput) (*types.DeleteVendorComplianceReportPayload, error) {
+	r.MustBeAuthorized(ctx, input.ReportID, authz.ActionDeleteVendorComplianceReport)
+
 	prb := r.ProboService(ctx, input.ReportID.TenantID())
 
 	err := prb.VendorComplianceReports.Delete(ctx, input.ReportID)
@@ -2739,6 +3004,8 @@ func (r *mutationResolver) DeleteVendorComplianceReport(ctx context.Context, inp
 
 // UploadVendorBusinessAssociateAgreement is the resolver for the uploadVendorBusinessAssociateAgreement field.
 func (r *mutationResolver) UploadVendorBusinessAssociateAgreement(ctx context.Context, input types.UploadVendorBusinessAssociateAgreementInput) (*types.UploadVendorBusinessAssociateAgreementPayload, error) {
+	r.MustBeAuthorized(ctx, input.VendorID, authz.ActionUploadVendorBusinessAssociateAgreement)
+
 	prb := r.ProboService(ctx, input.VendorID.TenantID())
 
 	vendorBusinessAssociateAgreement, file, err := prb.VendorBusinessAssociateAgreements.Upload(
@@ -2762,6 +3029,8 @@ func (r *mutationResolver) UploadVendorBusinessAssociateAgreement(ctx context.Co
 
 // UpdateVendorBusinessAssociateAgreement is the resolver for the updateVendorBusinessAssociateAgreement field.
 func (r *mutationResolver) UpdateVendorBusinessAssociateAgreement(ctx context.Context, input types.UpdateVendorBusinessAssociateAgreementInput) (*types.UpdateVendorBusinessAssociateAgreementPayload, error) {
+	r.MustBeAuthorized(ctx, input.VendorID, authz.ActionUpdateVendorBusinessAssociateAgreement)
+
 	prb := r.ProboService(ctx, input.VendorID.TenantID())
 
 	vendorBusinessAssociateAgreement, file, err := prb.VendorBusinessAssociateAgreements.Update(
@@ -2783,6 +3052,8 @@ func (r *mutationResolver) UpdateVendorBusinessAssociateAgreement(ctx context.Co
 
 // DeleteVendorBusinessAssociateAgreement is the resolver for the deleteVendorBusinessAssociateAgreement field.
 func (r *mutationResolver) DeleteVendorBusinessAssociateAgreement(ctx context.Context, input types.DeleteVendorBusinessAssociateAgreementInput) (*types.DeleteVendorBusinessAssociateAgreementPayload, error) {
+	r.MustBeAuthorized(ctx, input.VendorID, authz.ActionDeleteVendorBusinessAssociateAgreement)
+
 	prb := r.ProboService(ctx, input.VendorID.TenantID())
 
 	err := prb.VendorBusinessAssociateAgreements.DeleteByVendorID(ctx, input.VendorID)
@@ -2797,6 +3068,8 @@ func (r *mutationResolver) DeleteVendorBusinessAssociateAgreement(ctx context.Co
 
 // UploadVendorDataPrivacyAgreement is the resolver for the uploadVendorDataPrivacyAgreement field.
 func (r *mutationResolver) UploadVendorDataPrivacyAgreement(ctx context.Context, input types.UploadVendorDataPrivacyAgreementInput) (*types.UploadVendorDataPrivacyAgreementPayload, error) {
+	r.MustBeAuthorized(ctx, input.VendorID, authz.ActionUploadVendorDataPrivacyAgreement)
+
 	prb := r.ProboService(ctx, input.VendorID.TenantID())
 
 	vendorDataPrivacyAgreement, file, err := prb.VendorDataPrivacyAgreements.Upload(
@@ -2820,6 +3093,8 @@ func (r *mutationResolver) UploadVendorDataPrivacyAgreement(ctx context.Context,
 
 // UpdateVendorDataPrivacyAgreement is the resolver for the updateVendorDataPrivacyAgreement field.
 func (r *mutationResolver) UpdateVendorDataPrivacyAgreement(ctx context.Context, input types.UpdateVendorDataPrivacyAgreementInput) (*types.UpdateVendorDataPrivacyAgreementPayload, error) {
+	r.MustBeAuthorized(ctx, input.VendorID, authz.ActionUpdateVendorDataPrivacyAgreement)
+
 	prb := r.ProboService(ctx, input.VendorID.TenantID())
 
 	vendorDataPrivacyAgreement, file, err := prb.VendorDataPrivacyAgreements.Update(
@@ -2841,6 +3116,8 @@ func (r *mutationResolver) UpdateVendorDataPrivacyAgreement(ctx context.Context,
 
 // DeleteVendorDataPrivacyAgreement is the resolver for the deleteVendorDataPrivacyAgreement field.
 func (r *mutationResolver) DeleteVendorDataPrivacyAgreement(ctx context.Context, input types.DeleteVendorDataPrivacyAgreementInput) (*types.DeleteVendorDataPrivacyAgreementPayload, error) {
+	r.MustBeAuthorized(ctx, input.VendorID, authz.ActionDeleteVendorDataPrivacyAgreement)
+
 	prb := r.ProboService(ctx, input.VendorID.TenantID())
 
 	err := prb.VendorDataPrivacyAgreements.DeleteByVendorID(ctx, input.VendorID)
@@ -2855,6 +3132,8 @@ func (r *mutationResolver) DeleteVendorDataPrivacyAgreement(ctx context.Context,
 
 // CreateDocument is the resolver for the createDocument field.
 func (r *mutationResolver) CreateDocument(ctx context.Context, input types.CreateDocumentInput) (*types.CreateDocumentPayload, error) {
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionCreateDocument)
+
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
 	document, documentVersion, err := prb.Documents.Create(
@@ -2885,6 +3164,7 @@ func (r *mutationResolver) CreateDocument(ctx context.Context, input types.Creat
 
 // UpdateDocument is the resolver for the updateDocument field.
 func (r *mutationResolver) UpdateDocument(ctx context.Context, input types.UpdateDocumentInput) (*types.UpdateDocumentPayload, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionUpdateDocument)
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
 	document, err := prb.Documents.Update(
@@ -2910,6 +3190,8 @@ func (r *mutationResolver) UpdateDocument(ctx context.Context, input types.Updat
 
 // DeleteDocument is the resolver for the deleteDocument field.
 func (r *mutationResolver) DeleteDocument(ctx context.Context, input types.DeleteDocumentInput) (*types.DeleteDocumentPayload, error) {
+	r.MustBeAuthorized(ctx, input.DocumentID, authz.ActionDeleteDocument)
+
 	prb := r.ProboService(ctx, input.DocumentID.TenantID())
 
 	err := prb.Documents.SoftDelete(ctx, input.DocumentID)
@@ -2924,6 +3206,8 @@ func (r *mutationResolver) DeleteDocument(ctx context.Context, input types.Delet
 
 // CreateMeeting is the resolver for the createMeeting field.
 func (r *mutationResolver) CreateMeeting(ctx context.Context, input types.CreateMeetingInput) (*types.CreateMeetingPayload, error) {
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionCreateMeeting)
+
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
 	meeting, err := prb.Meetings.Create(
@@ -2947,6 +3231,8 @@ func (r *mutationResolver) CreateMeeting(ctx context.Context, input types.Create
 
 // UpdateMeeting is the resolver for the updateMeeting field.
 func (r *mutationResolver) UpdateMeeting(ctx context.Context, input types.UpdateMeetingInput) (*types.UpdateMeetingPayload, error) {
+	r.MustBeAuthorized(ctx, input.MeetingID, authz.ActionUpdateMeeting)
+
 	prb := r.ProboService(ctx, input.MeetingID.TenantID())
 
 	var attendeeIDs []gid.GID
@@ -2975,6 +3261,8 @@ func (r *mutationResolver) UpdateMeeting(ctx context.Context, input types.Update
 
 // DeleteMeeting is the resolver for the deleteMeeting field.
 func (r *mutationResolver) DeleteMeeting(ctx context.Context, input types.DeleteMeetingInput) (*types.DeleteMeetingPayload, error) {
+	r.MustBeAuthorized(ctx, input.MeetingID, authz.ActionDeleteMeeting)
+
 	prb := r.ProboService(ctx, input.MeetingID.TenantID())
 
 	err := prb.Meetings.Delete(ctx, input.MeetingID)
@@ -2989,7 +3277,10 @@ func (r *mutationResolver) DeleteMeeting(ctx context.Context, input types.Delete
 
 // PublishDocumentVersion is the resolver for the publishDocumentVersion field.
 func (r *mutationResolver) PublishDocumentVersion(ctx context.Context, input types.PublishDocumentVersionInput) (*types.PublishDocumentVersionPayload, error) {
+	r.MustBeAuthorized(ctx, input.DocumentID, authz.ActionPublishDocumentVersion)
+
 	prb := r.ProboService(ctx, input.DocumentID.TenantID())
+
 	user := UserFromContext(ctx)
 
 	document, documentVersion, err := prb.Documents.PublishVersion(ctx, input.DocumentID, user.ID, input.Changelog)
@@ -3015,6 +3306,8 @@ func (r *mutationResolver) BulkPublishDocumentVersions(ctx context.Context, inpu
 			DocumentEdges:        []*types.DocumentEdge{},
 		}, nil
 	}
+
+	r.MustBeAuthorized(ctx, input.DocumentIds[0], authz.ActionBulkPublishDocumentVersions)
 
 	prb := r.ProboService(ctx, input.DocumentIds[0].TenantID())
 
@@ -3046,6 +3339,8 @@ func (r *mutationResolver) BulkDeleteDocuments(ctx context.Context, input types.
 		}, nil
 	}
 
+	r.MustBeAuthorized(ctx, input.DocumentIds[0], authz.ActionBulkDeleteDocuments)
+
 	prb := r.ProboService(ctx, input.DocumentIds[0].TenantID())
 
 	err := prb.Documents.BulkSoftDelete(ctx, input.DocumentIds)
@@ -3064,7 +3359,10 @@ func (r *mutationResolver) BulkExportDocuments(ctx context.Context, input types.
 		panic(fmt.Errorf("no document ids provided"))
 	}
 
+	r.MustBeAuthorized(ctx, input.DocumentIds[0], authz.ActionBulkExportDocuments)
+
 	prb := r.ProboService(ctx, input.DocumentIds[0].TenantID())
+
 	user := UserFromContext(ctx)
 
 	options := probo.BulkExportOptions{
@@ -3085,6 +3383,8 @@ func (r *mutationResolver) BulkExportDocuments(ctx context.Context, input types.
 
 // GenerateDocumentChangelog is the resolver for the generateDocumentChangelog field.
 func (r *mutationResolver) GenerateDocumentChangelog(ctx context.Context, input types.GenerateDocumentChangelogInput) (*types.GenerateDocumentChangelogPayload, error) {
+	r.MustBeAuthorized(ctx, input.DocumentID, authz.ActionGenerateDocumentChangelog)
+
 	prb := r.ProboService(ctx, input.DocumentID.TenantID())
 
 	changelog, err := prb.Documents.GenerateChangelog(ctx, input.DocumentID)
@@ -3099,6 +3399,8 @@ func (r *mutationResolver) GenerateDocumentChangelog(ctx context.Context, input 
 
 // CreateDraftDocumentVersion is the resolver for the createDraftDocumentVersion field.
 func (r *mutationResolver) CreateDraftDocumentVersion(ctx context.Context, input types.CreateDraftDocumentVersionInput) (*types.CreateDraftDocumentVersionPayload, error) {
+	r.MustBeAuthorized(ctx, input.DocumentID, authz.ActionCreateDraftDocumentVersion)
+
 	prb := r.ProboService(ctx, input.DocumentID.TenantID())
 
 	documentVersion, err := prb.Documents.CreateDraft(ctx, input.DocumentID)
@@ -3113,6 +3415,8 @@ func (r *mutationResolver) CreateDraftDocumentVersion(ctx context.Context, input
 
 // DeleteDraftDocumentVersion is the resolver for the deleteDraftDocumentVersion field.
 func (r *mutationResolver) DeleteDraftDocumentVersion(ctx context.Context, input types.DeleteDraftDocumentVersionInput) (*types.DeleteDraftDocumentVersionPayload, error) {
+	r.MustBeAuthorized(ctx, input.DocumentVersionID, authz.ActionDeleteDraftDocumentVersion)
+
 	prb := r.ProboService(ctx, input.DocumentVersionID.TenantID())
 
 	err := prb.Documents.DeleteDraft(ctx, input.DocumentVersionID)
@@ -3127,6 +3431,8 @@ func (r *mutationResolver) DeleteDraftDocumentVersion(ctx context.Context, input
 
 // UpdateDocumentVersion is the resolver for the updateDocumentVersion field.
 func (r *mutationResolver) UpdateDocumentVersion(ctx context.Context, input types.UpdateDocumentVersionInput) (*types.UpdateDocumentVersionPayload, error) {
+	r.MustBeAuthorized(ctx, input.DocumentVersionID, authz.ActionUpdateDocumentVersion)
+
 	prb := r.ProboService(ctx, input.DocumentVersionID.TenantID())
 
 	documentVersion, err := prb.Documents.UpdateVersion(ctx, probo.UpdateDocumentVersionRequest{
@@ -3144,6 +3450,8 @@ func (r *mutationResolver) UpdateDocumentVersion(ctx context.Context, input type
 
 // RequestSignature is the resolver for the requestSignature field.
 func (r *mutationResolver) RequestSignature(ctx context.Context, input types.RequestSignatureInput) (*types.RequestSignaturePayload, error) {
+	r.MustBeAuthorized(ctx, input.DocumentVersionID, authz.ActionRequestSignature)
+
 	prb := r.ProboService(ctx, input.DocumentVersionID.TenantID())
 
 	documentVersionSignature, err := prb.Documents.RequestSignature(
@@ -3170,6 +3478,8 @@ func (r *mutationResolver) BulkRequestSignatures(ctx context.Context, input type
 		}, nil
 	}
 
+	r.MustBeAuthorized(ctx, input.DocumentIds[0], authz.ActionBulkRequestSignatures)
+
 	prb := r.ProboService(ctx, input.DocumentIds[0].TenantID())
 
 	documentVersionSignatures, err := prb.Documents.BulkRequestSignatures(
@@ -3190,6 +3500,8 @@ func (r *mutationResolver) BulkRequestSignatures(ctx context.Context, input type
 
 // SendSigningNotifications is the resolver for the sendSigningNotifications field.
 func (r *mutationResolver) SendSigningNotifications(ctx context.Context, input types.SendSigningNotificationsInput) (*types.SendSigningNotificationsPayload, error) {
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionSendSigningNotifications)
+
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
 	err := prb.Documents.SendSigningNotifications(ctx, input.OrganizationID)
@@ -3204,6 +3516,8 @@ func (r *mutationResolver) SendSigningNotifications(ctx context.Context, input t
 
 // CancelSignatureRequest is the resolver for the cancelSignatureRequest field.
 func (r *mutationResolver) CancelSignatureRequest(ctx context.Context, input types.CancelSignatureRequestInput) (*types.CancelSignatureRequestPayload, error) {
+	r.MustBeAuthorized(ctx, input.DocumentVersionSignatureID, authz.ActionCancelSignatureRequest)
+
 	prb := r.ProboService(ctx, input.DocumentVersionSignatureID.TenantID())
 
 	err := prb.Documents.CancelSignatureRequest(ctx, input.DocumentVersionSignatureID)
@@ -3218,6 +3532,8 @@ func (r *mutationResolver) CancelSignatureRequest(ctx context.Context, input typ
 
 // ExportDocumentVersionPDF is the resolver for the exportDocumentVersionPDF field.
 func (r *mutationResolver) ExportDocumentVersionPDF(ctx context.Context, input types.ExportDocumentVersionPDFInput) (*types.ExportDocumentVersionPDFPayload, error) {
+	r.MustBeAuthorized(ctx, input.DocumentVersionID, authz.ActionExportDocumentVersionPDF)
+
 	prb := r.ProboService(ctx, input.DocumentVersionID.TenantID())
 
 	options := probo.ExportPDFOptions{
@@ -3238,6 +3554,8 @@ func (r *mutationResolver) ExportDocumentVersionPDF(ctx context.Context, input t
 
 // CreateVendorRiskAssessment is the resolver for the createVendorRiskAssessment field.
 func (r *mutationResolver) CreateVendorRiskAssessment(ctx context.Context, input types.CreateVendorRiskAssessmentInput) (*types.CreateVendorRiskAssessmentPayload, error) {
+	r.MustBeAuthorized(ctx, input.VendorID, authz.ActionCreateVendorRiskAssessment)
+
 	prb := r.ProboService(ctx, input.VendorID.TenantID())
 
 	vendorRiskAssessment, err := prb.Vendors.CreateRiskAssessment(
@@ -3261,6 +3579,8 @@ func (r *mutationResolver) CreateVendorRiskAssessment(ctx context.Context, input
 
 // AssessVendor is the resolver for the assessVendor field.
 func (r *mutationResolver) AssessVendor(ctx context.Context, input types.AssessVendorInput) (*types.AssessVendorPayload, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionAssessVendor)
+
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
 	vendor, err := prb.Vendors.Assess(ctx, probo.AssessVendorRequest{
@@ -3278,6 +3598,8 @@ func (r *mutationResolver) AssessVendor(ctx context.Context, input types.AssessV
 
 // CreateAsset is the resolver for the createAsset field.
 func (r *mutationResolver) CreateAsset(ctx context.Context, input types.CreateAssetInput) (*types.CreateAssetPayload, error) {
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionCreateAsset)
+
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
 	asset, err := prb.Assets.Create(ctx, probo.CreateAssetRequest{
@@ -3303,6 +3625,13 @@ func (r *mutationResolver) CreateAsset(ctx context.Context, input types.CreateAs
 func (r *mutationResolver) UpdateAsset(ctx context.Context, input types.UpdateAssetInput) (*types.UpdateAssetPayload, error) {
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
+	existingAsset, err := prb.Assets.Get(ctx, input.ID)
+	if err != nil {
+		panic(fmt.Errorf("cannot get asset: %w", err))
+	}
+
+	r.MustBeAuthorized(ctx, existingAsset.OrganizationID, authz.ActionUpdateAsset)
+
 	asset, err := prb.Assets.Update(ctx, probo.UpdateAssetRequest{
 		ID:              input.ID,
 		Name:            input.Name,
@@ -3323,6 +3652,8 @@ func (r *mutationResolver) UpdateAsset(ctx context.Context, input types.UpdateAs
 
 // DeleteAsset is the resolver for the deleteAsset field.
 func (r *mutationResolver) DeleteAsset(ctx context.Context, input types.DeleteAssetInput) (*types.DeleteAssetPayload, error) {
+	r.MustBeAuthorized(ctx, input.AssetID, authz.ActionDeleteAsset)
+
 	prb := r.ProboService(ctx, input.AssetID.TenantID())
 
 	err := prb.Assets.Delete(ctx, input.AssetID)
@@ -3337,6 +3668,8 @@ func (r *mutationResolver) DeleteAsset(ctx context.Context, input types.DeleteAs
 
 // CreateDatum is the resolver for the createDatum field.
 func (r *mutationResolver) CreateDatum(ctx context.Context, input types.CreateDatumInput) (*types.CreateDatumPayload, error) {
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionCreateDatum)
+
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
 	data, err := prb.Data.Create(ctx, probo.CreateDatumRequest{
@@ -3358,6 +3691,8 @@ func (r *mutationResolver) CreateDatum(ctx context.Context, input types.CreateDa
 
 // UpdateDatum is the resolver for the updateDatum field.
 func (r *mutationResolver) UpdateDatum(ctx context.Context, input types.UpdateDatumInput) (*types.UpdateDatumPayload, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionUpdateDatum)
+
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
 	datum, err := prb.Data.Update(ctx, probo.UpdateDatumRequest{
@@ -3379,6 +3714,8 @@ func (r *mutationResolver) UpdateDatum(ctx context.Context, input types.UpdateDa
 
 // DeleteDatum is the resolver for the deleteDatum field.
 func (r *mutationResolver) DeleteDatum(ctx context.Context, input types.DeleteDatumInput) (*types.DeleteDatumPayload, error) {
+	r.MustBeAuthorized(ctx, input.DatumID, authz.ActionDeleteDatum)
+
 	prb := r.ProboService(ctx, input.DatumID.TenantID())
 
 	if err := prb.Data.Delete(ctx, input.DatumID); err != nil {
@@ -3392,6 +3729,8 @@ func (r *mutationResolver) DeleteDatum(ctx context.Context, input types.DeleteDa
 
 // CreateAudit is the resolver for the createAudit field.
 func (r *mutationResolver) CreateAudit(ctx context.Context, input types.CreateAuditInput) (*types.CreateAuditPayload, error) {
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionCreateAudit)
+
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
 	req := probo.CreateAuditRequest{
@@ -3416,6 +3755,8 @@ func (r *mutationResolver) CreateAudit(ctx context.Context, input types.CreateAu
 
 // UpdateAudit is the resolver for the updateAudit field.
 func (r *mutationResolver) UpdateAudit(ctx context.Context, input types.UpdateAuditInput) (*types.UpdateAuditPayload, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionUpdateAudit)
+
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
 	req := probo.UpdateAuditRequest{
@@ -3439,6 +3780,8 @@ func (r *mutationResolver) UpdateAudit(ctx context.Context, input types.UpdateAu
 
 // DeleteAudit is the resolver for the deleteAudit field.
 func (r *mutationResolver) DeleteAudit(ctx context.Context, input types.DeleteAuditInput) (*types.DeleteAuditPayload, error) {
+	r.MustBeAuthorized(ctx, input.AuditID, authz.ActionDeleteAudit)
+
 	prb := r.ProboService(ctx, input.AuditID.TenantID())
 
 	err := prb.Audits.Delete(ctx, input.AuditID)
@@ -3453,6 +3796,8 @@ func (r *mutationResolver) DeleteAudit(ctx context.Context, input types.DeleteAu
 
 // UploadAuditReport is the resolver for the uploadAuditReport field.
 func (r *mutationResolver) UploadAuditReport(ctx context.Context, input types.UploadAuditReportInput) (*types.UploadAuditReportPayload, error) {
+	r.MustBeAuthorized(ctx, input.AuditID, authz.ActionUploadAuditReport)
+
 	prb := r.ProboService(ctx, input.AuditID.TenantID())
 
 	req := probo.UploadAuditReportRequest{
@@ -3477,6 +3822,8 @@ func (r *mutationResolver) UploadAuditReport(ctx context.Context, input types.Up
 
 // DeleteAuditReport is the resolver for the deleteAuditReport field.
 func (r *mutationResolver) DeleteAuditReport(ctx context.Context, input types.DeleteAuditReportInput) (*types.DeleteAuditReportPayload, error) {
+	r.MustBeAuthorized(ctx, input.AuditID, authz.ActionDeleteAuditReport)
+
 	prb := r.ProboService(ctx, input.AuditID.TenantID())
 
 	audit, err := prb.Audits.DeleteReport(ctx, input.AuditID)
@@ -3491,6 +3838,8 @@ func (r *mutationResolver) DeleteAuditReport(ctx context.Context, input types.De
 
 // CreateNonconformity is the resolver for the createNonconformity field.
 func (r *mutationResolver) CreateNonconformity(ctx context.Context, input types.CreateNonconformityInput) (*types.CreateNonconformityPayload, error) {
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionCreateNonconformity)
+
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
 	req := probo.CreateNonconformityRequest{
@@ -3519,6 +3868,8 @@ func (r *mutationResolver) CreateNonconformity(ctx context.Context, input types.
 
 // UpdateNonconformity is the resolver for the updateNonconformity field.
 func (r *mutationResolver) UpdateNonconformity(ctx context.Context, input types.UpdateNonconformityInput) (*types.UpdateNonconformityPayload, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionUpdateNonconformity)
+
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
 	req := probo.UpdateNonconformityRequest{
@@ -3547,6 +3898,8 @@ func (r *mutationResolver) UpdateNonconformity(ctx context.Context, input types.
 
 // DeleteNonconformity is the resolver for the deleteNonconformity field.
 func (r *mutationResolver) DeleteNonconformity(ctx context.Context, input types.DeleteNonconformityInput) (*types.DeleteNonconformityPayload, error) {
+	r.MustBeAuthorized(ctx, input.NonconformityID, authz.ActionDeleteNonconformity)
+
 	prb := r.ProboService(ctx, input.NonconformityID.TenantID())
 
 	err := prb.Nonconformities.Delete(ctx, input.NonconformityID)
@@ -3561,6 +3914,8 @@ func (r *mutationResolver) DeleteNonconformity(ctx context.Context, input types.
 
 // CreateObligation is the resolver for the createObligation field.
 func (r *mutationResolver) CreateObligation(ctx context.Context, input types.CreateObligationInput) (*types.CreateObligationPayload, error) {
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionCreateObligation)
+
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
 	req := probo.CreateObligationRequest{
@@ -3588,6 +3943,8 @@ func (r *mutationResolver) CreateObligation(ctx context.Context, input types.Cre
 
 // UpdateObligation is the resolver for the updateObligation field.
 func (r *mutationResolver) UpdateObligation(ctx context.Context, input types.UpdateObligationInput) (*types.UpdateObligationPayload, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionUpdateObligation)
+
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
 	req := probo.UpdateObligationRequest{
@@ -3615,6 +3972,8 @@ func (r *mutationResolver) UpdateObligation(ctx context.Context, input types.Upd
 
 // DeleteObligation is the resolver for the deleteObligation field.
 func (r *mutationResolver) DeleteObligation(ctx context.Context, input types.DeleteObligationInput) (*types.DeleteObligationPayload, error) {
+	r.MustBeAuthorized(ctx, input.ObligationID, authz.ActionDeleteObligation)
+
 	prb := r.ProboService(ctx, input.ObligationID.TenantID())
 
 	err := prb.Obligations.Delete(ctx, input.ObligationID)
@@ -3629,6 +3988,8 @@ func (r *mutationResolver) DeleteObligation(ctx context.Context, input types.Del
 
 // CreateContinualImprovement is the resolver for the createContinualImprovement field.
 func (r *mutationResolver) CreateContinualImprovement(ctx context.Context, input types.CreateContinualImprovementInput) (*types.CreateContinualImprovementPayload, error) {
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionCreateContinualImprovement)
+
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
 	req := probo.CreateContinualImprovementRequest{
@@ -3654,6 +4015,8 @@ func (r *mutationResolver) CreateContinualImprovement(ctx context.Context, input
 
 // UpdateContinualImprovement is the resolver for the updateContinualImprovement field.
 func (r *mutationResolver) UpdateContinualImprovement(ctx context.Context, input types.UpdateContinualImprovementInput) (*types.UpdateContinualImprovementPayload, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionUpdateContinualImprovement)
+
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
 	req := probo.UpdateContinualImprovementRequest{
@@ -3679,6 +4042,8 @@ func (r *mutationResolver) UpdateContinualImprovement(ctx context.Context, input
 
 // DeleteContinualImprovement is the resolver for the deleteContinualImprovement field.
 func (r *mutationResolver) DeleteContinualImprovement(ctx context.Context, input types.DeleteContinualImprovementInput) (*types.DeleteContinualImprovementPayload, error) {
+	r.MustBeAuthorized(ctx, input.ContinualImprovementID, authz.ActionDeleteContinualImprovement)
+
 	prb := r.ProboService(ctx, input.ContinualImprovementID.TenantID())
 
 	err := prb.ContinualImprovements.Delete(ctx, input.ContinualImprovementID)
@@ -3693,6 +4058,8 @@ func (r *mutationResolver) DeleteContinualImprovement(ctx context.Context, input
 
 // CreateProcessingActivity is the resolver for the createProcessingActivity field.
 func (r *mutationResolver) CreateProcessingActivity(ctx context.Context, input types.CreateProcessingActivityInput) (*types.CreateProcessingActivityPayload, error) {
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionCreateProcessingActivity)
+
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
 	req := probo.CreateProcessingActivityRequest{
@@ -3726,6 +4093,8 @@ func (r *mutationResolver) CreateProcessingActivity(ctx context.Context, input t
 
 // UpdateProcessingActivity is the resolver for the updateProcessingActivity field.
 func (r *mutationResolver) UpdateProcessingActivity(ctx context.Context, input types.UpdateProcessingActivityInput) (*types.UpdateProcessingActivityPayload, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionUpdateProcessingActivity)
+
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
 	req := probo.UpdateProcessingActivityRequest{
@@ -3759,6 +4128,8 @@ func (r *mutationResolver) UpdateProcessingActivity(ctx context.Context, input t
 
 // DeleteProcessingActivity is the resolver for the deleteProcessingActivity field.
 func (r *mutationResolver) DeleteProcessingActivity(ctx context.Context, input types.DeleteProcessingActivityInput) (*types.DeleteProcessingActivityPayload, error) {
+	r.MustBeAuthorized(ctx, input.ProcessingActivityID, authz.ActionDeleteProcessingActivity)
+
 	prb := r.ProboService(ctx, input.ProcessingActivityID.TenantID())
 
 	err := prb.ProcessingActivities.Delete(ctx, input.ProcessingActivityID)
@@ -3773,6 +4144,8 @@ func (r *mutationResolver) DeleteProcessingActivity(ctx context.Context, input t
 
 // CreateSnapshot is the resolver for the createSnapshot field.
 func (r *mutationResolver) CreateSnapshot(ctx context.Context, input types.CreateSnapshotInput) (*types.CreateSnapshotPayload, error) {
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionCreateSnapshot)
+
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
 	snapshot, err := prb.Snapshots.Create(ctx, &probo.CreateSnapshotRequest{
@@ -3792,9 +4165,12 @@ func (r *mutationResolver) CreateSnapshot(ctx context.Context, input types.Creat
 
 // DeleteSnapshot is the resolver for the deleteSnapshot field.
 func (r *mutationResolver) DeleteSnapshot(ctx context.Context, input types.DeleteSnapshotInput) (*types.DeleteSnapshotPayload, error) {
+	r.MustBeAuthorized(ctx, input.SnapshotID, authz.ActionDeleteSnapshot)
+
 	prb := r.ProboService(ctx, input.SnapshotID.TenantID())
 
-	if err := prb.Snapshots.Delete(ctx, input.SnapshotID); err != nil {
+	err := prb.Snapshots.Delete(ctx, input.SnapshotID)
+	if err != nil {
 		panic(fmt.Errorf("cannot delete snapshot: %w", err))
 	}
 
@@ -3805,6 +4181,8 @@ func (r *mutationResolver) DeleteSnapshot(ctx context.Context, input types.Delet
 
 // CreateCustomDomain is the resolver for the createCustomDomain field.
 func (r *mutationResolver) CreateCustomDomain(ctx context.Context, input types.CreateCustomDomainInput) (*types.CreateCustomDomainPayload, error) {
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionCreateCustomDomain)
+
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
 	domain, err := prb.CustomDomains.CreateCustomDomain(ctx, probo.CreateCustomDomainRequest{
@@ -3822,6 +4200,8 @@ func (r *mutationResolver) CreateCustomDomain(ctx context.Context, input types.C
 
 // DeleteCustomDomain is the resolver for the deleteCustomDomain field.
 func (r *mutationResolver) DeleteCustomDomain(ctx context.Context, input types.DeleteCustomDomainInput) (*types.DeleteCustomDomainPayload, error) {
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionDeleteCustomDomain)
+
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
 	// Get the current custom domain ID before deleting
@@ -3847,6 +4227,8 @@ func (r *mutationResolver) DeleteCustomDomain(ctx context.Context, input types.D
 
 // InitiateDomainVerification is the resolver for the initiateDomainVerification field.
 func (r *mutationResolver) InitiateDomainVerification(ctx context.Context, input types.InitiateDomainVerificationInput) (*types.InitiateDomainVerificationPayload, error) {
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionInitiateDomainVerification)
+
 	organizationID := input.OrganizationID
 	tenantID := organizationID.TenantID()
 
@@ -3870,6 +4252,8 @@ func (r *mutationResolver) InitiateDomainVerification(ctx context.Context, input
 
 // VerifyDomain is the resolver for the verifyDomain field.
 func (r *mutationResolver) VerifyDomain(ctx context.Context, input types.VerifyDomainInput) (*types.VerifyDomainPayload, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionVerifyDomain)
+
 	configID := input.ID
 	tenantID := configID.TenantID()
 
@@ -3891,6 +4275,8 @@ func (r *mutationResolver) VerifyDomain(ctx context.Context, input types.VerifyD
 
 // CreateSAMLConfiguration is the resolver for the createSAMLConfiguration field.
 func (r *mutationResolver) CreateSAMLConfiguration(ctx context.Context, input types.CreateSAMLConfigurationInput) (*types.CreateSAMLConfigurationPayload, error) {
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionCreateSAMLConfiguration)
+
 	organizationID := input.OrganizationID
 	tenantID := organizationID.TenantID()
 
@@ -3977,6 +4363,8 @@ func (r *mutationResolver) CreateSAMLConfiguration(ctx context.Context, input ty
 
 // UpdateSAMLConfiguration is the resolver for the updateSAMLConfiguration field.
 func (r *mutationResolver) UpdateSAMLConfiguration(ctx context.Context, input types.UpdateSAMLConfigurationInput) (*types.UpdateSAMLConfigurationPayload, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionUpdateSAMLConfiguration)
+
 	configID := input.ID
 	tenantID := configID.TenantID()
 
@@ -4010,6 +4398,8 @@ func (r *mutationResolver) UpdateSAMLConfiguration(ctx context.Context, input ty
 
 // DeleteSAMLConfiguration is the resolver for the deleteSAMLConfiguration field.
 func (r *mutationResolver) DeleteSAMLConfiguration(ctx context.Context, input types.DeleteSAMLConfigurationInput) (*types.DeleteSAMLConfigurationPayload, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionDeleteSAMLConfiguration)
+
 	configID := input.ID
 	tenantID := configID.TenantID()
 
@@ -4026,6 +4416,8 @@ func (r *mutationResolver) DeleteSAMLConfiguration(ctx context.Context, input ty
 
 // EnableSaml is the resolver for the enableSAML field.
 func (r *mutationResolver) EnableSaml(ctx context.Context, input types.EnableSAMLInput) (*types.EnableSAMLPayload, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionEnableSAML)
+
 	configID := input.ID
 	tenantID := configID.TenantID()
 
@@ -4046,6 +4438,8 @@ func (r *mutationResolver) EnableSaml(ctx context.Context, input types.EnableSAM
 
 // DisableSaml is the resolver for the disableSAML field.
 func (r *mutationResolver) DisableSaml(ctx context.Context, input types.DisableSAMLInput) (*types.DisableSAMLPayload, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionDisableSAML)
+
 	configID := input.ID
 	tenantID := configID.TenantID()
 
@@ -4066,6 +4460,8 @@ func (r *mutationResolver) DisableSaml(ctx context.Context, input types.DisableS
 
 // Organization is the resolver for the organization field.
 func (r *nonconformityResolver) Organization(ctx context.Context, obj *types.Nonconformity) (*types.Organization, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetOrganization)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	nonconformity, err := prb.Nonconformities.Get(ctx, obj.ID)
@@ -4087,6 +4483,8 @@ func (r *nonconformityResolver) Organization(ctx context.Context, obj *types.Non
 
 // Audit is the resolver for the audit field.
 func (r *nonconformityResolver) Audit(ctx context.Context, obj *types.Nonconformity) (*types.Audit, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionAudit)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	nonconformity, err := prb.Nonconformities.Get(ctx, obj.ID)
@@ -4108,6 +4506,8 @@ func (r *nonconformityResolver) Audit(ctx context.Context, obj *types.Nonconform
 
 // Owner is the resolver for the owner field.
 func (r *nonconformityResolver) Owner(ctx context.Context, obj *types.Nonconformity) (*types.People, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetOwner)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	nonconformity, err := prb.Nonconformities.Get(ctx, obj.ID)
@@ -4129,8 +4529,9 @@ func (r *nonconformityResolver) Owner(ctx context.Context, obj *types.Nonconform
 
 // TotalCount is the resolver for the totalCount field.
 func (r *nonconformityConnectionResolver) TotalCount(ctx context.Context, obj *types.NonconformityConnection) (int, error) {
-	prb := r.ProboService(ctx, obj.ParentID.TenantID())
+	r.MustBeAuthorized(ctx, obj.ParentID, authz.ActionTotalCount)
 
+	prb := r.ProboService(ctx, obj.ParentID.TenantID())
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
 		nonconformityFilter := coredata.NewNonconformityFilter(nil)
@@ -4150,6 +4551,8 @@ func (r *nonconformityConnectionResolver) TotalCount(ctx context.Context, obj *t
 
 // Organization is the resolver for the organization field.
 func (r *obligationResolver) Organization(ctx context.Context, obj *types.Obligation) (*types.Organization, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetOrganization)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	obligation, err := prb.Obligations.Get(ctx, obj.ID)
@@ -4171,6 +4574,8 @@ func (r *obligationResolver) Organization(ctx context.Context, obj *types.Obliga
 
 // Owner is the resolver for the owner field.
 func (r *obligationResolver) Owner(ctx context.Context, obj *types.Obligation) (*types.People, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetOwner)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	obligation, err := prb.Obligations.Get(ctx, obj.ID)
@@ -4192,6 +4597,8 @@ func (r *obligationResolver) Owner(ctx context.Context, obj *types.Obligation) (
 
 // TotalCount is the resolver for the totalCount field.
 func (r *obligationConnectionResolver) TotalCount(ctx context.Context, obj *types.ObligationConnection) (int, error) {
+	r.MustBeAuthorized(ctx, obj.ParentID, authz.ActionTotalCount)
+
 	prb := r.ProboService(ctx, obj.ParentID.TenantID())
 
 	switch obj.Resolver.(type) {
@@ -4224,6 +4631,8 @@ func (r *obligationConnectionResolver) TotalCount(ctx context.Context, obj *type
 
 // LogoURL is the resolver for the logoUrl field.
 func (r *organizationResolver) LogoURL(ctx context.Context, obj *types.Organization) (*string, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetLogoUrl)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	return prb.Organizations.GenerateLogoURL(ctx, obj.ID, 1*time.Hour)
@@ -4231,6 +4640,8 @@ func (r *organizationResolver) LogoURL(ctx context.Context, obj *types.Organizat
 
 // HorizontalLogoURL is the resolver for the horizontalLogoUrl field.
 func (r *organizationResolver) HorizontalLogoURL(ctx context.Context, obj *types.Organization) (*string, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetHorizontalLogoUrl)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	return prb.Organizations.GenerateHorizontalLogoURL(ctx, obj.ID, 1*time.Hour)
@@ -4250,6 +4661,8 @@ func (r *organizationResolver) Context(ctx context.Context, obj *types.Organizat
 
 // Memberships is the resolver for the memberships field.
 func (r *organizationResolver) Memberships(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MembershipOrderBy) (*types.MembershipConnection, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionMemberships)
+
 	pageOrderBy := page.OrderBy[coredata.MembershipOrderField]{
 		Field:     coredata.MembershipOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
@@ -4274,6 +4687,8 @@ func (r *organizationResolver) Memberships(ctx context.Context, obj *types.Organ
 
 // Invitations is the resolver for the invitations field.
 func (r *organizationResolver) Invitations(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.InvitationOrder, filter *types.InvitationFilter) (*types.InvitationConnection, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListInvitations)
+
 	pageOrderBy := page.OrderBy[coredata.InvitationOrderField]{
 		Field:     coredata.InvitationOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
@@ -4303,6 +4718,8 @@ func (r *organizationResolver) Invitations(ctx context.Context, obj *types.Organ
 
 // SlackConnections is the resolver for the slackConnections field.
 func (r *organizationResolver) SlackConnections(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.SlackConnectionConnection, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListSlackConnections)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	// Filter for Slack connectors only
@@ -4326,6 +4743,8 @@ func (r *organizationResolver) SlackConnections(ctx context.Context, obj *types.
 
 // Frameworks is the resolver for the frameworks field.
 func (r *organizationResolver) Frameworks(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.FrameworkOrderBy) (*types.FrameworkConnection, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListFrameworks)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.FrameworkOrderField]{
@@ -4351,6 +4770,8 @@ func (r *organizationResolver) Frameworks(ctx context.Context, obj *types.Organi
 
 // Controls is the resolver for the controls field.
 func (r *organizationResolver) Controls(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) (*types.ControlConnection, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListControls)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.ControlOrderField]{
@@ -4381,6 +4802,8 @@ func (r *organizationResolver) Controls(ctx context.Context, obj *types.Organiza
 
 // Vendors is the resolver for the vendors field.
 func (r *organizationResolver) Vendors(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorOrderBy, filter *types.VendorFilter) (*types.VendorConnection, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListVendors)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.VendorOrderField]{
@@ -4411,6 +4834,8 @@ func (r *organizationResolver) Vendors(ctx context.Context, obj *types.Organizat
 
 // Peoples is the resolver for the peoples field.
 func (r *organizationResolver) Peoples(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.PeopleOrderBy, filter *types.PeopleFilter) (*types.PeopleConnection, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionPeoples)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.PeopleOrderField]{
@@ -4441,6 +4866,8 @@ func (r *organizationResolver) Peoples(ctx context.Context, obj *types.Organizat
 
 // Documents is the resolver for the documents field.
 func (r *organizationResolver) Documents(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy, filter *types.DocumentFilter) (*types.DocumentConnection, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListDocuments)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.DocumentOrderField]{
@@ -4471,6 +4898,8 @@ func (r *organizationResolver) Documents(ctx context.Context, obj *types.Organiz
 
 // Meetings is the resolver for the meetings field.
 func (r *organizationResolver) Meetings(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeetingOrderBy) (*types.MeetingConnection, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListMeetings)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.MeetingOrderField]{
@@ -4496,6 +4925,8 @@ func (r *organizationResolver) Meetings(ctx context.Context, obj *types.Organiza
 
 // Measures is the resolver for the measures field.
 func (r *organizationResolver) Measures(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy, filter *types.MeasureFilter) (*types.MeasureConnection, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListMeasures)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.MeasureOrderField]{
@@ -4526,6 +4957,8 @@ func (r *organizationResolver) Measures(ctx context.Context, obj *types.Organiza
 
 // Risks is the resolver for the risks field.
 func (r *organizationResolver) Risks(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskOrderBy, filter *types.RiskFilter) (*types.RiskConnection, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListRisks)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.RiskOrderField]{
@@ -4556,6 +4989,8 @@ func (r *organizationResolver) Risks(ctx context.Context, obj *types.Organizatio
 
 // Tasks is the resolver for the tasks field.
 func (r *organizationResolver) Tasks(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TaskOrderBy) (*types.TaskConnection, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListTasks)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.TaskOrderField]{
@@ -4581,6 +5016,8 @@ func (r *organizationResolver) Tasks(ctx context.Context, obj *types.Organizatio
 
 // Assets is the resolver for the assets field.
 func (r *organizationResolver) Assets(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AssetOrderBy, filter *types.AssetFilter) (*types.AssetConnection, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListAssets)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.AssetOrderField]{
@@ -4611,6 +5048,8 @@ func (r *organizationResolver) Assets(ctx context.Context, obj *types.Organizati
 
 // Assets is the resolver for the assets field.
 func (r *organizationResolver) Data(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DatumOrderBy, filter *types.DatumFilter) (*types.DatumConnection, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListAssets)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.DatumOrderField]{
@@ -4641,6 +5080,8 @@ func (r *organizationResolver) Data(ctx context.Context, obj *types.Organization
 
 // Audits is the resolver for the audits field.
 func (r *organizationResolver) Audits(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AuditOrderBy) (*types.AuditConnection, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListAudits)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.AuditOrderField]{
@@ -4666,6 +5107,8 @@ func (r *organizationResolver) Audits(ctx context.Context, obj *types.Organizati
 
 // Nonconformities is the resolver for the nonconformities field.
 func (r *organizationResolver) Nonconformities(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.NonconformityOrderBy, filter *types.NonconformityFilter) (*types.NonconformityConnection, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListNonconformities)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.NonconformityOrderField]{
@@ -4697,6 +5140,8 @@ func (r *organizationResolver) Nonconformities(ctx context.Context, obj *types.O
 
 // Obligations is the resolver for the obligations field.
 func (r *organizationResolver) Obligations(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ObligationOrderBy, filter *types.ObligationFilter) (*types.ObligationConnection, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListObligations)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.ObligationOrderField]{
@@ -4728,6 +5173,8 @@ func (r *organizationResolver) Obligations(ctx context.Context, obj *types.Organ
 
 // ContinualImprovements is the resolver for the continualImprovements field.
 func (r *organizationResolver) ContinualImprovements(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ContinualImprovementOrderBy, filter *types.ContinualImprovementFilter) (*types.ContinualImprovementConnection, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListContinualImprovements)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.ContinualImprovementOrderField]{
@@ -4759,6 +5206,8 @@ func (r *organizationResolver) ContinualImprovements(ctx context.Context, obj *t
 
 // ProcessingActivities is the resolver for the processingActivities field.
 func (r *organizationResolver) ProcessingActivities(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityOrderBy, filter *types.ProcessingActivityFilter) (*types.ProcessingActivityConnection, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListProcessingActivities)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.ProcessingActivityOrderField]{
@@ -4790,6 +5239,8 @@ func (r *organizationResolver) ProcessingActivities(ctx context.Context, obj *ty
 
 // Snapshots is the resolver for the snapshots field.
 func (r *organizationResolver) Snapshots(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.SnapshotOrderBy) (*types.SnapshotConnection, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListSnapshots)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.SnapshotOrderField]{
@@ -4815,6 +5266,8 @@ func (r *organizationResolver) Snapshots(ctx context.Context, obj *types.Organiz
 
 // TrustCenterFiles is the resolver for the trustCenterFiles field.
 func (r *organizationResolver) TrustCenterFiles(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterFileOrderField]) (*types.TrustCenterFileConnection, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListTrustCenterFiles)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.TrustCenterFileOrderField]{
@@ -4840,6 +5293,8 @@ func (r *organizationResolver) TrustCenterFiles(ctx context.Context, obj *types.
 
 // TrustCenter is the resolver for the trustCenter field.
 func (r *organizationResolver) TrustCenter(ctx context.Context, obj *types.Organization) (*types.TrustCenter, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetTrustCenter)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	trustCenter, file, err := prb.TrustCenters.GetByOrganizationID(ctx, obj.ID)
@@ -4852,6 +5307,8 @@ func (r *organizationResolver) TrustCenter(ctx context.Context, obj *types.Organ
 
 // CustomDomain is the resolver for the customDomain field.
 func (r *organizationResolver) CustomDomain(ctx context.Context, obj *types.Organization) (*types.CustomDomain, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetCustomDomain)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	domain, err := prb.CustomDomains.GetOrganizationCustomDomain(ctx, obj.ID)
@@ -4868,6 +5325,8 @@ func (r *organizationResolver) CustomDomain(ctx context.Context, obj *types.Orga
 
 // SamlConfigurations is the resolver for the samlConfigurations field.
 func (r *organizationResolver) SamlConfigurations(ctx context.Context, obj *types.Organization) ([]*types.SAMLConfiguration, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListSAMLConfigurations)
+
 	tenantID := obj.ID.TenantID()
 
 	authSvc := r.AuthService(ctx, tenantID)
@@ -4890,6 +5349,8 @@ func (r *organizationResolver) SamlConfigurations(ctx context.Context, obj *type
 
 // TotalCount is the resolver for the totalCount field.
 func (r *peopleConnectionResolver) TotalCount(ctx context.Context, obj *types.PeopleConnection) (int, error) {
+	r.MustBeAuthorized(ctx, obj.ParentID, authz.ActionTotalCount)
+
 	prb := r.ProboService(ctx, obj.ParentID.TenantID())
 
 	switch obj.Resolver.(type) {
@@ -4906,6 +5367,8 @@ func (r *peopleConnectionResolver) TotalCount(ctx context.Context, obj *types.Pe
 
 // Organization is the resolver for the organization field.
 func (r *processingActivityResolver) Organization(ctx context.Context, obj *types.ProcessingActivity) (*types.Organization, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetOrganization)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	processingActivity, err := prb.ProcessingActivities.Get(ctx, obj.ID)
@@ -4927,6 +5390,8 @@ func (r *processingActivityResolver) Organization(ctx context.Context, obj *type
 
 // Vendors is the resolver for the vendors field.
 func (r *processingActivityResolver) Vendors(ctx context.Context, obj *types.ProcessingActivity, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorOrderBy) (*types.VendorConnection, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListVendors)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.VendorOrderField]{
@@ -4952,6 +5417,8 @@ func (r *processingActivityResolver) Vendors(ctx context.Context, obj *types.Pro
 
 // TotalCount is the resolver for the totalCount field.
 func (r *processingActivityConnectionResolver) TotalCount(ctx context.Context, obj *types.ProcessingActivityConnection) (int, error) {
+	r.MustBeAuthorized(ctx, obj.ParentID, authz.ActionTotalCount)
+
 	prb := r.ProboService(ctx, obj.ParentID.TenantID())
 
 	switch obj.Resolver.(type) {
@@ -4973,6 +5440,8 @@ func (r *processingActivityConnectionResolver) TotalCount(ctx context.Context, o
 
 // Node is the resolver for the node field.
 func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error) {
+	r.MustBeAuthorized(ctx, id, authz.ActionGet)
+
 	prb := r.ProboService(ctx, id.TenantID())
 
 	switch id.EntityType() {
@@ -5058,6 +5527,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			}
 			panic(fmt.Errorf("cannot get document: %w", err))
 		}
+
 		return types.NewDocument(document), nil
 	case coredata.ControlEntityType:
 		control, err := prb.Controls.Get(ctx, id)
@@ -5079,6 +5549,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			}
 			panic(fmt.Errorf("cannot get risk: %w", err))
 		}
+
 		return types.NewRisk(risk), nil
 	case coredata.VendorComplianceReportEntityType:
 		vendorComplianceReport, err := prb.VendorComplianceReports.Get(ctx, id)
@@ -5119,12 +5590,14 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			}
 			panic(fmt.Errorf("cannot get asset: %w", err))
 		}
+
 		return types.NewAsset(asset), nil
 	case coredata.DatumEntityType:
 		datum, err := prb.Data.Get(ctx, id)
 		if err != nil {
 			panic(fmt.Errorf("cannot get data: %w", err))
 		}
+
 		return types.NewDatum(datum), nil
 	case coredata.AuditEntityType:
 		audit, err := prb.Audits.Get(ctx, id)
@@ -5135,24 +5608,28 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			}
 			panic(fmt.Errorf("cannot get audit: %w", err))
 		}
+
 		return types.NewAudit(audit), nil
 	case coredata.NonconformityEntityType:
 		nonconformity, err := prb.Nonconformities.Get(ctx, id)
 		if err != nil {
 			panic(fmt.Errorf("cannot get nonconformity: %w", err))
 		}
+
 		return types.NewNonconformity(nonconformity), nil
 	case coredata.ObligationEntityType:
 		obligation, err := prb.Obligations.Get(ctx, id)
 		if err != nil {
 			panic(fmt.Errorf("cannot get obligation: %w", err))
 		}
+
 		return types.NewObligation(obligation), nil
 	case coredata.ContinualImprovementEntityType:
 		continualImprovement, err := prb.ContinualImprovements.Get(ctx, id)
 		if err != nil {
 			panic(fmt.Errorf("cannot get continual improvement: %w", err))
 		}
+
 		return types.NewContinualImprovement(continualImprovement), nil
 	case coredata.ReportEntityType:
 		report, err := prb.Reports.Get(ctx, id)
@@ -5165,12 +5642,14 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 		if err != nil {
 			panic(fmt.Errorf("cannot get processing activity: %w", err))
 		}
+
 		return types.NewProcessingActivity(processingActivity), nil
 	case coredata.SnapshotEntityType:
 		snapshot, err := prb.Snapshots.Get(ctx, id)
 		if err != nil {
 			panic(fmt.Errorf("cannot get snapshot: %w", err))
 		}
+
 		return types.NewSnapshot(snapshot), nil
 	case coredata.TrustCenterEntityType:
 		trustCenter, file, err := prb.TrustCenters.Get(ctx, id)
@@ -5226,6 +5705,8 @@ func (r *queryResolver) Viewer(ctx context.Context) (*types.Viewer, error) {
 
 // DownloadURL is the resolver for the downloadUrl field.
 func (r *reportResolver) DownloadURL(ctx context.Context, obj *types.Report) (*string, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionDownloadUrl)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	url, err := prb.Reports.GenerateDownloadURL(ctx, obj.ID, 15*time.Minute)
@@ -5245,11 +5726,15 @@ func (r *reportResolver) Audit(ctx context.Context, obj *types.Report) (*types.A
 		panic(fmt.Errorf("cannot load audit for report: %w", err))
 	}
 
+	r.MustBeAuthorized(ctx, audit.OrganizationID, authz.ActionAudit)
+
 	return types.NewAudit(audit), nil
 }
 
 // Owner is the resolver for the owner field.
 func (r *riskResolver) Owner(ctx context.Context, obj *types.Risk) (*types.People, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetOwner)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	risk, err := prb.Risks.Get(ctx, obj.ID)
@@ -5279,14 +5764,12 @@ func (r *riskResolver) Owner(ctx context.Context, obj *types.Risk) (*types.Peopl
 
 // Organization is the resolver for the organization field.
 func (r *riskResolver) Organization(ctx context.Context, obj *types.Risk) (*types.Organization, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetOrganization)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	risk, err := prb.Risks.Get(ctx, obj.ID)
 	if err != nil {
-		var errNotFound *coredata.ErrRiskNotFound
-		if errors.As(err, &errNotFound) {
-			return nil, gqlutils.NotFound(errNotFound)
-		}
 		panic(fmt.Errorf("cannot get risk: %w", err))
 	}
 
@@ -5304,6 +5787,8 @@ func (r *riskResolver) Organization(ctx context.Context, obj *types.Risk) (*type
 
 // Measures is the resolver for the measures field.
 func (r *riskResolver) Measures(ctx context.Context, obj *types.Risk, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy, filter *types.MeasureFilter) (*types.MeasureConnection, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListMeasures)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.MeasureOrderField]{
@@ -5334,6 +5819,8 @@ func (r *riskResolver) Measures(ctx context.Context, obj *types.Risk, first *int
 
 // Documents is the resolver for the documents field.
 func (r *riskResolver) Documents(ctx context.Context, obj *types.Risk, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy, filter *types.DocumentFilter) (*types.DocumentConnection, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListDocuments)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.DocumentOrderField]{
@@ -5364,6 +5851,8 @@ func (r *riskResolver) Documents(ctx context.Context, obj *types.Risk, first *in
 
 // Controls is the resolver for the controls field.
 func (r *riskResolver) Controls(ctx context.Context, obj *types.Risk, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) (*types.ControlConnection, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListControls)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.ControlOrderField]{
@@ -5393,6 +5882,8 @@ func (r *riskResolver) Controls(ctx context.Context, obj *types.Risk, first *int
 
 // Obligations is the resolver for the obligations field.
 func (r *riskResolver) Obligations(ctx context.Context, obj *types.Risk, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ObligationOrderBy, filter *types.ObligationFilter) (*types.ObligationConnection, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListObligations)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.ObligationOrderField]{
@@ -5423,6 +5914,8 @@ func (r *riskResolver) Obligations(ctx context.Context, obj *types.Risk, first *
 
 // TotalCount is the resolver for the totalCount field.
 func (r *riskConnectionResolver) TotalCount(ctx context.Context, obj *types.RiskConnection) (int, error) {
+	r.MustBeAuthorized(ctx, obj.ParentID, authz.ActionTotalCount)
+
 	prb := r.ProboService(ctx, obj.ParentID.TenantID())
 
 	switch obj.Resolver.(type) {
@@ -5445,6 +5938,8 @@ func (r *riskConnectionResolver) TotalCount(ctx context.Context, obj *types.Risk
 
 // Organization is the resolver for the organization field.
 func (r *sAMLConfigurationResolver) Organization(ctx context.Context, obj *types.SAMLConfiguration) (*types.Organization, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetOrganization)
+
 	tenantID := obj.ID.TenantID()
 	prb := r.ProboService(ctx, tenantID)
 
@@ -5465,11 +5960,15 @@ func (r *sAMLConfigurationResolver) Organization(ctx context.Context, obj *types
 // SpMetadataURL is the resolver for the spMetadataUrl field.
 // Returns global Entity ID (same as spEntityId since metadata URL no longer needs config parameter)
 func (r *sAMLConfigurationResolver) SpMetadataURL(ctx context.Context, obj *types.SAMLConfiguration) (string, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionSpMetadataUrl)
+
 	return r.samlSvc.GetEntityID(), nil
 }
 
 // TestLoginURL is the resolver for the testLoginUrl field.
 func (r *sAMLConfigurationResolver) TestLoginURL(ctx context.Context, obj *types.SAMLConfiguration) (string, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionTestLoginUrl)
+
 	entityID := r.samlSvc.GetEntityID()
 	parts := strings.Split(entityID, "/connect/saml/metadata")
 	if len(parts) != 2 {
@@ -5481,6 +5980,8 @@ func (r *sAMLConfigurationResolver) TestLoginURL(ctx context.Context, obj *types
 
 // Organization is the resolver for the organization field.
 func (r *snapshotResolver) Organization(ctx context.Context, obj *types.Snapshot) (*types.Organization, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetOrganization)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	snapshot, err := prb.Snapshots.Get(ctx, obj.ID)
@@ -5502,6 +6003,8 @@ func (r *snapshotResolver) Organization(ctx context.Context, obj *types.Snapshot
 
 // Controls is the resolver for the controls field.
 func (r *snapshotResolver) Controls(ctx context.Context, obj *types.Snapshot, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) (*types.ControlConnection, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListControls)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.ControlOrderField]{
@@ -5532,6 +6035,8 @@ func (r *snapshotResolver) Controls(ctx context.Context, obj *types.Snapshot, fi
 
 // TotalCount is the resolver for the totalCount field.
 func (r *snapshotConnectionResolver) TotalCount(ctx context.Context, obj *types.SnapshotConnection) (int, error) {
+	r.MustBeAuthorized(ctx, obj.ParentID, authz.ActionTotalCount)
+
 	prb := r.ProboService(ctx, obj.ParentID.TenantID())
 
 	switch obj.Resolver.(type) {
@@ -5548,6 +6053,8 @@ func (r *snapshotConnectionResolver) TotalCount(ctx context.Context, obj *types.
 
 // AssignedTo is the resolver for the assignedTo field.
 func (r *taskResolver) AssignedTo(ctx context.Context, obj *types.Task) (*types.People, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetAssignedTo)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	task, err := prb.Tasks.Get(ctx, obj.ID)
@@ -5577,6 +6084,8 @@ func (r *taskResolver) AssignedTo(ctx context.Context, obj *types.Task) (*types.
 
 // Organization is the resolver for the organization field.
 func (r *taskResolver) Organization(ctx context.Context, obj *types.Task) (*types.Organization, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetOrganization)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	task, err := prb.Tasks.Get(ctx, obj.ID)
@@ -5602,6 +6111,8 @@ func (r *taskResolver) Organization(ctx context.Context, obj *types.Task) (*type
 
 // Measure is the resolver for the measure field.
 func (r *taskResolver) Measure(ctx context.Context, obj *types.Task) (*types.Measure, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetMeasure)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	task, err := prb.Tasks.Get(ctx, obj.ID)
@@ -5627,6 +6138,8 @@ func (r *taskResolver) Measure(ctx context.Context, obj *types.Task) (*types.Mea
 
 // Evidences is the resolver for the evidences field.
 func (r *taskResolver) Evidences(ctx context.Context, obj *types.Task, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.EvidenceOrderBy) (*types.EvidenceConnection, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListEvidences)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.EvidenceOrderField]{
@@ -5651,6 +6164,8 @@ func (r *taskResolver) Evidences(ctx context.Context, obj *types.Task, first *in
 
 // TotalCount is the resolver for the totalCount field.
 func (r *taskConnectionResolver) TotalCount(ctx context.Context, obj *types.TaskConnection) (int, error) {
+	r.MustBeAuthorized(ctx, obj.ParentID, authz.ActionTotalCount)
+
 	prb := r.ProboService(ctx, obj.ParentID.TenantID())
 
 	switch obj.Resolver.(type) {
@@ -5673,6 +6188,8 @@ func (r *taskConnectionResolver) TotalCount(ctx context.Context, obj *types.Task
 
 // NdaFileURL is the resolver for the ndaFileUrl field.
 func (r *trustCenterResolver) NdaFileURL(ctx context.Context, obj *types.TrustCenter) (*string, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetNdaFileUrl)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	fileURL, err := prb.TrustCenters.GenerateNDAFileURL(ctx, obj.ID, 15*time.Minute)
@@ -5685,9 +6202,16 @@ func (r *trustCenterResolver) NdaFileURL(ctx context.Context, obj *types.TrustCe
 
 // Organization is the resolver for the organization field.
 func (r *trustCenterResolver) Organization(ctx context.Context, obj *types.TrustCenter) (*types.Organization, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetOrganization)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
-	organization, err := prb.Organizations.Get(ctx, obj.Organization.ID)
+	trustCenter, _, err := prb.TrustCenters.Get(ctx, obj.ID)
+	if err != nil {
+		panic(fmt.Errorf("cannot get trust center: %w", err))
+	}
+
+	organization, err := prb.Organizations.Get(ctx, trustCenter.OrganizationID)
 	if err != nil {
 		var errNotFound *coredata.ErrOrganizationNotFound
 		if errors.As(err, &errNotFound) {
@@ -5701,6 +6225,8 @@ func (r *trustCenterResolver) Organization(ctx context.Context, obj *types.Trust
 
 // Accesses is the resolver for the accesses field.
 func (r *trustCenterResolver) Accesses(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterAccessOrderField]) (*types.TrustCenterAccessConnection, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListAccesses)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.TrustCenterAccessOrderField]{
@@ -5726,6 +6252,8 @@ func (r *trustCenterResolver) Accesses(ctx context.Context, obj *types.TrustCent
 
 // References is the resolver for the references field.
 func (r *trustCenterResolver) References(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterReferenceOrderField]) (*types.TrustCenterReferenceConnection, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListReferences)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.TrustCenterReferenceOrderField]{
@@ -5751,6 +6279,8 @@ func (r *trustCenterResolver) References(ctx context.Context, obj *types.TrustCe
 
 // PendingRequestCount is the resolver for the pendingRequestCount field.
 func (r *trustCenterAccessResolver) PendingRequestCount(ctx context.Context, obj *types.TrustCenterAccess) (int, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionPendingRequestCount)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	count, err := prb.TrustCenterAccesses.CountPendingRequestDocumentAccesses(ctx, obj.ID)
@@ -5763,6 +6293,7 @@ func (r *trustCenterAccessResolver) PendingRequestCount(ctx context.Context, obj
 
 // ActiveCount is the resolver for the activeCount field.
 func (r *trustCenterAccessResolver) ActiveCount(ctx context.Context, obj *types.TrustCenterAccess) (int, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionActiveCount)
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	count, err := prb.TrustCenterAccesses.CountActiveDocumentAccesses(ctx, obj.ID)
@@ -5775,6 +6306,8 @@ func (r *trustCenterAccessResolver) ActiveCount(ctx context.Context, obj *types.
 
 // AvailableDocumentAccesses is the resolver for the availableDocumentAccesses field.
 func (r *trustCenterAccessResolver) AvailableDocumentAccesses(ctx context.Context, obj *types.TrustCenterAccess, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterDocumentAccessOrderField]) (*types.TrustCenterDocumentAccessConnection, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionAvailableDocumentAccesses)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.TrustCenterDocumentAccessOrderField]{
@@ -5800,6 +6333,8 @@ func (r *trustCenterAccessResolver) AvailableDocumentAccesses(ctx context.Contex
 
 // Document is the resolver for the document field.
 func (r *trustCenterDocumentAccessResolver) Document(ctx context.Context, obj *types.TrustCenterDocumentAccess) (*types.Document, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionDocument)
+
 	if obj.DocumentID == nil {
 		return nil, nil
 	}
@@ -5820,6 +6355,8 @@ func (r *trustCenterDocumentAccessResolver) Document(ctx context.Context, obj *t
 
 // Report is the resolver for the report field.
 func (r *trustCenterDocumentAccessResolver) Report(ctx context.Context, obj *types.TrustCenterDocumentAccess) (*types.Report, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionReport)
+
 	if obj.ReportID == nil {
 		return nil, nil
 	}
@@ -5836,6 +6373,8 @@ func (r *trustCenterDocumentAccessResolver) Report(ctx context.Context, obj *typ
 
 // TrustCenterFile is the resolver for the trustCenterFile field.
 func (r *trustCenterDocumentAccessResolver) TrustCenterFile(ctx context.Context, obj *types.TrustCenterDocumentAccess) (*types.TrustCenterFile, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionTrustCenterFile)
+
 	if obj.TrustCenterFileID == nil {
 		return nil, nil
 	}
@@ -5852,6 +6391,8 @@ func (r *trustCenterDocumentAccessResolver) TrustCenterFile(ctx context.Context,
 
 // TotalCount is the resolver for the totalCount field.
 func (r *trustCenterDocumentAccessConnectionResolver) TotalCount(ctx context.Context, obj *types.TrustCenterDocumentAccessConnection) (int, error) {
+	r.MustBeAuthorized(ctx, obj.ParentID, authz.ActionTotalCount)
+
 	prb := r.ProboService(ctx, obj.ParentID.TenantID())
 
 	count, err := prb.TrustCenterAccesses.CountDocumentAccesses(ctx, obj.ParentID)
@@ -5864,6 +6405,8 @@ func (r *trustCenterDocumentAccessConnectionResolver) TotalCount(ctx context.Con
 
 // FileURL is the resolver for the fileUrl field.
 func (r *trustCenterFileResolver) FileURL(ctx context.Context, obj *types.TrustCenterFile) (string, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetFileUrl)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	fileURL, err := prb.TrustCenterFiles.GenerateFileURL(ctx, obj.ID, 1*time.Hour)
@@ -5876,14 +6419,16 @@ func (r *trustCenterFileResolver) FileURL(ctx context.Context, obj *types.TrustC
 
 // Organization is the resolver for the organization field.
 func (r *trustCenterFileResolver) Organization(ctx context.Context, obj *types.TrustCenterFile) (*types.Organization, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetOrganization)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
-	file, err := prb.TrustCenterFiles.Get(ctx, obj.ID)
+	trustCenterFile, err := prb.TrustCenterFiles.Get(ctx, obj.ID)
 	if err != nil {
 		panic(fmt.Errorf("cannot get trust center file: %w", err))
 	}
 
-	organization, err := prb.Organizations.Get(ctx, file.OrganizationID)
+	organization, err := prb.Organizations.Get(ctx, trustCenterFile.OrganizationID)
 	if err != nil {
 		var errNotFound *coredata.ErrOrganizationNotFound
 		if errors.As(err, &errNotFound) {
@@ -5897,6 +6442,8 @@ func (r *trustCenterFileResolver) Organization(ctx context.Context, obj *types.T
 
 // TotalCount is the resolver for the totalCount field.
 func (r *trustCenterFileConnectionResolver) TotalCount(ctx context.Context, obj *types.TrustCenterFileConnection) (int, error) {
+	r.MustBeAuthorized(ctx, obj.ParentID, authz.ActionTotalCount)
+
 	prb := r.ProboService(ctx, obj.ParentID.TenantID())
 
 	count, err := prb.TrustCenterFiles.CountForOrganizationID(ctx, obj.ParentID)
@@ -5908,6 +6455,8 @@ func (r *trustCenterFileConnectionResolver) TotalCount(ctx context.Context, obj 
 
 // LogoURL is the resolver for the logoUrl field.
 func (r *trustCenterReferenceResolver) LogoURL(ctx context.Context, obj *types.TrustCenterReference) (string, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetLogoUrl)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	fileURL, err := prb.TrustCenterReferences.GenerateLogoURL(ctx, obj.ID, 1*time.Hour)
@@ -5920,6 +6469,8 @@ func (r *trustCenterReferenceResolver) LogoURL(ctx context.Context, obj *types.T
 
 // TotalCount is the resolver for the totalCount field.
 func (r *trustCenterReferenceConnectionResolver) TotalCount(ctx context.Context, obj *types.TrustCenterReferenceConnection) (int, error) {
+	r.MustBeAuthorized(ctx, obj.ParentID, authz.ActionTotalCount)
+
 	prb := r.ProboService(ctx, obj.ParentID.TenantID())
 
 	count, err := prb.TrustCenterReferences.CountForTrustCenterID(ctx, obj.ParentID)
@@ -5931,6 +6482,8 @@ func (r *trustCenterReferenceConnectionResolver) TotalCount(ctx context.Context,
 
 // TotalCount is the resolver for the totalCount field.
 func (r *userConnectionResolver) TotalCount(ctx context.Context, obj *types.UserConnection) (int, error) {
+	r.MustBeAuthorized(ctx, obj.ParentID, authz.ActionTotalCount)
+
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
 		authzSvc := r.AuthzService(ctx, obj.ParentID.TenantID())
@@ -5946,6 +6499,8 @@ func (r *userConnectionResolver) TotalCount(ctx context.Context, obj *types.User
 
 // Organization is the resolver for the organization field.
 func (r *vendorResolver) Organization(ctx context.Context, obj *types.Vendor) (*types.Organization, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetOrganization)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	vendor, err := prb.Vendors.Get(ctx, obj.ID)
@@ -5971,6 +6526,8 @@ func (r *vendorResolver) Organization(ctx context.Context, obj *types.Vendor) (*
 
 // ComplianceReports is the resolver for the complianceReports field.
 func (r *vendorResolver) ComplianceReports(ctx context.Context, obj *types.Vendor, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorComplianceReportOrderBy) (*types.VendorComplianceReportConnection, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListComplianceReports)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.VendorComplianceReportOrderField]{
@@ -5996,6 +6553,8 @@ func (r *vendorResolver) ComplianceReports(ctx context.Context, obj *types.Vendo
 
 // BusinessAssociateAgreement is the resolver for the businessAssociateAgreement field.
 func (r *vendorResolver) BusinessAssociateAgreement(ctx context.Context, obj *types.Vendor) (*types.VendorBusinessAssociateAgreement, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetBusinessAssociateAgreement)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	vendorBusinessAssociateAgreement, file, err := prb.VendorBusinessAssociateAgreements.GetByVendorID(ctx, obj.ID)
@@ -6012,6 +6571,8 @@ func (r *vendorResolver) BusinessAssociateAgreement(ctx context.Context, obj *ty
 
 // DataPrivacyAgreement is the resolver for the dataPrivacyAgreement field.
 func (r *vendorResolver) DataPrivacyAgreement(ctx context.Context, obj *types.Vendor) (*types.VendorDataPrivacyAgreement, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetDataPrivacyAgreement)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	vendorDataPrivacyAgreement, file, err := prb.VendorDataPrivacyAgreements.GetByVendorID(ctx, obj.ID)
@@ -6028,6 +6589,8 @@ func (r *vendorResolver) DataPrivacyAgreement(ctx context.Context, obj *types.Ve
 
 // Contacts is the resolver for the contacts field.
 func (r *vendorResolver) Contacts(ctx context.Context, obj *types.Vendor, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorContactOrderBy) (*types.VendorContactConnection, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListContacts)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.VendorContactOrderField]{
@@ -6053,6 +6616,8 @@ func (r *vendorResolver) Contacts(ctx context.Context, obj *types.Vendor, first 
 
 // Services is the resolver for the services field.
 func (r *vendorResolver) Services(ctx context.Context, obj *types.Vendor, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorServiceOrderBy) (*types.VendorServiceConnection, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListServices)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.VendorServiceOrderField]{
@@ -6078,6 +6643,8 @@ func (r *vendorResolver) Services(ctx context.Context, obj *types.Vendor, first 
 
 // RiskAssessments is the resolver for the riskAssessments field.
 func (r *vendorResolver) RiskAssessments(ctx context.Context, obj *types.Vendor, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorRiskAssessmentOrder) (*types.VendorRiskAssessmentConnection, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListRiskAssessments)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.VendorRiskAssessmentOrderField]{
@@ -6103,6 +6670,8 @@ func (r *vendorResolver) RiskAssessments(ctx context.Context, obj *types.Vendor,
 
 // BusinessOwner is the resolver for the businessOwner field.
 func (r *vendorResolver) BusinessOwner(ctx context.Context, obj *types.Vendor) (*types.People, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetBusinessOwner)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	vendor, err := prb.Vendors.Get(ctx, obj.ID)
@@ -6132,7 +6701,10 @@ func (r *vendorResolver) BusinessOwner(ctx context.Context, obj *types.Vendor) (
 
 // SecurityOwner is the resolver for the securityOwner field.
 func (r *vendorResolver) SecurityOwner(ctx context.Context, obj *types.Vendor) (*types.People, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetSecurityOwner)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
+
 	vendor, err := prb.Vendors.Get(ctx, obj.ID)
 	if err != nil {
 		var errNotFound *coredata.ErrVendorNotFound
@@ -6160,6 +6732,8 @@ func (r *vendorResolver) SecurityOwner(ctx context.Context, obj *types.Vendor) (
 
 // Vendor is the resolver for the vendor field.
 func (r *vendorBusinessAssociateAgreementResolver) Vendor(ctx context.Context, obj *types.VendorBusinessAssociateAgreement) (*types.Vendor, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetVendor)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	vendor, err := prb.Vendors.Get(ctx, obj.ID)
@@ -6176,6 +6750,8 @@ func (r *vendorBusinessAssociateAgreementResolver) Vendor(ctx context.Context, o
 
 // FileURL is the resolver for the fileUrl field.
 func (r *vendorBusinessAssociateAgreementResolver) FileURL(ctx context.Context, obj *types.VendorBusinessAssociateAgreement) (string, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetFileUrl)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	fileURL, err := prb.VendorBusinessAssociateAgreements.GenerateFileURL(ctx, obj.ID, 1*time.Hour)
@@ -6188,6 +6764,8 @@ func (r *vendorBusinessAssociateAgreementResolver) FileURL(ctx context.Context, 
 
 // Vendor is the resolver for the vendor field.
 func (r *vendorComplianceReportResolver) Vendor(ctx context.Context, obj *types.VendorComplianceReport) (*types.Vendor, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetVendor)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	vendor, err := prb.Vendors.Get(ctx, obj.ID)
@@ -6204,6 +6782,8 @@ func (r *vendorComplianceReportResolver) Vendor(ctx context.Context, obj *types.
 
 // File is the resolver for the file field.
 func (r *vendorComplianceReportResolver) File(ctx context.Context, obj *types.VendorComplianceReport) (*types.File, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetFile)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	evidence, err := prb.VendorComplianceReports.Get(ctx, obj.ID)
@@ -6229,6 +6809,8 @@ func (r *vendorComplianceReportResolver) File(ctx context.Context, obj *types.Ve
 
 // TotalCount is the resolver for the totalCount field.
 func (r *vendorConnectionResolver) TotalCount(ctx context.Context, obj *types.VendorConnection) (int, error) {
+	r.MustBeAuthorized(ctx, obj.ParentID, authz.ActionTotalCount)
+
 	prb := r.ProboService(ctx, obj.ParentID.TenantID())
 
 	switch obj.Resolver.(type) {
@@ -6257,6 +6839,8 @@ func (r *vendorConnectionResolver) TotalCount(ctx context.Context, obj *types.Ve
 
 // Vendor is the resolver for the vendor field.
 func (r *vendorContactResolver) Vendor(ctx context.Context, obj *types.VendorContact) (*types.Vendor, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetVendor)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	// Get the vendor contact to access the VendorID
@@ -6279,6 +6863,8 @@ func (r *vendorContactResolver) Vendor(ctx context.Context, obj *types.VendorCon
 
 // Vendor is the resolver for the vendor field.
 func (r *vendorDataPrivacyAgreementResolver) Vendor(ctx context.Context, obj *types.VendorDataPrivacyAgreement) (*types.Vendor, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetVendor)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	vendor, err := prb.Vendors.Get(ctx, obj.ID)
@@ -6295,6 +6881,8 @@ func (r *vendorDataPrivacyAgreementResolver) Vendor(ctx context.Context, obj *ty
 
 // FileURL is the resolver for the fileUrl field.
 func (r *vendorDataPrivacyAgreementResolver) FileURL(ctx context.Context, obj *types.VendorDataPrivacyAgreement) (string, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetFileUrl)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	fileURL, err := prb.VendorDataPrivacyAgreements.GenerateFileURL(ctx, obj.ID, 1*time.Hour)
@@ -6307,6 +6895,8 @@ func (r *vendorDataPrivacyAgreementResolver) FileURL(ctx context.Context, obj *t
 
 // Vendor is the resolver for the vendor field.
 func (r *vendorRiskAssessmentResolver) Vendor(ctx context.Context, obj *types.VendorRiskAssessment) (*types.Vendor, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetVendor)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	vendor, err := prb.Vendors.Get(ctx, obj.ID)
@@ -6323,6 +6913,8 @@ func (r *vendorRiskAssessmentResolver) Vendor(ctx context.Context, obj *types.Ve
 
 // Vendor is the resolver for the vendor field.
 func (r *vendorServiceResolver) Vendor(ctx context.Context, obj *types.VendorService) (*types.Vendor, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetVendor)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	// Get the vendor service to access the VendorID

@@ -37,6 +37,8 @@ import type {
 } from "/hooks/graph/__generated__/VendorGraphPaginatedFragment.graphql";
 import { SortableTable, SortableTh } from "/components/SortableTable";
 import { SnapshotBanner } from "/components/SnapshotBanner";
+import { Authorized } from "/permissions";
+import { isAuthorized } from "/permissions";
 
 type Vendor = NodeOf<VendorGraphPaginatedFragment$data["vendors"]>;
 
@@ -61,6 +63,11 @@ export default function VendorsPage(props: Props) {
 
   usePageTitle(__("Vendors"));
 
+  const hasAnyAction = !isSnapshotMode && (
+    isAuthorized(organizationId, "Vendor", "updateVendor") ||
+    isAuthorized(organizationId, "Vendor", "deleteVendor")
+  );
+
   return (
     <div className="space-y-6">
       {snapshotId && <SnapshotBanner snapshotId={snapshotId} />}
@@ -71,12 +78,14 @@ export default function VendorsPage(props: Props) {
         )}
       >
         {!isSnapshotMode && (
-          <CreateVendorDialog
-            connection={connectionId}
-            organizationId={organizationId}
-          >
-            <Button icon={IconPlusLarge}>{__("Add vendor")}</Button>
-          </CreateVendorDialog>
+          <Authorized entity="Organization" action="createVendor">
+            <CreateVendorDialog
+              connection={connectionId}
+              organizationId={organizationId}
+            >
+              <Button icon={IconPlusLarge}>{__("Add vendor")}</Button>
+            </CreateVendorDialog>
+          </Authorized>
         )}
       </PageHeader>
       <SortableTable {...pagination}>
@@ -86,7 +95,7 @@ export default function VendorsPage(props: Props) {
             <Th>{__("Accessed At")}</Th>
             <Th>{__("Data Risk")}</Th>
             <Th>{__("Business Risk")}</Th>
-            <Th></Th>
+            {hasAnyAction && <Th></Th>}
           </Tr>
         </Thead>
         <Tbody>
@@ -96,6 +105,7 @@ export default function VendorsPage(props: Props) {
               vendor={vendor}
               organizationId={organizationId}
               connectionId={connectionId}
+              hasAnyAction={hasAnyAction}
             />
           ))}
         </Tbody>
@@ -108,10 +118,12 @@ function VendorRow({
   vendor,
   organizationId,
   connectionId,
+  hasAnyAction,
 }: {
   vendor: Vendor;
   organizationId: string;
   connectionId: string;
+  hasAnyAction: boolean;
 }) {
   const { snapshotId } = useParams<{ snapshotId?: string }>();
   const isSnapshotMode = Boolean(snapshotId);
@@ -144,19 +156,21 @@ function VendorRow({
         <Td>
           <RiskBadge level={latestAssessment?.businessImpact ?? "NONE"} />
         </Td>
-        <Td noLink width={50} className="text-end">
-          {!isSnapshotMode && (
+        {hasAnyAction && (
+          <Td noLink width={50} className="text-end">
             <ActionDropdown>
-              <DropdownItem
-                onClick={deleteVendor}
-                variant="danger"
-                icon={IconTrashCan}
-              >
-                {__("Delete")}
-              </DropdownItem>
+              <Authorized entity="Vendor" action="deleteVendor">
+                <DropdownItem
+                  onClick={deleteVendor}
+                  variant="danger"
+                  icon={IconTrashCan}
+                >
+                  {__("Delete")}
+                </DropdownItem>
+              </Authorized>
             </ActionDropdown>
-          )}
-        </Td>
+          </Td>
+        )}
       </Tr>
     </>
   );

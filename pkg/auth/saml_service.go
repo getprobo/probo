@@ -407,7 +407,7 @@ func (s *SAMLService) InitiateSAMLLogin(
 type SAMLUserInfo struct {
 	Email          string
 	FullName       string
-	Role           *coredata.Role
+	Role           *coredata.MembershipRole
 	SAMLSubject    string
 	OrganizationID gid.GID
 	SAMLConfigID   gid.GID

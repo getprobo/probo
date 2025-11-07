@@ -268,7 +268,7 @@ func (s *Service) ExportJob(ctx context.Context) error {
 		return unknownTypeErr
 	}
 
-	exportJob, buildErr := exportService.BuildAndUploadExport(ctx, exportJob.ID)
+	updatedExportJob, buildErr := exportService.BuildAndUploadExport(ctx, exportJob.ID)
 	if buildErr != nil {
 		if err := s.commitFailedExport(ctx, exportJob, buildErr); err != nil {
 			return fmt.Errorf(
@@ -280,6 +280,7 @@ func (s *Service) ExportJob(ctx context.Context) error {
 		}
 		return fmt.Errorf("cannot build and upload %s export: %w", exportJob.Type, buildErr)
 	}
+	exportJob = updatedExportJob
 
 	if emailErr := exportService.SendExportEmail(ctx, *exportJob.FileID, exportJob.RecipientName, exportJob.RecipientEmail); emailErr != nil {
 		if err := s.commitFailedExport(ctx, exportJob, emailErr); err != nil {

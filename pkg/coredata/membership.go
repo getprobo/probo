@@ -19,25 +19,26 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"strings"
 	"time"
 
-	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/page"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 )
 
 type (
 	Membership struct {
-		ID             gid.GID   `db:"id"`
-		UserID         gid.GID   `db:"user_id"`
-		OrganizationID gid.GID   `db:"organization_id"`
-		Role           Role      `db:"role"`
-		FullName       string    `db:"full_name"`
-		EmailAddress   string    `db:"email_address"`
-		CreatedAt      time.Time `db:"created_at"`
-		UpdatedAt      time.Time `db:"updated_at"`
+		ID             gid.GID        `db:"id"`
+		UserID         gid.GID        `db:"user_id"`
+		OrganizationID gid.GID        `db:"organization_id"`
+		Role           MembershipRole `db:"role"`
+		FullName       string         `db:"full_name"`
+		EmailAddress   string         `db:"email_address"`
+		CreatedAt      time.Time      `db:"created_at"`
+		UpdatedAt      time.Time      `db:"updated_at"`
 	}
 
 	Memberships []*Membership
@@ -185,6 +186,83 @@ JOIN
 	return nil
 }
 
+// LoadRoleByUserAndEntityID loads a user's role by querying any entity to extract its organization_id
+func (m *Membership) LoadRoleByUserAndEntityID(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	userID gid.GID,
+	entityID gid.GID,
+) error {
+	entityType := entityID.EntityType()
+
+	// For organization, the entity ID is the organization ID
+	if entityType == OrganizationEntityType {
+		return m.LoadByUserAndOrg(ctx, conn, scope, userID, entityID)
+	}
+
+	tableName, ok := EntityTable(entityType)
+	if !ok {
+		return fmt.Errorf("unsupported entity type for role lookup: %d", entityType)
+	}
+
+	// Build scope fragment with table alias to avoid ambiguity
+	scopeFragment := scope.SQLFragment()
+	// Replace column references with table-qualified versions
+	scopeFragment = strings.ReplaceAll(scopeFragment, "tenant_id =", "m.tenant_id =")
+
+	query := fmt.Sprintf(`
+SELECT
+	m.id,
+	m.user_id,
+	m.organization_id,
+	m.role,
+	m.created_at,
+	m.updated_at
+FROM
+	authz_memberships m
+	INNER JOIN %s e ON e.id = @entity_id
+WHERE
+	%s
+	AND m.user_id = @user_id
+	AND m.organization_id = e.organization_id
+LIMIT 1;
+`, tableName, scopeFragment)
+
+	args := pgx.NamedArgs{
+		"user_id":   userID,
+		"entity_id": entityID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, query, args)
+	if err != nil {
+		return fmt.Errorf("cannot query membership by entity: %w", err)
+	}
+	defer rows.Close()
+
+	if !rows.Next() {
+		return &ErrMembershipNotFound{UserID: userID, OrgID: entityID}
+	}
+
+	var membership Membership
+	err = rows.Scan(
+		&membership.ID,
+		&membership.UserID,
+		&membership.OrganizationID,
+		&membership.Role,
+		&membership.CreatedAt,
+		&membership.UpdatedAt,
+	)
+
+	if err != nil {
+		return fmt.Errorf("cannot scan membership: %w", err)
+	}
+
+	*m = membership
+	return nil
+}
+
 func (m *Membership) LoadByUserAndOrg(
 	ctx context.Context,
 	conn pg.Conn,
@@ -195,17 +273,17 @@ func (m *Membership) LoadByUserAndOrg(
 	query := `
 WITH mbr AS (
 	SELECT
-		id,
-		user_id,
-		organization_id,
-		role,
-		created_at,
-		updated_at
+		am.id,
+		am.user_id,
+		am.organization_id,
+		am.role,
+		am.created_at,
+		am.updated_at
 	FROM
-		authz_memberships
+		authz_memberships am
 	WHERE
-		user_id = @user_id
-		AND organization_id = @organization_id
+		am.user_id = @user_id
+		AND am.organization_id = @organization_id
 		AND %s
 )
 SELECT
@@ -223,7 +301,12 @@ JOIN
     users u ON mbr.user_id = u.id
 `
 
-	query = fmt.Sprintf(query, scope.SQLFragment())
+	// Build scope fragment with table alias
+	scopeFragment := scope.SQLFragment()
+	// Replace column references with table-qualified versions
+	scopeFragment = strings.ReplaceAll(scopeFragment, "tenant_id =", "am.tenant_id =")
+
+	query = fmt.Sprintf(query, scopeFragment)
 
 	args := pgx.StrictNamedArgs{
 		"user_id":         userID,
@@ -467,68 +550,4 @@ WHERE
 		return 0, fmt.Errorf("cannot count memberships: %w", err)
 	}
 	return count, nil
-}
-
-func LoadUserIDsByOrganizationID(
-	ctx context.Context,
-	conn pg.Conn,
-	scope Scoper,
-	organizationID gid.GID,
-) ([]gid.GID, error) {
-	query := `
-SELECT user_id
-FROM authz_memberships
-WHERE organization_id = @organization_id AND %s
-`
-	query = fmt.Sprintf(query, scope.SQLFragment())
-	args := pgx.StrictNamedArgs{"organization_id": organizationID}
-	maps.Copy(args, scope.SQLArguments())
-
-	rows, err := conn.Query(ctx, query, args)
-	if err != nil {
-		return nil, fmt.Errorf("cannot query memberships: %w", err)
-	}
-
-	var userIDs []gid.GID
-	for rows.Next() {
-		var userID gid.GID
-		if err := rows.Scan(&userID); err != nil {
-			rows.Close()
-			return nil, fmt.Errorf("cannot scan user_id: %w", err)
-		}
-		userIDs = append(userIDs, userID)
-	}
-	rows.Close()
-
-	return userIDs, nil
-}
-
-func UpdateMembershipUserID(
-	ctx context.Context,
-	conn pg.Conn,
-	scope Scoper,
-	oldUserID gid.GID,
-	newUserID gid.GID,
-	organizationID gid.GID,
-) error {
-	query := `
-UPDATE authz_memberships
-SET user_id = @new_user_id, updated_at = @updated_at
-WHERE user_id = @old_user_id AND organization_id = @organization_id AND %s
-`
-	query = fmt.Sprintf(query, scope.SQLFragment())
-	args := pgx.StrictNamedArgs{
-		"new_user_id":     newUserID,
-		"old_user_id":     oldUserID,
-		"organization_id": organizationID,
-		"updated_at":      time.Now(),
-	}
-	maps.Copy(args, scope.SQLArguments())
-
-	_, err := conn.Exec(ctx, query, args)
-	if err != nil {
-		return fmt.Errorf("cannot update membership: %w", err)
-	}
-
-	return nil
 }

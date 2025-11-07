@@ -27,9 +27,10 @@ import (
 
 type (
 	ControlAudit struct {
-		ControlID gid.GID   `db:"control_id"`
-		AuditID   gid.GID   `db:"audit_id"`
-		CreatedAt time.Time `db:"created_at"`
+		ControlID      gid.GID   `db:"control_id"`
+		AuditID        gid.GID   `db:"audit_id"`
+		OrganizationID gid.GID   `db:"organization_id"`
+		CreatedAt      time.Time `db:"created_at"`
 	}
 
 	ControlAudits []*ControlAudit
@@ -45,12 +46,14 @@ INSERT INTO
     controls_audits (
         control_id,
         audit_id,
+        organization_id,
         tenant_id,
         created_at
     )
 VALUES (
     @control_id,
     @audit_id,
+    @organization_id,
     @tenant_id,
     @created_at
 )
@@ -58,10 +61,11 @@ ON CONFLICT (control_id, audit_id) DO NOTHING;
 `
 
 	args := pgx.StrictNamedArgs{
-		"control_id": ca.ControlID,
-		"audit_id":   ca.AuditID,
-		"tenant_id":  scope.GetTenantID(),
-		"created_at": ca.CreatedAt,
+		"control_id":      ca.ControlID,
+		"audit_id":        ca.AuditID,
+		"organization_id": ca.OrganizationID,
+		"tenant_id":       scope.GetTenantID(),
+		"created_at":      ca.CreatedAt,
 	}
 	_, err := conn.Exec(ctx, q, args)
 	return err

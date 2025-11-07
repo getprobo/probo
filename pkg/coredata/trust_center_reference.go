@@ -30,15 +30,16 @@ import (
 
 type (
 	TrustCenterReference struct {
-		ID            gid.GID   `db:"id"`
-		TrustCenterID gid.GID   `db:"trust_center_id"`
-		Name          string    `db:"name"`
-		Description   *string   `db:"description"`
-		WebsiteURL    string    `db:"website_url"`
-		LogoFileID    gid.GID   `db:"logo_file_id"`
-		Rank          int       `db:"rank"`
-		CreatedAt     time.Time `db:"created_at"`
-		UpdatedAt     time.Time `db:"updated_at"`
+		ID             gid.GID   `db:"id"`
+		OrganizationID gid.GID   `db:"organization_id"`
+		TrustCenterID  gid.GID   `db:"trust_center_id"`
+		Name           string    `db:"name"`
+		Description    *string   `db:"description"`
+		WebsiteURL     string    `db:"website_url"`
+		LogoFileID     gid.GID   `db:"logo_file_id"`
+		Rank           int       `db:"rank"`
+		CreatedAt      time.Time `db:"created_at"`
+		UpdatedAt      time.Time `db:"updated_at"`
 	}
 
 	TrustCenterReferences []*TrustCenterReference
@@ -83,6 +84,7 @@ func (t *TrustCenterReference) LoadByID(
 	q := `
 SELECT
     id,
+    organization_id,
     trust_center_id,
     name,
     description,
@@ -128,6 +130,7 @@ INSERT INTO
     trust_center_references (
         tenant_id,
         id,
+        organization_id,
         trust_center_id,
         name,
         description,
@@ -140,6 +143,7 @@ INSERT INTO
 VALUES (
     @tenant_id,
     @id,
+    @organization_id,
     @trust_center_id,
     @name,
     @description,
@@ -155,6 +159,7 @@ RETURNING rank;
 	args := pgx.StrictNamedArgs{
 		"tenant_id":       scope.GetTenantID(),
 		"id":              t.ID,
+		"organization_id": t.OrganizationID,
 		"trust_center_id": t.TrustCenterID,
 		"name":            t.Name,
 		"description":     t.Description,
@@ -308,6 +313,7 @@ func (t *TrustCenterReferences) LoadByTrustCenterID(
 	q := `
 SELECT
     id,
+    organization_id,
     trust_center_id,
     name,
     description,

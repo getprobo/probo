@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"slices"
 	"time"
 
 	"go.gearno.de/kit/pg"
@@ -35,6 +36,14 @@ type TenantAccessError struct {
 
 func (e *TenantAccessError) Error() string {
 	return "not authorized"
+}
+
+type PermissionDeniedError struct {
+	Message string
+}
+
+func (e *PermissionDeniedError) Error() string {
+	return e.Message
 }
 
 type (
@@ -103,6 +112,27 @@ func (s *Service) GetAllUserOrganizations(
 	return organizations, err
 }
 
+func (s *Service) GetUserOrganizationsWithRole(
+	ctx context.Context,
+	userID gid.GID,
+	role coredata.MembershipRole,
+) (coredata.Organizations, error) {
+	organizations := coredata.Organizations{}
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := organizations.LoadAllByUserIDWithRole(ctx, conn, userID, role); err != nil {
+				return fmt.Errorf("cannot load user organizations with role: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	return organizations, err
+}
+
 func (s *Service) GetAllOrganizationsForUserAPIKeyId(
 	ctx context.Context,
 	userAPIKeyID gid.GID,
@@ -141,70 +171,6 @@ func (s *Service) GetUserOrganizations(
 	)
 
 	return organizations, err
-}
-
-func (s *Service) AcceptInvitation(
-	ctx context.Context,
-	token string,
-	userID gid.GID,
-) error {
-	payload, err := statelesstoken.ValidateToken[coredata.InvitationData](
-		s.tokenSecret,
-		TokenTypeOrganizationInvitation,
-		token,
-	)
-
-	if err != nil {
-		return fmt.Errorf("invalid invitation token: %w", err)
-	}
-
-	invitationData := payload.Data
-	scope := coredata.NewScope(invitationData.InvitationID.TenantID())
-
-	return s.pg.WithTx(
-		ctx,
-		func(tx pg.Conn) error {
-			invitation := &coredata.Invitation{}
-			if err := invitation.LoadByID(ctx, tx, scope, invitationData.InvitationID); err != nil {
-				var errInvitationNotFound *coredata.ErrInvitationNotFound
-				if errors.As(err, &errInvitationNotFound) {
-					return fmt.Errorf("invitation was deleted or no longer exists")
-				}
-				return fmt.Errorf("cannot load invitation: %w", err)
-			}
-
-			if invitation.AcceptedAt != nil {
-				return fmt.Errorf("invitation already accepted")
-			}
-
-			if time.Now().After(invitation.ExpiresAt) {
-				return fmt.Errorf("invitation expired")
-			}
-
-			now := time.Now()
-			membershipID := gid.New(scope.GetTenantID(), coredata.MembershipEntityType)
-
-			membership := &coredata.Membership{
-				ID:             membershipID,
-				UserID:         userID,
-				OrganizationID: invitation.OrganizationID,
-				Role:           invitation.Role,
-				CreatedAt:      now,
-				UpdatedAt:      now,
-			}
-
-			if err := membership.Create(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot add user to organization: %w", err)
-			}
-
-			invitation.AcceptedAt = &now
-			if err := invitation.Update(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot mark invitation as accepted: %w", err)
-			}
-
-			return nil
-		},
-	)
 }
 
 func (s *Service) AcceptInvitationByID(
@@ -274,36 +240,11 @@ func (s *Service) AcceptInvitationByID(
 	return acceptedInvitation, nil
 }
 
-func (s *Service) GetUserInvitations(
-	ctx context.Context,
-	email string,
-	cursor *page.Cursor[coredata.InvitationOrderField],
-	filter *coredata.InvitationFilter,
-) (*page.Page[*coredata.Invitation, coredata.InvitationOrderField], error) {
-	var invitations coredata.Invitations
-
-	err := s.pg.WithConn(
-		ctx,
-		func(conn pg.Conn) error {
-			if err := invitations.LoadByEmail(ctx, conn, coredata.NewNoScope(), email, cursor, filter); err != nil {
-				return fmt.Errorf("cannot load invitations: %w", err)
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return page.NewPage(invitations, cursor), nil
-}
-
 type UserInvitation struct {
 	ID             gid.GID
 	Email          string
 	FullName       string
-	Role           coredata.Role
+	Role           coredata.MembershipRole
 	ExpiresAt      time.Time
 	AcceptedAt     *time.Time
 	CreatedAt      time.Time
@@ -417,7 +358,7 @@ func (s *TenantAuthzService) AddUserToOrganization(
 	ctx context.Context,
 	userID gid.GID,
 	orgID gid.GID,
-	role coredata.Role,
+	role coredata.MembershipRole,
 ) error {
 	now := time.Now()
 	membershipID := gid.New(s.scope.GetTenantID(), coredata.MembershipEntityType)
@@ -538,6 +479,30 @@ func (s *TenantAuthzService) DeleteInvitation(
 	)
 }
 
+func (s *TenantAuthzService) GetMembershipByUserAndOrganizationID(
+	ctx context.Context,
+	userID gid.GID,
+	orgID gid.GID,
+) (*coredata.Membership, error) {
+	membership := &coredata.Membership{}
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := membership.LoadByUserAndOrg(ctx, conn, s.scope, userID, orgID); err != nil {
+				return fmt.Errorf("cannot load membership: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return membership, nil
+}
+
 func (s *TenantAuthzService) GetMembershipsByOrganizationID(
 	ctx context.Context,
 	orgID gid.GID,
@@ -609,41 +574,11 @@ func (s *TenantAuthzService) CountOrganizationUsers(
 	return count, nil
 }
 
-func (s *TenantAuthzService) CanUserAccessOrganization(
-	ctx context.Context,
-	userID gid.GID,
-	orgID gid.GID,
-) (bool, error) {
-	membership := &coredata.Membership{}
-
-	haveAccess := false
-
-	err := s.pg.WithConn(
-		ctx,
-		func(conn pg.Conn) error {
-			if err := membership.LoadByUserAndOrg(ctx, conn, s.scope, userID, orgID); err != nil {
-				if _, ok := err.(coredata.ErrMembershipNotFound); ok {
-					return nil // Not an error, just no access
-				}
-				return fmt.Errorf("cannot check organization access: %w", err)
-			}
-			haveAccess = true
-			return nil
-		},
-	)
-
-	if err != nil {
-		return false, err
-	}
-
-	return haveAccess, nil
-}
-
 func (s *TenantAuthzService) GetUserRoleInOrganization(
 	ctx context.Context,
 	userID gid.GID,
 	orgID gid.GID,
-) (coredata.Role, error) {
+) (coredata.MembershipRole, error) {
 	membership := &coredata.Membership{}
 
 	err := s.pg.WithConn(
@@ -690,30 +625,55 @@ func (s *TenantAuthzService) RemoveMemberFromOrganization(
 	)
 }
 
-func (s *TenantAuthzService) UpdateUserRole(
+func (s *TenantAuthzService) UpdateMembershipRole(
 	ctx context.Context,
-	userID gid.GID,
 	orgID gid.GID,
-	newRole coredata.Role,
-) error {
-	return s.pg.WithTx(
+	memberID gid.GID,
+	newRole coredata.MembershipRole,
+) (*coredata.Membership, error) {
+	membership := &coredata.Membership{}
+
+	err := s.pg.WithTx(
 		ctx,
 		func(tx pg.Conn) error {
-			membership := &coredata.Membership{}
-			if err := membership.LoadByUserAndOrg(ctx, tx, s.scope, userID, orgID); err != nil {
-				return fmt.Errorf("cannot find membership: %w", err)
+			if err := membership.LoadByID(ctx, tx, s.scope, memberID); err != nil {
+				return fmt.Errorf("cannot load membership: %w", err)
+			}
+
+			if membership.OrganizationID != orgID {
+				return fmt.Errorf("membership does not belong to organization")
+			}
+
+			// If the new role cannot create API keys, delete all related API key memberships
+			if newRole != coredata.MembershipRoleOwner {
+				var apiKeyMemberships coredata.UserAPIKeyMemberships
+				if err := apiKeyMemberships.LoadByMembershipID(ctx, tx, s.scope, memberID); err != nil {
+					return fmt.Errorf("cannot load api key memberships: %w", err)
+				}
+
+				for _, apiKeyMembership := range apiKeyMemberships {
+					if err := apiKeyMembership.Delete(ctx, tx, s.scope); err != nil {
+						return fmt.Errorf("cannot delete api key membership: %w", err)
+					}
+				}
 			}
 
 			membership.Role = newRole
 			membership.UpdatedAt = time.Now()
 
 			if err := membership.Update(ctx, tx, s.scope); err != nil {
-				return fmt.Errorf("cannot update user role: %w", err)
+				return fmt.Errorf("cannot update membership role: %w", err)
 			}
 
 			return nil
 		},
 	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return membership, nil
 }
 
 func (s *TenantAuthzService) InviteUserToOrganization(
@@ -721,7 +681,7 @@ func (s *TenantAuthzService) InviteUserToOrganization(
 	organizationID gid.GID,
 	emailAddress string,
 	fullName string,
-	role coredata.Role,
+	role coredata.MembershipRole,
 ) (*coredata.Invitation, error) {
 	var invitation *coredata.Invitation
 
@@ -827,7 +787,7 @@ func (s *TenantAuthzService) EnsureSAMLMembership(
 	ctx context.Context,
 	userID gid.GID,
 	organizationID gid.GID,
-	role *coredata.Role,
+	role *coredata.MembershipRole,
 ) error {
 	now := time.Now()
 
@@ -842,7 +802,7 @@ func (s *TenantAuthzService) EnsureSAMLMembership(
 					return fmt.Errorf("cannot load membership: %w", err)
 				}
 
-				membershipRole := coredata.RoleMember
+				membershipRole := coredata.MembershipRoleViewer
 				if role != nil {
 					membershipRole = *role
 				}
@@ -878,15 +838,94 @@ func (s *TenantAuthzService) EnsureSAMLMembership(
 	)
 }
 
-// This is a placeholder for future permission system
-func (s *TenantAuthzService) HasPermission(
+func (s *TenantAuthzService) Authorize(
 	ctx context.Context,
-	userID gid.GID,
-	orgID gid.GID,
-	resource string,
-	action string,
-) (bool, error) {
-	// For now, just check if user is a member
-	// In the future, this will check specific permissions based on role
-	return s.CanUserAccessOrganization(ctx, userID, orgID)
+	user *coredata.User,
+	apiKey *coredata.UserAPIKey,
+	entityGID gid.GID,
+	action Action,
+) error {
+	requiredRoles := GetPermissionsForAction(entityGID.EntityType(), action)
+	if requiredRoles == nil {
+		return &PermissionDeniedError{
+			Message: fmt.Sprintf("no permissions defined for action %s on entity type %d", action, entityGID.EntityType()),
+		}
+	}
+
+	role, err := s.GetUserOrAPIKeyRole(ctx, user, apiKey, entityGID)
+	if err != nil {
+		return fmt.Errorf("cannot get user or API key role: %w", err)
+	}
+
+	if !slices.Contains(requiredRoles, role) {
+		return &PermissionDeniedError{
+			Message: fmt.Sprintf("role %s not authorized for action %s, requires one of %v", role, action, requiredRoles),
+		}
+	}
+
+	return nil
+}
+
+func (s *TenantAuthzService) CanAssignRole(
+	ctx context.Context,
+	user *coredata.User,
+	apiKey *coredata.UserAPIKey,
+	entityGID gid.GID,
+	targetRole coredata.MembershipRole,
+) error {
+	currentRole, err := s.GetUserOrAPIKeyRole(ctx, user, apiKey, entityGID)
+	if err != nil {
+		return fmt.Errorf("cannot get user or API key role: %w", err)
+	}
+
+	if currentRole == RoleOwner || currentRole == RoleFull {
+		return nil
+	}
+
+	if currentRole == RoleAdmin {
+		if targetRole == coredata.MembershipRoleOwner {
+			return &PermissionDeniedError{Message: "admin users cannot assign owner role"}
+		}
+		return nil
+	}
+
+	return &PermissionDeniedError{Message: fmt.Sprintf("role %s cannot assign roles", currentRole)}
+}
+
+func (s *TenantAuthzService) GetUserOrAPIKeyRole(
+	ctx context.Context,
+	user *coredata.User,
+	apiKey *coredata.UserAPIKey,
+	entityGID gid.GID,
+) (Role, error) {
+	var role Role
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			if user != nil {
+				membership := &coredata.Membership{}
+				if err := membership.LoadRoleByUserAndEntityID(ctx, conn, s.scope, user.ID, entityGID); err != nil {
+					return fmt.Errorf("cannot get user role: %w", err)
+				}
+				role = Role(membership.Role.String())
+				return nil
+			}
+
+			if apiKey != nil {
+				apiKeyMembership := &coredata.UserAPIKeyMembership{}
+				if err := apiKeyMembership.LoadRoleByAPIKeyAndEntityID(ctx, conn, s.scope, apiKey.ID, entityGID); err != nil {
+					return fmt.Errorf("cannot get API key role: %w", err)
+				}
+				role = Role(apiKeyMembership.Role.String())
+				return nil
+			}
+
+			return fmt.Errorf("no user or API key provided")
+		},
+	)
+	if err != nil {
+		return "", err
+	}
+
+	return role, nil
 }

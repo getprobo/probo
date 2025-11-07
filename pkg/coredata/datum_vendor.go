@@ -41,6 +41,7 @@ func (dv DatumVendors) Merge(
 	conn pg.Conn,
 	scope Scoper,
 	datumID gid.GID,
+	organizationID gid.GID,
 	vendorIDs []gid.GID,
 ) error {
 	q := `
@@ -49,6 +50,7 @@ WITH vendor_ids AS (
 		unnest(@vendor_ids::text[]) AS vendor_id,
 		@tenant_id AS tenant_id,
 		@datum_id AS datum_id,
+		@organization_id AS organization_id,
 		@created_at::timestamptz AS created_at
 )
 MERGE INTO data_vendors AS tgt
@@ -57,18 +59,19 @@ ON tgt.tenant_id = src.tenant_id
 	AND tgt.datum_id = src.datum_id
 	AND tgt.vendor_id = src.vendor_id
 WHEN NOT MATCHED THEN
-	INSERT (tenant_id, datum_id, vendor_id, created_at)
-	VALUES (src.tenant_id, src.datum_id, src.vendor_id, src.created_at)
+	INSERT (tenant_id, datum_id, vendor_id, organization_id, created_at)
+	VALUES (src.tenant_id, src.datum_id, src.vendor_id, src.organization_id, src.created_at)
 WHEN NOT MATCHED BY SOURCE
 	AND tgt.tenant_id = @tenant_id AND tgt.datum_id = @datum_id
 	THEN DELETE
 	`
 
 	args := pgx.StrictNamedArgs{
-		"tenant_id":  scope.GetTenantID(),
-		"datum_id":   datumID,
-		"created_at": time.Now(),
-		"vendor_ids": vendorIDs,
+		"tenant_id":       scope.GetTenantID(),
+		"datum_id":        datumID,
+		"organization_id": organizationID,
+		"created_at":      time.Now(),
+		"vendor_ids":      vendorIDs,
 	}
 
 	_, err := conn.Exec(ctx, q, args)
@@ -84,26 +87,29 @@ func (dv DatumVendors) Insert(
 	conn pg.Conn,
 	scope Scoper,
 	datumID gid.GID,
+	organizationID gid.GID,
 	vendorIDs []gid.GID,
 ) error {
 	q := `
 WITH vendor_ids AS (
 	SELECT unnest(@vendor_ids::text[]) AS vendor_id
 )
-INSERT INTO data_vendors (tenant_id, datum_id, vendor_id, created_at)
+INSERT INTO data_vendors (tenant_id, datum_id, vendor_id, organization_id, created_at)
 SELECT
 	@tenant_id::text AS tenant_id,
 	@datum_id::text AS datum_id,
 	vendor_id,
+	@organization_id::text AS organization_id,
 	@created_at::timestamptz AS created_at
 FROM vendor_ids
 `
 
 	args := pgx.StrictNamedArgs{
-		"tenant_id":  scope.GetTenantID(),
-		"datum_id":   datumID,
-		"created_at": time.Now(),
-		"vendor_ids": vendorIDs,
+		"tenant_id":       scope.GetTenantID(),
+		"datum_id":        datumID,
+		"organization_id": organizationID,
+		"created_at":      time.Now(),
+		"vendor_ids":      vendorIDs,
 	}
 
 	_, err := conn.Exec(ctx, q, args)

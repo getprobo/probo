@@ -120,7 +120,7 @@ export default function APIKeysPage() {
       try {
         const [apiKeysResponse, organizationsResponse] = await Promise.all([
           fetch('/connect/api-keys', { credentials: 'include' }),
-          fetch('/connect/organizations', { credentials: 'include' }),
+          fetch('/connect/organizations?role=OWNER', { credentials: 'include' }),
         ]);
 
         if (apiKeysResponse.status === 401 || organizationsResponse.status === 401) {

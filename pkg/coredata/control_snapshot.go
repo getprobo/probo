@@ -27,9 +27,10 @@ import (
 
 type (
 	ControlSnapshot struct {
-		ControlID  gid.GID   `db:"control_id"`
-		SnapshotID gid.GID   `db:"snapshot_id"`
-		CreatedAt  time.Time `db:"created_at"`
+		ControlID      gid.GID   `db:"control_id"`
+		SnapshotID     gid.GID   `db:"snapshot_id"`
+		OrganizationID gid.GID   `db:"organization_id"`
+		CreatedAt      time.Time `db:"created_at"`
 	}
 
 	ControlSnapshots []*ControlSnapshot
@@ -45,12 +46,14 @@ INSERT INTO
     controls_snapshots (
         control_id,
         snapshot_id,
+        organization_id,
         tenant_id,
         created_at
     )
 VALUES (
     @control_id,
     @snapshot_id,
+    @organization_id,
     @tenant_id,
     @created_at
 )
@@ -58,10 +61,11 @@ ON CONFLICT (control_id, snapshot_id) DO NOTHING;
 `
 
 	args := pgx.StrictNamedArgs{
-		"control_id":  cs.ControlID,
-		"snapshot_id": cs.SnapshotID,
-		"tenant_id":   scope.GetTenantID(),
-		"created_at":  cs.CreatedAt,
+		"control_id":      cs.ControlID,
+		"snapshot_id":     cs.SnapshotID,
+		"organization_id": cs.OrganizationID,
+		"tenant_id":       scope.GetTenantID(),
+		"created_at":      cs.CreatedAt,
 	}
 	_, err := conn.Exec(ctx, q, args)
 	return err

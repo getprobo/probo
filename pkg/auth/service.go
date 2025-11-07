@@ -46,6 +46,8 @@ type (
 		invitationTokenValidity time.Duration
 	}
 
+	ErrCreateOrganizationDisabled struct{}
+
 	TenantAuthService struct {
 		pg            *pg.Client
 		encryptionKey cipher.EncryptionKey
@@ -192,6 +194,10 @@ func (e ErrSAMLAutoSignupDisabled) Error() string {
 	return "SAML auto-signup is disabled for this organization"
 }
 
+func (e ErrCreateOrganizationDisabled) Error() string {
+	return "organization creation is disabled for users without existing admin or owner membership"
+}
+
 func (e ErrSAMLAuthRequired) Error() string {
 	return "SAML authentication required for this organization"
 }
@@ -230,6 +236,28 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantAuthService {
 		tokenSecret:   s.tokenSecret,
 		scope:         coredata.NewScope(tenantID),
 	}
+}
+
+func (s Service) CanCreateOrganization(ctx context.Context, userID gid.GID) error {
+	if !s.disableSignup {
+		return nil
+	}
+
+	var memberships coredata.Memberships
+	err := s.pg.WithConn(ctx, func(conn pg.Conn) error {
+		return memberships.LoadByUserID(ctx, conn, coredata.NewNoScope(), userID)
+	})
+	if err != nil {
+		return fmt.Errorf("cannot load user memberships: %w", err)
+	}
+
+	for _, membership := range memberships {
+		if membership.Role == coredata.MembershipRoleOwner || membership.Role == coredata.MembershipRoleAdmin {
+			return nil
+		}
+	}
+
+	return &ErrCreateOrganizationDisabled{}
 }
 
 func (s Service) ForgetPassword(
@@ -1351,13 +1379,20 @@ func (s *Service) CreateUserAPIKey(
 
 			for _, membership := range memberships {
 				scope := coredata.NewScope(membership.MembershipID.TenantID())
+
+				var m coredata.Membership
+				if err := m.LoadByID(ctx, tx, scope, membership.MembershipID); err != nil {
+					return fmt.Errorf("cannot load membership: %w", err)
+				}
+
 				userAPIKeyMembership := &coredata.UserAPIKeyMembership{
-					ID:           gid.New(membership.MembershipID.TenantID(), coredata.UserAPIKeyMembershipEntityType),
-					UserAPIKeyID: userAPIKey.ID,
-					MembershipID: membership.MembershipID,
-					Role:         membership.Role,
-					CreatedAt:    now,
-					UpdatedAt:    now,
+					ID:             gid.New(membership.MembershipID.TenantID(), coredata.UserAPIKeyMembershipEntityType),
+					UserAPIKeyID:   userAPIKey.ID,
+					MembershipID:   membership.MembershipID,
+					Role:           membership.Role,
+					OrganizationID: m.OrganizationID,
+					CreatedAt:      now,
+					UpdatedAt:      now,
 				}
 
 				if err := userAPIKeyMembership.Insert(ctx, tx, scope); err != nil {
@@ -1513,13 +1548,20 @@ func (s *Service) UpdateUserAPIKeyMemberships(
 			now := time.Now()
 			for _, membership := range memberships {
 				scope := coredata.NewScope(membership.MembershipID.TenantID())
+
+				var m coredata.Membership
+				if err := m.LoadByID(ctx, tx, scope, membership.MembershipID); err != nil {
+					return fmt.Errorf("cannot load membership: %w", err)
+				}
+
 				userAPIKeyMembership := &coredata.UserAPIKeyMembership{
-					ID:           gid.New(membership.MembershipID.TenantID(), coredata.UserAPIKeyMembershipEntityType),
-					UserAPIKeyID: userAPIKey.ID,
-					MembershipID: membership.MembershipID,
-					Role:         membership.Role,
-					CreatedAt:    now,
-					UpdatedAt:    now,
+					ID:             gid.New(membership.MembershipID.TenantID(), coredata.UserAPIKeyMembershipEntityType),
+					UserAPIKeyID:   userAPIKey.ID,
+					MembershipID:   membership.MembershipID,
+					Role:           membership.Role,
+					OrganizationID: m.OrganizationID,
+					CreatedAt:      now,
+					UpdatedAt:      now,
 				}
 
 				if err := userAPIKeyMembership.Insert(ctx, tx, scope); err != nil {

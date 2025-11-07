@@ -27,10 +27,11 @@ import (
 
 type (
 	RiskDocument struct {
-		RiskID     gid.GID      `db:"risk_id"`
-		DocumentID gid.GID      `db:"document_id"`
-		TenantID   gid.TenantID `db:"tenant_id"`
-		CreatedAt  time.Time    `db:"created_at"`
+		RiskID         gid.GID      `db:"risk_id"`
+		DocumentID     gid.GID      `db:"document_id"`
+		OrganizationID gid.GID      `db:"organization_id"`
+		TenantID       gid.TenantID `db:"tenant_id"`
+		CreatedAt      time.Time    `db:"created_at"`
 	}
 
 	RiskDocuments []*RiskDocument
@@ -46,22 +47,25 @@ INSERT INTO
     risks_documents (
         risk_id,
         document_id,
+        organization_id,
         tenant_id,
         created_at
     )
 VALUES (
     @risk_id,
     @document_id,
+    @organization_id,
     @tenant_id,
     @created_at
 );
 `
 
 	args := pgx.StrictNamedArgs{
-		"risk_id":     rp.RiskID,
-		"document_id": rp.DocumentID,
-		"tenant_id":   scope.GetTenantID(),
-		"created_at":  rp.CreatedAt,
+		"risk_id":         rp.RiskID,
+		"document_id":     rp.DocumentID,
+		"organization_id": rp.OrganizationID,
+		"tenant_id":       scope.GetTenantID(),
+		"created_at":      rp.CreatedAt,
 	}
 	_, err := conn.Exec(ctx, q, args)
 	return err

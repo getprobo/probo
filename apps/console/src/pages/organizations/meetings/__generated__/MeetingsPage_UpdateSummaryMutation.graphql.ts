@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<60e0c9d7301cff5c1df299e76debb633>>
+ * @generated SignedSource<<1fff8c5cca1610284185c485630e84de>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -19,6 +19,7 @@ export type MeetingsPage_UpdateSummaryMutation$variables = {
 export type MeetingsPage_UpdateSummaryMutation$data = {
   readonly updateOrganizationContext: {
     readonly context: {
+      readonly organizationId: string;
       readonly summary: string | null | undefined;
     };
   };
@@ -63,6 +64,13 @@ v1 = [
             "alias": null,
             "args": null,
             "kind": "ScalarField",
+            "name": "organizationId",
+            "storageKey": null
+          },
+          {
+            "alias": null,
+            "args": null,
+            "kind": "ScalarField",
             "name": "summary",
             "storageKey": null
           }
@@ -91,16 +99,16 @@ return {
     "selections": (v1/*: any*/)
   },
   "params": {
-    "cacheID": "e6bead1dde5239f3cfd2fa1440191454",
+    "cacheID": "cb37cdde6dc5ac655a7cefc63d9e72e7",
     "id": null,
     "metadata": {},
     "name": "MeetingsPage_UpdateSummaryMutation",
     "operationKind": "mutation",
-    "text": "mutation MeetingsPage_UpdateSummaryMutation(\n  $input: UpdateOrganizationContextInput!\n) {\n  updateOrganizationContext(input: $input) {\n    context {\n      summary\n    }\n  }\n}\n"
+    "text": "mutation MeetingsPage_UpdateSummaryMutation(\n  $input: UpdateOrganizationContextInput!\n) {\n  updateOrganizationContext(input: $input) {\n    context {\n      organizationId\n      summary\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "f354a34b18a449f02508c45d0e7d9dc5";
+(node as any).hash = "8bfa5b636dbc3535dbed22e1869bc941";
 
 export default node;

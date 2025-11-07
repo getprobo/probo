@@ -122,6 +122,7 @@ func (s FrameworkService) RequestExport(
 
 		exportJob = &coredata.ExportJob{
 			ID:             exportJobID,
+			OrganizationID: framework.OrganizationID,
 			Type:           coredata.ExportJobTypeFramework,
 			Arguments:      argsJSON,
 			Status:         coredata.ExportJobStatusPending,
@@ -518,14 +519,15 @@ func (s FrameworkService) Import(
 			now := time.Now()
 			description := control.Description
 			control := &coredata.Control{
-				ID:           controlID,
-				FrameworkID:  frameworkID,
-				SectionTitle: control.ID,
-				Name:         control.Name,
-				Description:  &description,
-				Status:       coredata.ControlStatusIncluded,
-				CreatedAt:    now,
-				UpdatedAt:    now,
+				ID:             controlID,
+				FrameworkID:    frameworkID,
+				OrganizationID: organization.ID,
+				SectionTitle:   control.ID,
+				Name:           control.Name,
+				Description:    &description,
+				Status:         coredata.ControlStatusIncluded,
+				CreatedAt:      now,
+				UpdatedAt:      now,
 			}
 
 			if err := control.Insert(ctx, tx, s.svc.scope); err != nil {

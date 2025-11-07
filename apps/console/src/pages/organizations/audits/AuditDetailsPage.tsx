@@ -34,6 +34,7 @@ import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import z from "zod";
 import { getAuditStateLabel, getAuditStateVariant, auditStates, fileSize, sprintf, formatDatetime, formatError, formatDate, type GraphQLError } from "@probo/helpers";
 import type { AuditGraphNodeQuery } from "/hooks/graph/__generated__/AuditGraphNodeQuery.graphql";
+import { Authorized } from "/permissions";
 
 const updateAuditSchema = z.object({
   name: z.string().nullable().optional(),
@@ -145,13 +146,15 @@ export default function AuditDetailsPage(props: Props) {
           </Badge>
         </div>
         <ActionDropdown variant="secondary">
-          <DropdownItem
-            variant="danger"
-            icon={IconTrashCan}
-            onClick={deleteAudit}
-          >
-            {__("Delete")}
-          </DropdownItem>
+          <Authorized entity="Audit" action="deleteAudit">
+            <DropdownItem
+              variant="danger"
+              icon={IconTrashCan}
+              onClick={deleteAudit}
+            >
+              {__("Delete")}
+            </DropdownItem>
+          </Authorized>
         </ActionDropdown>
       </div>
 
@@ -184,9 +187,11 @@ export default function AuditDetailsPage(props: Props) {
 
           <div className="flex justify-end">
             {formState.isDirty && (
-              <Button type="submit" disabled={formState.isSubmitting}>
-                {formState.isSubmitting ? __("Updating...") : __("Update")}
-              </Button>
+              <Authorized entity="Audit" action="updateAudit">
+                <Button type="submit" disabled={formState.isSubmitting}>
+                  {formState.isSubmitting ? __("Updating...") : __("Update")}
+                </Button>
+              </Authorized>
             )}
           </div>
         </form>

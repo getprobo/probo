@@ -3,6 +3,10 @@
 package types
 
 import (
+	"bytes"
+	"fmt"
+	"io"
+	"strconv"
 	"time"
 
 	"github.com/99designs/gqlgen/graphql"
@@ -173,25 +177,6 @@ type ContinualImprovementEdge struct {
 type ContinualImprovementFilter struct {
 	SnapshotID *gid.GID `json:"snapshotId,omitempty"`
 }
-
-type Control struct {
-	ID                     gid.GID                `json:"id"`
-	SectionTitle           string                 `json:"sectionTitle"`
-	Name                   string                 `json:"name"`
-	Description            *string                `json:"description,omitempty"`
-	Status                 coredata.ControlStatus `json:"status"`
-	ExclusionJustification *string                `json:"exclusionJustification,omitempty"`
-	Framework              *Framework             `json:"framework"`
-	Measures               *MeasureConnection     `json:"measures"`
-	Documents              *DocumentConnection    `json:"documents"`
-	Audits                 *AuditConnection       `json:"audits"`
-	Snapshots              *SnapshotConnection    `json:"snapshots"`
-	CreatedAt              time.Time              `json:"createdAt"`
-	UpdatedAt              time.Time              `json:"updatedAt"`
-}
-
-func (Control) IsNode()             {}
-func (this Control) GetID() gid.GID { return this.ID }
 
 type ControlEdge struct {
 	Cursor page.CursorKey `json:"cursor"`
@@ -685,21 +670,6 @@ type DNSRecordInstruction struct {
 	Purpose string `json:"purpose"`
 }
 
-type Datum struct {
-	ID                 gid.GID                     `json:"id"`
-	SnapshotID         *gid.GID                    `json:"snapshotId,omitempty"`
-	Name               string                      `json:"name"`
-	DataClassification coredata.DataClassification `json:"dataClassification"`
-	Owner              *People                     `json:"owner"`
-	Vendors            *VendorConnection           `json:"vendors"`
-	Organization       *Organization               `json:"organization"`
-	CreatedAt          time.Time                   `json:"createdAt"`
-	UpdatedAt          time.Time                   `json:"updatedAt"`
-}
-
-func (Datum) IsNode()             {}
-func (this Datum) GetID() gid.GID { return this.ID }
-
 type DatumEdge struct {
 	Cursor page.CursorKey `json:"cursor"`
 	Node   *Datum         `json:"node"`
@@ -1087,25 +1057,6 @@ type DocumentFilter struct {
 	Query *string `json:"query,omitempty"`
 }
 
-type DocumentVersion struct {
-	ID             gid.GID                             `json:"id"`
-	Document       *Document                           `json:"document"`
-	Status         coredata.DocumentStatus             `json:"status"`
-	Version        int                                 `json:"version"`
-	Content        string                              `json:"content"`
-	Changelog      string                              `json:"changelog"`
-	Title          string                              `json:"title"`
-	Classification coredata.DocumentClassification     `json:"classification"`
-	Owner          *People                             `json:"owner"`
-	Signatures     *DocumentVersionSignatureConnection `json:"signatures"`
-	PublishedAt    *time.Time                          `json:"publishedAt,omitempty"`
-	CreatedAt      time.Time                           `json:"createdAt"`
-	UpdatedAt      time.Time                           `json:"updatedAt"`
-}
-
-func (DocumentVersion) IsNode()             {}
-func (this DocumentVersion) GetID() gid.GID { return this.ID }
-
 type DocumentVersionConnection struct {
 	Edges    []*DocumentVersionEdge `json:"edges"`
 	PageInfo *PageInfo              `json:"pageInfo"`
@@ -1297,7 +1248,7 @@ type Invitation struct {
 	ID           gid.GID                   `json:"id"`
 	Email        string                    `json:"email"`
 	FullName     string                    `json:"fullName"`
-	Role         coredata.Role             `json:"role"`
+	Role         coredata.MembershipRole   `json:"role"`
 	Status       coredata.InvitationStatus `json:"status"`
 	ExpiresAt    time.Time                 `json:"expiresAt"`
 	AcceptedAt   *time.Time                `json:"acceptedAt,omitempty"`
@@ -1323,10 +1274,11 @@ type InvitationOrder struct {
 }
 
 type InviteUserInput struct {
-	OrganizationID gid.GID `json:"organizationId"`
-	Email          string  `json:"email"`
-	FullName       string  `json:"fullName"`
-	CreatePeople   bool    `json:"createPeople"`
+	OrganizationID gid.GID                 `json:"organizationId"`
+	Email          string                  `json:"email"`
+	FullName       string                  `json:"fullName"`
+	Role           coredata.MembershipRole `json:"role"`
+	CreatePeople   bool                    `json:"createPeople"`
 }
 
 type InviteUserPayload struct {
@@ -1383,7 +1335,7 @@ type Membership struct {
 	ID             gid.GID                 `json:"id"`
 	UserID         gid.GID                 `json:"userID"`
 	OrganizationID gid.GID                 `json:"organizationID"`
-	Role           coredata.Role           `json:"role"`
+	Role           coredata.MembershipRole `json:"role"`
 	FullName       string                  `json:"fullName"`
 	EmailAddress   string                  `json:"emailAddress"`
 	AuthMethod     coredata.UserAuthMethod `json:"authMethod"`
@@ -1855,9 +1807,6 @@ type TrustCenterFile struct {
 	Organization          *Organization                  `json:"organization"`
 }
 
-func (TrustCenterFile) IsNode()             {}
-func (this TrustCenterFile) GetID() gid.GID { return this.ID }
-
 type TrustCenterFileEdge struct {
 	Cursor page.CursorKey   `json:"cursor"`
 	Node   *TrustCenterFile `json:"node"`
@@ -2012,6 +1961,16 @@ type UpdateMeetingInput struct {
 
 type UpdateMeetingPayload struct {
 	Meeting *Meeting `json:"meeting"`
+}
+
+type UpdateMembershipInput struct {
+	OrganizationID gid.GID                 `json:"organizationId"`
+	MemberID       gid.GID                 `json:"memberId"`
+	Role           coredata.MembershipRole `json:"role"`
+}
+
+type UpdateMembershipPayload struct {
+	Membership *Membership `json:"membership"`
 }
 
 type UpdateNonconformityInput struct {
@@ -2550,4 +2509,63 @@ type Viewer struct {
 	ID            gid.GID                 `json:"id"`
 	User          *User                   `json:"user"`
 	Organizations *OrganizationConnection `json:"organizations"`
+}
+
+type Role string
+
+const (
+	RoleOwner  Role = "OWNER"
+	RoleAdmin  Role = "ADMIN"
+	RoleViewer Role = "VIEWER"
+	RoleFull   Role = "FULL"
+)
+
+var AllRole = []Role{
+	RoleOwner,
+	RoleAdmin,
+	RoleViewer,
+	RoleFull,
+}
+
+func (e Role) IsValid() bool {
+	switch e {
+	case RoleOwner, RoleAdmin, RoleViewer, RoleFull:
+		return true
+	}
+	return false
+}
+
+func (e Role) String() string {
+	return string(e)
+}
+
+func (e *Role) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = Role(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid Role", str)
+	}
+	return nil
+}
+
+func (e Role) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *Role) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e Role) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
 }

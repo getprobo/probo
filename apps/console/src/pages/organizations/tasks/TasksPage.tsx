@@ -12,6 +12,7 @@ import { tasksQuery } from "/hooks/graph/TaskGraph";
 import { usePageTitle } from "@probo/hooks";
 import TasksCard from "/components/tasks/TasksCard";
 import TaskFormDialog from "/components/tasks/TaskFormDialog";
+import { Authorized } from "/permissions";
 
 const tasksFragment = graphql`
   fragment TasksPageFragment on Organization
@@ -76,9 +77,11 @@ export default function TasksPage({ queryRef }: Props) {
           "Track your assigned compliance tasks and keep progress on track."
         )}
       >
-        <TaskFormDialog connection={connectionId}>
-          <Button icon={IconPlusLarge}>{__("New task")}</Button>
-        </TaskFormDialog>
+        <Authorized entity="Organization" action="createTask">
+          <TaskFormDialog connection={connectionId}>
+            <Button icon={IconPlusLarge}>{__("New task")}</Button>
+          </TaskFormDialog>
+        </Authorized>
       </PageHeader>
       <TasksCard connectionId={connectionId} tasks={tasks ?? []} />
     </div>

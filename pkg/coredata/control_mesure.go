@@ -20,17 +20,18 @@ import (
 	"maps"
 	"time"
 
-	"go.probo.inc/probo/pkg/gid"
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/gid"
 )
 
 type (
 	ControlMeasure struct {
-		ControlID gid.GID      `db:"control_id"`
-		MeasureID gid.GID      `db:"measure_id"`
-		TenantID  gid.TenantID `db:"tenant_id"`
-		CreatedAt time.Time    `db:"created_at"`
+		ControlID      gid.GID      `db:"control_id"`
+		MeasureID      gid.GID      `db:"measure_id"`
+		OrganizationID gid.GID      `db:"organization_id"`
+		TenantID       gid.TenantID `db:"tenant_id"`
+		CreatedAt      time.Time    `db:"created_at"`
 	}
 
 	ControlMeasures []*ControlMeasure
@@ -46,12 +47,14 @@ INSERT INTO
     controls_measures (
         control_id,
         measure_id,
+        organization_id,
         tenant_id,
         created_at
     )
 VALUES (
     @control_id,
     @measure_id,
+    @organization_id,
     @tenant_id,
     @created_at
 )
@@ -59,10 +62,11 @@ ON CONFLICT (control_id, measure_id) DO NOTHING;
 `
 
 	args := pgx.StrictNamedArgs{
-		"control_id": cm.ControlID,
-		"measure_id": cm.MeasureID,
-		"tenant_id":  scope.GetTenantID(),
-		"created_at": cm.CreatedAt,
+		"control_id":      cm.ControlID,
+		"measure_id":      cm.MeasureID,
+		"organization_id": cm.OrganizationID,
+		"tenant_id":       scope.GetTenantID(),
+		"created_at":      cm.CreatedAt,
 	}
 	_, err := conn.Exec(ctx, q, args)
 	return err

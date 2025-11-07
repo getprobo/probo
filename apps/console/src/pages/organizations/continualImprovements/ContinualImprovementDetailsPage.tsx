@@ -35,6 +35,7 @@ import z from "zod";
 import { getStatusVariant, getStatusLabel, formatDatetime, validateSnapshotConsistency } from "@probo/helpers";
 import { SnapshotBanner } from "/components/SnapshotBanner";
 import type { ContinualImprovementGraphNodeQuery } from "/hooks/graph/__generated__/ContinualImprovementGraphNodeQuery.graphql";
+import { Authorized } from "/permissions";
 
 const updateImprovementSchema = z.object({
   referenceId: z.string().min(1, "Reference ID is required"),
@@ -149,11 +150,13 @@ export default function ContinualImprovementDetailsPage(props: Props) {
           ]}
         />
         {!isSnapshotMode && (
-          <ActionDropdown>
-            <DropdownItem onClick={deleteImprovement} variant="danger">
-              {__("Delete")}
-            </DropdownItem>
-          </ActionDropdown>
+          <Authorized entity="ContinualImprovement" action="deleteContinualImprovement">
+            <ActionDropdown>
+              <DropdownItem onClick={deleteImprovement} variant="danger">
+                {__("Delete")}
+              </DropdownItem>
+            </ActionDropdown>
+          </Authorized>
         )}
       </div>
 
@@ -286,13 +289,15 @@ export default function ContinualImprovementDetailsPage(props: Props) {
 
             {!isSnapshotMode && (
               <div className="flex justify-end pt-4">
-                <Button
-                  type="submit"
-                  variant="primary"
-                  disabled={formState.isSubmitting}
-                >
-                  {formState.isSubmitting ? __("Saving...") : __("Save Changes")}
-                </Button>
+                <Authorized entity="ContinualImprovement" action="updateContinualImprovement">
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    disabled={formState.isSubmitting}
+                  >
+                    {formState.isSubmitting ? __("Saving...") : __("Save Changes")}
+                  </Button>
+                </Authorized>
               </div>
             )}
           </form>

@@ -386,15 +386,16 @@ func (s MeasureService) Import(
 						continue
 					}
 
-					controlMeasure := &coredata.ControlMeasure{
-						ControlID: control.ID,
-						MeasureID: measure.ID,
-						CreatedAt: now,
-					}
+				controlMeasure := &coredata.ControlMeasure{
+					ControlID:      control.ID,
+					MeasureID:      measure.ID,
+					OrganizationID: measure.OrganizationID,
+					CreatedAt:      now,
+				}
 
-					if err := controlMeasure.Upsert(ctx, tx, s.svc.scope); err != nil {
-						return fmt.Errorf("cannot insert control measure: %w", err)
-					}
+				if err := controlMeasure.Upsert(ctx, tx, s.svc.scope); err != nil {
+					return fmt.Errorf("cannot insert control measure: %w", err)
+				}
 				}
 			}
 

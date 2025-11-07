@@ -68,3 +68,211 @@ const (
 	UserAPIKeyMembershipEntityType             uint16 = 44
 	MeetingEntityType                          uint16 = 45
 )
+
+type EntityInfo struct {
+	Model string
+	Table string
+}
+
+var entityRegistry = map[uint16]EntityInfo{
+	OrganizationEntityType: {
+		Model: "Organization",
+		Table: "organizations",
+	},
+	FrameworkEntityType: {
+		Model: "Framework",
+		Table: "frameworks",
+	},
+	MeasureEntityType: {
+		Model: "Measure",
+		Table: "measures",
+	},
+	TaskEntityType: {
+		Model: "Task",
+		Table: "tasks",
+	},
+	EvidenceEntityType: {
+		Model: "Evidence",
+		Table: "evidences",
+	},
+	ConnectorEntityType: {
+		Model: "Connector",
+		Table: "connectors",
+	},
+	VendorRiskAssessmentEntityType: {
+		Model: "VendorRiskAssessment",
+		Table: "vendor_risk_assessments",
+	},
+	VendorEntityType: {
+		Model: "Vendor",
+		Table: "vendors",
+	},
+	PeopleEntityType: {
+		Model: "People",
+		Table: "peoples",
+	},
+	VendorComplianceReportEntityType: {
+		Model: "VendorComplianceReport",
+		Table: "vendor_compliance_reports",
+	},
+	DocumentEntityType: {
+		Model: "Document",
+		Table: "documents",
+	},
+	UserEntityType: {
+		Model: "User",
+		Table: "auth_users",
+	},
+	SessionEntityType: {
+		Model: "Session",
+		Table: "auth_sessions",
+	},
+	EmailEntityType: {
+		Model: "Email",
+		Table: "auth_emails",
+	},
+	ControlEntityType: {
+		Model: "Control",
+		Table: "controls",
+	},
+	RiskEntityType: {
+		Model: "Risk",
+		Table: "risks",
+	},
+	DocumentVersionEntityType: {
+		Model: "DocumentVersion",
+		Table: "document_versions",
+	},
+	DocumentVersionSignatureEntityType: {
+		Model: "DocumentVersionSignature",
+		Table: "document_version_signatures",
+	},
+	AssetEntityType: {
+		Model: "Asset",
+		Table: "assets",
+	},
+	DatumEntityType: {
+		Model: "Datum",
+		Table: "data",
+	},
+	AuditEntityType: {
+		Model: "Audit",
+		Table: "audits",
+	},
+	ReportEntityType: {
+		Model: "Report",
+		Table: "reports",
+	},
+	TrustCenterEntityType: {
+		Model: "TrustCenter",
+		Table: "trust_centers",
+	},
+	TrustCenterAccessEntityType: {
+		Model: "TrustCenterAccess",
+		Table: "trust_center_accesses",
+	},
+	VendorBusinessAssociateAgreementEntityType: {
+		Model: "VendorBusinessAssociateAgreement",
+		Table: "vendor_business_associate_agreements",
+	},
+	FileEntityType: {
+		Model: "File",
+		Table: "files",
+	},
+	VendorContactEntityType: {
+		Model: "VendorContact",
+		Table: "vendor_contacts",
+	},
+	VendorDataPrivacyAgreementEntityType: {
+		Model: "VendorDataPrivacyAgreement",
+		Table: "vendor_data_privacy_agreements",
+	},
+	NonconformityEntityType: {
+		Model: "Nonconformity",
+		Table: "nonconformities",
+	},
+	ObligationEntityType: {
+		Model: "Obligation",
+		Table: "obligations",
+	},
+	VendorServiceEntityType: {
+		Model: "VendorService",
+		Table: "vendor_services",
+	},
+	SnapshotEntityType: {
+		Model: "Snapshot",
+		Table: "snapshots",
+	},
+	ContinualImprovementEntityType: {
+		Model: "ContinualImprovement",
+		Table: "continual_improvements",
+	},
+	ProcessingActivityEntityType: {
+		Model: "ProcessingActivity",
+		Table: "processing_activities",
+	},
+	ExportJobEntityType: {
+		Model: "ExportJob",
+		Table: "export_jobs",
+	},
+	TrustCenterReferenceEntityType: {
+		Model: "TrustCenterReference",
+		Table: "trust_center_references",
+	},
+	TrustCenterDocumentAccessEntityType: {
+		Model: "",
+		Table: "trust_center_document_accesses",
+	},
+	CustomDomainEntityType: {
+		Model: "CustomDomain",
+		Table: "custom_domains",
+	},
+	InvitationEntityType: {
+		Model: "Invitation",
+		Table: "authz_invitations",
+	},
+	MembershipEntityType: {
+		Model: "Membership",
+		Table: "authz_memberships",
+	},
+	SlackMessageEntityType: {
+		Model: "SlackMessage",
+		Table: "slack_messages",
+	},
+	TrustCenterFileEntityType: {
+		Model: "TrustCenterFile",
+		Table: "trust_center_files",
+	},
+	SAMLConfigurationEntityType: {
+		Model: "SAMLConfiguration",
+		Table: "auth_saml_configurations",
+	},
+	UserAPIKeyEntityType: {
+		Model: "UserAPIKey",
+		Table: "auth_user_api_keys",
+	},
+	UserAPIKeyMembershipEntityType: {
+		Model: "UserAPIKeyMembership",
+		Table: "authz_api_keys_memberships",
+	},
+	MeetingEntityType: {
+		Model: "Meeting",
+		Table: "meetings",
+	},
+}
+
+func EntityTable(entityType uint16) (string, bool) {
+	info, ok := entityRegistry[entityType]
+	if !ok {
+		return "", false
+	}
+	return info.Table, true
+}
+
+func EntityModel(entityType uint16) (string, bool) {
+	info, ok := entityRegistry[entityType]
+	if !ok {
+		return "", false
+	}
+	return info.Model, true
+}

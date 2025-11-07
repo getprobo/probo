@@ -405,6 +405,8 @@ func (s *DocumentService) Create(
 				return fmt.Errorf("cannot insert document: %w", err)
 			}
 
+			documentVersion.OrganizationID = organization.ID
+
 			if err := documentVersion.Insert(ctx, conn, s.svc.scope); err != nil {
 				return fmt.Errorf("cannot create document version: %w", err)
 			}
@@ -716,6 +718,11 @@ func (s *DocumentService) createSignatureRequestInTx(
 	ignoreExisting bool,
 ) (*coredata.DocumentVersionSignature, error) {
 	signatory := &coredata.People{}
+	documentVersion := &coredata.DocumentVersion{}
+
+	if err := documentVersion.LoadByID(ctx, tx, s.svc.scope, documentVersionID); err != nil {
+		return nil, fmt.Errorf("cannot load document version: %w", err)
+	}
 
 	if err := signatory.LoadByID(ctx, tx, s.svc.scope, signatoryID); err != nil {
 		return nil, fmt.Errorf("cannot load signatory: %w", err)
@@ -731,6 +738,7 @@ func (s *DocumentService) createSignatureRequestInTx(
 	now := time.Now()
 	documentVersionSignature := &coredata.DocumentVersionSignature{
 		ID:                documentVersionSignatureID,
+		OrganizationID:    documentVersion.OrganizationID,
 		DocumentVersionID: documentVersionID,
 		State:             coredata.DocumentVersionSignatureStateRequested,
 		RequestedAt:       now,
@@ -829,6 +837,7 @@ func (s *DocumentService) CreateDraft(
 			}
 
 			draftVersion.ID = draftVersionID
+			draftVersion.OrganizationID = document.OrganizationID
 			draftVersion.DocumentID = documentID
 			draftVersion.Title = document.Title
 			draftVersion.OwnerID = document.OwnerID
@@ -936,11 +945,14 @@ func (s *DocumentService) RequestExport(
 	}
 
 	err := s.svc.pg.WithTx(ctx, func(conn pg.Conn) error {
+		var organizationID gid.GID
 		for _, documentID := range documentIDs {
 			document := &coredata.Document{}
 			if err := document.LoadByID(ctx, conn, s.svc.scope, documentID); err != nil {
 				return fmt.Errorf("cannot load document %q: %w", documentID, err)
 			}
+
+			organizationID = document.OrganizationID
 		}
 
 		now := time.Now()
@@ -959,6 +971,7 @@ func (s *DocumentService) RequestExport(
 
 		exportJob = &coredata.ExportJob{
 			ID:             exportJobID,
+			OrganizationID: organizationID,
 			Type:           coredata.ExportJobTypeDocument,
 			Arguments:      argsJSON,
 			Status:         coredata.ExportJobStatusPending,

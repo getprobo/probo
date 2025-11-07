@@ -120,18 +120,30 @@ func (s FileService) UploadAndSaveFile(
 	fileID := gid.New(s.svc.scope.GetTenantID(), coredata.FileEntityType)
 	var file *coredata.File
 
+	// Extract organization ID from S3 metadata
+	organizationIDStr, hasOrgID := s3Metadata["organization-id"]
+	var organizationID gid.GID
+	if hasOrgID {
+		var err error
+		organizationID, err = gid.ParseGID(organizationIDStr)
+		if err != nil {
+			return nil, fmt.Errorf("invalid organization-id in metadata: %w", err)
+		}
+	}
+
 	err = s.svc.pg.WithTx(
 		ctx,
 		func(conn pg.Conn) error {
 			file = &coredata.File{
-				ID:         fileID,
-				BucketName: s.svc.bucket,
-				MimeType:   mimeType,
-				FileName:   req.Filename,
-				FileKey:    objectKey.String(),
-				FileSize:   *headOutput.ContentLength,
-				CreatedAt:  now,
-				UpdatedAt:  now,
+				ID:             fileID,
+				OrganizationID: organizationID,
+				BucketName:     s.svc.bucket,
+				MimeType:       mimeType,
+				FileName:       req.Filename,
+				FileKey:        objectKey.String(),
+				FileSize:       *headOutput.ContentLength,
+				CreatedAt:      now,
+				UpdatedAt:      now,
 			}
 
 			if err := file.Insert(ctx, conn, s.svc.scope); err != nil {

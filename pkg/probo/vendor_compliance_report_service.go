@@ -103,14 +103,15 @@ func (s VendorComplianceReportService) Upload(
 	vendorComplianceReportID := gid.New(s.svc.scope.GetTenantID(), coredata.VendorComplianceReportEntityType)
 
 	vendorComplianceReport := &coredata.VendorComplianceReport{
-		ID:           vendorComplianceReportID,
-		VendorID:     vendorID,
-		ReportDate:   req.ReportDate,
-		ValidUntil:   req.ValidUntil,
-		ReportName:   req.ReportName,
-		ReportFileId: &f.ID,
-		CreatedAt:    now,
-		UpdatedAt:    now,
+		ID:             vendorComplianceReportID,
+		OrganizationID: vendor.OrganizationID,
+		VendorID:       vendorID,
+		ReportDate:     req.ReportDate,
+		ValidUntil:     req.ValidUntil,
+		ReportName:     req.ReportName,
+		ReportFileId:   &f.ID,
+		CreatedAt:      now,
+		UpdatedAt:      now,
 	}
 
 	err = s.svc.pg.WithConn(

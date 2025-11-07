@@ -31,6 +31,7 @@ import type { FrameworkDetailPageExportFrameworkMutation } from "./__generated__
 import { FrameworkFormDialog } from "./dialogs/FrameworkFormDialog";
 import { FrameworkControlDialog } from "./dialogs/FrameworkControlDialog";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
+import { Authorized } from "/permissions";
 
 const frameworkDetailFragment = graphql`
   fragment FrameworkDetailPageFragment on Framework {
@@ -149,14 +150,16 @@ export default function FrameworkDetailPage(props: Props) {
           </>
         }
       >
-        <FrameworkFormDialog
-          organizationId={organizationId}
-          framework={framework}
-        >
-          <Button icon={IconPencil} variant="secondary">
-            {__("Edit")}
-          </Button>
-        </FrameworkFormDialog>
+        <Authorized entity="Framework" action="updateFramework">
+          <FrameworkFormDialog
+            organizationId={organizationId}
+            framework={framework}
+          >
+            <Button icon={IconPencil} variant="secondary">
+              {__("Edit")}
+            </Button>
+          </FrameworkFormDialog>
+        </Authorized>
         <ActionDropdown variant="secondary">
           <DropdownItem
             variant="primary"
@@ -188,9 +191,11 @@ export default function FrameworkDetailPage(props: Props) {
           >
             {__("Export Framework")}
           </DropdownItem>
-          <DropdownItem icon={IconTrashCan} variant="danger" onClick={onDelete}>
-            {__("Delete")}
-          </DropdownItem>
+          <Authorized entity="Framework" action="deleteFramework">
+            <DropdownItem icon={IconTrashCan} variant="danger" onClick={onDelete}>
+              {__("Delete")}
+            </DropdownItem>
+          </Authorized>
         </ActionDropdown>
       </PageHeader>
       <div className="text-lg font-semibold">
@@ -211,15 +216,17 @@ export default function FrameworkDetailPage(props: Props) {
               active={selectedControl?.id === control.id}
             />
           ))}
-          <FrameworkControlDialog
-            frameworkId={framework.id}
-            connectionId={connectionId}
-          >
-            <button className="flex gap-[6px] flex-col w-full p-4 space-y-[6px] rounded-xl cursor-pointer text-start text-sm text-txt-tertiary hover:bg-tertiary-hover">
-              <IconPlusLarge size={20} className="text-txt-primary" />
-              {__("Add new control")}
-            </button>
-          </FrameworkControlDialog>
+          <Authorized entity="Organization" action="createControl">
+            <FrameworkControlDialog
+              frameworkId={framework.id}
+              connectionId={connectionId}
+            >
+              <button className="flex gap-[6px] flex-col w-full p-4 space-y-[6px] rounded-xl cursor-pointer text-start text-sm text-txt-tertiary hover:bg-tertiary-hover">
+                <IconPlusLarge size={20} className="text-txt-primary" />
+                {__("Add new control")}
+              </button>
+            </FrameworkControlDialog>
+          </Authorized>
         </div>
         <Outlet context={{ framework }} />
       </div>

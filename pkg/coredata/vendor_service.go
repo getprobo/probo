@@ -21,22 +21,23 @@ import (
 	"maps"
 	"time"
 
-	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/page"
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 )
 
 type (
 	VendorService struct {
-		ID          gid.GID   `db:"id"`
-		VendorID    gid.GID   `db:"vendor_id"`
-		Name        string    `db:"name"`
-		Description *string   `db:"description"`
-		SnapshotID  *gid.GID  `db:"snapshot_id"`
-		SourceID    *gid.GID  `db:"source_id"`
-		CreatedAt   time.Time `db:"created_at"`
-		UpdatedAt   time.Time `db:"updated_at"`
+		ID             gid.GID   `db:"id"`
+		OrganizationID gid.GID   `db:"organization_id"`
+		VendorID       gid.GID   `db:"vendor_id"`
+		Name           string    `db:"name"`
+		Description    *string   `db:"description"`
+		SnapshotID     *gid.GID  `db:"snapshot_id"`
+		SourceID       *gid.GID  `db:"source_id"`
+		CreatedAt      time.Time `db:"created_at"`
+		UpdatedAt      time.Time `db:"updated_at"`
 	}
 
 	VendorServices []*VendorService
@@ -70,6 +71,7 @@ func (vs *VendorService) LoadByID(
 	q := `
 SELECT
 	id,
+	organization_id,
 	vendor_id,
 	name,
 	description,
@@ -120,6 +122,7 @@ func (vs *VendorServices) LoadByVendorID(
 	q := `
 SELECT
 	id,
+	organization_id,
 	vendor_id,
 	name,
 	description,
@@ -168,6 +171,7 @@ INSERT INTO
 	vendor_services (
 		tenant_id,
 		id,
+		organization_id,
 		vendor_id,
 		name,
 		description,
@@ -177,6 +181,7 @@ INSERT INTO
 VALUES (
 	@tenant_id,
 	@vendor_service_id,
+	@organization_id,
 	@vendor_id,
 	@name,
 	@description,
@@ -188,6 +193,7 @@ VALUES (
 	args := pgx.StrictNamedArgs{
 		"tenant_id":         scope.GetTenantID(),
 		"vendor_service_id": vs.ID,
+		"organization_id":   vs.OrganizationID,
 		"vendor_id":         vs.VendorID,
 		"name":              vs.Name,
 		"description":       vs.Description,

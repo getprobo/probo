@@ -205,7 +205,7 @@ func (s DatumService) Update(
 		}
 
 		if req.VendorIDs != nil {
-			if err := datumVendors.Merge(ctx, conn, s.svc.scope, datum.ID, req.VendorIDs); err != nil {
+			if err := datumVendors.Merge(ctx, conn, s.svc.scope, datum.ID, datum.OrganizationID, req.VendorIDs); err != nil {
 				return fmt.Errorf("cannot update data vendors: %w", err)
 			}
 		}
@@ -250,7 +250,7 @@ func (s DatumService) Create(
 			}
 
 			if len(req.VendorIDs) > 0 {
-				if err := datumVendors.Insert(ctx, conn, s.svc.scope, datum.ID, req.VendorIDs); err != nil {
+				if err := datumVendors.Insert(ctx, conn, s.svc.scope, datum.ID, datum.OrganizationID, req.VendorIDs); err != nil {
 					return fmt.Errorf("cannot create data vendors: %w", err)
 				}
 			}

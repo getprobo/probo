@@ -32,6 +32,8 @@ import { CreateProcessingActivityDialog } from "./dialogs/CreateProcessingActivi
 import { deleteProcessingActivityMutation, ProcessingActivitiesConnectionKey } from "../../../hooks/graph/ProcessingActivityGraph";
 import { sprintf, promisifyMutation } from "@probo/helpers";
 import { SnapshotBanner } from "/components/SnapshotBanner";
+import { Authorized } from "/permissions";
+import { isAuthorized } from "/permissions";
 import type { NodeOf } from "/types";
 import type { ProcessingActivitiesPageQuery } from "./__generated__/ProcessingActivitiesPageQuery.graphql";
 import type {
@@ -126,6 +128,11 @@ export default function ProcessingActivitiesPage({ queryRef }: ProcessingActivit
   );
   const activities = data?.processingActivities?.edges?.map((edge) => edge.node) ?? [];
 
+  const hasAnyAction = !isSnapshotMode && (
+    isAuthorized(organizationId, "ProcessingActivity", "updateProcessingActivity") ||
+    isAuthorized(organizationId, "ProcessingActivity", "deleteProcessingActivity")
+  );
+
   return (
     <div className="space-y-6">
       {isSnapshotMode && snapshotId && (
@@ -133,14 +140,16 @@ export default function ProcessingActivitiesPage({ queryRef }: ProcessingActivit
       )}
       <PageHeader title={__("Processing Activities")} description={__("Manage your processing activities under GDPR")}>
         {!isSnapshotMode && (
-          <CreateProcessingActivityDialog
-            organizationId={organizationId}
-            connectionId={connectionId}
-          >
-            <Button icon={IconPlusLarge}>
-              {__("Add processing activity")}
-            </Button>
-          </CreateProcessingActivityDialog>
+          <Authorized entity="Organization" action="createProcessingActivity">
+            <CreateProcessingActivityDialog
+              organizationId={organizationId}
+              connectionId={connectionId}
+            >
+              <Button icon={IconPlusLarge}>
+                {__("Add processing activity")}
+              </Button>
+            </CreateProcessingActivityDialog>
+          </Authorized>
         )}
       </PageHeader>
 
@@ -155,7 +164,7 @@ export default function ProcessingActivitiesPage({ queryRef }: ProcessingActivit
                 <Th>{__("Lawful Basis")}</Th>
                 <Th>{__("Location")}</Th>
                 <Th>{__("International Transfers")}</Th>
-                {!isSnapshotMode && <Th>{__("Actions")}</Th>}
+                {hasAnyAction && <Th>{__("Actions")}</Th>}
               </Tr>
             </Thead>
             <Tbody>
@@ -164,6 +173,7 @@ export default function ProcessingActivitiesPage({ queryRef }: ProcessingActivit
                   key={activity.id}
                   activity={activity}
                   connectionId={connectionId}
+                  hasAnyAction={hasAnyAction}
                 />
               ))}
             </Tbody>
@@ -200,9 +210,11 @@ export default function ProcessingActivitiesPage({ queryRef }: ProcessingActivit
 function ActivityRow({
   activity,
   connectionId,
+  hasAnyAction,
 }: {
   activity: NodeOf<NonNullable<ProcessingActivitiesPageFragment$data['processingActivities']>>;
   connectionId: string;
+  hasAnyAction: boolean;
 }) {
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
@@ -255,16 +267,18 @@ function ActivityRow({
           {activity.internationalTransfers ? __("Yes") : __("No")}
         </Badge>
       </Td>
-      {!isSnapshotMode && (
+      {hasAnyAction && (
         <Td noLink width={50} className="text-end">
           <ActionDropdown>
-            <DropdownItem
-              icon={IconTrashCan}
-              variant="danger"
-              onSelect={handleDelete}
-            >
-              {__("Delete")}
-            </DropdownItem>
+            <Authorized entity="ProcessingActivity" action="deleteProcessingActivity">
+              <DropdownItem
+                icon={IconTrashCan}
+                variant="danger"
+                onSelect={handleDelete}
+              >
+                {__("Delete")}
+              </DropdownItem>
+            </Authorized>
           </ActionDropdown>
         </Td>
       )}

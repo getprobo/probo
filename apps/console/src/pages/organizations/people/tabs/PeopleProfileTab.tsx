@@ -9,6 +9,7 @@ import type { PeopleGraphUpdateMutation } from "/hooks/graph/__generated__/Peopl
 import { updatePeopleMutation } from "/hooks/graph/PeopleGraph";
 import { Button, Card, Field, Input } from "@probo/ui";
 import { EmailsField } from "/components/form/EmailsField";
+import { Authorized } from "/permissions";
 
 const schema = z.object({
   fullName: z.string().min(1),
@@ -94,9 +95,11 @@ export default function PeopleProfileTab() {
       </Card>
       <div className="flex justify-end">
         {formState.isDirty && (
-          <Button type="submit" disabled={isMutating}>
-            {__("Update")}
-          </Button>
+          <Authorized entity="People" action="updatePeople">
+            <Button type="submit" disabled={isMutating}>
+              {__("Update")}
+            </Button>
+          </Authorized>
         )}
       </div>
     </form>

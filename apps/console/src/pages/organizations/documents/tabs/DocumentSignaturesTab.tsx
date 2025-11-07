@@ -20,6 +20,7 @@ import { useOutletContext } from "react-router";
 import type { DocumentSignaturesTab_signature$key } from "/pages/organizations/documents/tabs/__generated__/DocumentSignaturesTab_signature.graphql.ts";
 import type { DocumentSignaturesTab_version$key } from "/pages/organizations/documents/tabs/__generated__/DocumentSignaturesTab_version.graphql.ts";
 import type { DocumentSignaturesTabRefetchQuery } from "./__generated__/DocumentSignaturesTabRefetchQuery.graphql";
+import { Authorized } from "/permissions";
 
 type Version = NodeOf<DocumentDetailPageDocumentFragment$data["versions"]>;
 
@@ -274,6 +275,7 @@ function SignatureItem(props: {
           </div>
         </div>
         {props.signable && (
+          <Authorized entity="Document" action="requestSignature">
           <Button
             variant="secondary"
             className="ml-auto"
@@ -292,6 +294,7 @@ function SignatureItem(props: {
           >
             {__("Request signature")}
           </Button>
+          </Authorized>
         )}
       </div>
     );
@@ -328,6 +331,7 @@ function SignatureItem(props: {
           {__("Signed")}
         </Badge>
       ) : (
+        <Authorized entity="DocumentVersionSignature" action="cancelSignatureRequest">
         <Button
           variant="danger"
           className="ml-auto"
@@ -345,6 +349,7 @@ function SignatureItem(props: {
         >
           {__("Cancel request")}
         </Button>
+        </Authorized>
       )}
     </div>
   );

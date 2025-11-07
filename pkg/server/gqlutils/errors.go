@@ -29,6 +29,15 @@ func Unauthorized() *gqlerror.Error {
 	}
 }
 
+func Forbidden(err error) *gqlerror.Error {
+	return &gqlerror.Error{
+		Message: err.Error(),
+		Extensions: map[string]any{
+			"code": "FORBIDDEN",
+		},
+	}
+}
+
 func AuthenticationRequired(details map[string]any) *gqlerror.Error {
 	extensions := map[string]any{"code": "AUTHENTICATION_REQUIRED"}
 	maps.Copy(extensions, details)

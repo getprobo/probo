@@ -237,6 +237,63 @@ ORDER BY
 	return nil
 }
 
+func (o *Organizations) LoadAllByUserIDWithRole(
+	ctx context.Context,
+	conn pg.Conn,
+	userID gid.GID,
+	role MembershipRole,
+) error {
+	q := `
+WITH user_org AS (
+	SELECT
+		organization_id
+	FROM
+		authz_memberships
+	WHERE
+		user_id = @user_id
+		AND role = @role
+)
+SELECT
+	tenant_id,
+    id,
+    name,
+    description,
+    website_url,
+    email,
+    headquarter_address,
+    custom_domain_id,
+    logo_file_id,
+    horizontal_logo_file_id,
+    created_at,
+    updated_at
+FROM
+	organizations
+INNER JOIN
+	user_org ON organizations.id = user_org.organization_id
+ORDER BY
+	name ASC
+`
+
+	args := pgx.StrictNamedArgs{
+		"user_id": userID,
+		"role":    role,
+	}
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query organizations: %w", err)
+	}
+
+	organizations, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Organization])
+	if err != nil {
+		return fmt.Errorf("cannot collect organizations: %w", err)
+	}
+
+	*o = organizations
+
+	return nil
+}
+
 func (o *Organizations) LoadAllByUserAPIKeyID(
 	ctx context.Context,
 	conn pg.Conn,

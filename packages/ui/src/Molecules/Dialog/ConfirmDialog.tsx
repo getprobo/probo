@@ -7,7 +7,7 @@ import {
     Description,
     Cancel,
 } from "@radix-ui/react-alert-dialog";
-import { useCallback, useState, type ComponentProps } from "react";
+import { useCallback, useState, useMemo, type ComponentProps } from "react";
 import { Button } from "../../Atoms/Button/Button";
 import { Root as Portal } from "@radix-ui/react-portal";
 import { dialog } from "./Dialog";
@@ -67,38 +67,69 @@ export function useConfirm() {
  * Global component that displays a dialog when confirm() is called
  */
 export function ConfirmDialog() {
-    const { message, title, variant, label, onConfirm, close } =
-        useConfirmStore();
+    const message = useConfirmStore((state) => state.message);
+    const isOpen = !!message;
+
+    if (!isOpen) {
+        return null;
+    }
+
+    return <ConfirmDialogContent />;
+}
+
+function ConfirmDialogContent() {
+    const message = useConfirmStore((state) => state.message);
+    const title = useConfirmStore((state) => state.title);
+    const variant = useConfirmStore((state) => state.variant);
+    const label = useConfirmStore((state) => state.label);
+    const onConfirm = useConfirmStore((state) => state.onConfirm);
+    const close = useConfirmStore((state) => state.close);
+
     const { __ } = useTranslate();
     const isOpen = !!message;
-    const {
-        overlay,
-        content,
-        header,
-        title: titleClassname,
-        footer,
-    } = dialog();
+
     const [loading, setLoading] = useState(false);
+
+    const dialogStyles = useMemo(() => {
+        const styles = dialog();
+        return {
+            overlay: styles.overlay(),
+            content: styles.content({ className: "max-w-[500px]" }),
+            header: styles.header(),
+            title: styles.title(),
+            footer: styles.footer(),
+        };
+    }, []);
+
     const handleConfirm = async () => {
         setLoading(true);
         try {
             await onConfirm();
+        } catch (error) {
+            console.error('Confirm action failed:', error);
         } finally {
             close();
             setLoading(false);
         }
     };
 
+    const handleOpenChange = (open: boolean) => {
+        if (!open) {
+            setLoading(false);
+            close();
+        }
+    };
+
     return (
-        <Root open={isOpen} onOpenChange={close}>
+        <Root open={isOpen} onOpenChange={handleOpenChange}>
             <Portal>
-                <Overlay className={overlay()} />
-                <Content className={content({ className: "max-w-[500px]" })}>
-                    <header className={header()}>
-                        <Title children={title} className={titleClassname()} />
+                <Overlay className={dialogStyles.overlay} />
+                <Content className={dialogStyles.content}>
+                    <header className={dialogStyles.header}>
+                        <Title children={title} className={dialogStyles.title} />
                     </header>
                     <Description className="p-6" children={message} />
-                    <footer className={footer()}>
+                    <footer className={dialogStyles.footer}>
                         <Cancel asChild>
                             <Button disabled={loading} variant="tertiary">
                                 {__("Cancel")}

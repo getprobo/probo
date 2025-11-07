@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<ff12447635b4a42587b7d7de6ea1b4e1>>
+ * @generated SignedSource<<752dcbc2d152883fa2ac09b52039f01c>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,7 +9,7 @@
 // @ts-nocheck
 
 import { ReaderFragment } from 'relay-runtime';
-export type Role = "ADMIN" | "MEMBER" | "OWNER" | "VIEWER";
+export type MembershipRole = "ADMIN" | "OWNER" | "VIEWER";
 export type UserAuthMethod = "PASSWORD" | "SAML";
 import { FragmentRefs } from "relay-runtime";
 export type MembersSettingsTabMembershipsFragment$data = {
@@ -23,7 +23,7 @@ export type MembersSettingsTabMembershipsFragment$data = {
         readonly emailAddress: string;
         readonly fullName: string;
         readonly id: string;
-        readonly role: Role;
+        readonly role: MembershipRole;
       };
     }>;
     readonly totalCount: number;

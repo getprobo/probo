@@ -76,6 +76,7 @@ import { DocumentTypeOptions } from "/components/form/DocumentTypeOptions";
 import { DocumentClassificationOptions } from "/components/form/DocumentClassificationOptions";
 import { z } from "zod";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
+import { Authorized } from "/permissions";
 
 type Props = {
   queryRef: PreloadedQuery<DocumentGraphNodeQuery>;
@@ -521,20 +522,24 @@ export default function DocumentDetailPage(props: Props) {
             </Dropdown>
 
             <ActionDropdown variant="secondary">
-              <DropdownItem
-                onClick={() => updateDialogRef.current?.open()}
-                icon={IconPencil}
-              >
-                {isDraft ? __("Edit draft document") : __("Create new draft")}
-              </DropdownItem>
-              {isDraft && versions.length > 1 && (
+              <Authorized entity="Document" action="updateDocument">
                 <DropdownItem
-                  onClick={handleDeleteDraft}
-                  icon={IconTrashCan}
-                  disabled={isDeletingDraft}
+                  onClick={() => updateDialogRef.current?.open()}
+                  icon={IconPencil}
                 >
-                  {__("Delete draft document")}
+                  {isDraft ? __("Edit draft document") : __("Create new draft")}
                 </DropdownItem>
+              </Authorized>
+              {isDraft && versions.length > 1 && (
+                <Authorized entity="Document" action="deleteDocument">
+                  <DropdownItem
+                    onClick={handleDeleteDraft}
+                    icon={IconTrashCan}
+                    disabled={isDeletingDraft}
+                  >
+                    {__("Delete draft document")}
+                  </DropdownItem>
+                </Authorized>
               )}
               <DropdownItem
                 onClick={() => pdfDownloadDialogRef.current?.open()}
@@ -543,14 +548,16 @@ export default function DocumentDetailPage(props: Props) {
               >
                 {__("Download PDF")}
               </DropdownItem>
-              <DropdownItem
-                variant="danger"
-                icon={IconTrashCan}
-                disabled={isDeleting}
-                onClick={handleDelete}
-              >
-                {__("Delete document")}
-              </DropdownItem>
+              <Authorized entity="Document" action="deleteDocument">
+                <DropdownItem
+                  variant="danger"
+                  icon={IconTrashCan}
+                  disabled={isDeleting}
+                  onClick={handleDelete}
+                >
+                  {__("Delete document")}
+                </DropdownItem>
+              </Authorized>
             </ActionDropdown>
           </div>
         </div>

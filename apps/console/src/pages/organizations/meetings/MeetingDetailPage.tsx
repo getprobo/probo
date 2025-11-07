@@ -21,11 +21,12 @@ import {
   UpdateMeetingMinutesDialog,
   type UpdateMeetingMinutesDialogRef,
 } from "./dialogs/UpdateMeetingMinutesDialog";
-import { useRef } from "react";
+import { useRef, useState, useEffect } from "react";
 import {
   meetingNodeQuery,
   useDeleteMeetingMutation,
 } from "/hooks/graph/MeetingGraph";
+import { isAuthorized } from "/permissions";
 
 const meetingFragment = graphql`
   fragment MeetingDetailPageMeetingFragment on Meeting {
@@ -61,6 +62,63 @@ export default function MeetingDetailPage(props: Props) {
   const [deleteMeeting, isDeleting] = useDeleteMeetingMutation();
   const confirm = useConfirm();
   const updateMinutesDialogRef = useRef<UpdateMeetingMinutesDialogRef>(null);
+
+  const [canUpdate, setCanUpdate] = useState<boolean>(false);
+  const [canDelete, setCanDelete] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (!organizationId) {
+      setCanUpdate(false);
+      setCanDelete(false);
+      return;
+    }
+
+    try {
+      const updateAuth = isAuthorized(organizationId, "Meeting", "updateMeeting");
+      setCanUpdate(updateAuth);
+    } catch (promise) {
+      if (promise instanceof Promise) {
+        promise
+          .then(() => {
+            try {
+              const updateAuth = isAuthorized(organizationId, "Meeting", "updateMeeting");
+              setCanUpdate(updateAuth);
+            } catch {
+              setCanUpdate(false);
+            }
+          })
+          .catch(() => {
+            setCanUpdate(false);
+          });
+      } else {
+        setCanUpdate(false);
+      }
+    }
+
+    try {
+      const deleteAuth = isAuthorized(organizationId, "Meeting", "deleteMeeting");
+      setCanDelete(deleteAuth);
+    } catch (promise) {
+      if (promise instanceof Promise) {
+        promise
+          .then(() => {
+            try {
+              const deleteAuth = isAuthorized(organizationId, "Meeting", "deleteMeeting");
+              setCanDelete(deleteAuth);
+            } catch {
+              setCanDelete(false);
+            }
+          })
+          .catch(() => {
+            setCanDelete(false);
+          });
+      } else {
+        setCanDelete(false);
+      }
+    }
+  }, [organizationId]);
+
+  const hasAnyAction = canUpdate || canDelete;
 
   usePageTitle(meeting.name);
 
@@ -105,22 +163,28 @@ export default function MeetingDetailPage(props: Props) {
               },
             ]}
           />
-          <ActionDropdown variant="secondary">
-            <DropdownItem
-              onClick={() => updateMinutesDialogRef.current?.open()}
-              icon={IconPencil}
-            >
-              {__("Edit minutes")}
-            </DropdownItem>
-            <DropdownItem
-              variant="danger"
-              icon={IconTrashCan}
-              disabled={isDeleting}
-              onClick={handleDelete}
-            >
-              {__("Delete meeting")}
-            </DropdownItem>
-          </ActionDropdown>
+          {hasAnyAction && (
+            <ActionDropdown variant="secondary">
+              {canUpdate && (
+                <DropdownItem
+                  onClick={() => updateMinutesDialogRef.current?.open()}
+                  icon={IconPencil}
+                >
+                  {__("Edit minutes")}
+                </DropdownItem>
+              )}
+              {canDelete && (
+                <DropdownItem
+                  variant="danger"
+                  icon={IconTrashCan}
+                  disabled={isDeleting}
+                  onClick={handleDelete}
+                >
+                  {__("Delete meeting")}
+                </DropdownItem>
+              )}
+            </ActionDropdown>
+          )}
         </div>
         <PageHeader
           title={meeting.name}

@@ -164,6 +164,11 @@ func (s TrustCenterReferenceService) Create(
 	var logoKey string
 
 	err := s.svc.pg.WithTx(ctx, func(tx pg.Conn) error {
+		trustCenter := &coredata.TrustCenter{}
+		if err := trustCenter.LoadByID(ctx, tx, s.svc.scope, req.TrustCenterID); err != nil {
+			return fmt.Errorf("cannot load trust center: %w", err)
+		}
+
 		fileID, s3Key, err := s.uploadLogoFile(ctx, tx, req.LogoFile, referenceID, req.TrustCenterID, now)
 		if err != nil {
 			return fmt.Errorf("cannot upload logo file: %w", err)
@@ -171,14 +176,15 @@ func (s TrustCenterReferenceService) Create(
 		logoKey = s3Key
 
 		reference = &coredata.TrustCenterReference{
-			ID:            referenceID,
-			TrustCenterID: req.TrustCenterID,
-			Name:          req.Name,
-			Description:   req.Description,
-			WebsiteURL:    req.WebsiteURL,
-			LogoFileID:    fileID,
-			CreatedAt:     now,
-			UpdatedAt:     now,
+			ID:             referenceID,
+			OrganizationID: trustCenter.OrganizationID,
+			TrustCenterID:  req.TrustCenterID,
+			Name:           req.Name,
+			Description:    req.Description,
+			WebsiteURL:     req.WebsiteURL,
+			LogoFileID:     fileID,
+			CreatedAt:      now,
+			UpdatedAt:      now,
 		}
 
 		if err := reference.Insert(ctx, tx, s.svc.scope); err != nil {

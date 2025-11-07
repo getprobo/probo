@@ -28,16 +28,17 @@ import (
 
 type (
 	VendorComplianceReport struct {
-		ID           gid.GID
-		VendorID     gid.GID
-		ReportDate   time.Time
-		ValidUntil   *time.Time
-		ReportName   string
-		ReportFileId *gid.GID
-		SnapshotID   *gid.GID
-		SourceID     *gid.GID
-		CreatedAt    time.Time
-		UpdatedAt    time.Time
+		ID             gid.GID    `db:"id"`
+		OrganizationID gid.GID    `db:"organization_id"`
+		VendorID       gid.GID    `db:"vendor_id"`
+		ReportDate     time.Time  `db:"report_date"`
+		ValidUntil     *time.Time `db:"valid_until"`
+		ReportName     string     `db:"report_name"`
+		ReportFileId   *gid.GID   `db:"report_file_id"`
+		SnapshotID     *gid.GID   `db:"snapshot_id"`
+		SourceID       *gid.GID   `db:"source_id"`
+		CreatedAt      time.Time  `db:"created_at"`
+		UpdatedAt      time.Time  `db:"updated_at"`
 	}
 
 	VendorComplianceReports []*VendorComplianceReport
@@ -157,6 +158,7 @@ func (vcr *VendorComplianceReport) Insert(
 INSERT INTO
 	vendor_compliance_reports (
 		id,
+		organization_id,
 		tenant_id,
 		vendor_id,
 		report_date,
@@ -168,6 +170,7 @@ INSERT INTO
 	)
 VALUES (
 	@id,
+	@organization_id,
 	@tenant_id,
 	@vendor_id,
 	@report_date,
@@ -179,15 +182,16 @@ VALUES (
 )
 `
 	args := pgx.NamedArgs{
-		"id":             vcr.ID,
-		"tenant_id":      scope.GetTenantID(),
-		"vendor_id":      vcr.VendorID,
-		"report_date":    vcr.ReportDate,
-		"valid_until":    vcr.ValidUntil,
-		"report_name":    vcr.ReportName,
-		"report_file_id": vcr.ReportFileId,
-		"created_at":     vcr.CreatedAt,
-		"updated_at":     vcr.UpdatedAt,
+		"id":              vcr.ID,
+		"organization_id": vcr.OrganizationID,
+		"tenant_id":       scope.GetTenantID(),
+		"vendor_id":       vcr.VendorID,
+		"report_date":     vcr.ReportDate,
+		"valid_until":     vcr.ValidUntil,
+		"report_name":     vcr.ReportName,
+		"report_file_id":  vcr.ReportFileId,
+		"created_at":      vcr.CreatedAt,
+		"updated_at":      vcr.UpdatedAt,
 	}
 
 	_, err := conn.Exec(ctx, q, args)

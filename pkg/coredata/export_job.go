@@ -8,14 +8,15 @@ import (
 	"maps"
 	"time"
 
-	"go.probo.inc/probo/pkg/gid"
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/gid"
 )
 
 type (
 	ExportJob struct {
 		ID             gid.GID         `db:"id"`
+		OrganizationID gid.GID         `db:"organization_id"`
 		Type           ExportJobType   `db:"type"`
 		Arguments      json.RawMessage `db:"arguments"`
 		Error          *string         `db:"error"`
@@ -54,6 +55,7 @@ func (ej *ExportJob) Insert(
 	q := `
 INSERT INTO export_jobs (
 	id,
+	organization_id,
 	tenant_id,
 	type,
 	arguments,
@@ -63,6 +65,7 @@ INSERT INTO export_jobs (
 	created_at
 ) VALUES (
 	@id,
+	@organization_id,
 	@tenant_id,
 	@type,
 	@arguments,
@@ -73,6 +76,7 @@ INSERT INTO export_jobs (
 )`
 	args := pgx.StrictNamedArgs{
 		"id":              ej.ID,
+		"organization_id": ej.OrganizationID,
 		"tenant_id":       scope.GetTenantID(),
 		"type":            ej.Type,
 		"arguments":       ej.Arguments,
@@ -126,6 +130,7 @@ func (ej *ExportJob) LoadByID(
 	q := `
 SELECT
 	id,
+	organization_id,
 	type,
 	arguments,
 	error,
@@ -167,6 +172,7 @@ func (ej *ExportJob) LoadNextPendingForUpdateSkipLocked(
 	q := `
 SELECT
 	id,
+	organization_id,
 	type,
 	arguments,
 	error,

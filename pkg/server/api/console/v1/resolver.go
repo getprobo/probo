@@ -31,6 +31,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/go-chi/chi/v5"
+	"github.com/vektah/gqlparser/v2/ast"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/httpserver"
@@ -64,6 +65,7 @@ type (
 		samlSvc           *auth.SAMLService
 		authCfg           AuthConfig
 		customDomainCname string
+		schema            *ast.Schema
 	}
 
 	ctxKey struct{ name string }
@@ -307,21 +309,32 @@ func NewMux(
 	return r
 }
 
+// GetSchema returns the parsed GraphQL schema for the console API
+// This is used by other services like authz to extract permissions from @mustBeAuthorized directives
+func GetSchema() *ast.Schema {
+	execSchema := schema.NewExecutableSchema(schema.Config{})
+	return execSchema.Schema()
+}
+
 func graphqlHandler(logger *log.Logger, proboSvc *probo.Service, authSvc *auth.Service, authzSvc *authz.Service, samlSvc *auth.SAMLService, authCfg AuthConfig, customDomainCname string) http.HandlerFunc {
 	var mb int64 = 1 << 20
 
-	es := schema.NewExecutableSchema(
-		schema.Config{
-			Resolvers: &Resolver{
-				proboSvc:          proboSvc,
-				authSvc:           authSvc,
-				authzSvc:          authzSvc,
-				samlSvc:           samlSvc,
-				authCfg:           authCfg,
-				customDomainCname: customDomainCname,
-			},
+	// Parse the schema first to make it available to resolvers
+	execSchema := schema.NewExecutableSchema(schema.Config{})
+
+	cfg := schema.Config{
+		Resolvers: &Resolver{
+			proboSvc:          proboSvc,
+			authSvc:           authSvc,
+			authzSvc:          authzSvc,
+			samlSvc:           samlSvc,
+			authCfg:           authCfg,
+			customDomainCname: customDomainCname,
+			schema:            execSchema.Schema(),
 		},
-	)
+	}
+
+	es := schema.NewExecutableSchema(cfg)
 	srv := handler.New(es)
 	srv.AddTransport(transport.POST{})
 	srv.AddTransport(
@@ -502,5 +515,16 @@ func validateTenantAccess(ctx context.Context, tenantID gid.TenantID) {
 		}
 
 		panic(&authz.TenantAccessError{Message: "tenant not found"})
+	}
+}
+
+func (r *Resolver) MustBeAuthorized(ctx context.Context, entityID gid.GID, action authz.Action) {
+	user := UserFromContext(ctx)
+	apiKey := UserAPIKeyFromContext(ctx)
+
+	authzSvc := r.AuthzService(ctx, entityID.TenantID())
+	err := authzSvc.Authorize(ctx, user, apiKey, entityID, action)
+	if err != nil {
+		panic(err)
 	}
 }

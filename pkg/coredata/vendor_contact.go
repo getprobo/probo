@@ -21,24 +21,25 @@ import (
 	"maps"
 	"time"
 
-	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/page"
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 )
 
 type (
 	VendorContact struct {
-		ID         gid.GID   `db:"id"`
-		VendorID   gid.GID   `db:"vendor_id"`
-		FullName   *string   `db:"full_name"`
-		Email      *string   `db:"email"`
-		Phone      *string   `db:"phone"`
-		Role       *string   `db:"role"`
-		SnapshotID *gid.GID  `db:"snapshot_id"`
-		SourceID   *gid.GID  `db:"source_id"`
-		CreatedAt  time.Time `db:"created_at"`
-		UpdatedAt  time.Time `db:"updated_at"`
+		ID             gid.GID   `db:"id"`
+		OrganizationID gid.GID   `db:"organization_id"`
+		VendorID       gid.GID   `db:"vendor_id"`
+		FullName       *string   `db:"full_name"`
+		Email          *string   `db:"email"`
+		Phone          *string   `db:"phone"`
+		Role           *string   `db:"role"`
+		SnapshotID     *gid.GID  `db:"snapshot_id"`
+		SourceID       *gid.GID  `db:"source_id"`
+		CreatedAt      time.Time `db:"created_at"`
+		UpdatedAt      time.Time `db:"updated_at"`
 	}
 
 	VendorContacts []*VendorContact
@@ -74,6 +75,7 @@ func (vc *VendorContact) LoadByID(
 	q := `
 SELECT
 	id,
+	organization_id,
 	vendor_id,
 	full_name,
 	email,
@@ -126,6 +128,7 @@ func (vc *VendorContacts) LoadByVendorID(
 	q := `
 SELECT
 	id,
+	organization_id,
 	vendor_id,
 	full_name,
 	email,
@@ -176,6 +179,7 @@ INSERT INTO
 	vendor_contacts (
 		tenant_id,
 		id,
+		organization_id,
 		vendor_id,
 		full_name,
 		email,
@@ -187,6 +191,7 @@ INSERT INTO
 VALUES (
 	@tenant_id,
 	@vendor_contact_id,
+	@organization_id,
 	@vendor_id,
 	@full_name,
 	@email,
@@ -200,6 +205,7 @@ VALUES (
 	args := pgx.StrictNamedArgs{
 		"tenant_id":         scope.GetTenantID(),
 		"vendor_contact_id": vc.ID,
+		"organization_id":   vc.OrganizationID,
 		"vendor_id":         vc.VendorID,
 		"full_name":         vc.FullName,
 		"email":             vc.Email,

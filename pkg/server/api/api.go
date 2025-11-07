@@ -17,11 +17,11 @@ package api
 import (
 	"errors"
 	"net/http"
-
 	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
+	"github.com/vektah/gqlparser/v2/ast"
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/auth"
@@ -91,6 +91,11 @@ var (
 	ErrMissingAuthService  = errors.New("server configuration requires a valid auth.Service instance")
 	ErrMissingAuthzService = errors.New("server configuration requires a valid authz.Service instance")
 )
+
+// GetConsoleSchema returns the GraphQL schema for the console API
+func GetConsoleSchema() *ast.Schema {
+	return console_v1.GetSchema()
+}
 
 func methodNotAllowed(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()

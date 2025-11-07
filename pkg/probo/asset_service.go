@@ -203,7 +203,7 @@ func (s AssetService) Update(
 		}
 
 		if req.VendorIDs != nil {
-			if err := assetVendors.Merge(ctx, conn, s.svc.scope, asset.ID, req.VendorIDs); err != nil {
+			if err := assetVendors.Merge(ctx, conn, s.svc.scope, asset.ID, asset.OrganizationID, req.VendorIDs); err != nil {
 				return fmt.Errorf("cannot update asset vendors: %w", err)
 			}
 		}
@@ -248,7 +248,7 @@ func (s AssetService) Create(
 		}
 
 		if len(req.VendorIDs) > 0 {
-			if err := assetVendors.Insert(ctx, conn, s.svc.scope, asset.ID, req.VendorIDs); err != nil {
+			if err := assetVendors.Insert(ctx, conn, s.svc.scope, asset.ID, asset.OrganizationID, req.VendorIDs); err != nil {
 				return fmt.Errorf("cannot create asset vendors: %w", err)
 			}
 		}

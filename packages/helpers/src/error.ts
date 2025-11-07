@@ -1,7 +1,10 @@
 export interface GraphQLError {
   message?: string;
+  extensions?: {
+    code?: string;
+  };
   source?: {
-    errors?: Array<{ message: string }>;
+    errors?: Array<{ message: string; extensions?: { code?: string } }>;
   };
 }
 

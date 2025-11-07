@@ -29,6 +29,7 @@ import z from "zod";
 import { SnapshotBanner } from "/components/SnapshotBanner";
 import { validateSnapshotConsistency } from "@probo/helpers";
 import type { DatumGraphNodeQuery } from "/hooks/graph/__generated__/DatumGraphNodeQuery.graphql";
+import { Authorized } from "/permissions";
 
 const updateDatumSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -124,15 +125,17 @@ export default function DatumDetailsPage(props: Props) {
           <Badge variant="info">{datumEntry?.dataClassification}</Badge>
         </div>
         {!isSnapshotMode && (
-          <ActionDropdown variant="secondary">
-            <DropdownItem
-              variant="danger"
-              icon={IconTrashCan}
-              onClick={deleteDatum}
-            >
-              {__("Delete")}
-            </DropdownItem>
-          </ActionDropdown>
+          <Authorized entity="Datum" action="deleteDatum">
+            <ActionDropdown variant="secondary">
+              <DropdownItem
+                variant="danger"
+                icon={IconTrashCan}
+                onClick={deleteDatum}
+              >
+                {__("Delete")}
+              </DropdownItem>
+            </ActionDropdown>
+          </Authorized>
         )}
       </div>
 
@@ -177,9 +180,11 @@ export default function DatumDetailsPage(props: Props) {
         {!isSnapshotMode && (
           <div className="flex justify-end">
             {formState.isDirty && (
-              <Button type="submit" disabled={formState.isSubmitting}>
-                {formState.isSubmitting ? __("Updating...") : __("Update")}
-              </Button>
+              <Authorized entity="Datum" action="updateDatum">
+                <Button type="submit" disabled={formState.isSubmitting}>
+                  {formState.isSubmitting ? __("Updating...") : __("Update")}
+                </Button>
+              </Authorized>
             )}
           </div>
         )}

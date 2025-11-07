@@ -21,6 +21,9 @@ import { useFragment } from "react-relay";
 import { useMemo, useState, useCallback, useEffect } from "react";
 import { sprintf, getTrustCenterVisibilityOptions } from "@probo/helpers";
 import { formatDate } from "@probo/helpers";
+import { Authorized } from "/permissions";
+import { isAuthorized } from "/permissions";
+import { useParams } from "react-router";
 
 const trustCenterFileFragment = graphql`
   fragment TrustCenterFilesCardFragment on TrustCenterFile {
@@ -147,6 +150,9 @@ function FileRow(props: {
   const file = props.file;
   const { __ } = useTranslate();
   const [optimisticValue, setOptimisticValue] = useState<string | null>(null);
+  const { organizationId } = useParams();
+
+  const canUpdate = organizationId ? isAuthorized(organizationId, "TrustCenter", "updateTrustCenter") : false;
 
   const handleValueChange = useCallback((value: string | {}) => {
     const stringValue = typeof value === 'string' ? value : '';
@@ -179,7 +185,7 @@ function FileRow(props: {
           type="select"
           value={currentValue}
           onValueChange={handleValueChange}
-          disabled={props.disabled}
+          disabled={props.disabled || !canUpdate}
           className="w-[105px]"
         >
           {visibilityOptions.map((option) => (
@@ -201,20 +207,24 @@ function FileRow(props: {
             onClick={() => window.open(file.fileUrl, '_blank', 'noopener,noreferrer')}
             title={__("Download")}
           />
-          <Button
-            variant="secondary"
-            icon={IconPencil}
-            onClick={() => props.onEdit({ id: file.id, name: file.name, category: file.category })}
-            disabled={props.disabled}
-            title={__("Edit")}
-          />
-          <Button
-            variant="danger"
-            icon={IconTrashCan}
-            onClick={() => props.onDelete(file.id)}
-            disabled={props.disabled}
-            title={__("Delete")}
-          />
+          <Authorized entity="TrustCenterFile" action="updateTrustCenterFile">
+            <Button
+              variant="secondary"
+              icon={IconPencil}
+              onClick={() => props.onEdit({ id: file.id, name: file.name, category: file.category })}
+              disabled={props.disabled}
+              title={__("Edit")}
+            />
+          </Authorized>
+          <Authorized entity="TrustCenterFile" action="deleteTrustCenterFile">
+            <Button
+              variant="danger"
+              icon={IconTrashCan}
+              onClick={() => props.onDelete(file.id)}
+              disabled={props.disabled}
+              title={__("Delete")}
+            />
+          </Authorized>
         </div>
       </Td>
     </Tr>

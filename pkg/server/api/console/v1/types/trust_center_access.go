@@ -30,6 +30,7 @@ func NewTrustCenterAccess(tca *coredata.TrustCenterAccess) *TrustCenterAccess {
 		HasAcceptedNonDisclosureAgreement: tca.HasAcceptedNonDisclosureAgreement,
 		CreatedAt:                         tca.CreatedAt,
 		UpdatedAt:                         tca.UpdatedAt,
+		LastTokenExpiresAt:                tca.LastTokenExpiresAt,
 	}
 }
 

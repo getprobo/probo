@@ -30,6 +30,7 @@ import {
 } from "/hooks/graph/RiskGraph";
 import type { RiskGraphNodeQuery } from "/hooks/graph/__generated__/RiskGraphNodeQuery.graphql";
 import { SnapshotBanner } from "/components/SnapshotBanner";
+import { Authorized } from "/permissions";
 
 type Props = {
   queryRef: PreloadedQuery<RiskGraphNodeQuery>;
@@ -120,23 +121,27 @@ export default function RiskDetailPage(props: Props) {
         />
         {!isSnapshotMode && (
           <div className="flex gap-2">
-            <FormRiskDialog
-              trigger={
-                <Button icon={IconPencil} variant="secondary">
-                  {__("Edit")}
-                </Button>
-              }
-              risk={{ id: riskId, ...risk }}
-            />
-            <ActionDropdown variant="secondary">
-              <DropdownItem
-                variant="danger"
-                icon={IconTrashCan}
-                onClick={onDelete}
-              >
-                {__("Delete")}
-              </DropdownItem>
-            </ActionDropdown>
+            <Authorized entity="Risk" action="updateRisk">
+              <FormRiskDialog
+                trigger={
+                  <Button icon={IconPencil} variant="secondary">
+                    {__("Edit")}
+                  </Button>
+                }
+                risk={{ id: riskId, ...risk }}
+              />
+            </Authorized>
+            <Authorized entity="Risk" action="deleteRisk">
+              <ActionDropdown variant="secondary">
+                <DropdownItem
+                  variant="danger"
+                  icon={IconTrashCan}
+                  onClick={onDelete}
+                >
+                  {__("Delete")}
+                </DropdownItem>
+              </ActionDropdown>
+            </Authorized>
           </div>
         )}
       </div>

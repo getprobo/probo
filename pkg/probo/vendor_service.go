@@ -638,7 +638,13 @@ func (s VendorService) CreateRiskAssessment(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(tx pg.Conn) error {
-			vendor := coredata.Vendor{ID: req.VendorID}
+			vendor := coredata.Vendor{}
+			if err := vendor.LoadByID(ctx, tx, s.svc.scope, req.VendorID); err != nil {
+				return fmt.Errorf("cannot load vendor: %w", err)
+			}
+
+			vendorRiskAssessment.OrganizationID = vendor.OrganizationID
+
 			if err := vendor.ExpireNonExpiredRiskAssessments(ctx, tx, s.svc.scope); err != nil {
 				return fmt.Errorf("cannot expire vendor risk assessments: %w", err)
 			}

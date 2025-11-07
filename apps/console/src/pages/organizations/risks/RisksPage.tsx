@@ -29,6 +29,8 @@ import type { RiskGraphListQuery } from "/hooks/graph/__generated__/RiskGraphLis
 import type { RiskGraphFragment$data } from "/hooks/graph/__generated__/RiskGraphFragment.graphql";
 import { useParams } from "react-router";
 import { SnapshotBanner } from "/components/SnapshotBanner";
+import { Authorized } from "/permissions";
+import { isAuthorized } from "/permissions";
 
 type Props = {
   queryRef: PreloadedQuery<RiskGraphListQuery>;
@@ -54,6 +56,11 @@ export default function RisksPage(props: Props) {
 
   usePageTitle(__("Risks"));
 
+  const hasAnyAction = !isSnapshotMode && (
+    isAuthorized(organizationId, "Risk", "updateRisk") ||
+    isAuthorized(organizationId, "Risk", "deleteRisk")
+  );
+
   return (
     <div className="space-y-6">
       {snapshotId && <SnapshotBanner snapshotId={snapshotId} />}
@@ -64,13 +71,15 @@ export default function RisksPage(props: Props) {
         )}
       >
         {!isSnapshotMode && (
-          <FormRiskDialog
-            connection={connectionId}
-            onSuccess={() => {
-              pagination.refetch({ snapshotId });
-            }}
-            trigger={<Button icon={IconPlusLarge}>{__("New Risk")}</Button>}
-          />
+          <Authorized entity="Organization" action="createRisk">
+            <FormRiskDialog
+              connection={connectionId}
+              onSuccess={() => {
+                pagination.refetch({ snapshotId });
+              }}
+              trigger={<Button icon={IconPlusLarge}>{__("New Risk")}</Button>}
+            />
+          </Authorized>
         )}
       </PageHeader>
 
@@ -101,7 +110,7 @@ export default function RisksPage(props: Props) {
             <SortableTh field="OWNER_FULL_NAME">
               {__("Owner")}
             </SortableTh>
-            <Th></Th>
+            {hasAnyAction && <Th></Th>}
           </Tr>
         </Thead>
         <Tbody>
@@ -111,6 +120,7 @@ export default function RisksPage(props: Props) {
               key={risk.id}
               connectionId={connectionId}
               organizationId={organizationId}
+              hasAnyAction={hasAnyAction}
             />
           ))}
         </Tbody>
@@ -123,6 +133,7 @@ type RowProps = {
   risk: NodeOf<RiskGraphFragment$data["risks"]>;
   connectionId: string;
   organizationId: string;
+  hasAnyAction: boolean;
 };
 
 function RiskRow(props: RowProps) {
@@ -180,26 +191,30 @@ function RiskRow(props: RowProps) {
           <SeverityBadge score={risk.residualRiskScore} />
         </Td>
         <Td>{risk.owner?.fullName || __("Unassigned")}</Td>
-        <Td noLink className="text-end">
-          {!isSnapshotMode && (
+        {props.hasAnyAction && (
+          <Td noLink className="text-end">
             <ActionDropdown>
-              <DropdownItem
-                icon={IconPencil}
-                onClick={() => formDialogRef.current?.open()}
-              >
-                {__("Edit")}
-              </DropdownItem>
+              <Authorized entity="Risk" action="updateRisk">
+                <DropdownItem
+                  icon={IconPencil}
+                  onClick={() => formDialogRef.current?.open()}
+                >
+                  {__("Edit")}
+                </DropdownItem>
+              </Authorized>
 
-              <DropdownItem
-                variant="danger"
-                icon={IconTrashCan}
-                onClick={onDelete}
-              >
-                {__("Delete")}
-              </DropdownItem>
+              <Authorized entity="Risk" action="deleteRisk">
+                <DropdownItem
+                  variant="danger"
+                  icon={IconTrashCan}
+                  onClick={onDelete}
+                >
+                  {__("Delete")}
+                </DropdownItem>
+              </Authorized>
             </ActionDropdown>
-          )}
-        </Td>
+          </Td>
+        )}
       </Tr>
     </>
   );
