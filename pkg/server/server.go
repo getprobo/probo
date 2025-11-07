@@ -50,6 +50,7 @@ type Config struct {
 	SAML              *auth.SAMLService
 	ConsoleAuth       api.ConsoleAuthConfig
 	TrustAuth         api.TrustAuthConfig
+	MCPConfig         api.MCPConfig
 	ConnectorRegistry *connector.ConnectorRegistry
 	Agent             *agents.Agent
 	SafeRedirect      *saferedirect.SafeRedirect
@@ -80,6 +81,7 @@ func NewServer(cfg Config) (*Server, error) {
 		SAML:              cfg.SAML,
 		ConsoleAuth:       cfg.ConsoleAuth,
 		TrustAuth:         cfg.TrustAuth,
+		MCPConfig:         cfg.MCPConfig,
 		ConnectorRegistry: cfg.ConnectorRegistry,
 		SafeRedirect:      cfg.SafeRedirect,
 		CustomDomainCname: cfg.CustomDomainCname,

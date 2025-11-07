@@ -65,15 +65,25 @@ type (
 		SAML              *auth.SAMLService
 		ConsoleAuth       ConsoleAuthConfig
 		TrustAuth         TrustAuthConfig
+		MCPConfig         MCPConfig
 		ConnectorRegistry *connector.ConnectorRegistry
 		SafeRedirect      *saferedirect.SafeRedirect
 		CustomDomainCname string
 		Logger            *log.Logger
 	}
 
+	// MCPConfig holds configuration for MCP
+	MCPConfig struct {
+		Version        string
+		RequestTimeout time.Duration
+		MaxRequestSize int64
+	}
+
 	Server struct {
-		cfg             Config
-		trustAPIHandler http.Handler
+		cfg               Config
+		trustAPIHandler   http.Handler
+		consoleAPIHandler http.Handler
+		mcpAPIHandler     http.Handler
 	}
 )
 
@@ -120,7 +130,6 @@ func NewServer(cfg Config) (*Server, error) {
 		return nil, ErrMissingAuthzService
 	}
 
-	// Create trust API handler once
 	trustAPIHandler := trust_v1.NewMux(
 		cfg.Logger.Named("trust.v1"),
 		cfg.Auth,
@@ -146,9 +155,41 @@ func NewServer(cfg Config) (*Server, error) {
 		},
 	)
 
+	consoleAPIHandler := console_v1.NewMux(
+		cfg.Logger.Named("console.v1"),
+		cfg.Probo,
+		cfg.Auth,
+		cfg.Authz,
+		console_v1.AuthConfig{
+			CookieName:      cfg.ConsoleAuth.CookieName,
+			CookieDomain:    cfg.ConsoleAuth.CookieDomain,
+			SessionDuration: cfg.ConsoleAuth.SessionDuration,
+			CookieSecret:    cfg.ConsoleAuth.CookieSecret,
+			CookieSecure:    cfg.ConsoleAuth.CookieSecure,
+		},
+		cfg.ConnectorRegistry,
+		cfg.SafeRedirect,
+		cfg.CustomDomainCname,
+		cfg.SAML,
+	)
+
+	mcpAPIHandler := mcp_v1.NewMux(
+		cfg.Logger.Named("mcp.v1"),
+		cfg.Probo,
+		cfg.Auth,
+		cfg.Authz,
+		mcp_v1.Config{
+			Version:        cfg.MCPConfig.Version,
+			RequestTimeout: cfg.MCPConfig.RequestTimeout,
+			MaxRequestSize: cfg.MCPConfig.MaxRequestSize,
+		},
+	)
+
 	return &Server{
-		cfg:             cfg,
-		trustAPIHandler: trustAPIHandler,
+		cfg:               cfg,
+		trustAPIHandler:   trustAPIHandler,
+		consoleAPIHandler: consoleAPIHandler,
+		mcpAPIHandler:     mcpAPIHandler,
 	}, nil
 }
 
@@ -168,7 +209,6 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Debug:              false,
 	}
 
-	// Default API security headers
 	w.Header().Set("X-Frame-Options", "DENY")
 	w.Header().Set("X-XSS-Protection", "0")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
@@ -176,43 +216,15 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Security-Policy", "default-src 'self'")
 	w.Header().Set("Permissions-Policy", "microphone=(), camera=(), geolocation=()")
 
-	// Default API security headers
 	router := chi.NewRouter()
 	router.MethodNotAllowed(methodNotAllowed)
 	router.NotFound(notFound)
 
 	router.Use(cors.Handler(corsOpts))
 
-	// Mount the console API with authentication
-	router.Mount(
-		"/console/v1",
-		console_v1.NewMux(
-			s.cfg.Logger.Named("console.v1"),
-			s.cfg.Probo,
-			s.cfg.Auth,
-			s.cfg.Authz,
-			console_v1.AuthConfig{
-				CookieName:      s.cfg.ConsoleAuth.CookieName,
-				CookieDomain:    s.cfg.ConsoleAuth.CookieDomain,
-				SessionDuration: s.cfg.ConsoleAuth.SessionDuration,
-				CookieSecret:    s.cfg.ConsoleAuth.CookieSecret,
-				CookieSecure:    s.cfg.ConsoleAuth.CookieSecure,
-			},
-			s.cfg.ConnectorRegistry,
-			s.cfg.SafeRedirect,
-			s.cfg.CustomDomainCname,
-			s.cfg.SAML,
-		),
-	)
-
-	// Mount the trust API with authentication
+	router.Mount("/console/v1", s.consoleAPIHandler)
 	router.Mount("/trust/v1", s.trustAPIHandler)
-
-	// Mount the MCP API - use Route instead of Mount to preserve path for handler
-	router.Mount(
-		"/mcp/v1",
-		mcp_v1.NewMux(s.cfg.Probo),
-	)
+	router.Mount("/mcp/v1", s.mcpAPIHandler)
 
 	router.ServeHTTP(w, r)
 }

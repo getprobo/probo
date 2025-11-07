@@ -416,6 +416,11 @@ func (impl *Implm) Run(
 				TokenType:         impl.cfg.TrustAuth.TokenType,
 				CookieSecure:      impl.cfg.Auth.Cookie.Secure,
 			},
+			MCPConfig: api.MCPConfig{
+				Version:        "1.0.0",
+				RequestTimeout: 30 * time.Second,
+				MaxRequestSize: 10 * 1024 * 1024, // 10MB
+			},
 		},
 	)
 	if err != nil {
