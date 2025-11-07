@@ -87,12 +87,16 @@ type (
 	}
 )
 
+const (
+	documentMaxLength = 50_000
+)
+
 func (cdr *CreateDocumentRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(cdr.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
 	v.Check(cdr.Title, "title", validator.Required(), validator.SafeText(TitleMaxLength))
-	v.Check(cdr.Content, "content", validator.Required(), validator.SafeText(ContentMaxLength))
+	v.Check(cdr.Content, "content", validator.Required(), validator.NotEmpty(), validator.MaxLen(documentMaxLength))
 	v.Check(cdr.OwnerID, "owner_id", validator.Required(), validator.GID(coredata.PeopleEntityType))
 	v.Check(cdr.Classification, "classification", validator.Required(), validator.OneOfSlice(coredata.DocumentClassifications()))
 	v.Check(cdr.DocumentType, "document_type", validator.Required(), validator.OneOfSlice(coredata.DocumentTypes()))
@@ -118,7 +122,7 @@ func (udvr *UpdateDocumentVersionRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(udvr.ID, "id", validator.Required(), validator.GID(coredata.DocumentVersionEntityType))
-	v.Check(udvr.Content, "content", validator.Required(), validator.SafeText(ContentMaxLength))
+	v.Check(udvr.Content, "content", validator.Required(), validator.NotEmpty(), validator.MaxLen(documentMaxLength))
 
 	return v.Error()
 }
@@ -605,6 +609,10 @@ func (s *DocumentService) UpdateVersion(
 ) (*coredata.DocumentVersion, error) {
 	documentVersion := &coredata.DocumentVersion{}
 	document := &coredata.Document{}
+
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
 
 	err := s.svc.pg.WithTx(
 		ctx,
