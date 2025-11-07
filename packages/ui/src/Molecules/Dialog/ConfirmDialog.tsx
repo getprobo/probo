@@ -79,13 +79,14 @@ export function ConfirmDialog() {
         footer,
     } = dialog();
     const [loading, setLoading] = useState(false);
-    const handleConfirm = () => {
+    const handleConfirm = async () => {
         setLoading(true);
-        onConfirm()
-            .finally(() => {
-                close();
-                setLoading(false);
-            });
+        try {
+            await onConfirm();
+        } finally {
+            close();
+            setLoading(false);
+        }
     };
 
     return (
