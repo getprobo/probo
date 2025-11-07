@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.86.4] - 2025-11-07
+
+### Fixed
+
+- Test a fix of the deletion freeze
+
 ## [0.86.3] - 2025-11-07
 
 ### Fixed
