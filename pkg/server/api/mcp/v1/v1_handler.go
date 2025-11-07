@@ -1,209 +1,99 @@
 package v1
 
 import (
-	"encoding/json"
+	"context"
+	"fmt"
 	"net/http"
+	"time"
 
-	"github.com/getprobo/probo/pkg/gid"
-	"github.com/getprobo/probo/pkg/probo"
 	"github.com/go-chi/chi/v5"
-	"github.com/google/jsonschema-go/jsonschema"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/auth"
+	"go.probo.inc/probo/pkg/authz"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/server/api/mcp/mcputils"
 )
 
 type (
 	resolver struct {
-		proboSvc       *probo.TenantService
-		organizationID gid.GID
+		proboSvc *probo.Service
+		authSvc  *auth.Service
+		authzSvc *authz.Service
+		logger   *log.Logger
 	}
 )
 
-func NewMux(proboSvc *probo.Service) *chi.Mux {
+func (r *resolver) ProboService(ctx context.Context, tenantID gid.TenantID) *probo.TenantService {
+	validateTenantAccess(ctx, tenantID)
+	return r.proboSvc.WithTenant(tenantID)
+}
+
+func validateTenantAccess(ctx context.Context, tenantID gid.TenantID) {
+	mcpCtx := MCPContextFromContext(ctx)
+	if mcpCtx == nil {
+		panic(fmt.Errorf("authentication context not found"))
+	}
+
+	for _, tid := range mcpCtx.TenantIDs {
+		if tid == tenantID {
+			return
+		}
+	}
+
+	panic(fmt.Errorf("access denied: user does not have access to tenant %s", tenantID.String()))
+}
+
+func NewMux(logger *log.Logger, proboSvc *probo.Service, authSvc *auth.Service, authzSvc *authz.Service, cfg Config) *chi.Mux {
+	logger = logger.Named("mcp.v1")
+
+	logger.Info("initializing MCP server",
+		log.String("version", cfg.Version),
+		log.String("request_timeout", cfg.RequestTimeout.String()),
+	)
+
 	server := mcp.NewServer(
 		&mcp.Implementation{
 			Name:    "probo",
 			Title:   "Probo",
-			Version: "1.0.0", // todo retrieve from build info
+			Version: cfg.Version,
 		},
 		&mcp.ServerOptions{},
 	)
 
-	tenantID, err := gid.ParseTenantID("lXdXZSh-AAE")
-	if err != nil {
-		panic(err)
+	server.AddReceivingMiddleware(mcputils.LoggingMiddleware(logger))
+
+	resolver := &resolver{
+		proboSvc: proboSvc,
+		authSvc:  authSvc,
+		authzSvc: authzSvc,
+		logger:   logger,
 	}
 
-	organizationID, err := gid.ParseGID("lXdXZSh-AAEAAAAAAZfLJi38a0AGbu37")
-	if err != nil {
-		panic(err)
-	}
-
-	resolver := &resolver{proboSvc: proboSvc.WithTenant(tenantID), organizationID: organizationID}
-
-	mcp.AddTool(
-		server,
-		&mcp.Tool{
-			Title:       "List Vendors",
-			Description: "List all vendors for the organization",
-			Name:        "listVendors",
-			Annotations: &mcp.ToolAnnotations{
-				Title:        "List Vendors",
-				ReadOnlyHint: true,
-			},
-			InputSchema: &jsonschema.Schema{
-				Type: "object",
-				Properties: map[string]*jsonschema.Schema{
-					"orderField": {
-						Type:    "string",
-						Default: json.RawMessage(`"NAME"`),
-						Enum: []any{
-							"NAME",
-							"CREATED_AT",
-							"UPDATED_AT",
-						},
-					},
-					"cursor": {
-						Type: "string",
-					},
-					"size": {
-						Type:    "integer",
-						Minimum: jsonschema.Ptr(float64(1)),
-						Maximum: jsonschema.Ptr(float64(1000)),
-						Default: json.RawMessage(`100`),
-					},
-				},
-			},
-			OutputSchema: &jsonschema.Schema{
-				Type: "object",
-				Properties: map[string]*jsonschema.Schema{
-					"result": {
-						Type: "array",
-						Items: &jsonschema.Schema{
-							Type:     "object",
-							Required: []string{"name", "id"},
-							Properties: map[string]*jsonschema.Schema{
-								"name": {
-									Type: "string",
-								},
-								"id": {
-									Type: "string",
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		resolver.ListVendors,
-	)
-
-	mcp.AddTool(
-		server,
-		&mcp.Tool{
-			Name:        "addVendor",
-			Description: "Add a vendor",
-			InputSchema: &jsonschema.Schema{
-				Type: "object",
-				Properties: map[string]*jsonschema.Schema{
-					"name": {
-						Type:     "string",
-						Required: []string{"name"},
-					},
-					"description": {
-						Type: "string",
-					},
-					"headquarterAddress": {
-						Type: "string",
-					},
-					"legalName": {
-						Type: "string",
-					},
-					"websiteURL": {
-						Type:   "string",
-						Format: "uri",
-					},
-					"category": {
-						Type: "string",
-					},
-					"privacyPolicyURL": {
-						Type: "string",
-					},
-					"serviceLevelAgreementURL": {
-						Type:   "string",
-						Format: "uri",
-					},
-					"dataProcessingAgreementURL": {
-						Type:   "string",
-						Format: "uri",
-					},
-					"businessAssociateAgreementURL": {
-						Type:   "string",
-						Format: "uri",
-					},
-					"subprocessorsListURL": {
-						Type:   "string",
-						Format: "uri",
-					},
-					"certifications": {
-						Type: "array",
-						Items: &jsonschema.Schema{
-							Type: "string",
-						},
-					},
-					"securityPageURL": {
-						Type:   "string",
-						Format: "uri",
-					},
-					"trustPageURL": {
-						Type:   "string",
-						Format: "uri",
-					},
-					"termsOfServiceURL": {
-						Type:   "string",
-						Format: "uri",
-					},
-					"statusPageURL": {
-						Type:   "string",
-						Format: "uri",
-					},
-					"businessOwnerID": {
-						Type: "string",
-					},
-					"securityOwnerID": {
-						Type: "string",
-					},
-				},
-			},
-			OutputSchema: &jsonschema.Schema{
-				Type: "object",
-				Properties: map[string]*jsonschema.Schema{
-					"result": {
-						Type:     "object",
-						Required: []string{"name", "id"},
-						Properties: map[string]*jsonschema.Schema{
-							"name": {
-								Type: "string",
-							},
-							"id": {
-								Type: "string",
-							},
-						},
-					},
-				},
-			},
-		},
-		resolver.AddVendor,
-	)
+	mcp.AddTool(server, ListOrganizationsTool, resolver.ListOrganizations)
+	mcp.AddTool(server, ListVendorsTool, resolver.ListVendors)
+	mcp.AddTool(server, AddVendorTool, resolver.AddVendor)
 
 	getServer := func(r *http.Request) *mcp.Server { return server }
+	eventStore := mcp.NewMemoryEventStore(nil)
 
 	handler := mcp.NewStreamableHTTPHandler(
 		getServer,
-		&mcp.StreamableHTTPOptions{Stateless: true},
+		&mcp.StreamableHTTPOptions{
+			Stateless:      false,
+			SessionTimeout: 30 * time.Minute,
+			EventStore:     eventStore,
+			Logger:         nil, // TODO put logger here
+		},
 	)
 
+	authHandler := WithMCPAuth(logger, authSvc, authzSvc, handler)
+
 	r := chi.NewMux()
-	r.Handle("/", handler)
+	r.Handle("/", authHandler)
+
+	logger.Info("MCP server initialized successfully")
 
 	return r
 }

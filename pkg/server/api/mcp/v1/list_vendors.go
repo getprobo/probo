@@ -4,67 +4,52 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/getprobo/probo/pkg/coredata"
-	"github.com/getprobo/probo/pkg/page"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/page"
+	"go.probo.inc/probo/pkg/server/api/mcp/v1/types"
 )
 
-type (
-	listVendorsArgs struct {
-		OrderField coredata.VendorOrderField
-		Cursor     *page.CursorKey
-		Size       int
-	}
-
-	listVendorsResult struct {
-		NextCursor *string
-		Result     []struct {
-			Name string
-			ID   string
-		}
+var (
+	ListVendorsTool = &mcp.Tool{
+		Name:         "listVendors",
+		Title:        "List Vendors",
+		Description:  "List all vendors for the organization",
+		Annotations:  &mcp.ToolAnnotations{ReadOnlyHint: true},
+		InputSchema:  types.ListVendorsInputSchema,
+		OutputSchema: types.ListVendorsOutputSchema,
 	}
 )
 
 func (r *resolver) ListVendors(
 	ctx context.Context,
 	req *mcp.CallToolRequest,
-	args *listVendorsArgs,
-) (*mcp.CallToolResult, *listVendorsResult, error) {
+	args types.ListVendorsInput,
+) (*mcp.CallToolResult, types.ListVendorsOutput, error) {
+	prb := r.ProboService(ctx, args.OrganizationID.TenantID())
 
-	filter := coredata.NewVendorFilter(nil, nil)
-	cursor := page.NewCursor(
-		args.Size,
-		args.Cursor,
-		page.Head,
-		page.OrderBy[coredata.VendorOrderField]{
-			Field:     args.OrderField,
+	pageOrderBy := page.OrderBy[coredata.VendorOrderField]{
+		Field:     coredata.VendorOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if args.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.VendorOrderField]{
+			Field:     args.OrderBy.Field,
 			Direction: page.OrderDirectionDesc,
-		},
-	)
+		}
+	}
 
-	vendors, err := r.proboSvc.Vendors.ListForOrganizationID(ctx, r.organizationID, cursor, filter)
+	cursor := types.NewCursor(args.Size, args.Cursor, pageOrderBy)
+
+	var vendorFilter = coredata.NewVendorFilter(nil, nil)
+	if args.Filter != nil {
+		vendorFilter = coredata.NewVendorFilter(&args.Filter.SnapshotID, nil)
+	}
+
+	page, err := prb.Vendors.ListForOrganizationID(ctx, args.OrganizationID, cursor, vendorFilter)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to list vendors: %w", err)
+		panic(fmt.Errorf("cannot list organization vendors: %w", err))
 	}
 
-	result := &listVendorsResult{}
-	if len(vendors.Data) > 0 {
-		nextCursorKey := vendors.Data[len(vendors.Data)-1].CursorKey(args.OrderField).String()
-		result.NextCursor = &nextCursorKey
-	}
-
-	for _, vendor := range vendors.Data {
-		result.Result = append(
-			result.Result,
-			struct {
-				Name string
-				ID   string
-			}{
-				Name: vendor.Name,
-				ID:   vendor.ID.String(),
-			},
-		)
-	}
-
-	return nil, result, nil
+	return nil, types.NewListVendorsOutput(page), nil
 }

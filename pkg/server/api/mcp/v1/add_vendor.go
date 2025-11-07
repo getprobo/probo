@@ -4,51 +4,34 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/getprobo/probo/pkg/coredata"
-	"github.com/getprobo/probo/pkg/gid"
-	"github.com/getprobo/probo/pkg/probo"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/server/api/mcp/v1/types"
 )
 
-type (
-	addVendorArgs struct {
-		Name                          string
-		Description                   *string
-		HeadquarterAddress            *string
-		LegalName                     *string
-		WebsiteURL                    *string
-		Category                      *coredata.VendorCategory
-		PrivacyPolicyURL              *string
-		ServiceLevelAgreementURL      *string
-		DataProcessingAgreementURL    *string
-		BusinessAssociateAgreementURL *string
-		SubprocessorsListURL          *string
-		Certifications                []string
-		SecurityPageURL               *string
-		TrustPageURL                  *string
-		TermsOfServiceURL             *string
-		StatusPageURL                 *string
-		BusinessOwnerID               *gid.GID
-		SecurityOwnerID               *gid.GID
-	}
-
-	addVendorResult struct {
-		Result struct {
-			Name string
-			ID   string
-		}
+var (
+	AddVendorTool = &mcp.Tool{
+		Name:         "addVendor",
+		Title:        "Add Vendor",
+		Description:  "Add a new vendor to the organization",
+		Annotations:  &mcp.ToolAnnotations{ReadOnlyHint: false},
+		InputSchema:  types.AddVendorInputSchema,
+		OutputSchema: types.AddVendorOutputSchema,
 	}
 )
 
 func (r *resolver) AddVendor(
 	ctx context.Context,
 	req *mcp.CallToolRequest,
-	args *addVendorArgs,
-) (*mcp.CallToolResult, *addVendorResult, error) {
-	vendor, err := r.proboSvc.Vendors.Create(
+	args types.AddVendorInput,
+) (*mcp.CallToolResult, types.AddVendorOutput, error) {
+	tenantID := args.OrganizationID.TenantID()
+	svc := r.ProboService(ctx, tenantID)
+
+	vendor, err := svc.Vendors.Create(
 		ctx,
 		probo.CreateVendorRequest{
-			OrganizationID:                r.organizationID,
+			OrganizationID:                args.OrganizationID,
 			Name:                          args.Name,
 			Description:                   args.Description,
 			HeadquarterAddress:            args.HeadquarterAddress,
@@ -70,18 +53,8 @@ func (r *resolver) AddVendor(
 		},
 	)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to list vendors: %w", err)
+		return nil, types.AddVendorOutput{}, fmt.Errorf("failed to create vendor: %w", err)
 	}
 
-	result := &addVendorResult{
-		Result: struct {
-			Name string
-			ID   string
-		}{
-			Name: vendor.Name,
-			ID:   vendor.ID.String(),
-		},
-	}
-
-	return nil, result, nil
+	return nil, types.NewAddVendorOutput(vendor), nil
 }
