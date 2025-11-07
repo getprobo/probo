@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.86.3] - 2025-11-07
+
+### Fixed
+
+- Fix document validations
+
 ## [0.86.2] - 2025-11-06
 
 ### Fixed
