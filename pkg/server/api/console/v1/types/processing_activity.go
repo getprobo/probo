@@ -15,10 +15,41 @@
 package types
 
 import (
+	"time"
+
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 )
+
+type ProcessingActivity struct {
+	ID                             gid.GID                                                   `json:"id"`
+	OrganizationID                 gid.GID                                                   `json:"-"`
+	SnapshotID                     *gid.GID                                                  `json:"snapshotId,omitempty"`
+	SourceID                       *gid.GID                                                  `json:"sourceId,omitempty"`
+	Organization                   *Organization                                             `json:"organization"`
+	Name                           string                                                    `json:"name"`
+	Purpose                        *string                                                   `json:"purpose,omitempty"`
+	DataSubjectCategory            *string                                                   `json:"dataSubjectCategory,omitempty"`
+	PersonalDataCategory           *string                                                   `json:"personalDataCategory,omitempty"`
+	SpecialOrCriminalData          coredata.ProcessingActivitySpecialOrCriminalDatum         `json:"specialOrCriminalData"`
+	ConsentEvidenceLink            *string                                                   `json:"consentEvidenceLink,omitempty"`
+	LawfulBasis                    coredata.ProcessingActivityLawfulBasis                    `json:"lawfulBasis"`
+	Recipients                     *string                                                   `json:"recipients,omitempty"`
+	Location                       *string                                                   `json:"location,omitempty"`
+	InternationalTransfers         bool                                                      `json:"internationalTransfers"`
+	TransferSafeguards             *coredata.ProcessingActivityTransferSafeguard             `json:"transferSafeguards,omitempty"`
+	RetentionPeriod                *string                                                   `json:"retentionPeriod,omitempty"`
+	SecurityMeasures               *string                                                   `json:"securityMeasures,omitempty"`
+	DataProtectionImpactAssessment coredata.ProcessingActivityDataProtectionImpactAssessment `json:"dataProtectionImpactAssessment"`
+	TransferImpactAssessment       coredata.ProcessingActivityTransferImpactAssessment       `json:"transferImpactAssessment"`
+	Vendors                        *VendorConnection                                         `json:"vendors"`
+	CreatedAt                      time.Time                                                 `json:"createdAt"`
+	UpdatedAt                      time.Time                                                 `json:"updatedAt"`
+}
+
+func (ProcessingActivity) IsNode()             {}
+func (this ProcessingActivity) GetID() gid.GID { return this.ID }
 
 type (
 	ProcessingActivityOrderBy OrderBy[coredata.ProcessingActivityOrderField]
@@ -58,7 +89,9 @@ func NewProcessingActivityConnection(
 func NewProcessingActivity(par *coredata.ProcessingActivity) *ProcessingActivity {
 	return &ProcessingActivity{
 		ID:                             par.ID,
+		OrganizationID:                 par.OrganizationID,
 		SnapshotID:                     par.SnapshotID,
+		SourceID:                       par.SourceID,
 		Name:                           par.Name,
 		Purpose:                        par.Purpose,
 		DataSubjectCategory:            par.DataSubjectCategory,

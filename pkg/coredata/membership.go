@@ -21,23 +21,23 @@ import (
 	"maps"
 	"time"
 
-	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/page"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 )
 
 type (
 	Membership struct {
-		ID             gid.GID   `db:"id"`
-		UserID         gid.GID   `db:"user_id"`
-		OrganizationID gid.GID   `db:"organization_id"`
-		Role           Role      `db:"role"`
-		FullName       string    `db:"full_name"`
-		EmailAddress   string    `db:"email_address"`
-		CreatedAt      time.Time `db:"created_at"`
-		UpdatedAt      time.Time `db:"updated_at"`
+		ID             gid.GID    `db:"id"`
+		UserID         gid.GID    `db:"user_id"`
+		OrganizationID gid.GID    `db:"organization_id"`
+		Role           MembershipRole `db:"role"`
+		FullName       string     `db:"full_name"`
+		EmailAddress   string     `db:"email_address"`
+		CreatedAt      time.Time  `db:"created_at"`
+		UpdatedAt      time.Time  `db:"updated_at"`
 	}
 
 	Memberships []*Membership

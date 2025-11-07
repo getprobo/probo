@@ -21,16 +21,17 @@ import (
 	"maps"
 	"time"
 
-	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/page"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 )
 
 type (
 	TrustCenterDocumentAccess struct {
 		ID                  gid.GID   `db:"id"`
+		OrganizationID      gid.GID   `db:"organization_id"`
 		TrustCenterAccessID gid.GID   `db:"trust_center_access_id"`
 		DocumentID          *gid.GID  `db:"document_id"`
 		ReportID            *gid.GID  `db:"report_id"`
@@ -78,6 +79,7 @@ func (tcda *TrustCenterDocumentAccess) LoadByID(
 	q := `
 SELECT
 	id,
+	organization_id,
 	trust_center_access_id,
 	document_id,
 	report_id,
@@ -127,6 +129,7 @@ func (tcda *TrustCenterDocumentAccess) LoadByTrustCenterAccessIDAndDocumentID(
 	q := `
 SELECT
 	id,
+	organization_id,
 	trust_center_access_id,
 	document_id,
 	report_id,
@@ -177,6 +180,7 @@ func (tcda *TrustCenterDocumentAccess) LoadByTrustCenterAccessIDAndReportID(
 	q := `
 SELECT
 	id,
+	organization_id,
 	trust_center_access_id,
 	document_id,
 	report_id,
@@ -226,6 +230,7 @@ func (tcda *TrustCenterDocumentAccess) Insert(
 INSERT INTO trust_center_document_accesses (
 	id,
 	tenant_id,
+	organization_id,
 	trust_center_access_id,
 	document_id,
 	report_id,
@@ -237,6 +242,7 @@ INSERT INTO trust_center_document_accesses (
 ) VALUES (
 	@id,
 	@tenant_id,
+	@organization_id,
 	@trust_center_access_id,
 	@document_id,
 	@report_id,
@@ -251,6 +257,7 @@ INSERT INTO trust_center_document_accesses (
 	args := pgx.StrictNamedArgs{
 		"id":                     tcda.ID,
 		"tenant_id":              scope.GetTenantID(),
+		"organization_id":        tcda.OrganizationID,
 		"trust_center_access_id": tcda.TrustCenterAccessID,
 		"document_id":            tcda.DocumentID,
 		"report_id":              tcda.ReportID,
@@ -512,6 +519,7 @@ final_items AS (
 	SELECT
 		COALESCE(tcda.id, ai.item_id) AS id,
 		tcda.tenant_id,
+		(SELECT organization_id FROM organization) AS organization_id,
 		@trust_center_access_id AS trust_center_access_id,
 		ai.document_id,
 		ai.report_id,
@@ -532,6 +540,7 @@ final_items AS (
 )
 SELECT
 	id,
+	organization_id,
 	trust_center_access_id,
 	document_id,
 	report_id,
@@ -576,6 +585,7 @@ func (tcdas *TrustCenterDocumentAccesses) LoadAllByTrustCenterAccessID(
 	q := `
 SELECT
 	id,
+	organization_id,
 	trust_center_access_id,
 	document_id,
 	report_id,
@@ -717,6 +727,7 @@ func (tcdas TrustCenterDocumentAccesses) BulkInsertDocumentAccesses(
 	conn pg.Conn,
 	scope Scoper,
 	trustCenterAccessID gid.GID,
+	organizationID gid.GID,
 	documentIDs []gid.GID,
 	requested bool,
 	createdAt time.Time,
@@ -730,6 +741,7 @@ WITH document_access_data AS (
 	SELECT
 		generate_gid(decode_base64_unpadded(@tenant_id), @trust_center_document_access_entity_type) AS id,
 		@tenant_id AS tenant_id,
+		@organization_id AS organization_id,
 		@trust_center_access_id AS trust_center_access_id,
 		unnest(@document_ids::text[]) AS document_id,
 		null::text AS report_id,
@@ -740,7 +752,7 @@ WITH document_access_data AS (
 		@updated_at::timestamptz AS updated_at
 )
 INSERT INTO trust_center_document_accesses (
-	id, tenant_id, trust_center_access_id, document_id, report_id, trust_center_file_id, active, requested, created_at, updated_at
+	id, tenant_id, organization_id, trust_center_access_id, document_id, report_id, trust_center_file_id, active, requested, created_at, updated_at
 )
 SELECT * FROM document_access_data
 ON CONFLICT DO NOTHING
@@ -748,6 +760,7 @@ ON CONFLICT DO NOTHING
 
 	args := pgx.StrictNamedArgs{
 		"tenant_id":              scope.GetTenantID(),
+		"organization_id":        organizationID,
 		"trust_center_access_id": trustCenterAccessID,
 		"document_ids":           documentIDs,
 		"trust_center_document_access_entity_type": TrustCenterDocumentAccessEntityType,
@@ -768,6 +781,7 @@ func (tcdas TrustCenterDocumentAccesses) BulkInsertReportAccesses(
 	conn pg.Conn,
 	scope Scoper,
 	trustCenterAccessID gid.GID,
+	organizationID gid.GID,
 	reportIDs []gid.GID,
 	requested bool,
 	createdAt time.Time,
@@ -781,6 +795,7 @@ WITH report_access_data AS (
 	SELECT
 		generate_gid(decode_base64_unpadded(@tenant_id), @trust_center_document_access_entity_type) AS id,
 		@tenant_id AS tenant_id,
+		@organization_id AS organization_id,
 		@trust_center_access_id AS trust_center_access_id,
 		null::text AS document_id,
 		unnest(@report_ids::text[]) AS report_id,
@@ -791,14 +806,15 @@ WITH report_access_data AS (
 		@updated_at::timestamptz AS updated_at
 )
 INSERT INTO trust_center_document_accesses (
-	id, tenant_id, trust_center_access_id, document_id, report_id, trust_center_file_id, active, requested, created_at, updated_at
+	id, tenant_id, organization_id, trust_center_access_id, document_id, report_id, trust_center_file_id, active, requested, created_at, updated_at
 )
 SELECT * FROM report_access_data
 ON CONFLICT DO NOTHING
 `
 
 	args := pgx.StrictNamedArgs{
-		"tenant_id": scope.GetTenantID(),
+		"tenant_id":       scope.GetTenantID(),
+		"organization_id": organizationID,
 		"trust_center_document_access_entity_type": TrustCenterDocumentAccessEntityType,
 		"trust_center_access_id":                   trustCenterAccessID,
 		"report_ids":                               reportIDs,
@@ -903,6 +919,7 @@ func (tcdas TrustCenterDocumentAccesses) BulkInsertTrustCenterFileAccesses(
 	conn pg.Conn,
 	scope Scoper,
 	trustCenterAccessID gid.GID,
+	organizationID gid.GID,
 	trustCenterFileIDs []gid.GID,
 	requested bool,
 	createdAt time.Time,
@@ -912,6 +929,7 @@ WITH trust_center_file_access_data AS (
 	SELECT
 		generate_gid(decode_base64_unpadded(@tenant_id), @trust_center_document_access_entity_type) AS id,
 		@tenant_id AS tenant_id,
+		@organization_id AS organization_id,
 		@trust_center_access_id AS trust_center_access_id,
 		null::text AS document_id,
 		null::text AS report_id,
@@ -922,14 +940,15 @@ WITH trust_center_file_access_data AS (
 		@updated_at::timestamptz AS updated_at
 )
 INSERT INTO trust_center_document_accesses (
-	id, tenant_id, trust_center_access_id, document_id, report_id, trust_center_file_id, active, requested, created_at, updated_at
+	id, tenant_id, organization_id, trust_center_access_id, document_id, report_id, trust_center_file_id, active, requested, created_at, updated_at
 )
 SELECT * FROM trust_center_file_access_data
 ON CONFLICT DO NOTHING
 `
 
 	args := pgx.StrictNamedArgs{
-		"tenant_id": scope.GetTenantID(),
+		"tenant_id":       scope.GetTenantID(),
+		"organization_id": organizationID,
 		"trust_center_document_access_entity_type": TrustCenterDocumentAccessEntityType,
 		"trust_center_access_id":                   trustCenterAccessID,
 		"trust_center_file_ids":                    trustCenterFileIDs,

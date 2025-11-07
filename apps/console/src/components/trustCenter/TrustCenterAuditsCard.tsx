@@ -18,6 +18,7 @@ import { useMemo, useState, useCallback, useEffect } from "react";
 import { sprintf, getAuditStateVariant, getAuditStateLabel, formatDate, getTrustCenterVisibilityOptions } from "@probo/helpers";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import type { TrustCenterAuditsCardFragment$key } from "./__generated__/TrustCenterAuditsCardFragment.graphql";
+import { isAuthorized } from "/permissions/permissions";
 
 const trustCenterAuditFragment = graphql`
   fragment TrustCenterAuditsCardFragment on Audit {
@@ -124,6 +125,8 @@ function AuditRow(props: {
   const { __ } = useTranslate();
   const [optimisticValue, setOptimisticValue] = useState<string | null>(null);
 
+  const canUpdate = organizationId ? isAuthorized(organizationId, "TrustCenter", "update") : false;
+
   const handleValueChange = useCallback((value: string | {}) => {
     const stringValue = typeof value === 'string' ? value : '';
     const typedValue = stringValue as "NONE" | "PRIVATE" | "PUBLIC";
@@ -164,7 +167,7 @@ function AuditRow(props: {
           type="select"
           value={currentValue}
           onValueChange={handleValueChange}
-          disabled={props.disabled}
+          disabled={props.disabled || !canUpdate}
           className="w-[105px]"
         >
           {visibilityOptions.map((option) => (

@@ -6,6 +6,7 @@ import type { CustomDomainManagerDeleteMutation } from "./__generated__/CustomDo
 import { CreateCustomDomainDialog } from "./CreateCustomDomainDialog";
 import { DeleteCustomDomainDialog } from "./DeleteCustomDomainDialog";
 import { DomainDetailsDialog } from "./DomainDetailsDialog";
+import { IfAuthorized } from "/permissions/IfAuthorized";
 
 const deleteCustomDomainMutation = graphql`
   mutation CustomDomainManagerDeleteMutation($input: DeleteCustomDomainInput!) {
@@ -106,9 +107,11 @@ export function CustomDomainManager({
             )}
           </p>
           <div className="flex justify-center">
-            <CreateCustomDomainDialog organizationId={organizationId}>
-              <Button icon={IconPlusLarge}>{__("Add Domain")}</Button>
-            </CreateCustomDomainDialog>
+            <IfAuthorized entity="Organization" action="update">
+              <CreateCustomDomainDialog organizationId={organizationId}>
+                <Button icon={IconPlusLarge}>{__("Add Domain")}</Button>
+              </CreateCustomDomainDialog>
+            </IfAuthorized>
           </div>
         </div>
       </Card>
@@ -136,12 +139,14 @@ export function CustomDomainManager({
               <Button variant="secondary">{__("View Details")}</Button>
             </DomainDetailsDialog>
 
-            <DeleteCustomDomainDialog
-              domainName={domain.domain}
-              onConfirm={handleDeleteDomain}
-            >
-              <Button variant="danger">{__("Delete")}</Button>
-            </DeleteCustomDomainDialog>
+            <IfAuthorized entity="Organization" action="delete">
+              <DeleteCustomDomainDialog
+                domainName={domain.domain}
+                onConfirm={handleDeleteDomain}
+              >
+                <Button variant="danger">{__("Delete")}</Button>
+              </DeleteCustomDomainDialog>
+            </IfAuthorized>
           </div>
         </div>
       </div>

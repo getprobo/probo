@@ -78,6 +78,7 @@ func (s *CustomDomainService) CreateCustomDomain(
 		ctx,
 		func(tx pg.Conn) error {
 			domain = coredata.NewCustomDomain(s.svc.scope.GetTenantID(), req.Domain)
+			domain.OrganizationID = req.OrganizationID
 
 			if err := domain.Insert(ctx, tx, s.svc.scope, s.encryptionKey); err != nil {
 				return fmt.Errorf("cannot insert custom domain: %w", err)

@@ -34,6 +34,8 @@ import type { NodeOf } from "/types";
 import SnapshotFormDialog from "./dialog/SnapshotFormDialog";
 import { usePageTitle } from "@probo/hooks";
 import { useOrganizationId } from "/hooks/useOrganizationId";
+import { IfAuthorized } from "/permissions/IfAuthorized";
+import { isAuthorized } from "/permissions/permissions";
 
 type Props = {
   queryRef: PreloadedQuery<SnapshotGraphListQuery>;
@@ -71,6 +73,8 @@ export default function SnapshotsPage(props: Props) {
   const snapshots = data.snapshots.edges.map((edge) => edge.node);
   usePageTitle(__("Snapshots"));
 
+  const hasAnyAction = isAuthorized(organizationId, "Snapshot", "delete");
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -79,11 +83,13 @@ export default function SnapshotsPage(props: Props) {
           "Snapshots capture point-in-time views of your organization's compliance state. Create snapshots to track progress over time."
         )}
       >
-        <SnapshotFormDialog connection={connectionId}>
-          <Button variant="primary" icon={IconPlusLarge}>
-            {__("New snapshot")}
-          </Button>
-        </SnapshotFormDialog>
+        <IfAuthorized entity="Snapshot" action="create">
+          <SnapshotFormDialog connection={connectionId}>
+            <Button variant="primary" icon={IconPlusLarge}>
+              {__("New snapshot")}
+            </Button>
+          </SnapshotFormDialog>
+        </IfAuthorized>
       </PageHeader>
 
       {snapshots.length > 0 ? (
@@ -94,7 +100,7 @@ export default function SnapshotsPage(props: Props) {
               <Th>{__("Type")}</Th>
               <Th>{__("Description")}</Th>
               <Th>{__("Created")}</Th>
-              <Th></Th>
+              {hasAnyAction && <Th></Th>}
             </Tr>
           </Thead>
           <Tbody>
@@ -104,6 +110,7 @@ export default function SnapshotsPage(props: Props) {
                 snapshot={snapshot}
                 connectionId={connectionId}
                 organizationId={organizationId}
+                hasAnyAction={hasAnyAction}
               />
             ))}
           </Tbody>
@@ -126,6 +133,7 @@ type SnapshotRowProps = {
   snapshot: NodeOf<SnapshotsPageFragment$data["snapshots"]>;
   connectionId: string;
   organizationId: string;
+  hasAnyAction: boolean;
 };
 
 function SnapshotRow(props: SnapshotRowProps) {
@@ -148,17 +156,21 @@ function SnapshotRow(props: SnapshotRowProps) {
       <Td className="text-txt-tertiary">
         {formatDate(props.snapshot.createdAt)}
       </Td>
-      <Td noLink width={50} className="text-end">
-        <ActionDropdown>
-          <DropdownItem
-            onClick={deleteSnapshot}
-            variant="danger"
-            icon={IconTrashCan}
-          >
-            {__("Delete")}
-          </DropdownItem>
-        </ActionDropdown>
-      </Td>
+      {props.hasAnyAction && (
+        <Td noLink width={50} className="text-end">
+          <ActionDropdown>
+            <IfAuthorized entity="Snapshot" action="delete">
+              <DropdownItem
+                onClick={deleteSnapshot}
+                variant="danger"
+                icon={IconTrashCan}
+              >
+                {__("Delete")}
+              </DropdownItem>
+            </IfAuthorized>
+          </ActionDropdown>
+        </Td>
+      )}
     </Tr>
   );
 }

@@ -46,6 +46,7 @@ import { useToast } from "@probo/ui";
 import { ErrorBoundary } from "react-error-boundary";
 import { PageError } from "/components/PageError";
 import { buildEndpoint } from "/providers/RelayProviders";
+import { IfAuthorized } from "../permissions";
 
 const MainLayoutQuery = graphql`
   query MainLayoutQuery($organizationId: ID!) {
@@ -71,7 +72,6 @@ const MainLayoutQuery = graphql`
  */
 export function MainLayout() {
   const { organizationId } = useParams();
-  const { __ } = useTranslate();
 
   const prefix = `/organizations/${organizationId}`;
 
@@ -80,13 +80,30 @@ export function MainLayout() {
   }
 
   return (
+    <Suspense fallback={<Skeleton className="w-full h-screen" />}>
+      <MainLayoutContent organizationId={organizationId} prefix={prefix} />
+    </Suspense>
+  );
+}
+
+function MainLayoutContent({
+  organizationId,
+  prefix,
+}: {
+  organizationId: string;
+  prefix: string;
+}) {
+  const { __ } = useTranslate();
+  const data = useLazyLoadQuery<MainLayoutQueryType>(MainLayoutQuery, {
+    organizationId,
+  });
+
+  return (
     <Layout
       header={
         <>
           <div className="mr-auto">
-            <Suspense fallback={<Skeleton className="w-20 h-8" />}>
-              <OrganizationSelectorWrapper organizationId={organizationId} />
-            </Suspense>
+            <OrganizationSelector currentOrganization={data.organization} />
           </div>
           <Suspense fallback={<Skeleton className="w-32 h-8" />}>
             <UserDropdown organizationId={organizationId} />
@@ -95,91 +112,125 @@ export function MainLayout() {
       }
       sidebar={
         <ul className="space-y-[2px]">
-          <SidebarItem
-            label={__("Tasks")}
-            icon={IconInboxEmpty}
-            to={`${prefix}/tasks`}
-          />
-          <SidebarItem
-            label={__("Measures")}
-            icon={IconTodo}
-            to={`${prefix}/measures`}
-          />
-          <SidebarItem
-            label={__("Risks")}
-            icon={IconFire3}
-            to={`${prefix}/risks`}
-          />
-          <SidebarItem
-            label={__("Frameworks")}
-            icon={IconBank}
-            to={`${prefix}/frameworks`}
-          />
-          <SidebarItem
-            label={__("People")}
-            icon={IconGroup1}
-            to={`${prefix}/people`}
-          />
-          <SidebarItem
-            label={__("Vendors")}
-            icon={IconStore}
-            to={`${prefix}/vendors`}
-          />
-          <SidebarItem
-            label={__("Documents")}
-            icon={IconPageTextLine}
-            to={`${prefix}/documents`}
-          />
-          <SidebarItem
-            label={__("Assets")}
-            icon={IconBox}
-            to={`${prefix}/assets`}
-          />
-          <SidebarItem
-            label={__("Data")}
-            icon={IconListStack}
-            to={`${prefix}/data`}
-          />
-          <SidebarItem
-            label={__("Audits")}
-            icon={IconMedal}
-            to={`${prefix}/audits`}
-          />
-          <SidebarItem
-            label={__("Nonconformities")}
-            icon={IconCrossLargeX}
-            to={`${prefix}/nonconformities`}
-          />
-          <SidebarItem
-            label={__("Obligations")}
-            icon={IconBook}
-            to={`${prefix}/obligations`}
-          />
-          <SidebarItem
-            label={__("Continual Improvements")}
-            icon={IconRotateCw}
-            to={`${prefix}/continual-improvements`}
-          />
-          <SidebarItem
-            label={__("Processing Activities")}
-            icon={IconCircleProgress}
-            to={`${prefix}/processing-activities`}
-          />
-          <SidebarItem
-            label={__("Snapshots")}
-            icon={IconClock}
-            to={`${prefix}/snapshots`}
-          />
-          <SidebarItem
-            label={__("Trust Center")}
-            icon={IconShield}
-            to={`${prefix}/trust-center`}
-          />
-          <SidebarItem
-            label={__("Settings")}
-            icon={IconSettingsGear2}
-            to={`${prefix}/settings`}
-          />
+          <IfAuthorized entity="Task" action="get">
+            <SidebarItem
+              label={__("Tasks")}
+              icon={IconInboxEmpty}
+              to={`${prefix}/tasks`}
+            />
+          </IfAuthorized>
+          <IfAuthorized entity="Measure" action="get">
+            <SidebarItem
+              label={__("Measures")}
+              icon={IconTodo}
+              to={`${prefix}/measures`}
+            />
+          </IfAuthorized>
+          <IfAuthorized entity="Risk" action="get">
+            <SidebarItem
+              label={__("Risks")}
+              icon={IconFire3}
+              to={`${prefix}/risks`}
+            />
+          </IfAuthorized>
+          <IfAuthorized entity="Framework" action="get">
+            <SidebarItem
+              label={__("Frameworks")}
+              icon={IconBank}
+              to={`${prefix}/frameworks`}
+            />
+          </IfAuthorized>
+          <IfAuthorized entity="People" action="get">
+            <SidebarItem
+              label={__("People")}
+              icon={IconGroup1}
+              to={`${prefix}/people`}
+            />
+          </IfAuthorized>
+          <IfAuthorized entity="Vendor" action="get">
+            <SidebarItem
+              label={__("Vendors")}
+              icon={IconStore}
+              to={`${prefix}/vendors`}
+            />
+          </IfAuthorized>
+          <IfAuthorized entity="Document" action="get">
+            <SidebarItem
+              label={__("Documents")}
+              icon={IconPageTextLine}
+              to={`${prefix}/documents`}
+            />
+          </IfAuthorized>
+          <IfAuthorized entity="Asset" action="get">
+            <SidebarItem
+              label={__("Assets")}
+              icon={IconBox}
+              to={`${prefix}/assets`}
+            />
+          </IfAuthorized>
+          <IfAuthorized entity="Datum" action="get">
+            <SidebarItem
+              label={__("Data")}
+              icon={IconListStack}
+              to={`${prefix}/data`}
+            />
+          </IfAuthorized>
+          <IfAuthorized entity="Audit" action="get">
+            <SidebarItem
+              label={__("Audits")}
+              icon={IconMedal}
+              to={`${prefix}/audits`}
+            />
+          </IfAuthorized>
+          <IfAuthorized entity="Nonconformity" action="get">
+            <SidebarItem
+              label={__("Nonconformities")}
+              icon={IconCrossLargeX}
+              to={`${prefix}/nonconformities`}
+            />
+          </IfAuthorized>
+          <IfAuthorized entity="Obligation" action="get">
+            <SidebarItem
+              label={__("Obligations")}
+              icon={IconBook}
+              to={`${prefix}/obligations`}
+            />
+          </IfAuthorized>
+          <IfAuthorized entity="ContinualImprovement" action="get">
+            <SidebarItem
+              label={__("Continual Improvements")}
+              icon={IconRotateCw}
+              to={`${prefix}/continual-improvements`}
+            />
+          </IfAuthorized>
+          <IfAuthorized entity="ProcessingActivity" action="get">
+            <SidebarItem
+              label={__("Processing Activities")}
+              icon={IconCircleProgress}
+              to={`${prefix}/processing-activities`}
+            />
+          </IfAuthorized>
+          <IfAuthorized entity="Snapshot" action="get">
+            <SidebarItem
+              label={__("Snapshots")}
+              icon={IconClock}
+              to={`${prefix}/snapshots`}
+            />
+          </IfAuthorized>
+          <IfAuthorized entity="TrustCenter" action="get">
+            <SidebarItem
+              label={__("Trust Center")}
+              icon={IconShield}
+              to={`${prefix}/trust-center`}
+            />
+          </IfAuthorized>
+          <IfAuthorized entity="Membership" action="get">
+            <SidebarItem
+              label={__("Settings")}
+              icon={IconSettingsGear2}
+              to={`${prefix}/settings`}
+            />
+          </IfAuthorized>
         </ul>
       }
     >
@@ -228,11 +279,13 @@ function UserDropdown({ organizationId }: { organizationId: string }) {
 
   return (
     <UserDropdownRoot fullName={user.fullName} email={user.email}>
-      <UserDropdownItem
-        to="/api-keys"
-        icon={IconKey}
-        label={__("API Keys")}
-      />
+      <IfAuthorized entity="UserAPIKey" action="create">
+        <UserDropdownItem
+          to="/api-keys"
+          icon={IconKey}
+          label={__("API Keys")}
+        />
+      </IfAuthorized>
       <UserDropdownItem
         to="mailto:support@getprobo.com"
         icon={IconCircleQuestionmark}
@@ -281,16 +334,6 @@ interface InvitationsResponse {
   invitations: Invitation[];
 }
 
-function OrganizationSelectorWrapper({
-  organizationId,
-}: {
-  organizationId: string;
-}) {
-  const data = useLazyLoadQuery<MainLayoutQueryType>(MainLayoutQuery, {
-    organizationId,
-  });
-  return <OrganizationSelector currentOrganization={data.organization} />;
-}
 
 function OrganizationSelector({
   currentOrganization,

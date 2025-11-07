@@ -15,10 +15,40 @@
 package types
 
 import (
+	"time"
+
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 )
+
+type Risk struct {
+	ID                 gid.GID                `json:"id"`
+	OrganizationID     gid.GID                `json:"-"`
+	SnapshotID         *gid.GID               `json:"snapshotId,omitempty"`
+	Name               string                 `json:"name"`
+	Description        *string                `json:"description,omitempty"`
+	Category           string                 `json:"category"`
+	Treatment          coredata.RiskTreatment `json:"treatment"`
+	InherentLikelihood int                    `json:"inherentLikelihood"`
+	InherentImpact     int                    `json:"inherentImpact"`
+	InherentRiskScore  int                    `json:"inherentRiskScore"`
+	ResidualLikelihood int                    `json:"residualLikelihood"`
+	ResidualImpact     int                    `json:"residualImpact"`
+	ResidualRiskScore  int                    `json:"residualRiskScore"`
+	Note               string                 `json:"note"`
+	Owner              *People                `json:"owner,omitempty"`
+	Organization       *Organization          `json:"organization"`
+	Measures           *MeasureConnection     `json:"measures"`
+	Documents          *DocumentConnection    `json:"documents"`
+	Controls           *ControlConnection     `json:"controls"`
+	Obligations        *ObligationConnection  `json:"obligations"`
+	CreatedAt          time.Time              `json:"createdAt"`
+	UpdatedAt          time.Time              `json:"updatedAt"`
+}
+
+func (Risk) IsNode()             {}
+func (this Risk) GetID() gid.GID { return this.ID }
 
 type (
 	RiskOrderBy OrderBy[coredata.RiskOrderField]
@@ -66,6 +96,7 @@ func NewRiskEdge(r *coredata.Risk, orderBy coredata.RiskOrderField) *RiskEdge {
 func NewRisk(r *coredata.Risk) *Risk {
 	return &Risk{
 		ID:                 r.ID,
+		OrganizationID:     r.OrganizationID,
 		Name:               r.Name,
 		SnapshotID:         r.SnapshotID,
 		Description:        r.Description,

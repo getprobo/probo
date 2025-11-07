@@ -36,6 +36,7 @@ import {
 } from "/hooks/graph/TrustCenterAccessGraph";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
+import { IfAuthorized } from "/permissions/IfAuthorized";
 
 type ContextType = {
   organization: {
@@ -422,12 +423,14 @@ export default function TrustCenterAccessTab() {
           </p>
         </div>
         {organization.trustCenter?.id && (
-          <Button icon={IconPlusLarge} onClick={() => {
-            inviteForm.reset();
-            dialogRef.current?.open();
-          }}>
-            {__("Add Access")}
-          </Button>
+          <IfAuthorized entity="TrustCenter" action="update">
+            <Button icon={IconPlusLarge} onClick={() => {
+              inviteForm.reset();
+              dialogRef.current?.open();
+            }}>
+              {__("Add Access")}
+            </Button>
+          </IfAuthorized>
         )}
       </div>
 
@@ -512,18 +515,22 @@ export default function TrustCenterAccessTab() {
                       className="flex gap-2 justify-end"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <Button
-                        variant="secondary"
-                        onClick={() => handleEditAccess(access)}
-                        disabled={isUpdating}
-                        icon={IconPencil}
-                      />
-                      <Button
-                        variant="danger"
-                        onClick={() => handleDelete(access.id)}
-                        disabled={isDeleting}
-                        icon={IconTrashCan}
-                      />
+                      <IfAuthorized entity="TrustCenter" action="update">
+                        <Button
+                          variant="secondary"
+                          onClick={() => handleEditAccess(access)}
+                          disabled={isUpdating}
+                          icon={IconPencil}
+                        />
+                      </IfAuthorized>
+                      <IfAuthorized entity="TrustCenter" action="delete">
+                        <Button
+                          variant="danger"
+                          onClick={() => handleDelete(access.id)}
+                          disabled={isDeleting}
+                          icon={IconTrashCan}
+                        />
+                      </IfAuthorized>
                     </div>
                   </Td>
                 </Tr>

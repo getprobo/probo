@@ -15,10 +15,26 @@
 package types
 
 import (
+	"time"
+
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 )
+
+type Snapshot struct {
+	ID             gid.GID                `json:"id"`
+	OrganizationID gid.GID                `json:"-"`
+	Organization   *Organization          `json:"organization"`
+	Name           string                 `json:"name"`
+	Description    *string                `json:"description,omitempty"`
+	Type           coredata.SnapshotsType `json:"type"`
+	Controls       *ControlConnection     `json:"controls"`
+	CreatedAt      time.Time              `json:"createdAt"`
+}
+
+func (Snapshot) IsNode()             {}
+func (this Snapshot) GetID() gid.GID { return this.ID }
 
 type (
 	SnapshotOrderBy OrderBy[coredata.SnapshotOrderField]
@@ -54,11 +70,12 @@ func NewSnapshotConnection(
 
 func NewSnapshot(s *coredata.Snapshot) *Snapshot {
 	return &Snapshot{
-		ID:          s.ID,
-		Name:        s.Name,
-		Type:        s.Type,
-		Description: s.Description,
-		CreatedAt:   s.CreatedAt,
+		ID:             s.ID,
+		OrganizationID: s.OrganizationID,
+		Name:           s.Name,
+		Type:           s.Type,
+		Description:    s.Description,
+		CreatedAt:      s.CreatedAt,
 	}
 }
 

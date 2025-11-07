@@ -20,21 +20,22 @@ import (
 	"maps"
 	"time"
 
-	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/page"
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 )
 
 type (
 	Report struct {
-		ID        gid.GID   `db:"id"`
-		ObjectKey string    `db:"object_key"`
-		MimeType  string    `db:"mime_type"`
-		Filename  string    `db:"filename"`
-		Size      int64     `db:"size"`
-		CreatedAt time.Time `db:"created_at"`
-		UpdatedAt time.Time `db:"updated_at"`
+		ID             gid.GID   `db:"id"`
+		OrganizationID gid.GID   `db:"organization_id"`
+		ObjectKey      string    `db:"object_key"`
+		MimeType       string    `db:"mime_type"`
+		Filename       string    `db:"filename"`
+		Size           int64     `db:"size"`
+		CreatedAt      time.Time `db:"created_at"`
+		UpdatedAt      time.Time `db:"updated_at"`
 	}
 
 	Reports []*Report
@@ -49,6 +50,7 @@ func (r *Report) LoadByID(
 	q := `
 SELECT
 	id,
+	organization_id,
 	object_key,
 	mime_type,
 	filename,
@@ -92,6 +94,7 @@ func (r *Report) Insert(
 INSERT INTO reports (
 	id,
 	tenant_id,
+	organization_id,
 	object_key,
 	mime_type,
 	filename,
@@ -101,6 +104,7 @@ INSERT INTO reports (
 ) VALUES (
 	@id,
 	@tenant_id,
+	@organization_id,
 	@object_key,
 	@mime_type,
 	@filename,
@@ -111,14 +115,15 @@ INSERT INTO reports (
 `
 
 	args := pgx.StrictNamedArgs{
-		"id":         r.ID,
-		"tenant_id":  scope.GetTenantID(),
-		"object_key": r.ObjectKey,
-		"mime_type":  r.MimeType,
-		"filename":   r.Filename,
-		"size":       r.Size,
-		"created_at": r.CreatedAt,
-		"updated_at": r.UpdatedAt,
+		"id":              r.ID,
+		"tenant_id":       scope.GetTenantID(),
+		"organization_id": r.OrganizationID,
+		"object_key":      r.ObjectKey,
+		"mime_type":       r.MimeType,
+		"filename":        r.Filename,
+		"size":            r.Size,
+		"created_at":      r.CreatedAt,
+		"updated_at":      r.UpdatedAt,
 	}
 
 	_, err := conn.Exec(ctx, q, args)

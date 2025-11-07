@@ -504,3 +504,16 @@ func validateTenantAccess(ctx context.Context, tenantID gid.TenantID) {
 		panic(&authz.TenantAccessError{Message: "tenant not found"})
 	}
 }
+
+// MustBeAuthorized checks if the current user or API key has permission for a resource and action
+func (r *Resolver) MustBeAuthorized(ctx context.Context, orgID gid.GID, entityType uint16, action authz.Action) {
+	user := UserFromContext(ctx)
+	apiKey := UserAPIKeyFromContext(ctx)
+
+	authzSvc := r.AuthzService(ctx, orgID.TenantID())
+
+	err := authzSvc.Authorize(ctx, user, apiKey, orgID, entityType, action)
+	if err != nil {
+		panic(err)
+	}
+}

@@ -20,6 +20,7 @@ import { useFragment } from "react-relay";
 import { useMemo, useState, useCallback, useEffect } from "react";
 import { sprintf, getTrustCenterVisibilityOptions } from "@probo/helpers";
 import { useOrganizationId } from "/hooks/useOrganizationId";
+import { isAuthorized } from "/permissions/permissions";
 
 const trustCenterDocumentFragment = graphql`
   fragment TrustCenterDocumentsCardFragment on Document {
@@ -129,6 +130,8 @@ function DocumentRow(props: {
   const { __ } = useTranslate();
   const [optimisticValue, setOptimisticValue] = useState<string | null>(null);
 
+  const canUpdate = organizationId ? isAuthorized(organizationId, "TrustCenter", "update") : false;
+
   const handleValueChange = useCallback((value: string | {}) => {
     const stringValue = typeof value === 'string' ? value : '';
     const typedValue = stringValue as "NONE" | "PRIVATE" | "PUBLIC";
@@ -164,7 +167,7 @@ function DocumentRow(props: {
           type="select"
           value={currentValue}
           onValueChange={handleValueChange}
-          disabled={props.disabled}
+          disabled={props.disabled || !canUpdate}
           className="w-[105px]"
         >
           {visibilityOptions.map((option) => (

@@ -37,6 +37,7 @@ import {
   useVerifyDomainMutation,
 } from "/hooks/graph/SAMLConfigurationGraph";
 import type { SAMLSettingsTabFragment$key } from "./__generated__/SAMLSettingsTabFragment.graphql";
+import { IfAuthorized } from "/permissions/IfAuthorized";
 
 const samlSettingsTabFragment = graphql`
   fragment SAMLSettingsTabFragment on Organization {
@@ -371,9 +372,11 @@ export default function SAMLSettingsTab() {
       <div className="space-y-4">
         <div className="flex justify-between items-center">
           <h2 className="text-base font-medium">{__("SAML Single Sign-On")}</h2>
-          <Button onClick={() => handleOpenModal()}>
-            {__("Add Configuration")}
-          </Button>
+          <IfAuthorized entity="Organization" action="update">
+            <Button onClick={() => handleOpenModal()}>
+              {__("Add Configuration")}
+            </Button>
+          </IfAuthorized>
         </div>
 
         {configs.length === 0 ? (
@@ -385,9 +388,11 @@ export default function SAMLSettingsTab() {
               <p className="text-gray-600 mb-6">
                 {__("Set up SAML 2.0 single sign-on for your organization by adding a configuration for each email domain.")}
               </p>
-              <Button onClick={() => handleOpenModal()}>
-                {__("Add Your First Configuration")}
-              </Button>
+              <IfAuthorized entity="Organization" action="update">
+                <Button onClick={() => handleOpenModal()}>
+                  {__("Add Your First Configuration")}
+                </Button>
+              </IfAuthorized>
             </div>
           </Card>
         ) : (
@@ -452,34 +457,42 @@ export default function SAMLSettingsTab() {
                     <div className="flex gap-2 justify-end">
                       {config.domainVerified ? (
                         <>
-                          <Button
-                            variant={config.enabled ? "danger" : "primary"}
-                            onClick={() => handleToggleEnabled(config)}
-                            disabled={isEnabling || isDisabling}
-                          >
-                            {config.enabled ? __("Disable") : __("Enable")}
-                          </Button>
-                          <Button
-                            variant="secondary"
-                            onClick={() => handleOpenModal(config)}
-                          >
-                            {__("Edit")}
-                          </Button>
+                          <IfAuthorized entity="Organization" action="update">
+                            <Button
+                              variant={config.enabled ? "danger" : "primary"}
+                              onClick={() => handleToggleEnabled(config)}
+                              disabled={isEnabling || isDisabling}
+                            >
+                              {config.enabled ? __("Disable") : __("Enable")}
+                            </Button>
+                          </IfAuthorized>
+                          <IfAuthorized entity="Organization" action="update">
+                            <Button
+                              variant="secondary"
+                              onClick={() => handleOpenModal(config)}
+                            >
+                              {__("Edit")}
+                            </Button>
+                          </IfAuthorized>
                         </>
                       ) : (
                         <>
-                          <Button
-                            variant="primary"
-                            onClick={() => handleOpenModal(config)}
-                          >
-                            {__("Verify Domain")}
-                          </Button>
-                          <Button
-                            variant="danger"
-                            onClick={() => handleDelete(config)}
-                          >
-                            {__("Delete")}
-                          </Button>
+                          <IfAuthorized entity="Organization" action="update">
+                            <Button
+                              variant="primary"
+                              onClick={() => handleOpenModal(config)}
+                            >
+                              {__("Verify Domain")}
+                            </Button>
+                          </IfAuthorized>
+                          <IfAuthorized entity="Organization" action="delete">
+                            <Button
+                              variant="danger"
+                              onClick={() => handleDelete(config)}
+                            >
+                              {__("Delete")}
+                            </Button>
+                          </IfAuthorized>
                         </>
                       )}
                     </div>

@@ -22,16 +22,17 @@ import (
 	"maps"
 	"time"
 
-	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/page"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 )
 
 type (
 	TrustCenterAccess struct {
 		ID                                        gid.GID         `db:"id"`
+		OrganizationID                            gid.GID         `db:"organization_id"`
 		TenantID                                  gid.TenantID    `db:"tenant_id"`
 		TrustCenterID                             gid.GID         `db:"trust_center_id"`
 		Email                                     string          `db:"email"`
@@ -82,6 +83,7 @@ func (tca *TrustCenterAccess) LoadByID(
 	q := `
 SELECT
 	id,
+	organization_id,
 	tenant_id,
 	trust_center_id,
 	email,
@@ -135,6 +137,7 @@ func (tca *TrustCenterAccess) LoadByTrustCenterIDAndEmail(
 	q := `
 SELECT
 	id,
+	organization_id,
 	tenant_id,
 	trust_center_id,
 	email,
@@ -191,6 +194,7 @@ func (tca *TrustCenterAccess) Insert(
 INSERT INTO trust_center_accesses (
 	id,
 	tenant_id,
+	organization_id,
 	trust_center_id,
 	email,
 	name,
@@ -201,6 +205,7 @@ INSERT INTO trust_center_accesses (
 ) VALUES (
 	@id,
 	@tenant_id,
+	@organization_id,
 	@trust_center_id,
 	@email,
 	@name,
@@ -214,6 +219,7 @@ INSERT INTO trust_center_accesses (
 	args := pgx.StrictNamedArgs{
 		"id":                                    tca.ID,
 		"tenant_id":                             tca.TenantID,
+		"organization_id":                       tca.OrganizationID,
 		"trust_center_id":                       tca.TrustCenterID,
 		"email":                                 tca.Email,
 		"name":                                  tca.Name,
@@ -317,6 +323,7 @@ func (tcas *TrustCenterAccesses) LoadByTrustCenterID(
 	q := `
 SELECT
 	id,
+	organization_id,
 	tenant_id,
 	trust_center_id,
 	email,

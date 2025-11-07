@@ -15,8 +15,27 @@
 package types
 
 import (
+	"time"
+
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 )
+
+type TrustCenter struct {
+	ID             gid.GID                         `json:"id"`
+	OrganizationID gid.GID                         `json:"-"`
+	Active         bool                            `json:"active"`
+	NdaFileName    *string                         `json:"ndaFileName,omitempty"`
+	NdaFileURL     *string                         `json:"ndaFileUrl,omitempty"`
+	CreatedAt      time.Time                       `json:"createdAt"`
+	UpdatedAt      time.Time                       `json:"updatedAt"`
+	Organization   *Organization                   `json:"organization"`
+	Accesses       *TrustCenterAccessConnection    `json:"accesses"`
+	References     *TrustCenterReferenceConnection `json:"references"`
+}
+
+func (TrustCenter) IsNode()             {}
+func (this TrustCenter) GetID() gid.GID { return this.ID }
 
 func NewTrustCenter(tc *coredata.TrustCenter, file *coredata.File) *TrustCenter {
 	var ndaFileName *string
@@ -25,10 +44,11 @@ func NewTrustCenter(tc *coredata.TrustCenter, file *coredata.File) *TrustCenter 
 	}
 
 	return &TrustCenter{
-		ID:          tc.ID,
-		Active:      tc.Active,
-		NdaFileName: ndaFileName,
-		CreatedAt:   tc.CreatedAt,
-		UpdatedAt:   tc.UpdatedAt,
+		ID:             tc.ID,
+		OrganizationID: tc.OrganizationID,
+		Active:         tc.Active,
+		NdaFileName:    ndaFileName,
+		CreatedAt:      tc.CreatedAt,
+		UpdatedAt:      tc.UpdatedAt,
 	}
 }

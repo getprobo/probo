@@ -35,6 +35,8 @@ import type {
 } from "./__generated__/AssetsPageFragment.graphql";
 import { SortableTable } from "/components/SortableTable";
 import { SnapshotBanner } from "/components/SnapshotBanner";
+import { IfAuthorized } from "/permissions/IfAuthorized";
+import { isAuthorized } from "/permissions/permissions";
 
 const paginatedAssetsFragment = graphql`
   fragment AssetsPageFragment on Organization
@@ -106,6 +108,11 @@ export default function AssetsPage(props: Props) {
 
   usePageTitle(__("Assets"));
 
+  const hasAnyAction = !isSnapshotMode && (
+    isAuthorized(organizationId, "Asset", "update") ||
+    isAuthorized(organizationId, "Asset", "delete")
+  );
+
   return (
     <div className="space-y-6">
       {snapshotId && <SnapshotBanner snapshotId={snapshotId} />}
@@ -116,12 +123,14 @@ export default function AssetsPage(props: Props) {
         )}
       >
         {!isSnapshotMode && (
-          <CreateAssetDialog
-            connection={connectionId}
-            organizationId={organizationId}
-          >
-            <Button icon={IconPlusLarge}>{__("Add asset")}</Button>
-          </CreateAssetDialog>
+          <IfAuthorized entity="Asset" action="create">
+            <CreateAssetDialog
+              connection={connectionId}
+              organizationId={organizationId}
+            >
+              <Button icon={IconPlusLarge}>{__("Add asset")}</Button>
+            </CreateAssetDialog>
+          </IfAuthorized>
         )}
       </PageHeader>
       <SortableTable {...pagination}>
@@ -132,7 +141,7 @@ export default function AssetsPage(props: Props) {
             <Th>{__("Amount")}</Th>
             <Th>{__("Owner")}</Th>
             <Th>{__("Vendors")}</Th>
-            <Th></Th>
+            {hasAnyAction && <Th></Th>}
           </Tr>
         </Thead>
         <Tbody>
@@ -141,6 +150,7 @@ export default function AssetsPage(props: Props) {
               key={entry.id}
               entry={entry}
               connectionId={connectionId}
+              hasAnyAction={hasAnyAction}
             />
           ))}
         </Tbody>
@@ -152,9 +162,11 @@ export default function AssetsPage(props: Props) {
 function AssetRow({
   entry,
   connectionId,
+  hasAnyAction,
 }: {
   entry: AssetEntry;
   connectionId: string;
+  hasAnyAction: boolean;
 }) {
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
@@ -204,19 +216,21 @@ function AssetRow({
           <span className="text-txt-secondary text-sm">{__("None")}</span>
         )}
       </Td>
-      <Td noLink width={50} className="text-end">
-        {!isSnapshotMode && (
-          <ActionDropdown>
-            <DropdownItem
-              onClick={deleteAsset}
-              variant="danger"
-              icon={IconTrashCan}
-            >
-              {__("Delete")}
-            </DropdownItem>
-          </ActionDropdown>
-        )}
-      </Td>
+      {hasAnyAction && (
+        <Td noLink width={50} className="text-end">
+          <IfAuthorized entity="Asset" action="delete">
+            <ActionDropdown>
+              <DropdownItem
+                onClick={deleteAsset}
+                variant="danger"
+                icon={IconTrashCan}
+              >
+                {__("Delete")}
+              </DropdownItem>
+            </ActionDropdown>
+          </IfAuthorized>
+        </Td>
+      )}
     </Tr>
   );
 }

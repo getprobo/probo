@@ -28,11 +28,11 @@ import (
 	"time"
 
 	"github.com/crewjam/saml"
+	"go.gearno.de/kit/log"
+	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/gid"
-	"go.gearno.de/kit/log"
-	"go.gearno.de/kit/pg"
 )
 
 type (
@@ -407,7 +407,7 @@ func (s *SAMLService) InitiateSAMLLogin(
 type SAMLUserInfo struct {
 	Email          string
 	FullName       string
-	Role           coredata.Role
+	Role           coredata.MembershipRole
 	SAMLSubject    string
 	OrganizationID gid.GID
 	SAMLConfigID   gid.GID

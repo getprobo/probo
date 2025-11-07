@@ -16,12 +16,14 @@ package auth
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
 
 	"go.gearno.de/kit/httpserver"
 	authsvc "go.probo.inc/probo/pkg/auth"
+	"go.probo.inc/probo/pkg/authz"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 )
@@ -44,7 +46,7 @@ type (
 	}
 )
 
-func CreateUserAPIKeyHandler(authSvc *authsvc.Service) http.HandlerFunc {
+func CreateUserAPIKeyHandler(authSvc *authsvc.Service, authzSvc *authz.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		user := UserFromContext(ctx)
@@ -92,6 +94,23 @@ func CreateUserAPIKeyHandler(authSvc *authsvc.Service) http.HandlerFunc {
 				})
 				return
 			}
+
+			// Check if user has permission to create API keys for this organization
+			tenantAuthzSvc := authzSvc.WithTenant(orgID.TenantID())
+			if err := tenantAuthzSvc.Authorize(ctx, user, nil, orgID, coredata.UserAPIKeyEntityType, authz.ActionCreate); err != nil {
+				var permErr *authz.PermissionDeniedError
+				if errors.As(err, &permErr) {
+					httpserver.RenderJSON(w, http.StatusForbidden, map[string]string{
+						"error": "insufficient permissions to create API keys for this organization",
+					})
+					return
+				}
+				httpserver.RenderJSON(w, http.StatusInternalServerError, map[string]string{
+					"error": "failed to check permissions",
+				})
+				return
+			}
+
 			orgInputs[i] = authsvc.UserAPIKeyOrganizationRequest{
 				OrganizationID: orgID,
 				Role:           coredata.APIRole(org.Role),

@@ -36,6 +36,7 @@ type (
 
 	TrustCenterDocumentAccess struct {
 		ID                gid.GID            `json:"id"`
+		OrganizationID    gid.GID            `json:"-"`
 		Active            bool               `json:"active"`
 		Requested         bool               `json:"requested"`
 		CreatedAt         time.Time          `json:"createdAt"`
@@ -55,6 +56,7 @@ type (
 func NewTrustCenterDocumentAccess(tcda *coredata.TrustCenterDocumentAccess) *TrustCenterDocumentAccess {
 	return &TrustCenterDocumentAccess{
 		ID:                tcda.ID,
+		OrganizationID:    tcda.OrganizationID,
 		Active:            tcda.Active,
 		Requested:         tcda.Requested,
 		CreatedAt:         tcda.CreatedAt,

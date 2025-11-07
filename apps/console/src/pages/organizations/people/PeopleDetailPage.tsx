@@ -21,6 +21,7 @@ import {
 import { useTranslate } from "@probo/i18n";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { Outlet } from "react-router";
+import { IfAuthorized } from "/permissions/IfAuthorized";
 
 type Props = {
   queryRef: PreloadedQuery<PeopleGraphNodeQuery>;
@@ -54,15 +55,17 @@ export default function PeopleDetailPage(props: Props) {
           <Avatar name={people.fullName ?? ""} size="xl" />
           <div className="text-2xl">{people.fullName}</div>
         </div>
-        <ActionDropdown variant="secondary">
-          <DropdownItem
-            variant="danger"
-            icon={IconTrashCan}
-            onClick={deletePeople}
-          >
-            {__("Delete")}
-          </DropdownItem>
-        </ActionDropdown>
+        <IfAuthorized entity="People" action="delete">
+          <ActionDropdown variant="secondary">
+            <DropdownItem
+              variant="danger"
+              icon={IconTrashCan}
+              onClick={deletePeople}
+            >
+              {__("Delete")}
+            </DropdownItem>
+          </ActionDropdown>
+        </IfAuthorized>
       </div>
 
       <Tabs>

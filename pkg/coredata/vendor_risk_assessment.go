@@ -20,16 +20,17 @@ import (
 	"maps"
 	"time"
 
-	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/page"
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 )
 
 type (
 	// RiskAssessment represents a point-in-time risk assessment for a vendor
 	VendorRiskAssessment struct {
 		ID              gid.GID         `db:"id"`
+		OrganizationID  gid.GID         `db:"organization_id"`
 		VendorID        gid.GID         `db:"vendor_id"`
 		ExpiresAt       time.Time       `db:"expires_at"`
 		DataSensitivity DataSensitivity `db:"data_sensitivity"`
@@ -112,6 +113,7 @@ func (r *VendorRiskAssessment) LoadByID(
 	q := `
 SELECT
     id,
+    organization_id,
     vendor_id,
     expires_at,
     data_sensitivity,
@@ -160,6 +162,7 @@ func (r *VendorRiskAssessment) LoadLatestByVendorID(
 	q := `
 SELECT
     id,
+    organization_id,
     vendor_id,
     expires_at,
     data_sensitivity,
@@ -211,6 +214,7 @@ func (r *VendorRiskAssessments) LoadByVendorID(
 	q := `
 SELECT
     id,
+    organization_id,
     vendor_id,
     expires_at,
     data_sensitivity,

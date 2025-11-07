@@ -15,10 +15,27 @@
 package types
 
 import (
+	"time"
+
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 )
+
+type TrustCenterFile struct {
+	ID                    gid.GID                        `json:"id"`
+	OrganizationID        gid.GID                        `json:"-"`
+	Name                  string                         `json:"name"`
+	Category              string                         `json:"category"`
+	FileURL               string                         `json:"fileUrl"`
+	TrustCenterVisibility coredata.TrustCenterVisibility `json:"trustCenterVisibility"`
+	CreatedAt             time.Time                      `json:"createdAt"`
+	UpdatedAt             time.Time                      `json:"updatedAt"`
+	Organization          *Organization                  `json:"organization"`
+}
+
+func (TrustCenterFile) IsNode()             {}
+func (this TrustCenterFile) GetID() gid.GID { return this.ID }
 
 type TrustCenterFileOrderBy = OrderBy[coredata.TrustCenterFileOrderField]
 
@@ -32,6 +49,7 @@ type TrustCenterFileConnection struct {
 func NewTrustCenterFile(tcf *coredata.TrustCenterFile) *TrustCenterFile {
 	return &TrustCenterFile{
 		ID:                    tcf.ID,
+		OrganizationID:        tcf.OrganizationID,
 		Name:                  tcf.Name,
 		Category:              tcf.Category,
 		TrustCenterVisibility: tcf.TrustCenterVisibility,

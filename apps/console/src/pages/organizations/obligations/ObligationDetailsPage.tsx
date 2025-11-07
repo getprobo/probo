@@ -35,6 +35,7 @@ import z from "zod";
 import { getObligationStatusVariant, getObligationStatusLabel, formatDatetime, getObligationStatusOptions, validateSnapshotConsistency } from "@probo/helpers";
 import { SnapshotBanner } from "/components/SnapshotBanner";
 import type { ObligationGraphNodeQuery } from "/hooks/graph/__generated__/ObligationGraphNodeQuery.graphql";
+import { IfAuthorized } from "/permissions/IfAuthorized";
 
 const updateObligationSchema = z.object({
   area: z.string().optional(),
@@ -156,11 +157,13 @@ export default function ObligationDetailsPage(props: Props) {
       </div>
 
         {!isSnapshotMode && (
-          <ActionDropdown>
-            <DropdownItem icon={IconTrashCan} onClick={deleteObligation}>
-              {__("Delete")}
-            </DropdownItem>
-          </ActionDropdown>
+          <IfAuthorized entity="Obligation" action="delete">
+            <ActionDropdown>
+              <DropdownItem icon={IconTrashCan} onClick={deleteObligation}>
+                {__("Delete")}
+              </DropdownItem>
+            </ActionDropdown>
+          </IfAuthorized>
         )}
       </div>
 
@@ -298,12 +301,14 @@ export default function ObligationDetailsPage(props: Props) {
 
           {!isSnapshotMode && (
             <div className="flex justify-end">
-              <Button
-                type="submit"
-                disabled={formState.isSubmitting}
-              >
-                {formState.isSubmitting ? __("Saving...") : __("Save Changes")}
-              </Button>
+              <IfAuthorized entity="Obligation" action="update">
+                <Button
+                  type="submit"
+                  disabled={formState.isSubmitting}
+                >
+                  {formState.isSubmitting ? __("Saving...") : __("Save Changes")}
+                </Button>
+              </IfAuthorized>
             </div>
           )}
         </form>

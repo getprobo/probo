@@ -15,10 +15,26 @@
 package types
 
 import (
+	"time"
+
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 )
+
+type Framework struct {
+	ID             gid.GID            `json:"id"`
+	OrganizationID gid.GID            `json:"-"`
+	Name           string             `json:"name"`
+	Description    *string            `json:"description,omitempty"`
+	Organization   *Organization      `json:"organization"`
+	Controls       *ControlConnection `json:"controls"`
+	CreatedAt      time.Time          `json:"createdAt"`
+	UpdatedAt      time.Time          `json:"updatedAt"`
+}
+
+func (Framework) IsNode()             {}
+func (this Framework) GetID() gid.GID { return this.ID }
 
 type (
 	FrameworkOrderBy OrderBy[coredata.FrameworkOrderField]
@@ -62,10 +78,11 @@ func NewFrameworkEdge(f *coredata.Framework, orderBy coredata.FrameworkOrderFiel
 
 func NewFramework(f *coredata.Framework) *Framework {
 	return &Framework{
-		ID:          f.ID,
-		Name:        f.Name,
-		Description: f.Description,
-		CreatedAt:   f.CreatedAt,
-		UpdatedAt:   f.UpdatedAt,
+		ID:             f.ID,
+		OrganizationID: f.OrganizationID,
+		Name:           f.Name,
+		Description:    f.Description,
+		CreatedAt:      f.CreatedAt,
+		UpdatedAt:      f.UpdatedAt,
 	}
 }

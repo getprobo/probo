@@ -15,10 +15,32 @@
 package types
 
 import (
+	"time"
+
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 )
+
+type Audit struct {
+	ID                    gid.GID                        `json:"id"`
+	OrganizationID        gid.GID                        `json:"-"`
+	Name                  *string                        `json:"name,omitempty"`
+	Organization          *Organization                  `json:"organization"`
+	Framework             *Framework                     `json:"framework"`
+	ValidFrom             *time.Time                     `json:"validFrom,omitempty"`
+	ValidUntil            *time.Time                     `json:"validUntil,omitempty"`
+	Report                *Report                        `json:"report,omitempty"`
+	ReportURL             *string                        `json:"reportUrl,omitempty"`
+	State                 coredata.AuditState            `json:"state"`
+	Controls              *ControlConnection             `json:"controls"`
+	TrustCenterVisibility coredata.TrustCenterVisibility `json:"trustCenterVisibility"`
+	CreatedAt             time.Time                      `json:"createdAt"`
+	UpdatedAt             time.Time                      `json:"updatedAt"`
+}
+
+func (Audit) IsNode()             {}
+func (this Audit) GetID() gid.GID { return this.ID }
 
 type (
 	AuditOrderBy OrderBy[coredata.AuditOrderField]
@@ -55,6 +77,7 @@ func NewAuditConnection(
 func NewAudit(a *coredata.Audit) *Audit {
 	return &Audit{
 		ID:                    a.ID,
+		OrganizationID:        a.OrganizationID,
 		ValidFrom:             a.ValidFrom,
 		ValidUntil:            a.ValidUntil,
 		State:                 a.State,

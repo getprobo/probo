@@ -31,6 +31,7 @@ import (
 type (
 	Evidence struct {
 		ID             gid.GID       `db:"id"`
+		OrganizationID gid.GID       `db:"organization_id"`
 		MeasureID      gid.GID       `db:"measure_id"`
 		TaskID         *gid.GID      `db:"task_id"`
 		State          EvidenceState `db:"state"`
@@ -141,6 +142,7 @@ INSERT INTO
     evidences (
         tenant_id,
         id,
+        organization_id,
         measure_id,
         task_id,
         reference_id,
@@ -155,6 +157,7 @@ INSERT INTO
 VALUES (
     @tenant_id,
     @evidence_id,
+    @organization_id,
     @measure_id,
     @task_id,
     @reference_id,
@@ -171,6 +174,7 @@ VALUES (
 	args := pgx.StrictNamedArgs{
 		"tenant_id":        scope.GetTenantID(),
 		"evidence_id":      e.ID,
+		"organization_id":  e.OrganizationID,
 		"measure_id":       e.MeasureID,
 		"task_id":          e.TaskID,
 		"reference_id":     e.ReferenceID,
@@ -208,6 +212,7 @@ func (e *Evidence) LoadByID(
 	q := `
 SELECT
     id,
+    organization_id,
     task_id,
     measure_id,
     reference_id,
@@ -288,6 +293,7 @@ func (e *Evidences) LoadByMeasureID(
 	q := `
 SELECT
 	id,
+	organization_id,
 	measure_id,
 	task_id,
 	reference_id,
@@ -369,6 +375,7 @@ func (e *Evidences) LoadByTaskID(
 	q := `
 SELECT
     id,
+    organization_id,
     measure_id,
     task_id,
     reference_id,

@@ -58,9 +58,9 @@ func NewServer(cfg Config) (*Server, error) {
 	router.Post("/invitations/accept", AcceptInvitationHandler(cfg.Auth, cfg.Authz, cfg.CookieName, cfg.CookieSecret, cfg.CookieSecure))
 
 	router.Get("/api-keys", RequireAuth(cfg.Auth, cfg.Authz, cfg.CookieName, cfg.CookieSecret, cfg.CookieSecure, ListUserAPIKeysHandler(cfg.Auth, cfg.Authz)))
-	router.Post("/api-keys", RequireAuth(cfg.Auth, cfg.Authz, cfg.CookieName, cfg.CookieSecret, cfg.CookieSecure, CreateUserAPIKeyHandler(cfg.Auth)))
+	router.Post("/api-keys", RequireAuth(cfg.Auth, cfg.Authz, cfg.CookieName, cfg.CookieSecret, cfg.CookieSecure, CreateUserAPIKeyHandler(cfg.Auth, cfg.Authz)))
 	router.Get("/api-keys/{id}", RequireAuth(cfg.Auth, cfg.Authz, cfg.CookieName, cfg.CookieSecret, cfg.CookieSecure, GetUserAPIKeyHandler(cfg.Auth)))
-	router.Put("/api-keys", RequireAuth(cfg.Auth, cfg.Authz, cfg.CookieName, cfg.CookieSecret, cfg.CookieSecure, UpdateUserAPIKeyHandler(cfg.Auth)))
+	router.Put("/api-keys", RequireAuth(cfg.Auth, cfg.Authz, cfg.CookieName, cfg.CookieSecret, cfg.CookieSecure, UpdateUserAPIKeyHandler(cfg.Auth, cfg.Authz)))
 	router.Delete("/api-keys", RequireAuth(cfg.Auth, cfg.Authz, cfg.CookieName, cfg.CookieSecret, cfg.CookieSecure, DeleteUserAPIKeyHandler(cfg.Auth)))
 
 	router.Get("/saml/login/{samlConfigID}", SAMLLoginHandler(cfg.SAML, cfg.Auth, cfg.Logger))

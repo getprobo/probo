@@ -15,21 +15,44 @@
 package types
 
 import (
+	"time"
+
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 )
+
+type TrustCenterAccess struct {
+	ID                                gid.GID                              `json:"id"`
+	OrganizationID                    gid.GID                              `json:"-"`
+	Email                             string                               `json:"email"`
+	Name                              string                               `json:"name"`
+	Active                            bool                                 `json:"active"`
+	HasAcceptedNonDisclosureAgreement bool                                 `json:"hasAcceptedNonDisclosureAgreement"`
+	CreatedAt                         time.Time                            `json:"createdAt"`
+	UpdatedAt                         time.Time                            `json:"updatedAt"`
+	LastTokenExpiresAt                *time.Time                           `json:"lastTokenExpiresAt,omitempty"`
+	PendingRequestCount               int                                  `json:"pendingRequestCount"`
+	ActiveCount                       int                                  `json:"activeCount"`
+	AvailableDocumentAccesses         *TrustCenterDocumentAccessConnection `json:"availableDocumentAccesses"`
+}
+
+func (TrustCenterAccess) IsNode()            {}
+func (t TrustCenterAccess) GetID() gid.GID { return t.ID }
 
 type TrustCenterAccessOrderBy = OrderBy[coredata.TrustCenterAccessOrderField]
 
 func NewTrustCenterAccess(tca *coredata.TrustCenterAccess) *TrustCenterAccess {
 	return &TrustCenterAccess{
 		ID:                                tca.ID,
+		OrganizationID:                    tca.OrganizationID,
 		Email:                             tca.Email,
 		Name:                              tca.Name,
 		Active:                            tca.Active,
 		HasAcceptedNonDisclosureAgreement: tca.HasAcceptedNonDisclosureAgreement,
 		CreatedAt:                         tca.CreatedAt,
 		UpdatedAt:                         tca.UpdatedAt,
+		LastTokenExpiresAt:                tca.LastTokenExpiresAt,
 	}
 }
 

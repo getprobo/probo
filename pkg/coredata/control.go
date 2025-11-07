@@ -31,6 +31,7 @@ import (
 type (
 	Control struct {
 		ID                     gid.GID       `db:"id"`
+		OrganizationID         gid.GID       `db:"organization_id"`
 		SectionTitle           string        `db:"section_title"`
 		FrameworkID            gid.GID       `db:"framework_id"`
 		Name                   string        `db:"name"`
@@ -127,6 +128,7 @@ WITH ctrl AS (
 		c.id,
 		c.section_title,
 		c.framework_id,
+		c.organization_id,
 		c.tenant_id,
 		c.name,
 		c.description,
@@ -146,6 +148,7 @@ SELECT
 	id,
 	section_title,
 	framework_id,
+	organization_id,
 	name,
 	description,
 	status,
@@ -236,6 +239,7 @@ WITH ctrl AS (
 		c.id,
 		c.section_title,
 		c.framework_id,
+		c.organization_id,
 		c.tenant_id,
 		c.name,
 		c.description,
@@ -255,6 +259,7 @@ SELECT
 	id,
 	section_title,
 	framework_id,
+	organization_id,
 	name,
 	description,
 	status,
@@ -548,6 +553,7 @@ WITH ctrl AS (
 		c.id,
 		c.section_title,
 		c.framework_id,
+		c.organization_id,
 		c.tenant_id,
 		c.name,
 		c.description,
@@ -567,6 +573,7 @@ SELECT
 	id,
 	section_title,
 	framework_id,
+	organization_id,
 	name,
 	description,
 	status,
@@ -613,6 +620,7 @@ SELECT
     id,
     section_title,
     framework_id,
+    organization_id,
     name,
     description,
     status,
@@ -661,6 +669,7 @@ SELECT
     id,
     section_title,
     framework_id,
+    organization_id,
     name,
     description,
     status,
@@ -707,6 +716,7 @@ INSERT INTO
     controls (
         tenant_id,
         id,
+        organization_id,
         framework_id,
         section_title,
         name,
@@ -719,6 +729,7 @@ INSERT INTO
 VALUES (
     @tenant_id,
     @control_id,
+    @organization_id,
     @framework_id,
     @section_title,
     @name,
@@ -733,6 +744,7 @@ VALUES (
 	args := pgx.StrictNamedArgs{
 		"tenant_id":               scope.GetTenantID(),
 		"control_id":              c.ID,
+		"organization_id":         c.OrganizationID,
 		"framework_id":            c.FrameworkID,
 		"section_title":           c.SectionTitle,
 		"name":                    c.Name,
@@ -994,6 +1006,7 @@ WITH ctrl AS (
 		c.id,
 		c.section_title,
 		c.framework_id,
+		c.organization_id,
 		c.tenant_id,
 		c.name,
 		c.description,
@@ -1013,6 +1026,7 @@ SELECT
 	id,
 	section_title,
 	framework_id,
+	organization_id,
 	name,
 	description,
 	status,

@@ -127,6 +127,60 @@ ORDER BY akm.created_at DESC
 	return nil
 }
 
+func (a *UserAPIKeyMembership) LoadByAPIKeyIDAndOrganizationID(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	apiKeyID gid.GID,
+	organizationID gid.GID,
+) error {
+	q := `
+SELECT
+    akm.id,
+    akm.auth_user_api_key_id,
+    akm.membership_id,
+    akm.role,
+    akm.created_at,
+    akm.updated_at,
+    m.organization_id,
+    o.name as organization_name
+FROM
+    authz_api_keys_memberships akm
+JOIN
+    authz_memberships m ON akm.membership_id = m.id
+JOIN
+    organizations o ON m.organization_id = o.id
+WHERE
+    akm.auth_user_api_key_id = @api_key_id
+    AND m.organization_id = @organization_id
+    AND m.%s
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"api_key_id":      apiKeyID,
+		"organization_id": organizationID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query user api key membership: %w", err)
+	}
+
+	membership, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[UserAPIKeyMembership])
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return fmt.Errorf("API key does not have access to organization")
+		}
+		return fmt.Errorf("cannot collect user api key membership: %w", err)
+	}
+
+	*a = membership
+	return nil
+}
+
 func (a *UserAPIKeyMembership) Delete(
 	ctx context.Context,
 	conn pg.Conn,
@@ -151,6 +205,56 @@ WHERE
 	if err != nil {
 		return fmt.Errorf("cannot delete user api key membership: %w", err)
 	}
+
+	return nil
+}
+
+func (a *UserAPIKeyMemberships) LoadByMembershipID(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	membershipID gid.GID,
+) error {
+	q := `
+SELECT
+    akm.id,
+    akm.auth_user_api_key_id,
+    akm.membership_id,
+    akm.role,
+    akm.created_at,
+    akm.updated_at,
+    m.organization_id,
+    o.name as organization_name
+FROM
+    authz_api_keys_memberships akm
+JOIN
+    authz_memberships m ON akm.membership_id = m.id
+JOIN
+    organizations o ON m.organization_id = o.id
+WHERE
+    akm.membership_id = @membership_id
+    AND m.%s
+ORDER BY akm.created_at DESC
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"membership_id": membershipID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query user api key memberships by membership id: %w", err)
+	}
+
+	memberships, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[UserAPIKeyMembership])
+	if err != nil {
+		return fmt.Errorf("cannot collect user api key memberships: %w", err)
+	}
+
+	*a = memberships
 
 	return nil
 }

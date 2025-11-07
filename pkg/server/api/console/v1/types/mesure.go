@@ -15,10 +15,30 @@
 package types
 
 import (
+	"time"
+
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 )
+
+type Measure struct {
+	ID             gid.GID               `json:"id"`
+	OrganizationID gid.GID               `json:"-"`
+	Category       string                `json:"category"`
+	Name           string                `json:"name"`
+	Description    *string               `json:"description,omitempty"`
+	State          coredata.MeasureState `json:"state"`
+	Evidences      *EvidenceConnection   `json:"evidences"`
+	Tasks          *TaskConnection       `json:"tasks"`
+	Risks          *RiskConnection       `json:"risks"`
+	Controls       *ControlConnection    `json:"controls"`
+	CreatedAt      time.Time             `json:"createdAt"`
+	UpdatedAt      time.Time             `json:"updatedAt"`
+}
+
+func (Measure) IsNode()          {}
+func (m Measure) GetID() gid.GID { return m.ID }
 
 type (
 	MeasureOrderBy OrderBy[coredata.MeasureOrderField]
@@ -65,12 +85,13 @@ func NewMeasureEdge(c *coredata.Measure, orderBy coredata.MeasureOrderField) *Me
 
 func NewMeasure(c *coredata.Measure) *Measure {
 	return &Measure{
-		ID:          c.ID,
-		Category:    c.Category,
-		Name:        c.Name,
-		Description: c.Description,
-		State:       c.State,
-		CreatedAt:   c.CreatedAt,
-		UpdatedAt:   c.UpdatedAt,
+		ID:             c.ID,
+		OrganizationID: c.OrganizationID,
+		Category:       c.Category,
+		Name:           c.Name,
+		Description:    c.Description,
+		State:          c.State,
+		CreatedAt:      c.CreatedAt,
+		UpdatedAt:      c.UpdatedAt,
 	}
 }

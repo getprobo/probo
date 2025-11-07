@@ -15,10 +15,30 @@
 package types
 
 import (
+	"time"
+
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 )
+
+type Evidence struct {
+	ID             gid.GID                `json:"id"`
+	OrganizationID gid.GID                `json:"-"`
+	Size           int                    `json:"size"`
+	State          coredata.EvidenceState `json:"state"`
+	Type           coredata.EvidenceType  `json:"type"`
+	File           *File                  `json:"file,omitempty"`
+	URL            *string                `json:"url,omitempty"`
+	Description    *string                `json:"description,omitempty"`
+	Task           *Task                  `json:"task,omitempty"`
+	Measure        *Measure               `json:"measure"`
+	CreatedAt      time.Time              `json:"createdAt"`
+	UpdatedAt      time.Time              `json:"updatedAt"`
+}
+
+func (Evidence) IsNode()          {}
+func (e Evidence) GetID() gid.GID { return e.ID }
 
 type (
 	EvidenceOrderBy OrderBy[coredata.EvidenceOrderField]
@@ -68,12 +88,13 @@ func NewEvidence(e *coredata.Evidence) *Evidence {
 	}
 
 	return &Evidence{
-		ID:          e.ID,
-		State:       e.State,
-		Type:        e.Type,
-		URL:         urlPtr,
-		Description: e.Description,
-		CreatedAt:   e.CreatedAt,
-		UpdatedAt:   e.UpdatedAt,
+		ID:             e.ID,
+		OrganizationID: e.OrganizationID,
+		State:          e.State,
+		Type:           e.Type,
+		URL:            urlPtr,
+		Description:    e.Description,
+		CreatedAt:      e.CreatedAt,
+		UpdatedAt:      e.UpdatedAt,
 	}
 }

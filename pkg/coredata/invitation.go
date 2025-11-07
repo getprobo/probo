@@ -21,10 +21,10 @@ import (
 	"maps"
 	"time"
 
-	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/page"
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 )
 
 type (
@@ -33,7 +33,7 @@ type (
 		OrganizationID gid.GID          `db:"organization_id"`
 		Email          string           `db:"email"`
 		FullName       string           `db:"full_name"`
-		Role           Role             `db:"role"`
+		Role           MembershipRole       `db:"role"`
 		Status         InvitationStatus `db:"status"`
 		ExpiresAt      time.Time        `db:"expires_at"`
 		AcceptedAt     *time.Time       `db:"accepted_at"`
@@ -43,11 +43,11 @@ type (
 	Invitations []*Invitation
 
 	InvitationData struct {
-		InvitationID   gid.GID `json:"invitation_id"`
-		OrganizationID gid.GID `json:"organization_id"`
-		Email          string  `json:"email"`
-		FullName       string  `json:"full_name"`
-		Role           Role    `json:"role"`
+		InvitationID   gid.GID    `json:"invitation_id"`
+		OrganizationID gid.GID    `json:"organization_id"`
+		Email          string     `json:"email"`
+		FullName       string     `json:"full_name"`
+		Role           MembershipRole `json:"role"`
 	}
 
 	ErrInvitationNotFound struct {

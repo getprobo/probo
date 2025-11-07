@@ -31,6 +31,8 @@ import type {
   AuditsPageFragment$key,
 } from "./__generated__/AuditsPageFragment.graphql";
 import { SortableTable } from "/components/SortableTable";
+import { IfAuthorized } from "/permissions/IfAuthorized";
+import { isAuthorized } from "/permissions/permissions";
 
 const paginatedAuditsFragment = graphql`
   fragment AuditsPageFragment on Organization
@@ -92,6 +94,9 @@ export default function AuditsPage(props: Props) {
 
   usePageTitle(__("Audits"));
 
+  const hasAnyAction = isAuthorized(organizationId, "Audit", "update") ||
+    isAuthorized(organizationId, "Audit", "delete");
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -100,12 +105,14 @@ export default function AuditsPage(props: Props) {
           "Manage your organization's compliance audits and their progress."
         )}
       >
-        <CreateAuditDialog
-          connection={connectionId}
-          organizationId={organizationId}
-        >
-        <Button icon={IconPlusLarge}>{__("Add audit")}</Button>
-        </CreateAuditDialog>
+        <IfAuthorized entity="Audit" action="create">
+          <CreateAuditDialog
+            connection={connectionId}
+            organizationId={organizationId}
+          >
+          <Button icon={IconPlusLarge}>{__("Add audit")}</Button>
+          </CreateAuditDialog>
+        </IfAuthorized>
       </PageHeader>
       <SortableTable {...pagination}>
         <Thead>
@@ -116,7 +123,7 @@ export default function AuditsPage(props: Props) {
             <Th>{__("Valid From")}</Th>
             <Th>{__("Valid Until")}</Th>
             <Th>{__("Report")}</Th>
-            <Th></Th>
+            {hasAnyAction && <Th></Th>}
           </Tr>
         </Thead>
         <Tbody>
@@ -125,6 +132,7 @@ export default function AuditsPage(props: Props) {
               key={entry.id}
               entry={entry}
               connectionId={connectionId}
+              hasAnyAction={hasAnyAction}
             />
           ))}
         </Tbody>
@@ -136,9 +144,11 @@ export default function AuditsPage(props: Props) {
 function AuditRow({
   entry,
   connectionId,
+  hasAnyAction,
 }: {
   entry: AuditEntry;
   connectionId: string;
+  hasAnyAction: boolean;
 }) {
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
@@ -164,17 +174,21 @@ function AuditRow({
           <Badge variant="neutral">{__("Not uploaded")}</Badge>
         )}
       </Td>
-      <Td noLink width={50} className="text-end">
-        <ActionDropdown>
-          <DropdownItem
-            onClick={deleteAudit}
-            variant="danger"
-            icon={IconTrashCan}
-          >
-            {__("Delete")}
-          </DropdownItem>
-        </ActionDropdown>
-      </Td>
+      {hasAnyAction && (
+        <Td noLink width={50} className="text-end">
+          <ActionDropdown>
+            <IfAuthorized entity="Audit" action="delete">
+              <DropdownItem
+                onClick={deleteAudit}
+                variant="danger"
+                icon={IconTrashCan}
+              >
+                {__("Delete")}
+              </DropdownItem>
+            </IfAuthorized>
+          </ActionDropdown>
+        </Td>
+      )}
     </Tr>
   );
 }

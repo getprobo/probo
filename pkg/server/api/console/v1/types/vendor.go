@@ -15,10 +15,50 @@
 package types
 
 import (
+	"time"
+
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 )
+
+type Vendor struct {
+	ID                            gid.GID                           `json:"id"`
+	OrganizationID                gid.GID                           `json:"-"`
+	SnapshotID                    *gid.GID                          `json:"snapshotId,omitempty"`
+	Name                          string                            `json:"name"`
+	Category                      coredata.VendorCategory           `json:"category"`
+	Description                   *string                           `json:"description,omitempty"`
+	Organization                  *Organization                     `json:"organization"`
+	ComplianceReports             *VendorComplianceReportConnection `json:"complianceReports"`
+	BusinessAssociateAgreement    *VendorBusinessAssociateAgreement `json:"businessAssociateAgreement,omitempty"`
+	DataPrivacyAgreement          *VendorDataPrivacyAgreement       `json:"dataPrivacyAgreement,omitempty"`
+	Contacts                      *VendorContactConnection          `json:"contacts"`
+	Services                      *VendorServiceConnection          `json:"services"`
+	RiskAssessments               *VendorRiskAssessmentConnection   `json:"riskAssessments"`
+	BusinessOwner                 *People                           `json:"businessOwner,omitempty"`
+	SecurityOwner                 *People                           `json:"securityOwner,omitempty"`
+	StatusPageURL                 *string                           `json:"statusPageUrl,omitempty"`
+	TermsOfServiceURL             *string                           `json:"termsOfServiceUrl,omitempty"`
+	PrivacyPolicyURL              *string                           `json:"privacyPolicyUrl,omitempty"`
+	ServiceLevelAgreementURL      *string                           `json:"serviceLevelAgreementUrl,omitempty"`
+	DataProcessingAgreementURL    *string                           `json:"dataProcessingAgreementUrl,omitempty"`
+	BusinessAssociateAgreementURL *string                           `json:"businessAssociateAgreementUrl,omitempty"`
+	SubprocessorsListURL          *string                           `json:"subprocessorsListUrl,omitempty"`
+	Certifications                []string                          `json:"certifications"`
+	Countries                     []coredata.CountryCode            `json:"countries"`
+	SecurityPageURL               *string                           `json:"securityPageUrl,omitempty"`
+	TrustPageURL                  *string                           `json:"trustPageUrl,omitempty"`
+	HeadquarterAddress            *string                           `json:"headquarterAddress,omitempty"`
+	LegalName                     *string                           `json:"legalName,omitempty"`
+	WebsiteURL                    *string                           `json:"websiteUrl,omitempty"`
+	ShowOnTrustCenter             bool                              `json:"showOnTrustCenter"`
+	CreatedAt                     time.Time                         `json:"createdAt"`
+	UpdatedAt                     time.Time                         `json:"updatedAt"`
+}
+
+func (Vendor) IsNode()             {}
+func (this Vendor) GetID() gid.GID { return this.ID }
 
 type (
 	VendorOrderBy OrderBy[coredata.VendorOrderField]
@@ -63,6 +103,7 @@ func NewVendorEdge(v *coredata.Vendor, orderBy coredata.VendorOrderField) *Vendo
 func NewVendor(v *coredata.Vendor) *Vendor {
 	return &Vendor{
 		ID:                            v.ID,
+		OrganizationID:                v.OrganizationID,
 		Name:                          v.Name,
 		Description:                   v.Description,
 		StatusPageURL:                 v.StatusPageURL,

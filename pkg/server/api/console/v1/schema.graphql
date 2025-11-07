@@ -83,12 +83,16 @@ enum InvitationStatus
     @goEnum(value: "go.probo.inc/probo/pkg/coredata.InvitationStatusExpired")
 }
 
-enum Role @goModel(model: "go.probo.inc/probo/pkg/coredata.Role") {
-  OWNER @goEnum(value: "go.probo.inc/probo/pkg/coredata.RoleOwner")
-  ADMIN @goEnum(value: "go.probo.inc/probo/pkg/coredata.RoleAdmin")
-  MEMBER @goEnum(value: "go.probo.inc/probo/pkg/coredata.RoleMember")
-  VIEWER @goEnum(value: "go.probo.inc/probo/pkg/coredata.RoleViewer")
+enum MembershipRole @goModel(model: "go.probo.inc/probo/pkg/coredata.MembershipRole") {
+  OWNER @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleOwner")
+  ADMIN @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleAdmin")
+  VIEWER @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleViewer")
 }
+
+enum APIRole @goModel(model: "go.probo.inc/probo/pkg/coredata.APIRole") {
+  FULL @goEnum(value: "go.probo.inc/probo/pkg/coredata.APIRoleFull")
+}
+
 
 enum DocumentStatus
   @goModel(model: "go.probo.inc/probo/pkg/coredata.DocumentStatus") {
@@ -1406,7 +1410,7 @@ input VendorFilter {
 }
 
 # Core Types
-type TrustCenter implements Node {
+type TrustCenter implements Node @goModel(model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TrustCenter") {
   id: ID!
   active: Boolean!
   ndaFileName: String
@@ -1637,7 +1641,7 @@ type Membership implements Node {
   id: ID!
   userID: ID!
   organizationID: ID!
-  role: Role!
+  role: MembershipRole!
   fullName: String!
   emailAddress: String!
   authMethod: UserAuthMethod! @goField(forceResolver: true)
@@ -1649,7 +1653,7 @@ type Invitation implements Node {
   id: ID!
   email: String!
   fullName: String!
-  role: Role!
+  role: MembershipRole!
   status: InvitationStatus!
   expiresAt: Datetime!
   acceptedAt: Datetime
@@ -1688,7 +1692,7 @@ type People implements Node {
   updatedAt: Datetime!
 }
 
-type Vendor implements Node {
+type Vendor implements Node @goModel(model: "go.probo.inc/probo/pkg/server/api/console/v1/types.Vendor") {
   id: ID!
   snapshotId: ID
   name: String!
@@ -1810,7 +1814,7 @@ type VendorDataPrivacyAgreement implements Node {
   updatedAt: Datetime!
 }
 
-type Framework implements Node {
+type Framework implements Node @goModel(model: "go.probo.inc/probo/pkg/server/api/console/v1/types.Framework") {
   id: ID!
   name: String!
   description: String
@@ -1830,7 +1834,10 @@ type Framework implements Node {
   updatedAt: Datetime!
 }
 
-type Control implements Node {
+type Control implements Node
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.Control"
+  ) {
   id: ID!
   sectionTitle: String!
   name: String!
@@ -1878,7 +1885,10 @@ type Control implements Node {
   updatedAt: Datetime!
 }
 
-type Measure implements Node {
+type Measure implements Node
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.Measure"
+  ) {
   id: ID!
   category: String!
   name: String!
@@ -1923,7 +1933,8 @@ type Measure implements Node {
   updatedAt: Datetime!
 }
 
-type Task implements Node {
+type Task implements Node
+  @goModel(model: "go.probo.inc/probo/pkg/server/api/console/v1/types.Task") {
   id: ID!
   name: String!
   description: String
@@ -1947,7 +1958,10 @@ type Task implements Node {
   updatedAt: Datetime!
 }
 
-type Evidence implements Node {
+type Evidence implements Node
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.Evidence"
+  ) {
   id: ID!
   size: Int!
   state: EvidenceState!
@@ -1963,7 +1977,7 @@ type Evidence implements Node {
   updatedAt: Datetime!
 }
 
-type Document implements Node {
+type Document implements Node @goModel(model: "go.probo.inc/probo/pkg/server/api/console/v1/types.Document") {
   id: ID!
   title: String!
   description: String
@@ -1996,7 +2010,7 @@ type Document implements Node {
   updatedAt: Datetime!
 }
 
-type Risk implements Node {
+type Risk implements Node @goModel(model: "go.probo.inc/probo/pkg/server/api/console/v1/types.Risk") {
   id: ID!
   snapshotId: ID
   name: String!
@@ -2054,7 +2068,7 @@ type Risk implements Node {
   updatedAt: Datetime!
 }
 
-type Audit implements Node {
+type Audit implements Node @goModel(model: "go.probo.inc/probo/pkg/server/api/console/v1/types.Audit") {
   id: ID!
   name: String
   organization: Organization! @goField(forceResolver: true)
@@ -2079,7 +2093,7 @@ type Audit implements Node {
   updatedAt: Datetime!
 }
 
-type Nonconformity implements Node {
+type Nonconformity implements Node @goModel(model: "go.probo.inc/probo/pkg/server/api/console/v1/types.Nonconformity") {
   id: ID!
   snapshotId: ID
   organization: Organization! @goField(forceResolver: true)
@@ -2097,7 +2111,7 @@ type Nonconformity implements Node {
   updatedAt: Datetime!
 }
 
-type Obligation implements Node {
+type Obligation implements Node @goModel(model: "go.probo.inc/probo/pkg/server/api/console/v1/types.Obligation") {
   id: ID!
   snapshotId: ID
   sourceId: ID
@@ -2115,7 +2129,7 @@ type Obligation implements Node {
   updatedAt: Datetime!
 }
 
-type ContinualImprovement implements Node {
+type ContinualImprovement implements Node @goModel(model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ContinualImprovement") {
   id: ID!
   snapshotId: ID
   sourceId: ID
@@ -2131,7 +2145,7 @@ type ContinualImprovement implements Node {
   updatedAt: Datetime!
 }
 
-type ProcessingActivity implements Node {
+type ProcessingActivity implements Node @goModel(model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ProcessingActivity") {
   id: ID!
   snapshotId: ID
   sourceId: ID
@@ -2162,7 +2176,7 @@ type ProcessingActivity implements Node {
   updatedAt: Datetime!
 }
 
-type Snapshot implements Node {
+type Snapshot implements Node @goModel(model: "go.probo.inc/probo/pkg/server/api/console/v1/types.Snapshot") {
   id: ID!
   organization: Organization! @goField(forceResolver: true)
   name: String!
@@ -2232,7 +2246,10 @@ type TrustCenterEdge {
   node: TrustCenter!
 }
 
-type TrustCenterAccess implements Node {
+type TrustCenterAccess implements Node
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TrustCenterAccess"
+  ) {
   id: ID!
   email: String!
   name: String!
@@ -2313,7 +2330,7 @@ type TrustCenterReferenceEdge {
   node: TrustCenterReference!
 }
 
-type TrustCenterFile implements Node {
+type TrustCenterFile @goModel(model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TrustCenterFile") {
   id: ID!
   name: String!
   category: String!
@@ -2639,7 +2656,7 @@ type SnapshotEdge {
   node: Snapshot!
 }
 
-type File {
+type File @goModel(model: "go.probo.inc/probo/pkg/server/api/console/v1/types.File") {
   id: ID!
   mimeType: String!
   fileName: String!
@@ -2743,6 +2760,7 @@ type Mutation {
   acceptInvitation(input: AcceptInvitationInput!): AcceptInvitationPayload!
   deleteInvitation(input: DeleteInvitationInput!): DeleteInvitationPayload!
   removeMember(input: RemoveMemberInput!): RemoveMemberPayload!
+  updateMembership(input: UpdateMembershipInput!): UpdateMembershipPayload!
 
   # People mutations
   createPeople(input: CreatePeopleInput!): CreatePeoplePayload!
@@ -3547,6 +3565,7 @@ input InviteUserInput {
   organizationId: ID!
   email: String!
   fullName: String!
+  role: MembershipRole!
   createPeople: Boolean!
 }
 
@@ -3561,6 +3580,12 @@ input DeleteInvitationInput {
 input RemoveMemberInput {
   organizationId: ID!
   memberId: ID!
+}
+
+input UpdateMembershipInput {
+  organizationId: ID!
+  memberId: ID!
+  role: MembershipRole!
 }
 
 input CreateControlInput {
@@ -4111,6 +4136,10 @@ type RemoveMemberPayload {
   deletedMemberId: ID!
 }
 
+type UpdateMembershipPayload {
+  membership: Membership!
+}
+
 input VendorRiskAssessmentOrder {
   field: VendorRiskAssessmentOrderField!
   direction: OrderDirection!
@@ -4161,7 +4190,7 @@ type DeleteMeasurePayload {
   deletedMeasureId: ID!
 }
 
-type DocumentVersion implements Node {
+type DocumentVersion implements Node @goModel(model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DocumentVersion") {
   id: ID!
   document: Document! @goField(forceResolver: true)
   status: DocumentStatus!
@@ -4233,7 +4262,7 @@ enum DocumentVersionSignatureOrderField
     )
 }
 
-type DocumentVersionSignature implements Node {
+type DocumentVersionSignature implements Node @goModel(model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DocumentVersionSignature") {
   id: ID!
   documentVersion: DocumentVersion! @goField(forceResolver: true)
   state: DocumentVersionSignatureState!
@@ -4368,7 +4397,7 @@ type AssessVendorPayload {
   vendor: Vendor!
 }
 
-type Asset implements Node {
+type Asset implements Node @goModel(model: "go.probo.inc/probo/pkg/server/api/console/v1/types.Asset") {
   id: ID!
   snapshotId: ID
   name: String!
@@ -4446,7 +4475,7 @@ type DeleteAssetPayload {
   deletedAssetId: ID!
 }
 
-type Datum implements Node {
+type Datum implements Node @goModel(model: "go.probo.inc/probo/pkg/server/api/console/v1/types.Datum") {
   id: ID!
   snapshotId: ID
   name: String!

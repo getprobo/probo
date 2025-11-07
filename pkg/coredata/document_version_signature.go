@@ -21,16 +21,17 @@ import (
 	"maps"
 	"time"
 
-	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/page"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 )
 
 type (
 	DocumentVersionSignature struct {
 		ID                gid.GID                       `json:"id"`
+		OrganizationID    gid.GID                       `json:"-"`
 		DocumentVersionID gid.GID                       `json:"document_version_id"`
 		State             DocumentVersionSignatureState `json:"state"`
 		SignedBy          gid.GID                       `json:"signed_by"`
@@ -87,6 +88,7 @@ func (pvs *DocumentVersionSignature) LoadByDocumentVersionIDAndSignatory(
 	q := `
 SELECT
 	id,
+	organization_id,
 	document_version_id,
 	state,
 	signed_by,
@@ -132,6 +134,7 @@ func (pvs *DocumentVersionSignature) LoadByID(
 	q := `
 SELECT
 	id,
+	organization_id,
 	document_version_id,
 	state,
 	signed_by,
@@ -175,6 +178,7 @@ func (pvs DocumentVersionSignature) Insert(
 INSERT INTO document_version_signatures (
 	id,
 	tenant_id,
+	organization_id,
 	document_version_id,
 	state,
 	signed_by,
@@ -185,6 +189,7 @@ INSERT INTO document_version_signatures (
 ) VALUES (
  	@id,
 	@tenant_id,
+	@organization_id,
 	@document_version_id,
 	@state,
 	@signed_by,
@@ -198,6 +203,7 @@ INSERT INTO document_version_signatures (
 	args := pgx.StrictNamedArgs{
 		"id":                  pvs.ID,
 		"tenant_id":           scope.GetTenantID(),
+		"organization_id":     pvs.OrganizationID,
 		"document_version_id": pvs.DocumentVersionID,
 		"state":               pvs.State,
 		"signed_by":           pvs.SignedBy,
@@ -234,6 +240,7 @@ func (pvss *DocumentVersionSignatures) LoadByDocumentVersionID(
 	q := `
 SELECT
 	id,
+	organization_id,
 	document_version_id,
 	state,
 	signed_by,
@@ -346,6 +353,7 @@ func (pvss *DocumentVersionSignaturesWithPeople) LoadByDocumentVersionIDWithPeop
 WITH sigs AS (
 	SELECT
 		dvs.id,
+		dvs.organization_id,
 		dvs.tenant_id,
 		dvs.document_version_id,
 		dvs.state,
@@ -367,6 +375,7 @@ WITH sigs AS (
 )
 SELECT
 	id,
+	organization_id,
 	document_version_id,
 	state,
 	signed_by,

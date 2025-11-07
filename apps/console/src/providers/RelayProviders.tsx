@@ -51,6 +51,13 @@ export class UnauthorizedError extends Error {
   }
 }
 
+export class ForbiddenError extends Error {
+  constructor() {
+    super("FORBIDDEN");
+    this.name = "ForbiddenError";
+  }
+}
+
 export function buildEndpoint(path: string): string {
   const host = import.meta.env.VITE_API_URL;
 
@@ -80,6 +87,9 @@ const hasAuthenticationRequiredError = (error: GraphQLError) =>
 
 const hasUnauthorizedError = (error: GraphQLError) =>
   error.extensions?.code == "UNAUTHORIZED";
+
+const hasForbiddenError = (error: GraphQLError) =>
+  error.extensions?.code == "FORBIDDEN";
 
 const fetchRelay: FetchFunction = async (
   request,
@@ -165,6 +175,10 @@ const fetchRelay: FetchFunction = async (
 
     if (errors.find(hasUnauthorizedError)) {
       throw new UnauthorizedError();
+    }
+
+    if (errors.find(hasForbiddenError)) {
+      throw new ForbiddenError();
     }
   }
 

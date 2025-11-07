@@ -20,6 +20,7 @@ import type { useVendorFormFragment$key } from "/hooks/forms/__generated__/useVe
 import type { VendorOverviewTabBusinessAssociateAgreementFragment$key } from "./__generated__/VendorOverviewTabBusinessAssociateAgreementFragment.graphql";
 import type { VendorOverviewTabDataPrivacyAgreementFragment$key } from "./__generated__/VendorOverviewTabDataPrivacyAgreementFragment.graphql";
 import type { VendorCategory } from "@probo/vendors";
+import { IfAuthorized } from "/permissions/IfAuthorized";
 
 const vendorBusinessAssociateAgreementFragment = graphql`
   fragment VendorOverviewTabBusinessAssociateAgreementFragment on Vendor {
@@ -395,9 +396,11 @@ export default function VendorOverviewTab() {
       {/* Submit */}
       {!isSnapshotMode && (
         <div className="flex justify-end">
-          <Button type="submit" disabled={isSubmitting}>
-            {__("Update vendor")}
-          </Button>
+          <IfAuthorized entity="Vendor" action="update">
+            <Button type="submit" disabled={isSubmitting}>
+              {__("Update vendor")}
+            </Button>
+          </IfAuthorized>
         </div>
       )}
     </form>

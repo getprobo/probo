@@ -23,6 +23,7 @@ import {
 } from "/hooks/graph/TrustCenterFileGraph";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { TrustCenterFilesCard } from "/components/trustCenter/TrustCenterFilesCard";
+import { IfAuthorized } from "/permissions/IfAuthorized";
 import type { TrustCenterFilesCardFragment$key } from "/components/trustCenter/__generated__/TrustCenterFilesCardFragment.graphql";
 
 type ContextType = {
@@ -200,9 +201,11 @@ export default function TrustCenterFilesTab() {
             {__("Upload and manage files for your trust center")}
           </p>
         </div>
-        <Button icon={IconPlusLarge} onClick={() => createDialogRef.current?.open()}>
-          {__("Add File")}
-        </Button>
+        <IfAuthorized entity="TrustCenterFile" action="create">
+          <Button icon={IconPlusLarge} onClick={() => createDialogRef.current?.open()}>
+            {__("Add File")}
+          </Button>
+        </IfAuthorized>
       </div>
       {(isUpdating || isDeleting) && (
         <div className="flex items-center justify-center">

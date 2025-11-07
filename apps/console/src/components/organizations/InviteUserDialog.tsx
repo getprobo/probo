@@ -5,6 +5,8 @@ import {
   DialogFooter,
   Field,
   Checkbox,
+  Select,
+  Option,
   useDialogRef,
 } from "@probo/ui";
 import type { PropsWithChildren } from "react";
@@ -40,6 +42,7 @@ const inviteMutation = graphql`
 const schema = z.object({
   email: z.string().email(),
   fullName: z.string(),
+  role: z.enum(["OWNER", "ADMIN", "FULL", "VIEWER"]).default("VIEWER"),
   createPeople: z.boolean().default(false),
 });
 
@@ -57,7 +60,7 @@ export function InviteUserDialog({ children, connectionId, onRefetch }: Props) {
   });
   const { register, handleSubmit, formState, reset, control } = useFormWithSchema(
     schema,
-    { defaultValues: { createPeople: false } },
+    { defaultValues: { role: "VIEWER", createPeople: false } },
   );
 
   const dialogRef = useDialogRef();
@@ -69,6 +72,7 @@ export function InviteUserDialog({ children, connectionId, onRefetch }: Props) {
           organizationId,
           email: data.email,
           fullName: data.fullName,
+          role: data.role,
           createPeople: data.createPeople,
         },
         connections: connectionId ? [connectionId] : ["SettingsPageInvitations_invitations"],
@@ -107,6 +111,19 @@ export function InviteUserDialog({ children, connectionId, onRefetch }: Props) {
             {...register("fullName")}
             error={formState.errors.fullName?.message}
           />
+          <Field label={__("Role")} required>
+            <Controller
+              name="role"
+              control={control}
+              render={({ field }) => (
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <Option value="OWNER">{__("Owner")}</Option>
+                  <Option value="ADMIN">{__("Admin")}</Option>
+                  <Option value="VIEWER">{__("Viewer")}</Option>
+                </Select>
+              )}
+            />
+          </Field>
           <div className="space-y-2">
             <div className="flex items-center space-x-3">
               <Controller

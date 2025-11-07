@@ -20,9 +20,9 @@ import (
 	"fmt"
 	"time"
 
-	"go.probo.inc/probo/pkg/gid"
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/gid"
 )
 
 type (

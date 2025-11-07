@@ -15,10 +15,34 @@
 package types
 
 import (
+	"time"
+
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 )
+
+type Nonconformity struct {
+	ID                 gid.GID                      `json:"id"`
+	OrganizationID     gid.GID                      `json:"-"`
+	SnapshotID         *gid.GID                     `json:"snapshotId,omitempty"`
+	Organization       *Organization                `json:"organization"`
+	ReferenceID        string                       `json:"referenceId"`
+	Description        *string                      `json:"description,omitempty"`
+	Audit              *Audit                       `json:"audit"`
+	DateIdentified     *time.Time                   `json:"dateIdentified,omitempty"`
+	RootCause          string                       `json:"rootCause"`
+	CorrectiveAction   *string                      `json:"correctiveAction,omitempty"`
+	Owner              *People                      `json:"owner"`
+	DueDate            *time.Time                   `json:"dueDate,omitempty"`
+	Status             coredata.NonconformityStatus `json:"status"`
+	EffectivenessCheck *string                      `json:"effectivenessCheck,omitempty"`
+	CreatedAt          time.Time                    `json:"createdAt"`
+	UpdatedAt          time.Time                    `json:"updatedAt"`
+}
+
+func (Nonconformity) IsNode()             {}
+func (this Nonconformity) GetID() gid.GID { return this.ID }
 
 type (
 	NonconformityOrderBy OrderBy[coredata.NonconformityOrderField]
@@ -58,6 +82,7 @@ func NewNonconformityConnection(
 func NewNonconformity(nr *coredata.Nonconformity) *Nonconformity {
 	return &Nonconformity{
 		ID:                 nr.ID,
+		OrganizationID:     nr.OrganizationID,
 		ReferenceID:        nr.ReferenceID,
 		SnapshotID:         nr.SnapshotID,
 		Description:        nr.Description,

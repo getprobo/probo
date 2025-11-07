@@ -15,13 +15,39 @@
 package types
 
 import (
+	"time"
+
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 )
 
 type (
+	DocumentVersion struct {
+		ID             gid.GID                             `json:"id"`
+		OrganizationID gid.GID                             `json:"-"`
+		Document       *Document                           `json:"document"`
+		Status         coredata.DocumentStatus             `json:"status"`
+		Version        int                                 `json:"version"`
+		Content        string                              `json:"content"`
+		Changelog      string                              `json:"changelog"`
+		Title          string                              `json:"title"`
+		Classification coredata.DocumentClassification     `json:"classification"`
+		Owner          *People                             `json:"owner"`
+		Signatures     *DocumentVersionSignatureConnection `json:"signatures"`
+		PublishedAt    *time.Time                          `json:"publishedAt"`
+		CreatedAt      time.Time                           `json:"createdAt"`
+		UpdatedAt      time.Time                           `json:"updatedAt"`
+	}
+
 	DocumentVersionOrderBy OrderBy[coredata.DocumentVersionOrderField]
 )
+
+func (DocumentVersion) IsNode() {}
+
+func (d DocumentVersion) GetID() gid.GID {
+	return d.ID
+}
 
 func NewDocumentVersionConnection(page *page.Page[*coredata.DocumentVersion, coredata.DocumentVersionOrderField]) *DocumentVersionConnection {
 	edges := make([]*DocumentVersionEdge, len(page.Data))
@@ -55,6 +81,7 @@ func NewDocumentVersionEdge(documentVersion *coredata.DocumentVersion, orderBy c
 func NewDocumentVersion(documentVersion *coredata.DocumentVersion) *DocumentVersion {
 	return &DocumentVersion{
 		ID:             documentVersion.ID,
+		OrganizationID: documentVersion.OrganizationID,
 		Version:        documentVersion.VersionNumber,
 		Title:          documentVersion.Title,
 		Content:        documentVersion.Content,

@@ -35,6 +35,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api"
 	trust_v1 "go.probo.inc/probo/pkg/server/api/trust/v1"
 	auth_server "go.probo.inc/probo/pkg/server/auth"
+	authz_server "go.probo.inc/probo/pkg/server/authz"
 	"go.probo.inc/probo/pkg/server/trust"
 	"go.probo.inc/probo/pkg/server/web"
 	trust_pkg "go.probo.inc/probo/pkg/trust"
@@ -64,6 +65,7 @@ type Server struct {
 	webServer         *web.Server
 	trustServer       *trust.Server
 	authServer        *auth_server.Server
+	authzServer       *authz_server.Server
 	router            *chi.Mux
 	extraHeaderFields map[string]string
 	proboService      *probo.Service
@@ -116,6 +118,18 @@ func NewServer(cfg Config) (*Server, error) {
 		return nil, err
 	}
 
+	authzServer, err := authz_server.NewServer(authz_server.Config{
+		Auth:         cfg.Auth,
+		Authz:        cfg.Authz,
+		Logger:       cfg.Logger.Named("authz"),
+		CookieName:   cfg.ConsoleAuth.CookieName,
+		CookieSecret: cfg.ConsoleAuth.CookieSecret,
+		CookieSecure: cfg.ConsoleAuth.CookieSecure,
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	router := chi.NewRouter()
 
 	server := &Server{
@@ -123,6 +137,7 @@ func NewServer(cfg Config) (*Server, error) {
 		webServer:         webServer,
 		trustServer:       trustServer,
 		authServer:        authServer,
+		authzServer:       authzServer,
 		router:            router,
 		extraHeaderFields: cfg.ExtraHeaderFields,
 		proboService:      cfg.Probo,
@@ -137,6 +152,7 @@ func NewServer(cfg Config) (*Server, error) {
 func (s *Server) setupRoutes() {
 	s.router.Mount("/api", s.apiServer)
 	s.router.Mount("/connect", s.authServer)
+	s.router.Mount("/authz", s.authzServer)
 
 	s.router.Route("/trust/{slugOrId}", func(r chi.Router) {
 		r.Use(s.loadTrustCenterBySlugOrID)

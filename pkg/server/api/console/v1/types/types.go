@@ -33,23 +33,6 @@ type AssessVendorPayload struct {
 	Vendor *Vendor `json:"vendor"`
 }
 
-type Asset struct {
-	ID              gid.GID            `json:"id"`
-	SnapshotID      *gid.GID           `json:"snapshotId,omitempty"`
-	Name            string             `json:"name"`
-	Amount          int                `json:"amount"`
-	Owner           *People            `json:"owner"`
-	Vendors         *VendorConnection  `json:"vendors"`
-	AssetType       coredata.AssetType `json:"assetType"`
-	DataTypesStored string             `json:"dataTypesStored"`
-	Organization    *Organization      `json:"organization"`
-	CreatedAt       time.Time          `json:"createdAt"`
-	UpdatedAt       time.Time          `json:"updatedAt"`
-}
-
-func (Asset) IsNode()             {}
-func (this Asset) GetID() gid.GID { return this.ID }
-
 type AssetEdge struct {
 	Cursor page.CursorKey `json:"cursor"`
 	Node   *Asset         `json:"node"`
@@ -67,25 +50,6 @@ type AssignTaskInput struct {
 type AssignTaskPayload struct {
 	Task *Task `json:"task"`
 }
-
-type Audit struct {
-	ID                    gid.GID                        `json:"id"`
-	Name                  *string                        `json:"name,omitempty"`
-	Organization          *Organization                  `json:"organization"`
-	Framework             *Framework                     `json:"framework"`
-	ValidFrom             *time.Time                     `json:"validFrom,omitempty"`
-	ValidUntil            *time.Time                     `json:"validUntil,omitempty"`
-	Report                *Report                        `json:"report,omitempty"`
-	ReportURL             *string                        `json:"reportUrl,omitempty"`
-	State                 coredata.AuditState            `json:"state"`
-	Controls              *ControlConnection             `json:"controls"`
-	TrustCenterVisibility coredata.TrustCenterVisibility `json:"trustCenterVisibility"`
-	CreatedAt             time.Time                      `json:"createdAt"`
-	UpdatedAt             time.Time                      `json:"updatedAt"`
-}
-
-func (Audit) IsNode()             {}
-func (this Audit) GetID() gid.GID { return this.ID }
 
 type AuditEdge struct {
 	Cursor page.CursorKey `json:"cursor"`
@@ -146,25 +110,6 @@ type ConfirmEmailPayload struct {
 	Success bool `json:"success"`
 }
 
-type ContinualImprovement struct {
-	ID           gid.GID                               `json:"id"`
-	SnapshotID   *gid.GID                              `json:"snapshotId,omitempty"`
-	SourceID     *gid.GID                              `json:"sourceId,omitempty"`
-	Organization *Organization                         `json:"organization"`
-	ReferenceID  string                                `json:"referenceId"`
-	Description  *string                               `json:"description,omitempty"`
-	Source       *string                               `json:"source,omitempty"`
-	Owner        *People                               `json:"owner"`
-	TargetDate   *time.Time                            `json:"targetDate,omitempty"`
-	Status       coredata.ContinualImprovementStatus   `json:"status"`
-	Priority     coredata.ContinualImprovementPriority `json:"priority"`
-	CreatedAt    time.Time                             `json:"createdAt"`
-	UpdatedAt    time.Time                             `json:"updatedAt"`
-}
-
-func (ContinualImprovement) IsNode()             {}
-func (this ContinualImprovement) GetID() gid.GID { return this.ID }
-
 type ContinualImprovementEdge struct {
 	Cursor page.CursorKey        `json:"cursor"`
 	Node   *ContinualImprovement `json:"node"`
@@ -173,25 +118,6 @@ type ContinualImprovementEdge struct {
 type ContinualImprovementFilter struct {
 	SnapshotID *gid.GID `json:"snapshotId,omitempty"`
 }
-
-type Control struct {
-	ID                     gid.GID                `json:"id"`
-	SectionTitle           string                 `json:"sectionTitle"`
-	Name                   string                 `json:"name"`
-	Description            *string                `json:"description,omitempty"`
-	Status                 coredata.ControlStatus `json:"status"`
-	ExclusionJustification *string                `json:"exclusionJustification,omitempty"`
-	Framework              *Framework             `json:"framework"`
-	Measures               *MeasureConnection     `json:"measures"`
-	Documents              *DocumentConnection    `json:"documents"`
-	Audits                 *AuditConnection       `json:"audits"`
-	Snapshots              *SnapshotConnection    `json:"snapshots"`
-	CreatedAt              time.Time              `json:"createdAt"`
-	UpdatedAt              time.Time              `json:"updatedAt"`
-}
-
-func (Control) IsNode()             {}
-func (this Control) GetID() gid.GID { return this.ID }
 
 type ControlEdge struct {
 	Cursor page.CursorKey `json:"cursor"`
@@ -446,7 +372,7 @@ type CreateProcessingActivityInput struct {
 	Recipients                     *string                                                   `json:"recipients,omitempty"`
 	Location                       *string                                                   `json:"location,omitempty"`
 	InternationalTransfers         bool                                                      `json:"internationalTransfers"`
-	TransferSafeguard              *coredata.ProcessingActivityTransferSafeguard             `json:"transferSafeguards,omitempty"`
+	TransferSafeguards             *coredata.ProcessingActivityTransferSafeguard             `json:"transferSafeguards,omitempty"`
 	RetentionPeriod                *string                                                   `json:"retentionPeriod,omitempty"`
 	SecurityMeasures               *string                                                   `json:"securityMeasures,omitempty"`
 	DataProtectionImpactAssessment coredata.ProcessingActivityDataProtectionImpactAssessment `json:"dataProtectionImpactAssessment"`
@@ -672,21 +598,6 @@ type DNSRecordInstruction struct {
 	TTL     int    `json:"ttl"`
 	Purpose string `json:"purpose"`
 }
-
-type Datum struct {
-	ID                 gid.GID                     `json:"id"`
-	SnapshotID         *gid.GID                    `json:"snapshotId,omitempty"`
-	Name               string                      `json:"name"`
-	DataClassification coredata.DataClassification `json:"dataClassification"`
-	Owner              *People                     `json:"owner"`
-	Vendors            *VendorConnection           `json:"vendors"`
-	Organization       *Organization               `json:"organization"`
-	CreatedAt          time.Time                   `json:"createdAt"`
-	UpdatedAt          time.Time                   `json:"updatedAt"`
-}
-
-func (Datum) IsNode()             {}
-func (this Datum) GetID() gid.GID { return this.ID }
 
 type DatumEdge struct {
 	Cursor page.CursorKey `json:"cursor"`
@@ -1039,25 +950,6 @@ type DisableSAMLPayload struct {
 	SamlConfiguration *SAMLConfiguration `json:"samlConfiguration"`
 }
 
-type Document struct {
-	ID                      gid.GID                         `json:"id"`
-	Title                   string                          `json:"title"`
-	Description             *string                         `json:"description,omitempty"`
-	DocumentType            coredata.DocumentType           `json:"documentType"`
-	Classification          coredata.DocumentClassification `json:"classification"`
-	CurrentPublishedVersion *int                            `json:"currentPublishedVersion,omitempty"`
-	TrustCenterVisibility   coredata.TrustCenterVisibility  `json:"trustCenterVisibility"`
-	Owner                   *People                         `json:"owner"`
-	Organization            *Organization                   `json:"organization"`
-	Versions                *DocumentVersionConnection      `json:"versions"`
-	Controls                *ControlConnection              `json:"controls"`
-	CreatedAt               time.Time                       `json:"createdAt"`
-	UpdatedAt               time.Time                       `json:"updatedAt"`
-}
-
-func (Document) IsNode()             {}
-func (this Document) GetID() gid.GID { return this.ID }
-
 type DocumentEdge struct {
 	Cursor page.CursorKey `json:"cursor"`
 	Node   *Document      `json:"node"`
@@ -1066,25 +958,6 @@ type DocumentEdge struct {
 type DocumentFilter struct {
 	Query *string `json:"query,omitempty"`
 }
-
-type DocumentVersion struct {
-	ID             gid.GID                             `json:"id"`
-	Document       *Document                           `json:"document"`
-	Status         coredata.DocumentStatus             `json:"status"`
-	Version        int                                 `json:"version"`
-	Content        string                              `json:"content"`
-	Changelog      string                              `json:"changelog"`
-	Title          string                              `json:"title"`
-	Classification coredata.DocumentClassification     `json:"classification"`
-	Owner          *People                             `json:"owner"`
-	Signatures     *DocumentVersionSignatureConnection `json:"signatures"`
-	PublishedAt    *time.Time                          `json:"publishedAt,omitempty"`
-	CreatedAt      time.Time                           `json:"createdAt"`
-	UpdatedAt      time.Time                           `json:"updatedAt"`
-}
-
-func (DocumentVersion) IsNode()             {}
-func (this DocumentVersion) GetID() gid.GID { return this.ID }
 
 type DocumentVersionConnection struct {
 	Edges    []*DocumentVersionEdge `json:"edges"`
@@ -1099,20 +972,6 @@ type DocumentVersionEdge struct {
 type DocumentVersionFilter struct {
 	Status *coredata.DocumentStatus `json:"status,omitempty"`
 }
-
-type DocumentVersionSignature struct {
-	ID              gid.GID                                `json:"id"`
-	DocumentVersion *DocumentVersion                       `json:"documentVersion"`
-	State           coredata.DocumentVersionSignatureState `json:"state"`
-	SignedBy        *People                                `json:"signedBy"`
-	SignedAt        *time.Time                             `json:"signedAt,omitempty"`
-	RequestedAt     time.Time                              `json:"requestedAt"`
-	CreatedAt       time.Time                              `json:"createdAt"`
-	UpdatedAt       time.Time                              `json:"updatedAt"`
-}
-
-func (DocumentVersionSignature) IsNode()             {}
-func (this DocumentVersionSignature) GetID() gid.GID { return this.ID }
 
 type DocumentVersionSignatureConnection struct {
 	Edges    []*DocumentVersionSignatureEdge `json:"edges"`
@@ -1141,23 +1000,6 @@ type EnableSAMLPayload struct {
 	SamlConfiguration *SAMLConfiguration `json:"samlConfiguration"`
 }
 
-type Evidence struct {
-	ID          gid.GID                `json:"id"`
-	Size        int                    `json:"size"`
-	State       coredata.EvidenceState `json:"state"`
-	Type        coredata.EvidenceType  `json:"type"`
-	File        *File                  `json:"file,omitempty"`
-	URL         *string                `json:"url,omitempty"`
-	Description *string                `json:"description,omitempty"`
-	Task        *Task                  `json:"task,omitempty"`
-	Measure     *Measure               `json:"measure"`
-	CreatedAt   time.Time              `json:"createdAt"`
-	UpdatedAt   time.Time              `json:"updatedAt"`
-}
-
-func (Evidence) IsNode()             {}
-func (this Evidence) GetID() gid.GID { return this.ID }
-
 type EvidenceEdge struct {
 	Cursor page.CursorKey `json:"cursor"`
 	Node   *Evidence      `json:"node"`
@@ -1181,29 +1023,6 @@ type ExportFrameworkInput struct {
 type ExportFrameworkPayload struct {
 	ExportJobID gid.GID `json:"exportJobId"`
 }
-
-type File struct {
-	ID          gid.GID   `json:"id"`
-	MimeType    string    `json:"mimeType"`
-	FileName    string    `json:"fileName"`
-	Size        int64     `json:"size"`
-	DownloadURL string    `json:"downloadUrl"`
-	CreatedAt   time.Time `json:"createdAt"`
-	UpdatedAt   time.Time `json:"updatedAt"`
-}
-
-type Framework struct {
-	ID           gid.GID            `json:"id"`
-	Name         string             `json:"name"`
-	Description  *string            `json:"description,omitempty"`
-	Organization *Organization      `json:"organization"`
-	Controls     *ControlConnection `json:"controls"`
-	CreatedAt    time.Time          `json:"createdAt"`
-	UpdatedAt    time.Time          `json:"updatedAt"`
-}
-
-func (Framework) IsNode()             {}
-func (this Framework) GetID() gid.GID { return this.ID }
 
 type FrameworkEdge struct {
 	Cursor page.CursorKey `json:"cursor"`
@@ -1277,7 +1096,7 @@ type Invitation struct {
 	ID           gid.GID                   `json:"id"`
 	Email        string                    `json:"email"`
 	FullName     string                    `json:"fullName"`
-	Role         coredata.Role             `json:"role"`
+	Role         coredata.MembershipRole   `json:"role"`
 	Status       coredata.InvitationStatus `json:"status"`
 	ExpiresAt    time.Time                 `json:"expiresAt"`
 	AcceptedAt   *time.Time                `json:"acceptedAt,omitempty"`
@@ -1303,32 +1122,16 @@ type InvitationOrder struct {
 }
 
 type InviteUserInput struct {
-	OrganizationID gid.GID `json:"organizationId"`
-	Email          string  `json:"email"`
-	FullName       string  `json:"fullName"`
-	CreatePeople   bool    `json:"createPeople"`
+	OrganizationID gid.GID                 `json:"organizationId"`
+	Email          string                  `json:"email"`
+	FullName       string                  `json:"fullName"`
+	Role           coredata.MembershipRole `json:"role"`
+	CreatePeople   bool                    `json:"createPeople"`
 }
 
 type InviteUserPayload struct {
 	InvitationEdge *InvitationEdge `json:"invitationEdge"`
 }
-
-type Measure struct {
-	ID          gid.GID               `json:"id"`
-	Category    string                `json:"category"`
-	Name        string                `json:"name"`
-	Description *string               `json:"description,omitempty"`
-	State       coredata.MeasureState `json:"state"`
-	Evidences   *EvidenceConnection   `json:"evidences"`
-	Tasks       *TaskConnection       `json:"tasks"`
-	Risks       *RiskConnection       `json:"risks"`
-	Controls    *ControlConnection    `json:"controls"`
-	CreatedAt   time.Time             `json:"createdAt"`
-	UpdatedAt   time.Time             `json:"updatedAt"`
-}
-
-func (Measure) IsNode()             {}
-func (this Measure) GetID() gid.GID { return this.ID }
 
 type MeasureEdge struct {
 	Cursor page.CursorKey `json:"cursor"`
@@ -1344,7 +1147,7 @@ type Membership struct {
 	ID             gid.GID                 `json:"id"`
 	UserID         gid.GID                 `json:"userID"`
 	OrganizationID gid.GID                 `json:"organizationID"`
-	Role           coredata.Role           `json:"role"`
+	Role           coredata.MembershipRole `json:"role"`
 	FullName       string                  `json:"fullName"`
 	EmailAddress   string                  `json:"emailAddress"`
 	AuthMethod     coredata.UserAuthMethod `json:"authMethod"`
@@ -1363,27 +1166,6 @@ type MembershipEdge struct {
 type Mutation struct {
 }
 
-type Nonconformity struct {
-	ID                 gid.GID                      `json:"id"`
-	SnapshotID         *gid.GID                     `json:"snapshotId,omitempty"`
-	Organization       *Organization                `json:"organization"`
-	ReferenceID        string                       `json:"referenceId"`
-	Description        *string                      `json:"description,omitempty"`
-	Audit              *Audit                       `json:"audit"`
-	DateIdentified     *time.Time                   `json:"dateIdentified,omitempty"`
-	RootCause          string                       `json:"rootCause"`
-	CorrectiveAction   *string                      `json:"correctiveAction,omitempty"`
-	Owner              *People                      `json:"owner"`
-	DueDate            *time.Time                   `json:"dueDate,omitempty"`
-	Status             coredata.NonconformityStatus `json:"status"`
-	EffectivenessCheck *string                      `json:"effectivenessCheck,omitempty"`
-	CreatedAt          time.Time                    `json:"createdAt"`
-	UpdatedAt          time.Time                    `json:"updatedAt"`
-}
-
-func (Nonconformity) IsNode()             {}
-func (this Nonconformity) GetID() gid.GID { return this.ID }
-
 type NonconformityEdge struct {
 	Cursor page.CursorKey `json:"cursor"`
 	Node   *Nonconformity `json:"node"`
@@ -1392,27 +1174,6 @@ type NonconformityEdge struct {
 type NonconformityFilter struct {
 	SnapshotID *gid.GID `json:"snapshotId,omitempty"`
 }
-
-type Obligation struct {
-	ID                     gid.GID                   `json:"id"`
-	SnapshotID             *gid.GID                  `json:"snapshotId,omitempty"`
-	SourceID               *gid.GID                  `json:"sourceId,omitempty"`
-	Organization           *Organization             `json:"organization"`
-	Area                   *string                   `json:"area,omitempty"`
-	Source                 *string                   `json:"source,omitempty"`
-	Requirement            *string                   `json:"requirement,omitempty"`
-	ActionsToBeImplemented *string                   `json:"actionsToBeImplemented,omitempty"`
-	Regulator              *string                   `json:"regulator,omitempty"`
-	Owner                  *People                   `json:"owner"`
-	LastReviewDate         *time.Time                `json:"lastReviewDate,omitempty"`
-	DueDate                *time.Time                `json:"dueDate,omitempty"`
-	Status                 coredata.ObligationStatus `json:"status"`
-	CreatedAt              time.Time                 `json:"createdAt"`
-	UpdatedAt              time.Time                 `json:"updatedAt"`
-}
-
-func (Obligation) IsNode()             {}
-func (this Obligation) GetID() gid.GID { return this.ID }
 
 type ObligationEdge struct {
 	Cursor page.CursorKey `json:"cursor"`
@@ -1509,34 +1270,6 @@ type PeopleFilter struct {
 	ExcludeContractEnded *bool `json:"excludeContractEnded,omitempty"`
 }
 
-type ProcessingActivity struct {
-	ID                             gid.GID                                                   `json:"id"`
-	SnapshotID                     *gid.GID                                                  `json:"snapshotId,omitempty"`
-	SourceID                       *gid.GID                                                  `json:"sourceId,omitempty"`
-	Organization                   *Organization                                             `json:"organization"`
-	Name                           string                                                    `json:"name"`
-	Purpose                        *string                                                   `json:"purpose,omitempty"`
-	DataSubjectCategory            *string                                                   `json:"dataSubjectCategory,omitempty"`
-	PersonalDataCategory           *string                                                   `json:"personalDataCategory,omitempty"`
-	SpecialOrCriminalData          coredata.ProcessingActivitySpecialOrCriminalDatum         `json:"specialOrCriminalData"`
-	ConsentEvidenceLink            *string                                                   `json:"consentEvidenceLink,omitempty"`
-	LawfulBasis                    coredata.ProcessingActivityLawfulBasis                    `json:"lawfulBasis"`
-	Recipients                     *string                                                   `json:"recipients,omitempty"`
-	Location                       *string                                                   `json:"location,omitempty"`
-	InternationalTransfers         bool                                                      `json:"internationalTransfers"`
-	TransferSafeguards             *coredata.ProcessingActivityTransferSafeguard             `json:"transferSafeguards,omitempty"`
-	RetentionPeriod                *string                                                   `json:"retentionPeriod,omitempty"`
-	SecurityMeasures               *string                                                   `json:"securityMeasures,omitempty"`
-	DataProtectionImpactAssessment coredata.ProcessingActivityDataProtectionImpactAssessment `json:"dataProtectionImpactAssessment"`
-	TransferImpactAssessment       coredata.ProcessingActivityTransferImpactAssessment       `json:"transferImpactAssessment"`
-	Vendors                        *VendorConnection                                         `json:"vendors"`
-	CreatedAt                      time.Time                                                 `json:"createdAt"`
-	UpdatedAt                      time.Time                                                 `json:"updatedAt"`
-}
-
-func (ProcessingActivity) IsNode()             {}
-func (this ProcessingActivity) GetID() gid.GID { return this.ID }
-
 type ProcessingActivityEdge struct {
 	Cursor page.CursorKey      `json:"cursor"`
 	Node   *ProcessingActivity `json:"node"`
@@ -1602,33 +1335,6 @@ type RequestSignatureInput struct {
 type RequestSignaturePayload struct {
 	DocumentVersionSignatureEdge *DocumentVersionSignatureEdge `json:"documentVersionSignatureEdge"`
 }
-
-type Risk struct {
-	ID                 gid.GID                `json:"id"`
-	SnapshotID         *gid.GID               `json:"snapshotId,omitempty"`
-	Name               string                 `json:"name"`
-	Description        *string                `json:"description,omitempty"`
-	Category           string                 `json:"category"`
-	Treatment          coredata.RiskTreatment `json:"treatment"`
-	InherentLikelihood int                    `json:"inherentLikelihood"`
-	InherentImpact     int                    `json:"inherentImpact"`
-	InherentRiskScore  int                    `json:"inherentRiskScore"`
-	ResidualLikelihood int                    `json:"residualLikelihood"`
-	ResidualImpact     int                    `json:"residualImpact"`
-	ResidualRiskScore  int                    `json:"residualRiskScore"`
-	Note               string                 `json:"note"`
-	Owner              *People                `json:"owner,omitempty"`
-	Organization       *Organization          `json:"organization"`
-	Measures           *MeasureConnection     `json:"measures"`
-	Documents          *DocumentConnection    `json:"documents"`
-	Controls           *ControlConnection     `json:"controls"`
-	Obligations        *ObligationConnection  `json:"obligations"`
-	CreatedAt          time.Time              `json:"createdAt"`
-	UpdatedAt          time.Time              `json:"updatedAt"`
-}
-
-func (Risk) IsNode()             {}
-func (this Risk) GetID() gid.GID { return this.ID }
 
 type RiskEdge struct {
 	Cursor page.CursorKey `json:"cursor"`
@@ -1700,78 +1406,15 @@ type SlackConnectionEdge struct {
 	Node   *SlackConnection `json:"node"`
 }
 
-type Snapshot struct {
-	ID           gid.GID                `json:"id"`
-	Organization *Organization          `json:"organization"`
-	Name         string                 `json:"name"`
-	Description  *string                `json:"description,omitempty"`
-	Type         coredata.SnapshotsType `json:"type"`
-	Controls     *ControlConnection     `json:"controls"`
-	CreatedAt    time.Time              `json:"createdAt"`
-}
-
-func (Snapshot) IsNode()             {}
-func (this Snapshot) GetID() gid.GID { return this.ID }
-
 type SnapshotEdge struct {
 	Cursor page.CursorKey `json:"cursor"`
 	Node   *Snapshot      `json:"node"`
 }
 
-type Task struct {
-	ID           gid.GID             `json:"id"`
-	Name         string              `json:"name"`
-	Description  *string             `json:"description,omitempty"`
-	State        coredata.TaskState  `json:"state"`
-	TimeEstimate *time.Duration      `json:"timeEstimate,omitempty"`
-	Deadline     *time.Time          `json:"deadline,omitempty"`
-	AssignedTo   *People             `json:"assignedTo,omitempty"`
-	Organization *Organization       `json:"organization"`
-	Measure      *Measure            `json:"measure,omitempty"`
-	Evidences    *EvidenceConnection `json:"evidences"`
-	CreatedAt    time.Time           `json:"createdAt"`
-	UpdatedAt    time.Time           `json:"updatedAt"`
-}
-
-func (Task) IsNode()             {}
-func (this Task) GetID() gid.GID { return this.ID }
-
 type TaskEdge struct {
 	Cursor page.CursorKey `json:"cursor"`
 	Node   *Task          `json:"node"`
 }
-
-type TrustCenter struct {
-	ID           gid.GID                         `json:"id"`
-	Active       bool                            `json:"active"`
-	NdaFileName  *string                         `json:"ndaFileName,omitempty"`
-	NdaFileURL   *string                         `json:"ndaFileUrl,omitempty"`
-	CreatedAt    time.Time                       `json:"createdAt"`
-	UpdatedAt    time.Time                       `json:"updatedAt"`
-	Organization *Organization                   `json:"organization"`
-	Accesses     *TrustCenterAccessConnection    `json:"accesses"`
-	References   *TrustCenterReferenceConnection `json:"references"`
-}
-
-func (TrustCenter) IsNode()             {}
-func (this TrustCenter) GetID() gid.GID { return this.ID }
-
-type TrustCenterAccess struct {
-	ID                                gid.GID                              `json:"id"`
-	Email                             string                               `json:"email"`
-	Name                              string                               `json:"name"`
-	Active                            bool                                 `json:"active"`
-	HasAcceptedNonDisclosureAgreement bool                                 `json:"hasAcceptedNonDisclosureAgreement"`
-	CreatedAt                         time.Time                            `json:"createdAt"`
-	UpdatedAt                         time.Time                            `json:"updatedAt"`
-	LastTokenExpiresAt                *time.Time                           `json:"lastTokenExpiresAt,omitempty"`
-	PendingRequestCount               int                                  `json:"pendingRequestCount"`
-	ActiveCount                       int                                  `json:"activeCount"`
-	AvailableDocumentAccesses         *TrustCenterDocumentAccessConnection `json:"availableDocumentAccesses"`
-}
-
-func (TrustCenterAccess) IsNode()             {}
-func (this TrustCenterAccess) GetID() gid.GID { return this.ID }
 
 type TrustCenterAccessConnection struct {
 	Edges    []*TrustCenterAccessEdge `json:"edges"`
@@ -1797,20 +1440,6 @@ type TrustCenterEdge struct {
 	Cursor page.CursorKey `json:"cursor"`
 	Node   *TrustCenter   `json:"node"`
 }
-
-type TrustCenterFile struct {
-	ID                    gid.GID                        `json:"id"`
-	Name                  string                         `json:"name"`
-	Category              string                         `json:"category"`
-	FileURL               string                         `json:"fileUrl"`
-	TrustCenterVisibility coredata.TrustCenterVisibility `json:"trustCenterVisibility"`
-	CreatedAt             time.Time                      `json:"createdAt"`
-	UpdatedAt             time.Time                      `json:"updatedAt"`
-	Organization          *Organization                  `json:"organization"`
-}
-
-func (TrustCenterFile) IsNode()             {}
-func (this TrustCenterFile) GetID() gid.GID { return this.ID }
 
 type TrustCenterFileEdge struct {
 	Cursor page.CursorKey   `json:"cursor"`
@@ -1954,6 +1583,16 @@ type UpdateMeasureInput struct {
 
 type UpdateMeasurePayload struct {
 	Measure *Measure `json:"measure"`
+}
+
+type UpdateMembershipInput struct {
+	OrganizationID gid.GID                 `json:"organizationId"`
+	MemberID       gid.GID                 `json:"memberId"`
+	Role           coredata.MembershipRole `json:"role"`
+}
+
+type UpdateMembershipPayload struct {
+	Membership *Membership `json:"membership"`
 }
 
 type UpdateNonconformityInput struct {
@@ -2294,43 +1933,6 @@ type UserEdge struct {
 	Cursor page.CursorKey `json:"cursor"`
 	Node   *User          `json:"node"`
 }
-
-type Vendor struct {
-	ID                            gid.GID                           `json:"id"`
-	SnapshotID                    *gid.GID                          `json:"snapshotId,omitempty"`
-	Name                          string                            `json:"name"`
-	Category                      coredata.VendorCategory           `json:"category"`
-	Description                   *string                           `json:"description,omitempty"`
-	Organization                  *Organization                     `json:"organization"`
-	ComplianceReports             *VendorComplianceReportConnection `json:"complianceReports"`
-	BusinessAssociateAgreement    *VendorBusinessAssociateAgreement `json:"businessAssociateAgreement,omitempty"`
-	DataPrivacyAgreement          *VendorDataPrivacyAgreement       `json:"dataPrivacyAgreement,omitempty"`
-	Contacts                      *VendorContactConnection          `json:"contacts"`
-	Services                      *VendorServiceConnection          `json:"services"`
-	RiskAssessments               *VendorRiskAssessmentConnection   `json:"riskAssessments"`
-	BusinessOwner                 *People                           `json:"businessOwner,omitempty"`
-	SecurityOwner                 *People                           `json:"securityOwner,omitempty"`
-	StatusPageURL                 *string                           `json:"statusPageUrl,omitempty"`
-	TermsOfServiceURL             *string                           `json:"termsOfServiceUrl,omitempty"`
-	PrivacyPolicyURL              *string                           `json:"privacyPolicyUrl,omitempty"`
-	ServiceLevelAgreementURL      *string                           `json:"serviceLevelAgreementUrl,omitempty"`
-	DataProcessingAgreementURL    *string                           `json:"dataProcessingAgreementUrl,omitempty"`
-	BusinessAssociateAgreementURL *string                           `json:"businessAssociateAgreementUrl,omitempty"`
-	SubprocessorsListURL          *string                           `json:"subprocessorsListUrl,omitempty"`
-	Certifications                []string                          `json:"certifications"`
-	Countries                     []coredata.CountryCode            `json:"countries"`
-	SecurityPageURL               *string                           `json:"securityPageUrl,omitempty"`
-	TrustPageURL                  *string                           `json:"trustPageUrl,omitempty"`
-	HeadquarterAddress            *string                           `json:"headquarterAddress,omitempty"`
-	LegalName                     *string                           `json:"legalName,omitempty"`
-	WebsiteURL                    *string                           `json:"websiteUrl,omitempty"`
-	ShowOnTrustCenter             bool                              `json:"showOnTrustCenter"`
-	CreatedAt                     time.Time                         `json:"createdAt"`
-	UpdatedAt                     time.Time                         `json:"updatedAt"`
-}
-
-func (Vendor) IsNode()             {}
-func (this Vendor) GetID() gid.GID { return this.ID }
 
 type VendorBusinessAssociateAgreement struct {
 	ID         gid.GID    `json:"id"`

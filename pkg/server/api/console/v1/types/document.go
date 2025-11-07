@@ -15,10 +15,32 @@
 package types
 
 import (
+	"time"
+
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 )
+
+type Document struct {
+	ID                      gid.GID                         `json:"id"`
+	OrganizationID          gid.GID                         `json:"-"`
+	Title                   string                          `json:"title"`
+	Description             *string                         `json:"description,omitempty"`
+	DocumentType            coredata.DocumentType           `json:"documentType"`
+	Classification          coredata.DocumentClassification `json:"classification"`
+	CurrentPublishedVersion *int                            `json:"currentPublishedVersion,omitempty"`
+	TrustCenterVisibility   coredata.TrustCenterVisibility  `json:"trustCenterVisibility"`
+	Owner                   *People                         `json:"owner"`
+	Organization            *Organization                   `json:"organization"`
+	Versions                *DocumentVersionConnection      `json:"versions"`
+	Controls                *ControlConnection              `json:"controls"`
+	CreatedAt               time.Time                       `json:"createdAt"`
+	UpdatedAt               time.Time                       `json:"updatedAt"`
+}
+
+func (Document) IsNode()             {}
+func (this Document) GetID() gid.GID { return this.ID }
 
 type (
 	DocumentOrderBy OrderBy[coredata.DocumentOrderField]
@@ -76,6 +98,7 @@ func NewDocumentEdge(document *coredata.Document, orderBy coredata.DocumentOrder
 func NewDocument(document *coredata.Document) *Document {
 	return &Document{
 		ID:                      document.ID,
+		OrganizationID:          document.OrganizationID,
 		Title:                   document.Title,
 		DocumentType:            document.DocumentType,
 		Classification:          document.Classification,

@@ -15,13 +15,34 @@
 package types
 
 import (
+	"time"
+
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 )
 
 type (
+	DocumentVersionSignature struct {
+		ID                 gid.GID                                `json:"id"`
+		OrganizationID     gid.GID                                `json:"-"`
+		DocumentVersion    *DocumentVersion                       `json:"documentVersion"`
+		State              coredata.DocumentVersionSignatureState `json:"state"`
+		SignedBy           *People                                `json:"signedBy"`
+		SignedAt           *time.Time                             `json:"signedAt"`
+		RequestedAt        time.Time                              `json:"requestedAt"`
+		CreatedAt          time.Time                              `json:"createdAt"`
+		UpdatedAt          time.Time                              `json:"updatedAt"`
+	}
+
 	DocumentVersionSignatureOrderBy OrderBy[coredata.DocumentVersionSignatureOrderField]
 )
+
+func (DocumentVersionSignature) IsNode() {}
+
+func (d DocumentVersionSignature) GetID() gid.GID {
+	return d.ID
+}
 
 func NewDocumentVersionSignatureConnection(page *page.Page[*coredata.DocumentVersionSignature, coredata.DocumentVersionSignatureOrderField]) *DocumentVersionSignatureConnection {
 	edges := make([]*DocumentVersionSignatureEdge, len(page.Data))
@@ -53,11 +74,12 @@ func NewDocumentVersionSignatureEdge(documentVersionSignature *coredata.Document
 
 func NewDocumentVersionSignature(documentVersionSignature *coredata.DocumentVersionSignature) *DocumentVersionSignature {
 	return &DocumentVersionSignature{
-		ID:          documentVersionSignature.ID,
-		State:       documentVersionSignature.State,
-		SignedAt:    documentVersionSignature.SignedAt,
-		RequestedAt: documentVersionSignature.RequestedAt,
-		CreatedAt:   documentVersionSignature.CreatedAt,
-		UpdatedAt:   documentVersionSignature.UpdatedAt,
+		ID:             documentVersionSignature.ID,
+		OrganizationID: documentVersionSignature.OrganizationID,
+		State:          documentVersionSignature.State,
+		SignedAt:       documentVersionSignature.SignedAt,
+		RequestedAt:    documentVersionSignature.RequestedAt,
+		CreatedAt:      documentVersionSignature.CreatedAt,
+		UpdatedAt:      documentVersionSignature.UpdatedAt,
 	}
 }

@@ -23,6 +23,7 @@ import { z } from "zod";
 import type { GeneralSettingsTabFragment$key } from "./__generated__/GeneralSettingsTabFragment.graphql";
 import { DeleteOrganizationDialog } from "/components/organizations/DeleteOrganizationDialog";
 import { useDeleteOrganizationMutation } from "/hooks/graph/OrganizationGraph";
+import { isAuthorized } from "/permissions/permissions";
 
 const generalSettingsTabFragment = graphql`
   fragment GeneralSettingsTabFragment on Organization {
@@ -89,6 +90,9 @@ export default function GeneralSettingsTab() {
   const { organization: organizationKey } = useOutletContext<OutletContext>();
   const organization = useFragment(generalSettingsTabFragment, organizationKey);
   const deleteDialogRef = useDialogRef();
+
+  const canUpdate = isAuthorized(organization.id, "Organization", "update");
+  const canDelete = isAuthorized(organization.id, "Organization", "delete");
 
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [horizontalLogoPreview, setHorizontalLogoPreview] = useState<
@@ -267,17 +271,19 @@ export default function GeneralSettingsTab() {
                 name={organization.name}
                 size="xl"
               />
-              <FileButton
-                disabled={formState.isSubmitting || isUpdatingOrganization}
-                onChange={handleLogoChange}
-                variant="secondary"
-                className="ml-auto"
-                accept="image/png,image/jpeg,image/jpg"
-              >
-                {isUpdatingOrganization
-                  ? __("Uploading...")
-                  : __("Change logo")}
-              </FileButton>
+              {canUpdate && (
+                <FileButton
+                  disabled={formState.isSubmitting || isUpdatingOrganization}
+                  onChange={handleLogoChange}
+                  variant="secondary"
+                  className="ml-auto"
+                  accept="image/png,image/jpeg,image/jpg"
+                >
+                  {isUpdatingOrganization
+                    ? __("Uploading...")
+                    : __("Change logo")}
+                </FileButton>
+              )}
             </div>
           </div>
           <div>
@@ -301,19 +307,21 @@ export default function GeneralSettingsTab() {
                   />
                 </div>
               )}
-              <FileButton
-                disabled={formState.isSubmitting || isUpdatingOrganization}
-                onChange={handleHorizontalLogoChange}
-                variant="secondary"
-                accept="image/png,image/jpeg,image/jpg"
-              >
-                {isUpdatingOrganization
-                  ? __("Uploading...")
-                  : horizontalLogoPreview || organization.horizontalLogoUrl
-                    ? __("Change horizontal logo")
-                    : __("Upload horizontal logo")}
-              </FileButton>
-              {organization.horizontalLogoUrl && (
+              {canUpdate && (
+                <FileButton
+                  disabled={formState.isSubmitting || isUpdatingOrganization}
+                  onChange={handleHorizontalLogoChange}
+                  variant="secondary"
+                  accept="image/png,image/jpeg,image/jpg"
+                >
+                  {isUpdatingOrganization
+                    ? __("Uploading...")
+                    : horizontalLogoPreview || organization.horizontalLogoUrl
+                      ? __("Change horizontal logo")
+                      : __("Upload horizontal logo")}
+                </FileButton>
+              )}
+              {canUpdate && organization.horizontalLogoUrl && (
                 <Dialog
                   ref={deleteDialogRef}
                   trigger={
@@ -357,7 +365,7 @@ export default function GeneralSettingsTab() {
           </div>
           <Field
             {...register("name")}
-            readOnly={formState.isSubmitting}
+            readOnly={formState.isSubmitting || !canUpdate}
             name="name"
             type="text"
             label={__("Organization name")}
@@ -367,7 +375,7 @@ export default function GeneralSettingsTab() {
             <Label>{__("Description")}</Label>
             <Textarea
               {...register("description")}
-              readOnly={formState.isSubmitting}
+              readOnly={formState.isSubmitting || !canUpdate}
               name="description"
               placeholder={__("Brief description of your organization")}
               rows={3}
@@ -376,7 +384,7 @@ export default function GeneralSettingsTab() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Field
               {...register("websiteUrl")}
-              readOnly={formState.isSubmitting}
+              readOnly={formState.isSubmitting || !canUpdate}
               name="websiteUrl"
               type="url"
               label={__("Website URL")}
@@ -384,7 +392,7 @@ export default function GeneralSettingsTab() {
             />
             <Field
               {...register("email")}
-              readOnly={formState.isSubmitting}
+              readOnly={formState.isSubmitting || !canUpdate}
               name="email"
               type="email"
               label={__("Email")}
@@ -395,13 +403,13 @@ export default function GeneralSettingsTab() {
             <Label>{__("Headquarter Address")}</Label>
             <Textarea
               {...register("headquarterAddress")}
-              readOnly={formState.isSubmitting}
+              readOnly={formState.isSubmitting || !canUpdate}
               name="headquarterAddress"
               placeholder={__("123 Main St, City, Country")}
             />
           </div>
 
-          {formState.isDirty && (
+          {formState.isDirty && canUpdate && (
             <div className="flex justify-end pt-6">
               <Button
                 type="submit"
@@ -416,37 +424,39 @@ export default function GeneralSettingsTab() {
         </Card>
       </div>
 
-      <div className="space-y-4 mt-12">
-        <h2 className="text-base font-medium text-red-600">
-          {__("Danger Zone")}
-        </h2>
-        <Card padded className="border-red-200 flex items-center gap-3">
-          <div className="mr-auto">
-            <h3 className="text-base font-semibold text-red-700">
-              {__("Delete Organization")}
-            </h3>
-            <p className="text-sm text-txt-tertiary">
-              {__("Permanently delete this organization and all its data.")}{" "}
-              <span className="text-red-600 font-medium">
-                {__("This action cannot be undone.")}
-              </span>
-            </p>
-          </div>
-          <DeleteOrganizationDialog
-            organizationName={organization.name}
-            onConfirm={handleDeleteOrganization}
-            isDeleting={isDeletingOrganization}
-          >
-            <Button
-              variant="danger"
-              icon={IconTrashCan}
-              disabled={isDeletingOrganization}
+      {canDelete && (
+        <div className="space-y-4 mt-12">
+          <h2 className="text-base font-medium text-red-600">
+            {__("Danger Zone")}
+          </h2>
+          <Card padded className="border-red-200 flex items-center gap-3">
+            <div className="mr-auto">
+              <h3 className="text-base font-semibold text-red-700">
+                {__("Delete Organization")}
+              </h3>
+              <p className="text-sm text-txt-tertiary">
+                {__("Permanently delete this organization and all its data.")}{" "}
+                <span className="text-red-600 font-medium">
+                  {__("This action cannot be undone.")}
+                </span>
+              </p>
+            </div>
+            <DeleteOrganizationDialog
+              organizationName={organization.name}
+              onConfirm={handleDeleteOrganization}
+              isDeleting={isDeletingOrganization}
             >
-              {__("Delete Organization")}
-            </Button>
-          </DeleteOrganizationDialog>
-        </Card>
-      </div>
+              <Button
+                variant="danger"
+                icon={IconTrashCan}
+                disabled={isDeletingOrganization}
+              >
+                {__("Delete Organization")}
+              </Button>
+            </DeleteOrganizationDialog>
+          </Card>
+        </div>
+      )}
     </form>
   );
 }

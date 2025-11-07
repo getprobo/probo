@@ -34,6 +34,7 @@ import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import z from "zod";
 import { getStatusVariant, getStatusLabel, formatDatetime, validateSnapshotConsistency, getStatusOptions, formatError, type GraphQLError } from "@probo/helpers";
 import type { NonconformityGraphNodeQuery } from "/hooks/graph/__generated__/NonconformityGraphNodeQuery.graphql";
+import { IfAuthorized } from "/permissions/IfAuthorized";
 
 const updateNonconformitySchema = z.object({
   referenceId: z.string().min(1, "Reference ID is required"),
@@ -161,13 +162,15 @@ export default function NonconformityDetailsPage(props: Props) {
         </div>
         {!isSnapshotMode && (
           <ActionDropdown variant="secondary">
-            <DropdownItem
-              variant="danger"
-              icon={IconTrashCan}
-              onClick={deleteNonconformity}
-            >
-              {__("Delete")}
-            </DropdownItem>
+            <IfAuthorized entity="Nonconformity" action="delete">
+              <DropdownItem
+                variant="danger"
+                icon={IconTrashCan}
+                onClick={deleteNonconformity}
+              >
+                {__("Delete")}
+              </DropdownItem>
+            </IfAuthorized>
           </ActionDropdown>
         )}
       </div>
@@ -276,9 +279,11 @@ export default function NonconformityDetailsPage(props: Props) {
 
             <div className="flex justify-end">
               {formState.isDirty && !isSnapshotMode && (
-                <Button type="submit" disabled={formState.isSubmitting}>
-                  {formState.isSubmitting ? __("Updating...") : __("Update")}
-                </Button>
+                <IfAuthorized entity="Nonconformity" action="update">
+                  <Button type="submit" disabled={formState.isSubmitting}>
+                    {formState.isSubmitting ? __("Updating...") : __("Update")}
+                  </Button>
+                </IfAuthorized>
               )}
             </div>
           </form>

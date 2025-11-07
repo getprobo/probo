@@ -15,10 +15,34 @@
 package types
 
 import (
+	"time"
+
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 )
+
+type Obligation struct {
+	ID                     gid.GID                   `json:"id"`
+	OrganizationID         gid.GID                   `json:"-"`
+	SnapshotID             *gid.GID                  `json:"snapshotId,omitempty"`
+	SourceID               *gid.GID                  `json:"sourceId,omitempty"`
+	Organization           *Organization             `json:"organization"`
+	Area                   *string                   `json:"area,omitempty"`
+	Source                 *string                   `json:"source,omitempty"`
+	Requirement            *string                   `json:"requirement,omitempty"`
+	ActionsToBeImplemented *string                   `json:"actionsToBeImplemented,omitempty"`
+	Regulator              *string                   `json:"regulator,omitempty"`
+	Owner                  *People                   `json:"owner"`
+	LastReviewDate         *time.Time                `json:"lastReviewDate,omitempty"`
+	DueDate                *time.Time                `json:"dueDate,omitempty"`
+	Status                 coredata.ObligationStatus `json:"status"`
+	CreatedAt              time.Time                 `json:"createdAt"`
+	UpdatedAt              time.Time                 `json:"updatedAt"`
+}
+
+func (Obligation) IsNode()             {}
+func (this Obligation) GetID() gid.GID { return this.ID }
 
 type (
 	ObligationOrderBy OrderBy[coredata.ObligationOrderField]
@@ -58,6 +82,7 @@ func NewObligationConnection(
 func NewObligation(cr *coredata.Obligation) *Obligation {
 	return &Obligation{
 		ID:                     cr.ID,
+		OrganizationID:         cr.OrganizationID,
 		SnapshotID:             cr.SnapshotID,
 		SourceID:               cr.SourceID,
 		Area:                   cr.Area,

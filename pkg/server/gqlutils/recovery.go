@@ -77,6 +77,11 @@ func RecoverFunc(ctx context.Context, err any) error {
 		return Unauthorized()
 	}
 
+	var permissionDeniedErr *authz.PermissionDeniedError
+	if errTyped, ok := err.(error); ok && errors.As(errTyped, &permissionDeniedErr) {
+		return Forbidden(permissionDeniedErr)
+	}
+
 	logger := httpserver.LoggerFromContext(ctx)
 	logger.Error("resolver panic", log.Any("error", err), log.Any("stack", string(debug.Stack())))
 

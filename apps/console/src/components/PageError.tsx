@@ -68,6 +68,20 @@ export function PageError({ resetErrorBoundary, error: propsError }: Props) {
     );
   }
 
+  if (error && error.toString().includes("FORBIDDEN")) {
+    return (
+      <div className={classNames.wrapper}>
+        <h1 className={classNames.title}>
+          <IconPageCross size={26} />
+          {__("Page not found")}
+        </h1>
+        <p className={classNames.description}>
+          {__("The page you are looking for does not exist")}
+        </p>
+      </div>
+    );
+  }
+
   if (error && error.toString().includes("UNAUTHORIZED")) {
     return (
       <div className={classNames.wrapper}>

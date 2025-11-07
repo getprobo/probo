@@ -37,6 +37,14 @@ func (e *TenantAccessError) Error() string {
 	return "not authorized"
 }
 
+type PermissionDeniedError struct {
+	Message string
+}
+
+func (e *PermissionDeniedError) Error() string {
+	return e.Message
+}
+
 type (
 	Service struct {
 		pg                      *pg.Client
@@ -303,7 +311,7 @@ type UserInvitation struct {
 	ID             gid.GID
 	Email          string
 	FullName       string
-	Role           coredata.Role
+	Role           coredata.MembershipRole
 	ExpiresAt      time.Time
 	AcceptedAt     *time.Time
 	CreatedAt      time.Time
@@ -417,7 +425,7 @@ func (s *TenantAuthzService) AddUserToOrganization(
 	ctx context.Context,
 	userID gid.GID,
 	orgID gid.GID,
-	role coredata.Role,
+	role coredata.MembershipRole,
 ) error {
 	now := time.Now()
 	membershipID := gid.New(s.scope.GetTenantID(), coredata.MembershipEntityType)
@@ -643,7 +651,7 @@ func (s *TenantAuthzService) GetUserRoleInOrganization(
 	ctx context.Context,
 	userID gid.GID,
 	orgID gid.GID,
-) (coredata.Role, error) {
+) (coredata.MembershipRole, error) {
 	membership := &coredata.Membership{}
 
 	err := s.pg.WithConn(
@@ -651,6 +659,30 @@ func (s *TenantAuthzService) GetUserRoleInOrganization(
 		func(conn pg.Conn) error {
 			if err := membership.LoadByUserAndOrg(ctx, conn, s.scope, userID, orgID); err != nil {
 				return fmt.Errorf("cannot get user role: %w", err)
+			}
+			return nil
+		},
+	)
+
+	if err != nil {
+		return "", err
+	}
+
+	return membership.Role, nil
+}
+
+func (s *TenantAuthzService) GetAPIKeyRoleInOrganization(
+	ctx context.Context,
+	apiKeyID gid.GID,
+	orgID gid.GID,
+) (coredata.APIRole, error) {
+	membership := &coredata.UserAPIKeyMembership{}
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := membership.LoadByAPIKeyIDAndOrganizationID(ctx, conn, s.scope, apiKeyID, orgID); err != nil {
+				return fmt.Errorf("cannot load API key membership: %w", err)
 			}
 			return nil
 		},
@@ -690,30 +722,57 @@ func (s *TenantAuthzService) RemoveMemberFromOrganization(
 	)
 }
 
-func (s *TenantAuthzService) UpdateUserRole(
+func (s *TenantAuthzService) UpdateMembershipRole(
 	ctx context.Context,
-	userID gid.GID,
 	orgID gid.GID,
-	newRole coredata.Role,
-) error {
-	return s.pg.WithTx(
+	memberID gid.GID,
+	newRole coredata.MembershipRole,
+) (*coredata.Membership, error) {
+	membership := &coredata.Membership{}
+
+	err := s.pg.WithTx(
 		ctx,
 		func(tx pg.Conn) error {
-			membership := &coredata.Membership{}
-			if err := membership.LoadByUserAndOrg(ctx, tx, s.scope, userID, orgID); err != nil {
-				return fmt.Errorf("cannot find membership: %w", err)
+			if err := membership.LoadByID(ctx, tx, s.scope, memberID); err != nil {
+				return fmt.Errorf("cannot load membership: %w", err)
+			}
+
+			if membership.OrganizationID != orgID {
+				return fmt.Errorf("membership does not belong to organization")
+			}
+
+			// If the new role cannot create API keys, delete all API key memberships for this membership
+			role := Role(newRole.String())
+			err := authorizeForRole(role, coredata.UserAPIKeyEntityType, ActionCreate)
+			if err != nil {
+				var apiKeyMemberships coredata.UserAPIKeyMemberships
+				if err := apiKeyMemberships.LoadByMembershipID(ctx, tx, s.scope, memberID); err != nil {
+					return fmt.Errorf("cannot load api key memberships: %w", err)
+				}
+
+				for _, apiKeyMembership := range apiKeyMemberships {
+					if err := apiKeyMembership.Delete(ctx, tx, s.scope); err != nil {
+						return fmt.Errorf("cannot delete api key membership: %w", err)
+					}
+				}
 			}
 
 			membership.Role = newRole
 			membership.UpdatedAt = time.Now()
 
 			if err := membership.Update(ctx, tx, s.scope); err != nil {
-				return fmt.Errorf("cannot update user role: %w", err)
+				return fmt.Errorf("cannot update membership role: %w", err)
 			}
 
 			return nil
 		},
 	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return membership, nil
 }
 
 func (s *TenantAuthzService) InviteUserToOrganization(
@@ -721,7 +780,7 @@ func (s *TenantAuthzService) InviteUserToOrganization(
 	organizationID gid.GID,
 	emailAddress string,
 	fullName string,
-	role coredata.Role,
+	role coredata.MembershipRole,
 ) (*coredata.Invitation, error) {
 	var invitation *coredata.Invitation
 
@@ -827,7 +886,7 @@ func (s *TenantAuthzService) EnsureSAMLMembership(
 	ctx context.Context,
 	userID gid.GID,
 	organizationID gid.GID,
-	role coredata.Role,
+	role coredata.MembershipRole,
 ) error {
 	now := time.Now()
 
@@ -873,15 +932,55 @@ func (s *TenantAuthzService) EnsureSAMLMembership(
 	)
 }
 
-// This is a placeholder for future permission system
-func (s *TenantAuthzService) HasPermission(
+func (s *TenantAuthzService) Authorize(
 	ctx context.Context,
-	userID gid.GID,
+	user *coredata.User,
+	apiKey *coredata.UserAPIKey,
 	orgID gid.GID,
-	resource string,
-	action string,
-) (bool, error) {
-	// For now, just check if user is a member
-	// In the future, this will check specific permissions based on role
-	return s.CanUserAccessOrganization(ctx, userID, orgID)
+	entityType uint16,
+	action Action,
+) error {
+	if user != nil {
+		memberRole, err := s.GetUserRoleInOrganization(ctx, user.ID, orgID)
+		if err != nil {
+			return fmt.Errorf("cannot get user role: %w", err)
+		}
+		return authorizeForRole(Role(memberRole.String()), entityType, action)
+	}
+
+	if apiKey != nil {
+		apiRole, err := s.GetAPIKeyRoleInOrganization(ctx, apiKey.ID, orgID)
+		if err != nil {
+			return fmt.Errorf("cannot get API key role: %w", err)
+		}
+		return authorizeForRole(Role(apiRole.String()), entityType, action)
+	}
+
+	return fmt.Errorf("no user or API key provided")
+}
+
+func (s *TenantAuthzService) CanAssignRole(
+	ctx context.Context,
+	user *coredata.User,
+	apiKey *coredata.UserAPIKey,
+	orgID gid.GID,
+	targetRole coredata.MembershipRole,
+) error {
+	if user != nil {
+		currentUserRole, err := s.GetUserRoleInOrganization(ctx, user.ID, orgID)
+		if err != nil {
+			return fmt.Errorf("cannot get user role: %w", err)
+		}
+		return canAssignRole(Role(currentUserRole.String()), Role(targetRole.String()))
+	}
+
+	if apiKey != nil {
+		apiRole, err := s.GetAPIKeyRoleInOrganization(ctx, apiKey.ID, orgID)
+		if err != nil {
+			return fmt.Errorf("cannot get API key role: %w", err)
+		}
+		return canAssignRole(Role(apiRole.String()), Role(targetRole.String()))
+	}
+
+	return fmt.Errorf("no user or API key provided")
 }

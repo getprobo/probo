@@ -1,10 +1,30 @@
 package types
 
 import (
+	"time"
+
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 )
+
+type Asset struct {
+	ID              gid.GID            `json:"id"`
+	OrganizationID  gid.GID            `json:"-"`
+	SnapshotID      *gid.GID           `json:"snapshotId,omitempty"`
+	Name            string             `json:"name"`
+	Amount          int                `json:"amount"`
+	Owner           *People            `json:"owner"`
+	Vendors         *VendorConnection  `json:"vendors"`
+	AssetType       coredata.AssetType `json:"assetType"`
+	DataTypesStored string             `json:"dataTypesStored"`
+	Organization    *Organization      `json:"organization"`
+	CreatedAt       time.Time          `json:"createdAt"`
+	UpdatedAt       time.Time          `json:"updatedAt"`
+}
+
+func (Asset) IsNode()             {}
+func (this Asset) GetID() gid.GID { return this.ID }
 
 type (
 	AssetOrderBy OrderBy[coredata.AssetOrderField]
@@ -44,6 +64,7 @@ func NewAssetConnection(
 func NewAsset(asset *coredata.Asset) *Asset {
 	return &Asset{
 		ID:              asset.ID,
+		OrganizationID:  asset.OrganizationID,
 		SnapshotID:      asset.SnapshotID,
 		Name:            asset.Name,
 		Amount:          asset.Amount,

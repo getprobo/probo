@@ -37,6 +37,8 @@ import type {
   ContinualImprovementsPageFragment$key,
   ContinualImprovementsPageFragment$data,
 } from "./__generated__/ContinualImprovementsPageFragment.graphql";
+import { IfAuthorized } from "/permissions/IfAuthorized";
+import { isAuthorized } from "/permissions/permissions";
 
 interface ContinualImprovementsPageProps {
   queryRef: PreloadedQuery<ContinualImprovementsPageQuery>;
@@ -127,6 +129,11 @@ export default function ContinualImprovementsPage({ queryRef }: ContinualImprove
   );
   const improvements = data?.continualImprovements?.edges?.map((edge) => edge.node) ?? [];
 
+  const hasAnyAction = !isSnapshotMode && (
+    isAuthorized(organizationId, "ContinualImprovement", "update") ||
+    isAuthorized(organizationId, "ContinualImprovement", "delete")
+  );
+
   return (
     <div className="space-y-6">
       {isSnapshotMode && snapshotId && (
@@ -134,14 +141,16 @@ export default function ContinualImprovementsPage({ queryRef }: ContinualImprove
       )}
       <PageHeader title={__("Continual Improvements")} description={__("Manage your continual improvements.")}>
         {!isSnapshotMode && (
-          <CreateContinualImprovementDialog
-            organizationId={organizationId}
-            connectionId={connectionId}
-          >
-            <Button icon={IconPlusLarge}>
-              {__("Add continual improvement")}
-            </Button>
-          </CreateContinualImprovementDialog>
+          <IfAuthorized entity="ContinualImprovement" action="create">
+            <CreateContinualImprovementDialog
+              organizationId={organizationId}
+              connectionId={connectionId}
+            >
+              <Button icon={IconPlusLarge}>
+                {__("Add continual improvement")}
+              </Button>
+            </CreateContinualImprovementDialog>
+          </IfAuthorized>
         )}
       </PageHeader>
 
@@ -156,7 +165,7 @@ export default function ContinualImprovementsPage({ queryRef }: ContinualImprove
                 <Th>{__("Priority")}</Th>
                 <Th>{__("Owner")}</Th>
                 <Th>{__("Target Date")}</Th>
-                {!isSnapshotMode && <Th>{__("Actions")}</Th>}
+                {hasAnyAction && <Th>{__("Actions")}</Th>}
               </Tr>
             </Thead>
             <Tbody>
@@ -166,6 +175,7 @@ export default function ContinualImprovementsPage({ queryRef }: ContinualImprove
                   improvement={improvement}
                   connectionId={connectionId}
                   snapshotId={snapshotId}
+                  hasAnyAction={hasAnyAction}
                 />
               ))}
             </Tbody>
@@ -203,10 +213,12 @@ function ImprovementRow({
   improvement,
   connectionId,
   snapshotId,
+  hasAnyAction,
 }: {
   improvement: NodeOf<NonNullable<ContinualImprovementsPageFragment$data['continualImprovements']>>;
   connectionId: string;
   snapshotId?: string;
+  hasAnyAction: boolean;
 }) {
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
@@ -267,16 +279,18 @@ function ImprovementRow({
           <span className="text-txt-tertiary">{__("No target date")}</span>
         )}
       </Td>
-      {!isSnapshotMode && (
+      {hasAnyAction && (
         <Td noLink width={50} className="text-end">
           <ActionDropdown>
-            <DropdownItem
-              icon={IconTrashCan}
-              variant="danger"
-              onSelect={handleDelete}
-            >
-              {__("Delete")}
-            </DropdownItem>
+            <IfAuthorized entity="ContinualImprovement" action="delete">
+              <DropdownItem
+                icon={IconTrashCan}
+                variant="danger"
+                onSelect={handleDelete}
+              >
+                {__("Delete")}
+              </DropdownItem>
+            </IfAuthorized>
           </ActionDropdown>
         </Td>
       )}

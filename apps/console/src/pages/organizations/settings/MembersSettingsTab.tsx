@@ -5,7 +5,14 @@ import {
   Badge,
   Button,
   Card,
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  Field,
+  IconPencil,
   IconTrashCan,
+  Option,
+  Select,
   Spinner,
   TabBadge,
   TabItem,
@@ -16,6 +23,7 @@ import {
   Thead,
   Tr,
   useConfirm,
+  useDialogRef,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { SortableTable, SortableTh } from "/components/SortableTable";
@@ -24,6 +32,7 @@ import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { sprintf } from "@probo/helpers";
 import clsx from "clsx";
 import type { NodeOf } from "/types";
+import { IfAuthorized } from "/permissions/IfAuthorized";
 import type {
   MembersSettingsTabMembershipsFragment$data,
   MembersSettingsTabMembershipsFragment$key
@@ -112,6 +121,19 @@ const removeMemberMutation = graphql`
   }
 `;
 
+const updateMembershipMutation = graphql`
+  mutation MembersSettingsTab_UpdateMembershipMutation(
+    $input: UpdateMembershipInput!
+  ) {
+    updateMembership(input: $input) {
+      membership {
+        id
+        role
+      }
+    }
+  }
+`;
+
 const deleteInvitationMutation = graphql`
   mutation MembersSettingsTab_DeleteInvitationMutation(
     $input: DeleteInvitationInput!
@@ -157,12 +179,14 @@ export default function MembersSettingsTab() {
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <h2 className="text-base font-medium">{__("Workspace members")}</h2>
-        <InviteUserDialog
-          connectionId={invitationsPagination.data.invitations?.__id}
-          onRefetch={refetchInvitations}
-        >
-          <Button variant="secondary">{__("Invite member")}</Button>
-        </InviteUserDialog>
+        <IfAuthorized entity="Organization" action="update">
+          <InviteUserDialog
+            connectionId={invitationsPagination.data.invitations?.__id}
+            onRefetch={refetchInvitations}
+          >
+            <Button variant="secondary">{__("Invite member")}</Button>
+          </InviteUserDialog>
+        </IfAuthorized>
       </div>
 
       <Tabs>
@@ -351,13 +375,15 @@ function InvitationRow(props: {
           {isDeleting ? (
             <Spinner size={16} />
           ) : (
-            <Button
-              variant="danger"
-              onClick={onDelete}
-              disabled={isDeleting}
-              icon={IconTrashCan}
-              aria-label={__("Delete invitation")}
-            />
+            <IfAuthorized entity="Organization" action="delete">
+              <Button
+                variant="danger"
+                onClick={onDelete}
+                disabled={isDeleting}
+                icon={IconTrashCan}
+                aria-label={__("Delete invitation")}
+              />
+            </IfAuthorized>
           )}
         </div>
       </Td>
@@ -376,8 +402,14 @@ function MembershipRow(props: {
     successMessage: __("Member removed successfully"),
     errorMessage: __("Failed to remove member"),
   });
+  const [updateMembership, isUpdating] = useMutationWithToasts(updateMembershipMutation, {
+    successMessage: __("Role updated successfully"),
+    errorMessage: __("Failed to update role"),
+  });
   const confirm = useConfirm();
+  const editDialogRef = useDialogRef();
   const [isRemoved, setIsRemoved] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<string>(props.membership.role);
 
   if (isRemoved) {
     return null;
@@ -409,41 +441,116 @@ function MembershipRow(props: {
     );
   };
 
+  const handleEditClick = () => {
+    setSelectedRole(props.membership.role);
+    editDialogRef.current?.open();
+  };
+
+  const handleUpdateRole = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateMembership({
+      variables: {
+        input: {
+          memberId: props.membership.id,
+          organizationId: props.organizationId,
+          role: selectedRole,
+        },
+      },
+      onCompleted: () => {
+        editDialogRef.current?.close();
+      },
+    });
+  };
+
   return (
-    <Tr className={clsx(isRemoving && "opacity-60 pointer-events-none")}>
-      <Td>
-        <div className="font-semibold">{props.membership.fullName}</div>
-      </Td>
-      <Td>
-        <div className="flex items-center gap-2">
-          {props.membership.emailAddress}
-          {props.membership.authMethod === "SAML" && (
-            <Badge variant="info">SAML</Badge>
-          )}
-        </div>
-      </Td>
-      <Td>
-        <Badge>{props.membership.role}</Badge>
-      </Td>
-      <Td>{new Date(props.membership.createdAt).toLocaleDateString()}</Td>
-      <Td noLink width={80} className="text-end">
-        <div
-          className="flex gap-2 justify-end"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {isRemoving ? (
-            <Spinner size={16} />
-          ) : (
-            <Button
-              variant="danger"
-              onClick={onRemove}
-              disabled={isRemoving}
-              icon={IconTrashCan}
-              aria-label={__("Remove member")}
-            />
-          )}
-        </div>
-      </Td>
-    </Tr>
+    <>
+      <Tr className={clsx(isRemoving && "opacity-60 pointer-events-none")}>
+        <Td>
+          <div className="font-semibold">{props.membership.fullName}</div>
+        </Td>
+        <Td>
+          <div className="flex items-center gap-2">
+            {props.membership.emailAddress}
+            {props.membership.authMethod === "SAML" && (
+              <Badge variant="info">SAML</Badge>
+            )}
+          </div>
+        </Td>
+        <Td>
+          <Badge>{props.membership.role}</Badge>
+        </Td>
+        <Td>{new Date(props.membership.createdAt).toLocaleDateString()}</Td>
+        <Td noLink width={160} className="text-end">
+          <div
+            className="flex gap-2 justify-end"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <IfAuthorized entity="Organization" action="update">
+              <Button
+                variant="secondary"
+                onClick={handleEditClick}
+                disabled={isUpdating}
+                icon={IconPencil}
+                aria-label={__("Edit role")}
+              />
+            </IfAuthorized>
+            {isRemoving ? (
+              <Spinner size={16} />
+            ) : (
+              <IfAuthorized entity="Organization" action="delete">
+                <Button
+                  variant="danger"
+                  onClick={onRemove}
+                  disabled={isRemoving}
+                  icon={IconTrashCan}
+                  aria-label={__("Remove member")}
+                />
+              </IfAuthorized>
+            )}
+          </div>
+        </Td>
+      </Tr>
+
+      <Dialog ref={editDialogRef} title={__("Edit Member Role")}>
+        <form onSubmit={handleUpdateRole}>
+          <DialogContent padded className="space-y-6">
+            <div>
+              <p className="text-txt-secondary text-sm mb-4">
+                {sprintf(__("Update the role for %s"), props.membership.fullName)}
+              </p>
+
+              <Field label={__("Role")} required>
+                <Select value={selectedRole} onValueChange={setSelectedRole}>
+                  <Option value="OWNER">{__("Owner")}</Option>
+                  <Option value="ADMIN">{__("Admin")}</Option>
+                  <Option value="VIEWER">{__("Viewer")}</Option>
+                </Select>
+              </Field>
+
+              <div className="mt-4 space-y-2 text-sm text-txt-tertiary">
+                {selectedRole === "OWNER" && (
+                  <p>{__("Owners have complete control over the organization, including the ability to delete it and manage all members.")}</p>
+                )}
+                {selectedRole === "ADMIN" && (
+                  <p>{__("Admins have full access to manage the organization, including members, settings, and all content.")}</p>
+                )}
+                {selectedRole === "FULL" && (
+                  <p>{__("Full members can access and contribute to most areas but cannot manage organization settings or other members.")}</p>
+                )}
+                {selectedRole === "VIEWER" && (
+                  <p>{__("Viewers have read-only access to the organization's content.")}</p>
+                )}
+              </div>
+            </div>
+          </DialogContent>
+          <DialogFooter>
+            <Button type="submit" disabled={isUpdating || selectedRole === props.membership.role}>
+              {isUpdating && <Spinner />}
+              {__("Update Role")}
+            </Button>
+          </DialogFooter>
+        </form>
+      </Dialog>
+    </>
   );
 }

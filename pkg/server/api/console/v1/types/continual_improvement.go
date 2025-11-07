@@ -15,10 +15,32 @@
 package types
 
 import (
+	"time"
+
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 )
+
+type ContinualImprovement struct {
+	ID             gid.GID                               `json:"id"`
+	OrganizationID gid.GID                               `json:"-"`
+	SnapshotID     *gid.GID                              `json:"snapshotId,omitempty"`
+	SourceID       *gid.GID                              `json:"sourceId,omitempty"`
+	Organization   *Organization                         `json:"organization"`
+	ReferenceID    string                                `json:"referenceId"`
+	Description    *string                               `json:"description,omitempty"`
+	Source         *string                               `json:"source,omitempty"`
+	Owner          *People                               `json:"owner"`
+	TargetDate     *time.Time                            `json:"targetDate,omitempty"`
+	Status         coredata.ContinualImprovementStatus   `json:"status"`
+	Priority       coredata.ContinualImprovementPriority `json:"priority"`
+	CreatedAt      time.Time                             `json:"createdAt"`
+	UpdatedAt      time.Time                             `json:"updatedAt"`
+}
+
+func (ContinualImprovement) IsNode()             {}
+func (this ContinualImprovement) GetID() gid.GID { return this.ID }
 
 type (
 	ContinualImprovementOrderBy OrderBy[coredata.ContinualImprovementOrderField]
@@ -57,17 +79,18 @@ func NewContinualImprovementConnection(
 
 func NewContinualImprovement(ci *coredata.ContinualImprovement) *ContinualImprovement {
 	return &ContinualImprovement{
-		ID:          ci.ID,
-		SnapshotID:  ci.SnapshotID,
-		SourceID:    ci.SourceID,
-		ReferenceID: ci.ReferenceID,
-		Description: ci.Description,
-		Source:      ci.Source,
-		TargetDate:  ci.TargetDate,
-		Status:      ci.Status,
-		Priority:    ci.Priority,
-		CreatedAt:   ci.CreatedAt,
-		UpdatedAt:   ci.UpdatedAt,
+		ID:             ci.ID,
+		OrganizationID: ci.OrganizationID,
+		SnapshotID:     ci.SnapshotID,
+		SourceID:       ci.SourceID,
+		ReferenceID:    ci.ReferenceID,
+		Description:    ci.Description,
+		Source:         ci.Source,
+		TargetDate:     ci.TargetDate,
+		Status:         ci.Status,
+		Priority:       ci.Priority,
+		CreatedAt:      ci.CreatedAt,
+		UpdatedAt:      ci.UpdatedAt,
 	}
 }
 

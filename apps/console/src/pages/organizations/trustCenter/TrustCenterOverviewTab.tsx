@@ -13,6 +13,8 @@ import { useUpdateTrustCenterMutation, useUploadTrustCenterNDAMutation, useDelet
 import type { TrustCenterGraphQuery$data } from "/hooks/graph/__generated__/TrustCenterGraphQuery.graphql";
 import { useState } from "react";
 import { SlackConnections } from "../../../components/organizations/SlackConnection";
+import { isAuthorized } from "/permissions/permissions";
+import { useParams } from "react-router";
 
 type ContextType = {
   organization: TrustCenterGraphQuery$data["organization"];
@@ -22,11 +24,14 @@ export default function TrustCenterOverviewTab() {
   const { __ } = useTranslate();
   const { toast } = useToast();
   const { organization } = useOutletContext<ContextType>();
+  const { organizationId } = useParams();
 
   const [updateTrustCenter, isUpdating] = useUpdateTrustCenterMutation();
   const [uploadNDA, isUploadingNDA] = useUploadTrustCenterNDAMutation();
   const [deleteNDA, isDeletingNDA] = useDeleteTrustCenterNDAMutation();
   const [isActive, setIsActive] = useState(organization.trustCenter?.active || false);
+
+  const canUpdateTrustCenter = organizationId ? isAuthorized(organizationId, "TrustCenter", "update") : false;
 
   const handleToggleActive = async (active: boolean) => {
     if (!organization.trustCenter?.id) {
@@ -128,6 +133,7 @@ export default function TrustCenterOverviewTab() {
             <Checkbox
               checked={isActive}
               onChange={handleToggleActive}
+              disabled={!canUpdateTrustCenter}
             />
           </div>
 
@@ -210,25 +216,35 @@ export default function TrustCenterOverviewTab() {
                     >
                       {__("Download PDF")}
                     </Button>
-                    <Button
-                      variant="quaternary"
-                      icon={IconTrashCan}
-                      onClick={handleNDADelete}
-                      disabled={isDeletingNDA}
-                    />
+                    {canUpdateTrustCenter && (
+                      <Button
+                        variant="quaternary"
+                        icon={IconTrashCan}
+                        onClick={handleNDADelete}
+                        disabled={isDeletingNDA}
+                      />
+                    )}
                   </div>
                 </div>
               </div>
             ) : (
-              <Dropzone
-                description={__("Upload PDF files up to 10MB")}
-                isUploading={isUploadingNDA}
-                onDrop={handleNDAUpload}
-                accept={{
-                  "application/pdf": [".pdf"],
-                }}
-                maxSize={10}
-              />
+              <>
+                {canUpdateTrustCenter ? (
+                  <Dropzone
+                    description={__("Upload PDF files up to 10MB")}
+                    isUploading={isUploadingNDA}
+                    onDrop={handleNDAUpload}
+                    accept={{
+                      "application/pdf": [".pdf"],
+                    }}
+                    maxSize={10}
+                  />
+                ) : (
+                  <p className="text-sm text-txt-tertiary">
+                    {__("No NDA file uploaded")}
+                  </p>
+                )}
+              </>
             )}
           </div>
         </Card>

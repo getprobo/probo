@@ -57,6 +57,8 @@ import {
   type BulkExportDialogRef,
 } from "/components/documents/BulkExportDialog";
 import type { DocumentsPageUserEmailQuery } from "./__generated__/DocumentsPageUserEmailQuery.graphql";
+import { IfAuthorized } from "/permissions/IfAuthorized";
+import { isAuthorized } from "/permissions/permissions";
 
 const documentsFragment = graphql`
   fragment DocumentsPageListFragment on Organization
@@ -135,6 +137,9 @@ export default function DocumentsPage(props: Props) {
 
   usePageTitle(__("Documents"));
 
+  const hasAnyAction = isAuthorized(organization.id, "Document", "update") ||
+    isAuthorized(organization.id, "Document", "delete");
+
   const handleSendSigningNotifications = () => {
     sendSigningNotifications({
       variables: {
@@ -200,10 +205,12 @@ export default function DocumentsPage(props: Props) {
           >
             {__("Send signing notifications")}
           </Button>
-          <CreateDocumentDialog
-            connection={connectionId}
-            trigger={<Button icon={IconPlusLarge}>{__("New document")}</Button>}
-          />
+          <IfAuthorized entity="Document" action="create">
+            <CreateDocumentDialog
+              connection={connectionId}
+              trigger={<Button icon={IconPlusLarge}>{__("New document")}</Button>}
+            />
+          </IfAuthorized>
         </div>
       </PageHeader>
       {documents.length > 0 ? (
@@ -232,7 +239,7 @@ export default function DocumentsPage(props: Props) {
                 <Th className="w-60">{__("Owner")}</Th>
                 <Th className="w-60">{__("Last update")}</Th>
                 <Th className="w-20">{__("Signatures")}</Th>
-                <Th className="w-18"></Th>
+                {hasAnyAction && <Th className="w-18"></Th>}
               </Tr>
             ) : (
               <Tr>
@@ -249,29 +256,33 @@ export default function DocumentsPage(props: Props) {
                       </button>
                     </div>
                     <div className="flex gap-2 items-center">
-                      <PublishDocumentsDialog
-                        documentIds={selection}
-                        onSave={clear}
-                      >
-                        <Button
-                          icon={IconCheckmark1}
-                          className="py-0.5 px-2 text-xs h-6 min-h-6"
+                      <IfAuthorized entity="Document" action="update">
+                        <PublishDocumentsDialog
+                          documentIds={selection}
+                          onSave={clear}
                         >
-                          {__("Publish")}
-                        </Button>
-                      </PublishDocumentsDialog>
-                      <SignatureDocumentsDialog
-                        documentIds={selection}
-                        onSave={clear}
-                      >
-                        <Button
-                          variant="secondary"
-                          icon={IconSignature}
-                          className="py-0.5 px-2 text-xs h-6 min-h-6"
+                          <Button
+                            icon={IconCheckmark1}
+                            className="py-0.5 px-2 text-xs h-6 min-h-6"
+                          >
+                            {__("Publish")}
+                          </Button>
+                        </PublishDocumentsDialog>
+                      </IfAuthorized>
+                      <IfAuthorized entity="Document" action="update">
+                        <SignatureDocumentsDialog
+                          documentIds={selection}
+                          onSave={clear}
                         >
-                          {__("Request signature")}
-                        </Button>
-                      </SignatureDocumentsDialog>
+                          <Button
+                            variant="secondary"
+                            icon={IconSignature}
+                            className="py-0.5 px-2 text-xs h-6 min-h-6"
+                          >
+                            {__("Request signature")}
+                          </Button>
+                        </SignatureDocumentsDialog>
+                      </IfAuthorized>
                       <BulkExportDialog
                         ref={bulkExportDialogRef}
                         onExport={handleBulkExport}
@@ -287,14 +298,16 @@ export default function DocumentsPage(props: Props) {
                           {__("Export")}
                         </Button>
                       </BulkExportDialog>
-                      <Button
-                        variant="danger"
-                        icon={IconTrashCan}
-                        onClick={handleBulkDelete}
-                        className="py-0.5 px-2 text-xs h-6 min-h-6"
-                      >
-                        {__("Delete")}
-                      </Button>
+                      <IfAuthorized entity="Document" action="delete">
+                        <Button
+                          variant="danger"
+                          icon={IconTrashCan}
+                          onClick={handleBulkDelete}
+                          className="py-0.5 px-2 text-xs h-6 min-h-6"
+                        >
+                          {__("Delete")}
+                        </Button>
+                      </IfAuthorized>
                     </div>
                   </div>
                 </Th>
@@ -310,6 +323,7 @@ export default function DocumentsPage(props: Props) {
                 document={document}
                 organizationId={organization.id}
                 connectionId={connectionId}
+                hasAnyAction={hasAnyAction}
               />
             ))}
           </Tbody>
@@ -367,12 +381,14 @@ function DocumentRow({
   organizationId,
   checked,
   onCheck,
+  hasAnyAction,
 }: {
   document: DocumentsPageRowFragment$key;
   organizationId: string;
   connectionId: string;
   checked: boolean;
   onCheck: () => void;
+  hasAnyAction: boolean;
 }) {
   const document = useFragment<DocumentsPageRowFragment$key>(
     rowFragment,
@@ -444,17 +460,21 @@ function DocumentRow({
       <Td className="w-20">
         {signedCount}/{signatures.length}
       </Td>
-      <Td noLink width={50} className="text-end w-18">
-        <ActionDropdown>
-          <DropdownItem
-            variant="danger"
-            icon={IconTrashCan}
-            onClick={handleDelete}
-          >
-            {__("Delete")}
-          </DropdownItem>
-        </ActionDropdown>
-      </Td>
+      {hasAnyAction && (
+        <Td noLink width={50} className="text-end w-18">
+          <ActionDropdown>
+            <IfAuthorized entity="Document" action="delete">
+              <DropdownItem
+                variant="danger"
+                icon={IconTrashCan}
+                onClick={handleDelete}
+              >
+                {__("Delete")}
+              </DropdownItem>
+            </IfAuthorized>
+          </ActionDropdown>
+        </Td>
+      )}
     </Tr>
   );
 }

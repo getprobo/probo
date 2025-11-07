@@ -15,10 +15,28 @@
 package types
 
 import (
+	"time"
+
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 )
+
+type Datum struct {
+	ID                 gid.GID                     `json:"id"`
+	OrganizationID     gid.GID                     `json:"-"`
+	SnapshotID         *gid.GID                    `json:"snapshotId,omitempty"`
+	Name               string                      `json:"name"`
+	DataClassification coredata.DataClassification `json:"dataClassification"`
+	Owner              *People                     `json:"owner"`
+	Vendors            *VendorConnection           `json:"vendors"`
+	Organization       *Organization               `json:"organization"`
+	CreatedAt          time.Time                   `json:"createdAt"`
+	UpdatedAt          time.Time                   `json:"updatedAt"`
+}
+
+func (Datum) IsNode()             {}
+func (this Datum) GetID() gid.GID { return this.ID }
 
 type (
 	DatumOrderBy OrderBy[coredata.DatumOrderField]
@@ -58,12 +76,12 @@ func NewDataConnection(
 func NewDatum(d *coredata.Datum) *Datum {
 	return &Datum{
 		ID:                 d.ID,
+		OrganizationID:     d.OrganizationID,
 		Name:               d.Name,
 		SnapshotID:         d.SnapshotID,
 		DataClassification: d.DataClassification,
 		CreatedAt:          d.CreatedAt,
 		UpdatedAt:          d.UpdatedAt,
-		Organization:       &Organization{ID: d.OrganizationID},
 	}
 }
 

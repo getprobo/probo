@@ -15,16 +15,31 @@
 package types
 
 import (
+	"time"
+
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 )
+
+type File struct {
+	ID             gid.GID   `json:"id"`
+	OrganizationID gid.GID   `json:"-"`
+	MimeType       string    `json:"mimeType"`
+	FileName       string    `json:"fileName"`
+	Size           int64     `json:"size"`
+	DownloadURL    string    `json:"downloadUrl"`
+	CreatedAt      time.Time `json:"createdAt"`
+	UpdatedAt      time.Time `json:"updatedAt"`
+}
 
 func NewFile(r *coredata.File) *File {
 	return &File{
-		ID:        r.ID,
-		MimeType:  r.MimeType,
-		FileName:  r.FileName,
-		Size:      r.FileSize,
-		CreatedAt: r.CreatedAt,
-		UpdatedAt: r.UpdatedAt,
+		ID:             r.ID,
+		OrganizationID: r.OrganizationID,
+		MimeType:       r.MimeType,
+		FileName:       r.FileName,
+		Size:           r.FileSize,
+		CreatedAt:      r.CreatedAt,
+		UpdatedAt:      r.UpdatedAt,
 	}
 }

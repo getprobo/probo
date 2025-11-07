@@ -15,10 +15,31 @@
 package types
 
 import (
+	"time"
+
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 )
+
+type Task struct {
+	ID             gid.GID        `json:"id"`
+	OrganizationID gid.GID        `json:"-"`
+	Name           string         `json:"name"`
+	Description    *string        `json:"description,omitempty"`
+	State          coredata.TaskState `json:"state"`
+	TimeEstimate   *time.Duration `json:"timeEstimate,omitempty"`
+	Deadline       *time.Time     `json:"deadline,omitempty"`
+	AssignedTo     *People        `json:"assignedTo,omitempty"`
+	Organization   *Organization  `json:"organization"`
+	Measure        *Measure       `json:"measure,omitempty"`
+	Evidences      *EvidenceConnection `json:"evidences"`
+	CreatedAt      time.Time      `json:"createdAt"`
+	UpdatedAt      time.Time      `json:"updatedAt"`
+}
+
+func (Task) IsNode()          {}
+func (t Task) GetID() gid.GID { return t.ID }
 
 type (
 	TaskOrderBy OrderBy[coredata.TaskOrderField]
@@ -62,13 +83,14 @@ func NewTaskEdge(t *coredata.Task, orderBy coredata.TaskOrderField) *TaskEdge {
 
 func NewTask(t *coredata.Task) *Task {
 	return &Task{
-		ID:           t.ID,
-		Name:         t.Name,
-		Description:  t.Description,
-		State:        t.State,
-		TimeEstimate: t.TimeEstimate,
-		CreatedAt:    t.CreatedAt,
-		UpdatedAt:    t.UpdatedAt,
-		Deadline:     t.Deadline,
+		ID:             t.ID,
+		OrganizationID: t.OrganizationID,
+		Name:           t.Name,
+		Description:    t.Description,
+		State:          t.State,
+		TimeEstimate:   t.TimeEstimate,
+		CreatedAt:      t.CreatedAt,
+		UpdatedAt:      t.UpdatedAt,
+		Deadline:       t.Deadline,
 	}
 }

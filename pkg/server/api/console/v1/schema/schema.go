@@ -966,6 +966,7 @@ type ComplexityRoot struct {
 		UpdateDocumentVersion                  func(childComplexity int, input types.UpdateDocumentVersionInput) int
 		UpdateFramework                        func(childComplexity int, input types.UpdateFrameworkInput) int
 		UpdateMeasure                          func(childComplexity int, input types.UpdateMeasureInput) int
+		UpdateMembership                       func(childComplexity int, input types.UpdateMembershipInput) int
 		UpdateNonconformity                    func(childComplexity int, input types.UpdateNonconformityInput) int
 		UpdateObligation                       func(childComplexity int, input types.UpdateObligationInput) int
 		UpdateOrganization                     func(childComplexity int, input types.UpdateOrganizationInput) int
@@ -1481,6 +1482,10 @@ type ComplexityRoot struct {
 		Measure func(childComplexity int) int
 	}
 
+	UpdateMembershipPayload struct {
+		Membership func(childComplexity int) int
+	}
+
 	UpdateNonconformityPayload struct {
 		Nonconformity func(childComplexity int) int
 	}
@@ -1886,6 +1891,7 @@ type MutationResolver interface {
 	AcceptInvitation(ctx context.Context, input types.AcceptInvitationInput) (*types.AcceptInvitationPayload, error)
 	DeleteInvitation(ctx context.Context, input types.DeleteInvitationInput) (*types.DeleteInvitationPayload, error)
 	RemoveMember(ctx context.Context, input types.RemoveMemberInput) (*types.RemoveMemberPayload, error)
+	UpdateMembership(ctx context.Context, input types.UpdateMembershipInput) (*types.UpdateMembershipPayload, error)
 	CreatePeople(ctx context.Context, input types.CreatePeopleInput) (*types.CreatePeoplePayload, error)
 	UpdatePeople(ctx context.Context, input types.UpdatePeopleInput) (*types.UpdatePeoplePayload, error)
 	DeletePeople(ctx context.Context, input types.DeletePeopleInput) (*types.DeletePeoplePayload, error)
@@ -5899,6 +5905,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Mutation.UpdateMeasure(childComplexity, args["input"].(types.UpdateMeasureInput)), true
 
+	case "Mutation.updateMembership":
+		if e.complexity.Mutation.UpdateMembership == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateMembership_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateMembership(childComplexity, args["input"].(types.UpdateMembershipInput)), true
+
 	case "Mutation.updateNonconformity":
 		if e.complexity.Mutation.UpdateNonconformity == nil {
 			break
@@ -8463,6 +8481,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.UpdateMeasurePayload.Measure(childComplexity), true
 
+	case "UpdateMembershipPayload.membership":
+		if e.complexity.UpdateMembershipPayload.Membership == nil {
+			break
+		}
+
+		return e.complexity.UpdateMembershipPayload.Membership(childComplexity), true
+
 	case "UpdateNonconformityPayload.nonconformity":
 		if e.complexity.UpdateNonconformityPayload.Nonconformity == nil {
 			break
@@ -9611,6 +9636,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputUpdateDocumentVersionInput,
 		ec.unmarshalInputUpdateFrameworkInput,
 		ec.unmarshalInputUpdateMeasureInput,
+		ec.unmarshalInputUpdateMembershipInput,
 		ec.unmarshalInputUpdateNonconformityInput,
 		ec.unmarshalInputUpdateObligationInput,
 		ec.unmarshalInputUpdateOrganizationInput,
@@ -9824,12 +9850,16 @@ enum InvitationStatus
     @goEnum(value: "go.probo.inc/probo/pkg/coredata.InvitationStatusExpired")
 }
 
-enum Role @goModel(model: "go.probo.inc/probo/pkg/coredata.Role") {
-  OWNER @goEnum(value: "go.probo.inc/probo/pkg/coredata.RoleOwner")
-  ADMIN @goEnum(value: "go.probo.inc/probo/pkg/coredata.RoleAdmin")
-  MEMBER @goEnum(value: "go.probo.inc/probo/pkg/coredata.RoleMember")
-  VIEWER @goEnum(value: "go.probo.inc/probo/pkg/coredata.RoleViewer")
+enum MembershipRole @goModel(model: "go.probo.inc/probo/pkg/coredata.MembershipRole") {
+  OWNER @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleOwner")
+  ADMIN @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleAdmin")
+  VIEWER @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleViewer")
 }
+
+enum APIRole @goModel(model: "go.probo.inc/probo/pkg/coredata.APIRole") {
+  FULL @goEnum(value: "go.probo.inc/probo/pkg/coredata.APIRoleFull")
+}
+
 
 enum DocumentStatus
   @goModel(model: "go.probo.inc/probo/pkg/coredata.DocumentStatus") {
@@ -11147,7 +11177,7 @@ input VendorFilter {
 }
 
 # Core Types
-type TrustCenter implements Node {
+type TrustCenter implements Node @goModel(model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TrustCenter") {
   id: ID!
   active: Boolean!
   ndaFileName: String
@@ -11378,7 +11408,7 @@ type Membership implements Node {
   id: ID!
   userID: ID!
   organizationID: ID!
-  role: Role!
+  role: MembershipRole!
   fullName: String!
   emailAddress: String!
   authMethod: UserAuthMethod! @goField(forceResolver: true)
@@ -11390,7 +11420,7 @@ type Invitation implements Node {
   id: ID!
   email: String!
   fullName: String!
-  role: Role!
+  role: MembershipRole!
   status: InvitationStatus!
   expiresAt: Datetime!
   acceptedAt: Datetime
@@ -11429,7 +11459,7 @@ type People implements Node {
   updatedAt: Datetime!
 }
 
-type Vendor implements Node {
+type Vendor implements Node @goModel(model: "go.probo.inc/probo/pkg/server/api/console/v1/types.Vendor") {
   id: ID!
   snapshotId: ID
   name: String!
@@ -11551,7 +11581,7 @@ type VendorDataPrivacyAgreement implements Node {
   updatedAt: Datetime!
 }
 
-type Framework implements Node {
+type Framework implements Node @goModel(model: "go.probo.inc/probo/pkg/server/api/console/v1/types.Framework") {
   id: ID!
   name: String!
   description: String
@@ -11571,7 +11601,10 @@ type Framework implements Node {
   updatedAt: Datetime!
 }
 
-type Control implements Node {
+type Control implements Node
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.Control"
+  ) {
   id: ID!
   sectionTitle: String!
   name: String!
@@ -11619,7 +11652,10 @@ type Control implements Node {
   updatedAt: Datetime!
 }
 
-type Measure implements Node {
+type Measure implements Node
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.Measure"
+  ) {
   id: ID!
   category: String!
   name: String!
@@ -11664,7 +11700,8 @@ type Measure implements Node {
   updatedAt: Datetime!
 }
 
-type Task implements Node {
+type Task implements Node
+  @goModel(model: "go.probo.inc/probo/pkg/server/api/console/v1/types.Task") {
   id: ID!
   name: String!
   description: String
@@ -11688,7 +11725,10 @@ type Task implements Node {
   updatedAt: Datetime!
 }
 
-type Evidence implements Node {
+type Evidence implements Node
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.Evidence"
+  ) {
   id: ID!
   size: Int!
   state: EvidenceState!
@@ -11704,7 +11744,7 @@ type Evidence implements Node {
   updatedAt: Datetime!
 }
 
-type Document implements Node {
+type Document implements Node @goModel(model: "go.probo.inc/probo/pkg/server/api/console/v1/types.Document") {
   id: ID!
   title: String!
   description: String
@@ -11737,7 +11777,7 @@ type Document implements Node {
   updatedAt: Datetime!
 }
 
-type Risk implements Node {
+type Risk implements Node @goModel(model: "go.probo.inc/probo/pkg/server/api/console/v1/types.Risk") {
   id: ID!
   snapshotId: ID
   name: String!
@@ -11795,7 +11835,7 @@ type Risk implements Node {
   updatedAt: Datetime!
 }
 
-type Audit implements Node {
+type Audit implements Node @goModel(model: "go.probo.inc/probo/pkg/server/api/console/v1/types.Audit") {
   id: ID!
   name: String
   organization: Organization! @goField(forceResolver: true)
@@ -11820,7 +11860,7 @@ type Audit implements Node {
   updatedAt: Datetime!
 }
 
-type Nonconformity implements Node {
+type Nonconformity implements Node @goModel(model: "go.probo.inc/probo/pkg/server/api/console/v1/types.Nonconformity") {
   id: ID!
   snapshotId: ID
   organization: Organization! @goField(forceResolver: true)
@@ -11838,7 +11878,7 @@ type Nonconformity implements Node {
   updatedAt: Datetime!
 }
 
-type Obligation implements Node {
+type Obligation implements Node @goModel(model: "go.probo.inc/probo/pkg/server/api/console/v1/types.Obligation") {
   id: ID!
   snapshotId: ID
   sourceId: ID
@@ -11856,7 +11896,7 @@ type Obligation implements Node {
   updatedAt: Datetime!
 }
 
-type ContinualImprovement implements Node {
+type ContinualImprovement implements Node @goModel(model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ContinualImprovement") {
   id: ID!
   snapshotId: ID
   sourceId: ID
@@ -11872,7 +11912,7 @@ type ContinualImprovement implements Node {
   updatedAt: Datetime!
 }
 
-type ProcessingActivity implements Node {
+type ProcessingActivity implements Node @goModel(model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ProcessingActivity") {
   id: ID!
   snapshotId: ID
   sourceId: ID
@@ -11903,7 +11943,7 @@ type ProcessingActivity implements Node {
   updatedAt: Datetime!
 }
 
-type Snapshot implements Node {
+type Snapshot implements Node @goModel(model: "go.probo.inc/probo/pkg/server/api/console/v1/types.Snapshot") {
   id: ID!
   organization: Organization! @goField(forceResolver: true)
   name: String!
@@ -11973,7 +12013,10 @@ type TrustCenterEdge {
   node: TrustCenter!
 }
 
-type TrustCenterAccess implements Node {
+type TrustCenterAccess implements Node
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TrustCenterAccess"
+  ) {
   id: ID!
   email: String!
   name: String!
@@ -12054,7 +12097,7 @@ type TrustCenterReferenceEdge {
   node: TrustCenterReference!
 }
 
-type TrustCenterFile implements Node {
+type TrustCenterFile @goModel(model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TrustCenterFile") {
   id: ID!
   name: String!
   category: String!
@@ -12380,7 +12423,7 @@ type SnapshotEdge {
   node: Snapshot!
 }
 
-type File {
+type File @goModel(model: "go.probo.inc/probo/pkg/server/api/console/v1/types.File") {
   id: ID!
   mimeType: String!
   fileName: String!
@@ -12484,6 +12527,7 @@ type Mutation {
   acceptInvitation(input: AcceptInvitationInput!): AcceptInvitationPayload!
   deleteInvitation(input: DeleteInvitationInput!): DeleteInvitationPayload!
   removeMember(input: RemoveMemberInput!): RemoveMemberPayload!
+  updateMembership(input: UpdateMembershipInput!): UpdateMembershipPayload!
 
   # People mutations
   createPeople(input: CreatePeopleInput!): CreatePeoplePayload!
@@ -13288,6 +13332,7 @@ input InviteUserInput {
   organizationId: ID!
   email: String!
   fullName: String!
+  role: MembershipRole!
   createPeople: Boolean!
 }
 
@@ -13302,6 +13347,12 @@ input DeleteInvitationInput {
 input RemoveMemberInput {
   organizationId: ID!
   memberId: ID!
+}
+
+input UpdateMembershipInput {
+  organizationId: ID!
+  memberId: ID!
+  role: MembershipRole!
 }
 
 input CreateControlInput {
@@ -13852,6 +13903,10 @@ type RemoveMemberPayload {
   deletedMemberId: ID!
 }
 
+type UpdateMembershipPayload {
+  membership: Membership!
+}
+
 input VendorRiskAssessmentOrder {
   field: VendorRiskAssessmentOrderField!
   direction: OrderDirection!
@@ -13902,7 +13957,7 @@ type DeleteMeasurePayload {
   deletedMeasureId: ID!
 }
 
-type DocumentVersion implements Node {
+type DocumentVersion implements Node @goModel(model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DocumentVersion") {
   id: ID!
   document: Document! @goField(forceResolver: true)
   status: DocumentStatus!
@@ -13974,7 +14029,7 @@ enum DocumentVersionSignatureOrderField
     )
 }
 
-type DocumentVersionSignature implements Node {
+type DocumentVersionSignature implements Node @goModel(model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DocumentVersionSignature") {
   id: ID!
   documentVersion: DocumentVersion! @goField(forceResolver: true)
   state: DocumentVersionSignatureState!
@@ -14109,7 +14164,7 @@ type AssessVendorPayload {
   vendor: Vendor!
 }
 
-type Asset implements Node {
+type Asset implements Node @goModel(model: "go.probo.inc/probo/pkg/server/api/console/v1/types.Asset") {
   id: ID!
   snapshotId: ID
   name: String!
@@ -14187,7 +14242,7 @@ type DeleteAssetPayload {
   deletedAssetId: ID!
 }
 
-type Datum implements Node {
+type Datum implements Node @goModel(model: "go.probo.inc/probo/pkg/server/api/console/v1/types.Datum") {
   id: ID!
   snapshotId: ID
   name: String!
@@ -18597,6 +18652,29 @@ func (ec *executionContext) field_Mutation_updateMeasure_argsInput(
 	}
 
 	var zeroVal types.UpdateMeasureInput
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_updateMembership_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Mutation_updateMembership_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_updateMembership_argsInput(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (types.UpdateMembershipInput, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNUpdateMembershipInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateMembershipInput(ctx, tmp)
+	}
+
+	var zeroVal types.UpdateMembershipInput
 	return zeroVal, nil
 }
 
@@ -37906,9 +37984,9 @@ func (ec *executionContext) _Invitation_role(ctx context.Context, field graphql.
 		}
 		return graphql.Null
 	}
-	res := resTmp.(coredata.Role)
+	res := resTmp.(coredata.MembershipRole)
 	fc.Result = res
-	return ec.marshalNRole2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐRole(ctx, field.Selections, res)
+	return ec.marshalNMembershipRole2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipRole(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Invitation_role(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -37918,7 +37996,7 @@ func (ec *executionContext) fieldContext_Invitation_role(_ context.Context, fiel
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Role does not have child fields")
+			return nil, errors.New("field of type MembershipRole does not have child fields")
 		},
 	}
 	return fc, nil
@@ -39490,9 +39568,9 @@ func (ec *executionContext) _Membership_role(ctx context.Context, field graphql.
 		}
 		return graphql.Null
 	}
-	res := resTmp.(coredata.Role)
+	res := resTmp.(coredata.MembershipRole)
 	fc.Result = res
-	return ec.marshalNRole2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐRole(ctx, field.Selections, res)
+	return ec.marshalNMembershipRole2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipRole(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Membership_role(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -39502,7 +39580,7 @@ func (ec *executionContext) fieldContext_Membership_role(_ context.Context, fiel
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Role does not have child fields")
+			return nil, errors.New("field of type MembershipRole does not have child fields")
 		},
 	}
 	return fc, nil
@@ -41276,6 +41354,65 @@ func (ec *executionContext) fieldContext_Mutation_removeMember(ctx context.Conte
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_removeMember_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateMembership(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_updateMembership(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdateMembership(rctx, fc.Args["input"].(types.UpdateMembershipInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.UpdateMembershipPayload)
+	fc.Result = res
+	return ec.marshalNUpdateMembershipPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateMembershipPayload(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updateMembership(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "membership":
+				return ec.fieldContext_UpdateMembershipPayload_membership(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type UpdateMembershipPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateMembership_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -63477,6 +63614,70 @@ func (ec *executionContext) fieldContext_UpdateMeasurePayload_measure(_ context.
 	return fc, nil
 }
 
+func (ec *executionContext) _UpdateMembershipPayload_membership(ctx context.Context, field graphql.CollectedField, obj *types.UpdateMembershipPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UpdateMembershipPayload_membership(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Membership, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.Membership)
+	fc.Result = res
+	return ec.marshalNMembership2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐMembership(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UpdateMembershipPayload_membership(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UpdateMembershipPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Membership_id(ctx, field)
+			case "userID":
+				return ec.fieldContext_Membership_userID(ctx, field)
+			case "organizationID":
+				return ec.fieldContext_Membership_organizationID(ctx, field)
+			case "role":
+				return ec.fieldContext_Membership_role(ctx, field)
+			case "fullName":
+				return ec.fieldContext_Membership_fullName(ctx, field)
+			case "emailAddress":
+				return ec.fieldContext_Membership_emailAddress(ctx, field)
+			case "authMethod":
+				return ec.fieldContext_Membership_authMethod(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Membership_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Membership_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Membership", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _UpdateNonconformityPayload_nonconformity(ctx context.Context, field graphql.CollectedField, obj *types.UpdateNonconformityPayload) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_UpdateNonconformityPayload_nonconformity(ctx, field)
 	if err != nil {
@@ -74625,7 +74826,7 @@ func (ec *executionContext) unmarshalInputCreateProcessingActivityInput(ctx cont
 			if err != nil {
 				return it, err
 			}
-			it.TransferSafeguard = data
+			it.TransferSafeguards = data
 		case "retentionPeriod":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("retentionPeriod"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
@@ -77460,7 +77661,7 @@ func (ec *executionContext) unmarshalInputInviteUserInput(ctx context.Context, o
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"organizationId", "email", "fullName", "createPeople"}
+	fieldsInOrder := [...]string{"organizationId", "email", "fullName", "role", "createPeople"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -77488,6 +77689,13 @@ func (ec *executionContext) unmarshalInputInviteUserInput(ctx context.Context, o
 				return it, err
 			}
 			it.FullName = data
+		case "role":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("role"))
+			data, err := ec.unmarshalNMembershipRole2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipRole(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Role = data
 		case "createPeople":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createPeople"))
 			data, err := ec.unmarshalNBoolean2bool(ctx, v)
@@ -78874,6 +79082,47 @@ func (ec *executionContext) unmarshalInputUpdateMeasureInput(ctx context.Context
 				return it, err
 			}
 			it.State = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputUpdateMembershipInput(ctx context.Context, obj any) (types.UpdateMembershipInput, error) {
+	var it types.UpdateMembershipInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"organizationId", "memberId", "role"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "organizationId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("organizationId"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OrganizationID = data
+		case "memberId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("memberId"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MemberID = data
+		case "role":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("role"))
+			data, err := ec.unmarshalNMembershipRole2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipRole(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Role = data
 		}
 	}
 
@@ -80803,13 +81052,6 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._TrustCenterReference(ctx, sel, obj)
-	case types.TrustCenterFile:
-		return ec._TrustCenterFile(ctx, sel, &obj)
-	case *types.TrustCenterFile:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._TrustCenterFile(ctx, sel, obj)
 	case types.TrustCenterAccess:
 		return ec._TrustCenterAccess(ctx, sel, &obj)
 	case *types.TrustCenterAccess:
@@ -89010,6 +89252,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "updateMembership":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateMembership(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "createPeople":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_createPeople(ctx, field)
@@ -94639,7 +94888,7 @@ func (ec *executionContext) _TrustCenterEdge(ctx context.Context, sel ast.Select
 	return out
 }
 
-var trustCenterFileImplementors = []string{"TrustCenterFile", "Node"}
+var trustCenterFileImplementors = []string{"TrustCenterFile"}
 
 func (ec *executionContext) _TrustCenterFile(ctx context.Context, sel ast.SelectionSet, obj *types.TrustCenterFile) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, trustCenterFileImplementors)
@@ -95489,6 +95738,45 @@ func (ec *executionContext) _UpdateMeasurePayload(ctx context.Context, sel ast.S
 			out.Values[i] = graphql.MarshalString("UpdateMeasurePayload")
 		case "measure":
 			out.Values[i] = ec._UpdateMeasurePayload_measure(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var updateMembershipPayloadImplementors = []string{"UpdateMembershipPayload"}
+
+func (ec *executionContext) _UpdateMembershipPayload(ctx context.Context, sel ast.SelectionSet, obj *types.UpdateMembershipPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, updateMembershipPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UpdateMembershipPayload")
+		case "membership":
+			out.Values[i] = ec._UpdateMembershipPayload_membership(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -103571,6 +103859,36 @@ var (
 	}
 )
 
+func (ec *executionContext) unmarshalNMembershipRole2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipRole(ctx context.Context, v any) (coredata.MembershipRole, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNMembershipRole2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipRole[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNMembershipRole2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipRole(ctx context.Context, sel ast.SelectionSet, v coredata.MembershipRole) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNMembershipRole2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipRole[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNMembershipRole2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipRole = map[string]coredata.MembershipRole{
+		"OWNER":  coredata.MembershipRoleOwner,
+		"ADMIN":  coredata.MembershipRoleAdmin,
+		"VIEWER": coredata.MembershipRoleViewer,
+	}
+	marshalNMembershipRole2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipRole = map[coredata.MembershipRole]string{
+		coredata.MembershipRoleOwner:  "OWNER",
+		coredata.MembershipRoleAdmin:  "ADMIN",
+		coredata.MembershipRoleViewer: "VIEWER",
+	}
+)
+
 func (ec *executionContext) marshalNNode2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐNode(ctx context.Context, sel ast.SelectionSet, v types.Node) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -104591,38 +104909,6 @@ var (
 		coredata.RiskTreatmentAccepted:    "ACCEPTED",
 		coredata.RiskTreatmentAvoided:     "AVOIDED",
 		coredata.RiskTreatmentTransferred: "TRANSFERRED",
-	}
-)
-
-func (ec *executionContext) unmarshalNRole2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐRole(ctx context.Context, v any) (coredata.Role, error) {
-	tmp, err := graphql.UnmarshalString(v)
-	res := unmarshalNRole2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐRole[tmp]
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNRole2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐRole(ctx context.Context, sel ast.SelectionSet, v coredata.Role) graphql.Marshaler {
-	_ = sel
-	res := graphql.MarshalString(marshalNRole2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐRole[v])
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-	}
-	return res
-}
-
-var (
-	unmarshalNRole2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐRole = map[string]coredata.Role{
-		"OWNER":  coredata.RoleOwner,
-		"ADMIN":  coredata.RoleAdmin,
-		"MEMBER": coredata.RoleMember,
-		"VIEWER": coredata.RoleViewer,
-	}
-	marshalNRole2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐRole = map[coredata.Role]string{
-		coredata.RoleOwner:  "OWNER",
-		coredata.RoleAdmin:  "ADMIN",
-		coredata.RoleMember: "MEMBER",
-		coredata.RoleViewer: "VIEWER",
 	}
 )
 
@@ -105868,6 +106154,25 @@ func (ec *executionContext) marshalNUpdateMeasurePayload2ᚖgoᚗproboᚗincᚋp
 		return graphql.Null
 	}
 	return ec._UpdateMeasurePayload(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNUpdateMembershipInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateMembershipInput(ctx context.Context, v any) (types.UpdateMembershipInput, error) {
+	res, err := ec.unmarshalInputUpdateMembershipInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNUpdateMembershipPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateMembershipPayload(ctx context.Context, sel ast.SelectionSet, v types.UpdateMembershipPayload) graphql.Marshaler {
+	return ec._UpdateMembershipPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNUpdateMembershipPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateMembershipPayload(ctx context.Context, sel ast.SelectionSet, v *types.UpdateMembershipPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._UpdateMembershipPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNUpdateNonconformityInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateNonconformityInput(ctx context.Context, v any) (types.UpdateNonconformityInput, error) {
