@@ -20,10 +20,10 @@ import (
 	"strings"
 	"time"
 
-	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/crypto/cipher"
 )
 
 type (
@@ -31,6 +31,7 @@ type (
 		pg            *pg.Client
 		acmeService   *ACMEService
 		encryptionKey cipher.EncryptionKey
+		cnameTarget   string
 		interval      time.Duration
 		logger        *log.Logger
 	}
@@ -40,6 +41,7 @@ func NewProvisioner(
 	pg *pg.Client,
 	acmeService *ACMEService,
 	encryptionKey cipher.EncryptionKey,
+	cnameTarget string,
 	interval time.Duration,
 	logger *log.Logger,
 ) *Provisioner {
@@ -47,6 +49,7 @@ func NewProvisioner(
 		pg:            pg,
 		acmeService:   acmeService,
 		encryptionKey: encryptionKey,
+		cnameTarget:   cnameTarget,
 		interval:      interval,
 		logger:        logger.Named("certmanager.provisioner"),
 	}
@@ -73,6 +76,28 @@ func (p *Provisioner) Run(ctx context.Context) error {
 			}
 		}
 	}
+}
+
+func (p *Provisioner) checkDNSConfiguration(domain string) error {
+	if p.cnameTarget == "" {
+		return nil
+	}
+	cnameRecords, err := net.LookupCNAME(domain)
+	if err != nil {
+		return fmt.Errorf("DNS lookup Failed: %w", err)
+	}
+	expectedTarget := strings.TrimSuffix(p.cnameTarget, ".")
+	actualTarget := strings.TrimSuffix(cnameRecords, ".")
+
+	if !strings.EqualFold(actualTarget, expectedTarget) {
+		return fmt.Errorf(
+			"DNS configuration mismatch: domain %q  resolves to %q, expected %q",
+			domain,
+			actualTarget,
+			expectedTarget,
+		)
+	}
+	return nil
 }
 
 func (p *Provisioner) checkPendingDomains(ctx context.Context) error {
@@ -208,7 +233,17 @@ func (p *Provisioner) provisionDomainCertificate(
 	domain *coredata.CustomDomain,
 ) error {
 	if domain.SSLStatus == coredata.CustomDomainSSLStatusPending {
-		p.logger.InfoCtx(ctx, "initiating HTTP challenge for domain", log.String("domain", domain.Domain))
+		if err := p.checkDNSConfiguration(domain.Domain); err != nil {
+			p.logger.WarnCtx(
+				ctx,
+				"DNS configuration check failed, skipping ACME challenge",
+				log.String("domain", domain.Domain),
+				log.Error(err),
+			)
+			return fmt.Errorf("DNS configuration not ready: %w", err)
+		}
+
+		p.logger.InfoCtx(ctx, "DNS configuration verified, initiating HTTP challenge for domain", log.String("domain", domain.Domain))
 
 		challenge, err := p.acmeService.GetHTTPChallenge(ctx, domain.Domain)
 		if err != nil {

@@ -25,11 +25,11 @@ import (
 	"fmt"
 	"time"
 
+	"go.gearno.de/kit/httpclient"
+	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/crypto/keys"
 	"go.probo.inc/probo/pkg/crypto/pem"
 	"go.probo.inc/probo/pkg/version"
-	"go.gearno.de/kit/httpclient"
-	"go.gearno.de/kit/log"
 	"golang.org/x/crypto/acme"
 )
 

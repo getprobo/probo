@@ -21,9 +21,9 @@ import (
 	"sync"
 	"time"
 
+	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
-	"go.gearno.de/kit/pg"
 )
 
 type (

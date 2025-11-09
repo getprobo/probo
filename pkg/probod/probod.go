@@ -634,7 +634,7 @@ func (impl *Implm) runTrustCenterServer(
 	if certProvisioningInterval == 0 {
 		certProvisioningInterval = 30 * time.Second
 	}
-	certProvisioner := certmanager.NewProvisioner(pgClient, acmeService, impl.cfg.EncryptionKey, certProvisioningInterval, l)
+	certProvisioner := certmanager.NewProvisioner(pgClient, acmeService, impl.cfg.EncryptionKey, impl.cfg.CustomDomains.CnameTarget, certProvisioningInterval, l)
 
 	g, ctx := errgroup.WithContext(ctx)
 
