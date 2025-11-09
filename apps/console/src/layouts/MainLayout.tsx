@@ -21,6 +21,7 @@ import {
   IconRotateCw,
   IconCircleProgress,
   IconMedal,
+  IconCalendar1,
   Layout,
   SidebarItem,
   UserDropdown as UserDropdownRoot,
@@ -95,6 +96,11 @@ export function MainLayout() {
       }
       sidebar={
         <ul className="space-y-[2px]">
+          <SidebarItem
+            label={__("Meetings")}
+            icon={IconCalendar1}
+            to={`${prefix}/meetings`}
+          />
           <SidebarItem
             label={__("Tasks")}
             icon={IconInboxEmpty}

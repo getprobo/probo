@@ -381,19 +381,27 @@ func TestPrintableText(t *testing.T) {
 		}
 	})
 
-	t.Run("invalid - newline character", func(t *testing.T) {
+	t.Run("valid - newline character", func(t *testing.T) {
 		str := "test\ntext"
 		err := PrintableText()(&str)
-		if err == nil {
-			t.Error("expected validation error for newline character")
+		if err != nil {
+			t.Errorf("expected no error for newline character, got: %v", err)
 		}
 	})
 
-	t.Run("invalid - carriage return", func(t *testing.T) {
+	t.Run("valid - carriage return", func(t *testing.T) {
 		str := "test\rtext"
 		err := PrintableText()(&str)
-		if err == nil {
-			t.Error("expected validation error for carriage return")
+		if err != nil {
+			t.Errorf("expected no error for carriage return, got: %v", err)
+		}
+	})
+
+	t.Run("valid - multiple newlines", func(t *testing.T) {
+		str := "hello foo\nbar\n\njd"
+		err := PrintableText()(&str)
+		if err != nil {
+			t.Errorf("expected no error for multiple newlines, got: %v", err)
 		}
 	})
 
@@ -645,11 +653,19 @@ func TestSafeText(t *testing.T) {
 		}
 	})
 
-	t.Run("invalid - contains newline", func(t *testing.T) {
+	t.Run("valid - contains newline", func(t *testing.T) {
 		str := "test\ntext"
 		err := SafeText(100)(&str)
-		if err == nil {
-			t.Error("expected validation error for newline")
+		if err != nil {
+			t.Errorf("expected no error for newline, got: %v", err)
+		}
+	})
+
+	t.Run("valid - contains multiple newlines", func(t *testing.T) {
+		str := "hello foo\nbar\n\njd"
+		err := SafeText(100)(&str)
+		if err != nil {
+			t.Errorf("expected no error for multiple newlines, got: %v", err)
 		}
 	})
 
@@ -753,3 +769,157 @@ func TestSafeText(t *testing.T) {
 		}
 	})
 }
+
+func TestNoNewLine(t *testing.T) {
+	t.Run("valid text without newlines", func(t *testing.T) {
+		str := "Product Name 2024"
+		err := NoNewLine()(&str)
+		if err != nil {
+			t.Errorf("expected no error, got: %v", err)
+		}
+	})
+
+	t.Run("invalid - contains newline", func(t *testing.T) {
+		str := "Line 1\nLine 2"
+		err := NoNewLine()(&str)
+		if err == nil {
+			t.Error("expected validation error for newline")
+		}
+		if !strings.Contains(err.Message, "newline") {
+			t.Errorf("unexpected error message: %s", err.Message)
+		}
+	})
+
+	t.Run("invalid - contains carriage return", func(t *testing.T) {
+		str := "Line 1\rLine 2"
+		err := NoNewLine()(&str)
+		if err == nil {
+			t.Error("expected validation error for carriage return")
+		}
+		if !strings.Contains(err.Message, "carriage return") {
+			t.Errorf("unexpected error message: %s", err.Message)
+		}
+	})
+
+	t.Run("invalid - contains both newline and carriage return", func(t *testing.T) {
+		str := "Line 1\n\rLine 3"
+		err := NoNewLine()(&str)
+		if err == nil {
+			t.Error("expected validation error for newline or carriage return")
+		}
+	})
+
+	t.Run("nil pointer", func(t *testing.T) {
+		var str *string
+		err := NoNewLine()(str)
+		if err != nil {
+			t.Errorf("expected no error for nil pointer, got: %v", err)
+		}
+	})
+
+	t.Run("empty string", func(t *testing.T) {
+		str := ""
+		err := NoNewLine()(&str)
+		if err != nil {
+			t.Errorf("expected no error for empty string, got: %v", err)
+		}
+	})
+}
+
+func TestSafeTextNoNewLine(t *testing.T) {
+	t.Run("valid text", func(t *testing.T) {
+		str := "Product Name 2024"
+		err := SafeTextNoNewLine(100)(&str)
+		if err != nil {
+			t.Errorf("expected no error, got: %v", err)
+		}
+	})
+
+	t.Run("valid UTF-8 text", func(t *testing.T) {
+		str := "José García"
+		err := SafeTextNoNewLine(50)(&str)
+		if err != nil {
+			t.Errorf("expected no error, got: %v", err)
+		}
+	})
+
+	t.Run("invalid - contains newline", func(t *testing.T) {
+		str := "Line 1\nLine 2"
+		err := SafeTextNoNewLine(100)(&str)
+		if err == nil {
+			t.Error("expected validation error for newline")
+		}
+		if !strings.Contains(err.Message, "newline") {
+			t.Errorf("unexpected error message: %s", err.Message)
+		}
+	})
+
+	t.Run("invalid - contains carriage return", func(t *testing.T) {
+		str := "Line 1\rLine 2"
+		err := SafeTextNoNewLine(100)(&str)
+		if err == nil {
+			t.Error("expected validation error for carriage return")
+		}
+		if !strings.Contains(err.Message, "carriage return") {
+			t.Errorf("unexpected error message: %s", err.Message)
+		}
+	})
+
+	t.Run("invalid - empty string", func(t *testing.T) {
+		str := ""
+		err := SafeTextNoNewLine(100)(&str)
+		if err == nil {
+			t.Error("expected validation error for empty string")
+		}
+		if !strings.Contains(err.Message, "empty") && !strings.Contains(err.Message, "required") {
+			t.Errorf("unexpected error message: %s", err.Message)
+		}
+	})
+
+	t.Run("invalid - exceeds max length", func(t *testing.T) {
+		str := "This is a very long string that exceeds the maximum length"
+		err := SafeTextNoNewLine(10)(&str)
+		if err == nil {
+			t.Error("expected validation error for exceeding max length")
+		}
+		if !strings.Contains(err.Message, "at most") {
+			t.Errorf("unexpected error message: %s", err.Message)
+		}
+	})
+
+	t.Run("invalid - contains HTML tags", func(t *testing.T) {
+		str := "Hello <b>World</b>"
+		err := SafeTextNoNewLine(100)(&str)
+		if err == nil {
+			t.Error("expected validation error for HTML tags")
+		}
+		if !strings.Contains(err.Message, "HTML tags") {
+			t.Errorf("unexpected error message: %s", err.Message)
+		}
+	})
+
+	t.Run("invalid - contains tab character", func(t *testing.T) {
+		str := "test\ttext"
+		err := SafeTextNoNewLine(100)(&str)
+		if err == nil {
+			t.Error("expected validation error for tab character")
+		}
+	})
+
+	t.Run("nil pointer", func(t *testing.T) {
+		var str *string
+		err := SafeTextNoNewLine(100)(str)
+		if err != nil {
+			t.Errorf("expected no error for nil pointer, got: %v", err)
+		}
+	})
+
+	t.Run("edge case - exactly at max length", func(t *testing.T) {
+		str := "12345"
+		err := SafeTextNoNewLine(5)(&str)
+		if err != nil {
+			t.Errorf("expected no error for string at max length, got: %v", err)
+		}
+	})
+}
+

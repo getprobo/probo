@@ -50,7 +50,7 @@ func (csr *CreateSnapshotRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(csr.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
-	v.Check(csr.Name, "name", validator.Required(), validator.SafeText(TitleMaxLength))
+	v.Check(csr.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(csr.Description, "description", validator.SafeText(ContentMaxLength))
 	v.Check(csr.Type, "type", validator.Required(), validator.OneOfSlice(coredata.SnapshotsTypes()))
 
@@ -61,7 +61,7 @@ func (usr *UpdateSnapshotRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(usr.ID, "id", validator.Required(), validator.GID(coredata.SnapshotEntityType))
-	v.Check(usr.Name, "name", validator.SafeText(TitleMaxLength))
+	v.Check(usr.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(usr.Description, "description", validator.SafeText(ContentMaxLength))
 	v.Check(usr.Type, "type", validator.OneOfSlice(coredata.SnapshotsTypes()))
 

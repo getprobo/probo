@@ -60,7 +60,7 @@ func (ctcar *CreateTrustCenterAccessRequest) Validate() error {
 
 	v.Check(ctcar.TrustCenterID, "trust_center_id", validator.Required(), validator.GID(coredata.TrustCenterEntityType))
 	v.Check(ctcar.Email, "email", validator.Required(), validator.Email())
-	v.Check(ctcar.Name, "name", validator.Required(), validator.SafeText(TitleMaxLength))
+	v.Check(ctcar.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
 
 	return v.Error()
 }
@@ -69,7 +69,7 @@ func (utcar *UpdateTrustCenterAccessRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(utcar.ID, "id", validator.Required(), validator.GID(coredata.TrustCenterAccessEntityType))
-	v.Check(utcar.Name, "name", validator.SafeText(TitleMaxLength))
+	v.Check(utcar.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.CheckEach(utcar.DocumentIDs, "document_ids", func(index int, item any) {
 		v.Check(item, fmt.Sprintf("document_ids[%d]", index), validator.Required(), validator.GID(coredata.DocumentEntityType))
 	})

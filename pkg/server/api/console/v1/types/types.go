@@ -376,6 +376,18 @@ type CreateMeasurePayload struct {
 	MeasureEdge *MeasureEdge `json:"measureEdge"`
 }
 
+type CreateMeetingInput struct {
+	OrganizationID gid.GID   `json:"organizationId"`
+	Name           string    `json:"name"`
+	Date           time.Time `json:"date"`
+	AttendeeIds    []gid.GID `json:"attendeeIds,omitempty"`
+	Minutes        *string   `json:"minutes,omitempty"`
+}
+
+type CreateMeetingPayload struct {
+	MeetingEdge *MeetingEdge `json:"meetingEdge"`
+}
+
 type CreateNonconformityInput struct {
 	OrganizationID     gid.GID                      `json:"organizationId"`
 	ReferenceID        string                       `json:"referenceId"`
@@ -446,7 +458,7 @@ type CreateProcessingActivityInput struct {
 	Recipients                     *string                                                   `json:"recipients,omitempty"`
 	Location                       *string                                                   `json:"location,omitempty"`
 	InternationalTransfers         bool                                                      `json:"internationalTransfers"`
-	TransferSafeguard              *coredata.ProcessingActivityTransferSafeguard             `json:"transferSafeguards,omitempty"`
+	TransferSafeguards             *coredata.ProcessingActivityTransferSafeguard             `json:"transferSafeguards,omitempty"`
 	RetentionPeriod                *string                                                   `json:"retentionPeriod,omitempty"`
 	SecurityMeasures               *string                                                   `json:"securityMeasures,omitempty"`
 	DataProtectionImpactAssessment coredata.ProcessingActivityDataProtectionImpactAssessment `json:"dataProtectionImpactAssessment"`
@@ -839,6 +851,14 @@ type DeleteMeasureInput struct {
 
 type DeleteMeasurePayload struct {
 	DeletedMeasureID gid.GID `json:"deletedMeasureId"`
+}
+
+type DeleteMeetingInput struct {
+	MeetingID gid.GID `json:"meetingId"`
+}
+
+type DeleteMeetingPayload struct {
+	DeletedMeetingID gid.GID `json:"deletedMeetingId"`
 }
 
 type DeleteNonconformityInput struct {
@@ -1340,6 +1360,25 @@ type MeasureFilter struct {
 	State *coredata.MeasureState `json:"state,omitempty"`
 }
 
+type Meeting struct {
+	ID           gid.GID       `json:"id"`
+	Name         string        `json:"name"`
+	Date         time.Time     `json:"date"`
+	Minutes      *string       `json:"minutes,omitempty"`
+	Attendees    []*People     `json:"attendees"`
+	Organization *Organization `json:"organization"`
+	CreatedAt    time.Time     `json:"createdAt"`
+	UpdatedAt    time.Time     `json:"updatedAt"`
+}
+
+func (Meeting) IsNode()             {}
+func (this Meeting) GetID() gid.GID { return this.ID }
+
+type MeetingEdge struct {
+	Cursor page.CursorKey `json:"cursor"`
+	Node   *Meeting       `json:"node"`
+}
+
 type Membership struct {
 	ID             gid.GID                 `json:"id"`
 	UserID         gid.GID                 `json:"userID"`
@@ -1432,6 +1471,7 @@ type Organization struct {
 	WebsiteURL            *string                         `json:"websiteUrl,omitempty"`
 	Email                 *string                         `json:"email,omitempty"`
 	HeadquarterAddress    *string                         `json:"headquarterAddress,omitempty"`
+	Context               *OrganizationContext            `json:"context,omitempty"`
 	Memberships           *MembershipConnection           `json:"memberships"`
 	Invitations           *InvitationConnection           `json:"invitations"`
 	SlackConnections      *SlackConnectionConnection      `json:"slackConnections"`
@@ -1440,6 +1480,7 @@ type Organization struct {
 	Vendors               *VendorConnection               `json:"vendors"`
 	Peoples               *PeopleConnection               `json:"peoples"`
 	Documents             *DocumentConnection             `json:"documents"`
+	Meetings              *MeetingConnection              `json:"meetings"`
 	Measures              *MeasureConnection              `json:"measures"`
 	Risks                 *RiskConnection                 `json:"risks"`
 	Tasks                 *TaskConnection                 `json:"tasks"`
@@ -1465,6 +1506,11 @@ func (this Organization) GetID() gid.GID { return this.ID }
 type OrganizationConnection struct {
 	Edges    []*OrganizationEdge `json:"edges"`
 	PageInfo *PageInfo           `json:"pageInfo"`
+}
+
+type OrganizationContext struct {
+	OrganizationID gid.GID `json:"organizationId"`
+	Summary        *string `json:"summary,omitempty"`
 }
 
 type OrganizationEdge struct {
@@ -1956,6 +2002,18 @@ type UpdateMeasurePayload struct {
 	Measure *Measure `json:"measure"`
 }
 
+type UpdateMeetingInput struct {
+	MeetingID   gid.GID                    `json:"meetingId"`
+	Name        *string                    `json:"name,omitempty"`
+	Date        *time.Time                 `json:"date,omitempty"`
+	AttendeeIds []gid.GID                  `json:"attendeeIds,omitempty"`
+	Minutes     graphql.Omittable[*string] `json:"minutes,omitempty"`
+}
+
+type UpdateMeetingPayload struct {
+	Meeting *Meeting `json:"meeting"`
+}
+
 type UpdateNonconformityInput struct {
 	ID                 gid.GID                       `json:"id"`
 	ReferenceID        *string                       `json:"referenceId,omitempty"`
@@ -1989,6 +2047,15 @@ type UpdateObligationInput struct {
 
 type UpdateObligationPayload struct {
 	Obligation *Obligation `json:"obligation"`
+}
+
+type UpdateOrganizationContextInput struct {
+	OrganizationID gid.GID                    `json:"organizationId"`
+	Summary        graphql.Omittable[*string] `json:"summary,omitempty"`
+}
+
+type UpdateOrganizationContextPayload struct {
+	Context *OrganizationContext `json:"context"`
 }
 
 type UpdateOrganizationInput struct {

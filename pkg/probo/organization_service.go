@@ -73,12 +73,17 @@ type (
 		Email              **string
 		HeadquarterAddress **string
 	}
+
+	UpdateOrganizationContextRequest struct {
+		OrganizationID gid.GID
+		Summary        **string
+	}
 )
 
 func (cor *CreateOrganizationRequest) Validate() error {
 	v := validator.New()
 
-	v.Check(cor.Name, "name", validator.Required(), validator.SafeText(TitleMaxLength))
+	v.Check(cor.Name, "name", validator.Required(), validator.SafeTextNoNewLine(TitleMaxLength))
 
 	return v.Error()
 }
@@ -87,13 +92,22 @@ func (uor *UpdateOrganizationRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(uor.ID, "id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
-	v.Check(uor.Name, "name", validator.SafeText(TitleMaxLength))
+	v.Check(uor.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(uor.Description, "description", validator.SafeText(ContentMaxLength))
 	v.Check(uor.WebsiteURL, "website_url", validator.SafeText(2048))
 	v.Check(uor.Email, "email", validator.SafeText(255))
 	v.Check(uor.HeadquarterAddress, "headquarter_address", validator.SafeText(2048))
 	v.Check(uor.File, "file", validator.NotEmpty())
 	v.Check(uor.HorizontalLogoFile, "horizontal_logo_file", validator.NotEmpty())
+
+	return v.Error()
+}
+
+func (uocr *UpdateOrganizationContextRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(uocr.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
+	v.Check(uocr.Summary, "summary", validator.SafeText(30_000))
 
 	return v.Error()
 }
@@ -138,6 +152,16 @@ func (s OrganizationService) Create(
 				return fmt.Errorf("cannot insert trust center: %w", err)
 			}
 
+			organizationContext := &coredata.OrganizationContext{
+				OrganizationID: organization.ID,
+				CreatedAt:      now,
+				UpdatedAt:      now,
+			}
+
+			if err := organizationContext.Insert(ctx, tx, s.svc.scope); err != nil {
+				return fmt.Errorf("cannot insert organization context: %w", err)
+			}
+
 			if err := s.createProboVendor(ctx, tx, organization, now); err != nil {
 				return fmt.Errorf("cannot create Probo vendor: %w", err)
 			}
@@ -176,6 +200,78 @@ func (s OrganizationService) Get(
 	}
 
 	return organization, nil
+}
+
+func (s OrganizationService) GetContextSummary(
+	ctx context.Context,
+	organizationID gid.GID,
+) (*coredata.OrganizationContext, error) {
+	organizationContext := &coredata.OrganizationContext{}
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			err := organizationContext.LoadByOrganizationID(
+				ctx,
+				conn,
+				s.svc.scope,
+				organizationID,
+			)
+			if err != nil {
+				return fmt.Errorf("cannot load organization context: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return organizationContext, nil
+}
+
+func (s OrganizationService) UpdateContext(
+	ctx context.Context,
+	req UpdateOrganizationContextRequest,
+) (*coredata.OrganizationContext, error) {
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
+	organization := &coredata.Organization{}
+	organizationContext := &coredata.OrganizationContext{}
+
+	err := s.svc.pg.WithTx(
+		ctx,
+		func(tx pg.Conn) error {
+			if err := organization.LoadByID(ctx, tx, s.svc.scope, req.OrganizationID); err != nil {
+				return fmt.Errorf("cannot load organization: %w", err)
+			}
+
+			if err := organizationContext.LoadByOrganizationID(ctx, tx, s.svc.scope, req.OrganizationID); err != nil {
+				return fmt.Errorf("cannot load organization context: %w", err)
+			}
+
+			if req.Summary != nil {
+				organizationContext.Summary = *req.Summary
+				organizationContext.UpdatedAt = time.Now()
+
+				if err := organizationContext.Update(ctx, tx, s.svc.scope); err != nil {
+					return fmt.Errorf("cannot update organization context: %w", err)
+				}
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return organizationContext, nil
 }
 
 func (s OrganizationService) Update(
@@ -221,6 +317,10 @@ func (s OrganizationService) Update(
 
 			if req.HeadquarterAddress != nil {
 				organization.HeadquarterAddress = *req.HeadquarterAddress
+			}
+
+			if err := organization.Update(ctx, s.svc.scope, tx); err != nil {
+				return fmt.Errorf("cannot update organization: %w", err)
 			}
 
 			if req.File != nil {

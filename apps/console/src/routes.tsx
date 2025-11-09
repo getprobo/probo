@@ -29,6 +29,7 @@ import { taskRoutes } from "./routes/taskRoutes.ts";
 import { dataRoutes } from "./routes/dataRoutes.ts";
 import { assetRoutes } from "./routes/assetRoutes.ts";
 import { auditRoutes } from "./routes/auditRoutes.ts";
+import { meetingsRoutes } from "./routes/meetingsRoutes.ts";
 import { trustCenterRoutes } from "./routes/trustCenterRoutes.ts";
 import { nonconformityRoutes } from "./routes/nonconformityRoutes.ts";
 import { obligationRoutes } from "./routes/obligationRoutes.ts";
@@ -175,6 +176,7 @@ const routes = [
       ...assetRoutes,
       ...dataRoutes,
       ...auditRoutes,
+      ...meetingsRoutes,
       ...nonconformityRoutes,
       ...obligationRoutes,
       ...continualImprovementRoutes,

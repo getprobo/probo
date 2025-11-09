@@ -57,7 +57,7 @@ func (ctr *CreateTaskRequest) Validate() error {
 
 	v.Check(ctr.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
 	v.Check(ctr.MeasureID, "measure_id", validator.GID(coredata.MeasureEntityType))
-	v.Check(ctr.Name, "name", validator.Required(), validator.SafeText(TitleMaxLength))
+	v.Check(ctr.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(ctr.Description, "description", validator.SafeText(ContentMaxLength))
 	v.Check(ctr.TimeEstimate, "time_estimate", validator.RangeDuration(0, 1000*time.Hour))
 	v.Check(ctr.AssignedToID, "assigned_to_id", validator.GID(coredata.PeopleEntityType))
@@ -69,7 +69,7 @@ func (utr *UpdateTaskRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(utr.TaskID, "task_id", validator.Required(), validator.GID(coredata.TaskEntityType))
-	v.Check(utr.Name, "name", validator.SafeText(TitleMaxLength))
+	v.Check(utr.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(utr.Description, "description", validator.SafeText(ContentMaxLength))
 	v.Check(utr.TimeEstimate, "time_estimate", validator.RangeDuration(0, 1000*time.Hour))
 	v.Check(utr.State, "state", validator.OneOfSlice(coredata.TaskStates()))

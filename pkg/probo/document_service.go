@@ -95,7 +95,7 @@ func (cdr *CreateDocumentRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(cdr.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
-	v.Check(cdr.Title, "title", validator.Required(), validator.SafeText(TitleMaxLength))
+	v.Check(cdr.Title, "title", validator.Required(), validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(cdr.Content, "content", validator.Required(), validator.NotEmpty(), validator.MaxLen(documentMaxLength))
 	v.Check(cdr.OwnerID, "owner_id", validator.Required(), validator.GID(coredata.PeopleEntityType))
 	v.Check(cdr.Classification, "classification", validator.Required(), validator.OneOfSlice(coredata.DocumentClassifications()))
@@ -109,7 +109,7 @@ func (udr *UpdateDocumentRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(udr.DocumentID, "document_id", validator.Required(), validator.GID(coredata.DocumentEntityType))
-	v.Check(udr.Title, "title", validator.SafeText(TitleMaxLength))
+	v.Check(udr.Title, "title", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(udr.OwnerID, "owner_id", validator.GID(coredata.PeopleEntityType))
 	v.Check(udr.Classification, "classification", validator.OneOfSlice(coredata.DocumentClassifications()))
 	v.Check(udr.DocumentType, "document_type", validator.OneOfSlice(coredata.DocumentTypes()))

@@ -1177,6 +1177,68 @@ func (r *measureConnectionResolver) TotalCount(ctx context.Context, obj *types.M
 	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
 }
 
+// Attendees is the resolver for the attendees field.
+func (r *meetingResolver) Attendees(ctx context.Context, obj *types.Meeting) ([]*types.People, error) {
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	attendees, err := prb.Meetings.GetAttendees(ctx, obj.ID)
+	if err != nil {
+		panic(fmt.Errorf("cannot load meeting attendees: %w", err))
+	}
+
+	if len(attendees) == 0 {
+		return []*types.People{}, nil
+	}
+
+	people := make([]*types.People, len(attendees))
+	for i, attendee := range attendees {
+		people[i] = types.NewPeople(attendee)
+	}
+
+	return people, nil
+}
+
+// Organization is the resolver for the organization field.
+func (r *meetingResolver) Organization(ctx context.Context, obj *types.Meeting) (*types.Organization, error) {
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	meeting, err := prb.Meetings.Get(ctx, obj.ID)
+	if err != nil {
+		var errNotFound *coredata.ErrMeetingNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, gqlutils.NotFound(errNotFound)
+		}
+		panic(fmt.Errorf("cannot load meeting: %w", err))
+	}
+
+	organization, err := prb.Organizations.Get(ctx, meeting.OrganizationID)
+	if err != nil {
+		var errNotFound *coredata.ErrOrganizationNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, gqlutils.NotFound(errNotFound)
+		}
+		panic(fmt.Errorf("cannot load organization: %w", err))
+	}
+
+	return types.NewOrganization(organization), nil
+}
+
+// TotalCount is the resolver for the totalCount field.
+func (r *meetingConnectionResolver) TotalCount(ctx context.Context, obj *types.MeetingConnection) (int, error) {
+	prb := r.ProboService(ctx, obj.ParentID.TenantID())
+
+	switch obj.Resolver.(type) {
+	case *organizationResolver:
+		count, err := prb.Meetings.CountForOrganizationID(ctx, obj.ParentID)
+		if err != nil {
+			panic(fmt.Errorf("cannot count meetings: %w", err))
+		}
+		return count, nil
+	}
+
+	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
+}
+
 // AuthMethod is the resolver for the authMethod field.
 func (r *membershipResolver) AuthMethod(ctx context.Context, obj *types.Membership) (coredata.UserAuthMethod, error) {
 	session := SessionFromContext(ctx)
@@ -1314,6 +1376,25 @@ func (r *mutationResolver) UpdateOrganization(ctx context.Context, input types.U
 
 	return &types.UpdateOrganizationPayload{
 		Organization: types.NewOrganization(organization),
+	}, nil
+}
+
+// UpdateOrganizationContext is the resolver for the updateOrganizationContext field.
+func (r *mutationResolver) UpdateOrganizationContext(ctx context.Context, input types.UpdateOrganizationContextInput) (*types.UpdateOrganizationContextPayload, error) {
+	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
+
+	req := probo.UpdateOrganizationContextRequest{
+		OrganizationID: input.OrganizationID,
+		Summary:        UnwrapOmittable(input.Summary),
+	}
+
+	organizationContext, err := prb.Organizations.UpdateContext(ctx, req)
+	if err != nil {
+		panic(fmt.Errorf("cannot update organization context: %w", err))
+	}
+
+	return &types.UpdateOrganizationContextPayload{
+		Context: types.NewOrganizationContext(organizationContext),
 	}, nil
 }
 
@@ -2841,6 +2922,71 @@ func (r *mutationResolver) DeleteDocument(ctx context.Context, input types.Delet
 	}, nil
 }
 
+// CreateMeeting is the resolver for the createMeeting field.
+func (r *mutationResolver) CreateMeeting(ctx context.Context, input types.CreateMeetingInput) (*types.CreateMeetingPayload, error) {
+	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
+
+	meeting, err := prb.Meetings.Create(
+		ctx,
+		probo.CreateMeetingRequest{
+			OrganizationID: input.OrganizationID,
+			Name:           input.Name,
+			Date:           input.Date,
+			AttendeeIDs:    input.AttendeeIds,
+			Minutes:        input.Minutes,
+		},
+	)
+	if err != nil {
+		panic(fmt.Errorf("cannot create meeting: %w", err))
+	}
+
+	return &types.CreateMeetingPayload{
+		MeetingEdge: types.NewMeetingEdge(meeting, coredata.MeetingOrderFieldCreatedAt),
+	}, nil
+}
+
+// UpdateMeeting is the resolver for the updateMeeting field.
+func (r *mutationResolver) UpdateMeeting(ctx context.Context, input types.UpdateMeetingInput) (*types.UpdateMeetingPayload, error) {
+	prb := r.ProboService(ctx, input.MeetingID.TenantID())
+
+	var attendeeIDs []gid.GID
+	if input.AttendeeIds != nil {
+		attendeeIDs = input.AttendeeIds
+	}
+
+	meeting, err := prb.Meetings.Update(
+		ctx,
+		probo.UpdateMeetingRequest{
+			MeetingID:   input.MeetingID,
+			Name:        input.Name,
+			Date:        input.Date,
+			AttendeeIDs: attendeeIDs,
+			Minutes:     UnwrapOmittable(input.Minutes),
+		},
+	)
+	if err != nil {
+		panic(fmt.Errorf("cannot update meeting: %w", err))
+	}
+
+	return &types.UpdateMeetingPayload{
+		Meeting: types.NewMeeting(meeting),
+	}, nil
+}
+
+// DeleteMeeting is the resolver for the deleteMeeting field.
+func (r *mutationResolver) DeleteMeeting(ctx context.Context, input types.DeleteMeetingInput) (*types.DeleteMeetingPayload, error) {
+	prb := r.ProboService(ctx, input.MeetingID.TenantID())
+
+	err := prb.Meetings.Delete(ctx, input.MeetingID)
+	if err != nil {
+		panic(fmt.Errorf("cannot delete meeting: %w", err))
+	}
+
+	return &types.DeleteMeetingPayload{
+		DeletedMeetingID: input.MeetingID,
+	}, nil
+}
+
 // PublishDocumentVersion is the resolver for the publishDocumentVersion field.
 func (r *mutationResolver) PublishDocumentVersion(ctx context.Context, input types.PublishDocumentVersionInput) (*types.PublishDocumentVersionPayload, error) {
 	prb := r.ProboService(ctx, input.DocumentID.TenantID())
@@ -3560,7 +3706,7 @@ func (r *mutationResolver) CreateProcessingActivity(ctx context.Context, input t
 		Recipients:                     input.Recipients,
 		Location:                       input.Location,
 		InternationalTransfers:         input.InternationalTransfers,
-		TransferSafeguard:              input.TransferSafeguard,
+		TransferSafeguard:              input.TransferSafeguards,
 		RetentionPeriod:                input.RetentionPeriod,
 		SecurityMeasures:               input.SecurityMeasures,
 		DataProtectionImpactAssessment: input.DataProtectionImpactAssessment,
@@ -4090,6 +4236,18 @@ func (r *organizationResolver) HorizontalLogoURL(ctx context.Context, obj *types
 	return prb.Organizations.GenerateHorizontalLogoURL(ctx, obj.ID, 1*time.Hour)
 }
 
+// Context is the resolver for the context field.
+func (r *organizationResolver) Context(ctx context.Context, obj *types.Organization) (*types.OrganizationContext, error) {
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	orgContext, err := prb.Organizations.GetContextSummary(ctx, obj.ID)
+	if err != nil {
+		panic(fmt.Errorf("cannot load organization context: %w", err))
+	}
+
+	return types.NewOrganizationContext(orgContext), nil
+}
+
 // Memberships is the resolver for the memberships field.
 func (r *organizationResolver) Memberships(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MembershipOrderBy) (*types.MembershipConnection, error) {
 	pageOrderBy := page.OrderBy[coredata.MembershipOrderField]{
@@ -4309,6 +4467,31 @@ func (r *organizationResolver) Documents(ctx context.Context, obj *types.Organiz
 	}
 
 	return types.NewDocumentConnection(page, r, obj.ID, documentFilter), nil
+}
+
+// Meetings is the resolver for the meetings field.
+func (r *organizationResolver) Meetings(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeetingOrderBy) (*types.MeetingConnection, error) {
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.MeetingOrderField]{
+		Field:     coredata.MeetingOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.MeetingOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	page, err := prb.Meetings.ListForOrganizationID(ctx, obj.ID, cursor)
+	if err != nil {
+		panic(fmt.Errorf("cannot list organization meetings: %w", err))
+	}
+
+	return types.NewMeetingConnection(page, r, obj.ID), nil
 }
 
 // Measures is the resolver for the measures field.
@@ -5003,6 +5186,17 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 		}
 
 		return types.NewTrustCenterAccess(trustCenterAccess), nil
+	case coredata.MeetingEntityType:
+		meeting, err := prb.Meetings.Get(ctx, id)
+		if err != nil {
+			var errNotFound *coredata.ErrMeetingNotFound
+			if errors.As(err, &errNotFound) {
+				return nil, gqlutils.NotFound(errNotFound)
+			}
+			panic(fmt.Errorf("cannot get meeting: %w", err))
+		}
+
+		return types.NewMeeting(meeting), nil
 	default:
 	}
 
@@ -6272,6 +6466,14 @@ func (r *Resolver) MeasureConnection() schema.MeasureConnectionResolver {
 	return &measureConnectionResolver{r}
 }
 
+// Meeting returns schema.MeetingResolver implementation.
+func (r *Resolver) Meeting() schema.MeetingResolver { return &meetingResolver{r} }
+
+// MeetingConnection returns schema.MeetingConnectionResolver implementation.
+func (r *Resolver) MeetingConnection() schema.MeetingConnectionResolver {
+	return &meetingConnectionResolver{r}
+}
+
 // Membership returns schema.MembershipResolver implementation.
 func (r *Resolver) Membership() schema.MembershipResolver { return &membershipResolver{r} }
 
@@ -6449,6 +6651,8 @@ type invitationResolver struct{ *Resolver }
 type invitationConnectionResolver struct{ *Resolver }
 type measureResolver struct{ *Resolver }
 type measureConnectionResolver struct{ *Resolver }
+type meetingResolver struct{ *Resolver }
+type meetingConnectionResolver struct{ *Resolver }
 type membershipResolver struct{ *Resolver }
 type membershipConnectionResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }

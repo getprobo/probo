@@ -44,7 +44,7 @@ type (
 func (vcrcr *VendorComplianceReportCreateRequest) Validate() error {
 	v := validator.New()
 
-	v.Check(vcrcr.ReportName, "report_name", validator.Required(), validator.SafeText(TitleMaxLength))
+	v.Check(vcrcr.ReportName, "report_name", validator.SafeTextNoNewLine(TitleMaxLength))
 
 	return v.Error()
 }

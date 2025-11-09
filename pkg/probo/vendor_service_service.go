@@ -48,7 +48,7 @@ func (cvsr *CreateVendorServiceRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(cvsr.VendorID, "vendor_id", validator.Required(), validator.GID(coredata.VendorEntityType))
-	v.Check(cvsr.Name, "name", validator.Required(), validator.SafeText(TitleMaxLength))
+	v.Check(cvsr.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(cvsr.Description, "description", validator.SafeText(ContentMaxLength))
 
 	return v.Error()
@@ -58,7 +58,7 @@ func (uvsr *UpdateVendorServiceRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(uvsr.ID, "id", validator.Required(), validator.GID(coredata.VendorServiceEntityType))
-	v.Check(uvsr.Name, "name", validator.SafeText(TitleMaxLength))
+	v.Check(uvsr.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(uvsr.Description, "description", validator.SafeText(ContentMaxLength))
 
 	return v.Error()

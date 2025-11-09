@@ -53,7 +53,7 @@ type (
 func (vdpacr *VendorDataPrivacyAgreementCreateRequest) Validate() error {
 	v := validator.New()
 
-	v.Check(vdpacr.FileName, "file_name", validator.Required(), validator.SafeText(TitleMaxLength))
+	v.Check(vdpacr.FileName, "file_name", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(vdpacr.ValidUntil, "valid_until", validator.After(vdpacr.ValidFrom))
 
 	return v.Error()

@@ -52,7 +52,7 @@ func (cvcr *CreateVendorContactRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(cvcr.VendorID, "vendor_id", validator.Required(), validator.GID(coredata.VendorEntityType))
-	v.Check(cvcr.FullName, "full_name", validator.SafeText(TitleMaxLength))
+	v.Check(cvcr.FullName, "fullName", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(cvcr.Email, "email", validator.Email())
 	v.Check(cvcr.Phone, "phone", validator.SafeText(NameMaxLength))
 	v.Check(cvcr.Role, "role", validator.SafeText(TitleMaxLength))
@@ -64,7 +64,7 @@ func (uvcr *UpdateVendorContactRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(uvcr.ID, "id", validator.Required(), validator.GID(coredata.VendorContactEntityType))
-	v.Check(uvcr.FullName, "full_name", validator.SafeText(TitleMaxLength))
+	v.Check(uvcr.FullName, "fullName", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(uvcr.Email, "email", validator.Email())
 	v.Check(uvcr.Phone, "phone", validator.SafeText(NameMaxLength))
 	v.Check(uvcr.Role, "role", validator.SafeText(TitleMaxLength))

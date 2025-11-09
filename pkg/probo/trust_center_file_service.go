@@ -60,7 +60,7 @@ func (ctcfr *CreateTrustCenterFileRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(ctcfr.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
-	v.Check(ctcfr.Name, "name", validator.Required(), validator.SafeText(TitleMaxLength))
+	v.Check(ctcfr.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(ctcfr.Category, "category", validator.Required(), validator.SafeText(TitleMaxLength))
 	v.Check(ctcfr.File, "file", validator.Required())
 	v.Check(ctcfr.TrustCenterVisibility, "trust_center_visibility", validator.Required(), validator.OneOfSlice(coredata.TrustCenterVisibilities()))
@@ -72,7 +72,7 @@ func (utcfr *UpdateTrustCenterFileRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(utcfr.ID, "id", validator.Required(), validator.GID(coredata.TrustCenterFileEntityType))
-	v.Check(utcfr.Name, "name", validator.SafeText(TitleMaxLength))
+	v.Check(utcfr.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(utcfr.Category, "category", validator.SafeText(TitleMaxLength))
 	v.Check(utcfr.TrustCenterVisibility, "trust_center_visibility", validator.OneOfSlice(coredata.TrustCenterVisibilities()))
 

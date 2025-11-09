@@ -74,7 +74,7 @@ func (cmr *CreateMeasureRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(cmr.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
-	v.Check(cmr.Name, "name", validator.Required(), validator.SafeText(TitleMaxLength))
+	v.Check(cmr.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(cmr.Description, "description", validator.SafeText(ContentMaxLength))
 	v.Check(cmr.Category, "category", validator.Required(), validator.SafeText(TitleMaxLength))
 
@@ -85,7 +85,7 @@ func (umr *UpdateMeasureRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(umr.ID, "id", validator.Required(), validator.GID(coredata.MeasureEntityType))
-	v.Check(umr.Name, "name", validator.SafeText(TitleMaxLength))
+	v.Check(umr.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(umr.Description, "description", validator.SafeText(ContentMaxLength))
 	v.Check(umr.Category, "category", validator.SafeText(TitleMaxLength))
 	v.Check(umr.State, "state", validator.OneOfSlice(coredata.MeasureStates()))

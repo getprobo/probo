@@ -58,7 +58,7 @@ func (cpr *CreatePeopleRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(cpr.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
-	v.Check(cpr.FullName, "full_name", validator.Required(), validator.SafeText(NameMaxLength))
+	v.Check(cpr.FullName, "full_name", validator.SafeTextNoNewLine(NameMaxLength))
 	v.Check(cpr.PrimaryEmailAddress, "primary_email_address", validator.Required(), validator.NotEmpty(), validator.Email())
 	v.CheckEach(cpr.AdditionalEmailAddresses, "additional_email_addresses", func(index int, item any) {
 		v.Check(item, fmt.Sprintf("additional_email_addresses[%d]", index), validator.Required(), validator.NotEmpty(), validator.Email())
@@ -76,7 +76,7 @@ func (upr *UpdatePeopleRequest) Validate() error {
 
 	v.Check(upr.ID, "id", validator.Required(), validator.GID(coredata.PeopleEntityType))
 	v.Check(upr.Kind, "kind", validator.OneOfSlice(coredata.PeopleKinds()))
-	v.Check(upr.FullName, "full_name", validator.Required(), validator.SafeText(NameMaxLength))
+	v.Check(upr.FullName, "full_name", validator.SafeTextNoNewLine(NameMaxLength))
 	v.Check(upr.PrimaryEmailAddress, "primary_email_address", validator.NotEmpty(), validator.Email())
 	v.CheckEach(upr.AdditionalEmailAddresses, "additional_email_addresses", func(index int, item any) {
 		v.Check(item, fmt.Sprintf("additional_email_addresses[%d]", index), validator.Required(), validator.NotEmpty(), validator.Email())

@@ -78,7 +78,7 @@ func (cfr *CreateFrameworkRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(cfr.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
-	v.Check(cfr.Name, "name", validator.Required(), validator.SafeText(TitleMaxLength))
+	v.Check(cfr.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(cfr.Description, "description", validator.SafeText(ContentMaxLength))
 
 	return v.Error()
@@ -88,7 +88,7 @@ func (ufr *UpdateFrameworkRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(ufr.ID, "id", validator.Required(), validator.GID(coredata.FrameworkEntityType))
-	v.Check(ufr.Name, "name", validator.SafeText(TitleMaxLength))
+	v.Check(ufr.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(ufr.Description, "description", validator.SafeText(ContentMaxLength))
 
 	return v.Error()

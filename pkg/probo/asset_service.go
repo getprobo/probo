@@ -40,7 +40,7 @@ func (car *CreateAssetRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(car.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
-	v.Check(car.Name, "name", validator.Required(), validator.SafeText(TitleMaxLength))
+	v.Check(car.Name, "name", validator.Required(), validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(car.Amount, "amount", validator.Required(), validator.Min(1))
 	v.Check(car.OwnerID, "owner_id", validator.Required(), validator.GID(coredata.PeopleEntityType))
 	v.Check(car.AssetType, "asset_type", validator.Required(), validator.OneOfSlice(coredata.AssetTypes()))
@@ -56,7 +56,7 @@ func (uar *UpdateAssetRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(uar.ID, "id", validator.Required(), validator.GID(coredata.AssetEntityType))
-	v.Check(uar.Name, "name", validator.SafeText(NameMaxLength))
+	v.Check(uar.Name, "name", validator.SafeTextNoNewLine(NameMaxLength))
 	v.Check(uar.Amount, "amount", validator.Min(1))
 	v.Check(uar.OwnerID, "owner_id", validator.GID(coredata.PeopleEntityType))
 	v.Check(uar.AssetType, "asset_type", validator.OneOfSlice(coredata.AssetTypes()))

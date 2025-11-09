@@ -76,7 +76,7 @@ func (cpar *CreateProcessingActivityRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(cpar.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
-	v.Check(cpar.Name, "name", validator.Required(), validator.SafeText(TitleMaxLength))
+	v.Check(cpar.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(cpar.Purpose, "purpose", validator.SafeText(TitleMaxLength))
 	v.Check(cpar.DataSubjectCategory, "data_subject_category", validator.SafeText(TitleMaxLength))
 	v.Check(cpar.PersonalDataCategory, "personal_data_category", validator.SafeText(TitleMaxLength))
@@ -102,7 +102,7 @@ func (upar *UpdateProcessingActivityRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(upar.ID, "id", validator.Required(), validator.GID(coredata.ProcessingActivityEntityType))
-	v.Check(upar.Name, "name", validator.SafeText(TitleMaxLength))
+	v.Check(upar.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(upar.Purpose, "purpose", validator.SafeText(TitleMaxLength))
 	v.Check(upar.DataSubjectCategory, "data_subject_category", validator.SafeText(TitleMaxLength))
 	v.Check(upar.PersonalDataCategory, "personal_data_category", validator.SafeText(TitleMaxLength))

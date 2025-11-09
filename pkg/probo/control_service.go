@@ -56,9 +56,9 @@ func (ccr *CreateControlRequest) Validate() error {
 
 	v.Check(ccr.ID, "id", validator.Required(), validator.GID(coredata.ControlEntityType))
 	v.Check(ccr.FrameworkID, "framework_id", validator.Required(), validator.GID(coredata.FrameworkEntityType))
-	v.Check(ccr.Name, "name", validator.Required(), validator.SafeText(TitleMaxLength))
+	v.Check(ccr.Name, "name", validator.Required(), validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(ccr.Description, "description", validator.Required(), validator.SafeText(ContentMaxLength))
-	v.Check(ccr.SectionTitle, "section_title", validator.Required(), validator.SafeText(TitleMaxLength))
+	v.Check(ccr.SectionTitle, "section_title", validator.Required(), validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(ccr.Status, "status", validator.Required(), validator.OneOfSlice(coredata.ControlStatuses()))
 	v.Check(ccr.ExclusionJustification, "exclusion_justification", validator.Required(), validator.SafeText(TitleMaxLength))
 
@@ -69,9 +69,9 @@ func (ucr *UpdateControlRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(ucr.ID, "id", validator.Required(), validator.GID(coredata.ControlEntityType))
-	v.Check(ucr.Name, "name", validator.SafeText(TitleMaxLength))
+	v.Check(ucr.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(ucr.Description, "description", validator.SafeText(ContentMaxLength))
-	v.Check(ucr.SectionTitle, "section_title", validator.SafeText(TitleMaxLength))
+	v.Check(ucr.SectionTitle, "section_title", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(ucr.Status, "status", validator.OneOfSlice(coredata.ControlStatuses()))
 	v.Check(ucr.ExclusionJustification, "exclusion_justification", validator.SafeText(TitleMaxLength))
 

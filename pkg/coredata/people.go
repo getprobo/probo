@@ -21,10 +21,10 @@ import (
 	"maps"
 	"time"
 
-	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/page"
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 )
 
 type (
@@ -172,6 +172,52 @@ func (p *People) LoadByEmail(
 	}
 
 	*p = people
+
+	return nil
+}
+
+func (p *Peoples) LoadByIDs(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	peopleIDs []gid.GID,
+) error {
+	q := `
+SELECT
+    id,
+    organization_id,
+    kind,
+    full_name,
+    primary_email_address,
+    additional_email_addresses,
+    position,
+    contract_start_date,
+    contract_end_date,
+    created_at,
+    updated_at
+FROM
+    peoples
+WHERE
+    %s
+    AND id = ANY(@people_ids)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.NamedArgs{"people_ids": peopleIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query people: %w", err)
+	}
+
+	peoples, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[People])
+	if err != nil {
+		return fmt.Errorf("cannot collect people: %w", err)
+	}
+
+	*p = peoples
 
 	return nil
 }
@@ -414,6 +460,75 @@ INNER JOIN signatories ON peoples.id = signatories.signed_by
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	rows, err := conn.Query(ctx, q, scope.SQLArguments())
+	if err != nil {
+		return fmt.Errorf("cannot query people: %w", err)
+	}
+
+	peoples, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[People])
+	if err != nil {
+		return fmt.Errorf("cannot collect people: %w", err)
+	}
+
+	*p = peoples
+
+	return nil
+}
+
+func (p *Peoples) LoadByMeetingID(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	meetingID gid.GID,
+) error {
+	q := `
+WITH people_attendees AS (
+	SELECT
+		p.id,
+		p.organization_id,
+		p.kind,
+		p.full_name,
+		p.primary_email_address,
+		p.additional_email_addresses,
+		p.position,
+		p.contract_start_date,
+		p.contract_end_date,
+		p.created_at,
+		p.updated_at,
+		p.tenant_id,
+		ma.created_at AS attendee_created_at
+	FROM
+		peoples p
+	INNER JOIN
+		meeting_attendees ma ON p.id = ma.attendee_id
+	WHERE
+		ma.meeting_id = @meeting_id
+)
+SELECT
+	id,
+	organization_id,
+	kind,
+	full_name,
+	primary_email_address,
+	additional_email_addresses,
+	position,
+	contract_start_date,
+	contract_end_date,
+	created_at,
+	updated_at
+FROM
+	people_attendees
+WHERE
+	%s
+ORDER BY
+	attendee_created_at ASC
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.NamedArgs{"meeting_id": meetingID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot query people: %w", err)
 	}

@@ -66,4 +66,5 @@ const (
 	SAMLConfigurationEntityType                uint16 = 42
 	UserAPIKeyEntityType                       uint16 = 43
 	UserAPIKeyMembershipEntityType             uint16 = 44
+	MeetingEntityType                          uint16 = 45
 )

@@ -64,7 +64,7 @@ func (crr *CreateRiskRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(crr.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
-	v.Check(crr.Name, "name", validator.Required(), validator.SafeText(TitleMaxLength))
+	v.Check(crr.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(crr.Description, "description", validator.Required(), validator.SafeText(ContentMaxLength))
 	v.Check(crr.Category, "category", validator.Required(), validator.SafeText(TitleMaxLength))
 	v.Check(crr.Treatment, "treatment", validator.Required(), validator.OneOfSlice(coredata.RiskTreatments()))
@@ -82,7 +82,7 @@ func (urr *UpdateRiskRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(urr.ID, "id", validator.Required(), validator.GID(coredata.RiskEntityType))
-	v.Check(urr.Name, "name", validator.SafeText(TitleMaxLength))
+	v.Check(urr.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(urr.Description, "description", validator.SafeText(ContentMaxLength))
 	v.Check(urr.Category, "category", validator.SafeText(TitleMaxLength))
 	v.Check(urr.Treatment, "treatment", validator.OneOfSlice(coredata.RiskTreatments()))

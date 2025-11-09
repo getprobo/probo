@@ -63,7 +63,7 @@ func NoHTML() ValidatorFunc {
 
 // PrintableText validates that a string contains only printable UTF-8 characters.
 // It rejects:
-// - Control characters (including null bytes, tabs, line breaks except space)
+// - Control characters (0x00-0x1F and 0x7F-0x9F, including null bytes and tabs, but allows newlines and carriage returns)
 // - Unicode direction override characters (RLO, LRO, PDF, etc.)
 // - Zero-width characters (ZWSP, ZWNJ, ZWJ, etc.)
 // - Other invisible or formatting characters
@@ -71,8 +71,8 @@ func NoHTML() ValidatorFunc {
 // - Replacement characters
 //
 // This validator does NOT check for HTML tags - use NoHTML() for that.
-// This is ideal for validating titles, full names, display names, and similar text fields
-// where only printable characters should be allowed.
+// This validator allows line breaks (newline and carriage return) for multi-line text fields.
+// Use NoNewLine() or SafeTextNoNewLine() for single-line fields that should reject line breaks.
 func PrintableText() ValidatorFunc {
 	return func(value any) *ValidationError {
 		actualValue, isNil := dereferenceValue(value)
@@ -96,7 +96,12 @@ func PrintableText() ValidatorFunc {
 				continue
 			}
 
-			// Reject control characters (0x00-0x1F and 0x7F-0x9F)
+			// Allow newline (0x0A) and carriage return (0x0D) for multi-line text
+			if r == '\n' || r == '\r' {
+				continue
+			}
+
+			// Reject control characters (0x00-0x1F and 0x7F-0x9F), except newline and carriage return
 			if r < 0x20 || (r >= 0x7F && r < 0xA0) {
 				return newValidationError(ErrorCodeInvalidFormat, fmt.Sprintf("contains invalid control character at position %d", i))
 			}
@@ -152,14 +157,74 @@ func PrintableText() ValidatorFunc {
 	}
 }
 
+// NoNewLine validates that a string does not contain newline or carriage return characters.
+// It rejects:
+// - Newline characters (\n, 0x0A)
+// - Carriage return characters (\r, 0x0D)
+//
+// This is useful for validating single-line fields like names and titles where line breaks
+// should not be allowed.
+func NoNewLine() ValidatorFunc {
+	return func(value any) *ValidationError {
+		actualValue, isNil := dereferenceValue(value)
+		if isNil {
+			return nil
+		}
+
+		str, ok := actualValue.(string)
+		if !ok {
+			return newValidationError(ErrorCodeInvalidFormat, "value must be a string")
+		}
+
+		if str == "" {
+			return nil
+		}
+
+		for i, r := range str {
+			if r == '\n' {
+				return newValidationError(ErrorCodeInvalidFormat, fmt.Sprintf("contains newline character at position %d", i))
+			}
+			if r == '\r' {
+				return newValidationError(ErrorCodeInvalidFormat, fmt.Sprintf("contains carriage return character at position %d", i))
+			}
+		}
+
+		return nil
+	}
+}
+
 // SafeText validates that a string is non-empty, bounded, and contains only safe content.
 // It combines NotEmpty, MaxLen, NoHTML, and PrintableText validators.
+// This allows newlines and carriage returns for multi-line text fields.
+// Use SafeTextNoNewLine for single-line field validation that should reject line breaks.
 func SafeText(maxLen int) ValidatorFunc {
 	validators := []ValidatorFunc{
 		NotEmpty(),
 		MaxLen(maxLen),
 		NoHTML(),
 		PrintableText(),
+	}
+
+	return func(value any) *ValidationError {
+		for _, validator := range validators {
+			if err := validator(value); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+}
+
+// SafeTextNoNewLine validates that a string is non-empty, bounded, and contains only safe content
+// without newlines or carriage returns. It combines NotEmpty, MaxLen, NoHTML, PrintableText, and NoNewLine validators.
+// This is ideal for validating single-line fields like names, titles, and display names.
+func SafeTextNoNewLine(maxLen int) ValidatorFunc {
+	validators := []ValidatorFunc{
+		NotEmpty(),
+		MaxLen(maxLen),
+		NoHTML(),
+		PrintableText(),
+		NoNewLine(),
 	}
 
 	return func(value any) *ValidationError {

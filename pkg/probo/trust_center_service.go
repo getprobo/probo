@@ -65,7 +65,7 @@ func (utcndar *UploadTrustCenterNDARequest) Validate() error {
 	v := validator.New()
 
 	v.Check(utcndar.TrustCenterID, "trust_center_id", validator.Required(), validator.GID(coredata.TrustCenterEntityType))
-	v.Check(utcndar.FileName, "file_name", validator.Required(), validator.SafeText(TitleMaxLength))
+	v.Check(utcndar.FileName, "file_name", validator.SafeTextNoNewLine(TitleMaxLength))
 
 	return v.Error()
 }

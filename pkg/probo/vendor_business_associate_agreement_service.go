@@ -53,7 +53,7 @@ type (
 func (vbaacr *VendorBusinessAssociateAgreementCreateRequest) Validate() error {
 	v := validator.New()
 
-	v.Check(vbaacr.FileName, "file_name", validator.Required(), validator.SafeText(TitleMaxLength))
+	v.Check(vbaacr.FileName, "file_name", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(vbaacr.ValidUntil, "valid_until", validator.After(vbaacr.ValidFrom))
 
 	return v.Error()
