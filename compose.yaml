@@ -112,7 +112,7 @@ services:
       PEBBLE_VA_NOSLEEP: "1" # Don't sleep during validation for faster testing
       PEBBLE_WFE_NONCEREJECT: "0" # Don't reject reused nonces
       PEBBLE_VA_ALWAYS_VALID: "1" # Skip actual HTTP/DNS validation for local dev
-    command: pebble -config /test/config/pebble-config.json -dnsserver 127.0.0.1:8053
+    command: -config /test/config/pebble-config.json -dnsserver 127.0.0.1:8053
     volumes:
       - "./compose/pebble:/test/config:ro"
 
