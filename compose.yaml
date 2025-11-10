@@ -122,7 +122,7 @@ services:
       - "8055:8055" # HTTP-01 challenge test server
       - "8053:8053" # DNS server
       - "8056:8056" # Management API
-    command: pebble-challtestsrv -dns01 ":8053" -http01 ":8055" -management ":8056"
+    command: -dns01 ":8053" -http01 ":8055" -management ":8056"
 
 volumes:
   postgres-data:
