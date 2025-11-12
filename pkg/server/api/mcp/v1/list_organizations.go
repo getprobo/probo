@@ -30,10 +30,8 @@ var (
 		Description: "List all organizations the user has access to",
 		Annotations: &mcp.ToolAnnotations{ReadOnlyHint: true},
 		InputSchema: &jsonschema.Schema{
-			Type: "object",
-			Properties: map[string]*jsonschema.Schema{
-				"organizationID": {Type: "string"},
-			},
+			Type:       "object",
+			Properties: map[string]*jsonschema.Schema{},
 		},
 	}
 )

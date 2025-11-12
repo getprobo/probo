@@ -44,6 +44,7 @@ func (r *resolver) AddVendor(
 			BusinessAssociateAgreementURL: args.BusinessAssociateAgreementURL,
 			SubprocessorsListURL:          args.SubprocessorsListURL,
 			Certifications:                args.Certifications,
+			Countries:                     args.Countries,
 			SecurityPageURL:               args.SecurityPageURL,
 			TrustPageURL:                  args.TrustPageURL,
 			TermsOfServiceURL:             args.TermsOfServiceURL,

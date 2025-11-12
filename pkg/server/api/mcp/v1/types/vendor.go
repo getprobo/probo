@@ -103,19 +103,19 @@ type (
 var (
 	ListVendorsInputSchema = &jsonschema.Schema{
 		Type:     "object",
-		Required: []string{"organizationID"},
+		Required: []string{"organization_id"},
 		Properties: map[string]*jsonschema.Schema{
-			"organizationID": {Type: "string"},
+			"organization_id": {Type: "string"},
 			"filter": {
 				Type: "object",
 				Properties: map[string]*jsonschema.Schema{
-					"snapshotID": {Type: "string"},
+					"snapshot_id": {Type: "string"},
 				},
 			},
-			"orderBy": {
+			"order_field": {
 				Types: []string{"object", "null"},
 				Properties: map[string]*jsonschema.Schema{
-					"field":     {Type: "string", Enum: []any{"CREATED_AT"}},
+					"field":     {Type: "string", Enum: []any{"CREATED_AT", "UPDATED_AT", "NAME"}},
 					"direction": OrderByDirectionSchema,
 				},
 			},
@@ -170,7 +170,7 @@ var (
 			"description":                      NullableStringSchema,
 			"category":                         VendorCategorySchema,
 			"headquarter_address":              NullableStringSchema,
-			"legalName":                        NullableStringSchema,
+			"legal_name":                       NullableStringSchema,
 			"website_url":                      NullableStringSchema,
 			"privacy_policy_url":               NullableStringSchema,
 			"service_level_agreement_url":      NullableStringSchema,
