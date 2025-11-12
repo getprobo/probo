@@ -42,14 +42,18 @@ export function CellHead({
         <div
             {...props}
             className={clsx(
-                "text-xs text-txt-tertiary font-semibold border-border-low border-b",
-                "px-6 whitespace-nowrap py-3",
+                "text-xs text-txt-tertiary font-semibold ",
+                "first:pl-6 p-3 whitespace-nowrap",
                 className,
             )}
         >
             {children}
         </div>
     );
+}
+
+export function Row(props: ComponentPropsWithRef<"div">) {
+    return <div {...props} className={clsx("contents", props.className)} />;
 }
 
 export function Cell({
@@ -62,7 +66,7 @@ export function Cell({
             data-cell
             {...props}
             className={clsx(
-                "py-3 px-6 text-sm text-txt-primary bg-tertiary border-t border-border-low flex flex-col justify-center",
+                "first:pl-6 p-3 text-sm text-txt-primary bg-tertiary border-t border-border-low flex flex-col justify-center",
                 props.className,
             )}
         />

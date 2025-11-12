@@ -16,6 +16,7 @@ import { tv } from "tailwind-variants";
 import {
     Children,
     type ComponentProps,
+    type CSSProperties,
     type PropsWithChildren,
     type ReactNode,
 } from "react";
@@ -36,6 +37,8 @@ type Props<T> = PropsWithChildren<
         onSearch?: (s: string) => void;
         searchPlaceholder?: string;
         loading?: boolean;
+        style?: CSSProperties;
+        dropdownProps?: ComponentProps<typeof Content>;
     } & Omit<ComponentProps<typeof Root>, "onChange" | "value">
 >;
 
@@ -108,6 +111,7 @@ export function Select<T>({
     open,
     defaultOpen = false,
     onOpenChange,
+    dropdownProps,
     ...props
 }: Props<T>) {
     const { trigger, content, icon } = select({
@@ -140,7 +144,6 @@ export function Select<T>({
             </Trigger>
             <Portal>
                 <Content
-                    className={content()}
                     position="popper"
                     sideOffset={5}
                     style={{
@@ -148,6 +151,8 @@ export function Select<T>({
                         maxHeight:
                             "var(--radix-select-content-available-height)",
                     }}
+                    {...dropdownProps}
+                    className={content({ className: dropdownProps?.className })}
                 >
                     {onSearch && (
                         <Input
