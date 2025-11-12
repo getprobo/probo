@@ -60,10 +60,13 @@ func SAMLACSHandler(samlSvc *authsvc.SAMLService, authSvc *authsvc.Service, auth
 			return
 		}
 
-		if r.FormValue("RelayState") == "" {
-			logger.WarnCtx(ctx, "missing RelayState")
-			http.Error(w, "missing RelayState", http.StatusBadRequest)
-			return
+		relayState := r.FormValue("RelayState")
+		samlConfigID := r.URL.Query().Get("c")
+
+		if relayState != "" {
+			logger.InfoCtx(ctx, "processing SP-initiated SAML login", log.String("relay_state", relayState))
+		} else {
+			logger.InfoCtx(ctx, "processing IDP-initiated SAML login", log.String("config_id", samlConfigID))
 		}
 
 		userInfo, err := samlSvc.HandleSAMLAssertion(ctx, r)
