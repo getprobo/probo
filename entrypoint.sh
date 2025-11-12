@@ -4,11 +4,37 @@ set -e
 # Configuration file path
 CONFIG_FILE="${CONFIG_FILE:-/etc/probod/config.yml}"
 
+# Function to generate default SAML certificate and private key if not provided
+generate_saml_defaults() {
+  if [ -z "$SAML_CERTIFICATE" ] || [ -z "$SAML_PRIVATE_KEY" ]; then
+    echo "Generating default SAML certificate and private key..."
+
+    # Generate private key and certificate valid for 10 years
+    TEMP_KEY=$(mktemp)
+    TEMP_CERT=$(mktemp)
+
+    openssl req -x509 -newkey rsa:2048 -keyout "$TEMP_KEY" -out "$TEMP_CERT" \
+      -days 3650 -nodes -subj "/CN=probo-saml/O=Probo/C=US" 2>/dev/null
+
+    # Read generated files and export as environment variables
+    export SAML_PRIVATE_KEY=$(cat "$TEMP_KEY")
+    export SAML_CERTIFICATE=$(cat "$TEMP_CERT")
+
+    # Clean up temporary files
+    rm -f "$TEMP_KEY" "$TEMP_CERT"
+
+    echo "Default SAML certificate and private key generated successfully"
+  fi
+}
+
 # Check if config file already exists (e.g., mounted from ConfigMap)
 if [ -f "$CONFIG_FILE" ]; then
   echo "Using existing configuration file at: $CONFIG_FILE"
 else
   echo "Generating configuration file from environment variables at: $CONFIG_FILE"
+
+  # Generate default SAML credentials if not provided
+  generate_saml_defaults
 
   # Create directory if it doesn't exist
   mkdir -p "$(dirname "$CONFIG_FILE")"
@@ -121,7 +147,6 @@ EOF
   fi
 
   # Add SAML config if any SAML variable is configured
-  if [ -n "$SAML_SESSION_DURATION" ] || [ -n "$SAML_CLEANUP_INTERVAL_SECONDS" ] || [ -n "$SAML_CERTIFICATE" ] || [ -n "$SAML_PRIVATE_KEY" ]; then
     cat >> "$CONFIG_FILE" <<EOF
 
 saml:
@@ -132,7 +157,6 @@ $(echo "${SAML_CERTIFICATE:-}" | sed 's/^/    /')
   private-key: |
 $(echo "${SAML_PRIVATE_KEY:-}" | sed 's/^/    /')
 EOF
-  fi
 
   echo "Configuration file generated at: $CONFIG_FILE"
 fi
