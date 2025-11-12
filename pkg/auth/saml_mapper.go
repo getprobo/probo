@@ -77,12 +77,13 @@ func ExtractEmailDomain(email string) (string, error) {
 	return domain, nil
 }
 
-func MapSAMLRoleToSystemRole(samlRole string) coredata.Role {
+func MapSAMLRoleToSystemRole(samlRole string) *coredata.Role {
 	if samlRole != "" && isValidRole(samlRole) {
-		return coredata.Role(samlRole)
+		role := coredata.Role(samlRole)
+		return &role
 	}
 
-	return coredata.RoleMember
+	return nil
 }
 
 func isValidRole(role string) bool {

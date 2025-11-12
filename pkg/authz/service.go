@@ -827,7 +827,7 @@ func (s *TenantAuthzService) EnsureSAMLMembership(
 	ctx context.Context,
 	userID gid.GID,
 	organizationID gid.GID,
-	role coredata.Role,
+	role *coredata.Role,
 ) error {
 	now := time.Now()
 
@@ -842,12 +842,17 @@ func (s *TenantAuthzService) EnsureSAMLMembership(
 					return fmt.Errorf("cannot load membership: %w", err)
 				}
 
+				membershipRole := coredata.RoleMember
+				if role != nil {
+					membershipRole = *role
+				}
+
 				membershipID := gid.New(s.scope.GetTenantID(), coredata.MembershipEntityType)
 				membership = coredata.Membership{
 					ID:             membershipID,
 					UserID:         userID,
 					OrganizationID: organizationID,
-					Role:           role,
+					Role:           membershipRole,
 					CreatedAt:      now,
 					UpdatedAt:      now,
 				}
@@ -859,8 +864,8 @@ func (s *TenantAuthzService) EnsureSAMLMembership(
 				return nil
 			}
 
-			if membership.Role != role {
-				membership.Role = role
+			if role != nil && membership.Role != *role {
+				membership.Role = *role
 				membership.UpdatedAt = now
 
 				if err := membership.Update(ctx, tx, s.scope); err != nil {
