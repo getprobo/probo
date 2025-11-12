@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Added
+
+- Add beta MCP server.
+- Add official Kubernetes HEML chart.
+- Add SAML IDP initiated flow support.
+
+### Changed
+
+- SAML role is not mandatory anymore.
+
 ## [0.86.4] - 2025-11-07
 
 ### Fixed
