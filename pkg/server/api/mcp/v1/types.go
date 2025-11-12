@@ -22,17 +22,12 @@ import (
 )
 
 type (
-	// Config holds configuration for the MCP server
 	Config struct {
-		// Version is the MCP server version
-		Version string
-		// RequestTimeout is the maximum duration for a request
+		Version        string
 		RequestTimeout time.Duration
-		// MaxRequestSize is the maximum size of a request body in bytes
 		MaxRequestSize int64
 	}
 
-	// MCPContext holds the authenticated context for MCP requests
 	MCPContext struct {
 		UserID    gid.GID
 		TenantIDs []gid.TenantID
@@ -45,18 +40,15 @@ var (
 	mcpContextKey = &ctxKey{name: "mcp_context"}
 )
 
-// MCPContextFromContext extracts the MCP context from the request context
 func MCPContextFromContext(ctx context.Context) *MCPContext {
 	mcpCtx, _ := ctx.Value(mcpContextKey).(*MCPContext)
 	return mcpCtx
 }
 
-// ContextWithMCPContext adds the MCP context to the request context
 func ContextWithMCPContext(ctx context.Context, mcpCtx *MCPContext) context.Context {
 	return context.WithValue(ctx, mcpContextKey, mcpCtx)
 }
 
-// DefaultConfig returns a default MCP configuration
 func DefaultConfig() Config {
 	return Config{
 		Version:        "1.0.0",

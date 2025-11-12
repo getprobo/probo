@@ -417,7 +417,7 @@ func (impl *Implm) Run(
 				CookieSecure:      impl.cfg.Auth.Cookie.Secure,
 			},
 			MCPConfig: api.MCPConfig{
-				Version:        "1.0.0",
+				Version:        "0.0.1",
 				RequestTimeout: 30 * time.Second,
 				MaxRequestSize: 10 * 1024 * 1024, // 10MB
 			},

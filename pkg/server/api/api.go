@@ -72,7 +72,6 @@ type (
 		Logger            *log.Logger
 	}
 
-	// MCPConfig holds configuration for MCP
 	MCPConfig struct {
 		Version        string
 		RequestTimeout time.Duration

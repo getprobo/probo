@@ -16,14 +16,12 @@ package types
 
 import "go.probo.inc/probo/pkg/coredata"
 
-// Organization represents a single organization in MCP responses
 type Organization struct {
 	Name     string `json:"name" jsonschema:"the organization name"`
 	ID       string `json:"id" jsonschema:"the organization ID"`
 	TenantID string `json:"tenantID" jsonschema:"the tenant ID this organization belongs to"`
 }
 
-// NewOrganization converts a coredata.Organization to an MCP Organization
 func NewOrganization(o *coredata.Organization) Organization {
 	return Organization{
 		Name:     o.Name,

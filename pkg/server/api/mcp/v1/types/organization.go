@@ -14,11 +14,8 @@
 
 package types
 
-// ListOrganizationsInput defines the input parameters for listOrganizations tool
-// Empty struct since no arguments are required
 type ListOrganizationsInput struct{}
 
-// ListOrganizationsOutput defines the output structure for listOrganizations tool
 type ListOrganizationsOutput struct {
 	Organizations []Organization `json:"organizations" jsonschema:"list of organizations the user has access to"`
 }
