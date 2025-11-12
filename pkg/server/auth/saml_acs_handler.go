@@ -64,7 +64,7 @@ func SAMLACSHandler(samlSvc *authsvc.SAMLService, authSvc *authsvc.Service, auth
 		samlConfigID := r.URL.Query().Get("c")
 
 		if relayState != "" {
-			logger.InfoCtx(ctx, "processing SP-initiated SAML login", log.String("relay_state", relayState))
+			logger.InfoCtx(ctx, "processing SP-initiated SAML login")
 		} else {
 			logger.InfoCtx(ctx, "processing IDP-initiated SAML login", log.String("config_id", samlConfigID))
 		}
