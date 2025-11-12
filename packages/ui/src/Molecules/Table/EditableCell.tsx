@@ -69,18 +69,28 @@ export function EditableCell({
                     side="bottom"
                     align="start"
                     sideOffset={height * -1}
-                    style={{ height, paddingLeft: padding }}
+                    style={{
+                        height,
+                        paddingLeft: type === "select" ? 0 : padding,
+                    }}
                     className="border border-border-low bg-level-2 min-w-[200px] min-h-[57px] flex flex-col justify-center rounded-sm"
                 >
                     {type === "select" && (
                         <>
                             <Select
-                                className="-mx-3"
                                 onValueChange={onValueChange}
                                 onOpenChange={setOpen}
                                 defaultOpen
                                 variant="ghost"
+                                style={{
+                                    height: height,
+                                }}
                                 placeholder={children}
+                                dropdownProps={{
+                                    sideOffset: 0,
+                                    className:
+                                        "rounded-t-none border border-border-low",
+                                }}
                             >
                                 {options}
                             </Select>
