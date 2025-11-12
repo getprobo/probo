@@ -18,6 +18,7 @@ import {
   DataTable,
   CellHead,
   Cell,
+  Row,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { usePageTitle } from "@probo/hooks";
@@ -145,13 +146,15 @@ export default function AssetsPage(props: Props) {
           </Authorized>
         )}
       </PageHeader>
-      <DataTable columns={6}>
-        <CellHead>{__("Name")}</CellHead>
-        <CellHead>{__("Type")}</CellHead>
-        <CellHead>{__("Amount")}</CellHead>
-        <CellHead>{__("Owner")}</CellHead>
-        <CellHead>{__("Vendors")}</CellHead>
-        <CellHead></CellHead>
+      <DataTable columns={["1fr", "1fr", "1fr", "1fr", "1fr", "56px"]}>
+        <Row>
+          <CellHead>{__("Name")}</CellHead>
+          <CellHead>{__("Type")}</CellHead>
+          <CellHead>{__("Amount")}</CellHead>
+          <CellHead>{__("Owner")}</CellHead>
+          <CellHead>{__("Vendors")}</CellHead>
+          <CellHead></CellHead>
+        </Row>
         {assets.map((entry) => (
           <AssetRow key={entry.id} entry={entry} connectionId={connectionId} />
         ))}
@@ -196,7 +199,7 @@ function AssetRow({
   };
 
   return (
-    <>
+    <Row>
       <EditableCell
         type="text"
         defaultValue={entry.name}
@@ -278,6 +281,6 @@ function AssetRow({
           </ActionDropdown>
         )}
       </Cell>
-    </>
+    </Row>
   );
 }
