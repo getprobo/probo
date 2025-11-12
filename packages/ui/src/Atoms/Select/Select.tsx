@@ -13,16 +13,21 @@ import * as ScrollArea from "@radix-ui/react-scroll-area";
 import { Input, input } from "../Input/Input.tsx";
 import { IconChevronGrabberVertical } from "../Icons/IconChevronGrabberVertical.tsx";
 import { tv } from "tailwind-variants";
-import { Children, type ComponentProps, type PropsWithChildren } from "react";
+import {
+    Children,
+    type ComponentProps,
+    type PropsWithChildren,
+    type ReactNode,
+} from "react";
 import { IconMagnifyingGlass } from "../Icons/IconMagnifyingGlass.tsx";
 import { Spinner } from "../Spinner/Spinner.tsx";
 
 type Props<T> = PropsWithChildren<
     {
         id?: string;
-        placeholder?: string;
+        placeholder?: ReactNode;
         onValueChange?: (s: NonNullable<T>) => void;
-        variant?: "default" | "editor" | "dashed";
+        variant?: "default" | "editor" | "dashed" | "ghost";
         invalid?: boolean;
         disabled?: boolean;
         className?: string;
@@ -71,6 +76,10 @@ const select = tv({
             default: {
                 trigger: input({ class: "w-full gap-4 " }),
             },
+            ghost: {
+                trigger: "w-full px-3",
+                content: "bg-level-2",
+            },
         },
     },
     compoundVariants: [
@@ -96,6 +105,9 @@ export function Select<T>({
     onSearch,
     searchPlaceholder,
     loading,
+    open,
+    defaultOpen = false,
+    onOpenChange,
     ...props
 }: Props<T>) {
     const { trigger, content, icon } = select({
@@ -103,7 +115,13 @@ export function Select<T>({
     });
 
     return (
-        <Root onValueChange={onValueChange} value={value as string}>
+        <Root
+            defaultOpen={defaultOpen}
+            open={open}
+            onOpenChange={onOpenChange}
+            onValueChange={onValueChange}
+            value={value as string}
+        >
             <Trigger
                 {...props}
                 className={trigger({

@@ -6,6 +6,7 @@ import {
     type PropsWithChildren,
     type ReactNode,
     type ThHTMLAttributes,
+    type ComponentPropsWithRef,
 } from "react";
 import { Card } from "../Card/Card";
 import { Link } from "react-router";
