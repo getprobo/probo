@@ -1,10 +1,11 @@
-import type { PropsWithChildren } from "react";
+import type { CSSProperties, PropsWithChildren } from "react";
 import { tv } from "tailwind-variants";
 import { Slot } from "../Slot";
 
 type Props = PropsWithChildren<{
     padded?: boolean;
     className?: string;
+    style?: CSSProperties;
     asChild?: boolean;
 }>;
 
@@ -17,10 +18,16 @@ const card = tv({
     },
 });
 
-export function Card({ padded = false, children, className, asChild }: Props) {
+export function Card({
+    padded = false,
+    children,
+    className,
+    asChild,
+    style,
+}: Props) {
     const Component = asChild ? Slot : "div";
     return (
-        <Component className={card({ padded, className })}>
+        <Component style={style} className={card({ padded, className })}>
             {children}
         </Component>
     );

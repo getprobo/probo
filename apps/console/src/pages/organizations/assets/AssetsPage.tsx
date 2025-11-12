@@ -12,6 +12,12 @@ import {
   DropdownItem,
   IconTrashCan,
   Avatar,
+  EditableCell,
+  Select,
+  Option,
+  DataTable,
+  CellHead,
+  Cell,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { usePageTitle } from "@probo/hooks";
@@ -20,11 +26,16 @@ import {
   usePaginationFragment,
   usePreloadedQuery,
   type PreloadedQuery,
+  useMutation,
 } from "react-relay";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { useParams } from "react-router";
 import { CreateAssetDialog } from "./dialogs/CreateAssetDialog";
-import { useDeleteAsset, assetsQuery } from "../../../hooks/graph/AssetGraph";
+import {
+  useDeleteAsset,
+  assetsQuery,
+  updateAssetMutation,
+} from "../../../hooks/graph/AssetGraph";
 import type { AssetGraphListQuery } from "/hooks/graph/__generated__/AssetGraphListQuery.graphql";
 import { faviconUrl } from "@probo/helpers";
 import type { NodeOf } from "/types";
@@ -37,6 +48,7 @@ import { SortableTable } from "/components/SortableTable";
 import { SnapshotBanner } from "/components/SnapshotBanner";
 import { Authorized } from "/permissions";
 import { isAuthorized } from "/permissions";
+import { PeopleSelectOptions } from "/components/form/PeopleSelectField.tsx";
 
 const paginatedAssetsFragment = graphql`
   fragment AssetsPageFragment on Organization
@@ -101,7 +113,7 @@ export default function AssetsPage(props: Props) {
   const data = usePreloadedQuery(assetsQuery, props.queryRef);
   const pagination = usePaginationFragment(
     paginatedAssetsFragment,
-    data.node as AssetsPageFragment$key
+    data.node as AssetsPageFragment$key,
   );
   const assets = pagination.data.assets?.edges.map((edge) => edge.node);
   const connectionId = pagination.data.assets.__id;
@@ -119,7 +131,7 @@ export default function AssetsPage(props: Props) {
       <PageHeader
         title={__("Assets")}
         description={__(
-          "Manage your organization's assets and their classifications."
+          "Manage your organization's assets and their classifications.",
         )}
       >
         {!isSnapshotMode && (
@@ -133,28 +145,17 @@ export default function AssetsPage(props: Props) {
           </Authorized>
         )}
       </PageHeader>
-      <SortableTable {...pagination}>
-        <Thead>
-          <Tr>
-            <Th>{__("Name")}</Th>
-            <Th>{__("Type")}</Th>
-            <Th>{__("Amount")}</Th>
-            <Th>{__("Owner")}</Th>
-            <Th>{__("Vendors")}</Th>
-            {hasAnyAction && <Th></Th>}
-          </Tr>
-        </Thead>
-        <Tbody>
-          {assets.map((entry) => (
-            <AssetRow
-              key={entry.id}
-              entry={entry}
-              connectionId={connectionId}
-              hasAnyAction={hasAnyAction}
-            />
-          ))}
-        </Tbody>
-      </SortableTable>
+      <DataTable columns={6}>
+        <CellHead>{__("Name")}</CellHead>
+        <CellHead>{__("Type")}</CellHead>
+        <CellHead>{__("Amount")}</CellHead>
+        <CellHead>{__("Owner")}</CellHead>
+        <CellHead>{__("Vendors")}</CellHead>
+        <CellHead></CellHead>
+        {assets.map((entry) => (
+          <AssetRow key={entry.id} entry={entry} connectionId={connectionId} />
+        ))}
+      </DataTable>
     </div>
   );
 }
@@ -162,11 +163,9 @@ export default function AssetsPage(props: Props) {
 function AssetRow({
   entry,
   connectionId,
-  hasAnyAction,
 }: {
   entry: AssetEntry;
   connectionId: string;
-  hasAnyAction: boolean;
 }) {
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
@@ -175,21 +174,71 @@ function AssetRow({
   const deleteAsset = useDeleteAsset(entry, connectionId);
   const vendors = entry.vendors?.edges.map((edge) => edge.node) ?? [];
 
-  const assetUrl = isSnapshotMode && snapshotId
-    ? `/organizations/${organizationId}/snapshots/${snapshotId}/assets/${entry.id}`
-    : `/organizations/${organizationId}/assets/${entry.id}`;
+  const assetUrl =
+    isSnapshotMode && snapshotId
+      ? `/organizations/${organizationId}/snapshots/${snapshotId}/assets/${entry.id}`
+      : `/organizations/${organizationId}/assets/${entry.id}`;
+
+  const [mutate, isLoading] = useMutation(updateAssetMutation);
+  const updater = (fieldName: keyof typeof entry) => (value: string) => {
+    // Only send an update if the value changed
+    if (entry[fieldName] === value) {
+      return;
+    }
+    mutate({
+      variables: {
+        input: {
+          id: entry.id,
+          [fieldName]: value,
+        },
+      },
+    });
+  };
 
   return (
-    <Tr to={assetUrl}>
-      <Td>{entry.name}</Td>
-      <Td>
+    <>
+      <EditableCell
+        type="text"
+        defaultValue={entry.name}
+        onValueChange={updater("name")}
+      />
+      <EditableCell
+        type="select"
+        isLoading={isLoading}
+        onValueChange={updater("assetType")}
+        options={
+          <>
+            <Option value="VIRTUAL">
+              <Badge variant={getAssetTypeVariant("VIRTUAL")}>
+                {__("Virtual")}
+              </Badge>
+            </Option>
+            <Option value="PHYSICAL">
+              <Badge variant={getAssetTypeVariant("PHYSICAL")}>
+                {__("Physical")}
+              </Badge>
+            </Option>
+          </>
+        }
+      >
         <Badge variant={getAssetTypeVariant(entry.assetType)}>
           {entry.assetType === "PHYSICAL" ? __("Physical") : __("Virtual")}
         </Badge>
-      </Td>
-      <Td>{entry.amount}</Td>
-      <Td>{entry.owner?.fullName ?? __("Unassigned")}</Td>
-      <Td>
+      </EditableCell>
+      <EditableCell
+        type="text"
+        defaultValue={entry.amount}
+        onValueChange={updater("amount")}
+      />
+      <EditableCell
+        type="select"
+        isLoading={isLoading}
+        onValueChange={updater("owner")}
+        options={<PeopleSelectOptions organizationId={organizationId} />}
+      >
+        {entry.owner?.fullName ?? __("Unassigned")}
+      </EditableCell>
+      <Cell>
         {vendors.length > 0 ? (
           <div className="flex flex-wrap gap-1">
             {vendors.slice(0, 3).map((vendor) => (
@@ -215,22 +264,20 @@ function AssetRow({
         ) : (
           <span className="text-txt-secondary text-sm">{__("None")}</span>
         )}
-      </Td>
-      {hasAnyAction && (
-        <Td noLink width={50} className="text-end">
-          <Authorized entity="Asset" action="deleteAsset">
-            <ActionDropdown>
-              <DropdownItem
-                onClick={deleteAsset}
-                variant="danger"
-                icon={IconTrashCan}
-              >
-                {__("Delete")}
-              </DropdownItem>
-            </ActionDropdown>
-          </Authorized>
-        </Td>
-      )}
-    </Tr>
+      </Cell>
+      <Cell className="text-end">
+        {!isSnapshotMode && (
+          <ActionDropdown>
+            <DropdownItem
+              onClick={deleteAsset}
+              variant="danger"
+              icon={IconTrashCan}
+            >
+              {__("Delete")}
+            </DropdownItem>
+          </ActionDropdown>
+        )}
+      </Cell>
+    </>
   );
 }
