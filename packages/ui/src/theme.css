@@ -249,6 +249,11 @@ button:focus-visible {
     }
 }
 
+button[data-cell]:focus-visible {
+    box-shadow: none;
+    outline: solid 2px rgba(135, 190, 34, 0.5);
+}
+
 /* Allow interpolation : https://developer.chrome.com/docs/css-ui/animate-to-height-auto */
 :root {
     interpolate-size: allow-keywords;
