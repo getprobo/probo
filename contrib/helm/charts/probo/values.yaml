@@ -216,10 +216,6 @@ probo:
     sessionDuration: 604800
     # Cleanup interval in seconds for expired SAML sessions (0 = disabled)
     cleanupIntervalSeconds: 0
-    # SAML service provider certificate in PEM format
-    certificate: ""
-    # SAML service provider private key in PEM format
-    privateKey: ""
 
   # Trust center authentication
   trustAuth:

@@ -8,6 +8,7 @@ This Helm chart deploys Probo - an open-source SOC-2 compliance platform - on Ku
 - Helm 3.8+
 - External PostgreSQL database (AWS RDS, GCP Cloud SQL, Azure Database, etc.)
 - S3 or S3-compatible object storage (AWS S3, GCS, DigitalOcean Spaces, MinIO, etc.)
+- OpenSSL installed (for generating secrets)
 
 ## Installing the Chart
 
@@ -19,6 +20,20 @@ export ENCRYPTION_KEY=$(openssl rand -base64 32)
 export COOKIE_SECRET=$(openssl rand -base64 32)
 export PASSWORD_PEPPER=$(openssl rand -base64 32)
 export TRUST_TOKEN_SECRET=$(openssl rand -base64 32)
+
+# Generate private key and certificate valid for 10 years
+TEMP_KEY=$(mktemp)
+TEMP_CERT=$(mktemp)
+
+openssl req -x509 -newkey rsa:2048 -keyout "$TEMP_KEY" -out "$TEMP_CERT" \
+  -days 3650 -nodes -subj "/CN=probo-saml/O=Probo/C=US" 2>/dev/null
+
+# Read generated files and export as environment variables
+export SAML_PRIVATE_KEY=$(cat "$TEMP_KEY")
+export SAML_CERTIFICATE=$(cat "$TEMP_CERT")
+
+# Clean up temporary files
+rm -f "$TEMP_KEY" "$TEMP_CERT"
 
 echo "Save these secrets securely!"
 ```
@@ -32,6 +47,8 @@ helm install probo . \
   --set probo.auth.cookieSecret="$COOKIE_SECRET" \
   --set probo.auth.passwordPepper="$PASSWORD_PEPPER" \
   --set probo.trustAuth.tokenSecret="$TRUST_TOKEN_SECRET" \
+  --set probo.saml.privateKey="$SAML_PRIVATE_KEY" \
+  --set probo.saml.certificate="$SAML_CERTIFICATE" \
   --set postgresql.host="postgres.example.com" \
   --set postgresql.password="<db-password>" \
   --set s3.bucket="probo-production" \
