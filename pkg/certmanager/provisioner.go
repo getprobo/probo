@@ -82,7 +82,7 @@ func (p *Provisioner) Run(ctx context.Context) error {
 func (p *Provisioner) checkDNSConfiguration(domain string) error {
 	cnameRecords, err := net.LookupCNAME(domain)
 	if err != nil {
-		return fmt.Errorf("DNS lookup Failed: %w", err)
+		return fmt.Errorf("cannot lookup cname for domain %q: %w", domain, err)
 	}
 	expectedTarget := strings.TrimSuffix(p.cnameTarget, ".")
 	actualTarget := strings.TrimSuffix(cnameRecords, ".")
