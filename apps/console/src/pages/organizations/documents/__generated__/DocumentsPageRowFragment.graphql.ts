@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<f772c53b0007859aecc59a9484b5b791>>
+ * @generated SignedSource<<049b7a6b6b6c6e452248a109fd64aad8>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -23,13 +23,30 @@ export type DocumentsPageRowFragment$data = {
     readonly fullName: string;
     readonly id: string;
   };
-  readonly title: string;
-  readonly updatedAt: any;
-  readonly versions: {
+  readonly requestedVersions?: {
     readonly edges: ReadonlyArray<{
       readonly node: {
         readonly id: string;
-        readonly signatures: {
+        readonly signatures?: {
+          readonly edges: ReadonlyArray<{
+            readonly node: {
+              readonly id: string;
+              readonly state: DocumentVersionSignatureState;
+            };
+          }>;
+        };
+        readonly status: DocumentStatus;
+        readonly version: number;
+      };
+    }>;
+  };
+  readonly title: string;
+  readonly updatedAt: any;
+  readonly versions?: {
+    readonly edges: ReadonlyArray<{
+      readonly node: {
+        readonly id: string;
+        readonly signatures?: {
           readonly edges: ReadonlyArray<{
             readonly node: {
               readonly id: string;
@@ -56,9 +73,120 @@ var v0 = {
   "kind": "ScalarField",
   "name": "id",
   "storageKey": null
-};
+},
+v1 = [
+  {
+    "kind": "Literal",
+    "name": "first",
+    "value": 1
+  }
+],
+v2 = [
+  {
+    "alias": null,
+    "args": null,
+    "concreteType": "DocumentVersionEdge",
+    "kind": "LinkedField",
+    "name": "edges",
+    "plural": true,
+    "selections": [
+      {
+        "alias": null,
+        "args": null,
+        "concreteType": "DocumentVersion",
+        "kind": "LinkedField",
+        "name": "node",
+        "plural": false,
+        "selections": [
+          (v0/*: any*/),
+          {
+            "alias": null,
+            "args": null,
+            "kind": "ScalarField",
+            "name": "status",
+            "storageKey": null
+          },
+          {
+            "alias": null,
+            "args": null,
+            "kind": "ScalarField",
+            "name": "version",
+            "storageKey": null
+          },
+          {
+            "condition": "includeSignatures",
+            "kind": "Condition",
+            "passingValue": true,
+            "selections": [
+              {
+                "alias": null,
+                "args": [
+                  {
+                    "kind": "Literal",
+                    "name": "first",
+                    "value": 1000
+                  }
+                ],
+                "concreteType": "DocumentVersionSignatureConnection",
+                "kind": "LinkedField",
+                "name": "signatures",
+                "plural": false,
+                "selections": [
+                  {
+                    "alias": null,
+                    "args": null,
+                    "concreteType": "DocumentVersionSignatureEdge",
+                    "kind": "LinkedField",
+                    "name": "edges",
+                    "plural": true,
+                    "selections": [
+                      {
+                        "alias": null,
+                        "args": null,
+                        "concreteType": "DocumentVersionSignature",
+                        "kind": "LinkedField",
+                        "name": "node",
+                        "plural": false,
+                        "selections": [
+                          (v0/*: any*/),
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "state",
+                            "storageKey": null
+                          }
+                        ],
+                        "storageKey": null
+                      }
+                    ],
+                    "storageKey": null
+                  }
+                ],
+                "storageKey": "signatures(first:1000)"
+              }
+            ]
+          }
+        ],
+        "storageKey": null
+      }
+    ],
+    "storageKey": null
+  }
+];
 return {
-  "argumentDefinitions": [],
+  "argumentDefinitions": [
+    {
+      "defaultValue": false,
+      "kind": "LocalArgument",
+      "name": "includeSignatures"
+    },
+    {
+      "defaultValue": false,
+      "kind": "LocalArgument",
+      "name": "useRequestedVersions"
+    }
+  ],
   "kind": "Fragment",
   "metadata": null,
   "name": "DocumentsPageRowFragment",
@@ -119,105 +247,38 @@ return {
       "storageKey": null
     },
     {
-      "alias": null,
-      "args": [
-        {
-          "kind": "Literal",
-          "name": "first",
-          "value": 1
-        }
-      ],
-      "concreteType": "DocumentVersionConnection",
-      "kind": "LinkedField",
-      "name": "versions",
-      "plural": false,
+      "condition": "useRequestedVersions",
+      "kind": "Condition",
+      "passingValue": false,
       "selections": [
         {
           "alias": null,
-          "args": null,
-          "concreteType": "DocumentVersionEdge",
+          "args": (v1/*: any*/),
+          "concreteType": "DocumentVersionConnection",
           "kind": "LinkedField",
-          "name": "edges",
-          "plural": true,
-          "selections": [
-            {
-              "alias": null,
-              "args": null,
-              "concreteType": "DocumentVersion",
-              "kind": "LinkedField",
-              "name": "node",
-              "plural": false,
-              "selections": [
-                (v0/*: any*/),
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "status",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "version",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": [
-                    {
-                      "kind": "Literal",
-                      "name": "first",
-                      "value": 1000
-                    }
-                  ],
-                  "concreteType": "DocumentVersionSignatureConnection",
-                  "kind": "LinkedField",
-                  "name": "signatures",
-                  "plural": false,
-                  "selections": [
-                    {
-                      "alias": null,
-                      "args": null,
-                      "concreteType": "DocumentVersionSignatureEdge",
-                      "kind": "LinkedField",
-                      "name": "edges",
-                      "plural": true,
-                      "selections": [
-                        {
-                          "alias": null,
-                          "args": null,
-                          "concreteType": "DocumentVersionSignature",
-                          "kind": "LinkedField",
-                          "name": "node",
-                          "plural": false,
-                          "selections": [
-                            (v0/*: any*/),
-                            {
-                              "alias": null,
-                              "args": null,
-                              "kind": "ScalarField",
-                              "name": "state",
-                              "storageKey": null
-                            }
-                          ],
-                          "storageKey": null
-                        }
-                      ],
-                      "storageKey": null
-                    }
-                  ],
-                  "storageKey": "signatures(first:1000)"
-                }
-              ],
-              "storageKey": null
-            }
-          ],
-          "storageKey": null
+          "name": "versions",
+          "plural": false,
+          "selections": (v2/*: any*/),
+          "storageKey": "versions(first:1)"
         }
-      ],
-      "storageKey": "versions(first:1)"
+      ]
+    },
+    {
+      "condition": "useRequestedVersions",
+      "kind": "Condition",
+      "passingValue": true,
+      "selections": [
+        {
+          "alias": null,
+          "args": (v1/*: any*/),
+          "concreteType": "DocumentVersionConnection",
+          "kind": "LinkedField",
+          "name": "requestedVersions",
+          "plural": false,
+          "selections": (v2/*: any*/),
+          "storageKey": "requestedVersions(first:1)"
+        }
+      ]
     }
   ],
   "type": "Document",
@@ -225,6 +286,6 @@ return {
 };
 })();
 
-(node as any).hash = "cd6d6bebffb9ed17a251aeef4b86f753";
+(node as any).hash = "62a3ef366a90ec4bfcc5bfdb69622f9e";
 
 export default node;

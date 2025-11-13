@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<a39062565d1126fbcbee36865fa8c0fb>>
+ * @generated SignedSource<<d9c272a0703ff8fbc3eecfa14f3033c3>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,6 +12,9 @@ import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type DocumentGraphNodeQuery$variables = {
   documentId: string;
+  includeControls: boolean;
+  includeSignatures: boolean;
+  useRequestedVersions?: boolean | null | undefined;
 };
 export type DocumentGraphNodeQuery$data = {
   readonly node: {
@@ -29,6 +32,21 @@ var v0 = [
     "defaultValue": null,
     "kind": "LocalArgument",
     "name": "documentId"
+  },
+  {
+    "defaultValue": null,
+    "kind": "LocalArgument",
+    "name": "includeControls"
+  },
+  {
+    "defaultValue": null,
+    "kind": "LocalArgument",
+    "name": "includeSignatures"
+  },
+  {
+    "defaultValue": false,
+    "kind": "LocalArgument",
+    "name": "useRequestedVersions"
   }
 ],
 v1 = [
@@ -62,59 +80,69 @@ v4 = {
 v5 = {
   "alias": null,
   "args": null,
-  "kind": "ScalarField",
-  "name": "fullName",
-  "storageKey": null
-},
-v6 = {
-  "alias": null,
-  "args": null,
   "concreteType": "People",
   "kind": "LinkedField",
   "name": "owner",
   "plural": false,
   "selections": [
     (v3/*: any*/),
-    (v5/*: any*/)
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "fullName",
+      "storageKey": null
+    }
   ],
   "storageKey": null
 },
-v7 = [
+v6 = [
   {
     "kind": "Literal",
     "name": "first",
     "value": 20
   }
 ],
+v7 = [
+  {
+    "kind": "Literal",
+    "name": "first",
+    "value": 1000
+  }
+],
 v8 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "name",
-  "storageKey": null
-},
-v9 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "cursor",
   "storageKey": null
 },
+v9 = {
+  "alias": null,
+  "args": null,
+  "concreteType": "PageInfo",
+  "kind": "LinkedField",
+  "name": "pageInfo",
+  "plural": false,
+  "selections": [
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "endCursor",
+      "storageKey": null
+    },
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "hasNextPage",
+      "storageKey": null
+    }
+  ],
+  "storageKey": null
+},
 v10 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "endCursor",
-  "storageKey": null
-},
-v11 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "hasNextPage",
-  "storageKey": null
-},
-v12 = {
   "kind": "ClientExtension",
   "selections": [
     {
@@ -126,26 +154,133 @@ v12 = {
     }
   ]
 },
-v13 = [
+v11 = [
   {
-    "kind": "Literal",
-    "name": "first",
-    "value": 1000
-  }
-],
-v14 = {
-  "alias": null,
-  "args": null,
-  "concreteType": "PageInfo",
-  "kind": "LinkedField",
-  "name": "pageInfo",
-  "plural": false,
-  "selections": [
-    (v10/*: any*/),
-    (v11/*: any*/)
-  ],
-  "storageKey": null
-};
+    "alias": null,
+    "args": null,
+    "concreteType": "DocumentVersionEdge",
+    "kind": "LinkedField",
+    "name": "edges",
+    "plural": true,
+    "selections": [
+      {
+        "alias": null,
+        "args": null,
+        "concreteType": "DocumentVersion",
+        "kind": "LinkedField",
+        "name": "node",
+        "plural": false,
+        "selections": [
+          (v3/*: any*/),
+          {
+            "alias": null,
+            "args": null,
+            "kind": "ScalarField",
+            "name": "content",
+            "storageKey": null
+          },
+          {
+            "alias": null,
+            "args": null,
+            "kind": "ScalarField",
+            "name": "status",
+            "storageKey": null
+          },
+          {
+            "alias": null,
+            "args": null,
+            "kind": "ScalarField",
+            "name": "publishedAt",
+            "storageKey": null
+          },
+          {
+            "alias": null,
+            "args": null,
+            "kind": "ScalarField",
+            "name": "version",
+            "storageKey": null
+          },
+          {
+            "alias": null,
+            "args": null,
+            "kind": "ScalarField",
+            "name": "updatedAt",
+            "storageKey": null
+          },
+          (v4/*: any*/),
+          (v5/*: any*/),
+          {
+            "condition": "includeSignatures",
+            "kind": "Condition",
+            "passingValue": true,
+            "selections": [
+              {
+                "alias": null,
+                "args": (v7/*: any*/),
+                "concreteType": "DocumentVersionSignatureConnection",
+                "kind": "LinkedField",
+                "name": "signatures",
+                "plural": false,
+                "selections": [
+                  {
+                    "alias": null,
+                    "args": null,
+                    "concreteType": "DocumentVersionSignatureEdge",
+                    "kind": "LinkedField",
+                    "name": "edges",
+                    "plural": true,
+                    "selections": [
+                      {
+                        "alias": null,
+                        "args": null,
+                        "concreteType": "DocumentVersionSignature",
+                        "kind": "LinkedField",
+                        "name": "node",
+                        "plural": false,
+                        "selections": [
+                          (v3/*: any*/),
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "state",
+                            "storageKey": null
+                          },
+                          (v2/*: any*/)
+                        ],
+                        "storageKey": null
+                      },
+                      (v8/*: any*/)
+                    ],
+                    "storageKey": null
+                  },
+                  (v9/*: any*/),
+                  (v10/*: any*/)
+                ],
+                "storageKey": "signatures(first:1000)"
+              },
+              {
+                "alias": null,
+                "args": (v7/*: any*/),
+                "filters": ([]/*: any*/),
+                "handle": "connection",
+                "key": "DocumentDetailPage_signatures",
+                "kind": "LinkedHandle",
+                "name": "signatures"
+              }
+            ]
+          },
+          (v2/*: any*/)
+        ],
+        "storageKey": null
+      },
+      (v8/*: any*/)
+    ],
+    "storageKey": null
+  },
+  (v9/*: any*/),
+  (v10/*: any*/)
+];
 return {
   "fragment": {
     "argumentDefinitions": (v0/*: any*/),
@@ -165,7 +300,23 @@ return {
             "kind": "InlineFragment",
             "selections": [
               {
-                "args": null,
+                "args": [
+                  {
+                    "kind": "Variable",
+                    "name": "includeControls",
+                    "variableName": "includeControls"
+                  },
+                  {
+                    "kind": "Variable",
+                    "name": "includeSignatures",
+                    "variableName": "includeSignatures"
+                  },
+                  {
+                    "kind": "Variable",
+                    "name": "useRequestedVersions",
+                    "variableName": "useRequestedVersions"
+                  }
+                ],
                 "kind": "FragmentSpread",
                 "name": "DocumentDetailPageDocumentFragment"
               }
@@ -214,310 +365,101 @@ return {
                 "storageKey": null
               },
               (v4/*: any*/),
-              (v6/*: any*/),
               {
                 "alias": null,
-                "args": (v7/*: any*/),
-                "concreteType": "ControlConnection",
+                "args": null,
+                "concreteType": "Organization",
                 "kind": "LinkedField",
-                "name": "controls",
+                "name": "organization",
                 "plural": false,
                 "selections": [
+                  (v3/*: any*/)
+                ],
+                "storageKey": null
+              },
+              (v5/*: any*/),
+              {
+                "condition": "includeControls",
+                "kind": "Condition",
+                "passingValue": true,
+                "selections": [
                   {
-                    "alias": null,
-                    "args": null,
-                    "concreteType": "ControlEdge",
-                    "kind": "LinkedField",
-                    "name": "edges",
-                    "plural": true,
-                    "selections": [
+                    "alias": "controlsInfo",
+                    "args": [
                       {
-                        "alias": null,
-                        "args": null,
-                        "concreteType": "Control",
-                        "kind": "LinkedField",
-                        "name": "node",
-                        "plural": false,
-                        "selections": [
-                          (v3/*: any*/),
-                          (v8/*: any*/),
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "sectionTitle",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "concreteType": "Framework",
-                            "kind": "LinkedField",
-                            "name": "framework",
-                            "plural": false,
-                            "selections": [
-                              (v3/*: any*/),
-                              (v8/*: any*/)
-                            ],
-                            "storageKey": null
-                          },
-                          (v2/*: any*/)
-                        ],
-                        "storageKey": null
-                      },
-                      (v9/*: any*/)
+                        "kind": "Literal",
+                        "name": "first",
+                        "value": 0
+                      }
                     ],
-                    "storageKey": null
-                  },
-                  {
-                    "alias": null,
-                    "args": null,
-                    "concreteType": "PageInfo",
+                    "concreteType": "ControlConnection",
                     "kind": "LinkedField",
-                    "name": "pageInfo",
+                    "name": "controls",
                     "plural": false,
                     "selections": [
-                      (v10/*: any*/),
-                      (v11/*: any*/),
                       {
                         "alias": null,
                         "args": null,
                         "kind": "ScalarField",
-                        "name": "hasPreviousPage",
-                        "storageKey": null
-                      },
-                      {
-                        "alias": null,
-                        "args": null,
-                        "kind": "ScalarField",
-                        "name": "startCursor",
+                        "name": "totalCount",
                         "storageKey": null
                       }
                     ],
-                    "storageKey": null
-                  },
-                  (v12/*: any*/)
-                ],
-                "storageKey": "controls(first:20)"
-              },
-              {
-                "alias": null,
-                "args": (v7/*: any*/),
-                "filters": [
-                  "orderBy",
-                  "filter"
-                ],
-                "handle": "connection",
-                "key": "DocumentControlsTab_controls",
-                "kind": "LinkedHandle",
-                "name": "controls"
-              },
-              {
-                "alias": "controlsInfo",
-                "args": [
-                  {
-                    "kind": "Literal",
-                    "name": "first",
-                    "value": 0
+                    "storageKey": "controls(first:0)"
                   }
-                ],
-                "concreteType": "ControlConnection",
-                "kind": "LinkedField",
-                "name": "controls",
-                "plural": false,
+                ]
+              },
+              {
+                "condition": "useRequestedVersions",
+                "kind": "Condition",
+                "passingValue": false,
                 "selections": [
                   {
                     "alias": null,
-                    "args": null,
-                    "kind": "ScalarField",
-                    "name": "totalCount",
-                    "storageKey": null
-                  }
-                ],
-                "storageKey": "controls(first:0)"
-              },
-              {
-                "alias": null,
-                "args": (v7/*: any*/),
-                "concreteType": "DocumentVersionConnection",
-                "kind": "LinkedField",
-                "name": "versions",
-                "plural": false,
-                "selections": [
-                  {
-                    "alias": null,
-                    "args": null,
-                    "concreteType": "DocumentVersionEdge",
+                    "args": (v6/*: any*/),
+                    "concreteType": "DocumentVersionConnection",
                     "kind": "LinkedField",
-                    "name": "edges",
-                    "plural": true,
-                    "selections": [
-                      {
-                        "alias": null,
-                        "args": null,
-                        "concreteType": "DocumentVersion",
-                        "kind": "LinkedField",
-                        "name": "node",
-                        "plural": false,
-                        "selections": [
-                          (v3/*: any*/),
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "content",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "status",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "publishedAt",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "version",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "updatedAt",
-                            "storageKey": null
-                          },
-                          (v4/*: any*/),
-                          (v6/*: any*/),
-                          {
-                            "alias": null,
-                            "args": (v13/*: any*/),
-                            "concreteType": "DocumentVersionSignatureConnection",
-                            "kind": "LinkedField",
-                            "name": "signatures",
-                            "plural": false,
-                            "selections": [
-                              {
-                                "alias": null,
-                                "args": null,
-                                "concreteType": "DocumentVersionSignatureEdge",
-                                "kind": "LinkedField",
-                                "name": "edges",
-                                "plural": true,
-                                "selections": [
-                                  {
-                                    "alias": null,
-                                    "args": null,
-                                    "concreteType": "DocumentVersionSignature",
-                                    "kind": "LinkedField",
-                                    "name": "node",
-                                    "plural": false,
-                                    "selections": [
-                                      (v3/*: any*/),
-                                      {
-                                        "alias": null,
-                                        "args": null,
-                                        "kind": "ScalarField",
-                                        "name": "state",
-                                        "storageKey": null
-                                      },
-                                      {
-                                        "alias": null,
-                                        "args": null,
-                                        "concreteType": "People",
-                                        "kind": "LinkedField",
-                                        "name": "signedBy",
-                                        "plural": false,
-                                        "selections": [
-                                          (v3/*: any*/),
-                                          (v5/*: any*/),
-                                          {
-                                            "alias": null,
-                                            "args": null,
-                                            "kind": "ScalarField",
-                                            "name": "primaryEmailAddress",
-                                            "storageKey": null
-                                          }
-                                        ],
-                                        "storageKey": null
-                                      },
-                                      {
-                                        "alias": null,
-                                        "args": null,
-                                        "kind": "ScalarField",
-                                        "name": "signedAt",
-                                        "storageKey": null
-                                      },
-                                      {
-                                        "alias": null,
-                                        "args": null,
-                                        "kind": "ScalarField",
-                                        "name": "requestedAt",
-                                        "storageKey": null
-                                      },
-                                      (v2/*: any*/)
-                                    ],
-                                    "storageKey": null
-                                  },
-                                  (v9/*: any*/)
-                                ],
-                                "storageKey": null
-                              },
-                              (v14/*: any*/),
-                              (v12/*: any*/)
-                            ],
-                            "storageKey": "signatures(first:1000)"
-                          },
-                          {
-                            "alias": null,
-                            "args": (v13/*: any*/),
-                            "filters": [
-                              "filter"
-                            ],
-                            "handle": "connection",
-                            "key": "DocumentSignaturesTab_signatures",
-                            "kind": "LinkedHandle",
-                            "name": "signatures"
-                          },
-                          {
-                            "alias": null,
-                            "args": (v13/*: any*/),
-                            "filters": [],
-                            "handle": "connection",
-                            "key": "DocumentDetailPage_signatures",
-                            "kind": "LinkedHandle",
-                            "name": "signatures"
-                          },
-                          (v2/*: any*/)
-                        ],
-                        "storageKey": null
-                      },
-                      (v9/*: any*/)
-                    ],
-                    "storageKey": null
+                    "name": "versions",
+                    "plural": false,
+                    "selections": (v11/*: any*/),
+                    "storageKey": "versions(first:20)"
                   },
-                  (v14/*: any*/),
-                  (v12/*: any*/)
-                ],
-                "storageKey": "versions(first:20)"
+                  {
+                    "alias": null,
+                    "args": (v6/*: any*/),
+                    "filters": null,
+                    "handle": "connection",
+                    "key": "DocumentDetailPage_versions",
+                    "kind": "LinkedHandle",
+                    "name": "versions"
+                  }
+                ]
               },
               {
-                "alias": null,
-                "args": (v7/*: any*/),
-                "filters": null,
-                "handle": "connection",
-                "key": "DocumentDetailPage_versions",
-                "kind": "LinkedHandle",
-                "name": "versions"
+                "condition": "useRequestedVersions",
+                "kind": "Condition",
+                "passingValue": true,
+                "selections": [
+                  {
+                    "alias": null,
+                    "args": (v6/*: any*/),
+                    "concreteType": "DocumentVersionConnection",
+                    "kind": "LinkedField",
+                    "name": "requestedVersions",
+                    "plural": false,
+                    "selections": (v11/*: any*/),
+                    "storageKey": "requestedVersions(first:20)"
+                  },
+                  {
+                    "alias": null,
+                    "args": (v6/*: any*/),
+                    "filters": null,
+                    "handle": "connection",
+                    "key": "DocumentDetailPage_requestedVersions",
+                    "kind": "LinkedHandle",
+                    "name": "requestedVersions"
+                  }
+                ]
               }
             ],
             "type": "Document",
@@ -529,16 +471,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "72db9b5c4f2a4cd076ebf4e45f0eb662",
+    "cacheID": "a2546bb9174ab8078f5b14e57a64dd1e",
     "id": null,
     "metadata": {},
     "name": "DocumentGraphNodeQuery",
     "operationKind": "query",
-    "text": "query DocumentGraphNodeQuery(\n  $documentId: ID!\n) {\n  node(id: $documentId) {\n    __typename\n    ... on Document {\n      ...DocumentDetailPageDocumentFragment\n    }\n    id\n  }\n}\n\nfragment DocumentControlsTabFragment on Document {\n  id\n  controls(first: 20) {\n    edges {\n      node {\n        id\n        ...LinkedControlsCardFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n}\n\nfragment DocumentDetailPageDocumentFragment on Document {\n  id\n  title\n  documentType\n  classification\n  owner {\n    id\n    fullName\n  }\n  ...DocumentControlsTabFragment\n  controlsInfo: controls(first: 0) {\n    totalCount\n  }\n  versions(first: 20) {\n    edges {\n      node {\n        id\n        content\n        status\n        publishedAt\n        version\n        updatedAt\n        classification\n        owner {\n          id\n          fullName\n        }\n        ...DocumentSignaturesTab_version\n        signatures(first: 1000) {\n          edges {\n            node {\n              id\n              state\n              signedBy {\n                id\n              }\n              ...DocumentSignaturesTab_signature\n              __typename\n            }\n            cursor\n          }\n          pageInfo {\n            endCursor\n            hasNextPage\n          }\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n\nfragment DocumentSignaturesTab_signature on DocumentVersionSignature {\n  id\n  state\n  signedAt\n  requestedAt\n  signedBy {\n    fullName\n    primaryEmailAddress\n    id\n  }\n}\n\nfragment DocumentSignaturesTab_version on DocumentVersion {\n  id\n  status\n  signatures(first: 1000) {\n    edges {\n      node {\n        id\n        state\n        signedBy {\n          id\n          fullName\n          primaryEmailAddress\n        }\n        ...DocumentSignaturesTab_signature\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n\nfragment LinkedControlsCardFragment on Control {\n  id\n  name\n  sectionTitle\n  framework {\n    id\n    name\n  }\n}\n"
+    "text": "query DocumentGraphNodeQuery(\n  $documentId: ID!\n  $includeControls: Boolean!\n  $includeSignatures: Boolean!\n  $useRequestedVersions: Boolean = false\n) {\n  node(id: $documentId) {\n    __typename\n    ... on Document {\n      ...DocumentDetailPageDocumentFragment_3N33mI\n    }\n    id\n  }\n}\n\nfragment DocumentDetailPageDocumentFragment_3N33mI on Document {\n  id\n  title\n  documentType\n  classification\n  organization {\n    id\n  }\n  owner {\n    id\n    fullName\n  }\n  controlsInfo: controls(first: 0) @include(if: $includeControls) {\n    totalCount\n  }\n  versions(first: 20) @skip(if: $useRequestedVersions) {\n    edges {\n      node {\n        id\n        content\n        status\n        publishedAt\n        version\n        updatedAt\n        classification\n        owner {\n          id\n          fullName\n        }\n        signatures(first: 1000) @include(if: $includeSignatures) {\n          edges {\n            node {\n              id\n              state\n              __typename\n            }\n            cursor\n          }\n          pageInfo {\n            endCursor\n            hasNextPage\n          }\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n  requestedVersions(first: 20) @include(if: $useRequestedVersions) {\n    edges {\n      node {\n        id\n        content\n        status\n        publishedAt\n        version\n        updatedAt\n        classification\n        owner {\n          id\n          fullName\n        }\n        signatures(first: 1000) @include(if: $includeSignatures) {\n          edges {\n            node {\n              id\n              state\n              __typename\n            }\n            cursor\n          }\n          pageInfo {\n            endCursor\n            hasNextPage\n          }\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "f7e5a8ebb67a7668627c01ca1c4c6b19";
+(node as any).hash = "5c3be4665b543875f6bc8a8f9c383b86";
 
 export default node;

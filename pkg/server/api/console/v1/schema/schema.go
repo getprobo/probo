@@ -632,6 +632,7 @@ type ComplexityRoot struct {
 		ID                      func(childComplexity int) int
 		Organization            func(childComplexity int) int
 		Owner                   func(childComplexity int) int
+		RequestedVersions       func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentVersionOrderBy, filter *types.DocumentVersionFilter) int
 		Title                   func(childComplexity int) int
 		TrustCenterVisibility   func(childComplexity int) int
 		UpdatedAt               func(childComplexity int) int
@@ -1113,6 +1114,7 @@ type ComplexityRoot struct {
 		Obligations           func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ObligationOrderBy, filter *types.ObligationFilter) int
 		Peoples               func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.PeopleOrderBy, filter *types.PeopleFilter) int
 		ProcessingActivities  func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityOrderBy, filter *types.ProcessingActivityFilter) int
+		RequestedDocuments    func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy, filter *types.DocumentFilter) int
 		Risks                 func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskOrderBy, filter *types.RiskFilter) int
 		SamlConfigurations    func(childComplexity int) int
 		SlackConnections      func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
@@ -1863,6 +1865,7 @@ type DocumentResolver interface {
 	Owner(ctx context.Context, obj *types.Document) (*types.People, error)
 	Organization(ctx context.Context, obj *types.Document) (*types.Organization, error)
 	Versions(ctx context.Context, obj *types.Document, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentVersionOrderBy, filter *types.DocumentVersionFilter) (*types.DocumentVersionConnection, error)
+	RequestedVersions(ctx context.Context, obj *types.Document, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentVersionOrderBy, filter *types.DocumentVersionFilter) (*types.DocumentVersionConnection, error)
 	Controls(ctx context.Context, obj *types.Document, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) (*types.ControlConnection, error)
 }
 type DocumentConnectionResolver interface {
@@ -2095,6 +2098,7 @@ type OrganizationResolver interface {
 	Vendors(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorOrderBy, filter *types.VendorFilter) (*types.VendorConnection, error)
 	Peoples(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.PeopleOrderBy, filter *types.PeopleFilter) (*types.PeopleConnection, error)
 	Documents(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy, filter *types.DocumentFilter) (*types.DocumentConnection, error)
+	RequestedDocuments(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy, filter *types.DocumentFilter) (*types.DocumentConnection, error)
 	Meetings(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeetingOrderBy) (*types.MeetingConnection, error)
 	Measures(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy, filter *types.MeasureFilter) (*types.MeasureConnection, error)
 	Risks(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskOrderBy, filter *types.RiskFilter) (*types.RiskConnection, error)
@@ -3760,6 +3764,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Document.Owner(childComplexity), true
+
+	case "Document.requestedVersions":
+		if e.complexity.Document.RequestedVersions == nil {
+			break
+		}
+
+		args, err := ec.field_Document_requestedVersions_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Document.RequestedVersions(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.DocumentVersionOrderBy), args["filter"].(*types.DocumentVersionFilter)), true
 
 	case "Document.title":
 		if e.complexity.Document.Title == nil {
@@ -6952,6 +6968,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Organization.ProcessingActivities(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.ProcessingActivityOrderBy), args["filter"].(*types.ProcessingActivityFilter)), true
 
+	case "Organization.requestedDocuments":
+		if e.complexity.Organization.RequestedDocuments == nil {
+			break
+		}
+
+		args, err := ec.field_Organization_requestedDocuments_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Organization.RequestedDocuments(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.DocumentOrderBy), args["filter"].(*types.DocumentFilter)), true
+
 	case "Organization.risks":
 		if e.complexity.Organization.Risks == nil {
 			break
@@ -10130,6 +10158,7 @@ enum InvitationStatus
 enum MembershipRole @goModel(model: "go.probo.inc/probo/pkg/coredata.MembershipRole") {
   OWNER @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleOwner")
   ADMIN @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleAdmin")
+  EMPLOYEE @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleEmployee")
   VIEWER @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleViewer")
 }
 
@@ -11576,6 +11605,15 @@ type Organization implements Node {
     filter: DocumentFilter
   ): DocumentConnection! @goField(forceResolver: true)
 
+  requestedDocuments(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: DocumentOrder
+    filter: DocumentFilter
+  ): DocumentConnection! @goField(forceResolver: true)
+
   meetings(
     first: Int
     after: CursorKey
@@ -12050,6 +12088,15 @@ type Document implements Node {
   organization: Organization! @goField(forceResolver: true)
 
   versions(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: DocumentVersionOrder
+    filter: DocumentVersionFilter
+  ): DocumentVersionConnection! @goField(forceResolver: true)
+
+  requestedVersions(
     first: Int
     after: CursorKey
     last: Int
@@ -15794,6 +15841,119 @@ func (ec *executionContext) field_Document_controls_argsFilter(
 	}
 
 	var zeroVal *types.ControlFilter
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Document_requestedVersions_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Document_requestedVersions_argsFirst(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg0
+	arg1, err := ec.field_Document_requestedVersions_argsAfter(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg1
+	arg2, err := ec.field_Document_requestedVersions_argsLast(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["last"] = arg2
+	arg3, err := ec.field_Document_requestedVersions_argsBefore(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["before"] = arg3
+	arg4, err := ec.field_Document_requestedVersions_argsOrderBy(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["orderBy"] = arg4
+	arg5, err := ec.field_Document_requestedVersions_argsFilter(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["filter"] = arg5
+	return args, nil
+}
+func (ec *executionContext) field_Document_requestedVersions_argsFirst(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*int, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+	if tmp, ok := rawArgs["first"]; ok {
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
+	}
+
+	var zeroVal *int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Document_requestedVersions_argsAfter(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*page.CursorKey, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+	if tmp, ok := rawArgs["after"]; ok {
+		return ec.unmarshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
+	}
+
+	var zeroVal *page.CursorKey
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Document_requestedVersions_argsLast(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*int, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
+	if tmp, ok := rawArgs["last"]; ok {
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
+	}
+
+	var zeroVal *int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Document_requestedVersions_argsBefore(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*page.CursorKey, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
+	if tmp, ok := rawArgs["before"]; ok {
+		return ec.unmarshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
+	}
+
+	var zeroVal *page.CursorKey
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Document_requestedVersions_argsOrderBy(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*types.DocumentVersionOrderBy, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
+	if tmp, ok := rawArgs["orderBy"]; ok {
+		return ec.unmarshalODocumentVersionOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionOrderBy(ctx, tmp)
+	}
+
+	var zeroVal *types.DocumentVersionOrderBy
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Document_requestedVersions_argsFilter(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*types.DocumentVersionFilter, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("filter"))
+	if tmp, ok := rawArgs["filter"]; ok {
+		return ec.unmarshalODocumentVersionFilter2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionFilter(ctx, tmp)
+	}
+
+	var zeroVal *types.DocumentVersionFilter
 	return zeroVal, nil
 }
 
@@ -21190,6 +21350,119 @@ func (ec *executionContext) field_Organization_processingActivities_argsFilter(
 	return zeroVal, nil
 }
 
+func (ec *executionContext) field_Organization_requestedDocuments_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Organization_requestedDocuments_argsFirst(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg0
+	arg1, err := ec.field_Organization_requestedDocuments_argsAfter(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg1
+	arg2, err := ec.field_Organization_requestedDocuments_argsLast(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["last"] = arg2
+	arg3, err := ec.field_Organization_requestedDocuments_argsBefore(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["before"] = arg3
+	arg4, err := ec.field_Organization_requestedDocuments_argsOrderBy(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["orderBy"] = arg4
+	arg5, err := ec.field_Organization_requestedDocuments_argsFilter(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["filter"] = arg5
+	return args, nil
+}
+func (ec *executionContext) field_Organization_requestedDocuments_argsFirst(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*int, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+	if tmp, ok := rawArgs["first"]; ok {
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
+	}
+
+	var zeroVal *int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Organization_requestedDocuments_argsAfter(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*page.CursorKey, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+	if tmp, ok := rawArgs["after"]; ok {
+		return ec.unmarshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
+	}
+
+	var zeroVal *page.CursorKey
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Organization_requestedDocuments_argsLast(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*int, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
+	if tmp, ok := rawArgs["last"]; ok {
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
+	}
+
+	var zeroVal *int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Organization_requestedDocuments_argsBefore(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*page.CursorKey, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
+	if tmp, ok := rawArgs["before"]; ok {
+		return ec.unmarshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
+	}
+
+	var zeroVal *page.CursorKey
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Organization_requestedDocuments_argsOrderBy(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*types.DocumentOrderBy, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
+	if tmp, ok := rawArgs["orderBy"]; ok {
+		return ec.unmarshalODocumentOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentOrderBy(ctx, tmp)
+	}
+
+	var zeroVal *types.DocumentOrderBy
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Organization_requestedDocuments_argsFilter(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*types.DocumentFilter, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("filter"))
+	if tmp, ok := rawArgs["filter"]; ok {
+		return ec.unmarshalODocumentFilter2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentFilter(ctx, tmp)
+	}
+
+	var zeroVal *types.DocumentFilter
+	return zeroVal, nil
+}
+
 func (ec *executionContext) field_Organization_risks_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -24074,6 +24347,8 @@ func (ec *executionContext) fieldContext_Asset_organization(_ context.Context, f
 				return ec.fieldContext_Organization_peoples(ctx, field)
 			case "documents":
 				return ec.fieldContext_Organization_documents(ctx, field)
+			case "requestedDocuments":
+				return ec.fieldContext_Organization_requestedDocuments(ctx, field)
 			case "meetings":
 				return ec.fieldContext_Organization_meetings(ctx, field)
 			case "measures":
@@ -24693,6 +24968,8 @@ func (ec *executionContext) fieldContext_Audit_organization(_ context.Context, f
 				return ec.fieldContext_Organization_peoples(ctx, field)
 			case "documents":
 				return ec.fieldContext_Organization_documents(ctx, field)
+			case "requestedDocuments":
+				return ec.fieldContext_Organization_requestedDocuments(ctx, field)
 			case "meetings":
 				return ec.fieldContext_Organization_meetings(ctx, field)
 			case "measures":
@@ -26008,6 +26285,8 @@ func (ec *executionContext) fieldContext_ContinualImprovement_organization(_ con
 				return ec.fieldContext_Organization_peoples(ctx, field)
 			case "documents":
 				return ec.fieldContext_Organization_documents(ctx, field)
+			case "requestedDocuments":
+				return ec.fieldContext_Organization_requestedDocuments(ctx, field)
 			case "meetings":
 				return ec.fieldContext_Organization_meetings(ctx, field)
 			case "measures":
@@ -29967,6 +30246,8 @@ func (ec *executionContext) fieldContext_CustomDomain_organization(_ context.Con
 				return ec.fieldContext_Organization_peoples(ctx, field)
 			case "documents":
 				return ec.fieldContext_Organization_documents(ctx, field)
+			case "requestedDocuments":
+				return ec.fieldContext_Organization_requestedDocuments(ctx, field)
 			case "meetings":
 				return ec.fieldContext_Organization_meetings(ctx, field)
 			case "measures":
@@ -30878,6 +31159,8 @@ func (ec *executionContext) fieldContext_Datum_organization(_ context.Context, f
 				return ec.fieldContext_Organization_peoples(ctx, field)
 			case "documents":
 				return ec.fieldContext_Organization_documents(ctx, field)
+			case "requestedDocuments":
+				return ec.fieldContext_Organization_requestedDocuments(ctx, field)
 			case "meetings":
 				return ec.fieldContext_Organization_meetings(ctx, field)
 			case "measures":
@@ -32422,6 +32705,8 @@ func (ec *executionContext) fieldContext_DeleteOrganizationHorizontalLogoPayload
 				return ec.fieldContext_Organization_peoples(ctx, field)
 			case "documents":
 				return ec.fieldContext_Organization_documents(ctx, field)
+			case "requestedDocuments":
+				return ec.fieldContext_Organization_requestedDocuments(ctx, field)
 			case "meetings":
 				return ec.fieldContext_Organization_meetings(ctx, field)
 			case "measures":
@@ -34030,6 +34315,8 @@ func (ec *executionContext) fieldContext_Document_organization(_ context.Context
 				return ec.fieldContext_Organization_peoples(ctx, field)
 			case "documents":
 				return ec.fieldContext_Organization_documents(ctx, field)
+			case "requestedDocuments":
+				return ec.fieldContext_Organization_requestedDocuments(ctx, field)
 			case "meetings":
 				return ec.fieldContext_Organization_meetings(ctx, field)
 			case "measures":
@@ -34128,6 +34415,67 @@ func (ec *executionContext) fieldContext_Document_versions(ctx context.Context, 
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Document_versions_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Document_requestedVersions(ctx context.Context, field graphql.CollectedField, obj *types.Document) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Document_requestedVersions(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Document().RequestedVersions(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.DocumentVersionOrderBy), fc.Args["filter"].(*types.DocumentVersionFilter))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.DocumentVersionConnection)
+	fc.Result = res
+	return ec.marshalNDocumentVersionConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionConnection(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Document_requestedVersions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Document",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "edges":
+				return ec.fieldContext_DocumentVersionConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_DocumentVersionConnection_pageInfo(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DocumentVersionConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Document_requestedVersions_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -34536,6 +34884,8 @@ func (ec *executionContext) fieldContext_DocumentEdge_node(_ context.Context, fi
 				return ec.fieldContext_Document_organization(ctx, field)
 			case "versions":
 				return ec.fieldContext_Document_versions(ctx, field)
+			case "requestedVersions":
+				return ec.fieldContext_Document_requestedVersions(ctx, field)
 			case "controls":
 				return ec.fieldContext_Document_controls(ctx, field)
 			case "createdAt":
@@ -34652,6 +35002,8 @@ func (ec *executionContext) fieldContext_DocumentVersion_document(_ context.Cont
 				return ec.fieldContext_Document_organization(ctx, field)
 			case "versions":
 				return ec.fieldContext_Document_versions(ctx, field)
+			case "requestedVersions":
+				return ec.fieldContext_Document_requestedVersions(ctx, field)
 			case "controls":
 				return ec.fieldContext_Document_controls(ctx, field)
 			case "createdAt":
@@ -37502,6 +37854,8 @@ func (ec *executionContext) fieldContext_Framework_organization(_ context.Contex
 				return ec.fieldContext_Organization_peoples(ctx, field)
 			case "documents":
 				return ec.fieldContext_Organization_documents(ctx, field)
+			case "requestedDocuments":
+				return ec.fieldContext_Organization_requestedDocuments(ctx, field)
 			case "meetings":
 				return ec.fieldContext_Organization_meetings(ctx, field)
 			case "measures":
@@ -38806,6 +39160,8 @@ func (ec *executionContext) fieldContext_Invitation_organization(_ context.Conte
 				return ec.fieldContext_Organization_peoples(ctx, field)
 			case "documents":
 				return ec.fieldContext_Organization_documents(ctx, field)
+			case "requestedDocuments":
+				return ec.fieldContext_Organization_requestedDocuments(ctx, field)
 			case "meetings":
 				return ec.fieldContext_Organization_meetings(ctx, field)
 			case "measures":
@@ -40284,6 +40640,8 @@ func (ec *executionContext) fieldContext_Meeting_organization(_ context.Context,
 				return ec.fieldContext_Organization_peoples(ctx, field)
 			case "documents":
 				return ec.fieldContext_Organization_documents(ctx, field)
+			case "requestedDocuments":
+				return ec.fieldContext_Organization_requestedDocuments(ctx, field)
 			case "meetings":
 				return ec.fieldContext_Organization_meetings(ctx, field)
 			case "measures":
@@ -49541,6 +49899,8 @@ func (ec *executionContext) fieldContext_Nonconformity_organization(_ context.Co
 				return ec.fieldContext_Organization_peoples(ctx, field)
 			case "documents":
 				return ec.fieldContext_Organization_documents(ctx, field)
+			case "requestedDocuments":
+				return ec.fieldContext_Organization_requestedDocuments(ctx, field)
 			case "meetings":
 				return ec.fieldContext_Organization_meetings(ctx, field)
 			case "measures":
@@ -50614,6 +50974,8 @@ func (ec *executionContext) fieldContext_Obligation_organization(_ context.Conte
 				return ec.fieldContext_Organization_peoples(ctx, field)
 			case "documents":
 				return ec.fieldContext_Organization_documents(ctx, field)
+			case "requestedDocuments":
+				return ec.fieldContext_Organization_requestedDocuments(ctx, field)
 			case "meetings":
 				return ec.fieldContext_Organization_meetings(ctx, field)
 			case "measures":
@@ -52293,6 +52655,69 @@ func (ec *executionContext) fieldContext_Organization_documents(ctx context.Cont
 	return fc, nil
 }
 
+func (ec *executionContext) _Organization_requestedDocuments(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Organization_requestedDocuments(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Organization().RequestedDocuments(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.DocumentOrderBy), fc.Args["filter"].(*types.DocumentFilter))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.DocumentConnection)
+	fc.Result = res
+	return ec.marshalNDocumentConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentConnection(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Organization_requestedDocuments(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Organization",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "totalCount":
+				return ec.fieldContext_DocumentConnection_totalCount(ctx, field)
+			case "edges":
+				return ec.fieldContext_DocumentConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_DocumentConnection_pageInfo(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DocumentConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Organization_requestedDocuments_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Organization_meetings(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Organization_meetings(ctx, field)
 	if err != nil {
@@ -53718,6 +54143,8 @@ func (ec *executionContext) fieldContext_OrganizationEdge_node(_ context.Context
 				return ec.fieldContext_Organization_peoples(ctx, field)
 			case "documents":
 				return ec.fieldContext_Organization_documents(ctx, field)
+			case "requestedDocuments":
+				return ec.fieldContext_Organization_requestedDocuments(ctx, field)
 			case "meetings":
 				return ec.fieldContext_Organization_meetings(ctx, field)
 			case "measures":
@@ -54819,6 +55246,8 @@ func (ec *executionContext) fieldContext_ProcessingActivity_organization(_ conte
 				return ec.fieldContext_Organization_peoples(ctx, field)
 			case "documents":
 				return ec.fieldContext_Organization_documents(ctx, field)
+			case "requestedDocuments":
+				return ec.fieldContext_Organization_requestedDocuments(ctx, field)
 			case "meetings":
 				return ec.fieldContext_Organization_meetings(ctx, field)
 			case "measures":
@@ -56059,6 +56488,8 @@ func (ec *executionContext) fieldContext_PublishDocumentVersionPayload_document(
 				return ec.fieldContext_Document_organization(ctx, field)
 			case "versions":
 				return ec.fieldContext_Document_versions(ctx, field)
+			case "requestedVersions":
+				return ec.fieldContext_Document_requestedVersions(ctx, field)
 			case "controls":
 				return ec.fieldContext_Document_controls(ctx, field)
 			case "createdAt":
@@ -57574,6 +58005,8 @@ func (ec *executionContext) fieldContext_Risk_organization(_ context.Context, fi
 				return ec.fieldContext_Organization_peoples(ctx, field)
 			case "documents":
 				return ec.fieldContext_Organization_documents(ctx, field)
+			case "requestedDocuments":
+				return ec.fieldContext_Organization_requestedDocuments(ctx, field)
 			case "meetings":
 				return ec.fieldContext_Organization_meetings(ctx, field)
 			case "measures":
@@ -58354,6 +58787,8 @@ func (ec *executionContext) fieldContext_SAMLConfiguration_organization(_ contex
 				return ec.fieldContext_Organization_peoples(ctx, field)
 			case "documents":
 				return ec.fieldContext_Organization_documents(ctx, field)
+			case "requestedDocuments":
+				return ec.fieldContext_Organization_requestedDocuments(ctx, field)
 			case "meetings":
 				return ec.fieldContext_Organization_meetings(ctx, field)
 			case "measures":
@@ -59979,6 +60414,8 @@ func (ec *executionContext) fieldContext_Snapshot_organization(_ context.Context
 				return ec.fieldContext_Organization_peoples(ctx, field)
 			case "documents":
 				return ec.fieldContext_Organization_documents(ctx, field)
+			case "requestedDocuments":
+				return ec.fieldContext_Organization_requestedDocuments(ctx, field)
 			case "meetings":
 				return ec.fieldContext_Organization_meetings(ctx, field)
 			case "measures":
@@ -60901,6 +61338,8 @@ func (ec *executionContext) fieldContext_Task_organization(_ context.Context, fi
 				return ec.fieldContext_Organization_peoples(ctx, field)
 			case "documents":
 				return ec.fieldContext_Organization_documents(ctx, field)
+			case "requestedDocuments":
+				return ec.fieldContext_Organization_requestedDocuments(ctx, field)
 			case "meetings":
 				return ec.fieldContext_Organization_meetings(ctx, field)
 			case "measures":
@@ -61753,6 +62192,8 @@ func (ec *executionContext) fieldContext_TrustCenter_organization(_ context.Cont
 				return ec.fieldContext_Organization_peoples(ctx, field)
 			case "documents":
 				return ec.fieldContext_Organization_documents(ctx, field)
+			case "requestedDocuments":
+				return ec.fieldContext_Organization_requestedDocuments(ctx, field)
 			case "meetings":
 				return ec.fieldContext_Organization_meetings(ctx, field)
 			case "measures":
@@ -62884,6 +63325,8 @@ func (ec *executionContext) fieldContext_TrustCenterDocumentAccess_document(_ co
 				return ec.fieldContext_Document_organization(ctx, field)
 			case "versions":
 				return ec.fieldContext_Document_versions(ctx, field)
+			case "requestedVersions":
+				return ec.fieldContext_Document_requestedVersions(ctx, field)
 			case "controls":
 				return ec.fieldContext_Document_controls(ctx, field)
 			case "createdAt":
@@ -63754,6 +64197,8 @@ func (ec *executionContext) fieldContext_TrustCenterFile_organization(_ context.
 				return ec.fieldContext_Organization_peoples(ctx, field)
 			case "documents":
 				return ec.fieldContext_Organization_documents(ctx, field)
+			case "requestedDocuments":
+				return ec.fieldContext_Organization_requestedDocuments(ctx, field)
 			case "meetings":
 				return ec.fieldContext_Organization_meetings(ctx, field)
 			case "measures":
@@ -65131,6 +65576,8 @@ func (ec *executionContext) fieldContext_UpdateDocumentPayload_document(_ contex
 				return ec.fieldContext_Document_organization(ctx, field)
 			case "versions":
 				return ec.fieldContext_Document_versions(ctx, field)
+			case "requestedVersions":
+				return ec.fieldContext_Document_requestedVersions(ctx, field)
 			case "controls":
 				return ec.fieldContext_Document_controls(ctx, field)
 			case "createdAt":
@@ -65745,6 +66192,8 @@ func (ec *executionContext) fieldContext_UpdateOrganizationPayload_organization(
 				return ec.fieldContext_Organization_peoples(ctx, field)
 			case "documents":
 				return ec.fieldContext_Organization_documents(ctx, field)
+			case "requestedDocuments":
+				return ec.fieldContext_Organization_requestedDocuments(ctx, field)
 			case "meetings":
 				return ec.fieldContext_Organization_meetings(ctx, field)
 			case "measures":
@@ -67925,6 +68374,8 @@ func (ec *executionContext) fieldContext_Vendor_organization(_ context.Context, 
 				return ec.fieldContext_Organization_peoples(ctx, field)
 			case "documents":
 				return ec.fieldContext_Organization_documents(ctx, field)
+			case "requestedDocuments":
+				return ec.fieldContext_Organization_requestedDocuments(ctx, field)
 			case "meetings":
 				return ec.fieldContext_Organization_meetings(ctx, field)
 			case "measures":
@@ -88649,6 +89100,42 @@ func (ec *executionContext) _Document(ctx context.Context, sel ast.SelectionSet,
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "requestedVersions":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Document_requestedVersions(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "controls":
 			field := field
 
@@ -93436,6 +93923,42 @@ func (ec *executionContext) _Organization(ctx context.Context, sel ast.Selection
 					}
 				}()
 				res = ec._Organization_documents(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "requestedDocuments":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Organization_requestedDocuments(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -106637,14 +107160,16 @@ func (ec *executionContext) marshalNMembershipRole2goᚗproboᚗincᚋproboᚋpk
 
 var (
 	unmarshalNMembershipRole2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipRole = map[string]coredata.MembershipRole{
-		"OWNER":  coredata.MembershipRoleOwner,
-		"ADMIN":  coredata.MembershipRoleAdmin,
-		"VIEWER": coredata.MembershipRoleViewer,
+		"OWNER":    coredata.MembershipRoleOwner,
+		"ADMIN":    coredata.MembershipRoleAdmin,
+		"EMPLOYEE": coredata.MembershipRoleEmployee,
+		"VIEWER":   coredata.MembershipRoleViewer,
 	}
 	marshalNMembershipRole2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipRole = map[coredata.MembershipRole]string{
-		coredata.MembershipRoleOwner:  "OWNER",
-		coredata.MembershipRoleAdmin:  "ADMIN",
-		coredata.MembershipRoleViewer: "VIEWER",
+		coredata.MembershipRoleOwner:    "OWNER",
+		coredata.MembershipRoleAdmin:    "ADMIN",
+		coredata.MembershipRoleEmployee: "EMPLOYEE",
+		coredata.MembershipRoleViewer:   "VIEWER",
 	}
 )
 

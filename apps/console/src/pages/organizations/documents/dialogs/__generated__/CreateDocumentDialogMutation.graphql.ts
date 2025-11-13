@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<8f842e1d6a4c314a9bfba43097ac2795>>
+ * @generated SignedSource<<a62d022e93d9c7712dba2365367b22d4>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -251,53 +251,6 @@ return {
                                 "kind": "ScalarField",
                                 "name": "version",
                                 "storageKey": null
-                              },
-                              {
-                                "alias": null,
-                                "args": [
-                                  {
-                                    "kind": "Literal",
-                                    "name": "first",
-                                    "value": 1000
-                                  }
-                                ],
-                                "concreteType": "DocumentVersionSignatureConnection",
-                                "kind": "LinkedField",
-                                "name": "signatures",
-                                "plural": false,
-                                "selections": [
-                                  {
-                                    "alias": null,
-                                    "args": null,
-                                    "concreteType": "DocumentVersionSignatureEdge",
-                                    "kind": "LinkedField",
-                                    "name": "edges",
-                                    "plural": true,
-                                    "selections": [
-                                      {
-                                        "alias": null,
-                                        "args": null,
-                                        "concreteType": "DocumentVersionSignature",
-                                        "kind": "LinkedField",
-                                        "name": "node",
-                                        "plural": false,
-                                        "selections": [
-                                          (v3/*: any*/),
-                                          {
-                                            "alias": null,
-                                            "args": null,
-                                            "kind": "ScalarField",
-                                            "name": "state",
-                                            "storageKey": null
-                                          }
-                                        ],
-                                        "storageKey": null
-                                      }
-                                    ],
-                                    "storageKey": null
-                                  }
-                                ],
-                                "storageKey": "signatures(first:1000)"
                               }
                             ],
                             "storageKey": null
@@ -336,12 +289,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "319502472cd9600df506f084a7648571",
+    "cacheID": "3f4d2ff0aa6f6683d06c36ae4dda0287",
     "id": null,
     "metadata": {},
     "name": "CreateDocumentDialogMutation",
     "operationKind": "mutation",
-    "text": "mutation CreateDocumentDialogMutation(\n  $input: CreateDocumentInput!\n) {\n  createDocument(input: $input) {\n    documentEdge {\n      node {\n        id\n        ...DocumentsPageRowFragment\n      }\n    }\n  }\n}\n\nfragment DocumentsPageRowFragment on Document {\n  id\n  title\n  description\n  documentType\n  classification\n  updatedAt\n  owner {\n    id\n    fullName\n  }\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n        version\n        signatures(first: 1000) {\n          edges {\n            node {\n              id\n              state\n            }\n          }\n        }\n      }\n    }\n  }\n}\n"
+    "text": "mutation CreateDocumentDialogMutation(\n  $input: CreateDocumentInput!\n) {\n  createDocument(input: $input) {\n    documentEdge {\n      node {\n        id\n        ...DocumentsPageRowFragment\n      }\n    }\n  }\n}\n\nfragment DocumentsPageRowFragment on Document {\n  id\n  title\n  description\n  documentType\n  classification\n  updatedAt\n  owner {\n    id\n    fullName\n  }\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n        version\n      }\n    }\n  }\n}\n"
   }
 };
 })();

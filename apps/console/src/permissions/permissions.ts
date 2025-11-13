@@ -24,7 +24,7 @@ const pendingRequests: Map<string, Promise<PermissionsResponse>> = new Map();
 /**
  * Fetch permissions for the current user's role in the organization
  */
-function fetchPermissions(organizationId: string): Promise<PermissionsResponse> {
+export function fetchPermissions(organizationId: string): Promise<PermissionsResponse> {
   if (cache[organizationId]) {
     return Promise.resolve(cache[organizationId]);
   }
@@ -190,7 +190,7 @@ export function getUserRole(organizationId: string): string {
 
 /**
  * Get available roles that the current user can assign
- * Based on the rule: OWNER and FULL can assign any role, ADMIN can assign ADMIN and VIEWER but not OWNER
+ * Based on the rule: OWNER and FULL can assign any role, ADMIN can assign ADMIN, EMPLOYEE and VIEWER but not OWNER
  *
  * @param organizationId - The organization ID
  * @returns Array of roles that can be assigned
@@ -200,11 +200,11 @@ export function getAssignableRoles(organizationId: string): string[] {
   if (!currentRole) return [];
 
   if (currentRole === "OWNER" || currentRole === "FULL") {
-    return ["OWNER", "ADMIN", "VIEWER"];
+    return ["OWNER", "ADMIN", "EMPLOYEE", "VIEWER"];
   }
 
   if (currentRole === "ADMIN") {
-    return ["ADMIN", "VIEWER"];
+    return ["ADMIN", "EMPLOYEE", "VIEWER"];
   }
 
   return [];

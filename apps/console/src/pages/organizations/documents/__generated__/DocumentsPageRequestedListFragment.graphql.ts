@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<8fcd99714c4bf7dba138fcb0de398a3a>>
+ * @generated SignedSource<<1b96b33df3e8d74f86424031b3b08235>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,37 +9,30 @@
 // @ts-nocheck
 
 import { ReaderFragment } from 'relay-runtime';
-export type MembershipRole = "ADMIN" | "EMPLOYEE" | "OWNER" | "VIEWER";
-export type UserAuthMethod = "PASSWORD" | "SAML";
 import { FragmentRefs } from "relay-runtime";
-export type MembersSettingsTabMembershipsFragment$data = {
+export type DocumentsPageRequestedListFragment$data = {
   readonly id: string;
-  readonly memberships: {
+  readonly requestedDocuments: {
     readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly node: {
-        readonly authMethod: UserAuthMethod;
-        readonly createdAt: any;
-        readonly emailAddress: string;
-        readonly fullName: string;
         readonly id: string;
-        readonly role: MembershipRole;
+        readonly " $fragmentSpreads": FragmentRefs<"DocumentsPageRowFragment">;
       };
     }>;
-    readonly totalCount: number;
   };
-  readonly " $fragmentType": "MembersSettingsTabMembershipsFragment";
+  readonly " $fragmentType": "DocumentsPageRequestedListFragment";
 };
-export type MembersSettingsTabMembershipsFragment$key = {
-  readonly " $data"?: MembersSettingsTabMembershipsFragment$data;
-  readonly " $fragmentSpreads": FragmentRefs<"MembersSettingsTabMembershipsFragment">;
+export type DocumentsPageRequestedListFragment$key = {
+  readonly " $data"?: DocumentsPageRequestedListFragment$data;
+  readonly " $fragmentSpreads": FragmentRefs<"DocumentsPageRequestedListFragment">;
 };
 
-import MembersSettingsTabMembershipsRefetchQuery_graphql from './MembersSettingsTabMembershipsRefetchQuery.graphql';
+import DocumentsRequestedListQuery_graphql from './DocumentsRequestedListQuery.graphql';
 
 const node: ReaderFragment = (function(){
 var v0 = [
-  "memberships"
+  "requestedDocuments"
 ],
 v1 = {
   "alias": null,
@@ -61,9 +54,14 @@ return {
       "name": "before"
     },
     {
-      "defaultValue": 20,
+      "defaultValue": 50,
       "kind": "LocalArgument",
       "name": "first"
+    },
+    {
+      "defaultValue": false,
+      "kind": "LocalArgument",
+      "name": "includeSignatures"
     },
     {
       "defaultValue": null,
@@ -73,7 +71,7 @@ return {
     {
       "defaultValue": {
         "direction": "ASC",
-        "field": "CREATED_AT"
+        "field": "TITLE"
       },
       "kind": "LocalArgument",
       "name": "order"
@@ -104,17 +102,17 @@ return {
       "fragmentPathInResult": [
         "node"
       ],
-      "operation": MembersSettingsTabMembershipsRefetchQuery_graphql,
+      "operation": DocumentsRequestedListQuery_graphql,
       "identifierInfo": {
         "identifierField": "id",
         "identifierQueryVariableName": "id"
       }
     }
   },
-  "name": "MembersSettingsTabMembershipsFragment",
+  "name": "DocumentsPageRequestedListFragment",
   "selections": [
     {
-      "alias": "memberships",
+      "alias": "requestedDocuments",
       "args": [
         {
           "kind": "Variable",
@@ -122,22 +120,15 @@ return {
           "variableName": "order"
         }
       ],
-      "concreteType": "MembershipConnection",
+      "concreteType": "DocumentConnection",
       "kind": "LinkedField",
-      "name": "__MembersSettingsTabMemberships_memberships_connection",
+      "name": "__DocumentsRequestedListQuery_requestedDocuments_connection",
       "plural": false,
       "selections": [
         {
           "alias": null,
           "args": null,
-          "kind": "ScalarField",
-          "name": "totalCount",
-          "storageKey": null
-        },
-        {
-          "alias": null,
-          "args": null,
-          "concreteType": "MembershipEdge",
+          "concreteType": "DocumentEdge",
           "kind": "LinkedField",
           "name": "edges",
           "plural": true,
@@ -145,46 +136,27 @@ return {
             {
               "alias": null,
               "args": null,
-              "concreteType": "Membership",
+              "concreteType": "Document",
               "kind": "LinkedField",
               "name": "node",
               "plural": false,
               "selections": [
                 (v1/*: any*/),
                 {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "fullName",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "emailAddress",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "role",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "authMethod",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "createdAt",
-                  "storageKey": null
+                  "args": [
+                    {
+                      "kind": "Variable",
+                      "name": "includeSignatures",
+                      "variableName": "includeSignatures"
+                    },
+                    {
+                      "kind": "Literal",
+                      "name": "useRequestedVersions",
+                      "value": true
+                    }
+                  ],
+                  "kind": "FragmentSpread",
+                  "name": "DocumentsPageRowFragment"
                 },
                 {
                   "alias": null,
@@ -267,6 +239,6 @@ return {
 };
 })();
 
-(node as any).hash = "c9e341e99052ba74299c5ddd0433d7c0";
+(node as any).hash = "82ef212b81a06ce640f78e1a059352bd";
 
 export default node;

@@ -78,6 +78,7 @@ func (p *DocumentVersions) LoadByDocumentID(
 	scope Scoper,
 	documentID gid.GID,
 	cursor *page.Cursor[DocumentVersionOrderField],
+	filter *DocumentVersionFilter,
 ) error {
 	q := `
 SELECT
@@ -100,14 +101,16 @@ WHERE
 	%s
 	AND document_id = @document_id
 	AND %s
+	AND %s
 `
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"document_id": documentID,
 	}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {

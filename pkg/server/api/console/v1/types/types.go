@@ -1040,6 +1040,7 @@ type Document struct {
 	Owner                   *People                         `json:"owner"`
 	Organization            *Organization                   `json:"organization"`
 	Versions                *DocumentVersionConnection      `json:"versions"`
+	RequestedVersions       *DocumentVersionConnection      `json:"requestedVersions"`
 	Controls                *ControlConnection              `json:"controls"`
 	CreatedAt               time.Time                       `json:"createdAt"`
 	UpdatedAt               time.Time                       `json:"updatedAt"`
@@ -1432,6 +1433,7 @@ type Organization struct {
 	Vendors               *VendorConnection               `json:"vendors"`
 	Peoples               *PeopleConnection               `json:"peoples"`
 	Documents             *DocumentConnection             `json:"documents"`
+	RequestedDocuments    *DocumentConnection             `json:"requestedDocuments"`
 	Meetings              *MeetingConnection              `json:"meetings"`
 	Measures              *MeasureConnection              `json:"measures"`
 	Risks                 *RiskConnection                 `json:"risks"`

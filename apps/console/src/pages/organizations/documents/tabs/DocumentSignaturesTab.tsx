@@ -9,20 +9,49 @@ import {
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { Suspense, useState, useEffect, useRef } from "react";
-import type { ItemOf, NodeOf } from "/types";
-import { graphql, useFragment, useRefetchableFragment } from "react-relay";
+import type { ItemOf } from "/types";
+import { graphql, useFragment, useRefetchableFragment, useLazyLoadQuery } from "react-relay";
 import { usePeople } from "/hooks/graph/PeopleGraph.ts";
 import { useOrganizationId } from "/hooks/useOrganizationId.ts";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts.ts";
 import { sprintf } from "@probo/helpers";
-import type { DocumentDetailPageDocumentFragment$data } from "../__generated__/DocumentDetailPageDocumentFragment.graphql";
-import { useOutletContext } from "react-router";
+import { useParams } from "react-router";
 import type { DocumentSignaturesTab_signature$key } from "/pages/organizations/documents/tabs/__generated__/DocumentSignaturesTab_signature.graphql.ts";
 import type { DocumentSignaturesTab_version$key } from "/pages/organizations/documents/tabs/__generated__/DocumentSignaturesTab_version.graphql.ts";
 import type { DocumentSignaturesTabRefetchQuery } from "./__generated__/DocumentSignaturesTabRefetchQuery.graphql";
-import { Authorized } from "/permissions";
+import type { DocumentSignaturesTabQuery } from "./__generated__/DocumentSignaturesTabQuery.graphql";
+import { Authorized, isAuthorized, fetchPermissions } from "/permissions";
 
-type Version = NodeOf<DocumentDetailPageDocumentFragment$data["versions"]>;
+const documentVersionQuery = graphql`
+  query DocumentSignaturesTabQuery($documentId: ID!, $versionId: ID!, $hasVersionId: Boolean!, $useRequestedVersions: Boolean!) {
+    document: node(id: $documentId) @skip(if: $hasVersionId) {
+      ... on Document {
+        id
+        versions(first: 1) @skip(if: $useRequestedVersions) {
+          edges {
+            node {
+              id
+              ...DocumentSignaturesTab_version
+            }
+          }
+        }
+        requestedVersions(first: 1) @include(if: $useRequestedVersions) {
+          edges {
+            node {
+              id
+              ...DocumentSignaturesTab_version
+            }
+          }
+        }
+      }
+    }
+    version: node(id: $versionId) @include(if: $hasVersionId) {
+      ... on DocumentVersion {
+        ...DocumentSignaturesTab_version
+      }
+    }
+  }
+`;
 
 const versionFragment = graphql`
   fragment DocumentSignaturesTab_version on DocumentVersion
@@ -58,14 +87,29 @@ const versionFragment = graphql`
 
 type SignatureState = "REQUESTED" | "SIGNED";
 
-export default function DocumentSignaturesTab() {
-  const { version: versionFromContext } = useOutletContext<{
-    version: Version;
-  }>();
+function DocumentSignaturesTabContent() {
+  const { documentId, versionId } = useParams<{ documentId: string; versionId?: string }>();
+  const organizationId = useOrganizationId();
+  const hasVersionId = Boolean(versionId);
+  const canListVersions = isAuthorized(organizationId, "Document", "listVersions");
+  const queryData = useLazyLoadQuery<DocumentSignaturesTabQuery>(
+    documentVersionQuery,
+    {
+      documentId: documentId!,
+      versionId: versionId || documentId!,
+      hasVersionId,
+      useRequestedVersions: !canListVersions
+    },
+    { fetchPolicy: 'store-or-network' }
+  );
   const [selectedStates, setSelectedStates] = useState<SignatureState[]>([]);
   const { __ } = useTranslate();
 
-  if (!versionFromContext) {
+  const versionData = queryData.version
+    || queryData.document?.versions?.edges[0]?.node
+    || queryData.document?.requestedVersions?.edges[0]?.node;
+
+  if (!versionData) {
     return null;
   }
 
@@ -108,7 +152,7 @@ export default function DocumentSignaturesTab() {
       </div>
       <Suspense fallback={<Spinner centered />}>
         <SignatureList
-          version={versionFromContext}
+          version={versionData}
           selectedStates={selectedStates}
         />
       </Suspense>
@@ -116,8 +160,28 @@ export default function DocumentSignaturesTab() {
   );
 }
 
+export default function DocumentSignaturesTab() {
+  const organizationId = useOrganizationId();
+
+  const [cacheKey, setCacheKey] = useState(0);
+
+  useEffect(() => {
+    fetchPermissions(organizationId).then(() => {
+      setCacheKey(prev => prev + 1);
+    });
+  }, [organizationId]);
+
+  const hasCheckedPermissions = cacheKey > 0;
+
+  if (!hasCheckedPermissions) {
+    return <Spinner />;
+  }
+
+  return <DocumentSignaturesTabContent key={cacheKey} />;
+}
+
 function SignatureList(props: {
-  version: Version;
+  version: DocumentSignaturesTab_version$key;
   selectedStates: SignatureState[];
 }) {
   const [version, refetch] = useRefetchableFragment<

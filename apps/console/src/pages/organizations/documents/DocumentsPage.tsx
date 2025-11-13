@@ -21,17 +21,15 @@ import {
   IconCheckmark1,
   IconArrowDown,
   Card,
+  Spinner,
 } from "@probo/ui";
 import {
   useFragment,
   usePaginationFragment,
-  usePreloadedQuery,
   useLazyLoadQuery,
-  type PreloadedQuery,
 } from "react-relay";
-import { useRef } from "react";
+import { useRef, useEffect, useState } from "react";
 import { graphql } from "relay-runtime";
-import type { DocumentGraphListQuery } from "/hooks/graph/__generated__/DocumentGraphListQuery.graphql";
 import {
   documentsQuery,
   useDeleteDocumentMutation,
@@ -39,7 +37,10 @@ import {
   useBulkDeleteDocumentsMutation,
   useBulkExportDocumentsMutation,
 } from "/hooks/graph/DocumentGraph";
+import type { DocumentsPageUserEmailQuery } from "./__generated__/DocumentsPageUserEmailQuery.graphql";
+import type { DocumentGraphListQuery } from "/hooks/graph/__generated__/DocumentGraphListQuery.graphql";
 import type { DocumentsPageListFragment$key } from "./__generated__/DocumentsPageListFragment.graphql";
+import type { DocumentsPageRequestedListFragment$key } from "./__generated__/DocumentsPageRequestedListFragment.graphql";
 import { useList, usePageTitle } from "@probo/hooks";
 import {
   sprintf,
@@ -56,9 +57,8 @@ import {
   BulkExportDialog,
   type BulkExportDialogRef,
 } from "/components/documents/BulkExportDialog";
-import type { DocumentsPageUserEmailQuery } from "./__generated__/DocumentsPageUserEmailQuery.graphql";
-import { Authorized } from "/permissions";
-import { isAuthorized } from "/permissions";
+import { Authorized, isAuthorized, fetchPermissions } from "/permissions";
+import { useOrganizationId } from "/hooks/useOrganizationId";
 
 const documentsFragment = graphql`
   fragment DocumentsPageListFragment on Organization
@@ -72,6 +72,7 @@ const documentsFragment = graphql`
     after: { type: "CursorKey", defaultValue: null }
     before: { type: "CursorKey", defaultValue: null }
     last: { type: "Int", defaultValue: null }
+    includeSignatures: { type: "Boolean", defaultValue: false }
   ) {
     documents(
       first: $first
@@ -84,16 +85,44 @@ const documentsFragment = graphql`
       edges {
         node {
           id
-          ...DocumentsPageRowFragment
+          ...DocumentsPageRowFragment @arguments(includeSignatures: $includeSignatures, useRequestedVersions: false)
         }
       }
     }
   }
 `;
 
-type Props = {
-  queryRef: PreloadedQuery<DocumentGraphListQuery>;
-};
+const requestedDocumentsFragment = graphql`
+  fragment DocumentsPageRequestedListFragment on Organization
+  @refetchable(queryName: "DocumentsRequestedListQuery")
+  @argumentDefinitions(
+    first: { type: "Int", defaultValue: 50 }
+    order: {
+      type: "DocumentOrder"
+      defaultValue: { field: TITLE, direction: ASC }
+    }
+    after: { type: "CursorKey", defaultValue: null }
+    before: { type: "CursorKey", defaultValue: null }
+    last: { type: "Int", defaultValue: null }
+    includeSignatures: { type: "Boolean", defaultValue: false }
+  ) {
+    requestedDocuments(
+      first: $first
+      after: $after
+      last: $last
+      before: $before
+      orderBy: $order
+    ) @connection(key: "DocumentsRequestedListQuery_requestedDocuments") {
+      __id
+      edges {
+        node {
+          id
+          ...DocumentsPageRowFragment @arguments(includeSignatures: $includeSignatures, useRequestedVersions: true)
+        }
+      }
+    }
+  }
+`;
 
 const UserEmailQuery = graphql`
   query DocumentsPageUserEmailQuery {
@@ -105,28 +134,56 @@ const UserEmailQuery = graphql`
   }
 `;
 
-export default function DocumentsPage(props: Props) {
+function DocumentsPageContent() {
   const { __ } = useTranslate();
+  const organizationId = useOrganizationId();
+  const canListDocuments = isAuthorized(organizationId, "Organization", "listDocuments");
 
-  const organization = usePreloadedQuery(
+  const queryData = useLazyLoadQuery<DocumentGraphListQuery>(
     documentsQuery,
-    props.queryRef
-  ).organization;
+    {
+      organizationId,
+      includeSignatures: false,
+      useRequestedDocuments: !canListDocuments
+    },
+    { fetchPolicy: 'store-or-network' }
+  );
+
+  const organization = queryData.organization;
+
+  const canViewSignatures = isAuthorized(organization.id, "DocumentVersion", "signatures");
+
+  const regularPagination = usePaginationFragment<any, DocumentsPageListFragment$key>(
+    documentsFragment,
+    canListDocuments ? (organization as DocumentsPageListFragment$key) : null
+  );
+
+  const requestedPagination = usePaginationFragment<any, DocumentsPageRequestedListFragment$key>(
+    requestedDocumentsFragment,
+    !canListDocuments ? (organization as DocumentsPageRequestedListFragment$key) : null
+  );
+
+  const pagination = canListDocuments ? regularPagination : requestedPagination;
 
   const userEmailData = useLazyLoadQuery<DocumentsPageUserEmailQuery>(
     UserEmailQuery,
     {}
   );
   const defaultEmail = userEmailData.viewer.user.email;
-  const pagination = usePaginationFragment(
-    documentsFragment,
-    organization as DocumentsPageListFragment$key
-  );
 
-  const documents = pagination.data.documents.edges
-    .map((edge) => edge.node)
-    .filter(Boolean);
-  const connectionId = pagination.data.documents.__id;
+  useEffect(() => {
+    pagination.refetch({
+      includeSignatures: canViewSignatures
+    }, { fetchPolicy: 'network-only' });
+  }, []);
+
+  const documentsConnection = canListDocuments
+    ? regularPagination.data?.documents
+    : requestedPagination.data?.requestedDocuments;
+  const documents = documentsConnection?.edges
+    .map((edge: any) => edge.node)
+    .filter(Boolean) || [];
+  const connectionId = documentsConnection?.__id || "";
   const [sendSigningNotifications] = useSendSigningNotificationsMutation();
   const [bulkDeleteDocuments] = useBulkDeleteDocumentsMutation();
   const [bulkExportDocuments, isBulkExporting] =
@@ -240,7 +297,7 @@ export default function DocumentsPage(props: Props) {
                 <Th className="w-32">{__("Classification")}</Th>
                 <Th className="w-60">{__("Owner")}</Th>
                 <Th className="w-60">{__("Last update")}</Th>
-                <Th className="w-20">{__("Signatures")}</Th>
+                {canViewSignatures && <Th className="w-20">{__("Signatures")}</Th>}
                 {hasAnyAction && <Th className="w-18"></Th>}
               </Tr>
             ) : (
@@ -285,21 +342,37 @@ export default function DocumentsPage(props: Props) {
                           </Button>
                         </SignatureDocumentsDialog>
                       </Authorized>
-                      <BulkExportDialog
-                        ref={bulkExportDialogRef}
-                        onExport={handleBulkExport}
-                        isLoading={isBulkExporting}
-                        defaultEmail={defaultEmail}
-                        selectedCount={selection.length}
-                      >
+                      {canViewSignatures ? (
+                        <BulkExportDialog
+                          ref={bulkExportDialogRef}
+                          onExport={handleBulkExport}
+                          isLoading={isBulkExporting}
+                          defaultEmail={defaultEmail}
+                          selectedCount={selection.length}
+                        >
+                          <Button
+                            variant="secondary"
+                            icon={IconArrowDown}
+                            className="py-0.5 px-2 text-xs h-6 min-h-6"
+                          >
+                            {__("Export")}
+                          </Button>
+                        </BulkExportDialog>
+                      ) : (
                         <Button
                           variant="secondary"
                           icon={IconArrowDown}
                           className="py-0.5 px-2 text-xs h-6 min-h-6"
+                          onClick={() => handleBulkExport({
+                            withWatermark: true,
+                            withSignatures: false,
+                            watermarkEmail: defaultEmail,
+                          })}
+                          disabled={isBulkExporting}
                         >
                           {__("Export")}
                         </Button>
-                      </BulkExportDialog>
+                      )}
                       <Authorized entity="Document" action="deleteDocument">
                         <Button
                           variant="danger"
@@ -326,6 +399,7 @@ export default function DocumentsPage(props: Props) {
                 organizationId={organization.id}
                 connectionId={connectionId}
                 hasAnyAction={hasAnyAction}
+                canViewSignatures={canViewSignatures}
               />
             ))}
           </Tbody>
@@ -347,7 +421,11 @@ export default function DocumentsPage(props: Props) {
 }
 
 const rowFragment = graphql`
-  fragment DocumentsPageRowFragment on Document {
+  fragment DocumentsPageRowFragment on Document
+  @argumentDefinitions(
+    includeSignatures: { type: "Boolean", defaultValue: false }
+    useRequestedVersions: { type: "Boolean", defaultValue: false }
+  ) {
     id
     title
     description
@@ -358,13 +436,30 @@ const rowFragment = graphql`
       id
       fullName
     }
-    versions(first: 1) {
+    versions(first: 1) @skip(if: $useRequestedVersions) {
       edges {
         node {
           id
           status
           version
-          signatures(first: 1000) {
+          signatures(first: 1000) @include(if: $includeSignatures) {
+            edges {
+              node {
+                id
+                state
+              }
+            }
+          }
+        }
+      }
+    }
+    requestedVersions(first: 1) @include(if: $useRequestedVersions) {
+      edges {
+        node {
+          id
+          status
+          version
+          signatures(first: 1000) @include(if: $includeSignatures) {
             edges {
               node {
                 id
@@ -384,6 +479,7 @@ function DocumentRow({
   checked,
   onCheck,
   hasAnyAction,
+  canViewSignatures,
 }: {
   document: DocumentsPageRowFragment$key;
   organizationId: string;
@@ -391,12 +487,13 @@ function DocumentRow({
   checked: boolean;
   onCheck: () => void;
   hasAnyAction: boolean;
+  canViewSignatures: boolean;
 }) {
   const document = useFragment<DocumentsPageRowFragment$key>(
     rowFragment,
     documentKey
   );
-  const lastVersion = document.versions.edges?.[0]?.node;
+  const lastVersion = document.versions?.edges?.[0]?.node || document.requestedVersions?.edges?.[0]?.node;
 
   if (!lastVersion) {
     return null;
@@ -404,12 +501,14 @@ function DocumentRow({
 
   const isDraft = lastVersion.status === "DRAFT";
   const { __ } = useTranslate();
-  const signatures =
-    lastVersion.signatures?.edges?.map((edge) => edge?.node)?.filter(Boolean) ??
-    [];
-  const signedCount = signatures.filter(
-    (signature) => signature.state === "SIGNED"
-  ).length;
+
+  let signatures: any[] = [];
+  let signedCount = 0;
+
+  if (canViewSignatures && lastVersion.signatures) {
+    signatures = lastVersion.signatures.edges?.map((edge) => edge?.node)?.filter(Boolean) ?? [];
+    signedCount = signatures.filter((signature) => signature.state === "SIGNED").length;
+  }
   const [deleteDocument] = useDeleteDocumentMutation();
   const confirm = useConfirm();
 
@@ -459,9 +558,11 @@ function DocumentRow({
         </div>
       </Td>
       <Td className="w-60">{formatDate(document.updatedAt)}</Td>
-      <Td className="w-20">
-        {signedCount}/{signatures.length}
-      </Td>
+      {canViewSignatures && (
+        <Td className="w-20">
+          {signedCount}/{signatures.length}
+        </Td>
+      )}
       {hasAnyAction && (
         <Td noLink width={50} className="text-end w-18">
           <ActionDropdown>
@@ -479,4 +580,24 @@ function DocumentRow({
       )}
     </Tr>
   );
+}
+
+export default function DocumentsPage() {
+  const organizationId = useOrganizationId();
+
+  const [cacheKey, setCacheKey] = useState(0);
+
+  useEffect(() => {
+    fetchPermissions(organizationId).then(() => {
+      setCacheKey(prev => prev + 1);
+    });
+  }, [organizationId]);
+
+  const hasCheckedPermissions = cacheKey > 0;
+
+  if (!hasCheckedPermissions) {
+    return <Spinner />;
+  }
+
+  return <DocumentsPageContent key={cacheKey} />;
 }

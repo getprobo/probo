@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<562744e07bdb502c26aebe267b181b0e>>
+ * @generated SignedSource<<9aaf763355340403cfd0c9666b61be19>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,7 +9,7 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
-export type MembershipRole = "ADMIN" | "OWNER" | "VIEWER";
+export type MembershipRole = "ADMIN" | "EMPLOYEE" | "OWNER" | "VIEWER";
 export type UpdateMembershipInput = {
   memberId: string;
   organizationId: string;

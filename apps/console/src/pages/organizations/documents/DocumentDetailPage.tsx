@@ -1,9 +1,6 @@
-import type { PreloadedQuery } from "react-relay";
 import {
   graphql,
-  loadQuery,
   useFragment,
-  usePreloadedQuery,
   useLazyLoadQuery,
 } from "react-relay";
 import type { DocumentGraphNodeQuery } from "/hooks/graph/__generated__/DocumentGraphNodeQuery.graphql";
@@ -44,6 +41,7 @@ import {
   TabLink,
   Tabs,
   useConfirm,
+  Spinner,
 } from "@probo/ui";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
@@ -67,7 +65,7 @@ import {
   PdfDownloadDialog,
   type PdfDownloadDialogRef,
 } from "/components/documents/PdfDownloadDialog";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import type { NodeOf } from "/types.ts";
 import clsx from "clsx";
 import { PeopleSelectField } from "/components/form/PeopleSelectField";
@@ -76,27 +74,30 @@ import { DocumentTypeOptions } from "/components/form/DocumentTypeOptions";
 import { DocumentClassificationOptions } from "/components/form/DocumentClassificationOptions";
 import { z } from "zod";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
-import { Authorized } from "/permissions";
-
-type Props = {
-  queryRef: PreloadedQuery<DocumentGraphNodeQuery>;
-};
+import { Authorized, isAuthorized, fetchPermissions } from "/permissions";
 
 const documentFragment = graphql`
-  fragment DocumentDetailPageDocumentFragment on Document {
+  fragment DocumentDetailPageDocumentFragment on Document
+  @argumentDefinitions(
+    includeControls: { type: "Boolean!", defaultValue: false }
+    includeSignatures: { type: "Boolean!", defaultValue: false }
+    useRequestedVersions: { type: "Boolean!", defaultValue: false }
+  ) {
     id
     title
     documentType
     classification
+    organization {
+      id
+    }
     owner {
       id
       fullName
     }
-    ...DocumentControlsTabFragment
-    controlsInfo: controls(first: 0) {
+    controlsInfo: controls(first: 0) @include(if: $includeControls) {
       totalCount
     }
-    versions(first: 20) @connection(key: "DocumentDetailPage_versions") {
+    versions(first: 20) @skip(if: $useRequestedVersions) @connection(key: "DocumentDetailPage_versions") {
       __id
       edges {
         node {
@@ -111,18 +112,41 @@ const documentFragment = graphql`
             id
             fullName
           }
-          ...DocumentSignaturesTab_version
-          signatures(first: 1000)
+          signatures(first: 1000) @include(if: $includeSignatures)
             @connection(key: "DocumentDetailPage_signatures", filters: []) {
             __id
             edges {
               node {
                 id
                 state
-                signedBy {
-                  id
-                }
-                ...DocumentSignaturesTab_signature
+              }
+            }
+          }
+        }
+      }
+    }
+    requestedVersions(first: 20) @include(if: $useRequestedVersions) @connection(key: "DocumentDetailPage_requestedVersions") {
+      __id
+      edges {
+        node {
+          id
+          content
+          status
+          publishedAt
+          version
+          updatedAt
+          classification
+          owner {
+            id
+            fullName
+          }
+          signatures(first: 1000) @include(if: $includeSignatures)
+            @connection(key: "DocumentDetailPage_signatures", filters: []) {
+            __id
+            edges {
+              node {
+                id
+                state
               }
             }
           }
@@ -220,28 +244,51 @@ const UserEmailQuery = graphql`
   }
 `;
 
-export default function DocumentDetailPage(props: Props) {
+function DocumentDetailPageContent() {
   const { versionId } = useParams<{ versionId?: string }>();
-  const node = usePreloadedQuery(documentNodeQuery, props.queryRef).node;
+  const { documentId } = useParams<{ documentId: string }>();
+  const organizationId = useOrganizationId();
+  const canViewControls = isAuthorized(organizationId, "Document", "listControls");
+  const canViewSignatures = isAuthorized(organizationId, "DocumentVersion", "signatures");
+  const canListVersions = isAuthorized(organizationId, "Document", "listVersions");
+
+  const { node } = useLazyLoadQuery<DocumentGraphNodeQuery>(
+    documentNodeQuery,
+    {
+      documentId: documentId!,
+      includeControls: canViewControls,
+      includeSignatures: canViewSignatures,
+      useRequestedVersions: !canListVersions
+    },
+    { fetchPolicy: 'store-or-network' }
+  );
+
   const document = useFragment<DocumentDetailPageDocumentFragment$key>(
     documentFragment,
     node
   );
   const { __ } = useTranslate();
-  const organizationId = useOrganizationId();
   const navigate = useNavigate();
 
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [isEditingOwner, setIsEditingOwner] = useState(false);
   const [isEditingType, setIsEditingType] = useState(false);
   const [isEditingClassification, setIsEditingClassification] = useState(false);
-  const versions = document.versions.edges.map((edge) => edge.node);
+  const versionsConnection = canListVersions ? document.versions : document.requestedVersions;
+  const versions = versionsConnection?.edges.map((edge: any) => edge.node) || [];
   const currentVersion =
-    document.versions.edges.find((v) => v.node.id === versionId)?.node ??
-    document.versions.edges[0].node;
-  const signatures = currentVersion.signatures?.edges?.map((s) => s.node) ?? [];
-  const signedSignatures = signatures.filter((s) => s.state === "SIGNED");
+    versionsConnection?.edges.find((v: any) => v.node.id === versionId)?.node ??
+    versionsConnection?.edges[0]?.node;
+
+  if (!currentVersion) {
+    return null;
+  }
+
   const isDraft = currentVersion.status === "DRAFT";
+
+  const controlsCount = document.controlsInfo?.totalCount ?? 0;
+  const signatures = currentVersion.signatures?.edges?.map((s) => s.node) ?? [];
+  const signedCount = signatures.filter((s) => s.state === "SIGNED").length;
   const [publishDocumentVersion, isPublishing] = useMutationWithToasts(
     publishDocumentVersionMutation,
     {
@@ -270,7 +317,7 @@ export default function DocumentDetailPage(props: Props) {
       errorMessage: __("Failed to update document"),
     }
   );
-  const versionConnectionId = document.versions.__id;
+  const versionConnectionId = versionsConnection?.__id || "";
 
   const { register, control, handleSubmit, reset } = useFormWithSchema(
     documentUpdateSchema,
@@ -326,12 +373,6 @@ export default function DocumentDetailPage(props: Props) {
       },
       onSuccess: () => {
         setIsEditingType(false);
-        loadQuery(
-          props.queryRef.environment,
-          documentNodeQuery,
-          props.queryRef.variables,
-          { fetchPolicy: "network-only" }
-        );
       },
     });
   };
@@ -348,12 +389,6 @@ export default function DocumentDetailPage(props: Props) {
       },
       onSuccess: () => {
         setIsEditingClassification(false);
-        loadQuery(
-          props.queryRef.environment,
-          documentNodeQuery,
-          props.queryRef.variables,
-          { fetchPolicy: "network-only" }
-        );
       },
     });
   };
@@ -404,13 +439,6 @@ export default function DocumentDetailPage(props: Props) {
               connections: [versionConnectionId],
             },
             onSuccess() {
-              loadQuery(
-                props.queryRef.environment,
-                documentNodeQuery,
-                props.queryRef.variables,
-                { fetchPolicy: "network-only" }
-              );
-
               resolve();
             },
             onError: () => resolve(),
@@ -458,10 +486,21 @@ export default function DocumentDetailPage(props: Props) {
 
   const updateDialogRef = useRef<{ open: () => void }>(null);
   const pdfDownloadDialogRef = useRef<PdfDownloadDialogRef>(null);
-  const controlsCount = document.controlsInfo.totalCount;
   const urlPrefix = versionId
     ? `/organizations/${organizationId}/documents/${document.id}/versions/${versionId}`
     : `/organizations/${organizationId}/documents/${document.id}`;
+
+  const handleDownloadClick = () => {
+    if (!canViewSignatures) {
+      handleDownloadPdf({
+        withWatermark: true,
+        withSignatures: false,
+        watermarkEmail: defaultEmail,
+      });
+    } else {
+      pdfDownloadDialogRef.current?.open();
+    }
+  };
 
   return (
     <>
@@ -493,13 +532,15 @@ export default function DocumentDetailPage(props: Props) {
           />
           <div className="flex gap-2">
             {isDraft && (
-              <Button
-                onClick={handlePublish}
-                icon={IconCheckmark1}
-                disabled={isPublishing}
-              >
-                {__("Publish")}
-              </Button>
+              <Authorized entity="Document" action="publishDocumentVersion">
+                <Button
+                  onClick={handlePublish}
+                  icon={IconCheckmark1}
+                  disabled={isPublishing}
+                >
+                  {__("Publish")}
+                </Button>
+              </Authorized>
             )}
             <Dropdown
               toggle={
@@ -542,7 +583,7 @@ export default function DocumentDetailPage(props: Props) {
                 </Authorized>
               )}
               <DropdownItem
-                onClick={() => pdfDownloadDialogRef.current?.open()}
+                onClick={handleDownloadClick}
                 icon={IconArrowDown}
                 disabled={isExporting}
               >
@@ -598,29 +639,37 @@ export default function DocumentDetailPage(props: Props) {
             ) : (
               <div className="flex items-center gap-2">
                 <span>{document.title}</span>
-                <Button
-                  variant="quaternary"
-                  icon={IconPencil}
-                  onClick={() => setIsEditingTitle(true)}
-                />
+                <Authorized entity="Document" action="updateDocument">
+                  <Button
+                    variant="quaternary"
+                    icon={IconPencil}
+                    onClick={() => setIsEditingTitle(true)}
+                  />
+                </Authorized>
               </div>
             )
           }
         />
 
         <Tabs>
-          <TabLink to={`${urlPrefix}/description`}>{__("Description")}</TabLink>
-          <TabLink to={`${urlPrefix}/controls`}>
-            {__("Controls")}
-            <TabBadge>{controlsCount}</TabBadge>
-          </TabLink>
-          {!isDraft && (
-            <TabLink to={`${urlPrefix}/signatures`}>
-              {__("Signatures")}
-              <TabBadge>
-                {signedSignatures.length}/{signatures.length}
-              </TabBadge>
+          <TabLink to={`${urlPrefix}/description`}>{__("Content")}</TabLink>
+          <Authorized entity="Document" action="listControls">
+            <TabLink to={`${urlPrefix}/controls`}>
+              {__("Controls")}
+              {document.controlsInfo && <TabBadge>{controlsCount}</TabBadge>}
             </TabLink>
+          </Authorized>
+          {!isDraft && (
+            <Authorized entity="DocumentVersion" action="signatures">
+              <TabLink to={`${urlPrefix}/signatures`}>
+                {__("Signatures")}
+                {currentVersion.signatures && (
+                  <TabBadge>
+                    {signedCount}/{signatures.length}
+                  </TabBadge>
+                )}
+              </TabLink>
+            </Authorized>
           )}
         </Tabs>
 
@@ -777,7 +826,9 @@ function ReadOnlyPropertyContent({
   return (
     <div className="flex items-center justify-between gap-3">
       {children}
-      <Button variant="quaternary" icon={IconPencil} onClick={onEdit} />
+      <Authorized entity="Document" action="updateDocument">
+        <Button variant="quaternary" icon={IconPencil} onClick={onEdit} />
+      </Authorized>
     </div>
   );
 }
@@ -830,4 +881,24 @@ function VersionItem({
       </div>
     </Link>
   );
+}
+
+export default function DocumentDetailPage() {
+  const organizationId = useOrganizationId();
+
+  const [cacheKey, setCacheKey] = useState(0);
+
+  useEffect(() => {
+    fetchPermissions(organizationId).then(() => {
+      setCacheKey(prev => prev + 1);
+    });
+  }, [organizationId]);
+
+  const hasCheckedPermissions = cacheKey > 0;
+
+  if (!hasCheckedPermissions) {
+    return <Spinner />;
+  }
+
+  return <DocumentDetailPageContent key={cacheKey} />;
 }

@@ -537,6 +537,7 @@ function MembershipRowContent(props: {
                   {availableRoles.includes("OWNER") && <Option value="OWNER">{__("Owner")}</Option>}
                   {availableRoles.includes("ADMIN") && <Option value="ADMIN">{__("Admin")}</Option>}
                   {availableRoles.includes("VIEWER") && <Option value="VIEWER">{__("Viewer")}</Option>}
+                  {availableRoles.includes("EMPLOYEE") && <Option value="EMPLOYEE">{__("Employee")}</Option>}
                 </Select>
               </Field>
 
@@ -546,6 +547,9 @@ function MembershipRowContent(props: {
                 )}
                 {selectedRole === "ADMIN" && (
                   <p>{__("Full access except organization setup and API keys")}</p>
+                )}
+                {selectedRole === "EMPLOYEE" && (
+                  <p>{__("Access only to documents with requested signature")}</p>
                 )}
                 {selectedRole === "VIEWER" && (
                   <p>{__("Read-only access")}</p>

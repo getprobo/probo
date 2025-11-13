@@ -94,6 +94,7 @@ enum InvitationStatus
 enum MembershipRole @goModel(model: "go.probo.inc/probo/pkg/coredata.MembershipRole") {
   OWNER @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleOwner")
   ADMIN @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleAdmin")
+  EMPLOYEE @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleEmployee")
   VIEWER @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleViewer")
 }
 
@@ -1540,6 +1541,15 @@ type Organization implements Node {
     filter: DocumentFilter
   ): DocumentConnection! @goField(forceResolver: true)
 
+  requestedDocuments(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: DocumentOrder
+    filter: DocumentFilter
+  ): DocumentConnection! @goField(forceResolver: true)
+
   meetings(
     first: Int
     after: CursorKey
@@ -2014,6 +2024,15 @@ type Document implements Node {
   organization: Organization! @goField(forceResolver: true)
 
   versions(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: DocumentVersionOrder
+    filter: DocumentVersionFilter
+  ): DocumentVersionConnection! @goField(forceResolver: true)
+
+  requestedVersions(
     first: Int
     after: CursorKey
     last: Int

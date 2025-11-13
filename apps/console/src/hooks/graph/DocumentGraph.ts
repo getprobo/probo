@@ -7,10 +7,11 @@ import type { DocumentGraphDeleteDraftMutation } from "./__generated__/DocumentG
 import type { DocumentGraphBulkExportDocumentsMutation } from "./__generated__/DocumentGraphBulkExportDocumentsMutation.graphql";
 
 export const documentsQuery = graphql`
-  query DocumentGraphListQuery($organizationId: ID!) {
+  query DocumentGraphListQuery($organizationId: ID!, $includeSignatures: Boolean = false, $useRequestedDocuments: Boolean = false) {
     organization: node(id: $organizationId) {
       id
-      ...DocumentsPageListFragment
+      ...DocumentsPageListFragment @skip(if: $useRequestedDocuments) @arguments(includeSignatures: $includeSignatures)
+      ...DocumentsPageRequestedListFragment @include(if: $useRequestedDocuments) @arguments(includeSignatures: $includeSignatures)
     }
   }
 `;
@@ -129,10 +130,10 @@ export function useBulkExportDocumentsMutation() {
 }
 
 export const documentNodeQuery = graphql`
-  query DocumentGraphNodeQuery($documentId: ID!) {
+  query DocumentGraphNodeQuery($documentId: ID!, $includeControls: Boolean!, $includeSignatures: Boolean!, $useRequestedVersions: Boolean = false) {
     node(id: $documentId) {
       ... on Document {
-        ...DocumentDetailPageDocumentFragment
+        ...DocumentDetailPageDocumentFragment @arguments(includeControls: $includeControls, includeSignatures: $includeSignatures, useRequestedVersions: $useRequestedVersions)
       }
     }
   }

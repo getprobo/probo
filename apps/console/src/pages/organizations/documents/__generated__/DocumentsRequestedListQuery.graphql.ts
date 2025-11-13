@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<fd85cc1897a23eaa3fdc06dc6dd3a54d>>
+ * @generated SignedSource<<334dda6c6298a32b1d51223357d0b5a6>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -16,7 +16,7 @@ export type DocumentOrder = {
   direction: OrderDirection;
   field: DocumentOrderField;
 };
-export type DocumentsListQuery$variables = {
+export type DocumentsRequestedListQuery$variables = {
   after?: any | null | undefined;
   before?: any | null | undefined;
   first?: number | null | undefined;
@@ -25,14 +25,14 @@ export type DocumentsListQuery$variables = {
   last?: number | null | undefined;
   order?: DocumentOrder | null | undefined;
 };
-export type DocumentsListQuery$data = {
+export type DocumentsRequestedListQuery$data = {
   readonly node: {
-    readonly " $fragmentSpreads": FragmentRefs<"DocumentsPageListFragment">;
+    readonly " $fragmentSpreads": FragmentRefs<"DocumentsPageRequestedListFragment">;
   };
 };
-export type DocumentsListQuery = {
-  response: DocumentsListQuery$data;
-  variables: DocumentsListQuery$variables;
+export type DocumentsRequestedListQuery = {
+  response: DocumentsRequestedListQuery$data;
+  variables: DocumentsRequestedListQuery$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -139,7 +139,7 @@ return {
     ],
     "kind": "Fragment",
     "metadata": null,
-    "name": "DocumentsListQuery",
+    "name": "DocumentsRequestedListQuery",
     "selections": [
       {
         "alias": null,
@@ -167,7 +167,7 @@ return {
               }
             ],
             "kind": "FragmentSpread",
-            "name": "DocumentsPageListFragment"
+            "name": "DocumentsPageRequestedListFragment"
           }
         ],
         "storageKey": null
@@ -188,7 +188,7 @@ return {
       (v3/*: any*/)
     ],
     "kind": "Operation",
-    "name": "DocumentsListQuery",
+    "name": "DocumentsRequestedListQuery",
     "selections": [
       {
         "alias": null,
@@ -208,7 +208,7 @@ return {
                 "args": (v14/*: any*/),
                 "concreteType": "DocumentConnection",
                 "kind": "LinkedField",
-                "name": "documents",
+                "name": "requestedDocuments",
                 "plural": false,
                 "selections": [
                   {
@@ -293,7 +293,7 @@ return {
                             ],
                             "concreteType": "DocumentVersionConnection",
                             "kind": "LinkedField",
-                            "name": "versions",
+                            "name": "requestedVersions",
                             "plural": false,
                             "selections": [
                               {
@@ -388,7 +388,7 @@ return {
                                 "storageKey": null
                               }
                             ],
-                            "storageKey": "versions(first:1)"
+                            "storageKey": "requestedVersions(first:1)"
                           },
                           (v12/*: any*/)
                         ],
@@ -465,9 +465,9 @@ return {
                   "orderBy"
                 ],
                 "handle": "connection",
-                "key": "DocumentsListQuery_documents",
+                "key": "DocumentsRequestedListQuery_requestedDocuments",
                 "kind": "LinkedHandle",
-                "name": "documents"
+                "name": "requestedDocuments"
               }
             ],
             "type": "Organization",
@@ -479,16 +479,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "205d88e73f2e5c5934a61b381f27a077",
+    "cacheID": "4747d0050b7a180385745e7d18464f8a",
     "id": null,
     "metadata": {},
-    "name": "DocumentsListQuery",
+    "name": "DocumentsRequestedListQuery",
     "operationKind": "query",
-    "text": "query DocumentsListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 50\n  $includeSignatures: Boolean = false\n  $last: Int = null\n  $order: DocumentOrder = {field: TITLE, direction: ASC}\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...DocumentsPageListFragment_ovv2o\n    id\n  }\n}\n\nfragment DocumentsPageListFragment_ovv2o on Organization {\n  documents(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    edges {\n      node {\n        id\n        ...DocumentsPageRowFragment_2ykUZW\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment DocumentsPageRowFragment_2ykUZW on Document {\n  id\n  title\n  description\n  documentType\n  classification\n  updatedAt\n  owner {\n    id\n    fullName\n  }\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n        version\n        signatures(first: 1000) @include(if: $includeSignatures) {\n          edges {\n            node {\n              id\n              state\n            }\n          }\n        }\n      }\n    }\n  }\n}\n"
+    "text": "query DocumentsRequestedListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 50\n  $includeSignatures: Boolean = false\n  $last: Int = null\n  $order: DocumentOrder = {field: TITLE, direction: ASC}\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...DocumentsPageRequestedListFragment_ovv2o\n    id\n  }\n}\n\nfragment DocumentsPageRequestedListFragment_ovv2o on Organization {\n  requestedDocuments(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    edges {\n      node {\n        id\n        ...DocumentsPageRowFragment_1L3zd7\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment DocumentsPageRowFragment_1L3zd7 on Document {\n  id\n  title\n  description\n  documentType\n  classification\n  updatedAt\n  owner {\n    id\n    fullName\n  }\n  requestedVersions(first: 1) {\n    edges {\n      node {\n        id\n        status\n        version\n        signatures(first: 1000) @include(if: $includeSignatures) {\n          edges {\n            node {\n              id\n              state\n            }\n          }\n        }\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "7a1053a68364d14f82a685448bbda69f";
+(node as any).hash = "82ef212b81a06ce640f78e1a059352bd";
 
 export default node;

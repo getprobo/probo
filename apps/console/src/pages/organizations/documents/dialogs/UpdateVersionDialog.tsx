@@ -80,7 +80,8 @@ export default function UpdateVersionDialog({
   const { toast } = useToast();
   const dialogRef = useDialogRef();
 
-  const version = document.versions.edges[0].node;
+  const versionsConnection = document.versions || document.requestedVersions;
+  const version = versionsConnection?.edges[0]?.node;
   const isDraft = version?.status === "DRAFT";
   const [createDraftDocumentVersion, isCreatingDraft] =
     useMutation<UpdateVersionDialogCreateMutation>(createDraftDocument);
@@ -94,7 +95,7 @@ export default function UpdateVersionDialog({
     );
   const { handleSubmit, register } = useFormWithSchema(versionSchema, {
     defaultValues: {
-      content: version.content,
+      content: version?.content || "",
     },
   });
 
