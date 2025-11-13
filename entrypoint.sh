@@ -27,6 +27,18 @@ generate_saml_defaults() {
   fi
 }
 
+# Function to load CA bundle from file or environment variable
+load_pg_ca_bundle() {
+  if [ -n "$PG_CA_BUNDLE_PATH" ]; then
+    if [ -f "$PG_CA_BUNDLE_PATH" ]; then
+      echo "Loading PostgreSQL CA bundle from: $PG_CA_BUNDLE_PATH"
+      export PG_CA_BUNDLE=$(cat "$PG_CA_BUNDLE_PATH")
+    else
+      echo "Warning: PG_CA_BUNDLE_PATH specified but file not found: $PG_CA_BUNDLE_PATH"
+    fi
+  fi
+}
+
 # Check if config file already exists (e.g., mounted from ConfigMap)
 if [ -f "$CONFIG_FILE" ]; then
   echo "Using existing configuration file at: $CONFIG_FILE"
@@ -35,6 +47,9 @@ else
 
   # Generate default SAML credentials if not provided
   generate_saml_defaults
+
+  # Load PostgreSQL CA bundle if configured
+  load_pg_ca_bundle
 
   # Create directory if it doesn't exist
   mkdir -p "$(dirname "$CONFIG_FILE")"
@@ -67,6 +82,17 @@ probod:
     password: "${PG_PASSWORD:-postgres}"
     database: "${PG_DATABASE:-probod}"
     pool-size: ${PG_POOL_SIZE:-100}
+EOF
+
+  # Add PostgreSQL CA bundle if configured
+  if [ -n "$PG_CA_BUNDLE" ]; then
+    cat >> "$CONFIG_FILE" <<EOF
+    ca-bundle: |
+$(echo "$PG_CA_BUNDLE" | sed 's/^/      /')
+EOF
+  fi
+
+  cat >> "$CONFIG_FILE" <<EOF
 
   auth:
     disable-signup: ${AUTH_DISABLE_SIGNUP:-false}
