@@ -1377,6 +1377,7 @@ func (r *membershipConnectionResolver) TotalCount(ctx context.Context, obj *type
 // CreateOrganization is the resolver for the createOrganization field.
 func (r *mutationResolver) CreateOrganization(ctx context.Context, input types.CreateOrganizationInput) (*types.CreateOrganizationPayload, error) {
 	currentUser := UserFromContext(ctx)
+	currentAPIKey := UserAPIKeyFromContext(ctx)
 
 	tenantID := gid.NewTenantID()
 
@@ -1409,6 +1410,25 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input types.C
 	)
 	if err != nil {
 		panic(fmt.Errorf("cannot add user to organization: %w", err))
+	}
+
+	if currentAPIKey != nil {
+		membership, err := authz.GetMembershipByUserAndOrganizationID(ctx, currentUser.ID, organization.ID)
+		if err != nil {
+			panic(fmt.Errorf("cannot get user membership: %w", err))
+		}
+
+		err = r.authSvc.AddAPIKeyMembershipToOrganization(
+			ctx,
+			tenantID,
+			currentAPIKey.ID,
+			membership.ID,
+			organization.ID,
+			coredata.APIRoleFull,
+		)
+		if err != nil {
+			panic(fmt.Errorf("cannot add API key membership to organization: %w", err))
+		}
 	}
 
 	_, err = prb.Peoples.Create(

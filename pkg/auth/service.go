@@ -1574,6 +1574,39 @@ func (s *Service) UpdateUserAPIKeyMemberships(
 	)
 }
 
+func (s *Service) AddAPIKeyMembershipToOrganization(
+	ctx context.Context,
+	tenantID gid.TenantID,
+	userAPIKeyID gid.GID,
+	membershipID gid.GID,
+	organizationID gid.GID,
+	role coredata.APIRole,
+) error {
+	scope := coredata.NewScope(tenantID)
+	now := time.Now()
+
+	return s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			userAPIKeyMembership := &coredata.UserAPIKeyMembership{
+				ID:             gid.New(tenantID, coredata.UserAPIKeyMembershipEntityType),
+				UserAPIKeyID:   userAPIKeyID,
+				MembershipID:   membershipID,
+				Role:           role,
+				OrganizationID: organizationID,
+				CreatedAt:      now,
+				UpdatedAt:      now,
+			}
+
+			if err := userAPIKeyMembership.Insert(ctx, conn, scope); err != nil {
+				return fmt.Errorf("cannot insert user api key membership: %w", err)
+			}
+
+			return nil
+		},
+	)
+}
+
 func (s *Service) UpdateUserAPIKeyName(
 	ctx context.Context,
 	userAPIKeyID gid.GID,
