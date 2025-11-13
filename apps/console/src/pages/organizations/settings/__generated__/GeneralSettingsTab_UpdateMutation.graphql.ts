@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<270832e99647c6636914a9644a65358c>>
+ * @generated SignedSource<<e83ac9ec44f74ec09b1b0273b398bb55>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -17,6 +17,7 @@ export type UpdateOrganizationInput = {
   logoFile?: any | null | undefined;
   name?: string | null | undefined;
   organizationId: string;
+  slackId?: string | null | undefined;
   websiteUrl?: string | null | undefined;
 };
 export type GeneralSettingsTab_UpdateMutation$variables = {
@@ -32,6 +33,7 @@ export type GeneralSettingsTab_UpdateMutation$data = {
       readonly id: string;
       readonly logoUrl: string | null | undefined;
       readonly name: string;
+      readonly slackId: string | null | undefined;
       readonly websiteUrl: string | null | undefined;
     };
   };
@@ -127,6 +129,13 @@ v1 = [
             "kind": "ScalarField",
             "name": "headquarterAddress",
             "storageKey": null
+          },
+          {
+            "alias": null,
+            "args": null,
+            "kind": "ScalarField",
+            "name": "slackId",
+            "storageKey": null
           }
         ],
         "storageKey": null
@@ -153,16 +162,16 @@ return {
     "selections": (v1/*: any*/)
   },
   "params": {
-    "cacheID": "55c07b334317a5ca30023ef5354a6c45",
+    "cacheID": "b12144751666cdf149b9da0e5c2147e1",
     "id": null,
     "metadata": {},
     "name": "GeneralSettingsTab_UpdateMutation",
     "operationKind": "mutation",
-    "text": "mutation GeneralSettingsTab_UpdateMutation(\n  $input: UpdateOrganizationInput!\n) {\n  updateOrganization(input: $input) {\n    organization {\n      id\n      name\n      logoUrl\n      horizontalLogoUrl\n      description\n      websiteUrl\n      email\n      headquarterAddress\n    }\n  }\n}\n"
+    "text": "mutation GeneralSettingsTab_UpdateMutation(\n  $input: UpdateOrganizationInput!\n) {\n  updateOrganization(input: $input) {\n    organization {\n      id\n      name\n      logoUrl\n      horizontalLogoUrl\n      description\n      websiteUrl\n      email\n      headquarterAddress\n      slackId\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "f1731adcb4bf7b7214301a612f48567e";
+(node as any).hash = "0bb9e3923427f5830a034a023cffe07c";
 
 export default node;

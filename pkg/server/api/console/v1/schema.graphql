@@ -1458,6 +1458,7 @@ type Organization implements Node {
   websiteUrl: String
   email: String
   headquarterAddress: String
+  slackId: String
   context: OrganizationContext @goField(forceResolver: true)
 
   memberships(
@@ -3103,6 +3104,7 @@ input UpdateOrganizationInput {
   websiteUrl: String @goField(omittable: true)
   email: String @goField(omittable: true)
   headquarterAddress: String @goField(omittable: true)
+  slackId: String @goField(omittable: true)
   logoFile: Upload
   horizontalLogoFile: Upload
 }

@@ -34,6 +34,7 @@ const generalSettingsTabFragment = graphql`
     websiteUrl
     email
     headquarterAddress
+    slackId
     createdAt
     updatedAt
   }
@@ -51,6 +52,7 @@ const updateOrganizationMutation = graphql`
         websiteUrl
         email
         headquarterAddress
+        slackId
       }
     }
   }
@@ -75,6 +77,7 @@ const organizationSchema = z.object({
   websiteUrl: z.string().optional(),
   email: z.string().optional(),
   headquarterAddress: z.string().optional(),
+  slackId: z.string().optional(),
 });
 
 type OrganizationFormData = z.infer<typeof organizationSchema>;
@@ -119,6 +122,7 @@ export default function GeneralSettingsTab() {
         websiteUrl: organization.websiteUrl || "",
         email: organization.email || "",
         headquarterAddress: organization.headquarterAddress || "",
+        slackId: organization.slackId || "",
       },
     }
   );
@@ -129,6 +133,7 @@ export default function GeneralSettingsTab() {
     websiteUrl: organization.websiteUrl,
     email: organization.email,
     headquarterAddress: organization.headquarterAddress,
+    slackId: organization.slackId,
   });
 
   useEffect(() => {
@@ -139,6 +144,7 @@ export default function GeneralSettingsTab() {
       websiteUrl: organization.websiteUrl,
       email: organization.email,
       headquarterAddress: organization.headquarterAddress,
+      slackId: organization.slackId,
     };
 
     if (JSON.stringify(prevData) !== JSON.stringify(currentData)) {
@@ -148,6 +154,7 @@ export default function GeneralSettingsTab() {
         websiteUrl: organization.websiteUrl || "",
         email: organization.email || "",
         headquarterAddress: organization.headquarterAddress || "",
+        slackId: organization.slackId || "",
       });
       prevOrgDataRef.current = currentData;
     }
@@ -163,6 +170,7 @@ export default function GeneralSettingsTab() {
           websiteUrl: data.websiteUrl || null,
           email: data.email || null,
           headquarterAddress: data.headquarterAddress || null,
+          slackId: data.slackId || null,
         },
       },
     });
@@ -399,6 +407,16 @@ export default function GeneralSettingsTab() {
               name="headquarterAddress"
               placeholder={__("123 Main St, City, Country")}
             />
+          </div>
+          <div>
+            <Field
+              {...register("slackId")}
+              readOnly={formState.isSubmitting}
+              name="slackId"
+              type="text"
+              label={__("Slack ID")}
+              placeholder={__("C1234567890")}
+              />
           </div>
 
           {formState.isDirty && (

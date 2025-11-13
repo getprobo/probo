@@ -72,6 +72,7 @@ type (
 		WebsiteURL         **string
 		Email              **string
 		HeadquarterAddress **string
+		SlackID            **string
 	}
 
 	UpdateOrganizationContextRequest struct {
@@ -97,6 +98,7 @@ func (uor *UpdateOrganizationRequest) Validate() error {
 	v.Check(uor.WebsiteURL, "website_url", validator.SafeText(2048))
 	v.Check(uor.Email, "email", validator.SafeText(255))
 	v.Check(uor.HeadquarterAddress, "headquarter_address", validator.SafeText(2048))
+	v.Check(uor.SlackID, "slack_id", validator.SafeTextNoNewLine(100))
 	v.Check(uor.File, "file", validator.NotEmpty())
 	v.Check(uor.HorizontalLogoFile, "horizontal_logo_file", validator.NotEmpty())
 
@@ -317,6 +319,10 @@ func (s OrganizationService) Update(
 
 			if req.HeadquarterAddress != nil {
 				organization.HeadquarterAddress = *req.HeadquarterAddress
+			}
+
+			if req.SlackID != nil {
+				organization.SlackID = *req.SlackID
 			}
 
 			if err := organization.Update(ctx, s.svc.scope, tx); err != nil {

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<02beba57812b8dd7c5c61fb10291de5a>>
+ * @generated SignedSource<<06d72f40fa4d7f96b4cad010ac8e6d30>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -19,6 +19,7 @@ export type GeneralSettingsTabFragment$data = {
   readonly id: string;
   readonly logoUrl: string | null | undefined;
   readonly name: string;
+  readonly slackId: string | null | undefined;
   readonly updatedAt: any;
   readonly websiteUrl: string | null | undefined;
   readonly " $fragmentType": "GeneralSettingsTabFragment";
@@ -94,6 +95,13 @@ const node: ReaderFragment = {
       "alias": null,
       "args": null,
       "kind": "ScalarField",
+      "name": "slackId",
+      "storageKey": null
+    },
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
       "name": "createdAt",
       "storageKey": null
     },
@@ -109,6 +117,6 @@ const node: ReaderFragment = {
   "abstractKey": null
 };
 
-(node as any).hash = "f6552148ce1c0061c4f5cbef78d46c0e";
+(node as any).hash = "bebe816d2d14a8b07d94f48c360d12ee";
 
 export default node;

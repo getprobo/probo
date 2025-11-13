@@ -1471,6 +1471,7 @@ type Organization struct {
 	WebsiteURL            *string                         `json:"websiteUrl,omitempty"`
 	Email                 *string                         `json:"email,omitempty"`
 	HeadquarterAddress    *string                         `json:"headquarterAddress,omitempty"`
+	SlackID               *string                         `json:"slackId,omitempty"`
 	Context               *OrganizationContext            `json:"context,omitempty"`
 	Memberships           *MembershipConnection           `json:"memberships"`
 	Invitations           *InvitationConnection           `json:"invitations"`
@@ -2065,6 +2066,7 @@ type UpdateOrganizationInput struct {
 	WebsiteURL         graphql.Omittable[*string] `json:"websiteUrl,omitempty"`
 	Email              graphql.Omittable[*string] `json:"email,omitempty"`
 	HeadquarterAddress graphql.Omittable[*string] `json:"headquarterAddress,omitempty"`
+	SlackID            graphql.Omittable[*string] `json:"slackId,omitempty"`
 	LogoFile           *graphql.Upload            `json:"logoFile,omitempty"`
 	HorizontalLogoFile *graphql.Upload            `json:"horizontalLogoFile,omitempty"`
 }

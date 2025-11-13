@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<11a62d34dafa502e3a464b91e12728ea>>
+ * @generated SignedSource<<2fddef55f50d256b153590f39128e26a>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -269,6 +269,13 @@ return {
                 "args": null,
                 "kind": "ScalarField",
                 "name": "headquarterAddress",
+                "storageKey": null
+              },
+              {
+                "alias": null,
+                "args": null,
+                "kind": "ScalarField",
+                "name": "slackId",
                 "storageKey": null
               },
               (v6/*: any*/),
@@ -641,12 +648,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "a44a7b84f5f4c569d028f1d88deadb99",
+    "cacheID": "94b51a33a118cedfc990b260620020f7",
     "id": null,
     "metadata": {},
     "name": "OrganizationGraph_ViewQuery",
     "operationKind": "query",
-    "text": "query OrganizationGraph_ViewQuery(\n  $organizationId: ID!\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      name\n      ...SettingsPageFragment\n    }\n    id\n  }\n}\n\nfragment DomainSettingsTabFragment on Organization {\n  id\n  customDomain {\n    id\n    domain\n    sslStatus\n    dnsRecords {\n      type\n      name\n      value\n      ttl\n      purpose\n    }\n    createdAt\n    updatedAt\n    sslExpiresAt\n  }\n}\n\nfragment GeneralSettingsTabFragment on Organization {\n  id\n  name\n  logoUrl\n  horizontalLogoUrl\n  description\n  websiteUrl\n  email\n  headquarterAddress\n  createdAt\n  updatedAt\n}\n\nfragment MembersSettingsTabInvitationsFragment on Organization {\n  invitations(first: 20, orderBy: {direction: ASC, field: CREATED_AT}) {\n    totalCount\n    edges {\n      node {\n        id\n        fullName\n        email\n        role\n        status\n        createdAt\n        expiresAt\n        acceptedAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment MembersSettingsTabMembershipsFragment on Organization {\n  memberships(first: 20, orderBy: {direction: ASC, field: CREATED_AT}) {\n    totalCount\n    edges {\n      node {\n        id\n        fullName\n        emailAddress\n        role\n        authMethod\n        createdAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment SAMLSettingsTabFragment on Organization {\n  id\n  name\n  samlConfigurations {\n    id\n    enabled\n    emailDomain\n    enforcementPolicy\n    domainVerified\n    domainVerificationToken\n    domainVerifiedAt\n    spEntityId\n    spAcsUrl\n    spMetadataUrl\n    testLoginUrl\n    idpEntityId\n    idpSsoUrl\n    idpCertificate\n    idpMetadataUrl\n    attributeEmail\n    attributeFirstname\n    attributeLastname\n    attributeRole\n    autoSignupEnabled\n  }\n}\n\nfragment SettingsPageFragment on Organization {\n  id\n  name\n  ...GeneralSettingsTabFragment\n  ...MembersSettingsTabMembershipsFragment\n  ...MembersSettingsTabInvitationsFragment\n  ...DomainSettingsTabFragment\n  ...SAMLSettingsTabFragment\n}\n"
+    "text": "query OrganizationGraph_ViewQuery(\n  $organizationId: ID!\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      name\n      ...SettingsPageFragment\n    }\n    id\n  }\n}\n\nfragment DomainSettingsTabFragment on Organization {\n  id\n  customDomain {\n    id\n    domain\n    sslStatus\n    dnsRecords {\n      type\n      name\n      value\n      ttl\n      purpose\n    }\n    createdAt\n    updatedAt\n    sslExpiresAt\n  }\n}\n\nfragment GeneralSettingsTabFragment on Organization {\n  id\n  name\n  logoUrl\n  horizontalLogoUrl\n  description\n  websiteUrl\n  email\n  headquarterAddress\n  slackId\n  createdAt\n  updatedAt\n}\n\nfragment MembersSettingsTabInvitationsFragment on Organization {\n  invitations(first: 20, orderBy: {direction: ASC, field: CREATED_AT}) {\n    totalCount\n    edges {\n      node {\n        id\n        fullName\n        email\n        role\n        status\n        createdAt\n        expiresAt\n        acceptedAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment MembersSettingsTabMembershipsFragment on Organization {\n  memberships(first: 20, orderBy: {direction: ASC, field: CREATED_AT}) {\n    totalCount\n    edges {\n      node {\n        id\n        fullName\n        emailAddress\n        role\n        authMethod\n        createdAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment SAMLSettingsTabFragment on Organization {\n  id\n  name\n  samlConfigurations {\n    id\n    enabled\n    emailDomain\n    enforcementPolicy\n    domainVerified\n    domainVerificationToken\n    domainVerifiedAt\n    spEntityId\n    spAcsUrl\n    spMetadataUrl\n    testLoginUrl\n    idpEntityId\n    idpSsoUrl\n    idpCertificate\n    idpMetadataUrl\n    attributeEmail\n    attributeFirstname\n    attributeLastname\n    attributeRole\n    autoSignupEnabled\n  }\n}\n\nfragment SettingsPageFragment on Organization {\n  id\n  name\n  ...GeneralSettingsTabFragment\n  ...MembersSettingsTabMembershipsFragment\n  ...MembersSettingsTabInvitationsFragment\n  ...DomainSettingsTabFragment\n  ...SAMLSettingsTabFragment\n}\n"
   }
 };
 })();

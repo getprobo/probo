@@ -1349,6 +1349,7 @@ func (r *mutationResolver) UpdateOrganization(ctx context.Context, input types.U
 		WebsiteURL:         UnwrapOmittable(input.WebsiteURL),
 		Email:              UnwrapOmittable(input.Email),
 		HeadquarterAddress: UnwrapOmittable(input.HeadquarterAddress),
+		SlackID:            UnwrapOmittable(input.SlackID),
 	}
 
 	if input.LogoFile != nil {

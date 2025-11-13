@@ -1115,6 +1115,7 @@ type ComplexityRoot struct {
 		Risks                 func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskOrderBy, filter *types.RiskFilter) int
 		SamlConfigurations    func(childComplexity int) int
 		SlackConnections      func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
+		SlackID               func(childComplexity int) int
 		Snapshots             func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.SnapshotOrderBy) int
 		Tasks                 func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TaskOrderBy) int
 		TrustCenter           func(childComplexity int) int
@@ -6965,6 +6966,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Organization.SlackConnections(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey)), true
 
+	case "Organization.slackId":
+		if e.complexity.Organization.SlackID == nil {
+			break
+		}
+
+		return e.complexity.Organization.SlackID(childComplexity), true
+
 	case "Organization.snapshots":
 		if e.complexity.Organization.Snapshots == nil {
 			break
@@ -11468,6 +11476,7 @@ type Organization implements Node {
   websiteUrl: String
   email: String
   headquarterAddress: String
+  slackId: String
   context: OrganizationContext @goField(forceResolver: true)
 
   memberships(
@@ -13113,6 +13122,7 @@ input UpdateOrganizationInput {
   websiteUrl: String @goField(omittable: true)
   email: String @goField(omittable: true)
   headquarterAddress: String @goField(omittable: true)
+  slackId: String @goField(omittable: true)
   logoFile: Upload
   horizontalLogoFile: Upload
 }
@@ -24105,6 +24115,8 @@ func (ec *executionContext) fieldContext_Asset_organization(_ context.Context, f
 				return ec.fieldContext_Organization_email(ctx, field)
 			case "headquarterAddress":
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
+			case "slackId":
+				return ec.fieldContext_Organization_slackId(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
 			case "memberships":
@@ -24724,6 +24736,8 @@ func (ec *executionContext) fieldContext_Audit_organization(_ context.Context, f
 				return ec.fieldContext_Organization_email(ctx, field)
 			case "headquarterAddress":
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
+			case "slackId":
+				return ec.fieldContext_Organization_slackId(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
 			case "memberships":
@@ -26039,6 +26053,8 @@ func (ec *executionContext) fieldContext_ContinualImprovement_organization(_ con
 				return ec.fieldContext_Organization_email(ctx, field)
 			case "headquarterAddress":
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
+			case "slackId":
+				return ec.fieldContext_Organization_slackId(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
 			case "memberships":
@@ -29998,6 +30014,8 @@ func (ec *executionContext) fieldContext_CustomDomain_organization(_ context.Con
 				return ec.fieldContext_Organization_email(ctx, field)
 			case "headquarterAddress":
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
+			case "slackId":
+				return ec.fieldContext_Organization_slackId(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
 			case "memberships":
@@ -30909,6 +30927,8 @@ func (ec *executionContext) fieldContext_Datum_organization(_ context.Context, f
 				return ec.fieldContext_Organization_email(ctx, field)
 			case "headquarterAddress":
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
+			case "slackId":
+				return ec.fieldContext_Organization_slackId(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
 			case "memberships":
@@ -32453,6 +32473,8 @@ func (ec *executionContext) fieldContext_DeleteOrganizationHorizontalLogoPayload
 				return ec.fieldContext_Organization_email(ctx, field)
 			case "headquarterAddress":
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
+			case "slackId":
+				return ec.fieldContext_Organization_slackId(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
 			case "memberships":
@@ -34061,6 +34083,8 @@ func (ec *executionContext) fieldContext_Document_organization(_ context.Context
 				return ec.fieldContext_Organization_email(ctx, field)
 			case "headquarterAddress":
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
+			case "slackId":
+				return ec.fieldContext_Organization_slackId(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
 			case "memberships":
@@ -37533,6 +37557,8 @@ func (ec *executionContext) fieldContext_Framework_organization(_ context.Contex
 				return ec.fieldContext_Organization_email(ctx, field)
 			case "headquarterAddress":
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
+			case "slackId":
+				return ec.fieldContext_Organization_slackId(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
 			case "memberships":
@@ -38837,6 +38863,8 @@ func (ec *executionContext) fieldContext_Invitation_organization(_ context.Conte
 				return ec.fieldContext_Organization_email(ctx, field)
 			case "headquarterAddress":
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
+			case "slackId":
+				return ec.fieldContext_Organization_slackId(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
 			case "memberships":
@@ -40315,6 +40343,8 @@ func (ec *executionContext) fieldContext_Meeting_organization(_ context.Context,
 				return ec.fieldContext_Organization_email(ctx, field)
 			case "headquarterAddress":
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
+			case "slackId":
+				return ec.fieldContext_Organization_slackId(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
 			case "memberships":
@@ -49513,6 +49543,8 @@ func (ec *executionContext) fieldContext_Nonconformity_organization(_ context.Co
 				return ec.fieldContext_Organization_email(ctx, field)
 			case "headquarterAddress":
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
+			case "slackId":
+				return ec.fieldContext_Organization_slackId(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
 			case "memberships":
@@ -50586,6 +50618,8 @@ func (ec *executionContext) fieldContext_Obligation_organization(_ context.Conte
 				return ec.fieldContext_Organization_email(ctx, field)
 			case "headquarterAddress":
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
+			case "slackId":
+				return ec.fieldContext_Organization_slackId(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
 			case "memberships":
@@ -51722,6 +51756,47 @@ func (ec *executionContext) _Organization_headquarterAddress(ctx context.Context
 }
 
 func (ec *executionContext) fieldContext_Organization_headquarterAddress(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Organization",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Organization_slackId(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Organization_slackId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SlackID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Organization_slackId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Organization",
 		Field:      field,
@@ -53690,6 +53765,8 @@ func (ec *executionContext) fieldContext_OrganizationEdge_node(_ context.Context
 				return ec.fieldContext_Organization_email(ctx, field)
 			case "headquarterAddress":
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
+			case "slackId":
+				return ec.fieldContext_Organization_slackId(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
 			case "memberships":
@@ -54791,6 +54868,8 @@ func (ec *executionContext) fieldContext_ProcessingActivity_organization(_ conte
 				return ec.fieldContext_Organization_email(ctx, field)
 			case "headquarterAddress":
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
+			case "slackId":
+				return ec.fieldContext_Organization_slackId(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
 			case "memberships":
@@ -57546,6 +57625,8 @@ func (ec *executionContext) fieldContext_Risk_organization(_ context.Context, fi
 				return ec.fieldContext_Organization_email(ctx, field)
 			case "headquarterAddress":
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
+			case "slackId":
+				return ec.fieldContext_Organization_slackId(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
 			case "memberships":
@@ -58326,6 +58407,8 @@ func (ec *executionContext) fieldContext_SAMLConfiguration_organization(_ contex
 				return ec.fieldContext_Organization_email(ctx, field)
 			case "headquarterAddress":
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
+			case "slackId":
+				return ec.fieldContext_Organization_slackId(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
 			case "memberships":
@@ -59951,6 +60034,8 @@ func (ec *executionContext) fieldContext_Snapshot_organization(_ context.Context
 				return ec.fieldContext_Organization_email(ctx, field)
 			case "headquarterAddress":
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
+			case "slackId":
+				return ec.fieldContext_Organization_slackId(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
 			case "memberships":
@@ -60873,6 +60958,8 @@ func (ec *executionContext) fieldContext_Task_organization(_ context.Context, fi
 				return ec.fieldContext_Organization_email(ctx, field)
 			case "headquarterAddress":
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
+			case "slackId":
+				return ec.fieldContext_Organization_slackId(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
 			case "memberships":
@@ -61725,6 +61812,8 @@ func (ec *executionContext) fieldContext_TrustCenter_organization(_ context.Cont
 				return ec.fieldContext_Organization_email(ctx, field)
 			case "headquarterAddress":
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
+			case "slackId":
+				return ec.fieldContext_Organization_slackId(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
 			case "memberships":
@@ -63726,6 +63815,8 @@ func (ec *executionContext) fieldContext_TrustCenterFile_organization(_ context.
 				return ec.fieldContext_Organization_email(ctx, field)
 			case "headquarterAddress":
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
+			case "slackId":
+				return ec.fieldContext_Organization_slackId(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
 			case "memberships":
@@ -65653,6 +65744,8 @@ func (ec *executionContext) fieldContext_UpdateOrganizationPayload_organization(
 				return ec.fieldContext_Organization_email(ctx, field)
 			case "headquarterAddress":
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
+			case "slackId":
+				return ec.fieldContext_Organization_slackId(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
 			case "memberships":
@@ -67833,6 +67926,8 @@ func (ec *executionContext) fieldContext_Vendor_organization(_ context.Context, 
 				return ec.fieldContext_Organization_email(ctx, field)
 			case "headquarterAddress":
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
+			case "slackId":
+				return ec.fieldContext_Organization_slackId(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
 			case "memberships":
@@ -81256,7 +81351,7 @@ func (ec *executionContext) unmarshalInputUpdateOrganizationInput(ctx context.Co
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"organizationId", "name", "description", "websiteUrl", "email", "headquarterAddress", "logoFile", "horizontalLogoFile"}
+	fieldsInOrder := [...]string{"organizationId", "name", "description", "websiteUrl", "email", "headquarterAddress", "slackId", "logoFile", "horizontalLogoFile"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -81305,6 +81400,13 @@ func (ec *executionContext) unmarshalInputUpdateOrganizationInput(ctx context.Co
 				return it, err
 			}
 			it.HeadquarterAddress = graphql.OmittableOf(data)
+		case "slackId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("slackId"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SlackID = graphql.OmittableOf(data)
 		case "logoFile":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("logoFile"))
 			data, err := ec.unmarshalOUpload2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx, v)
@@ -93019,6 +93121,8 @@ func (ec *executionContext) _Organization(ctx context.Context, sel ast.Selection
 			out.Values[i] = ec._Organization_email(ctx, field, obj)
 		case "headquarterAddress":
 			out.Values[i] = ec._Organization_headquarterAddress(ctx, field, obj)
+		case "slackId":
+			out.Values[i] = ec._Organization_slackId(ctx, field, obj)
 		case "context":
 			field := field
 

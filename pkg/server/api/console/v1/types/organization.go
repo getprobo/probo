@@ -51,6 +51,7 @@ func NewOrganization(o *coredata.Organization) *Organization {
 		WebsiteURL:         o.WebsiteURL,
 		Email:              o.Email,
 		HeadquarterAddress: o.HeadquarterAddress,
+		SlackID:            o.SlackID,
 		CreatedAt:          o.CreatedAt,
 		UpdatedAt:          o.UpdatedAt,
 	}
