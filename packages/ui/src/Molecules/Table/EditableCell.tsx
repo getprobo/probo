@@ -10,6 +10,7 @@ import { Cell } from "../../Atoms/DataTable/DataTable.tsx";
 import { Command } from "cmdk";
 import { useTranslate } from "@probo/i18n";
 import { Spinner } from "../../Atoms/Spinner/Spinner.tsx";
+import { focusSiblingElement } from "@probo/helpers";
 
 type Props<T> =
     | {
@@ -112,12 +113,30 @@ export function EditableCell<T>(props: Props<T>) {
         return value as ReactNode;
     })();
 
+    // Handle keyboard navigation inside the cells
+    const onKeyDown: KeyboardEventHandler<HTMLButtonElement> = (e) => {
+        if (e.key === "ArrowRight") {
+            focusSiblingElement(1);
+        } else if (e.key === "ArrowLeft") {
+            focusSiblingElement(-1);
+        } else if (e.key === "ArrowDown") {
+            e.preventDefault();
+            focusSiblingElement(td.current?.parentNode?.children.length ?? 0);
+        } else if (e.key === "ArrowUp") {
+            e.preventDefault();
+            focusSiblingElement(
+                (td.current?.parentNode?.children.length ?? 0) * -1,
+            );
+        }
+    };
+
     return (
         <Popover.Root onOpenChange={onOpenChange} open={isOpen}>
             <Popover.Trigger asChild>
                 <Cell ref={td} asChild>
                     {/* Keep the height of the cell when the popover is open, so that the popover doesn't jump when it opens/closes. */}
                     <button
+                        onKeyDown={onKeyDown}
                         className="flex flex-row justify-start hover:bg-level-2 flex-wrap gap-1 items-center relative"
                         style={{ height }}
                     >
@@ -197,7 +216,7 @@ function Select<T>(props: PropsField<"select", T>) {
                         .map((item) => (
                             <Command.Item
                                 key={getKey(item)}
-                                className="py-2 px-3 hover:bg-level-3"
+                                className="py-2 px-3 hover:bg-level-3 data-[selected]:bg-level-3"
                                 onSelect={() => {
                                     props.onValueChange(item);
                                     props.onOpenChange(false);
@@ -209,7 +228,7 @@ function Select<T>(props: PropsField<"select", T>) {
                 ) : (
                     <Suspense
                         fallback={
-                            <div className="py-2 px-3 hover:bg-level-3">
+                            <div className="py-2 px-3">
                                 <Spinner />
                             </div>
                         }
@@ -275,7 +294,7 @@ function Multiple<T>(props: PropsField<"multiple", T>) {
                         .map((item, k) => (
                             <Command.Item
                                 key={k}
-                                className="py-2 px-3 hover:bg-level-3"
+                                className="py-2 px-3 hover:bg-level-3 data-[selected]:bg-level-3"
                                 onSelect={() => {
                                     pushValue(item);
                                 }}
@@ -288,7 +307,7 @@ function Multiple<T>(props: PropsField<"multiple", T>) {
                 ) : (
                     <Suspense
                         fallback={
-                            <div className="py-2 px-3 hover:bg-level-3">
+                            <div className="py-2 px-3">
                                 <Spinner />
                             </div>
                         }
@@ -327,7 +346,7 @@ function SelectItems<T>(props: {
                 .map((item) => (
                     <Command.Item
                         key={getKey(item)}
-                        className="py-2 px-3 hover:bg-level-3"
+                        className="py-2 px-3 hover:bg-level-3 data-[selected]:bg-level-3"
                         onSelect={() => props.onSelect(item)}
                     >
                         {props.itemRenderer({ item })}
