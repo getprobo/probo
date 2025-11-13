@@ -1,55 +1,59 @@
 import {
-  Button,
-  IconPlusLarge,
-  PageHeader,
-  Thead,
-  Tbody,
-  Tr,
-  Th,
-  Td,
-  Badge,
   ActionDropdown,
-  DropdownItem,
-  IconTrashCan,
   Avatar,
-  EditableCell,
-  Select,
-  Option,
-  DataTable,
-  CellHead,
+  Badge,
+  Button,
   Cell,
+  CellHead,
+  DataTable,
+  DropdownItem,
+  EditableCell,
+  IconCheckmark1,
+  IconCrossLargeX,
+  IconPlusLarge,
+  IconTrashCan,
+  PageHeader,
   Row,
+  RowButton,
+  Spinner,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
-import { usePageTitle } from "@probo/hooks";
+import { usePageTitle, useToggle } from "@probo/hooks";
 import {
   graphql,
+  type PreloadedQuery,
   usePaginationFragment,
   usePreloadedQuery,
-  type PreloadedQuery,
-  useMutation,
 } from "react-relay";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { useParams } from "react-router";
 import { CreateAssetDialog } from "./dialogs/CreateAssetDialog";
 import {
-  useDeleteAsset,
   assetsQuery,
   updateAssetMutation,
+  useCreateAsset,
+  useDeleteAsset,
 } from "../../../hooks/graph/AssetGraph";
 import type { AssetGraphListQuery } from "/hooks/graph/__generated__/AssetGraphListQuery.graphql";
-import { faviconUrl } from "@probo/helpers";
+import { faviconUrl, getAssetTypeVariant } from "@probo/helpers";
 import type { NodeOf } from "/types";
-import { getAssetTypeVariant } from "@probo/helpers";
 import type {
   AssetsPageFragment$data,
   AssetsPageFragment$key,
 } from "./__generated__/AssetsPageFragment.graphql";
-import { SortableTable } from "/components/SortableTable";
 import { SnapshotBanner } from "/components/SnapshotBanner";
+import {
+  type MutationFieldUpdate,
+  useMutateField,
+} from "/hooks/useMutateField.tsx";
+import type { UpdateAssetInput } from "/hooks/graph/__generated__/AssetGraphUpdateMutation.graphql.ts";
+import z from "zod";
+import { useStateWithSchema } from "/hooks/useStateWithSchema.ts";
+import { usePeople } from "/hooks/graph/PeopleGraph.ts";
+import { useVendors } from "/hooks/graph/VendorGraph.ts";
+import clsx from "clsx";
 import { Authorized } from "/permissions";
 import { isAuthorized } from "/permissions";
-import { PeopleSelectOptions } from "/components/form/PeopleSelectField.tsx";
 
 const paginatedAssetsFragment = graphql`
   fragment AssetsPageFragment on Organization
@@ -125,6 +129,8 @@ export default function AssetsPage(props: Props) {
     isAuthorized(organizationId, "Asset", "updateAsset") ||
     isAuthorized(organizationId, "Asset", "deleteAsset")
   );
+  const { update } = useMutateField<UpdateAssetInput>(updateAssetMutation);
+  const [showAdd, toggleAdd] = useToggle(false);
 
   return (
     <div className="space-y-6">
@@ -146,130 +152,190 @@ export default function AssetsPage(props: Props) {
           </Authorized>
         )}
       </PageHeader>
-      <DataTable columns={["1fr", "1fr", "1fr", "1fr", "1fr", "56px"]}>
+      <DataTable
+        columns={[...Array.from({ length: 6 }).map(() => "1fr"), "56px"]}
+      >
         <Row>
           <CellHead>{__("Name")}</CellHead>
           <CellHead>{__("Type")}</CellHead>
+          <CellHead>{__("Data Types stored")}</CellHead>
           <CellHead>{__("Amount")}</CellHead>
           <CellHead>{__("Owner")}</CellHead>
           <CellHead>{__("Vendors")}</CellHead>
           <CellHead></CellHead>
         </Row>
         {assets.map((entry) => (
-          <AssetRow key={entry.id} entry={entry} connectionId={connectionId} />
+          <AssetRow
+            key={entry.id}
+            entry={entry}
+            connectionId={connectionId}
+            onUpdate={(field, value) => update(entry.id, field, value)}
+          />
         ))}
+        {showAdd ? (
+          <AssetAddRow
+            organizationId={organizationId}
+            onSuccess={toggleAdd}
+            connection={connectionId}
+          />
+        ) : (
+          <RowButton onClick={toggleAdd}>{__("Add a new asset")}</RowButton>
+        )}
       </DataTable>
     </div>
+  );
+}
+
+const schema = z.object({
+  name: z.string().min(1, "Name is required"),
+  amount: z.coerce.number().min(1, "Amount is required"),
+  assetType: z.enum(["PHYSICAL", "VIRTUAL"]),
+  ownerId: z.string().min(1, "Owner is required"),
+  vendorIds: z.array(z.string()).optional(),
+  dataTypesStored: z.string().min(1, "Data types stored is required"),
+});
+
+function AssetAddRow({
+  organizationId,
+  onSuccess,
+  connection,
+}: {
+  organizationId: string;
+  onSuccess: () => void;
+  connection: string;
+}) {
+  const [value, setValue, errors] = useStateWithSchema(schema, {
+    name: "",
+    amount: 0,
+    assetType: "VIRTUAL",
+    ownerId: "",
+    vendorIds: [],
+    dataTypesStored: "",
+  });
+
+  const [createAsset, isMutating] = useCreateAsset(connection);
+
+  const onSubmit = async () => {
+    await createAsset({
+      ...value,
+      organizationId,
+    });
+    onSuccess();
+  };
+
+  return (
+    <AssetRow
+      // @ts-expect-error - TS doesn't know form value match schema
+      onUpdate={setValue}
+      onSubmit={onSubmit}
+      errors={errors}
+      loading={isMutating}
+    />
   );
 }
 
 function AssetRow({
   entry,
   connectionId,
+  onUpdate,
+  onSubmit,
+  errors,
+  loading,
 }: {
-  entry: AssetEntry;
-  connectionId: string;
+  entry?: AssetEntry;
+  connectionId?: string;
+  onUpdate: MutationFieldUpdate<UpdateAssetInput>;
+  onSubmit?: () => void;
+  errors?: Record<string, string>;
+  loading?: boolean;
 }) {
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
   const { snapshotId } = useParams<{ snapshotId?: string }>();
   const isSnapshotMode = Boolean(snapshotId);
   const deleteAsset = useDeleteAsset(entry, connectionId);
-  const vendors = entry.vendors?.edges.map((edge) => edge.node) ?? [];
-
-  const assetUrl =
-    isSnapshotMode && snapshotId
-      ? `/organizations/${organizationId}/snapshots/${snapshotId}/assets/${entry.id}`
-      : `/organizations/${organizationId}/assets/${entry.id}`;
-
-  const [mutate, isLoading] = useMutation(updateAssetMutation);
-  const updater = (fieldName: keyof typeof entry) => (value: string) => {
-    // Only send an update if the value changed
-    if (entry[fieldName] === value) {
-      return;
-    }
-    mutate({
-      variables: {
-        input: {
-          id: entry.id,
-          [fieldName]: value,
-        },
-      },
-    });
-  };
-
+  const isOk = Object.keys(errors ?? {}).length === 0;
   return (
     <Row>
       <EditableCell
         type="text"
-        defaultValue={entry.name}
-        onValueChange={updater("name")}
+        value={entry?.name ?? ""}
+        onValueChange={(v) => onUpdate("name", v)}
+        blink={Boolean(errors?.name)}
       />
       <EditableCell
         type="select"
-        isLoading={isLoading}
-        onValueChange={updater("assetType")}
-        options={
-          <>
-            <Option value="VIRTUAL">
-              <Badge variant={getAssetTypeVariant("VIRTUAL")}>
-                {__("Virtual")}
-              </Badge>
-            </Option>
-            <Option value="PHYSICAL">
-              <Badge variant={getAssetTypeVariant("PHYSICAL")}>
-                {__("Physical")}
-              </Badge>
-            </Option>
-          </>
-        }
-      >
-        <Badge variant={getAssetTypeVariant(entry.assetType)}>
-          {entry.assetType === "PHYSICAL" ? __("Physical") : __("Virtual")}
-        </Badge>
-      </EditableCell>
+        items={["VIRTUAL", "PHYSICAL"]}
+        value={entry?.assetType ?? "VIRTUAL"}
+        itemRenderer={({ item }) => (
+          <Badge variant={getAssetTypeVariant(item ?? "VIRTUAL")}>
+            {item === "PHYSICAL" ? __("Physical") : __("Virtual")}
+          </Badge>
+        )}
+        onValueChange={(v) => onUpdate("assetType", v)}
+        blink={Boolean(errors?.assetType)}
+      />
       <EditableCell
         type="text"
-        defaultValue={entry.amount}
-        onValueChange={updater("amount")}
+        value={entry?.dataTypesStored ?? ""}
+        onValueChange={(v) => onUpdate("dataTypesStored", v)}
+        blink={Boolean(errors?.dataTypeStored)}
+      />
+      <EditableCell
+        type="text"
+        value={entry?.amount.toString() ?? ""}
+        onValueChange={(v) => onUpdate("amount", v)}
+        blink={Boolean(errors?.amount)}
       />
       <EditableCell
         type="select"
-        isLoading={isLoading}
-        onValueChange={updater("owner")}
-        options={<PeopleSelectOptions organizationId={organizationId} />}
-      >
-        {entry.owner?.fullName ?? __("Unassigned")}
-      </EditableCell>
-      <Cell>
-        {vendors.length > 0 ? (
-          <div className="flex flex-wrap gap-1">
-            {vendors.slice(0, 3).map((vendor) => (
-              <Badge
-                key={vendor.id}
-                variant="neutral"
-                className="flex items-center gap-1"
-              >
-                <Avatar
-                  name={vendor.name}
-                  src={faviconUrl(vendor.websiteUrl)}
-                  size="s"
-                />
-                <span className="text-xs">{vendor.name}</span>
-              </Badge>
-            ))}
-            {vendors.length > 3 && (
-              <Badge variant="neutral" className="text-xs">
-                +{vendors.length - 3}
-              </Badge>
-            )}
+        items={() => usePeople(organizationId, { excludeContractEnded: true })}
+        value={entry?.owner}
+        itemRenderer={({ item }) => (
+          <div className="flex gap-2">
+            <Avatar name={item.fullName} />
+            {item.fullName}
           </div>
-        ) : (
-          <span className="text-txt-secondary text-sm">{__("None")}</span>
         )}
-      </Cell>
+        onValueChange={(v) => onUpdate("ownerId", v.id)}
+        blink={Boolean(errors?.ownerId)}
+      />
+      <EditableCell
+        type="multiple"
+        items={() => useVendors(organizationId)}
+        value={entry?.vendors.edges.map((edge) => edge.node)}
+        itemRenderer={({ item, onRemove }) => (
+          <VendorBadge key={item.id} vendor={item} onRemove={onRemove} />
+        )}
+        onValueChange={(v) =>
+          onUpdate(
+            "vendorIds",
+            v.map((v) => v.id),
+          )
+        }
+        blink={Boolean(errors?.vendorIds)}
+      />
       <Cell className="text-end">
-        {!isSnapshotMode && (
+        {loading && (
+          <Button
+            disabled={true}
+            variant="tertiary"
+            className="text-txt-secondary"
+          >
+            <Spinner size={16} />
+          </Button>
+        )}
+        {onSubmit && !loading && (
+          <Button
+            disabled={!isOk}
+            variant="tertiary"
+            className={clsx(isOk ? "text-txt-success" : "text-txt-secondary")}
+            onClick={onSubmit}
+          >
+            <IconCheckmark1 size={16} />
+          </Button>
+        )}
+        {!isSnapshotMode && entry && (
           <ActionDropdown>
             <DropdownItem
               onClick={deleteAsset}
@@ -282,5 +348,36 @@ function AssetRow({
         )}
       </Cell>
     </Row>
+  );
+}
+
+type Vendor = {
+  id: string;
+  name: string;
+  websiteUrl: string | null | undefined;
+};
+
+function VendorBadge({
+  vendor,
+  onRemove,
+}: {
+  vendor: Vendor;
+  onRemove?: () => void;
+}) {
+  return (
+    <Badge variant="neutral" className="flex items-center gap-1">
+      <Avatar name={vendor.name} src={faviconUrl(vendor.websiteUrl)} size="s" />
+      <span className="max-w-[100px] text-ellipsis overflow-hidden min-w-0 block">
+        {vendor.name}
+      </span>
+      {onRemove && (
+        <button
+          onClick={onRemove}
+          className="size-4 hover:text-txt-primary cursor-pointer"
+        >
+          <IconCrossLargeX size={14} />
+        </button>
+      )}
+    </Badge>
   );
 }

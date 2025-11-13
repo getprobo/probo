@@ -46,75 +46,32 @@ function PeopleSelectWithQuery(
   const people = usePeople(organizationId, { excludeContractEnded: true });
 
   return (
-    <>
-      <Controller
-        control={control}
-        name={name}
-        render={({ field }) => (
-          <Select
-            disabled={props.disabled}
-            id={name}
-            variant="editor"
-            placeholder={__("Select an owner")}
-            onValueChange={(value) =>
-              field.onChange(value === "__NONE__" ? null : value)
-            }
-            key={people?.length.toString() ?? "0"}
-            {...field}
-            className="w-full"
-            value={field.value ?? (props.optional ? "__NONE__" : "")}
-          >
-            {props.optional && <Option value="__NONE__">{__("None")}</Option>}
-            {people?.map((p) => (
-              <Option key={p.id} value={p.id} className="flex gap-2">
-                <Avatar name={p.fullName} />
-                {p.fullName}
-              </Option>
-            ))}
-          </Select>
-        )}
-      />
-    </>
-  );
-}
-
-type OptionsProps = {
-  organizationId: string;
-  optional?: boolean;
-} & ComponentProps<typeof Field>;
-
-export function PeopleSelectOptions({
-  organizationId,
-  ...props
-}: OptionsProps) {
-  return (
-    <Suspense
-      fallback={<Select variant="editor" loading placeholder="Loading..." />}
-    >
-      <PeopleSelectOptionsWithQuery
-        organizationId={organizationId}
-        optional={props.optional}
-      />
-    </Suspense>
-  );
-}
-
-function PeopleSelectOptionsWithQuery(
-  props: Pick<Props, "organizationId" | "disabled" | "optional">,
-) {
-  const { __ } = useTranslate();
-  const { organizationId } = props;
-  const people = usePeople(organizationId, { excludeContractEnded: true });
-
-  return (
-    <>
-      {props.optional && <Option value="__NONE__">{__("None")}</Option>}
-      {people?.map((p) => (
-        <Option key={p.id} value={p.id} className="flex gap-2">
-          <Avatar name={p.fullName} />
-          {p.fullName}
-        </Option>
-      ))}
-    </>
+    <Controller
+      control={control}
+      name={name}
+      render={({ field }) => (
+        <Select
+          disabled={props.disabled}
+          id={name}
+          variant="editor"
+          placeholder={__("Select an owner")}
+          onValueChange={(value) =>
+            field.onChange(value === "__NONE__" ? null : value)
+          }
+          key={people?.length.toString() ?? "0"}
+          {...field}
+          className="w-full"
+          value={field.value ?? (props.optional ? "__NONE__" : "")}
+        >
+          {props.optional && <Option value="__NONE__">{__("None")}</Option>}
+          {people?.map((p) => (
+            <Option key={p.id} value={p.id} className="flex gap-2">
+              <Avatar name={p.fullName} />
+              {p.fullName}
+            </Option>
+          ))}
+        </Select>
+      )}
+    />
   );
 }

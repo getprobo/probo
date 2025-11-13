@@ -12,11 +12,9 @@ export const assetRoutes = [
     queryLoader: (params: Record<string, string>) =>
       loadQuery(relayEnvironment, assetsQuery, {
         organizationId: params.organizationId,
-        snapshotId: null
+        snapshotId: null,
       }),
-    Component: lazy(
-      () => import("/pages/organizations/assets/AssetsPage")
-    ),
+    Component: lazy(() => import("/pages/organizations/assets/AssetsPage")),
   },
   {
     path: "snapshots/:snapshotId/assets",
@@ -24,20 +22,9 @@ export const assetRoutes = [
     queryLoader: (params: Record<string, string>) =>
       loadQuery(relayEnvironment, assetsQuery, {
         organizationId: params.organizationId,
-        snapshotId: params.snapshotId
+        snapshotId: params.snapshotId,
       }),
-    Component: lazy(
-      () => import("/pages/organizations/assets/AssetsPage")
-    ),
-  },
-  {
-    path: "assets/:assetId",
-    fallback: PageSkeleton,
-    queryLoader: (params: Record<string, string>) =>
-      loadQuery(relayEnvironment, assetNodeQuery, { assetId: params.assetId }),
-    Component: lazy(
-      () => import("/pages/organizations/assets/AssetDetailsPage")
-    ),
+    Component: lazy(() => import("/pages/organizations/assets/AssetsPage")),
   },
   {
     path: "snapshots/:snapshotId/assets/:assetId",
@@ -45,7 +32,7 @@ export const assetRoutes = [
     queryLoader: (params: Record<string, string>) =>
       loadQuery(relayEnvironment, assetNodeQuery, { assetId: params.assetId }),
     Component: lazy(
-      () => import("/pages/organizations/assets/AssetDetailsPage")
+      () => import("/pages/organizations/assets/AssetDetailsPage"),
     ),
   },
 ] satisfies AppRoute[];

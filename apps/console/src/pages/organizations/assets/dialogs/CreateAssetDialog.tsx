@@ -48,7 +48,7 @@ export function CreateAssetDialog({
       },
     });
   const ref = useDialogRef();
-  const createAsset = useCreateAsset(connection);
+  const [createAsset] = useCreateAsset(connection);
 
   const onSubmit = handleSubmit(async (data) => {
     try {

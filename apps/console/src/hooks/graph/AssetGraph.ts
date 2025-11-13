@@ -121,12 +121,16 @@ export const deleteAssetMutation = graphql`
 `;
 
 export const useDeleteAsset = (
-  asset: { id?: string; name?: string },
-  connectionId: string
+  asset?: { id?: string; name?: string },
+  connectionId?: string,
 ) => {
   const [mutate] = useMutation(deleteAssetMutation);
   const confirm = useConfirm();
   const { __ } = useTranslate();
+
+  if (!asset) {
+    return () => {};
+  }
 
   return () => {
     if (!asset.id || !asset.name) {
@@ -145,56 +149,61 @@ export const useDeleteAsset = (
       {
         message: sprintf(
           __(
-            'This will permanently delete "%s". This action cannot be undone.'
+            'This will permanently delete "%s". This action cannot be undone.',
           ),
-          asset.name
+          asset.name,
         ),
-      }
+      },
     );
   };
 };
 
 export const useCreateAsset = (connectionId: string) => {
-  const [mutate] = useMutation(createAssetMutation);
+  const [mutate, isMutating] = useMutation(createAssetMutation);
   const { __ } = useTranslate();
 
-  return (input: {
-    name: string;
-    amount: number;
-    assetType: string;
-    ownerId: string;
-    organizationId: string;
-    vendorIds?: string[];
-    dataTypesStored: string;
-  }) => {
-    if (!input.name?.trim()) {
-      return alert(__("Failed to create asset: name is required"));
-    }
-    if (!input.ownerId) {
-      return alert(__("Failed to create asset: owner is required"));
-    }
-    if (!input.organizationId) {
-      return alert(__("Failed to create asset: organization is required"));
-    }
-    if (!input.dataTypesStored) {
-      return alert(__("Failed to create asset: data types stored is required"));
-    }
+  return [
+    (input: {
+      name: string;
+      amount: number;
+      assetType: string;
+      ownerId: string;
+      organizationId: string;
+      vendorIds?: string[];
+      dataTypesStored: string;
+    }) => {
+      if (!input.name?.trim()) {
+        return alert(__("Failed to create asset: name is required"));
+      }
+      if (!input.ownerId) {
+        return alert(__("Failed to create asset: owner is required"));
+      }
+      if (!input.organizationId) {
+        return alert(__("Failed to create asset: organization is required"));
+      }
+      if (!input.dataTypesStored) {
+        return alert(
+          __("Failed to create asset: data types stored is required"),
+        );
+      }
 
-    return promisifyMutation(mutate)({
-      variables: {
-        input: {
-          name: input.name,
-          amount: input.amount,
-          assetType: input.assetType,
-          dataTypesStored: input.dataTypesStored || "",
-          ownerId: input.ownerId,
-          organizationId: input.organizationId,
-          vendorIds: input.vendorIds || [],
+      return promisifyMutation(mutate)({
+        variables: {
+          input: {
+            name: input.name,
+            amount: input.amount,
+            assetType: input.assetType,
+            dataTypesStored: input.dataTypesStored || "",
+            ownerId: input.ownerId,
+            organizationId: input.organizationId,
+            vendorIds: input.vendorIds || [],
+          },
+          connections: [connectionId],
         },
-        connections: [connectionId],
-      },
-    });
-  };
+      });
+    },
+    isMutating,
+  ] as const;
 };
 
 export const useUpdateAsset = () => {
