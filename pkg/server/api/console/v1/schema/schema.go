@@ -10130,6 +10130,7 @@ enum InvitationStatus
 enum MembershipRole @goModel(model: "go.probo.inc/probo/pkg/coredata.MembershipRole") {
   OWNER @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleOwner")
   ADMIN @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleAdmin")
+  EMPLOYEE @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleEmployee")
   VIEWER @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleViewer")
 }
 
@@ -106637,14 +106638,16 @@ func (ec *executionContext) marshalNMembershipRole2goᚗproboᚗincᚋproboᚋpk
 
 var (
 	unmarshalNMembershipRole2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipRole = map[string]coredata.MembershipRole{
-		"OWNER":  coredata.MembershipRoleOwner,
-		"ADMIN":  coredata.MembershipRoleAdmin,
-		"VIEWER": coredata.MembershipRoleViewer,
+		"OWNER":    coredata.MembershipRoleOwner,
+		"ADMIN":    coredata.MembershipRoleAdmin,
+		"EMPLOYEE": coredata.MembershipRoleEmployee,
+		"VIEWER":   coredata.MembershipRoleViewer,
 	}
 	marshalNMembershipRole2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipRole = map[coredata.MembershipRole]string{
-		coredata.MembershipRoleOwner:  "OWNER",
-		coredata.MembershipRoleAdmin:  "ADMIN",
-		coredata.MembershipRoleViewer: "VIEWER",
+		coredata.MembershipRoleOwner:    "OWNER",
+		coredata.MembershipRoleAdmin:    "ADMIN",
+		coredata.MembershipRoleEmployee: "EMPLOYEE",
+		coredata.MembershipRoleViewer:   "VIEWER",
 	}
 )
 

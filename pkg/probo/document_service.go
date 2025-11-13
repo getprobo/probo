@@ -998,13 +998,14 @@ func (s *DocumentService) ListVersions(
 	ctx context.Context,
 	documentID gid.GID,
 	cursor *page.Cursor[coredata.DocumentVersionOrderField],
+	filter *coredata.DocumentVersionFilter,
 ) (*page.Page[*coredata.DocumentVersion, coredata.DocumentVersionOrderField], error) {
 	var documentVersions coredata.DocumentVersions
 
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			return documentVersions.LoadByDocumentID(ctx, conn, s.svc.scope, documentID, cursor)
+			return documentVersions.LoadByDocumentID(ctx, conn, s.svc.scope, documentID, cursor, filter)
 		},
 	)
 

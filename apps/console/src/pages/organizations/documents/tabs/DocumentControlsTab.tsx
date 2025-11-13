@@ -1,9 +1,20 @@
 import { LinkedControlsCard } from "/components/controls/LinkedControlsCard";
-import { useOutletContext } from "react-router";
+import { useParams } from "react-router";
 import { graphql } from "relay-runtime";
-import { useRefetchableFragment } from "react-relay";
+import { useLazyLoadQuery, useRefetchableFragment } from "react-relay";
 import type { DocumentControlsTabFragment$key } from "./__generated__/DocumentControlsTabFragment.graphql";
+import type { DocumentControlsTabQuery } from "./__generated__/DocumentControlsTabQuery.graphql";
 import { useMutationWithIncrement } from "/hooks/useMutationWithIncrement";
+
+const documentControlsQuery = graphql`
+  query DocumentControlsTabQuery($documentId: ID!) {
+    node(id: $documentId) {
+      ... on Document {
+        ...DocumentControlsTabFragment
+      }
+    }
+  }
+`;
 
 export const controlsFragment = graphql`
   fragment DocumentControlsTabFragment on Document
@@ -64,10 +75,15 @@ const attachControlMutation = graphql`
 `;
 
 export default function DocumentControlsTab() {
-  const { document } = useOutletContext<{
-    document: DocumentControlsTabFragment$key;
-  }>();
-  const [data, refetch] = useRefetchableFragment(controlsFragment, document);
+  const { documentId } = useParams<{ documentId: string }>();
+  const queryData = useLazyLoadQuery<DocumentControlsTabQuery>(
+    documentControlsQuery,
+    { documentId: documentId! }
+  );
+  const [data, refetch] = useRefetchableFragment(
+    controlsFragment,
+    queryData.node as DocumentControlsTabFragment$key
+  );
   const controls = data.controls.edges.map((edge) => edge.node);
   const incrementOptions = {
     id: data.id,

@@ -56,7 +56,7 @@ export const documentsRoutes = [
     path: "documents",
     fallback: PageSkeleton,
     queryLoader: ({ organizationId }) =>
-      loadQuery(relayEnvironment, documentsQuery, { organizationId }),
+      loadQuery(relayEnvironment, documentsQuery, { organizationId, includeSignatures: false }),
     Component: lazy(
       () => import("/pages/organizations/documents/DocumentsPage"),
     ),
@@ -65,7 +65,11 @@ export const documentsRoutes = [
     path: "documents/:documentId",
     fallback: PageSkeleton,
     queryLoader: ({ documentId }) =>
-      loadQuery(relayEnvironment, documentNodeQuery, { documentId }),
+      loadQuery(relayEnvironment, documentNodeQuery, {
+        documentId,
+        includeControls: false,
+        includeSignatures: false
+      }),
     Component: lazy(
       () => import("../pages/organizations/documents/DocumentDetailPage"),
     ),

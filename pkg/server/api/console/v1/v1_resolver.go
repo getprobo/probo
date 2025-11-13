@@ -699,6 +699,7 @@ func (r *documentResolver) Versions(ctx context.Context, obj *types.Document, fi
 	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListVersions)
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
+	authzSvc := r.AuthzService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.DocumentVersionOrderField]{
 		Field:     coredata.DocumentVersionOrderFieldCreatedAt,
@@ -713,7 +714,24 @@ func (r *documentResolver) Versions(ctx context.Context, obj *types.Document, fi
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := prb.Documents.ListVersions(ctx, obj.ID, cursor)
+	// For Employee role: filter versions to only show those with signature requested for their email
+	versionFilter := coredata.NewDocumentVersionFilter()
+	user := UserFromContext(ctx)
+	if user != nil {
+		document, err := prb.Documents.Get(ctx, obj.ID)
+		if err != nil {
+			panic(fmt.Errorf("cannot get document: %w", err))
+		}
+		membership, err := authzSvc.GetMembershipByUserAndOrganizationID(ctx, user.ID, document.OrganizationID)
+		if err != nil {
+			panic(fmt.Errorf("cannot get membership: %w", err))
+		}
+		if membership.Role == coredata.MembershipRoleEmployee {
+			versionFilter = versionFilter.WithUserEmail(&user.EmailAddress)
+		}
+	}
+
+	page, err := prb.Documents.ListVersions(ctx, obj.ID, cursor, versionFilter)
 	if err != nil {
 		panic(fmt.Errorf("cannot list document versions: %w", err))
 	}
@@ -3383,12 +3401,27 @@ func (r *mutationResolver) BulkExportDocuments(ctx context.Context, input types.
 
 	prb := r.ProboService(ctx, input.DocumentIds[0].TenantID())
 
-	user := UserFromContext(ctx)
-
 	options := probo.BulkExportOptions{
 		WithWatermark:  input.WithWatermark,
 		WithSignatures: input.WithSignatures,
 		WatermarkEmail: input.WatermarkEmail,
+	}
+
+	// For Employee role: force watermark with user email and no signatures
+	document, err := prb.Documents.Get(ctx, input.DocumentIds[0])
+	if err != nil {
+		panic(fmt.Errorf("cannot get document: %w", err))
+	}
+	user := UserFromContext(ctx)
+	authzSvc := r.AuthzService(ctx, input.DocumentIds[0].TenantID())
+	membership, err := authzSvc.GetMembershipByUserAndOrganizationID(ctx, user.ID, document.OrganizationID)
+	if err != nil {
+		panic(fmt.Errorf("cannot get membership: %w", err))
+	}
+	if membership.Role == coredata.MembershipRoleEmployee {
+		options.WithWatermark = true
+		options.WatermarkEmail = &user.EmailAddress
+		options.WithSignatures = false
 	}
 
 	documentExport, err := prb.Documents.RequestExport(ctx, input.DocumentIds, user.EmailAddress, user.FullName, options)
@@ -3560,6 +3593,23 @@ func (r *mutationResolver) ExportDocumentVersionPDF(ctx context.Context, input t
 		WithSignatures: input.WithSignatures,
 		WithWatermark:  input.WithWatermark,
 		WatermarkEmail: input.WatermarkEmail,
+	}
+
+	// For Employee role: force watermark with user email and no signatures
+	documentVersion, err := prb.Documents.GetVersion(ctx, input.DocumentVersionID)
+	if err != nil {
+		panic(fmt.Errorf("cannot get document version: %w", err))
+	}
+	user := UserFromContext(ctx)
+	authzSvc := r.AuthzService(ctx, input.DocumentVersionID.TenantID())
+	membership, err := authzSvc.GetMembershipByUserAndOrganizationID(ctx, user.ID, documentVersion.OrganizationID)
+	if err != nil {
+		panic(fmt.Errorf("cannot get membership: %w", err))
+	}
+	if membership.Role == coredata.MembershipRoleEmployee {
+		options.WithWatermark = true
+		options.WatermarkEmail = &user.EmailAddress
+		options.WithSignatures = false
 	}
 
 	pdf, err := prb.Documents.ExportPDF(ctx, input.DocumentVersionID, options)
@@ -4906,6 +4956,18 @@ func (r *organizationResolver) Documents(ctx context.Context, obj *types.Organiz
 	var documentFilter = coredata.NewDocumentFilter(nil)
 	if filter != nil {
 		documentFilter = coredata.NewDocumentFilter(filter.Query)
+	}
+
+	// For Employee role: filter documents to only show those with signature requested for their email
+	user := UserFromContext(ctx)
+	authzSvc := r.AuthzService(ctx, obj.ID.TenantID())
+	membership, err := authzSvc.GetMembershipByUserAndOrganizationID(ctx, user.ID, obj.ID)
+	if err != nil {
+		panic(fmt.Errorf("cannot get membership: %w", err))
+	}
+	if membership.Role == coredata.MembershipRoleEmployee {
+		published := true
+		documentFilter = documentFilter.WithPublished(&published).WithUserEmail(&user.EmailAddress)
 	}
 
 	page, err := prb.Documents.ListByOrganizationID(ctx, obj.ID, cursor, documentFilter)

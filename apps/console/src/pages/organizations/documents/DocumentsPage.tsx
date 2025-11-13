@@ -29,7 +29,7 @@ import {
   useLazyLoadQuery,
   type PreloadedQuery,
 } from "react-relay";
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
 import { graphql } from "relay-runtime";
 import type { DocumentGraphListQuery } from "/hooks/graph/__generated__/DocumentGraphListQuery.graphql";
 import {
@@ -72,6 +72,7 @@ const documentsFragment = graphql`
     after: { type: "CursorKey", defaultValue: null }
     before: { type: "CursorKey", defaultValue: null }
     last: { type: "Int", defaultValue: null }
+    includeSignatures: { type: "Boolean", defaultValue: false }
   ) {
     documents(
       first: $first
@@ -84,7 +85,7 @@ const documentsFragment = graphql`
       edges {
         node {
           id
-          ...DocumentsPageRowFragment
+          ...DocumentsPageRowFragment @arguments(includeSignatures: $includeSignatures)
         }
       }
     }
@@ -118,10 +119,17 @@ export default function DocumentsPage(props: Props) {
     {}
   );
   const defaultEmail = userEmailData.viewer.user.email;
+  const canViewSignatures = isAuthorized(organization.id, "DocumentVersion", "signatures");
   const pagination = usePaginationFragment(
     documentsFragment,
     organization as DocumentsPageListFragment$key
   );
+
+  useEffect(() => {
+    if (canViewSignatures) {
+      pagination.refetch({ includeSignatures: true }, { fetchPolicy: 'network-only' });
+    }
+  }, []);
 
   const documents = pagination.data.documents.edges
     .map((edge) => edge.node)
@@ -240,7 +248,7 @@ export default function DocumentsPage(props: Props) {
                 <Th className="w-32">{__("Classification")}</Th>
                 <Th className="w-60">{__("Owner")}</Th>
                 <Th className="w-60">{__("Last update")}</Th>
-                <Th className="w-20">{__("Signatures")}</Th>
+                {canViewSignatures && <Th className="w-20">{__("Signatures")}</Th>}
                 {hasAnyAction && <Th className="w-18"></Th>}
               </Tr>
             ) : (
@@ -285,21 +293,37 @@ export default function DocumentsPage(props: Props) {
                           </Button>
                         </SignatureDocumentsDialog>
                       </Authorized>
-                      <BulkExportDialog
-                        ref={bulkExportDialogRef}
-                        onExport={handleBulkExport}
-                        isLoading={isBulkExporting}
-                        defaultEmail={defaultEmail}
-                        selectedCount={selection.length}
-                      >
+                      {canViewSignatures ? (
+                        <BulkExportDialog
+                          ref={bulkExportDialogRef}
+                          onExport={handleBulkExport}
+                          isLoading={isBulkExporting}
+                          defaultEmail={defaultEmail}
+                          selectedCount={selection.length}
+                        >
+                          <Button
+                            variant="secondary"
+                            icon={IconArrowDown}
+                            className="py-0.5 px-2 text-xs h-6 min-h-6"
+                          >
+                            {__("Export")}
+                          </Button>
+                        </BulkExportDialog>
+                      ) : (
                         <Button
                           variant="secondary"
                           icon={IconArrowDown}
                           className="py-0.5 px-2 text-xs h-6 min-h-6"
+                          onClick={() => handleBulkExport({
+                            withWatermark: true,
+                            withSignatures: false,
+                            watermarkEmail: defaultEmail,
+                          })}
+                          disabled={isBulkExporting}
                         >
                           {__("Export")}
                         </Button>
-                      </BulkExportDialog>
+                      )}
                       <Authorized entity="Document" action="deleteDocument">
                         <Button
                           variant="danger"
@@ -326,6 +350,7 @@ export default function DocumentsPage(props: Props) {
                 organizationId={organization.id}
                 connectionId={connectionId}
                 hasAnyAction={hasAnyAction}
+                canViewSignatures={canViewSignatures}
               />
             ))}
           </Tbody>
@@ -347,7 +372,10 @@ export default function DocumentsPage(props: Props) {
 }
 
 const rowFragment = graphql`
-  fragment DocumentsPageRowFragment on Document {
+  fragment DocumentsPageRowFragment on Document
+  @argumentDefinitions(
+    includeSignatures: { type: "Boolean", defaultValue: false }
+  ) {
     id
     title
     description
@@ -364,7 +392,7 @@ const rowFragment = graphql`
           id
           status
           version
-          signatures(first: 1000) {
+          signatures(first: 1000) @include(if: $includeSignatures) {
             edges {
               node {
                 id
@@ -384,6 +412,7 @@ function DocumentRow({
   checked,
   onCheck,
   hasAnyAction,
+  canViewSignatures,
 }: {
   document: DocumentsPageRowFragment$key;
   organizationId: string;
@@ -391,6 +420,7 @@ function DocumentRow({
   checked: boolean;
   onCheck: () => void;
   hasAnyAction: boolean;
+  canViewSignatures: boolean;
 }) {
   const document = useFragment<DocumentsPageRowFragment$key>(
     rowFragment,
@@ -404,12 +434,14 @@ function DocumentRow({
 
   const isDraft = lastVersion.status === "DRAFT";
   const { __ } = useTranslate();
-  const signatures =
-    lastVersion.signatures?.edges?.map((edge) => edge?.node)?.filter(Boolean) ??
-    [];
-  const signedCount = signatures.filter(
-    (signature) => signature.state === "SIGNED"
-  ).length;
+
+  let signatures: any[] = [];
+  let signedCount = 0;
+
+  if (canViewSignatures && lastVersion.signatures) {
+    signatures = lastVersion.signatures.edges?.map((edge) => edge?.node)?.filter(Boolean) ?? [];
+    signedCount = signatures.filter((signature) => signature.state === "SIGNED").length;
+  }
   const [deleteDocument] = useDeleteDocumentMutation();
   const confirm = useConfirm();
 
@@ -459,9 +491,11 @@ function DocumentRow({
         </div>
       </Td>
       <Td className="w-60">{formatDate(document.updatedAt)}</Td>
-      <Td className="w-20">
-        {signedCount}/{signatures.length}
-      </Td>
+      {canViewSignatures && (
+        <Td className="w-20">
+          {signedCount}/{signatures.length}
+        </Td>
+      )}
       {hasAnyAction && (
         <Td noLink width={50} className="text-end w-18">
           <ActionDropdown>

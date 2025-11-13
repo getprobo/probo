@@ -6,6 +6,7 @@ import {
   useRouteError,
   type RouteObject,
 } from "react-router";
+import { Component as ReactComponent, type ErrorInfo } from "react";
 import { MainLayout } from "./layouts/MainLayout";
 import { AuthLayout, CenteredLayout, CenteredLayoutSkeleton } from "@probo/ui";
 import { Fragment, Suspense } from "react";
@@ -47,13 +48,11 @@ export type AppRoute = Omit<RouteObject, "Component" | "children"> & {
 };
 
 /**
- * Top level error boundary
+ * Common error handling logic
  */
-function ErrorBoundary({ error: propsError }: { error?: string }) {
-  const error = useRouteError() ?? propsError;
-
+function renderError(error: unknown): React.ReactElement {
   if (error instanceof UnAuthenticatedError) {
-    return <Navigate to="/auth/login" />;
+    return <Navigate to="/auth/login" replace />;
   }
 
   if (error instanceof UnauthorizedError) {
@@ -65,6 +64,43 @@ function ErrorBoundary({ error: propsError }: { error?: string }) {
   }
 
   return <PageError error={error?.toString()} />;
+}
+
+/**
+ * React Error Boundary for catching errors in Suspense
+ */
+class ReactErrorBoundary extends ReactComponent<
+  { children: React.ReactNode },
+  { error: Error | null }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { error: null };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error("ReactErrorBoundary caught error:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.error) {
+      return renderError(this.state.error);
+    }
+
+    return this.props.children;
+  }
+}
+
+/**
+ * Top level error boundary for Router errors
+ */
+function ErrorBoundary({ error: propsError }: { error?: string }) {
+  const error = useRouteError() ?? propsError;
+  return renderError(error);
 }
 
 const routes = [
@@ -134,7 +170,7 @@ const routes = [
       {
         path: "",
         loader: () => {
-          throw redirect(`tasks`);
+          throw redirect(`documents`);
         },
         Component: Fragment,
       },
@@ -215,9 +251,11 @@ function routeTransformer({
     result = {
       ...result,
       Component: (props) => (
-        <Suspense fallback={<FallbackComponent />}>
-          <OriginalComponent {...props} />
-        </Suspense>
+        <ReactErrorBoundary>
+          <Suspense fallback={<FallbackComponent />}>
+            <OriginalComponent {...props} />
+          </Suspense>
+        </ReactErrorBoundary>
       ),
     };
   }
@@ -238,9 +276,11 @@ function routeTransformer({
         useCleanup(dispose, 1000);
 
         return (
-          <Suspense fallback={FallbackComponent ? <FallbackComponent /> : null}>
-            <OriginalComponent queryRef={queryRef} />
-          </Suspense>
+          <ReactErrorBoundary>
+            <Suspense fallback={FallbackComponent ? <FallbackComponent /> : null}>
+              <OriginalComponent queryRef={queryRef} />
+            </Suspense>
+          </ReactErrorBoundary>
         );
       },
     };
