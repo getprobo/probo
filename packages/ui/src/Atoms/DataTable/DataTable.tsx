@@ -1,7 +1,13 @@
-import { type ComponentPropsWithRef, type PropsWithChildren } from "react";
+import {
+    type ComponentPropsWithRef,
+    type FC,
+    type PropsWithChildren,
+    type ReactNode,
+} from "react";
 import { Card } from "../Card/Card";
 import clsx from "clsx";
 import { type AsChildProps, Slot } from "../Slot.tsx";
+import { IconPlusLarge } from "../Icons";
 
 export function DataTable({
     children,
@@ -70,5 +76,27 @@ export function Cell({
                 props.className,
             )}
         />
+    );
+}
+
+export function RowButton({
+    icon = IconPlusLarge,
+    children,
+    ...props
+}: {
+    colspan?: number;
+    children: ReactNode;
+    icon?: FC<{ size: number; className?: string }>;
+} & ComponentPropsWithRef<"button">) {
+    const IconComponent = icon;
+    return (
+        <button
+            {...props}
+            className="py-2 bg-highlight hover:bg-highlight-hover active:bg-highlight-pressed           cursor-pointer w-full flex gap-2 items-center justify-center text-sm text-txt-secondary"
+            style={{ gridColumnEnd: -1, gridColumnStart: 1 }}
+        >
+            <IconComponent size={16} />
+            {children}
+        </button>
     );
 }

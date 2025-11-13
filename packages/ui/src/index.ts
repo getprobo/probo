@@ -38,7 +38,13 @@ export { InfiniteScrollTrigger } from "./Atoms/InfiniteScrollTrigger/InfiniteScr
 export { PriorityLevel } from "./Atoms/PriorityLevel/PriorityLevel.tsx";
 export { TaskStateIcon } from "./Atoms/Icons/TaskStateIcon";
 export { Checkbox } from "./Atoms/Checkbox/Checkbox";
-export { DataTable, Cell, CellHead, Row } from "./Atoms/DataTable/DataTable";
+export {
+    DataTable,
+    Cell,
+    CellHead,
+    Row,
+    RowButton,
+} from "./Atoms/DataTable/DataTable";
 
 // Molecules
 export {
