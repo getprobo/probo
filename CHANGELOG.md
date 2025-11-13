@@ -8,6 +8,10 @@ All notable changes to this project will be documented in this file.
 
 - Add role management.
 
+### Changed
+
+- API keys now have access to the organization they just created.
+
 ## [0.87.0] - 2025-13-07
 
 ### Added
