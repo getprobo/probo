@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Add beta MCP server.
 - Add official Kubernetes HEML chart.
 - Add SAML IDP initiated flow support.
+- Add meeting object.
 
 ### Changed
 
