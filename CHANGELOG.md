@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.87.0] - 2025-13-07
+
 ### Added
 
 - Add beta MCP server.
