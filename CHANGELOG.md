@@ -2,9 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.88.4] - 2025-14-07
+
+### Fixed
+
+- Fix `PG_CA_BUNDLE_FILE` does not map to right config key.
+
 ## [0.88.3] - 2025-14-07
 
-## Fixed
+### Fixed
 
 - Fix document permissions
 
