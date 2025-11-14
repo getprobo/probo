@@ -88,7 +88,7 @@ EOF
   if [ -n "$PG_CA_BUNDLE_FILE" ]; then
     cat >> "$CONFIG_FILE" <<EOF
     ca-bundle: |
-$(cat "$PG_CA_BUNDLE_FILE" | sed 's/^/      /')
+$(sed 's/^/      /' "$PG_CA_BUNDLE_FILE")
 EOF
   elif [ -n "$PG_CA_BUNDLE" ]; then
     cat >> "$CONFIG_FILE" <<EOF
