@@ -79,6 +79,13 @@ export { ImpactOptions } from "./Molecules/Select/ImpactOptions";
 export { DurationPicker } from "./Molecules/DurationPicker/DurationPicker";
 export { FrameworkLogo } from "./Molecules/Badge/FrameworkLogo";
 export { EditableCell } from "./Molecules/Table/EditableCell";
+export { TextCell } from "./Molecules/Table/TextCell";
+export {
+    SelectCell,
+    selectCell,
+    SelectValue,
+} from "./Molecules/Table/SelectCell";
+export { EditableRow } from "./Molecules/Table/EditableRow";
 
 // Hooks
 export { useToast, Toasts } from "./Atoms/Toasts/Toasts";
