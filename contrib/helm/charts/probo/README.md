@@ -155,6 +155,8 @@ The following parameters **must** be configured:
 | `postgresql.port`      | PostgreSQL port                 | `5432` |
 | `postgresql.database`  | Database name                   | `probod` |
 | `postgresql.username`  | Database user                   | `probod` |
+| `postgresql.caBundle`  | PostgreSQL TLS CA certificate bundle (inline) | `""` |
+| `postgresql.caBundlePath` | PostgreSQL TLS CA certificate bundle (file path) | `""` |
 | `s3.bucket`            | S3 bucket name                  | `probod` |
 | `s3.region`            | AWS region                      | `us-east-1` |
 | `s3.endpoint`          | S3 endpoint (for S3-compatible) | `""` |
@@ -182,6 +184,38 @@ The chart deploys the following:
 ### Migrations
 
 Database migrations run automatically when Probo starts. No manual intervention is required.
+
+### TLS/SSL Configuration
+
+For secure PostgreSQL connections, you can provide a CA certificate bundle in two ways:
+
+1. **Inline CA Bundle** (`postgresql.caBundle`): Provide the certificate content directly in values.yaml
+   ```yaml
+   postgresql:
+     caBundle: |
+       -----BEGIN CERTIFICATE-----
+       MIIEDzCCAvegAwIBAgIBADANBgkqhkiG9w0BAQUFADBoMQswCQYDVQQGEwJVUzEl
+       ...
+       -----END CERTIFICATE-----
+   ```
+
+2. **File Path** (`postgresql.caBundlePath`): Mount the CA bundle as a ConfigMap/Secret and reference the path
+   ```yaml
+   postgresql:
+     caBundlePath: /etc/ssl/certs/ca-certificates.crt
+
+   # Then mount your CA bundle using volumes/volumeMounts
+   volumes:
+     - name: ca-bundle
+       configMap:
+         name: postgres-ca-bundle
+   volumeMounts:
+     - name: ca-bundle
+       mountPath: /etc/ssl/certs
+       readOnly: true
+   ```
+
+**Note:** Using `caBundlePath` is recommended for large CA bundles (e.g., system CA bundles) as it avoids environment variable size limitations.
 
 ### Backup
 
@@ -232,6 +266,11 @@ Check the Probo logs for S3 connection errors when uploading files.
 postgresql:
   host: "mydb.abc123.us-east-1.rds.amazonaws.com"
   password: "<rds-password>"
+  # Optional: Add RDS CA bundle for TLS connections
+  # caBundle: |
+  #   -----BEGIN CERTIFICATE-----
+  #   ...RDS CA certificate...
+  #   -----END CERTIFICATE-----
 
 s3:
   region: "us-east-1"

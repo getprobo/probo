@@ -325,6 +325,20 @@ Maximum number of database connections in the connection pool.
 
 PEM-encoded CA certificate bundle for TLS database connections. Required when connecting to databases with custom or self-signed certificates.
 
+**Environment Variable Options:**
+
+- `PG_CA_BUNDLE`: Provide the CA bundle content directly as an environment variable (suitable for smaller bundles)
+- `PG_CA_BUNDLE_PATH`: Provide a file path to the CA bundle (recommended for large CA bundles to avoid "Argument list too long" errors)
+
+**Example using file path:**
+```yaml
+# docker-compose.yml or Kubernetes deployment
+environment:
+  PG_CA_BUNDLE_PATH: /etc/ssl/certs/ca-certificates.crt
+```
+
+**Note:** When using `PG_CA_BUNDLE_PATH`, the file is read during configuration generation, avoiding environment size limitations. This is the recommended approach when using system CA bundles or large certificate collections.
+
 ### Authentication Configuration
 
 #### `auth.disable-signup` (boolean)
