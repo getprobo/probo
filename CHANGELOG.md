@@ -2,7 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
-## Unreleased
+## [0.88.1] - 2025-14-07
+
+## Fixed
+
+- Fix support PostgreSQL CA bundle in Helm charts with file path option
 
 ## [0.88.0] - 2025-13-07
 
