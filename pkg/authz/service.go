@@ -847,8 +847,9 @@ func (s *TenantAuthzService) Authorize(
 ) error {
 	requiredRoles := GetPermissionsForAction(entityGID.EntityType(), action)
 	if requiredRoles == nil {
+		entityModel, _ := coredata.EntityModel(entityGID.EntityType())
 		return &PermissionDeniedError{
-			Message: fmt.Sprintf("no permissions defined for action %s on entity type %d", action, entityGID.EntityType()),
+			Message: fmt.Sprintf("no permissions defined for action %s on entity %s", action, entityModel),
 		}
 	}
 
