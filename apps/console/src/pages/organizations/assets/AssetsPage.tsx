@@ -1,14 +1,14 @@
 import {
   ActionDropdown,
-  Avatar,
   Badge,
   Button,
   DropdownItem,
-  EditableCell,
-  IconCrossLargeX,
+  IconPencil,
   IconPlusLarge,
   IconTrashCan,
   PageHeader,
+  SelectCell,
+  TextCell,
   useConfirm,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
@@ -21,17 +21,15 @@ import {
   usePreloadedQuery,
 } from "react-relay";
 import { useOrganizationId } from "/hooks/useOrganizationId";
-import { useParams } from "react-router";
-import { CreateAssetDialog } from "./dialogs/CreateAssetDialog";
+import { Link, useParams } from "react-router";
 import {
   assetsQuery,
   createAssetMutation,
   deleteAssetMutation,
   updateAssetMutation,
-} from "../../../hooks/graph/AssetGraph";
+} from "/hooks/graph/AssetGraph";
 import type { AssetGraphListQuery } from "/hooks/graph/__generated__/AssetGraphListQuery.graphql";
 import {
-  faviconUrl,
   getAssetTypeVariant,
   promisifyMutation,
   sprintf,
@@ -39,9 +37,10 @@ import {
 import type { AssetsPageFragment$key } from "./__generated__/AssetsPageFragment.graphql";
 import { SnapshotBanner } from "/components/SnapshotBanner";
 import z from "zod";
-import { usePeople } from "/hooks/graph/PeopleGraph.ts";
-import { useVendors } from "/hooks/graph/VendorGraph.ts";
 import { EditableTable } from "/components/table/EditableTable.tsx";
+import { PeopleCell } from "/components/table/PeopleCell.tsx";
+import { VendorsCell } from "/components/table/VendorsCell.tsx";
+import { CreateAssetDialog } from "./dialogs/CreateAssetDialog";
 import { Authorized, isAuthorized } from "/permissions";
 
 const paginatedAssetsFragment = graphql`
@@ -98,7 +97,7 @@ type Props = {
 
 const schema = z.object({
   name: z.string().trim().min(1, "Name is required"),
-  amount: z.coerce.number().min(0, "Amount is required"),
+  amount: z.coerce.number().min(1, "Amount is required"),
   assetType: z.enum(["PHYSICAL", "VIRTUAL"]),
   ownerId: z.string().trim().min(1, "Owner is required"),
   vendorIds: z.array(z.string()).optional(),
@@ -121,6 +120,11 @@ export default function AssetsPage(props: Props) {
   const organizationId = useOrganizationId();
   const { snapshotId } = useParams<{ snapshotId?: string }>();
   const isSnapshotMode = Boolean(snapshotId);
+
+  const assetUrl = (entry: { id: string }) =>
+    isSnapshotMode && snapshotId
+      ? `/organizations/${organizationId}/snapshots/${snapshotId}/assets/${entry.id}`
+      : `/organizations/${organizationId}/assets/${entry.id}`;
 
   const data = usePreloadedQuery(assetsQuery, props.queryRef);
   const pagination = usePaginationFragment(
@@ -177,114 +181,64 @@ export default function AssetsPage(props: Props) {
           ...defaultValue,
           organizationId,
         }}
-        action={({ item }) => (
-          <ActionDropdown>
-            <DropdownItem
-              onClick={() => deleteAsset(item)}
-              variant="danger"
-              icon={IconTrashCan}
-            >
-              {__("Delete")}
-            </DropdownItem>
-          </ActionDropdown>
-        )}
-        row={({ item, onUpdate, errors }) => (
+        action={({ item }) =>
+          hasAnyAction ? (
+            <ActionDropdown>
+              <DropdownItem asChild>
+                <Link to={assetUrl(item)}>
+                  <IconPencil size={16} />
+                  {__("Edit")}
+                </Link>
+              </DropdownItem>
+              <DropdownItem
+                onClick={() => deleteAsset(item)}
+                variant="danger"
+                icon={IconTrashCan}
+              >
+                {__("Delete")}
+              </DropdownItem>
+            </ActionDropdown>
+          ) : null
+        }
+        row={({ item }) => (
           <>
-            <EditableCell
-              type="text"
-              value={item?.name ?? ""}
-              onValueChange={(v) => onUpdate("name", v)}
-              blink={Boolean(errors?.name)}
-            />
-            <EditableCell
-              type="select"
+            <TextCell name="name" defaultValue={item?.name ?? ""} required />
+            <SelectCell
+              name="assetType"
               items={["VIRTUAL", "PHYSICAL"]}
-              value={item?.assetType ?? "VIRTUAL"}
               itemRenderer={({ item }) => (
                 <Badge variant={getAssetTypeVariant(item ?? "VIRTUAL")}>
                   {item === "PHYSICAL" ? __("Physical") : __("Virtual")}
                 </Badge>
               )}
-              onValueChange={(v) => onUpdate("assetType", v)}
-              blink={Boolean(errors?.assetType)}
+              defaultValue={item?.assetType ?? defaultValue.assetType}
             />
-            <EditableCell
-              type="text"
-              value={item?.dataTypesStored ?? ""}
-              onValueChange={(v) => onUpdate("dataTypesStored", v)}
-              blink={Boolean(errors?.dataTypesStored)}
-            />
-            <EditableCell
-              type="text"
-              value={item?.amount.toString() ?? "0"}
-              onValueChange={(v) => onUpdate("amount", v)}
-              blink={Boolean(errors?.amount)}
-            />
-            <EditableCell
-              type="select"
-              items={() =>
-                usePeople(organizationId, { excludeContractEnded: true })
+            <TextCell
+              name="dataTypesStored"
+              defaultValue={
+                item?.dataTypesStored ?? defaultValue.dataTypesStored
               }
-              value={item?.owner}
-              itemRenderer={({ item }) => (
-                <div className="flex gap-2">
-                  <Avatar name={item.fullName} />
-                  {item.fullName}
-                </div>
-              )}
-              onValueChange={(v) => onUpdate("ownerId", v.id)}
-              blink={Boolean(errors?.ownerId)}
+              required
             />
-            <EditableCell
-              type="multiple"
-              items={() => useVendors(organizationId)}
-              value={item?.vendors.edges.map((edge) => edge.node)}
-              itemRenderer={({ item, onRemove }) => (
-                <VendorBadge key={item.id} vendor={item} onRemove={onRemove} />
-              )}
-              onValueChange={(v) =>
-                onUpdate(
-                  "vendorIds",
-                  v.map((v) => v.id),
-                )
-              }
-              blink={Boolean(errors?.vendorIds)}
+            <TextCell
+              name="amount"
+              defaultValue={(item?.amount ?? defaultValue.amount).toString()}
+              required
+            />
+            <PeopleCell
+              name="ownerId"
+              defaultValue={item?.owner}
+              organizationId={organizationId}
+            />
+            <VendorsCell
+              name="vendorIds"
+              organizationId={organizationId}
+              defaultValue={item?.vendors.edges.map((edge) => edge.node) ?? []}
             />
           </>
         )}
       />
     </div>
-  );
-}
-
-type Vendor = {
-  id: string;
-  name: string;
-  websiteUrl: string | null | undefined;
-};
-
-function VendorBadge({
-  vendor,
-  onRemove,
-}: {
-  vendor: Vendor;
-  onRemove?: () => void;
-}) {
-  return (
-    <Badge variant="neutral" className="flex items-center gap-1">
-      <Avatar name={vendor.name} src={faviconUrl(vendor.websiteUrl)} size="s" />
-      <span className="max-w-[100px] text-ellipsis overflow-hidden min-w-0 block">
-        {vendor.name}
-      </span>
-      {onRemove && (
-        <button
-          onClick={onRemove}
-          className="size-4 hover:text-txt-primary cursor-pointer"
-        >
-          <IconCrossLargeX size={14} />
-        </button>
-      )}
-    </Badge>
   );
 }
 

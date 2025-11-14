@@ -27,6 +27,15 @@ export const assetRoutes = [
     Component: lazy(() => import("/pages/organizations/assets/AssetsPage")),
   },
   {
+    path: "assets/:assetId",
+    fallback: PageSkeleton,
+    queryLoader: (params: Record<string, string>) =>
+      loadQuery(relayEnvironment, assetNodeQuery, { assetId: params.assetId }),
+    Component: lazy(
+      () => import("/pages/organizations/assets/AssetDetailsPage"),
+    ),
+  },
+  {
     path: "snapshots/:snapshotId/assets/:assetId",
     fallback: PageSkeleton,
     queryLoader: (params: Record<string, string>) =>

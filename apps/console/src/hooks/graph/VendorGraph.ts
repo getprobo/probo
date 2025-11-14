@@ -37,7 +37,7 @@ export function useCreateVendorMutation() {
     {
       successMessage: __("Vendor created successfully."),
       errorMessage: __("Failed to create vendor"),
-    }
+    },
   );
 }
 
@@ -54,7 +54,7 @@ const deleteVendorMutation = graphql`
 
 export const useDeleteVendor = (
   vendor: { id?: string; name?: string },
-  connectionId: string
+  connectionId: string,
 ) => {
   const [mutate] = useMutation<VendorGraphDeleteMutation>(deleteVendorMutation);
   const confirm = useConfirm();
@@ -77,11 +77,11 @@ export const useDeleteVendor = (
       {
         message: sprintf(
           __(
-            'This will permanently delete vendor "%s". This action cannot be undone.'
+            'This will permanently delete vendor "%s". This action cannot be undone.',
           ),
-          vendor.name
+          vendor.name,
         ),
-      }
+      },
     );
   };
 };
@@ -171,7 +171,7 @@ export const vendorNodeQuery = graphql`
   }
 `;
 
-const vendorsSelectQuery = graphql`
+export const vendorsSelectQuery = graphql`
   query VendorGraphSelectQuery($organizationId: ID!) {
     organization: node(id: $organizationId) {
       ... on Organization {
@@ -195,7 +195,7 @@ export function useVendors(organizationId: string) {
     {
       organizationId: organizationId,
     },
-    { fetchPolicy: "network-only" }
+    { fetchPolicy: "network-only" },
   );
   return useMemo(() => {
     return data.organization?.vendors?.edges.map((edge) => edge.node) ?? [];

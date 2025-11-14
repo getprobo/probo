@@ -52,7 +52,7 @@ export const createAssetMutation = graphql`
     $connections: [ID!]!
   ) {
     createAsset(input: $input) {
-      assetEdge @prependEdge(connections: $connections) {
+      assetEdge @appendEdge(connections: $connections) {
         node {
           id
           snapshotId
