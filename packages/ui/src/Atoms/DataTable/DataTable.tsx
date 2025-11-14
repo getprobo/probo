@@ -21,16 +21,17 @@ export function DataTable({
             };
         }
         return {
-            gridTemplateColumns: columns
-                .map((col) => `minmax(0, ${col})`)
-                .join(" "),
+            gridTemplateColumns: columns.join(" "),
         };
     };
 
     return (
         <div className="overflow-auto relative w-full p-1 -m-1">
             <Card
-                className={clsx(className, "w-full text-left grid")}
+                className={clsx(
+                    className,
+                    "min-w-min text-left grid overflow-hidden",
+                )}
                 style={style()}
             >
                 {children}

@@ -12,14 +12,23 @@ import type { PeopleGraphPaginatedQuery } from "./__generated__/PeopleGraphPagin
 import type { PeopleGraphPaginatedFragment$key } from "./__generated__/PeopleGraphPaginatedFragment.graphql";
 import { useConfirm, useToast } from "@probo/ui";
 import type { PeopleGraphDeleteMutation } from "./__generated__/PeopleGraphDeleteMutation.graphql";
-import { promisifyMutation, sprintf, formatError, type GraphQLError } from "@probo/helpers";
+import {
+  promisifyMutation,
+  sprintf,
+  formatError,
+  type GraphQLError,
+} from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 
-const peopleQuery = graphql`
+export const peopleQuery = graphql`
   query PeopleGraphQuery($organizationId: ID!, $filter: PeopleFilter) {
     organization: node(id: $organizationId) {
       ... on Organization {
-        peoples(first: 1000, orderBy: { direction: ASC, field: FULL_NAME }, filter: $filter) {
+        peoples(
+          first: 1000
+          orderBy: { direction: ASC, field: FULL_NAME }
+          filter: $filter
+        ) {
           edges {
             node {
               id
@@ -36,14 +45,17 @@ const peopleQuery = graphql`
 /**
  * Return a list of people (used for people selectors)
  */
-export function usePeople(organizationId: string, { excludeContractEnded }: { excludeContractEnded?: boolean } = {}) {
+export function usePeople(
+  organizationId: string,
+  { excludeContractEnded }: { excludeContractEnded?: boolean } = {},
+) {
   const data = useLazyLoadQuery<PeopleGraphQuery>(
     peopleQuery,
     {
       organizationId: organizationId,
       filter: excludeContractEnded ? { excludeContractEnded: true } : null,
     },
-    { fetchPolicy: "network-only" }
+    { fetchPolicy: "network-only" },
   );
   return useMemo(() => {
     return data.organization?.peoples?.edges.map((edge) => edge.node) ?? [];
@@ -66,7 +78,10 @@ export const paginatedPeopleFragment = graphql`
   @refetchable(queryName: "PeopleListQuery")
   @argumentDefinitions(
     first: { type: "Int", defaultValue: 50 }
-    order: { type: "PeopleOrder", defaultValue: { direction: ASC, field: FULL_NAME } }
+    order: {
+      type: "PeopleOrder"
+      defaultValue: { direction: ASC, field: FULL_NAME }
+    }
     filter: { type: "PeopleFilter", defaultValue: null }
     after: { type: "CursorKey", defaultValue: null }
     before: { type: "CursorKey", defaultValue: null }
@@ -98,12 +113,12 @@ export const paginatedPeopleFragment = graphql`
 `;
 
 export function usePeopleQuery(
-  queryRef: PreloadedQuery<PeopleGraphPaginatedQuery>
+  queryRef: PreloadedQuery<PeopleGraphPaginatedQuery>,
 ) {
   const data = usePreloadedQuery(paginatedPeopleQuery, queryRef);
   const pagination = usePaginationFragment(
     paginatedPeopleFragment,
-    data.organization as PeopleGraphPaginatedFragment$key
+    data.organization as PeopleGraphPaginatedFragment$key,
   );
   const people = pagination.data.peoples?.edges.map((edge) => edge.node);
   return {
@@ -128,7 +143,7 @@ export const PeopleConnectionKey = "PeopleGraphPaginatedQuery_peoples";
 
 export const useDeletePeople = (
   people: { id?: string; fullName?: string },
-  connectionId: string
+  connectionId: string,
 ) => {
   const [mutate] = useMutation<PeopleGraphDeleteMutation>(deletePeopleMutation);
   const confirm = useConfirm();
@@ -151,18 +166,21 @@ export const useDeletePeople = (
         }).catch((error) => {
           toast({
             title: __("Error"),
-            description: formatError(__("Failed to delete people"), error as GraphQLError),
+            description: formatError(
+              __("Failed to delete people"),
+              error as GraphQLError,
+            ),
             variant: "error",
           });
         }),
       {
         message: sprintf(
           __(
-            'This will permanently delete "%s". This action cannot be undone.'
+            'This will permanently delete "%s". This action cannot be undone.',
           ),
-          people.fullName
+          people.fullName,
         ),
-      }
+      },
     );
   };
 };

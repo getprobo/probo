@@ -9,6 +9,7 @@ import {
   Button,
   Cell,
   CellHead,
+  EditableRow,
   IconCheckmark1,
   Row,
   RowButton,
@@ -19,8 +20,8 @@ import { useMutateField } from "/hooks/useMutateField.tsx";
 import { type ReactNode } from "react";
 import { useToggle } from "@probo/hooks";
 import { useStateWithSchema } from "/hooks/useStateWithSchema.ts";
-import { useMutation } from "react-relay";
 import clsx from "clsx";
+import { useMutationWithToasts } from "/hooks/useMutationWithToasts.ts";
 
 type ColumnDefinition = { label: string; field: string } | string;
 
@@ -65,7 +66,7 @@ export function EditableTable<
 
   return (
     <SortableDataTable
-      columns={[...props.columns.map(() => "1fr"), "56px"]}
+      columns={[...props.columns.map(() => "minmax(min-content, 1fr)"), "56px"]}
       refetch={props.pagination.refetch}
       hasNext={props.pagination.hasNext}
       isLoadingNext={props.pagination.isLoadingNext}
@@ -78,14 +79,14 @@ export function EditableTable<
         <CellHead />
       </Row>
       {props.items.map((item) => (
-        <Row key={item.id}>
+        <EditableRow onUpdate={(k, v) => update(item.id, k, v)} key={item.id}>
           {props.row({
             item,
             onUpdate: (key, value) => update(item.id, key as string, value),
             errors: {},
           })}
           <Cell>{props.action({ item })}</Cell>
-        </Row>
+        </EditableRow>
       ))}
       {showAdd ? (
         <NewItemRow
@@ -94,6 +95,7 @@ export function EditableTable<
           connectionId={props.connectionId}
           row={props.row}
           mutation={props.createMutation}
+          onSuccess={toggleAdd}
         />
       ) : (
         <RowButton onClick={toggleAdd}>{props.addLabel}</RowButton>
@@ -107,13 +109,14 @@ function NewItemRow<S extends z.ZodSchema>(props: {
   defaultValue: z.infer<S>;
   connectionId: string;
   mutation: GraphQLTaggedNode;
+  onSuccess: () => void;
   row: (props: EditableTableRowProps<any, S>) => ReactNode;
 }) {
   const { update, errors, value } = useStateWithSchema(
     props.schema,
     props.defaultValue,
   );
-  const [mutate, isMutating] = useMutation(props.mutation);
+  const [mutate, isMutating] = useMutationWithToasts(props.mutation);
   const isOk = Object.keys(errors ?? {}).length === 0;
 
   const onSubmit = async () => {
@@ -122,15 +125,16 @@ function NewItemRow<S extends z.ZodSchema>(props: {
       alert("Please fix the errors before submitting.");
       return;
     }
-    mutate({
+    await mutate({
       variables: {
         input: value,
         connections: [props.connectionId],
       },
+      onSuccess: props.onSuccess,
     });
   };
   return (
-    <Row>
+    <EditableRow onUpdate={update} errors={errors}>
       {props.row({ errors, onUpdate: update })}
       <Cell>
         <Button
@@ -142,7 +146,7 @@ function NewItemRow<S extends z.ZodSchema>(props: {
           {isMutating ? <Spinner size={16} /> : <IconCheckmark1 size={16} />}
         </Button>
       </Cell>
-    </Row>
+    </EditableRow>
   );
 }
 
