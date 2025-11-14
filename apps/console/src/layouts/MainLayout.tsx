@@ -47,7 +47,7 @@ import { useToast } from "@probo/ui";
 import { ErrorBoundary } from "react-error-boundary";
 import { PageError } from "/components/PageError";
 import { buildEndpoint } from "/providers/RelayProviders";
-import { Authorized } from "/permissions";
+import { Authorized, getUserRole } from "/permissions";
 
 const MainLayoutQuery = graphql`
   query MainLayoutQuery($organizationId: ID!) {
@@ -99,149 +99,163 @@ function MainLayoutContent({
     organizationId,
   });
 
+  const userRole = getUserRole(organizationId);
+  const isEmployee = userRole === "EMPLOYEE";
+
+  const header = (
+    <>
+      <div className="mr-auto">
+        <OrganizationSelector currentOrganization={data.organization} />
+      </div>
+      <Suspense fallback={<Skeleton className="w-32 h-8" />}>
+        <UserDropdown organizationId={organizationId} />
+      </Suspense>
+    </>
+  );
+
+  const sidebar = (
+    <ul className="space-y-[2px]">
+      <Authorized entity="Organization" action="listMeetings">
+        <SidebarItem
+          label={__("Meetings")}
+          icon={IconCalendar1}
+          to={`${prefix}/meetings`}
+        />
+      </Authorized>
+      <Authorized entity="Organization" action="listTasks">
+        <SidebarItem
+          label={__("Tasks")}
+          icon={IconInboxEmpty}
+          to={`${prefix}/tasks`}
+        />
+      </Authorized>
+      <Authorized entity="Organization" action="listMeasures">
+        <SidebarItem
+          label={__("Measures")}
+          icon={IconTodo}
+          to={`${prefix}/measures`}
+        />
+      </Authorized>
+      <Authorized entity="Organization" action="listRisks">
+        <SidebarItem
+          label={__("Risks")}
+          icon={IconFire3}
+          to={`${prefix}/risks`}
+        />
+      </Authorized>
+      <Authorized entity="Organization" action="listFrameworks">
+        <SidebarItem
+          label={__("Frameworks")}
+          icon={IconBank}
+          to={`${prefix}/frameworks`}
+        />
+      </Authorized>
+      <Authorized entity="Organization" action="listPeople">
+        <SidebarItem
+          label={__("People")}
+          icon={IconGroup1}
+          to={`${prefix}/people`}
+        />
+      </Authorized>
+      <Authorized entity="Organization" action="listVendors">
+        <SidebarItem
+          label={__("Vendors")}
+          icon={IconStore}
+          to={`${prefix}/vendors`}
+        />
+      </Authorized>
+      <Authorized entity="Organization" action="listDocuments">
+        <SidebarItem
+          label={__("Documents")}
+          icon={IconPageTextLine}
+          to={`${prefix}/documents`}
+        />
+      </Authorized>
+      <Authorized entity="Organization" action="listAssets">
+        <SidebarItem
+          label={__("Assets")}
+          icon={IconBox}
+          to={`${prefix}/assets`}
+        />
+      </Authorized>
+      <Authorized entity="Organization" action="listData">
+        <SidebarItem
+          label={__("Data")}
+          icon={IconListStack}
+          to={`${prefix}/data`}
+        />
+      </Authorized>
+      <Authorized entity="Organization" action="listAudits">
+        <SidebarItem
+          label={__("Audits")}
+          icon={IconMedal}
+          to={`${prefix}/audits`}
+        />
+      </Authorized>
+      <Authorized entity="Organization" action="listNonconformities">
+        <SidebarItem
+          label={__("Nonconformities")}
+          icon={IconCrossLargeX}
+          to={`${prefix}/nonconformities`}
+        />
+      </Authorized>
+      <Authorized entity="Organization" action="listObligations">
+        <SidebarItem
+          label={__("Obligations")}
+          icon={IconBook}
+          to={`${prefix}/obligations`}
+        />
+      </Authorized>
+      <Authorized entity="Organization" action="listContinualImprovements">
+        <SidebarItem
+          label={__("Continual Improvements")}
+          icon={IconRotateCw}
+          to={`${prefix}/continual-improvements`}
+        />
+      </Authorized>
+      <Authorized entity="Organization" action="listProcessingActivities">
+        <SidebarItem
+          label={__("Processing Activities")}
+          icon={IconCircleProgress}
+          to={`${prefix}/processing-activities`}
+        />
+      </Authorized>
+      <Authorized entity="Organization" action="listSnapshots">
+        <SidebarItem
+          label={__("Snapshots")}
+          icon={IconClock}
+          to={`${prefix}/snapshots`}
+        />
+      </Authorized>
+      <Authorized entity="Organization" action="getTrustCenter">
+        <SidebarItem
+          label={__("Trust Center")}
+          icon={IconShield}
+          to={`${prefix}/trust-center`}
+        />
+      </Authorized>
+      <Authorized entity="Organization" action="listMembers">
+        <SidebarItem
+          label={__("Settings")}
+          icon={IconSettingsGear2}
+          to={`${prefix}/settings`}
+        />
+      </Authorized>
+    </ul>
+  );
+
+  if (isEmployee) {
+    return (
+      <Layout header={header}>
+        <ErrorBoundary FallbackComponent={PageError}>
+          <Outlet />
+        </ErrorBoundary>
+      </Layout>
+    );
+  }
+
   return (
-    <Layout
-      header={
-        <>
-          <div className="mr-auto">
-            <OrganizationSelector currentOrganization={data.organization} />
-          </div>
-          <Suspense fallback={<Skeleton className="w-32 h-8" />}>
-            <UserDropdown organizationId={organizationId} />
-          </Suspense>
-        </>
-      }
-      sidebar={
-        <ul className="space-y-[2px]">
-          <Authorized entity="Organization" action="listMeetings">
-            <SidebarItem
-              label={__("Meetings")}
-              icon={IconCalendar1}
-              to={`${prefix}/meetings`}
-            />
-          </Authorized>
-          <Authorized entity="Organization" action="listTasks">
-            <SidebarItem
-              label={__("Tasks")}
-              icon={IconInboxEmpty}
-              to={`${prefix}/tasks`}
-            />
-          </Authorized>
-          <Authorized entity="Organization" action="listMeasures">
-            <SidebarItem
-              label={__("Measures")}
-              icon={IconTodo}
-              to={`${prefix}/measures`}
-            />
-          </Authorized>
-          <Authorized entity="Organization" action="listRisks">
-            <SidebarItem
-              label={__("Risks")}
-              icon={IconFire3}
-              to={`${prefix}/risks`}
-            />
-          </Authorized>
-          <Authorized entity="Organization" action="listFrameworks">
-            <SidebarItem
-              label={__("Frameworks")}
-              icon={IconBank}
-              to={`${prefix}/frameworks`}
-            />
-          </Authorized>
-          <Authorized entity="Organization" action="listPeople">
-            <SidebarItem
-              label={__("People")}
-              icon={IconGroup1}
-              to={`${prefix}/people`}
-            />
-          </Authorized>
-          <Authorized entity="Organization" action="listVendors">
-            <SidebarItem
-              label={__("Vendors")}
-              icon={IconStore}
-              to={`${prefix}/vendors`}
-            />
-          </Authorized>
-          <Authorized entity="Organization" action="listDocuments">
-            <SidebarItem
-              label={__("Documents")}
-              icon={IconPageTextLine}
-              to={`${prefix}/documents`}
-            />
-          </Authorized>
-          <Authorized entity="Organization" action="listAssets">
-            <SidebarItem
-              label={__("Assets")}
-              icon={IconBox}
-              to={`${prefix}/assets`}
-            />
-          </Authorized>
-          <Authorized entity="Organization" action="listData">
-            <SidebarItem
-              label={__("Data")}
-              icon={IconListStack}
-              to={`${prefix}/data`}
-            />
-          </Authorized>
-          <Authorized entity="Organization" action="listAudits">
-            <SidebarItem
-              label={__("Audits")}
-              icon={IconMedal}
-              to={`${prefix}/audits`}
-            />
-          </Authorized>
-          <Authorized entity="Organization" action="listNonconformities">
-            <SidebarItem
-              label={__("Nonconformities")}
-              icon={IconCrossLargeX}
-              to={`${prefix}/nonconformities`}
-            />
-          </Authorized>
-          <Authorized entity="Organization" action="listObligations">
-            <SidebarItem
-              label={__("Obligations")}
-              icon={IconBook}
-              to={`${prefix}/obligations`}
-            />
-          </Authorized>
-          <Authorized entity="Organization" action="listContinualImprovements">
-            <SidebarItem
-              label={__("Continual Improvements")}
-              icon={IconRotateCw}
-              to={`${prefix}/continual-improvements`}
-            />
-          </Authorized>
-          <Authorized entity="Organization" action="listProcessingActivities">
-            <SidebarItem
-              label={__("Processing Activities")}
-              icon={IconCircleProgress}
-              to={`${prefix}/processing-activities`}
-            />
-          </Authorized>
-          <Authorized entity="Organization" action="listSnapshots">
-            <SidebarItem
-              label={__("Snapshots")}
-              icon={IconClock}
-              to={`${prefix}/snapshots`}
-            />
-          </Authorized>
-          <Authorized entity="Organization" action="getTrustCenter">
-            <SidebarItem
-              label={__("Trust Center")}
-              icon={IconShield}
-              to={`${prefix}/trust-center`}
-            />
-          </Authorized>
-          <Authorized entity="Organization" action="listMembers">
-            <SidebarItem
-              label={__("Settings")}
-              icon={IconSettingsGear2}
-              to={`${prefix}/settings`}
-            />
-          </Authorized>
-        </ul>
-      }
-    >
+    <Layout header={header} sidebar={sidebar}>
       <ErrorBoundary FallbackComponent={PageError}>
         <Outlet />
       </ErrorBoundary>

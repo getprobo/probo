@@ -88,7 +88,7 @@ func MapSAMLRoleToSystemRole(samlRole string) *coredata.MembershipRole {
 
 func isValidRole(role string) bool {
 	switch role {
-	case "OWNER", "ADMIN", "VIEWER":
+	case "OWNER", "ADMIN", "EMPLOYEE", "VIEWER":
 		return true
 	default:
 		return false

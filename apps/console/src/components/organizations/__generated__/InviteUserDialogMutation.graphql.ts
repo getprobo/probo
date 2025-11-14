@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<eda42f72473c65692ddd9cee68c0ce81>>
+ * @generated SignedSource<<4dda94f89f726842762d68c28d8180b6>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,7 +9,7 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
-export type MembershipRole = "ADMIN" | "OWNER" | "VIEWER";
+export type MembershipRole = "ADMIN" | "EMPLOYEE" | "OWNER" | "VIEWER";
 export type InviteUserInput = {
   createPeople: boolean;
   email: string;

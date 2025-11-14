@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<f772c53b0007859aecc59a9484b5b791>>
+ * @generated SignedSource<<aa77cda8d89dabe0fcfdcb82f2352efd>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -29,7 +29,7 @@ export type DocumentsPageRowFragment$data = {
     readonly edges: ReadonlyArray<{
       readonly node: {
         readonly id: string;
-        readonly signatures: {
+        readonly signatures?: {
           readonly edges: ReadonlyArray<{
             readonly node: {
               readonly id: string;
@@ -58,7 +58,13 @@ var v0 = {
   "storageKey": null
 };
 return {
-  "argumentDefinitions": [],
+  "argumentDefinitions": [
+    {
+      "defaultValue": false,
+      "kind": "LocalArgument",
+      "name": "includeSignatures"
+    }
+  ],
   "kind": "Fragment",
   "metadata": null,
   "name": "DocumentsPageRowFragment",
@@ -164,51 +170,58 @@ return {
                   "storageKey": null
                 },
                 {
-                  "alias": null,
-                  "args": [
-                    {
-                      "kind": "Literal",
-                      "name": "first",
-                      "value": 1000
-                    }
-                  ],
-                  "concreteType": "DocumentVersionSignatureConnection",
-                  "kind": "LinkedField",
-                  "name": "signatures",
-                  "plural": false,
+                  "condition": "includeSignatures",
+                  "kind": "Condition",
+                  "passingValue": true,
                   "selections": [
                     {
                       "alias": null,
-                      "args": null,
-                      "concreteType": "DocumentVersionSignatureEdge",
+                      "args": [
+                        {
+                          "kind": "Literal",
+                          "name": "first",
+                          "value": 1000
+                        }
+                      ],
+                      "concreteType": "DocumentVersionSignatureConnection",
                       "kind": "LinkedField",
-                      "name": "edges",
-                      "plural": true,
+                      "name": "signatures",
+                      "plural": false,
                       "selections": [
                         {
                           "alias": null,
                           "args": null,
-                          "concreteType": "DocumentVersionSignature",
+                          "concreteType": "DocumentVersionSignatureEdge",
                           "kind": "LinkedField",
-                          "name": "node",
-                          "plural": false,
+                          "name": "edges",
+                          "plural": true,
                           "selections": [
-                            (v0/*: any*/),
                             {
                               "alias": null,
                               "args": null,
-                              "kind": "ScalarField",
-                              "name": "state",
+                              "concreteType": "DocumentVersionSignature",
+                              "kind": "LinkedField",
+                              "name": "node",
+                              "plural": false,
+                              "selections": [
+                                (v0/*: any*/),
+                                {
+                                  "alias": null,
+                                  "args": null,
+                                  "kind": "ScalarField",
+                                  "name": "state",
+                                  "storageKey": null
+                                }
+                              ],
                               "storageKey": null
                             }
                           ],
                           "storageKey": null
                         }
                       ],
-                      "storageKey": null
+                      "storageKey": "signatures(first:1000)"
                     }
-                  ],
-                  "storageKey": "signatures(first:1000)"
+                  ]
                 }
               ],
               "storageKey": null
@@ -225,6 +238,6 @@ return {
 };
 })();
 
-(node as any).hash = "cd6d6bebffb9ed17a251aeef4b86f753";
+(node as any).hash = "ae1f77bd2c1aca4b5d47af89d0407379";
 
 export default node;

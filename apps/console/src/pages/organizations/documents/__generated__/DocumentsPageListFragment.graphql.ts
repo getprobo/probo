@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<0abee66a5b3a949907293acd4981f05e>>
+ * @generated SignedSource<<e4baf64521bd4c559d1a6ffbfe5f1c71>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -57,6 +57,11 @@ return {
       "defaultValue": 50,
       "kind": "LocalArgument",
       "name": "first"
+    },
+    {
+      "defaultValue": false,
+      "kind": "LocalArgument",
+      "name": "includeSignatures"
     },
     {
       "defaultValue": null,
@@ -138,7 +143,13 @@ return {
               "selections": [
                 (v1/*: any*/),
                 {
-                  "args": null,
+                  "args": [
+                    {
+                      "kind": "Variable",
+                      "name": "includeSignatures",
+                      "variableName": "includeSignatures"
+                    }
+                  ],
                   "kind": "FragmentSpread",
                   "name": "DocumentsPageRowFragment"
                 },
@@ -223,6 +234,6 @@ return {
 };
 })();
 
-(node as any).hash = "8cda24b1d10caa3f4b83dbb82035365b";
+(node as any).hash = "d74d60128576422fdd24a99e7a2bee9a";
 
 export default node;

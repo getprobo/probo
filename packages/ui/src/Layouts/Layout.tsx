@@ -16,7 +16,7 @@ import { ConfirmDialog } from "../Molecules/Dialog/ConfirmDialog.tsx";
 
 type Props = PropsWithChildren<{
     header: ReactNode;
-    sidebar: ReactNode;
+    sidebar?: ReactNode;
 }>;
 
 const LayoutContext = createContext({
@@ -49,7 +49,7 @@ export function Layout({ header, sidebar, children }: Props) {
                     {header}
                 </header>
                 <div className="flex h-screen" id="main">
-                    <Sidebar>{sidebar}</Sidebar>
+                    {sidebar && <Sidebar>{sidebar}</Sidebar>}
                     <main
                         className={clsx(
                             "overflow-y-auto w-full mt-12 transition-all duration-300",

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<83dad18be7a9249bb99048ba14b6de41>>
+ * @generated SignedSource<<5211bce0bdfc25a5bdeb2aebd76329ff>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -21,6 +21,7 @@ export type DocumentsListQuery$variables = {
   before?: any | null | undefined;
   first?: number | null | undefined;
   id: string;
+  includeSignatures?: boolean | null | undefined;
   last?: number | null | undefined;
   order?: DocumentOrder | null | undefined;
 };
@@ -56,11 +57,16 @@ v3 = {
   "name": "id"
 },
 v4 = {
+  "defaultValue": false,
+  "kind": "LocalArgument",
+  "name": "includeSignatures"
+},
+v5 = {
   "defaultValue": null,
   "kind": "LocalArgument",
   "name": "last"
 },
-v5 = {
+v6 = {
   "defaultValue": {
     "direction": "ASC",
     "field": "TITLE"
@@ -68,52 +74,52 @@ v5 = {
   "kind": "LocalArgument",
   "name": "order"
 },
-v6 = [
+v7 = [
   {
     "kind": "Variable",
     "name": "id",
     "variableName": "id"
   }
 ],
-v7 = {
+v8 = {
   "kind": "Variable",
   "name": "after",
   "variableName": "after"
 },
-v8 = {
+v9 = {
   "kind": "Variable",
   "name": "before",
   "variableName": "before"
 },
-v9 = {
+v10 = {
   "kind": "Variable",
   "name": "first",
   "variableName": "first"
 },
-v10 = {
+v11 = {
   "kind": "Variable",
   "name": "last",
   "variableName": "last"
 },
-v11 = {
+v12 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "__typename",
   "storageKey": null
 },
-v12 = {
+v13 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "id",
   "storageKey": null
 },
-v13 = [
-  (v7/*: any*/),
+v14 = [
   (v8/*: any*/),
   (v9/*: any*/),
   (v10/*: any*/),
+  (v11/*: any*/),
   {
     "kind": "Variable",
     "name": "orderBy",
@@ -128,7 +134,8 @@ return {
       (v2/*: any*/),
       (v3/*: any*/),
       (v4/*: any*/),
-      (v5/*: any*/)
+      (v5/*: any*/),
+      (v6/*: any*/)
     ],
     "kind": "Fragment",
     "metadata": null,
@@ -136,7 +143,7 @@ return {
     "selections": [
       {
         "alias": null,
-        "args": (v6/*: any*/),
+        "args": (v7/*: any*/),
         "concreteType": null,
         "kind": "LinkedField",
         "name": "node",
@@ -144,10 +151,15 @@ return {
         "selections": [
           {
             "args": [
-              (v7/*: any*/),
               (v8/*: any*/),
               (v9/*: any*/),
               (v10/*: any*/),
+              {
+                "kind": "Variable",
+                "name": "includeSignatures",
+                "variableName": "includeSignatures"
+              },
+              (v11/*: any*/),
               {
                 "kind": "Variable",
                 "name": "order",
@@ -172,6 +184,7 @@ return {
       (v2/*: any*/),
       (v4/*: any*/),
       (v5/*: any*/),
+      (v6/*: any*/),
       (v3/*: any*/)
     ],
     "kind": "Operation",
@@ -179,20 +192,20 @@ return {
     "selections": [
       {
         "alias": null,
-        "args": (v6/*: any*/),
+        "args": (v7/*: any*/),
         "concreteType": null,
         "kind": "LinkedField",
         "name": "node",
         "plural": false,
         "selections": [
-          (v11/*: any*/),
           (v12/*: any*/),
+          (v13/*: any*/),
           {
             "kind": "InlineFragment",
             "selections": [
               {
                 "alias": null,
-                "args": (v13/*: any*/),
+                "args": (v14/*: any*/),
                 "concreteType": "DocumentConnection",
                 "kind": "LinkedField",
                 "name": "documents",
@@ -214,7 +227,7 @@ return {
                         "name": "node",
                         "plural": false,
                         "selections": [
-                          (v12/*: any*/),
+                          (v13/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -258,7 +271,7 @@ return {
                             "name": "owner",
                             "plural": false,
                             "selections": [
-                              (v12/*: any*/),
+                              (v13/*: any*/),
                               {
                                 "alias": null,
                                 "args": null,
@@ -299,7 +312,7 @@ return {
                                     "name": "node",
                                     "plural": false,
                                     "selections": [
-                                      (v12/*: any*/),
+                                      (v13/*: any*/),
                                       {
                                         "alias": null,
                                         "args": null,
@@ -315,51 +328,58 @@ return {
                                         "storageKey": null
                                       },
                                       {
-                                        "alias": null,
-                                        "args": [
-                                          {
-                                            "kind": "Literal",
-                                            "name": "first",
-                                            "value": 1000
-                                          }
-                                        ],
-                                        "concreteType": "DocumentVersionSignatureConnection",
-                                        "kind": "LinkedField",
-                                        "name": "signatures",
-                                        "plural": false,
+                                        "condition": "includeSignatures",
+                                        "kind": "Condition",
+                                        "passingValue": true,
                                         "selections": [
                                           {
                                             "alias": null,
-                                            "args": null,
-                                            "concreteType": "DocumentVersionSignatureEdge",
+                                            "args": [
+                                              {
+                                                "kind": "Literal",
+                                                "name": "first",
+                                                "value": 1000
+                                              }
+                                            ],
+                                            "concreteType": "DocumentVersionSignatureConnection",
                                             "kind": "LinkedField",
-                                            "name": "edges",
-                                            "plural": true,
+                                            "name": "signatures",
+                                            "plural": false,
                                             "selections": [
                                               {
                                                 "alias": null,
                                                 "args": null,
-                                                "concreteType": "DocumentVersionSignature",
+                                                "concreteType": "DocumentVersionSignatureEdge",
                                                 "kind": "LinkedField",
-                                                "name": "node",
-                                                "plural": false,
+                                                "name": "edges",
+                                                "plural": true,
                                                 "selections": [
-                                                  (v12/*: any*/),
                                                   {
                                                     "alias": null,
                                                     "args": null,
-                                                    "kind": "ScalarField",
-                                                    "name": "state",
+                                                    "concreteType": "DocumentVersionSignature",
+                                                    "kind": "LinkedField",
+                                                    "name": "node",
+                                                    "plural": false,
+                                                    "selections": [
+                                                      (v13/*: any*/),
+                                                      {
+                                                        "alias": null,
+                                                        "args": null,
+                                                        "kind": "ScalarField",
+                                                        "name": "state",
+                                                        "storageKey": null
+                                                      }
+                                                    ],
                                                     "storageKey": null
                                                   }
                                                 ],
                                                 "storageKey": null
                                               }
                                             ],
-                                            "storageKey": null
+                                            "storageKey": "signatures(first:1000)"
                                           }
-                                        ],
-                                        "storageKey": "signatures(first:1000)"
+                                        ]
                                       }
                                     ],
                                     "storageKey": null
@@ -370,7 +390,7 @@ return {
                             ],
                             "storageKey": "versions(first:1)"
                           },
-                          (v11/*: any*/)
+                          (v12/*: any*/)
                         ],
                         "storageKey": null
                       },
@@ -440,7 +460,7 @@ return {
               },
               {
                 "alias": null,
-                "args": (v13/*: any*/),
+                "args": (v14/*: any*/),
                 "filters": [
                   "orderBy"
                 ],
@@ -459,16 +479,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "2f5cd9919b919f4e9d80354cb26d3e9d",
+    "cacheID": "1e2ca4c8ba9fd0c0abe2b71c115e891d",
     "id": null,
     "metadata": {},
     "name": "DocumentsListQuery",
     "operationKind": "query",
-    "text": "query DocumentsListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 50\n  $last: Int = null\n  $order: DocumentOrder = {field: TITLE, direction: ASC}\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...DocumentsPageListFragment_16fISc\n    id\n  }\n}\n\nfragment DocumentsPageListFragment_16fISc on Organization {\n  documents(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    edges {\n      node {\n        id\n        ...DocumentsPageRowFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment DocumentsPageRowFragment on Document {\n  id\n  title\n  description\n  documentType\n  classification\n  updatedAt\n  owner {\n    id\n    fullName\n  }\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n        version\n        signatures(first: 1000) {\n          edges {\n            node {\n              id\n              state\n            }\n          }\n        }\n      }\n    }\n  }\n}\n"
+    "text": "query DocumentsListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 50\n  $includeSignatures: Boolean = false\n  $last: Int = null\n  $order: DocumentOrder = {field: TITLE, direction: ASC}\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...DocumentsPageListFragment_ovv2o\n    id\n  }\n}\n\nfragment DocumentsPageListFragment_ovv2o on Organization {\n  documents(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    edges {\n      node {\n        id\n        ...DocumentsPageRowFragment_ipv6e\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment DocumentsPageRowFragment_ipv6e on Document {\n  id\n  title\n  description\n  documentType\n  classification\n  updatedAt\n  owner {\n    id\n    fullName\n  }\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n        version\n        signatures(first: 1000) @include(if: $includeSignatures) {\n          edges {\n            node {\n              id\n              state\n            }\n          }\n        }\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "8cda24b1d10caa3f4b83dbb82035365b";
+(node as any).hash = "d74d60128576422fdd24a99e7a2bee9a";
 
 export default node;
