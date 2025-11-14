@@ -74,7 +74,7 @@ func (c *Cleaner) Run(ctx context.Context) error {
 }
 
 func (c *Cleaner) cleanup(ctx context.Context) error {
-	var assertionsDeleted, requestsDeleted, relayStatesDeleted int64
+	var assertionsDeleted, requestsDeleted int64
 
 	err := c.pg.WithConn(
 		ctx,
@@ -91,12 +91,6 @@ func (c *Cleaner) cleanup(ctx context.Context) error {
 			}
 			requestsDeleted = count
 
-			count, err = CleanupExpiredRelayStates(ctx, conn)
-			if err != nil {
-				return err
-			}
-			relayStatesDeleted = count
-
 			return nil
 		},
 	)
@@ -105,11 +99,10 @@ func (c *Cleaner) cleanup(ctx context.Context) error {
 		return err
 	}
 
-	if assertionsDeleted > 0 || requestsDeleted > 0 || relayStatesDeleted > 0 {
+	if assertionsDeleted > 0 || requestsDeleted > 0 {
 		c.logger.InfoCtx(ctx, "cleaned up expired SAML data",
 			log.Int64("assertions", assertionsDeleted),
-			log.Int64("requests", requestsDeleted),
-			log.Int64("relay_states", relayStatesDeleted))
+			log.Int64("requests", requestsDeleted))
 	}
 
 	return nil

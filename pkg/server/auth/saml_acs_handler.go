@@ -60,15 +60,6 @@ func SAMLACSHandler(samlSvc *authsvc.SAMLService, authSvc *authsvc.Service, auth
 			return
 		}
 
-		relayState := r.FormValue("RelayState")
-		samlConfigID := r.URL.Query().Get("c")
-
-		if relayState != "" {
-			logger.InfoCtx(ctx, "processing SP-initiated SAML login")
-		} else {
-			logger.InfoCtx(ctx, "processing IDP-initiated SAML login", log.String("config_id", samlConfigID))
-		}
-
 		userInfo, err := samlSvc.HandleSAMLAssertion(ctx, r)
 		if err != nil {
 			logger.ErrorCtx(ctx, "SAML authentication failed", log.Error(err))

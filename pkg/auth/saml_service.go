@@ -20,7 +20,6 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/pem"
-	"encoding/xml"
 	"errors"
 	"fmt"
 	"net/http"
@@ -232,27 +231,6 @@ func (s *SAMLService) GetAcsURL() string {
 	return fmt.Sprintf("%s/connect/saml/consume", s.baseURL)
 }
 
-func parseRawSAMLResponse(encodedResponse string) (*saml.Assertion, error) {
-	rawResponseBuf, err := base64.StdEncoding.DecodeString(encodedResponse)
-	if err != nil {
-		return nil, fmt.Errorf("cannot decode base64: %w", err)
-	}
-
-	var response saml.Response
-	if err := xml.Unmarshal(rawResponseBuf, &response); err != nil {
-		return nil, fmt.Errorf("cannot unmarshal response: %w", err)
-	}
-
-	if response.Assertion == nil {
-		if response.EncryptedAssertion != nil {
-			return nil, fmt.Errorf("response contains encrypted assertion which cannot be parsed without SP private key")
-		}
-		return nil, fmt.Errorf("response contains no assertion")
-	}
-
-	return response.Assertion, nil
-}
-
 func (s *SAMLService) GetServiceProvider(
 	ctx context.Context,
 	config *coredata.SAMLConfiguration,
@@ -271,18 +249,24 @@ func (s *SAMLService) GetServiceProvider(
 		return nil, ErrInvalidURL{Field: "ACS", URL: s.GetAcsURL(), Err: err}
 	}
 
+	metadataURL, err := url.Parse(s.GetEntityID())
+	if err != nil {
+		return nil, ErrInvalidURL{Field: "Metadata", URL: s.GetEntityID(), Err: err}
+	}
+
 	idpSSOURL, err := url.Parse(config.IdPSsoURL)
 	if err != nil {
 		return nil, ErrInvalidURL{Field: "IdP SSO", URL: config.IdPSsoURL, Err: err}
 	}
 
 	sp := &saml.ServiceProvider{
-		EntityID:    s.GetEntityID(),
-		Key:         s.privateKey,
-		Certificate: s.certificate,
-		MetadataURL: *acsURL,
-		AcsURL:      *acsURL,
-		SloURL:      *acsURL,
+		EntityID:          s.GetEntityID(),
+		Key:               s.privateKey,
+		Certificate:       s.certificate,
+		MetadataURL:       *metadataURL,
+		AcsURL:            *acsURL,
+		SloURL:            *acsURL,
+		AllowIDPInitiated: true,
 		IDPMetadata: &saml.EntityDescriptor{
 			EntityID: config.IdPEntityID,
 			IDPSSODescriptors: []saml.IDPSSODescriptor{
@@ -355,14 +339,8 @@ func (s *SAMLService) InitiateSAMLLogin(
 		return "", ErrCannotCreateAuthRequest{Err: err}
 	}
 
-	relayStateToken, err := coredata.GenerateSecureToken()
-	if err != nil {
-		return "", fmt.Errorf("cannot generate relay state token: %w", err)
-	}
-
 	now := time.Now()
 	requestExpiry := now.Add(10 * time.Minute)
-	relayStateExpiry := now.Add(15 * time.Minute)
 
 	err = s.pg.WithTx(
 		ctx,
@@ -373,20 +351,9 @@ func (s *SAMLService) InitiateSAMLLogin(
 				CreatedAt:      now,
 				ExpiresAt:      requestExpiry,
 			}
-			if err := samlRequest.Insert(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot store SAML request: %w", err)
-			}
 
-			relayState := coredata.SAMLRelayState{
-				Token:          relayStateToken,
-				OrganizationID: organizationID,
-				SAMLConfigID:   config.ID,
-				RequestID:      authReq.ID,
-				CreatedAt:      now,
-				ExpiresAt:      relayStateExpiry,
-			}
-			if err := relayState.Insert(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot store relay state: %w", err)
+			if err := samlRequest.Insert(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot insert SAML request: %w", err)
 			}
 
 			return nil
@@ -396,7 +363,7 @@ func (s *SAMLService) InitiateSAMLLogin(
 		return "", err
 	}
 
-	redirectURL, err := authReq.Redirect(relayStateToken, sp)
+	redirectURL, err := authReq.Redirect(config.ID.String(), sp)
 	if err != nil {
 		return "", ErrCannotGenerateRedirectURL{Err: err}
 	}
@@ -413,85 +380,36 @@ type SAMLUserInfo struct {
 	SAMLConfigID   gid.GID
 }
 
-func (s *SAMLService) loadContextForSPInitiated(
+func (s *SAMLService) loadConfigFromRelayState(
 	ctx context.Context,
-	relayStateToken string,
-	now time.Time,
-) (*coredata.SAMLConfiguration, *coredata.Organization, string, error) {
-	var relayState coredata.SAMLRelayState
-	var samlRequest coredata.SAMLRequest
-	var org coredata.Organization
-	var config coredata.SAMLConfiguration
-
-	err := s.pg.WithTx(ctx, func(tx pg.Conn) error {
-		if err := relayState.Load(ctx, tx, relayStateToken); err != nil {
-			return fmt.Errorf("invalid relay state: %w", err)
-		}
-
-		if relayState.IsExpired(now) {
-			return coredata.ErrRelayStateExpired{Token: relayStateToken, ExpiresAt: relayState.ExpiresAt}
-		}
-
-		if err := samlRequest.Load(ctx, tx, relayState.RequestID, relayState.OrganizationID); err != nil {
-			return fmt.Errorf("invalid SAML request: %w", err)
-		}
-
-		if samlRequest.IsExpired(now) {
-			return coredata.ErrSAMLRequestExpired{RequestID: relayState.RequestID, ExpiresAt: samlRequest.ExpiresAt}
-		}
-
-		if err := org.LoadByID(ctx, tx, coredata.NewNoScope(), relayState.OrganizationID); err != nil {
-			return fmt.Errorf("organization not found: %w", err)
-		}
-
-		scope := coredata.NewScope(org.TenantID)
-		if err := config.LoadByID(ctx, tx, scope, relayState.SAMLConfigID); err != nil {
-			return fmt.Errorf("cannot load SAML configuration: %w", err)
-		}
-
-		if err := relayState.Delete(ctx, tx); err != nil {
-			return fmt.Errorf("cannot delete relay state: %w", err)
-		}
-		if err := samlRequest.Delete(ctx, tx); err != nil {
-			return fmt.Errorf("cannot delete SAML request: %w", err)
-		}
-
-		return nil
-	})
-	if err != nil {
-		return nil, nil, "", err
-	}
-
-	return &config, &org, samlRequest.ID, nil
-}
-
-func (s *SAMLService) loadContextForIDPInitiated(
-	ctx context.Context,
-	samlConfigIDParam string,
+	relayStateValue string,
 ) (*coredata.SAMLConfiguration, *coredata.Organization, error) {
-	if samlConfigIDParam == "" {
-		return nil, nil, fmt.Errorf("IDP-initiated login requires 'c' query parameter with SAML config ID")
+	if relayStateValue == "" {
+		return nil, nil, fmt.Errorf("RelayState is required and must contain SAML config ID")
 	}
 
-	samlConfigID, err := gid.ParseGID(samlConfigIDParam)
+	samlConfigID, err := gid.ParseGID(relayStateValue)
 	if err != nil {
-		return nil, nil, fmt.Errorf("invalid 'c' parameter: %w", err)
+		return nil, nil, fmt.Errorf("invalid SAML config ID in RelayState: %w", err)
 	}
 
 	var config coredata.SAMLConfiguration
 	var org coredata.Organization
 
-	err = s.pg.WithConn(ctx, func(conn pg.Conn) error {
-		if err := config.LoadByID(ctx, conn, coredata.NewNoScope(), samlConfigID); err != nil {
-			return fmt.Errorf("cannot load SAML configuration: %w", err)
-		}
+	err = s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := config.LoadByID(ctx, conn, coredata.NewNoScope(), samlConfigID); err != nil {
+				return fmt.Errorf("cannot load SAML configuration: %w", err)
+			}
 
-		if err := org.LoadByID(ctx, conn, coredata.NewNoScope(), config.OrganizationID); err != nil {
-			return fmt.Errorf("organization not found: %w", err)
-		}
+			if err := org.LoadByID(ctx, conn, coredata.NewNoScope(), config.OrganizationID); err != nil {
+				return fmt.Errorf("organization not found: %w", err)
+			}
 
-		return nil
-	})
+			return nil
+		},
+	)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -508,28 +426,10 @@ func (s *SAMLService) HandleSAMLAssertion(
 		return nil, fmt.Errorf("missing SAMLResponse in request")
 	}
 
-	relayStateToken := req.FormValue("RelayState")
-	samlConfigIDParam := req.URL.Query().Get("c")
-	now := time.Now()
-
-	var config *coredata.SAMLConfiguration
-	var org *coredata.Organization
-	var possibleRequestIDs []string
-	var err error
-
-	if relayStateToken != "" {
-		var requestID string
-		config, org, requestID, err = s.loadContextForSPInitiated(ctx, relayStateToken, now)
-		if err != nil {
-			return nil, err
-		}
-		possibleRequestIDs = []string{requestID}
-	} else {
-		config, org, err = s.loadContextForIDPInitiated(ctx, samlConfigIDParam)
-		if err != nil {
-			return nil, err
-		}
-		possibleRequestIDs = []string{}
+	relayStateValue := req.FormValue("RelayState")
+	config, org, err := s.loadConfigFromRelayState(ctx, relayStateValue)
+	if err != nil {
+		return nil, err
 	}
 
 	if !config.Enabled {
@@ -548,14 +448,28 @@ func (s *SAMLService) HandleSAMLAssertion(
 		req.URL.Host = req.Host
 	}
 
+	now := time.Now()
+
+	var possibleRequestIDs []string
+	err = s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			requestIDs, err := coredata.LoadValidRequestIDsForOrganization(ctx, conn, config.OrganizationID, now)
+			if err != nil {
+				return err
+			}
+			possibleRequestIDs = requestIDs
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load valid request IDs: %w", err)
+	}
+
 	assertion, err := sp.ParseResponse(req, possibleRequestIDs)
 	if err != nil {
-		return nil, fmt.Errorf(
-			"cannot parse SAML response (SP EntityID: %s, IdP EntityID: %s): %w",
-			s.GetEntityID(),
-			config.IdPEntityID,
-			err,
-		)
+		return nil, fmt.Errorf("cannot parse SAML response: %w", err)
 	}
 
 	if err := ValidateAssertion(assertion, s.GetEntityID(), now); err != nil {
@@ -571,14 +485,22 @@ func (s *SAMLService) HandleSAMLAssertion(
 		}
 
 		scope := coredata.NewScope(org.TenantID)
-		err = s.pg.WithTx(ctx, func(tx pg.Conn) error {
-			return PreventReplayAttack(ctx, tx, scope, assertion.ID, config.OrganizationID, expiresAt)
-		})
+		err = s.pg.WithTx(
+			ctx,
+			func(tx pg.Conn) error {
+				if err := PreventReplayAttack(ctx, tx, scope, assertion.ID, config.OrganizationID, expiresAt); err != nil {
+					return fmt.Errorf("cannot prevent replay attack: %w", err)
+				}
+
+				return nil
+			},
+		)
 		if err != nil {
 			var replayAttackErr *coredata.ErrAssertionAlreadyUsed
 			if errors.As(err, &replayAttackErr) {
 				return nil, ErrReplayAttackDetected{AssertionID: assertion.ID, Err: replayAttackErr}
 			}
+
 			return nil, fmt.Errorf("cannot prevent replay attack: %w", err)
 		}
 	}
@@ -598,6 +520,7 @@ func (s *SAMLService) HandleSAMLAssertion(
 	if err != nil {
 		return nil, ErrCannotExtractUserAttributes{Err: fmt.Errorf("cannot extract domain from email: %w", err)}
 	}
+
 	if actualEmailDomain != config.EmailDomain {
 		return nil, fmt.Errorf("email domain mismatch: assertion contains email with domain %s but SAML config is for domain %s", actualEmailDomain, config.EmailDomain)
 	}

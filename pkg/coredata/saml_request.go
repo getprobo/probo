@@ -130,6 +130,40 @@ WHERE id = @id
 	return nil
 }
 
+func LoadValidRequestIDsForOrganization(
+	ctx context.Context,
+	conn pg.Conn,
+	organizationID gid.GID,
+	now time.Time,
+) ([]string, error) {
+	query := `
+SELECT id
+FROM auth_saml_requests
+WHERE organization_id = @organization_id AND expires_at > @now
+`
+
+	args := pgx.NamedArgs{
+		"organization_id": organizationID,
+		"now":             now,
+	}
+
+	rows, err := conn.Query(ctx, query, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query saml_requests: %w", err)
+	}
+
+	requestIDs, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (string, error) {
+		var id string
+		err := row.Scan(&id)
+		return id, err
+	})
+	if err != nil {
+		return nil, fmt.Errorf("cannot collect request IDs: %w", err)
+	}
+
+	return requestIDs, nil
+}
+
 func DeleteExpiredSAMLRequests(ctx context.Context, conn pg.Conn, now time.Time) (int64, error) {
 	query := `
 DELETE FROM auth_saml_requests

@@ -101,7 +101,3 @@ func CleanupExpiredAssertions(ctx context.Context, conn pg.Conn) (int64, error) 
 func CleanupExpiredRequests(ctx context.Context, conn pg.Conn) (int64, error) {
 	return coredata.DeleteExpiredSAMLRequests(ctx, conn, time.Now())
 }
-
-func CleanupExpiredRelayStates(ctx context.Context, conn pg.Conn) (int64, error) {
-	return coredata.DeleteExpiredSAMLRelayStates(ctx, conn, time.Now())
-}
