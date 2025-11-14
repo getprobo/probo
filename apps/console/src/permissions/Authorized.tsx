@@ -1,6 +1,6 @@
-import { type ReactNode, useState, useEffect } from "react";
+import { type ReactNode } from "react";
 import { useParams } from "react-router";
-import { isAuthorized } from "./permissions";
+import { usePermissions } from "./permissions";
 
 type Props = {
   entity: string;
@@ -38,41 +38,9 @@ export function Authorized({
   fallback = null,
 }: Props) {
   const { organizationId } = useParams();
-  const [hasAccess, setHasAccess] = useState<boolean | null>(null);
+  const { loading, error, isAuthorized } = usePermissions(organizationId || "");
 
-  useEffect(() => {
-    if (!organizationId) {
-      setHasAccess(false);
-      return;
-    }
-
-    // Try to check authorization, catching promise throws
-    try {
-      const authorized = isAuthorized(organizationId, entity, action);
-      setHasAccess(authorized);
-    } catch (promise) {
-      // If a promise is thrown (Suspense pattern), wait for it
-      if (promise instanceof Promise) {
-        promise
-          .then(() => {
-            // Permissions loaded, try again
-            try {
-              const authorized = isAuthorized(organizationId, entity, action);
-              setHasAccess(authorized);
-            } catch {
-              setHasAccess(false);
-            }
-          })
-          .catch(() => {
-            setHasAccess(false);
-          });
-      } else {
-        setHasAccess(false);
-      }
-    }
-  }, [organizationId, entity, action]);
-
-  if (!organizationId || hasAccess === null || hasAccess === false) {
+  if (!organizationId || loading || error || !isAuthorized(entity, action)) {
     return fallback;
   }
 
