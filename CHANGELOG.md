@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.88.2] - 2025-14-07
+
+### Fixed
+
+- Fix missing healthcheck for postgres docker compose prod.
+- Fix missing `AUTH_COOKIE_SECURE` support in entrypoint.sh.
+
 ## [0.88.1] - 2025-14-07
 
 ## Fixed
