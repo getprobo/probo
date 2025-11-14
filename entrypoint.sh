@@ -87,12 +87,12 @@ EOF
   # Add PostgreSQL CA bundle if configured
   if [ -n "$PG_CA_BUNDLE_FILE" ]; then
     cat >> "$CONFIG_FILE" <<EOF
-    ca-bundle: |
+    ca-cert-bundle: |
 $(sed 's/^/      /' "$PG_CA_BUNDLE_FILE")
 EOF
   elif [ -n "$PG_CA_BUNDLE" ]; then
     cat >> "$CONFIG_FILE" <<EOF
-    ca-bundle: |
+    ca-cert-bundle: |
 $(echo "$PG_CA_BUNDLE" | sed 's/^/      /')
 EOF
   fi
