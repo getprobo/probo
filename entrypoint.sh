@@ -107,6 +107,7 @@ EOF
       domain: "${AUTH_COOKIE_DOMAIN:-localhost}"
       secret: "${AUTH_COOKIE_SECRET:?AUTH_COOKIE_SECRET is required}"
       duration: ${AUTH_COOKIE_DURATION:-24}
+      secure: ${AUTH_COOKIE_SECURE:-true}
     password:
       pepper: "${AUTH_PASSWORD_PEPPER:?AUTH_PASSWORD_PEPPER is required}"
       iterations: ${AUTH_PASSWORD_ITERATIONS:-1000000}
