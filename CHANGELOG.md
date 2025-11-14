@@ -25,9 +25,9 @@ All notable changes to this project will be documented in this file.
 
 - Fix asset permissions
 
-### [0.88.5] - 2025-11-17
+## [0.88.5] - 2025-11-17
 
-## Fixed
+### Fixed
 
 - Fix invitation permissions
 
@@ -268,20 +268,24 @@ All notable changes to this project will be documented in this file.
 ## [0.74.1] - 2025-10-15
 
 ### Changed
+
 - Use hosted png for logo in emails
 
 ## [0.74.0] - 2025-10-15
 
 ### Fixed
+
 - Fix audit update in trust center settings
 
 ### Changed
+
 - New signatures page design
 - New emails design
 
 ## [0.73.1] - 2025-10-15
 
 ### Fixed
+
 - Fix organization logo update
 
 ## [0.73.0] - 2025-10-14
@@ -292,8 +296,8 @@ All notable changes to this project will be documented in this file.
 - Bootstrap role management
 
 ### Changed
-- Refactor of authentication and authorization
 
+- Refactor of authentication and authorization
 
 ## [0.72.0] - 2025-10-14
 
