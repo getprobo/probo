@@ -45,8 +45,6 @@ services:
       - "8443:8443"
     volumes:
       - "probo-data:/data"
-    networks:
-      - postgres
     depends_on:
       postgres:
         condition: service_healthy
