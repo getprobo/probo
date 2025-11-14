@@ -85,6 +85,16 @@ spec:
               value: {{ include "probo.postgresql.database" . | quote }}
             - name: PG_POOL_SIZE
               value: {{ .Values.postgresql.poolSize | default "100" | quote }}
+            {{- if .Values.postgresql.caBundle }}
+            - name: PG_CA_BUNDLE
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "probo.fullname" . }}
+                  key: pg-ca-bundle
+            {{- else if .Values.postgresql.caBundlePath }}
+            - name: PG_CA_BUNDLE_PATH
+              value: {{ .Values.postgresql.caBundlePath | quote }}
+            {{- end }}
             # Authentication
             - name: AUTH_DISABLE_SIGNUP
               value: {{ .Values.probo.auth.disableSignup | quote }}

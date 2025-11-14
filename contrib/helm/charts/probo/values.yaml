@@ -297,6 +297,13 @@ postgresql:
   password: ""  # REQUIRED when enabled=false: PostgreSQL password
   database: probod
   poolSize: 100
+  # PostgreSQL TLS/SSL configuration
+  # caBundle: |
+  #   -----BEGIN CERTIFICATE-----
+  #   ...certificate content...
+  #   -----END CERTIFICATE-----
+  # Or use caBundlePath to mount from a ConfigMap/Secret
+  # caBundlePath: /etc/ssl/certs/ca-certificates.crt
 
 # S3 storage configuration
 # For production: Use external S3 (AWS S3, GCS, etc.)

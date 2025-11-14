@@ -27,12 +27,12 @@ generate_saml_defaults() {
   fi
 }
 
-# Function to load CA bundle from file or environment variable
-load_pg_ca_bundle() {
+# Function to validate CA bundle path
+validate_pg_ca_bundle_path() {
   if [ -n "$PG_CA_BUNDLE_PATH" ]; then
     if [ -f "$PG_CA_BUNDLE_PATH" ]; then
       echo "Loading PostgreSQL CA bundle from: $PG_CA_BUNDLE_PATH"
-      export PG_CA_BUNDLE=$(cat "$PG_CA_BUNDLE_PATH")
+      export PG_CA_BUNDLE_FILE="$PG_CA_BUNDLE_PATH"
     else
       echo "Warning: PG_CA_BUNDLE_PATH specified but file not found: $PG_CA_BUNDLE_PATH"
     fi
@@ -48,8 +48,8 @@ else
   # Generate default SAML credentials if not provided
   generate_saml_defaults
 
-  # Load PostgreSQL CA bundle if configured
-  load_pg_ca_bundle
+  # Validate PostgreSQL CA bundle path if configured
+  validate_pg_ca_bundle_path
 
   # Create directory if it doesn't exist
   mkdir -p "$(dirname "$CONFIG_FILE")"
@@ -85,7 +85,12 @@ probod:
 EOF
 
   # Add PostgreSQL CA bundle if configured
-  if [ -n "$PG_CA_BUNDLE" ]; then
+  if [ -n "$PG_CA_BUNDLE_FILE" ]; then
+    cat >> "$CONFIG_FILE" <<EOF
+    ca-bundle: |
+$(cat "$PG_CA_BUNDLE_FILE" | sed 's/^/      /')
+EOF
+  elif [ -n "$PG_CA_BUNDLE" ]; then
     cat >> "$CONFIG_FILE" <<EOF
     ca-bundle: |
 $(echo "$PG_CA_BUNDLE" | sed 's/^/      /')
