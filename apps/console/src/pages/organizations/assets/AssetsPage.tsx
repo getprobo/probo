@@ -1,42 +1,47 @@
 import {
-  Button,
-  IconPlusLarge,
-  PageHeader,
-  Thead,
-  Tbody,
-  Tr,
-  Th,
-  Td,
-  Badge,
   ActionDropdown,
+  Badge,
+  Button,
   DropdownItem,
+  IconPencil,
+  IconPlusLarge,
   IconTrashCan,
-  Avatar,
+  PageHeader,
+  SelectCell,
+  TextCell,
+  useConfirm,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { usePageTitle } from "@probo/hooks";
 import {
   graphql,
+  type PreloadedQuery,
+  useMutation,
   usePaginationFragment,
   usePreloadedQuery,
-  type PreloadedQuery,
 } from "react-relay";
 import { useOrganizationId } from "/hooks/useOrganizationId";
-import { useParams } from "react-router";
-import { CreateAssetDialog } from "./dialogs/CreateAssetDialog";
-import { useDeleteAsset, assetsQuery } from "../../../hooks/graph/AssetGraph";
+import { Link, useParams } from "react-router";
+import {
+  assetsQuery,
+  createAssetMutation,
+  deleteAssetMutation,
+  updateAssetMutation,
+} from "/hooks/graph/AssetGraph";
 import type { AssetGraphListQuery } from "/hooks/graph/__generated__/AssetGraphListQuery.graphql";
-import { faviconUrl } from "@probo/helpers";
-import type { NodeOf } from "/types";
-import { getAssetTypeVariant } from "@probo/helpers";
-import type {
-  AssetsPageFragment$data,
-  AssetsPageFragment$key,
-} from "./__generated__/AssetsPageFragment.graphql";
-import { SortableTable } from "/components/SortableTable";
+import {
+  getAssetTypeVariant,
+  promisifyMutation,
+  sprintf,
+} from "@probo/helpers";
+import type { AssetsPageFragment$key } from "./__generated__/AssetsPageFragment.graphql";
 import { SnapshotBanner } from "/components/SnapshotBanner";
-import { Authorized } from "/permissions";
-import { isAuthorized } from "/permissions";
+import z from "zod";
+import { EditableTable } from "/components/table/EditableTable.tsx";
+import { PeopleCell } from "/components/table/PeopleCell.tsx";
+import { VendorsCell } from "/components/table/VendorsCell.tsx";
+import { CreateAssetDialog } from "./dialogs/CreateAssetDialog";
+import { Authorized, isAuthorized } from "/permissions";
 
 const paginatedAssetsFragment = graphql`
   fragment AssetsPageFragment on Organization
@@ -86,11 +91,29 @@ const paginatedAssetsFragment = graphql`
   }
 `;
 
-type AssetEntry = NodeOf<AssetsPageFragment$data["assets"]>;
-
 type Props = {
   queryRef: PreloadedQuery<AssetGraphListQuery>;
 };
+
+const schema = z.object({
+  name: z.string().trim().min(1, "Name is required"),
+  amount: z.coerce.number().min(1, "Amount is required"),
+  assetType: z.enum(["PHYSICAL", "VIRTUAL"]),
+  ownerId: z.string().trim().min(1, "Owner is required"),
+  vendorIds: z.array(z.string()).optional(),
+  dataTypesStored: z.string().trim().min(1, "Data types stored is required"),
+  organizationId: z.string().trim().min(1, "Organization is required"),
+});
+
+const defaultValue = {
+  name: "",
+  amount: 0,
+  assetType: "VIRTUAL",
+  ownerId: "",
+  vendorIds: [],
+  dataTypesStored: "",
+  organizationId: "",
+} satisfies z.infer<typeof schema>;
 
 export default function AssetsPage(props: Props) {
   const { __ } = useTranslate();
@@ -98,20 +121,25 @@ export default function AssetsPage(props: Props) {
   const { snapshotId } = useParams<{ snapshotId?: string }>();
   const isSnapshotMode = Boolean(snapshotId);
 
+  const assetUrl = (entry: { id: string }) =>
+    isSnapshotMode && snapshotId
+      ? `/organizations/${organizationId}/snapshots/${snapshotId}/assets/${entry.id}`
+      : `/organizations/${organizationId}/assets/${entry.id}`;
+
   const data = usePreloadedQuery(assetsQuery, props.queryRef);
   const pagination = usePaginationFragment(
     paginatedAssetsFragment,
-    data.node as AssetsPageFragment$key
+    data.node as AssetsPageFragment$key,
   );
   const assets = pagination.data.assets?.edges.map((edge) => edge.node);
   const connectionId = pagination.data.assets.__id;
+  const deleteAsset = useDeleteAsset(connectionId);
 
+  const hasAnyAction =
+    !isSnapshotMode &&
+    (isAuthorized(organizationId, "Asset", "updateAsset") ||
+      isAuthorized(organizationId, "Asset", "deleteAsset"));
   usePageTitle(__("Assets"));
-
-  const hasAnyAction = !isSnapshotMode && (
-    isAuthorized(organizationId, "Asset", "updateAsset") ||
-    isAuthorized(organizationId, "Asset", "deleteAsset")
-  );
 
   return (
     <div className="space-y-6">
@@ -119,7 +147,7 @@ export default function AssetsPage(props: Props) {
       <PageHeader
         title={__("Assets")}
         description={__(
-          "Manage your organization's assets and their classifications."
+          "Manage your organization's assets and their classifications.",
         )}
       >
         {!isSnapshotMode && (
@@ -133,104 +161,114 @@ export default function AssetsPage(props: Props) {
           </Authorized>
         )}
       </PageHeader>
-      <SortableTable {...pagination}>
-        <Thead>
-          <Tr>
-            <Th>{__("Name")}</Th>
-            <Th>{__("Type")}</Th>
-            <Th>{__("Amount")}</Th>
-            <Th>{__("Owner")}</Th>
-            <Th>{__("Vendors")}</Th>
-            {hasAnyAction && <Th></Th>}
-          </Tr>
-        </Thead>
-        <Tbody>
-          {assets.map((entry) => (
-            <AssetRow
-              key={entry.id}
-              entry={entry}
-              connectionId={connectionId}
-              hasAnyAction={hasAnyAction}
-            />
-          ))}
-        </Tbody>
-      </SortableTable>
-    </div>
-  );
-}
-
-function AssetRow({
-  entry,
-  connectionId,
-  hasAnyAction,
-}: {
-  entry: AssetEntry;
-  connectionId: string;
-  hasAnyAction: boolean;
-}) {
-  const organizationId = useOrganizationId();
-  const { __ } = useTranslate();
-  const { snapshotId } = useParams<{ snapshotId?: string }>();
-  const isSnapshotMode = Boolean(snapshotId);
-  const deleteAsset = useDeleteAsset(entry, connectionId);
-  const vendors = entry.vendors?.edges.map((edge) => edge.node) ?? [];
-
-  const assetUrl = isSnapshotMode && snapshotId
-    ? `/organizations/${organizationId}/snapshots/${snapshotId}/assets/${entry.id}`
-    : `/organizations/${organizationId}/assets/${entry.id}`;
-
-  return (
-    <Tr to={assetUrl}>
-      <Td>{entry.name}</Td>
-      <Td>
-        <Badge variant={getAssetTypeVariant(entry.assetType)}>
-          {entry.assetType === "PHYSICAL" ? __("Physical") : __("Virtual")}
-        </Badge>
-      </Td>
-      <Td>{entry.amount}</Td>
-      <Td>{entry.owner?.fullName ?? __("Unassigned")}</Td>
-      <Td>
-        {vendors.length > 0 ? (
-          <div className="flex flex-wrap gap-1">
-            {vendors.slice(0, 3).map((vendor) => (
-              <Badge
-                key={vendor.id}
-                variant="neutral"
-                className="flex items-center gap-1"
-              >
-                <Avatar
-                  name={vendor.name}
-                  src={faviconUrl(vendor.websiteUrl)}
-                  size="s"
-                />
-                <span className="text-xs">{vendor.name}</span>
-              </Badge>
-            ))}
-            {vendors.length > 3 && (
-              <Badge variant="neutral" className="text-xs">
-                +{vendors.length - 3}
-              </Badge>
-            )}
-          </div>
-        ) : (
-          <span className="text-txt-secondary text-sm">{__("None")}</span>
-        )}
-      </Td>
-      {hasAnyAction && (
-        <Td noLink width={50} className="text-end">
-          <Authorized entity="Asset" action="deleteAsset">
+      <EditableTable
+        connectionId={connectionId}
+        pagination={pagination}
+        items={assets}
+        columns={[
+          __("Name"),
+          __("Type"),
+          __("Data Types stored"),
+          __("Amount"),
+          __("Owner"),
+          __("Vendors"),
+        ]}
+        schema={schema}
+        updateMutation={updateAssetMutation}
+        createMutation={createAssetMutation}
+        addLabel={__("Add a new asset")}
+        defaultValue={{
+          ...defaultValue,
+          organizationId,
+        }}
+        action={({ item }) =>
+          hasAnyAction ? (
             <ActionDropdown>
+              <DropdownItem asChild>
+                <Link to={assetUrl(item)}>
+                  <IconPencil size={16} />
+                  {__("Edit")}
+                </Link>
+              </DropdownItem>
               <DropdownItem
-                onClick={deleteAsset}
+                onClick={() => deleteAsset(item)}
                 variant="danger"
                 icon={IconTrashCan}
               >
                 {__("Delete")}
               </DropdownItem>
             </ActionDropdown>
-          </Authorized>
-        </Td>
-      )}
-    </Tr>
+          ) : null
+        }
+        row={({ item }) => (
+          <>
+            <TextCell name="name" defaultValue={item?.name ?? ""} required />
+            <SelectCell
+              name="assetType"
+              items={["VIRTUAL", "PHYSICAL"]}
+              itemRenderer={({ item }) => (
+                <Badge variant={getAssetTypeVariant(item ?? "VIRTUAL")}>
+                  {item === "PHYSICAL" ? __("Physical") : __("Virtual")}
+                </Badge>
+              )}
+              defaultValue={item?.assetType ?? defaultValue.assetType}
+            />
+            <TextCell
+              name="dataTypesStored"
+              defaultValue={
+                item?.dataTypesStored ?? defaultValue.dataTypesStored
+              }
+              required
+            />
+            <TextCell
+              name="amount"
+              defaultValue={(item?.amount ?? defaultValue.amount).toString()}
+              required
+            />
+            <PeopleCell
+              name="ownerId"
+              defaultValue={item?.owner}
+              organizationId={organizationId}
+            />
+            <VendorsCell
+              name="vendorIds"
+              organizationId={organizationId}
+              defaultValue={item?.vendors.edges.map((edge) => edge.node) ?? []}
+            />
+          </>
+        )}
+      />
+    </div>
   );
 }
+
+const useDeleteAsset = (connectionId: string) => {
+  const [mutate] = useMutation(deleteAssetMutation);
+  const confirm = useConfirm();
+  const { __ } = useTranslate();
+
+  return (asset: { id: string; name: string }) => {
+    if (!asset.id || !asset.name) {
+      return alert(__("Failed to delete asset: missing id or name"));
+    }
+    confirm(
+      () =>
+        promisifyMutation(mutate)({
+          variables: {
+            input: {
+              assetId: asset.id!,
+            },
+            connections: [connectionId],
+          },
+        }),
+      {
+        message: sprintf(
+          __(
+            'This will permanently delete "%s". This action cannot be undone.',
+          ),
+          asset.name,
+        ),
+      },
+    );
+  };
+};

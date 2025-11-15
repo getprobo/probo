@@ -13,16 +13,22 @@ import * as ScrollArea from "@radix-ui/react-scroll-area";
 import { Input, input } from "../Input/Input.tsx";
 import { IconChevronGrabberVertical } from "../Icons/IconChevronGrabberVertical.tsx";
 import { tv } from "tailwind-variants";
-import { Children, type ComponentProps, type PropsWithChildren } from "react";
+import {
+    Children,
+    type ComponentProps,
+    type CSSProperties,
+    type PropsWithChildren,
+    type ReactNode,
+} from "react";
 import { IconMagnifyingGlass } from "../Icons/IconMagnifyingGlass.tsx";
 import { Spinner } from "../Spinner/Spinner.tsx";
 
 type Props<T> = PropsWithChildren<
     {
         id?: string;
-        placeholder?: string;
+        placeholder?: ReactNode;
         onValueChange?: (s: NonNullable<T>) => void;
-        variant?: "default" | "editor" | "dashed";
+        variant?: "default" | "editor" | "dashed" | "ghost";
         invalid?: boolean;
         disabled?: boolean;
         className?: string;
@@ -31,6 +37,8 @@ type Props<T> = PropsWithChildren<
         onSearch?: (s: string) => void;
         searchPlaceholder?: string;
         loading?: boolean;
+        style?: CSSProperties;
+        dropdownProps?: ComponentProps<typeof Content>;
     } & Omit<ComponentProps<typeof Root>, "onChange" | "value">
 >;
 
@@ -71,6 +79,10 @@ const select = tv({
             default: {
                 trigger: input({ class: "w-full gap-4 " }),
             },
+            ghost: {
+                trigger: "w-full px-3",
+                content: "bg-level-2",
+            },
         },
     },
     compoundVariants: [
@@ -96,6 +108,10 @@ export function Select<T>({
     onSearch,
     searchPlaceholder,
     loading,
+    open,
+    defaultOpen = false,
+    onOpenChange,
+    dropdownProps,
     ...props
 }: Props<T>) {
     const { trigger, content, icon } = select({
@@ -103,7 +119,13 @@ export function Select<T>({
     });
 
     return (
-        <Root onValueChange={onValueChange} value={value as string}>
+        <Root
+            defaultOpen={defaultOpen}
+            open={open}
+            onOpenChange={onOpenChange}
+            onValueChange={onValueChange}
+            value={value as string}
+        >
             <Trigger
                 {...props}
                 className={trigger({
@@ -122,7 +144,6 @@ export function Select<T>({
             </Trigger>
             <Portal>
                 <Content
-                    className={content()}
                     position="popper"
                     sideOffset={5}
                     style={{
@@ -130,6 +151,8 @@ export function Select<T>({
                         maxHeight:
                             "var(--radix-select-content-available-height)",
                     }}
+                    {...dropdownProps}
+                    className={content({ className: dropdownProps?.className })}
                 >
                     {onSearch && (
                         <Input

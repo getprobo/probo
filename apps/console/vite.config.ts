@@ -8,6 +8,10 @@ export default defineConfig({
   plugins: [react({ babel: { plugins: ["relay"] } }), tailwindcss()],
   server: {
     proxy: {
+      "/connect": {
+        target: "http://localhost:8080",
+        changeOrigin: true,
+      },
       "/api": {
         target: "http://localhost:8080",
         changeOrigin: true,
@@ -18,7 +22,7 @@ export default defineConfig({
     alias: {
       "/type": fileURLToPath(new URL("./src/type.ts", import.meta.url)),
       "/components": fileURLToPath(
-        new URL("./src/components", import.meta.url)
+        new URL("./src/components", import.meta.url),
       ),
       "/hooks": fileURLToPath(new URL("./src/hooks", import.meta.url)),
       "/layouts": fileURLToPath(new URL("./src/layouts", import.meta.url)),
