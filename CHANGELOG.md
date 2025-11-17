@@ -2,11 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.88.4] - 2025-11-17
+## [0.88.5] - 2025-11-17
 
 ## Fixed
 
 - Fix invitation permissions
+
+## [0.88.4] - 2025-11-14
+
+## Fixed
+
+- Fix ca-cert-bundle entrypoint.sh
 
 ## [0.88.3] - 2025-11-14
 
