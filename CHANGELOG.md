@@ -2,13 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.88.3] - 2025-14-07
+## [0.88.4] - 2025-11-17
+
+## Fixed
+
+- Fix invitation permissions
+
+## [0.88.3] - 2025-11-14
 
 ## Fixed
 
 - Fix document permissions
 
-## [0.88.2] - 2025-14-07
+## [0.88.2] - 2025-11-14
 
 ### Fixed
 
@@ -21,7 +27,7 @@ All notable changes to this project will be documented in this file.
 
 - Fix support PostgreSQL CA bundle in Helm charts with file path option
 
-## [0.88.0] - 2025-13-07
+## [0.88.0] - 2025-11-13
 
 ### Added
 
@@ -32,7 +38,7 @@ All notable changes to this project will be documented in this file.
 
 - API keys now have access to the organization they just created.
 
-## [0.87.0] - 2025-13-07
+## [0.87.0] - 2025-11-13
 
 ### Added
 
