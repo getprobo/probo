@@ -291,7 +291,6 @@ var Permissions = map[uint16]map[Action][]Role{
 		ActionDeleteOrganizationHorizontalLogo: EditRoles,
 		ActionCreateTrustCenter:                EditRoles,
 		ActionInviteUser:                       EditRoles,
-		ActionDeleteInvitation:                 EditRoles,
 		ActionUpdateMembership:                 EditRoles,
 		ActionCreatePeople:                     EditRoles,
 		ActionCreateVendor:                     EditRoles,
@@ -370,6 +369,8 @@ var Permissions = map[uint16]map[Action][]Role{
 	coredata.InvitationEntityType: {
 		ActionGet:             AllRoles,
 		ActionGetOrganization: AllRoles,
+
+		ActionDeleteInvitation: EditRoles,
 	},
 	coredata.PeopleEntityType: {
 		ActionGet: AllRoles,

@@ -376,7 +376,7 @@ function InvitationRow(props: {
           {isDeleting ? (
             <Spinner size={16} />
           ) : (
-            <Authorized entity="Organization" action="deleteInvitation">
+            <Authorized entity="Invitation" action="deleteInvitation">
               <Button
                 variant="danger"
                 onClick={onDelete}
