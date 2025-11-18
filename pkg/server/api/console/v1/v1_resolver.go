@@ -3643,14 +3643,9 @@ func (r *mutationResolver) CreateAsset(ctx context.Context, input types.CreateAs
 
 // UpdateAsset is the resolver for the updateAsset field.
 func (r *mutationResolver) UpdateAsset(ctx context.Context, input types.UpdateAssetInput) (*types.UpdateAssetPayload, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionUpdateAsset)
+
 	prb := r.ProboService(ctx, input.ID.TenantID())
-
-	existingAsset, err := prb.Assets.Get(ctx, input.ID)
-	if err != nil {
-		panic(fmt.Errorf("cannot get asset: %w", err))
-	}
-
-	r.MustBeAuthorized(ctx, existingAsset.OrganizationID, authz.ActionUpdateAsset)
 
 	asset, err := prb.Assets.Update(ctx, probo.UpdateAssetRequest{
 		ID:              input.ID,
