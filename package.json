@@ -19,6 +19,9 @@
   "devDependencies": {
     "turbo": "^2.5.3"
   },
+  "overrides": {
+    "glob": "^11.1.0"
+  },
   "graphql": {
     "schema": "./pkg/server/api/console/v1/schema.graphql"
   },
