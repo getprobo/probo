@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.88.6] - 2025-11-18
+
+## Fixed
+
+- Fix asset permissions
+
 ## [0.88.5] - 2025-11-17
 
 ## Fixed
