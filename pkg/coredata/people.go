@@ -132,29 +132,85 @@ func (p *People) LoadByEmail(
 	primaryEmailAddress string,
 ) error {
 	q := `
-	SELECT
-		id,
-		organization_id,
-		kind,
-		full_name,
-		primary_email_address,
-		additional_email_addresses,
-		position,
-		contract_start_date,
-		contract_end_date,
-		created_at,
-		updated_at
-	FROM
-		peoples
-	WHERE
-		%s
-		AND primary_email_address = @primary_email_address
-	LIMIT 1;
+SELECT
+	id,
+	organization_id,
+	kind,
+	full_name,
+	primary_email_address,
+	additional_email_addresses,
+	position,
+	contract_start_date,
+	contract_end_date,
+	created_at,
+	updated_at
+FROM
+	peoples
+WHERE
+	%s
+	AND primary_email_address = @primary_email_address
+LIMIT 1;
 	`
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"primary_email_address": primaryEmailAddress}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query people: %w", err)
+	}
+
+	people, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[People])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return &ErrPeopleNotFound{Identifier: primaryEmailAddress}
+		}
+
+		return fmt.Errorf("cannot collect people: %w", err)
+	}
+
+	*p = people
+
+	return nil
+}
+
+func (p *People) LoadByEmailAndOrganizationID(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	primaryEmailAddress string,
+	organizationID gid.GID,
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	kind,
+	full_name,
+	primary_email_address,
+	additional_email_addresses,
+	position,
+	contract_start_date,
+	contract_end_date,
+	created_at,
+	updated_at
+FROM
+	peoples
+WHERE
+	%s
+	AND primary_email_address = @primary_email_address
+	AND organization_id = @organization_id
+LIMIT 1;
+	`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"primary_email_address": primaryEmailAddress,
+		"organization_id":       organizationID,
+	}
 	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)

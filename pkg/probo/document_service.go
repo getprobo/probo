@@ -164,6 +164,32 @@ func (s *DocumentService) Get(
 	return document, nil
 }
 
+func (s *DocumentService) GetWithFilter(
+	ctx context.Context,
+	documentID gid.GID,
+	filter *coredata.DocumentFilter,
+) (*coredata.Document, error) {
+	document := &coredata.Document{}
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			err := document.LoadByIDWithFilter(ctx, conn, s.svc.scope, documentID, filter)
+			if err != nil {
+				return fmt.Errorf("cannot load document: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return document, nil
+}
+
 func (s DocumentService) GenerateChangelog(
 	ctx context.Context,
 	documentID gid.GID,
@@ -559,39 +585,13 @@ func (s *DocumentService) SignDocumentVersion(
 	documentVersionID gid.GID,
 	signatory gid.GID,
 ) error {
-	documentVersion := &coredata.DocumentVersion{}
-	documentVersionSignature := &coredata.DocumentVersionSignature{}
-	now := time.Now()
-
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(conn pg.Conn) error {
-			if err := documentVersion.LoadByID(ctx, conn, s.svc.scope, documentVersionID); err != nil {
-				return fmt.Errorf("cannot load document version %q: %w", documentVersionID, err)
-			}
-
-			if documentVersion.Status != coredata.DocumentStatusPublished {
-				return fmt.Errorf("cannot sign unpublished version")
-			}
-
-			if err := documentVersionSignature.LoadByDocumentVersionIDAndSignatory(ctx, conn, s.svc.scope, documentVersionID, signatory); err != nil {
-				return fmt.Errorf("cannot load document version signature: %w", err)
-			}
-
-			if documentVersionSignature.State == coredata.DocumentVersionSignatureStateSigned {
-				return fmt.Errorf("document version already signed")
-			}
-
-			documentVersionSignature.State = coredata.DocumentVersionSignatureStateSigned
-			documentVersionSignature.SignedAt = &now
-			documentVersionSignature.UpdatedAt = now
-
-			if err := documentVersion.Update(ctx, conn, s.svc.scope); err != nil {
-				return fmt.Errorf("cannot update document version: %w", err)
-			}
-
-			if err := documentVersionSignature.Update(ctx, conn, s.svc.scope); err != nil {
-				return fmt.Errorf("cannot update document version signature: %w", err)
+			var err error
+			_, err = s.signDocumentVersionInTx(ctx, conn, documentVersionID, signatory)
+			if err != nil {
+				return fmt.Errorf("cannot sign document version: %w", err)
 			}
 
 			return nil
@@ -603,6 +603,80 @@ func (s *DocumentService) SignDocumentVersion(
 	}
 
 	return nil
+}
+
+func (s *DocumentService) SignDocumentVersionByEmail(
+	ctx context.Context,
+	documentVersionID gid.GID,
+	userEmail string,
+) (*coredata.DocumentVersionSignature, error) {
+	var documentVersionSignature *coredata.DocumentVersionSignature
+
+	err := s.svc.pg.WithTx(
+		ctx,
+		func(conn pg.Conn) error {
+			documentVersion := &coredata.DocumentVersion{}
+			if err := documentVersion.LoadByID(ctx, conn, s.svc.scope, documentVersionID); err != nil {
+				return fmt.Errorf("cannot get document version: %w", err)
+			}
+
+			people := &coredata.People{}
+			if err := people.LoadByEmailAndOrganizationID(ctx, conn, s.svc.scope, userEmail, documentVersion.OrganizationID); err != nil {
+				return fmt.Errorf("cannot find people record for user email in organization %q: %w", documentVersion.OrganizationID, err)
+			}
+
+			var signErr error
+			documentVersionSignature, signErr = s.signDocumentVersionInTx(ctx, conn, documentVersionID, people.ID)
+			return signErr
+		},
+	)
+
+	if err != nil {
+		return nil, fmt.Errorf("cannot sign document version: %w", err)
+	}
+
+	return documentVersionSignature, nil
+}
+
+func (s *DocumentService) signDocumentVersionInTx(
+	ctx context.Context,
+	conn pg.Conn,
+	documentVersionID gid.GID,
+	signatory gid.GID,
+) (*coredata.DocumentVersionSignature, error) {
+	documentVersion := &coredata.DocumentVersion{}
+	documentVersionSignature := &coredata.DocumentVersionSignature{}
+	now := time.Now()
+
+	if err := documentVersion.LoadByID(ctx, conn, s.svc.scope, documentVersionID); err != nil {
+		return nil, fmt.Errorf("cannot load document version %q: %w", documentVersionID, err)
+	}
+
+	if documentVersion.Status != coredata.DocumentStatusPublished {
+		return nil, fmt.Errorf("cannot sign unpublished version")
+	}
+
+	if err := documentVersionSignature.LoadByDocumentVersionIDAndSignatory(ctx, conn, s.svc.scope, documentVersionID, signatory); err != nil {
+		return nil, fmt.Errorf("cannot load document version signature: %w", err)
+	}
+
+	if documentVersionSignature.State == coredata.DocumentVersionSignatureStateSigned {
+		return nil, &coredata.ErrDocumentVersionSignatureAlreadySigned{}
+	}
+
+	documentVersionSignature.State = coredata.DocumentVersionSignatureStateSigned
+	documentVersionSignature.SignedAt = &now
+	documentVersionSignature.UpdatedAt = now
+
+	if err := documentVersion.Update(ctx, conn, s.svc.scope); err != nil {
+		return nil, fmt.Errorf("cannot update document version: %w", err)
+	}
+
+	if err := documentVersionSignature.Update(ctx, conn, s.svc.scope); err != nil {
+		return nil, fmt.Errorf("cannot update document version signature: %w", err)
+	}
+
+	return documentVersionSignature, nil
 }
 
 func (s *DocumentService) UpdateVersion(
@@ -810,6 +884,36 @@ func (s *DocumentService) ListSignatures(
 	return page.NewPage(documentVersionSignatures, cursor), nil
 }
 
+func (s *DocumentService) IsVersionSignedByUserEmail(
+	ctx context.Context,
+	documentVersionID gid.GID,
+	userEmail string,
+) (bool, error) {
+	documentVersionSignature := &coredata.DocumentVersionSignature{}
+
+	var signed bool
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			var err error
+			signed, err = documentVersionSignature.IsSignedByUserEmail(
+				ctx,
+				conn,
+				s.svc.scope,
+				documentVersionID,
+				userEmail,
+			)
+			return err
+		},
+	)
+
+	if err != nil {
+		return false, fmt.Errorf("cannot check if document version is signed: %w", err)
+	}
+
+	return signed, nil
+}
+
 func (s *DocumentService) CreateDraft(
 	ctx context.Context,
 	documentID gid.GID,
@@ -998,13 +1102,20 @@ func (s *DocumentService) ListVersions(
 	ctx context.Context,
 	documentID gid.GID,
 	cursor *page.Cursor[coredata.DocumentVersionOrderField],
+	filter *coredata.DocumentVersionFilter,
 ) (*page.Page[*coredata.DocumentVersion, coredata.DocumentVersionOrderField], error) {
 	var documentVersions coredata.DocumentVersions
 
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			return documentVersions.LoadByDocumentID(ctx, conn, s.svc.scope, documentID, cursor)
+
+			err := documentVersions.LoadByDocumentID(ctx, conn, s.svc.scope, documentID, cursor, filter)
+			if err != nil {
+				return fmt.Errorf("cannot load document versions: %w", err)
+			}
+
+			return nil
 		},
 	)
 
@@ -1033,6 +1144,36 @@ func (s *DocumentService) GetVersion(
 	}
 
 	return documentVersion, nil
+}
+
+func (s *DocumentService) IsSigned(
+	ctx context.Context,
+	documentID gid.GID,
+	userEmail string,
+) (bool, error) {
+	document := &coredata.Document{}
+
+	var signed bool
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			var err error
+			signed, err = document.IsLastSignableVersionSignedByUserEmail(
+				ctx,
+				conn,
+				s.svc.scope,
+				documentID,
+				userEmail,
+			)
+			return err
+		},
+	)
+
+	if err != nil {
+		return false, fmt.Errorf("cannot check if document is signed: %w", err)
+	}
+
+	return signed, nil
 }
 
 func (s *DocumentService) CountForOrganizationID(

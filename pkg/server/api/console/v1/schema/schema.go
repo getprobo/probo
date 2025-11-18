@@ -86,6 +86,7 @@ type ResolverRoot interface {
 	Risk() RiskResolver
 	RiskConnection() RiskConnectionResolver
 	SAMLConfiguration() SAMLConfigurationResolver
+	SignableDocument() SignableDocumentResolver
 	Snapshot() SnapshotResolver
 	SnapshotConnection() SnapshotConnectionResolver
 	Task() TaskResolver
@@ -659,6 +660,7 @@ type ComplexityRoot struct {
 		Owner          func(childComplexity int) int
 		PublishedAt    func(childComplexity int) int
 		Signatures     func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentVersionSignatureOrder, filter *types.DocumentVersionSignatureFilter) int
+		Signed         func(childComplexity int) int
 		Status         func(childComplexity int) int
 		Title          func(childComplexity int) int
 		UpdatedAt      func(childComplexity int) int
@@ -731,6 +733,10 @@ type ComplexityRoot struct {
 
 	ExportFrameworkPayload struct {
 		ExportJobID func(childComplexity int) int
+	}
+
+	ExportSignableDocumentVersionPDFPayload struct {
+		Data func(childComplexity int) int
 	}
 
 	File struct {
@@ -979,6 +985,7 @@ type ComplexityRoot struct {
 		EnableSaml                             func(childComplexity int, input types.EnableSAMLInput) int
 		ExportDocumentVersionPDF               func(childComplexity int, input types.ExportDocumentVersionPDFInput) int
 		ExportFramework                        func(childComplexity int, input types.ExportFrameworkInput) int
+		ExportSignableVersionDocumentPDF       func(childComplexity int, input types.ExportSignableDocumentVersionPDFInput) int
 		GenerateDocumentChangelog              func(childComplexity int, input types.GenerateDocumentChangelogInput) int
 		GenerateFrameworkStateOfApplicability  func(childComplexity int, input types.GenerateFrameworkStateOfApplicabilityInput) int
 		GetTrustCenterFile                     func(childComplexity int, input types.GetTrustCenterFileInput) int
@@ -990,6 +997,7 @@ type ComplexityRoot struct {
 		RemoveMember                           func(childComplexity int, input types.RemoveMemberInput) int
 		RequestSignature                       func(childComplexity int, input types.RequestSignatureInput) int
 		SendSigningNotifications               func(childComplexity int, input types.SendSigningNotificationsInput) int
+		SignDocument                           func(childComplexity int, input types.SignDocumentInput) int
 		UnassignTask                           func(childComplexity int, input types.UnassignTaskInput) int
 		UpdateAsset                            func(childComplexity int, input types.UpdateAssetInput) int
 		UpdateAudit                            func(childComplexity int, input types.UpdateAuditInput) int
@@ -1309,6 +1317,32 @@ type ComplexityRoot struct {
 	Session struct {
 		ExpiresAt func(childComplexity int) int
 		ID        func(childComplexity int) int
+	}
+
+	SignDocumentPayload struct {
+		DocumentVersionSignature func(childComplexity int) int
+	}
+
+	SignableDocument struct {
+		Classification func(childComplexity int) int
+		CreatedAt      func(childComplexity int) int
+		Description    func(childComplexity int) int
+		DocumentType   func(childComplexity int) int
+		ID             func(childComplexity int) int
+		Signed         func(childComplexity int) int
+		Title          func(childComplexity int) int
+		UpdatedAt      func(childComplexity int) int
+		Versions       func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentVersionOrderBy, filter *types.DocumentVersionFilter) int
+	}
+
+	SignableDocumentConnection struct {
+		Edges    func(childComplexity int) int
+		PageInfo func(childComplexity int) int
+	}
+
+	SignableDocumentEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
 	}
 
 	SlackConnection struct {
@@ -1805,9 +1839,11 @@ type ComplexityRoot struct {
 	}
 
 	Viewer struct {
-		ID            func(childComplexity int) int
-		Organizations func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrganizationOrder) int
-		User          func(childComplexity int) int
+		ID                func(childComplexity int) int
+		Organizations     func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrganizationOrder) int
+		SignableDocument  func(childComplexity int, id gid.GID) int
+		SignableDocuments func(childComplexity int, organizationID gid.GID, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy) int
+		User              func(childComplexity int) int
 	}
 }
 
@@ -1873,6 +1909,7 @@ type DocumentVersionResolver interface {
 
 	Owner(ctx context.Context, obj *types.DocumentVersion) (*types.People, error)
 	Signatures(ctx context.Context, obj *types.DocumentVersion, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentVersionSignatureOrder, filter *types.DocumentVersionSignatureFilter) (*types.DocumentVersionSignatureConnection, error)
+	Signed(ctx context.Context, obj *types.DocumentVersion) (bool, error)
 }
 type DocumentVersionSignatureResolver interface {
 	DocumentVersion(ctx context.Context, obj *types.DocumentVersionSignature) (*types.DocumentVersion, error)
@@ -2026,7 +2063,9 @@ type MutationResolver interface {
 	BulkRequestSignatures(ctx context.Context, input types.BulkRequestSignaturesInput) (*types.BulkRequestSignaturesPayload, error)
 	SendSigningNotifications(ctx context.Context, input types.SendSigningNotificationsInput) (*types.SendSigningNotificationsPayload, error)
 	CancelSignatureRequest(ctx context.Context, input types.CancelSignatureRequestInput) (*types.CancelSignatureRequestPayload, error)
+	SignDocument(ctx context.Context, input types.SignDocumentInput) (*types.SignDocumentPayload, error)
 	ExportDocumentVersionPDF(ctx context.Context, input types.ExportDocumentVersionPDFInput) (*types.ExportDocumentVersionPDFPayload, error)
+	ExportSignableVersionDocumentPDF(ctx context.Context, input types.ExportSignableDocumentVersionPDFInput) (*types.ExportSignableDocumentVersionPDFPayload, error)
 	CreateVendorRiskAssessment(ctx context.Context, input types.CreateVendorRiskAssessmentInput) (*types.CreateVendorRiskAssessmentPayload, error)
 	AssessVendor(ctx context.Context, input types.AssessVendorInput) (*types.AssessVendorPayload, error)
 	CreateAsset(ctx context.Context, input types.CreateAssetInput) (*types.CreateAssetPayload, error)
@@ -2150,6 +2189,10 @@ type SAMLConfigurationResolver interface {
 
 	TestLoginURL(ctx context.Context, obj *types.SAMLConfiguration) (string, error)
 }
+type SignableDocumentResolver interface {
+	Signed(ctx context.Context, obj *types.SignableDocument) (bool, error)
+	Versions(ctx context.Context, obj *types.SignableDocument, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentVersionOrderBy, filter *types.DocumentVersionFilter) (*types.DocumentVersionConnection, error)
+}
 type SnapshotResolver interface {
 	Organization(ctx context.Context, obj *types.Snapshot) (*types.Organization, error)
 
@@ -2244,6 +2287,8 @@ type VendorServiceResolver interface {
 }
 type ViewerResolver interface {
 	Organizations(ctx context.Context, obj *types.Viewer, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrganizationOrder) (*types.OrganizationConnection, error)
+	SignableDocuments(ctx context.Context, obj *types.Viewer, organizationID gid.GID, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy) (*types.SignableDocumentConnection, error)
+	SignableDocument(ctx context.Context, obj *types.Viewer, id gid.GID) (*types.SignableDocument, error)
 }
 
 type executableSchema struct {
@@ -3777,6 +3822,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.DocumentVersion.Signatures(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.DocumentVersionSignatureOrder), args["filter"].(*types.DocumentVersionSignatureFilter)), true
+	case "DocumentVersion.signed":
+		if e.complexity.DocumentVersion.Signed == nil {
+			break
+		}
+
+		return e.complexity.DocumentVersion.Signed(childComplexity), true
 	case "DocumentVersion.status":
 		if e.complexity.DocumentVersion.Status == nil {
 			break
@@ -4022,6 +4073,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.ExportFrameworkPayload.ExportJobID(childComplexity), true
+
+	case "ExportSignableDocumentVersionPDFPayload.data":
+		if e.complexity.ExportSignableDocumentVersionPDFPayload.Data == nil {
+			break
+		}
+
+		return e.complexity.ExportSignableDocumentVersionPDFPayload.Data(childComplexity), true
 
 	case "File.createdAt":
 		if e.complexity.File.CreatedAt == nil {
@@ -5550,6 +5608,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.ExportFramework(childComplexity, args["input"].(types.ExportFrameworkInput)), true
+	case "Mutation.exportSignableVersionDocumentPDF":
+		if e.complexity.Mutation.ExportSignableVersionDocumentPDF == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_exportSignableVersionDocumentPDF_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.ExportSignableVersionDocumentPDF(childComplexity, args["input"].(types.ExportSignableDocumentVersionPDFInput)), true
 	case "Mutation.generateDocumentChangelog":
 		if e.complexity.Mutation.GenerateDocumentChangelog == nil {
 			break
@@ -5671,6 +5740,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.SendSigningNotifications(childComplexity, args["input"].(types.SendSigningNotificationsInput)), true
+	case "Mutation.signDocument":
+		if e.complexity.Mutation.SignDocument == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_signDocument_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.SignDocument(childComplexity, args["input"].(types.SignDocumentInput)), true
 	case "Mutation.unassignTask":
 		if e.complexity.Mutation.UnassignTask == nil {
 			break
@@ -7413,6 +7493,99 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Session.ID(childComplexity), true
 
+	case "SignDocumentPayload.documentVersionSignature":
+		if e.complexity.SignDocumentPayload.DocumentVersionSignature == nil {
+			break
+		}
+
+		return e.complexity.SignDocumentPayload.DocumentVersionSignature(childComplexity), true
+
+	case "SignableDocument.classification":
+		if e.complexity.SignableDocument.Classification == nil {
+			break
+		}
+
+		return e.complexity.SignableDocument.Classification(childComplexity), true
+	case "SignableDocument.createdAt":
+		if e.complexity.SignableDocument.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.SignableDocument.CreatedAt(childComplexity), true
+	case "SignableDocument.description":
+		if e.complexity.SignableDocument.Description == nil {
+			break
+		}
+
+		return e.complexity.SignableDocument.Description(childComplexity), true
+	case "SignableDocument.documentType":
+		if e.complexity.SignableDocument.DocumentType == nil {
+			break
+		}
+
+		return e.complexity.SignableDocument.DocumentType(childComplexity), true
+	case "SignableDocument.id":
+		if e.complexity.SignableDocument.ID == nil {
+			break
+		}
+
+		return e.complexity.SignableDocument.ID(childComplexity), true
+	case "SignableDocument.signed":
+		if e.complexity.SignableDocument.Signed == nil {
+			break
+		}
+
+		return e.complexity.SignableDocument.Signed(childComplexity), true
+	case "SignableDocument.title":
+		if e.complexity.SignableDocument.Title == nil {
+			break
+		}
+
+		return e.complexity.SignableDocument.Title(childComplexity), true
+	case "SignableDocument.updatedAt":
+		if e.complexity.SignableDocument.UpdatedAt == nil {
+			break
+		}
+
+		return e.complexity.SignableDocument.UpdatedAt(childComplexity), true
+	case "SignableDocument.versions":
+		if e.complexity.SignableDocument.Versions == nil {
+			break
+		}
+
+		args, err := ec.field_SignableDocument_versions_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.SignableDocument.Versions(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.DocumentVersionOrderBy), args["filter"].(*types.DocumentVersionFilter)), true
+
+	case "SignableDocumentConnection.edges":
+		if e.complexity.SignableDocumentConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.SignableDocumentConnection.Edges(childComplexity), true
+	case "SignableDocumentConnection.pageInfo":
+		if e.complexity.SignableDocumentConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.SignableDocumentConnection.PageInfo(childComplexity), true
+
+	case "SignableDocumentEdge.cursor":
+		if e.complexity.SignableDocumentEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.SignableDocumentEdge.Cursor(childComplexity), true
+	case "SignableDocumentEdge.node":
+		if e.complexity.SignableDocumentEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.SignableDocumentEdge.Node(childComplexity), true
+
 	case "SlackConnection.channel":
 		if e.complexity.SlackConnection.Channel == nil {
 			break
@@ -9056,6 +9229,28 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Viewer.Organizations(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.OrganizationOrder)), true
+	case "Viewer.signableDocument":
+		if e.complexity.Viewer.SignableDocument == nil {
+			break
+		}
+
+		args, err := ec.field_Viewer_signableDocument_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Viewer.SignableDocument(childComplexity, args["id"].(gid.GID)), true
+	case "Viewer.signableDocuments":
+		if e.complexity.Viewer.SignableDocuments == nil {
+			break
+		}
+
+		args, err := ec.field_Viewer_signableDocuments_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Viewer.SignableDocuments(childComplexity, args["organizationId"].(gid.GID), args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.DocumentOrderBy)), true
 	case "Viewer.user":
 		if e.complexity.Viewer.User == nil {
 			break
@@ -9176,6 +9371,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputEvidenceOrder,
 		ec.unmarshalInputExportDocumentVersionPDFInput,
 		ec.unmarshalInputExportFrameworkInput,
+		ec.unmarshalInputExportSignableDocumentVersionPDFInput,
 		ec.unmarshalInputFrameworkOrder,
 		ec.unmarshalInputFulfillEvidenceInput,
 		ec.unmarshalInputGenerateDocumentChangelogInput,
@@ -9207,6 +9403,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputRiskFilter,
 		ec.unmarshalInputRiskOrder,
 		ec.unmarshalInputSendSigningNotificationsInput,
+		ec.unmarshalInputSignDocumentInput,
 		ec.unmarshalInputSnapshotOrder,
 		ec.unmarshalInputTaskOrder,
 		ec.unmarshalInputTrustCenterAccessOrder,
@@ -9450,6 +9647,7 @@ enum InvitationStatus
 enum MembershipRole @goModel(model: "go.probo.inc/probo/pkg/coredata.MembershipRole") {
   OWNER @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleOwner")
   ADMIN @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleAdmin")
+  EMPLOYEE @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleEmployee")
   VIEWER @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleViewer")
 }
 
@@ -9878,10 +10076,6 @@ enum BusinessImpact
 
 enum DocumentVersionOrderField
   @goModel(model: "go.probo.inc/probo/pkg/coredata.DocumentVersionOrderField") {
-  VERSION
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.DocumentVersionOrderFieldVersion"
-    )
   CREATED_AT
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.DocumentVersionOrderFieldCreatedAt"
@@ -11391,6 +11585,29 @@ type Document implements Node {
   updatedAt: Datetime!
 }
 
+type SignableDocument @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.SignableDocument"
+  ){
+  id: ID!
+  title: String!
+  description: String
+  documentType: DocumentType!
+  classification: DocumentClassification!
+  signed: Boolean! @goField(forceResolver: true)
+
+  versions(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: DocumentVersionOrder
+    filter: DocumentVersionFilter
+  ): DocumentVersionConnection! @goField(forceResolver: true)
+
+  createdAt: Datetime!
+  updatedAt: Datetime!
+}
+
 type Meeting implements Node {
   id: ID!
   name: String!
@@ -11615,6 +11832,17 @@ type Viewer {
     before: CursorKey
     orderBy: OrganizationOrder
   ): OrganizationConnection! @goField(forceResolver: true)
+
+  signableDocuments(
+    organizationId: ID!
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: DocumentOrder
+  ): SignableDocumentConnection! @goField(forceResolver: true)
+
+  signableDocument(id: ID!): SignableDocument @goField(forceResolver: true)
 }
 
 # Connection Types
@@ -11868,6 +12096,22 @@ type EvidenceConnection
 type EvidenceEdge {
   cursor: CursorKey!
   node: Evidence!
+}
+
+type SignableDocumentConnection
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.SignableDocumentConnection"
+  ) {
+  edges: [SignableDocumentEdge!]!
+  pageInfo: PageInfo!
+}
+
+type SignableDocumentEdge
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.SignableDocumentEdge"
+  ) {
+  cursor: CursorKey!
+  node: SignableDocument!
 }
 
 type DocumentConnection
@@ -12270,9 +12514,16 @@ type Mutation {
     input: SendSigningNotificationsInput!
   ): SendSigningNotificationsPayload!  cancelSignatureRequest(
     input: CancelSignatureRequestInput!
-  ): CancelSignatureRequestPayload!  exportDocumentVersionPDF(
+  ): CancelSignatureRequestPayload!
+  signDocument(
+    input: SignDocumentInput!
+  ): SignDocumentPayload!
+  exportDocumentVersionPDF(
     input: ExportDocumentVersionPDFInput!
   ): ExportDocumentVersionPDFPayload!
+  exportSignableVersionDocumentPDF(
+    input: ExportSignableDocumentVersionPDFInput!
+  ): ExportSignableDocumentVersionPDFPayload!
   createVendorRiskAssessment(
     input: CreateVendorRiskAssessmentInput!
   ): CreateVendorRiskAssessmentPayload!
@@ -12842,6 +13093,10 @@ input ExportDocumentVersionPDFInput {
   withWatermark: Boolean!
   watermarkEmail: String
   withSignatures: Boolean!
+}
+
+input ExportSignableDocumentVersionPDFInput {
+  documentVersionId: ID!
 }
 
 input DeleteDocumentInput {
@@ -13428,6 +13683,10 @@ type ExportDocumentVersionPDFPayload {
   data: String!
 }
 
+type ExportSignableDocumentVersionPDFPayload {
+  data: String!
+}
+
 type UpdateDocumentPayload {
   document: Document!
 }
@@ -13541,6 +13800,8 @@ type DocumentVersion implements Node @goModel(model: "go.probo.inc/probo/pkg/ser
     orderBy: DocumentVersionSignatureOrder
     filter: DocumentVersionSignatureFilter
   ): DocumentVersionSignatureConnection! @goField(forceResolver: true)
+
+  signed: Boolean! @goField(forceResolver: true)
 
   publishedAt: Datetime
   createdAt: Datetime!
@@ -13701,6 +13962,14 @@ type SendSigningNotificationsPayload {
 
 type CancelSignatureRequestPayload {
   deletedDocumentVersionSignatureId: ID!
+}
+
+input SignDocumentInput {
+  documentVersionId: ID!
+}
+
+type SignDocumentPayload {
+  documentVersionSignature: DocumentVersionSignature!
 }
 
 type UploadMeasureEvidencePayload {
@@ -15650,6 +15919,17 @@ func (ec *executionContext) field_Mutation_exportFramework_args(ctx context.Cont
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_exportSignableVersionDocumentPDF_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNExportSignableDocumentVersionPDFInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐExportSignableDocumentVersionPDFInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_generateDocumentChangelog_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -15764,6 +16044,17 @@ func (ec *executionContext) field_Mutation_sendSigningNotifications_args(ctx con
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNSendSigningNotificationsInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐSendSigningNotificationsInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_signDocument_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNSignDocumentInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐSignDocumentInput)
 	if err != nil {
 		return nil, err
 	}
@@ -17086,6 +17377,42 @@ func (ec *executionContext) field_Risk_obligations_args(ctx context.Context, raw
 	return args, nil
 }
 
+func (ec *executionContext) field_SignableDocument_versions_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "first", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "after", ec.unmarshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey)
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "last", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["last"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "before", ec.unmarshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey)
+	if err != nil {
+		return nil, err
+	}
+	args["before"] = arg3
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "orderBy", ec.unmarshalODocumentVersionOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionOrderBy)
+	if err != nil {
+		return nil, err
+	}
+	args["orderBy"] = arg4
+	arg5, err := graphql.ProcessArgField(ctx, rawArgs, "filter", ec.unmarshalODocumentVersionFilter2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionFilter)
+	if err != nil {
+		return nil, err
+	}
+	args["filter"] = arg5
+	return args, nil
+}
+
 func (ec *executionContext) field_Snapshot_controls_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -17398,6 +17725,53 @@ func (ec *executionContext) field_Viewer_organizations_args(ctx context.Context,
 		return nil, err
 	}
 	args["orderBy"] = arg4
+	return args, nil
+}
+
+func (ec *executionContext) field_Viewer_signableDocument_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Viewer_signableDocuments_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "organizationId", ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID)
+	if err != nil {
+		return nil, err
+	}
+	args["organizationId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "first", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "after", ec.unmarshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey)
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "last", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["last"] = arg3
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "before", ec.unmarshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey)
+	if err != nil {
+		return nil, err
+	}
+	args["before"] = arg4
+	arg5, err := graphql.ProcessArgField(ctx, rawArgs, "orderBy", ec.unmarshalODocumentOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentOrderBy)
+	if err != nil {
+		return nil, err
+	}
+	args["orderBy"] = arg5
 	return args, nil
 }
 
@@ -25726,6 +26100,35 @@ func (ec *executionContext) fieldContext_DocumentVersion_signatures(ctx context.
 	return fc, nil
 }
 
+func (ec *executionContext) _DocumentVersion_signed(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_DocumentVersion_signed,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.DocumentVersion().Signed(ctx, obj)
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_DocumentVersion_signed(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DocumentVersion",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _DocumentVersion_publishedAt(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersion) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -25960,6 +26363,8 @@ func (ec *executionContext) fieldContext_DocumentVersionEdge_node(_ context.Cont
 				return ec.fieldContext_DocumentVersion_owner(ctx, field)
 			case "signatures":
 				return ec.fieldContext_DocumentVersion_signatures(ctx, field)
+			case "signed":
+				return ec.fieldContext_DocumentVersion_signed(ctx, field)
 			case "publishedAt":
 				return ec.fieldContext_DocumentVersion_publishedAt(ctx, field)
 			case "createdAt":
@@ -26046,6 +26451,8 @@ func (ec *executionContext) fieldContext_DocumentVersionSignature_documentVersio
 				return ec.fieldContext_DocumentVersion_owner(ctx, field)
 			case "signatures":
 				return ec.fieldContext_DocumentVersion_signatures(ctx, field)
+			case "signed":
+				return ec.fieldContext_DocumentVersion_signed(ctx, field)
 			case "publishedAt":
 				return ec.fieldContext_DocumentVersion_publishedAt(ctx, field)
 			case "createdAt":
@@ -27105,6 +27512,35 @@ func (ec *executionContext) fieldContext_ExportFrameworkPayload_exportJobId(_ co
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ExportSignableDocumentVersionPDFPayload_data(ctx context.Context, field graphql.CollectedField, obj *types.ExportSignableDocumentVersionPDFPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ExportSignableDocumentVersionPDFPayload_data,
+		func(ctx context.Context) (any, error) {
+			return obj.Data, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ExportSignableDocumentVersionPDFPayload_data(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ExportSignableDocumentVersionPDFPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -34670,6 +35106,51 @@ func (ec *executionContext) fieldContext_Mutation_cancelSignatureRequest(ctx con
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_signDocument(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_signDocument,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().SignDocument(ctx, fc.Args["input"].(types.SignDocumentInput))
+		},
+		nil,
+		ec.marshalNSignDocumentPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐSignDocumentPayload,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_signDocument(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "documentVersionSignature":
+				return ec.fieldContext_SignDocumentPayload_documentVersionSignature(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type SignDocumentPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_signDocument_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_exportDocumentVersionPDF(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -34709,6 +35190,51 @@ func (ec *executionContext) fieldContext_Mutation_exportDocumentVersionPDF(ctx c
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_exportDocumentVersionPDF_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_exportSignableVersionDocumentPDF(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_exportSignableVersionDocumentPDF,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().ExportSignableVersionDocumentPDF(ctx, fc.Args["input"].(types.ExportSignableDocumentVersionPDFInput))
+		},
+		nil,
+		ec.marshalNExportSignableDocumentVersionPDFPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐExportSignableDocumentVersionPDFPayload,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_exportSignableVersionDocumentPDF(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "data":
+				return ec.fieldContext_ExportSignableDocumentVersionPDFPayload_data(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ExportSignableDocumentVersionPDFPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_exportSignableVersionDocumentPDF_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -41168,6 +41694,8 @@ func (ec *executionContext) fieldContext_PublishDocumentVersionPayload_documentV
 				return ec.fieldContext_DocumentVersion_owner(ctx, field)
 			case "signatures":
 				return ec.fieldContext_DocumentVersion_signatures(ctx, field)
+			case "signed":
+				return ec.fieldContext_DocumentVersion_signed(ctx, field)
 			case "publishedAt":
 				return ec.fieldContext_DocumentVersion_publishedAt(ctx, field)
 			case "createdAt":
@@ -41309,6 +41837,10 @@ func (ec *executionContext) fieldContext_Query_viewer(_ context.Context, field g
 				return ec.fieldContext_Viewer_user(ctx, field)
 			case "organizations":
 				return ec.fieldContext_Viewer_organizations(ctx, field)
+			case "signableDocuments":
+				return ec.fieldContext_Viewer_signableDocuments(ctx, field)
+			case "signableDocument":
+				return ec.fieldContext_Viewer_signableDocument(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Viewer", field.Name)
 		},
@@ -43621,6 +44153,484 @@ func (ec *executionContext) fieldContext_Session_expiresAt(_ context.Context, fi
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SignDocumentPayload_documentVersionSignature(ctx context.Context, field graphql.CollectedField, obj *types.SignDocumentPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SignDocumentPayload_documentVersionSignature,
+		func(ctx context.Context) (any, error) {
+			return obj.DocumentVersionSignature, nil
+		},
+		nil,
+		ec.marshalNDocumentVersionSignature2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionSignature,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SignDocumentPayload_documentVersionSignature(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SignDocumentPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_DocumentVersionSignature_id(ctx, field)
+			case "documentVersion":
+				return ec.fieldContext_DocumentVersionSignature_documentVersion(ctx, field)
+			case "state":
+				return ec.fieldContext_DocumentVersionSignature_state(ctx, field)
+			case "signedBy":
+				return ec.fieldContext_DocumentVersionSignature_signedBy(ctx, field)
+			case "signedAt":
+				return ec.fieldContext_DocumentVersionSignature_signedAt(ctx, field)
+			case "requestedAt":
+				return ec.fieldContext_DocumentVersionSignature_requestedAt(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_DocumentVersionSignature_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_DocumentVersionSignature_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DocumentVersionSignature", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SignableDocument_id(ctx context.Context, field graphql.CollectedField, obj *types.SignableDocument) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SignableDocument_id,
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SignableDocument_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SignableDocument",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SignableDocument_title(ctx context.Context, field graphql.CollectedField, obj *types.SignableDocument) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SignableDocument_title,
+		func(ctx context.Context) (any, error) {
+			return obj.Title, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SignableDocument_title(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SignableDocument",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SignableDocument_description(ctx context.Context, field graphql.CollectedField, obj *types.SignableDocument) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SignableDocument_description,
+		func(ctx context.Context) (any, error) {
+			return obj.Description, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_SignableDocument_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SignableDocument",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SignableDocument_documentType(ctx context.Context, field graphql.CollectedField, obj *types.SignableDocument) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SignableDocument_documentType,
+		func(ctx context.Context) (any, error) {
+			return obj.DocumentType, nil
+		},
+		nil,
+		ec.marshalNDocumentType2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐDocumentType,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SignableDocument_documentType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SignableDocument",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type DocumentType does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SignableDocument_classification(ctx context.Context, field graphql.CollectedField, obj *types.SignableDocument) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SignableDocument_classification,
+		func(ctx context.Context) (any, error) {
+			return obj.Classification, nil
+		},
+		nil,
+		ec.marshalNDocumentClassification2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐDocumentClassification,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SignableDocument_classification(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SignableDocument",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type DocumentClassification does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SignableDocument_signed(ctx context.Context, field graphql.CollectedField, obj *types.SignableDocument) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SignableDocument_signed,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.SignableDocument().Signed(ctx, obj)
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SignableDocument_signed(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SignableDocument",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SignableDocument_versions(ctx context.Context, field graphql.CollectedField, obj *types.SignableDocument) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SignableDocument_versions,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.SignableDocument().Versions(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.DocumentVersionOrderBy), fc.Args["filter"].(*types.DocumentVersionFilter))
+		},
+		nil,
+		ec.marshalNDocumentVersionConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionConnection,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SignableDocument_versions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SignableDocument",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "edges":
+				return ec.fieldContext_DocumentVersionConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_DocumentVersionConnection_pageInfo(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DocumentVersionConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_SignableDocument_versions_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SignableDocument_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.SignableDocument) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SignableDocument_createdAt,
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		ec.marshalNDatetime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SignableDocument_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SignableDocument",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SignableDocument_updatedAt(ctx context.Context, field graphql.CollectedField, obj *types.SignableDocument) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SignableDocument_updatedAt,
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		ec.marshalNDatetime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SignableDocument_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SignableDocument",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SignableDocumentConnection_edges(ctx context.Context, field graphql.CollectedField, obj *types.SignableDocumentConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SignableDocumentConnection_edges,
+		func(ctx context.Context) (any, error) {
+			return obj.Edges, nil
+		},
+		nil,
+		ec.marshalNSignableDocumentEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐSignableDocumentEdgeᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SignableDocumentConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SignableDocumentConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cursor":
+				return ec.fieldContext_SignableDocumentEdge_cursor(ctx, field)
+			case "node":
+				return ec.fieldContext_SignableDocumentEdge_node(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type SignableDocumentEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SignableDocumentConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *types.SignableDocumentConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SignableDocumentConnection_pageInfo,
+		func(ctx context.Context) (any, error) {
+			return obj.PageInfo, nil
+		},
+		nil,
+		ec.marshalNPageInfo2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPageInfo,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SignableDocumentConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SignableDocumentConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SignableDocumentEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *types.SignableDocumentEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SignableDocumentEdge_cursor,
+		func(ctx context.Context) (any, error) {
+			return obj.Cursor, nil
+		},
+		nil,
+		ec.marshalNCursorKey2goᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SignableDocumentEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SignableDocumentEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type CursorKey does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SignableDocumentEdge_node(ctx context.Context, field graphql.CollectedField, obj *types.SignableDocumentEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SignableDocumentEdge_node,
+		func(ctx context.Context) (any, error) {
+			return obj.Node, nil
+		},
+		nil,
+		ec.marshalNSignableDocument2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐSignableDocument,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SignableDocumentEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SignableDocumentEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_SignableDocument_id(ctx, field)
+			case "title":
+				return ec.fieldContext_SignableDocument_title(ctx, field)
+			case "description":
+				return ec.fieldContext_SignableDocument_description(ctx, field)
+			case "documentType":
+				return ec.fieldContext_SignableDocument_documentType(ctx, field)
+			case "classification":
+				return ec.fieldContext_SignableDocument_classification(ctx, field)
+			case "signed":
+				return ec.fieldContext_SignableDocument_signed(ctx, field)
+			case "versions":
+				return ec.fieldContext_SignableDocument_versions(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_SignableDocument_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_SignableDocument_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type SignableDocument", field.Name)
 		},
 	}
 	return fc, nil
@@ -47785,6 +48795,8 @@ func (ec *executionContext) fieldContext_UpdateDocumentVersionPayload_documentVe
 				return ec.fieldContext_DocumentVersion_owner(ctx, field)
 			case "signatures":
 				return ec.fieldContext_DocumentVersion_signatures(ctx, field)
+			case "signed":
+				return ec.fieldContext_DocumentVersion_signed(ctx, field)
 			case "publishedAt":
 				return ec.fieldContext_DocumentVersion_publishedAt(ctx, field)
 			case "createdAt":
@@ -53613,6 +54625,114 @@ func (ec *executionContext) fieldContext_Viewer_organizations(ctx context.Contex
 	return fc, nil
 }
 
+func (ec *executionContext) _Viewer_signableDocuments(ctx context.Context, field graphql.CollectedField, obj *types.Viewer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Viewer_signableDocuments,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Viewer().SignableDocuments(ctx, obj, fc.Args["organizationId"].(gid.GID), fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.DocumentOrderBy))
+		},
+		nil,
+		ec.marshalNSignableDocumentConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐSignableDocumentConnection,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Viewer_signableDocuments(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Viewer",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "edges":
+				return ec.fieldContext_SignableDocumentConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_SignableDocumentConnection_pageInfo(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type SignableDocumentConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Viewer_signableDocuments_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Viewer_signableDocument(ctx context.Context, field graphql.CollectedField, obj *types.Viewer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Viewer_signableDocument,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Viewer().SignableDocument(ctx, obj, fc.Args["id"].(gid.GID))
+		},
+		nil,
+		ec.marshalOSignableDocument2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐSignableDocument,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Viewer_signableDocument(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Viewer",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_SignableDocument_id(ctx, field)
+			case "title":
+				return ec.fieldContext_SignableDocument_title(ctx, field)
+			case "description":
+				return ec.fieldContext_SignableDocument_description(ctx, field)
+			case "documentType":
+				return ec.fieldContext_SignableDocument_documentType(ctx, field)
+			case "classification":
+				return ec.fieldContext_SignableDocument_classification(ctx, field)
+			case "signed":
+				return ec.fieldContext_SignableDocument_signed(ctx, field)
+			case "versions":
+				return ec.fieldContext_SignableDocument_versions(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_SignableDocument_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_SignableDocument_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type SignableDocument", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Viewer_signableDocument_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) ___Directive_name(ctx context.Context, field graphql.CollectedField, obj *introspection.Directive) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -59287,6 +60407,33 @@ func (ec *executionContext) unmarshalInputExportFrameworkInput(ctx context.Conte
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputExportSignableDocumentVersionPDFInput(ctx context.Context, obj any) (types.ExportSignableDocumentVersionPDFInput, error) {
+	var it types.ExportSignableDocumentVersionPDFInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"documentVersionId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "documentVersionId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("documentVersionId"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DocumentVersionID = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputFrameworkOrder(ctx context.Context, obj any) (types.FrameworkOrderBy, error) {
 	var it types.FrameworkOrderBy
 	asMap := map[string]any{}
@@ -60321,6 +61468,33 @@ func (ec *executionContext) unmarshalInputSendSigningNotificationsInput(ctx cont
 				return it, err
 			}
 			it.OrganizationID = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputSignDocumentInput(ctx context.Context, obj any) (types.SignDocumentInput, error) {
+	var it types.SignDocumentInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"documentVersionId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "documentVersionId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("documentVersionId"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DocumentVersionID = data
 		}
 	}
 
@@ -69023,6 +70197,42 @@ func (ec *executionContext) _DocumentVersion(ctx context.Context, sel ast.Select
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "signed":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._DocumentVersion_signed(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "publishedAt":
 			out.Values[i] = ec._DocumentVersion_publishedAt(ctx, field, obj)
 		case "createdAt":
@@ -69752,6 +70962,45 @@ func (ec *executionContext) _ExportFrameworkPayload(ctx context.Context, sel ast
 			out.Values[i] = graphql.MarshalString("ExportFrameworkPayload")
 		case "exportJobId":
 			out.Values[i] = ec._ExportFrameworkPayload_exportJobId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var exportSignableDocumentVersionPDFPayloadImplementors = []string{"ExportSignableDocumentVersionPDFPayload"}
+
+func (ec *executionContext) _ExportSignableDocumentVersionPDFPayload(ctx context.Context, sel ast.SelectionSet, obj *types.ExportSignableDocumentVersionPDFPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, exportSignableDocumentVersionPDFPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ExportSignableDocumentVersionPDFPayload")
+		case "data":
+			out.Values[i] = ec._ExportSignableDocumentVersionPDFPayload_data(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -72215,9 +73464,23 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "signDocument":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_signDocument(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "exportDocumentVersionPDF":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_exportDocumentVersionPDF(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "exportSignableVersionDocumentPDF":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_exportSignableVersionDocumentPDF(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -75885,6 +77148,271 @@ func (ec *executionContext) _Session(ctx context.Context, sel ast.SelectionSet, 
 			}
 		case "expiresAt":
 			out.Values[i] = ec._Session_expiresAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var signDocumentPayloadImplementors = []string{"SignDocumentPayload"}
+
+func (ec *executionContext) _SignDocumentPayload(ctx context.Context, sel ast.SelectionSet, obj *types.SignDocumentPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, signDocumentPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SignDocumentPayload")
+		case "documentVersionSignature":
+			out.Values[i] = ec._SignDocumentPayload_documentVersionSignature(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var signableDocumentImplementors = []string{"SignableDocument"}
+
+func (ec *executionContext) _SignableDocument(ctx context.Context, sel ast.SelectionSet, obj *types.SignableDocument) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, signableDocumentImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SignableDocument")
+		case "id":
+			out.Values[i] = ec._SignableDocument_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "title":
+			out.Values[i] = ec._SignableDocument_title(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "description":
+			out.Values[i] = ec._SignableDocument_description(ctx, field, obj)
+		case "documentType":
+			out.Values[i] = ec._SignableDocument_documentType(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "classification":
+			out.Values[i] = ec._SignableDocument_classification(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "signed":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._SignableDocument_signed(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "versions":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._SignableDocument_versions(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "createdAt":
+			out.Values[i] = ec._SignableDocument_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "updatedAt":
+			out.Values[i] = ec._SignableDocument_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var signableDocumentConnectionImplementors = []string{"SignableDocumentConnection"}
+
+func (ec *executionContext) _SignableDocumentConnection(ctx context.Context, sel ast.SelectionSet, obj *types.SignableDocumentConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, signableDocumentConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SignableDocumentConnection")
+		case "edges":
+			out.Values[i] = ec._SignableDocumentConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._SignableDocumentConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var signableDocumentEdgeImplementors = []string{"SignableDocumentEdge"}
+
+func (ec *executionContext) _SignableDocumentEdge(ctx context.Context, sel ast.SelectionSet, obj *types.SignableDocumentEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, signableDocumentEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SignableDocumentEdge")
+		case "cursor":
+			out.Values[i] = ec._SignableDocumentEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "node":
+			out.Values[i] = ec._SignableDocumentEdge_node(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -81201,6 +82729,75 @@ func (ec *executionContext) _Viewer(ctx context.Context, sel ast.SelectionSet, o
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "signableDocuments":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Viewer_signableDocuments(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "signableDocument":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Viewer_signableDocument(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -84982,11 +86579,9 @@ func (ec *executionContext) marshalNDocumentVersionOrderField2goᚗproboᚗinc�
 
 var (
 	unmarshalNDocumentVersionOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐDocumentVersionOrderField = map[string]coredata.DocumentVersionOrderField{
-		"VERSION":    coredata.DocumentVersionOrderFieldVersion,
 		"CREATED_AT": coredata.DocumentVersionOrderFieldCreatedAt,
 	}
 	marshalNDocumentVersionOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐDocumentVersionOrderField = map[coredata.DocumentVersionOrderField]string{
-		coredata.DocumentVersionOrderFieldVersion:   "VERSION",
 		coredata.DocumentVersionOrderFieldCreatedAt: "CREATED_AT",
 	}
 )
@@ -85331,6 +86926,25 @@ func (ec *executionContext) marshalNExportFrameworkPayload2ᚖgoᚗproboᚗinc�
 		return graphql.Null
 	}
 	return ec._ExportFrameworkPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNExportSignableDocumentVersionPDFInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐExportSignableDocumentVersionPDFInput(ctx context.Context, v any) (types.ExportSignableDocumentVersionPDFInput, error) {
+	res, err := ec.unmarshalInputExportSignableDocumentVersionPDFInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNExportSignableDocumentVersionPDFPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐExportSignableDocumentVersionPDFPayload(ctx context.Context, sel ast.SelectionSet, v types.ExportSignableDocumentVersionPDFPayload) graphql.Marshaler {
+	return ec._ExportSignableDocumentVersionPDFPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNExportSignableDocumentVersionPDFPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐExportSignableDocumentVersionPDFPayload(ctx context.Context, sel ast.SelectionSet, v *types.ExportSignableDocumentVersionPDFPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ExportSignableDocumentVersionPDFPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNFramework2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐFramework(ctx context.Context, sel ast.SelectionSet, v types.Framework) graphql.Marshaler {
@@ -86159,14 +87773,16 @@ func (ec *executionContext) marshalNMembershipRole2goᚗproboᚗincᚋproboᚋpk
 
 var (
 	unmarshalNMembershipRole2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipRole = map[string]coredata.MembershipRole{
-		"OWNER":  coredata.MembershipRoleOwner,
-		"ADMIN":  coredata.MembershipRoleAdmin,
-		"VIEWER": coredata.MembershipRoleViewer,
+		"OWNER":    coredata.MembershipRoleOwner,
+		"ADMIN":    coredata.MembershipRoleAdmin,
+		"EMPLOYEE": coredata.MembershipRoleEmployee,
+		"VIEWER":   coredata.MembershipRoleViewer,
 	}
 	marshalNMembershipRole2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipRole = map[coredata.MembershipRole]string{
-		coredata.MembershipRoleOwner:  "OWNER",
-		coredata.MembershipRoleAdmin:  "ADMIN",
-		coredata.MembershipRoleViewer: "VIEWER",
+		coredata.MembershipRoleOwner:    "OWNER",
+		coredata.MembershipRoleAdmin:    "ADMIN",
+		coredata.MembershipRoleEmployee: "EMPLOYEE",
+		coredata.MembershipRoleViewer:   "VIEWER",
 	}
 )
 
@@ -87384,6 +89000,103 @@ func (ec *executionContext) marshalNSendSigningNotificationsPayload2ᚖgoᚗprob
 		return graphql.Null
 	}
 	return ec._SendSigningNotificationsPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNSignDocumentInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐSignDocumentInput(ctx context.Context, v any) (types.SignDocumentInput, error) {
+	res, err := ec.unmarshalInputSignDocumentInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNSignDocumentPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐSignDocumentPayload(ctx context.Context, sel ast.SelectionSet, v types.SignDocumentPayload) graphql.Marshaler {
+	return ec._SignDocumentPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNSignDocumentPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐSignDocumentPayload(ctx context.Context, sel ast.SelectionSet, v *types.SignDocumentPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._SignDocumentPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNSignableDocument2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐSignableDocument(ctx context.Context, sel ast.SelectionSet, v *types.SignableDocument) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._SignableDocument(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNSignableDocumentConnection2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐSignableDocumentConnection(ctx context.Context, sel ast.SelectionSet, v types.SignableDocumentConnection) graphql.Marshaler {
+	return ec._SignableDocumentConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNSignableDocumentConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐSignableDocumentConnection(ctx context.Context, sel ast.SelectionSet, v *types.SignableDocumentConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._SignableDocumentConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNSignableDocumentEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐSignableDocumentEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.SignableDocumentEdge) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNSignableDocumentEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐSignableDocumentEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNSignableDocumentEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐSignableDocumentEdge(ctx context.Context, sel ast.SelectionSet, v *types.SignableDocumentEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._SignableDocumentEdge(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNSlackConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐSlackConnection(ctx context.Context, sel ast.SelectionSet, v *types.SlackConnection) graphql.Marshaler {
@@ -91365,6 +93078,13 @@ var (
 		coredata.SAMLEnforcementPolicyRequired: "REQUIRED",
 	}
 )
+
+func (ec *executionContext) marshalOSignableDocument2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐSignableDocument(ctx context.Context, sel ast.SelectionSet, v *types.SignableDocument) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._SignableDocument(ctx, sel, v)
+}
 
 func (ec *executionContext) unmarshalOSnapshotOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐSnapshotOrderBy(ctx context.Context, v any) (*types.SnapshotOrderBy, error) {
 	if v == nil {

@@ -5,8 +5,8 @@ import {
   useRouteError,
 } from "react-router";
 import { MainLayout } from "./layouts/MainLayout";
+import { EmployeeLayout } from "./layouts/EmployeeLayout";
 import { AuthLayout, CenteredLayout, CenteredLayoutSkeleton } from "@probo/ui";
-import { Fragment } from "react";
 import {
   relayEnvironment,
   UnAuthenticatedError,
@@ -36,6 +36,11 @@ import { continualImprovementRoutes } from "./routes/continualImprovementRoutes.
 import { processingActivityRoutes } from "./routes/processingActivityRoutes.ts";
 import { lazy } from "@probo/react-lazy";
 import { loaderFromQueryLoader, routeFromAppRoute, withQueryRef, type AppRoute } from "@probo/routes";
+import { employeeDocumentsQuery } from "./pages/organizations/employee/EmployeeDocumentsPage";
+import { employeeDocumentSignatureQuery } from "./pages/organizations/employee/EmployeeDocumentSignaturePage";
+import { Role } from "@probo/helpers";
+import { PermissionsContext } from "./providers/PermissionsContext";
+import { use } from "react";
 
 /**
  * Top level error boundary
@@ -118,16 +123,53 @@ const routes = [
     ],
   },
   {
+    path: "/organizations/:organizationId/employee",
+    Component: EmployeeLayout,
+    ErrorBoundary: ErrorBoundary,
+    children: [
+      {
+        path: "",
+        Fallback: PageSkeleton,
+        loader: loaderFromQueryLoader(
+          ({ organizationId }) =>
+            loadQuery(relayEnvironment, employeeDocumentsQuery, {
+              organizationId: organizationId!,
+            })
+        ),
+        Component: withQueryRef(lazy(
+          () => import("./pages/organizations/employee/EmployeeDocumentsPage")
+        )),
+      },
+      {
+        path: ":documentId",
+        Fallback: PageSkeleton,
+        ErrorBoundary: ErrorBoundary,
+        loader: loaderFromQueryLoader(
+          ({ documentId }) =>
+            loadQuery(relayEnvironment, employeeDocumentSignatureQuery, {
+              documentId: documentId!,
+            })
+        ),
+        Component: withQueryRef(lazy(
+          () => import("./pages/organizations/employee/EmployeeDocumentSignaturePage")
+        )),
+      },
+    ],
+  },
+  {
     path: "/organizations/:organizationId",
     Component: MainLayout,
     ErrorBoundary: ErrorBoundary,
     children: [
       {
         path: "",
-        loader: () => {
-          throw redirect(`tasks`);
+        Component: () => {
+          const { role } = use(PermissionsContext);
+          if (role === Role.EMPLOYEE) {
+            return <Navigate to="employee" />;
+          }
+          return <Navigate to="tasks" />;
         },
-        Component: Fragment,
       },
       {
         path: "settings",

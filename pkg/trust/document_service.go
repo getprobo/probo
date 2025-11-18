@@ -46,7 +46,8 @@ func (s *DocumentService) ListVersions(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			return documentVersions.LoadByDocumentID(ctx, conn, s.svc.scope, documentID, cursor)
+			filter := coredata.NewDocumentVersionFilter()
+			return documentVersions.LoadByDocumentID(ctx, conn, s.svc.scope, documentID, cursor, filter)
 		},
 	)
 

@@ -299,6 +299,13 @@ function UserDropdown({ organizationId }: { organizationId: string }) {
           label={__("API Keys")}
         />
       )}
+      {isAuthorized("Organization", "listSignableDocuments") && (
+        <UserDropdownItem
+          to={`/organizations/${organizationId}/employee`}
+          icon={IconPageTextLine}
+          label={__("My Signatures")}
+        />
+      )}
       <UserDropdownItem
         to="mailto:support@getprobo.com"
         icon={IconCircleQuestionmark}
@@ -364,7 +371,6 @@ function OrganizationSelector({
       try {
         setIsLoading(true);
 
-        // Fetch organizations and invitations in parallel
         const [orgsResponse, invitationsResponse] = await Promise.all([
           fetch("/connect/organizations", { credentials: "include" }),
           fetch("/connect/invitations", { credentials: "include" }),

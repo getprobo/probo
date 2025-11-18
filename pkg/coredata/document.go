@@ -124,6 +124,60 @@ LIMIT 1;
 	return nil
 }
 
+func (p *Document) LoadByIDWithFilter(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	documentID gid.GID,
+	filter *DocumentFilter,
+) error {
+	q := `
+SELECT
+    id,
+    organization_id,
+    owner_id,
+    title,
+    document_type,
+    classification,
+    current_published_version,
+    trust_center_visibility,
+    created_at,
+    updated_at
+FROM
+    documents
+WHERE
+    %s
+    AND deleted_at IS NULL
+    AND id = @document_id
+    AND %s
+LIMIT 1;
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"document_id": documentID}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query documents: %w", err)
+	}
+
+	document, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Document])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return &ErrDocumentNotFound{Identifier: documentID.String()}
+		}
+
+		return fmt.Errorf("cannot collect document: %w", err)
+	}
+
+	*p = document
+
+	return nil
+}
+
 func (p *Documents) CountByOrganizationID(
 	ctx context.Context,
 	conn pg.Conn,
@@ -400,28 +454,17 @@ func (p *Documents) CountByControlID(
 	filter *DocumentFilter,
 ) (int, error) {
 	q := `
-WITH plcs AS (
-	SELECT
-		p.id,
-		p.tenant_id,
-		p.search_vector,
-		p.trust_center_visibility,
-		p.deleted_at
-	FROM
-		documents p
-	INNER JOIN
-		controls_documents cp ON p.id = cp.document_id
-	WHERE
-		cp.control_id = @control_id
+WITH scoped_documents AS (
+	SELECT *
+	FROM documents
+	WHERE %s
+		AND deleted_at IS NULL
+		AND %s
 )
-SELECT
-	COUNT(id)
-FROM
-	plcs
-WHERE
-	%s
-	AND deleted_at IS NULL
-	AND %s
+SELECT COUNT(scoped_documents.id)
+FROM scoped_documents
+INNER JOIN controls_documents cp ON scoped_documents.id = cp.document_id
+WHERE cp.control_id = @control_id
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
@@ -448,46 +491,28 @@ func (p *Documents) LoadByControlID(
 	filter *DocumentFilter,
 ) error {
 	q := `
-WITH plcs AS (
-	SELECT
-		p.id,
-		p.tenant_id,
-		p.search_vector,
-		p.organization_id,
-		p.owner_id,
-		p.title,
-		p.document_type,
-		p.classification,
-		p.current_published_version,
-		p.trust_center_visibility,
-		p.created_at,
-		p.updated_at,
-		p.deleted_at
-	FROM
-		documents p
-	INNER JOIN
-		controls_documents cp ON p.id = cp.document_id
-	WHERE
-		cp.control_id = @control_id
+WITH scoped_documents AS (
+	SELECT *
+	FROM documents
+	WHERE %s
+		AND deleted_at IS NULL
+		AND %s
+		AND %s
 )
 SELECT
-	id,
-	organization_id,
-	owner_id,
-	title,
-	document_type,
-	classification,
-	current_published_version,
-	trust_center_visibility,
-	created_at,
-	updated_at
-FROM
-	plcs
-WHERE
-	%s
-	AND deleted_at IS NULL
-	AND %s
-	AND %s
+	scoped_documents.id,
+	scoped_documents.organization_id,
+	scoped_documents.owner_id,
+	scoped_documents.title,
+	scoped_documents.document_type,
+	scoped_documents.classification,
+	scoped_documents.current_published_version,
+	scoped_documents.trust_center_visibility,
+	scoped_documents.created_at,
+	scoped_documents.updated_at
+FROM scoped_documents
+INNER JOIN controls_documents cp ON scoped_documents.id = cp.document_id
+WHERE cp.control_id = @control_id
 `
 	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
@@ -519,28 +544,17 @@ func (p *Documents) CountByRiskID(
 	filter *DocumentFilter,
 ) (int, error) {
 	q := `
-WITH plcs AS (
-	SELECT
-		p.id,
-		p.tenant_id,
-		p.search_vector,
-		p.trust_center_visibility,
-		p.deleted_at
-	FROM
-		documents p
-	INNER JOIN
-		risks_documents rp ON p.id = rp.document_id
-	WHERE
-		rp.risk_id = @risk_id
+WITH scoped_documents AS (
+	SELECT *
+	FROM documents
+	WHERE %s
+		AND deleted_at IS NULL
+		AND %s
 )
-SELECT
-	COUNT(id)
-FROM
-	plcs
-WHERE
-	%s
-	AND deleted_at IS NULL
-	AND %s
+SELECT COUNT(scoped_documents.id)
+FROM scoped_documents
+INNER JOIN risks_documents rp ON scoped_documents.id = rp.document_id
+WHERE rp.risk_id = @risk_id
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
@@ -567,46 +581,28 @@ func (p *Documents) LoadByRiskID(
 	filter *DocumentFilter,
 ) error {
 	q := `
-WITH plcs AS (
-	SELECT
-		p.id,
-		p.tenant_id,
-		p.organization_id,
-		p.owner_id,
-		p.title,
-		p.document_type,
-		p.classification,
-		p.current_published_version,
-		p.trust_center_visibility,
-		p.created_at,
-		p.updated_at,
-		p.search_vector,
-		p.deleted_at
-	FROM
-		documents p
-	INNER JOIN
-		risks_documents rp ON p.id = rp.document_id
-	WHERE
-		rp.risk_id = @risk_id
+WITH scoped_documents AS (
+	SELECT *
+	FROM documents
+	WHERE %s
+		AND deleted_at IS NULL
+		AND %s
+		AND %s
 )
 SELECT
-	id,
-	organization_id,
-	owner_id,
-	title,
-	document_type,
-	classification,
-	current_published_version,
-	trust_center_visibility,
-	created_at,
-	updated_at
-FROM
-	plcs
-WHERE
-	%s
-	AND deleted_at IS NULL
-	AND %s
-	AND %s
+	scoped_documents.id,
+	scoped_documents.organization_id,
+	scoped_documents.owner_id,
+	scoped_documents.title,
+	scoped_documents.document_type,
+	scoped_documents.classification,
+	scoped_documents.current_published_version,
+	scoped_documents.trust_center_visibility,
+	scoped_documents.created_at,
+	scoped_documents.updated_at
+FROM scoped_documents
+INNER JOIN risks_documents rp ON scoped_documents.id = rp.document_id
+WHERE rp.risk_id = @risk_id
 `
 	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
@@ -652,4 +648,62 @@ UPDATE documents SET deleted_at = @deleted_at WHERE %s AND id = ANY(@document_id
 
 	_, err := conn.Exec(ctx, q, args)
 	return err
+}
+
+func (p *Document) IsLastSignableVersionSignedByUserEmail(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	documentID gid.GID,
+	userEmail string,
+) (bool, error) {
+	q := `
+WITH last_signable_version AS (
+	SELECT
+		d.id AS document_id,
+		d.tenant_id,
+		dv.version_number,
+		dvs.state
+	FROM documents d
+	INNER JOIN document_versions dv ON dv.document_id = d.id
+	INNER JOIN document_version_signatures dvs ON dvs.document_version_id = dv.id
+	INNER JOIN peoples p ON dvs.signed_by = p.id
+	WHERE d.id = @document_id
+		AND p.primary_email_address = @user_email
+		AND dv.version_number = (
+			SELECT MAX(dv2.version_number)
+			FROM document_versions dv2
+			INNER JOIN document_version_signatures dvs2 ON dvs2.document_version_id = dv2.id
+			INNER JOIN peoples p2 ON dvs2.signed_by = p2.id
+			WHERE dv2.document_id = d.id
+				AND p2.primary_email_address = @user_email
+		)
+)
+SELECT EXISTS (
+	SELECT 1
+	FROM last_signable_version
+	WHERE %s
+		AND state = 'SIGNED'
+) AS signed
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"document_id": documentID,
+		"user_email":  userEmail,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return false, fmt.Errorf("cannot query document signed status: %w", err)
+	}
+
+	signed, err := pgx.CollectOneRow(rows, pgx.RowTo[bool])
+	if err != nil {
+		return false, fmt.Errorf("cannot collect signed status: %w", err)
+	}
+
+	return signed, nil
 }

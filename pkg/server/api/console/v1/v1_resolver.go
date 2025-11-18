@@ -714,7 +714,9 @@ func (r *documentResolver) Versions(ctx context.Context, obj *types.Document, fi
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := prb.Documents.ListVersions(ctx, obj.ID, cursor)
+	versionFilter := coredata.NewDocumentVersionFilter()
+
+	page, err := prb.Documents.ListVersions(ctx, obj.ID, cursor, versionFilter)
 	if err != nil {
 		panic(fmt.Errorf("cannot list document versions: %w", err))
 	}
@@ -785,7 +787,7 @@ func (r *documentConnectionResolver) TotalCount(ctx context.Context, obj *types.
 
 // Document is the resolver for the document field.
 func (r *documentVersionResolver) Document(ctx context.Context, obj *types.DocumentVersion) (*types.Document, error) {
-	r.MustBeAuthorized(ctx, obj.ID, authz.ActionDocument)
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetDocument)
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -860,6 +862,24 @@ func (r *documentVersionResolver) Signatures(ctx context.Context, obj *types.Doc
 	}
 
 	return types.NewDocumentVersionSignatureConnection(page), nil
+}
+
+// Signed is the resolver for the signed field.
+func (r *documentVersionResolver) Signed(ctx context.Context, obj *types.DocumentVersion) (bool, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetSigned)
+
+	user := UserFromContext(ctx)
+	if user == nil {
+		panic(fmt.Errorf("user not found in context"))
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+	signed, err := prb.Documents.IsVersionSignedByUserEmail(ctx, obj.ID, user.EmailAddress)
+	if err != nil {
+		panic(fmt.Errorf("cannot check if document version is signed: %w", err))
+	}
+
+	return signed, nil
 }
 
 // DocumentVersion is the resolver for the documentVersion field.
@@ -3551,6 +3571,31 @@ func (r *mutationResolver) CancelSignatureRequest(ctx context.Context, input typ
 	}, nil
 }
 
+// SignDocument is the resolver for the signDocument field.
+func (r *mutationResolver) SignDocument(ctx context.Context, input types.SignDocumentInput) (*types.SignDocumentPayload, error) {
+	r.MustBeAuthorized(ctx, input.DocumentVersionID, authz.ActionSignDocument)
+
+	user := UserFromContext(ctx)
+	if user == nil {
+		panic(fmt.Errorf("user not found in context"))
+	}
+
+	prb := r.ProboService(ctx, input.DocumentVersionID.TenantID())
+
+	documentVersionSignature, err := prb.Documents.SignDocumentVersionByEmail(ctx, input.DocumentVersionID, user.EmailAddress)
+	if err != nil {
+		var errAlreadySigned *coredata.ErrDocumentVersionSignatureAlreadySigned
+		if errors.As(err, &errAlreadySigned) {
+			return nil, gqlutils.Conflict(errAlreadySigned)
+		}
+		panic(fmt.Errorf("cannot sign document: %w", err))
+	}
+
+	return &types.SignDocumentPayload{
+		DocumentVersionSignature: types.NewDocumentVersionSignature(documentVersionSignature),
+	}, nil
+}
+
 // ExportDocumentVersionPDF is the resolver for the exportDocumentVersionPDF field.
 func (r *mutationResolver) ExportDocumentVersionPDF(ctx context.Context, input types.ExportDocumentVersionPDFInput) (*types.ExportDocumentVersionPDFPayload, error) {
 	r.MustBeAuthorized(ctx, input.DocumentVersionID, authz.ActionExportDocumentVersionPDF)
@@ -3569,6 +3614,49 @@ func (r *mutationResolver) ExportDocumentVersionPDF(ctx context.Context, input t
 	}
 
 	return &types.ExportDocumentVersionPDFPayload{
+		Data: fmt.Sprintf("data:application/pdf;base64,%s", base64.StdEncoding.EncodeToString(pdf)),
+	}, nil
+}
+
+// ExportSignableVersionDocumentPDF is the resolver for the exportSignableVersionDocumentPDF field.
+func (r *mutationResolver) ExportSignableVersionDocumentPDF(ctx context.Context, input types.ExportSignableDocumentVersionPDFInput) (*types.ExportSignableDocumentVersionPDFPayload, error) {
+	r.MustBeAuthorized(ctx, input.DocumentVersionID, authz.ActionExportSignableVersionDocumentPDF)
+
+	prb := r.ProboService(ctx, input.DocumentVersionID.TenantID())
+
+	documentVersion, err := prb.Documents.GetVersion(ctx, input.DocumentVersionID)
+	if err != nil {
+		panic(fmt.Errorf("cannot get document version: %w", err))
+	}
+
+	user := UserFromContext(ctx)
+	if user == nil {
+		panic(fmt.Errorf("user not found in context"))
+	}
+
+	documentFilter := coredata.NewDocumentFilter(nil).WithUserEmail(&user.EmailAddress)
+
+	_, err = prb.Documents.GetWithFilter(ctx, documentVersion.DocumentID, documentFilter)
+	if err != nil {
+		var errNotFound *coredata.ErrDocumentNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, gqlutils.NotFound(errNotFound)
+		}
+		panic(fmt.Errorf("cannot get signable document: %w", err))
+	}
+
+	options := probo.ExportPDFOptions{
+		WithSignatures: false,
+		WithWatermark:  true,
+		WatermarkEmail: &user.EmailAddress,
+	}
+
+	pdf, err := prb.Documents.ExportPDF(ctx, input.DocumentVersionID, options)
+	if err != nil {
+		panic(fmt.Errorf("cannot export signable document PDF: %w", err))
+	}
+
+	return &types.ExportSignableDocumentVersionPDFPayload{
 		Data: fmt.Sprintf("data:application/pdf;base64,%s", base64.StdEncoding.EncodeToString(pdf)),
 	}, nil
 }
@@ -5994,6 +6082,59 @@ func (r *sAMLConfigurationResolver) TestLoginURL(ctx context.Context, obj *types
 	return fmt.Sprintf("%s/connect/saml/login/%s", parts[0], obj.ID), nil
 }
 
+// Signed is the resolver for the signed field.
+func (r *signableDocumentResolver) Signed(ctx context.Context, obj *types.SignableDocument) (bool, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetSigned)
+
+	user := UserFromContext(ctx)
+	if user == nil {
+		panic(fmt.Errorf("user not found in context"))
+	}
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	signed, err := prb.Documents.IsSigned(ctx, obj.ID, user.EmailAddress)
+	if err != nil {
+		panic(fmt.Errorf("cannot check if document is signed: %w", err))
+	}
+
+	return signed, nil
+}
+
+// Versions is the resolver for the versions field.
+func (r *signableDocumentResolver) Versions(ctx context.Context, obj *types.SignableDocument, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentVersionOrderBy, filter *types.DocumentVersionFilter) (*types.DocumentVersionConnection, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListSignableDocumentVersion)
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.DocumentVersionOrderField]{
+		Field:     coredata.DocumentVersionOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.DocumentVersionOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	user := UserFromContext(ctx)
+	if user == nil {
+		panic(fmt.Errorf("user not found in context"))
+	}
+
+	versionFilter := coredata.NewDocumentVersionFilter().WithUserEmail(&user.EmailAddress)
+
+	page, err := prb.Documents.ListVersions(ctx, obj.ID, cursor, versionFilter)
+	if err != nil {
+		panic(fmt.Errorf("cannot list signable document versions: %w", err))
+	}
+
+	return types.NewDocumentVersionConnection(page), nil
+}
+
 // Organization is the resolver for the organization field.
 func (r *snapshotResolver) Organization(ctx context.Context, obj *types.Snapshot) (*types.Organization, error) {
 	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetOrganization)
@@ -6349,7 +6490,7 @@ func (r *trustCenterAccessResolver) AvailableDocumentAccesses(ctx context.Contex
 
 // Document is the resolver for the document field.
 func (r *trustCenterDocumentAccessResolver) Document(ctx context.Context, obj *types.TrustCenterDocumentAccess) (*types.Document, error) {
-	r.MustBeAuthorized(ctx, obj.TrustCenterAccessID, authz.ActionDocument)
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGet)
 
 	if obj.DocumentID == nil {
 		return nil, nil
@@ -6979,6 +7120,85 @@ func (r *viewerResolver) Organizations(ctx context.Context, obj *types.Viewer, f
 	return types.NewOrganizationConnection(page), nil
 }
 
+// SignableDocuments is the resolver for the signableDocuments field.
+func (r *viewerResolver) SignableDocuments(ctx context.Context, obj *types.Viewer, organizationID gid.GID, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy) (*types.SignableDocumentConnection, error) {
+	r.MustBeAuthorized(ctx, organizationID, authz.ActionListSignableDocuments)
+
+	prb := r.ProboService(ctx, organizationID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.DocumentOrderField]{
+		Field:     coredata.DocumentOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.DocumentOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	user := UserFromContext(ctx)
+	if user == nil {
+		panic(fmt.Errorf("user not found in context"))
+	}
+
+	documentFilter := coredata.NewDocumentFilter(nil).WithUserEmail(&user.EmailAddress)
+
+	documentsPage, err := prb.Documents.ListByOrganizationID(ctx, organizationID, cursor, documentFilter)
+	if err != nil {
+		panic(fmt.Errorf("cannot list organization signable documents: %w", err))
+	}
+
+	signableDocuments := make([]*types.SignableDocument, len(documentsPage.Data))
+	for i, doc := range documentsPage.Data {
+		signableDocuments[i] = &types.SignableDocument{
+			ID:             doc.ID,
+			Title:          doc.Title,
+			DocumentType:   doc.DocumentType,
+			Classification: doc.Classification,
+			CreatedAt:      doc.CreatedAt,
+			UpdatedAt:      doc.UpdatedAt,
+		}
+	}
+
+	page := page.NewPage(signableDocuments, documentsPage.Cursor)
+
+	return types.NewSignableDocumentConnection(page), nil
+}
+
+// SignableDocument is the resolver for the signableDocument field.
+func (r *viewerResolver) SignableDocument(ctx context.Context, obj *types.Viewer, id gid.GID) (*types.SignableDocument, error) {
+	r.MustBeAuthorized(ctx, id, authz.ActionGetSignableDocument)
+
+	prb := r.ProboService(ctx, id.TenantID())
+
+	user := UserFromContext(ctx)
+	if user == nil {
+		panic(fmt.Errorf("user not found in context"))
+	}
+
+	documentFilter := coredata.NewDocumentFilter(nil).WithUserEmail(&user.EmailAddress)
+	document, err := prb.Documents.GetWithFilter(ctx, id, documentFilter)
+	if err != nil {
+		var errNotFound *coredata.ErrDocumentNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, gqlutils.NotFound(errNotFound)
+		}
+		panic(fmt.Errorf("cannot get signable document: %w", err))
+	}
+
+	return &types.SignableDocument{
+		ID:             document.ID,
+		Title:          document.Title,
+		DocumentType:   document.DocumentType,
+		Classification: document.Classification,
+		CreatedAt:      document.CreatedAt,
+		UpdatedAt:      document.UpdatedAt,
+	}, nil
+}
+
 // Asset returns schema.AssetResolver implementation.
 func (r *Resolver) Asset() schema.AssetResolver { return &assetResolver{r} }
 
@@ -7144,6 +7364,11 @@ func (r *Resolver) SAMLConfiguration() schema.SAMLConfigurationResolver {
 	return &sAMLConfigurationResolver{r}
 }
 
+// SignableDocument returns schema.SignableDocumentResolver implementation.
+func (r *Resolver) SignableDocument() schema.SignableDocumentResolver {
+	return &signableDocumentResolver{r}
+}
+
 // Snapshot returns schema.SnapshotResolver implementation.
 func (r *Resolver) Snapshot() schema.SnapshotResolver { return &snapshotResolver{r} }
 
@@ -7277,6 +7502,7 @@ type reportResolver struct{ *Resolver }
 type riskResolver struct{ *Resolver }
 type riskConnectionResolver struct{ *Resolver }
 type sAMLConfigurationResolver struct{ *Resolver }
+type signableDocumentResolver struct{ *Resolver }
 type snapshotResolver struct{ *Resolver }
 type snapshotConnectionResolver struct{ *Resolver }
 type taskResolver struct{ *Resolver }

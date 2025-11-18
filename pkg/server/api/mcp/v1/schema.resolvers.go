@@ -1595,7 +1595,7 @@ func (r *Resolver) ListDocumentVersionsTool(ctx context.Context, req *mcp.CallTo
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 	svc := r.ProboService(ctx, input.DocumentID)
 
-	page, err := svc.Documents.ListVersions(ctx, input.DocumentID, cursor)
+	page, err := svc.Documents.ListVersions(ctx, input.DocumentID, cursor, coredata.NewDocumentVersionFilter())
 	if err != nil {
 		panic(fmt.Errorf("cannot list document versions: %w", err))
 	}

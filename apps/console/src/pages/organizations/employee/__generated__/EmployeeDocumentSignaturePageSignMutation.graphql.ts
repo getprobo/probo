@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<9aaf763355340403cfd0c9666b61be19>>
+ * @generated SignedSource<<ea70fd099349ca45cb2a847b06e28694>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,26 +9,24 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
-export type MembershipRole = "ADMIN" | "EMPLOYEE" | "OWNER" | "VIEWER";
-export type UpdateMembershipInput = {
-  memberId: string;
-  organizationId: string;
-  role: MembershipRole;
+export type DocumentVersionSignatureState = "REQUESTED" | "SIGNED";
+export type SignDocumentInput = {
+  documentVersionId: string;
 };
-export type MembersSettingsTab_UpdateMembershipMutation$variables = {
-  input: UpdateMembershipInput;
+export type EmployeeDocumentSignaturePageSignMutation$variables = {
+  input: SignDocumentInput;
 };
-export type MembersSettingsTab_UpdateMembershipMutation$data = {
-  readonly updateMembership: {
-    readonly membership: {
+export type EmployeeDocumentSignaturePageSignMutation$data = {
+  readonly signDocument: {
+    readonly documentVersionSignature: {
       readonly id: string;
-      readonly role: MembershipRole;
+      readonly state: DocumentVersionSignatureState;
     };
   };
 };
-export type MembersSettingsTab_UpdateMembershipMutation = {
-  response: MembersSettingsTab_UpdateMembershipMutation$data;
-  variables: MembersSettingsTab_UpdateMembershipMutation$variables;
+export type EmployeeDocumentSignaturePageSignMutation = {
+  response: EmployeeDocumentSignaturePageSignMutation$data;
+  variables: EmployeeDocumentSignaturePageSignMutation$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -49,17 +47,17 @@ v1 = [
         "variableName": "input"
       }
     ],
-    "concreteType": "UpdateMembershipPayload",
+    "concreteType": "SignDocumentPayload",
     "kind": "LinkedField",
-    "name": "updateMembership",
+    "name": "signDocument",
     "plural": false,
     "selections": [
       {
         "alias": null,
         "args": null,
-        "concreteType": "Membership",
+        "concreteType": "DocumentVersionSignature",
         "kind": "LinkedField",
-        "name": "membership",
+        "name": "documentVersionSignature",
         "plural": false,
         "selections": [
           {
@@ -73,7 +71,7 @@ v1 = [
             "alias": null,
             "args": null,
             "kind": "ScalarField",
-            "name": "role",
+            "name": "state",
             "storageKey": null
           }
         ],
@@ -88,7 +86,7 @@ return {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Fragment",
     "metadata": null,
-    "name": "MembersSettingsTab_UpdateMembershipMutation",
+    "name": "EmployeeDocumentSignaturePageSignMutation",
     "selections": (v1/*: any*/),
     "type": "Mutation",
     "abstractKey": null
@@ -97,20 +95,20 @@ return {
   "operation": {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
-    "name": "MembersSettingsTab_UpdateMembershipMutation",
+    "name": "EmployeeDocumentSignaturePageSignMutation",
     "selections": (v1/*: any*/)
   },
   "params": {
-    "cacheID": "675437becfdd9cc5ea20d2b40b9ace37",
+    "cacheID": "dfdd778fc4b0cfc9c007e4c29258ea96",
     "id": null,
     "metadata": {},
-    "name": "MembersSettingsTab_UpdateMembershipMutation",
+    "name": "EmployeeDocumentSignaturePageSignMutation",
     "operationKind": "mutation",
-    "text": "mutation MembersSettingsTab_UpdateMembershipMutation(\n  $input: UpdateMembershipInput!\n) {\n  updateMembership(input: $input) {\n    membership {\n      id\n      role\n    }\n  }\n}\n"
+    "text": "mutation EmployeeDocumentSignaturePageSignMutation(\n  $input: SignDocumentInput!\n) {\n  signDocument(input: $input) {\n    documentVersionSignature {\n      id\n      state\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "29ead2b06842cc8ed98bbea1cf6c1bed";
+(node as any).hash = "b91674332a1914e270e4fb811ccfd479";
 
 export default node;

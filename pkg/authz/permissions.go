@@ -27,10 +27,11 @@ type (
 )
 
 const (
-	RoleOwner  Role = "OWNER"
-	RoleAdmin  Role = "ADMIN"
-	RoleViewer Role = "VIEWER"
-	RoleFull   Role = "FULL"
+	RoleOwner    Role = "OWNER"
+	RoleAdmin    Role = "ADMIN"
+	RoleEmployee Role = "EMPLOYEE"
+	RoleViewer   Role = "VIEWER"
+	RoleFull     Role = "FULL"
 )
 
 const (
@@ -43,6 +44,7 @@ const (
 	ActionGetBusinessOwner              Action = "getBusinessOwner"
 	ActionGetCustomDomain               Action = "getCustomDomain"
 	ActionGetDataPrivacyAgreement       Action = "getDataPrivacyAgreement"
+	ActionGetDocument                   Action = "getDocument"
 	ActionGetFile                       Action = "getFile"
 	ActionGetFileUrl                    Action = "getFileUrl"
 	ActionGetFramework                  Action = "getFramework"
@@ -53,6 +55,8 @@ const (
 	ActionGetOrganization               Action = "getOrganization"
 	ActionGetOwner                      Action = "getOwner"
 	ActionGetSecurityOwner              Action = "getSecurityOwner"
+	ActionGetSigned                     Action = "getSigned"
+	ActionGetSignableDocument           Action = "getSignableDocument"
 	ActionGetSnapshot                   Action = "getSnapshot"
 	ActionGetTask                       Action = "getTask"
 	ActionGetTrustCenter                Action = "getTrustCenter"
@@ -62,7 +66,6 @@ const (
 	ActionActiveCount               Action = "activeCount"
 	ActionAudit                     Action = "audit"
 	ActionAvailableDocumentAccesses Action = "availableDocumentAccesses"
-	ActionDocument                  Action = "document"
 	ActionDocumentVersion           Action = "documentVersion"
 	ActionDownloadUrl               Action = "downloadUrl"
 	ActionMemberships               Action = "memberships"
@@ -77,36 +80,38 @@ const (
 	ActionTotalCount                Action = "totalCount"
 	ActionTrustCenterFile           Action = "trustCenterFile"
 
-	ActionListAccesses              Action = "listAccesses"
-	ActionListAssets                Action = "listAssets"
-	ActionListAudits                Action = "listAudits"
-	ActionListComplianceReports     Action = "listComplianceReports"
-	ActionListContacts              Action = "listContacts"
-	ActionListContinualImprovements Action = "listContinualImprovements"
-	ActionListControls              Action = "listControls"
-	ActionListData                  Action = "listData"
-	ActionListDocuments             Action = "listDocuments"
-	ActionListEvidences             Action = "listEvidences"
-	ActionListFrameworks            Action = "listFrameworks"
-	ActionListInvitations           Action = "listInvitations"
-	ActionListMeasures              Action = "listMeasures"
-	ActionListMeetings              Action = "listMeetings"
-	ActionListMembers               Action = "listMembers"
-	ActionListNonconformities       Action = "listNonconformities"
-	ActionListObligations           Action = "listObligations"
-	ActionListPeople                Action = "listPeople"
-	ActionListProcessingActivities  Action = "listProcessingActivities"
-	ActionListReferences            Action = "listReferences"
-	ActionListRiskAssessments       Action = "listRiskAssessments"
-	ActionListRisks                 Action = "listRisks"
-	ActionListSAMLConfigurations    Action = "listSAMLConfigurations"
-	ActionListServices              Action = "listServices"
-	ActionListSlackConnections      Action = "listSlackConnections"
-	ActionListSnapshots             Action = "listSnapshots"
-	ActionListTasks                 Action = "listTasks"
-	ActionListTrustCenterFiles      Action = "listTrustCenterFiles"
-	ActionListVendors               Action = "listVendors"
-	ActionListVersions              Action = "listVersions"
+	ActionListAccesses                Action = "listAccesses"
+	ActionListAssets                  Action = "listAssets"
+	ActionListAudits                  Action = "listAudits"
+	ActionListComplianceReports       Action = "listComplianceReports"
+	ActionListContacts                Action = "listContacts"
+	ActionListContinualImprovements   Action = "listContinualImprovements"
+	ActionListControls                Action = "listControls"
+	ActionListData                    Action = "listData"
+	ActionListDocuments               Action = "listDocuments"
+	ActionListEvidences               Action = "listEvidences"
+	ActionListFrameworks              Action = "listFrameworks"
+	ActionListInvitations             Action = "listInvitations"
+	ActionListMeasures                Action = "listMeasures"
+	ActionListMeetings                Action = "listMeetings"
+	ActionListMembers                 Action = "listMembers"
+	ActionListNonconformities         Action = "listNonconformities"
+	ActionListObligations             Action = "listObligations"
+	ActionListPeople                  Action = "listPeople"
+	ActionListProcessingActivities    Action = "listProcessingActivities"
+	ActionListReferences              Action = "listReferences"
+	ActionListRiskAssessments         Action = "listRiskAssessments"
+	ActionListRisks                   Action = "listRisks"
+	ActionListSAMLConfigurations      Action = "listSAMLConfigurations"
+	ActionListServices                Action = "listServices"
+	ActionListSlackConnections        Action = "listSlackConnections"
+	ActionListSnapshots               Action = "listSnapshots"
+	ActionListTasks                   Action = "listTasks"
+	ActionListTrustCenterFiles        Action = "listTrustCenterFiles"
+	ActionListVendors                 Action = "listVendors"
+	ActionListVersions                Action = "listVersions"
+	ActionListSignableDocuments       Action = "listSignableDocuments"
+	ActionListSignableDocumentVersion Action = "listSignableDocumentVersion"
 
 	ActionCreateAsset                  Action = "createAsset"
 	ActionCreateAudit                  Action = "createAudit"
@@ -222,10 +227,12 @@ const (
 	ActionBulkPublishDocumentVersions            Action = "bulkPublishDocumentVersions"
 	ActionBulkRequestSignatures                  Action = "bulkRequestSignatures"
 	ActionCancelSignatureRequest                 Action = "cancelSignatureRequest"
+	ActionSignDocument                           Action = "signDocument"
 	ActionConfirmEmail                           Action = "confirmEmail"
 	ActionDisableSAML                            Action = "disableSAML"
 	ActionEnableSAML                             Action = "enableSAML"
 	ActionExportDocumentVersionPDF               Action = "exportDocumentVersionPDF"
+	ActionExportSignableVersionDocumentPDF       Action = "exportSignableVersionDocumentPDF"
 	ActionExportFramework                        Action = "exportFramework"
 	ActionGenerateDocumentChangelog              Action = "generateDocumentChangelog"
 	ActionGenerateFrameworkStateOfApplicability  Action = "generateFrameworkStateOfApplicability"
@@ -248,45 +255,47 @@ const (
 )
 
 var (
-	AllRoles  = []Role{RoleOwner, RoleAdmin, RoleViewer, RoleFull}
-	EditRoles = []Role{RoleOwner, RoleAdmin, RoleFull}
+	AllRoles         = []Role{RoleOwner, RoleAdmin, RoleEmployee, RoleViewer, RoleFull}
+	NonEmployeeRoles = []Role{RoleOwner, RoleAdmin, RoleViewer, RoleFull}
+	EditRoles        = []Role{RoleOwner, RoleAdmin, RoleFull}
 )
 
 var Permissions = map[uint16]map[Action][]Role{
 	coredata.OrganizationEntityType: {
-		ActionGet:                       AllRoles,
-		ActionGetLogoUrl:                AllRoles,
-		ActionGetHorizontalLogoUrl:      AllRoles,
-		ActionMemberships:               AllRoles,
-		ActionPeoples:                   AllRoles,
-		ActionTotalCount:                AllRoles,
-		ActionListMembers:               AllRoles,
-		ActionListInvitations:           AllRoles,
-		ActionListSlackConnections:      AllRoles,
-		ActionListFrameworks:            AllRoles,
-		ActionListControls:              AllRoles,
-		ActionListVendors:               AllRoles,
-		ActionListPeople:                AllRoles,
-		ActionListDocuments:             AllRoles,
-		ActionListMeetings:              AllRoles,
-		ActionListMeasures:              AllRoles,
-		ActionListRisks:                 AllRoles,
-		ActionListTasks:                 AllRoles,
-		ActionListAssets:                AllRoles,
-		ActionListData:                  AllRoles,
-		ActionListAudits:                AllRoles,
-		ActionListNonconformities:       AllRoles,
-		ActionListObligations:           AllRoles,
-		ActionListContinualImprovements: AllRoles,
-		ActionListProcessingActivities:  AllRoles,
-		ActionListSnapshots:             AllRoles,
-		ActionListTrustCenterFiles:      AllRoles,
-		ActionGetTrustCenter:            AllRoles,
-		ActionAudit:                     AllRoles,
-		ActionGetCustomDomain:           AllRoles,
-		ActionListSAMLConfigurations:    AllRoles,
-		ActionConfirmEmail:              AllRoles,
-		ActionAcceptInvitation:          AllRoles,
+		ActionGet:                   AllRoles,
+		ActionListSignableDocuments: AllRoles,
+		ActionGetLogoUrl:            AllRoles,
+
+		ActionListDocuments:             NonEmployeeRoles,
+		ActionGetHorizontalLogoUrl:      NonEmployeeRoles,
+		ActionMemberships:               NonEmployeeRoles,
+		ActionPeoples:                   NonEmployeeRoles,
+		ActionTotalCount:                NonEmployeeRoles,
+		ActionListMembers:               NonEmployeeRoles,
+		ActionListInvitations:           NonEmployeeRoles,
+		ActionListSlackConnections:      NonEmployeeRoles,
+		ActionListFrameworks:            NonEmployeeRoles,
+		ActionListControls:              NonEmployeeRoles,
+		ActionListVendors:               NonEmployeeRoles,
+		ActionListPeople:                NonEmployeeRoles,
+		ActionListMeetings:              NonEmployeeRoles,
+		ActionListMeasures:              NonEmployeeRoles,
+		ActionListRisks:                 NonEmployeeRoles,
+		ActionListTasks:                 NonEmployeeRoles,
+		ActionListAssets:                NonEmployeeRoles,
+		ActionListData:                  NonEmployeeRoles,
+		ActionListAudits:                NonEmployeeRoles,
+		ActionListNonconformities:       NonEmployeeRoles,
+		ActionListObligations:           NonEmployeeRoles,
+		ActionListContinualImprovements: NonEmployeeRoles,
+		ActionListProcessingActivities:  NonEmployeeRoles,
+		ActionListSnapshots:             NonEmployeeRoles,
+		ActionListTrustCenterFiles:      NonEmployeeRoles,
+		ActionGetTrustCenter:            NonEmployeeRoles,
+		ActionGetCustomDomain:           NonEmployeeRoles,
+		ActionListSAMLConfigurations:    NonEmployeeRoles,
+		ActionConfirmEmail:              NonEmployeeRoles,
+		ActionAcceptInvitation:          NonEmployeeRoles,
 
 		ActionUpdateOrganization:               EditRoles,
 		ActionDeleteOrganizationHorizontalLogo: EditRoles,
@@ -325,11 +334,11 @@ var Permissions = map[uint16]map[Action][]Role{
 		ActionDeleteOrganization:         {RoleOwner},
 	},
 	coredata.TrustCenterEntityType: {
-		ActionGet:             AllRoles,
-		ActionGetNdaFileUrl:   AllRoles,
-		ActionGetOrganization: AllRoles,
-		ActionListAccesses:    AllRoles,
-		ActionListReferences:  AllRoles,
+		ActionGet:             NonEmployeeRoles,
+		ActionGetNdaFileUrl:   NonEmployeeRoles,
+		ActionGetOrganization: NonEmployeeRoles,
+		ActionListAccesses:    NonEmployeeRoles,
+		ActionListReferences:  NonEmployeeRoles,
 
 		ActionUpdateTrustCenter:          EditRoles,
 		ActionUploadTrustCenterNDA:       EditRoles,
@@ -338,62 +347,59 @@ var Permissions = map[uint16]map[Action][]Role{
 		ActionCreateTrustCenterReference: EditRoles,
 	},
 	coredata.TrustCenterAccessEntityType: {
-		ActionGet:                       AllRoles,
-		ActionActiveCount:               AllRoles,
-		ActionPendingRequestCount:       AllRoles,
-		ActionAvailableDocumentAccesses: AllRoles,
-		ActionDocument:                  AllRoles,
-		ActionReport:                    AllRoles,
-		ActionTrustCenterFile:           AllRoles,
+		ActionGet:                       NonEmployeeRoles,
+		ActionActiveCount:               NonEmployeeRoles,
+		ActionPendingRequestCount:       NonEmployeeRoles,
+		ActionAvailableDocumentAccesses: NonEmployeeRoles,
 
 		ActionUpdateTrustCenterAccess: EditRoles,
 		ActionDeleteTrustCenterAccess: EditRoles,
 	},
 	coredata.TrustCenterReferenceEntityType: {
-		ActionGet:        AllRoles,
-		ActionGetLogoUrl: AllRoles,
+		ActionGet:        NonEmployeeRoles,
+		ActionGetLogoUrl: NonEmployeeRoles,
 
 		ActionUpdateTrustCenterReference: EditRoles,
 		ActionDeleteTrustCenterReference: EditRoles,
 	},
 	coredata.TrustCenterFileEntityType: {
-		ActionGet:        AllRoles,
-		ActionGetFileUrl: AllRoles,
+		ActionGet:        NonEmployeeRoles,
+		ActionGetFileUrl: NonEmployeeRoles,
 
 		ActionUpdateTrustCenterFile: EditRoles,
 		ActionGetTrustCenterFile:    EditRoles,
 		ActionDeleteTrustCenterFile: EditRoles,
 	},
 	coredata.UserEntityType: {
-		ActionGet: AllRoles,
+		ActionGet: NonEmployeeRoles,
 	},
 	coredata.MembershipEntityType: {
-		ActionGet:           AllRoles,
-		ActionGetAuthMethod: AllRoles,
+		ActionGet:           NonEmployeeRoles,
+		ActionGetAuthMethod: NonEmployeeRoles,
 	},
 	coredata.InvitationEntityType: {
-		ActionGet:             AllRoles,
-		ActionGetOrganization: AllRoles,
+		ActionGet:             NonEmployeeRoles,
+		ActionGetOrganization: NonEmployeeRoles,
 
 		ActionDeleteInvitation: EditRoles,
 	},
 	coredata.PeopleEntityType: {
-		ActionGet: AllRoles,
+		ActionGet: NonEmployeeRoles,
 
 		ActionUpdatePeople: EditRoles,
 		ActionDeletePeople: EditRoles,
 	},
 	coredata.VendorEntityType: {
-		ActionGet:                           AllRoles,
-		ActionGetOrganization:               AllRoles,
-		ActionListComplianceReports:         AllRoles,
-		ActionGetBusinessAssociateAgreement: AllRoles,
-		ActionGetDataPrivacyAgreement:       AllRoles,
-		ActionListContacts:                  AllRoles,
-		ActionListServices:                  AllRoles,
-		ActionListRiskAssessments:           AllRoles,
-		ActionGetBusinessOwner:              AllRoles,
-		ActionGetSecurityOwner:              AllRoles,
+		ActionGet:                           NonEmployeeRoles,
+		ActionGetOrganization:               NonEmployeeRoles,
+		ActionListComplianceReports:         NonEmployeeRoles,
+		ActionGetBusinessAssociateAgreement: NonEmployeeRoles,
+		ActionGetDataPrivacyAgreement:       NonEmployeeRoles,
+		ActionListContacts:                  NonEmployeeRoles,
+		ActionListServices:                  NonEmployeeRoles,
+		ActionListRiskAssessments:           NonEmployeeRoles,
+		ActionGetBusinessOwner:              NonEmployeeRoles,
+		ActionGetSecurityOwner:              NonEmployeeRoles,
 
 		ActionUpdateVendor:                           EditRoles,
 		ActionDeleteVendor:                           EditRoles,
@@ -407,49 +413,49 @@ var Permissions = map[uint16]map[Action][]Role{
 		ActionAssessVendor:                           EditRoles,
 	},
 	coredata.VendorComplianceReportEntityType: {
-		ActionGet:       AllRoles,
-		ActionGetVendor: AllRoles,
-		ActionGetFile:   AllRoles,
+		ActionGet:       NonEmployeeRoles,
+		ActionGetVendor: NonEmployeeRoles,
+		ActionGetFile:   NonEmployeeRoles,
 
 		ActionDeleteVendorComplianceReport: EditRoles,
 	},
 	coredata.VendorBusinessAssociateAgreementEntityType: {
-		ActionGet:        AllRoles,
-		ActionGetVendor:  AllRoles,
-		ActionGetFileUrl: AllRoles,
+		ActionGet:        NonEmployeeRoles,
+		ActionGetVendor:  NonEmployeeRoles,
+		ActionGetFileUrl: NonEmployeeRoles,
 
 		ActionUpdateVendorBusinessAssociateAgreement: EditRoles,
 		ActionDeleteVendorBusinessAssociateAgreement: EditRoles,
 	},
 	coredata.VendorContactEntityType: {
-		ActionGet:       AllRoles,
-		ActionGetVendor: AllRoles,
+		ActionGet:       NonEmployeeRoles,
+		ActionGetVendor: NonEmployeeRoles,
 
 		ActionUpdateVendorContact: EditRoles,
 		ActionDeleteVendorContact: EditRoles,
 	},
 	coredata.VendorServiceEntityType: {
-		ActionGet:       AllRoles,
-		ActionGetVendor: AllRoles,
+		ActionGet:       NonEmployeeRoles,
+		ActionGetVendor: NonEmployeeRoles,
 
 		ActionUpdateVendorService: EditRoles,
 		ActionDeleteVendorService: EditRoles,
 	},
 	coredata.VendorDataPrivacyAgreementEntityType: {
-		ActionGet:        AllRoles,
-		ActionGetVendor:  AllRoles,
-		ActionGetFileUrl: AllRoles,
+		ActionGet:        NonEmployeeRoles,
+		ActionGetVendor:  NonEmployeeRoles,
+		ActionGetFileUrl: NonEmployeeRoles,
 
 		ActionUpdateVendorDataPrivacyAgreement: EditRoles,
 		ActionDeleteVendorDataPrivacyAgreement: EditRoles,
 	},
 	coredata.VendorRiskAssessmentEntityType: {
-		ActionGet: AllRoles,
+		ActionGet: NonEmployeeRoles,
 	},
 	coredata.FrameworkEntityType: {
-		ActionGet:             AllRoles,
-		ActionGetOrganization: AllRoles,
-		ActionListControls:    AllRoles,
+		ActionGet:             NonEmployeeRoles,
+		ActionGetOrganization: NonEmployeeRoles,
+		ActionListControls:    NonEmployeeRoles,
 
 		ActionCreateControl:                         EditRoles,
 		ActionUpdateFramework:                       EditRoles,
@@ -458,12 +464,12 @@ var Permissions = map[uint16]map[Action][]Role{
 		ActionExportFramework:                       EditRoles,
 	},
 	coredata.ControlEntityType: {
-		ActionGet:           AllRoles,
-		ActionGetFramework:  AllRoles,
-		ActionListMeasures:  AllRoles,
-		ActionListDocuments: AllRoles,
-		ActionListAudits:    AllRoles,
-		ActionListSnapshots: AllRoles,
+		ActionGet:           NonEmployeeRoles,
+		ActionGetFramework:  NonEmployeeRoles,
+		ActionListMeasures:  NonEmployeeRoles,
+		ActionListDocuments: NonEmployeeRoles,
+		ActionListAudits:    NonEmployeeRoles,
+		ActionListSnapshots: NonEmployeeRoles,
 
 		ActionUpdateControl:                EditRoles,
 		ActionDeleteControl:                EditRoles,
@@ -477,23 +483,23 @@ var Permissions = map[uint16]map[Action][]Role{
 		ActionDeleteControlSnapshotMapping: EditRoles,
 	},
 	coredata.MeasureEntityType: {
-		ActionGet:           AllRoles,
-		ActionListEvidences: AllRoles,
-		ActionListTasks:     AllRoles,
-		ActionListRisks:     AllRoles,
-		ActionListControls:  AllRoles,
-		ActionTotalCount:    AllRoles,
+		ActionGet:           NonEmployeeRoles,
+		ActionListEvidences: NonEmployeeRoles,
+		ActionListTasks:     NonEmployeeRoles,
+		ActionListRisks:     NonEmployeeRoles,
+		ActionListControls:  NonEmployeeRoles,
+		ActionTotalCount:    NonEmployeeRoles,
 
 		ActionUpdateMeasure:         EditRoles,
 		ActionDeleteMeasure:         EditRoles,
 		ActionUploadMeasureEvidence: EditRoles,
 	},
 	coredata.TaskEntityType: {
-		ActionGet:             AllRoles,
-		ActionGetAssignedTo:   AllRoles,
-		ActionGetOrganization: AllRoles,
-		ActionGetMeasure:      AllRoles,
-		ActionListEvidences:   AllRoles,
+		ActionGet:             NonEmployeeRoles,
+		ActionGetAssignedTo:   NonEmployeeRoles,
+		ActionGetOrganization: NonEmployeeRoles,
+		ActionGetMeasure:      NonEmployeeRoles,
+		ActionListEvidences:   NonEmployeeRoles,
 
 		ActionUpdateTask:   EditRoles,
 		ActionDeleteTask:   EditRoles,
@@ -501,28 +507,31 @@ var Permissions = map[uint16]map[Action][]Role{
 		ActionUnassignTask: EditRoles,
 	},
 	coredata.EvidenceEntityType: {
-		ActionGet:        AllRoles,
-		ActionGetFile:    AllRoles,
-		ActionGetTask:    AllRoles,
-		ActionGetMeasure: AllRoles,
+		ActionGet:        NonEmployeeRoles,
+		ActionGetFile:    NonEmployeeRoles,
+		ActionGetTask:    NonEmployeeRoles,
+		ActionGetMeasure: NonEmployeeRoles,
 
 		ActionDeleteEvidence: EditRoles,
 	},
 	coredata.DocumentEntityType: {
-		ActionGet:                      AllRoles,
-		ActionExportDocumentVersionPDF: AllRoles,
-		ActionGetOwner:                 AllRoles,
-		ActionGetOrganization:          AllRoles,
-		ActionListVersions:             AllRoles,
-		ActionListControls:             AllRoles,
-		ActionTotalCount:               AllRoles,
+		ActionListSignableDocumentVersion: AllRoles,
+		ActionGetSigned:                   AllRoles,
+		ActionGetSignableDocument:         AllRoles,
+
+		ActionGet:                 NonEmployeeRoles,
+		ActionGetOwner:            NonEmployeeRoles,
+		ActionGetOrganization:     NonEmployeeRoles,
+		ActionBulkExportDocuments: NonEmployeeRoles,
+		ActionTotalCount:          NonEmployeeRoles,
+		ActionListControls:        NonEmployeeRoles,
+		ActionListVersions:        NonEmployeeRoles,
 
 		ActionUpdateDocument:              EditRoles,
 		ActionDeleteDocument:              EditRoles,
 		ActionPublishDocumentVersion:      EditRoles,
 		ActionBulkPublishDocumentVersions: EditRoles,
 		ActionBulkDeleteDocuments:         EditRoles,
-		ActionBulkExportDocuments:         EditRoles,
 		ActionGenerateDocumentChangelog:   EditRoles,
 		ActionCreateDraftDocumentVersion:  EditRoles,
 		ActionDeleteDraftDocumentVersion:  EditRoles,
@@ -533,33 +542,35 @@ var Permissions = map[uint16]map[Action][]Role{
 		ActionCancelSignatureRequest:      EditRoles,
 	},
 	coredata.DocumentVersionEntityType: {
-		ActionGet:                      AllRoles,
-		ActionGetFile:                  AllRoles,
-		ActionGetOwner:                 AllRoles,
-		ActionDocument:                 AllRoles,
-		ActionSignatures:               AllRoles,
-		ActionExportDocumentVersionPDF: AllRoles,
+		ActionSignDocument: AllRoles,
 
-		ActionUpdateDocumentVersion:    EditRoles,
-		ActionRequestSignature:         EditRoles,
-		ActionBulkRequestSignatures:    EditRoles,
-		ActionSendSigningNotifications: EditRoles,
-		ActionCancelSignatureRequest:   EditRoles,
+		ActionExportSignableVersionDocumentPDF: AllRoles,
+		ActionGetSigned:                        AllRoles,
+
+		ActionGet:                      NonEmployeeRoles,
+		ActionGetFile:                  NonEmployeeRoles,
+		ActionGetOwner:                 NonEmployeeRoles,
+		ActionGetDocument:              NonEmployeeRoles,
+		ActionSignatures:               NonEmployeeRoles,
+		ActionExportDocumentVersionPDF: NonEmployeeRoles,
+
+		ActionUpdateDocumentVersion: EditRoles,
+		ActionRequestSignature:      EditRoles,
 	},
 	coredata.DocumentVersionSignatureEntityType: {
-		ActionGet:             AllRoles,
-		ActionDocumentVersion: AllRoles,
-		ActionSignedBy:        AllRoles,
+		ActionGet:             NonEmployeeRoles,
+		ActionDocumentVersion: NonEmployeeRoles,
+		ActionSignedBy:        NonEmployeeRoles,
 	},
 	coredata.RiskEntityType: {
-		ActionGet:             AllRoles,
-		ActionGetOwner:        AllRoles,
-		ActionGetOrganization: AllRoles,
-		ActionTotalCount:      AllRoles,
-		ActionListControls:    AllRoles,
-		ActionListMeasures:    AllRoles,
-		ActionListDocuments:   AllRoles,
-		ActionListObligations: AllRoles,
+		ActionGet:             NonEmployeeRoles,
+		ActionGetOwner:        NonEmployeeRoles,
+		ActionGetOrganization: NonEmployeeRoles,
+		ActionTotalCount:      NonEmployeeRoles,
+		ActionListControls:    NonEmployeeRoles,
+		ActionListMeasures:    NonEmployeeRoles,
+		ActionListDocuments:   NonEmployeeRoles,
+		ActionListObligations: NonEmployeeRoles,
 
 		ActionUpdateRisk:                  EditRoles,
 		ActionDeleteRisk:                  EditRoles,
@@ -571,32 +582,32 @@ var Permissions = map[uint16]map[Action][]Role{
 		ActionDeleteRiskObligationMapping: EditRoles,
 	},
 	coredata.AssetEntityType: {
-		ActionGet:             AllRoles,
-		ActionGetOwner:        AllRoles,
-		ActionListVendors:     AllRoles,
-		ActionGetAssetType:    AllRoles,
-		ActionGetOrganization: AllRoles,
+		ActionGet:             NonEmployeeRoles,
+		ActionGetOwner:        NonEmployeeRoles,
+		ActionListVendors:     NonEmployeeRoles,
+		ActionGetAssetType:    NonEmployeeRoles,
+		ActionGetOrganization: NonEmployeeRoles,
 
 		ActionUpdateAsset: EditRoles,
 		ActionDeleteAsset: EditRoles,
 	},
 	coredata.DatumEntityType: {
-		ActionGet:             AllRoles,
-		ActionGetOwner:        AllRoles,
-		ActionGetOrganization: AllRoles,
-		ActionListVendors:     AllRoles,
+		ActionGet:             NonEmployeeRoles,
+		ActionGetOwner:        NonEmployeeRoles,
+		ActionGetOrganization: NonEmployeeRoles,
+		ActionListVendors:     NonEmployeeRoles,
 
 		ActionUpdateDatum: EditRoles,
 		ActionDeleteDatum: EditRoles,
 	},
 	coredata.AuditEntityType: {
-		ActionGet:             AllRoles,
-		ActionGetFile:         AllRoles,
-		ActionGetFramework:    AllRoles,
-		ActionGetOrganization: AllRoles,
-		ActionReport:          AllRoles,
-		ActionReportUrl:       AllRoles,
-		ActionListControls:    AllRoles,
+		ActionGet:             NonEmployeeRoles,
+		ActionGetFile:         NonEmployeeRoles,
+		ActionGetFramework:    NonEmployeeRoles,
+		ActionGetOrganization: NonEmployeeRoles,
+		ActionReport:          NonEmployeeRoles,
+		ActionReportUrl:       NonEmployeeRoles,
+		ActionListControls:    NonEmployeeRoles,
 
 		ActionUpdateAudit:       EditRoles,
 		ActionDeleteAudit:       EditRoles,
@@ -604,51 +615,50 @@ var Permissions = map[uint16]map[Action][]Role{
 		ActionDeleteAuditReport: EditRoles,
 	},
 	coredata.ReportEntityType: {
-		ActionGet:             AllRoles,
-		ActionGetFile:         AllRoles,
-		ActionGetOrganization: AllRoles,
-		ActionGetSnapshot:     AllRoles,
-		ActionDownloadUrl:     AllRoles,
-		ActionAudit:           AllRoles,
+		ActionGet:             NonEmployeeRoles,
+		ActionGetFile:         NonEmployeeRoles,
+		ActionGetOrganization: NonEmployeeRoles,
+		ActionGetSnapshot:     NonEmployeeRoles,
+		ActionDownloadUrl:     NonEmployeeRoles,
 	},
 	coredata.NonconformityEntityType: {
-		ActionGet:             AllRoles,
-		ActionGetOwner:        AllRoles,
-		ActionGetOrganization: AllRoles,
-		ActionAudit:           AllRoles,
+		ActionGet:             NonEmployeeRoles,
+		ActionGetOwner:        NonEmployeeRoles,
+		ActionGetOrganization: NonEmployeeRoles,
+		ActionAudit:           NonEmployeeRoles,
 
 		ActionUpdateNonconformity: EditRoles,
 		ActionDeleteNonconformity: EditRoles,
 	},
 	coredata.ObligationEntityType: {
-		ActionGet:             AllRoles,
-		ActionGetOrganization: AllRoles,
-		ActionGetOwner:        AllRoles,
-		ActionListRisks:       AllRoles,
+		ActionGet:             NonEmployeeRoles,
+		ActionGetOrganization: NonEmployeeRoles,
+		ActionGetOwner:        NonEmployeeRoles,
+		ActionListRisks:       NonEmployeeRoles,
 
 		ActionUpdateObligation: EditRoles,
 		ActionDeleteObligation: EditRoles,
 	},
 	coredata.ContinualImprovementEntityType: {
-		ActionGet:             AllRoles,
-		ActionGetOwner:        AllRoles,
-		ActionGetOrganization: AllRoles,
+		ActionGet:             NonEmployeeRoles,
+		ActionGetOwner:        NonEmployeeRoles,
+		ActionGetOrganization: NonEmployeeRoles,
 
 		ActionUpdateContinualImprovement: EditRoles,
 		ActionDeleteContinualImprovement: EditRoles,
 	},
 	coredata.ProcessingActivityEntityType: {
-		ActionGet:             AllRoles,
-		ActionGetOrganization: AllRoles,
-		ActionListVendors:     AllRoles,
+		ActionGet:             NonEmployeeRoles,
+		ActionGetOrganization: NonEmployeeRoles,
+		ActionListVendors:     NonEmployeeRoles,
 
 		ActionUpdateProcessingActivity: EditRoles,
 		ActionDeleteProcessingActivity: EditRoles,
 	},
 	coredata.SnapshotEntityType: {
-		ActionGet:             AllRoles,
-		ActionGetOrganization: AllRoles,
-		ActionListControls:    AllRoles,
+		ActionGet:             NonEmployeeRoles,
+		ActionGetOrganization: NonEmployeeRoles,
+		ActionListControls:    NonEmployeeRoles,
 
 		ActionDeleteSnapshot: EditRoles,
 	},
@@ -669,19 +679,18 @@ var Permissions = map[uint16]map[Action][]Role{
 		ActionVerifyDomain:            {RoleOwner},
 	},
 	coredata.FileEntityType: {
-		ActionGet:         AllRoles,
-		ActionDownloadUrl: AllRoles,
+		ActionGet:         NonEmployeeRoles,
+		ActionDownloadUrl: NonEmployeeRoles,
 	},
 	coredata.TrustCenterDocumentAccessEntityType: {
-		ActionGet:             AllRoles,
-		ActionDocument:        {RoleOwner, RoleAdmin},
-		ActionReport:          {RoleOwner, RoleAdmin},
-		ActionTrustCenterFile: {RoleOwner, RoleAdmin},
+		ActionGet:             NonEmployeeRoles,
+		ActionReport:          NonEmployeeRoles,
+		ActionTrustCenterFile: NonEmployeeRoles,
 	},
 	coredata.MeetingEntityType: {
-		ActionGet:             AllRoles,
-		ActionGetOrganization: AllRoles,
-		ActionTotalCount:      AllRoles,
+		ActionGet:             NonEmployeeRoles,
+		ActionGetOrganization: NonEmployeeRoles,
+		ActionTotalCount:      NonEmployeeRoles,
 
 		ActionUpdateMeeting: EditRoles,
 		ActionDeleteMeeting: EditRoles,

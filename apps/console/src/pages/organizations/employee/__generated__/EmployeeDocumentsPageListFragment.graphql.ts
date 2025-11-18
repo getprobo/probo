@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<8fcd99714c4bf7dba138fcb0de398a3a>>
+ * @generated SignedSource<<47bb54b1ca3acc8736d619a74455a9c3>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,45 +9,30 @@
 // @ts-nocheck
 
 import { ReaderFragment } from 'relay-runtime';
-export type MembershipRole = "ADMIN" | "EMPLOYEE" | "OWNER" | "VIEWER";
-export type UserAuthMethod = "PASSWORD" | "SAML";
 import { FragmentRefs } from "relay-runtime";
-export type MembersSettingsTabMembershipsFragment$data = {
-  readonly id: string;
-  readonly memberships: {
+export type EmployeeDocumentsPageListFragment$data = {
+  readonly signableDocuments: {
     readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly node: {
-        readonly authMethod: UserAuthMethod;
-        readonly createdAt: any;
-        readonly emailAddress: string;
-        readonly fullName: string;
         readonly id: string;
-        readonly role: MembershipRole;
+        readonly " $fragmentSpreads": FragmentRefs<"EmployeeDocumentsPageRowFragment">;
       };
     }>;
-    readonly totalCount: number;
   };
-  readonly " $fragmentType": "MembersSettingsTabMembershipsFragment";
+  readonly " $fragmentType": "EmployeeDocumentsPageListFragment";
 };
-export type MembersSettingsTabMembershipsFragment$key = {
-  readonly " $data"?: MembersSettingsTabMembershipsFragment$data;
-  readonly " $fragmentSpreads": FragmentRefs<"MembersSettingsTabMembershipsFragment">;
+export type EmployeeDocumentsPageListFragment$key = {
+  readonly " $data"?: EmployeeDocumentsPageListFragment$data;
+  readonly " $fragmentSpreads": FragmentRefs<"EmployeeDocumentsPageListFragment">;
 };
 
-import MembersSettingsTabMembershipsRefetchQuery_graphql from './MembersSettingsTabMembershipsRefetchQuery.graphql';
+import EmployeeDocumentsListQuery_graphql from './EmployeeDocumentsListQuery.graphql';
 
 const node: ReaderFragment = (function(){
 var v0 = [
-  "memberships"
-],
-v1 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "id",
-  "storageKey": null
-};
+  "signableDocuments"
+];
 return {
   "argumentDefinitions": [
     {
@@ -61,7 +46,7 @@ return {
       "name": "before"
     },
     {
-      "defaultValue": 20,
+      "defaultValue": 50,
       "kind": "LocalArgument",
       "name": "first"
     },
@@ -72,11 +57,16 @@ return {
     },
     {
       "defaultValue": {
-        "direction": "ASC",
+        "direction": "DESC",
         "field": "CREATED_AT"
       },
       "kind": "LocalArgument",
       "name": "order"
+    },
+    {
+      "defaultValue": null,
+      "kind": "LocalArgument",
+      "name": "organizationId"
     }
   ],
   "kind": "Fragment",
@@ -102,42 +92,36 @@ return {
         "path": (v0/*: any*/)
       },
       "fragmentPathInResult": [
-        "node"
+        "viewer"
       ],
-      "operation": MembersSettingsTabMembershipsRefetchQuery_graphql,
-      "identifierInfo": {
-        "identifierField": "id",
-        "identifierQueryVariableName": "id"
-      }
+      "operation": EmployeeDocumentsListQuery_graphql
     }
   },
-  "name": "MembersSettingsTabMembershipsFragment",
+  "name": "EmployeeDocumentsPageListFragment",
   "selections": [
     {
-      "alias": "memberships",
+      "alias": "signableDocuments",
       "args": [
         {
           "kind": "Variable",
           "name": "orderBy",
           "variableName": "order"
+        },
+        {
+          "kind": "Variable",
+          "name": "organizationId",
+          "variableName": "organizationId"
         }
       ],
-      "concreteType": "MembershipConnection",
+      "concreteType": "SignableDocumentConnection",
       "kind": "LinkedField",
-      "name": "__MembersSettingsTabMemberships_memberships_connection",
+      "name": "__EmployeeDocumentsListQuery_signableDocuments_connection",
       "plural": false,
       "selections": [
         {
           "alias": null,
           "args": null,
-          "kind": "ScalarField",
-          "name": "totalCount",
-          "storageKey": null
-        },
-        {
-          "alias": null,
-          "args": null,
-          "concreteType": "MembershipEdge",
+          "concreteType": "SignableDocumentEdge",
           "kind": "LinkedField",
           "name": "edges",
           "plural": true,
@@ -145,46 +129,22 @@ return {
             {
               "alias": null,
               "args": null,
-              "concreteType": "Membership",
+              "concreteType": "SignableDocument",
               "kind": "LinkedField",
               "name": "node",
               "plural": false,
               "selections": [
-                (v1/*: any*/),
                 {
                   "alias": null,
                   "args": null,
                   "kind": "ScalarField",
-                  "name": "fullName",
+                  "name": "id",
                   "storageKey": null
                 },
                 {
-                  "alias": null,
                   "args": null,
-                  "kind": "ScalarField",
-                  "name": "emailAddress",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "role",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "authMethod",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "createdAt",
-                  "storageKey": null
+                  "kind": "FragmentSpread",
+                  "name": "EmployeeDocumentsPageRowFragment"
                 },
                 {
                   "alias": null,
@@ -259,14 +219,13 @@ return {
         }
       ],
       "storageKey": null
-    },
-    (v1/*: any*/)
+    }
   ],
-  "type": "Organization",
+  "type": "Viewer",
   "abstractKey": null
 };
 })();
 
-(node as any).hash = "c9e341e99052ba74299c5ddd0433d7c0";
+(node as any).hash = "ebd2703f79cdf6900b5e42fc3b28932a";
 
 export default node;

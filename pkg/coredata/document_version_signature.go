@@ -57,6 +57,8 @@ type (
 	ErrDocumentVersionSignatureAlreadyExists struct {
 		message string
 	}
+
+	ErrDocumentVersionSignatureAlreadySigned struct{}
 )
 
 func (e ErrDocumentVersionSignatureNotFound) Error() string {
@@ -65,6 +67,10 @@ func (e ErrDocumentVersionSignatureNotFound) Error() string {
 
 func (e ErrDocumentVersionSignatureAlreadyExists) Error() string {
 	return e.message
+}
+
+func (e ErrDocumentVersionSignatureAlreadySigned) Error() string {
+	return "document version already signed"
 }
 
 func (pvs DocumentVersionSignature) CursorKey(orderBy DocumentVersionSignatureOrderField) page.CursorKey {
@@ -411,4 +417,42 @@ WHERE
 	*pvss = signatures
 
 	return nil
+}
+
+func (pvs *DocumentVersionSignature) IsSignedByUserEmail(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	documentVersionID gid.GID,
+	userEmail string,
+) (bool, error) {
+	q := `
+SELECT EXISTS (
+	SELECT 1
+	FROM document_version_signatures dvs
+	INNER JOIN peoples p ON dvs.signed_by = p.id
+	WHERE dvs.document_version_id = @document_version_id
+		AND p.primary_email_address = @user_email
+		AND dvs.state = 'SIGNED'
+		AND dvs.tenant_id = @tenant_id
+) AS signed
+`
+
+	args := pgx.StrictNamedArgs{
+		"document_version_id": documentVersionID,
+		"user_email":          userEmail,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return false, fmt.Errorf("cannot query document version signature: %w", err)
+	}
+
+	signed, err := pgx.CollectOneRow(rows, pgx.RowTo[bool])
+	if err != nil {
+		return false, fmt.Errorf("cannot collect signed status: %w", err)
+	}
+
+	return signed, nil
 }
