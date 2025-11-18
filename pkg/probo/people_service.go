@@ -108,6 +108,31 @@ func (s PeopleService) Get(
 	return people, nil
 }
 
+func (s PeopleService) GetByEmailAndOrganizationID(
+	ctx context.Context,
+	primaryEmailAddress string,
+	organizationID gid.GID,
+) (*coredata.People, error) {
+	people := &coredata.People{}
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			err := people.LoadByEmailAndOrganizationID(ctx, conn, s.svc.scope, primaryEmailAddress, organizationID)
+			if err != nil {
+				return fmt.Errorf("cannot load people by email and organization ID: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return people, nil
+}
+
 func (s PeopleService) CountForOrganizationID(
 	ctx context.Context,
 	organizationID gid.GID,

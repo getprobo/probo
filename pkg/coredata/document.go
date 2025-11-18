@@ -124,6 +124,60 @@ LIMIT 1;
 	return nil
 }
 
+func (p *Document) LoadByIDWithFilter(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	documentID gid.GID,
+	filter *DocumentFilter,
+) error {
+	q := `
+SELECT
+    id,
+    organization_id,
+    owner_id,
+    title,
+    document_type,
+    classification,
+    current_published_version,
+    trust_center_visibility,
+    created_at,
+    updated_at
+FROM
+    documents
+WHERE
+    %s
+    AND deleted_at IS NULL
+    AND id = @document_id
+    AND %s
+LIMIT 1;
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"document_id": documentID}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query documents: %w", err)
+	}
+
+	document, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Document])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return &ErrDocumentNotFound{Identifier: documentID.String()}
+		}
+
+		return fmt.Errorf("cannot collect document: %w", err)
+	}
+
+	*p = document
+
+	return nil
+}
+
 func (p *Documents) CountByOrganizationID(
 	ctx context.Context,
 	conn pg.Conn,
@@ -652,4 +706,47 @@ UPDATE documents SET deleted_at = @deleted_at WHERE %s AND id = ANY(@document_id
 
 	_, err := conn.Exec(ctx, q, args)
 	return err
+}
+
+func (p *Document) IsPublishedVersionSignedByUserEmail(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	documentID gid.GID,
+	userEmail string,
+) (bool, error) {
+	q := `
+SELECT EXISTS (
+	SELECT 1
+	FROM documents d
+	INNER JOIN document_versions dv ON dv.document_id = d.id
+		AND dv.version_number = d.current_published_version
+		AND dv.status = 'PUBLISHED'
+	INNER JOIN document_version_signatures dvs ON dvs.document_version_id = dv.id
+	INNER JOIN peoples p ON dvs.signed_by = p.id
+	WHERE d.id = @document_id
+		AND d.current_published_version IS NOT NULL
+		AND p.primary_email_address = @user_email
+		AND dvs.state = 'SIGNED'
+		AND d.tenant_id = @tenant_id
+) AS signed
+`
+
+	args := pgx.StrictNamedArgs{
+		"document_id": documentID,
+		"user_email":  userEmail,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return false, fmt.Errorf("cannot query document signed status: %w", err)
+	}
+
+	signed, err := pgx.CollectOneRow(rows, pgx.RowTo[bool])
+	if err != nil {
+		return false, fmt.Errorf("cannot collect signed status: %w", err)
+	}
+
+	return signed, nil
 }

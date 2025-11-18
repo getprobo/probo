@@ -22,9 +22,10 @@ import (
 type MembershipRole string
 
 const (
-	MembershipRoleOwner  MembershipRole = "OWNER"
-	MembershipRoleAdmin  MembershipRole = "ADMIN"
-	MembershipRoleViewer MembershipRole = "VIEWER"
+	MembershipRoleOwner    MembershipRole = "OWNER"
+	MembershipRoleAdmin    MembershipRole = "ADMIN"
+	MembershipRoleEmployee MembershipRole = "EMPLOYEE"
+	MembershipRoleViewer   MembershipRole = "VIEWER"
 )
 
 func (r MembershipRole) String() string {
@@ -47,6 +48,8 @@ func (r *MembershipRole) Scan(value any) error {
 		*r = MembershipRoleOwner
 	case "ADMIN":
 		*r = MembershipRoleAdmin
+	case "EMPLOYEE":
+		*r = MembershipRoleEmployee
 	case "VIEWER":
 		*r = MembershipRoleViewer
 	default:

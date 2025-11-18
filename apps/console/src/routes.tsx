@@ -7,6 +7,7 @@ import {
   type RouteObject,
 } from "react-router";
 import { MainLayout } from "./layouts/MainLayout";
+import { EmployeeLayout } from "./layouts/EmployeeLayout";
 import { AuthLayout, CenteredLayout, CenteredLayoutSkeleton } from "@probo/ui";
 import { Fragment, Suspense } from "react";
 import {
@@ -38,6 +39,9 @@ import { snapshotsRoutes } from "./routes/snapshotsRoutes.ts";
 import { continualImprovementRoutes } from "./routes/continualImprovementRoutes.ts";
 import { processingActivityRoutes } from "./routes/processingActivityRoutes.ts";
 import { lazy } from "@probo/react-lazy";
+import { employeeDocumentsQuery } from "./pages/organizations/employee/EmployeeDocumentsPage";
+import { employeeDocumentSignatureQuery } from "./pages/organizations/employee/EmployeeDocumentSignaturePage";
+import { isRole } from "./permissions/permissions";
 
 export type AppRoute = Omit<RouteObject, "Component" | "children"> & {
   Component?: React.ComponentType<any>;
@@ -127,13 +131,60 @@ const routes = [
     ],
   },
   {
+    path: "/organizations/:organizationId/employee",
+    Component: EmployeeLayout,
+    ErrorBoundary: ErrorBoundary,
+    children: [
+      {
+        path: "",
+        fallback: PageSkeleton,
+        loader: ({ params }) => ({ organizationId: params.organizationId }),
+        queryLoader: ({ organizationId }) =>
+          loadQuery(relayEnvironment, employeeDocumentsQuery, {
+            organizationId,
+          }),
+        Component: lazy(
+          () => import("./pages/organizations/employee/EmployeeDocumentsPage")
+        ),
+      },
+      {
+        path: ":documentId",
+        fallback: PageSkeleton,
+        ErrorBoundary: ErrorBoundary,
+        loader: ({ params }) => ({ organizationId: params.organizationId }),
+        queryLoader: ({ documentId }) =>
+          loadQuery(relayEnvironment, employeeDocumentSignatureQuery, {
+            documentId,
+          }),
+        Component: lazy(
+          () => import("./pages/organizations/employee/EmployeeDocumentSignaturePage")
+        ),
+      },
+    ],
+  },
+  {
     path: "/organizations/:organizationId",
     Component: MainLayout,
     ErrorBoundary: ErrorBoundary,
     children: [
       {
         path: "",
-        loader: () => {
+        loader: async ({ params }) => {
+          const { organizationId } = params;
+          if (!organizationId) {
+            throw redirect(`tasks`);
+          }
+
+          try {
+            if (await isRole(organizationId, "EMPLOYEE")) {
+              throw redirect(`employee`);
+            }
+          } catch (error) {
+            if (error instanceof Response) {
+              throw error;
+            }
+          }
+
           throw redirect(`tasks`);
         },
         Component: Fragment,
@@ -223,23 +274,32 @@ function routeTransformer({
   }
   if (queryLoader && route.Component) {
     const OriginalComponent = route.Component;
+    const customLoader = route.loader;
     result = {
       ...result,
       loader: ({ params }) => {
         const query = queryLoader(params as Record<string, string>);
-        return {
+        const baseData = {
           queryRef: query,
           dispose: query.dispose,
         };
+        if (customLoader && typeof customLoader === 'function') {
+          const customData = customLoader({ params } as any);
+          if (customData && typeof customData === 'object') {
+            return Object.assign({}, baseData, customData);
+          }
+        }
+        return baseData;
       },
       Component: () => {
-        const { queryRef, dispose } = useLoaderData();
+        const loaderData = useLoaderData() as { queryRef: any; dispose: () => void; [key: string]: any };
+        const { queryRef, dispose, ...restProps } = loaderData;
 
         useCleanup(dispose, 1000);
 
         return (
           <Suspense fallback={FallbackComponent ? <FallbackComponent /> : null}>
-            <OriginalComponent queryRef={queryRef} />
+            <OriginalComponent queryRef={queryRef} {...restProps} />
           </Suspense>
         );
       },

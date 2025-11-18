@@ -1153,6 +1153,14 @@ type ExportFrameworkPayload struct {
 	ExportJobID gid.GID `json:"exportJobId"`
 }
 
+type ExportSignableDocumentVersionPDFInput struct {
+	DocumentVersionID gid.GID `json:"documentVersionId"`
+}
+
+type ExportSignableDocumentVersionPDFPayload struct {
+	Data string `json:"data"`
+}
+
 type File struct {
 	ID          gid.GID   `json:"id"`
 	MimeType    string    `json:"mimeType"`
@@ -1678,6 +1686,14 @@ type SendSigningNotificationsPayload struct {
 type Session struct {
 	ID        gid.GID   `json:"id"`
 	ExpiresAt time.Time `json:"expiresAt"`
+}
+
+type SignDocumentInput struct {
+	DocumentVersionID gid.GID `json:"documentVersionId"`
+}
+
+type SignDocumentPayload struct {
+	DocumentVersionSignature *DocumentVersionSignature `json:"documentVersionSignature"`
 }
 
 type SlackConnection struct {
@@ -2506,9 +2522,11 @@ type VerifyDomainPayload struct {
 }
 
 type Viewer struct {
-	ID            gid.GID                 `json:"id"`
-	User          *User                   `json:"user"`
-	Organizations *OrganizationConnection `json:"organizations"`
+	ID                gid.GID                     `json:"id"`
+	User              *User                       `json:"user"`
+	Organizations     *OrganizationConnection     `json:"organizations"`
+	SignableDocuments *SignableDocumentConnection `json:"signableDocuments"`
+	SignableDocument  *SignableDocument           `json:"signableDocument,omitempty"`
 }
 
 type Role string
