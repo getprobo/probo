@@ -55,7 +55,7 @@ export function SortableDataTable({
     });
   };
   return (
-    <SortableContext value={{ order, onOrderChange }}>
+    <SortableContext.Provider value={{ order, onOrderChange }}>
       <div className="space-y-4">
         <DataTable {...props} />
         {hasNext && loadNext && (
@@ -70,7 +70,7 @@ export function SortableDataTable({
           </Button>
         )}
       </div>
-    </SortableContext>
+    </SortableContext.Provider>
   );
 }
 

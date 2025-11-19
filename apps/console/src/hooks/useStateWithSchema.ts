@@ -8,6 +8,7 @@ export function useStateWithSchema<T extends ZodTypeAny>(
   const [state, setState] = useState(initialValue);
   const [value, errors] = useMemo((): [z.infer<T>, Record<string, string>] => {
     try {
+      schema.parse(state);
       return [schema.parse(state), {}];
     } catch (error) {
       if (error instanceof ZodError) {
@@ -26,7 +27,7 @@ export function useStateWithSchema<T extends ZodTypeAny>(
   }, [state, schema]);
 
   return {
-    rawValue: value,
+    rawValue: state,
     value,
     errors,
     update: useCallback(

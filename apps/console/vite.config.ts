@@ -12,6 +12,10 @@ export default defineConfig({
         target: "http://localhost:8080",
         changeOrigin: true,
       },
+      "/authz": {
+        target: "http://localhost:8080",
+        changeOrigin: true,
+      },
       "/api": {
         target: "http://localhost:8080",
         changeOrigin: true,
@@ -29,7 +33,9 @@ export default defineConfig({
       "/pages": fileURLToPath(new URL("./src/pages", import.meta.url)),
       "/routes": fileURLToPath(new URL("./src/routes", import.meta.url)),
       "/providers": fileURLToPath(new URL("./src/providers", import.meta.url)),
-      "/permissions": fileURLToPath(new URL("./src/permissions", import.meta.url)),
+      "/permissions": fileURLToPath(
+        new URL("./src/permissions", import.meta.url),
+      ),
     },
   },
 });

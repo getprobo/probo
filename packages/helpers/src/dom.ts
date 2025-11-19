@@ -57,11 +57,7 @@ export function focusSiblingElement(direction = 1) {
     ).filter((el) => {
         // Filter out elements that are not visible or have display: none
         const style = window.getComputedStyle(el);
-        return (
-            style.display !== "none" &&
-            style.visibility !== "hidden" &&
-            el.offsetParent !== null
-        );
+        return style.display !== "none" && style.visibility !== "hidden";
     });
 
     const currentIndex = focusableElements.indexOf(current);

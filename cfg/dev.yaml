@@ -16,7 +16,7 @@ probod:
   trust-center:
     http-addr: ":8085"
     https-addr: ":8443"
-  
+
   api:
     addr: "localhost:8080"
     cors:
@@ -101,11 +101,3 @@ probod:
           - "incoming-webhook"
       settings:
         signing-secret: "this-is-not-a-secret-for-slack-signing"
-
-  custom-domains:
-    renewal-interval: 3600
-    provision-interval: 30
-    acme:
-      directory: "https://localhost:14000/dir"
-      email: "bryan@getprobo.com"
-      key-type: "EC256"
