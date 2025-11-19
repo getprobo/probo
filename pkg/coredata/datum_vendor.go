@@ -149,11 +149,12 @@ WITH
 		FROM data_vendors
 		WHERE %s AND datum_id = ANY(SELECT id FROM source_data)
 	)
-INSERT INTO data_vendors (tenant_id, datum_id, vendor_id, snapshot_id, created_at)
+INSERT INTO data_vendors (tenant_id, datum_id, vendor_id, organization_id, snapshot_id, created_at)
 SELECT
 	@tenant_id,
 	sd.id,
 	sv.id,
+	@organization_id,
 	@snapshot_id,
 	dv.created_at
 FROM source_data_vendors dv

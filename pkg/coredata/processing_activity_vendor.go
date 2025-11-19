@@ -20,9 +20,9 @@ import (
 	"maps"
 	"time"
 
-	"go.probo.inc/probo/pkg/gid"
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/gid"
 )
 
 type (
@@ -46,6 +46,7 @@ func (pav ProcessingActivityVendors) Merge(
 	conn pg.Conn,
 	scope Scoper,
 	processingActivityID gid.GID,
+	organizationID gid.GID,
 	vendorIDs []gid.GID,
 ) error {
 	q := `
@@ -54,6 +55,7 @@ WITH vendor_ids AS (
 		unnest(@vendor_ids::text[]) AS vendor_id,
 		@tenant_id AS tenant_id,
 		@processing_activity_id AS processing_activity_id,
+		@organization_id AS organization_id,
 		@created_at::timestamptz AS created_at
 )
 MERGE INTO processing_activity_vendors AS tgt
@@ -62,8 +64,8 @@ ON tgt.tenant_id = src.tenant_id
 	AND tgt.processing_activity_id = src.processing_activity_id
 	AND tgt.vendor_id = src.vendor_id
 WHEN NOT MATCHED
-	THEN INSERT (tenant_id, processing_activity_id, vendor_id, created_at)
-		VALUES (src.tenant_id, src.processing_activity_id, src.vendor_id, src.created_at)
+	THEN INSERT (tenant_id, processing_activity_id, vendor_id, organization_id, created_at)
+		VALUES (src.tenant_id, src.processing_activity_id, src.vendor_id, src.organization_id, src.created_at)
 	WHEN NOT MATCHED BY SOURCE
 		AND tgt.tenant_id = @tenant_id AND tgt.processing_activity_id = @processing_activity_id
 		THEN DELETE
@@ -72,6 +74,7 @@ WHEN NOT MATCHED
 	args := pgx.StrictNamedArgs{
 		"tenant_id":              scope.GetTenantID(),
 		"processing_activity_id": processingActivityID,
+		"organization_id":        organizationID,
 		"created_at":             time.Now(),
 		"vendor_ids":             vendorIDs,
 	}
@@ -89,17 +92,19 @@ func (pav ProcessingActivityVendors) Insert(
 	conn pg.Conn,
 	scope Scoper,
 	processingActivityID gid.GID,
+	organizationID gid.GID,
 	vendorIDs []gid.GID,
 ) error {
 	q := `
 WITH vendor_ids AS (
 	SELECT unnest(@vendor_ids::text[]) AS vendor_id
 )
-INSERT INTO processing_activity_vendors (tenant_id, processing_activity_id, vendor_id, created_at)
+INSERT INTO processing_activity_vendors (tenant_id, processing_activity_id, vendor_id, organization_id, created_at)
 SELECT
 	@tenant_id AS tenant_id,
 	@processing_activity_id AS processing_activity_id,
 	vendor_id,
+	@organization_id AS organization_id,
 	@created_at AS created_at
 FROM vendor_ids
 `
@@ -107,6 +112,7 @@ FROM vendor_ids
 	args := pgx.StrictNamedArgs{
 		"tenant_id":              scope.GetTenantID(),
 		"processing_activity_id": processingActivityID,
+		"organization_id":        organizationID,
 		"created_at":             time.Now(),
 		"vendor_ids":             vendorIDs,
 	}
@@ -148,11 +154,12 @@ WITH
 		FROM processing_activity_vendors
 		WHERE %s AND processing_activity_id = ANY(SELECT id FROM source_processing_activities) AND snapshot_id IS NULL
 	)
-INSERT INTO processing_activity_vendors (tenant_id, processing_activity_id, vendor_id, snapshot_id, created_at)
+INSERT INTO processing_activity_vendors (tenant_id, processing_activity_id, vendor_id, organization_id, snapshot_id, created_at)
 SELECT
 	@tenant_id,
 	spa.id,
 	sv.id,
+	@organization_id,
 	@snapshot_id,
 	pav.created_at
 FROM source_processing_activity_vendors pav

@@ -154,11 +154,12 @@ WITH
 		FROM asset_vendors
 		WHERE %s AND asset_id = ANY(SELECT id FROM source_assets) AND snapshot_id IS NULL
 	)
-INSERT INTO asset_vendors (tenant_id, asset_id, vendor_id, snapshot_id, created_at)
+INSERT INTO asset_vendors (tenant_id, asset_id, vendor_id, organization_id, snapshot_id, created_at)
 SELECT
 	@tenant_id,
 	sa.id,
 	sv.id,
+	@organization_id,
 	@snapshot_id,
 	av.created_at
 FROM source_asset_vendors av

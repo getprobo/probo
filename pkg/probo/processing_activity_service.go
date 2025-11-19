@@ -185,7 +185,7 @@ func (s *ProcessingActivityService) Create(
 			}
 
 			if len(req.VendorIDs) > 0 {
-				if err := processingActivityVendors.Insert(ctx, conn, s.svc.scope, processingActivity.ID, req.VendorIDs); err != nil {
+				if err := processingActivityVendors.Insert(ctx, conn, s.svc.scope, processingActivity.ID, req.OrganizationID, req.VendorIDs); err != nil {
 					return fmt.Errorf("cannot create processing activity vendors: %w", err)
 				}
 			}
@@ -268,7 +268,7 @@ func (s *ProcessingActivityService) Update(
 			}
 
 			if req.VendorIDs != nil {
-				if err := processingActivityVendors.Merge(ctx, conn, s.svc.scope, processingActivity.ID, *req.VendorIDs); err != nil {
+				if err := processingActivityVendors.Merge(ctx, conn, s.svc.scope, processingActivity.ID, processingActivity.OrganizationID, *req.VendorIDs); err != nil {
 					return fmt.Errorf("cannot update processing activity vendors: %w", err)
 				}
 			}
