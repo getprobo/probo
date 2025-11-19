@@ -28,10 +28,6 @@ export function TextCell(props: Props) {
         onUpdate(props.name, inputValue);
     };
 
-    // Keep the value in sync with the props.defaultValue if defaultValue changes
-    useEffect(() => {
-        setValue(props.defaultValue);
-    }, [props.defaultValue]);
     return (
         <EditableCell
             name={props.name}

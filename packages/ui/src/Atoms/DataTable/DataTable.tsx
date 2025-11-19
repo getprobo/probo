@@ -85,7 +85,6 @@ export function RowButton({
     children,
     ...props
 }: {
-    colspan?: number;
     children: ReactNode;
     icon?: FC<{ size: number; className?: string }>;
 } & ComponentPropsWithRef<"button">) {
@@ -94,7 +93,10 @@ export function RowButton({
         <button
             {...props}
             type="button"
-            className="py-2 bg-highlight hover:bg-highlight-hover active:bg-highlight-pressed           cursor-pointer w-full flex gap-2 items-center justify-center text-sm text-txt-secondary"
+            className={clsx(
+                "py-2 bg-highlight hover:bg-highlight-hover active:bg-highlight-pressed cursor-pointer w-full flex gap-2 items-center justify-center text-sm text-txt-secondary",
+                props.className,
+            )}
             style={{ gridColumnEnd: -1, gridColumnStart: 1 }}
         >
             <IconComponent size={16} />
