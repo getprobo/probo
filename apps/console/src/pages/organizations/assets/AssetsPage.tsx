@@ -233,7 +233,9 @@ export default function AssetsPage(props: Props) {
             <VendorsCell
               name="vendorIds"
               organizationId={organizationId}
-              defaultValue={item?.vendors.edges.map((edge) => edge.node) ?? []}
+              defaultValue={
+                item?.vendors?.edges?.map((edge) => edge.node) ?? []
+              }
             />
           </>
         )}

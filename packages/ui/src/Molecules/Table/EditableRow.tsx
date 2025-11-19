@@ -39,8 +39,8 @@ export function EditableRow(props: Props) {
         [props.errors],
     );
     return (
-        <EditableRowContext value={value}>
+        <EditableRowContext.Provider value={value}>
             <Row>{props.children}</Row>
-        </EditableRowContext>
+        </EditableRowContext.Provider>
     );
 }

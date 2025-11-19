@@ -1,5 +1,5 @@
 import { EditableCell, useEditableCellRef } from "./EditableCell.tsx";
-import { type KeyboardEventHandler, useRef, useState } from "react";
+import { type KeyboardEventHandler, useEffect, useRef, useState } from "react";
 import { useEditableRowContext } from "./EditableRow.tsx";
 
 type Props = {
@@ -27,6 +27,11 @@ export function TextCell(props: Props) {
         setValue(inputValue);
         onUpdate(props.name, inputValue);
     };
+
+    // Keep the value in sync with the props.defaultValue if defaultValue changes
+    useEffect(() => {
+        setValue(props.defaultValue);
+    }, [props.defaultValue]);
     return (
         <EditableCell
             name={props.name}

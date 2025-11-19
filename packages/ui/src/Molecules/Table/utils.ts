@@ -3,7 +3,7 @@ export function getKey<T>(item: T): string {
         item &&
         typeof item === "object" &&
         "id" in item &&
-        typeof item.id === "string"
+        (typeof item.id === "string" || typeof item.id === "number")
     ) {
         return item.id.toString();
     }
