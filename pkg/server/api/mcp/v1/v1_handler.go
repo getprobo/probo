@@ -1,4 +1,4 @@
-package v1
+package mcp_v1
 
 import (
 	"context"
@@ -13,19 +13,10 @@ import (
 	"go.probo.inc/probo/pkg/authz"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/probo"
-	"go.probo.inc/probo/pkg/server/api/mcp/mcputils"
+	"go.probo.inc/probo/pkg/server/api/mcp/v1/server"
 )
 
-type (
-	resolver struct {
-		proboSvc *probo.Service
-		authSvc  *auth.Service
-		authzSvc *authz.Service
-		logger   *log.Logger
-	}
-)
-
-func (r *resolver) ProboService(ctx context.Context, tenantID gid.TenantID) *probo.TenantService {
+func (r *Resolver) ProboService(ctx context.Context, tenantID gid.TenantID) *probo.TenantService {
 	validateTenantAccess(ctx, tenantID)
 	return r.proboSvc.WithTenant(tenantID)
 }
@@ -52,30 +43,18 @@ func NewMux(logger *log.Logger, proboSvc *probo.Service, authSvc *auth.Service, 
 		log.String("version", cfg.Version),
 		log.String("request_timeout", cfg.RequestTimeout.String()),
 	)
+	// server.AddReceivingMiddleware(mcputils.LoggingMiddleware(logger))
 
-	server := mcp.NewServer(
-		&mcp.Implementation{
-			Name:    "probo",
-			Title:   "Probo",
-			Version: cfg.Version,
-		},
-		&mcp.ServerOptions{},
-	)
-
-	server.AddReceivingMiddleware(mcputils.LoggingMiddleware(logger))
-
-	resolver := &resolver{
+	resolver := &Resolver{
 		proboSvc: proboSvc,
 		authSvc:  authSvc,
 		authzSvc: authzSvc,
 		logger:   logger,
 	}
 
-	mcp.AddTool(server, ListOrganizationsTool, resolver.ListOrganizations)
-	mcp.AddTool(server, ListVendorsTool, resolver.ListVendors)
-	mcp.AddTool(server, AddVendorTool, resolver.AddVendor)
+	mcpServer := server.New(resolver)
 
-	getServer := func(r *http.Request) *mcp.Server { return server }
+	getServer := func(r *http.Request) *mcp.Server { return mcpServer }
 	eventStore := mcp.NewMemoryEventStore(nil)
 
 	handler := mcp.NewStreamableHTTPHandler(

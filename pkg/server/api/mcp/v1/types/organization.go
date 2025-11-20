@@ -14,8 +14,14 @@
 
 package types
 
-type ListOrganizationsInput struct{}
+import "go.probo.inc/probo/pkg/coredata"
 
-type ListOrganizationsOutput struct {
-	Organizations []Organization `json:"organizations" jsonschema:"list of organizations the user has access to"`
+func NewOrganization(o *coredata.Organization) *Organization {
+	return &Organization{
+		ID:          o.ID,
+		Name:        o.Name,
+		Description: o.Description,
+		CreatedAt:   o.CreatedAt,
+		UpdatedAt:   o.UpdatedAt,
+	}
 }

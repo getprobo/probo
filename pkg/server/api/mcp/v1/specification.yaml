@@ -1,0 +1,241 @@
+info:
+  title: Probo MCP Server
+  version: 1.0.0
+  description: Probo MCP Server API
+
+components:
+  schemas:
+    OrderDirection:
+      type: string
+      enum:
+        - asc
+        - desc
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/page.OrderDirection
+
+    VendorOrderField:
+      type: string
+      enum:
+        - created_at
+        - updated_at
+        - name
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.VendorOrderField
+
+    VendorOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/VendorOrderField"
+          description: Vendor order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: Vendor order direction
+    GID:
+      type: string
+      format: string
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/gid.GID
+
+    CursorKey:
+      type: string
+      format: string
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/page.CursorKey
+
+    ListOrganizationsInput:
+      type: object
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+
+    ListOrganizationsOutput:
+      type: object
+      properties:
+        organizations:
+          type: array
+          items:
+            $ref: "#/components/schemas/Organization"
+
+    Organization:
+      type: object
+      required:
+        - id
+        - name
+        - description
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        name:
+          type: string
+          description: Organization name
+        description:
+          type:
+            - string
+            - "null"
+          description: Organization description
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Update timestamp
+
+    ListVendorsInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        order_by:
+          $ref: "#/components/schemas/VendorOrderBy"
+          description: Vendor order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+        filter:
+          type: object
+          properties:
+            snapshot_id:
+              $ref: "#/components/schemas/GID"
+              description: Snapshot ID
+
+    ListVendorsOutput:
+      type: object
+      required:
+        - vendors
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        vendors:
+          type: array
+          items:
+            $ref: "#/components/schemas/Vendor"
+
+    Vendor:
+      type: object
+      required:
+        - id
+        - name
+        - organization_id
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Vendor ID
+        name:
+          type: string
+          description: Vendor name
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        description:
+          type:
+            - string
+            - "null"
+          description: Vendor description
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Update timestamp
+
+    AddVendorInput:
+      type: object
+      required:
+        - organization_id
+        - name
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        name:
+          type: string
+          description: Vendor name
+        description:
+          type: string
+          description: Vendor description
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Update timestamp
+
+    AddVendorOutput:
+      type: object
+      required:
+        - vendor
+      properties:
+        vendor:
+          $ref: "#/components/schemas/Vendor"
+
+    UpdateVendorInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Vendor ID
+        name:
+          type: string
+          description: Vendor name
+        description:
+          type: string
+          description: Vendor description
+
+    UpdateVendorOutput:
+      type: object
+      required:
+        - vendor
+      properties:
+        vendor:
+          $ref: "#/components/schemas/Vendor"
+
+tools:
+  - name: listOrganizations
+    description: List all organizations the user has access to
+    readonly: true
+    inputSchema:
+      $ref: "#/components/schemas/ListOrganizationsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListOrganizationsOutput"
+  - name: listVendors
+    description: List all vendors for the organization
+    readonly: true
+    inputSchema:
+      $ref: "#/components/schemas/ListVendorsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListVendorsOutput"
+  - name: addVendor
+    description: Add a new vendor to the organization
+    readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/AddVendorInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddVendorOutput"
+  - name: updateVendor
+    description: Update an existing vendor
+    readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateVendorInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateVendorOutput"

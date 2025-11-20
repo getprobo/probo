@@ -15,14 +15,20 @@
 package types
 
 import (
+	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/server/gqlutils/types/cursor"
 )
 
 func NewCursor[O page.OrderField](
-	first *int,
+	first *int64,
 	after *page.CursorKey,
 	orderBy page.OrderBy[O],
 ) *page.Cursor[O] {
-	return cursor.NewCursor(first, after, nil, nil, orderBy)
+	firstValue := ref.Ref(100)
+	if first != nil {
+		firstValue = ref.Ref(int(*first))
+	}
+
+	return cursor.NewCursor(firstValue, after, nil, nil, orderBy)
 }

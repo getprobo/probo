@@ -1,0 +1,17 @@
+spec: specification.yaml
+
+output: "."
+
+resolver:
+  package: mcp_v1
+  filename: v1_resolver.go
+  type: Resolver
+  preserve: true
+
+server:
+  package: server
+  filename: server/server.go
+
+model:
+  package: types
+  filename: types/types.go
