@@ -22,6 +22,8 @@ type (
 	DocumentFilter struct {
 		query                   *string
 		trustCenterVisibilities []TrustCenterVisibility
+		published               *bool
+		userEmail               *string
 	}
 )
 
@@ -40,6 +42,16 @@ func NewDocumentTrustCenterFilter() *DocumentFilter {
 	}
 }
 
+func (f *DocumentFilter) WithPublished(published *bool) *DocumentFilter {
+	f.published = published
+	return f
+}
+
+func (f *DocumentFilter) WithUserEmail(userEmail *string) *DocumentFilter {
+	f.userEmail = userEmail
+	return f
+}
+
 func (f *DocumentFilter) SQLArguments() pgx.StrictNamedArgs {
 	var visibilities []string
 	if f.trustCenterVisibilities != nil {
@@ -51,6 +63,8 @@ func (f *DocumentFilter) SQLArguments() pgx.StrictNamedArgs {
 	return pgx.StrictNamedArgs{
 		"query":                     f.query,
 		"trust_center_visibilities": visibilities,
+		"published":                 f.published,
+		"user_email":                f.userEmail,
 	}
 }
 
@@ -70,6 +84,26 @@ func (f *DocumentFilter) SQLFragment() string {
 		WHEN @trust_center_visibilities::trust_center_visibility[] IS NOT NULL THEN
 			trust_center_visibility = ANY(@trust_center_visibilities::trust_center_visibility[])
 		ELSE TRUE
+	END
+	AND
+	CASE
+		WHEN @published::boolean IS NULL THEN TRUE
+		WHEN @published::boolean IS TRUE THEN current_published_version IS NOT NULL
+		WHEN @published::boolean IS FALSE THEN current_published_version IS NULL
+	END
+	AND
+	CASE
+		WHEN @user_email::text IS NULL THEN TRUE
+		ELSE EXISTS (
+			SELECT 1
+			FROM document_versions dv
+			INNER JOIN document_version_signatures dvs ON dv.id = dvs.document_version_id
+			INNER JOIN peoples p ON dvs.signed_by = p.id
+			WHERE dv.document_id = documents.id
+				AND dv.status = 'PUBLISHED'
+				AND p.primary_email_address = @user_email::text
+				AND dvs.state IN ('REQUESTED', 'SIGNED')
+		)
 	END
 )`
 }

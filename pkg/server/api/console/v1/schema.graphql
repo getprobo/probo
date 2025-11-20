@@ -522,10 +522,6 @@ enum BusinessImpact
 
 enum DocumentVersionOrderField
   @goModel(model: "go.probo.inc/probo/pkg/coredata.DocumentVersionOrderField") {
-  VERSION
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.DocumentVersionOrderFieldVersion"
-    )
   CREATED_AT
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.DocumentVersionOrderFieldCreatedAt"
@@ -2035,6 +2031,29 @@ type Document implements Node {
   updatedAt: Datetime!
 }
 
+type SignableDocument @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.SignableDocument"
+  ){
+  id: ID!
+  title: String!
+  description: String
+  documentType: DocumentType!
+  classification: DocumentClassification!
+  signed: Boolean! @goField(forceResolver: true)
+
+  versions(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: DocumentVersionOrder
+    filter: DocumentVersionFilter
+  ): DocumentVersionConnection! @goField(forceResolver: true)
+
+  createdAt: Datetime!
+  updatedAt: Datetime!
+}
+
 type Meeting implements Node {
   id: ID!
   name: String!
@@ -2259,6 +2278,17 @@ type Viewer {
     before: CursorKey
     orderBy: OrganizationOrder
   ): OrganizationConnection! @goField(forceResolver: true)
+
+  signableDocuments(
+    organizationId: ID!
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: DocumentOrder
+  ): SignableDocumentConnection! @goField(forceResolver: true)
+
+  signableDocument(id: ID!): SignableDocument @goField(forceResolver: true)
 }
 
 # Connection Types
@@ -2512,6 +2542,22 @@ type EvidenceConnection
 type EvidenceEdge {
   cursor: CursorKey!
   node: Evidence!
+}
+
+type SignableDocumentConnection
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.SignableDocumentConnection"
+  ) {
+  edges: [SignableDocumentEdge!]!
+  pageInfo: PageInfo!
+}
+
+type SignableDocumentEdge
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.SignableDocumentEdge"
+  ) {
+  cursor: CursorKey!
+  node: SignableDocument!
 }
 
 type DocumentConnection
@@ -2914,9 +2960,16 @@ type Mutation {
     input: SendSigningNotificationsInput!
   ): SendSigningNotificationsPayload!  cancelSignatureRequest(
     input: CancelSignatureRequestInput!
-  ): CancelSignatureRequestPayload!  exportDocumentVersionPDF(
+  ): CancelSignatureRequestPayload!
+  signDocument(
+    input: SignDocumentInput!
+  ): SignDocumentPayload!
+  exportDocumentVersionPDF(
     input: ExportDocumentVersionPDFInput!
   ): ExportDocumentVersionPDFPayload!
+  exportSignableVersionDocumentPDF(
+    input: ExportSignableDocumentVersionPDFInput!
+  ): ExportSignableDocumentVersionPDFPayload!
   createVendorRiskAssessment(
     input: CreateVendorRiskAssessmentInput!
   ): CreateVendorRiskAssessmentPayload!
@@ -3486,6 +3539,10 @@ input ExportDocumentVersionPDFInput {
   withWatermark: Boolean!
   watermarkEmail: String
   withSignatures: Boolean!
+}
+
+input ExportSignableDocumentVersionPDFInput {
+  documentVersionId: ID!
 }
 
 input DeleteDocumentInput {
@@ -4072,6 +4129,10 @@ type ExportDocumentVersionPDFPayload {
   data: String!
 }
 
+type ExportSignableDocumentVersionPDFPayload {
+  data: String!
+}
+
 type UpdateDocumentPayload {
   document: Document!
 }
@@ -4185,6 +4246,8 @@ type DocumentVersion implements Node @goModel(model: "go.probo.inc/probo/pkg/ser
     orderBy: DocumentVersionSignatureOrder
     filter: DocumentVersionSignatureFilter
   ): DocumentVersionSignatureConnection! @goField(forceResolver: true)
+
+  signed: Boolean! @goField(forceResolver: true)
 
   publishedAt: Datetime
   createdAt: Datetime!
@@ -4345,6 +4408,14 @@ type SendSigningNotificationsPayload {
 
 type CancelSignatureRequestPayload {
   deletedDocumentVersionSignatureId: ID!
+}
+
+input SignDocumentInput {
+  documentVersionId: ID!
+}
+
+type SignDocumentPayload {
+  documentVersionSignature: DocumentVersionSignature!
 }
 
 type UploadMeasureEvidencePayload {

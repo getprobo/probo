@@ -14,27 +14,42 @@
 
 package coredata
 
+import (
+	"github.com/jackc/pgx/v5"
+)
+
 type (
-	DocumentVersionOrderField string
+	DocumentVersionFilter struct {
+		userEmail *string
+	}
 )
 
-const (
-	DocumentVersionOrderFieldCreatedAt DocumentVersionOrderField = "CREATED_AT"
-)
-
-func (p DocumentVersionOrderField) Column() string {
-	return string(p)
+func NewDocumentVersionFilter() *DocumentVersionFilter {
+	return &DocumentVersionFilter{}
 }
 
-func (p DocumentVersionOrderField) String() string {
-	return string(p)
+func (f *DocumentVersionFilter) WithUserEmail(userEmail *string) *DocumentVersionFilter {
+	f.userEmail = userEmail
+	return f
 }
 
-func (p DocumentVersionOrderField) MarshalText() ([]byte, error) {
-	return []byte(p.String()), nil
+func (f *DocumentVersionFilter) SQLArguments() pgx.StrictNamedArgs {
+	return pgx.StrictNamedArgs{
+		"user_email": f.userEmail,
+	}
 }
 
-func (p *DocumentVersionOrderField) UnmarshalText(text []byte) error {
-	*p = DocumentVersionOrderField(text)
-	return nil
+func (f *DocumentVersionFilter) SQLFragment() string {
+	return `
+(
+	@user_email::text IS NULL
+	OR EXISTS (
+		SELECT 1
+		FROM document_version_signatures dvs
+		INNER JOIN peoples p ON dvs.signed_by = p.id
+		WHERE dvs.document_version_id = document_versions.id
+			AND p.primary_email_address = @user_email::text
+			AND dvs.state IN ('REQUESTED', 'SIGNED')
+		)
+)`
 }

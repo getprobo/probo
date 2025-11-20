@@ -2,28 +2,7 @@ import { Link, Navigate, Outlet, useParams } from "react-router";
 import {
   DropdownSeparator,
   IconArrowBoxLeft,
-  IconBank,
-  IconBook,
-  IconCheckmark1,
   IconCircleQuestionmark,
-  IconClock,
-  IconCrossLargeX,
-  IconFire3,
-  IconGroup1,
-  IconInboxEmpty,
-  IconPageTextLine,
-  IconSettingsGear2,
-  IconStore,
-  IconTodo,
-  IconListStack,
-  IconBox,
-  IconShield,
-  IconRotateCw,
-  IconCircleProgress,
-  IconMedal,
-  IconCalendar1,
-  Layout,
-  SidebarItem,
   UserDropdown as UserDropdownRoot,
   UserDropdownItem,
   Skeleton,
@@ -31,26 +10,31 @@ import {
   Button,
   DropdownItem,
   IconChevronGrabberVertical,
-  IconPlusLarge,
-  Avatar,
-  IconPeopleAdd,
-  Badge,
-  IconKey,
   IconLock,
+  IconKey,
+  IconPeopleAdd,
+  IconPlusLarge,
+  IconCheckmark1,
+  IconClock,
+  useToast,
+  Logo,
+  Toasts,
+  ConfirmDialog,
+  Avatar,
+  Badge,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { graphql } from "relay-runtime";
 import { useLazyLoadQuery } from "react-relay";
-import type { MainLayoutQuery as MainLayoutQueryType } from "./__generated__/MainLayoutQuery.graphql";
+import type { EmployeeLayoutQuery as EmployeeLayoutQueryType } from "./__generated__/EmployeeLayoutQuery.graphql";
 import { Suspense, useState, useEffect } from "react";
-import { useToast } from "@probo/ui";
 import { ErrorBoundary } from "react-error-boundary";
 import { PageError } from "/components/PageError";
 import { buildEndpoint } from "/providers/RelayProviders";
 import { Authorized } from "/permissions";
 
-const MainLayoutQuery = graphql`
-  query MainLayoutQuery($organizationId: ID!) {
+const EmployeeLayoutQuery = graphql`
+  query EmployeeLayoutQuery($organizationId: ID!) {
     viewer {
       id
       user {
@@ -68,13 +52,8 @@ const MainLayoutQuery = graphql`
   }
 `;
 
-/**
- * Site layout with a header and a sidebar
- */
-export function MainLayout() {
+export function EmployeeLayout() {
   const { organizationId } = useParams();
-
-  const prefix = `/organizations/${organizationId}`;
 
   if (!organizationId) {
     return <Navigate to="/" />;
@@ -82,232 +61,51 @@ export function MainLayout() {
 
   return (
     <Suspense fallback={<Skeleton className="w-full h-screen" />}>
-      <MainLayoutContent organizationId={organizationId} prefix={prefix} />
+      <EmployeeLayoutContent organizationId={organizationId} />
     </Suspense>
   );
 }
 
-function MainLayoutContent({
+function EmployeeLayoutContent({
   organizationId,
-  prefix,
 }: {
   organizationId: string;
-  prefix: string;
 }) {
-  const { __ } = useTranslate();
-  const data = useLazyLoadQuery<MainLayoutQueryType>(MainLayoutQuery, {
+  const data = useLazyLoadQuery<EmployeeLayoutQueryType>(EmployeeLayoutQuery, {
     organizationId,
   });
 
   return (
-    <Layout
-      header={
-        <>
-          <div className="mr-auto">
-            <OrganizationSelector currentOrganization={data.organization} />
-          </div>
-          <Suspense fallback={<Skeleton className="w-32 h-8" />}>
-            <UserDropdown organizationId={organizationId} />
-          </Suspense>
-        </>
-      }
-      sidebar={
-        <ul className="space-y-[2px]">
-          <Authorized entity="Organization" action="listMeetings">
-            <SidebarItem
-              label={__("Meetings")}
-              icon={IconCalendar1}
-              to={`${prefix}/meetings`}
-            />
-          </Authorized>
-          <Authorized entity="Organization" action="listTasks">
-            <SidebarItem
-              label={__("Tasks")}
-              icon={IconInboxEmpty}
-              to={`${prefix}/tasks`}
-            />
-          </Authorized>
-          <Authorized entity="Organization" action="listMeasures">
-            <SidebarItem
-              label={__("Measures")}
-              icon={IconTodo}
-              to={`${prefix}/measures`}
-            />
-          </Authorized>
-          <Authorized entity="Organization" action="listRisks">
-            <SidebarItem
-              label={__("Risks")}
-              icon={IconFire3}
-              to={`${prefix}/risks`}
-            />
-          </Authorized>
-          <Authorized entity="Organization" action="listFrameworks">
-            <SidebarItem
-              label={__("Frameworks")}
-              icon={IconBank}
-              to={`${prefix}/frameworks`}
-            />
-          </Authorized>
-          <Authorized entity="Organization" action="listPeople">
-            <SidebarItem
-              label={__("People")}
-              icon={IconGroup1}
-              to={`${prefix}/people`}
-            />
-          </Authorized>
-          <Authorized entity="Organization" action="listVendors">
-            <SidebarItem
-              label={__("Vendors")}
-              icon={IconStore}
-              to={`${prefix}/vendors`}
-            />
-          </Authorized>
-          <Authorized entity="Organization" action="listDocuments">
-            <SidebarItem
-              label={__("Documents")}
-              icon={IconPageTextLine}
-              to={`${prefix}/documents`}
-            />
-          </Authorized>
-          <Authorized entity="Organization" action="listAssets">
-            <SidebarItem
-              label={__("Assets")}
-              icon={IconBox}
-              to={`${prefix}/assets`}
-            />
-          </Authorized>
-          <Authorized entity="Organization" action="listData">
-            <SidebarItem
-              label={__("Data")}
-              icon={IconListStack}
-              to={`${prefix}/data`}
-            />
-          </Authorized>
-          <Authorized entity="Organization" action="listAudits">
-            <SidebarItem
-              label={__("Audits")}
-              icon={IconMedal}
-              to={`${prefix}/audits`}
-            />
-          </Authorized>
-          <Authorized entity="Organization" action="listNonconformities">
-            <SidebarItem
-              label={__("Nonconformities")}
-              icon={IconCrossLargeX}
-              to={`${prefix}/nonconformities`}
-            />
-          </Authorized>
-          <Authorized entity="Organization" action="listObligations">
-            <SidebarItem
-              label={__("Obligations")}
-              icon={IconBook}
-              to={`${prefix}/obligations`}
-            />
-          </Authorized>
-          <Authorized entity="Organization" action="listContinualImprovements">
-            <SidebarItem
-              label={__("Continual Improvements")}
-              icon={IconRotateCw}
-              to={`${prefix}/continual-improvements`}
-            />
-          </Authorized>
-          <Authorized entity="Organization" action="listProcessingActivities">
-            <SidebarItem
-              label={__("Processing Activities")}
-              icon={IconCircleProgress}
-              to={`${prefix}/processing-activities`}
-            />
-          </Authorized>
-          <Authorized entity="Organization" action="listSnapshots">
-            <SidebarItem
-              label={__("Snapshots")}
-              icon={IconClock}
-              to={`${prefix}/snapshots`}
-            />
-          </Authorized>
-          <Authorized entity="Organization" action="getTrustCenter">
-            <SidebarItem
-              label={__("Trust Center")}
-              icon={IconShield}
-              to={`${prefix}/trust-center`}
-            />
-          </Authorized>
-          <Authorized entity="Organization" action="listMembers">
-            <SidebarItem
-              label={__("Settings")}
-              icon={IconSettingsGear2}
-              to={`${prefix}/settings`}
-            />
-          </Authorized>
-        </ul>
-      }
-    >
-      <ErrorBoundary FallbackComponent={PageError}>
-        <Outlet />
-      </ErrorBoundary>
-    </Layout>
-  );
-}
-
-function UserDropdown({ organizationId }: { organizationId: string }) {
-  const { __ } = useTranslate();
-  const { toast } = useToast();
-  const user = useLazyLoadQuery<MainLayoutQueryType>(MainLayoutQuery, {
-    organizationId,
-  }).viewer.user;
-
-  const handleLogout: React.MouseEventHandler<HTMLAnchorElement> = async (
-    e
-  ) => {
-    e.preventDefault();
-
-    fetch(buildEndpoint("/connect/logout"), {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({}),
-    })
-      .then(async (res) => {
-        if (!res.ok) {
-          const error = await res.json();
-          throw new Error(error.message || __("Failed to login"));
-        }
-
-        window.location.reload();
-      })
-      .catch((e) => {
-        toast({
-          title: __("Error"),
-          description: e.message as string,
-          variant: "error",
-        });
-      });
-  };
-
-  return (
-    <UserDropdownRoot fullName={user.fullName} email={user.email}>
-      <Authorized entity="Organization" action="deleteOrganization">
-        <UserDropdownItem
-          to="/api-keys"
-          icon={IconKey}
-          label={__("API Keys")}
-        />
-      </Authorized>
-      <UserDropdownItem
-        to="mailto:support@getprobo.com"
-        icon={IconCircleQuestionmark}
-        label={__("Help")}
-      />
-      <DropdownSeparator />
-      <UserDropdownItem
-        variant="danger"
-        to="/logout"
-        icon={IconArrowBoxLeft}
-        label="Logout"
-        onClick={handleLogout}
-      />
-    </UserDropdownRoot>
+    <div className="text-txt-primary bg-level-0">
+      <header className="absolute z-2 left-0 right-0 px-4 flex items-center border-b border-border-solid h-12 bg-level-0">
+        <Logo className="w-12 h-5" />
+        <svg
+          className="mx-3 text-txt-tertiary"
+          width="8"
+          height="18"
+          viewBox="0 0 8 18"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path d="M1 17L7 1" stroke="currentColor" />
+        </svg>
+        <div className="mr-auto">
+          <OrganizationSelector currentOrganization={data.organization} />
+        </div>
+        <Suspense fallback={<Skeleton className="w-32 h-8" />}>
+          <UserDropdown organizationId={organizationId} />
+        </Suspense>
+      </header>
+      <main className="overflow-y-auto w-full pt-12 h-[calc(100vh-3rem)]">
+        <div className="px-8 pb-8 pt-8">
+          <ErrorBoundary FallbackComponent={PageError}>
+            <Outlet />
+          </ErrorBoundary>
+        </div>
+      </main>
+      <Toasts />
+      <ConfirmDialog />
+    </div>
   );
 }
 
@@ -342,11 +140,10 @@ interface InvitationsResponse {
   invitations: Invitation[];
 }
 
-
 function OrganizationSelector({
   currentOrganization,
 }: {
-  currentOrganization: MainLayoutQueryType["response"]["organization"];
+  currentOrganization: EmployeeLayoutQueryType["response"]["organization"];
 }) {
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [pendingInvitationsCount, setPendingInvitationsCount] = useState(0);
@@ -440,7 +237,6 @@ function OrganizationSelector({
 
               const isSAMLUrl = targetUrl.includes("/connect/saml/");
 
-              // Use organization endpoint for all logos for consistency
               const logoUrl = organization.logoUrl;
 
               return (
@@ -511,5 +307,67 @@ function OrganizationSelector({
         </Link>
       )}
     </div>
+  );
+}
+
+function UserDropdown({ organizationId }: { organizationId: string }) {
+  const { __ } = useTranslate();
+  const { toast } = useToast();
+  const user = useLazyLoadQuery<EmployeeLayoutQueryType>(EmployeeLayoutQuery, {
+    organizationId,
+  }).viewer.user;
+
+  const handleLogout: React.MouseEventHandler<HTMLAnchorElement> = async (
+    e
+  ) => {
+    e.preventDefault();
+
+    fetch(buildEndpoint("/connect/logout"), {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({}),
+    })
+      .then(async (res) => {
+        if (!res.ok) {
+          const error = await res.json();
+          throw new Error(error.message || __("Failed to login"));
+        }
+
+        window.location.reload();
+      })
+      .catch((e) => {
+        toast({
+          title: __("Error"),
+          description: e.message as string,
+          variant: "error",
+        });
+      });
+  };
+
+  return (
+    <UserDropdownRoot fullName={user.fullName} email={user.email}>
+      <Authorized entity="Organization" action="deleteOrganization">
+        <UserDropdownItem
+          to="/api-keys"
+          icon={IconKey}
+          label={__("API Keys")}
+        />
+      </Authorized>
+      <UserDropdownItem
+        to="mailto:support@getprobo.com"
+        icon={IconCircleQuestionmark}
+        label={__("Help")}
+      />
+      <DropdownSeparator />
+      <UserDropdownItem
+        variant="danger"
+        to="/logout"
+        icon={IconArrowBoxLeft}
+        label="Logout"
+        onClick={handleLogout}
+      />
+    </UserDropdownRoot>
   );
 }

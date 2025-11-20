@@ -24,7 +24,7 @@ const pendingRequests: Map<string, Promise<PermissionsResponse>> = new Map();
 /**
  * Fetch permissions for the current user's role in the organization
  */
-function fetchPermissions(organizationId: string): Promise<PermissionsResponse> {
+export function fetchPermissions(organizationId: string): Promise<PermissionsResponse> {
   if (cache[organizationId]) {
     return Promise.resolve(cache[organizationId]);
   }
@@ -208,4 +208,26 @@ export function getAssignableRoles(organizationId: string): string[] {
   }
 
   return [];
+}
+
+/**
+ * Check if the current user has a specific role in the organization
+ * Fetches permissions if not already cached
+ *
+ * @param organizationId - The organization ID
+ * @param role - The role to check (e.g., "EMPLOYEE", "OWNER", "ADMIN", "VIEWER", "FULL")
+ * @returns Promise that resolves to true if the user has the role, false otherwise
+ *
+ * @example
+ * const isEmployee = await isRole(orgId, "EMPLOYEE");
+ * if (isEmployee) { ... }
+ */
+export async function isRole(organizationId: string, role: string): Promise<boolean> {
+  try {
+    const data = await fetchPermissions(organizationId);
+    return data.role === role;
+  } catch (error) {
+    console.error('Failed to fetch permissions for role check:', error);
+    return false;
+  }
 }
