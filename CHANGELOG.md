@@ -4,10 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
-### Fixed
+## [0.88.8] - 2025-11-20
 
 - Fix SAML entrypoint config.
 - Fix missing permission to verify SAML domain.
+
+### Changed
+
+- Update go dependencies
 
 ## [0.88.7] - 2025-11-19
 
