@@ -149,47 +149,21 @@ func (ck *CursorKey) UnmarshalBinary(data []byte) error {
 }
 
 func (ck CursorKey) MarshalJSON() ([]byte, error) {
-	arr := []any{ck.ID.String(), ck.Value}
-	return json.Marshal(arr)
+	return json.Marshal(ck.String())
 }
 
 func (ck *CursorKey) UnmarshalJSON(data []byte) error {
-	var arr []json.RawMessage
-	if err := json.Unmarshal(data, &arr); err != nil {
-		var s string
-		if err := json.Unmarshal(data, &s); err != nil {
-			return err
-		}
-
-		parsed, err := ParseCursorKey(s)
-		if err != nil {
-			return err
-		}
-
-		*ck = parsed
-		return nil
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
 	}
 
-	if len(arr) != 2 {
-		return ErrInvalidFormat
-	}
-
-	var idStr string
-	if err := json.Unmarshal(arr[0], &idStr); err != nil {
-		return ErrInvalidFormat
-	}
-
-	id, err := gid.ParseGID(idStr)
+	parsed, err := ParseCursorKey(s)
 	if err != nil {
-		return ErrInvalidFormat
+		return err
 	}
 
-	var value any
-	if err := json.Unmarshal(arr[1], &value); err != nil {
-		return ErrInvalidFormat
-	}
+	*ck = parsed
 
-	ck.ID = id
-	ck.Value = value
 	return nil
 }
