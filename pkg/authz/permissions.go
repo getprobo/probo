@@ -660,6 +660,7 @@ var Permissions = map[uint16]map[Action][]Role{
 		ActionDeleteSAMLConfiguration: {RoleOwner, RoleAdmin},
 		ActionEnableSAML:              {RoleOwner, RoleAdmin},
 		ActionDisableSAML:             {RoleOwner, RoleAdmin},
+		ActionVerifyDomain:            {RoleOwner},
 	},
 	coredata.FileEntityType: {
 		ActionGet:         AllRoles,
