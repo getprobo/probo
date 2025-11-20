@@ -137,3 +137,16 @@ func (r *Resolver) ListPeopleTool(ctx context.Context, req *mcp.CallToolRequest,
 
 	return nil, types.NewListPeopleOutput(page), nil
 }
+
+func (r *Resolver) GetPeopleTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetPeopleInput) (*mcp.CallToolResult, types.GetPeopleOutput, error) {
+	prb := r.ProboService(ctx, input.ID.TenantID())
+
+	people, err := prb.Peoples.Get(ctx, input.ID)
+	if err != nil {
+		return nil, types.GetPeopleOutput{}, fmt.Errorf("failed to get people: %w", err)
+	}
+
+	return nil, types.GetPeopleOutput{
+		People: types.NewPeople(people),
+	}, nil
+}

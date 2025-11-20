@@ -335,6 +335,23 @@ components:
         vendor:
           $ref: "#/components/schemas/Vendor"
 
+    GetPeopleInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: People ID
+
+    GetPeopleOutput:
+      type: object
+      required:
+        - people
+      properties:
+        people:
+          $ref: "#/components/schemas/People"
+
 tools:
   - name: listOrganizations
     description: List all organizations the user has access to
@@ -371,3 +388,10 @@ tools:
       $ref: "#/components/schemas/UpdateVendorInput"
     outputSchema:
       $ref: "#/components/schemas/UpdateVendorOutput"
+  - name: getPeople
+    description: Get a people by ID
+    readonly: true
+    inputSchema:
+      $ref: "#/components/schemas/GetPeopleInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetPeopleOutput"
