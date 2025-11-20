@@ -2,19 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+
+### Fixed
+
+- Fix missing permission to verify SAML domain.
+
 ## [0.88.7] - 2025-11-19
 
-## Fixed
+### Fixed
 
 - Fix snapshot creation
 
 ## [0.88.6] - 2025-11-18
 
-## Fixed
+### Fixed
 
 - Fix asset permissions
 
-## [0.88.5] - 2025-11-17
+### [0.88.5] - 2025-11-17
 
 ## Fixed
 
@@ -22,13 +28,13 @@ All notable changes to this project will be documented in this file.
 
 ## [0.88.4] - 2025-11-14
 
-## Fixed
+### Fixed
 
 - Fix ca-cert-bundle entrypoint.sh
 
 ## [0.88.3] - 2025-11-14
 
-## Fixed
+### Fixed
 
 - Fix document permissions
 
