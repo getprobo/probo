@@ -12,6 +12,7 @@ import (
 type ResolverInterface interface {
 	ListOrganizationsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListOrganizationsInput) (*mcp.CallToolResult, types.ListOrganizationsOutput, error)
 	ListVendorsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListVendorsInput) (*mcp.CallToolResult, types.ListVendorsOutput, error)
+	ListPeopleTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListPeopleInput) (*mcp.CallToolResult, types.ListPeopleOutput, error)
 	AddVendorTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddVendorInput) (*mcp.CallToolResult, types.AddVendorOutput, error)
 	UpdateVendorTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateVendorInput) (*mcp.CallToolResult, types.UpdateVendorOutput, error)
 }
@@ -52,6 +53,16 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 			OutputSchema: types.ListVendorsToolOutputSchema,
 		},
 		resolver.ListVendorsTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "listPeople",
+			Description:  "List all people for the organization",
+			InputSchema:  types.ListPeopleToolInputSchema,
+			OutputSchema: types.ListPeopleToolOutputSchema,
+		},
+		resolver.ListPeopleTool,
 	)
 	mcp.AddTool(
 		server,

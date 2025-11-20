@@ -108,3 +108,32 @@ func (r *Resolver) AddVendorTool(ctx context.Context, req *mcp.CallToolRequest, 
 func (r *Resolver) UpdateVendorTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateVendorInput) (*mcp.CallToolResult, types.UpdateVendorOutput, error) {
 	return nil, types.UpdateVendorOutput{}, fmt.Errorf("updateVendor not implemented")
 }
+
+func (r *Resolver) ListPeopleTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListPeopleInput) (*mcp.CallToolResult, types.ListPeopleOutput, error) {
+	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.PeopleOrderField]{
+		Field:     coredata.PeopleOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.PeopleOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	var peopleFilter = coredata.NewPeopleFilter(nil)
+	if input.Filter != nil {
+		peopleFilter = coredata.NewPeopleFilter(input.Filter.ExcludeContractEnded)
+	}
+
+	page, err := prb.Peoples.ListForOrganizationID(ctx, input.OrganizationID, cursor, peopleFilter)
+	if err != nil {
+		panic(fmt.Errorf("cannot list organization people: %w", err))
+	}
+
+	return nil, types.NewListPeopleOutput(page), nil
+}

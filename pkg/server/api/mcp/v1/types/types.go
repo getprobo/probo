@@ -16,7 +16,9 @@ var (
 	AddVendorToolOutputSchema         = mcp.MustUnmarshalSchema(`{"type":"object","required":["vendor"],"properties":{"vendor":{"type":"object","required":["id","name","organization_id","created_at","updated_at"],"properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"description":"Vendor description"},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Vendor name"},"organization_id":{"type":"string","format":"string"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}}}`)
 	ListOrganizationsToolInputSchema  = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"organization_id":{"type":"string","format":"string"}}}`)
 	ListOrganizationsToolOutputSchema = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"organizations":{"type":"array","items":{"type":"object","required":["id","name","description","created_at","updated_at"],"properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"description":"Organization description"},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Organization name"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}}}}`)
-	ListVendorsToolInputSchema        = mcp.MustUnmarshalSchema(`{"type":"object","required":["organization_id"],"properties":{"cursor":{"type":"string","format":"string"},"filter":{"type":"object","properties":{"snapshot_id":{"type":"string","format":"string"}}},"order_by":{"type":"object","required":["field","direction"],"properties":{"direction":{"type":"string","enum":["asc","desc"]},"field":{"type":"string","enum":["created_at","updated_at","name"]}}},"organization_id":{"type":"string","format":"string"},"size":{"type":"integer","description":"Page size"}}}`)
+	ListPeopleToolInputSchema         = mcp.MustUnmarshalSchema(`{"type":"object","required":["organization_id"],"properties":{"cursor":{"type":"string","format":"string"},"filter":{"type":"object","properties":{"exclude_contract_ended":{"type":"boolean","description":"Exclude people with ended contracts"}}},"order_by":{"type":"object","required":["field","direction"],"properties":{"direction":{"type":"string","enum":["asc","desc"]},"field":{"type":"string","enum":["CREATED_AT","FULL_NAME","KIND"]}}},"organization_id":{"type":"string","format":"string"},"size":{"type":"integer","description":"Page size"}}}`)
+	ListPeopleToolOutputSchema        = mcp.MustUnmarshalSchema(`{"type":"object","required":["people"],"properties":{"next_cursor":{"type":"string","format":"string"},"people":{"type":"array","items":{"type":"object","required":["id","organization_id","full_name","primary_email_address","additional_email_addresses","kind","created_at","updated_at"],"properties":{"additional_email_addresses":{"type":"array","description":"Additional email addresses","items":{"type":"string"}},"contract_end_date":{"description":"Contract end date","format":"date-time"},"contract_start_date":{"description":"Contract start date","format":"date-time"},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"full_name":{"type":"string","description":"Full name"},"id":{"type":"string","format":"string"},"kind":{"type":"string","enum":["EMPLOYEE","CONTRACTOR","SERVICE_ACCOUNT"]},"organization_id":{"type":"string","format":"string"},"position":{"description":"Position"},"primary_email_address":{"type":"string","description":"Primary email address"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}}}}`)
+	ListVendorsToolInputSchema        = mcp.MustUnmarshalSchema(`{"type":"object","required":["organization_id"],"properties":{"cursor":{"type":"string","format":"string"},"filter":{"type":"object","properties":{"snapshot_id":{"type":"string","format":"string"}}},"order_by":{"type":"object","required":["field","direction"],"properties":{"direction":{"type":"string","enum":["asc","desc"]},"field":{"type":"string","enum":["CREATED_AT","UPDATED_AT","NAME"]}}},"organization_id":{"type":"string","format":"string"},"size":{"type":"integer","description":"Page size"}}}`)
 	ListVendorsToolOutputSchema       = mcp.MustUnmarshalSchema(`{"type":"object","required":["vendors"],"properties":{"next_cursor":{"type":"string","format":"string"},"vendors":{"type":"array","items":{"type":"object","required":["id","name","organization_id","created_at","updated_at"],"properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"description":"Vendor description"},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Vendor name"},"organization_id":{"type":"string","format":"string"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}}}}`)
 	UpdateVendorToolInputSchema       = mcp.MustUnmarshalSchema(`{"type":"object","required":["id"],"properties":{"description":{"type":"string","description":"Vendor description"},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Vendor name"}}}`)
 	UpdateVendorToolOutputSchema      = mcp.MustUnmarshalSchema(`{"type":"object","required":["vendor"],"properties":{"vendor":{"type":"object","required":["id","name","organization_id","created_at","updated_at"],"properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"description":"Vendor description"},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Vendor name"},"organization_id":{"type":"string","format":"string"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}}}`)
@@ -52,6 +54,26 @@ type ListOrganizationsOutput struct {
 	Organizations []*Organization `json:"organizations,omitempty"`
 }
 
+// ListPeopleInput represents the schema
+type ListPeopleInput struct {
+	// Page cursor
+	Cursor *page.CursorKey        `json:"cursor,omitempty"`
+	Filter *ListPeopleInputFilter `json:"filter,omitempty"`
+	// People order by
+	OrderBy *PeopleOrderBy `json:"order_by,omitempty"`
+	// Organization ID
+	OrganizationID gid.GID `json:"organization_id"`
+	// Page size
+	Size *int64 `json:"size,omitempty"`
+}
+
+// ListPeopleOutput represents the schema
+type ListPeopleOutput struct {
+	// Next cursor
+	NextCursor *page.CursorKey `json:"next_cursor,omitempty"`
+	People     []*People       `json:"people"`
+}
+
 // ListVendorsInput represents the schema
 type ListVendorsInput struct {
 	// Page cursor
@@ -84,6 +106,40 @@ type Organization struct {
 	Name string `json:"name"`
 	// Update timestamp
 	UpdatedAt time.Time `json:"updated_at"`
+}
+
+// People represents the schema
+type People struct {
+	// Additional email addresses
+	AdditionalEmailAddresses []string `json:"additional_email_addresses"`
+	// Contract end date
+	ContractEndDate *string `json:"contract_end_date,omitempty"`
+	// Contract start date
+	ContractStartDate *string `json:"contract_start_date,omitempty"`
+	// Creation timestamp
+	CreatedAt time.Time `json:"created_at"`
+	// Full name
+	FullName string `json:"full_name"`
+	// People ID
+	ID gid.GID `json:"id"`
+	// People kind
+	Kind coredata.PeopleKind `json:"kind"`
+	// Organization ID
+	OrganizationID gid.GID `json:"organization_id"`
+	// Position
+	Position *string `json:"position,omitempty"`
+	// Primary email address
+	PrimaryEmailAddress string `json:"primary_email_address"`
+	// Update timestamp
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+// PeopleOrderBy represents the schema
+type PeopleOrderBy struct {
+	// People order direction
+	Direction page.OrderDirection `json:"direction"`
+	// People order field
+	Field coredata.PeopleOrderField `json:"field"`
 }
 
 // UpdateVendorInput represents the schema
@@ -123,6 +179,12 @@ type VendorOrderBy struct {
 	Direction page.OrderDirection `json:"direction"`
 	// Vendor order field
 	Field coredata.VendorOrderField `json:"field"`
+}
+
+// ListPeopleInputFilter represents the schema
+type ListPeopleInputFilter struct {
+	// Exclude people with ended contracts
+	ExcludeContractEnded *bool `json:"exclude_contract_ended,omitempty"`
 }
 
 // ListVendorsInputFilter represents the schema

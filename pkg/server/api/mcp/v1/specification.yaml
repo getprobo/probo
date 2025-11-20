@@ -15,9 +15,9 @@ components:
     VendorOrderField:
       type: string
       enum:
-        - created_at
-        - updated_at
-        - name
+        - CREATED_AT
+        - UPDATED_AT
+        - NAME
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.VendorOrderField
 
     VendorOrderBy:
@@ -32,6 +32,131 @@ components:
         direction:
           $ref: "#/components/schemas/OrderDirection"
           description: Vendor order direction
+
+    PeopleOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/PeopleOrderField"
+          description: People order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: People order direction
+
+    PeopleOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+        - FULL_NAME
+        - KIND
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.PeopleOrderField
+
+    PeopleKind:
+      type: string
+      enum:
+        - EMPLOYEE
+        - CONTRACTOR
+        - SERVICE_ACCOUNT
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.PeopleKind
+
+    People:
+      type: object
+      required:
+        - id
+        - organization_id
+        - full_name
+        - primary_email_address
+        - additional_email_addresses
+        - kind
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: People ID
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        full_name:
+          type: string
+          description: Full name
+        primary_email_address:
+          type: string
+          description: Primary email address
+        additional_email_addresses:
+          type: array
+          items:
+            type: string
+          description: Additional email addresses
+        kind:
+          $ref: "#/components/schemas/PeopleKind"
+          description: People kind
+        position:
+          type:
+            - string
+            - "null"
+          description: Position
+        contract_start_date:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: Contract start date
+        contract_end_date:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: Contract end date
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Update timestamp
+
+    ListPeopleInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        order_by:
+          $ref: "#/components/schemas/PeopleOrderBy"
+          description: People order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+        filter:
+          type: object
+          properties:
+            exclude_contract_ended:
+              type: boolean
+              description: Exclude people with ended contracts
+
+    ListPeopleOutput:
+      type: object
+      required:
+        - people
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        people:
+          type: array
+          items:
+            $ref: "#/components/schemas/People"
+
     GID:
       type: string
       format: string
@@ -225,6 +350,13 @@ tools:
       $ref: "#/components/schemas/ListVendorsInput"
     outputSchema:
       $ref: "#/components/schemas/ListVendorsOutput"
+  - name: listPeople
+    description: List all people for the organization
+    readonly: true
+    inputSchema:
+      $ref: "#/components/schemas/ListPeopleInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListPeopleOutput"
   - name: addVendor
     description: Add a new vendor to the organization
     readonly: false
