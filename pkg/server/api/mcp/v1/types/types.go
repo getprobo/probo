@@ -113,9 +113,9 @@ type People struct {
 	// Additional email addresses
 	AdditionalEmailAddresses []string `json:"additional_email_addresses"`
 	// Contract end date
-	ContractEndDate *string `json:"contract_end_date,omitempty"`
+	ContractEndDate *time.Time `json:"contract_end_date,omitempty"`
 	// Contract start date
-	ContractStartDate *string `json:"contract_start_date,omitempty"`
+	ContractStartDate *time.Time `json:"contract_start_date,omitempty"`
 	// Creation timestamp
 	CreatedAt time.Time `json:"created_at"`
 	// Full name

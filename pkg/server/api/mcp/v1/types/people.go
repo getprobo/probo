@@ -27,10 +27,10 @@ func NewPeople(p *coredata.People) *People {
 		PrimaryEmailAddress:      p.PrimaryEmailAddress,
 		AdditionalEmailAddresses: p.AdditionalEmailAddresses,
 		Position:                 p.Position,
-		// ContractStartDate:        p.ContractStartDate,
-		// ContractEndDate:          p.ContractEndDate,
-		CreatedAt: p.CreatedAt,
-		UpdatedAt: p.UpdatedAt,
+		ContractStartDate:        p.ContractStartDate,
+		ContractEndDate:          p.ContractEndDate,
+		CreatedAt:                p.CreatedAt,
+		UpdatedAt:                p.UpdatedAt,
 	}
 }
 
