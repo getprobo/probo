@@ -13,6 +13,10 @@ probod:
   encryption-key: "thisisnotasecretAAAAAAAAAAAAAAAAAAAAAAAAAAA="
   chrome-dp-addr: "localhost:9222"
 
+  trust-center:
+    http-addr: ":8085"
+    https-addr: ":8443"
+
   api:
     addr: "localhost:8080"
     cors:

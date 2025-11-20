@@ -38,6 +38,13 @@ export { InfiniteScrollTrigger } from "./Atoms/InfiniteScrollTrigger/InfiniteScr
 export { PriorityLevel } from "./Atoms/PriorityLevel/PriorityLevel.tsx";
 export { TaskStateIcon } from "./Atoms/Icons/TaskStateIcon";
 export { Checkbox } from "./Atoms/Checkbox/Checkbox";
+export {
+    DataTable,
+    Cell,
+    CellHead,
+    Row,
+    RowButton,
+} from "./Atoms/DataTable/DataTable";
 
 // Molecules
 export {
@@ -71,6 +78,14 @@ export { SentitivityOptions } from "./Molecules/Select/SentitivityOptions";
 export { ImpactOptions } from "./Molecules/Select/ImpactOptions";
 export { DurationPicker } from "./Molecules/DurationPicker/DurationPicker";
 export { FrameworkLogo } from "./Molecules/Badge/FrameworkLogo";
+export { EditableCell } from "./Molecules/Table/EditableCell";
+export { TextCell } from "./Molecules/Table/TextCell";
+export {
+    SelectCell,
+    selectCell,
+    SelectValue,
+} from "./Molecules/Table/SelectCell";
+export { EditableRow } from "./Molecules/Table/EditableRow";
 
 // Hooks
 export { useToast, Toasts } from "./Atoms/Toasts/Toasts";

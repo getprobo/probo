@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<0f47a0632a7158414d8c87cf9de16a7a>>
+ * @generated SignedSource<<9ebcbef6d786f85d0b88c881d1478938>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -262,7 +262,7 @@ return {
             "alias": null,
             "args": null,
             "filters": null,
-            "handle": "prependEdge",
+            "handle": "appendEdge",
             "key": "",
             "kind": "LinkedHandle",
             "name": "assetEdge",
@@ -290,6 +290,6 @@ return {
 };
 })();
 
-(node as any).hash = "1d36f3080ab525417516779740f5977c";
+(node as any).hash = "92fca40d88a9ea68f013e9953d46388e";
 
 export default node;
