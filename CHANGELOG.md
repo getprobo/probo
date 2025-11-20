@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- Fix SAML entrypoint config.
 - Fix missing permission to verify SAML domain.
 
 ## [0.88.7] - 2025-11-19
