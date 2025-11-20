@@ -111,6 +111,13 @@ EOF
     password:
       pepper: "${AUTH_PASSWORD_PEPPER:?AUTH_PASSWORD_PEPPER is required}"
       iterations: ${AUTH_PASSWORD_ITERATIONS:-1000000}
+    saml:
+      session-duration: ${SAML_SESSION_DURATION:-604800}
+      cleanup-interval-seconds: ${SAML_CLEANUP_INTERVAL_SECONDS:-0}
+      certificate: |
+$(echo "${SAML_CERTIFICATE:-}" | sed 's/^/        /')
+      private-key: |
+$(echo "${SAML_PRIVATE_KEY:-}" | sed 's/^/        /')
 
   trust-auth:
     cookie-name: "${TRUST_AUTH_COOKIE_NAME:-TCT}"
@@ -177,18 +184,6 @@ EOF
         signing-secret: "${CONNECTOR_SLACK_SIGNING_SECRET:?CONNECTOR_SLACK_SIGNING_SECRET is required when CONNECTOR_SLACK_CLIENT_ID is set}"
 EOF
   fi
-
-  # Add SAML config if any SAML variable is configured
-    cat >> "$CONFIG_FILE" <<EOF
-
-saml:
-  session-duration: ${SAML_SESSION_DURATION:-604800}
-  cleanup-interval-seconds: ${SAML_CLEANUP_INTERVAL_SECONDS:-0}
-  certificate: |
-$(echo "${SAML_CERTIFICATE:-}" | sed 's/^/    /')
-  private-key: |
-$(echo "${SAML_PRIVATE_KEY:-}" | sed 's/^/    /')
-EOF
 
   echo "Configuration file generated at: $CONFIG_FILE"
 fi
