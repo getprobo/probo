@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.89.1] - 2025-11-21
+
+### Fixed
+
+- MCP client always lost their session.
+
 ## [0.89.0] - 2025-11-21
 
 ### Added
