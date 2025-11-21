@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.89.0] - 2025-11-21
+
+### Added
+
+- New MCP tools.
+
 ## [0.88.8] - 2025-11-20
 
 - Fix SAML entrypoint config.
