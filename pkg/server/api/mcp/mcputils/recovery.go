@@ -25,8 +25,6 @@ import (
 	"go.probo.inc/probo/pkg/authz"
 )
 
-// RecoveryMiddleware creates a middleware that recovers from panics in MCP method handlers.
-// It converts panics to errors, handling authz errors appropriately.
 func RecoveryMiddleware(logger *log.Logger) func(mcp.MethodHandler) mcp.MethodHandler {
 	return func(next mcp.MethodHandler) mcp.MethodHandler {
 		return func(ctx context.Context, method string, req mcp.Request) (result mcp.Result, err error) {
@@ -43,25 +41,22 @@ func RecoveryMiddleware(logger *log.Logger) func(mcp.MethodHandler) mcp.MethodHa
 	}
 }
 
-// convertPanicToError converts a panic value to an error, handling authz errors appropriately.
 func convertPanicToError(ctx context.Context, logger *log.Logger, panicValue any) error {
 	if panicValue == nil {
-		return nil
+		logger.ErrorCtx(ctx, "nil panic in MCP method handler")
+		return fmt.Errorf("internal server error")
 	}
 
-	// Handle TenantAccessError - convert to "not authorized" error
 	var tenantAccessErr *authz.TenantAccessError
 	if errTyped, ok := panicValue.(error); ok && errors.As(errTyped, &tenantAccessErr) {
 		return fmt.Errorf("not authorized: %s", tenantAccessErr.Message)
 	}
 
-	// Handle PermissionDeniedError - convert to "permission denied" error
 	var permissionDeniedErr *authz.PermissionDeniedError
 	if errTyped, ok := panicValue.(error); ok && errors.As(errTyped, &permissionDeniedErr) {
 		return fmt.Errorf("permission denied: %s", permissionDeniedErr.Message)
 	}
 
-	// Handle other errors - return as-is
 	if err, ok := panicValue.(error); ok {
 		return err
 	}
