@@ -3,7 +3,6 @@ package mcp_v1
 import (
 	"context"
 	"net/http"
-	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -50,10 +49,10 @@ func NewMux(logger *log.Logger, proboSvc *probo.Service, authSvc *auth.Service, 
 	handler := mcp.NewStreamableHTTPHandler(
 		getServer,
 		&mcp.StreamableHTTPOptions{
-			Stateless:      false,
-			SessionTimeout: 30 * time.Minute,
-			EventStore:     eventStore,
-			Logger:         nil, // TODO put logger here
+			Stateless: true,
+			// SessionTimeout: 30 * time.Minute,
+			EventStore: eventStore,
+			Logger:     nil, // TODO put logger here
 		},
 	)
 
