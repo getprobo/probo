@@ -21,7 +21,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"slices"
 	"strings"
 	"time"
 
@@ -44,6 +43,7 @@ import (
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/saferedirect"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
+	serverauth "go.probo.inc/probo/pkg/server/auth"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 	"go.probo.inc/probo/pkg/server/session"
 	"go.probo.inc/probo/pkg/statelesstoken"
@@ -69,18 +69,10 @@ type (
 	}
 
 	ctxKey struct{ name string }
-
-	userTenantAccess struct {
-		tenantIDs  []gid.TenantID
-		authErrors map[gid.TenantID]error
-	}
 )
 
 var (
-	sessionContextKey    = &ctxKey{name: "session"}
-	userContextKey       = &ctxKey{name: "user"}
-	userTenantContextKey = &ctxKey{name: "user_tenants"}
-	userAPIKeyContextKey = &ctxKey{name: "user_api_key"}
+	sessionContextKey = &ctxKey{name: "session"}
 )
 
 func SessionFromContext(ctx context.Context) *coredata.Session {
@@ -89,13 +81,11 @@ func SessionFromContext(ctx context.Context) *coredata.Session {
 }
 
 func UserFromContext(ctx context.Context) *coredata.User {
-	user, _ := ctx.Value(userContextKey).(*coredata.User)
-	return user
+	return serverauth.UserFromContext(ctx)
 }
 
 func UserAPIKeyFromContext(ctx context.Context) *coredata.UserAPIKey {
-	userAPIKey, _ := ctx.Value(userAPIKeyContextKey).(*coredata.UserAPIKey)
-	return userAPIKey
+	return serverauth.UserAPIKeyFromContext(ctx)
 }
 
 func NewMux(
@@ -377,7 +367,7 @@ func WithSession(authSvc *auth.Service, authzSvc *authz.Service, authCfg AuthCon
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		if authCtx := tryAPIKeyAuth(ctx, r, authSvc, authzSvc); authCtx != nil {
+		if authCtx := serverauth.AuthenticateWithAPIKey(ctx, r, authSvc, authzSvc); authCtx != nil {
 			next(w, r.WithContext(authCtx))
 			return
 		}
@@ -413,10 +403,10 @@ func WithSession(authSvc *auth.Service, authzSvc *authz.Service, authCfg AuthCon
 		}
 
 		ctx = context.WithValue(ctx, sessionContextKey, authResult.Session)
-		ctx = context.WithValue(ctx, userContextKey, authResult.User)
-		ctx = context.WithValue(ctx, userTenantContextKey, &userTenantAccess{
-			tenantIDs:  authResult.TenantIDs,
-			authErrors: authResult.AuthErrors,
+		ctx = context.WithValue(ctx, serverauth.UserContextKey, authResult.User)
+		ctx = context.WithValue(ctx, serverauth.UserTenantContextKey, &serverauth.UserTenantAccess{
+			TenantIDs:  authResult.TenantIDs,
+			AuthErrors: authResult.AuthErrors,
 		})
 
 		next(w, r.WithContext(ctx))
@@ -426,43 +416,6 @@ func WithSession(authSvc *auth.Service, authzSvc *authz.Service, authCfg AuthCon
 			panic(fmt.Errorf("cannot update session: %w", err))
 		}
 	}
-}
-
-func tryAPIKeyAuth(ctx context.Context, r *http.Request, authSvc *auth.Service, authzSvc *authz.Service) context.Context {
-	authHeader := r.Header.Get("Authorization")
-	if authHeader == "" {
-		return nil
-	}
-
-	if !strings.HasPrefix(authHeader, "Bearer ") {
-		return nil
-	}
-
-	apiKeyString := strings.TrimPrefix(authHeader, "Bearer ")
-
-	user, userAPIKey, err := authSvc.ValidateUserAPIKey(ctx, apiKeyString)
-	if err != nil {
-		return nil
-	}
-
-	organizations, err := authzSvc.GetAllOrganizationsForUserAPIKeyId(ctx, userAPIKey.ID)
-	if err != nil {
-		return nil
-	}
-
-	tenantIDs := make([]gid.TenantID, 0, len(organizations))
-	for _, org := range organizations {
-		tenantIDs = append(tenantIDs, org.ID.TenantID())
-	}
-
-	ctx = context.WithValue(ctx, userContextKey, user)
-	ctx = context.WithValue(ctx, userAPIKeyContextKey, userAPIKey)
-	ctx = context.WithValue(ctx, userTenantContextKey, &userTenantAccess{
-		tenantIDs:  tenantIDs,
-		authErrors: make(map[gid.TenantID]error),
-	})
-
-	return ctx
 }
 
 func (r *Resolver) ProboService(ctx context.Context, tenantID gid.TenantID) *probo.TenantService {
@@ -486,36 +439,18 @@ func UnwrapOmittable[T any](field graphql.Omittable[T]) *T {
 }
 
 func GetTenantService(ctx context.Context, proboSvc *probo.Service, tenantID gid.TenantID) *probo.TenantService {
-	validateTenantAccess(ctx, tenantID)
+	serverauth.RequireTenantAccess(ctx, tenantID)
 	return proboSvc.WithTenant(tenantID)
 }
 
 func GetTenantAuthzService(ctx context.Context, authzSvc *authz.Service, tenantID gid.TenantID) *authz.TenantAuthzService {
-	validateTenantAccess(ctx, tenantID)
+	serverauth.RequireTenantAccess(ctx, tenantID)
 	return authzSvc.WithTenant(tenantID)
 }
 
 func GetTenantAuthService(ctx context.Context, authSvc *auth.Service, tenantID gid.TenantID) *auth.TenantAuthService {
-	validateTenantAccess(ctx, tenantID)
+	serverauth.RequireTenantAccess(ctx, tenantID)
 	return authSvc.WithTenant(tenantID)
-}
-
-func validateTenantAccess(ctx context.Context, tenantID gid.TenantID) {
-	access, _ := ctx.Value(userTenantContextKey).(*userTenantAccess)
-
-	if access == nil {
-		panic(&authz.TenantAccessError{Message: "tenant not found"})
-	}
-
-	if !slices.Contains(access.tenantIDs, tenantID) {
-		if access.authErrors != nil {
-			if authErr := access.authErrors[tenantID]; authErr != nil {
-				panic(authErr)
-			}
-		}
-
-		panic(&authz.TenantAccessError{Message: "tenant not found"})
-	}
 }
 
 func (r *Resolver) MustBeAuthorized(ctx context.Context, entityID gid.GID, action authz.Action) {

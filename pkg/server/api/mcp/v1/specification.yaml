@@ -352,6 +352,51 @@ components:
         people:
           $ref: "#/components/schemas/People"
 
+    AddPeopleInput:
+      type: object
+      required:
+        - organization_id
+        - full_name
+        - primary_email_address
+        - kind
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        full_name:
+          type: string
+          description: Full name
+        primary_email_address:
+          type: string
+          description: Primary email address
+        additional_email_addresses:
+          type: array
+          items:
+            type: string
+          description: Additional email addresses
+        kind:
+          $ref: "#/components/schemas/PeopleKind"
+          description: People kind
+        position:
+          type: string
+          description: Position
+        contract_start_date:
+          type: string
+          format: date-time
+          description: Contract start date
+        contract_end_date:
+          type: string
+          format: date-time
+          description: Contract end date
+
+    AddPeopleOutput:
+      type: object
+      required:
+        - people
+      properties:
+        people:
+          $ref: "#/components/schemas/People"
+
 tools:
   - name: listOrganizations
     description: List all organizations the user has access to
@@ -395,3 +440,10 @@ tools:
       $ref: "#/components/schemas/GetPeopleInput"
     outputSchema:
       $ref: "#/components/schemas/GetPeopleOutput"
+  - name: addPeople
+    description: Add a new people to the organization
+    readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/AddPeopleInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddPeopleOutput"

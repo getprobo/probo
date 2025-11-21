@@ -15,10 +15,7 @@
 package mcp_v1
 
 import (
-	"context"
 	"time"
-
-	"go.probo.inc/probo/pkg/gid"
 )
 
 type (
@@ -27,27 +24,7 @@ type (
 		RequestTimeout time.Duration
 		MaxRequestSize int64
 	}
-
-	MCPContext struct {
-		UserID    gid.GID
-		TenantIDs []gid.TenantID
-	}
-
-	ctxKey struct{ name string }
 )
-
-var (
-	mcpContextKey = &ctxKey{name: "mcp_context"}
-)
-
-func MCPContextFromContext(ctx context.Context) *MCPContext {
-	mcpCtx, _ := ctx.Value(mcpContextKey).(*MCPContext)
-	return mcpCtx
-}
-
-func ContextWithMCPContext(ctx context.Context, mcpCtx *MCPContext) context.Context {
-	return context.WithValue(ctx, mcpContextKey, mcpCtx)
-}
 
 func DefaultConfig() Config {
 	return Config{

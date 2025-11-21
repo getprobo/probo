@@ -16,6 +16,7 @@ type ResolverInterface interface {
 	AddVendorTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddVendorInput) (*mcp.CallToolResult, types.AddVendorOutput, error)
 	UpdateVendorTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateVendorInput) (*mcp.CallToolResult, types.UpdateVendorOutput, error)
 	GetPeopleTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetPeopleInput) (*mcp.CallToolResult, types.GetPeopleOutput, error)
+	AddPeopleTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddPeopleInput) (*mcp.CallToolResult, types.AddPeopleOutput, error)
 }
 
 // New creates a new MCP server instance with all handlers registered.
@@ -94,5 +95,15 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 			OutputSchema: types.GetPeopleToolOutputSchema,
 		},
 		resolver.GetPeopleTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "addPeople",
+			Description:  "Add a new people to the organization",
+			InputSchema:  types.AddPeopleToolInputSchema,
+			OutputSchema: types.AddPeopleToolOutputSchema,
+		},
+		resolver.AddPeopleTool,
 	)
 }

@@ -9,17 +9,23 @@ import (
 	"fmt"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+	"go.probo.inc/probo/pkg/authz"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/mcp/v1/types"
+	serverauth "go.probo.inc/probo/pkg/server/auth"
 )
 
 // ListOrganizationsTool handles the listOrganizations tool
 // List all organizations the user has access to
 func (r *Resolver) ListOrganizationsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListOrganizationsInput) (*mcp.CallToolResult, types.ListOrganizationsOutput, error) {
-	mcpCtx := MCPContextFromContext(ctx)
-	organizations, err := r.authzSvc.GetAllUserOrganizations(ctx, mcpCtx.UserID)
+	user := serverauth.UserFromContext(ctx)
+	if user == nil {
+		return nil, types.ListOrganizationsOutput{}, fmt.Errorf("authentication required")
+	}
+
+	organizations, err := r.authzSvc.GetAllUserOrganizations(ctx, user.ID)
 	if err != nil {
 		return nil, types.ListOrganizationsOutput{}, fmt.Errorf("failed to list organizations: %w", err)
 	}
@@ -38,7 +44,9 @@ func (r *Resolver) ListOrganizationsTool(ctx context.Context, req *mcp.CallToolR
 // ListVendorsTool handles the listVendors tool
 // List all vendors for the organization
 func (r *Resolver) ListVendorsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListVendorsInput) (*mcp.CallToolResult, types.ListVendorsOutput, error) {
-	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionListVendors)
+
+	prb := r.ProboService(ctx, input.OrganizationID)
 
 	pageOrderBy := page.OrderBy[coredata.VendorOrderField]{
 		Field:     coredata.VendorOrderFieldCreatedAt,
@@ -69,7 +77,9 @@ func (r *Resolver) ListVendorsTool(ctx context.Context, req *mcp.CallToolRequest
 // AddVendorTool handles the addVendor tool
 // Add a new vendor to the organization
 func (r *Resolver) AddVendorTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddVendorInput) (*mcp.CallToolResult, types.AddVendorOutput, error) {
-	svc := r.ProboService(ctx, input.OrganizationID.TenantID())
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionCreateAsset)
+
+	svc := r.ProboService(ctx, input.OrganizationID)
 
 	vendor, err := svc.Vendors.Create(
 		ctx,
@@ -106,11 +116,14 @@ func (r *Resolver) AddVendorTool(ctx context.Context, req *mcp.CallToolRequest, 
 // UpdateVendorTool handles the updateVendor tool
 // Update an existing vendor
 func (r *Resolver) UpdateVendorTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateVendorInput) (*mcp.CallToolResult, types.UpdateVendorOutput, error) {
+
 	return nil, types.UpdateVendorOutput{}, fmt.Errorf("updateVendor not implemented")
 }
 
 func (r *Resolver) ListPeopleTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListPeopleInput) (*mcp.CallToolResult, types.ListPeopleOutput, error) {
-	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionListPeople)
+
+	prb := r.ProboService(ctx, input.OrganizationID)
 
 	pageOrderBy := page.OrderBy[coredata.PeopleOrderField]{
 		Field:     coredata.PeopleOrderFieldCreatedAt,
@@ -139,7 +152,9 @@ func (r *Resolver) ListPeopleTool(ctx context.Context, req *mcp.CallToolRequest,
 }
 
 func (r *Resolver) GetPeopleTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetPeopleInput) (*mcp.CallToolResult, types.GetPeopleOutput, error) {
-	prb := r.ProboService(ctx, input.ID.TenantID())
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionGet)
+
+	prb := r.ProboService(ctx, input.ID)
 
 	people, err := prb.Peoples.Get(ctx, input.ID)
 	if err != nil {
@@ -147,6 +162,33 @@ func (r *Resolver) GetPeopleTool(ctx context.Context, req *mcp.CallToolRequest, 
 	}
 
 	return nil, types.GetPeopleOutput{
+		People: types.NewPeople(people),
+	}, nil
+}
+
+func (r *Resolver) AddPeopleTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddPeopleInput) (*mcp.CallToolResult, types.AddPeopleOutput, error) {
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionCreatePeople)
+
+	svc := r.ProboService(ctx, input.OrganizationID)
+
+	people, err := svc.Peoples.Create(
+		ctx,
+		probo.CreatePeopleRequest{
+			OrganizationID:           input.OrganizationID,
+			FullName:                 input.FullName,
+			PrimaryEmailAddress:      input.PrimaryEmailAddress,
+			AdditionalEmailAddresses: input.AdditionalEmailAddresses,
+			Kind:                     input.Kind,
+			Position:                 input.Position,
+			ContractStartDate:        input.ContractStartDate,
+			ContractEndDate:          input.ContractEndDate,
+		},
+	)
+	if err != nil {
+		return nil, types.AddPeopleOutput{}, fmt.Errorf("failed to create people: %w", err)
+	}
+
+	return nil, types.AddPeopleOutput{
 		People: types.NewPeople(people),
 	}, nil
 }

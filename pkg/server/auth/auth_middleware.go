@@ -30,7 +30,6 @@ type ctxKey struct{ name string }
 
 var (
 	sessionContextKey = &ctxKey{name: "session"}
-	userContextKey    = &ctxKey{name: "user"}
 )
 
 func RequireAuth(
@@ -78,7 +77,7 @@ func RequireAuth(
 		}
 
 		ctx = context.WithValue(ctx, sessionContextKey, authResult.Session)
-		ctx = context.WithValue(ctx, userContextKey, authResult.User)
+		ctx = context.WithValue(ctx, UserContextKey, authResult.User)
 
 		next(w, r.WithContext(ctx))
 	}
@@ -87,9 +86,4 @@ func RequireAuth(
 func SessionFromContext(ctx context.Context) *coredata.Session {
 	session, _ := ctx.Value(sessionContextKey).(*coredata.Session)
 	return session
-}
-
-func UserFromContext(ctx context.Context) *coredata.User {
-	user, _ := ctx.Value(userContextKey).(*coredata.User)
-	return user
 }

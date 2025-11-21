@@ -12,6 +12,8 @@ import (
 
 // Tool input schemas
 var (
+	AddPeopleToolInputSchema          = mcp.MustUnmarshalSchema(`{"type":"object","required":["organization_id","full_name","primary_email_address","kind"],"properties":{"additional_email_addresses":{"type":"array","description":"Additional email addresses","items":{"type":"string"}},"contract_end_date":{"type":"string","description":"Contract end date","format":"date-time"},"contract_start_date":{"type":"string","description":"Contract start date","format":"date-time"},"full_name":{"type":"string","description":"Full name"},"kind":{"type":"string","enum":["EMPLOYEE","CONTRACTOR","SERVICE_ACCOUNT"]},"organization_id":{"type":"string","format":"string"},"position":{"type":"string","description":"Position"},"primary_email_address":{"type":"string","description":"Primary email address"}}}`)
+	AddPeopleToolOutputSchema         = mcp.MustUnmarshalSchema(`{"type":"object","required":["people"],"properties":{"people":{"type":"object","required":["id","organization_id","full_name","primary_email_address","additional_email_addresses","kind","created_at","updated_at"],"properties":{"additional_email_addresses":{"type":"array","description":"Additional email addresses","items":{"type":"string"}},"contract_end_date":{"description":"Contract end date","format":"date-time"},"contract_start_date":{"description":"Contract start date","format":"date-time"},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"full_name":{"type":"string","description":"Full name"},"id":{"type":"string","format":"string"},"kind":{"type":"string","enum":["EMPLOYEE","CONTRACTOR","SERVICE_ACCOUNT"]},"organization_id":{"type":"string","format":"string"},"position":{"description":"Position"},"primary_email_address":{"type":"string","description":"Primary email address"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}}}`)
 	AddVendorToolInputSchema          = mcp.MustUnmarshalSchema(`{"type":"object","required":["organization_id","name"],"properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"type":"string","description":"Vendor description"},"name":{"type":"string","description":"Vendor name"},"organization_id":{"type":"string","format":"string"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}`)
 	AddVendorToolOutputSchema         = mcp.MustUnmarshalSchema(`{"type":"object","required":["vendor"],"properties":{"vendor":{"type":"object","required":["id","name","organization_id","created_at","updated_at"],"properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"description":"Vendor description"},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Vendor name"},"organization_id":{"type":"string","format":"string"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}}}`)
 	GetPeopleToolInputSchema          = mcp.MustUnmarshalSchema(`{"type":"object","required":["id"],"properties":{"id":{"type":"string","format":"string"}}}`)
@@ -25,6 +27,31 @@ var (
 	UpdateVendorToolInputSchema       = mcp.MustUnmarshalSchema(`{"type":"object","required":["id"],"properties":{"description":{"type":"string","description":"Vendor description"},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Vendor name"}}}`)
 	UpdateVendorToolOutputSchema      = mcp.MustUnmarshalSchema(`{"type":"object","required":["vendor"],"properties":{"vendor":{"type":"object","required":["id","name","organization_id","created_at","updated_at"],"properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"description":"Vendor description"},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Vendor name"},"organization_id":{"type":"string","format":"string"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}}}`)
 )
+
+// AddPeopleInput represents the schema
+type AddPeopleInput struct {
+	// Additional email addresses
+	AdditionalEmailAddresses []string `json:"additional_email_addresses,omitempty"`
+	// Contract end date
+	ContractEndDate *time.Time `json:"contract_end_date,omitempty"`
+	// Contract start date
+	ContractStartDate *time.Time `json:"contract_start_date,omitempty"`
+	// Full name
+	FullName string `json:"full_name"`
+	// People kind
+	Kind coredata.PeopleKind `json:"kind"`
+	// Organization ID
+	OrganizationID gid.GID `json:"organization_id"`
+	// Position
+	Position *string `json:"position,omitempty"`
+	// Primary email address
+	PrimaryEmailAddress string `json:"primary_email_address"`
+}
+
+// AddPeopleOutput represents the schema
+type AddPeopleOutput struct {
+	People *People `json:"people"`
+}
 
 // AddVendorInput represents the schema
 type AddVendorInput struct {
