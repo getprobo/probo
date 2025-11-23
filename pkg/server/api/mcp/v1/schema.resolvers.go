@@ -665,3 +665,109 @@ func (r *Resolver) UpdateDatumTool(ctx context.Context, req *mcp.CallToolRequest
 		Datum: types.NewDatum(datum),
 	}, nil
 }
+
+func (r *Resolver) ListNonconformitiesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListNonconformitiesInput) (*mcp.CallToolResult, types.ListNonconformitiesOutput, error) {
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionListNonconformities)
+
+	prb := r.ProboService(ctx, input.OrganizationID)
+
+	pageOrderBy := page.OrderBy[coredata.NonconformityOrderField]{
+		Field:     coredata.NonconformityOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.NonconformityOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	var nonconformityFilter = coredata.NewNonconformityFilter(nil)
+	if input.Filter != nil {
+		nonconformityFilter = coredata.NewNonconformityFilter(&input.Filter.SnapshotID)
+	}
+
+	page, err := prb.Nonconformities.ListForOrganizationID(ctx, input.OrganizationID, cursor, nonconformityFilter)
+	if err != nil {
+		panic(fmt.Errorf("cannot list organization nonconformities: %w", err))
+	}
+
+	return nil, types.NewListNonconformitiesOutput(page), nil
+}
+
+func (r *Resolver) GetNonconformityTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetNonconformityInput) (*mcp.CallToolResult, types.GetNonconformityOutput, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionGet)
+
+	prb := r.ProboService(ctx, input.ID)
+
+	nonconformity, err := prb.Nonconformities.Get(ctx, input.ID)
+	if err != nil {
+		return nil, types.GetNonconformityOutput{}, fmt.Errorf("failed to get nonconformity: %w", err)
+	}
+
+	return nil, types.GetNonconformityOutput{
+		Nonconformity: types.NewNonconformity(nonconformity),
+	}, nil
+}
+
+func (r *Resolver) AddNonconformityTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddNonconformityInput) (*mcp.CallToolResult, types.AddNonconformityOutput, error) {
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionCreateNonconformity)
+
+	svc := r.ProboService(ctx, input.OrganizationID)
+
+	nonconformity, err := svc.Nonconformities.Create(
+		ctx,
+		&probo.CreateNonconformityRequest{
+			OrganizationID:     input.OrganizationID,
+			ReferenceID:        input.ReferenceID,
+			Description:        input.Description,
+			AuditID:            input.AuditID,
+			DateIdentified:     input.DateIdentified,
+			RootCause:          input.RootCause,
+			CorrectiveAction:   input.CorrectiveAction,
+			OwnerID:            input.OwnerID,
+			DueDate:            input.DueDate,
+			Status:             input.Status,
+			EffectivenessCheck: input.EffectivenessCheck,
+		},
+	)
+	if err != nil {
+		return nil, types.AddNonconformityOutput{}, fmt.Errorf("failed to create nonconformity: %w", err)
+	}
+
+	return nil, types.AddNonconformityOutput{
+		Nonconformity: types.NewNonconformity(nonconformity),
+	}, nil
+}
+
+func (r *Resolver) UpdateNonconformityTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateNonconformityInput) (*mcp.CallToolResult, types.UpdateNonconformityOutput, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionUpdateNonconformity)
+
+	svc := r.ProboService(ctx, input.ID)
+
+	nonconformity, err := svc.Nonconformities.Update(
+		ctx,
+		&probo.UpdateNonconformityRequest{
+			ID:                 input.ID,
+			ReferenceID:        input.ReferenceID,
+			Description:        UnwrapOmittable(input.Description),
+			DateIdentified:     UnwrapOmittable(input.DateIdentified),
+			RootCause:          input.RootCause,
+			CorrectiveAction:   UnwrapOmittable(input.CorrectiveAction),
+			OwnerID:            input.OwnerID,
+			AuditID:            input.AuditID,
+			DueDate:            UnwrapOmittable(input.DueDate),
+			Status:             input.Status,
+			EffectivenessCheck: UnwrapOmittable(input.EffectivenessCheck),
+		},
+	)
+	if err != nil {
+		return nil, types.UpdateNonconformityOutput{}, fmt.Errorf("failed to update nonconformity: %w", err)
+	}
+
+	return nil, types.UpdateNonconformityOutput{
+		Nonconformity: types.NewNonconformity(nonconformity),
+	}, nil
+}

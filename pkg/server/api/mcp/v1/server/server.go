@@ -37,6 +37,10 @@ type ResolverInterface interface {
 	GetDatumTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetDatumInput) (*mcp.CallToolResult, types.GetDatumOutput, error)
 	AddDatumTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddDatumInput) (*mcp.CallToolResult, types.AddDatumOutput, error)
 	UpdateDatumTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateDatumInput) (*mcp.CallToolResult, types.UpdateDatumOutput, error)
+	ListNonconformitiesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListNonconformitiesInput) (*mcp.CallToolResult, types.ListNonconformitiesOutput, error)
+	GetNonconformityTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetNonconformityInput) (*mcp.CallToolResult, types.GetNonconformityOutput, error)
+	AddNonconformityTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddNonconformityInput) (*mcp.CallToolResult, types.AddNonconformityOutput, error)
+	UpdateNonconformityTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateNonconformityInput) (*mcp.CallToolResult, types.UpdateNonconformityOutput, error)
 }
 
 // New creates a new MCP server instance with all handlers registered.
@@ -325,5 +329,45 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 			OutputSchema: types.UpdateDatumToolOutputSchema,
 		},
 		resolver.UpdateDatumTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "listNonconformities",
+			Description:  "List all nonconformities for the organization",
+			InputSchema:  types.ListNonconformitiesToolInputSchema,
+			OutputSchema: types.ListNonconformitiesToolOutputSchema,
+		},
+		resolver.ListNonconformitiesTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "getNonconformity",
+			Description:  "Get a nonconformity by ID",
+			InputSchema:  types.GetNonconformityToolInputSchema,
+			OutputSchema: types.GetNonconformityToolOutputSchema,
+		},
+		resolver.GetNonconformityTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "addNonconformity",
+			Description:  "Add a new nonconformity to the organization",
+			InputSchema:  types.AddNonconformityToolInputSchema,
+			OutputSchema: types.AddNonconformityToolOutputSchema,
+		},
+		resolver.AddNonconformityTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "updateNonconformity",
+			Description:  "Update an existing nonconformity",
+			InputSchema:  types.UpdateNonconformityToolInputSchema,
+			OutputSchema: types.UpdateNonconformityToolOutputSchema,
+		},
+		resolver.UpdateNonconformityTool,
 	)
 }

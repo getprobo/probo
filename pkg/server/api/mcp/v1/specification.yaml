@@ -1403,6 +1403,286 @@ components:
         datum:
           $ref: "#/components/schemas/Datum"
 
+    NonconformityStatus:
+      type: string
+      enum:
+        - OPEN
+        - IN_PROGRESS
+        - CLOSED
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.NonconformityStatus
+
+    NonconformityOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+        - REFERENCE_ID
+        - DATE_IDENTIFIED
+        - DUE_DATE
+        - STATUS
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.NonconformityOrderField
+
+    NonconformityOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/NonconformityOrderField"
+          description: Nonconformity order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: Nonconformity order direction
+
+    Nonconformity:
+      type: object
+      required:
+        - id
+        - organization_id
+        - reference_id
+        - audit_id
+        - root_cause
+        - owner_id
+        - status
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Nonconformity ID
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        snapshot_id:
+          anyOf:
+            - $ref: "#/components/schemas/GID"
+              description: Snapshot ID
+            - type: "null"
+              description: No snapshot
+          description: Snapshot ID
+        reference_id:
+          type: string
+          description: Reference ID
+        description:
+          type:
+            - string
+            - "null"
+          description: Description
+        audit_id:
+          $ref: "#/components/schemas/GID"
+          description: Audit ID
+        date_identified:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: Date identified
+        root_cause:
+          type: string
+          description: Root cause
+        corrective_action:
+          type:
+            - string
+            - "null"
+          description: Corrective action
+        owner_id:
+          $ref: "#/components/schemas/GID"
+          description: Owner ID
+        due_date:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: Due date
+        status:
+          $ref: "#/components/schemas/NonconformityStatus"
+          description: Status
+        effectiveness_check:
+          type:
+            - string
+            - "null"
+          description: Effectiveness check
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Update timestamp
+
+    ListNonconformitiesInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        order_by:
+          $ref: "#/components/schemas/NonconformityOrderBy"
+          description: Nonconformity order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+        filter:
+          type: object
+          properties:
+            snapshot_id:
+              $ref: "#/components/schemas/GID"
+              description: Snapshot ID
+
+    ListNonconformitiesOutput:
+      type: object
+      required:
+        - nonconformities
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        nonconformities:
+          type: array
+          items:
+            $ref: "#/components/schemas/Nonconformity"
+
+    GetNonconformityInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Nonconformity ID
+
+    GetNonconformityOutput:
+      type: object
+      required:
+        - nonconformity
+      properties:
+        nonconformity:
+          $ref: "#/components/schemas/Nonconformity"
+
+    AddNonconformityInput:
+      type: object
+      required:
+        - organization_id
+        - reference_id
+        - audit_id
+        - root_cause
+        - owner_id
+        - status
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        reference_id:
+          type: string
+          description: Reference ID
+        description:
+          type: string
+          description: Description
+        audit_id:
+          $ref: "#/components/schemas/GID"
+          description: Audit ID
+        date_identified:
+          type: string
+          format: date-time
+          description: Date identified
+        root_cause:
+          type: string
+          description: Root cause
+        corrective_action:
+          type: string
+          description: Corrective action
+        owner_id:
+          $ref: "#/components/schemas/GID"
+          description: Owner ID
+        due_date:
+          type: string
+          format: date-time
+          description: Due date
+        status:
+          anyOf:
+            - $ref: "#/components/schemas/NonconformityStatus"
+              description: Nonconformity status
+            - type: "null"
+              description: No status
+          description: Status
+        effectiveness_check:
+          type: string
+          description: Effectiveness check
+
+    AddNonconformityOutput:
+      type: object
+      required:
+        - nonconformity
+      properties:
+        nonconformity:
+          $ref: "#/components/schemas/Nonconformity"
+
+    UpdateNonconformityInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Nonconformity ID
+        reference_id:
+          type: string
+          description: Reference ID
+        description:
+          type: ["string", "null"]
+          description: Description
+          go.probo.inc/mcpgen/omittable: true
+        date_identified:
+          type: ["string", "null"]
+          format: date-time
+          description: Date identified
+          go.probo.inc/mcpgen/omittable: true
+        root_cause:
+          type: string
+          description: Root cause
+        corrective_action:
+          type: ["string", "null"]
+          description: Corrective action
+          go.probo.inc/mcpgen/omittable: true
+        owner_id:
+          anyOf:
+            - type: string
+              $ref: "#/components/schemas/GID"
+            - type: "null"
+          description: Owner ID
+        audit_id:
+          anyOf:
+            - type: string
+              $ref: "#/components/schemas/GID"
+            - type: "null"
+          description: Audit ID
+        due_date:
+          type: ["string", "null"]
+          format: date-time
+          description: Due date
+          go.probo.inc/mcpgen/omittable: true
+        status:
+          $ref: "#/components/schemas/NonconformityStatus"
+          description: Status
+        effectiveness_check:
+          type: ["string", "null"]
+          description: Effectiveness check
+          go.probo.inc/mcpgen/omittable: true
+
+    UpdateNonconformityOutput:
+      type: object
+      required:
+        - nonconformity
+      properties:
+        nonconformity:
+          $ref: "#/components/schemas/Nonconformity"
+
 tools:
   - name: listOrganizations
     description: List all organizations the user has access to
@@ -1593,3 +1873,31 @@ tools:
       $ref: "#/components/schemas/UpdateDatumInput"
     outputSchema:
       $ref: "#/components/schemas/UpdateDatumOutput"
+  - name: listNonconformities
+    description: List all nonconformities for the organization
+    readonly: true
+    inputSchema:
+      $ref: "#/components/schemas/ListNonconformitiesInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListNonconformitiesOutput"
+  - name: getNonconformity
+    description: Get a nonconformity by ID
+    readonly: true
+    inputSchema:
+      $ref: "#/components/schemas/GetNonconformityInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetNonconformityOutput"
+  - name: addNonconformity
+    description: Add a new nonconformity to the organization
+    readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/AddNonconformityInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddNonconformityOutput"
+  - name: updateNonconformity
+    description: Update an existing nonconformity
+    readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateNonconformityInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateNonconformityOutput"
