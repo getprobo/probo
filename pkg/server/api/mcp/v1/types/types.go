@@ -22,6 +22,8 @@ var (
 	AddMeasureToolOutputSchema          = mcp.MustUnmarshalSchema(`{"type":"object","required":["measure"],"properties":{"measure":{"type":"object","required":["id","category","name","state","created_at","updated_at"],"properties":{"category":{"type":"string","description":"Measure category"},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"description":"Measure description"},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Measure name"},"state":{"type":"string","enum":["NOT_STARTED","IN_PROGRESS","NOT_APPLICABLE","IMPLEMENTED"]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}}}`)
 	AddNonconformityToolInputSchema     = mcp.MustUnmarshalSchema(`{"type":"object","required":["organization_id","reference_id","audit_id","root_cause","owner_id","status"],"properties":{"audit_id":{"type":"string","format":"string"},"corrective_action":{"type":"string","description":"Corrective action"},"date_identified":{"type":"string","description":"Date identified","format":"date-time"},"description":{"type":"string","description":"Description"},"due_date":{"type":"string","description":"Due date","format":"date-time"},"effectiveness_check":{"type":"string","description":"Effectiveness check"},"organization_id":{"type":"string","format":"string"},"owner_id":{"type":"string","format":"string"},"reference_id":{"type":"string","description":"Reference ID"},"root_cause":{"type":"string","description":"Root cause"},"status":{"description":"Status","anyOf":[{"type":"string","enum":["OPEN","IN_PROGRESS","CLOSED"]},{"type":"null","description":"No status"}]}}}`)
 	AddNonconformityToolOutputSchema    = mcp.MustUnmarshalSchema(`{"type":"object","required":["nonconformity"],"properties":{"nonconformity":{"type":"object","required":["id","organization_id","reference_id","audit_id","root_cause","owner_id","status","created_at","updated_at"],"properties":{"audit_id":{"type":"string","format":"string"},"corrective_action":{"description":"Corrective action"},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"date_identified":{"description":"Date identified","format":"date-time"},"description":{"description":"Description"},"due_date":{"description":"Due date","format":"date-time"},"effectiveness_check":{"description":"Effectiveness check"},"id":{"type":"string","format":"string"},"organization_id":{"type":"string","format":"string"},"owner_id":{"type":"string","format":"string"},"reference_id":{"type":"string","description":"Reference ID"},"root_cause":{"type":"string","description":"Root cause"},"snapshot_id":{"description":"Snapshot ID","anyOf":[{"type":"string","format":"string"},{"type":"null","description":"No snapshot"}]},"status":{"type":"string","enum":["OPEN","IN_PROGRESS","CLOSED"]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}}}`)
+	AddObligationToolInputSchema        = mcp.MustUnmarshalSchema(`{"type":"object","required":["organization_id","owner_id","status"],"properties":{"actions_to_be_implemented":{"type":"string","description":"Actions to be implemented"},"area":{"type":"string","description":"Area"},"due_date":{"type":"string","description":"Due date","format":"date-time"},"last_review_date":{"type":"string","description":"Last review date","format":"date-time"},"organization_id":{"type":"string","format":"string"},"owner_id":{"type":"string","format":"string"},"regulator":{"type":"string","description":"Regulator"},"requirement":{"type":"string","description":"Requirement"},"source":{"type":"string","description":"Source"},"status":{"description":"Status","anyOf":[{"type":"string","enum":["NON_COMPLIANT","PARTIALLY_COMPLIANT","COMPLIANT"]},{"type":"null","description":"No status"}]}}}`)
+	AddObligationToolOutputSchema       = mcp.MustUnmarshalSchema(`{"type":"object","required":["obligation"],"properties":{"obligation":{"type":"object","required":["id","organization_id","owner_id","status","created_at","updated_at"],"properties":{"actions_to_be_implemented":{"description":"Actions to be implemented"},"area":{"description":"Area"},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"due_date":{"description":"Due date","format":"date-time"},"id":{"type":"string","format":"string"},"last_review_date":{"description":"Last review date","format":"date-time"},"organization_id":{"type":"string","format":"string"},"owner_id":{"type":"string","format":"string"},"regulator":{"description":"Regulator"},"requirement":{"description":"Requirement"},"snapshot_id":{"description":"Snapshot ID","anyOf":[{"type":"string","format":"string"},{"type":"null","description":"No snapshot"}]},"source":{"description":"Source"},"source_id":{"description":"Source ID"},"status":{"type":"string","enum":["NON_COMPLIANT","PARTIALLY_COMPLIANT","COMPLIANT"]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}}}`)
 	AddPeopleToolInputSchema            = mcp.MustUnmarshalSchema(`{"type":"object","required":["organization_id","full_name","primary_email_address","kind"],"properties":{"additional_email_addresses":{"type":"array","description":"Additional email addresses","items":{"type":"string"}},"contract_end_date":{"type":"string","description":"Contract end date","format":"date-time"},"contract_start_date":{"type":"string","description":"Contract start date","format":"date-time"},"full_name":{"type":"string","description":"Full name"},"kind":{"type":"string","enum":["EMPLOYEE","CONTRACTOR","SERVICE_ACCOUNT"]},"organization_id":{"type":"string","format":"string"},"position":{"type":"string","description":"Position"},"primary_email_address":{"type":"string","description":"Primary email address"}}}`)
 	AddPeopleToolOutputSchema           = mcp.MustUnmarshalSchema(`{"type":"object","required":["people"],"properties":{"people":{"type":"object","required":["id","organization_id","full_name","primary_email_address","additional_email_addresses","kind","created_at","updated_at"],"properties":{"additional_email_addresses":{"type":"array","description":"Additional email addresses","items":{"type":"string"}},"contract_end_date":{"description":"Contract end date","format":"date-time"},"contract_start_date":{"description":"Contract start date","format":"date-time"},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"full_name":{"type":"string","description":"Full name"},"id":{"type":"string","format":"string"},"kind":{"type":"string","enum":["EMPLOYEE","CONTRACTOR","SERVICE_ACCOUNT"]},"organization_id":{"type":"string","format":"string"},"position":{"description":"Position"},"primary_email_address":{"type":"string","description":"Primary email address"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}}}`)
 	AddRiskToolInputSchema              = mcp.MustUnmarshalSchema(`{"type":"object","required":["organization_id","name","category","treatment","inherent_likelihood","inherent_impact"],"properties":{"category":{"type":"string","description":"Risk category"},"description":{"type":"string","description":"Risk description"},"inherent_impact":{"type":"integer","description":"Inherent impact"},"inherent_likelihood":{"type":"integer","description":"Inherent likelihood"},"name":{"type":"string","description":"Risk name"},"note":{"type":"string","description":"Risk note"},"organization_id":{"type":"string","format":"string"},"owner_id":{"type":"string","format":"string"},"residual_impact":{"type":"integer","description":"Residual impact"},"residual_likelihood":{"type":"integer","description":"Residual likelihood"},"treatment":{"type":"string","enum":["MITIGATED","ACCEPTED","AVOIDED","TRANSFERRED"]}}}`)
@@ -38,6 +40,8 @@ var (
 	GetMeasureToolOutputSchema          = mcp.MustUnmarshalSchema(`{"type":"object","required":["measure"],"properties":{"measure":{"type":"object","required":["id","category","name","state","created_at","updated_at"],"properties":{"category":{"type":"string","description":"Measure category"},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"description":"Measure description"},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Measure name"},"state":{"type":"string","enum":["NOT_STARTED","IN_PROGRESS","NOT_APPLICABLE","IMPLEMENTED"]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}}}`)
 	GetNonconformityToolInputSchema     = mcp.MustUnmarshalSchema(`{"type":"object","required":["id"],"properties":{"id":{"type":"string","format":"string"}}}`)
 	GetNonconformityToolOutputSchema    = mcp.MustUnmarshalSchema(`{"type":"object","required":["nonconformity"],"properties":{"nonconformity":{"type":"object","required":["id","organization_id","reference_id","audit_id","root_cause","owner_id","status","created_at","updated_at"],"properties":{"audit_id":{"type":"string","format":"string"},"corrective_action":{"description":"Corrective action"},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"date_identified":{"description":"Date identified","format":"date-time"},"description":{"description":"Description"},"due_date":{"description":"Due date","format":"date-time"},"effectiveness_check":{"description":"Effectiveness check"},"id":{"type":"string","format":"string"},"organization_id":{"type":"string","format":"string"},"owner_id":{"type":"string","format":"string"},"reference_id":{"type":"string","description":"Reference ID"},"root_cause":{"type":"string","description":"Root cause"},"snapshot_id":{"description":"Snapshot ID","anyOf":[{"type":"string","format":"string"},{"type":"null","description":"No snapshot"}]},"status":{"type":"string","enum":["OPEN","IN_PROGRESS","CLOSED"]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}}}`)
+	GetObligationToolInputSchema        = mcp.MustUnmarshalSchema(`{"type":"object","required":["id"],"properties":{"id":{"type":"string","format":"string"}}}`)
+	GetObligationToolOutputSchema       = mcp.MustUnmarshalSchema(`{"type":"object","required":["obligation"],"properties":{"obligation":{"type":"object","required":["id","organization_id","owner_id","status","created_at","updated_at"],"properties":{"actions_to_be_implemented":{"description":"Actions to be implemented"},"area":{"description":"Area"},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"due_date":{"description":"Due date","format":"date-time"},"id":{"type":"string","format":"string"},"last_review_date":{"description":"Last review date","format":"date-time"},"organization_id":{"type":"string","format":"string"},"owner_id":{"type":"string","format":"string"},"regulator":{"description":"Regulator"},"requirement":{"description":"Requirement"},"snapshot_id":{"description":"Snapshot ID","anyOf":[{"type":"string","format":"string"},{"type":"null","description":"No snapshot"}]},"source":{"description":"Source"},"source_id":{"description":"Source ID"},"status":{"type":"string","enum":["NON_COMPLIANT","PARTIALLY_COMPLIANT","COMPLIANT"]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}}}`)
 	GetPeopleToolInputSchema            = mcp.MustUnmarshalSchema(`{"type":"object","required":["id"],"properties":{"id":{"type":"string","format":"string"}}}`)
 	GetPeopleToolOutputSchema           = mcp.MustUnmarshalSchema(`{"type":"object","required":["people"],"properties":{"people":{"type":"object","required":["id","organization_id","full_name","primary_email_address","additional_email_addresses","kind","created_at","updated_at"],"properties":{"additional_email_addresses":{"type":"array","description":"Additional email addresses","items":{"type":"string"}},"contract_end_date":{"description":"Contract end date","format":"date-time"},"contract_start_date":{"description":"Contract start date","format":"date-time"},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"full_name":{"type":"string","description":"Full name"},"id":{"type":"string","format":"string"},"kind":{"type":"string","enum":["EMPLOYEE","CONTRACTOR","SERVICE_ACCOUNT"]},"organization_id":{"type":"string","format":"string"},"position":{"description":"Position"},"primary_email_address":{"type":"string","description":"Primary email address"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}}}`)
 	GetRiskToolInputSchema              = mcp.MustUnmarshalSchema(`{"type":"object","required":["id"],"properties":{"id":{"type":"string","format":"string"}}}`)
@@ -52,6 +56,8 @@ var (
 	ListMeasuresToolOutputSchema        = mcp.MustUnmarshalSchema(`{"type":"object","required":["measures"],"properties":{"measures":{"type":"array","items":{"type":"object","required":["id","category","name","state","created_at","updated_at"],"properties":{"category":{"type":"string","description":"Measure category"},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"description":"Measure description"},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Measure name"},"state":{"type":"string","enum":["NOT_STARTED","IN_PROGRESS","NOT_APPLICABLE","IMPLEMENTED"]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}},"next_cursor":{"type":"string","format":"string"}}}`)
 	ListNonconformitiesToolInputSchema  = mcp.MustUnmarshalSchema(`{"type":"object","required":["organization_id"],"properties":{"cursor":{"type":"string","format":"string"},"filter":{"type":"object","properties":{"snapshot_id":{"type":"string","format":"string"}}},"order_by":{"type":"object","required":["field","direction"],"properties":{"direction":{"type":"string","enum":["asc","desc"]},"field":{"type":"string","enum":["CREATED_AT","REFERENCE_ID","DATE_IDENTIFIED","DUE_DATE","STATUS"]}}},"organization_id":{"type":"string","format":"string"},"size":{"type":"integer","description":"Page size"}}}`)
 	ListNonconformitiesToolOutputSchema = mcp.MustUnmarshalSchema(`{"type":"object","required":["nonconformities"],"properties":{"next_cursor":{"type":"string","format":"string"},"nonconformities":{"type":"array","items":{"type":"object","required":["id","organization_id","reference_id","audit_id","root_cause","owner_id","status","created_at","updated_at"],"properties":{"audit_id":{"type":"string","format":"string"},"corrective_action":{"description":"Corrective action"},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"date_identified":{"description":"Date identified","format":"date-time"},"description":{"description":"Description"},"due_date":{"description":"Due date","format":"date-time"},"effectiveness_check":{"description":"Effectiveness check"},"id":{"type":"string","format":"string"},"organization_id":{"type":"string","format":"string"},"owner_id":{"type":"string","format":"string"},"reference_id":{"type":"string","description":"Reference ID"},"root_cause":{"type":"string","description":"Root cause"},"snapshot_id":{"description":"Snapshot ID","anyOf":[{"type":"string","format":"string"},{"type":"null","description":"No snapshot"}]},"status":{"type":"string","enum":["OPEN","IN_PROGRESS","CLOSED"]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}}}}`)
+	ListObligationsToolInputSchema      = mcp.MustUnmarshalSchema(`{"type":"object","required":["organization_id"],"properties":{"cursor":{"type":"string","format":"string"},"filter":{"type":"object","properties":{"snapshot_id":{"type":"string","format":"string"}}},"order_by":{"type":"object","required":["field","direction"],"properties":{"direction":{"type":"string","enum":["asc","desc"]},"field":{"type":"string","enum":["CREATED_AT","LAST_REVIEW_DATE","DUE_DATE","STATUS"]}}},"organization_id":{"type":"string","format":"string"},"size":{"type":"integer","description":"Page size"}}}`)
+	ListObligationsToolOutputSchema     = mcp.MustUnmarshalSchema(`{"type":"object","required":["obligations"],"properties":{"next_cursor":{"type":"string","format":"string"},"obligations":{"type":"array","items":{"type":"object","required":["id","organization_id","owner_id","status","created_at","updated_at"],"properties":{"actions_to_be_implemented":{"description":"Actions to be implemented"},"area":{"description":"Area"},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"due_date":{"description":"Due date","format":"date-time"},"id":{"type":"string","format":"string"},"last_review_date":{"description":"Last review date","format":"date-time"},"organization_id":{"type":"string","format":"string"},"owner_id":{"type":"string","format":"string"},"regulator":{"description":"Regulator"},"requirement":{"description":"Requirement"},"snapshot_id":{"description":"Snapshot ID","anyOf":[{"type":"string","format":"string"},{"type":"null","description":"No snapshot"}]},"source":{"description":"Source"},"source_id":{"description":"Source ID"},"status":{"type":"string","enum":["NON_COMPLIANT","PARTIALLY_COMPLIANT","COMPLIANT"]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}}}}`)
 	ListOrganizationsToolInputSchema    = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"organization_id":{"type":"string","format":"string"}}}`)
 	ListOrganizationsToolOutputSchema   = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"organizations":{"type":"array","items":{"type":"object","required":["id","name","description","created_at","updated_at"],"properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"description":"Organization description"},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Organization name"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}}}}`)
 	ListPeopleToolInputSchema           = mcp.MustUnmarshalSchema(`{"type":"object","required":["organization_id"],"properties":{"cursor":{"type":"string","format":"string"},"filter":{"type":"object","properties":{"exclude_contract_ended":{"type":"boolean","description":"Exclude people with ended contracts"}}},"order_by":{"type":"object","required":["field","direction"],"properties":{"direction":{"type":"string","enum":["asc","desc"]},"field":{"type":"string","enum":["CREATED_AT","FULL_NAME","KIND"]}}},"organization_id":{"type":"string","format":"string"},"size":{"type":"integer","description":"Page size"}}}`)
@@ -70,6 +76,8 @@ var (
 	UpdateMeasureToolOutputSchema       = mcp.MustUnmarshalSchema(`{"type":"object","required":["measure"],"properties":{"measure":{"type":"object","required":["id","category","name","state","created_at","updated_at"],"properties":{"category":{"type":"string","description":"Measure category"},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"description":"Measure description"},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Measure name"},"state":{"type":"string","enum":["NOT_STARTED","IN_PROGRESS","NOT_APPLICABLE","IMPLEMENTED"]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}}}`)
 	UpdateNonconformityToolInputSchema  = mcp.MustUnmarshalSchema(`{"type":"object","required":["id"],"properties":{"audit_id":{"description":"Audit ID","anyOf":[{"type":"string","format":"string"},{"type":"null"}]},"corrective_action":{"description":"Corrective action"},"date_identified":{"description":"Date identified","format":"date-time"},"description":{"description":"Description"},"due_date":{"description":"Due date","format":"date-time"},"effectiveness_check":{"description":"Effectiveness check"},"id":{"type":"string","format":"string"},"owner_id":{"description":"Owner ID","anyOf":[{"type":"string","format":"string"},{"type":"null"}]},"reference_id":{"type":"string","description":"Reference ID"},"root_cause":{"type":"string","description":"Root cause"},"status":{"type":"string","enum":["OPEN","IN_PROGRESS","CLOSED"]}}}`)
 	UpdateNonconformityToolOutputSchema = mcp.MustUnmarshalSchema(`{"type":"object","required":["nonconformity"],"properties":{"nonconformity":{"type":"object","required":["id","organization_id","reference_id","audit_id","root_cause","owner_id","status","created_at","updated_at"],"properties":{"audit_id":{"type":"string","format":"string"},"corrective_action":{"description":"Corrective action"},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"date_identified":{"description":"Date identified","format":"date-time"},"description":{"description":"Description"},"due_date":{"description":"Due date","format":"date-time"},"effectiveness_check":{"description":"Effectiveness check"},"id":{"type":"string","format":"string"},"organization_id":{"type":"string","format":"string"},"owner_id":{"type":"string","format":"string"},"reference_id":{"type":"string","description":"Reference ID"},"root_cause":{"type":"string","description":"Root cause"},"snapshot_id":{"description":"Snapshot ID","anyOf":[{"type":"string","format":"string"},{"type":"null","description":"No snapshot"}]},"status":{"type":"string","enum":["OPEN","IN_PROGRESS","CLOSED"]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}}}`)
+	UpdateObligationToolInputSchema     = mcp.MustUnmarshalSchema(`{"type":"object","required":["id"],"properties":{"actions_to_be_implemented":{"description":"Actions to be implemented"},"area":{"description":"Area"},"due_date":{"description":"Due date","format":"date-time"},"id":{"type":"string","format":"string"},"last_review_date":{"description":"Last review date","format":"date-time"},"owner_id":{"description":"Owner ID","anyOf":[{"type":"string","format":"string"},{"type":"null"}]},"regulator":{"description":"Regulator"},"requirement":{"description":"Requirement"},"source":{"description":"Source"},"status":{"description":"Status","anyOf":[{"type":"string","enum":["NON_COMPLIANT","PARTIALLY_COMPLIANT","COMPLIANT"]},{"type":"null","description":"No status"}]}}}`)
+	UpdateObligationToolOutputSchema    = mcp.MustUnmarshalSchema(`{"type":"object","required":["obligation"],"properties":{"obligation":{"type":"object","required":["id","organization_id","owner_id","status","created_at","updated_at"],"properties":{"actions_to_be_implemented":{"description":"Actions to be implemented"},"area":{"description":"Area"},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"due_date":{"description":"Due date","format":"date-time"},"id":{"type":"string","format":"string"},"last_review_date":{"description":"Last review date","format":"date-time"},"organization_id":{"type":"string","format":"string"},"owner_id":{"type":"string","format":"string"},"regulator":{"description":"Regulator"},"requirement":{"description":"Requirement"},"snapshot_id":{"description":"Snapshot ID","anyOf":[{"type":"string","format":"string"},{"type":"null","description":"No snapshot"}]},"source":{"description":"Source"},"source_id":{"description":"Source ID"},"status":{"type":"string","enum":["NON_COMPLIANT","PARTIALLY_COMPLIANT","COMPLIANT"]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}}}`)
 	UpdateRiskToolInputSchema           = mcp.MustUnmarshalSchema(`{"type":"object","required":["id"],"properties":{"category":{"type":"string","description":"Risk category"},"description":{"description":"Risk description"},"id":{"type":"string","format":"string"},"inherent_impact":{"type":"integer","description":"Inherent impact"},"inherent_likelihood":{"type":"integer","description":"Inherent likelihood"},"name":{"type":"string","description":"Risk name"},"note":{"type":"string","description":"Risk note"},"owner_id":{"description":"Owner ID","anyOf":[{"type":"string","format":"string"},{"type":"null"}]},"residual_impact":{"type":"integer","description":"Residual impact"},"residual_likelihood":{"type":"integer","description":"Residual likelihood"},"treatment":{"type":"string","enum":["MITIGATED","ACCEPTED","AVOIDED","TRANSFERRED"]}}}`)
 	UpdateRiskToolOutputSchema          = mcp.MustUnmarshalSchema(`{"type":"object","required":["risk"],"properties":{"risk":{"type":"object","required":["id","organization_id","name","category","treatment","inherent_likelihood","inherent_impact","inherent_risk_score","residual_likelihood","residual_impact","residual_risk_score","note","created_at","updated_at"],"properties":{"category":{"type":"string","description":"Risk category"},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"description":"Risk description"},"id":{"type":"string","format":"string"},"inherent_impact":{"type":"integer","description":"Inherent impact"},"inherent_likelihood":{"type":"integer","description":"Inherent likelihood"},"inherent_risk_score":{"type":"integer","description":"Inherent risk score"},"name":{"type":"string","description":"Risk name"},"note":{"type":"string","description":"Risk note"},"organization_id":{"type":"string","format":"string"},"owner_id":{"description":"Owner ID"},"residual_impact":{"type":"integer","description":"Residual impact"},"residual_likelihood":{"type":"integer","description":"Residual likelihood"},"residual_risk_score":{"type":"integer","description":"Residual risk score"},"snapshot_id":{"description":"Snapshot ID"},"treatment":{"type":"string","enum":["MITIGATED","ACCEPTED","AVOIDED","TRANSFERRED"]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}}}`)
 	UpdateVendorToolInputSchema         = mcp.MustUnmarshalSchema(`{"type":"object","required":["id"],"properties":{"description":{"type":"string","description":"Vendor description"},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Vendor name"}}}`)
@@ -179,6 +187,35 @@ type AddNonconformityInput struct {
 // AddNonconformityOutput represents the schema
 type AddNonconformityOutput struct {
 	Nonconformity *Nonconformity `json:"nonconformity"`
+}
+
+// AddObligationInput represents the schema
+type AddObligationInput struct {
+	// Actions to be implemented
+	ActionsToBeImplemented *string `json:"actions_to_be_implemented,omitempty"`
+	// Area
+	Area *string `json:"area,omitempty"`
+	// Due date
+	DueDate *time.Time `json:"due_date,omitempty"`
+	// Last review date
+	LastReviewDate *time.Time `json:"last_review_date,omitempty"`
+	// Organization ID
+	OrganizationID gid.GID `json:"organization_id"`
+	// Owner ID
+	OwnerID gid.GID `json:"owner_id"`
+	// Regulator
+	Regulator *string `json:"regulator,omitempty"`
+	// Requirement
+	Requirement *string `json:"requirement,omitempty"`
+	// Source
+	Source *string `json:"source,omitempty"`
+	// Status
+	Status *coredata.ObligationStatus `json:"status"`
+}
+
+// AddObligationOutput represents the schema
+type AddObligationOutput struct {
+	Obligation *Obligation `json:"obligation"`
 }
 
 // AddPeopleInput represents the schema
@@ -395,6 +432,17 @@ type GetNonconformityOutput struct {
 	Nonconformity *Nonconformity `json:"nonconformity"`
 }
 
+// GetObligationInput represents the schema
+type GetObligationInput struct {
+	// Obligation ID
+	ID gid.GID `json:"id"`
+}
+
+// GetObligationOutput represents the schema
+type GetObligationOutput struct {
+	Obligation *Obligation `json:"obligation"`
+}
+
 // GetPeopleInput represents the schema
 type GetPeopleInput struct {
 	// People ID
@@ -514,6 +562,26 @@ type ListNonconformitiesOutput struct {
 	// Next cursor
 	NextCursor      *page.CursorKey  `json:"next_cursor,omitempty"`
 	Nonconformities []*Nonconformity `json:"nonconformities"`
+}
+
+// ListObligationsInput represents the schema
+type ListObligationsInput struct {
+	// Page cursor
+	Cursor *page.CursorKey             `json:"cursor,omitempty"`
+	Filter *ListObligationsInputFilter `json:"filter,omitempty"`
+	// Obligation order by
+	OrderBy *ObligationOrderBy `json:"order_by,omitempty"`
+	// Organization ID
+	OrganizationID gid.GID `json:"organization_id"`
+	// Page size
+	Size *int `json:"size,omitempty"`
+}
+
+// ListObligationsOutput represents the schema
+type ListObligationsOutput struct {
+	// Next cursor
+	NextCursor  *page.CursorKey `json:"next_cursor,omitempty"`
+	Obligations []*Obligation   `json:"obligations"`
 }
 
 // ListOrganizationsInput represents the schema
@@ -653,6 +721,48 @@ type NonconformityOrderBy struct {
 	Direction page.OrderDirection `json:"direction"`
 	// Nonconformity order field
 	Field coredata.NonconformityOrderField `json:"field"`
+}
+
+// Obligation represents the schema
+type Obligation struct {
+	// Actions to be implemented
+	ActionsToBeImplemented *string `json:"actions_to_be_implemented,omitempty"`
+	// Area
+	Area *string `json:"area,omitempty"`
+	// Creation timestamp
+	CreatedAt time.Time `json:"created_at"`
+	// Due date
+	DueDate *time.Time `json:"due_date,omitempty"`
+	// Obligation ID
+	ID gid.GID `json:"id"`
+	// Last review date
+	LastReviewDate *time.Time `json:"last_review_date,omitempty"`
+	// Organization ID
+	OrganizationID gid.GID `json:"organization_id"`
+	// Owner ID
+	OwnerID gid.GID `json:"owner_id"`
+	// Regulator
+	Regulator *string `json:"regulator,omitempty"`
+	// Requirement
+	Requirement *string `json:"requirement,omitempty"`
+	// Snapshot ID
+	SnapshotID *gid.GID `json:"snapshot_id,omitempty"`
+	// Source
+	Source *string `json:"source,omitempty"`
+	// Source ID
+	SourceID *string `json:"source_id,omitempty"`
+	// Status
+	Status coredata.ObligationStatus `json:"status"`
+	// Update timestamp
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+// ObligationOrderBy represents the schema
+type ObligationOrderBy struct {
+	// Obligation order direction
+	Direction page.OrderDirection `json:"direction"`
+	// Obligation order field
+	Field coredata.ObligationOrderField `json:"field"`
 }
 
 // Organization represents the schema
@@ -856,6 +966,35 @@ type UpdateNonconformityOutput struct {
 	Nonconformity *Nonconformity `json:"nonconformity"`
 }
 
+// UpdateObligationInput represents the schema
+type UpdateObligationInput struct {
+	// Actions to be implemented
+	ActionsToBeImplemented mcp.Omittable[*string] `json:"actions_to_be_implemented,omitempty"`
+	// Area
+	Area mcp.Omittable[*string] `json:"area,omitempty"`
+	// Due date
+	DueDate mcp.Omittable[*time.Time] `json:"due_date,omitempty"`
+	// Obligation ID
+	ID gid.GID `json:"id"`
+	// Last review date
+	LastReviewDate mcp.Omittable[*time.Time] `json:"last_review_date,omitempty"`
+	// Owner ID
+	OwnerID *gid.GID `json:"owner_id,omitempty"`
+	// Regulator
+	Regulator mcp.Omittable[*string] `json:"regulator,omitempty"`
+	// Requirement
+	Requirement mcp.Omittable[*string] `json:"requirement,omitempty"`
+	// Source
+	Source mcp.Omittable[*string] `json:"source,omitempty"`
+	// Status
+	Status *coredata.ObligationStatus `json:"status,omitempty"`
+}
+
+// UpdateObligationOutput represents the schema
+type UpdateObligationOutput struct {
+	Obligation *Obligation `json:"obligation"`
+}
+
 // UpdateRiskInput represents the schema
 type UpdateRiskInput struct {
 	// Risk category
@@ -948,6 +1087,12 @@ type ListMeasuresInputFilter struct {
 
 // ListNonconformitiesInputFilter represents the schema
 type ListNonconformitiesInputFilter struct {
+	// Snapshot ID
+	SnapshotID *gid.GID `json:"snapshot_id,omitempty"`
+}
+
+// ListObligationsInputFilter represents the schema
+type ListObligationsInputFilter struct {
 	// Snapshot ID
 	SnapshotID *gid.GID `json:"snapshot_id,omitempty"`
 }

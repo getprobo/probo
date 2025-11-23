@@ -41,6 +41,10 @@ type ResolverInterface interface {
 	GetNonconformityTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetNonconformityInput) (*mcp.CallToolResult, types.GetNonconformityOutput, error)
 	AddNonconformityTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddNonconformityInput) (*mcp.CallToolResult, types.AddNonconformityOutput, error)
 	UpdateNonconformityTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateNonconformityInput) (*mcp.CallToolResult, types.UpdateNonconformityOutput, error)
+	ListObligationsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListObligationsInput) (*mcp.CallToolResult, types.ListObligationsOutput, error)
+	GetObligationTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetObligationInput) (*mcp.CallToolResult, types.GetObligationOutput, error)
+	AddObligationTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddObligationInput) (*mcp.CallToolResult, types.AddObligationOutput, error)
+	UpdateObligationTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateObligationInput) (*mcp.CallToolResult, types.UpdateObligationOutput, error)
 }
 
 // New creates a new MCP server instance with all handlers registered.
@@ -369,5 +373,45 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 			OutputSchema: types.UpdateNonconformityToolOutputSchema,
 		},
 		resolver.UpdateNonconformityTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "listObligations",
+			Description:  "List all obligations for the organization",
+			InputSchema:  types.ListObligationsToolInputSchema,
+			OutputSchema: types.ListObligationsToolOutputSchema,
+		},
+		resolver.ListObligationsTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "getObligation",
+			Description:  "Get an obligation by ID",
+			InputSchema:  types.GetObligationToolInputSchema,
+			OutputSchema: types.GetObligationToolOutputSchema,
+		},
+		resolver.GetObligationTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "addObligation",
+			Description:  "Add a new obligation to the organization",
+			InputSchema:  types.AddObligationToolInputSchema,
+			OutputSchema: types.AddObligationToolOutputSchema,
+		},
+		resolver.AddObligationTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "updateObligation",
+			Description:  "Update an existing obligation",
+			InputSchema:  types.UpdateObligationToolInputSchema,
+			OutputSchema: types.UpdateObligationToolOutputSchema,
+		},
+		resolver.UpdateObligationTool,
 	)
 }

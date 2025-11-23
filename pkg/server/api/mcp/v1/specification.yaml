@@ -1683,6 +1683,282 @@ components:
         nonconformity:
           $ref: "#/components/schemas/Nonconformity"
 
+    ObligationStatus:
+      type: string
+      enum:
+        - NON_COMPLIANT
+        - PARTIALLY_COMPLIANT
+        - COMPLIANT
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ObligationStatus
+
+    ObligationOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+        - LAST_REVIEW_DATE
+        - DUE_DATE
+        - STATUS
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ObligationOrderField
+
+    ObligationOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/ObligationOrderField"
+          description: Obligation order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: Obligation order direction
+
+    Obligation:
+      type: object
+      required:
+        - id
+        - organization_id
+        - owner_id
+        - status
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Obligation ID
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        snapshot_id:
+          anyOf:
+            - $ref: "#/components/schemas/GID"
+              description: Snapshot ID
+            - type: "null"
+              description: No snapshot
+          description: Snapshot ID
+        source_id:
+          type:
+            - string
+            - "null"
+          description: Source ID
+        area:
+          type:
+            - string
+            - "null"
+          description: Area
+        source:
+          type:
+            - string
+            - "null"
+          description: Source
+        requirement:
+          type:
+            - string
+            - "null"
+          description: Requirement
+        actions_to_be_implemented:
+          type:
+            - string
+            - "null"
+          description: Actions to be implemented
+        regulator:
+          type:
+            - string
+            - "null"
+          description: Regulator
+        owner_id:
+          $ref: "#/components/schemas/GID"
+          description: Owner ID
+        last_review_date:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: Last review date
+        due_date:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: Due date
+        status:
+          $ref: "#/components/schemas/ObligationStatus"
+          description: Status
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Update timestamp
+
+    ListObligationsInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        order_by:
+          $ref: "#/components/schemas/ObligationOrderBy"
+          description: Obligation order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+        filter:
+          type: object
+          properties:
+            snapshot_id:
+              $ref: "#/components/schemas/GID"
+              description: Snapshot ID
+
+    ListObligationsOutput:
+      type: object
+      required:
+        - obligations
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        obligations:
+          type: array
+          items:
+            $ref: "#/components/schemas/Obligation"
+
+    GetObligationInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Obligation ID
+
+    GetObligationOutput:
+      type: object
+      required:
+        - obligation
+      properties:
+        obligation:
+          $ref: "#/components/schemas/Obligation"
+
+    AddObligationInput:
+      type: object
+      required:
+        - organization_id
+        - owner_id
+        - status
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        area:
+          type: string
+          description: Area
+        source:
+          type: string
+          description: Source
+        requirement:
+          type: string
+          description: Requirement
+        actions_to_be_implemented:
+          type: string
+          description: Actions to be implemented
+        regulator:
+          type: string
+          description: Regulator
+        owner_id:
+          $ref: "#/components/schemas/GID"
+          description: Owner ID
+        last_review_date:
+          type: string
+          format: date-time
+          description: Last review date
+        due_date:
+          type: string
+          format: date-time
+          description: Due date
+        status:
+          anyOf:
+            - $ref: "#/components/schemas/ObligationStatus"
+              description: Obligation status
+            - type: "null"
+              description: No status
+          description: Status
+
+    AddObligationOutput:
+      type: object
+      required:
+        - obligation
+      properties:
+        obligation:
+          $ref: "#/components/schemas/Obligation"
+
+    UpdateObligationInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Obligation ID
+        area:
+          type: ["string", "null"]
+          description: Area
+          go.probo.inc/mcpgen/omittable: true
+        source:
+          type: ["string", "null"]
+          description: Source
+          go.probo.inc/mcpgen/omittable: true
+        requirement:
+          type: ["string", "null"]
+          description: Requirement
+          go.probo.inc/mcpgen/omittable: true
+        actions_to_be_implemented:
+          type: ["string", "null"]
+          description: Actions to be implemented
+          go.probo.inc/mcpgen/omittable: true
+        regulator:
+          type: ["string", "null"]
+          description: Regulator
+          go.probo.inc/mcpgen/omittable: true
+        owner_id:
+          anyOf:
+            - type: string
+              $ref: "#/components/schemas/GID"
+            - type: "null"
+          description: Owner ID
+        last_review_date:
+          type: ["string", "null"]
+          format: date-time
+          description: Last review date
+          go.probo.inc/mcpgen/omittable: true
+        due_date:
+          type: ["string", "null"]
+          format: date-time
+          description: Due date
+          go.probo.inc/mcpgen/omittable: true
+        status:
+          anyOf:
+            - $ref: "#/components/schemas/ObligationStatus"
+              description: Obligation status
+            - type: "null"
+              description: No status
+          description: Status
+
+    UpdateObligationOutput:
+      type: object
+      required:
+        - obligation
+      properties:
+        obligation:
+          $ref: "#/components/schemas/Obligation"
+
 tools:
   - name: listOrganizations
     description: List all organizations the user has access to
@@ -1901,3 +2177,31 @@ tools:
       $ref: "#/components/schemas/UpdateNonconformityInput"
     outputSchema:
       $ref: "#/components/schemas/UpdateNonconformityOutput"
+  - name: listObligations
+    description: List all obligations for the organization
+    readonly: true
+    inputSchema:
+      $ref: "#/components/schemas/ListObligationsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListObligationsOutput"
+  - name: getObligation
+    description: Get an obligation by ID
+    readonly: true
+    inputSchema:
+      $ref: "#/components/schemas/GetObligationInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetObligationOutput"
+  - name: addObligation
+    description: Add a new obligation to the organization
+    readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/AddObligationInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddObligationOutput"
+  - name: updateObligation
+    description: Update an existing obligation
+    readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateObligationInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateObligationOutput"

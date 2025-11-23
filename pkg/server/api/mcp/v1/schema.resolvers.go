@@ -771,3 +771,107 @@ func (r *Resolver) UpdateNonconformityTool(ctx context.Context, req *mcp.CallToo
 		Nonconformity: types.NewNonconformity(nonconformity),
 	}, nil
 }
+
+func (r *Resolver) ListObligationsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListObligationsInput) (*mcp.CallToolResult, types.ListObligationsOutput, error) {
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionListObligations)
+
+	prb := r.ProboService(ctx, input.OrganizationID)
+
+	pageOrderBy := page.OrderBy[coredata.ObligationOrderField]{
+		Field:     coredata.ObligationOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.ObligationOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	var obligationFilter = coredata.NewObligationFilter(nil)
+	if input.Filter != nil {
+		obligationFilter = coredata.NewObligationFilter(&input.Filter.SnapshotID)
+	}
+
+	page, err := prb.Obligations.ListForOrganizationID(ctx, input.OrganizationID, cursor, obligationFilter)
+	if err != nil {
+		panic(fmt.Errorf("cannot list organization obligations: %w", err))
+	}
+
+	return nil, types.NewListObligationsOutput(page), nil
+}
+
+func (r *Resolver) GetObligationTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetObligationInput) (*mcp.CallToolResult, types.GetObligationOutput, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionGet)
+
+	prb := r.ProboService(ctx, input.ID)
+
+	obligation, err := prb.Obligations.Get(ctx, input.ID)
+	if err != nil {
+		return nil, types.GetObligationOutput{}, fmt.Errorf("failed to get obligation: %w", err)
+	}
+
+	return nil, types.GetObligationOutput{
+		Obligation: types.NewObligation(obligation),
+	}, nil
+}
+
+func (r *Resolver) AddObligationTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddObligationInput) (*mcp.CallToolResult, types.AddObligationOutput, error) {
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionCreateObligation)
+
+	svc := r.ProboService(ctx, input.OrganizationID)
+
+	obligation, err := svc.Obligations.Create(
+		ctx,
+		&probo.CreateObligationRequest{
+			OrganizationID:         input.OrganizationID,
+			Area:                   input.Area,
+			Source:                 input.Source,
+			Requirement:            input.Requirement,
+			ActionsToBeImplemented: input.ActionsToBeImplemented,
+			Regulator:              input.Regulator,
+			OwnerID:                input.OwnerID,
+			LastReviewDate:         input.LastReviewDate,
+			DueDate:                input.DueDate,
+			Status:                 input.Status,
+		},
+	)
+	if err != nil {
+		return nil, types.AddObligationOutput{}, fmt.Errorf("failed to create obligation: %w", err)
+	}
+
+	return nil, types.AddObligationOutput{
+		Obligation: types.NewObligation(obligation),
+	}, nil
+}
+
+func (r *Resolver) UpdateObligationTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateObligationInput) (*mcp.CallToolResult, types.UpdateObligationOutput, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionUpdateObligation)
+
+	svc := r.ProboService(ctx, input.ID)
+
+	obligation, err := svc.Obligations.Update(
+		ctx,
+		&probo.UpdateObligationRequest{
+			ID:                     input.ID,
+			Area:                   UnwrapOmittable(input.Area),
+			Source:                 UnwrapOmittable(input.Source),
+			Requirement:            UnwrapOmittable(input.Requirement),
+			ActionsToBeImplemented: UnwrapOmittable(input.ActionsToBeImplemented),
+			Regulator:              UnwrapOmittable(input.Regulator),
+			OwnerID:                input.OwnerID,
+			LastReviewDate:         UnwrapOmittable(input.LastReviewDate),
+			DueDate:                UnwrapOmittable(input.DueDate),
+			Status:                 input.Status,
+		},
+	)
+	if err != nil {
+		return nil, types.UpdateObligationOutput{}, fmt.Errorf("failed to update obligation: %w", err)
+	}
+
+	return nil, types.UpdateObligationOutput{
+		Obligation: types.NewObligation(obligation),
+	}, nil
+}
