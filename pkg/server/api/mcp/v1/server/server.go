@@ -25,6 +25,10 @@ type ResolverInterface interface {
 	GetMeasureTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetMeasureInput) (*mcp.CallToolResult, types.GetMeasureOutput, error)
 	AddMeasureTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddMeasureInput) (*mcp.CallToolResult, types.AddMeasureOutput, error)
 	UpdateMeasureTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateMeasureInput) (*mcp.CallToolResult, types.UpdateMeasureOutput, error)
+	ListFrameworksTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListFrameworksInput) (*mcp.CallToolResult, types.ListFrameworksOutput, error)
+	GetFrameworkTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetFrameworkInput) (*mcp.CallToolResult, types.GetFrameworkOutput, error)
+	AddFrameworkTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddFrameworkInput) (*mcp.CallToolResult, types.AddFrameworkOutput, error)
+	UpdateFrameworkTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateFrameworkInput) (*mcp.CallToolResult, types.UpdateFrameworkOutput, error)
 }
 
 // New creates a new MCP server instance with all handlers registered.
@@ -193,5 +197,45 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 			OutputSchema: types.UpdateMeasureToolOutputSchema,
 		},
 		resolver.UpdateMeasureTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "listFrameworks",
+			Description:  "List all frameworks for the organization",
+			InputSchema:  types.ListFrameworksToolInputSchema,
+			OutputSchema: types.ListFrameworksToolOutputSchema,
+		},
+		resolver.ListFrameworksTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "getFramework",
+			Description:  "Get a framework by ID",
+			InputSchema:  types.GetFrameworkToolInputSchema,
+			OutputSchema: types.GetFrameworkToolOutputSchema,
+		},
+		resolver.GetFrameworkTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "addFramework",
+			Description:  "Add a new framework to the organization",
+			InputSchema:  types.AddFrameworkToolInputSchema,
+			OutputSchema: types.AddFrameworkToolOutputSchema,
+		},
+		resolver.AddFrameworkTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "updateFramework",
+			Description:  "Update an existing framework",
+			InputSchema:  types.UpdateFrameworkToolInputSchema,
+			OutputSchema: types.UpdateFrameworkToolOutputSchema,
+		},
+		resolver.UpdateFrameworkTool,
 	)
 }

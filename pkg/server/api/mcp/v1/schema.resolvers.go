@@ -382,3 +382,85 @@ func (r *Resolver) UpdateMeasureTool(ctx context.Context, req *mcp.CallToolReque
 		Measure: types.NewMeasure(measure),
 	}, nil
 }
+
+func (r *Resolver) ListFrameworksTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListFrameworksInput) (*mcp.CallToolResult, types.ListFrameworksOutput, error) {
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionListFrameworks)
+
+	prb := r.ProboService(ctx, input.OrganizationID)
+
+	pageOrderBy := page.OrderBy[coredata.FrameworkOrderField]{
+		Field:     coredata.FrameworkOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.FrameworkOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	page, err := prb.Frameworks.ListForOrganizationID(ctx, input.OrganizationID, cursor)
+	if err != nil {
+		panic(fmt.Errorf("cannot list organization frameworks: %w", err))
+	}
+
+	return nil, types.NewListFrameworksOutput(page), nil
+}
+func (r *Resolver) GetFrameworkTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetFrameworkInput) (*mcp.CallToolResult, types.GetFrameworkOutput, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionGet)
+
+	prb := r.ProboService(ctx, input.ID)
+
+	framework, err := prb.Frameworks.Get(ctx, input.ID)
+	if err != nil {
+		return nil, types.GetFrameworkOutput{}, fmt.Errorf("failed to get framework: %w", err)
+	}
+
+	return nil, types.GetFrameworkOutput{
+		Framework: types.NewFramework(framework),
+	}, nil
+}
+func (r *Resolver) AddFrameworkTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddFrameworkInput) (*mcp.CallToolResult, types.AddFrameworkOutput, error) {
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionCreateFramework)
+
+	svc := r.ProboService(ctx, input.OrganizationID)
+
+	framework, err := svc.Frameworks.Create(
+		ctx,
+		probo.CreateFrameworkRequest{
+			OrganizationID: input.OrganizationID,
+			Name:           input.Name,
+			Description:    input.Description,
+		},
+	)
+	if err != nil {
+		return nil, types.AddFrameworkOutput{}, fmt.Errorf("failed to create framework: %w", err)
+	}
+
+	return nil, types.AddFrameworkOutput{
+		Framework: types.NewFramework(framework),
+	}, nil
+}
+func (r *Resolver) UpdateFrameworkTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateFrameworkInput) (*mcp.CallToolResult, types.UpdateFrameworkOutput, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionUpdateFramework)
+
+	svc := r.ProboService(ctx, input.ID)
+
+	framework, err := svc.Frameworks.Update(
+		ctx,
+		probo.UpdateFrameworkRequest{
+			ID:          input.ID,
+			Name:        input.Name,
+			Description: UnwrapOmittable(input.Description),
+		},
+	)
+	if err != nil {
+		return nil, types.UpdateFrameworkOutput{}, fmt.Errorf("failed to update framework: %w", err)
+	}
+
+	return nil, types.UpdateFrameworkOutput{
+		Framework: types.NewFramework(framework),
+	}, nil
+}

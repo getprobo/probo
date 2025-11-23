@@ -851,6 +851,153 @@ components:
         measure:
           $ref: "#/components/schemas/Measure"
 
+    FrameworkOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.FrameworkOrderField
+
+    FrameworkOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/FrameworkOrderField"
+          description: Framework order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: Framework order direction
+
+    Framework:
+      type: object
+      required:
+        - id
+        - organization_id
+        - name
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Framework ID
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        name:
+          type: string
+          description: Framework name
+        description:
+          type:
+            - string
+            - "null"
+          description: Framework description
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Update timestamp
+
+    ListFrameworksInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        order_by:
+          $ref: "#/components/schemas/FrameworkOrderBy"
+          description: Framework order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListFrameworksOutput:
+      type: object
+      required:
+        - frameworks
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        frameworks:
+          type: array
+          items:
+            $ref: "#/components/schemas/Framework"
+
+    GetFrameworkInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Framework ID
+
+    GetFrameworkOutput:
+      type: object
+      required:
+        - framework
+      properties:
+        framework:
+          $ref: "#/components/schemas/Framework"
+
+    AddFrameworkInput:
+      type: object
+      required:
+        - organization_id
+        - name
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        name:
+          type: string
+          description: Framework name
+        description:
+          type: string
+          description: Framework description
+
+    AddFrameworkOutput:
+      type: object
+      required:
+        - framework
+      properties:
+        framework:
+          $ref: "#/components/schemas/Framework"
+
+    UpdateFrameworkInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Framework ID
+        name:
+          type: string
+          description: Framework name
+        description:
+          type: ["string", "null"]
+          description: Framework description
+          go.probo.inc/mcpgen/omittable: true
+
+    UpdateFrameworkOutput:
+      type: object
+      required:
+        - framework
+      properties:
+        framework:
+          $ref: "#/components/schemas/Framework"
+
 tools:
   - name: listOrganizations
     description: List all organizations the user has access to
@@ -957,3 +1104,31 @@ tools:
       $ref: "#/components/schemas/UpdateMeasureInput"
     outputSchema:
       $ref: "#/components/schemas/UpdateMeasureOutput"
+  - name: listFrameworks
+    description: List all frameworks for the organization
+    readonly: true
+    inputSchema:
+      $ref: "#/components/schemas/ListFrameworksInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListFrameworksOutput"
+  - name: getFramework
+    description: Get a framework by ID
+    readonly: true
+    inputSchema:
+      $ref: "#/components/schemas/GetFrameworkInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetFrameworkOutput"
+  - name: addFramework
+    description: Add a new framework to the organization
+    readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/AddFrameworkInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddFrameworkOutput"
+  - name: updateFramework
+    description: Update an existing framework
+    readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateFrameworkInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateFrameworkOutput"
