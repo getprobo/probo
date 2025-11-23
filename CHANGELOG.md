@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.90.0] - 2025-11-23
+
+### Added
+
+- MCP tools for many new objects.
+
+### Fixed
+
+- HTTP to HTTPS redirect for trust center.
+
 ## [0.89.1] - 2025-11-21
 
 ### Fixed
