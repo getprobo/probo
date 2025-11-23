@@ -45,6 +45,10 @@ type ResolverInterface interface {
 	GetObligationTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetObligationInput) (*mcp.CallToolResult, types.GetObligationOutput, error)
 	AddObligationTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddObligationInput) (*mcp.CallToolResult, types.AddObligationOutput, error)
 	UpdateObligationTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateObligationInput) (*mcp.CallToolResult, types.UpdateObligationOutput, error)
+	ListContinualImprovementsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListContinualImprovementsInput) (*mcp.CallToolResult, types.ListContinualImprovementsOutput, error)
+	GetContinualImprovementTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetContinualImprovementInput) (*mcp.CallToolResult, types.GetContinualImprovementOutput, error)
+	AddContinualImprovementTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddContinualImprovementInput) (*mcp.CallToolResult, types.AddContinualImprovementOutput, error)
+	UpdateContinualImprovementTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateContinualImprovementInput) (*mcp.CallToolResult, types.UpdateContinualImprovementOutput, error)
 }
 
 // New creates a new MCP server instance with all handlers registered.
@@ -413,5 +417,45 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 			OutputSchema: types.UpdateObligationToolOutputSchema,
 		},
 		resolver.UpdateObligationTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "listContinualImprovements",
+			Description:  "List all continual improvements for the organization",
+			InputSchema:  types.ListContinualImprovementsToolInputSchema,
+			OutputSchema: types.ListContinualImprovementsToolOutputSchema,
+		},
+		resolver.ListContinualImprovementsTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "getContinualImprovement",
+			Description:  "Get a continual improvement by ID",
+			InputSchema:  types.GetContinualImprovementToolInputSchema,
+			OutputSchema: types.GetContinualImprovementToolOutputSchema,
+		},
+		resolver.GetContinualImprovementTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "addContinualImprovement",
+			Description:  "Add a new continual improvement to the organization",
+			InputSchema:  types.AddContinualImprovementToolInputSchema,
+			OutputSchema: types.AddContinualImprovementToolOutputSchema,
+		},
+		resolver.AddContinualImprovementTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "updateContinualImprovement",
+			Description:  "Update an existing continual improvement",
+			InputSchema:  types.UpdateContinualImprovementToolInputSchema,
+			OutputSchema: types.UpdateContinualImprovementToolOutputSchema,
+		},
+		resolver.UpdateContinualImprovementTool,
 	)
 }

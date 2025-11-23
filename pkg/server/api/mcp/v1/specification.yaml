@@ -1959,6 +1959,262 @@ components:
         obligation:
           $ref: "#/components/schemas/Obligation"
 
+    ContinualImprovementStatus:
+      type: string
+      enum:
+        - OPEN
+        - IN_PROGRESS
+        - CLOSED
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ContinualImprovementStatus
+
+    ContinualImprovementPriority:
+      type: string
+      enum:
+        - LOW
+        - MEDIUM
+        - HIGH
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ContinualImprovementPriority
+
+    ContinualImprovementOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+        - REFERENCE_ID
+        - TARGET_DATE
+        - STATUS
+        - PRIORITY
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ContinualImprovementOrderField
+
+    ContinualImprovementOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/ContinualImprovementOrderField"
+          description: Continual improvement order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: Continual improvement order direction
+
+    ContinualImprovement:
+      type: object
+      required:
+        - id
+        - organization_id
+        - reference_id
+        - owner_id
+        - status
+        - priority
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Continual improvement ID
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        snapshot_id:
+          anyOf:
+            - $ref: "#/components/schemas/GID"
+              description: Snapshot ID
+            - type: "null"
+              description: No snapshot
+          description: Snapshot ID
+        source_id:
+          type:
+            - string
+            - "null"
+          description: Source ID
+        reference_id:
+          type: string
+          description: Reference ID
+        description:
+          type:
+            - string
+            - "null"
+          description: Description
+        source:
+          type:
+            - string
+            - "null"
+          description: Source
+        owner_id:
+          $ref: "#/components/schemas/GID"
+          description: Owner ID
+        target_date:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: Target date
+        status:
+          $ref: "#/components/schemas/ContinualImprovementStatus"
+          description: Status
+        priority:
+          $ref: "#/components/schemas/ContinualImprovementPriority"
+          description: Priority
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Update timestamp
+
+    ListContinualImprovementsInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        order_by:
+          $ref: "#/components/schemas/ContinualImprovementOrderBy"
+          description: Continual improvement order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+        filter:
+          type: object
+          properties:
+            snapshot_id:
+              $ref: "#/components/schemas/GID"
+              description: Snapshot ID
+
+    ListContinualImprovementsOutput:
+      type: object
+      required:
+        - continual_improvements
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        continual_improvements:
+          type: array
+          items:
+            $ref: "#/components/schemas/ContinualImprovement"
+
+    GetContinualImprovementInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Continual improvement ID
+
+    GetContinualImprovementOutput:
+      type: object
+      required:
+        - continual_improvement
+      properties:
+        continual_improvement:
+          $ref: "#/components/schemas/ContinualImprovement"
+
+    AddContinualImprovementInput:
+      type: object
+      required:
+        - organization_id
+        - reference_id
+        - owner_id
+        - status
+        - priority
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        reference_id:
+          type: string
+          description: Reference ID
+        description:
+          type: string
+          description: Description
+        source:
+          type: string
+          description: Source
+        owner_id:
+          $ref: "#/components/schemas/GID"
+          description: Owner ID
+        target_date:
+          type: string
+          format: date-time
+          description: Target date
+        status:
+          $ref: "#/components/schemas/ContinualImprovementStatus"
+          description: Status
+        priority:
+          $ref: "#/components/schemas/ContinualImprovementPriority"
+          description: Priority
+
+    AddContinualImprovementOutput:
+      type: object
+      required:
+        - continual_improvement
+      properties:
+        continual_improvement:
+          $ref: "#/components/schemas/ContinualImprovement"
+
+    UpdateContinualImprovementInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Continual improvement ID
+        reference_id:
+          type: string
+          description: Reference ID
+        description:
+          type: ["string", "null"]
+          description: Description
+          go.probo.inc/mcpgen/omittable: true
+        source:
+          type: ["string", "null"]
+          description: Source
+          go.probo.inc/mcpgen/omittable: true
+        owner_id:
+          anyOf:
+            - type: string
+              $ref: "#/components/schemas/GID"
+            - type: "null"
+          description: Owner ID
+        target_date:
+          type: ["string", "null"]
+          format: date-time
+          description: Target date
+          go.probo.inc/mcpgen/omittable: true
+        status:
+          anyOf:
+            - $ref: "#/components/schemas/ContinualImprovementStatus"
+              description: Continual improvement status
+            - type: "null"
+              description: No status
+          description: Status
+        priority:
+          anyOf:
+            - $ref: "#/components/schemas/ContinualImprovementPriority"
+              description: Continual improvement priority
+            - type: "null"
+              description: No priority
+          description: Priority
+
+    UpdateContinualImprovementOutput:
+      type: object
+      required:
+        - continual_improvement
+      properties:
+        continual_improvement:
+          $ref: "#/components/schemas/ContinualImprovement"
+
 tools:
   - name: listOrganizations
     description: List all organizations the user has access to
@@ -2205,3 +2461,31 @@ tools:
       $ref: "#/components/schemas/UpdateObligationInput"
     outputSchema:
       $ref: "#/components/schemas/UpdateObligationOutput"
+  - name: listContinualImprovements
+    description: List all continual improvements for the organization
+    readonly: true
+    inputSchema:
+      $ref: "#/components/schemas/ListContinualImprovementsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListContinualImprovementsOutput"
+  - name: getContinualImprovement
+    description: Get a continual improvement by ID
+    readonly: true
+    inputSchema:
+      $ref: "#/components/schemas/GetContinualImprovementInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetContinualImprovementOutput"
+  - name: addContinualImprovement
+    description: Add a new continual improvement to the organization
+    readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/AddContinualImprovementInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddContinualImprovementOutput"
+  - name: updateContinualImprovement
+    description: Update an existing continual improvement
+    readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateContinualImprovementInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateContinualImprovementOutput"

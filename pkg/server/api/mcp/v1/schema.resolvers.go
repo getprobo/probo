@@ -875,3 +875,96 @@ func (r *Resolver) UpdateObligationTool(ctx context.Context, req *mcp.CallToolRe
 		Obligation: types.NewObligation(obligation),
 	}, nil
 }
+
+func (r *Resolver) ListContinualImprovementsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListContinualImprovementsInput) (*mcp.CallToolResult, types.ListContinualImprovementsOutput, error) {
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionListContinualImprovements)
+
+	prb := r.ProboService(ctx, input.OrganizationID)
+
+	pageOrderBy := page.OrderBy[coredata.ContinualImprovementOrderField]{
+		Field:     coredata.ContinualImprovementOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.ContinualImprovementOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	var continualImprovementFilter = coredata.NewContinualImprovementFilter(nil)
+	if input.Filter != nil {
+		continualImprovementFilter = coredata.NewContinualImprovementFilter(&input.Filter.SnapshotID)
+	}
+
+	page, err := prb.ContinualImprovements.ListForOrganizationID(ctx, input.OrganizationID, cursor, continualImprovementFilter)
+	if err != nil {
+		panic(fmt.Errorf("cannot list organization continual improvements: %w", err))
+	}
+
+	return nil, types.NewListContinualImprovementsOutput(page), nil
+}
+
+func (r *Resolver) GetContinualImprovementTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetContinualImprovementInput) (*mcp.CallToolResult, types.GetContinualImprovementOutput, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionGet)
+
+	prb := r.ProboService(ctx, input.ID)
+
+	continualImprovement, err := prb.ContinualImprovements.Get(ctx, input.ID)
+	if err != nil {
+		return nil, types.GetContinualImprovementOutput{}, fmt.Errorf("failed to get continual improvement: %w", err)
+	}
+
+	return nil, types.GetContinualImprovementOutput{
+		ContinualImprovement: types.NewContinualImprovement(continualImprovement),
+	}, nil
+}
+
+func (r *Resolver) AddContinualImprovementTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddContinualImprovementInput) (*mcp.CallToolResult, types.AddContinualImprovementOutput, error) {
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionCreateContinualImprovement)
+
+	svc := r.ProboService(ctx, input.OrganizationID)
+
+	continualImprovement, err := svc.ContinualImprovements.Create(
+		ctx,
+		&probo.CreateContinualImprovementRequest{
+			OrganizationID: input.OrganizationID,
+		},
+	)
+	if err != nil {
+		return nil, types.AddContinualImprovementOutput{}, fmt.Errorf("failed to create continual improvement: %w", err)
+	}
+
+	return nil, types.AddContinualImprovementOutput{
+		ContinualImprovement: types.NewContinualImprovement(continualImprovement),
+	}, nil
+}
+
+func (r *Resolver) UpdateContinualImprovementTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateContinualImprovementInput) (*mcp.CallToolResult, types.UpdateContinualImprovementOutput, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionUpdateContinualImprovement)
+
+	svc := r.ProboService(ctx, input.ID)
+
+	continualImprovement, err := svc.ContinualImprovements.Update(
+		ctx,
+		&probo.UpdateContinualImprovementRequest{
+			ID:          input.ID,
+			ReferenceID: input.ReferenceID,
+			Description: UnwrapOmittable(input.Description),
+			Source:      UnwrapOmittable(input.Source),
+			OwnerID:     input.OwnerID,
+			TargetDate:  UnwrapOmittable(input.TargetDate),
+			Status:      input.Status,
+			Priority:    input.Priority,
+		},
+	)
+	if err != nil {
+		return nil, types.UpdateContinualImprovementOutput{}, fmt.Errorf("failed to update continual improvement: %w", err)
+	}
+
+	return nil, types.UpdateContinualImprovementOutput{
+		ContinualImprovement: types.NewContinualImprovement(continualImprovement),
+	}, nil
+}
