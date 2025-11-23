@@ -8,8 +8,8 @@ components:
     OrderDirection:
       type: string
       enum:
-        - asc
-        - desc
+        - ASC
+        - DESC
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/page.OrderDirection
 
     VendorOrderField:
