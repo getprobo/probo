@@ -457,9 +457,11 @@ components:
           $ref: "#/components/schemas/GID"
           description: Organization ID
         snapshot_id:
-          type:
-            - string
-            - "null"
+          anyOf:
+            - type: string
+              $ref: "#/components/schemas/GID"
+            - type: "null"
+              description: No snapshot
           description: Snapshot ID
         name:
           type: string
@@ -497,10 +499,11 @@ components:
           type: string
           description: Risk note
         owner_id:
-          type:
-            - string
-            - "null"
-          description: Owner ID
+          anyOf:
+            - type: string
+              $ref: "#/components/schemas/GID"
+            - type: "null"
+              description: No owner
         created_at:
           type: string
           format: date-time

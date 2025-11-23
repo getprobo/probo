@@ -22,12 +22,22 @@ import (
 func NewRisk(r *coredata.Risk) *Risk {
 	return &Risk{
 		ID:                 r.ID,
+		OrganizationID:     r.OrganizationID,
 		Name:               r.Name,
 		Description:        r.Description,
 		Category:           r.Category,
 		Treatment:          r.Treatment,
+		Note:               r.Note,
+		OwnerID:            r.OwnerID,
 		InherentLikelihood: r.InherentLikelihood,
 		InherentImpact:     r.InherentImpact,
+		InherentRiskScore:  r.InherentRiskScore,
+		ResidualLikelihood: r.ResidualLikelihood,
+		ResidualImpact:     r.ResidualImpact,
+		ResidualRiskScore:  r.ResidualRiskScore,
+		SnapshotID:         r.SnapshotID,
+		CreatedAt:          r.CreatedAt,
+		UpdatedAt:          r.UpdatedAt,
 	}
 }
 
