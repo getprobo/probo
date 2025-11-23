@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.90.1] - 2025-11-23
+
+### Fixed
+
+- Fix missing permission to delete custom domain.
+
 ## [0.90.0] - 2025-11-23
 
 ### Added
