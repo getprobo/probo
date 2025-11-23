@@ -571,3 +571,97 @@ func (r *Resolver) UpdateAssetTool(ctx context.Context, req *mcp.CallToolRequest
 		Asset: types.NewAsset(asset),
 	}, nil
 }
+
+func (r *Resolver) ListDataTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListDataInput) (*mcp.CallToolResult, types.ListDataOutput, error) {
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionListData)
+
+	prb := r.ProboService(ctx, input.OrganizationID)
+
+	pageOrderBy := page.OrderBy[coredata.DatumOrderField]{
+		Field:     coredata.DatumOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.DatumOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	var datumFilter = coredata.NewDatumFilter(nil)
+	if input.Filter != nil {
+		datumFilter = coredata.NewDatumFilter(&input.Filter.SnapshotID)
+	}
+
+	page, err := prb.Data.ListForOrganizationID(ctx, input.OrganizationID, cursor, datumFilter)
+	if err != nil {
+		panic(fmt.Errorf("cannot list organization data: %w", err))
+	}
+
+	return nil, types.NewListDataOutput(page), nil
+}
+
+func (r *Resolver) GetDatumTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetDatumInput) (*mcp.CallToolResult, types.GetDatumOutput, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionGet)
+
+	prb := r.ProboService(ctx, input.ID)
+
+	datum, err := prb.Data.Get(ctx, input.ID)
+	if err != nil {
+		return nil, types.GetDatumOutput{}, fmt.Errorf("failed to get datum: %w", err)
+	}
+
+	return nil, types.GetDatumOutput{
+		Datum: types.NewDatum(datum),
+	}, nil
+}
+
+func (r *Resolver) AddDatumTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddDatumInput) (*mcp.CallToolResult, types.AddDatumOutput, error) {
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionCreateDatum)
+
+	svc := r.ProboService(ctx, input.OrganizationID)
+
+	datum, err := svc.Data.Create(
+		ctx,
+		probo.CreateDatumRequest{
+			OrganizationID:     input.OrganizationID,
+			Name:               input.Name,
+			DataClassification: input.DataClassification,
+			OwnerID:            input.OwnerID,
+			VendorIDs:          input.VendorIds,
+		},
+	)
+	if err != nil {
+		return nil, types.AddDatumOutput{}, fmt.Errorf("failed to create datum: %w", err)
+	}
+
+	return nil, types.AddDatumOutput{
+		Datum: types.NewDatum(datum),
+	}, nil
+}
+
+func (r *Resolver) UpdateDatumTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateDatumInput) (*mcp.CallToolResult, types.UpdateDatumOutput, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionUpdateDatum)
+
+	svc := r.ProboService(ctx, input.ID)
+
+	datum, err := svc.Data.Update(
+		ctx,
+		probo.UpdateDatumRequest{
+			ID:                 input.ID,
+			Name:               input.Name,
+			DataClassification: input.DataClassification,
+			OwnerID:            input.OwnerID,
+			VendorIDs:          input.VendorIds,
+		},
+	)
+	if err != nil {
+		return nil, types.UpdateDatumOutput{}, fmt.Errorf("failed to update datum: %w", err)
+	}
+
+	return nil, types.UpdateDatumOutput{
+		Datum: types.NewDatum(datum),
+	}, nil
+}

@@ -1209,6 +1209,200 @@ components:
         asset:
           $ref: "#/components/schemas/Asset"
 
+    DataClassification:
+      type: string
+      enum:
+        - PUBLIC
+        - INTERNAL
+        - CONFIDENTIAL
+        - SECRET
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DataClassification
+
+    DatumOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+        - NAME
+        - DATA_CLASSIFICATION
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DatumOrderField
+
+    DatumOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/DatumOrderField"
+          description: Datum order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: Datum order direction
+
+    Datum:
+      type: object
+      required:
+        - id
+        - organization_id
+        - name
+        - data_classification
+        - owner_id
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Datum ID
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        snapshot_id:
+          anyOf:
+            - $ref: "#/components/schemas/GID"
+              description: Snapshot ID
+            - type: "null"
+              description: No snapshot
+          description: Snapshot ID
+        name:
+          type: string
+          description: Datum name
+        data_classification:
+          $ref: "#/components/schemas/DataClassification"
+          description: Data classification
+        owner_id:
+          $ref: "#/components/schemas/GID"
+          description: Owner ID
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Update timestamp
+
+    ListDataInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        order_by:
+          $ref: "#/components/schemas/DatumOrderBy"
+          description: Datum order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+        filter:
+          type: object
+          properties:
+            snapshot_id:
+              $ref: "#/components/schemas/GID"
+              description: Snapshot ID
+
+    ListDataOutput:
+      type: object
+      required:
+        - data
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Datum"
+
+    GetDatumInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Datum ID
+
+    GetDatumOutput:
+      type: object
+      required:
+        - datum
+      properties:
+        datum:
+          $ref: "#/components/schemas/Datum"
+
+    AddDatumInput:
+      type: object
+      required:
+        - organization_id
+        - name
+        - data_classification
+        - owner_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        name:
+          type: string
+          description: Datum name
+        data_classification:
+          $ref: "#/components/schemas/DataClassification"
+          description: Data classification
+        owner_id:
+          $ref: "#/components/schemas/GID"
+          description: Owner ID
+        vendor_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Vendor IDs
+
+    AddDatumOutput:
+      type: object
+      required:
+        - datum
+      properties:
+        datum:
+          $ref: "#/components/schemas/Datum"
+
+    UpdateDatumInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Datum ID
+        name:
+          type: string
+          description: Datum name
+        data_classification:
+          $ref: "#/components/schemas/DataClassification"
+          description: Data classification
+        owner_id:
+          anyOf:
+            - type: string
+              $ref: "#/components/schemas/GID"
+            - type: "null"
+          description: Owner ID
+        vendor_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Vendor IDs
+
+    UpdateDatumOutput:
+      type: object
+      required:
+        - datum
+      properties:
+        datum:
+          $ref: "#/components/schemas/Datum"
+
 tools:
   - name: listOrganizations
     description: List all organizations the user has access to
@@ -1371,3 +1565,31 @@ tools:
       $ref: "#/components/schemas/UpdateAssetInput"
     outputSchema:
       $ref: "#/components/schemas/UpdateAssetOutput"
+  - name: listData
+    description: List all data for the organization
+    readonly: true
+    inputSchema:
+      $ref: "#/components/schemas/ListDataInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListDataOutput"
+  - name: getDatum
+    description: Get a datum by ID
+    readonly: true
+    inputSchema:
+      $ref: "#/components/schemas/GetDatumInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetDatumOutput"
+  - name: addDatum
+    description: Add a new datum to the organization
+    readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/AddDatumInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddDatumOutput"
+  - name: updateDatum
+    description: Update an existing datum
+    readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateDatumInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateDatumOutput"

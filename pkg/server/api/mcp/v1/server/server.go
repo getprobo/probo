@@ -33,6 +33,10 @@ type ResolverInterface interface {
 	GetAssetTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetAssetInput) (*mcp.CallToolResult, types.GetAssetOutput, error)
 	AddAssetTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddAssetInput) (*mcp.CallToolResult, types.AddAssetOutput, error)
 	UpdateAssetTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateAssetInput) (*mcp.CallToolResult, types.UpdateAssetOutput, error)
+	ListDataTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListDataInput) (*mcp.CallToolResult, types.ListDataOutput, error)
+	GetDatumTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetDatumInput) (*mcp.CallToolResult, types.GetDatumOutput, error)
+	AddDatumTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddDatumInput) (*mcp.CallToolResult, types.AddDatumOutput, error)
+	UpdateDatumTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateDatumInput) (*mcp.CallToolResult, types.UpdateDatumOutput, error)
 }
 
 // New creates a new MCP server instance with all handlers registered.
@@ -281,5 +285,45 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 			OutputSchema: types.UpdateAssetToolOutputSchema,
 		},
 		resolver.UpdateAssetTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "listData",
+			Description:  "List all data for the organization",
+			InputSchema:  types.ListDataToolInputSchema,
+			OutputSchema: types.ListDataToolOutputSchema,
+		},
+		resolver.ListDataTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "getDatum",
+			Description:  "Get a datum by ID",
+			InputSchema:  types.GetDatumToolInputSchema,
+			OutputSchema: types.GetDatumToolOutputSchema,
+		},
+		resolver.GetDatumTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "addDatum",
+			Description:  "Add a new datum to the organization",
+			InputSchema:  types.AddDatumToolInputSchema,
+			OutputSchema: types.AddDatumToolOutputSchema,
+		},
+		resolver.AddDatumTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "updateDatum",
+			Description:  "Update an existing datum",
+			InputSchema:  types.UpdateDatumToolInputSchema,
+			OutputSchema: types.UpdateDatumToolOutputSchema,
+		},
+		resolver.UpdateDatumTool,
 	)
 }
