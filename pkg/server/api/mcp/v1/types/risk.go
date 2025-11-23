@@ -15,20 +15,36 @@
 package types
 
 import (
-	"go.gearno.de/x/ref"
+	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/page"
-	"go.probo.inc/probo/pkg/server/gqlutils/types/cursor"
 )
 
-func NewCursor[O page.OrderField](
-	first *int,
-	after *page.CursorKey,
-	orderBy page.OrderBy[O],
-) *page.Cursor[O] {
-	firstValue := ref.Ref(100)
-	if first != nil {
-		firstValue = ref.Ref(int(*first))
+func NewRisk(r *coredata.Risk) *Risk {
+	return &Risk{
+		ID:                 r.ID,
+		Name:               r.Name,
+		Description:        r.Description,
+		Category:           r.Category,
+		Treatment:          r.Treatment,
+		InherentLikelihood: r.InherentLikelihood,
+		InherentImpact:     r.InherentImpact,
+	}
+}
+
+func NewListRisksOutput(riskPage *page.Page[*coredata.Risk, coredata.RiskOrderField]) ListRisksOutput {
+	risks := make([]*Risk, 0, len(riskPage.Data))
+	for _, v := range riskPage.Data {
+		risks = append(risks, NewRisk(v))
 	}
 
-	return cursor.NewCursor(firstValue, after, nil, nil, orderBy)
+	var nextCursor *page.CursorKey
+	if len(riskPage.Data) > 0 {
+		cursorKey := riskPage.Data[len(riskPage.Data)-1].CursorKey(riskPage.Cursor.OrderBy.Field)
+		nextCursor = &cursorKey
+	}
+
+	return ListRisksOutput{
+		NextCursor: nextCursor,
+		Risks:      risks,
+	}
 }

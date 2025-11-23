@@ -192,3 +192,103 @@ func (r *Resolver) AddPeopleTool(ctx context.Context, req *mcp.CallToolRequest, 
 		People: types.NewPeople(people),
 	}, nil
 }
+
+func (r *Resolver) ListRisksTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListRisksInput) (*mcp.CallToolResult, types.ListRisksOutput, error) {
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionListRisks)
+
+	prb := r.ProboService(ctx, input.OrganizationID)
+
+	pageOrderBy := page.OrderBy[coredata.RiskOrderField]{
+		Field:     coredata.RiskOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.RiskOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	var riskFilter = coredata.NewRiskFilter(nil, nil)
+	if input.Filter != nil {
+		riskFilter = coredata.NewRiskFilter(input.Filter.Query, &input.Filter.SnapshotID)
+	}
+
+	page, err := prb.Risks.ListForOrganizationID(ctx, input.OrganizationID, cursor, riskFilter)
+	if err != nil {
+		panic(fmt.Errorf("cannot list organization risks: %w", err))
+	}
+
+	return nil, types.NewListRisksOutput(page), nil
+}
+func (r *Resolver) GetRiskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetRiskInput) (*mcp.CallToolResult, types.GetRiskOutput, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionGet)
+
+	prb := r.ProboService(ctx, input.ID)
+
+	risk, err := prb.Risks.Get(ctx, input.ID)
+	if err != nil {
+		return nil, types.GetRiskOutput{}, fmt.Errorf("failed to get risk: %w", err)
+	}
+
+	return nil, types.GetRiskOutput{
+		Risk: types.NewRisk(risk),
+	}, nil
+}
+func (r *Resolver) AddRiskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddRiskInput) (*mcp.CallToolResult, types.AddRiskOutput, error) {
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionCreateRisk)
+
+	svc := r.ProboService(ctx, input.OrganizationID)
+
+	risk, err := svc.Risks.Create(
+		ctx,
+		probo.CreateRiskRequest{
+			OrganizationID:     input.OrganizationID,
+			Name:               input.Name,
+			Description:        input.Description,
+			Category:           input.Category,
+			Treatment:          input.Treatment,
+			InherentLikelihood: input.InherentLikelihood,
+			InherentImpact:     input.InherentImpact,
+			ResidualLikelihood: input.ResidualLikelihood,
+			ResidualImpact:     input.ResidualImpact,
+		},
+	)
+	if err != nil {
+		return nil, types.AddRiskOutput{}, fmt.Errorf("failed to create risk: %w", err)
+	}
+
+	return nil, types.AddRiskOutput{
+		Risk: types.NewRisk(risk),
+	}, nil
+}
+func (r *Resolver) UpdateRiskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateRiskInput) (*mcp.CallToolResult, types.UpdateRiskOutput, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionUpdateRisk)
+
+	svc := r.ProboService(ctx, input.ID)
+
+	risk, err := svc.Risks.Update(
+		ctx,
+		probo.UpdateRiskRequest{
+			ID:                 input.ID,
+			Name:               input.Name,
+			Description:        UnwrapOmittable(input.Description),
+			Category:           input.Category,
+			Treatment:          input.Treatment,
+			OwnerID:            UnwrapOmittable(input.OwnerID),
+			InherentLikelihood: input.InherentLikelihood,
+			InherentImpact:     input.InherentImpact,
+			ResidualLikelihood: input.ResidualLikelihood,
+			ResidualImpact:     input.ResidualImpact,
+		},
+	)
+	if err != nil {
+		return nil, types.UpdateRiskOutput{}, fmt.Errorf("failed to update risk: %w", err)
+	}
+
+	return nil, types.UpdateRiskOutput{
+		Risk: types.NewRisk(risk),
+	}, nil
+}

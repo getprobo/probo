@@ -397,6 +397,280 @@ components:
         people:
           $ref: "#/components/schemas/People"
 
+    RiskOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+        - UPDATED_AT
+        - NAME
+        - CATEGORY
+        - TREATMENT
+        - INHERENT_RISK_SCORE
+        - RESIDUAL_RISK_SCORE
+        - OWNER_FULL_NAME
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.RiskOrderField
+
+    RiskOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/RiskOrderField"
+          description: Risk order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: Risk order direction
+
+    RiskTreatment:
+      type: string
+      enum:
+        - MITIGATED
+        - ACCEPTED
+        - AVOIDED
+        - TRANSFERRED
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.RiskTreatment
+
+    Risk:
+      type: object
+      required:
+        - id
+        - organization_id
+        - name
+        - category
+        - treatment
+        - inherent_likelihood
+        - inherent_impact
+        - inherent_risk_score
+        - residual_likelihood
+        - residual_impact
+        - residual_risk_score
+        - note
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Risk ID
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        snapshot_id:
+          type:
+            - string
+            - "null"
+          description: Snapshot ID
+        name:
+          type: string
+          description: Risk name
+        description:
+          type:
+            - string
+            - "null"
+          description: Risk description
+        category:
+          type: string
+          description: Risk category
+        treatment:
+          $ref: "#/components/schemas/RiskTreatment"
+          description: Risk treatment
+        inherent_likelihood:
+          type: integer
+          description: Inherent likelihood
+        inherent_impact:
+          type: integer
+          description: Inherent impact
+        inherent_risk_score:
+          type: integer
+          description: Inherent risk score
+        residual_likelihood:
+          type: integer
+          description: Residual likelihood
+        residual_impact:
+          type: integer
+          description: Residual impact
+        residual_risk_score:
+          type: integer
+          description: Residual risk score
+        note:
+          type: string
+          description: Risk note
+        owner_id:
+          type:
+            - string
+            - "null"
+          description: Owner ID
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Update timestamp
+
+    ListRisksInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        order_by:
+          $ref: "#/components/schemas/RiskOrderBy"
+          description: Risk order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+        filter:
+          type: object
+          properties:
+            query:
+              type: string
+              description: Search query
+            snapshot_id:
+              $ref: "#/components/schemas/GID"
+              description: Snapshot ID
+
+    ListRisksOutput:
+      type: object
+      required:
+        - risks
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        risks:
+          type: array
+          items:
+            $ref: "#/components/schemas/Risk"
+
+    GetRiskInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Risk ID
+
+    GetRiskOutput:
+      type: object
+      required:
+        - risk
+      properties:
+        risk:
+          $ref: "#/components/schemas/Risk"
+
+    AddRiskInput:
+      type: object
+      required:
+        - organization_id
+        - name
+        - category
+        - treatment
+        - inherent_likelihood
+        - inherent_impact
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        name:
+          type: string
+          description: Risk name
+        description:
+          type: string
+          description: Risk description
+        category:
+          type: string
+          description: Risk category
+        owner_id:
+          $ref: "#/components/schemas/GID"
+          description: Owner ID
+        treatment:
+          $ref: "#/components/schemas/RiskTreatment"
+          description: Risk treatment
+        inherent_likelihood:
+          type: integer
+          description: Inherent likelihood
+        inherent_impact:
+          type: integer
+          description: Inherent impact
+        residual_likelihood:
+          type: integer
+          description: Residual likelihood
+        residual_impact:
+          type: integer
+          description: Residual impact
+        note:
+          type: string
+          description: Risk note
+
+    AddRiskOutput:
+      type: object
+      required:
+        - risk
+      properties:
+        risk:
+          $ref: "#/components/schemas/Risk"
+
+    UpdateRiskInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Risk ID
+        name:
+          type: string
+          description: Risk name
+        description:
+          type: ["string", "null"]
+          description: Risk description
+          go.probo.inc/mcpgen/omittable: true
+        category:
+          type: string
+          description: Risk category
+        owner_id:
+          anyOf:
+            - type: string
+              $ref: "#/components/schemas/GID"
+            - type: "null"
+          description: Owner ID
+          go.probo.inc/mcpgen/omittable: true
+        treatment:
+          $ref: "#/components/schemas/RiskTreatment"
+          description: Risk treatment
+        inherent_likelihood:
+          type: integer
+          description: Inherent likelihood
+        inherent_impact:
+          type: integer
+          description: Inherent impact
+        residual_likelihood:
+          type: integer
+          description: Residual likelihood
+        residual_impact:
+          type: integer
+          description: Residual impact
+        note:
+          type: string
+          description: Risk note
+
+    UpdateRiskOutput:
+      type: object
+      required:
+        - risk
+      properties:
+        risk:
+          $ref: "#/components/schemas/Risk"
+
 tools:
   - name: listOrganizations
     description: List all organizations the user has access to
@@ -447,3 +721,31 @@ tools:
       $ref: "#/components/schemas/AddPeopleInput"
     outputSchema:
       $ref: "#/components/schemas/AddPeopleOutput"
+  - name: listRisks
+    description: List all risks for the organization
+    readonly: true
+    inputSchema:
+      $ref: "#/components/schemas/ListRisksInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListRisksOutput"
+  - name: getRisk
+    description: Get a risk by ID
+    readonly: true
+    inputSchema:
+      $ref: "#/components/schemas/GetRiskInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetRiskOutput"
+  - name: addRisk
+    description: Add a new risk to the organization
+    readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/AddRiskInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddRiskOutput"
+  - name: updateRisk
+    description: Update an existing risk
+    readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateRiskInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateRiskOutput"

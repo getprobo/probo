@@ -14,16 +14,24 @@ import (
 var (
 	AddPeopleToolInputSchema          = mcp.MustUnmarshalSchema(`{"type":"object","required":["organization_id","full_name","primary_email_address","kind"],"properties":{"additional_email_addresses":{"type":"array","description":"Additional email addresses","items":{"type":"string"}},"contract_end_date":{"type":"string","description":"Contract end date","format":"date-time"},"contract_start_date":{"type":"string","description":"Contract start date","format":"date-time"},"full_name":{"type":"string","description":"Full name"},"kind":{"type":"string","enum":["EMPLOYEE","CONTRACTOR","SERVICE_ACCOUNT"]},"organization_id":{"type":"string","format":"string"},"position":{"type":"string","description":"Position"},"primary_email_address":{"type":"string","description":"Primary email address"}}}`)
 	AddPeopleToolOutputSchema         = mcp.MustUnmarshalSchema(`{"type":"object","required":["people"],"properties":{"people":{"type":"object","required":["id","organization_id","full_name","primary_email_address","additional_email_addresses","kind","created_at","updated_at"],"properties":{"additional_email_addresses":{"type":"array","description":"Additional email addresses","items":{"type":"string"}},"contract_end_date":{"description":"Contract end date","format":"date-time"},"contract_start_date":{"description":"Contract start date","format":"date-time"},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"full_name":{"type":"string","description":"Full name"},"id":{"type":"string","format":"string"},"kind":{"type":"string","enum":["EMPLOYEE","CONTRACTOR","SERVICE_ACCOUNT"]},"organization_id":{"type":"string","format":"string"},"position":{"description":"Position"},"primary_email_address":{"type":"string","description":"Primary email address"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}}}`)
+	AddRiskToolInputSchema            = mcp.MustUnmarshalSchema(`{"type":"object","required":["organization_id","name","category","treatment","inherent_likelihood","inherent_impact"],"properties":{"category":{"type":"string","description":"Risk category"},"description":{"type":"string","description":"Risk description"},"inherent_impact":{"type":"integer","description":"Inherent impact"},"inherent_likelihood":{"type":"integer","description":"Inherent likelihood"},"name":{"type":"string","description":"Risk name"},"note":{"type":"string","description":"Risk note"},"organization_id":{"type":"string","format":"string"},"owner_id":{"type":"string","format":"string"},"residual_impact":{"type":"integer","description":"Residual impact"},"residual_likelihood":{"type":"integer","description":"Residual likelihood"},"treatment":{"type":"string","enum":["MITIGATED","ACCEPTED","AVOIDED","TRANSFERRED"]}}}`)
+	AddRiskToolOutputSchema           = mcp.MustUnmarshalSchema(`{"type":"object","required":["risk"],"properties":{"risk":{"type":"object","required":["id","organization_id","name","category","treatment","inherent_likelihood","inherent_impact","inherent_risk_score","residual_likelihood","residual_impact","residual_risk_score","note","created_at","updated_at"],"properties":{"category":{"type":"string","description":"Risk category"},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"description":"Risk description"},"id":{"type":"string","format":"string"},"inherent_impact":{"type":"integer","description":"Inherent impact"},"inherent_likelihood":{"type":"integer","description":"Inherent likelihood"},"inherent_risk_score":{"type":"integer","description":"Inherent risk score"},"name":{"type":"string","description":"Risk name"},"note":{"type":"string","description":"Risk note"},"organization_id":{"type":"string","format":"string"},"owner_id":{"description":"Owner ID"},"residual_impact":{"type":"integer","description":"Residual impact"},"residual_likelihood":{"type":"integer","description":"Residual likelihood"},"residual_risk_score":{"type":"integer","description":"Residual risk score"},"snapshot_id":{"description":"Snapshot ID"},"treatment":{"type":"string","enum":["MITIGATED","ACCEPTED","AVOIDED","TRANSFERRED"]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}}}`)
 	AddVendorToolInputSchema          = mcp.MustUnmarshalSchema(`{"type":"object","required":["organization_id","name"],"properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"type":"string","description":"Vendor description"},"name":{"type":"string","description":"Vendor name"},"organization_id":{"type":"string","format":"string"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}`)
 	AddVendorToolOutputSchema         = mcp.MustUnmarshalSchema(`{"type":"object","required":["vendor"],"properties":{"vendor":{"type":"object","required":["id","name","organization_id","created_at","updated_at"],"properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"description":"Vendor description"},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Vendor name"},"organization_id":{"type":"string","format":"string"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}}}`)
 	GetPeopleToolInputSchema          = mcp.MustUnmarshalSchema(`{"type":"object","required":["id"],"properties":{"id":{"type":"string","format":"string"}}}`)
 	GetPeopleToolOutputSchema         = mcp.MustUnmarshalSchema(`{"type":"object","required":["people"],"properties":{"people":{"type":"object","required":["id","organization_id","full_name","primary_email_address","additional_email_addresses","kind","created_at","updated_at"],"properties":{"additional_email_addresses":{"type":"array","description":"Additional email addresses","items":{"type":"string"}},"contract_end_date":{"description":"Contract end date","format":"date-time"},"contract_start_date":{"description":"Contract start date","format":"date-time"},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"full_name":{"type":"string","description":"Full name"},"id":{"type":"string","format":"string"},"kind":{"type":"string","enum":["EMPLOYEE","CONTRACTOR","SERVICE_ACCOUNT"]},"organization_id":{"type":"string","format":"string"},"position":{"description":"Position"},"primary_email_address":{"type":"string","description":"Primary email address"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}}}`)
+	GetRiskToolInputSchema            = mcp.MustUnmarshalSchema(`{"type":"object","required":["id"],"properties":{"id":{"type":"string","format":"string"}}}`)
+	GetRiskToolOutputSchema           = mcp.MustUnmarshalSchema(`{"type":"object","required":["risk"],"properties":{"risk":{"type":"object","required":["id","organization_id","name","category","treatment","inherent_likelihood","inherent_impact","inherent_risk_score","residual_likelihood","residual_impact","residual_risk_score","note","created_at","updated_at"],"properties":{"category":{"type":"string","description":"Risk category"},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"description":"Risk description"},"id":{"type":"string","format":"string"},"inherent_impact":{"type":"integer","description":"Inherent impact"},"inherent_likelihood":{"type":"integer","description":"Inherent likelihood"},"inherent_risk_score":{"type":"integer","description":"Inherent risk score"},"name":{"type":"string","description":"Risk name"},"note":{"type":"string","description":"Risk note"},"organization_id":{"type":"string","format":"string"},"owner_id":{"description":"Owner ID"},"residual_impact":{"type":"integer","description":"Residual impact"},"residual_likelihood":{"type":"integer","description":"Residual likelihood"},"residual_risk_score":{"type":"integer","description":"Residual risk score"},"snapshot_id":{"description":"Snapshot ID"},"treatment":{"type":"string","enum":["MITIGATED","ACCEPTED","AVOIDED","TRANSFERRED"]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}}}`)
 	ListOrganizationsToolInputSchema  = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"organization_id":{"type":"string","format":"string"}}}`)
 	ListOrganizationsToolOutputSchema = mcp.MustUnmarshalSchema(`{"type":"object","properties":{"organizations":{"type":"array","items":{"type":"object","required":["id","name","description","created_at","updated_at"],"properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"description":"Organization description"},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Organization name"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}}}}`)
 	ListPeopleToolInputSchema         = mcp.MustUnmarshalSchema(`{"type":"object","required":["organization_id"],"properties":{"cursor":{"type":"string","format":"string"},"filter":{"type":"object","properties":{"exclude_contract_ended":{"type":"boolean","description":"Exclude people with ended contracts"}}},"order_by":{"type":"object","required":["field","direction"],"properties":{"direction":{"type":"string","enum":["asc","desc"]},"field":{"type":"string","enum":["CREATED_AT","FULL_NAME","KIND"]}}},"organization_id":{"type":"string","format":"string"},"size":{"type":"integer","description":"Page size"}}}`)
 	ListPeopleToolOutputSchema        = mcp.MustUnmarshalSchema(`{"type":"object","required":["people"],"properties":{"next_cursor":{"type":"string","format":"string"},"people":{"type":"array","items":{"type":"object","required":["id","organization_id","full_name","primary_email_address","additional_email_addresses","kind","created_at","updated_at"],"properties":{"additional_email_addresses":{"type":"array","description":"Additional email addresses","items":{"type":"string"}},"contract_end_date":{"description":"Contract end date","format":"date-time"},"contract_start_date":{"description":"Contract start date","format":"date-time"},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"full_name":{"type":"string","description":"Full name"},"id":{"type":"string","format":"string"},"kind":{"type":"string","enum":["EMPLOYEE","CONTRACTOR","SERVICE_ACCOUNT"]},"organization_id":{"type":"string","format":"string"},"position":{"description":"Position"},"primary_email_address":{"type":"string","description":"Primary email address"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}}}}`)
+	ListRisksToolInputSchema          = mcp.MustUnmarshalSchema(`{"type":"object","required":["organization_id"],"properties":{"cursor":{"type":"string","format":"string"},"filter":{"type":"object","properties":{"query":{"type":"string","description":"Search query"},"snapshot_id":{"type":"string","format":"string"}}},"order_by":{"type":"object","required":["field","direction"],"properties":{"direction":{"type":"string","enum":["asc","desc"]},"field":{"type":"string","enum":["CREATED_AT","UPDATED_AT","NAME","CATEGORY","TREATMENT","INHERENT_RISK_SCORE","RESIDUAL_RISK_SCORE","OWNER_FULL_NAME"]}}},"organization_id":{"type":"string","format":"string"},"size":{"type":"integer","description":"Page size"}}}`)
+	ListRisksToolOutputSchema         = mcp.MustUnmarshalSchema(`{"type":"object","required":["risks"],"properties":{"next_cursor":{"type":"string","format":"string"},"risks":{"type":"array","items":{"type":"object","required":["id","organization_id","name","category","treatment","inherent_likelihood","inherent_impact","inherent_risk_score","residual_likelihood","residual_impact","residual_risk_score","note","created_at","updated_at"],"properties":{"category":{"type":"string","description":"Risk category"},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"description":"Risk description"},"id":{"type":"string","format":"string"},"inherent_impact":{"type":"integer","description":"Inherent impact"},"inherent_likelihood":{"type":"integer","description":"Inherent likelihood"},"inherent_risk_score":{"type":"integer","description":"Inherent risk score"},"name":{"type":"string","description":"Risk name"},"note":{"type":"string","description":"Risk note"},"organization_id":{"type":"string","format":"string"},"owner_id":{"description":"Owner ID"},"residual_impact":{"type":"integer","description":"Residual impact"},"residual_likelihood":{"type":"integer","description":"Residual likelihood"},"residual_risk_score":{"type":"integer","description":"Residual risk score"},"snapshot_id":{"description":"Snapshot ID"},"treatment":{"type":"string","enum":["MITIGATED","ACCEPTED","AVOIDED","TRANSFERRED"]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}}}}`)
 	ListVendorsToolInputSchema        = mcp.MustUnmarshalSchema(`{"type":"object","required":["organization_id"],"properties":{"cursor":{"type":"string","format":"string"},"filter":{"type":"object","properties":{"snapshot_id":{"type":"string","format":"string"}}},"order_by":{"type":"object","required":["field","direction"],"properties":{"direction":{"type":"string","enum":["asc","desc"]},"field":{"type":"string","enum":["CREATED_AT","UPDATED_AT","NAME"]}}},"organization_id":{"type":"string","format":"string"},"size":{"type":"integer","description":"Page size"}}}`)
 	ListVendorsToolOutputSchema       = mcp.MustUnmarshalSchema(`{"type":"object","required":["vendors"],"properties":{"next_cursor":{"type":"string","format":"string"},"vendors":{"type":"array","items":{"type":"object","required":["id","name","organization_id","created_at","updated_at"],"properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"description":"Vendor description"},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Vendor name"},"organization_id":{"type":"string","format":"string"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}}}}`)
+	UpdateRiskToolInputSchema         = mcp.MustUnmarshalSchema(`{"type":"object","required":["id"],"properties":{"category":{"type":"string","description":"Risk category"},"description":{"description":"Risk description"},"id":{"type":"string","format":"string"},"inherent_impact":{"type":"integer","description":"Inherent impact"},"inherent_likelihood":{"type":"integer","description":"Inherent likelihood"},"name":{"type":"string","description":"Risk name"},"note":{"type":"string","description":"Risk note"},"owner_id":{"description":"Owner ID","anyOf":[{"type":"string","format":"string"},{"type":"null"}]},"residual_impact":{"type":"integer","description":"Residual impact"},"residual_likelihood":{"type":"integer","description":"Residual likelihood"},"treatment":{"type":"string","enum":["MITIGATED","ACCEPTED","AVOIDED","TRANSFERRED"]}}}`)
+	UpdateRiskToolOutputSchema        = mcp.MustUnmarshalSchema(`{"type":"object","required":["risk"],"properties":{"risk":{"type":"object","required":["id","organization_id","name","category","treatment","inherent_likelihood","inherent_impact","inherent_risk_score","residual_likelihood","residual_impact","residual_risk_score","note","created_at","updated_at"],"properties":{"category":{"type":"string","description":"Risk category"},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"description":"Risk description"},"id":{"type":"string","format":"string"},"inherent_impact":{"type":"integer","description":"Inherent impact"},"inherent_likelihood":{"type":"integer","description":"Inherent likelihood"},"inherent_risk_score":{"type":"integer","description":"Inherent risk score"},"name":{"type":"string","description":"Risk name"},"note":{"type":"string","description":"Risk note"},"organization_id":{"type":"string","format":"string"},"owner_id":{"description":"Owner ID"},"residual_impact":{"type":"integer","description":"Residual impact"},"residual_likelihood":{"type":"integer","description":"Residual likelihood"},"residual_risk_score":{"type":"integer","description":"Residual risk score"},"snapshot_id":{"description":"Snapshot ID"},"treatment":{"type":"string","enum":["MITIGATED","ACCEPTED","AVOIDED","TRANSFERRED"]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}}}`)
 	UpdateVendorToolInputSchema       = mcp.MustUnmarshalSchema(`{"type":"object","required":["id"],"properties":{"description":{"type":"string","description":"Vendor description"},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Vendor name"}}}`)
 	UpdateVendorToolOutputSchema      = mcp.MustUnmarshalSchema(`{"type":"object","required":["vendor"],"properties":{"vendor":{"type":"object","required":["id","name","organization_id","created_at","updated_at"],"properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"description":"Vendor description"},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Vendor name"},"organization_id":{"type":"string","format":"string"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}}}`)
 )
@@ -51,6 +59,37 @@ type AddPeopleInput struct {
 // AddPeopleOutput represents the schema
 type AddPeopleOutput struct {
 	People *People `json:"people"`
+}
+
+// AddRiskInput represents the schema
+type AddRiskInput struct {
+	// Risk category
+	Category string `json:"category"`
+	// Risk description
+	Description *string `json:"description,omitempty"`
+	// Inherent impact
+	InherentImpact int `json:"inherent_impact"`
+	// Inherent likelihood
+	InherentLikelihood int `json:"inherent_likelihood"`
+	// Risk name
+	Name string `json:"name"`
+	// Risk note
+	Note *string `json:"note,omitempty"`
+	// Organization ID
+	OrganizationID gid.GID `json:"organization_id"`
+	// Owner ID
+	OwnerID *gid.GID `json:"owner_id,omitempty"`
+	// Residual impact
+	ResidualImpact *int `json:"residual_impact,omitempty"`
+	// Residual likelihood
+	ResidualLikelihood *int `json:"residual_likelihood,omitempty"`
+	// Risk treatment
+	Treatment coredata.RiskTreatment `json:"treatment"`
+}
+
+// AddRiskOutput represents the schema
+type AddRiskOutput struct {
+	Risk *Risk `json:"risk"`
 }
 
 // AddVendorInput represents the schema
@@ -83,6 +122,17 @@ type GetPeopleOutput struct {
 	People *People `json:"people"`
 }
 
+// GetRiskInput represents the schema
+type GetRiskInput struct {
+	// Risk ID
+	ID gid.GID `json:"id"`
+}
+
+// GetRiskOutput represents the schema
+type GetRiskOutput struct {
+	Risk *Risk `json:"risk"`
+}
+
 // ListOrganizationsInput represents the schema
 type ListOrganizationsInput struct {
 	// Organization ID
@@ -104,7 +154,7 @@ type ListPeopleInput struct {
 	// Organization ID
 	OrganizationID gid.GID `json:"organization_id"`
 	// Page size
-	Size *int64 `json:"size,omitempty"`
+	Size *int `json:"size,omitempty"`
 }
 
 // ListPeopleOutput represents the schema
@@ -112,6 +162,26 @@ type ListPeopleOutput struct {
 	// Next cursor
 	NextCursor *page.CursorKey `json:"next_cursor,omitempty"`
 	People     []*People       `json:"people"`
+}
+
+// ListRisksInput represents the schema
+type ListRisksInput struct {
+	// Page cursor
+	Cursor *page.CursorKey       `json:"cursor,omitempty"`
+	Filter *ListRisksInputFilter `json:"filter,omitempty"`
+	// Risk order by
+	OrderBy *RiskOrderBy `json:"order_by,omitempty"`
+	// Organization ID
+	OrganizationID gid.GID `json:"organization_id"`
+	// Page size
+	Size *int `json:"size,omitempty"`
+}
+
+// ListRisksOutput represents the schema
+type ListRisksOutput struct {
+	// Next cursor
+	NextCursor *page.CursorKey `json:"next_cursor,omitempty"`
+	Risks      []*Risk         `json:"risks"`
 }
 
 // ListVendorsInput represents the schema
@@ -124,7 +194,7 @@ type ListVendorsInput struct {
 	// Organization ID
 	OrganizationID gid.GID `json:"organization_id"`
 	// Page size
-	Size *int64 `json:"size,omitempty"`
+	Size *int `json:"size,omitempty"`
 }
 
 // ListVendorsOutput represents the schema
@@ -182,6 +252,83 @@ type PeopleOrderBy struct {
 	Field coredata.PeopleOrderField `json:"field"`
 }
 
+// Risk represents the schema
+type Risk struct {
+	// Risk category
+	Category string `json:"category"`
+	// Creation timestamp
+	CreatedAt time.Time `json:"created_at"`
+	// Risk description
+	Description *string `json:"description,omitempty"`
+	// Risk ID
+	ID gid.GID `json:"id"`
+	// Inherent impact
+	InherentImpact int `json:"inherent_impact"`
+	// Inherent likelihood
+	InherentLikelihood int `json:"inherent_likelihood"`
+	// Inherent risk score
+	InherentRiskScore int `json:"inherent_risk_score"`
+	// Risk name
+	Name string `json:"name"`
+	// Risk note
+	Note string `json:"note"`
+	// Organization ID
+	OrganizationID gid.GID `json:"organization_id"`
+	// Owner ID
+	OwnerID *string `json:"owner_id,omitempty"`
+	// Residual impact
+	ResidualImpact int `json:"residual_impact"`
+	// Residual likelihood
+	ResidualLikelihood int `json:"residual_likelihood"`
+	// Residual risk score
+	ResidualRiskScore int `json:"residual_risk_score"`
+	// Snapshot ID
+	SnapshotID *string `json:"snapshot_id,omitempty"`
+	// Risk treatment
+	Treatment coredata.RiskTreatment `json:"treatment"`
+	// Update timestamp
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+// RiskOrderBy represents the schema
+type RiskOrderBy struct {
+	// Risk order direction
+	Direction page.OrderDirection `json:"direction"`
+	// Risk order field
+	Field coredata.RiskOrderField `json:"field"`
+}
+
+// UpdateRiskInput represents the schema
+type UpdateRiskInput struct {
+	// Risk category
+	Category *string `json:"category,omitempty"`
+	// Risk description
+	Description mcp.Omittable[*string] `json:"description,omitempty"`
+	// Risk ID
+	ID gid.GID `json:"id"`
+	// Inherent impact
+	InherentImpact *int `json:"inherent_impact,omitempty"`
+	// Inherent likelihood
+	InherentLikelihood *int `json:"inherent_likelihood,omitempty"`
+	// Risk name
+	Name *string `json:"name,omitempty"`
+	// Risk note
+	Note *string `json:"note,omitempty"`
+	// Owner ID
+	OwnerID mcp.Omittable[*gid.GID] `json:"owner_id,omitempty"`
+	// Residual impact
+	ResidualImpact *int `json:"residual_impact,omitempty"`
+	// Residual likelihood
+	ResidualLikelihood *int `json:"residual_likelihood,omitempty"`
+	// Risk treatment
+	Treatment *coredata.RiskTreatment `json:"treatment,omitempty"`
+}
+
+// UpdateRiskOutput represents the schema
+type UpdateRiskOutput struct {
+	Risk *Risk `json:"risk"`
+}
+
 // UpdateVendorInput represents the schema
 type UpdateVendorInput struct {
 	// Vendor description
@@ -225,6 +372,14 @@ type VendorOrderBy struct {
 type ListPeopleInputFilter struct {
 	// Exclude people with ended contracts
 	ExcludeContractEnded *bool `json:"exclude_contract_ended,omitempty"`
+}
+
+// ListRisksInputFilter represents the schema
+type ListRisksInputFilter struct {
+	// Search query
+	Query *string `json:"query,omitempty"`
+	// Snapshot ID
+	SnapshotID *gid.GID `json:"snapshot_id,omitempty"`
 }
 
 // ListVendorsInputFilter represents the schema

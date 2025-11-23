@@ -17,6 +17,10 @@ type ResolverInterface interface {
 	UpdateVendorTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateVendorInput) (*mcp.CallToolResult, types.UpdateVendorOutput, error)
 	GetPeopleTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetPeopleInput) (*mcp.CallToolResult, types.GetPeopleOutput, error)
 	AddPeopleTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddPeopleInput) (*mcp.CallToolResult, types.AddPeopleOutput, error)
+	ListRisksTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListRisksInput) (*mcp.CallToolResult, types.ListRisksOutput, error)
+	GetRiskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetRiskInput) (*mcp.CallToolResult, types.GetRiskOutput, error)
+	AddRiskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddRiskInput) (*mcp.CallToolResult, types.AddRiskOutput, error)
+	UpdateRiskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateRiskInput) (*mcp.CallToolResult, types.UpdateRiskOutput, error)
 }
 
 // New creates a new MCP server instance with all handlers registered.
@@ -105,5 +109,45 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 			OutputSchema: types.AddPeopleToolOutputSchema,
 		},
 		resolver.AddPeopleTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "listRisks",
+			Description:  "List all risks for the organization",
+			InputSchema:  types.ListRisksToolInputSchema,
+			OutputSchema: types.ListRisksToolOutputSchema,
+		},
+		resolver.ListRisksTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "getRisk",
+			Description:  "Get a risk by ID",
+			InputSchema:  types.GetRiskToolInputSchema,
+			OutputSchema: types.GetRiskToolOutputSchema,
+		},
+		resolver.GetRiskTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "addRisk",
+			Description:  "Add a new risk to the organization",
+			InputSchema:  types.AddRiskToolInputSchema,
+			OutputSchema: types.AddRiskToolOutputSchema,
+		},
+		resolver.AddRiskTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "updateRisk",
+			Description:  "Update an existing risk",
+			InputSchema:  types.UpdateRiskToolInputSchema,
+			OutputSchema: types.UpdateRiskToolOutputSchema,
+		},
+		resolver.UpdateRiskTool,
 	)
 }

@@ -7,6 +7,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"go.gearno.de/kit/log"
+	mcpgenmcp "go.probo.inc/mcpgen/mcp"
 	"go.probo.inc/probo/pkg/auth"
 	"go.probo.inc/probo/pkg/authz"
 	"go.probo.inc/probo/pkg/gid"
@@ -64,4 +65,12 @@ func NewMux(logger *log.Logger, proboSvc *probo.Service, authSvc *auth.Service, 
 	logger.Info("MCP server initialized successfully")
 
 	return r
+}
+
+func UnwrapOmittable[T any](field mcpgenmcp.Omittable[T]) *T {
+	if !field.IsSet() {
+		return nil
+	}
+	value, _ := field.Value()
+	return &value
 }
