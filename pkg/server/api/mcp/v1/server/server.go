@@ -29,6 +29,10 @@ type ResolverInterface interface {
 	GetFrameworkTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetFrameworkInput) (*mcp.CallToolResult, types.GetFrameworkOutput, error)
 	AddFrameworkTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddFrameworkInput) (*mcp.CallToolResult, types.AddFrameworkOutput, error)
 	UpdateFrameworkTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateFrameworkInput) (*mcp.CallToolResult, types.UpdateFrameworkOutput, error)
+	ListAssetsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListAssetsInput) (*mcp.CallToolResult, types.ListAssetsOutput, error)
+	GetAssetTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetAssetInput) (*mcp.CallToolResult, types.GetAssetOutput, error)
+	AddAssetTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddAssetInput) (*mcp.CallToolResult, types.AddAssetOutput, error)
+	UpdateAssetTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateAssetInput) (*mcp.CallToolResult, types.UpdateAssetOutput, error)
 }
 
 // New creates a new MCP server instance with all handlers registered.
@@ -237,5 +241,45 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 			OutputSchema: types.UpdateFrameworkToolOutputSchema,
 		},
 		resolver.UpdateFrameworkTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "listAssets",
+			Description:  "List all assets for the organization",
+			InputSchema:  types.ListAssetsToolInputSchema,
+			OutputSchema: types.ListAssetsToolOutputSchema,
+		},
+		resolver.ListAssetsTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "getAsset",
+			Description:  "Get an asset by ID",
+			InputSchema:  types.GetAssetToolInputSchema,
+			OutputSchema: types.GetAssetToolOutputSchema,
+		},
+		resolver.GetAssetTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "addAsset",
+			Description:  "Add a new asset to the organization",
+			InputSchema:  types.AddAssetToolInputSchema,
+			OutputSchema: types.AddAssetToolOutputSchema,
+		},
+		resolver.AddAssetTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "updateAsset",
+			Description:  "Update an existing asset",
+			InputSchema:  types.UpdateAssetToolInputSchema,
+			OutputSchema: types.UpdateAssetToolOutputSchema,
+		},
+		resolver.UpdateAssetTool,
 	)
 }

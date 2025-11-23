@@ -998,6 +998,217 @@ components:
         framework:
           $ref: "#/components/schemas/Framework"
 
+    AssetType:
+      type: string
+      enum:
+        - PHYSICAL
+        - VIRTUAL
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.AssetType
+
+    AssetOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+        - AMOUNT
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.AssetOrderField
+
+    AssetOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/AssetOrderField"
+          description: Asset order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: Asset order direction
+
+    Asset:
+      type: object
+      required:
+        - id
+        - organization_id
+        - name
+        - amount
+        - owner_id
+        - asset_type
+        - data_types_stored
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Asset ID
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        snapshot_id:
+          type:
+            - string
+            - "null"
+          description: Snapshot ID
+        name:
+          type: string
+          description: Asset name
+        amount:
+          type: integer
+          description: Asset amount
+        owner_id:
+          $ref: "#/components/schemas/GID"
+          description: Owner ID
+        asset_type:
+          $ref: "#/components/schemas/AssetType"
+          description: Asset type
+        data_types_stored:
+          type: string
+          description: Data types stored
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Update timestamp
+
+    ListAssetsInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        order_by:
+          $ref: "#/components/schemas/AssetOrderBy"
+          description: Asset order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+        filter:
+          type: object
+          properties:
+            snapshot_id:
+              $ref: "#/components/schemas/GID"
+              description: Snapshot ID
+
+    ListAssetsOutput:
+      type: object
+      required:
+        - assets
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        assets:
+          type: array
+          items:
+            $ref: "#/components/schemas/Asset"
+
+    GetAssetInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Asset ID
+
+    GetAssetOutput:
+      type: object
+      required:
+        - asset
+      properties:
+        asset:
+          $ref: "#/components/schemas/Asset"
+
+    AddAssetInput:
+      type: object
+      required:
+        - organization_id
+        - name
+        - amount
+        - owner_id
+        - asset_type
+        - data_types_stored
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        name:
+          type: string
+          description: Asset name
+        amount:
+          type: integer
+          description: Asset amount
+        owner_id:
+          $ref: "#/components/schemas/GID"
+          description: Owner ID
+        asset_type:
+          $ref: "#/components/schemas/AssetType"
+          description: Asset type
+        data_types_stored:
+          type: string
+          description: Data types stored
+        vendor_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Vendor IDs
+
+    AddAssetOutput:
+      type: object
+      required:
+        - asset
+      properties:
+        asset:
+          $ref: "#/components/schemas/Asset"
+
+    UpdateAssetInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Asset ID
+        name:
+          type: string
+          description: Asset name
+        amount:
+          type: integer
+          description: Asset amount
+        owner_id:
+          anyOf:
+            - type: string
+              $ref: "#/components/schemas/GID"
+            - type: "null"
+          description: Owner ID
+        asset_type:
+          $ref: "#/components/schemas/AssetType"
+          description: Asset type
+        data_types_stored:
+          type: string
+          description: Data types stored
+        vendor_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Vendor IDs
+
+    UpdateAssetOutput:
+      type: object
+      required:
+        - asset
+      properties:
+        asset:
+          $ref: "#/components/schemas/Asset"
+
 tools:
   - name: listOrganizations
     description: List all organizations the user has access to
@@ -1132,3 +1343,31 @@ tools:
       $ref: "#/components/schemas/UpdateFrameworkInput"
     outputSchema:
       $ref: "#/components/schemas/UpdateFrameworkOutput"
+  - name: listAssets
+    description: List all assets for the organization
+    readonly: true
+    inputSchema:
+      $ref: "#/components/schemas/ListAssetsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListAssetsOutput"
+  - name: getAsset
+    description: Get an asset by ID
+    readonly: true
+    inputSchema:
+      $ref: "#/components/schemas/GetAssetInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetAssetOutput"
+  - name: addAsset
+    description: Add a new asset to the organization
+    readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/AddAssetInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddAssetOutput"
+  - name: updateAsset
+    description: Update an existing asset
+    readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateAssetInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateAssetOutput"

@@ -223,6 +223,7 @@ func (r *Resolver) ListRisksTool(ctx context.Context, req *mcp.CallToolRequest, 
 
 	return nil, types.NewListRisksOutput(page), nil
 }
+
 func (r *Resolver) GetRiskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetRiskInput) (*mcp.CallToolResult, types.GetRiskOutput, error) {
 	r.MustBeAuthorized(ctx, input.ID, authz.ActionGet)
 
@@ -237,6 +238,7 @@ func (r *Resolver) GetRiskTool(ctx context.Context, req *mcp.CallToolRequest, in
 		Risk: types.NewRisk(risk),
 	}, nil
 }
+
 func (r *Resolver) AddRiskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddRiskInput) (*mcp.CallToolResult, types.AddRiskOutput, error) {
 	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionCreateRisk)
 
@@ -264,6 +266,7 @@ func (r *Resolver) AddRiskTool(ctx context.Context, req *mcp.CallToolRequest, in
 		Risk: types.NewRisk(risk),
 	}, nil
 }
+
 func (r *Resolver) UpdateRiskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateRiskInput) (*mcp.CallToolResult, types.UpdateRiskOutput, error) {
 	r.MustBeAuthorized(ctx, input.ID, authz.ActionUpdateRisk)
 
@@ -323,6 +326,7 @@ func (r *Resolver) ListMeasuresTool(ctx context.Context, req *mcp.CallToolReques
 
 	return nil, types.NewListMeasuresOutput(page), nil
 }
+
 func (r *Resolver) GetMeasureTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetMeasureInput) (*mcp.CallToolResult, types.GetMeasureOutput, error) {
 	r.MustBeAuthorized(ctx, input.ID, authz.ActionGet)
 
@@ -337,6 +341,7 @@ func (r *Resolver) GetMeasureTool(ctx context.Context, req *mcp.CallToolRequest,
 		Measure: types.NewMeasure(measure),
 	}, nil
 }
+
 func (r *Resolver) AddMeasureTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddMeasureInput) (*mcp.CallToolResult, types.AddMeasureOutput, error) {
 	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionCreateMeasure)
 
@@ -359,6 +364,7 @@ func (r *Resolver) AddMeasureTool(ctx context.Context, req *mcp.CallToolRequest,
 		Measure: types.NewMeasure(measure),
 	}, nil
 }
+
 func (r *Resolver) UpdateMeasureTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateMeasureInput) (*mcp.CallToolResult, types.UpdateMeasureOutput, error) {
 	r.MustBeAuthorized(ctx, input.ID, authz.ActionUpdateMeasure)
 
@@ -408,6 +414,7 @@ func (r *Resolver) ListFrameworksTool(ctx context.Context, req *mcp.CallToolRequ
 
 	return nil, types.NewListFrameworksOutput(page), nil
 }
+
 func (r *Resolver) GetFrameworkTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetFrameworkInput) (*mcp.CallToolResult, types.GetFrameworkOutput, error) {
 	r.MustBeAuthorized(ctx, input.ID, authz.ActionGet)
 
@@ -422,6 +429,7 @@ func (r *Resolver) GetFrameworkTool(ctx context.Context, req *mcp.CallToolReques
 		Framework: types.NewFramework(framework),
 	}, nil
 }
+
 func (r *Resolver) AddFrameworkTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddFrameworkInput) (*mcp.CallToolResult, types.AddFrameworkOutput, error) {
 	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionCreateFramework)
 
@@ -443,6 +451,7 @@ func (r *Resolver) AddFrameworkTool(ctx context.Context, req *mcp.CallToolReques
 		Framework: types.NewFramework(framework),
 	}, nil
 }
+
 func (r *Resolver) UpdateFrameworkTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateFrameworkInput) (*mcp.CallToolResult, types.UpdateFrameworkOutput, error) {
 	r.MustBeAuthorized(ctx, input.ID, authz.ActionUpdateFramework)
 
@@ -462,5 +471,103 @@ func (r *Resolver) UpdateFrameworkTool(ctx context.Context, req *mcp.CallToolReq
 
 	return nil, types.UpdateFrameworkOutput{
 		Framework: types.NewFramework(framework),
+	}, nil
+}
+
+func (r *Resolver) ListAssetsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListAssetsInput) (*mcp.CallToolResult, types.ListAssetsOutput, error) {
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionListAssets)
+
+	prb := r.ProboService(ctx, input.OrganizationID)
+
+	pageOrderBy := page.OrderBy[coredata.AssetOrderField]{
+		Field:     coredata.AssetOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.AssetOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	var assetFilter = coredata.NewAssetFilter(nil)
+	if input.Filter != nil {
+		assetFilter = coredata.NewAssetFilter(&input.Filter.SnapshotID)
+	}
+
+	page, err := prb.Assets.ListForOrganizationID(ctx, input.OrganizationID, cursor, assetFilter)
+	if err != nil {
+		panic(fmt.Errorf("cannot list organization assets: %w", err))
+	}
+
+	return nil, types.NewListAssetsOutput(page), nil
+}
+
+func (r *Resolver) GetAssetTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetAssetInput) (*mcp.CallToolResult, types.GetAssetOutput, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionGet)
+
+	prb := r.ProboService(ctx, input.ID)
+
+	asset, err := prb.Assets.Get(ctx, input.ID)
+	if err != nil {
+		return nil, types.GetAssetOutput{}, fmt.Errorf("failed to get asset: %w", err)
+	}
+
+	return nil, types.GetAssetOutput{
+		Asset: types.NewAsset(asset),
+	}, nil
+}
+
+func (r *Resolver) AddAssetTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddAssetInput) (*mcp.CallToolResult, types.AddAssetOutput, error) {
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionCreateAsset)
+
+	svc := r.ProboService(ctx, input.OrganizationID)
+
+	asset, err := svc.Assets.Create(
+		ctx,
+		probo.CreateAssetRequest{
+			OrganizationID:  input.OrganizationID,
+			Name:            input.Name,
+			Amount:          input.Amount,
+			OwnerID:         input.OwnerID,
+			AssetType:       input.AssetType,
+			DataTypesStored: input.DataTypesStored,
+			VendorIDs:       input.VendorIds,
+		},
+	)
+	if err != nil {
+		return nil, types.AddAssetOutput{}, fmt.Errorf("failed to create asset: %w", err)
+	}
+
+	return nil, types.AddAssetOutput{
+		Asset: types.NewAsset(asset),
+	}, nil
+}
+
+func (r *Resolver) UpdateAssetTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateAssetInput) (*mcp.CallToolResult, types.UpdateAssetOutput, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionUpdateAsset)
+
+	svc := r.ProboService(ctx, input.ID)
+
+	asset, err := svc.Assets.Update(
+		ctx,
+		probo.UpdateAssetRequest{
+			ID:              input.ID,
+			Name:            input.Name,
+			Amount:          input.Amount,
+			OwnerID:         input.OwnerID,
+			AssetType:       input.AssetType,
+			DataTypesStored: input.DataTypesStored,
+			VendorIDs:       input.VendorIds,
+		},
+	)
+	if err != nil {
+		return nil, types.UpdateAssetOutput{}, fmt.Errorf("failed to update asset: %w", err)
+	}
+
+	return nil, types.UpdateAssetOutput{
+		Asset: types.NewAsset(asset),
 	}, nil
 }
