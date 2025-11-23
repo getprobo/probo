@@ -317,6 +317,7 @@ var Permissions = map[uint16]map[Action][]Role{
 		ActionRemoveMember: {RoleOwner, RoleFull},
 
 		ActionCreateCustomDomain:         {RoleOwner},
+		ActionDeleteCustomDomain:         {RoleOwner},
 		ActionInitiateDomainVerification: {RoleOwner},
 		ActionVerifyDomain:               {RoleOwner},
 		ActionCreateSAMLConfiguration:    {RoleOwner},
