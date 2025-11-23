@@ -292,3 +292,93 @@ func (r *Resolver) UpdateRiskTool(ctx context.Context, req *mcp.CallToolRequest,
 		Risk: types.NewRisk(risk),
 	}, nil
 }
+
+func (r *Resolver) ListMeasuresTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListMeasuresInput) (*mcp.CallToolResult, types.ListMeasuresOutput, error) {
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionListMeasures)
+
+	prb := r.ProboService(ctx, input.OrganizationID)
+
+	pageOrderBy := page.OrderBy[coredata.MeasureOrderField]{
+		Field:     coredata.MeasureOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.MeasureOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	var measureFilter = coredata.NewMeasureFilter(nil, nil)
+	if input.Filter != nil {
+		measureFilter = coredata.NewMeasureFilter(input.Filter.Query, input.Filter.State)
+	}
+
+	page, err := prb.Measures.ListForOrganizationID(ctx, input.OrganizationID, cursor, measureFilter)
+	if err != nil {
+		panic(fmt.Errorf("cannot list organization measures: %w", err))
+	}
+
+	return nil, types.NewListMeasuresOutput(page), nil
+}
+func (r *Resolver) GetMeasureTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetMeasureInput) (*mcp.CallToolResult, types.GetMeasureOutput, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionGet)
+
+	prb := r.ProboService(ctx, input.ID)
+
+	measure, err := prb.Measures.Get(ctx, input.ID)
+	if err != nil {
+		return nil, types.GetMeasureOutput{}, fmt.Errorf("failed to get measure: %w", err)
+	}
+
+	return nil, types.GetMeasureOutput{
+		Measure: types.NewMeasure(measure),
+	}, nil
+}
+func (r *Resolver) AddMeasureTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddMeasureInput) (*mcp.CallToolResult, types.AddMeasureOutput, error) {
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionCreateMeasure)
+
+	svc := r.ProboService(ctx, input.OrganizationID)
+
+	measure, err := svc.Measures.Create(
+		ctx,
+		probo.CreateMeasureRequest{
+			OrganizationID: input.OrganizationID,
+			Name:           input.Name,
+			Description:    input.Description,
+			Category:       input.Category,
+		},
+	)
+	if err != nil {
+		return nil, types.AddMeasureOutput{}, fmt.Errorf("failed to create measure: %w", err)
+	}
+
+	return nil, types.AddMeasureOutput{
+		Measure: types.NewMeasure(measure),
+	}, nil
+}
+func (r *Resolver) UpdateMeasureTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateMeasureInput) (*mcp.CallToolResult, types.UpdateMeasureOutput, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionUpdateMeasure)
+
+	svc := r.ProboService(ctx, input.ID)
+
+	measure, err := svc.Measures.Update(
+		ctx,
+		probo.UpdateMeasureRequest{
+			ID:          input.ID,
+			Name:        input.Name,
+			Description: UnwrapOmittable(input.Description),
+			Category:    input.Category,
+			State:       input.State,
+		},
+	)
+	if err != nil {
+		return nil, types.UpdateMeasureOutput{}, fmt.Errorf("failed to update measure: %w", err)
+	}
+
+	return nil, types.UpdateMeasureOutput{
+		Measure: types.NewMeasure(measure),
+	}, nil
+}

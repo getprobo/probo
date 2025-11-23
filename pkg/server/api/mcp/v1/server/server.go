@@ -21,6 +21,10 @@ type ResolverInterface interface {
 	GetRiskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetRiskInput) (*mcp.CallToolResult, types.GetRiskOutput, error)
 	AddRiskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddRiskInput) (*mcp.CallToolResult, types.AddRiskOutput, error)
 	UpdateRiskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateRiskInput) (*mcp.CallToolResult, types.UpdateRiskOutput, error)
+	ListMeasuresTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListMeasuresInput) (*mcp.CallToolResult, types.ListMeasuresOutput, error)
+	GetMeasureTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetMeasureInput) (*mcp.CallToolResult, types.GetMeasureOutput, error)
+	AddMeasureTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddMeasureInput) (*mcp.CallToolResult, types.AddMeasureOutput, error)
+	UpdateMeasureTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateMeasureInput) (*mcp.CallToolResult, types.UpdateMeasureOutput, error)
 }
 
 // New creates a new MCP server instance with all handlers registered.
@@ -149,5 +153,45 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 			OutputSchema: types.UpdateRiskToolOutputSchema,
 		},
 		resolver.UpdateRiskTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "listMeasures",
+			Description:  "List all measures for the organization",
+			InputSchema:  types.ListMeasuresToolInputSchema,
+			OutputSchema: types.ListMeasuresToolOutputSchema,
+		},
+		resolver.ListMeasuresTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "getMeasure",
+			Description:  "Get a measure by ID",
+			InputSchema:  types.GetMeasureToolInputSchema,
+			OutputSchema: types.GetMeasureToolOutputSchema,
+		},
+		resolver.GetMeasureTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "addMeasure",
+			Description:  "Add a new measure to the organization",
+			InputSchema:  types.AddMeasureToolInputSchema,
+			OutputSchema: types.AddMeasureToolOutputSchema,
+		},
+		resolver.AddMeasureTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "updateMeasure",
+			Description:  "Update an existing measure",
+			InputSchema:  types.UpdateMeasureToolInputSchema,
+			OutputSchema: types.UpdateMeasureToolOutputSchema,
+		},
+		resolver.UpdateMeasureTool,
 	)
 }
