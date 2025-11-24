@@ -289,6 +289,7 @@ WITH
 INSERT INTO vendor_services (
 	tenant_id,
 	id,
+	organization_id,
 	snapshot_id,
 	source_id,
 	vendor_id,
@@ -300,6 +301,7 @@ INSERT INTO vendor_services (
 SELECT
 	@tenant_id,
 	generate_gid(decode_base64_unpadded(@tenant_id), @vendor_service_entity_type),
+	@organization_id,
 	@snapshot_id,
 	vs.id,
 	sv.id,
