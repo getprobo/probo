@@ -2128,8 +2128,6 @@ components:
         - organization_id
         - reference_id
         - owner_id
-        - status
-        - priority
       properties:
         organization_id:
           $ref: "#/components/schemas/GID"
@@ -2151,10 +2149,18 @@ components:
           format: date-time
           description: Target date
         status:
-          $ref: "#/components/schemas/ContinualImprovementStatus"
+          anyOf:
+            - $ref: "#/components/schemas/ContinualImprovementStatus"
+              description: Continual improvement status
+            - type: "null"
+              description: No status
           description: Status
         priority:
-          $ref: "#/components/schemas/ContinualImprovementPriority"
+          anyOf:
+            - $ref: "#/components/schemas/ContinualImprovementPriority"
+              description: Continual improvement priority
+            - type: "null"
+              description: No priority
           description: Priority
 
     AddContinualImprovementOutput:
