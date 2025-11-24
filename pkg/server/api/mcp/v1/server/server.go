@@ -65,6 +65,12 @@ type ResolverInterface interface {
 	UnlinkControlAuditTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UnlinkControlAuditInput) (*mcp.CallToolResult, types.UnlinkControlAuditOutput, error)
 	LinkControlSnapshotTool(ctx context.Context, req *mcp.CallToolRequest, input *types.LinkControlSnapshotInput) (*mcp.CallToolResult, types.LinkControlSnapshotOutput, error)
 	UnlinkControlSnapshotTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UnlinkControlSnapshotInput) (*mcp.CallToolResult, types.UnlinkControlSnapshotOutput, error)
+	ListTasksTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListTasksInput) (*mcp.CallToolResult, types.ListTasksOutput, error)
+	GetTaskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetTaskInput) (*mcp.CallToolResult, types.GetTaskOutput, error)
+	AddTaskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddTaskInput) (*mcp.CallToolResult, types.AddTaskOutput, error)
+	UpdateTaskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateTaskInput) (*mcp.CallToolResult, types.UpdateTaskOutput, error)
+	AssignTaskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AssignTaskInput) (*mcp.CallToolResult, types.AssignTaskOutput, error)
+	UnassignTaskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UnassignTaskInput) (*mcp.CallToolResult, types.UnassignTaskOutput, error)
 }
 
 // New creates a new MCP server instance with all handlers registered.
@@ -633,5 +639,65 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 			OutputSchema: types.UnlinkControlSnapshotToolOutputSchema,
 		},
 		resolver.UnlinkControlSnapshotTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "listTasks",
+			Description:  "List all tasks for the organization or measure",
+			InputSchema:  types.ListTasksToolInputSchema,
+			OutputSchema: types.ListTasksToolOutputSchema,
+		},
+		resolver.ListTasksTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "getTask",
+			Description:  "Get a task by ID",
+			InputSchema:  types.GetTaskToolInputSchema,
+			OutputSchema: types.GetTaskToolOutputSchema,
+		},
+		resolver.GetTaskTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "addTask",
+			Description:  "Add a new task to the organization",
+			InputSchema:  types.AddTaskToolInputSchema,
+			OutputSchema: types.AddTaskToolOutputSchema,
+		},
+		resolver.AddTaskTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "updateTask",
+			Description:  "Update an existing task",
+			InputSchema:  types.UpdateTaskToolInputSchema,
+			OutputSchema: types.UpdateTaskToolOutputSchema,
+		},
+		resolver.UpdateTaskTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "assignTask",
+			Description:  "Assign a task to a person",
+			InputSchema:  types.AssignTaskToolInputSchema,
+			OutputSchema: types.AssignTaskToolOutputSchema,
+		},
+		resolver.AssignTaskTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "unassignTask",
+			Description:  "Unassign a task from a person",
+			InputSchema:  types.UnassignTaskToolInputSchema,
+			OutputSchema: types.UnassignTaskToolOutputSchema,
+		},
+		resolver.UnassignTaskTool,
 	)
 }

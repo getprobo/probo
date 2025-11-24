@@ -5,6 +5,11 @@ info:
 
 components:
   schemas:
+    Duration:
+      type: string
+      description: A duration
+      go.probo.inc/mcpgen/type: time.Duration
+
     OrderDirection:
       type: string
       enum:
@@ -2782,6 +2787,282 @@ components:
     UnlinkControlSnapshotOutput:
       type: object
 
+    TaskState:
+      type: string
+      enum:
+        - TODO
+        - DONE
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.TaskState
+
+    TaskOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.TaskOrderField
+
+    TaskOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/TaskOrderField"
+          description: Task order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: Task order direction
+
+    Task:
+      type: object
+      required:
+        - id
+        - organization_id
+        - name
+        - state
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Task ID
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        measure_id:
+          anyOf:
+            - $ref: "#/components/schemas/GID"
+              description: Measure ID
+            - type: "null"
+              description: No measure
+          description: Measure ID
+        name:
+          type: string
+          description: Task name
+        description:
+          anyOf:
+            - type: string
+              description: Task description
+            - type: "null"
+              description: No description
+          description: Task description
+        state:
+          $ref: "#/components/schemas/TaskState"
+          description: Task state
+        time_estimate:
+          anyOf:
+            - $ref: "#/components/schemas/Duration"
+            - type: "null"
+              description: No time estimate
+          description: Time estimate
+        deadline:
+          anyOf:
+            - type: string
+              format: date-time
+              description: Deadline
+            - type: "null"
+              description: No deadline
+          description: Deadline
+        assigned_to_id:
+          anyOf:
+            - $ref: "#/components/schemas/GID"
+              description: Assigned to person ID
+            - type: "null"
+              description: Not assigned
+          description: Assigned to person ID
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Update timestamp
+
+    ListTasksInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        measure_id:
+          $ref: "#/components/schemas/GID"
+          description: Measure ID
+        order_by:
+          $ref: "#/components/schemas/TaskOrderBy"
+          description: Task order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListTasksOutput:
+      type: object
+      required:
+        - tasks
+      properties:
+        tasks:
+          type: array
+          items:
+            $ref: "#/components/schemas/Task"
+          description: List of tasks
+        next_cursor:
+          anyOf:
+            - $ref: "#/components/schemas/CursorKey"
+            - type: "null"
+          description: Next page cursor
+
+    GetTaskInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Task ID
+
+    GetTaskOutput:
+      type: object
+      required:
+        - task
+      properties:
+        task:
+          $ref: "#/components/schemas/Task"
+
+    AddTaskInput:
+      type: object
+      required:
+        - organization_id
+        - name
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        measure_id:
+          anyOf:
+            - $ref: "#/components/schemas/GID"
+              description: Measure ID
+            - type: "null"
+              description: No measure
+          description: Measure ID
+        name:
+          type: string
+          description: Task name
+        description:
+          type: string
+          description: Task description
+        time_estimate:
+          $ref: "#/components/schemas/Duration"
+          description: Time estimate
+        deadline:
+          type: string
+          format: date-time
+          description: Deadline
+        assigned_to_id:
+          anyOf:
+            - $ref: "#/components/schemas/GID"
+              description: Assigned to person ID
+            - type: "null"
+              description: Not assigned
+          description: Assigned to person ID
+
+    AddTaskOutput:
+      type: object
+      required:
+        - task
+      properties:
+        task:
+          $ref: "#/components/schemas/Task"
+
+    UpdateTaskInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Task ID
+        name:
+          type: string
+          description: Task name
+        description:
+          type: ["string", "null"]
+          description: Task description
+          go.probo.inc/mcpgen/omittable: true
+        state:
+          anyOf:
+            - $ref: "#/components/schemas/TaskState"
+              description: Task state
+            - type: "null"
+              description: No state
+          description: Task state
+        time_estimate:
+          anyOf:
+            - $ref: "#/components/schemas/Duration"
+            - type: "null"
+              description: No time estimate
+          description: Time estimate
+          go.probo.inc/mcpgen/omittable: true
+        deadline:
+          anyOf:
+            - type: string
+              format: date-time
+              description: Deadline
+            - type: "null"
+              description: No deadline
+          description: Deadline
+          go.probo.inc/mcpgen/omittable: true
+
+    UpdateTaskOutput:
+      type: object
+      required:
+        - task
+      properties:
+        task:
+          $ref: "#/components/schemas/Task"
+
+    AssignTaskInput:
+      type: object
+      required:
+        - id
+        - assigned_to_id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Task ID
+        assigned_to_id:
+          $ref: "#/components/schemas/GID"
+          description: Assigned to person ID
+
+    AssignTaskOutput:
+      type: object
+      required:
+        - task
+      properties:
+        task:
+          $ref: "#/components/schemas/Task"
+
+    UnassignTaskInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Task ID
+
+    UnassignTaskOutput:
+      type: object
+      required:
+        - task
+      properties:
+        task:
+          $ref: "#/components/schemas/Task"
+
 tools:
   - name: listOrganizations
     description: List all organizations the user has access to
@@ -3168,3 +3449,45 @@ tools:
       $ref: "#/components/schemas/UnlinkControlSnapshotInput"
     outputSchema:
       $ref: "#/components/schemas/UnlinkControlSnapshotOutput"
+  - name: listTasks
+    description: List all tasks for the organization or measure
+    readonly: true
+    inputSchema:
+      $ref: "#/components/schemas/ListTasksInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListTasksOutput"
+  - name: getTask
+    description: Get a task by ID
+    readonly: true
+    inputSchema:
+      $ref: "#/components/schemas/GetTaskInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetTaskOutput"
+  - name: addTask
+    description: Add a new task to the organization
+    readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/AddTaskInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddTaskOutput"
+  - name: updateTask
+    description: Update an existing task
+    readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateTaskInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateTaskOutput"
+  - name: assignTask
+    description: Assign a task to a person
+    readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/AssignTaskInput"
+    outputSchema:
+      $ref: "#/components/schemas/AssignTaskOutput"
+  - name: unassignTask
+    description: Unassign a task from a person
+    readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UnassignTaskInput"
+    outputSchema:
+      $ref: "#/components/schemas/UnassignTaskOutput"

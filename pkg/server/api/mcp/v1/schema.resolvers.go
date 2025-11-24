@@ -1266,3 +1266,114 @@ func (r *Resolver) UnlinkControlSnapshotTool(ctx context.Context, req *mcp.CallT
 
 	return nil, types.UnlinkControlSnapshotOutput{}, nil
 }
+
+func (r *Resolver) ListTasksTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListTasksInput) (*mcp.CallToolResult, types.ListTasksOutput, error) {
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionListTasks)
+
+	prb := r.ProboService(ctx, input.OrganizationID)
+
+	pageOrderBy := page.OrderBy[coredata.TaskOrderField]{
+		Field:     coredata.TaskOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.TaskOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	page, err := prb.Tasks.ListForOrganizationID(ctx, input.OrganizationID, cursor)
+	if err != nil {
+		panic(fmt.Errorf("cannot list organization tasks: %w", err))
+	}
+
+	return nil, types.NewListTasksOutput(page), nil
+}
+
+func (r *Resolver) GetTaskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetTaskInput) (*mcp.CallToolResult, types.GetTaskOutput, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionGet)
+
+	prb := r.ProboService(ctx, input.ID)
+
+	task, err := prb.Tasks.Get(ctx, input.ID)
+	if err != nil {
+		return nil, types.GetTaskOutput{}, fmt.Errorf("failed to get task: %w", err)
+	}
+	return nil, types.GetTaskOutput{
+		Task: types.NewTask(task),
+	}, nil
+}
+
+func (r *Resolver) AddTaskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddTaskInput) (*mcp.CallToolResult, types.AddTaskOutput, error) {
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionCreateTask)
+
+	svc := r.ProboService(ctx, input.OrganizationID)
+
+	task, err := svc.Tasks.Create(ctx, probo.CreateTaskRequest{
+		OrganizationID: input.OrganizationID,
+		Name:           input.Name,
+		Description:    input.Description,
+		TimeEstimate:   input.TimeEstimate,
+		Deadline:       input.Deadline,
+		AssignedToID:   input.AssignedToID,
+	})
+	if err != nil {
+		return nil, types.AddTaskOutput{}, fmt.Errorf("failed to create task: %w", err)
+	}
+	return nil, types.AddTaskOutput{
+		Task: types.NewTask(task),
+	}, nil
+}
+
+func (r *Resolver) UpdateTaskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateTaskInput) (*mcp.CallToolResult, types.UpdateTaskOutput, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionUpdateTask)
+
+	svc := r.ProboService(ctx, input.ID)
+
+	task, err := svc.Tasks.Update(ctx, probo.UpdateTaskRequest{
+		TaskID:       input.ID,
+		Name:         input.Name,
+		Description:  UnwrapOmittable(input.Description),
+		State:        input.State,
+		TimeEstimate: UnwrapOmittable(input.TimeEstimate),
+		Deadline:     UnwrapOmittable(input.Deadline),
+	})
+	if err != nil {
+		return nil, types.UpdateTaskOutput{}, fmt.Errorf("failed to update task: %w", err)
+	}
+	return nil, types.UpdateTaskOutput{
+		Task: types.NewTask(task),
+	}, nil
+}
+
+func (r *Resolver) AssignTaskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AssignTaskInput) (*mcp.CallToolResult, types.AssignTaskOutput, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionAssignTask)
+
+	svc := r.ProboService(ctx, input.ID)
+
+	task, err := svc.Tasks.Assign(ctx, input.ID, input.AssignedToID)
+	if err != nil {
+		return nil, types.AssignTaskOutput{}, fmt.Errorf("failed to assign task: %w", err)
+	}
+
+	return nil, types.AssignTaskOutput{
+		Task: types.NewTask(task),
+	}, nil
+}
+
+func (r *Resolver) UnassignTaskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UnassignTaskInput) (*mcp.CallToolResult, types.UnassignTaskOutput, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionUnassignTask)
+
+	svc := r.ProboService(ctx, input.ID)
+
+	task, err := svc.Tasks.Unassign(ctx, input.ID)
+	if err != nil {
+		return nil, types.UnassignTaskOutput{}, fmt.Errorf("failed to unassign task: %w", err)
+	}
+	return nil, types.UnassignTaskOutput{
+		Task: types.NewTask(task),
+	}, nil
+}
