@@ -53,6 +53,10 @@ type ResolverInterface interface {
 	GetAuditTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetAuditInput) (*mcp.CallToolResult, types.GetAuditOutput, error)
 	AddAuditTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddAuditInput) (*mcp.CallToolResult, types.AddAuditOutput, error)
 	UpdateAuditTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateAuditInput) (*mcp.CallToolResult, types.UpdateAuditOutput, error)
+	ListControlsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListControlsInput) (*mcp.CallToolResult, types.ListControlsOutput, error)
+	GetControlTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetControlInput) (*mcp.CallToolResult, types.GetControlOutput, error)
+	AddControlTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddControlInput) (*mcp.CallToolResult, types.AddControlOutput, error)
+	UpdateControlTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateControlInput) (*mcp.CallToolResult, types.UpdateControlOutput, error)
 }
 
 // New creates a new MCP server instance with all handlers registered.
@@ -501,5 +505,45 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 			OutputSchema: types.UpdateAuditToolOutputSchema,
 		},
 		resolver.UpdateAuditTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "listControls",
+			Description:  "List all controls for the organization or framework",
+			InputSchema:  types.ListControlsToolInputSchema,
+			OutputSchema: types.ListControlsToolOutputSchema,
+		},
+		resolver.ListControlsTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "getControl",
+			Description:  "Get a control by ID",
+			InputSchema:  types.GetControlToolInputSchema,
+			OutputSchema: types.GetControlToolOutputSchema,
+		},
+		resolver.GetControlTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "addControl",
+			Description:  "Add a new control to a framework",
+			InputSchema:  types.AddControlToolInputSchema,
+			OutputSchema: types.AddControlToolOutputSchema,
+		},
+		resolver.AddControlTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "updateControl",
+			Description:  "Update an existing control",
+			InputSchema:  types.UpdateControlToolInputSchema,
+			OutputSchema: types.UpdateControlToolOutputSchema,
+		},
+		resolver.UpdateControlTool,
 	)
 }

@@ -2446,6 +2446,214 @@ components:
         audit:
           $ref: "#/components/schemas/Audit"
 
+    ControlStatus:
+      type: string
+      enum:
+        - INCLUDED
+        - EXCLUDED
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ControlStatus
+
+    ControlOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+        - SECTION_TITLE
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ControlOrderField
+
+    ControlOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/ControlOrderField"
+          description: Control order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: Control order direction
+
+    Control:
+      type: object
+      required:
+        - id
+        - organization_id
+        - framework_id
+        - section_title
+        - name
+        - status
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Control ID
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        framework_id:
+          $ref: "#/components/schemas/GID"
+          description: Framework ID
+        section_title:
+          type: string
+          description: Section title
+        name:
+          type: string
+          description: Control name
+        description:
+          type:
+            - string
+            - "null"
+          description: Control description
+        status:
+          $ref: "#/components/schemas/ControlStatus"
+          description: Control status
+        exclusion_justification:
+          type:
+            - string
+            - "null"
+          description: Exclusion justification
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Update timestamp
+
+    ListControlsInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        framework_id:
+          $ref: "#/components/schemas/GID"
+          description: Framework ID
+        order_by:
+          $ref: "#/components/schemas/ControlOrderBy"
+          description: Control order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+        filter:
+          type: object
+          properties:
+            query:
+              type: string
+              description: Search query
+
+    ListControlsOutput:
+      type: object
+      required:
+        - controls
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        controls:
+          type: array
+          items:
+            $ref: "#/components/schemas/Control"
+
+    GetControlInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Control ID
+
+    GetControlOutput:
+      type: object
+      required:
+        - control
+      properties:
+        control:
+          $ref: "#/components/schemas/Control"
+
+    AddControlInput:
+      type: object
+      required:
+        - organization_id
+        - framework_id
+        - section_title
+        - name
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        framework_id:
+          $ref: "#/components/schemas/GID"
+          description: Framework ID
+        section_title:
+          type: string
+          description: Section title
+        name:
+          type: string
+          description: Control name
+        description:
+          type: string
+          description: Control description
+        status:
+          $ref: "#/components/schemas/ControlStatus"
+          description: Control status
+        exclusion_justification:
+          type: string
+          description: Exclusion justification
+
+    AddControlOutput:
+      type: object
+      required:
+        - control
+      properties:
+        control:
+          $ref: "#/components/schemas/Control"
+
+    UpdateControlInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Control ID
+        section_title:
+          type: string
+          description: Section title
+        name:
+          type: string
+          description: Control name
+        description:
+          type: ["string", "null"]
+          description: Control description
+          go.probo.inc/mcpgen/omittable: true
+        status:
+          anyOf:
+            - $ref: "#/components/schemas/ControlStatus"
+              description: Control status
+            - type: "null"
+              description: No status
+          description: Control status
+        exclusion_justification:
+          type: string
+          description: Exclusion justification
+
+    UpdateControlOutput:
+      type: object
+      required:
+        - control
+      properties:
+        control:
+          $ref: "#/components/schemas/Control"
+
 tools:
   - name: listOrganizations
     description: List all organizations the user has access to
@@ -2748,3 +2956,31 @@ tools:
       $ref: "#/components/schemas/UpdateAuditInput"
     outputSchema:
       $ref: "#/components/schemas/UpdateAuditOutput"
+  - name: listControls
+    description: List all controls for the organization or framework
+    readonly: true
+    inputSchema:
+      $ref: "#/components/schemas/ListControlsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListControlsOutput"
+  - name: getControl
+    description: Get a control by ID
+    readonly: true
+    inputSchema:
+      $ref: "#/components/schemas/GetControlInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetControlOutput"
+  - name: addControl
+    description: Add a new control to a framework
+    readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/AddControlInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddControlOutput"
+  - name: updateControl
+    description: Update an existing control
+    readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateControlInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateControlOutput"

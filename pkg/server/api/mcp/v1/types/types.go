@@ -18,6 +18,8 @@ var (
 	AddAuditToolOutputSchema                   = mcp.MustUnmarshalSchema(`{"type":"object","required":["audit"],"properties":{"audit":{"type":"object","required":["id","organization_id","framework_id","state","trust_center_visibility","created_at","updated_at"],"properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"framework_id":{"type":"string","format":"string"},"id":{"type":"string","format":"string"},"name":{"description":"Audit name"},"organization_id":{"type":"string","format":"string"},"state":{"type":"string","enum":["NOT_STARTED","IN_PROGRESS","COMPLETED","REJECTED","OUTDATED"]},"trust_center_visibility":{"type":"string","enum":["NONE","PRIVATE","PUBLIC"]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"},"valid_from":{"description":"Valid from date","format":"date-time"},"valid_until":{"description":"Valid until date","format":"date-time"}}}}}`)
 	AddContinualImprovementToolInputSchema     = mcp.MustUnmarshalSchema(`{"type":"object","required":["organization_id","reference_id","owner_id"],"properties":{"description":{"type":"string","description":"Description"},"organization_id":{"type":"string","format":"string"},"owner_id":{"type":"string","format":"string"},"priority":{"description":"Priority","anyOf":[{"type":"string","enum":["LOW","MEDIUM","HIGH"]},{"type":"null","description":"No priority"}]},"reference_id":{"type":"string","description":"Reference ID"},"source":{"type":"string","description":"Source"},"status":{"description":"Status","anyOf":[{"type":"string","enum":["OPEN","IN_PROGRESS","CLOSED"]},{"type":"null","description":"No status"}]},"target_date":{"type":"string","description":"Target date","format":"date-time"}}}`)
 	AddContinualImprovementToolOutputSchema    = mcp.MustUnmarshalSchema(`{"type":"object","required":["continual_improvement"],"properties":{"continual_improvement":{"type":"object","required":["id","organization_id","reference_id","owner_id","status","priority","created_at","updated_at"],"properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"description":"Description"},"id":{"type":"string","format":"string"},"organization_id":{"type":"string","format":"string"},"owner_id":{"type":"string","format":"string"},"priority":{"type":"string","enum":["LOW","MEDIUM","HIGH"]},"reference_id":{"type":"string","description":"Reference ID"},"snapshot_id":{"description":"Snapshot ID","anyOf":[{"type":"string","format":"string"},{"type":"null","description":"No snapshot"}]},"source":{"description":"Source"},"source_id":{"description":"Source ID"},"status":{"type":"string","enum":["OPEN","IN_PROGRESS","CLOSED"]},"target_date":{"description":"Target date","format":"date-time"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}}}`)
+	AddControlToolInputSchema                  = mcp.MustUnmarshalSchema(`{"type":"object","required":["organization_id","framework_id","section_title","name"],"properties":{"description":{"type":"string","description":"Control description"},"exclusion_justification":{"type":"string","description":"Exclusion justification"},"framework_id":{"type":"string","format":"string"},"name":{"type":"string","description":"Control name"},"organization_id":{"type":"string","format":"string"},"section_title":{"type":"string","description":"Section title"},"status":{"type":"string","enum":["INCLUDED","EXCLUDED"]}}}`)
+	AddControlToolOutputSchema                 = mcp.MustUnmarshalSchema(`{"type":"object","required":["control"],"properties":{"control":{"type":"object","required":["id","organization_id","framework_id","section_title","name","status","created_at","updated_at"],"properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"description":"Control description"},"exclusion_justification":{"description":"Exclusion justification"},"framework_id":{"type":"string","format":"string"},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Control name"},"organization_id":{"type":"string","format":"string"},"section_title":{"type":"string","description":"Section title"},"status":{"type":"string","enum":["INCLUDED","EXCLUDED"]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}}}`)
 	AddDatumToolInputSchema                    = mcp.MustUnmarshalSchema(`{"type":"object","required":["organization_id","name","data_classification","owner_id"],"properties":{"data_classification":{"type":"string","enum":["PUBLIC","INTERNAL","CONFIDENTIAL","SECRET"]},"name":{"type":"string","description":"Datum name"},"organization_id":{"type":"string","format":"string"},"owner_id":{"type":"string","format":"string"},"vendor_ids":{"type":"array","description":"Vendor IDs","items":{"type":"string","format":"string"}}}}`)
 	AddDatumToolOutputSchema                   = mcp.MustUnmarshalSchema(`{"type":"object","required":["datum"],"properties":{"datum":{"type":"object","required":["id","organization_id","name","data_classification","owner_id","created_at","updated_at"],"properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"data_classification":{"type":"string","enum":["PUBLIC","INTERNAL","CONFIDENTIAL","SECRET"]},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Datum name"},"organization_id":{"type":"string","format":"string"},"owner_id":{"type":"string","format":"string"},"snapshot_id":{"description":"Snapshot ID","anyOf":[{"type":"string","format":"string"},{"type":"null","description":"No snapshot"}]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}}}`)
 	AddFrameworkToolInputSchema                = mcp.MustUnmarshalSchema(`{"type":"object","required":["organization_id","name"],"properties":{"description":{"type":"string","description":"Framework description"},"name":{"type":"string","description":"Framework name"},"organization_id":{"type":"string","format":"string"}}}`)
@@ -40,6 +42,8 @@ var (
 	GetAuditToolOutputSchema                   = mcp.MustUnmarshalSchema(`{"type":"object","required":["audit"],"properties":{"audit":{"type":"object","required":["id","organization_id","framework_id","state","trust_center_visibility","created_at","updated_at"],"properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"framework_id":{"type":"string","format":"string"},"id":{"type":"string","format":"string"},"name":{"description":"Audit name"},"organization_id":{"type":"string","format":"string"},"state":{"type":"string","enum":["NOT_STARTED","IN_PROGRESS","COMPLETED","REJECTED","OUTDATED"]},"trust_center_visibility":{"type":"string","enum":["NONE","PRIVATE","PUBLIC"]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"},"valid_from":{"description":"Valid from date","format":"date-time"},"valid_until":{"description":"Valid until date","format":"date-time"}}}}}`)
 	GetContinualImprovementToolInputSchema     = mcp.MustUnmarshalSchema(`{"type":"object","required":["id"],"properties":{"id":{"type":"string","format":"string"}}}`)
 	GetContinualImprovementToolOutputSchema    = mcp.MustUnmarshalSchema(`{"type":"object","required":["continual_improvement"],"properties":{"continual_improvement":{"type":"object","required":["id","organization_id","reference_id","owner_id","status","priority","created_at","updated_at"],"properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"description":"Description"},"id":{"type":"string","format":"string"},"organization_id":{"type":"string","format":"string"},"owner_id":{"type":"string","format":"string"},"priority":{"type":"string","enum":["LOW","MEDIUM","HIGH"]},"reference_id":{"type":"string","description":"Reference ID"},"snapshot_id":{"description":"Snapshot ID","anyOf":[{"type":"string","format":"string"},{"type":"null","description":"No snapshot"}]},"source":{"description":"Source"},"source_id":{"description":"Source ID"},"status":{"type":"string","enum":["OPEN","IN_PROGRESS","CLOSED"]},"target_date":{"description":"Target date","format":"date-time"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}}}`)
+	GetControlToolInputSchema                  = mcp.MustUnmarshalSchema(`{"type":"object","required":["id"],"properties":{"id":{"type":"string","format":"string"}}}`)
+	GetControlToolOutputSchema                 = mcp.MustUnmarshalSchema(`{"type":"object","required":["control"],"properties":{"control":{"type":"object","required":["id","organization_id","framework_id","section_title","name","status","created_at","updated_at"],"properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"description":"Control description"},"exclusion_justification":{"description":"Exclusion justification"},"framework_id":{"type":"string","format":"string"},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Control name"},"organization_id":{"type":"string","format":"string"},"section_title":{"type":"string","description":"Section title"},"status":{"type":"string","enum":["INCLUDED","EXCLUDED"]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}}}`)
 	GetDatumToolInputSchema                    = mcp.MustUnmarshalSchema(`{"type":"object","required":["id"],"properties":{"id":{"type":"string","format":"string"}}}`)
 	GetDatumToolOutputSchema                   = mcp.MustUnmarshalSchema(`{"type":"object","required":["datum"],"properties":{"datum":{"type":"object","required":["id","organization_id","name","data_classification","owner_id","created_at","updated_at"],"properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"data_classification":{"type":"string","enum":["PUBLIC","INTERNAL","CONFIDENTIAL","SECRET"]},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Datum name"},"organization_id":{"type":"string","format":"string"},"owner_id":{"type":"string","format":"string"},"snapshot_id":{"description":"Snapshot ID","anyOf":[{"type":"string","format":"string"},{"type":"null","description":"No snapshot"}]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}}}`)
 	GetFrameworkToolInputSchema                = mcp.MustUnmarshalSchema(`{"type":"object","required":["id"],"properties":{"id":{"type":"string","format":"string"}}}`)
@@ -60,6 +64,8 @@ var (
 	ListAuditsToolOutputSchema                 = mcp.MustUnmarshalSchema(`{"type":"object","required":["audits"],"properties":{"audits":{"type":"array","items":{"type":"object","required":["id","organization_id","framework_id","state","trust_center_visibility","created_at","updated_at"],"properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"framework_id":{"type":"string","format":"string"},"id":{"type":"string","format":"string"},"name":{"description":"Audit name"},"organization_id":{"type":"string","format":"string"},"state":{"type":"string","enum":["NOT_STARTED","IN_PROGRESS","COMPLETED","REJECTED","OUTDATED"]},"trust_center_visibility":{"type":"string","enum":["NONE","PRIVATE","PUBLIC"]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"},"valid_from":{"description":"Valid from date","format":"date-time"},"valid_until":{"description":"Valid until date","format":"date-time"}}}},"next_cursor":{"type":"string","format":"string"}}}`)
 	ListContinualImprovementsToolInputSchema   = mcp.MustUnmarshalSchema(`{"type":"object","required":["organization_id"],"properties":{"cursor":{"type":"string","format":"string"},"filter":{"type":"object","properties":{"snapshot_id":{"type":"string","format":"string"}}},"order_by":{"type":"object","required":["field","direction"],"properties":{"direction":{"type":"string","enum":["ASC","DESC"]},"field":{"type":"string","enum":["CREATED_AT","REFERENCE_ID","TARGET_DATE","STATUS","PRIORITY"]}}},"organization_id":{"type":"string","format":"string"},"size":{"type":"integer","description":"Page size"}}}`)
 	ListContinualImprovementsToolOutputSchema  = mcp.MustUnmarshalSchema(`{"type":"object","required":["continual_improvements"],"properties":{"continual_improvements":{"type":"array","items":{"type":"object","required":["id","organization_id","reference_id","owner_id","status","priority","created_at","updated_at"],"properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"description":"Description"},"id":{"type":"string","format":"string"},"organization_id":{"type":"string","format":"string"},"owner_id":{"type":"string","format":"string"},"priority":{"type":"string","enum":["LOW","MEDIUM","HIGH"]},"reference_id":{"type":"string","description":"Reference ID"},"snapshot_id":{"description":"Snapshot ID","anyOf":[{"type":"string","format":"string"},{"type":"null","description":"No snapshot"}]},"source":{"description":"Source"},"source_id":{"description":"Source ID"},"status":{"type":"string","enum":["OPEN","IN_PROGRESS","CLOSED"]},"target_date":{"description":"Target date","format":"date-time"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}},"next_cursor":{"type":"string","format":"string"}}}`)
+	ListControlsToolInputSchema                = mcp.MustUnmarshalSchema(`{"type":"object","required":["organization_id"],"properties":{"cursor":{"type":"string","format":"string"},"filter":{"type":"object","properties":{"query":{"type":"string","description":"Search query"}}},"framework_id":{"type":"string","format":"string"},"order_by":{"type":"object","required":["field","direction"],"properties":{"direction":{"type":"string","enum":["ASC","DESC"]},"field":{"type":"string","enum":["CREATED_AT","SECTION_TITLE"]}}},"organization_id":{"type":"string","format":"string"},"size":{"type":"integer","description":"Page size"}}}`)
+	ListControlsToolOutputSchema               = mcp.MustUnmarshalSchema(`{"type":"object","required":["controls"],"properties":{"controls":{"type":"array","items":{"type":"object","required":["id","organization_id","framework_id","section_title","name","status","created_at","updated_at"],"properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"description":"Control description"},"exclusion_justification":{"description":"Exclusion justification"},"framework_id":{"type":"string","format":"string"},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Control name"},"organization_id":{"type":"string","format":"string"},"section_title":{"type":"string","description":"Section title"},"status":{"type":"string","enum":["INCLUDED","EXCLUDED"]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}},"next_cursor":{"type":"string","format":"string"}}}`)
 	ListDataToolInputSchema                    = mcp.MustUnmarshalSchema(`{"type":"object","required":["organization_id"],"properties":{"cursor":{"type":"string","format":"string"},"filter":{"type":"object","properties":{"snapshot_id":{"type":"string","format":"string"}}},"order_by":{"type":"object","required":["field","direction"],"properties":{"direction":{"type":"string","enum":["ASC","DESC"]},"field":{"type":"string","enum":["CREATED_AT","NAME","DATA_CLASSIFICATION"]}}},"organization_id":{"type":"string","format":"string"},"size":{"type":"integer","description":"Page size"}}}`)
 	ListDataToolOutputSchema                   = mcp.MustUnmarshalSchema(`{"type":"object","required":["data"],"properties":{"data":{"type":"array","items":{"type":"object","required":["id","organization_id","name","data_classification","owner_id","created_at","updated_at"],"properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"data_classification":{"type":"string","enum":["PUBLIC","INTERNAL","CONFIDENTIAL","SECRET"]},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Datum name"},"organization_id":{"type":"string","format":"string"},"owner_id":{"type":"string","format":"string"},"snapshot_id":{"description":"Snapshot ID","anyOf":[{"type":"string","format":"string"},{"type":"null","description":"No snapshot"}]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}},"next_cursor":{"type":"string","format":"string"}}}`)
 	ListFrameworksToolInputSchema              = mcp.MustUnmarshalSchema(`{"type":"object","required":["organization_id"],"properties":{"cursor":{"type":"string","format":"string"},"order_by":{"type":"object","required":["field","direction"],"properties":{"direction":{"type":"string","enum":["ASC","DESC"]},"field":{"type":"string","enum":["CREATED_AT"]}}},"organization_id":{"type":"string","format":"string"},"size":{"type":"integer","description":"Page size"}}}`)
@@ -84,6 +90,8 @@ var (
 	UpdateAuditToolOutputSchema                = mcp.MustUnmarshalSchema(`{"type":"object","required":["audit"],"properties":{"audit":{"type":"object","required":["id","organization_id","framework_id","state","trust_center_visibility","created_at","updated_at"],"properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"framework_id":{"type":"string","format":"string"},"id":{"type":"string","format":"string"},"name":{"description":"Audit name"},"organization_id":{"type":"string","format":"string"},"state":{"type":"string","enum":["NOT_STARTED","IN_PROGRESS","COMPLETED","REJECTED","OUTDATED"]},"trust_center_visibility":{"type":"string","enum":["NONE","PRIVATE","PUBLIC"]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"},"valid_from":{"description":"Valid from date","format":"date-time"},"valid_until":{"description":"Valid until date","format":"date-time"}}}}}`)
 	UpdateContinualImprovementToolInputSchema  = mcp.MustUnmarshalSchema(`{"type":"object","required":["id"],"properties":{"description":{"description":"Description"},"id":{"type":"string","format":"string"},"owner_id":{"description":"Owner ID","anyOf":[{"type":"string","format":"string"},{"type":"null"}]},"priority":{"description":"Priority","anyOf":[{"type":"string","enum":["LOW","MEDIUM","HIGH"]},{"type":"null","description":"No priority"}]},"reference_id":{"type":"string","description":"Reference ID"},"source":{"description":"Source"},"status":{"description":"Status","anyOf":[{"type":"string","enum":["OPEN","IN_PROGRESS","CLOSED"]},{"type":"null","description":"No status"}]},"target_date":{"description":"Target date","format":"date-time"}}}`)
 	UpdateContinualImprovementToolOutputSchema = mcp.MustUnmarshalSchema(`{"type":"object","required":["continual_improvement"],"properties":{"continual_improvement":{"type":"object","required":["id","organization_id","reference_id","owner_id","status","priority","created_at","updated_at"],"properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"description":"Description"},"id":{"type":"string","format":"string"},"organization_id":{"type":"string","format":"string"},"owner_id":{"type":"string","format":"string"},"priority":{"type":"string","enum":["LOW","MEDIUM","HIGH"]},"reference_id":{"type":"string","description":"Reference ID"},"snapshot_id":{"description":"Snapshot ID","anyOf":[{"type":"string","format":"string"},{"type":"null","description":"No snapshot"}]},"source":{"description":"Source"},"source_id":{"description":"Source ID"},"status":{"type":"string","enum":["OPEN","IN_PROGRESS","CLOSED"]},"target_date":{"description":"Target date","format":"date-time"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}}}`)
+	UpdateControlToolInputSchema               = mcp.MustUnmarshalSchema(`{"type":"object","required":["id"],"properties":{"description":{"description":"Control description"},"exclusion_justification":{"type":"string","description":"Exclusion justification"},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Control name"},"section_title":{"type":"string","description":"Section title"},"status":{"description":"Control status","anyOf":[{"type":"string","enum":["INCLUDED","EXCLUDED"]},{"type":"null","description":"No status"}]}}}`)
+	UpdateControlToolOutputSchema              = mcp.MustUnmarshalSchema(`{"type":"object","required":["control"],"properties":{"control":{"type":"object","required":["id","organization_id","framework_id","section_title","name","status","created_at","updated_at"],"properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"description":"Control description"},"exclusion_justification":{"description":"Exclusion justification"},"framework_id":{"type":"string","format":"string"},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Control name"},"organization_id":{"type":"string","format":"string"},"section_title":{"type":"string","description":"Section title"},"status":{"type":"string","enum":["INCLUDED","EXCLUDED"]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}}}`)
 	UpdateDatumToolInputSchema                 = mcp.MustUnmarshalSchema(`{"type":"object","required":["id"],"properties":{"data_classification":{"type":"string","enum":["PUBLIC","INTERNAL","CONFIDENTIAL","SECRET"]},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Datum name"},"owner_id":{"description":"Owner ID","anyOf":[{"type":"string","format":"string"},{"type":"null"}]},"vendor_ids":{"type":"array","description":"Vendor IDs","items":{"type":"string","format":"string"}}}}`)
 	UpdateDatumToolOutputSchema                = mcp.MustUnmarshalSchema(`{"type":"object","required":["datum"],"properties":{"datum":{"type":"object","required":["id","organization_id","name","data_classification","owner_id","created_at","updated_at"],"properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"data_classification":{"type":"string","enum":["PUBLIC","INTERNAL","CONFIDENTIAL","SECRET"]},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Datum name"},"organization_id":{"type":"string","format":"string"},"owner_id":{"type":"string","format":"string"},"snapshot_id":{"description":"Snapshot ID","anyOf":[{"type":"string","format":"string"},{"type":"null","description":"No snapshot"}]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}}}`)
 	UpdateFrameworkToolInputSchema             = mcp.MustUnmarshalSchema(`{"type":"object","required":["id"],"properties":{"description":{"description":"Framework description"},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Framework name"}}}`)
@@ -167,6 +175,29 @@ type AddContinualImprovementInput struct {
 // AddContinualImprovementOutput represents the schema
 type AddContinualImprovementOutput struct {
 	ContinualImprovement *ContinualImprovement `json:"continual_improvement"`
+}
+
+// AddControlInput represents the schema
+type AddControlInput struct {
+	// Control description
+	Description *string `json:"description,omitempty"`
+	// Exclusion justification
+	ExclusionJustification *string `json:"exclusion_justification,omitempty"`
+	// Framework ID
+	FrameworkID gid.GID `json:"framework_id"`
+	// Control name
+	Name string `json:"name"`
+	// Organization ID
+	OrganizationID gid.GID `json:"organization_id"`
+	// Section title
+	SectionTitle string `json:"section_title"`
+	// Control status
+	Status *coredata.ControlStatus `json:"status,omitempty"`
+}
+
+// AddControlOutput represents the schema
+type AddControlOutput struct {
+	Control *Control `json:"control"`
 }
 
 // AddDatumInput represents the schema
@@ -457,6 +488,38 @@ type ContinualImprovementOrderBy struct {
 	Field coredata.ContinualImprovementOrderField `json:"field"`
 }
 
+// Control represents the schema
+type Control struct {
+	// Creation timestamp
+	CreatedAt time.Time `json:"created_at"`
+	// Control description
+	Description *string `json:"description,omitempty"`
+	// Exclusion justification
+	ExclusionJustification *string `json:"exclusion_justification,omitempty"`
+	// Framework ID
+	FrameworkID gid.GID `json:"framework_id"`
+	// Control ID
+	ID gid.GID `json:"id"`
+	// Control name
+	Name string `json:"name"`
+	// Organization ID
+	OrganizationID gid.GID `json:"organization_id"`
+	// Section title
+	SectionTitle string `json:"section_title"`
+	// Control status
+	Status coredata.ControlStatus `json:"status"`
+	// Update timestamp
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+// ControlOrderBy represents the schema
+type ControlOrderBy struct {
+	// Control order direction
+	Direction page.OrderDirection `json:"direction"`
+	// Control order field
+	Field coredata.ControlOrderField `json:"field"`
+}
+
 // Datum represents the schema
 type Datum struct {
 	// Creation timestamp
@@ -540,6 +603,17 @@ type GetContinualImprovementInput struct {
 // GetContinualImprovementOutput represents the schema
 type GetContinualImprovementOutput struct {
 	ContinualImprovement *ContinualImprovement `json:"continual_improvement"`
+}
+
+// GetControlInput represents the schema
+type GetControlInput struct {
+	// Control ID
+	ID gid.GID `json:"id"`
+}
+
+// GetControlOutput represents the schema
+type GetControlOutput struct {
+	Control *Control `json:"control"`
 }
 
 // GetDatumInput represents the schema
@@ -674,6 +748,28 @@ type ListContinualImprovementsInput struct {
 // ListContinualImprovementsOutput represents the schema
 type ListContinualImprovementsOutput struct {
 	ContinualImprovements []*ContinualImprovement `json:"continual_improvements"`
+	// Next cursor
+	NextCursor *page.CursorKey `json:"next_cursor,omitempty"`
+}
+
+// ListControlsInput represents the schema
+type ListControlsInput struct {
+	// Page cursor
+	Cursor *page.CursorKey          `json:"cursor,omitempty"`
+	Filter *ListControlsInputFilter `json:"filter,omitempty"`
+	// Framework ID
+	FrameworkID *gid.GID `json:"framework_id,omitempty"`
+	// Control order by
+	OrderBy *ControlOrderBy `json:"order_by,omitempty"`
+	// Organization ID
+	OrganizationID gid.GID `json:"organization_id"`
+	// Page size
+	Size *int `json:"size,omitempty"`
+}
+
+// ListControlsOutput represents the schema
+type ListControlsOutput struct {
+	Controls []*Control `json:"controls"`
 	// Next cursor
 	NextCursor *page.CursorKey `json:"next_cursor,omitempty"`
 }
@@ -1120,6 +1216,27 @@ type UpdateContinualImprovementOutput struct {
 	ContinualImprovement *ContinualImprovement `json:"continual_improvement"`
 }
 
+// UpdateControlInput represents the schema
+type UpdateControlInput struct {
+	// Control description
+	Description mcp.Omittable[*string] `json:"description,omitempty"`
+	// Exclusion justification
+	ExclusionJustification *string `json:"exclusion_justification,omitempty"`
+	// Control ID
+	ID gid.GID `json:"id"`
+	// Control name
+	Name *string `json:"name,omitempty"`
+	// Section title
+	SectionTitle *string `json:"section_title,omitempty"`
+	// Control status
+	Status *coredata.ControlStatus `json:"status,omitempty"`
+}
+
+// UpdateControlOutput represents the schema
+type UpdateControlOutput struct {
+	Control *Control `json:"control"`
+}
+
 // UpdateDatumInput represents the schema
 type UpdateDatumInput struct {
 	// Data classification
@@ -1313,6 +1430,12 @@ type ListAssetsInputFilter struct {
 type ListContinualImprovementsInputFilter struct {
 	// Snapshot ID
 	SnapshotID *gid.GID `json:"snapshot_id,omitempty"`
+}
+
+// ListControlsInputFilter represents the schema
+type ListControlsInputFilter struct {
+	// Search query
+	Query *string `json:"query,omitempty"`
 }
 
 // ListDataInputFilter represents the schema

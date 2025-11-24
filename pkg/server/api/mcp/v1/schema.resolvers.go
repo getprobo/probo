@@ -1066,3 +1066,99 @@ func (r *Resolver) UpdateAuditTool(ctx context.Context, req *mcp.CallToolRequest
 		Audit: types.NewAudit(audit),
 	}, nil
 }
+
+func (r *Resolver) ListControlsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListControlsInput) (*mcp.CallToolResult, types.ListControlsOutput, error) {
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionListControls)
+
+	prb := r.ProboService(ctx, input.OrganizationID)
+
+	pageOrderBy := page.OrderBy[coredata.ControlOrderField]{
+		Field:     coredata.ControlOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.ControlOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	var controlFilter = coredata.NewControlFilter(nil)
+	if input.Filter != nil {
+		controlFilter = coredata.NewControlFilter(input.Filter.Query)
+	}
+
+	page, err := prb.Controls.ListForOrganizationID(ctx, input.OrganizationID, cursor, controlFilter)
+	if err != nil {
+		panic(fmt.Errorf("cannot list organization controls: %w", err))
+	}
+
+	return nil, types.NewListControlsOutput(page), nil
+}
+
+func (r *Resolver) GetControlTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetControlInput) (*mcp.CallToolResult, types.GetControlOutput, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionGet)
+
+	prb := r.ProboService(ctx, input.ID)
+
+	control, err := prb.Controls.Get(ctx, input.ID)
+	if err != nil {
+		return nil, types.GetControlOutput{}, fmt.Errorf("failed to get control: %w", err)
+	}
+
+	return nil, types.GetControlOutput{
+		Control: types.NewControl(control),
+	}, nil
+}
+
+func (r *Resolver) AddControlTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddControlInput) (*mcp.CallToolResult, types.AddControlOutput, error) {
+	r.MustBeAuthorized(ctx, input.FrameworkID, authz.ActionCreateControl)
+
+	svc := r.ProboService(ctx, input.FrameworkID)
+
+	control, err := svc.Controls.Create(
+		ctx,
+		probo.CreateControlRequest{
+			FrameworkID:            input.FrameworkID,
+			Name:                   input.Name,
+			Description:            input.Description,
+			SectionTitle:           input.SectionTitle,
+			Status:                 input.Status,
+			ExclusionJustification: input.ExclusionJustification,
+		},
+	)
+	if err != nil {
+		return nil, types.AddControlOutput{}, fmt.Errorf("failed to create control: %w", err)
+	}
+
+	return nil, types.AddControlOutput{
+		Control: types.NewControl(control),
+	}, nil
+}
+
+func (r *Resolver) UpdateControlTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateControlInput) (*mcp.CallToolResult, types.UpdateControlOutput, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionUpdateControl)
+
+	svc := r.ProboService(ctx, input.ID)
+
+	control, err := svc.Controls.Update(
+		ctx,
+		probo.UpdateControlRequest{
+			ID:                     input.ID,
+			Name:                   input.Name,
+			Description:            UnwrapOmittable(input.Description),
+			SectionTitle:           input.SectionTitle,
+			Status:                 input.Status,
+			ExclusionJustification: input.ExclusionJustification,
+		},
+	)
+	if err != nil {
+		return nil, types.UpdateControlOutput{}, fmt.Errorf("failed to update control: %w", err)
+	}
+
+	return nil, types.UpdateControlOutput{
+		Control: types.NewControl(control),
+	}, nil
+}
