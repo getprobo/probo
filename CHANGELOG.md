@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.92.0] - 2025-11-24
+
+### Added
+
+- Add snapshot MCP tools.
+- Add task MCP tools.
+- Add control MCP tools.
+- Add control mapping MCP tools.
+
+### Fixed
+
+- Fix 5xx on vendor snapshot.
+
+
 ## [0.91.0] - 2025-11-24
 
 ### Added
