@@ -35,7 +35,7 @@ jobs:
         with:
           distribution: "goreleaser"
           version: "~> v2"
-          args: "release --clean --snapshot"
+          args: "release --clean --snapshot --verbose"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: "aquasecurity/trivy-action@0.28.0"
