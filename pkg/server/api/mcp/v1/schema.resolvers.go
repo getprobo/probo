@@ -1162,3 +1162,107 @@ func (r *Resolver) UpdateControlTool(ctx context.Context, req *mcp.CallToolReque
 		Control: types.NewControl(control),
 	}, nil
 }
+
+func (r *Resolver) LinkControlMeasureTool(ctx context.Context, req *mcp.CallToolRequest, input *types.LinkControlMeasureInput) (*mcp.CallToolResult, types.LinkControlMeasureOutput, error) {
+	r.MustBeAuthorized(ctx, input.ControlID, authz.ActionCreateControlMeasureMapping)
+
+	svc := r.ProboService(ctx, input.ControlID)
+
+	_, _, err := svc.Controls.CreateMeasureMapping(ctx, input.ControlID, input.MeasureID)
+	if err != nil {
+		return nil, types.LinkControlMeasureOutput{}, fmt.Errorf("failed to link control measure: %w", err)
+	}
+
+	return nil, types.LinkControlMeasureOutput{}, nil
+}
+
+func (r *Resolver) UnlinkControlMeasureTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UnlinkControlMeasureInput) (*mcp.CallToolResult, types.UnlinkControlMeasureOutput, error) {
+	r.MustBeAuthorized(ctx, input.ControlID, authz.ActionDeleteControlMeasureMapping)
+
+	svc := r.ProboService(ctx, input.ControlID)
+
+	_, _, err := svc.Controls.DeleteMeasureMapping(ctx, input.ControlID, input.MeasureID)
+	if err != nil {
+		return nil, types.UnlinkControlMeasureOutput{}, fmt.Errorf("failed to unlink control measure: %w", err)
+	}
+
+	return nil, types.UnlinkControlMeasureOutput{}, nil
+}
+
+func (r *Resolver) LinkControlDocumentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.LinkControlDocumentInput) (*mcp.CallToolResult, types.LinkControlDocumentOutput, error) {
+	r.MustBeAuthorized(ctx, input.ControlID, authz.ActionCreateControlDocumentMapping)
+
+	svc := r.ProboService(ctx, input.ControlID)
+
+	_, _, err := svc.Controls.CreateDocumentMapping(ctx, input.ControlID, input.DocumentID)
+	if err != nil {
+		return nil, types.LinkControlDocumentOutput{}, fmt.Errorf("failed to link control document: %w", err)
+	}
+
+	return nil, types.LinkControlDocumentOutput{}, nil
+}
+
+func (r *Resolver) UnlinkControlDocumentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UnlinkControlDocumentInput) (*mcp.CallToolResult, types.UnlinkControlDocumentOutput, error) {
+	r.MustBeAuthorized(ctx, input.ControlID, authz.ActionDeleteControlDocumentMapping)
+
+	svc := r.ProboService(ctx, input.ControlID)
+
+	_, _, err := svc.Controls.DeleteDocumentMapping(ctx, input.ControlID, input.DocumentID)
+	if err != nil {
+		return nil, types.UnlinkControlDocumentOutput{}, fmt.Errorf("failed to unlink control document: %w", err)
+	}
+
+	return nil, types.UnlinkControlDocumentOutput{}, nil
+}
+
+func (r *Resolver) LinkControlAuditTool(ctx context.Context, req *mcp.CallToolRequest, input *types.LinkControlAuditInput) (*mcp.CallToolResult, types.LinkControlAuditOutput, error) {
+	r.MustBeAuthorized(ctx, input.ControlID, authz.ActionCreateControlAuditMapping)
+
+	svc := r.ProboService(ctx, input.ControlID)
+
+	_, _, err := svc.Controls.CreateAuditMapping(ctx, input.ControlID, input.AuditID)
+	if err != nil {
+		return nil, types.LinkControlAuditOutput{}, fmt.Errorf("failed to link control audit: %w", err)
+	}
+
+	return nil, types.LinkControlAuditOutput{}, nil
+}
+
+func (r *Resolver) UnlinkControlAuditTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UnlinkControlAuditInput) (*mcp.CallToolResult, types.UnlinkControlAuditOutput, error) {
+	r.MustBeAuthorized(ctx, input.ControlID, authz.ActionDeleteControlAuditMapping)
+
+	svc := r.ProboService(ctx, input.ControlID)
+
+	_, _, err := svc.Controls.DeleteAuditMapping(ctx, input.ControlID, input.AuditID)
+	if err != nil {
+		return nil, types.UnlinkControlAuditOutput{}, fmt.Errorf("failed to unlink control audit: %w", err)
+	}
+
+	return nil, types.UnlinkControlAuditOutput{}, nil
+}
+
+func (r *Resolver) LinkControlSnapshotTool(ctx context.Context, req *mcp.CallToolRequest, input *types.LinkControlSnapshotInput) (*mcp.CallToolResult, types.LinkControlSnapshotOutput, error) {
+	r.MustBeAuthorized(ctx, input.ControlID, authz.ActionCreateControlSnapshotMapping)
+
+	svc := r.ProboService(ctx, input.ControlID)
+
+	_, _, err := svc.Controls.CreateSnapshotMapping(ctx, input.ControlID, input.SnapshotID)
+	if err != nil {
+		return nil, types.LinkControlSnapshotOutput{}, fmt.Errorf("failed to link control snapshot: %w", err)
+	}
+
+	return nil, types.LinkControlSnapshotOutput{}, nil
+}
+
+func (r *Resolver) UnlinkControlSnapshotTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UnlinkControlSnapshotInput) (*mcp.CallToolResult, types.UnlinkControlSnapshotOutput, error) {
+	r.MustBeAuthorized(ctx, input.ControlID, authz.ActionDeleteControlSnapshotMapping)
+
+	svc := r.ProboService(ctx, input.ControlID)
+
+	_, _, err := svc.Controls.DeleteSnapshotMapping(ctx, input.ControlID, input.SnapshotID)
+	if err != nil {
+		return nil, types.UnlinkControlSnapshotOutput{}, fmt.Errorf("failed to unlink control snapshot: %w", err)
+	}
+
+	return nil, types.UnlinkControlSnapshotOutput{}, nil
+}

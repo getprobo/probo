@@ -57,6 +57,14 @@ type ResolverInterface interface {
 	GetControlTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetControlInput) (*mcp.CallToolResult, types.GetControlOutput, error)
 	AddControlTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddControlInput) (*mcp.CallToolResult, types.AddControlOutput, error)
 	UpdateControlTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateControlInput) (*mcp.CallToolResult, types.UpdateControlOutput, error)
+	LinkControlMeasureTool(ctx context.Context, req *mcp.CallToolRequest, input *types.LinkControlMeasureInput) (*mcp.CallToolResult, types.LinkControlMeasureOutput, error)
+	UnlinkControlMeasureTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UnlinkControlMeasureInput) (*mcp.CallToolResult, types.UnlinkControlMeasureOutput, error)
+	LinkControlDocumentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.LinkControlDocumentInput) (*mcp.CallToolResult, types.LinkControlDocumentOutput, error)
+	UnlinkControlDocumentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UnlinkControlDocumentInput) (*mcp.CallToolResult, types.UnlinkControlDocumentOutput, error)
+	LinkControlAuditTool(ctx context.Context, req *mcp.CallToolRequest, input *types.LinkControlAuditInput) (*mcp.CallToolResult, types.LinkControlAuditOutput, error)
+	UnlinkControlAuditTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UnlinkControlAuditInput) (*mcp.CallToolResult, types.UnlinkControlAuditOutput, error)
+	LinkControlSnapshotTool(ctx context.Context, req *mcp.CallToolRequest, input *types.LinkControlSnapshotInput) (*mcp.CallToolResult, types.LinkControlSnapshotOutput, error)
+	UnlinkControlSnapshotTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UnlinkControlSnapshotInput) (*mcp.CallToolResult, types.UnlinkControlSnapshotOutput, error)
 }
 
 // New creates a new MCP server instance with all handlers registered.
@@ -545,5 +553,85 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 			OutputSchema: types.UpdateControlToolOutputSchema,
 		},
 		resolver.UpdateControlTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "linkControlMeasure",
+			Description:  "Link a measure to a control",
+			InputSchema:  types.LinkControlMeasureToolInputSchema,
+			OutputSchema: types.LinkControlMeasureToolOutputSchema,
+		},
+		resolver.LinkControlMeasureTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "unlinkControlMeasure",
+			Description:  "Unlink a measure from a control",
+			InputSchema:  types.UnlinkControlMeasureToolInputSchema,
+			OutputSchema: types.UnlinkControlMeasureToolOutputSchema,
+		},
+		resolver.UnlinkControlMeasureTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "linkControlDocument",
+			Description:  "Link a document to a control",
+			InputSchema:  types.LinkControlDocumentToolInputSchema,
+			OutputSchema: types.LinkControlDocumentToolOutputSchema,
+		},
+		resolver.LinkControlDocumentTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "unlinkControlDocument",
+			Description:  "Unlink a document from a control",
+			InputSchema:  types.UnlinkControlDocumentToolInputSchema,
+			OutputSchema: types.UnlinkControlDocumentToolOutputSchema,
+		},
+		resolver.UnlinkControlDocumentTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "linkControlAudit",
+			Description:  "Link an audit to a control",
+			InputSchema:  types.LinkControlAuditToolInputSchema,
+			OutputSchema: types.LinkControlAuditToolOutputSchema,
+		},
+		resolver.LinkControlAuditTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "unlinkControlAudit",
+			Description:  "Unlink an audit from a control",
+			InputSchema:  types.UnlinkControlAuditToolInputSchema,
+			OutputSchema: types.UnlinkControlAuditToolOutputSchema,
+		},
+		resolver.UnlinkControlAuditTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "linkControlSnapshot",
+			Description:  "Link a snapshot to a control",
+			InputSchema:  types.LinkControlSnapshotToolInputSchema,
+			OutputSchema: types.LinkControlSnapshotToolOutputSchema,
+		},
+		resolver.LinkControlSnapshotTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "unlinkControlSnapshot",
+			Description:  "Unlink a snapshot from a control",
+			InputSchema:  types.UnlinkControlSnapshotToolInputSchema,
+			OutputSchema: types.UnlinkControlSnapshotToolOutputSchema,
+		},
+		resolver.UnlinkControlSnapshotTool,
 	)
 }

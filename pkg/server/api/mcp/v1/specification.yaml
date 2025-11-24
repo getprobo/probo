@@ -2654,6 +2654,134 @@ components:
         control:
           $ref: "#/components/schemas/Control"
 
+    LinkControlMeasureInput:
+      type: object
+      required:
+        - control_id
+        - measure_id
+      properties:
+        control_id:
+          $ref: "#/components/schemas/GID"
+          description: Control ID
+        measure_id:
+          $ref: "#/components/schemas/GID"
+          description: Measure ID
+
+    LinkControlMeasureOutput:
+      type: object
+
+    UnlinkControlMeasureInput:
+      type: object
+      required:
+        - control_id
+        - measure_id
+      properties:
+        control_id:
+          $ref: "#/components/schemas/GID"
+          description: Control ID
+        measure_id:
+          $ref: "#/components/schemas/GID"
+          description: Measure ID
+
+    UnlinkControlMeasureOutput:
+      type: object
+
+    LinkControlDocumentInput:
+      type: object
+      required:
+        - control_id
+        - document_id
+      properties:
+        control_id:
+          $ref: "#/components/schemas/GID"
+          description: Control ID
+        document_id:
+          $ref: "#/components/schemas/GID"
+          description: Document ID
+
+    LinkControlDocumentOutput:
+      type: object
+
+    UnlinkControlDocumentInput:
+      type: object
+      required:
+        - control_id
+        - document_id
+      properties:
+        control_id:
+          $ref: "#/components/schemas/GID"
+          description: Control ID
+        document_id:
+          $ref: "#/components/schemas/GID"
+          description: Document ID
+
+    UnlinkControlDocumentOutput:
+      type: object
+
+    LinkControlAuditInput:
+      type: object
+      required:
+        - control_id
+        - audit_id
+      properties:
+        control_id:
+          $ref: "#/components/schemas/GID"
+          description: Control ID
+        audit_id:
+          $ref: "#/components/schemas/GID"
+          description: Audit ID
+
+    LinkControlAuditOutput:
+      type: object
+
+    UnlinkControlAuditInput:
+      type: object
+      required:
+        - control_id
+        - audit_id
+      properties:
+        control_id:
+          $ref: "#/components/schemas/GID"
+          description: Control ID
+        audit_id:
+          $ref: "#/components/schemas/GID"
+          description: Audit ID
+
+    UnlinkControlAuditOutput:
+      type: object
+
+    LinkControlSnapshotInput:
+      type: object
+      required:
+        - control_id
+        - snapshot_id
+      properties:
+        control_id:
+          $ref: "#/components/schemas/GID"
+          description: Control ID
+        snapshot_id:
+          $ref: "#/components/schemas/GID"
+          description: Snapshot ID
+
+    LinkControlSnapshotOutput:
+      type: object
+
+    UnlinkControlSnapshotInput:
+      type: object
+      required:
+        - control_id
+        - snapshot_id
+      properties:
+        control_id:
+          $ref: "#/components/schemas/GID"
+          description: Control ID
+        snapshot_id:
+          $ref: "#/components/schemas/GID"
+          description: Snapshot ID
+
+    UnlinkControlSnapshotOutput:
+      type: object
+
 tools:
   - name: listOrganizations
     description: List all organizations the user has access to
@@ -2984,3 +3112,59 @@ tools:
       $ref: "#/components/schemas/UpdateControlInput"
     outputSchema:
       $ref: "#/components/schemas/UpdateControlOutput"
+  - name: linkControlMeasure
+    description: Link a measure to a control
+    readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/LinkControlMeasureInput"
+    outputSchema:
+      $ref: "#/components/schemas/LinkControlMeasureOutput"
+  - name: unlinkControlMeasure
+    description: Unlink a measure from a control
+    readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UnlinkControlMeasureInput"
+    outputSchema:
+      $ref: "#/components/schemas/UnlinkControlMeasureOutput"
+  - name: linkControlDocument
+    description: Link a document to a control
+    readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/LinkControlDocumentInput"
+    outputSchema:
+      $ref: "#/components/schemas/LinkControlDocumentOutput"
+  - name: unlinkControlDocument
+    description: Unlink a document from a control
+    readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UnlinkControlDocumentInput"
+    outputSchema:
+      $ref: "#/components/schemas/UnlinkControlDocumentOutput"
+  - name: linkControlAudit
+    description: Link an audit to a control
+    readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/LinkControlAuditInput"
+    outputSchema:
+      $ref: "#/components/schemas/LinkControlAuditOutput"
+  - name: unlinkControlAudit
+    description: Unlink an audit from a control
+    readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UnlinkControlAuditInput"
+    outputSchema:
+      $ref: "#/components/schemas/UnlinkControlAuditOutput"
+  - name: linkControlSnapshot
+    description: Link a snapshot to a control
+    readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/LinkControlSnapshotInput"
+    outputSchema:
+      $ref: "#/components/schemas/LinkControlSnapshotOutput"
+  - name: unlinkControlSnapshot
+    description: Unlink a snapshot from a control
+    readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UnlinkControlSnapshotInput"
+    outputSchema:
+      $ref: "#/components/schemas/UnlinkControlSnapshotOutput"

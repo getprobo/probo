@@ -58,6 +58,14 @@ var (
 	GetPeopleToolOutputSchema                  = mcp.MustUnmarshalSchema(`{"type":"object","required":["people"],"properties":{"people":{"type":"object","required":["id","organization_id","full_name","primary_email_address","additional_email_addresses","kind","created_at","updated_at"],"properties":{"additional_email_addresses":{"type":"array","description":"Additional email addresses","items":{"type":"string"}},"contract_end_date":{"description":"Contract end date","format":"date-time"},"contract_start_date":{"description":"Contract start date","format":"date-time"},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"full_name":{"type":"string","description":"Full name"},"id":{"type":"string","format":"string"},"kind":{"type":"string","enum":["EMPLOYEE","CONTRACTOR","SERVICE_ACCOUNT"]},"organization_id":{"type":"string","format":"string"},"position":{"description":"Position"},"primary_email_address":{"type":"string","description":"Primary email address"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}}}`)
 	GetRiskToolInputSchema                     = mcp.MustUnmarshalSchema(`{"type":"object","required":["id"],"properties":{"id":{"type":"string","format":"string"}}}`)
 	GetRiskToolOutputSchema                    = mcp.MustUnmarshalSchema(`{"type":"object","required":["risk"],"properties":{"risk":{"type":"object","required":["id","organization_id","name","category","treatment","inherent_likelihood","inherent_impact","inherent_risk_score","residual_likelihood","residual_impact","residual_risk_score","note","created_at","updated_at"],"properties":{"category":{"type":"string","description":"Risk category"},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"description":"Risk description"},"id":{"type":"string","format":"string"},"inherent_impact":{"type":"integer","description":"Inherent impact"},"inherent_likelihood":{"type":"integer","description":"Inherent likelihood"},"inherent_risk_score":{"type":"integer","description":"Inherent risk score"},"name":{"type":"string","description":"Risk name"},"note":{"type":"string","description":"Risk note"},"organization_id":{"type":"string","format":"string"},"owner_id":{"anyOf":[{"type":"string","format":"string"},{"type":"null","description":"No owner"}]},"residual_impact":{"type":"integer","description":"Residual impact"},"residual_likelihood":{"type":"integer","description":"Residual likelihood"},"residual_risk_score":{"type":"integer","description":"Residual risk score"},"snapshot_id":{"description":"Snapshot ID","anyOf":[{"type":"string","format":"string"},{"type":"null","description":"No snapshot"}]},"treatment":{"type":"string","enum":["MITIGATED","ACCEPTED","AVOIDED","TRANSFERRED"]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}}}`)
+	LinkControlAuditToolInputSchema            = mcp.MustUnmarshalSchema(`{"type":"object","required":["control_id","audit_id"],"properties":{"audit_id":{"type":"string","format":"string"},"control_id":{"type":"string","format":"string"}}}`)
+	LinkControlAuditToolOutputSchema           = mcp.MustUnmarshalSchema(`{"type":"object"}`)
+	LinkControlDocumentToolInputSchema         = mcp.MustUnmarshalSchema(`{"type":"object","required":["control_id","document_id"],"properties":{"control_id":{"type":"string","format":"string"},"document_id":{"type":"string","format":"string"}}}`)
+	LinkControlDocumentToolOutputSchema        = mcp.MustUnmarshalSchema(`{"type":"object"}`)
+	LinkControlMeasureToolInputSchema          = mcp.MustUnmarshalSchema(`{"type":"object","required":["control_id","measure_id"],"properties":{"control_id":{"type":"string","format":"string"},"measure_id":{"type":"string","format":"string"}}}`)
+	LinkControlMeasureToolOutputSchema         = mcp.MustUnmarshalSchema(`{"type":"object"}`)
+	LinkControlSnapshotToolInputSchema         = mcp.MustUnmarshalSchema(`{"type":"object","required":["control_id","snapshot_id"],"properties":{"control_id":{"type":"string","format":"string"},"snapshot_id":{"type":"string","format":"string"}}}`)
+	LinkControlSnapshotToolOutputSchema        = mcp.MustUnmarshalSchema(`{"type":"object"}`)
 	ListAssetsToolInputSchema                  = mcp.MustUnmarshalSchema(`{"type":"object","required":["organization_id"],"properties":{"cursor":{"type":"string","format":"string"},"filter":{"type":"object","properties":{"snapshot_id":{"type":"string","format":"string"}}},"order_by":{"type":"object","required":["field","direction"],"properties":{"direction":{"type":"string","enum":["ASC","DESC"]},"field":{"type":"string","enum":["CREATED_AT","AMOUNT"]}}},"organization_id":{"type":"string","format":"string"},"size":{"type":"integer","description":"Page size"}}}`)
 	ListAssetsToolOutputSchema                 = mcp.MustUnmarshalSchema(`{"type":"object","required":["assets"],"properties":{"assets":{"type":"array","items":{"type":"object","required":["id","organization_id","name","amount","owner_id","asset_type","data_types_stored","created_at","updated_at"],"properties":{"amount":{"type":"integer","description":"Asset amount"},"asset_type":{"type":"string","enum":["PHYSICAL","VIRTUAL"]},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"data_types_stored":{"type":"string","description":"Data types stored"},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Asset name"},"organization_id":{"type":"string","format":"string"},"owner_id":{"type":"string","format":"string"},"snapshot_id":{"description":"Snapshot ID"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}},"next_cursor":{"type":"string","format":"string"}}}`)
 	ListAuditsToolInputSchema                  = mcp.MustUnmarshalSchema(`{"type":"object","required":["organization_id"],"properties":{"cursor":{"type":"string","format":"string"},"order_by":{"type":"object","required":["field","direction"],"properties":{"direction":{"type":"string","enum":["ASC","DESC"]},"field":{"type":"string","enum":["CREATED_AT","VALID_FROM","VALID_UNTIL","STATE"]}}},"organization_id":{"type":"string","format":"string"},"size":{"type":"integer","description":"Page size"}}}`)
@@ -84,6 +92,14 @@ var (
 	ListRisksToolOutputSchema                  = mcp.MustUnmarshalSchema(`{"type":"object","required":["risks"],"properties":{"next_cursor":{"type":"string","format":"string"},"risks":{"type":"array","items":{"type":"object","required":["id","organization_id","name","category","treatment","inherent_likelihood","inherent_impact","inherent_risk_score","residual_likelihood","residual_impact","residual_risk_score","note","created_at","updated_at"],"properties":{"category":{"type":"string","description":"Risk category"},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"description":"Risk description"},"id":{"type":"string","format":"string"},"inherent_impact":{"type":"integer","description":"Inherent impact"},"inherent_likelihood":{"type":"integer","description":"Inherent likelihood"},"inherent_risk_score":{"type":"integer","description":"Inherent risk score"},"name":{"type":"string","description":"Risk name"},"note":{"type":"string","description":"Risk note"},"organization_id":{"type":"string","format":"string"},"owner_id":{"anyOf":[{"type":"string","format":"string"},{"type":"null","description":"No owner"}]},"residual_impact":{"type":"integer","description":"Residual impact"},"residual_likelihood":{"type":"integer","description":"Residual likelihood"},"residual_risk_score":{"type":"integer","description":"Residual risk score"},"snapshot_id":{"description":"Snapshot ID","anyOf":[{"type":"string","format":"string"},{"type":"null","description":"No snapshot"}]},"treatment":{"type":"string","enum":["MITIGATED","ACCEPTED","AVOIDED","TRANSFERRED"]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}}}}`)
 	ListVendorsToolInputSchema                 = mcp.MustUnmarshalSchema(`{"type":"object","required":["organization_id"],"properties":{"cursor":{"type":"string","format":"string"},"filter":{"type":"object","properties":{"snapshot_id":{"type":"string","format":"string"}}},"order_by":{"type":"object","required":["field","direction"],"properties":{"direction":{"type":"string","enum":["ASC","DESC"]},"field":{"type":"string","enum":["CREATED_AT","UPDATED_AT","NAME"]}}},"organization_id":{"type":"string","format":"string"},"size":{"type":"integer","description":"Page size"}}}`)
 	ListVendorsToolOutputSchema                = mcp.MustUnmarshalSchema(`{"type":"object","required":["vendors"],"properties":{"next_cursor":{"type":"string","format":"string"},"vendors":{"type":"array","items":{"type":"object","required":["id","name","organization_id","created_at","updated_at"],"properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"description":"Vendor description"},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Vendor name"},"organization_id":{"type":"string","format":"string"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}}}}`)
+	UnlinkControlAuditToolInputSchema          = mcp.MustUnmarshalSchema(`{"type":"object","required":["control_id","audit_id"],"properties":{"audit_id":{"type":"string","format":"string"},"control_id":{"type":"string","format":"string"}}}`)
+	UnlinkControlAuditToolOutputSchema         = mcp.MustUnmarshalSchema(`{"type":"object"}`)
+	UnlinkControlDocumentToolInputSchema       = mcp.MustUnmarshalSchema(`{"type":"object","required":["control_id","document_id"],"properties":{"control_id":{"type":"string","format":"string"},"document_id":{"type":"string","format":"string"}}}`)
+	UnlinkControlDocumentToolOutputSchema      = mcp.MustUnmarshalSchema(`{"type":"object"}`)
+	UnlinkControlMeasureToolInputSchema        = mcp.MustUnmarshalSchema(`{"type":"object","required":["control_id","measure_id"],"properties":{"control_id":{"type":"string","format":"string"},"measure_id":{"type":"string","format":"string"}}}`)
+	UnlinkControlMeasureToolOutputSchema       = mcp.MustUnmarshalSchema(`{"type":"object"}`)
+	UnlinkControlSnapshotToolInputSchema       = mcp.MustUnmarshalSchema(`{"type":"object","required":["control_id","snapshot_id"],"properties":{"control_id":{"type":"string","format":"string"},"snapshot_id":{"type":"string","format":"string"}}}`)
+	UnlinkControlSnapshotToolOutputSchema      = mcp.MustUnmarshalSchema(`{"type":"object"}`)
 	UpdateAssetToolInputSchema                 = mcp.MustUnmarshalSchema(`{"type":"object","required":["id"],"properties":{"amount":{"type":"integer","description":"Asset amount"},"asset_type":{"type":"string","enum":["PHYSICAL","VIRTUAL"]},"data_types_stored":{"type":"string","description":"Data types stored"},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Asset name"},"owner_id":{"description":"Owner ID","anyOf":[{"type":"string","format":"string"},{"type":"null"}]},"vendor_ids":{"type":"array","description":"Vendor IDs","items":{"type":"string","format":"string"}}}}`)
 	UpdateAssetToolOutputSchema                = mcp.MustUnmarshalSchema(`{"type":"object","required":["asset"],"properties":{"asset":{"type":"object","required":["id","organization_id","name","amount","owner_id","asset_type","data_types_stored","created_at","updated_at"],"properties":{"amount":{"type":"integer","description":"Asset amount"},"asset_type":{"type":"string","enum":["PHYSICAL","VIRTUAL"]},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"data_types_stored":{"type":"string","description":"Data types stored"},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Asset name"},"organization_id":{"type":"string","format":"string"},"owner_id":{"type":"string","format":"string"},"snapshot_id":{"description":"Snapshot ID"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}}}`)
 	UpdateAuditToolInputSchema                 = mcp.MustUnmarshalSchema(`{"type":"object","required":["id"],"properties":{"id":{"type":"string","format":"string"},"name":{"description":"Audit name"},"state":{"description":"Audit state","anyOf":[{"type":"string","enum":["NOT_STARTED","IN_PROGRESS","COMPLETED","REJECTED","OUTDATED"]},{"type":"null","description":"No state"}]},"trust_center_visibility":{"description":"Trust center visibility","anyOf":[{"type":"string","enum":["NONE","PRIVATE","PUBLIC"]},{"type":"null","description":"No trust center visibility"}]},"valid_from":{"description":"Valid from date","format":"date-time"},"valid_until":{"description":"Valid until date","format":"date-time"}}}`)
@@ -693,6 +709,54 @@ type GetRiskOutput struct {
 	Risk *Risk `json:"risk"`
 }
 
+// LinkControlAuditInput represents the schema
+type LinkControlAuditInput struct {
+	// Audit ID
+	AuditID gid.GID `json:"audit_id"`
+	// Control ID
+	ControlID gid.GID `json:"control_id"`
+}
+
+// LinkControlAuditOutput represents the schema
+type LinkControlAuditOutput struct {
+}
+
+// LinkControlDocumentInput represents the schema
+type LinkControlDocumentInput struct {
+	// Control ID
+	ControlID gid.GID `json:"control_id"`
+	// Document ID
+	DocumentID gid.GID `json:"document_id"`
+}
+
+// LinkControlDocumentOutput represents the schema
+type LinkControlDocumentOutput struct {
+}
+
+// LinkControlMeasureInput represents the schema
+type LinkControlMeasureInput struct {
+	// Control ID
+	ControlID gid.GID `json:"control_id"`
+	// Measure ID
+	MeasureID gid.GID `json:"measure_id"`
+}
+
+// LinkControlMeasureOutput represents the schema
+type LinkControlMeasureOutput struct {
+}
+
+// LinkControlSnapshotInput represents the schema
+type LinkControlSnapshotInput struct {
+	// Control ID
+	ControlID gid.GID `json:"control_id"`
+	// Snapshot ID
+	SnapshotID gid.GID `json:"snapshot_id"`
+}
+
+// LinkControlSnapshotOutput represents the schema
+type LinkControlSnapshotOutput struct {
+}
+
 // ListAssetsInput represents the schema
 type ListAssetsInput struct {
 	// Page cursor
@@ -1145,6 +1209,54 @@ type RiskOrderBy struct {
 	Direction page.OrderDirection `json:"direction"`
 	// Risk order field
 	Field coredata.RiskOrderField `json:"field"`
+}
+
+// UnlinkControlAuditInput represents the schema
+type UnlinkControlAuditInput struct {
+	// Audit ID
+	AuditID gid.GID `json:"audit_id"`
+	// Control ID
+	ControlID gid.GID `json:"control_id"`
+}
+
+// UnlinkControlAuditOutput represents the schema
+type UnlinkControlAuditOutput struct {
+}
+
+// UnlinkControlDocumentInput represents the schema
+type UnlinkControlDocumentInput struct {
+	// Control ID
+	ControlID gid.GID `json:"control_id"`
+	// Document ID
+	DocumentID gid.GID `json:"document_id"`
+}
+
+// UnlinkControlDocumentOutput represents the schema
+type UnlinkControlDocumentOutput struct {
+}
+
+// UnlinkControlMeasureInput represents the schema
+type UnlinkControlMeasureInput struct {
+	// Control ID
+	ControlID gid.GID `json:"control_id"`
+	// Measure ID
+	MeasureID gid.GID `json:"measure_id"`
+}
+
+// UnlinkControlMeasureOutput represents the schema
+type UnlinkControlMeasureOutput struct {
+}
+
+// UnlinkControlSnapshotInput represents the schema
+type UnlinkControlSnapshotInput struct {
+	// Control ID
+	ControlID gid.GID `json:"control_id"`
+	// Snapshot ID
+	SnapshotID gid.GID `json:"snapshot_id"`
+}
+
+// UnlinkControlSnapshotOutput represents the schema
+type UnlinkControlSnapshotOutput struct {
 }
 
 // UpdateAssetInput represents the schema
