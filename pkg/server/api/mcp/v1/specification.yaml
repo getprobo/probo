@@ -3063,6 +3063,152 @@ components:
         task:
           $ref: "#/components/schemas/Task"
 
+    SnapshotsType:
+      type: string
+      enum:
+        - RISKS
+        - VENDORS
+        - ASSETS
+        - DATA
+        - NONCONFORMITIES
+        - OBLIGATIONS
+        - CONTINUAL_IMPROVEMENTS
+        - PROCESSING_ACTIVITIES
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.SnapshotsType
+
+    SnapshotOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+        - NAME
+        - TYPE
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.SnapshotOrderField
+
+    SnapshotOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/SnapshotOrderField"
+          description: Snapshot order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: Snapshot order direction
+
+    Snapshot:
+      type: object
+      required:
+        - id
+        - organization_id
+        - name
+        - type
+        - created_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Snapshot ID
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        name:
+          type: string
+          description: Snapshot name
+        description:
+          anyOf:
+            - type: string
+              description: Snapshot description
+            - type: "null"
+              description: No description
+          description: Snapshot description
+        type:
+          $ref: "#/components/schemas/SnapshotsType"
+          description: Snapshot type
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+
+    ListSnapshotsInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        order_by:
+          $ref: "#/components/schemas/SnapshotOrderBy"
+          description: Snapshot order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListSnapshotsOutput:
+      type: object
+      required:
+        - snapshots
+      properties:
+        snapshots:
+          type: array
+          items:
+            $ref: "#/components/schemas/Snapshot"
+          description: List of snapshots
+        next_cursor:
+          anyOf:
+            - $ref: "#/components/schemas/CursorKey"
+            - type: "null"
+          description: Next page cursor
+
+    GetSnapshotInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Snapshot ID
+
+    GetSnapshotOutput:
+      type: object
+      required:
+        - snapshot
+      properties:
+        snapshot:
+          $ref: "#/components/schemas/Snapshot"
+
+    TakeSnapshotInput:
+      type: object
+      required:
+        - organization_id
+        - name
+        - type
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        name:
+          type: string
+          description: Snapshot name
+        description:
+          type: string
+          description: Snapshot description
+        type:
+          $ref: "#/components/schemas/SnapshotsType"
+          description: Snapshot type (determines which collection to snapshot)
+
+    TakeSnapshotOutput:
+      type: object
+      required:
+        - snapshot
+      properties:
+        snapshot:
+          $ref: "#/components/schemas/Snapshot"
+
 tools:
   - name: listOrganizations
     description: List all organizations the user has access to
@@ -3491,3 +3637,24 @@ tools:
       $ref: "#/components/schemas/UnassignTaskInput"
     outputSchema:
       $ref: "#/components/schemas/UnassignTaskOutput"
+  - name: listSnapshots
+    description: List all snapshots for the organization
+    readonly: true
+    inputSchema:
+      $ref: "#/components/schemas/ListSnapshotsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListSnapshotsOutput"
+  - name: getSnapshot
+    description: Get a snapshot by ID
+    readonly: true
+    inputSchema:
+      $ref: "#/components/schemas/GetSnapshotInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetSnapshotOutput"
+  - name: takeSnapshot
+    description: Take a snapshot of a collection of objects (risks, vendors, assets, data, nonconformities, obligations, continual improvements, or processing activities)
+    readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/TakeSnapshotInput"
+    outputSchema:
+      $ref: "#/components/schemas/TakeSnapshotOutput"

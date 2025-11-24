@@ -71,6 +71,9 @@ type ResolverInterface interface {
 	UpdateTaskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateTaskInput) (*mcp.CallToolResult, types.UpdateTaskOutput, error)
 	AssignTaskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AssignTaskInput) (*mcp.CallToolResult, types.AssignTaskOutput, error)
 	UnassignTaskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UnassignTaskInput) (*mcp.CallToolResult, types.UnassignTaskOutput, error)
+	ListSnapshotsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListSnapshotsInput) (*mcp.CallToolResult, types.ListSnapshotsOutput, error)
+	GetSnapshotTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetSnapshotInput) (*mcp.CallToolResult, types.GetSnapshotOutput, error)
+	TakeSnapshotTool(ctx context.Context, req *mcp.CallToolRequest, input *types.TakeSnapshotInput) (*mcp.CallToolResult, types.TakeSnapshotOutput, error)
 }
 
 // New creates a new MCP server instance with all handlers registered.
@@ -699,5 +702,35 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 			OutputSchema: types.UnassignTaskToolOutputSchema,
 		},
 		resolver.UnassignTaskTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "listSnapshots",
+			Description:  "List all snapshots for the organization",
+			InputSchema:  types.ListSnapshotsToolInputSchema,
+			OutputSchema: types.ListSnapshotsToolOutputSchema,
+		},
+		resolver.ListSnapshotsTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "getSnapshot",
+			Description:  "Get a snapshot by ID",
+			InputSchema:  types.GetSnapshotToolInputSchema,
+			OutputSchema: types.GetSnapshotToolOutputSchema,
+		},
+		resolver.GetSnapshotTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "takeSnapshot",
+			Description:  "Take a snapshot of a collection of objects (risks, vendors, assets, data, nonconformities, obligations, continual improvements, or processing activities)",
+			InputSchema:  types.TakeSnapshotToolInputSchema,
+			OutputSchema: types.TakeSnapshotToolOutputSchema,
+		},
+		resolver.TakeSnapshotTool,
 	)
 }

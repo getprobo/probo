@@ -1312,14 +1312,17 @@ func (r *Resolver) AddTaskTool(ctx context.Context, req *mcp.CallToolRequest, in
 
 	svc := r.ProboService(ctx, input.OrganizationID)
 
-	task, err := svc.Tasks.Create(ctx, probo.CreateTaskRequest{
-		OrganizationID: input.OrganizationID,
-		Name:           input.Name,
-		Description:    input.Description,
-		TimeEstimate:   input.TimeEstimate,
-		Deadline:       input.Deadline,
-		AssignedToID:   input.AssignedToID,
-	})
+	task, err := svc.Tasks.Create(
+		ctx,
+		probo.CreateTaskRequest{
+			OrganizationID: input.OrganizationID,
+			Name:           input.Name,
+			Description:    input.Description,
+			TimeEstimate:   input.TimeEstimate,
+			Deadline:       input.Deadline,
+			AssignedToID:   input.AssignedToID,
+		},
+	)
 	if err != nil {
 		return nil, types.AddTaskOutput{}, fmt.Errorf("failed to create task: %w", err)
 	}
@@ -1333,14 +1336,17 @@ func (r *Resolver) UpdateTaskTool(ctx context.Context, req *mcp.CallToolRequest,
 
 	svc := r.ProboService(ctx, input.ID)
 
-	task, err := svc.Tasks.Update(ctx, probo.UpdateTaskRequest{
-		TaskID:       input.ID,
-		Name:         input.Name,
-		Description:  UnwrapOmittable(input.Description),
-		State:        input.State,
-		TimeEstimate: UnwrapOmittable(input.TimeEstimate),
-		Deadline:     UnwrapOmittable(input.Deadline),
-	})
+	task, err := svc.Tasks.Update(
+		ctx,
+		probo.UpdateTaskRequest{
+			TaskID:       input.ID,
+			Name:         input.Name,
+			Description:  UnwrapOmittable(input.Description),
+			State:        input.State,
+			TimeEstimate: UnwrapOmittable(input.TimeEstimate),
+			Deadline:     UnwrapOmittable(input.Deadline),
+		},
+	)
 	if err != nil {
 		return nil, types.UpdateTaskOutput{}, fmt.Errorf("failed to update task: %w", err)
 	}
@@ -1375,5 +1381,67 @@ func (r *Resolver) UnassignTaskTool(ctx context.Context, req *mcp.CallToolReques
 	}
 	return nil, types.UnassignTaskOutput{
 		Task: types.NewTask(task),
+	}, nil
+}
+
+func (r *Resolver) ListSnapshotsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListSnapshotsInput) (*mcp.CallToolResult, types.ListSnapshotsOutput, error) {
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionListSnapshots)
+
+	prb := r.ProboService(ctx, input.OrganizationID)
+
+	pageOrderBy := page.OrderBy[coredata.SnapshotOrderField]{
+		Field:     coredata.SnapshotOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.SnapshotOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	page, err := prb.Snapshots.ListForOrganizationID(ctx, input.OrganizationID, cursor)
+	if err != nil {
+		panic(fmt.Errorf("cannot list organization snapshots: %w", err))
+	}
+
+	return nil, types.NewListSnapshotsOutput(page), nil
+}
+
+func (r *Resolver) GetSnapshotTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetSnapshotInput) (*mcp.CallToolResult, types.GetSnapshotOutput, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionGet)
+
+	prb := r.ProboService(ctx, input.ID)
+
+	snapshot, err := prb.Snapshots.Get(ctx, input.ID)
+	if err != nil {
+		return nil, types.GetSnapshotOutput{}, fmt.Errorf("failed to get snapshot: %w", err)
+	}
+	return nil, types.GetSnapshotOutput{
+		Snapshot: types.NewSnapshot(snapshot),
+	}, nil
+}
+
+func (r *Resolver) TakeSnapshotTool(ctx context.Context, req *mcp.CallToolRequest, input *types.TakeSnapshotInput) (*mcp.CallToolResult, types.TakeSnapshotOutput, error) {
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionCreateSnapshot)
+
+	prb := r.ProboService(ctx, input.OrganizationID)
+
+	snapshot, err := prb.Snapshots.Create(
+		ctx,
+		&probo.CreateSnapshotRequest{
+			OrganizationID: input.OrganizationID,
+			Name:           input.Name,
+			Description:    input.Description,
+			Type:           input.Type,
+		},
+	)
+	if err != nil {
+		return nil, types.TakeSnapshotOutput{}, fmt.Errorf("failed to take snapshot: %w", err)
+	}
+	return nil, types.TakeSnapshotOutput{
+		Snapshot: types.NewSnapshot(snapshot),
 	}, nil
 }
