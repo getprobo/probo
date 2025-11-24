@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Fixed
+
+- Fix 5xx when create vendor snapshot.
+- Fix compliance page http to https redirect.
+
 ## [0.90.1] - 2025-11-23
 
 ### Fixed
