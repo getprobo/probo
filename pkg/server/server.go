@@ -307,26 +307,6 @@ func (s *Server) stripTrustPrefix(next http.Handler) http.Handler {
 	})
 }
 
-func (s *Server) redirectHTTPToHTTPSForCustomDomain(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-
-		if r.TLS == nil {
-			if ctx.Value(trust_v1.CustomDomainOrganizationIDKey) != nil {
-				httpsURL := "https://" + r.Host + r.URL.RequestURI()
-				s.logger.InfoCtx(ctx, "HTTP request to custom domain, redirecting to HTTPS",
-					log.String("domain", r.Host),
-					log.String("path", r.URL.Path),
-				)
-				http.Redirect(w, r, httpsURL, http.StatusMovedPermanently)
-				return
-			}
-		}
-
-		next.ServeHTTP(w, r)
-	})
-}
-
 func (s *Server) trustCenterRouter() chi.Router {
 	r := chi.NewRouter()
 
@@ -348,7 +328,6 @@ func (s *Server) TrustCenterHandler() http.Handler {
 	})
 
 	r.Use(s.loadTrustCenterByDomain)
-	r.Use(s.redirectHTTPToHTTPSForCustomDomain)
 	r.NotFound(s.handleCustomDomain404)
 
 	r.Mount("/", s.trustCenterRouter())

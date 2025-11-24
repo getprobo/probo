@@ -495,7 +495,7 @@ func (impl *Implm) Run(
 	defer stopTrustCenterServer()
 	wg.Go(
 		func() {
-			if err := impl.runTrustCenterServer(trustCenterServerCtx, l, r, tp, pgClient, serverHandler.TrustCenterHandler(), acmeService); err != nil {
+			if err := impl.runTrustCenterServer(trustCenterServerCtx, l, r, tp, pgClient, serverHandler.TrustCenterHandler(), acmeService, proboService); err != nil {
 				cancel(fmt.Errorf("trust center server crashed: %w", err))
 			}
 		},
@@ -602,6 +602,41 @@ func (impl *Implm) runApiServer(
 	return ctx.Err()
 }
 
+func newTrustCenterHTTPRedirectHandler(proboService *probo.Service, l *log.Logger) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		// Only redirect HTTP requests (no TLS)
+		if r.TLS != nil {
+			httpserver.RenderError(w, http.StatusNotFound, errors.New("not found"))
+			return
+		}
+
+		domain := r.Host
+		if domain == "" {
+			httpserver.RenderError(w, http.StatusNotFound, errors.New("not found"))
+			return
+		}
+
+		// Check if this domain is a trust center domain
+		_, err := proboService.LoadOrganizationByDomain(ctx, domain)
+		if err != nil {
+			// Not a trust center domain, return 404
+			httpserver.RenderError(w, http.StatusNotFound, errors.New("not found"))
+			return
+		}
+
+		// This is a trust center domain, redirect to HTTPS
+		httpsURL := "https://" + r.Host + r.URL.RequestURI()
+		l.InfoCtx(ctx, "HTTP request to trust center custom domain, redirecting to HTTPS",
+			log.String("domain", domain),
+			log.String("path", r.URL.Path),
+			log.String("to", httpsURL),
+		)
+		http.Redirect(w, r, httpsURL, http.StatusMovedPermanently)
+	})
+}
+
 func (impl *Implm) runTrustCenterServer(
 	ctx context.Context,
 	l *log.Logger,
@@ -610,6 +645,7 @@ func (impl *Implm) runTrustCenterServer(
 	pgClient *pg.Client,
 	trustRouter http.Handler,
 	acmeService *certmanager.ACMEService,
+	proboService *probo.Service,
 ) error {
 	tracer := tp.Tracer("go.probo.inc/probo/pkg/probod")
 	ctx, span := tracer.Start(ctx, "probod.runTrustCenterServer")
@@ -661,9 +697,11 @@ func (impl *Implm) runTrustCenterServer(
 		l.Named("http_acme_handler"),
 	)
 
+	httpRedirectHandler := newTrustCenterHTTPRedirectHandler(proboService, l.Named("http_redirect"))
+
 	httpServer := httpserver.NewServer(
 		impl.cfg.TrustCenter.HTTPAddr,
-		httpACMEHandler.Handle(http.NotFoundHandler()),
+		httpACMEHandler.Handle(httpRedirectHandler),
 		httpserver.WithLogger(l),
 		httpserver.WithRegisterer(r),
 		httpserver.WithTracerProvider(tp),
