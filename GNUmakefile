@@ -114,9 +114,8 @@ bin/probod: pkg/server/api/console/v1/schema/schema.go \
 	pkg/server/api/trust/v1/schema/schema.go \
 	pkg/server/api/trust/v1/types/types.go \
 	pkg/server/api/trust/v1/v1_resolver.go \
-	pkg/server/api/mcp/v1/schema/schema.go \
+	pkg/server/api/mcp/v1/server/server.go \
 	pkg/server/api/mcp/v1/types/types.go \
-	pkg/server/api/mcp/v1/schema.resolvers.go \
 	@probo/emails \
 	vet
 	$(GO_BUILD) -o $(PROBOD_BIN) $(PROBOD_SRC)
@@ -147,9 +146,8 @@ pkg/server/api/trust/v1/types/types.go \
 pkg/server/api/trust/v1/v1_resolver.go: pkg/server/api/trust/v1/gqlgen.yaml pkg/server/api/trust/v1/schema.graphql
 	$(GO_GENERATE) ./pkg/server/api/trust/v1
 
-pkg/server/api/mcp/v1/schema/schema.go \
-pkg/server/api/mcp/v1/types/types.go \
-pkg/server/api/mcp/v1/schema.resolvers.go: pkg/server/api/mcp/v1/specification.yaml pkg/server/api/mcp/v1/mcpgen.yaml
+pkg/server/api/mcp/v1/server/server.go \
+pkg/server/api/mcp/v1/types/types.go: pkg/server/api/mcp/v1/specification.yaml pkg/server/api/mcp/v1/mcpgen.yaml
 	$(GO_GENERATE) ./pkg/server/api/mcp/v1
 
 .PHONY: help
