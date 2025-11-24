@@ -931,6 +931,13 @@ func (r *Resolver) AddContinualImprovementTool(ctx context.Context, req *mcp.Cal
 		ctx,
 		&probo.CreateContinualImprovementRequest{
 			OrganizationID: input.OrganizationID,
+			ReferenceID:    input.ReferenceID,
+			Description:    input.Description,
+			Source:         input.Source,
+			OwnerID:        input.OwnerID,
+			TargetDate:     input.TargetDate,
+			Status:         input.Status,
+			Priority:       input.Priority,
 		},
 	)
 	if err != nil {
@@ -966,5 +973,96 @@ func (r *Resolver) UpdateContinualImprovementTool(ctx context.Context, req *mcp.
 
 	return nil, types.UpdateContinualImprovementOutput{
 		ContinualImprovement: types.NewContinualImprovement(continualImprovement),
+	}, nil
+}
+
+func (r *Resolver) ListAuditsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListAuditsInput) (*mcp.CallToolResult, types.ListAuditsOutput, error) {
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionListAudits)
+
+	prb := r.ProboService(ctx, input.OrganizationID)
+
+	pageOrderBy := page.OrderBy[coredata.AuditOrderField]{
+		Field:     coredata.AuditOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.AuditOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	page, err := prb.Audits.ListForOrganizationID(ctx, input.OrganizationID, cursor)
+	if err != nil {
+		panic(fmt.Errorf("cannot list organization audits: %w", err))
+	}
+
+	return nil, types.NewListAuditsOutput(page), nil
+}
+
+func (r *Resolver) GetAuditTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetAuditInput) (*mcp.CallToolResult, types.GetAuditOutput, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionGet)
+
+	prb := r.ProboService(ctx, input.ID)
+
+	audit, err := prb.Audits.Get(ctx, input.ID)
+	if err != nil {
+		return nil, types.GetAuditOutput{}, fmt.Errorf("failed to get audit: %w", err)
+	}
+
+	return nil, types.GetAuditOutput{
+		Audit: types.NewAudit(audit),
+	}, nil
+}
+
+func (r *Resolver) AddAuditTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddAuditInput) (*mcp.CallToolResult, types.AddAuditOutput, error) {
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionCreateAudit)
+
+	svc := r.ProboService(ctx, input.OrganizationID)
+
+	audit, err := svc.Audits.Create(
+		ctx,
+		&probo.CreateAuditRequest{
+			OrganizationID: input.OrganizationID,
+			Name:           input.Name,
+			ValidFrom:      input.ValidFrom,
+			ValidUntil:     input.ValidUntil,
+			State:          input.State,
+			FrameworkID:    input.FrameworkID,
+		},
+	)
+	if err != nil {
+		return nil, types.AddAuditOutput{}, fmt.Errorf("failed to create audit: %w", err)
+	}
+
+	return nil, types.AddAuditOutput{
+		Audit: types.NewAudit(audit),
+	}, nil
+}
+
+func (r *Resolver) UpdateAuditTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateAuditInput) (*mcp.CallToolResult, types.UpdateAuditOutput, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionUpdateAudit)
+
+	svc := r.ProboService(ctx, input.ID)
+
+	audit, err := svc.Audits.Update(
+		ctx,
+		&probo.UpdateAuditRequest{
+			ID:                    input.ID,
+			Name:                  UnwrapOmittable(input.Name),
+			ValidFrom:             input.ValidFrom,
+			ValidUntil:            input.ValidUntil,
+			State:                 input.State,
+			TrustCenterVisibility: input.TrustCenterVisibility,
+		},
+	)
+	if err != nil {
+		return nil, types.UpdateAuditOutput{}, fmt.Errorf("failed to update audit: %w", err)
+	}
+
+	return nil, types.UpdateAuditOutput{
+		Audit: types.NewAudit(audit),
 	}, nil
 }

@@ -2224,6 +2224,228 @@ components:
         continual_improvement:
           $ref: "#/components/schemas/ContinualImprovement"
 
+    AuditState:
+      type: string
+      enum:
+        - NOT_STARTED
+        - IN_PROGRESS
+        - COMPLETED
+        - REJECTED
+        - OUTDATED
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.AuditState
+
+    TrustCenterVisibility:
+      type: string
+      enum:
+        - NONE
+        - PRIVATE
+        - PUBLIC
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.TrustCenterVisibility
+
+    AuditOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+        - VALID_FROM
+        - VALID_UNTIL
+        - STATE
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.AuditOrderField
+
+    AuditOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/AuditOrderField"
+          description: Audit order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: Audit order direction
+
+    Audit:
+      type: object
+      required:
+        - id
+        - organization_id
+        - framework_id
+        - state
+        - trust_center_visibility
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Audit ID
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        framework_id:
+          $ref: "#/components/schemas/GID"
+          description: Framework ID
+        name:
+          type:
+            - string
+            - "null"
+          description: Audit name
+        valid_from:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: Valid from date
+        valid_until:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: Valid until date
+        state:
+          $ref: "#/components/schemas/AuditState"
+          description: Audit state
+        trust_center_visibility:
+          $ref: "#/components/schemas/TrustCenterVisibility"
+          description: Trust center visibility
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Update timestamp
+
+    ListAuditsInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        order_by:
+          $ref: "#/components/schemas/AuditOrderBy"
+          description: Audit order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListAuditsOutput:
+      type: object
+      required:
+        - audits
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        audits:
+          type: array
+          items:
+            $ref: "#/components/schemas/Audit"
+
+    GetAuditInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Audit ID
+
+    GetAuditOutput:
+      type: object
+      required:
+        - audit
+      properties:
+        audit:
+          $ref: "#/components/schemas/Audit"
+
+    AddAuditInput:
+      type: object
+      required:
+        - organization_id
+        - framework_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        framework_id:
+          $ref: "#/components/schemas/GID"
+          description: Framework ID
+        name:
+          type: string
+          description: Audit name
+        valid_from:
+          type: string
+          format: date-time
+          description: Valid from date
+        valid_until:
+          type: string
+          format: date-time
+          description: Valid until date
+        state:
+          $ref: "#/components/schemas/AuditState"
+          description: Audit state
+
+    AddAuditOutput:
+      type: object
+      required:
+        - audit
+      properties:
+        audit:
+          $ref: "#/components/schemas/Audit"
+
+    UpdateAuditInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Audit ID
+        name:
+          type: ["string", "null"]
+          description: Audit name
+          go.probo.inc/mcpgen/omittable: true
+        valid_from:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: Valid from date
+        valid_until:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: Valid until date
+        state:
+          anyOf:
+            - $ref: "#/components/schemas/AuditState"
+              description: Audit state
+            - type: "null"
+              description: No state
+          description: Audit state
+        trust_center_visibility:
+          anyOf:
+            - $ref: "#/components/schemas/TrustCenterVisibility"
+              description: Trust center visibility
+            - type: "null"
+              description: No trust center visibility
+          description: Trust center visibility
+
+    UpdateAuditOutput:
+      type: object
+      required:
+        - audit
+      properties:
+        audit:
+          $ref: "#/components/schemas/Audit"
+
 tools:
   - name: listOrganizations
     description: List all organizations the user has access to
@@ -2498,3 +2720,31 @@ tools:
       $ref: "#/components/schemas/UpdateContinualImprovementInput"
     outputSchema:
       $ref: "#/components/schemas/UpdateContinualImprovementOutput"
+  - name: listAudits
+    description: List all audits for the organization
+    readonly: true
+    inputSchema:
+      $ref: "#/components/schemas/ListAuditsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListAuditsOutput"
+  - name: getAudit
+    description: Get an audit by ID
+    readonly: true
+    inputSchema:
+      $ref: "#/components/schemas/GetAuditInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetAuditOutput"
+  - name: addAudit
+    description: Add a new audit to the organization
+    readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/AddAuditInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddAuditOutput"
+  - name: updateAudit
+    description: Update an existing audit
+    readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateAuditInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateAuditOutput"

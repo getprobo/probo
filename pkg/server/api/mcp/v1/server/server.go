@@ -49,6 +49,10 @@ type ResolverInterface interface {
 	GetContinualImprovementTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetContinualImprovementInput) (*mcp.CallToolResult, types.GetContinualImprovementOutput, error)
 	AddContinualImprovementTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddContinualImprovementInput) (*mcp.CallToolResult, types.AddContinualImprovementOutput, error)
 	UpdateContinualImprovementTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateContinualImprovementInput) (*mcp.CallToolResult, types.UpdateContinualImprovementOutput, error)
+	ListAuditsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListAuditsInput) (*mcp.CallToolResult, types.ListAuditsOutput, error)
+	GetAuditTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetAuditInput) (*mcp.CallToolResult, types.GetAuditOutput, error)
+	AddAuditTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddAuditInput) (*mcp.CallToolResult, types.AddAuditOutput, error)
+	UpdateAuditTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateAuditInput) (*mcp.CallToolResult, types.UpdateAuditOutput, error)
 }
 
 // New creates a new MCP server instance with all handlers registered.
@@ -457,5 +461,45 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 			OutputSchema: types.UpdateContinualImprovementToolOutputSchema,
 		},
 		resolver.UpdateContinualImprovementTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "listAudits",
+			Description:  "List all audits for the organization",
+			InputSchema:  types.ListAuditsToolInputSchema,
+			OutputSchema: types.ListAuditsToolOutputSchema,
+		},
+		resolver.ListAuditsTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "getAudit",
+			Description:  "Get an audit by ID",
+			InputSchema:  types.GetAuditToolInputSchema,
+			OutputSchema: types.GetAuditToolOutputSchema,
+		},
+		resolver.GetAuditTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "addAudit",
+			Description:  "Add a new audit to the organization",
+			InputSchema:  types.AddAuditToolInputSchema,
+			OutputSchema: types.AddAuditToolOutputSchema,
+		},
+		resolver.AddAuditTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "updateAudit",
+			Description:  "Update an existing audit",
+			InputSchema:  types.UpdateAuditToolInputSchema,
+			OutputSchema: types.UpdateAuditToolOutputSchema,
+		},
+		resolver.UpdateAuditTool,
 	)
 }

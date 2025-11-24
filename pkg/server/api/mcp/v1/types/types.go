@@ -14,7 +14,9 @@ import (
 var (
 	AddAssetToolInputSchema                    = mcp.MustUnmarshalSchema(`{"type":"object","required":["organization_id","name","amount","owner_id","asset_type","data_types_stored"],"properties":{"amount":{"type":"integer","description":"Asset amount"},"asset_type":{"type":"string","enum":["PHYSICAL","VIRTUAL"]},"data_types_stored":{"type":"string","description":"Data types stored"},"name":{"type":"string","description":"Asset name"},"organization_id":{"type":"string","format":"string"},"owner_id":{"type":"string","format":"string"},"vendor_ids":{"type":"array","description":"Vendor IDs","items":{"type":"string","format":"string"}}}}`)
 	AddAssetToolOutputSchema                   = mcp.MustUnmarshalSchema(`{"type":"object","required":["asset"],"properties":{"asset":{"type":"object","required":["id","organization_id","name","amount","owner_id","asset_type","data_types_stored","created_at","updated_at"],"properties":{"amount":{"type":"integer","description":"Asset amount"},"asset_type":{"type":"string","enum":["PHYSICAL","VIRTUAL"]},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"data_types_stored":{"type":"string","description":"Data types stored"},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Asset name"},"organization_id":{"type":"string","format":"string"},"owner_id":{"type":"string","format":"string"},"snapshot_id":{"description":"Snapshot ID"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}}}`)
-	AddContinualImprovementToolInputSchema     = mcp.MustUnmarshalSchema(`{"type":"object","required":["organization_id","reference_id","owner_id","status","priority"],"properties":{"description":{"type":"string","description":"Description"},"organization_id":{"type":"string","format":"string"},"owner_id":{"type":"string","format":"string"},"priority":{"type":"string","enum":["LOW","MEDIUM","HIGH"]},"reference_id":{"type":"string","description":"Reference ID"},"source":{"type":"string","description":"Source"},"status":{"type":"string","enum":["OPEN","IN_PROGRESS","CLOSED"]},"target_date":{"type":"string","description":"Target date","format":"date-time"}}}`)
+	AddAuditToolInputSchema                    = mcp.MustUnmarshalSchema(`{"type":"object","required":["organization_id","framework_id"],"properties":{"framework_id":{"type":"string","format":"string"},"name":{"type":"string","description":"Audit name"},"organization_id":{"type":"string","format":"string"},"state":{"type":"string","enum":["NOT_STARTED","IN_PROGRESS","COMPLETED","REJECTED","OUTDATED"]},"valid_from":{"type":"string","description":"Valid from date","format":"date-time"},"valid_until":{"type":"string","description":"Valid until date","format":"date-time"}}}`)
+	AddAuditToolOutputSchema                   = mcp.MustUnmarshalSchema(`{"type":"object","required":["audit"],"properties":{"audit":{"type":"object","required":["id","organization_id","framework_id","state","trust_center_visibility","created_at","updated_at"],"properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"framework_id":{"type":"string","format":"string"},"id":{"type":"string","format":"string"},"name":{"description":"Audit name"},"organization_id":{"type":"string","format":"string"},"state":{"type":"string","enum":["NOT_STARTED","IN_PROGRESS","COMPLETED","REJECTED","OUTDATED"]},"trust_center_visibility":{"type":"string","enum":["NONE","PRIVATE","PUBLIC"]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"},"valid_from":{"description":"Valid from date","format":"date-time"},"valid_until":{"description":"Valid until date","format":"date-time"}}}}}`)
+	AddContinualImprovementToolInputSchema     = mcp.MustUnmarshalSchema(`{"type":"object","required":["organization_id","reference_id","owner_id"],"properties":{"description":{"type":"string","description":"Description"},"organization_id":{"type":"string","format":"string"},"owner_id":{"type":"string","format":"string"},"priority":{"description":"Priority","anyOf":[{"type":"string","enum":["LOW","MEDIUM","HIGH"]},{"type":"null","description":"No priority"}]},"reference_id":{"type":"string","description":"Reference ID"},"source":{"type":"string","description":"Source"},"status":{"description":"Status","anyOf":[{"type":"string","enum":["OPEN","IN_PROGRESS","CLOSED"]},{"type":"null","description":"No status"}]},"target_date":{"type":"string","description":"Target date","format":"date-time"}}}`)
 	AddContinualImprovementToolOutputSchema    = mcp.MustUnmarshalSchema(`{"type":"object","required":["continual_improvement"],"properties":{"continual_improvement":{"type":"object","required":["id","organization_id","reference_id","owner_id","status","priority","created_at","updated_at"],"properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"description":"Description"},"id":{"type":"string","format":"string"},"organization_id":{"type":"string","format":"string"},"owner_id":{"type":"string","format":"string"},"priority":{"type":"string","enum":["LOW","MEDIUM","HIGH"]},"reference_id":{"type":"string","description":"Reference ID"},"snapshot_id":{"description":"Snapshot ID","anyOf":[{"type":"string","format":"string"},{"type":"null","description":"No snapshot"}]},"source":{"description":"Source"},"source_id":{"description":"Source ID"},"status":{"type":"string","enum":["OPEN","IN_PROGRESS","CLOSED"]},"target_date":{"description":"Target date","format":"date-time"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}}}`)
 	AddDatumToolInputSchema                    = mcp.MustUnmarshalSchema(`{"type":"object","required":["organization_id","name","data_classification","owner_id"],"properties":{"data_classification":{"type":"string","enum":["PUBLIC","INTERNAL","CONFIDENTIAL","SECRET"]},"name":{"type":"string","description":"Datum name"},"organization_id":{"type":"string","format":"string"},"owner_id":{"type":"string","format":"string"},"vendor_ids":{"type":"array","description":"Vendor IDs","items":{"type":"string","format":"string"}}}}`)
 	AddDatumToolOutputSchema                   = mcp.MustUnmarshalSchema(`{"type":"object","required":["datum"],"properties":{"datum":{"type":"object","required":["id","organization_id","name","data_classification","owner_id","created_at","updated_at"],"properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"data_classification":{"type":"string","enum":["PUBLIC","INTERNAL","CONFIDENTIAL","SECRET"]},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Datum name"},"organization_id":{"type":"string","format":"string"},"owner_id":{"type":"string","format":"string"},"snapshot_id":{"description":"Snapshot ID","anyOf":[{"type":"string","format":"string"},{"type":"null","description":"No snapshot"}]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}}}`)
@@ -34,6 +36,8 @@ var (
 	AddVendorToolOutputSchema                  = mcp.MustUnmarshalSchema(`{"type":"object","required":["vendor"],"properties":{"vendor":{"type":"object","required":["id","name","organization_id","created_at","updated_at"],"properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"description":"Vendor description"},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Vendor name"},"organization_id":{"type":"string","format":"string"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}}}`)
 	GetAssetToolInputSchema                    = mcp.MustUnmarshalSchema(`{"type":"object","required":["id"],"properties":{"id":{"type":"string","format":"string"}}}`)
 	GetAssetToolOutputSchema                   = mcp.MustUnmarshalSchema(`{"type":"object","required":["asset"],"properties":{"asset":{"type":"object","required":["id","organization_id","name","amount","owner_id","asset_type","data_types_stored","created_at","updated_at"],"properties":{"amount":{"type":"integer","description":"Asset amount"},"asset_type":{"type":"string","enum":["PHYSICAL","VIRTUAL"]},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"data_types_stored":{"type":"string","description":"Data types stored"},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Asset name"},"organization_id":{"type":"string","format":"string"},"owner_id":{"type":"string","format":"string"},"snapshot_id":{"description":"Snapshot ID"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}}}`)
+	GetAuditToolInputSchema                    = mcp.MustUnmarshalSchema(`{"type":"object","required":["id"],"properties":{"id":{"type":"string","format":"string"}}}`)
+	GetAuditToolOutputSchema                   = mcp.MustUnmarshalSchema(`{"type":"object","required":["audit"],"properties":{"audit":{"type":"object","required":["id","organization_id","framework_id","state","trust_center_visibility","created_at","updated_at"],"properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"framework_id":{"type":"string","format":"string"},"id":{"type":"string","format":"string"},"name":{"description":"Audit name"},"organization_id":{"type":"string","format":"string"},"state":{"type":"string","enum":["NOT_STARTED","IN_PROGRESS","COMPLETED","REJECTED","OUTDATED"]},"trust_center_visibility":{"type":"string","enum":["NONE","PRIVATE","PUBLIC"]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"},"valid_from":{"description":"Valid from date","format":"date-time"},"valid_until":{"description":"Valid until date","format":"date-time"}}}}}`)
 	GetContinualImprovementToolInputSchema     = mcp.MustUnmarshalSchema(`{"type":"object","required":["id"],"properties":{"id":{"type":"string","format":"string"}}}`)
 	GetContinualImprovementToolOutputSchema    = mcp.MustUnmarshalSchema(`{"type":"object","required":["continual_improvement"],"properties":{"continual_improvement":{"type":"object","required":["id","organization_id","reference_id","owner_id","status","priority","created_at","updated_at"],"properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"description":"Description"},"id":{"type":"string","format":"string"},"organization_id":{"type":"string","format":"string"},"owner_id":{"type":"string","format":"string"},"priority":{"type":"string","enum":["LOW","MEDIUM","HIGH"]},"reference_id":{"type":"string","description":"Reference ID"},"snapshot_id":{"description":"Snapshot ID","anyOf":[{"type":"string","format":"string"},{"type":"null","description":"No snapshot"}]},"source":{"description":"Source"},"source_id":{"description":"Source ID"},"status":{"type":"string","enum":["OPEN","IN_PROGRESS","CLOSED"]},"target_date":{"description":"Target date","format":"date-time"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}}}`)
 	GetDatumToolInputSchema                    = mcp.MustUnmarshalSchema(`{"type":"object","required":["id"],"properties":{"id":{"type":"string","format":"string"}}}`)
@@ -52,6 +56,8 @@ var (
 	GetRiskToolOutputSchema                    = mcp.MustUnmarshalSchema(`{"type":"object","required":["risk"],"properties":{"risk":{"type":"object","required":["id","organization_id","name","category","treatment","inherent_likelihood","inherent_impact","inherent_risk_score","residual_likelihood","residual_impact","residual_risk_score","note","created_at","updated_at"],"properties":{"category":{"type":"string","description":"Risk category"},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"description":"Risk description"},"id":{"type":"string","format":"string"},"inherent_impact":{"type":"integer","description":"Inherent impact"},"inherent_likelihood":{"type":"integer","description":"Inherent likelihood"},"inherent_risk_score":{"type":"integer","description":"Inherent risk score"},"name":{"type":"string","description":"Risk name"},"note":{"type":"string","description":"Risk note"},"organization_id":{"type":"string","format":"string"},"owner_id":{"anyOf":[{"type":"string","format":"string"},{"type":"null","description":"No owner"}]},"residual_impact":{"type":"integer","description":"Residual impact"},"residual_likelihood":{"type":"integer","description":"Residual likelihood"},"residual_risk_score":{"type":"integer","description":"Residual risk score"},"snapshot_id":{"description":"Snapshot ID","anyOf":[{"type":"string","format":"string"},{"type":"null","description":"No snapshot"}]},"treatment":{"type":"string","enum":["MITIGATED","ACCEPTED","AVOIDED","TRANSFERRED"]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}}}`)
 	ListAssetsToolInputSchema                  = mcp.MustUnmarshalSchema(`{"type":"object","required":["organization_id"],"properties":{"cursor":{"type":"string","format":"string"},"filter":{"type":"object","properties":{"snapshot_id":{"type":"string","format":"string"}}},"order_by":{"type":"object","required":["field","direction"],"properties":{"direction":{"type":"string","enum":["ASC","DESC"]},"field":{"type":"string","enum":["CREATED_AT","AMOUNT"]}}},"organization_id":{"type":"string","format":"string"},"size":{"type":"integer","description":"Page size"}}}`)
 	ListAssetsToolOutputSchema                 = mcp.MustUnmarshalSchema(`{"type":"object","required":["assets"],"properties":{"assets":{"type":"array","items":{"type":"object","required":["id","organization_id","name","amount","owner_id","asset_type","data_types_stored","created_at","updated_at"],"properties":{"amount":{"type":"integer","description":"Asset amount"},"asset_type":{"type":"string","enum":["PHYSICAL","VIRTUAL"]},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"data_types_stored":{"type":"string","description":"Data types stored"},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Asset name"},"organization_id":{"type":"string","format":"string"},"owner_id":{"type":"string","format":"string"},"snapshot_id":{"description":"Snapshot ID"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}},"next_cursor":{"type":"string","format":"string"}}}`)
+	ListAuditsToolInputSchema                  = mcp.MustUnmarshalSchema(`{"type":"object","required":["organization_id"],"properties":{"cursor":{"type":"string","format":"string"},"order_by":{"type":"object","required":["field","direction"],"properties":{"direction":{"type":"string","enum":["ASC","DESC"]},"field":{"type":"string","enum":["CREATED_AT","VALID_FROM","VALID_UNTIL","STATE"]}}},"organization_id":{"type":"string","format":"string"},"size":{"type":"integer","description":"Page size"}}}`)
+	ListAuditsToolOutputSchema                 = mcp.MustUnmarshalSchema(`{"type":"object","required":["audits"],"properties":{"audits":{"type":"array","items":{"type":"object","required":["id","organization_id","framework_id","state","trust_center_visibility","created_at","updated_at"],"properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"framework_id":{"type":"string","format":"string"},"id":{"type":"string","format":"string"},"name":{"description":"Audit name"},"organization_id":{"type":"string","format":"string"},"state":{"type":"string","enum":["NOT_STARTED","IN_PROGRESS","COMPLETED","REJECTED","OUTDATED"]},"trust_center_visibility":{"type":"string","enum":["NONE","PRIVATE","PUBLIC"]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"},"valid_from":{"description":"Valid from date","format":"date-time"},"valid_until":{"description":"Valid until date","format":"date-time"}}}},"next_cursor":{"type":"string","format":"string"}}}`)
 	ListContinualImprovementsToolInputSchema   = mcp.MustUnmarshalSchema(`{"type":"object","required":["organization_id"],"properties":{"cursor":{"type":"string","format":"string"},"filter":{"type":"object","properties":{"snapshot_id":{"type":"string","format":"string"}}},"order_by":{"type":"object","required":["field","direction"],"properties":{"direction":{"type":"string","enum":["ASC","DESC"]},"field":{"type":"string","enum":["CREATED_AT","REFERENCE_ID","TARGET_DATE","STATUS","PRIORITY"]}}},"organization_id":{"type":"string","format":"string"},"size":{"type":"integer","description":"Page size"}}}`)
 	ListContinualImprovementsToolOutputSchema  = mcp.MustUnmarshalSchema(`{"type":"object","required":["continual_improvements"],"properties":{"continual_improvements":{"type":"array","items":{"type":"object","required":["id","organization_id","reference_id","owner_id","status","priority","created_at","updated_at"],"properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"description":"Description"},"id":{"type":"string","format":"string"},"organization_id":{"type":"string","format":"string"},"owner_id":{"type":"string","format":"string"},"priority":{"type":"string","enum":["LOW","MEDIUM","HIGH"]},"reference_id":{"type":"string","description":"Reference ID"},"snapshot_id":{"description":"Snapshot ID","anyOf":[{"type":"string","format":"string"},{"type":"null","description":"No snapshot"}]},"source":{"description":"Source"},"source_id":{"description":"Source ID"},"status":{"type":"string","enum":["OPEN","IN_PROGRESS","CLOSED"]},"target_date":{"description":"Target date","format":"date-time"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}},"next_cursor":{"type":"string","format":"string"}}}`)
 	ListDataToolInputSchema                    = mcp.MustUnmarshalSchema(`{"type":"object","required":["organization_id"],"properties":{"cursor":{"type":"string","format":"string"},"filter":{"type":"object","properties":{"snapshot_id":{"type":"string","format":"string"}}},"order_by":{"type":"object","required":["field","direction"],"properties":{"direction":{"type":"string","enum":["ASC","DESC"]},"field":{"type":"string","enum":["CREATED_AT","NAME","DATA_CLASSIFICATION"]}}},"organization_id":{"type":"string","format":"string"},"size":{"type":"integer","description":"Page size"}}}`)
@@ -74,6 +80,8 @@ var (
 	ListVendorsToolOutputSchema                = mcp.MustUnmarshalSchema(`{"type":"object","required":["vendors"],"properties":{"next_cursor":{"type":"string","format":"string"},"vendors":{"type":"array","items":{"type":"object","required":["id","name","organization_id","created_at","updated_at"],"properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"description":"Vendor description"},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Vendor name"},"organization_id":{"type":"string","format":"string"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}}}}`)
 	UpdateAssetToolInputSchema                 = mcp.MustUnmarshalSchema(`{"type":"object","required":["id"],"properties":{"amount":{"type":"integer","description":"Asset amount"},"asset_type":{"type":"string","enum":["PHYSICAL","VIRTUAL"]},"data_types_stored":{"type":"string","description":"Data types stored"},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Asset name"},"owner_id":{"description":"Owner ID","anyOf":[{"type":"string","format":"string"},{"type":"null"}]},"vendor_ids":{"type":"array","description":"Vendor IDs","items":{"type":"string","format":"string"}}}}`)
 	UpdateAssetToolOutputSchema                = mcp.MustUnmarshalSchema(`{"type":"object","required":["asset"],"properties":{"asset":{"type":"object","required":["id","organization_id","name","amount","owner_id","asset_type","data_types_stored","created_at","updated_at"],"properties":{"amount":{"type":"integer","description":"Asset amount"},"asset_type":{"type":"string","enum":["PHYSICAL","VIRTUAL"]},"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"data_types_stored":{"type":"string","description":"Data types stored"},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Asset name"},"organization_id":{"type":"string","format":"string"},"owner_id":{"type":"string","format":"string"},"snapshot_id":{"description":"Snapshot ID"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}}}`)
+	UpdateAuditToolInputSchema                 = mcp.MustUnmarshalSchema(`{"type":"object","required":["id"],"properties":{"id":{"type":"string","format":"string"},"name":{"description":"Audit name"},"state":{"description":"Audit state","anyOf":[{"type":"string","enum":["NOT_STARTED","IN_PROGRESS","COMPLETED","REJECTED","OUTDATED"]},{"type":"null","description":"No state"}]},"trust_center_visibility":{"description":"Trust center visibility","anyOf":[{"type":"string","enum":["NONE","PRIVATE","PUBLIC"]},{"type":"null","description":"No trust center visibility"}]},"valid_from":{"description":"Valid from date","format":"date-time"},"valid_until":{"description":"Valid until date","format":"date-time"}}}`)
+	UpdateAuditToolOutputSchema                = mcp.MustUnmarshalSchema(`{"type":"object","required":["audit"],"properties":{"audit":{"type":"object","required":["id","organization_id","framework_id","state","trust_center_visibility","created_at","updated_at"],"properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"framework_id":{"type":"string","format":"string"},"id":{"type":"string","format":"string"},"name":{"description":"Audit name"},"organization_id":{"type":"string","format":"string"},"state":{"type":"string","enum":["NOT_STARTED","IN_PROGRESS","COMPLETED","REJECTED","OUTDATED"]},"trust_center_visibility":{"type":"string","enum":["NONE","PRIVATE","PUBLIC"]},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"},"valid_from":{"description":"Valid from date","format":"date-time"},"valid_until":{"description":"Valid until date","format":"date-time"}}}}}`)
 	UpdateContinualImprovementToolInputSchema  = mcp.MustUnmarshalSchema(`{"type":"object","required":["id"],"properties":{"description":{"description":"Description"},"id":{"type":"string","format":"string"},"owner_id":{"description":"Owner ID","anyOf":[{"type":"string","format":"string"},{"type":"null"}]},"priority":{"description":"Priority","anyOf":[{"type":"string","enum":["LOW","MEDIUM","HIGH"]},{"type":"null","description":"No priority"}]},"reference_id":{"type":"string","description":"Reference ID"},"source":{"description":"Source"},"status":{"description":"Status","anyOf":[{"type":"string","enum":["OPEN","IN_PROGRESS","CLOSED"]},{"type":"null","description":"No status"}]},"target_date":{"description":"Target date","format":"date-time"}}}`)
 	UpdateContinualImprovementToolOutputSchema = mcp.MustUnmarshalSchema(`{"type":"object","required":["continual_improvement"],"properties":{"continual_improvement":{"type":"object","required":["id","organization_id","reference_id","owner_id","status","priority","created_at","updated_at"],"properties":{"created_at":{"type":"string","description":"Creation timestamp","format":"date-time"},"description":{"description":"Description"},"id":{"type":"string","format":"string"},"organization_id":{"type":"string","format":"string"},"owner_id":{"type":"string","format":"string"},"priority":{"type":"string","enum":["LOW","MEDIUM","HIGH"]},"reference_id":{"type":"string","description":"Reference ID"},"snapshot_id":{"description":"Snapshot ID","anyOf":[{"type":"string","format":"string"},{"type":"null","description":"No snapshot"}]},"source":{"description":"Source"},"source_id":{"description":"Source ID"},"status":{"type":"string","enum":["OPEN","IN_PROGRESS","CLOSED"]},"target_date":{"description":"Target date","format":"date-time"},"updated_at":{"type":"string","description":"Update timestamp","format":"date-time"}}}}}`)
 	UpdateDatumToolInputSchema                 = mcp.MustUnmarshalSchema(`{"type":"object","required":["id"],"properties":{"data_classification":{"type":"string","enum":["PUBLIC","INTERNAL","CONFIDENTIAL","SECRET"]},"id":{"type":"string","format":"string"},"name":{"type":"string","description":"Datum name"},"owner_id":{"description":"Owner ID","anyOf":[{"type":"string","format":"string"},{"type":"null"}]},"vendor_ids":{"type":"array","description":"Vendor IDs","items":{"type":"string","format":"string"}}}}`)
@@ -115,6 +123,27 @@ type AddAssetOutput struct {
 	Asset *Asset `json:"asset"`
 }
 
+// AddAuditInput represents the schema
+type AddAuditInput struct {
+	// Framework ID
+	FrameworkID gid.GID `json:"framework_id"`
+	// Audit name
+	Name *string `json:"name,omitempty"`
+	// Organization ID
+	OrganizationID gid.GID `json:"organization_id"`
+	// Audit state
+	State *coredata.AuditState `json:"state,omitempty"`
+	// Valid from date
+	ValidFrom *time.Time `json:"valid_from,omitempty"`
+	// Valid until date
+	ValidUntil *time.Time `json:"valid_until,omitempty"`
+}
+
+// AddAuditOutput represents the schema
+type AddAuditOutput struct {
+	Audit *Audit `json:"audit"`
+}
+
 // AddContinualImprovementInput represents the schema
 type AddContinualImprovementInput struct {
 	// Description
@@ -124,13 +153,13 @@ type AddContinualImprovementInput struct {
 	// Owner ID
 	OwnerID gid.GID `json:"owner_id"`
 	// Priority
-	Priority coredata.ContinualImprovementPriority `json:"priority"`
+	Priority *coredata.ContinualImprovementPriority `json:"priority,omitempty"`
 	// Reference ID
 	ReferenceID string `json:"reference_id"`
 	// Source
 	Source *string `json:"source,omitempty"`
 	// Status
-	Status coredata.ContinualImprovementStatus `json:"status"`
+	Status *coredata.ContinualImprovementStatus `json:"status,omitempty"`
 	// Target date
 	TargetDate *time.Time `json:"target_date,omitempty"`
 }
@@ -358,6 +387,38 @@ type AssetOrderBy struct {
 	Field coredata.AssetOrderField `json:"field"`
 }
 
+// Audit represents the schema
+type Audit struct {
+	// Creation timestamp
+	CreatedAt time.Time `json:"created_at"`
+	// Framework ID
+	FrameworkID gid.GID `json:"framework_id"`
+	// Audit ID
+	ID gid.GID `json:"id"`
+	// Audit name
+	Name *string `json:"name,omitempty"`
+	// Organization ID
+	OrganizationID gid.GID `json:"organization_id"`
+	// Audit state
+	State coredata.AuditState `json:"state"`
+	// Trust center visibility
+	TrustCenterVisibility coredata.TrustCenterVisibility `json:"trust_center_visibility"`
+	// Update timestamp
+	UpdatedAt time.Time `json:"updated_at"`
+	// Valid from date
+	ValidFrom *time.Time `json:"valid_from,omitempty"`
+	// Valid until date
+	ValidUntil *time.Time `json:"valid_until,omitempty"`
+}
+
+// AuditOrderBy represents the schema
+type AuditOrderBy struct {
+	// Audit order direction
+	Direction page.OrderDirection `json:"direction"`
+	// Audit order field
+	Field coredata.AuditOrderField `json:"field"`
+}
+
 // ContinualImprovement represents the schema
 type ContinualImprovement struct {
 	// Creation timestamp
@@ -457,6 +518,17 @@ type GetAssetInput struct {
 // GetAssetOutput represents the schema
 type GetAssetOutput struct {
 	Asset *Asset `json:"asset"`
+}
+
+// GetAuditInput represents the schema
+type GetAuditInput struct {
+	// Audit ID
+	ID gid.GID `json:"id"`
+}
+
+// GetAuditOutput represents the schema
+type GetAuditOutput struct {
+	Audit *Audit `json:"audit"`
 }
 
 // GetContinualImprovementInput represents the schema
@@ -563,6 +635,25 @@ type ListAssetsInput struct {
 // ListAssetsOutput represents the schema
 type ListAssetsOutput struct {
 	Assets []*Asset `json:"assets"`
+	// Next cursor
+	NextCursor *page.CursorKey `json:"next_cursor,omitempty"`
+}
+
+// ListAuditsInput represents the schema
+type ListAuditsInput struct {
+	// Page cursor
+	Cursor *page.CursorKey `json:"cursor,omitempty"`
+	// Audit order by
+	OrderBy *AuditOrderBy `json:"order_by,omitempty"`
+	// Organization ID
+	OrganizationID gid.GID `json:"organization_id"`
+	// Page size
+	Size *int `json:"size,omitempty"`
+}
+
+// ListAuditsOutput represents the schema
+type ListAuditsOutput struct {
+	Audits []*Audit `json:"audits"`
 	// Next cursor
 	NextCursor *page.CursorKey `json:"next_cursor,omitempty"`
 }
@@ -981,6 +1072,27 @@ type UpdateAssetInput struct {
 // UpdateAssetOutput represents the schema
 type UpdateAssetOutput struct {
 	Asset *Asset `json:"asset"`
+}
+
+// UpdateAuditInput represents the schema
+type UpdateAuditInput struct {
+	// Audit ID
+	ID gid.GID `json:"id"`
+	// Audit name
+	Name mcp.Omittable[*string] `json:"name,omitempty"`
+	// Audit state
+	State *coredata.AuditState `json:"state,omitempty"`
+	// Trust center visibility
+	TrustCenterVisibility *coredata.TrustCenterVisibility `json:"trust_center_visibility,omitempty"`
+	// Valid from date
+	ValidFrom *time.Time `json:"valid_from,omitempty"`
+	// Valid until date
+	ValidUntil *time.Time `json:"valid_until,omitempty"`
+}
+
+// UpdateAuditOutput represents the schema
+type UpdateAuditOutput struct {
+	Audit *Audit `json:"audit"`
 }
 
 // UpdateContinualImprovementInput represents the schema
