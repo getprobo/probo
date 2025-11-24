@@ -4,10 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.91.0] - 2025-11-24
+
+### Added
+
+- Add audit MCP tools.
+
 ### Fixed
 
 - Fix 5xx when create vendor snapshot.
 - Fix compliance page http to https redirect.
+- Fix cannot create continious improvment via MCP.
 
 ## [0.90.1] - 2025-11-23
 
