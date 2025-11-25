@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.93.0] - 2025-11-25
+
+### Added
+
+- Add document MCP tools.
+- Add document version MCP tools.
+- Add document version signature MCP tools.
+- Add MCP tools annotation hints.
+
 ## [0.92.0] - 2025-11-24
 
 ### Added
