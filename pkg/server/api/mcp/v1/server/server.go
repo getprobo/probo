@@ -74,6 +74,21 @@ type ResolverInterface interface {
 	ListSnapshotsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListSnapshotsInput) (*mcp.CallToolResult, types.ListSnapshotsOutput, error)
 	GetSnapshotTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetSnapshotInput) (*mcp.CallToolResult, types.GetSnapshotOutput, error)
 	TakeSnapshotTool(ctx context.Context, req *mcp.CallToolRequest, input *types.TakeSnapshotInput) (*mcp.CallToolResult, types.TakeSnapshotOutput, error)
+	ListDocumentsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListDocumentsInput) (*mcp.CallToolResult, types.ListDocumentsOutput, error)
+	GetDocumentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetDocumentInput) (*mcp.CallToolResult, types.GetDocumentOutput, error)
+	AddDocumentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddDocumentInput) (*mcp.CallToolResult, types.AddDocumentOutput, error)
+	UpdateDocumentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateDocumentInput) (*mcp.CallToolResult, types.UpdateDocumentOutput, error)
+	ListDocumentVersionsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListDocumentVersionsInput) (*mcp.CallToolResult, types.ListDocumentVersionsOutput, error)
+	GetDocumentVersionTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetDocumentVersionInput) (*mcp.CallToolResult, types.GetDocumentVersionOutput, error)
+	CreateDraftDocumentVersionTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CreateDraftDocumentVersionInput) (*mcp.CallToolResult, types.CreateDraftDocumentVersionOutput, error)
+	UpdateDocumentVersionTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateDocumentVersionInput) (*mcp.CallToolResult, types.UpdateDocumentVersionOutput, error)
+	DeleteDraftDocumentVersionTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteDraftDocumentVersionInput) (*mcp.CallToolResult, types.DeleteDraftDocumentVersionOutput, error)
+	PublishDocumentVersionTool(ctx context.Context, req *mcp.CallToolRequest, input *types.PublishDocumentVersionInput) (*mcp.CallToolResult, types.PublishDocumentVersionOutput, error)
+	DeleteDocumentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteDocumentInput) (*mcp.CallToolResult, types.DeleteDocumentOutput, error)
+	ListDocumentVersionSignaturesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListDocumentVersionSignaturesInput) (*mcp.CallToolResult, types.ListDocumentVersionSignaturesOutput, error)
+	GetDocumentVersionSignatureTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetDocumentVersionSignatureInput) (*mcp.CallToolResult, types.GetDocumentVersionSignatureOutput, error)
+	RequestDocumentVersionSignatureTool(ctx context.Context, req *mcp.CallToolRequest, input *types.RequestDocumentVersionSignatureInput) (*mcp.CallToolResult, types.RequestDocumentVersionSignatureOutput, error)
+	CancelSignatureRequestTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CancelSignatureRequestInput) (*mcp.CallToolResult, types.CancelSignatureRequestOutput, error)
 }
 
 // New creates a new MCP server instance with all handlers registered.
@@ -844,6 +859,186 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 			OutputSchema: types.TakeSnapshotToolOutputSchema,
 		},
 		resolver.TakeSnapshotTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "listDocuments",
+			Description:  "List all documents for the organization",
+			InputSchema:  types.ListDocumentsToolInputSchema,
+			OutputSchema: types.ListDocumentsToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
+		},
+		resolver.ListDocumentsTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "getDocument",
+			Description:  "Get a document by ID",
+			InputSchema:  types.GetDocumentToolInputSchema,
+			OutputSchema: types.GetDocumentToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
+		},
+		resolver.GetDocumentTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "addDocument",
+			Description:  "Add a new document to the organization",
+			InputSchema:  types.AddDocumentToolInputSchema,
+			OutputSchema: types.AddDocumentToolOutputSchema,
+		},
+		resolver.AddDocumentTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "updateDocument",
+			Description:  "Update an existing document",
+			InputSchema:  types.UpdateDocumentToolInputSchema,
+			OutputSchema: types.UpdateDocumentToolOutputSchema,
+		},
+		resolver.UpdateDocumentTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "listDocumentVersions",
+			Description:  "List all versions for a document",
+			InputSchema:  types.ListDocumentVersionsToolInputSchema,
+			OutputSchema: types.ListDocumentVersionsToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
+		},
+		resolver.ListDocumentVersionsTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "getDocumentVersion",
+			Description:  "Get a document version by ID",
+			InputSchema:  types.GetDocumentVersionToolInputSchema,
+			OutputSchema: types.GetDocumentVersionToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
+		},
+		resolver.GetDocumentVersionTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "createDraftDocumentVersion",
+			Description:  "Create a new draft version from the latest published version",
+			InputSchema:  types.CreateDraftDocumentVersionToolInputSchema,
+			OutputSchema: types.CreateDraftDocumentVersionToolOutputSchema,
+		},
+		resolver.CreateDraftDocumentVersionTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "updateDocumentVersion",
+			Description:  "Update an existing draft document version content",
+			InputSchema:  types.UpdateDocumentVersionToolInputSchema,
+			OutputSchema: types.UpdateDocumentVersionToolOutputSchema,
+		},
+		resolver.UpdateDocumentVersionTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "deleteDraftDocumentVersion",
+			Description:  "Delete a draft document version",
+			InputSchema:  types.DeleteDraftDocumentVersionToolInputSchema,
+			OutputSchema: types.DeleteDraftDocumentVersionToolOutputSchema,
+		},
+		resolver.DeleteDraftDocumentVersionTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "publishDocumentVersion",
+			Description:  "Publish a draft document version",
+			InputSchema:  types.PublishDocumentVersionToolInputSchema,
+			OutputSchema: types.PublishDocumentVersionToolOutputSchema,
+		},
+		resolver.PublishDocumentVersionTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "deleteDocument",
+			Description:  "Delete a document",
+			InputSchema:  types.DeleteDocumentToolInputSchema,
+			OutputSchema: types.DeleteDocumentToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				DestructiveHint: boolPtr(true),
+			},
+		},
+		resolver.DeleteDocumentTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "listDocumentVersionSignatures",
+			Description:  "List all signatures for a document version",
+			InputSchema:  types.ListDocumentVersionSignaturesToolInputSchema,
+			OutputSchema: types.ListDocumentVersionSignaturesToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
+		},
+		resolver.ListDocumentVersionSignaturesTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "getDocumentVersionSignature",
+			Description:  "Get a document version signature by ID",
+			InputSchema:  types.GetDocumentVersionSignatureToolInputSchema,
+			OutputSchema: types.GetDocumentVersionSignatureToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
+		},
+		resolver.GetDocumentVersionSignatureTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "requestDocumentVersionSignature",
+			Description:  "Request a signature for a document version",
+			InputSchema:  types.RequestDocumentVersionSignatureToolInputSchema,
+			OutputSchema: types.RequestDocumentVersionSignatureToolOutputSchema,
+		},
+		resolver.RequestDocumentVersionSignatureTool,
+	)
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Name:         "cancelSignatureRequest",
+			Description:  "Cancel a document version signature request",
+			InputSchema:  types.CancelSignatureRequestToolInputSchema,
+			OutputSchema: types.CancelSignatureRequestToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				DestructiveHint: boolPtr(true),
+			},
+		},
+		resolver.CancelSignatureRequestTool,
 	)
 }
 

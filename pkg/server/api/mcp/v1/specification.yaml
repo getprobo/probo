@@ -3209,6 +3209,628 @@ components:
         snapshot:
           $ref: "#/components/schemas/Snapshot"
 
+    DocumentType:
+      type: string
+      enum:
+        - OTHER
+        - ISMS
+        - POLICY
+        - PROCEDURE
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DocumentType
+
+    DocumentClassification:
+      type: string
+      enum:
+        - PUBLIC
+        - INTERNAL
+        - CONFIDENTIAL
+        - SECRET
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DocumentClassification
+
+    DocumentStatus:
+      type: string
+      enum:
+        - DRAFT
+        - PUBLISHED
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DocumentStatus
+
+    DocumentVersionSignatureState:
+      type: string
+      enum:
+        - REQUESTED
+        - SIGNED
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DocumentVersionSignatureState
+
+    DocumentOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+        - TITLE
+        - DOCUMENT_TYPE
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DocumentOrderField
+
+    DocumentOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/DocumentOrderField"
+          description: Document order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: Document order direction
+
+    DocumentVersionOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+        - VERSION
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DocumentVersionOrderField
+
+    DocumentVersionOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/DocumentVersionOrderField"
+          description: Document version order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: Document version order direction
+
+    DocumentVersionSignatureOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+        - SIGNED_AT
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DocumentVersionSignatureOrderField
+
+    DocumentVersionSignatureOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/DocumentVersionSignatureOrderField"
+          description: Document version signature order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: Document version signature order direction
+
+    Document:
+      type: object
+      required:
+        - id
+        - organization_id
+        - owner_id
+        - title
+        - document_type
+        - classification
+        - trust_center_visibility
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Document ID
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        owner_id:
+          $ref: "#/components/schemas/GID"
+          description: Owner ID
+        title:
+          type: string
+          description: Document title
+        document_type:
+          $ref: "#/components/schemas/DocumentType"
+          description: Document type
+        classification:
+          $ref: "#/components/schemas/DocumentClassification"
+          description: Document classification
+        current_published_version:
+          type:
+            - integer
+            - "null"
+          description: Current published version number
+        trust_center_visibility:
+          $ref: "#/components/schemas/TrustCenterVisibility"
+          description: Trust center visibility
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Update timestamp
+
+    DocumentVersion:
+      type: object
+      required:
+        - id
+        - organization_id
+        - document_id
+        - title
+        - owner_id
+        - version_number
+        - classification
+        - content
+        - changelog
+        - status
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Document version ID
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        document_id:
+          $ref: "#/components/schemas/GID"
+          description: Document ID
+        title:
+          type: string
+          description: Document version title
+        owner_id:
+          $ref: "#/components/schemas/GID"
+          description: Owner ID
+        version_number:
+          type: integer
+          description: Version number
+        classification:
+          $ref: "#/components/schemas/DocumentClassification"
+          description: Document classification
+        content:
+          type: string
+          description: Document content
+        changelog:
+          type: string
+          description: Changelog
+        status:
+          $ref: "#/components/schemas/DocumentStatus"
+          description: Document status
+        published_at:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: Published timestamp
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Update timestamp
+
+    DocumentVersionSignature:
+      type: object
+      required:
+        - id
+        - organization_id
+        - document_version_id
+        - state
+        - signed_by
+        - requested_at
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Document version signature ID
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        document_version_id:
+          $ref: "#/components/schemas/GID"
+          description: Document version ID
+        state:
+          $ref: "#/components/schemas/DocumentVersionSignatureState"
+          description: Signature state
+        signed_by:
+          $ref: "#/components/schemas/GID"
+          description: Signatory ID
+        signed_at:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: Signed timestamp
+        requested_at:
+          type: string
+          format: date-time
+          description: Requested timestamp
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Update timestamp
+
+    ListDocumentsInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        order_by:
+          $ref: "#/components/schemas/DocumentOrderBy"
+          description: Document order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+        filter:
+          type: object
+          properties:
+            query:
+              type: string
+              description: Search query
+            trust_center_visibilities:
+              type: array
+              items:
+                $ref: "#/components/schemas/TrustCenterVisibility"
+              description: Trust center visibilities
+
+    ListDocumentsOutput:
+      type: object
+      required:
+        - documents
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        documents:
+          type: array
+          items:
+            $ref: "#/components/schemas/Document"
+
+    GetDocumentInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Document ID
+
+    GetDocumentOutput:
+      type: object
+      required:
+        - document
+      properties:
+        document:
+          $ref: "#/components/schemas/Document"
+
+    AddDocumentInput:
+      type: object
+      required:
+        - organization_id
+        - title
+        - content
+        - owner_id
+        - classification
+        - document_type
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        title:
+          type: string
+          description: Document title
+        content:
+          type: string
+          description: Document content
+        owner_id:
+          $ref: "#/components/schemas/GID"
+          description: Owner ID
+        classification:
+          $ref: "#/components/schemas/DocumentClassification"
+          description: Document classification
+        document_type:
+          $ref: "#/components/schemas/DocumentType"
+          description: Document type
+        trust_center_visibility:
+          $ref: "#/components/schemas/TrustCenterVisibility"
+          description: Trust center visibility
+
+    AddDocumentOutput:
+      type: object
+      required:
+        - document
+        - document_version
+      properties:
+        document:
+          $ref: "#/components/schemas/Document"
+        document_version:
+          $ref: "#/components/schemas/DocumentVersion"
+
+    UpdateDocumentInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Document ID
+        title:
+          type: string
+          description: Document title
+        owner_id:
+          $ref: "#/components/schemas/GID"
+          description: Owner ID
+        classification:
+          $ref: "#/components/schemas/DocumentClassification"
+          description: Document classification
+        document_type:
+          $ref: "#/components/schemas/DocumentType"
+          description: Document type
+        trust_center_visibility:
+          $ref: "#/components/schemas/TrustCenterVisibility"
+          description: Trust center visibility
+
+    UpdateDocumentOutput:
+      type: object
+      required:
+        - document
+      properties:
+        document:
+          $ref: "#/components/schemas/Document"
+
+    ListDocumentVersionsInput:
+      type: object
+      required:
+        - document_id
+      properties:
+        document_id:
+          $ref: "#/components/schemas/GID"
+          description: Document ID
+        order_by:
+          $ref: "#/components/schemas/DocumentVersionOrderBy"
+          description: Document version order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListDocumentVersionsOutput:
+      type: object
+      required:
+        - document_versions
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        document_versions:
+          type: array
+          items:
+            $ref: "#/components/schemas/DocumentVersion"
+
+    GetDocumentVersionInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Document version ID
+
+    GetDocumentVersionOutput:
+      type: object
+      required:
+        - document_version
+      properties:
+        document_version:
+          $ref: "#/components/schemas/DocumentVersion"
+
+    CreateDraftDocumentVersionInput:
+      type: object
+      required:
+        - document_id
+      properties:
+        document_id:
+          $ref: "#/components/schemas/GID"
+          description: Document ID
+
+    CreateDraftDocumentVersionOutput:
+      type: object
+      required:
+        - document_version
+      properties:
+        document_version:
+          $ref: "#/components/schemas/DocumentVersion"
+
+    UpdateDocumentVersionInput:
+      type: object
+      required:
+        - document_version_id
+        - content
+      properties:
+        document_version_id:
+          $ref: "#/components/schemas/GID"
+          description: Document version ID
+        content:
+          type: string
+          description: Document content
+
+    UpdateDocumentVersionOutput:
+      type: object
+      required:
+        - document_version
+      properties:
+        document_version:
+          $ref: "#/components/schemas/DocumentVersion"
+
+    DeleteDraftDocumentVersionInput:
+      type: object
+      required:
+        - document_version_id
+      properties:
+        document_version_id:
+          $ref: "#/components/schemas/GID"
+          description: Document version ID
+
+    DeleteDraftDocumentVersionOutput:
+      type: object
+      required:
+        - deleted_document_version_id
+      properties:
+        deleted_document_version_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted document version ID
+
+    PublishDocumentVersionInput:
+      type: object
+      required:
+        - document_id
+      properties:
+        document_id:
+          $ref: "#/components/schemas/GID"
+          description: Document ID
+        changelog:
+          type: string
+          description: Changelog
+
+    PublishDocumentVersionOutput:
+      type: object
+      required:
+        - document
+        - document_version
+      properties:
+        document:
+          $ref: "#/components/schemas/Document"
+        document_version:
+          $ref: "#/components/schemas/DocumentVersion"
+
+    DeleteDocumentInput:
+      type: object
+      required:
+        - document_id
+      properties:
+        document_id:
+          $ref: "#/components/schemas/GID"
+          description: Document ID
+
+    DeleteDocumentOutput:
+      type: object
+      required:
+        - deleted_document_id
+      properties:
+        deleted_document_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted document ID
+
+    ListDocumentVersionSignaturesInput:
+      type: object
+      required:
+        - document_version_id
+      properties:
+        document_version_id:
+          $ref: "#/components/schemas/GID"
+          description: Document version ID
+        order_by:
+          $ref: "#/components/schemas/DocumentVersionSignatureOrderBy"
+          description: Document version signature order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+        filter:
+          type: object
+          properties:
+            states:
+              type: array
+              items:
+                $ref: "#/components/schemas/DocumentVersionSignatureState"
+              description: Signature states
+
+    ListDocumentVersionSignaturesOutput:
+      type: object
+      required:
+        - document_version_signatures
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        document_version_signatures:
+          type: array
+          items:
+            $ref: "#/components/schemas/DocumentVersionSignature"
+
+    GetDocumentVersionSignatureInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Document version signature ID
+
+    GetDocumentVersionSignatureOutput:
+      type: object
+      required:
+        - document_version_signature
+      properties:
+        document_version_signature:
+          $ref: "#/components/schemas/DocumentVersionSignature"
+
+    RequestDocumentVersionSignatureInput:
+      type: object
+      required:
+        - document_version_id
+        - signatory_id
+      properties:
+        document_version_id:
+          $ref: "#/components/schemas/GID"
+          description: Document version ID
+        signatory_id:
+          $ref: "#/components/schemas/GID"
+          description: Signatory ID (People ID)
+
+    RequestDocumentVersionSignatureOutput:
+      type: object
+      required:
+        - document_version_signature
+      properties:
+        document_version_signature:
+          $ref: "#/components/schemas/DocumentVersionSignature"
+
+    CancelSignatureRequestInput:
+      type: object
+      required:
+        - document_version_signature_id
+      properties:
+        document_version_signature_id:
+          $ref: "#/components/schemas/GID"
+          description: Document version signature ID
+
+    CancelSignatureRequestOutput:
+      type: object
+      required:
+        - deleted_document_version_signature_id
+      properties:
+        deleted_document_version_signature_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted document version signature ID
+
 tools:
   - name: listOrganizations
     description: List all organizations the user has access to
@@ -3750,3 +4372,131 @@ tools:
       $ref: "#/components/schemas/TakeSnapshotInput"
     outputSchema:
       $ref: "#/components/schemas/TakeSnapshotOutput"
+  - name: listDocuments
+    description: List all documents for the organization
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListDocumentsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListDocumentsOutput"
+  - name: getDocument
+    description: Get a document by ID
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/GetDocumentInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetDocumentOutput"
+  - name: addDocument
+    description: Add a new document to the organization
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/AddDocumentInput"
+    outputSchema:
+      $ref: "#/components/schemas/AddDocumentOutput"
+  - name: updateDocument
+    description: Update an existing document
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateDocumentInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateDocumentOutput"
+  - name: listDocumentVersions
+    description: List all versions for a document
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListDocumentVersionsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListDocumentVersionsOutput"
+  - name: getDocumentVersion
+    description: Get a document version by ID
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/GetDocumentVersionInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetDocumentVersionOutput"
+  - name: createDraftDocumentVersion
+    description: Create a new draft version from the latest published version
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/CreateDraftDocumentVersionInput"
+    outputSchema:
+      $ref: "#/components/schemas/CreateDraftDocumentVersionOutput"
+  - name: updateDocumentVersion
+    description: Update an existing draft document version content
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateDocumentVersionInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateDocumentVersionOutput"
+  - name: deleteDraftDocumentVersion
+    description: Delete a draft document version
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/DeleteDraftDocumentVersionInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteDraftDocumentVersionOutput"
+  - name: publishDocumentVersion
+    description: Publish a draft document version
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/PublishDocumentVersionInput"
+    outputSchema:
+      $ref: "#/components/schemas/PublishDocumentVersionOutput"
+  - name: deleteDocument
+    description: Delete a document
+    hints:
+      readonly: false
+      destructive: true
+    inputSchema:
+      $ref: "#/components/schemas/DeleteDocumentInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteDocumentOutput"
+  - name: listDocumentVersionSignatures
+    description: List all signatures for a document version
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/ListDocumentVersionSignaturesInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListDocumentVersionSignaturesOutput"
+  - name: getDocumentVersionSignature
+    description: Get a document version signature by ID
+    hints:
+      readonly: true
+      idempotent: true
+    inputSchema:
+      $ref: "#/components/schemas/GetDocumentVersionSignatureInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetDocumentVersionSignatureOutput"
+  - name: requestDocumentVersionSignature
+    description: Request a signature for a document version
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/RequestDocumentVersionSignatureInput"
+    outputSchema:
+      $ref: "#/components/schemas/RequestDocumentVersionSignatureOutput"
+  - name: cancelSignatureRequest
+    description: Cancel a document version signature request
+    hints:
+      readonly: false
+      destructive: true
+    inputSchema:
+      $ref: "#/components/schemas/CancelSignatureRequestInput"
+    outputSchema:
+      $ref: "#/components/schemas/CancelSignatureRequestOutput"

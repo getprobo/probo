@@ -1445,3 +1445,316 @@ func (r *Resolver) TakeSnapshotTool(ctx context.Context, req *mcp.CallToolReques
 		Snapshot: types.NewSnapshot(snapshot),
 	}, nil
 }
+
+func (r *Resolver) ListDocumentsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListDocumentsInput) (*mcp.CallToolResult, types.ListDocumentsOutput, error) {
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionListDocuments)
+
+	prb := r.ProboService(ctx, input.OrganizationID)
+
+	pageOrderBy := page.OrderBy[coredata.DocumentOrderField]{
+		Field:     coredata.DocumentOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.DocumentOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	documentFilter := coredata.NewDocumentFilter(nil)
+	if input.Filter != nil {
+		var query *string
+		if input.Filter.Query != nil && *input.Filter.Query != "" {
+			query = input.Filter.Query
+		}
+
+		documentFilter = coredata.NewDocumentFilter(query)
+	}
+
+	page, err := prb.Documents.ListByOrganizationID(ctx, input.OrganizationID, cursor, documentFilter)
+	if err != nil {
+		panic(fmt.Errorf("cannot list organization documents: %w", err))
+	}
+
+	return nil, types.NewListDocumentsOutput(page), nil
+}
+
+func (r *Resolver) GetDocumentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetDocumentInput) (*mcp.CallToolResult, types.GetDocumentOutput, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionDocument)
+
+	prb := r.ProboService(ctx, input.ID)
+
+	document, err := prb.Documents.Get(ctx, input.ID)
+	if err != nil {
+		panic(fmt.Errorf("cannot get document: %w", err))
+	}
+
+	return nil, types.GetDocumentOutput{
+		Document: types.NewDocument(document),
+	}, nil
+}
+
+func (r *Resolver) AddDocumentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddDocumentInput) (*mcp.CallToolResult, types.AddDocumentOutput, error) {
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionCreateDocument)
+
+	svc := r.ProboService(ctx, input.OrganizationID)
+
+	var trustCenterVisibility *coredata.TrustCenterVisibility
+	if input.TrustCenterVisibility != nil {
+		trustCenterVisibility = input.TrustCenterVisibility
+	}
+
+	document, documentVersion, err := svc.Documents.Create(
+		ctx,
+		probo.CreateDocumentRequest{
+			OrganizationID:        input.OrganizationID,
+			Title:                 input.Title,
+			Content:               input.Content,
+			OwnerID:               input.OwnerID,
+			Classification:        input.Classification,
+			DocumentType:          input.DocumentType,
+			TrustCenterVisibility: trustCenterVisibility,
+		},
+	)
+	if err != nil {
+		panic(fmt.Errorf("cannot create document: %w", err))
+	}
+
+	return nil, types.NewAddDocumentOutput(document, documentVersion), nil
+}
+
+func (r *Resolver) UpdateDocumentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateDocumentInput) (*mcp.CallToolResult, types.UpdateDocumentOutput, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionUpdateDocument)
+
+	svc := r.ProboService(ctx, input.ID)
+
+	document, err := svc.Documents.Update(
+		ctx,
+		probo.UpdateDocumentRequest{
+			DocumentID:            input.ID,
+			Title:                 input.Title,
+			OwnerID:               input.OwnerID,
+			Classification:        input.Classification,
+			DocumentType:          input.DocumentType,
+			TrustCenterVisibility: input.TrustCenterVisibility,
+		},
+	)
+	if err != nil {
+		panic(fmt.Errorf("cannot update document: %w", err))
+	}
+
+	return nil, types.UpdateDocumentOutput{
+		Document: types.NewDocument(document),
+	}, nil
+}
+
+func (r *Resolver) ListDocumentVersionsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListDocumentVersionsInput) (*mcp.CallToolResult, types.ListDocumentVersionsOutput, error) {
+	r.MustBeAuthorized(ctx, input.DocumentID, authz.ActionDocumentVersion)
+
+	pageOrderBy := page.OrderBy[coredata.DocumentVersionOrderField]{
+		Field:     coredata.DocumentVersionOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.DocumentVersionOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+	svc := r.ProboService(ctx, input.DocumentID)
+
+	page, err := svc.Documents.ListVersions(ctx, input.DocumentID, cursor)
+	if err != nil {
+		panic(fmt.Errorf("cannot list document versions: %w", err))
+	}
+
+	return nil, types.NewListDocumentVersionsOutput(page), nil
+}
+
+func (r *Resolver) GetDocumentVersionTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetDocumentVersionInput) (*mcp.CallToolResult, types.GetDocumentVersionOutput, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionDocumentVersion)
+
+	svc := r.ProboService(ctx, input.ID)
+
+	version, err := svc.Documents.GetVersion(ctx, input.ID)
+	if err != nil {
+		panic(fmt.Errorf("cannot get document version: %w", err))
+	}
+
+	return nil, types.GetDocumentVersionOutput{
+		DocumentVersion: types.NewDocumentVersion(version),
+	}, nil
+}
+
+func (r *Resolver) CreateDraftDocumentVersionTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CreateDraftDocumentVersionInput) (*mcp.CallToolResult, types.CreateDraftDocumentVersionOutput, error) {
+	r.MustBeAuthorized(ctx, input.DocumentID, authz.ActionCreateDraftDocumentVersion)
+
+	svc := r.ProboService(ctx, input.DocumentID)
+
+	draftVersion, err := svc.Documents.CreateDraft(ctx, input.DocumentID)
+	if err != nil {
+		panic(fmt.Errorf("cannot create draft document version: %w", err))
+	}
+
+	return nil, types.CreateDraftDocumentVersionOutput{
+		DocumentVersion: types.NewDocumentVersion(draftVersion),
+	}, nil
+}
+
+func (r *Resolver) UpdateDocumentVersionTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateDocumentVersionInput) (*mcp.CallToolResult, types.UpdateDocumentVersionOutput, error) {
+	r.MustBeAuthorized(ctx, input.DocumentVersionID, authz.ActionUpdateDocumentVersion)
+
+	svc := r.ProboService(ctx, input.DocumentVersionID)
+
+	documentVersion, err := svc.Documents.UpdateVersion(
+		ctx,
+		probo.UpdateDocumentVersionRequest{
+			ID:      input.DocumentVersionID,
+			Content: input.Content,
+		},
+	)
+	if err != nil {
+		panic(fmt.Errorf("cannot update document version: %w", err))
+	}
+
+	return nil, types.UpdateDocumentVersionOutput{
+		DocumentVersion: types.NewDocumentVersion(documentVersion),
+	}, nil
+}
+
+func (r *Resolver) PublishDocumentVersionTool(ctx context.Context, req *mcp.CallToolRequest, input *types.PublishDocumentVersionInput) (*mcp.CallToolResult, types.PublishDocumentVersionOutput, error) {
+	r.MustBeAuthorized(ctx, input.DocumentID, authz.ActionPublishDocumentVersion)
+
+	svc := r.ProboService(ctx, input.DocumentID)
+
+	user := serverauth.UserFromContext(ctx)
+
+	document, documentVersion, err := svc.Documents.PublishVersion(ctx, input.DocumentID, user.ID, input.Changelog)
+	if err != nil {
+		panic(fmt.Errorf("cannot publish document version: %w", err))
+	}
+
+	return nil, types.PublishDocumentVersionOutput{
+		Document:        types.NewDocument(document),
+		DocumentVersion: types.NewDocumentVersion(documentVersion),
+	}, nil
+}
+
+func (r *Resolver) ListDocumentVersionSignaturesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListDocumentVersionSignaturesInput) (*mcp.CallToolResult, types.ListDocumentVersionSignaturesOutput, error) {
+	r.MustBeAuthorized(ctx, input.DocumentVersionID, authz.ActionDocumentVersion)
+
+	prb := r.ProboService(ctx, input.DocumentVersionID)
+
+	pageOrderBy := page.OrderBy[coredata.DocumentVersionSignatureOrderField]{
+		Field:     coredata.DocumentVersionSignatureOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.DocumentVersionSignatureOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	var signatureFilter *coredata.DocumentVersionSignatureFilter
+	if input.Filter != nil && input.Filter.States != nil && len(input.Filter.States) > 0 {
+		signatureFilter = coredata.NewDocumentVersionSignatureFilter(input.Filter.States)
+	} else {
+		signatureFilter = coredata.NewDocumentVersionSignatureFilter(nil)
+	}
+
+	page, err := prb.Documents.ListSignatures(ctx, input.DocumentVersionID, cursor, signatureFilter)
+	if err != nil {
+		panic(fmt.Errorf("cannot list document version signatures: %w", err))
+	}
+
+	return nil, types.NewListDocumentVersionSignaturesOutput(page), nil
+}
+
+func (r *Resolver) GetDocumentVersionSignatureTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetDocumentVersionSignatureInput) (*mcp.CallToolResult, types.GetDocumentVersionSignatureOutput, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionDocumentVersion)
+
+	prb := r.ProboService(ctx, input.ID)
+
+	signature, err := prb.Documents.GetVersionSignature(ctx, input.ID)
+	if err != nil {
+		panic(fmt.Errorf("cannot get document version signature: %w", err))
+	}
+
+	return nil, types.GetDocumentVersionSignatureOutput{
+		DocumentVersionSignature: types.NewDocumentVersionSignature(signature),
+	}, nil
+}
+
+func (r *Resolver) RequestDocumentVersionSignatureTool(ctx context.Context, req *mcp.CallToolRequest, input *types.RequestDocumentVersionSignatureInput) (*mcp.CallToolResult, types.RequestDocumentVersionSignatureOutput, error) {
+	r.MustBeAuthorized(ctx, input.DocumentVersionID, authz.ActionRequestSignature)
+
+	svc := r.ProboService(ctx, input.DocumentVersionID)
+
+	documentVersionSignature, err := svc.Documents.RequestSignature(
+		ctx,
+		probo.RequestSignatureRequest{
+			DocumentVersionID: input.DocumentVersionID,
+			Signatory:         input.SignatoryID,
+		},
+	)
+	if err != nil {
+		panic(fmt.Errorf("cannot request signature: %w", err))
+	}
+
+	return nil, types.RequestDocumentVersionSignatureOutput{
+		DocumentVersionSignature: types.NewDocumentVersionSignature(documentVersionSignature),
+	}, nil
+}
+
+func (r *Resolver) DeleteDraftDocumentVersionTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteDraftDocumentVersionInput) (*mcp.CallToolResult, types.DeleteDraftDocumentVersionOutput, error) {
+	r.MustBeAuthorized(ctx, input.DocumentVersionID, authz.ActionDeleteDraftDocumentVersion)
+
+	svc := r.ProboService(ctx, input.DocumentVersionID)
+
+	err := svc.Documents.DeleteDraft(ctx, input.DocumentVersionID)
+	if err != nil {
+		panic(fmt.Errorf("cannot delete draft document version: %w", err))
+	}
+
+	return nil, types.DeleteDraftDocumentVersionOutput{
+		DeletedDocumentVersionID: input.DocumentVersionID,
+	}, nil
+}
+
+func (r *Resolver) DeleteDocumentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteDocumentInput) (*mcp.CallToolResult, types.DeleteDocumentOutput, error) {
+	r.MustBeAuthorized(ctx, input.DocumentID, authz.ActionDeleteDocument)
+
+	svc := r.ProboService(ctx, input.DocumentID)
+
+	err := svc.Documents.SoftDelete(ctx, input.DocumentID)
+	if err != nil {
+		panic(fmt.Errorf("cannot soft delete document: %w", err))
+	}
+
+	return nil, types.DeleteDocumentOutput{
+		DeletedDocumentID: input.DocumentID,
+	}, nil
+}
+
+func (r *Resolver) CancelSignatureRequestTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CancelSignatureRequestInput) (*mcp.CallToolResult, types.CancelSignatureRequestOutput, error) {
+	r.MustBeAuthorized(ctx, input.DocumentVersionSignatureID, authz.ActionCancelSignatureRequest)
+
+	svc := r.ProboService(ctx, input.DocumentVersionSignatureID)
+
+	err := svc.Documents.CancelSignatureRequest(ctx, input.DocumentVersionSignatureID)
+	if err != nil {
+		panic(fmt.Errorf("cannot cancel signature request: %w", err))
+	}
+
+	return nil, types.CancelSignatureRequestOutput{
+		DeletedDocumentVersionSignatureID: input.DocumentVersionSignatureID,
+	}, nil
+}
