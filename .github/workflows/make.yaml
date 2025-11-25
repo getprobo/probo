@@ -10,7 +10,7 @@ on:
 jobs:
   release-snapshot:
     name: "release-snapshot"
-    runs-on: "shipfox-32vcpu-ubuntu-2404"
+    runs-on: "shipfox-16vcpu-ubuntu-2404"
     permissions:
       contents: "read"
       packages: "write"
@@ -57,7 +57,7 @@ jobs:
 
   test:
     name: "test"
-    runs-on: "shipfox-32vcpu-ubuntu-2404"
+    runs-on: "shipfox-16vcpu-ubuntu-2404"
     permissions:
       contents: "read"
     steps:
