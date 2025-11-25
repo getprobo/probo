@@ -11,6 +11,9 @@ builds:
   - id: probod
     main: ./cmd/probod/main.go
     binary: probod
+    flags:
+      - -x
+      - -v
     ldflags:
       - -s -w
       - -X 'main.version={{.Version}}'

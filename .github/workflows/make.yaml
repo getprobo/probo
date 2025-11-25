@@ -10,7 +10,7 @@ on:
 jobs:
   release-snapshot:
     name: "release-snapshot"
-    runs-on: "ubuntu-24.04"
+    runs-on: "shipfox-16vcpu-ubuntu-2404"
     permissions:
       contents: "read"
       packages: "write"
@@ -23,6 +23,9 @@ jobs:
       - uses: "actions/setup-go@v5"
         with:
           go-version: "1.25"
+          cache-dependency-path: |
+            go.sum
+            .goreleaser.yaml
       - uses: "actions/setup-node@v4"
         with:
           node-version-file: ".nvmrc"
@@ -35,7 +38,7 @@ jobs:
         with:
           distribution: "goreleaser"
           version: "~> v2"
-          args: "release --clean --snapshot"
+          args: "release --clean --snapshot --verbose"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: "aquasecurity/trivy-action@0.28.0"
@@ -54,7 +57,7 @@ jobs:
 
   test:
     name: "test"
-    runs-on: "ubuntu-22.04"
+    runs-on: "shipfox-16vcpu-ubuntu-2404"
     permissions:
       contents: "read"
     steps:
