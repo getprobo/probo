@@ -100,6 +100,10 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 			Description:  "List all organizations the user has access to",
 			InputSchema:  types.ListOrganizationsToolInputSchema,
 			OutputSchema: types.ListOrganizationsToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
 		},
 		resolver.ListOrganizationsTool,
 	)
@@ -110,6 +114,10 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 			Description:  "List all vendors for the organization",
 			InputSchema:  types.ListVendorsToolInputSchema,
 			OutputSchema: types.ListVendorsToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
 		},
 		resolver.ListVendorsTool,
 	)
@@ -120,6 +128,10 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 			Description:  "List all people for the organization",
 			InputSchema:  types.ListPeopleToolInputSchema,
 			OutputSchema: types.ListPeopleToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
 		},
 		resolver.ListPeopleTool,
 	)
@@ -150,6 +162,10 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 			Description:  "Get a people by ID",
 			InputSchema:  types.GetPeopleToolInputSchema,
 			OutputSchema: types.GetPeopleToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
 		},
 		resolver.GetPeopleTool,
 	)
@@ -170,6 +186,10 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 			Description:  "List all risks for the organization",
 			InputSchema:  types.ListRisksToolInputSchema,
 			OutputSchema: types.ListRisksToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
 		},
 		resolver.ListRisksTool,
 	)
@@ -180,6 +200,10 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 			Description:  "Get a risk by ID",
 			InputSchema:  types.GetRiskToolInputSchema,
 			OutputSchema: types.GetRiskToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
 		},
 		resolver.GetRiskTool,
 	)
@@ -210,6 +234,10 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 			Description:  "List all measures for the organization",
 			InputSchema:  types.ListMeasuresToolInputSchema,
 			OutputSchema: types.ListMeasuresToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
 		},
 		resolver.ListMeasuresTool,
 	)
@@ -220,6 +248,10 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 			Description:  "Get a measure by ID",
 			InputSchema:  types.GetMeasureToolInputSchema,
 			OutputSchema: types.GetMeasureToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
 		},
 		resolver.GetMeasureTool,
 	)
@@ -250,6 +282,10 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 			Description:  "List all frameworks for the organization",
 			InputSchema:  types.ListFrameworksToolInputSchema,
 			OutputSchema: types.ListFrameworksToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
 		},
 		resolver.ListFrameworksTool,
 	)
@@ -260,6 +296,10 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 			Description:  "Get a framework by ID",
 			InputSchema:  types.GetFrameworkToolInputSchema,
 			OutputSchema: types.GetFrameworkToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
 		},
 		resolver.GetFrameworkTool,
 	)
@@ -290,6 +330,10 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 			Description:  "List all assets for the organization",
 			InputSchema:  types.ListAssetsToolInputSchema,
 			OutputSchema: types.ListAssetsToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
 		},
 		resolver.ListAssetsTool,
 	)
@@ -300,6 +344,10 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 			Description:  "Get an asset by ID",
 			InputSchema:  types.GetAssetToolInputSchema,
 			OutputSchema: types.GetAssetToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
 		},
 		resolver.GetAssetTool,
 	)
@@ -330,6 +378,10 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 			Description:  "List all data for the organization",
 			InputSchema:  types.ListDataToolInputSchema,
 			OutputSchema: types.ListDataToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
 		},
 		resolver.ListDataTool,
 	)
@@ -340,6 +392,10 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 			Description:  "Get a datum by ID",
 			InputSchema:  types.GetDatumToolInputSchema,
 			OutputSchema: types.GetDatumToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
 		},
 		resolver.GetDatumTool,
 	)
@@ -370,6 +426,10 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 			Description:  "List all nonconformities for the organization",
 			InputSchema:  types.ListNonconformitiesToolInputSchema,
 			OutputSchema: types.ListNonconformitiesToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
 		},
 		resolver.ListNonconformitiesTool,
 	)
@@ -380,6 +440,10 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 			Description:  "Get a nonconformity by ID",
 			InputSchema:  types.GetNonconformityToolInputSchema,
 			OutputSchema: types.GetNonconformityToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
 		},
 		resolver.GetNonconformityTool,
 	)
@@ -410,6 +474,10 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 			Description:  "List all obligations for the organization",
 			InputSchema:  types.ListObligationsToolInputSchema,
 			OutputSchema: types.ListObligationsToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
 		},
 		resolver.ListObligationsTool,
 	)
@@ -420,6 +488,10 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 			Description:  "Get an obligation by ID",
 			InputSchema:  types.GetObligationToolInputSchema,
 			OutputSchema: types.GetObligationToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
 		},
 		resolver.GetObligationTool,
 	)
@@ -450,6 +522,10 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 			Description:  "List all continual improvements for the organization",
 			InputSchema:  types.ListContinualImprovementsToolInputSchema,
 			OutputSchema: types.ListContinualImprovementsToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
 		},
 		resolver.ListContinualImprovementsTool,
 	)
@@ -460,6 +536,10 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 			Description:  "Get a continual improvement by ID",
 			InputSchema:  types.GetContinualImprovementToolInputSchema,
 			OutputSchema: types.GetContinualImprovementToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
 		},
 		resolver.GetContinualImprovementTool,
 	)
@@ -490,6 +570,10 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 			Description:  "List all audits for the organization",
 			InputSchema:  types.ListAuditsToolInputSchema,
 			OutputSchema: types.ListAuditsToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
 		},
 		resolver.ListAuditsTool,
 	)
@@ -500,6 +584,10 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 			Description:  "Get an audit by ID",
 			InputSchema:  types.GetAuditToolInputSchema,
 			OutputSchema: types.GetAuditToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
 		},
 		resolver.GetAuditTool,
 	)
@@ -530,6 +618,10 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 			Description:  "List all controls for the organization or framework",
 			InputSchema:  types.ListControlsToolInputSchema,
 			OutputSchema: types.ListControlsToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
 		},
 		resolver.ListControlsTool,
 	)
@@ -540,6 +632,10 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 			Description:  "Get a control by ID",
 			InputSchema:  types.GetControlToolInputSchema,
 			OutputSchema: types.GetControlToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
 		},
 		resolver.GetControlTool,
 	)
@@ -650,6 +746,10 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 			Description:  "List all tasks for the organization or measure",
 			InputSchema:  types.ListTasksToolInputSchema,
 			OutputSchema: types.ListTasksToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
 		},
 		resolver.ListTasksTool,
 	)
@@ -660,6 +760,10 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 			Description:  "Get a task by ID",
 			InputSchema:  types.GetTaskToolInputSchema,
 			OutputSchema: types.GetTaskToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
 		},
 		resolver.GetTaskTool,
 	)
@@ -710,6 +814,10 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 			Description:  "List all snapshots for the organization",
 			InputSchema:  types.ListSnapshotsToolInputSchema,
 			OutputSchema: types.ListSnapshotsToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
 		},
 		resolver.ListSnapshotsTool,
 	)
@@ -720,6 +828,10 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 			Description:  "Get a snapshot by ID",
 			InputSchema:  types.GetSnapshotToolInputSchema,
 			OutputSchema: types.GetSnapshotToolOutputSchema,
+			Annotations: &mcp.ToolAnnotations{
+				ReadOnlyHint:   true,
+				IdempotentHint: true,
+			},
 		},
 		resolver.GetSnapshotTool,
 	)
@@ -733,4 +845,8 @@ func registerToolHandlers(server *mcp.Server, resolver ResolverInterface) {
 		},
 		resolver.TakeSnapshotTool,
 	)
+}
+
+func boolPtr(b bool) *bool {
+	return &b
 }

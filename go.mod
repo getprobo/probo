@@ -28,7 +28,7 @@ require (
 	go.gearno.de/x/ref v0.0.0-20240502200927-d74926fcb14c
 	go.opentelemetry.io/otel v1.38.0
 	go.opentelemetry.io/otel/trace v1.38.0
-	go.probo.inc/mcpgen v0.0.0-20251123193256-f77e7775c058
+	go.probo.inc/mcpgen v0.0.0-20251124210642-41a5174eb92f
 	golang.org/x/crypto v0.45.0
 	golang.org/x/image v0.33.0
 	golang.org/x/sync v0.18.0

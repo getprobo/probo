@@ -3212,448 +3212,540 @@ components:
 tools:
   - name: listOrganizations
     description: List all organizations the user has access to
-    readonly: true
+    hints:
+      readonly: true
+      idempotent: true
     inputSchema:
       $ref: "#/components/schemas/ListOrganizationsInput"
     outputSchema:
       $ref: "#/components/schemas/ListOrganizationsOutput"
   - name: listVendors
     description: List all vendors for the organization
-    readonly: true
+    hints:
+      readonly: true
+      idempotent: true
     inputSchema:
       $ref: "#/components/schemas/ListVendorsInput"
     outputSchema:
       $ref: "#/components/schemas/ListVendorsOutput"
   - name: listPeople
     description: List all people for the organization
-    readonly: true
+    hints:
+      readonly: true
+      idempotent: true
     inputSchema:
       $ref: "#/components/schemas/ListPeopleInput"
     outputSchema:
       $ref: "#/components/schemas/ListPeopleOutput"
   - name: addVendor
     description: Add a new vendor to the organization
-    readonly: false
+    hints:
+      readonly: false
     inputSchema:
       $ref: "#/components/schemas/AddVendorInput"
     outputSchema:
       $ref: "#/components/schemas/AddVendorOutput"
   - name: updateVendor
     description: Update an existing vendor
-    readonly: false
+    hints:
+      readonly: false
     inputSchema:
       $ref: "#/components/schemas/UpdateVendorInput"
     outputSchema:
       $ref: "#/components/schemas/UpdateVendorOutput"
   - name: getPeople
     description: Get a people by ID
-    readonly: true
+    hints:
+      readonly: true
+      idempotent: true
     inputSchema:
       $ref: "#/components/schemas/GetPeopleInput"
     outputSchema:
       $ref: "#/components/schemas/GetPeopleOutput"
   - name: addPeople
     description: Add a new people to the organization
-    readonly: false
+    hints:
+      readonly: false
     inputSchema:
       $ref: "#/components/schemas/AddPeopleInput"
     outputSchema:
       $ref: "#/components/schemas/AddPeopleOutput"
   - name: listRisks
     description: List all risks for the organization
-    readonly: true
+    hints:
+      readonly: true
+      idempotent: true
     inputSchema:
       $ref: "#/components/schemas/ListRisksInput"
     outputSchema:
       $ref: "#/components/schemas/ListRisksOutput"
   - name: getRisk
     description: Get a risk by ID
-    readonly: true
+    hints:
+      readonly: true
+      idempotent: true
     inputSchema:
       $ref: "#/components/schemas/GetRiskInput"
     outputSchema:
       $ref: "#/components/schemas/GetRiskOutput"
   - name: addRisk
     description: Add a new risk to the organization
-    readonly: false
+    hints:
+      readonly: false
     inputSchema:
       $ref: "#/components/schemas/AddRiskInput"
     outputSchema:
       $ref: "#/components/schemas/AddRiskOutput"
   - name: updateRisk
     description: Update an existing risk
-    readonly: false
+    hints:
+      readonly: false
     inputSchema:
       $ref: "#/components/schemas/UpdateRiskInput"
     outputSchema:
       $ref: "#/components/schemas/UpdateRiskOutput"
   - name: listMeasures
     description: List all measures for the organization
-    readonly: true
+    hints:
+      readonly: true
+      idempotent: true
     inputSchema:
       $ref: "#/components/schemas/ListMeasuresInput"
     outputSchema:
       $ref: "#/components/schemas/ListMeasuresOutput"
   - name: getMeasure
     description: Get a measure by ID
-    readonly: true
+    hints:
+      readonly: true
+      idempotent: true
     inputSchema:
       $ref: "#/components/schemas/GetMeasureInput"
     outputSchema:
       $ref: "#/components/schemas/GetMeasureOutput"
   - name: addMeasure
     description: Add a new measure to the organization
-    readonly: false
+    hints:
+      readonly: false
     inputSchema:
       $ref: "#/components/schemas/AddMeasureInput"
     outputSchema:
       $ref: "#/components/schemas/AddMeasureOutput"
   - name: updateMeasure
     description: Update an existing measure
-    readonly: false
+    hints:
+      readonly: false
     inputSchema:
       $ref: "#/components/schemas/UpdateMeasureInput"
     outputSchema:
       $ref: "#/components/schemas/UpdateMeasureOutput"
   - name: listFrameworks
     description: List all frameworks for the organization
-    readonly: true
+    hints:
+      readonly: true
+      idempotent: true
     inputSchema:
       $ref: "#/components/schemas/ListFrameworksInput"
     outputSchema:
       $ref: "#/components/schemas/ListFrameworksOutput"
   - name: getFramework
     description: Get a framework by ID
-    readonly: true
+    hints:
+      readonly: true
+      idempotent: true
     inputSchema:
       $ref: "#/components/schemas/GetFrameworkInput"
     outputSchema:
       $ref: "#/components/schemas/GetFrameworkOutput"
   - name: addFramework
     description: Add a new framework to the organization
-    readonly: false
+    hints:
+      readonly: false
     inputSchema:
       $ref: "#/components/schemas/AddFrameworkInput"
     outputSchema:
       $ref: "#/components/schemas/AddFrameworkOutput"
   - name: updateFramework
     description: Update an existing framework
-    readonly: false
+    hints:
+      readonly: false
     inputSchema:
       $ref: "#/components/schemas/UpdateFrameworkInput"
     outputSchema:
       $ref: "#/components/schemas/UpdateFrameworkOutput"
   - name: listAssets
     description: List all assets for the organization
-    readonly: true
+    hints:
+      readonly: true
+      idempotent: true
     inputSchema:
       $ref: "#/components/schemas/ListAssetsInput"
     outputSchema:
       $ref: "#/components/schemas/ListAssetsOutput"
   - name: getAsset
     description: Get an asset by ID
-    readonly: true
+    hints:
+      readonly: true
+      idempotent: true
     inputSchema:
       $ref: "#/components/schemas/GetAssetInput"
     outputSchema:
       $ref: "#/components/schemas/GetAssetOutput"
   - name: addAsset
     description: Add a new asset to the organization
-    readonly: false
+    hints:
+      readonly: false
     inputSchema:
       $ref: "#/components/schemas/AddAssetInput"
     outputSchema:
       $ref: "#/components/schemas/AddAssetOutput"
   - name: updateAsset
     description: Update an existing asset
-    readonly: false
+    hints:
+      readonly: false
     inputSchema:
       $ref: "#/components/schemas/UpdateAssetInput"
     outputSchema:
       $ref: "#/components/schemas/UpdateAssetOutput"
   - name: listData
     description: List all data for the organization
-    readonly: true
+    hints:
+      readonly: true
+      idempotent: true
     inputSchema:
       $ref: "#/components/schemas/ListDataInput"
     outputSchema:
       $ref: "#/components/schemas/ListDataOutput"
   - name: getDatum
     description: Get a datum by ID
-    readonly: true
+    hints:
+      readonly: true
+      idempotent: true
     inputSchema:
       $ref: "#/components/schemas/GetDatumInput"
     outputSchema:
       $ref: "#/components/schemas/GetDatumOutput"
   - name: addDatum
     description: Add a new datum to the organization
-    readonly: false
+    hints:
+      readonly: false
     inputSchema:
       $ref: "#/components/schemas/AddDatumInput"
     outputSchema:
       $ref: "#/components/schemas/AddDatumOutput"
   - name: updateDatum
     description: Update an existing datum
-    readonly: false
+    hints:
+      readonly: false
     inputSchema:
       $ref: "#/components/schemas/UpdateDatumInput"
     outputSchema:
       $ref: "#/components/schemas/UpdateDatumOutput"
   - name: listNonconformities
     description: List all nonconformities for the organization
-    readonly: true
+    hints:
+      readonly: true
+      idempotent: true
     inputSchema:
       $ref: "#/components/schemas/ListNonconformitiesInput"
     outputSchema:
       $ref: "#/components/schemas/ListNonconformitiesOutput"
   - name: getNonconformity
     description: Get a nonconformity by ID
-    readonly: true
+    hints:
+      readonly: true
+      idempotent: true
     inputSchema:
       $ref: "#/components/schemas/GetNonconformityInput"
     outputSchema:
       $ref: "#/components/schemas/GetNonconformityOutput"
   - name: addNonconformity
     description: Add a new nonconformity to the organization
-    readonly: false
+    hints:
+      readonly: false
     inputSchema:
       $ref: "#/components/schemas/AddNonconformityInput"
     outputSchema:
       $ref: "#/components/schemas/AddNonconformityOutput"
   - name: updateNonconformity
     description: Update an existing nonconformity
-    readonly: false
+    hints:
+      readonly: false
     inputSchema:
       $ref: "#/components/schemas/UpdateNonconformityInput"
     outputSchema:
       $ref: "#/components/schemas/UpdateNonconformityOutput"
   - name: listObligations
     description: List all obligations for the organization
-    readonly: true
+    hints:
+      readonly: true
+      idempotent: true
     inputSchema:
       $ref: "#/components/schemas/ListObligationsInput"
     outputSchema:
       $ref: "#/components/schemas/ListObligationsOutput"
   - name: getObligation
     description: Get an obligation by ID
-    readonly: true
+    hints:
+      readonly: true
+      idempotent: true
     inputSchema:
       $ref: "#/components/schemas/GetObligationInput"
     outputSchema:
       $ref: "#/components/schemas/GetObligationOutput"
   - name: addObligation
     description: Add a new obligation to the organization
-    readonly: false
+    hints:
+      readonly: false
     inputSchema:
       $ref: "#/components/schemas/AddObligationInput"
     outputSchema:
       $ref: "#/components/schemas/AddObligationOutput"
   - name: updateObligation
     description: Update an existing obligation
-    readonly: false
+    hints:
+      readonly: false
     inputSchema:
       $ref: "#/components/schemas/UpdateObligationInput"
     outputSchema:
       $ref: "#/components/schemas/UpdateObligationOutput"
   - name: listContinualImprovements
     description: List all continual improvements for the organization
-    readonly: true
+    hints:
+      readonly: true
+      idempotent: true
     inputSchema:
       $ref: "#/components/schemas/ListContinualImprovementsInput"
     outputSchema:
       $ref: "#/components/schemas/ListContinualImprovementsOutput"
   - name: getContinualImprovement
     description: Get a continual improvement by ID
-    readonly: true
+    hints:
+      readonly: true
+      idempotent: true
     inputSchema:
       $ref: "#/components/schemas/GetContinualImprovementInput"
     outputSchema:
       $ref: "#/components/schemas/GetContinualImprovementOutput"
   - name: addContinualImprovement
     description: Add a new continual improvement to the organization
-    readonly: false
+    hints:
+      readonly: false
     inputSchema:
       $ref: "#/components/schemas/AddContinualImprovementInput"
     outputSchema:
       $ref: "#/components/schemas/AddContinualImprovementOutput"
   - name: updateContinualImprovement
     description: Update an existing continual improvement
-    readonly: false
+    hints:
+      readonly: false
     inputSchema:
       $ref: "#/components/schemas/UpdateContinualImprovementInput"
     outputSchema:
       $ref: "#/components/schemas/UpdateContinualImprovementOutput"
   - name: listAudits
     description: List all audits for the organization
-    readonly: true
+    hints:
+      readonly: true
+      idempotent: true
     inputSchema:
       $ref: "#/components/schemas/ListAuditsInput"
     outputSchema:
       $ref: "#/components/schemas/ListAuditsOutput"
   - name: getAudit
     description: Get an audit by ID
-    readonly: true
+    hints:
+      readonly: true
+      idempotent: true
     inputSchema:
       $ref: "#/components/schemas/GetAuditInput"
     outputSchema:
       $ref: "#/components/schemas/GetAuditOutput"
   - name: addAudit
     description: Add a new audit to the organization
-    readonly: false
+    hints:
+      readonly: false
     inputSchema:
       $ref: "#/components/schemas/AddAuditInput"
     outputSchema:
       $ref: "#/components/schemas/AddAuditOutput"
   - name: updateAudit
     description: Update an existing audit
-    readonly: false
+    hints:
+      readonly: false
     inputSchema:
       $ref: "#/components/schemas/UpdateAuditInput"
     outputSchema:
       $ref: "#/components/schemas/UpdateAuditOutput"
   - name: listControls
     description: List all controls for the organization or framework
-    readonly: true
+    hints:
+      readonly: true
+      idempotent: true
     inputSchema:
       $ref: "#/components/schemas/ListControlsInput"
     outputSchema:
       $ref: "#/components/schemas/ListControlsOutput"
   - name: getControl
     description: Get a control by ID
-    readonly: true
+    hints:
+      readonly: true
+      idempotent: true
     inputSchema:
       $ref: "#/components/schemas/GetControlInput"
     outputSchema:
       $ref: "#/components/schemas/GetControlOutput"
   - name: addControl
     description: Add a new control to a framework
-    readonly: false
+    hints:
+      readonly: false
     inputSchema:
       $ref: "#/components/schemas/AddControlInput"
     outputSchema:
       $ref: "#/components/schemas/AddControlOutput"
   - name: updateControl
     description: Update an existing control
-    readonly: false
+    hints:
+      readonly: false
     inputSchema:
       $ref: "#/components/schemas/UpdateControlInput"
     outputSchema:
       $ref: "#/components/schemas/UpdateControlOutput"
   - name: linkControlMeasure
     description: Link a measure to a control
-    readonly: false
+    hints:
+      readonly: false
     inputSchema:
       $ref: "#/components/schemas/LinkControlMeasureInput"
     outputSchema:
       $ref: "#/components/schemas/LinkControlMeasureOutput"
   - name: unlinkControlMeasure
     description: Unlink a measure from a control
-    readonly: false
+    hints:
+      readonly: false
     inputSchema:
       $ref: "#/components/schemas/UnlinkControlMeasureInput"
     outputSchema:
       $ref: "#/components/schemas/UnlinkControlMeasureOutput"
   - name: linkControlDocument
     description: Link a document to a control
-    readonly: false
+    hints:
+      readonly: false
     inputSchema:
       $ref: "#/components/schemas/LinkControlDocumentInput"
     outputSchema:
       $ref: "#/components/schemas/LinkControlDocumentOutput"
   - name: unlinkControlDocument
     description: Unlink a document from a control
-    readonly: false
+    hints:
+      readonly: false
     inputSchema:
       $ref: "#/components/schemas/UnlinkControlDocumentInput"
     outputSchema:
       $ref: "#/components/schemas/UnlinkControlDocumentOutput"
   - name: linkControlAudit
     description: Link an audit to a control
-    readonly: false
+    hints:
+      readonly: false
     inputSchema:
       $ref: "#/components/schemas/LinkControlAuditInput"
     outputSchema:
       $ref: "#/components/schemas/LinkControlAuditOutput"
   - name: unlinkControlAudit
     description: Unlink an audit from a control
-    readonly: false
+    hints:
+      readonly: false
     inputSchema:
       $ref: "#/components/schemas/UnlinkControlAuditInput"
     outputSchema:
       $ref: "#/components/schemas/UnlinkControlAuditOutput"
   - name: linkControlSnapshot
     description: Link a snapshot to a control
-    readonly: false
+    hints:
+      readonly: false
     inputSchema:
       $ref: "#/components/schemas/LinkControlSnapshotInput"
     outputSchema:
       $ref: "#/components/schemas/LinkControlSnapshotOutput"
   - name: unlinkControlSnapshot
     description: Unlink a snapshot from a control
-    readonly: false
+    hints:
+      readonly: false
     inputSchema:
       $ref: "#/components/schemas/UnlinkControlSnapshotInput"
     outputSchema:
       $ref: "#/components/schemas/UnlinkControlSnapshotOutput"
   - name: listTasks
     description: List all tasks for the organization or measure
-    readonly: true
+    hints:
+      readonly: true
+      idempotent: true
     inputSchema:
       $ref: "#/components/schemas/ListTasksInput"
     outputSchema:
       $ref: "#/components/schemas/ListTasksOutput"
   - name: getTask
     description: Get a task by ID
-    readonly: true
+    hints:
+      readonly: true
+      idempotent: true
     inputSchema:
       $ref: "#/components/schemas/GetTaskInput"
     outputSchema:
       $ref: "#/components/schemas/GetTaskOutput"
   - name: addTask
     description: Add a new task to the organization
-    readonly: false
+    hints:
+      readonly: false
     inputSchema:
       $ref: "#/components/schemas/AddTaskInput"
     outputSchema:
       $ref: "#/components/schemas/AddTaskOutput"
   - name: updateTask
     description: Update an existing task
-    readonly: false
+    hints:
+      readonly: false
     inputSchema:
       $ref: "#/components/schemas/UpdateTaskInput"
     outputSchema:
       $ref: "#/components/schemas/UpdateTaskOutput"
   - name: assignTask
     description: Assign a task to a person
-    readonly: false
+    hints:
+      readonly: false
     inputSchema:
       $ref: "#/components/schemas/AssignTaskInput"
     outputSchema:
       $ref: "#/components/schemas/AssignTaskOutput"
   - name: unassignTask
     description: Unassign a task from a person
-    readonly: false
+    hints:
+      readonly: false
     inputSchema:
       $ref: "#/components/schemas/UnassignTaskInput"
     outputSchema:
       $ref: "#/components/schemas/UnassignTaskOutput"
   - name: listSnapshots
     description: List all snapshots for the organization
-    readonly: true
+    hints:
+      readonly: true
+      idempotent: true
     inputSchema:
       $ref: "#/components/schemas/ListSnapshotsInput"
     outputSchema:
       $ref: "#/components/schemas/ListSnapshotsOutput"
   - name: getSnapshot
     description: Get a snapshot by ID
-    readonly: true
+    hints:
+      readonly: true
+      idempotent: true
     inputSchema:
       $ref: "#/components/schemas/GetSnapshotInput"
     outputSchema:
       $ref: "#/components/schemas/GetSnapshotOutput"
   - name: takeSnapshot
     description: Take a snapshot of a collection of objects (risks, vendors, assets, data, nonconformities, obligations, continual improvements, or processing activities)
-    readonly: false
+    hints:
+      readonly: false
     inputSchema:
       $ref: "#/components/schemas/TakeSnapshotInput"
     outputSchema:
