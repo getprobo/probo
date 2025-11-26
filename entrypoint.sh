@@ -142,6 +142,8 @@ $(echo "${SAML_PRIVATE_KEY:-}" | sed 's/^/        /')
       sender-email: "${MAILER_SENDER_EMAIL:-no-reply@notification.getprobo.com}"
       smtp:
         addr: "${SMTP_ADDR:-localhost:1025}"
+        user: "${SMTP_USER:-}"
+        password: "${SMTP_PASSWORD:-}"
         tls-required: ${SMTP_TLS_REQUIRED:-false}
       mailer-interval: ${MAILER_INTERVAL:-60}
     slack:
