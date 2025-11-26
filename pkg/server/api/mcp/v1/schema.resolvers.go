@@ -1483,7 +1483,7 @@ func (r *Resolver) ListDocumentsTool(ctx context.Context, req *mcp.CallToolReque
 }
 
 func (r *Resolver) GetDocumentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetDocumentInput) (*mcp.CallToolResult, types.GetDocumentOutput, error) {
-	r.MustBeAuthorized(ctx, input.ID, authz.ActionDocument)
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionGet)
 
 	prb := r.ProboService(ctx, input.ID)
 
@@ -1577,7 +1577,7 @@ func (r *Resolver) ListDocumentVersionsTool(ctx context.Context, req *mcp.CallTo
 }
 
 func (r *Resolver) GetDocumentVersionTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetDocumentVersionInput) (*mcp.CallToolResult, types.GetDocumentVersionOutput, error) {
-	r.MustBeAuthorized(ctx, input.ID, authz.ActionDocumentVersion)
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionGet)
 
 	svc := r.ProboService(ctx, input.ID)
 
@@ -1679,7 +1679,7 @@ func (r *Resolver) ListDocumentVersionSignaturesTool(ctx context.Context, req *m
 }
 
 func (r *Resolver) GetDocumentVersionSignatureTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetDocumentVersionSignatureInput) (*mcp.CallToolResult, types.GetDocumentVersionSignatureOutput, error) {
-	r.MustBeAuthorized(ctx, input.ID, authz.ActionDocumentVersion)
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionGet)
 
 	prb := r.ProboService(ctx, input.ID)
 
