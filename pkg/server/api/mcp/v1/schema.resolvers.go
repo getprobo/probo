@@ -193,6 +193,33 @@ func (r *Resolver) AddPeopleTool(ctx context.Context, req *mcp.CallToolRequest, 
 	}, nil
 }
 
+func (r *Resolver) UpdatePeopleTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdatePeopleInput) (*mcp.CallToolResult, types.UpdatePeopleOutput, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionUpdatePeople)
+
+	svc := r.ProboService(ctx, input.ID)
+
+	people, err := svc.Peoples.Update(
+		ctx,
+		probo.UpdatePeopleRequest{
+			ID:                       input.ID,
+			FullName:                 input.FullName,
+			PrimaryEmailAddress:      input.PrimaryEmailAddress,
+			AdditionalEmailAddresses: input.AdditionalEmailAddresses,
+			Kind:                     input.Kind,
+			Position:                 UnwrapOmittable(input.Position),
+			ContractStartDate:        UnwrapOmittable(input.ContractStartDate),
+			ContractEndDate:          UnwrapOmittable(input.ContractEndDate),
+		},
+	)
+	if err != nil {
+		panic(fmt.Errorf("cannot update people: %w", err))
+	}
+
+	return nil, types.UpdatePeopleOutput{
+		People: types.NewPeople(people),
+	}, nil
+}
+
 func (r *Resolver) ListRisksTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListRisksInput) (*mcp.CallToolResult, types.ListRisksOutput, error) {
 	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionListRisks)
 

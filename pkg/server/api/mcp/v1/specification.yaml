@@ -402,6 +402,54 @@ components:
         people:
           $ref: "#/components/schemas/People"
 
+    UpdatePeopleInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: People ID
+        full_name:
+          type: string
+          description: Full name
+        primary_email_address:
+          type: string
+          description: Primary email address
+        additional_email_addresses:
+          anyOf:
+            - type: array
+              items:
+                type: string
+            - type: "null"
+              description: No additional email addresses
+          description: Additional email addresses
+        kind:
+          $ref: "#/components/schemas/PeopleKind"
+          description: People kind
+        position:
+          type: ["string", "null"]
+          description: Position
+          go.probo.inc/mcpgen/omittable: true
+        contract_start_date:
+          type: ["string", "null"]
+          format: date-time
+          description: Contract start date
+          go.probo.inc/mcpgen/omittable: true
+        contract_end_date:
+          type: ["string", "null"]
+          format: date-time
+          description: Contract end date
+          go.probo.inc/mcpgen/omittable: true
+
+    UpdatePeopleOutput:
+      type: object
+      required:
+        - people
+      properties:
+        people:
+          $ref: "#/components/schemas/People"
+
     RiskOrderField:
       type: string
       enum:
@@ -3892,6 +3940,14 @@ tools:
       $ref: "#/components/schemas/AddPeopleInput"
     outputSchema:
       $ref: "#/components/schemas/AddPeopleOutput"
+  - name: updatePeople
+    description: Update an existing people
+    hints:
+      readonly: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdatePeopleInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdatePeopleOutput"
   - name: listRisks
     description: List all risks for the organization
     hints:
