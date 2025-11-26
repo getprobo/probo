@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.94.0] - 2025-11-26
+
+### Added
+
+- Add updatePeople MCP tool.
+- Add `SMTP_USER` and `SMTP_PASSWORD` to entrypoint.sh.
+
+### Fixed
+
+- MCP permission tools.
+
 ## [0.93.0] - 2025-11-25
 
 ### Added
