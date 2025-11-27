@@ -1,0 +1,1981 @@
+Building probod binary...
+CGO_ENABLED=0 go build -ldflags "-X 'main.version=0.94.1' -X 'main.env=prod'" -gcflags="-e" -o bin/probod-e2e ./cmd/probod
+Running e2e tests...
+PROBO_E2E_BINARY=/Users/gearnode/Developer/probo/probo/bin/probod-e2e \
+	PROBO_E2E_CONFIG=/Users/gearnode/Developer/probo/probo/e2e/console/testdata/config.yaml \
+	CGO_ENABLED=1 go test -count=1 -v ./e2e/console/...
+=== RUN   TestAsset_Create
+=== PAUSE TestAsset_Create
+=== RUN   TestAsset_Update
+=== PAUSE TestAsset_Update
+=== RUN   TestAsset_Delete
+=== PAUSE TestAsset_Delete
+=== RUN   TestAsset_List
+=== PAUSE TestAsset_List
+=== RUN   TestAsset_Types
+=== PAUSE TestAsset_Types
+=== RUN   TestAudit_Create
+=== PAUSE TestAudit_Create
+=== RUN   TestAudit_Create_Validation
+=== PAUSE TestAudit_Create_Validation
+=== RUN   TestAudit_Update
+=== PAUSE TestAudit_Update
+=== RUN   TestAudit_Update_Validation
+=== PAUSE TestAudit_Update_Validation
+=== RUN   TestAudit_Delete
+=== PAUSE TestAudit_Delete
+=== RUN   TestAudit_Delete_Validation
+=== PAUSE TestAudit_Delete_Validation
+=== RUN   TestAudit_List
+=== PAUSE TestAudit_List
+=== RUN   TestAudit_Query
+=== PAUSE TestAudit_Query
+=== RUN   TestAudit_Timestamps
+=== PAUSE TestAudit_Timestamps
+=== RUN   TestAudit_SubResolvers
+=== PAUSE TestAudit_SubResolvers
+=== RUN   TestAudit_RBAC
+=== PAUSE TestAudit_RBAC
+=== RUN   TestAudit_MaxLength_Validation
+=== PAUSE TestAudit_MaxLength_Validation
+=== RUN   TestAudit_Pagination
+=== PAUSE TestAudit_Pagination
+=== RUN   TestAudit_TenantIsolation
+=== PAUSE TestAudit_TenantIsolation
+=== RUN   TestAudit_Ordering
+=== PAUSE TestAudit_Ordering
+=== RUN   TestAudit_UploadReport
+=== PAUSE TestAudit_UploadReport
+=== RUN   TestAudit_UploadReport_Validation
+=== PAUSE TestAudit_UploadReport_Validation
+=== RUN   TestAudit_UploadReport_RBAC
+=== PAUSE TestAudit_UploadReport_RBAC
+=== RUN   TestAudit_DeleteReport
+=== PAUSE TestAudit_DeleteReport
+=== RUN   TestAudit_DeleteReport_RBAC
+=== PAUSE TestAudit_DeleteReport_RBAC
+=== RUN   TestContinualImprovement_Create
+=== PAUSE TestContinualImprovement_Create
+=== RUN   TestContinualImprovement_Update
+=== PAUSE TestContinualImprovement_Update
+=== RUN   TestContinualImprovement_Delete
+=== PAUSE TestContinualImprovement_Delete
+=== RUN   TestContinualImprovement_List
+=== PAUSE TestContinualImprovement_List
+=== RUN   TestContinualImprovement_StatusAndPriorityValues
+=== PAUSE TestContinualImprovement_StatusAndPriorityValues
+=== RUN   TestControl_RequiredFields
+=== PAUSE TestControl_RequiredFields
+=== RUN   TestControl_OmittableDescription
+=== PAUSE TestControl_OmittableDescription
+=== RUN   TestControl_SubResolvers
+=== PAUSE TestControl_SubResolvers
+=== RUN   TestControl_ExclusionJustification
+=== PAUSE TestControl_ExclusionJustification
+=== RUN   TestControl_Create
+=== PAUSE TestControl_Create
+=== RUN   TestControl_Update
+=== PAUSE TestControl_Update
+=== RUN   TestControl_Delete
+=== PAUSE TestControl_Delete
+=== RUN   TestControl_List
+=== PAUSE TestControl_List
+=== RUN   TestDatum_Create
+=== PAUSE TestDatum_Create
+=== RUN   TestDatum_Update
+=== PAUSE TestDatum_Update
+=== RUN   TestDatum_Delete
+=== PAUSE TestDatum_Delete
+=== RUN   TestDatum_List
+=== PAUSE TestDatum_List
+=== RUN   TestDatum_DataClassification
+=== PAUSE TestDatum_DataClassification
+=== RUN   TestDocument_Create
+=== PAUSE TestDocument_Create
+=== RUN   TestDocument_Update
+=== PAUSE TestDocument_Update
+=== RUN   TestDocument_Delete
+=== PAUSE TestDocument_Delete
+=== RUN   TestDocument_List
+=== PAUSE TestDocument_List
+=== RUN   TestDocument_Types
+=== PAUSE TestDocument_Types
+=== RUN   TestDocumentVersion_PublishVersion
+=== PAUSE TestDocumentVersion_PublishVersion
+=== RUN   TestDocumentVersion_CreateDraft
+=== PAUSE TestDocumentVersion_CreateDraft
+=== RUN   TestDocumentVersion_UpdateContent
+=== PAUSE TestDocumentVersion_UpdateContent
+=== RUN   TestDocumentVersion_RequestSignature
+=== PAUSE TestDocumentVersion_RequestSignature
+=== RUN   TestDocumentVersion_BulkPublish
+=== PAUSE TestDocumentVersion_BulkPublish
+=== RUN   TestDocumentVersion_BulkRequestSignatures
+=== PAUSE TestDocumentVersion_BulkRequestSignatures
+=== RUN   TestDocumentVersion_BulkDelete
+=== PAUSE TestDocumentVersion_BulkDelete
+=== RUN   TestFramework_Create
+=== PAUSE TestFramework_Create
+=== RUN   TestFramework_Create_Validation
+=== PAUSE TestFramework_Create_Validation
+=== RUN   TestFramework_Update
+=== PAUSE TestFramework_Update
+=== RUN   TestFramework_Update_Validation
+=== PAUSE TestFramework_Update_Validation
+=== RUN   TestFramework_Delete
+=== PAUSE TestFramework_Delete
+=== RUN   TestFramework_Delete_Validation
+=== PAUSE TestFramework_Delete_Validation
+=== RUN   TestFramework_List
+=== PAUSE TestFramework_List
+=== RUN   TestFramework_Query
+=== PAUSE TestFramework_Query
+=== RUN   TestFramework_Timestamps
+=== PAUSE TestFramework_Timestamps
+=== RUN   TestFramework_OmittableDescription
+=== PAUSE TestFramework_OmittableDescription
+=== RUN   TestFramework_SubResolvers
+=== PAUSE TestFramework_SubResolvers
+=== RUN   TestFramework_RBAC
+=== PAUSE TestFramework_RBAC
+=== RUN   TestFramework_MaxLength_Validation
+=== PAUSE TestFramework_MaxLength_Validation
+=== RUN   TestFramework_SubResolvers_WithData
+=== PAUSE TestFramework_SubResolvers_WithData
+=== RUN   TestFramework_Pagination
+=== PAUSE TestFramework_Pagination
+=== RUN   TestFramework_TenantIsolation
+=== PAUSE TestFramework_TenantIsolation
+=== RUN   TestFramework_Ordering
+=== PAUSE TestFramework_Ordering
+=== RUN   TestFramework_DuplicateName
+=== PAUSE TestFramework_DuplicateName
+=== RUN   TestControlMeasureMapping_CreateDelete
+=== PAUSE TestControlMeasureMapping_CreateDelete
+=== RUN   TestRiskMeasureMapping_CreateDelete
+=== PAUSE TestRiskMeasureMapping_CreateDelete
+=== RUN   TestControlDocumentMapping_CreateDelete
+=== PAUSE TestControlDocumentMapping_CreateDelete
+=== RUN   TestControlAuditMapping_CreateDelete
+=== PAUSE TestControlAuditMapping_CreateDelete
+=== RUN   TestControlSnapshotMapping_CreateDelete
+=== PAUSE TestControlSnapshotMapping_CreateDelete
+=== RUN   TestRiskDocumentMapping_CreateDelete
+=== PAUSE TestRiskDocumentMapping_CreateDelete
+=== RUN   TestRiskObligationMapping_CreateDelete
+=== PAUSE TestRiskObligationMapping_CreateDelete
+=== RUN   TestMeasure_Create
+=== PAUSE TestMeasure_Create
+=== RUN   TestMeasure_Create_Validation
+=== PAUSE TestMeasure_Create_Validation
+=== RUN   TestMeasure_Update
+=== PAUSE TestMeasure_Update
+=== RUN   TestMeasure_Update_Validation
+=== PAUSE TestMeasure_Update_Validation
+=== RUN   TestMeasure_Delete
+=== PAUSE TestMeasure_Delete
+=== RUN   TestMeasure_Delete_Validation
+=== PAUSE TestMeasure_Delete_Validation
+=== RUN   TestMeasure_List
+=== PAUSE TestMeasure_List
+=== RUN   TestMeasure_Query
+=== PAUSE TestMeasure_Query
+=== RUN   TestMeasure_Timestamps
+=== PAUSE TestMeasure_Timestamps
+=== RUN   TestMeasure_OmittableDescription
+=== PAUSE TestMeasure_OmittableDescription
+=== RUN   TestMeasure_SubResolvers
+=== PAUSE TestMeasure_SubResolvers
+=== RUN   TestMeasure_RBAC
+=== PAUSE TestMeasure_RBAC
+=== RUN   TestMeasure_MaxLength_Validation
+=== PAUSE TestMeasure_MaxLength_Validation
+=== RUN   TestMeasure_SubResolvers_WithData
+=== PAUSE TestMeasure_SubResolvers_WithData
+=== RUN   TestMeasure_Pagination
+=== PAUSE TestMeasure_Pagination
+=== RUN   TestMeasure_Filtering
+=== PAUSE TestMeasure_Filtering
+=== RUN   TestMeasure_TenantIsolation
+=== PAUSE TestMeasure_TenantIsolation
+=== RUN   TestMeasure_Ordering
+=== PAUSE TestMeasure_Ordering
+=== RUN   TestMeeting_Create
+=== PAUSE TestMeeting_Create
+=== RUN   TestMeeting_Update
+=== PAUSE TestMeeting_Update
+=== RUN   TestMeeting_Delete
+=== PAUSE TestMeeting_Delete
+=== RUN   TestMeeting_List
+=== PAUSE TestMeeting_List
+=== RUN   TestMeeting_WithAttendees
+=== PAUSE TestMeeting_WithAttendees
+=== RUN   TestMember_UpdateMembership
+=== PAUSE TestMember_UpdateMembership
+=== RUN   TestMember_RemoveMember
+=== PAUSE TestMember_RemoveMember
+=== RUN   TestInvitation_Delete
+=== PAUSE TestInvitation_Delete
+=== RUN   TestMember_List
+=== PAUSE TestMember_List
+=== RUN   TestNonconformity_Create
+=== PAUSE TestNonconformity_Create
+=== RUN   TestNonconformity_Update
+=== PAUSE TestNonconformity_Update
+=== RUN   TestNonconformity_Delete
+=== PAUSE TestNonconformity_Delete
+=== RUN   TestNonconformity_List
+=== PAUSE TestNonconformity_List
+=== RUN   TestNonconformity_StatusValues
+=== PAUSE TestNonconformity_StatusValues
+=== RUN   TestObligation_Create
+=== PAUSE TestObligation_Create
+=== RUN   TestObligation_Update
+=== PAUSE TestObligation_Update
+=== RUN   TestObligation_Delete
+=== PAUSE TestObligation_Delete
+=== RUN   TestObligation_List
+=== PAUSE TestObligation_List
+=== RUN   TestObligation_StatusValues
+=== PAUSE TestObligation_StatusValues
+=== RUN   TestOrganization_Update
+=== PAUSE TestOrganization_Update
+=== RUN   TestOrganization_UpdateContext
+    organization_test.go:140: updateOrganizationContext mutation not implemented
+--- SKIP: TestOrganization_UpdateContext (0.00s)
+=== RUN   TestOrganization_Get
+=== PAUSE TestOrganization_Get
+=== RUN   TestPeople_RequiredFields
+=== PAUSE TestPeople_RequiredFields
+=== RUN   TestPeople_DuplicatePrimaryEmail
+    people_edge_cases_test.go:134: Duplicate email validation may not be implemented yet
+--- SKIP: TestPeople_DuplicatePrimaryEmail (0.00s)
+=== RUN   TestPeople_OmittablePosition
+    people_edge_cases_test.go:189: Omittable position behavior not implemented as expected
+--- SKIP: TestPeople_OmittablePosition (0.00s)
+=== RUN   TestPeople_OmittableContractDates
+    people_edge_cases_test.go:322: Omittable contract dates behavior not implemented as expected
+--- SKIP: TestPeople_OmittableContractDates (0.00s)
+=== RUN   TestPeople_KindEnum
+=== PAUSE TestPeople_KindEnum
+=== RUN   TestPeople_SubResolvers
+=== PAUSE TestPeople_SubResolvers
+=== RUN   TestPeople_InvalidID
+    people_edge_cases_test.go:527: Invalid ID handling needs review
+--- SKIP: TestPeople_InvalidID (0.00s)
+=== RUN   TestPeople_Create
+=== PAUSE TestPeople_Create
+=== RUN   TestPeople_Update
+    people_test.go:125: updatePeople has server bug with additional_email_addresses null constraint
+--- SKIP: TestPeople_Update (0.00s)
+=== RUN   TestPeople_Delete
+=== PAUSE TestPeople_Delete
+=== RUN   TestPeople_List
+=== PAUSE TestPeople_List
+=== RUN   TestProcessingActivity_Create
+=== PAUSE TestProcessingActivity_Create
+=== RUN   TestProcessingActivity_Update
+=== PAUSE TestProcessingActivity_Update
+=== RUN   TestProcessingActivity_Delete
+=== PAUSE TestProcessingActivity_Delete
+=== RUN   TestProcessingActivity_List
+=== PAUSE TestProcessingActivity_List
+=== RUN   TestProcessingActivity_LawfulBasis
+=== PAUSE TestProcessingActivity_LawfulBasis
+=== RUN   TestRBAC
+=== PAUSE TestRBAC
+=== RUN   TestRisk_RequiredFields
+=== PAUSE TestRisk_RequiredFields
+=== RUN   TestRisk_OmittableFields
+=== PAUSE TestRisk_OmittableFields
+=== RUN   TestRisk_OmittableOwnerId
+=== PAUSE TestRisk_OmittableOwnerId
+=== RUN   TestRisk_SubResolvers
+=== PAUSE TestRisk_SubResolvers
+=== RUN   TestRisk_TreatmentEnum
+=== PAUSE TestRisk_TreatmentEnum
+=== RUN   TestRisk_InvalidID
+=== PAUSE TestRisk_InvalidID
+=== RUN   TestRisk_Create
+=== PAUSE TestRisk_Create
+=== RUN   TestRisk_Update
+=== PAUSE TestRisk_Update
+=== RUN   TestRisk_Delete
+=== PAUSE TestRisk_Delete
+=== RUN   TestRisk_List
+=== PAUSE TestRisk_List
+=== RUN   TestSnapshot_Create
+=== PAUSE TestSnapshot_Create
+=== RUN   TestSnapshot_Delete
+=== PAUSE TestSnapshot_Delete
+=== RUN   TestSnapshot_List
+=== PAUSE TestSnapshot_List
+=== RUN   TestSnapshot_Types
+=== PAUSE TestSnapshot_Types
+=== RUN   TestTask_Assign
+=== PAUSE TestTask_Assign
+=== RUN   TestTask_Unassign
+=== PAUSE TestTask_Unassign
+=== RUN   TestTask_RequiredFields
+=== PAUSE TestTask_RequiredFields
+=== RUN   TestTask_OmittableFields
+    task_edge_cases_test.go:128: Omittable fields behavior needs review
+--- SKIP: TestTask_OmittableFields (0.00s)
+=== RUN   TestTask_OmittableDeadline
+    task_edge_cases_test.go:334: Omittable deadline behavior needs review
+--- SKIP: TestTask_OmittableDeadline (0.00s)
+=== RUN   TestTask_OmittableAssignee
+    task_edge_cases_test.go:442: Omittable assignee behavior needs review
+--- SKIP: TestTask_OmittableAssignee (0.00s)
+=== RUN   TestTask_SubResolvers
+    task_edge_cases_test.go:623: Task sub-resolvers need review
+--- SKIP: TestTask_SubResolvers (0.00s)
+=== RUN   TestTask_StateEnum
+    task_edge_cases_test.go:735: Task state enum needs review
+--- SKIP: TestTask_StateEnum (0.00s)
+=== RUN   TestTask_InvalidID
+=== PAUSE TestTask_InvalidID
+=== RUN   TestTask_Create
+=== PAUSE TestTask_Create
+=== RUN   TestTask_Update
+=== PAUSE TestTask_Update
+=== RUN   TestTask_Delete
+=== PAUSE TestTask_Delete
+=== RUN   TestTask_ListByMeasure
+=== PAUSE TestTask_ListByMeasure
+=== RUN   TestVendorContact_Create
+=== PAUSE TestVendorContact_Create
+=== RUN   TestVendorContact_Update
+=== PAUSE TestVendorContact_Update
+=== RUN   TestVendorContact_Delete
+=== PAUSE TestVendorContact_Delete
+=== RUN   TestVendorContact_List
+=== PAUSE TestVendorContact_List
+=== RUN   TestVendor_RequiredFields
+=== PAUSE TestVendor_RequiredFields
+=== RUN   TestVendor_OmittableFields
+=== PAUSE TestVendor_OmittableFields
+=== RUN   TestVendor_OmittableOwners
+=== PAUSE TestVendor_OmittableOwners
+=== RUN   TestVendor_SubResolvers
+=== PAUSE TestVendor_SubResolvers
+=== RUN   TestVendor_CategoryEnum
+=== PAUSE TestVendor_CategoryEnum
+=== RUN   TestVendor_InvalidID
+=== PAUSE TestVendor_InvalidID
+=== RUN   TestVendorService_Create
+=== PAUSE TestVendorService_Create
+=== RUN   TestVendorService_Update
+=== PAUSE TestVendorService_Update
+=== RUN   TestVendorService_Delete
+=== PAUSE TestVendorService_Delete
+=== RUN   TestVendorService_List
+=== PAUSE TestVendorService_List
+=== RUN   TestVendor_Create
+=== PAUSE TestVendor_Create
+=== RUN   TestVendor_Update
+=== PAUSE TestVendor_Update
+=== RUN   TestVendor_Delete
+=== PAUSE TestVendor_Delete
+=== RUN   TestVendor_List
+=== PAUSE TestVendor_List
+=== RUN   TestVendor_CreateContact
+=== PAUSE TestVendor_CreateContact
+=== CONT  TestAsset_Create
+=== CONT  TestMeasure_List
+=== CONT  TestDocument_Create
+=== CONT  TestFramework_OmittableDescription
+=== CONT  TestVendor_CreateContact
+=== CONT  TestFramework_List
+=== CONT  TestFramework_Timestamps
+=== CONT  TestFramework_Create
+=== CONT  TestFramework_Query
+=== CONT  TestDocumentVersion_BulkDelete
+=== CONT  TestFramework_Delete_Validation
+=== CONT  TestDocumentVersion_BulkRequestSignatures
+=== CONT  TestFramework_Delete
+=== CONT  TestFramework_Update_Validation
+=== CONT  TestFramework_Update
+=== CONT  TestFramework_Create_Validation
+=== RUN   TestFramework_Create/with_full_details
+=== RUN   TestFramework_Timestamps/createdAt_and_updatedAt_are_set_on_create
+=== RUN   TestFramework_Create_Validation/missing_name
+=== RUN   TestFramework_Delete_Validation/invalid_ID_format
+=== RUN   TestFramework_Update/update_name
+=== RUN   TestFramework_Delete/delete_existing_framework
+=== RUN   TestFramework_Query/query_with_non-existent_ID_returns_nil
+=== NAME  TestFramework_Delete_Validation/invalid_ID_format
+    framework_test.go:544: 
+        	Error Trace:	/Users/gearnode/Developer/probo/probo/e2e/console/framework_test.go:544
+        	Error:      	"illegal base64 data at input byte 16" does not contain "id"
+        	Test:       	TestFramework_Delete_Validation/invalid_ID_format
+--- FAIL: TestFramework_Delete_Validation (0.12s)
+    --- FAIL: TestFramework_Delete_Validation/invalid_ID_format (0.01s)
+=== CONT  TestDocumentVersion_BulkPublish
+=== RUN   TestFramework_Create_Validation/empty_name
+=== NAME  TestFramework_Query/query_with_non-existent_ID_returns_nil
+    framework_test.go:623: 
+        	Error Trace:	/Users/gearnode/Developer/probo/probo/e2e/console/framework_test.go:623
+        	Error:      	Received unexpected error:
+        	            	invalid length for GID: got 32, want 24
+        	Test:       	TestFramework_Query/query_with_non-existent_ID_returns_nil
+--- FAIL: TestFramework_Query (0.12s)
+    --- FAIL: TestFramework_Query/query_with_non-existent_ID_returns_nil (0.01s)
+=== CONT  TestDocumentVersion_RequestSignature
+=== RUN   TestFramework_Update_Validation/invalid_ID_format
+=== RUN   TestFramework_Create/with_name_only
+=== RUN   TestFramework_OmittableDescription/update_with_new_description
+=== RUN   TestFramework_Timestamps/updatedAt_changes_on_update
+=== RUN   TestFramework_Create_Validation/missing_organizationId
+=== NAME  TestFramework_Update_Validation/invalid_ID_format
+    framework_test.go:480: 
+        	Error Trace:	/Users/gearnode/Developer/probo/probo/e2e/console/framework_test.go:480
+        	Error:      	"illegal base64 data at input byte 16" does not contain "id"
+        	Test:       	TestFramework_Update_Validation/invalid_ID_format
+=== RUN   TestFramework_Update_Validation/empty_name
+--- PASS: TestFramework_Create (0.14s)
+    --- PASS: TestFramework_Create/with_full_details (0.02s)
+    --- PASS: TestFramework_Create/with_name_only (0.01s)
+=== RUN   TestFramework_Update/update_name_and_description
+=== CONT  TestDocumentVersion_UpdateContent
+--- PASS: TestDocument_Create (0.14s)
+=== CONT  TestDocumentVersion_CreateDraft
+=== RUN   TestFramework_OmittableDescription/update_with_null_description_clears_it
+--- PASS: TestFramework_Delete (0.14s)
+    --- PASS: TestFramework_Delete/delete_existing_framework (0.03s)
+=== CONT  TestDocumentVersion_PublishVersion
+=== RUN   TestFramework_Create_Validation/name_with_HTML_tags
+--- PASS: TestAsset_Create (0.15s)
+=== CONT  TestDocument_Types
+=== RUN   TestFramework_Update_Validation/name_with_HTML_tags
+=== NAME  TestFramework_Update
+    factory.go:466: 
+        	Error Trace:	/Users/gearnode/Developer/probo/probo/e2e/internal/factory/factory.go:177
+        	            				/Users/gearnode/Developer/probo/probo/e2e/internal/factory/factory.go:466
+        	            				/Users/gearnode/Developer/probo/probo/e2e/console/framework_test.go:279
+        	            				/Users/gearnode/Developer/probo/probo/e2e/console/framework_test.go:295
+        	Error:      	Received unexpected error:
+        	            	cannot create framework: cannot insert framework: framework with reference ID "framework-to-update" already exists for organization Hdq8LCSOAAwAAAAAAZrUbs3rb3AWASAU
+        	Test:       	TestFramework_Update
+        	Messages:   	createFramework mutation failed
+=== NAME  TestFramework_Update/update_name_and_description
+    testing.go:1811: test executed panic(nil) or runtime.Goexit: subtest may have called FailNow on a parent test
+--- FAIL: TestFramework_Update (0.15s)
+    --- PASS: TestFramework_Update/update_name (0.03s)
+    --- FAIL: TestFramework_Update/update_name_and_description (0.01s)
+=== CONT  TestDocument_List
+=== RUN   TestFramework_OmittableDescription/set_description_again
+=== RUN   TestFramework_Create_Validation/name_with_angle_brackets
+--- PASS: TestVendor_CreateContact (0.15s)
+=== CONT  TestDocument_Delete
+=== RUN   TestFramework_Update_Validation/name_with_angle_brackets
+=== NAME  TestFramework_Create_Validation/name_with_angle_brackets
+    framework_test.go:241: 
+        	Error Trace:	/Users/gearnode/Developer/probo/probo/e2e/console/framework_test.go:241
+        	Error:      	"cannot create framework: name must not contain HTML tags" does not contain "angle brackets"
+        	Test:       	TestFramework_Create_Validation/name_with_angle_brackets
+=== RUN   TestFramework_Create_Validation/description_with_HTML_tags
+--- PASS: TestFramework_List (0.16s)
+=== CONT  TestDocument_Update
+=== RUN   TestFramework_OmittableDescription/update_without_description_preserves_it
+=== NAME  TestFramework_Update_Validation/name_with_angle_brackets
+    framework_test.go:480: 
+        	Error Trace:	/Users/gearnode/Developer/probo/probo/e2e/console/framework_test.go:480
+        	Error:      	"cannot update framework: name must not contain HTML tags" does not contain "angle brackets"
+        	Test:       	TestFramework_Update_Validation/name_with_angle_brackets
+=== RUN   TestFramework_Update_Validation/description_with_HTML_tags
+--- PASS: TestMeasure_List (0.17s)
+=== CONT  TestControlAuditMapping_CreateDelete
+=== NAME  TestFramework_Create_Validation/description_with_HTML_tags
+    framework_test.go:240: 
+        	Error Trace:	/Users/gearnode/Developer/probo/probo/e2e/console/framework_test.go:240
+        	Error:      	An error is expected but got nil.
+        	Test:       	TestFramework_Create_Validation/description_with_HTML_tags
+=== RUN   TestFramework_Create_Validation/name_with_newline
+=== NAME  TestFramework_Timestamps/updatedAt_changes_on_update
+    framework_test.go:734: 
+        	Error Trace:	/Users/gearnode/Developer/probo/probo/e2e/console/framework_test.go:734
+        	Error:      	Should be true
+        	Test:       	TestFramework_Timestamps/updatedAt_changes_on_update
+        	Messages:   	updatedAt should be after initial value
+--- FAIL: TestFramework_Timestamps (0.18s)
+    --- PASS: TestFramework_Timestamps/createdAt_and_updatedAt_are_set_on_create (0.02s)
+    --- FAIL: TestFramework_Timestamps/updatedAt_changes_on_update (0.05s)
+=== CONT  TestMeasure_Delete_Validation
+=== RUN   TestFramework_Update_Validation/name_with_newline
+--- PASS: TestFramework_OmittableDescription (0.18s)
+    --- PASS: TestFramework_OmittableDescription/update_with_new_description (0.01s)
+    --- PASS: TestFramework_OmittableDescription/update_with_null_description_clears_it (0.01s)
+    --- PASS: TestFramework_OmittableDescription/set_description_again (0.01s)
+    --- PASS: TestFramework_OmittableDescription/update_without_description_preserves_it (0.02s)
+=== CONT  TestMeasure_Delete
+=== RUN   TestFramework_Create_Validation/name_with_carriage_return
+--- PASS: TestDocumentVersion_BulkDelete (0.19s)
+=== CONT  TestMeasure_Update_Validation
+=== RUN   TestFramework_Update_Validation/name_with_carriage_return
+=== RUN   TestFramework_Create_Validation/name_with_null_byte
+=== RUN   TestFramework_Update_Validation/name_with_null_byte
+=== RUN   TestFramework_Create_Validation/name_with_tab_character
+=== RUN   TestFramework_Update_Validation/name_with_tab_character
+--- PASS: TestDocumentVersion_BulkRequestSignatures (0.21s)
+=== CONT  TestMeasure_Update
+=== RUN   TestFramework_Create_Validation/name_with_zero-width_space
+=== RUN   TestFramework_Update_Validation/description_with_null_byte
+=== RUN   TestFramework_Create_Validation/name_with_zero-width_joiner
+=== RUN   TestFramework_Update_Validation/name_with_zero-width_space
+=== RUN   TestFramework_Create_Validation/name_with_right-to-left_override
+=== RUN   TestFramework_Update_Validation/description_with_zero-width_joiner
+=== RUN   TestDocument_Types/POLICY
+--- FAIL: TestFramework_Create_Validation (0.24s)
+    --- PASS: TestFramework_Create_Validation/missing_name (0.01s)
+    --- PASS: TestFramework_Create_Validation/empty_name (0.01s)
+    --- PASS: TestFramework_Create_Validation/missing_organizationId (0.01s)
+    --- PASS: TestFramework_Create_Validation/name_with_HTML_tags (0.01s)
+    --- FAIL: TestFramework_Create_Validation/name_with_angle_brackets (0.01s)
+    --- FAIL: TestFramework_Create_Validation/description_with_HTML_tags (0.01s)
+    --- PASS: TestFramework_Create_Validation/name_with_newline (0.01s)
+    --- PASS: TestFramework_Create_Validation/name_with_carriage_return (0.01s)
+    --- PASS: TestFramework_Create_Validation/name_with_null_byte (0.01s)
+    --- PASS: TestFramework_Create_Validation/name_with_tab_character (0.01s)
+    --- PASS: TestFramework_Create_Validation/name_with_zero-width_space (0.01s)
+    --- PASS: TestFramework_Create_Validation/name_with_zero-width_joiner (0.01s)
+    --- PASS: TestFramework_Create_Validation/name_with_right-to-left_override (0.01s)
+=== CONT  TestMeasure_Create_Validation
+=== RUN   TestFramework_Update_Validation/name_with_right-to-left_override
+=== RUN   TestFramework_Update_Validation/description_with_left-to-right_override
+=== RUN   TestDocument_Types/PROCEDURE
+--- FAIL: TestFramework_Update_Validation (0.26s)
+    --- FAIL: TestFramework_Update_Validation/invalid_ID_format (0.01s)
+    --- PASS: TestFramework_Update_Validation/empty_name (0.01s)
+    --- PASS: TestFramework_Update_Validation/name_with_HTML_tags (0.01s)
+    --- FAIL: TestFramework_Update_Validation/name_with_angle_brackets (0.01s)
+    --- PASS: TestFramework_Update_Validation/description_with_HTML_tags (0.01s)
+    --- PASS: TestFramework_Update_Validation/name_with_newline (0.01s)
+    --- PASS: TestFramework_Update_Validation/name_with_carriage_return (0.01s)
+    --- PASS: TestFramework_Update_Validation/name_with_null_byte (0.01s)
+    --- PASS: TestFramework_Update_Validation/name_with_tab_character (0.01s)
+    --- PASS: TestFramework_Update_Validation/description_with_null_byte (0.01s)
+    --- PASS: TestFramework_Update_Validation/name_with_zero-width_space (0.01s)
+    --- PASS: TestFramework_Update_Validation/description_with_zero-width_joiner (0.01s)
+    --- PASS: TestFramework_Update_Validation/name_with_right-to-left_override (0.01s)
+    --- PASS: TestFramework_Update_Validation/description_with_left-to-right_override (0.01s)
+=== CONT  TestMeasure_Create
+=== RUN   TestDocument_Types/ISMS
+=== RUN   TestMeasure_Delete_Validation/invalid_ID_format
+--- PASS: TestDocumentVersion_UpdateContent (0.13s)
+=== CONT  TestRiskObligationMapping_CreateDelete
+--- PASS: TestDocument_Delete (0.11s)
+=== CONT  TestRiskDocumentMapping_CreateDelete
+=== RUN   TestMeasure_Delete/delete_existing_measure
+=== NAME  TestMeasure_Delete_Validation/invalid_ID_format
+    measure_test.go:658: 
+        	Error Trace:	/Users/gearnode/Developer/probo/probo/e2e/console/measure_test.go:658
+        	Error:      	"illegal base64 data at input byte 16" does not contain "id"
+        	Test:       	TestMeasure_Delete_Validation/invalid_ID_format
+--- FAIL: TestMeasure_Delete_Validation (0.09s)
+    --- FAIL: TestMeasure_Delete_Validation/invalid_ID_format (0.01s)
+=== CONT  TestControlSnapshotMapping_CreateDelete
+--- PASS: TestDocumentVersion_PublishVersion (0.13s)
+=== CONT  TestAudit_UploadReport_RBAC
+=== RUN   TestAudit_UploadReport_RBAC/owner_can_upload
+=== RUN   TestDocument_Types/OTHER
+--- PASS: TestDocumentVersion_BulkPublish (0.16s)
+=== CONT  TestDatum_DataClassification
+--- PASS: TestDocumentVersion_CreateDraft (0.14s)
+=== CONT  TestDatum_List
+--- PASS: TestDocument_Update (0.12s)
+=== CONT  TestDatum_Delete
+=== RUN   TestMeasure_Update_Validation/invalid_ID_format
+--- PASS: TestDocumentVersion_RequestSignature (0.17s)
+=== CONT  TestDatum_Update
+--- PASS: TestDocument_Types (0.14s)
+    --- PASS: TestDocument_Types/POLICY (0.01s)
+    --- PASS: TestDocument_Types/PROCEDURE (0.01s)
+    --- PASS: TestDocument_Types/ISMS (0.01s)
+    --- PASS: TestDocument_Types/OTHER (0.02s)
+=== CONT  TestDatum_Create
+=== RUN   TestControlAuditMapping_CreateDelete/create_mapping
+--- PASS: TestMeasure_Delete (0.11s)
+    --- PASS: TestMeasure_Delete/delete_existing_measure (0.03s)
+=== CONT  TestControl_List
+=== NAME  TestMeasure_Update_Validation/invalid_ID_format
+    measure_test.go:594: 
+        	Error Trace:	/Users/gearnode/Developer/probo/probo/e2e/console/measure_test.go:594
+        	Error:      	"illegal base64 data at input byte 16" does not contain "id"
+        	Test:       	TestMeasure_Update_Validation/invalid_ID_format
+=== RUN   TestMeasure_Update_Validation/empty_name
+=== NAME  TestDocument_List
+    document_test.go:294: 
+        	Error Trace:	/Users/gearnode/Developer/probo/probo/e2e/console/document_test.go:294
+        	Error:      	"0" is not greater than or equal to "3"
+        	Test:       	TestDocument_List
+--- FAIL: TestDocument_List (0.14s)
+=== CONT  TestControl_Delete
+=== RUN   TestMeasure_Update/update_name_and_description
+=== RUN   TestMeasure_Update_Validation/empty_category
+=== RUN   TestMeasure_Update_Validation/name_with_HTML_tags
+=== RUN   TestControlAuditMapping_CreateDelete/delete_mapping
+=== RUN   TestMeasure_Update_Validation/name_with_angle_brackets
+    measure_test.go:594: 
+        	Error Trace:	/Users/gearnode/Developer/probo/probo/e2e/console/measure_test.go:594
+        	Error:      	"name must not contain HTML tags" does not contain "angle brackets"
+        	Test:       	TestMeasure_Update_Validation/name_with_angle_brackets
+=== RUN   TestMeasure_Update_Validation/description_with_HTML_tags
+=== RUN   TestMeasure_Update/update_to_NOT_STARTED_state
+--- PASS: TestControlAuditMapping_CreateDelete (0.15s)
+    --- PASS: TestControlAuditMapping_CreateDelete/create_mapping (0.02s)
+    --- PASS: TestControlAuditMapping_CreateDelete/delete_mapping (0.01s)
+=== CONT  TestControl_Update
+=== RUN   TestMeasure_Update_Validation/category_with_HTML_tags
+=== RUN   TestMeasure_Update_Validation/name_with_newline
+=== RUN   TestMeasure_Create/with_full_details
+=== RUN   TestMeasure_Update/update_to_IMPLEMENTED_state
+=== RUN   TestMeasure_Create_Validation/missing_name
+=== RUN   TestMeasure_Update_Validation/name_with_carriage_return
+=== RUN   TestMeasure_Create_Validation/missing_category
+=== RUN   TestMeasure_Create/with_POLICY_category
+=== RUN   TestMeasure_Update_Validation/name_with_null_byte
+=== RUN   TestMeasure_Create_Validation/empty_name
+=== RUN   TestMeasure_Update_Validation/name_with_tab_character
+=== RUN   TestMeasure_Create/with_PROCEDURE_category
+=== RUN   TestMeasure_Update/update_to_NOT_APPLICABLE_state
+=== RUN   TestMeasure_Create_Validation/empty_category
+=== RUN   TestMeasure_Update_Validation/description_with_null_byte
+=== RUN   TestMeasure_Create_Validation/missing_organizationId
+=== RUN   TestMeasure_Create/with_TECHNICAL_category
+=== RUN   TestDatum_DataClassification/PUBLIC
+=== RUN   TestMeasure_Update_Validation/name_with_zero-width_space
+=== RUN   TestMeasure_Create_Validation/name_with_HTML_tags
+=== RUN   TestRiskObligationMapping_CreateDelete/create_mapping
+=== RUN   TestMeasure_Create/with_EVIDENCE_category
+=== RUN   TestRiskDocumentMapping_CreateDelete/create_mapping
+=== RUN   TestMeasure_Update_Validation/description_with_zero-width_joiner
+--- PASS: TestMeasure_Update (0.18s)
+    --- PASS: TestMeasure_Update/update_name_and_description (0.02s)
+    --- PASS: TestMeasure_Update/update_to_NOT_STARTED_state (0.02s)
+    --- PASS: TestMeasure_Update/update_to_IMPLEMENTED_state (0.03s)
+    --- PASS: TestMeasure_Update/update_to_NOT_APPLICABLE_state (0.03s)
+=== CONT  TestControl_Create
+=== RUN   TestDatum_DataClassification/INTERNAL
+=== RUN   TestMeasure_Create_Validation/name_with_angle_brackets
+=== RUN   TestControlSnapshotMapping_CreateDelete/create_mapping
+=== NAME  TestAudit_UploadReport_RBAC/owner_can_upload
+    audit_test.go:1778: 
+        	Error Trace:	/Users/gearnode/Developer/probo/probo/e2e/console/audit_test.go:1778
+        	Error:      	Received unexpected error:
+        	            	internal server error
+        	Test:       	TestAudit_UploadReport_RBAC/owner_can_upload
+        	Messages:   	owner should be able to upload report
+=== RUN   TestAudit_UploadReport_RBAC/admin_can_upload
+=== RUN   TestMeasure_Create/with_TRAINING_category
+=== RUN   TestMeasure_Update_Validation/name_with_right-to-left_override
+=== RUN   TestRiskObligationMapping_CreateDelete/delete_mapping
+=== RUN   TestRiskDocumentMapping_CreateDelete/delete_mapping
+=== NAME  TestMeasure_Create_Validation/name_with_angle_brackets
+    measure_test.go:319: 
+        	Error Trace:	/Users/gearnode/Developer/probo/probo/e2e/console/measure_test.go:319
+        	Error:      	"name must not contain HTML tags" does not contain "angle brackets"
+        	Test:       	TestMeasure_Create_Validation/name_with_angle_brackets
+=== RUN   TestMeasure_Create_Validation/description_with_HTML_tags
+=== RUN   TestDatum_DataClassification/CONFIDENTIAL
+=== RUN   TestMeasure_Update_Validation/description_with_left-to-right_override
+--- PASS: TestMeasure_Create (0.15s)
+    --- PASS: TestMeasure_Create/with_full_details (0.01s)
+    --- PASS: TestMeasure_Create/with_POLICY_category (0.01s)
+    --- PASS: TestMeasure_Create/with_PROCEDURE_category (0.01s)
+    --- PASS: TestMeasure_Create/with_TECHNICAL_category (0.01s)
+    --- PASS: TestMeasure_Create/with_EVIDENCE_category (0.01s)
+    --- PASS: TestMeasure_Create/with_TRAINING_category (0.01s)
+=== CONT  TestControl_ExclusionJustification
+=== RUN   TestControlSnapshotMapping_CreateDelete/delete_mapping
+=== RUN   TestMeasure_Create_Validation/category_with_HTML_tags
+--- PASS: TestRiskObligationMapping_CreateDelete (0.15s)
+    --- PASS: TestRiskObligationMapping_CreateDelete/create_mapping (0.02s)
+    --- PASS: TestRiskObligationMapping_CreateDelete/delete_mapping (0.02s)
+=== CONT  TestControl_SubResolvers
+--- PASS: TestRiskDocumentMapping_CreateDelete (0.15s)
+    --- PASS: TestRiskDocumentMapping_CreateDelete/create_mapping (0.02s)
+    --- PASS: TestRiskDocumentMapping_CreateDelete/delete_mapping (0.01s)
+=== CONT  TestControl_OmittableDescription
+=== RUN   TestDatum_DataClassification/SECRET
+--- FAIL: TestMeasure_Update_Validation (0.24s)
+    --- FAIL: TestMeasure_Update_Validation/invalid_ID_format (0.01s)
+    --- PASS: TestMeasure_Update_Validation/empty_name (0.01s)
+    --- PASS: TestMeasure_Update_Validation/empty_category (0.01s)
+    --- PASS: TestMeasure_Update_Validation/name_with_HTML_tags (0.00s)
+    --- FAIL: TestMeasure_Update_Validation/name_with_angle_brackets (0.01s)
+    --- PASS: TestMeasure_Update_Validation/description_with_HTML_tags (0.01s)
+    --- PASS: TestMeasure_Update_Validation/category_with_HTML_tags (0.01s)
+    --- PASS: TestMeasure_Update_Validation/name_with_newline (0.01s)
+    --- PASS: TestMeasure_Update_Validation/name_with_carriage_return (0.01s)
+    --- PASS: TestMeasure_Update_Validation/name_with_null_byte (0.01s)
+    --- PASS: TestMeasure_Update_Validation/name_with_tab_character (0.01s)
+    --- PASS: TestMeasure_Update_Validation/description_with_null_byte (0.01s)
+    --- PASS: TestMeasure_Update_Validation/name_with_zero-width_space (0.01s)
+    --- PASS: TestMeasure_Update_Validation/description_with_zero-width_joiner (0.01s)
+    --- PASS: TestMeasure_Update_Validation/name_with_right-to-left_override (0.01s)
+    --- PASS: TestMeasure_Update_Validation/description_with_left-to-right_override (0.01s)
+=== CONT  TestControl_RequiredFields
+=== RUN   TestMeasure_Create_Validation/name_with_newline
+--- PASS: TestDatum_Create (0.13s)
+=== CONT  TestContinualImprovement_StatusAndPriorityValues
+--- PASS: TestDatum_Delete (0.14s)
+=== CONT  TestContinualImprovement_List
+--- PASS: TestControl_Delete (0.13s)
+=== CONT  TestContinualImprovement_Delete
+=== RUN   TestMeasure_Create_Validation/name_with_carriage_return
+--- PASS: TestControlSnapshotMapping_CreateDelete (0.16s)
+    --- PASS: TestControlSnapshotMapping_CreateDelete/create_mapping (0.02s)
+    --- PASS: TestControlSnapshotMapping_CreateDelete/delete_mapping (0.02s)
+=== CONT  TestContinualImprovement_Update
+--- PASS: TestDatum_Update (0.14s)
+=== CONT  TestContinualImprovement_Create
+--- PASS: TestDatum_DataClassification (0.15s)
+    --- PASS: TestDatum_DataClassification/PUBLIC (0.01s)
+    --- PASS: TestDatum_DataClassification/INTERNAL (0.01s)
+    --- PASS: TestDatum_DataClassification/CONFIDENTIAL (0.01s)
+    --- PASS: TestDatum_DataClassification/SECRET (0.01s)
+=== CONT  TestAudit_DeleteReport_RBAC
+=== RUN   TestAudit_DeleteReport_RBAC/viewer_cannot_delete_report
+=== RUN   TestControl_Update/updates_name_and_description
+=== RUN   TestMeasure_Create_Validation/name_with_null_byte
+=== NAME  TestDatum_List
+    datum_test.go:289: 
+        	Error Trace:	/Users/gearnode/Developer/probo/probo/e2e/console/datum_test.go:289
+        	Error:      	"0" is not greater than or equal to "3"
+        	Test:       	TestDatum_List
+--- FAIL: TestDatum_List (0.16s)
+=== CONT  TestAudit_DeleteReport
+=== RUN   TestMeasure_Create_Validation/name_with_tab_character
+=== RUN   TestControl_Update/changes_status_from_INCLUDED_to_EXCLUDED
+=== RUN   TestMeasure_Create_Validation/name_with_zero-width_space
+--- PASS: TestControl_List (0.18s)
+=== CONT  TestFramework_Ordering
+=== RUN   TestMeasure_Create_Validation/name_with_zero-width_joiner
+=== RUN   TestMeasure_Create_Validation/name_with_right-to-left_override
+--- PASS: TestControl_Update (0.18s)
+    --- PASS: TestControl_Update/updates_name_and_description (0.03s)
+    --- PASS: TestControl_Update/changes_status_from_INCLUDED_to_EXCLUDED (0.03s)
+=== CONT  TestControlDocumentMapping_CreateDelete
+--- FAIL: TestMeasure_Create_Validation (0.26s)
+    --- PASS: TestMeasure_Create_Validation/missing_name (0.01s)
+    --- PASS: TestMeasure_Create_Validation/missing_category (0.01s)
+    --- PASS: TestMeasure_Create_Validation/empty_name (0.01s)
+    --- PASS: TestMeasure_Create_Validation/empty_category (0.01s)
+    --- PASS: TestMeasure_Create_Validation/missing_organizationId (0.01s)
+    --- PASS: TestMeasure_Create_Validation/name_with_HTML_tags (0.01s)
+    --- FAIL: TestMeasure_Create_Validation/name_with_angle_brackets (0.01s)
+    --- PASS: TestMeasure_Create_Validation/description_with_HTML_tags (0.01s)
+    --- PASS: TestMeasure_Create_Validation/category_with_HTML_tags (0.01s)
+    --- PASS: TestMeasure_Create_Validation/name_with_newline (0.01s)
+    --- PASS: TestMeasure_Create_Validation/name_with_carriage_return (0.01s)
+    --- PASS: TestMeasure_Create_Validation/name_with_null_byte (0.02s)
+    --- PASS: TestMeasure_Create_Validation/name_with_tab_character (0.01s)
+    --- PASS: TestMeasure_Create_Validation/name_with_zero-width_space (0.01s)
+    --- PASS: TestMeasure_Create_Validation/name_with_zero-width_joiner (0.01s)
+    --- PASS: TestMeasure_Create_Validation/name_with_right-to-left_override (0.01s)
+=== CONT  TestRiskMeasureMapping_CreateDelete
+=== RUN   TestControl_Create/with_full_details
+=== RUN   TestControl_ExclusionJustification/EXCLUDED_status_should_have_exclusionJustification
+=== RUN   TestControl_Create/with_excluded_status_and_justification
+=== RUN   TestControl_ExclusionJustification/Change_status_from_INCLUDED_to_EXCLUDED
+=== RUN   TestControl_RequiredFields/Missing_frameworkId_should_fail
+--- PASS: TestControl_Create (0.13s)
+    --- PASS: TestControl_Create/with_full_details (0.01s)
+    --- PASS: TestControl_Create/with_excluded_status_and_justification (0.01s)
+=== CONT  TestControlMeasureMapping_CreateDelete
+=== RUN   TestControl_RequiredFields/Missing_name_should_fail
+=== RUN   TestControl_OmittableDescription/Update_with_null_description_should_clear_it
+=== RUN   TestContinualImprovement_StatusAndPriorityValues/status_values
+=== RUN   TestContinualImprovement_StatusAndPriorityValues/status_values/OPEN
+=== RUN   TestControl_RequiredFields/Missing_sectionTitle_should_fail
+--- PASS: TestContinualImprovement_Create (0.10s)
+=== CONT  TestFramework_DuplicateName
+=== RUN   TestControl_OmittableDescription/Update_without_description_should_not_change_it
+=== RUN   TestControl_RequiredFields/Missing_status_should_fail
+=== RUN   TestContinualImprovement_StatusAndPriorityValues/status_values/IN_PROGRESS
+=== RUN   TestAudit_DeleteReport/delete_existing_report
+=== RUN   TestControl_RequiredFields/Missing_description_should_fail_(required_field)
+--- PASS: TestControl_ExclusionJustification (0.13s)
+    --- PASS: TestControl_ExclusionJustification/EXCLUDED_status_should_have_exclusionJustification (0.01s)
+    --- PASS: TestControl_ExclusionJustification/Change_status_from_INCLUDED_to_EXCLUDED (0.03s)
+=== CONT  TestProcessingActivity_List
+--- PASS: TestContinualImprovement_Update (0.12s)
+=== CONT  TestVendor_List
+--- PASS: TestContinualImprovement_Delete (0.12s)
+=== CONT  TestVendor_Delete
+=== RUN   TestContinualImprovement_StatusAndPriorityValues/status_values/CLOSED
+=== RUN   TestControl_RequiredFields/Invalid_status_enum_should_fail
+=== RUN   TestControl_SubResolvers/Control_framework_sub-resolver
+--- PASS: TestControl_OmittableDescription (0.14s)
+    --- PASS: TestControl_OmittableDescription/Update_with_null_description_should_clear_it (0.01s)
+    --- PASS: TestControl_OmittableDescription/Update_without_description_should_not_change_it (0.02s)
+=== CONT  TestVendor_Update
+--- PASS: TestControl_RequiredFields (0.14s)
+    --- PASS: TestControl_RequiredFields/Missing_frameworkId_should_fail (0.01s)
+    --- PASS: TestControl_RequiredFields/Missing_name_should_fail (0.01s)
+    --- PASS: TestControl_RequiredFields/Missing_sectionTitle_should_fail (0.01s)
+    --- PASS: TestControl_RequiredFields/Missing_status_should_fail (0.01s)
+    --- PASS: TestControl_RequiredFields/Missing_description_should_fail_(required_field) (0.01s)
+    --- PASS: TestControl_RequiredFields/Invalid_status_enum_should_fail (0.01s)
+=== CONT  TestVendor_Create
+=== RUN   TestContinualImprovement_StatusAndPriorityValues/priority_values
+=== RUN   TestContinualImprovement_StatusAndPriorityValues/priority_values/LOW
+=== NAME  TestAudit_DeleteReport/delete_existing_report
+    audit_test.go:1855: 
+        	Error Trace:	/Users/gearnode/Developer/probo/probo/e2e/console/audit_test.go:1855
+        	Error:      	Received unexpected error:
+        	            	internal server error
+        	Test:       	TestAudit_DeleteReport/delete_existing_report
+--- FAIL: TestAudit_DeleteReport (0.12s)
+    --- FAIL: TestAudit_DeleteReport/delete_existing_report (0.02s)
+=== CONT  TestVendorService_List
+=== RUN   TestControl_SubResolvers/Control_measures_sub-resolver
+--- PASS: TestContinualImprovement_List (0.15s)
+=== CONT  TestVendorService_Delete
+=== RUN   TestContinualImprovement_StatusAndPriorityValues/priority_values/MEDIUM
+--- PASS: TestControl_SubResolvers (0.16s)
+    --- PASS: TestControl_SubResolvers/Control_framework_sub-resolver (0.01s)
+    --- PASS: TestControl_SubResolvers/Control_measures_sub-resolver (0.01s)
+=== CONT  TestVendorService_Update
+=== RUN   TestFramework_Ordering/order_by_created_at_descending
+=== RUN   TestContinualImprovement_StatusAndPriorityValues/priority_values/HIGH
+--- PASS: TestFramework_Ordering (0.12s)
+    --- PASS: TestFramework_Ordering/order_by_created_at_descending (0.01s)
+=== CONT  TestVendorService_Create
+--- PASS: TestContinualImprovement_StatusAndPriorityValues (0.18s)
+    --- PASS: TestContinualImprovement_StatusAndPriorityValues/status_values (0.04s)
+        --- PASS: TestContinualImprovement_StatusAndPriorityValues/status_values/OPEN (0.01s)
+        --- PASS: TestContinualImprovement_StatusAndPriorityValues/status_values/IN_PROGRESS (0.01s)
+        --- PASS: TestContinualImprovement_StatusAndPriorityValues/status_values/CLOSED (0.01s)
+    --- PASS: TestContinualImprovement_StatusAndPriorityValues/priority_values (0.04s)
+        --- PASS: TestContinualImprovement_StatusAndPriorityValues/priority_values/LOW (0.02s)
+        --- PASS: TestContinualImprovement_StatusAndPriorityValues/priority_values/MEDIUM (0.01s)
+        --- PASS: TestContinualImprovement_StatusAndPriorityValues/priority_values/HIGH (0.01s)
+=== CONT  TestVendor_InvalidID
+=== RUN   TestRiskMeasureMapping_CreateDelete/create_mapping
+=== RUN   TestRiskMeasureMapping_CreateDelete/delete_mapping
+=== RUN   TestControlDocumentMapping_CreateDelete/create_mapping
+=== NAME  TestAudit_UploadReport_RBAC/admin_can_upload
+    audit_test.go:1797: 
+        	Error Trace:	/Users/gearnode/Developer/probo/probo/e2e/console/audit_test.go:1797
+        	Error:      	Received unexpected error:
+        	            	internal server error
+        	Test:       	TestAudit_UploadReport_RBAC/admin_can_upload
+        	Messages:   	admin should be able to upload report
+=== RUN   TestAudit_UploadReport_RBAC/viewer_cannot_upload
+--- PASS: TestRiskMeasureMapping_CreateDelete (0.14s)
+    --- PASS: TestRiskMeasureMapping_CreateDelete/create_mapping (0.01s)
+    --- PASS: TestRiskMeasureMapping_CreateDelete/delete_mapping (0.01s)
+=== CONT  TestVendor_CategoryEnum
+--- PASS: TestFramework_DuplicateName (0.10s)
+=== CONT  TestVendor_SubResolvers
+=== RUN   TestControlMeasureMapping_CreateDelete/create_mapping
+=== RUN   TestControlDocumentMapping_CreateDelete/delete_mapping
+=== RUN   TestVendor_Create/with_full_details
+=== NAME  TestAudit_DeleteReport_RBAC/viewer_cannot_delete_report
+    audit_test.go:1931: 
+        	Error Trace:	/Users/gearnode/Developer/probo/probo/e2e/console/audit_test.go:1931
+        	Error:      	Received unexpected error:
+        	            	internal server error
+        	Test:       	TestAudit_DeleteReport_RBAC/viewer_cannot_delete_report
+--- FAIL: TestAudit_DeleteReport_RBAC (0.22s)
+    --- FAIL: TestAudit_DeleteReport_RBAC/viewer_cannot_delete_report (0.22s)
+=== CONT  TestVendor_OmittableOwners
+=== RUN   TestVendor_Create/with_all_optional_fields
+--- PASS: TestControlDocumentMapping_CreateDelete (0.16s)
+    --- PASS: TestControlDocumentMapping_CreateDelete/create_mapping (0.01s)
+    --- PASS: TestControlDocumentMapping_CreateDelete/delete_mapping (0.01s)
+=== CONT  TestVendor_OmittableFields
+=== RUN   TestControlMeasureMapping_CreateDelete/delete_mapping
+--- PASS: TestVendor_Delete (0.11s)
+=== CONT  TestVendor_RequiredFields
+--- PASS: TestVendor_Update (0.10s)
+=== CONT  TestVendorContact_List
+--- PASS: TestVendor_Create (0.10s)
+    --- PASS: TestVendor_Create/with_full_details (0.01s)
+    --- PASS: TestVendor_Create/with_all_optional_fields (0.01s)
+=== CONT  TestVendorContact_Delete
+--- PASS: TestControlMeasureMapping_CreateDelete (0.14s)
+    --- PASS: TestControlMeasureMapping_CreateDelete/create_mapping (0.01s)
+    --- PASS: TestControlMeasureMapping_CreateDelete/delete_mapping (0.01s)
+=== CONT  TestVendorContact_Update
+=== RUN   TestVendorService_Delete/Viewer_cannot_delete_vendor_service
+--- PASS: TestVendor_List (0.13s)
+=== CONT  TestVendorContact_Create
+=== NAME  TestProcessingActivity_List
+    processing_activity_test.go:303: 
+        	Error Trace:	/Users/gearnode/Developer/probo/probo/e2e/console/processing_activity_test.go:303
+        	Error:      	"0" is not greater than or equal to "3"
+        	Test:       	TestProcessingActivity_List
+--- FAIL: TestProcessingActivity_List (0.14s)
+=== CONT  TestTask_ListByMeasure
+=== RUN   TestVendor_InvalidID/Update_with_invalid_ID
+=== RUN   TestVendorService_List/Owner_can_list_vendor_services
+=== RUN   TestVendorService_Update/Owner_can_update_vendor_service
+=== RUN   TestVendor_InvalidID/Delete_with_invalid_ID
+=== RUN   TestVendorService_Create/Owner_can_create_vendor_service
+=== RUN   TestVendor_InvalidID/Query_with_non-existent_ID
+=== RUN   TestVendorService_List/Viewer_can_list_vendor_services
+=== RUN   TestVendorService_Update/Admin_can_update_vendor_service
+=== RUN   TestVendor_CategoryEnum/Create_with_category_ANALYTICS
+=== NAME  TestVendor_InvalidID/Query_with_non-existent_ID
+    vendor_edge_cases_test.go:717: 
+        	Error Trace:	/Users/gearnode/Developer/probo/probo/e2e/console/vendor_edge_cases_test.go:717
+        	Error:      	Received unexpected error:
+        	            	invalid length for GID: got 32, want 24
+        	Test:       	TestVendor_InvalidID/Query_with_non-existent_ID
+--- FAIL: TestVendor_InvalidID (0.12s)
+    --- PASS: TestVendor_InvalidID/Update_with_invalid_ID (0.01s)
+    --- PASS: TestVendor_InvalidID/Delete_with_invalid_ID (0.01s)
+    --- FAIL: TestVendor_InvalidID/Query_with_non-existent_ID (0.01s)
+=== CONT  TestTask_Delete
+=== RUN   TestVendorService_Create/Admin_can_create_vendor_service
+=== RUN   TestVendor_CategoryEnum/Create_with_category_CLOUD_PROVIDER
+=== RUN   TestVendor_SubResolvers/Vendor_organization_sub-resolver
+=== RUN   TestVendor_RequiredFields/Missing_organizationId_should_fail
+=== RUN   TestVendor_CategoryEnum/Create_with_category_COLLABORATION
+=== RUN   TestVendor_RequiredFields/Missing_name_should_fail
+=== RUN   TestVendor_OmittableFields/Update_with_null_description_(omittable)
+=== RUN   TestVendor_SubResolvers/Vendor_services_sub-resolver_(empty)
+--- PASS: TestVendor_CategoryEnum (0.12s)
+    --- PASS: TestVendor_CategoryEnum/Create_with_category_ANALYTICS (0.01s)
+    --- PASS: TestVendor_CategoryEnum/Create_with_category_CLOUD_PROVIDER (0.01s)
+    --- PASS: TestVendor_CategoryEnum/Create_with_category_COLLABORATION (0.01s)
+=== CONT  TestTask_Update
+=== RUN   TestVendor_RequiredFields/Empty_name_should_fail
+=== RUN   TestVendor_OmittableFields/Update_with_null_websiteUrl_(omittable)
+--- PASS: TestVendor_RequiredFields (0.11s)
+    --- PASS: TestVendor_RequiredFields/Missing_organizationId_should_fail (0.01s)
+    --- PASS: TestVendor_RequiredFields/Missing_name_should_fail (0.01s)
+    --- PASS: TestVendor_RequiredFields/Empty_name_should_fail (0.01s)
+=== CONT  TestTask_Create
+--- PASS: TestVendor_SubResolvers (0.13s)
+    --- PASS: TestVendor_SubResolvers/Vendor_organization_sub-resolver (0.01s)
+    --- PASS: TestVendor_SubResolvers/Vendor_services_sub-resolver_(empty) (0.02s)
+=== CONT  TestTask_InvalidID
+=== RUN   TestVendor_OmittableFields/Update_without_description_(should_not_change)
+=== RUN   TestVendor_OmittableOwners/Update_to_set_business_owner
+--- PASS: TestVendorContact_Delete (0.12s)
+=== CONT  TestTask_RequiredFields
+--- PASS: TestVendorContact_Update (0.12s)
+=== CONT  TestTask_Unassign
+--- PASS: TestVendorContact_Create (0.11s)
+=== CONT  TestTask_Assign
+=== RUN   TestVendor_OmittableOwners/Update_to_set_security_owner
+=== RUN   TestVendorService_Delete/Admin_can_delete_vendor_service
+--- PASS: TestVendor_OmittableFields (0.14s)
+    --- PASS: TestVendor_OmittableFields/Update_with_null_description_(omittable) (0.01s)
+    --- PASS: TestVendor_OmittableFields/Update_with_null_websiteUrl_(omittable) (0.01s)
+    --- PASS: TestVendor_OmittableFields/Update_without_description_(should_not_change) (0.03s)
+=== CONT  TestSnapshot_Types
+=== RUN   TestVendor_OmittableOwners/Clear_business_owner_with_null
+--- PASS: TestVendorContact_List (0.15s)
+=== CONT  TestSnapshot_List
+--- PASS: TestVendor_OmittableOwners (0.17s)
+    --- PASS: TestVendor_OmittableOwners/Update_to_set_business_owner (0.02s)
+    --- PASS: TestVendor_OmittableOwners/Update_to_set_security_owner (0.01s)
+    --- PASS: TestVendor_OmittableOwners/Clear_business_owner_with_null (0.01s)
+=== CONT  TestSnapshot_Delete
+--- PASS: TestVendorService_List (0.26s)
+    --- PASS: TestVendorService_List/Owner_can_list_vendor_services (0.01s)
+    --- PASS: TestVendorService_List/Viewer_can_list_vendor_services (0.11s)
+=== CONT  TestSnapshot_Create
+--- PASS: TestTask_ListByMeasure (0.15s)
+=== CONT  TestRisk_List
+=== RUN   TestVendorService_Create/Viewer_cannot_create_vendor_service
+=== RUN   TestVendorService_Update/Viewer_cannot_update_vendor_service
+--- FAIL: TestAudit_UploadReport_RBAC (0.57s)
+    --- FAIL: TestAudit_UploadReport_RBAC/owner_can_upload (0.13s)
+    --- FAIL: TestAudit_UploadReport_RBAC/admin_can_upload (0.23s)
+    --- PASS: TestAudit_UploadReport_RBAC/viewer_cannot_upload (0.21s)
+=== CONT  TestProcessingActivity_Delete
+=== RUN   TestTask_InvalidID/Update_with_invalid_ID
+--- PASS: TestTask_Delete (0.13s)
+=== CONT  TestRisk_Delete
+=== RUN   TestTask_InvalidID/Delete_with_invalid_ID
+=== RUN   TestTask_InvalidID/Query_with_non-existent_ID
+    task_edge_cases_test.go:910: 
+        	Error Trace:	/Users/gearnode/Developer/probo/probo/e2e/console/task_edge_cases_test.go:910
+        	Error:      	Received unexpected error:
+        	            	invalid length for GID: got 32, want 24
+        	Test:       	TestTask_InvalidID/Query_with_non-existent_ID
+--- FAIL: TestTask_InvalidID (0.10s)
+    --- PASS: TestTask_InvalidID/Update_with_invalid_ID (0.01s)
+    --- PASS: TestTask_InvalidID/Delete_with_invalid_ID (0.01s)
+    --- FAIL: TestTask_InvalidID/Query_with_non-existent_ID (0.01s)
+=== CONT  TestProcessingActivity_Update
+--- PASS: TestTask_Create (0.10s)
+=== CONT  TestRisk_Update
+=== RUN   TestTask_RequiredFields/Missing_measureId_should_fail
+--- PASS: TestTask_Update (0.12s)
+=== CONT  TestRisk_Create
+=== RUN   TestSnapshot_Types/RISKS
+=== RUN   TestTask_RequiredFields/Missing_name_should_fail
+=== RUN   TestTask_RequiredFields/Empty_name_should_fail
+=== RUN   TestSnapshot_Types/VENDORS
+--- PASS: TestTask_RequiredFields (0.11s)
+    --- PASS: TestTask_RequiredFields/Missing_measureId_should_fail (0.01s)
+    --- PASS: TestTask_RequiredFields/Missing_name_should_fail (0.01s)
+    --- PASS: TestTask_RequiredFields/Empty_name_should_fail (0.01s)
+=== CONT  TestProcessingActivity_Create
+--- PASS: TestTask_Assign (0.12s)
+=== CONT  TestRisk_InvalidID
+=== RUN   TestSnapshot_Types/ASSETS
+=== RUN   TestVendorService_Delete/Owner_can_delete_vendor_service
+--- PASS: TestSnapshot_Create (0.10s)
+=== CONT  TestPeople_List
+--- PASS: TestTask_Unassign (0.15s)
+=== CONT  TestRisk_TreatmentEnum
+--- PASS: TestVendorService_Create (0.33s)
+    --- PASS: TestVendorService_Create/Owner_can_create_vendor_service (0.01s)
+    --- PASS: TestVendorService_Create/Admin_can_create_vendor_service (0.11s)
+    --- PASS: TestVendorService_Create/Viewer_cannot_create_vendor_service (0.10s)
+=== CONT  TestPeople_Delete
+=== RUN   TestSnapshot_Types/DATA
+--- PASS: TestSnapshot_Delete (0.11s)
+=== CONT  TestRisk_SubResolvers
+--- PASS: TestVendorService_Delete (0.36s)
+    --- PASS: TestVendorService_Delete/Viewer_cannot_delete_vendor_service (0.12s)
+    --- PASS: TestVendorService_Delete/Admin_can_delete_vendor_service (0.12s)
+    --- PASS: TestVendorService_Delete/Owner_can_delete_vendor_service (0.02s)
+=== CONT  TestPeople_Create
+--- PASS: TestVendorService_Update (0.36s)
+    --- PASS: TestVendorService_Update/Owner_can_update_vendor_service (0.02s)
+    --- PASS: TestVendorService_Update/Admin_can_update_vendor_service (0.11s)
+    --- PASS: TestVendorService_Update/Viewer_cannot_update_vendor_service (0.11s)
+=== CONT  TestRisk_OmittableOwnerId
+--- PASS: TestSnapshot_Types (0.15s)
+    --- PASS: TestSnapshot_Types/RISKS (0.01s)
+    --- PASS: TestSnapshot_Types/VENDORS (0.02s)
+    --- PASS: TestSnapshot_Types/ASSETS (0.02s)
+    --- PASS: TestSnapshot_Types/DATA (0.02s)
+=== CONT  TestRisk_OmittableFields
+--- PASS: TestProcessingActivity_Delete (0.11s)
+=== CONT  TestRisk_RequiredFields
+--- PASS: TestRisk_List (0.13s)
+=== CONT  TestRBAC
+=== RUN   TestRisk_Create/with_full_details
+--- PASS: TestRisk_Delete (0.11s)
+=== CONT  TestProcessingActivity_LawfulBasis
+=== RUN   TestRisk_Create/with_different_treatments
+=== RUN   TestRisk_Create/with_different_treatments/Mitigated
+--- PASS: TestRisk_Update (0.12s)
+=== CONT  TestMember_UpdateMembership
+--- PASS: TestSnapshot_List (0.18s)
+=== CONT  TestPeople_KindEnum
+--- PASS: TestProcessingActivity_Create (0.10s)
+=== CONT  TestPeople_RequiredFields
+=== RUN   TestRisk_InvalidID/Update_with_invalid_ID
+--- PASS: TestProcessingActivity_Update (0.13s)
+=== CONT  TestOrganization_Get
+=== RUN   TestRisk_Create/with_different_treatments/Transferred
+=== RUN   TestRisk_InvalidID/Delete_with_invalid_ID
+=== RUN   TestRisk_InvalidID/Query_with_non-existent_ID
+=== RUN   TestRisk_TreatmentEnum/Update_to_treatment_MITIGATED
+=== NAME  TestRisk_InvalidID/Query_with_non-existent_ID
+    risk_edge_cases_test.go:736: 
+        	Error Trace:	/Users/gearnode/Developer/probo/probo/e2e/console/risk_edge_cases_test.go:736
+        	Error:      	Received unexpected error:
+        	            	invalid length for GID: got 32, want 24
+        	Test:       	TestRisk_InvalidID/Query_with_non-existent_ID
+--- FAIL: TestRisk_InvalidID (0.11s)
+    --- PASS: TestRisk_InvalidID/Update_with_invalid_ID (0.01s)
+    --- PASS: TestRisk_InvalidID/Delete_with_invalid_ID (0.01s)
+    --- FAIL: TestRisk_InvalidID/Query_with_non-existent_ID (0.01s)
+=== CONT  TestOrganization_Update
+=== RUN   TestRisk_Create/with_different_treatments/Accepted
+=== RUN   TestPeople_Create/with_full_details
+=== RUN   TestRisk_SubResolvers/Risk_organization_sub-resolver
+=== RUN   TestRisk_Create/with_different_treatments/Avoided
+=== RUN   TestPeople_Create/with_different_kinds
+=== RUN   TestPeople_Create/with_different_kinds/Employee
+=== RUN   TestRisk_TreatmentEnum/Update_to_treatment_ACCEPTED
+=== RUN   TestRisk_RequiredFields/Missing_organizationId_should_fail
+=== RUN   TestRisk_OmittableFields/Update_with_new_description
+=== RUN   TestRisk_SubResolvers/Risk_measures_sub-resolver_(empty)
+--- PASS: TestPeople_Delete (0.11s)
+=== CONT  TestObligation_StatusValues
+=== RUN   TestRisk_RequiredFields/Missing_name_should_fail
+=== RUN   TestProcessingActivity_LawfulBasis/CONSENT
+=== RUN   TestRisk_RequiredFields/Empty_name_should_fail
+=== RUN   TestRisk_OmittableOwnerId/Update_to_set_owner
+=== RUN   TestRisk_Create/with_different_likelihood_and_impact
+=== RUN   TestRisk_Create/with_different_likelihood_and_impact/Low_Low
+=== RUN   TestRisk_SubResolvers/Risk_documents_sub-resolver_(empty)
+=== RUN   TestRisk_OmittableFields/Update_with_null_description_(omittable)
+=== RUN   TestPeople_Create/with_different_kinds/Contractor
+=== RUN   TestRisk_TreatmentEnum/Update_to_treatment_TRANSFERRED
+--- PASS: TestPeople_List (0.13s)
+=== CONT  TestObligation_List
+--- PASS: TestRisk_RequiredFields (0.11s)
+    --- PASS: TestRisk_RequiredFields/Missing_organizationId_should_fail (0.01s)
+    --- PASS: TestRisk_RequiredFields/Missing_name_should_fail (0.01s)
+    --- PASS: TestRisk_RequiredFields/Empty_name_should_fail (0.01s)
+=== CONT  TestObligation_Delete
+=== RUN   TestProcessingActivity_LawfulBasis/CONTRACTUAL_NECESSITY
+--- PASS: TestRisk_SubResolvers (0.13s)
+    --- PASS: TestRisk_SubResolvers/Risk_organization_sub-resolver (0.01s)
+    --- PASS: TestRisk_SubResolvers/Risk_measures_sub-resolver_(empty) (0.01s)
+    --- PASS: TestRisk_SubResolvers/Risk_documents_sub-resolver_(empty) (0.01s)
+=== CONT  TestObligation_Update
+=== RUN   TestRisk_OmittableFields/Update_without_description_(should_not_change)
+=== RUN   TestRisk_OmittableOwnerId/Update_with_null_owner_(clear_assignment)
+=== RUN   TestRisk_Create/with_different_likelihood_and_impact/Low_Medium
+=== RUN   TestProcessingActivity_LawfulBasis/LEGITIMATE_INTEREST
+=== RUN   TestPeople_KindEnum/Create_with_kind_EMPLOYEE
+=== RUN   TestPeople_Create/with_different_kinds/Service_Account
+=== RUN   TestPeople_RequiredFields/Missing_organizationId_should_fail
+=== RUN   TestRisk_TreatmentEnum/Update_to_treatment_AVOIDED
+=== RUN   TestPeople_RequiredFields/Missing_fullName_should_fail
+--- PASS: TestRisk_OmittableOwnerId (0.14s)
+    --- PASS: TestRisk_OmittableOwnerId/Update_to_set_owner (0.02s)
+    --- PASS: TestRisk_OmittableOwnerId/Update_with_null_owner_(clear_assignment) (0.01s)
+=== CONT  TestObligation_Create
+--- PASS: TestProcessingActivity_LawfulBasis (0.12s)
+    --- PASS: TestProcessingActivity_LawfulBasis/CONSENT (0.01s)
+    --- PASS: TestProcessingActivity_LawfulBasis/CONTRACTUAL_NECESSITY (0.01s)
+    --- PASS: TestProcessingActivity_LawfulBasis/LEGITIMATE_INTEREST (0.01s)
+=== CONT  TestNonconformity_StatusValues
+=== RUN   TestPeople_KindEnum/Create_with_kind_CONTRACTOR
+--- PASS: TestOrganization_Get (0.09s)
+=== CONT  TestNonconformity_List
+=== RUN   TestPeople_RequiredFields/Missing_primaryEmailAddress_should_fail
+--- PASS: TestRisk_OmittableFields (0.14s)
+    --- PASS: TestRisk_OmittableFields/Update_with_new_description (0.01s)
+    --- PASS: TestRisk_OmittableFields/Update_with_null_description_(omittable) (0.01s)
+    --- PASS: TestRisk_OmittableFields/Update_without_description_(should_not_change) (0.02s)
+=== CONT  TestNonconformity_Delete
+=== RUN   TestRisk_Create/with_different_likelihood_and_impact/Low_High
+=== RUN   TestPeople_Create/with_additional_emails
+    people_test.go:120: additionalEmailAddresses feature not fully implemented
+--- PASS: TestPeople_Create (0.16s)
+    --- PASS: TestPeople_Create/with_full_details (0.01s)
+    --- PASS: TestPeople_Create/with_different_kinds (0.06s)
+        --- PASS: TestPeople_Create/with_different_kinds/Employee (0.02s)
+        --- PASS: TestPeople_Create/with_different_kinds/Contractor (0.02s)
+        --- PASS: TestPeople_Create/with_different_kinds/Service_Account (0.02s)
+    --- SKIP: TestPeople_Create/with_additional_emails (0.00s)
+=== CONT  TestNonconformity_Update
+--- PASS: TestPeople_KindEnum (0.11s)
+    --- PASS: TestPeople_KindEnum/Create_with_kind_EMPLOYEE (0.01s)
+    --- PASS: TestPeople_KindEnum/Create_with_kind_CONTRACTOR (0.01s)
+=== CONT  TestNonconformity_Create
+=== RUN   TestPeople_RequiredFields/Missing_kind_should_fail
+=== RUN   TestOrganization_Update/update_name_and_description
+--- PASS: TestRisk_TreatmentEnum (0.17s)
+    --- PASS: TestRisk_TreatmentEnum/Update_to_treatment_MITIGATED (0.02s)
+    --- PASS: TestRisk_TreatmentEnum/Update_to_treatment_ACCEPTED (0.02s)
+    --- PASS: TestRisk_TreatmentEnum/Update_to_treatment_TRANSFERRED (0.02s)
+    --- PASS: TestRisk_TreatmentEnum/Update_to_treatment_AVOIDED (0.02s)
+=== CONT  TestMember_List
+=== RUN   TestPeople_RequiredFields/Empty_fullName_should_fail
+=== RUN   TestRisk_Create/with_different_likelihood_and_impact/Low_Critical
+=== RUN   TestOrganization_Update/update_website_and_email
+=== RUN   TestPeople_RequiredFields/Invalid_kind_enum_should_fail
+--- PASS: TestPeople_RequiredFields (0.12s)
+    --- PASS: TestPeople_RequiredFields/Missing_organizationId_should_fail (0.01s)
+    --- PASS: TestPeople_RequiredFields/Missing_fullName_should_fail (0.01s)
+    --- PASS: TestPeople_RequiredFields/Missing_primaryEmailAddress_should_fail (0.01s)
+    --- PASS: TestPeople_RequiredFields/Missing_kind_should_fail (0.01s)
+    --- PASS: TestPeople_RequiredFields/Empty_fullName_should_fail (0.01s)
+    --- PASS: TestPeople_RequiredFields/Invalid_kind_enum_should_fail (0.00s)
+=== CONT  TestInvitation_Delete
+=== RUN   TestOrganization_Update/update_headquarter_address
+=== RUN   TestRisk_Create/with_different_likelihood_and_impact/Medium_Low
+--- PASS: TestOrganization_Update (0.11s)
+    --- PASS: TestOrganization_Update/update_name_and_description (0.01s)
+    --- PASS: TestOrganization_Update/update_website_and_email (0.01s)
+    --- PASS: TestOrganization_Update/update_headquarter_address (0.01s)
+=== CONT  TestMember_RemoveMember
+=== RUN   TestRisk_Create/with_different_likelihood_and_impact/Medium_Medium
+=== RUN   TestObligation_StatusValues/NON_COMPLIANT
+=== RUN   TestRisk_Create/with_different_likelihood_and_impact/Medium_High
+=== RUN   TestObligation_StatusValues/PARTIALLY_COMPLIANT
+=== RUN   TestRisk_Create/with_different_likelihood_and_impact/Medium_Critical
+=== RUN   TestObligation_StatusValues/COMPLIANT
+--- PASS: TestObligation_StatusValues (0.14s)
+    --- PASS: TestObligation_StatusValues/NON_COMPLIANT (0.01s)
+    --- PASS: TestObligation_StatusValues/PARTIALLY_COMPLIANT (0.01s)
+    --- PASS: TestObligation_StatusValues/COMPLIANT (0.01s)
+=== CONT  TestMeasure_Pagination
+--- PASS: TestMember_UpdateMembership (0.20s)
+=== RUN   TestRisk_Create/with_different_likelihood_and_impact/High_Low
+=== CONT  TestMeeting_WithAttendees
+--- PASS: TestObligation_Create (0.11s)
+=== CONT  TestMeeting_List
+--- PASS: TestObligation_Delete (0.14s)
+=== CONT  TestMeeting_Delete
+=== RUN   TestNonconformity_StatusValues/OPEN
+=== RUN   TestRisk_Create/with_different_likelihood_and_impact/High_Medium
+--- PASS: TestObligation_Update (0.14s)
+=== CONT  TestMeeting_Update
+=== RUN   TestNonconformity_StatusValues/IN_PROGRESS
+--- PASS: TestObligation_List (0.16s)
+=== CONT  TestMeeting_Create
+=== RUN   TestRisk_Create/with_different_likelihood_and_impact/High_High
+--- PASS: TestInvitation_Delete (0.11s)
+=== CONT  TestMeasure_Ordering
+=== RUN   TestNonconformity_StatusValues/CLOSED
+--- PASS: TestNonconformity_Delete (0.14s)
+=== CONT  TestMeasure_TenantIsolation
+--- PASS: TestNonconformity_StatusValues (0.16s)
+    --- PASS: TestNonconformity_StatusValues/OPEN (0.01s)
+    --- PASS: TestNonconformity_StatusValues/IN_PROGRESS (0.01s)
+    --- PASS: TestNonconformity_StatusValues/CLOSED (0.01s)
+=== CONT  TestMeasure_Filtering
+=== RUN   TestRisk_Create/with_different_likelihood_and_impact/High_Critical
+--- PASS: TestNonconformity_Create (0.15s)
+=== CONT  TestMeasure_SubResolvers
+--- PASS: TestNonconformity_Update (0.16s)
+=== CONT  TestMeasure_SubResolvers_WithData
+--- PASS: TestNonconformity_List (0.17s)
+=== CONT  TestMeasure_MaxLength_Validation
+=== RUN   TestRisk_Create/with_different_likelihood_and_impact/Critical_Low
+=== RUN   TestRisk_Create/with_different_likelihood_and_impact/Critical_Medium
+=== RUN   TestRisk_Create/with_different_likelihood_and_impact/Critical_High
+--- PASS: TestMeeting_Delete (0.11s)
+=== CONT  TestMeasure_RBAC
+=== RUN   TestMeasure_RBAC/create
+=== RUN   TestMeasure_RBAC/create/owner_can_create
+=== RUN   TestRBAC/owner_can_create_framework
+--- PASS: TestMeeting_WithAttendees (0.12s)
+=== CONT  TestAudit_List
+=== RUN   TestRBAC/admin_can_create_framework
+=== RUN   TestRisk_Create/with_different_likelihood_and_impact/Critical_Critical
+--- PASS: TestMeeting_Update (0.11s)
+=== CONT  TestAudit_UploadReport_Validation
+--- PASS: TestMeeting_Create (0.10s)
+=== CONT  TestAudit_UploadReport
+=== NAME  TestMeeting_List
+    meeting_test.go:287: 
+        	Error Trace:	/Users/gearnode/Developer/probo/probo/e2e/console/meeting_test.go:287
+        	Error:      	"0" is not greater than or equal to "3"
+        	Test:       	TestMeeting_List
+--- FAIL: TestMeeting_List (0.13s)
+=== CONT  TestAudit_Ordering
+--- PASS: TestMember_RemoveMember (0.20s)
+=== CONT  TestAudit_TenantIsolation
+=== RUN   TestRBAC/viewer_cannot_create_framework
+=== RUN   TestMeasure_Ordering/order_by_name_ascending
+=== RUN   TestRBAC/owner_can_update_framework
+--- PASS: TestRisk_Create (0.46s)
+    --- PASS: TestRisk_Create/with_full_details (0.01s)
+    --- PASS: TestRisk_Create/with_different_treatments (0.08s)
+        --- PASS: TestRisk_Create/with_different_treatments/Mitigated (0.02s)
+        --- PASS: TestRisk_Create/with_different_treatments/Transferred (0.02s)
+        --- PASS: TestRisk_Create/with_different_treatments/Accepted (0.02s)
+        --- PASS: TestRisk_Create/with_different_treatments/Avoided (0.02s)
+    --- PASS: TestRisk_Create/with_different_likelihood_and_impact (0.28s)
+        --- PASS: TestRisk_Create/with_different_likelihood_and_impact/Low_Low (0.02s)
+        --- PASS: TestRisk_Create/with_different_likelihood_and_impact/Low_Medium (0.02s)
+        --- PASS: TestRisk_Create/with_different_likelihood_and_impact/Low_High (0.02s)
+        --- PASS: TestRisk_Create/with_different_likelihood_and_impact/Low_Critical (0.01s)
+        --- PASS: TestRisk_Create/with_different_likelihood_and_impact/Medium_Low (0.01s)
+        --- PASS: TestRisk_Create/with_different_likelihood_and_impact/Medium_Medium (0.02s)
+        --- PASS: TestRisk_Create/with_different_likelihood_and_impact/Medium_High (0.02s)
+        --- PASS: TestRisk_Create/with_different_likelihood_and_impact/Medium_Critical (0.02s)
+        --- PASS: TestRisk_Create/with_different_likelihood_and_impact/High_Low (0.02s)
+        --- PASS: TestRisk_Create/with_different_likelihood_and_impact/High_Medium (0.02s)
+        --- PASS: TestRisk_Create/with_different_likelihood_and_impact/High_High (0.02s)
+        --- PASS: TestRisk_Create/with_different_likelihood_and_impact/High_Critical (0.02s)
+        --- PASS: TestRisk_Create/with_different_likelihood_and_impact/Critical_Low (0.02s)
+        --- PASS: TestRisk_Create/with_different_likelihood_and_impact/Critical_Medium (0.02s)
+        --- PASS: TestRisk_Create/with_different_likelihood_and_impact/Critical_High (0.02s)
+        --- PASS: TestRisk_Create/with_different_likelihood_and_impact/Critical_Critical (0.02s)
+=== CONT  TestAudit_Pagination
+=== RUN   TestMeasure_SubResolvers_WithData/tasks_sub-resolver_with_linked_tasks
+=== RUN   TestMeasure_Pagination/first/after_pagination
+=== RUN   TestMeasure_SubResolvers/controls_sub-resolver_returns_empty_list
+=== RUN   TestMeasure_Ordering/order_by_name_descending
+=== RUN   TestMeasure_MaxLength_Validation/create
+=== RUN   TestMeasure_MaxLength_Validation/create/name_exceeds_max_length
+=== RUN   TestRBAC/admin_can_update_framework
+=== RUN   TestMeasure_MaxLength_Validation/create/category_exceeds_max_length
+=== RUN   TestMeasure_SubResolvers/risks_sub-resolver_returns_empty_list
+=== RUN   TestMeasure_Ordering/order_by_created_at
+=== RUN   TestRBAC/viewer_cannot_update_framework
+=== RUN   TestMeasure_MaxLength_Validation/create/description_exceeds_max_length
+=== RUN   TestMeasure_Pagination/last/before_pagination
+=== RUN   TestMeasure_SubResolvers/tasks_sub-resolver_returns_empty_list
+=== RUN   TestRBAC/owner_can_delete_framework
+--- PASS: TestMeasure_Ordering (0.14s)
+    --- PASS: TestMeasure_Ordering/order_by_name_ascending (0.01s)
+    --- PASS: TestMeasure_Ordering/order_by_name_descending (0.02s)
+    --- PASS: TestMeasure_Ordering/order_by_created_at (0.01s)
+=== CONT  TestAudit_MaxLength_Validation
+=== RUN   TestMeasure_MaxLength_Validation/update
+=== RUN   TestMeasure_Filtering/filter_by_state
+--- PASS: TestMeasure_Pagination (0.19s)
+    --- PASS: TestMeasure_Pagination/first/after_pagination (0.03s)
+    --- PASS: TestMeasure_Pagination/last/before_pagination (0.01s)
+=== CONT  TestAudit_RBAC
+=== RUN   TestAudit_RBAC/create
+=== RUN   TestAudit_RBAC/create/owner_can_create
+=== RUN   TestMeasure_SubResolvers/evidences_sub-resolver_returns_empty_list
+=== RUN   TestMeasure_MaxLength_Validation/update/name_exceeds_max_length
+=== RUN   TestMeasure_Filtering/filter_by_query_string
+=== RUN   TestMeasure_SubResolvers_WithData/controls_sub-resolver_with_linked_controls
+=== RUN   TestMeasure_MaxLength_Validation/update/category_exceeds_max_length
+=== RUN   TestRBAC/admin_can_delete_framework
+--- PASS: TestMeasure_SubResolvers (0.14s)
+    --- PASS: TestMeasure_SubResolvers/controls_sub-resolver_returns_empty_list (0.01s)
+    --- PASS: TestMeasure_SubResolvers/risks_sub-resolver_returns_empty_list (0.01s)
+    --- PASS: TestMeasure_SubResolvers/tasks_sub-resolver_returns_empty_list (0.01s)
+    --- PASS: TestMeasure_SubResolvers/evidences_sub-resolver_returns_empty_list (0.01s)
+=== CONT  TestAudit_SubResolvers
+--- PASS: TestMember_List (0.29s)
+=== CONT  TestAudit_Timestamps
+=== RUN   TestMeasure_MaxLength_Validation/update/description_exceeds_max_length
+--- PASS: TestMeasure_Filtering (0.16s)
+    --- PASS: TestMeasure_Filtering/filter_by_state (0.01s)
+    --- PASS: TestMeasure_Filtering/filter_by_query_string (0.01s)
+=== CONT  TestAudit_Query
+=== RUN   TestMeasure_RBAC/create/admin_can_create
+--- PASS: TestMeasure_MaxLength_Validation (0.15s)
+    --- PASS: TestMeasure_MaxLength_Validation/create (0.03s)
+        --- PASS: TestMeasure_MaxLength_Validation/create/name_exceeds_max_length (0.01s)
+        --- PASS: TestMeasure_MaxLength_Validation/create/category_exceeds_max_length (0.01s)
+        --- PASS: TestMeasure_MaxLength_Validation/create/description_exceeds_max_length (0.01s)
+    --- PASS: TestMeasure_MaxLength_Validation/update (0.04s)
+        --- PASS: TestMeasure_MaxLength_Validation/update/name_exceeds_max_length (0.01s)
+        --- PASS: TestMeasure_MaxLength_Validation/update/category_exceeds_max_length (0.01s)
+        --- PASS: TestMeasure_MaxLength_Validation/update/description_exceeds_max_length (0.01s)
+=== CONT  TestFramework_SubResolvers_WithData
+=== RUN   TestRBAC/viewer_cannot_delete_framework
+=== RUN   TestAudit_UploadReport/upload_valid_PDF_report
+=== RUN   TestMeasure_TenantIsolation/cannot_read_measure_from_another_organization
+=== RUN   TestAudit_UploadReport_Validation/reject_non-PDF_file
+=== RUN   TestMeasure_TenantIsolation/cannot_update_measure_from_another_organization
+=== RUN   TestMeasure_TenantIsolation/cannot_delete_measure_from_another_organization
+=== NAME  TestMeasure_SubResolvers_WithData/controls_sub-resolver_with_linked_controls
+    measure_test.go:1419: 
+        	Error Trace:	/Users/gearnode/Developer/probo/probo/e2e/console/measure_test.go:1419
+        	Error:      	Received unexpected error:
+        	            	unexpected status 422: {"errors":[{"message":"Cannot query field \"control\" on type \"CreateControlMeasureMappingPayload\".","locations":[{"line":4,"column":6}],"extensions":{"code":"GRAPHQL_VALIDATION_FAILED"}}],"data":null}
+        	Test:       	TestMeasure_SubResolvers_WithData/controls_sub-resolver_with_linked_controls
+=== RUN   TestMeasure_SubResolvers_WithData/risks_sub-resolver_with_linked_risks
+=== RUN   TestRBAC/owner_can_list_frameworks
+=== RUN   TestMeasure_TenantIsolation/cannot_list_measures_from_another_organization
+=== NAME  TestAudit_UploadReport/upload_valid_PDF_report
+    audit_test.go:1546: 
+        	Error Trace:	/Users/gearnode/Developer/probo/probo/e2e/console/audit_test.go:1546
+        	Error:      	Received unexpected error:
+        	            	internal server error
+        	Test:       	TestAudit_UploadReport/upload_valid_PDF_report
+=== RUN   TestAudit_UploadReport/upload_replaces_existing_report
+--- PASS: TestMeasure_TenantIsolation (0.21s)
+    --- PASS: TestMeasure_TenantIsolation/cannot_read_measure_from_another_organization (0.01s)
+    --- PASS: TestMeasure_TenantIsolation/cannot_update_measure_from_another_organization (0.01s)
+    --- PASS: TestMeasure_TenantIsolation/cannot_delete_measure_from_another_organization (0.01s)
+    --- PASS: TestMeasure_TenantIsolation/cannot_list_measures_from_another_organization (0.01s)
+=== CONT  TestFramework_TenantIsolation
+=== RUN   TestRBAC/admin_can_list_frameworks
+=== RUN   TestAudit_UploadReport_Validation/reject_file_with_wrong_extension_but_PDF_content-type
+=== RUN   TestAudit_Ordering/order_by_created_at_descending
+--- PASS: TestAudit_List (0.15s)
+=== CONT  TestFramework_Pagination
+=== RUN   TestRBAC/viewer_can_list_frameworks
+--- PASS: TestAudit_Ordering (0.14s)
+    --- PASS: TestAudit_Ordering/order_by_created_at_descending (0.01s)
+=== CONT  TestFramework_MaxLength_Validation
+=== NAME  TestMeasure_SubResolvers_WithData/risks_sub-resolver_with_linked_risks
+    measure_test.go:1482: 
+        	Error Trace:	/Users/gearnode/Developer/probo/probo/e2e/console/measure_test.go:1482
+        	Error:      	Received unexpected error:
+        	            	unexpected status 422: {"errors":[{"message":"Cannot query field \"risk\" on type \"CreateRiskMeasureMappingPayload\".","locations":[{"line":4,"column":6}],"extensions":{"code":"GRAPHQL_VALIDATION_FAILED"}}],"data":null}
+        	Test:       	TestMeasure_SubResolvers_WithData/risks_sub-resolver_with_linked_risks
+--- FAIL: TestMeasure_SubResolvers_WithData (0.21s)
+    --- PASS: TestMeasure_SubResolvers_WithData/tasks_sub-resolver_with_linked_tasks (0.05s)
+    --- FAIL: TestMeasure_SubResolvers_WithData/controls_sub-resolver_with_linked_controls (0.04s)
+    --- FAIL: TestMeasure_SubResolvers_WithData/risks_sub-resolver_with_linked_risks (0.03s)
+=== CONT  TestPeople_SubResolvers
+=== RUN   TestAudit_MaxLength_Validation/create
+=== NAME  TestAudit_UploadReport/upload_replaces_existing_report
+    audit_test.go:1596: 
+        	Error Trace:	/Users/gearnode/Developer/probo/probo/e2e/console/audit_test.go:1596
+        	Error:      	Received unexpected error:
+        	            	internal server error
+        	Test:       	TestAudit_UploadReport/upload_replaces_existing_report
+--- FAIL: TestAudit_UploadReport (0.15s)
+    --- FAIL: TestAudit_UploadReport/upload_valid_PDF_report (0.03s)
+    --- FAIL: TestAudit_UploadReport/upload_replaces_existing_report (0.02s)
+=== CONT  TestAudit_Create_Validation
+=== RUN   TestAudit_MaxLength_Validation/update
+=== RUN   TestAudit_UploadReport_Validation/reject_empty_file
+=== RUN   TestRBAC/owner_can_create_control
+=== RUN   TestAudit_RBAC/create/admin_can_create
+=== RUN   TestRBAC/admin_can_create_control
+=== RUN   TestAudit_Query/query_with_non-existent_ID_returns_nil
+=== RUN   TestFramework_SubResolvers_WithData/controls_sub-resolver_with_linked_controls
+--- PASS: TestAudit_MaxLength_Validation (0.12s)
+    --- PASS: TestAudit_MaxLength_Validation/create (0.01s)
+    --- PASS: TestAudit_MaxLength_Validation/update (0.02s)
+=== CONT  TestMeasure_OmittableDescription
+=== RUN   TestAudit_SubResolvers/framework_sub-resolver
+=== RUN   TestAudit_Pagination/first/after_pagination
+=== NAME  TestAudit_Query/query_with_non-existent_ID_returns_nil
+    audit_test.go:669: 
+        	Error Trace:	/Users/gearnode/Developer/probo/probo/e2e/console/audit_test.go:669
+        	Error:      	Received unexpected error:
+        	            	invalid length for GID: got 32, want 24
+        	Test:       	TestAudit_Query/query_with_non-existent_ID_returns_nil
+--- FAIL: TestAudit_Query (0.09s)
+    --- FAIL: TestAudit_Query/query_with_non-existent_ID_returns_nil (0.01s)
+=== CONT  TestAudit_Delete_Validation
+=== NAME  TestRBAC/admin_can_create_control
+    rbac_test.go:1249: 
+        	Error Trace:	/Users/gearnode/Developer/probo/probo/e2e/console/rbac_test.go:1249
+        	Error:      	Received unexpected error:
+        	            	control with framework_id Hdq8LCSPAG8AAQAAAZrUbtJemNelqR__ and section_title "Section" already exists
+        	Test:       	TestRBAC/admin_can_create_control
+        	Messages:   	expected request to be allowed
+=== RUN   TestRBAC/viewer_cannot_create_control
+=== RUN   TestAudit_Timestamps/createdAt_and_updatedAt_are_set_on_create
+=== RUN   TestAudit_UploadReport_Validation/reject_invalid_audit_ID
+=== RUN   TestRBAC/owner_can_update_control
+=== RUN   TestAudit_SubResolvers/organization_sub-resolver
+--- PASS: TestAudit_UploadReport_Validation (0.18s)
+    --- PASS: TestAudit_UploadReport_Validation/reject_non-PDF_file (0.03s)
+    --- PASS: TestAudit_UploadReport_Validation/reject_file_with_wrong_extension_but_PDF_content-type (0.02s)
+    --- PASS: TestAudit_UploadReport_Validation/reject_empty_file (0.02s)
+    --- PASS: TestAudit_UploadReport_Validation/reject_invalid_audit_ID (0.01s)
+=== CONT  TestMeasure_Timestamps
+=== RUN   TestAudit_Timestamps/updatedAt_changes_on_update
+=== RUN   TestRBAC/admin_can_update_control
+--- PASS: TestAudit_SubResolvers (0.12s)
+    --- PASS: TestAudit_SubResolvers/framework_sub-resolver (0.01s)
+    --- PASS: TestAudit_SubResolvers/organization_sub-resolver (0.01s)
+=== CONT  TestAudit_Delete
+=== RUN   TestAudit_Pagination/last/before_pagination
+=== RUN   TestAudit_TenantIsolation/cannot_read_audit_from_another_organization
+--- PASS: TestAudit_Pagination (0.19s)
+    --- PASS: TestAudit_Pagination/first/after_pagination (0.02s)
+    --- PASS: TestAudit_Pagination/last/before_pagination (0.01s)
+=== CONT  TestMeasure_Query
+=== RUN   TestRBAC/viewer_cannot_update_control
+=== RUN   TestAudit_TenantIsolation/cannot_update_audit_from_another_organization
+=== NAME  TestFramework_SubResolvers_WithData/controls_sub-resolver_with_linked_controls
+    framework_test.go:1268: 
+        	Error Trace:	/Users/gearnode/Developer/probo/probo/e2e/console/framework_test.go:1268
+        	Error:      	Received unexpected error:
+        	            	no permissions defined for action totalCount on entity Framework
+        	Test:       	TestFramework_SubResolvers_WithData/controls_sub-resolver_with_linked_controls
+--- FAIL: TestFramework_SubResolvers_WithData (0.13s)
+    --- FAIL: TestFramework_SubResolvers_WithData/controls_sub-resolver_with_linked_controls (0.05s)
+=== CONT  TestAudit_Update_Validation
+=== RUN   TestAudit_TenantIsolation/cannot_delete_audit_from_another_organization
+=== RUN   TestRBAC/owner_can_delete_control
+=== RUN   TestAudit_TenantIsolation/cannot_list_audits_from_another_organization
+=== RUN   TestFramework_MaxLength_Validation/create
+=== RUN   TestFramework_MaxLength_Validation/create/name_exceeds_max_length
+--- PASS: TestAudit_TenantIsolation (0.23s)
+    --- PASS: TestAudit_TenantIsolation/cannot_read_audit_from_another_organization (0.01s)
+    --- PASS: TestAudit_TenantIsolation/cannot_update_audit_from_another_organization (0.01s)
+    --- PASS: TestAudit_TenantIsolation/cannot_delete_audit_from_another_organization (0.01s)
+    --- PASS: TestAudit_TenantIsolation/cannot_list_audits_from_another_organization (0.01s)
+=== CONT  TestAudit_Update
+--- PASS: TestAudit_Timestamps (0.16s)
+    --- PASS: TestAudit_Timestamps/createdAt_and_updatedAt_are_set_on_create (0.01s)
+    --- PASS: TestAudit_Timestamps/updatedAt_changes_on_update (0.05s)
+=== CONT  TestFramework_RBAC
+=== RUN   TestFramework_RBAC/create
+=== RUN   TestFramework_RBAC/create/owner_can_create
+=== RUN   TestFramework_MaxLength_Validation/create/description_exceeds_max_length
+=== RUN   TestRBAC/admin_can_delete_control
+=== RUN   TestPeople_SubResolvers/People_node_query
+=== NAME  TestFramework_MaxLength_Validation/create/description_exceeds_max_length
+    framework_test.go:1174: 
+        	Error Trace:	/Users/gearnode/Developer/probo/probo/e2e/console/framework_test.go:1174
+        	Error:      	An error is expected but got nil.
+        	Test:       	TestFramework_MaxLength_Validation/create/description_exceeds_max_length
+=== RUN   TestFramework_MaxLength_Validation/update
+--- PASS: TestPeople_SubResolvers (0.11s)
+    --- PASS: TestPeople_SubResolvers/People_node_query (0.01s)
+=== CONT  TestAsset_List
+=== RUN   TestAudit_Create_Validation/missing_organizationId
+=== RUN   TestFramework_MaxLength_Validation/update/name_exceeds_max_length
+=== RUN   TestMeasure_RBAC/create/viewer_cannot_create
+=== RUN   TestAudit_Create_Validation/missing_frameworkId
+=== RUN   TestFramework_MaxLength_Validation/update/description_exceeds_max_length
+=== RUN   TestAudit_Delete_Validation/invalid_ID_format
+=== RUN   TestRBAC/viewer_cannot_delete_control
+=== RUN   TestAudit_Create_Validation/name_with_HTML_tags
+=== RUN   TestMeasure_OmittableDescription/update_with_new_description
+=== NAME  TestAudit_Delete_Validation/invalid_ID_format
+    audit_test.go:588: 
+        	Error Trace:	/Users/gearnode/Developer/probo/probo/e2e/console/audit_test.go:588
+        	Error:      	"illegal base64 data at input byte 16" does not contain "id"
+        	Test:       	TestAudit_Delete_Validation/invalid_ID_format
+--- FAIL: TestAudit_Delete_Validation (0.10s)
+    --- FAIL: TestAudit_Delete_Validation/invalid_ID_format (0.01s)
+=== CONT  TestAudit_Create
+=== RUN   TestMeasure_Timestamps/createdAt_and_updatedAt_are_set_on_create
+--- FAIL: TestFramework_MaxLength_Validation (0.13s)
+    --- FAIL: TestFramework_MaxLength_Validation/create (0.02s)
+        --- PASS: TestFramework_MaxLength_Validation/create/name_exceeds_max_length (0.01s)
+        --- FAIL: TestFramework_MaxLength_Validation/create/description_exceeds_max_length (0.01s)
+    --- PASS: TestFramework_MaxLength_Validation/update (0.03s)
+        --- PASS: TestFramework_MaxLength_Validation/update/name_exceeds_max_length (0.01s)
+        --- PASS: TestFramework_MaxLength_Validation/update/description_exceeds_max_length (0.01s)
+=== CONT  TestAsset_Types
+=== RUN   TestFramework_Pagination/first/after_pagination
+=== RUN   TestAudit_Create_Validation/name_with_angle_brackets
+=== RUN   TestMeasure_Timestamps/updatedAt_changes_on_update
+=== RUN   TestMeasure_OmittableDescription/update_with_null_description_clears_it
+=== NAME  TestAudit_Create_Validation/name_with_angle_brackets
+    audit_test.go:276: 
+        	Error Trace:	/Users/gearnode/Developer/probo/probo/e2e/console/audit_test.go:276
+        	Error:      	"name must not contain HTML tags" does not contain "angle brackets"
+        	Test:       	TestAudit_Create_Validation/name_with_angle_brackets
+=== RUN   TestAudit_Create_Validation/name_with_newline
+=== NAME  TestRBAC/viewer_cannot_delete_control
+    rbac_test.go:1252: 
+        	Error Trace:	/Users/gearnode/Developer/probo/probo/e2e/console/rbac_test.go:1252
+        	Error:      	An error is expected but got nil.
+        	            	expected: testutil.GraphQLErrors
+        	Test:       	TestRBAC/viewer_cannot_delete_control
+        	Messages:   	expected GraphQL error, got: <nil>
+=== RUN   TestRBAC/owner_can_list_controls
+=== NAME  TestFramework_Pagination/first/after_pagination
+    framework_test.go:1339: 
+        	Error Trace:	/Users/gearnode/Developer/probo/probo/e2e/console/framework_test.go:1339
+        	Error:      	"[{{Hdq8LCSQAKAAAQAAAZrUbtO-Y3KfocHI Pagination Framework 4} WyJIZHE4TENTUUFLQUFBUUFBQVpyVWJ0Ty1ZM0tmb2NISSIsIjIwMjUtMTEtMzBUMTI6MDM6NDQuMzE4NzYyKzAxOjAwIl0} {{Hdq8LCSQAKAAAQAAAZrUbtOzZ9eWxB2W Pagination Framework 3} WyJIZHE4TENTUUFLQUFBUUFBQVpyVWJ0T3paOWVXeEIyVyIsIjIwMjUtMTEtMzBUMTI6MDM6NDQuMzA3NjYzKzAxOjAwIl0} {{Hdq8LCSQAKAAAQAAAZrUbtOpWd2ya-1K Pagination Framework 2} WyJIZHE4TENTUUFLQUFBUUFBQVpyVWJ0T3BXZDJ5YS0xSyIsIjIwMjUtMTEtMzBUMTI6MDM6NDQuMjk3MTI2KzAxOjAwIl0} {{Hdq8LCSQAKAAAQAAAZrUbtOf2pC9rips Pagination Framework 1} WyJIZHE4TENTUUFLQUFBUUFBQVpyVWJ0T2YycEM5cmlwcyIsIjIwMjUtMTEtMzBUMTI6MDM6NDQuMjg3Mzg1KzAxOjAwIl0} {{Hdq8LCSQAKAAAQAAAZrUbtOSQfeZXXZ_ Pagination Framework 0} WyJIZHE4TENTUUFLQUFBUUFBQVpyVWJ0T1NRZmVaWFhaXyIsIjIwMjUtMTEtMzBUMTI6MDM6NDQuMjc0MjU5KzAxOjAwIl0}]" should have 2 item(s), but has 5
+        	Test:       	TestFramework_Pagination/first/after_pagination
+    framework_test.go:1340: 
+        	Error Trace:	/Users/gearnode/Developer/probo/probo/e2e/console/framework_test.go:1340
+        	Error:      	Should be true
+        	Test:       	TestFramework_Pagination/first/after_pagination
+=== RUN   TestAudit_Delete/delete_existing_audit
+=== RUN   TestAudit_Create_Validation/name_with_carriage_return
+=== RUN   TestMeasure_Query/query_with_non-existent_ID_returns_nil
+=== NAME  TestRBAC/owner_can_list_controls
+    rbac_test.go:1249: 
+        	Error Trace:	/Users/gearnode/Developer/probo/probo/e2e/console/rbac_test.go:1249
+        	Error:      	Received unexpected error:
+        	            	no permissions defined for action totalCount on entity Framework
+        	Test:       	TestRBAC/owner_can_list_controls
+        	Messages:   	expected request to be allowed
+=== RUN   TestRBAC/admin_can_list_controls
+=== NAME  TestFramework_Pagination/first/after_pagination
+    framework_test.go:1385: 
+        	Error Trace:	/Users/gearnode/Developer/probo/probo/e2e/console/framework_test.go:1385
+        	Error:      	"[]" should have 2 item(s), but has 0
+        	Test:       	TestFramework_Pagination/first/after_pagination
+    framework_test.go:1386: 
+        	Error Trace:	/Users/gearnode/Developer/probo/probo/e2e/console/framework_test.go:1386
+        	Error:      	Should be true
+        	Test:       	TestFramework_Pagination/first/after_pagination
+=== RUN   TestFramework_Pagination/last/before_pagination
+=== RUN   TestAudit_Create_Validation/name_with_null_byte
+=== RUN   TestMeasure_OmittableDescription/set_description_again
+=== NAME  TestMeasure_Query/query_with_non-existent_ID_returns_nil
+    measure_test.go:737: 
+        	Error Trace:	/Users/gearnode/Developer/probo/probo/e2e/console/measure_test.go:737
+        	Error:      	Received unexpected error:
+        	            	invalid length for GID: got 32, want 24
+        	Test:       	TestMeasure_Query/query_with_non-existent_ID_returns_nil
+--- FAIL: TestMeasure_Query (0.09s)
+    --- FAIL: TestMeasure_Query/query_with_non-existent_ID_returns_nil (0.01s)
+=== CONT  TestAsset_Delete
+=== NAME  TestRBAC/admin_can_list_controls
+    rbac_test.go:1249: 
+        	Error Trace:	/Users/gearnode/Developer/probo/probo/e2e/console/rbac_test.go:1249
+        	Error:      	Received unexpected error:
+        	            	no permissions defined for action totalCount on entity Framework
+        	Test:       	TestRBAC/admin_can_list_controls
+        	Messages:   	expected request to be allowed
+=== RUN   TestRBAC/viewer_can_list_controls
+=== RUN   TestAudit_Create_Validation/name_with_tab_character
+=== NAME  TestFramework_Pagination/last/before_pagination
+    framework_test.go:1431: 
+        	Error Trace:	/Users/gearnode/Developer/probo/probo/e2e/console/framework_test.go:1431
+        	Error:      	"[{{Hdq8LCSQAKAAAQAAAZrUbtO-Y3KfocHI Pagination Framework 4}} {{Hdq8LCSQAKAAAQAAAZrUbtOzZ9eWxB2W Pagination Framework 3}} {{Hdq8LCSQAKAAAQAAAZrUbtOpWd2ya-1K Pagination Framework 2}} {{Hdq8LCSQAKAAAQAAAZrUbtOf2pC9rips Pagination Framework 1}} {{Hdq8LCSQAKAAAQAAAZrUbtOSQfeZXXZ_ Pagination Framework 0}}]" should have 2 item(s), but has 5
+        	Test:       	TestFramework_Pagination/last/before_pagination
+    framework_test.go:1432: 
+        	Error Trace:	/Users/gearnode/Developer/probo/probo/e2e/console/framework_test.go:1432
+        	Error:      	Should be true
+        	Test:       	TestFramework_Pagination/last/before_pagination
+--- FAIL: TestFramework_Pagination (0.18s)
+    --- FAIL: TestFramework_Pagination/first/after_pagination (0.02s)
+    --- FAIL: TestFramework_Pagination/last/before_pagination (0.01s)
+=== CONT  TestAsset_Update
+=== RUN   TestFramework_TenantIsolation/cannot_read_framework_from_another_organization
+--- PASS: TestAudit_Delete (0.11s)
+    --- PASS: TestAudit_Delete/delete_existing_audit (0.02s)
+=== CONT  TestFramework_SubResolvers
+=== RUN   TestMeasure_OmittableDescription/update_without_description_preserves_it
+=== RUN   TestAudit_Create_Validation/name_with_zero-width_space
+=== RUN   TestFramework_TenantIsolation/cannot_update_framework_from_another_organization
+=== NAME  TestRBAC/viewer_can_list_controls
+    rbac_test.go:1249: 
+        	Error Trace:	/Users/gearnode/Developer/probo/probo/e2e/console/rbac_test.go:1249
+        	Error:      	Received unexpected error:
+        	            	no permissions defined for action totalCount on entity Framework
+        	Test:       	TestRBAC/viewer_can_list_controls
+        	Messages:   	expected request to be allowed
+=== RUN   TestRBAC/owner_can_create_measure
+=== RUN   TestAudit_Create_Validation/name_with_zero-width_joiner
+=== RUN   TestAudit_Update_Validation/invalid_ID_format
+--- PASS: TestMeasure_Timestamps (0.14s)
+    --- PASS: TestMeasure_Timestamps/createdAt_and_updatedAt_are_set_on_create (0.01s)
+    --- PASS: TestMeasure_Timestamps/updatedAt_changes_on_update (0.04s)
+=== RUN   TestFramework_TenantIsolation/cannot_delete_framework_from_another_organization
+--- PASS: TestMeasure_OmittableDescription (0.15s)
+    --- PASS: TestMeasure_OmittableDescription/update_with_new_description (0.02s)
+    --- PASS: TestMeasure_OmittableDescription/update_with_null_description_clears_it (0.01s)
+    --- PASS: TestMeasure_OmittableDescription/set_description_again (0.01s)
+    --- PASS: TestMeasure_OmittableDescription/update_without_description_preserves_it (0.01s)
+=== RUN   TestFramework_RBAC/create/admin_can_create
+=== RUN   TestAudit_Update/update_name
+=== NAME  TestAudit_Update_Validation/invalid_ID_format
+    audit_test.go:522: 
+        	Error Trace:	/Users/gearnode/Developer/probo/probo/e2e/console/audit_test.go:522
+        	Error:      	"illegal base64 data at input byte 16" does not contain "id"
+        	Test:       	TestAudit_Update_Validation/invalid_ID_format
+=== RUN   TestAudit_Update_Validation/name_with_HTML_tags
+=== RUN   TestAudit_Create_Validation/name_with_right-to-left_override
+=== RUN   TestFramework_TenantIsolation/cannot_list_frameworks_from_another_organization
+=== RUN   TestRBAC/admin_can_create_measure
+--- FAIL: TestAudit_Create_Validation (0.19s)
+    --- PASS: TestAudit_Create_Validation/missing_organizationId (0.01s)
+    --- PASS: TestAudit_Create_Validation/missing_frameworkId (0.01s)
+    --- PASS: TestAudit_Create_Validation/name_with_HTML_tags (0.01s)
+    --- FAIL: TestAudit_Create_Validation/name_with_angle_brackets (0.01s)
+    --- PASS: TestAudit_Create_Validation/name_with_newline (0.01s)
+    --- PASS: TestAudit_Create_Validation/name_with_carriage_return (0.01s)
+    --- PASS: TestAudit_Create_Validation/name_with_null_byte (0.01s)
+    --- PASS: TestAudit_Create_Validation/name_with_tab_character (0.01s)
+    --- PASS: TestAudit_Create_Validation/name_with_zero-width_space (0.01s)
+    --- PASS: TestAudit_Create_Validation/name_with_zero-width_joiner (0.01s)
+    --- PASS: TestAudit_Create_Validation/name_with_right-to-left_override (0.01s)
+=== RUN   TestAudit_Update_Validation/name_with_angle_brackets
+--- PASS: TestFramework_TenantIsolation (0.21s)
+    --- PASS: TestFramework_TenantIsolation/cannot_read_framework_from_another_organization (0.01s)
+    --- PASS: TestFramework_TenantIsolation/cannot_update_framework_from_another_organization (0.01s)
+    --- PASS: TestFramework_TenantIsolation/cannot_delete_framework_from_another_organization (0.01s)
+    --- PASS: TestFramework_TenantIsolation/cannot_list_frameworks_from_another_organization (0.01s)
+=== RUN   TestRBAC/viewer_cannot_create_measure
+=== NAME  TestAudit_Update_Validation/name_with_angle_brackets
+    audit_test.go:522: 
+        	Error Trace:	/Users/gearnode/Developer/probo/probo/e2e/console/audit_test.go:522
+        	Error:      	"name must not contain HTML tags" does not contain "angle brackets"
+        	Test:       	TestAudit_Update_Validation/name_with_angle_brackets
+=== RUN   TestAudit_Update_Validation/name_with_newline
+=== RUN   TestRBAC/owner_can_update_measure
+=== RUN   TestAudit_Update/update_to_IN_PROGRESS_state
+=== RUN   TestAudit_Update_Validation/name_with_carriage_return
+=== RUN   TestAudit_Update_Validation/name_with_null_byte
+=== RUN   TestAudit_RBAC/create/viewer_cannot_create
+=== RUN   TestRBAC/admin_can_update_measure
+=== RUN   TestAudit_Create/with_full_details
+=== RUN   TestAudit_Update_Validation/name_with_tab_character
+=== RUN   TestAsset_Types/PHYSICAL
+=== RUN   TestAudit_Update/update_to_COMPLETED_state
+=== RUN   TestRBAC/viewer_cannot_update_measure
+=== RUN   TestAudit_Update_Validation/name_with_zero-width_space
+=== RUN   TestAudit_Create/with_NOT_STARTED_state
+=== RUN   TestRBAC/owner_can_delete_measure
+=== RUN   TestAsset_Types/VIRTUAL
+=== RUN   TestAudit_Update_Validation/name_with_zero-width_joiner
+=== RUN   TestAudit_Create/with_IN_PROGRESS_state
+=== RUN   TestAudit_Update_Validation/name_with_right-to-left_override
+--- PASS: TestAsset_Types (0.10s)
+    --- PASS: TestAsset_Types/PHYSICAL (0.01s)
+    --- PASS: TestAsset_Types/VIRTUAL (0.01s)
+=== RUN   TestAudit_Update/update_to_REJECTED_state
+--- PASS: TestAsset_List (0.13s)
+--- FAIL: TestAudit_Update_Validation (0.16s)
+    --- FAIL: TestAudit_Update_Validation/invalid_ID_format (0.01s)
+    --- PASS: TestAudit_Update_Validation/name_with_HTML_tags (0.01s)
+    --- FAIL: TestAudit_Update_Validation/name_with_angle_brackets (0.01s)
+    --- PASS: TestAudit_Update_Validation/name_with_newline (0.01s)
+    --- PASS: TestAudit_Update_Validation/name_with_carriage_return (0.01s)
+    --- PASS: TestAudit_Update_Validation/name_with_null_byte (0.01s)
+    --- PASS: TestAudit_Update_Validation/name_with_tab_character (0.01s)
+    --- PASS: TestAudit_Update_Validation/name_with_zero-width_space (0.01s)
+    --- PASS: TestAudit_Update_Validation/name_with_zero-width_joiner (0.01s)
+    --- PASS: TestAudit_Update_Validation/name_with_right-to-left_override (0.01s)
+=== RUN   TestRBAC/admin_can_delete_measure
+=== RUN   TestAudit_Create/with_COMPLETED_state
+=== RUN   TestAudit_Create/with_REJECTED_state
+=== RUN   TestAudit_Update/update_to_OUTDATED_state
+=== RUN   TestFramework_SubResolvers/controls_sub-resolver_returns_empty_list
+=== RUN   TestRBAC/viewer_cannot_delete_measure
+--- PASS: TestAsset_Delete (0.10s)
+=== RUN   TestAudit_Create/with_OUTDATED_state
+=== RUN   TestFramework_SubResolvers/organization_sub-resolver
+--- PASS: TestAudit_Create (0.14s)
+    --- PASS: TestAudit_Create/with_full_details (0.01s)
+    --- PASS: TestAudit_Create/with_NOT_STARTED_state (0.01s)
+    --- PASS: TestAudit_Create/with_IN_PROGRESS_state (0.01s)
+    --- PASS: TestAudit_Create/with_COMPLETED_state (0.01s)
+    --- PASS: TestAudit_Create/with_REJECTED_state (0.01s)
+    --- PASS: TestAudit_Create/with_OUTDATED_state (0.01s)
+--- PASS: TestAudit_Update (0.17s)
+    --- PASS: TestAudit_Update/update_name (0.02s)
+    --- PASS: TestAudit_Update/update_to_IN_PROGRESS_state (0.02s)
+    --- PASS: TestAudit_Update/update_to_COMPLETED_state (0.02s)
+    --- PASS: TestAudit_Update/update_to_REJECTED_state (0.02s)
+    --- PASS: TestAudit_Update/update_to_OUTDATED_state (0.01s)
+=== RUN   TestRBAC/owner_can_list_measures
+--- PASS: TestFramework_SubResolvers (0.10s)
+    --- PASS: TestFramework_SubResolvers/controls_sub-resolver_returns_empty_list (0.01s)
+    --- PASS: TestFramework_SubResolvers/organization_sub-resolver (0.01s)
+--- PASS: TestAsset_Update (0.10s)
+=== RUN   TestRBAC/admin_can_list_measures
+=== RUN   TestRBAC/viewer_can_list_measures
+=== RUN   TestMeasure_RBAC/update
+=== RUN   TestMeasure_RBAC/update/owner_can_update
+=== RUN   TestRBAC/owner_can_create_task
+=== RUN   TestRBAC/admin_can_create_task
+=== RUN   TestRBAC/viewer_cannot_create_task
+=== RUN   TestRBAC/owner_can_update_task
+=== RUN   TestRBAC/admin_can_update_task
+=== RUN   TestRBAC/viewer_cannot_update_task
+=== RUN   TestRBAC/owner_can_delete_task
+=== RUN   TestRBAC/admin_can_delete_task
+=== RUN   TestRBAC/viewer_cannot_delete_task
+=== RUN   TestRBAC/owner_can_list_tasks
+=== RUN   TestRBAC/admin_can_list_tasks
+=== RUN   TestFramework_RBAC/create/viewer_cannot_create
+=== RUN   TestRBAC/viewer_can_list_tasks
+=== RUN   TestRBAC/owner_can_create_risk
+=== RUN   TestRBAC/admin_can_create_risk
+=== RUN   TestRBAC/viewer_cannot_create_risk
+=== RUN   TestRBAC/owner_can_update_risk
+=== RUN   TestRBAC/admin_can_update_risk
+=== RUN   TestMeasure_RBAC/update/admin_can_update
+=== RUN   TestRBAC/viewer_cannot_update_risk
+=== RUN   TestAudit_RBAC/update
+=== RUN   TestAudit_RBAC/update/owner_can_update
+=== RUN   TestRBAC/owner_can_delete_risk
+=== RUN   TestRBAC/admin_can_delete_risk
+=== RUN   TestRBAC/viewer_cannot_delete_risk
+=== RUN   TestRBAC/owner_can_list_risks
+=== RUN   TestRBAC/admin_can_list_risks
+=== RUN   TestRBAC/viewer_can_list_risks
+=== RUN   TestRBAC/owner_can_create_people
+=== RUN   TestRBAC/admin_can_create_people
+=== RUN   TestRBAC/viewer_cannot_create_people
+=== RUN   TestRBAC/owner_can_update_people
+    rbac_test.go:1249: 
+        	Error Trace:	/Users/gearnode/Developer/probo/probo/e2e/console/rbac_test.go:1249
+        	Error:      	Received unexpected error:
+        	            	internal server error
+        	Test:       	TestRBAC/owner_can_update_people
+        	Messages:   	expected request to be allowed
+=== RUN   TestRBAC/admin_can_update_people
+    rbac_test.go:1249: 
+        	Error Trace:	/Users/gearnode/Developer/probo/probo/e2e/console/rbac_test.go:1249
+        	Error:      	Received unexpected error:
+        	            	internal server error
+        	Test:       	TestRBAC/admin_can_update_people
+        	Messages:   	expected request to be allowed
+=== RUN   TestRBAC/viewer_cannot_update_people
+=== RUN   TestRBAC/owner_can_delete_people
+=== RUN   TestRBAC/admin_can_delete_people
+=== RUN   TestRBAC/viewer_cannot_delete_people
+=== RUN   TestAudit_RBAC/update/admin_can_update
+=== RUN   TestRBAC/owner_can_list_peoples
+=== RUN   TestRBAC/admin_can_list_peoples
+=== RUN   TestRBAC/viewer_can_list_peoples
+=== RUN   TestRBAC/owner_can_create_vendor
+=== RUN   TestRBAC/admin_can_create_vendor
+=== RUN   TestRBAC/viewer_cannot_create_vendor
+=== RUN   TestRBAC/owner_can_update_vendor
+=== RUN   TestFramework_RBAC/update
+=== RUN   TestFramework_RBAC/update/owner_can_update
+=== RUN   TestRBAC/admin_can_update_vendor
+=== RUN   TestRBAC/viewer_cannot_update_vendor
+=== RUN   TestRBAC/owner_can_delete_vendor
+=== RUN   TestRBAC/admin_can_delete_vendor
+=== RUN   TestMeasure_RBAC/update/viewer_cannot_update
+=== RUN   TestRBAC/viewer_cannot_delete_vendor
+=== RUN   TestRBAC/owner_can_list_vendors
+=== RUN   TestRBAC/admin_can_list_vendors
+=== RUN   TestRBAC/viewer_can_list_vendors
+=== RUN   TestRBAC/owner_can_update_organization
+=== RUN   TestRBAC/admin_can_update_organization
+=== RUN   TestRBAC/viewer_cannot_update_organization
+=== RUN   TestRBAC/owner_can_get_organization
+=== RUN   TestRBAC/admin_can_get_organization
+=== RUN   TestRBAC/viewer_can_get_organization
+=== RUN   TestRBAC/owner_can_list_members
+=== RUN   TestFramework_RBAC/update/admin_can_update
+=== RUN   TestRBAC/admin_can_list_members
+=== RUN   TestRBAC/viewer_can_list_members
+--- FAIL: TestRBAC (1.08s)
+    --- PASS: TestRBAC/owner_can_create_framework (0.01s)
+    --- PASS: TestRBAC/admin_can_create_framework (0.01s)
+    --- PASS: TestRBAC/viewer_cannot_create_framework (0.01s)
+    --- PASS: TestRBAC/owner_can_update_framework (0.01s)
+    --- PASS: TestRBAC/admin_can_update_framework (0.01s)
+    --- PASS: TestRBAC/viewer_cannot_update_framework (0.01s)
+    --- PASS: TestRBAC/owner_can_delete_framework (0.02s)
+    --- PASS: TestRBAC/admin_can_delete_framework (0.02s)
+    --- PASS: TestRBAC/viewer_cannot_delete_framework (0.02s)
+    --- PASS: TestRBAC/owner_can_list_frameworks (0.01s)
+    --- PASS: TestRBAC/admin_can_list_frameworks (0.01s)
+    --- PASS: TestRBAC/viewer_can_list_frameworks (0.02s)
+    --- PASS: TestRBAC/owner_can_create_control (0.01s)
+    --- FAIL: TestRBAC/admin_can_create_control (0.01s)
+    --- PASS: TestRBAC/viewer_cannot_create_control (0.01s)
+    --- PASS: TestRBAC/owner_can_update_control (0.01s)
+    --- PASS: TestRBAC/admin_can_update_control (0.01s)
+    --- PASS: TestRBAC/viewer_cannot_update_control (0.01s)
+    --- PASS: TestRBAC/owner_can_delete_control (0.02s)
+    --- PASS: TestRBAC/admin_can_delete_control (0.02s)
+    --- FAIL: TestRBAC/viewer_cannot_delete_control (0.02s)
+    --- FAIL: TestRBAC/owner_can_list_controls (0.01s)
+    --- FAIL: TestRBAC/admin_can_list_controls (0.01s)
+    --- FAIL: TestRBAC/viewer_can_list_controls (0.01s)
+    --- PASS: TestRBAC/owner_can_create_measure (0.01s)
+    --- PASS: TestRBAC/admin_can_create_measure (0.01s)
+    --- PASS: TestRBAC/viewer_cannot_create_measure (0.01s)
+    --- PASS: TestRBAC/owner_can_update_measure (0.01s)
+    --- PASS: TestRBAC/admin_can_update_measure (0.01s)
+    --- PASS: TestRBAC/viewer_cannot_update_measure (0.01s)
+    --- PASS: TestRBAC/owner_can_delete_measure (0.02s)
+    --- PASS: TestRBAC/admin_can_delete_measure (0.01s)
+    --- PASS: TestRBAC/viewer_cannot_delete_measure (0.01s)
+    --- PASS: TestRBAC/owner_can_list_measures (0.01s)
+    --- PASS: TestRBAC/admin_can_list_measures (0.01s)
+    --- PASS: TestRBAC/viewer_can_list_measures (0.01s)
+    --- PASS: TestRBAC/owner_can_create_task (0.00s)
+    --- PASS: TestRBAC/admin_can_create_task (0.00s)
+    --- PASS: TestRBAC/viewer_cannot_create_task (0.00s)
+    --- PASS: TestRBAC/owner_can_update_task (0.01s)
+    --- PASS: TestRBAC/admin_can_update_task (0.00s)
+    --- PASS: TestRBAC/viewer_cannot_update_task (0.00s)
+    --- PASS: TestRBAC/owner_can_delete_task (0.01s)
+    --- PASS: TestRBAC/admin_can_delete_task (0.01s)
+    --- PASS: TestRBAC/viewer_cannot_delete_task (0.01s)
+    --- PASS: TestRBAC/owner_can_list_tasks (0.00s)
+    --- PASS: TestRBAC/admin_can_list_tasks (0.01s)
+    --- PASS: TestRBAC/viewer_can_list_tasks (0.00s)
+    --- PASS: TestRBAC/owner_can_create_risk (0.00s)
+    --- PASS: TestRBAC/admin_can_create_risk (0.00s)
+    --- PASS: TestRBAC/viewer_cannot_create_risk (0.00s)
+    --- PASS: TestRBAC/owner_can_update_risk (0.00s)
+    --- PASS: TestRBAC/admin_can_update_risk (0.00s)
+    --- PASS: TestRBAC/viewer_cannot_update_risk (0.00s)
+    --- PASS: TestRBAC/owner_can_delete_risk (0.01s)
+    --- PASS: TestRBAC/admin_can_delete_risk (0.01s)
+    --- PASS: TestRBAC/viewer_cannot_delete_risk (0.01s)
+    --- PASS: TestRBAC/owner_can_list_risks (0.01s)
+    --- PASS: TestRBAC/admin_can_list_risks (0.00s)
+    --- PASS: TestRBAC/viewer_can_list_risks (0.01s)
+    --- PASS: TestRBAC/owner_can_create_people (0.00s)
+    --- PASS: TestRBAC/admin_can_create_people (0.00s)
+    --- PASS: TestRBAC/viewer_cannot_create_people (0.00s)
+    --- FAIL: TestRBAC/owner_can_update_people (0.00s)
+    --- FAIL: TestRBAC/admin_can_update_people (0.00s)
+    --- PASS: TestRBAC/viewer_cannot_update_people (0.00s)
+    --- PASS: TestRBAC/owner_can_delete_people (0.01s)
+    --- PASS: TestRBAC/admin_can_delete_people (0.01s)
+    --- PASS: TestRBAC/viewer_cannot_delete_people (0.01s)
+    --- PASS: TestRBAC/owner_can_list_peoples (0.01s)
+    --- PASS: TestRBAC/admin_can_list_peoples (0.01s)
+    --- PASS: TestRBAC/viewer_can_list_peoples (0.01s)
+    --- PASS: TestRBAC/owner_can_create_vendor (0.01s)
+    --- PASS: TestRBAC/admin_can_create_vendor (0.00s)
+    --- PASS: TestRBAC/viewer_cannot_create_vendor (0.00s)
+    --- PASS: TestRBAC/owner_can_update_vendor (0.00s)
+    --- PASS: TestRBAC/admin_can_update_vendor (0.00s)
+    --- PASS: TestRBAC/viewer_cannot_update_vendor (0.00s)
+    --- PASS: TestRBAC/owner_can_delete_vendor (0.01s)
+    --- PASS: TestRBAC/admin_can_delete_vendor (0.01s)
+    --- PASS: TestRBAC/viewer_cannot_delete_vendor (0.01s)
+    --- PASS: TestRBAC/owner_can_list_vendors (0.01s)
+    --- PASS: TestRBAC/admin_can_list_vendors (0.01s)
+    --- PASS: TestRBAC/viewer_can_list_vendors (0.01s)
+    --- PASS: TestRBAC/owner_can_update_organization (0.00s)
+    --- PASS: TestRBAC/admin_can_update_organization (0.00s)
+    --- PASS: TestRBAC/viewer_cannot_update_organization (0.00s)
+    --- PASS: TestRBAC/owner_can_get_organization (0.00s)
+    --- PASS: TestRBAC/admin_can_get_organization (0.00s)
+    --- PASS: TestRBAC/viewer_can_get_organization (0.00s)
+    --- PASS: TestRBAC/owner_can_list_members (0.01s)
+    --- PASS: TestRBAC/admin_can_list_members (0.00s)
+    --- PASS: TestRBAC/viewer_can_list_members (0.01s)
+=== RUN   TestAudit_RBAC/update/viewer_cannot_update
+=== RUN   TestMeasure_RBAC/delete
+=== RUN   TestMeasure_RBAC/delete/owner_can_delete
+=== RUN   TestFramework_RBAC/update/viewer_cannot_update
+=== RUN   TestMeasure_RBAC/delete/admin_can_delete
+=== RUN   TestAudit_RBAC/delete
+=== RUN   TestAudit_RBAC/delete/owner_can_delete
+=== RUN   TestAudit_RBAC/delete/admin_can_delete
+=== RUN   TestFramework_RBAC/delete
+=== RUN   TestFramework_RBAC/delete/owner_can_delete
+=== RUN   TestMeasure_RBAC/delete/viewer_cannot_delete
+=== RUN   TestFramework_RBAC/delete/admin_can_delete
+=== RUN   TestAudit_RBAC/delete/viewer_cannot_delete
+=== RUN   TestMeasure_RBAC/read
+=== RUN   TestMeasure_RBAC/read/owner_can_read
+=== RUN   TestFramework_RBAC/delete/viewer_cannot_delete
+=== RUN   TestMeasure_RBAC/read/admin_can_read
+=== RUN   TestAudit_RBAC/read
+=== RUN   TestAudit_RBAC/read/owner_can_read
+=== RUN   TestAudit_RBAC/read/admin_can_read
+=== RUN   TestFramework_RBAC/read
+=== RUN   TestFramework_RBAC/read/owner_can_read
+=== RUN   TestMeasure_RBAC/read/viewer_can_read
+=== RUN   TestFramework_RBAC/read/admin_can_read
+=== RUN   TestAudit_RBAC/read/viewer_can_read
+--- PASS: TestMeasure_RBAC (1.58s)
+    --- PASS: TestMeasure_RBAC/create (0.44s)
+        --- PASS: TestMeasure_RBAC/create/owner_can_create (0.10s)
+        --- PASS: TestMeasure_RBAC/create/admin_can_create (0.18s)
+        --- PASS: TestMeasure_RBAC/create/viewer_cannot_create (0.16s)
+    --- PASS: TestMeasure_RBAC/update (0.39s)
+        --- PASS: TestMeasure_RBAC/update/owner_can_update (0.08s)
+        --- PASS: TestMeasure_RBAC/update/admin_can_update (0.15s)
+        --- PASS: TestMeasure_RBAC/update/viewer_cannot_update (0.15s)
+    --- PASS: TestMeasure_RBAC/delete (0.37s)
+        --- PASS: TestMeasure_RBAC/delete/owner_can_delete (0.07s)
+        --- PASS: TestMeasure_RBAC/delete/admin_can_delete (0.15s)
+        --- PASS: TestMeasure_RBAC/delete/viewer_cannot_delete (0.15s)
+    --- PASS: TestMeasure_RBAC/read (0.38s)
+        --- PASS: TestMeasure_RBAC/read/owner_can_read (0.08s)
+        --- PASS: TestMeasure_RBAC/read/admin_can_read (0.15s)
+        --- PASS: TestMeasure_RBAC/read/viewer_can_read (0.15s)
+=== RUN   TestFramework_RBAC/read/viewer_can_read
+--- PASS: TestAudit_RBAC (1.62s)
+    --- PASS: TestAudit_RBAC/create (0.46s)
+        --- PASS: TestAudit_RBAC/create/owner_can_create (0.11s)
+        --- PASS: TestAudit_RBAC/create/admin_can_create (0.19s)
+        --- PASS: TestAudit_RBAC/create/viewer_cannot_create (0.16s)
+    --- PASS: TestAudit_RBAC/update (0.39s)
+        --- PASS: TestAudit_RBAC/update/owner_can_update (0.09s)
+        --- PASS: TestAudit_RBAC/update/admin_can_update (0.15s)
+        --- PASS: TestAudit_RBAC/update/viewer_cannot_update (0.15s)
+    --- PASS: TestAudit_RBAC/delete (0.39s)
+        --- PASS: TestAudit_RBAC/delete/owner_can_delete (0.08s)
+        --- PASS: TestAudit_RBAC/delete/admin_can_delete (0.15s)
+        --- PASS: TestAudit_RBAC/delete/viewer_cannot_delete (0.16s)
+    --- PASS: TestAudit_RBAC/read (0.39s)
+        --- PASS: TestAudit_RBAC/read/owner_can_read (0.08s)
+        --- PASS: TestAudit_RBAC/read/admin_can_read (0.16s)
+        --- PASS: TestAudit_RBAC/read/viewer_can_read (0.15s)
+--- PASS: TestFramework_RBAC (1.55s)
+    --- PASS: TestFramework_RBAC/create (0.40s)
+        --- PASS: TestFramework_RBAC/create/owner_can_create (0.09s)
+        --- PASS: TestFramework_RBAC/create/admin_can_create (0.16s)
+        --- PASS: TestFramework_RBAC/create/viewer_cannot_create (0.15s)
+    --- PASS: TestFramework_RBAC/update (0.39s)
+        --- PASS: TestFramework_RBAC/update/owner_can_update (0.08s)
+        --- PASS: TestFramework_RBAC/update/admin_can_update (0.15s)
+        --- PASS: TestFramework_RBAC/update/viewer_cannot_update (0.16s)
+    --- PASS: TestFramework_RBAC/delete (0.39s)
+        --- PASS: TestFramework_RBAC/delete/owner_can_delete (0.08s)
+        --- PASS: TestFramework_RBAC/delete/admin_can_delete (0.15s)
+        --- PASS: TestFramework_RBAC/delete/viewer_cannot_delete (0.15s)
+    --- PASS: TestFramework_RBAC/read (0.37s)
+        --- PASS: TestFramework_RBAC/read/owner_can_read (0.08s)
+        --- PASS: TestFramework_RBAC/read/admin_can_read (0.15s)
+        --- PASS: TestFramework_RBAC/read/viewer_can_read (0.14s)
+FAIL
+FAIL	go.probo.inc/probo/e2e/console	3.912s
+FAIL

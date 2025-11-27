@@ -1,0 +1,89 @@
+unit:
+  metrics:
+    addr: "localhost:19081"
+  tracing:
+    addr: "localhost:14317"
+    max-batch-size: 512
+    batch-timeout: 5
+    export-timeout: 30
+    max-queue-size: 2048
+
+probod:
+  base-url: "http://localhost:18080"
+  encryption-key: "thisisnotasecretAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+  chrome-dp-addr: "localhost:9222"
+
+  api:
+    addr: "localhost:18080"
+    cors:
+      allowed-origins: ["http://localhost:18080"]
+    extra-header-fields: {}
+
+  pg:
+    addr: "localhost:5432"
+    username: "postgres"
+    password: "postgres"
+    database: "probod_test"
+    pool-size: 10
+
+  auth:
+    disable-signup: false
+    invitation-confirmation-token-validity: 3600
+    cookie:
+      name: "SSID"
+      domain: "localhost"
+      secret: "this-is-a-secure-secret-for-cookie-signing-at-least-32-bytes"
+      duration: 24
+      secure: false
+    password:
+      pepper: "this-is-a-secure-pepper-for-password-hashing-at-least-32-bytes"
+      iterations: 600000
+
+  trust-auth:
+    cookie-name: "TCT"
+    cookie-domain: "localhost"
+    cookie-duration: 24
+    token-duration: 720
+    report-url-duration: 15
+    token-secret: "this-is-a-secure-secret-for-trust-token-signing-at-least-32-bytes"
+    scope: "trust_center_readonly"
+    token-type: "trust_center_access"
+
+  trust-center:
+    http-addr: ":10080"
+    https-addr: ":10443"
+
+  aws:
+    region: "us-east-1"
+    bucket: "probod-test"
+    access-key-id: "probod"
+    secret-access-key: "thisisnotasecret"
+    endpoint: "http://127.0.0.1:9000"
+
+  notifications:
+    mailer:
+      sender-name: "Probo Test"
+      sender-email: "no-reply@test.getprobo.com"
+      smtp:
+        addr: "localhost:1025"
+        tls-required: false
+      mailer-interval: 60
+    slack:
+      sender-interval: 60
+
+  openai:
+    api-key: "thisisnotasecret"
+    temperature: 0.1
+    model-name: "gpt-4o"
+
+  custom-domains:
+    renewal-interval: 3600
+    provision-interval: 30
+    cname-target: "custom.test.getprobo.com"
+    acme:
+      directory: "https://localhost:14000/dir"
+      email: "admin@test.getprobo.com"
+      key-type: "EC256"
+      root-ca: ""
+
+  connectors: []

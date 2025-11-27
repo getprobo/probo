@@ -71,6 +71,45 @@ coverage-report: test ## Generate HTML coverage report
 test-bench: TEST_FLAGS+=-bench=.
 test-bench: test ## Run benchmark tests
 
+.PHONY: test-e2e
+test-e2e: E2E_CONFIG?=$(CURDIR)/e2e/console/testdata/config.yaml
+test-e2e: CGO_ENABLED=1
+test-e2e: ## Run console e2e tests
+	@echo "Building probod binary..."
+	CGO_ENABLED=0 $(GO) build $(LDFLAGS) $(GCFLAGS) -o bin/probod-e2e ./cmd/probod
+	@echo "Running e2e tests..."
+	PROBO_E2E_BINARY=$(CURDIR)/bin/probod-e2e \
+	PROBO_E2E_CONFIG=$(E2E_CONFIG) \
+	CGO_ENABLED=1 $(GO) test -count=1 -v ./e2e/console/...
+
+.PHONY: test-e2e-coverage
+test-e2e-coverage: E2E_COVER_DIR?=$(CURDIR)/coverage/e2e
+test-e2e-coverage: E2E_CONFIG?=$(CURDIR)/e2e/console/testdata/config.yaml
+test-e2e-coverage: CGO_ENABLED=1
+test-e2e-coverage: ## Build coverage binary and run e2e tests with coverage
+	@echo "Building coverage-instrumented binary..."
+	CGO_ENABLED=0 $(GO) build $(LDFLAGS) $(GCFLAGS) -cover -o bin/probod-coverage ./cmd/probod
+	@$(RM) -rf $(E2E_COVER_DIR)
+	@$(MKDIR) -p $(E2E_COVER_DIR)
+	@echo "Running e2e tests with coverage..."
+	PROBO_E2E_BINARY=$(CURDIR)/bin/probod-coverage \
+	PROBO_E2E_COVERDIR=$(E2E_COVER_DIR) \
+	PROBO_E2E_CONFIG=$(E2E_CONFIG) \
+	CGO_ENABLED=1 $(GO) test -count=1 -v ./e2e/console/...
+	@echo "Generating coverage report..."
+	$(GO) tool covdata textfmt -i=$(E2E_COVER_DIR) -o=coverage-e2e.out
+	$(GO) tool cover -html=coverage-e2e.out -o=coverage-e2e.html
+	@echo "E2E coverage report generated: coverage-e2e.html"
+
+.PHONY: coverage-combined
+coverage-combined: E2E_COVER_DIR?=./coverage/e2e
+coverage-combined: coverage-report test-e2e-coverage ## Generate combined coverage report (unit + e2e)
+	@echo "Merging coverage reports..."
+	@cat coverage.out > coverage-combined.out
+	@tail -n +2 coverage-e2e.out >> coverage-combined.out
+	$(GO) tool cover -html=coverage-combined.out -o=coverage-combined.html
+	@echo "Combined coverage report generated: coverage-combined.html"
+
 .PHONY: build
 build: @probo/emails @probo/console @probo/trust bin/probod
 
@@ -172,7 +211,8 @@ clean: ## Clean the project (node_modules and build artifacts)
 	$(RM) -rf apps/{console,trust}/{dist,node_modules}
 	$(RM) -rf packages/emails/{dist,node_modules}
 	$(RM) -rf sbom-docker.json sbom.json
-	$(RM) -rf coverage.out coverage.html
+	$(RM) -rf coverage.out coverage.html coverage-e2e.out coverage-e2e.html coverage-combined.out coverage-combined.html
+	$(RM) -rf coverage/
 
 .PHONY: stack-up
 stack-up: compose/pebble/certs/rootCA.pem ## Start the docker stack as a deamon
