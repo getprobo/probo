@@ -605,6 +605,7 @@ var Permissions = map[uint16]map[Action][]Role{
 		ActionGetOrganization: AllRoles,
 		ActionGetSnapshot:     AllRoles,
 		ActionDownloadUrl:     AllRoles,
+		ActionAudit:           AllRoles,
 	},
 	coredata.NonconformityEntityType: {
 		ActionGet:             AllRoles,
@@ -669,8 +670,9 @@ var Permissions = map[uint16]map[Action][]Role{
 	},
 	coredata.TrustCenterDocumentAccessEntityType: {
 		ActionGet:             AllRoles,
-		ActionReport:          AllRoles,
-		ActionTrustCenterFile: AllRoles,
+		ActionDocument:        {RoleOwner, RoleAdmin},
+		ActionReport:          {RoleOwner, RoleAdmin},
+		ActionTrustCenterFile: {RoleOwner, RoleAdmin},
 	},
 	coredata.MeetingEntityType: {
 		ActionGet:             AllRoles,
