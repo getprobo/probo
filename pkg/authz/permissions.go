@@ -282,6 +282,7 @@ var Permissions = map[uint16]map[Action][]Role{
 		ActionListSnapshots:             AllRoles,
 		ActionListTrustCenterFiles:      AllRoles,
 		ActionGetTrustCenter:            AllRoles,
+		ActionAudit:                     AllRoles,
 		ActionGetCustomDomain:           AllRoles,
 		ActionListSAMLConfigurations:    AllRoles,
 		ActionConfirmEmail:              AllRoles,
@@ -341,6 +342,9 @@ var Permissions = map[uint16]map[Action][]Role{
 		ActionActiveCount:               AllRoles,
 		ActionPendingRequestCount:       AllRoles,
 		ActionAvailableDocumentAccesses: AllRoles,
+		ActionDocument:                  AllRoles,
+		ActionReport:                    AllRoles,
+		ActionTrustCenterFile:           AllRoles,
 
 		ActionUpdateTrustCenterAccess: EditRoles,
 		ActionDeleteTrustCenterAccess: EditRoles,

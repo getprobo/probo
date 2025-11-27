@@ -6349,13 +6349,13 @@ func (r *trustCenterAccessResolver) AvailableDocumentAccesses(ctx context.Contex
 
 // Document is the resolver for the document field.
 func (r *trustCenterDocumentAccessResolver) Document(ctx context.Context, obj *types.TrustCenterDocumentAccess) (*types.Document, error) {
-	r.MustBeAuthorized(ctx, obj.ID, authz.ActionDocument)
+	r.MustBeAuthorized(ctx, obj.TrustCenterAccessID, authz.ActionDocument)
 
 	if obj.DocumentID == nil {
 		return nil, nil
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb := r.ProboService(ctx, obj.TrustCenterAccessID.TenantID())
 
 	document, err := prb.Documents.Get(ctx, *obj.DocumentID)
 	if err != nil {
@@ -6371,13 +6371,13 @@ func (r *trustCenterDocumentAccessResolver) Document(ctx context.Context, obj *t
 
 // Report is the resolver for the report field.
 func (r *trustCenterDocumentAccessResolver) Report(ctx context.Context, obj *types.TrustCenterDocumentAccess) (*types.Report, error) {
-	r.MustBeAuthorized(ctx, obj.ID, authz.ActionReport)
+	r.MustBeAuthorized(ctx, obj.TrustCenterAccessID, authz.ActionReport)
 
 	if obj.ReportID == nil {
 		return nil, nil
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb := r.ProboService(ctx, obj.TrustCenterAccessID.TenantID())
 
 	report, err := prb.Reports.Get(ctx, *obj.ReportID)
 	if err != nil {
@@ -6389,13 +6389,13 @@ func (r *trustCenterDocumentAccessResolver) Report(ctx context.Context, obj *typ
 
 // TrustCenterFile is the resolver for the trustCenterFile field.
 func (r *trustCenterDocumentAccessResolver) TrustCenterFile(ctx context.Context, obj *types.TrustCenterDocumentAccess) (*types.TrustCenterFile, error) {
-	r.MustBeAuthorized(ctx, obj.ID, authz.ActionTrustCenterFile)
+	r.MustBeAuthorized(ctx, obj.TrustCenterAccessID, authz.ActionTrustCenterFile)
 
 	if obj.TrustCenterFileID == nil {
 		return nil, nil
 	}
 
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb := r.ProboService(ctx, obj.TrustCenterAccessID.TenantID())
 
 	trustCenterFile, err := prb.TrustCenterFiles.Get(ctx, *obj.TrustCenterFileID)
 	if err != nil {

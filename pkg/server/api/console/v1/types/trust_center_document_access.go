@@ -47,23 +47,25 @@ type (
 		TrustCenterFile   *TrustCenterFile   `json:"trustCenterFile,omitempty"`
 
 		// Internal fields used by resolvers
-		DocumentID        *gid.GID `json:"-"`
-		ReportID          *gid.GID `json:"-"`
-		TrustCenterFileID *gid.GID `json:"-"`
+		TrustCenterAccessID gid.GID  `json:"-"`
+		DocumentID          *gid.GID `json:"-"`
+		ReportID            *gid.GID `json:"-"`
+		TrustCenterFileID   *gid.GID `json:"-"`
 	}
 )
 
 func NewTrustCenterDocumentAccess(tcda *coredata.TrustCenterDocumentAccess) *TrustCenterDocumentAccess {
 	return &TrustCenterDocumentAccess{
-		ID:                tcda.ID,
-		OrganizationID:    tcda.OrganizationID,
-		Active:            tcda.Active,
-		Requested:         tcda.Requested,
-		CreatedAt:         tcda.CreatedAt,
-		UpdatedAt:         tcda.UpdatedAt,
-		DocumentID:        tcda.DocumentID,
-		ReportID:          tcda.ReportID,
-		TrustCenterFileID: tcda.TrustCenterFileID,
+		ID:                  tcda.ID,
+		OrganizationID:      tcda.OrganizationID,
+		Active:              tcda.Active,
+		Requested:           tcda.Requested,
+		CreatedAt:           tcda.CreatedAt,
+		UpdatedAt:           tcda.UpdatedAt,
+		TrustCenterAccessID: tcda.TrustCenterAccessID,
+		DocumentID:          tcda.DocumentID,
+		ReportID:            tcda.ReportID,
+		TrustCenterFileID:   tcda.TrustCenterFileID,
 	}
 }
 
