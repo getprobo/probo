@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.94.2] - 2025-11-27
+
+### Fixed
+
+- Fix missing compliance page permission again.
+
 ## [0.94.1] - 2025-11-27
 
 ### Fixed
