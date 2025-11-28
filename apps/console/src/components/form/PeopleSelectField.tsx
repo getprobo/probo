@@ -36,41 +36,42 @@ export function PeopleSelectField({
 }
 
 function PeopleSelectWithQuery(
-  props: Pick<Props, "organizationId" | "control" | "name" | "disabled" | "optional">
+  props: Pick<
+    Props,
+    "organizationId" | "control" | "name" | "disabled" | "optional"
+  >,
 ) {
   const { __ } = useTranslate();
   const { name, organizationId, control } = props;
   const people = usePeople(organizationId, { excludeContractEnded: true });
 
   return (
-    <>
-      <Controller
-        control={control}
-        name={name}
-        render={({ field }) => (
-          <Select
-            disabled={props.disabled}
-            id={name}
-            variant="editor"
-            placeholder={__("Select an owner")}
-            onValueChange={(value) => field.onChange(value === "__NONE__" ? null : value)}
-            key={people?.length.toString() ?? "0"}
-            {...field}
-            className="w-full"
-            value={field.value ?? (props.optional ? "__NONE__" : "")}
-          >
-            {props.optional && (
-              <Option value="__NONE__">{__("None")}</Option>
-            )}
-            {people?.map((p) => (
-              <Option key={p.id} value={p.id} className="flex gap-2">
-                <Avatar name={p.fullName} />
-                {p.fullName}
-              </Option>
-            ))}
-          </Select>
-        )}
-      />
-    </>
+    <Controller
+      control={control}
+      name={name}
+      render={({ field }) => (
+        <Select
+          disabled={props.disabled}
+          id={name}
+          variant="editor"
+          placeholder={__("Select an owner")}
+          onValueChange={(value) =>
+            field.onChange(value === "__NONE__" ? null : value)
+          }
+          key={people?.length.toString() ?? "0"}
+          {...field}
+          className="w-full"
+          value={field.value ?? (props.optional ? "__NONE__" : "")}
+        >
+          {props.optional && <Option value="__NONE__">{__("None")}</Option>}
+          {people?.map((p) => (
+            <Option key={p.id} value={p.id} className="flex gap-2">
+              <Avatar name={p.fullName} />
+              {p.fullName}
+            </Option>
+          ))}
+        </Select>
+      )}
+    />
   );
 }

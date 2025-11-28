@@ -6,7 +6,12 @@ export {
     getRiskLikelihoods,
     getSeverity,
 } from "./risk";
-export { withViewTransition, downloadFile, safeOpenUrl } from "./dom";
+export {
+    withViewTransition,
+    downloadFile,
+    safeOpenUrl,
+    focusSiblingElement,
+} from "./dom";
 export { times, groupBy, isEmpty } from "./array";
 export { randomInt } from "./number";
 export { getMeasureStateLabel, measureStates } from "./measure";
