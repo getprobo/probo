@@ -91,3 +91,75 @@ jobs:
           path: ./
           fail-build: true
           severity-cutoff: critical
+
+  test-e2e:
+    name: "test-e2e"
+    runs-on: "ubuntu-22.04"
+    permissions:
+      contents: "read"
+    services:
+      postgres:
+        image: "postgres:17.4"
+        env:
+          POSTGRES_USER: "postgres"
+          POSTGRES_PASSWORD: "postgres"
+        ports:
+          - "5432:5432"
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      minio:
+        image: "bitnami/minio:latest"
+        env:
+          MINIO_ROOT_USER: "probod"
+          MINIO_ROOT_PASSWORD: "thisisnotasecret"
+          MINIO_DEFAULT_BUCKETS: "probod-test"
+        ports:
+          - "9000:9000"
+        options: >-
+          --health-cmd "curl -f http://localhost:9000/minio/health/live || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      mailpit:
+        image: "axllent/mailpit:latest"
+        env:
+          MP_DISABLE_VERSION_CHECK: "true"
+          MP_VERBOSE: "false"
+          MP_SMTP_AUTH_ACCEPT_ANY: "true"
+          MP_SMTP_AUTH_ALLOW_INSECURE: "true"
+        ports:
+          - "1025:1025"
+      chrome:
+        image: "chromedp/headless-shell:140.0.7259.2"
+        ports:
+          - "9222:9222"
+      pebble:
+        image: "ghcr.io/letsencrypt/pebble:latest"
+        env:
+          PEBBLE_VA_NOSLEEP: "1"
+          PEBBLE_WFE_NONCEREJECT: "0"
+          PEBBLE_VA_ALWAYS_VALID: "1"
+        ports:
+          - "14000:14000"
+    steps:
+      - uses: "actions/checkout@v4"
+      - uses: "actions/setup-go@v5"
+        with:
+          go-version: "1.25"
+      - uses: "actions/setup-node@v4"
+        with:
+          node-version-file: ".nvmrc"
+      - run: "npm ci"
+      - name: "Setup PostgreSQL database"
+        env:
+          PGHOST: "localhost"
+          PGUSER: "postgres"
+          PGPASSWORD: "postgres"
+        run: |
+          psql -c "CREATE DATABASE probod_test;"
+      - run: "make build"
+      - name: "Run e2e tests"
+        run: "make test-e2e"
