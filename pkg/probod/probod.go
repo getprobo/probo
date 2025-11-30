@@ -61,9 +61,7 @@ import (
 
 type (
 	Implm struct {
-		cfg       config
-		ready     chan struct{}
-		readyOnce sync.Once
+		cfg config
 	}
 
 	config struct {
@@ -91,12 +89,10 @@ type (
 var (
 	_ unit.Configurable = (*Implm)(nil)
 	_ unit.Runnable     = (*Implm)(nil)
-	_ unit.Readyable    = (*Implm)(nil)
 )
 
 func New() *Implm {
 	return &Implm{
-		ready: make(chan struct{}),
 		cfg: config{
 			BaseURL: baseurl.MustParse("http://localhost:8080"),
 			Api: apiConfig{
@@ -175,18 +171,6 @@ func New() *Implm {
 
 func (impl *Implm) GetConfiguration() any {
 	return &impl.cfg
-}
-
-// GetAPIAddr returns the API server address (e.g., "localhost:8080").
-// This is useful for tests to know which address to connect to.
-func (impl *Implm) GetAPIAddr() string {
-	return impl.cfg.Api.Addr
-}
-
-// Ready returns a channel that is closed when the server is ready to accept requests.
-// This implements the unit.Readyable interface for testing purposes.
-func (impl *Implm) Ready() <-chan struct{} {
-	return impl.ready
 }
 
 func (impl *Implm) Run(
@@ -593,11 +577,6 @@ func (impl *Implm) runApiServer(
 
 	l.Info("api server started")
 	span.AddEvent("API server started")
-
-	// Signal that the server is ready to accept requests
-	impl.readyOnce.Do(func() {
-		close(impl.ready)
-	})
 
 	select {
 	case err := <-serverErrCh:

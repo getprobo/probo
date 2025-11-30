@@ -128,5 +128,3 @@ require (
 tool go.probo.inc/mcpgen
 
 replace github.com/olekukonko/tablewriter => github.com/olekukonko/tablewriter v0.0.5
-
-replace go.gearno.de/kit => ../../gearnode/kit
