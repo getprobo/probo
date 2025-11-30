@@ -23,6 +23,7 @@
 //
 // Optional environment variables:
 //   - PROBO_E2E_COVERDIR: Directory for coverage data (enables coverage collection)
+//   - PROBO_E2E_VERBOSE: If set, outputs binary stdout/stderr for debugging
 //
 // Example usage:
 //
@@ -114,8 +115,13 @@ func Setup() {
 		} else {
 			cmd.Env = os.Environ()
 		}
-		cmd.Stdout = io.Discard
-		cmd.Stderr = io.Discard
+		if os.Getenv("PROBO_E2E_VERBOSE") != "" {
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
+		} else {
+			cmd.Stdout = io.Discard
+			cmd.Stderr = io.Discard
+		}
 
 		testEnv.cmd = cmd
 

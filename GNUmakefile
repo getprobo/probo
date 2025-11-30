@@ -100,7 +100,7 @@ coverage-combined: coverage-report test-e2e-coverage ## Generate combined covera
 	$(GO) tool cover -html=coverage-combined.out -o=coverage-combined.html
 
 .PHONY: build
-build: @probo/emails @probo/console @probo/trust bin/probod
+build: bin/probod
 
 .PHONY: sbom-docker
 sbom-docker: docker-build
@@ -145,6 +145,8 @@ bin/probod: pkg/server/api/console/v1/schema/schema.go \
 	pkg/server/api/mcp/v1/server/server.go \
 	pkg/server/api/mcp/v1/types/types.go \
 	@probo/emails \
+	@probo/console \
+	@probo/trust \
 	vet
 	$(GO_BUILD) -o $(PROBOD_BIN) $(PROBOD_SRC)
 

@@ -97,53 +97,6 @@ jobs:
     runs-on: "ubuntu-22.04"
     permissions:
       contents: "read"
-    services:
-      postgres:
-        image: "postgres:17.4"
-        env:
-          POSTGRES_USER: "postgres"
-          POSTGRES_PASSWORD: "postgres"
-        ports:
-          - "5432:5432"
-        options: >-
-          --health-cmd "pg_isready -U postgres"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-      minio:
-        image: "bitnami/minio:latest"
-        env:
-          MINIO_ROOT_USER: "probod"
-          MINIO_ROOT_PASSWORD: "thisisnotasecret"
-          MINIO_DEFAULT_BUCKETS: "probod-test"
-        ports:
-          - "9000:9000"
-        options: >-
-          --health-cmd "curl -f http://localhost:9000/minio/health/live || exit 1"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-      mailpit:
-        image: "axllent/mailpit:latest"
-        env:
-          MP_DISABLE_VERSION_CHECK: "true"
-          MP_VERBOSE: "false"
-          MP_SMTP_AUTH_ACCEPT_ANY: "true"
-          MP_SMTP_AUTH_ALLOW_INSECURE: "true"
-        ports:
-          - "1025:1025"
-      chrome:
-        image: "chromedp/headless-shell:140.0.7259.2"
-        ports:
-          - "9222:9222"
-      pebble:
-        image: "ghcr.io/letsencrypt/pebble:latest"
-        env:
-          PEBBLE_VA_NOSLEEP: "1"
-          PEBBLE_WFE_NONCEREJECT: "0"
-          PEBBLE_VA_ALWAYS_VALID: "1"
-        ports:
-          - "14000:14000"
     steps:
       - uses: "actions/checkout@v4"
       - uses: "actions/setup-go@v5"
@@ -152,14 +105,31 @@ jobs:
       - uses: "actions/setup-node@v4"
         with:
           node-version-file: ".nvmrc"
+      - run: "sudo apt-get install -y mkcert"
+      - run: "sudo mkcert -install"
+      - uses: "docker/setup-qemu-action@v3"
+      - uses: "docker/setup-buildx-action@v3"
+      - uses: "docker/setup-compose-action@v1"
       - run: "npm ci"
-      - name: "Setup PostgreSQL database"
-        env:
-          PGHOST: "localhost"
-          PGUSER: "postgres"
-          PGPASSWORD: "postgres"
+      - run: "make stack-up"
+      - run: "make stack-ps"
+      - name: "Inject root CA into e2e config"
         run: |
-          psql -c "CREATE DATABASE probod_test;"
-      - run: "make build"
-      - name: "Run e2e tests"
-        run: "make test-e2e"
+          # Use Python to properly inject the root CA PEM content into YAML
+          python3 << 'EOF'
+          import yaml
+
+          with open('compose/pebble/certs/rootCA.pem', 'r') as f:
+              root_ca = f.read()
+
+          with open('e2e/console/testdata/config.yaml', 'r') as f:
+              config = yaml.safe_load(f)
+
+          config['probod']['custom-domains']['acme']['root-ca'] = root_ca
+
+          with open('e2e/console/testdata/config.yaml', 'w') as f:
+              yaml.dump(config, f, default_flow_style=False, allow_unicode=True)
+          EOF
+      - run: "make test-e2e"
+        env:
+          PROBO_E2E_VERBOSE: "true"
