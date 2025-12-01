@@ -43,7 +43,7 @@ export class ProboApi implements ICredentialType {
 
 	test: ICredentialTestRequest = {
 		request: {
-			baseURL: '={{$credentials.server}}',
+			baseURL: '={{$credentials?.server}}',
 			url: '/api/console/v1/query',
 			method: 'POST',
 			headers: {
