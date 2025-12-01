@@ -55,7 +55,7 @@ npm-lint:
 .PHONY: test
 test: CGO_ENABLED=1
 test: ## Run tests with race detection and coverage (usage: make test [MODULE=./pkg/some/module])
-	$(GO_TEST) $(if $(MODULE),$(MODULE),./...)
+	$(GO_TEST) $(if $(MODULE),$(MODULE),$(shell $(GO) list ./... | grep -v /e2e/))
 
 .PHONY: test-verbose
 test-verbose: TEST_FLAGS+=-v
