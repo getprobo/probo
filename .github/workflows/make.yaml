@@ -69,8 +69,7 @@ jobs:
       - run: "make build"
       - run: "make test"
       - run: "make coverage-report"
-      - name: "Upload coverage reports"
-        uses: "actions/upload-artifact@v4"
+      - uses: "actions/upload-artifact@v4"
         with:
           name: "coverage-reports"
           path: |
@@ -78,19 +77,17 @@ jobs:
             coverage.html
           retention-days: 30
       - run: "make lint"
-      - name: Generate SBOM
-        uses: anchore/sbom-action@da167eac915b4e86f08b264dbdbc867b61be6f0c #v0.20.5
+      - uses: anchore/sbom-action@da167eac915b4e86f08b264dbdbc867b61be6f0c #v0.20.5
         with:
           path: ./
           format: cyclonedx-json
           output-file: sbom.json
-
-      - name: Run vulnerability scan
-        uses: anchore/scan-action@1638637db639e0ade3258b51db49a9a137574c3e #v6.5.1
+      - uses: anchore/scan-action@1638637db639e0ade3258b51db49a9a137574c3e #v6.5.1
         with:
           path: ./
           fail-build: true
           severity-cutoff: critical
+          output-format: table
 
   test-e2e:
     name: "test-e2e"
