@@ -31,5 +31,8 @@
   },
   "peerDependencies": {
     "n8n-workflow": "*"
+  },
+  "dependencies": {
+    "graphql": "^16.12.0"
   }
 }

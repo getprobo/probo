@@ -1,0 +1,19 @@
+{
+  "node": "n8n-nodes-probo",
+  "nodeVersion": "1.0",
+  "codexVersion": "1.0",
+  "categories": ["Development", "Developer Tools", "Automation"],
+  "resources": {
+    "credentialDocumentation": [
+      {
+        "url": "https://www.getprobo.com/docs"
+      }
+    ],
+    "primaryDocumentation": [
+      {
+        "url": "https://www.getprobo.com/docs"
+      }
+    ],
+    "generic": []
+  }
+}
