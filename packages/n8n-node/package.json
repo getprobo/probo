@@ -1,0 +1,35 @@
+{
+  "name": "@probo/n8n-nodes-probo",
+  "version": "0.0.1",
+  "main": "index.js",
+  "scripts": {
+    "build": "n8n-node build",
+    "build:watch": "tsc --watch",
+    "dev": "n8n-node dev",
+    "lint": "n8n-node lint",
+    "lint:fix": "n8n-node lint --fix",
+    "release": "n8n-node release",
+    "prepublishOnly": "n8n-node prerelease"
+  },
+  "author": "",
+  "files": [
+    "dist"
+  ],
+  "n8n": {
+    "n8nNodesApiVersion": 1,
+    "strict": true,
+    "credentials": [
+      "dist/credentials/ProboApi.credentials.js"
+    ],
+    "nodes": []
+  },
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@n8n/node-cli": "^0.17.0",
+    "eslint": "9.32.0"
+  },
+  "peerDependencies": {
+    "n8n-workflow": "*"
+  }
+}
