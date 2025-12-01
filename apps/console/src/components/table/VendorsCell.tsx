@@ -54,6 +54,7 @@ function VendorBadge({
         <button
           onClick={() => onRemove(vendor)}
           className="size-4 hover:text-txt-primary cursor-pointer"
+          type="button"
         >
           <IconCrossLargeX size={14} />
         </button>

@@ -146,12 +146,13 @@ export function Select<T>({
                 <Content
                     position="popper"
                     sideOffset={5}
+                    {...dropdownProps}
                     style={{
                         minWidth: "var(--radix-select-trigger-width)",
                         maxHeight:
-                            "var(--radix-select-content-available-height)",
+                        "var(--radix-select-content-available-height)",
+                        ...dropdownProps?.style,
                     }}
-                    {...dropdownProps}
                     className={content({ className: dropdownProps?.className })}
                 >
                     {onSearch && (

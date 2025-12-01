@@ -24,8 +24,10 @@ export function TextCell(props: Props) {
         if (props.required && inputValue === "") {
             return;
         }
-        setValue(inputValue);
-        onUpdate(props.name, inputValue);
+        if (inputValue !== props.defaultValue) {
+            setValue(inputValue);
+            onUpdate(props.name, inputValue);
+        }
     };
 
     return (

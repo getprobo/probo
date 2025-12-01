@@ -1,13 +1,5 @@
-import {
-  ConnectionHandler,
-  usePreloadedQuery,
-  type PreloadedQuery,
-} from "react-relay";
-import {
-  assetNodeQuery,
-  useDeleteAsset,
-  useUpdateAsset,
-} from "../../../hooks/graph/AssetGraph";
+import { getAssetTypeVariant, validateSnapshotConsistency } from "@probo/helpers";
+import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
   Badge,
@@ -18,16 +10,25 @@ import {
   IconTrashCan,
   Option,
 } from "@probo/ui";
-import { useTranslate } from "@probo/i18n";
-import { useOrganizationId } from "/hooks/useOrganizationId";
+import {
+  ConnectionHandler,
+  usePreloadedQuery,
+  type PreloadedQuery,
+} from "react-relay";
 import { useParams } from "react-router";
+import z from "zod";
+import {
+  assetNodeQuery,
+  useDeleteAsset,
+  useUpdateAsset,
+} from "../../../hooks/graph/AssetGraph";
+import { SnapshotBanner } from "/components/SnapshotBanner";
 import { ControlledField } from "/components/form/ControlledField";
 import { PeopleSelectField } from "/components/form/PeopleSelectField";
 import { VendorsMultiSelectField } from "/components/form/VendorsMultiSelectField";
+import type { AssetGraphNodeQuery } from "/hooks/graph/__generated__/AssetGraphNodeQuery.graphql";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
-import z from "zod";
-import { getAssetTypeVariant, validateSnapshotConsistency } from "@probo/helpers";
-import { SnapshotBanner } from "/components/SnapshotBanner";
+import { useOrganizationId } from "/hooks/useOrganizationId";
 import { Authorized } from "/permissions";
 
 const updateAssetSchema = z.object({
@@ -40,18 +41,18 @@ const updateAssetSchema = z.object({
 });
 
 type Props = {
-  queryRef: PreloadedQuery<any>;
+  queryRef: PreloadedQuery<AssetGraphNodeQuery>;
 };
 
 export default function AssetDetailsPage(props: Props) {
-  const asset = usePreloadedQuery(assetNodeQuery, props.queryRef);
+  const asset = usePreloadedQuery<AssetGraphNodeQuery>(assetNodeQuery, props.queryRef);
   const assetEntry = asset.node;
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
   const { snapshotId } = useParams<{ snapshotId?: string }>();
   const isSnapshotMode = Boolean(snapshotId);
 
-  if (!assetEntry) {
+  if (!assetEntry || !assetEntry.id) {
     return <div>{__("Asset not found")}</div>;
   }
 
@@ -64,16 +65,16 @@ export default function AssetDetailsPage(props: Props) {
   );
   const deleteAsset = useDeleteAsset(assetEntry, connectionId);
 
-  const vendors = assetEntry?.vendors?.edges.map((edge: any) => edge.node) ?? [];
+  const vendors = assetEntry.vendors?.edges.map((edge: any) => edge.node) ?? [];
   const vendorIds = vendors.map((vendor: any) => vendor.id);
 
   const { control, formState, handleSubmit, register, reset } = useFormWithSchema(updateAssetSchema, {
     defaultValues: {
-      name: assetEntry?.name || "",
-      amount: assetEntry?.amount || 0,
-      assetType: assetEntry?.assetType || "VIRTUAL",
-      dataTypesStored: assetEntry?.dataTypesStored || "",
-      ownerId: assetEntry?.owner?.id || "",
+      name: assetEntry.name || "",
+      amount: assetEntry.amount || 0,
+      assetType: assetEntry.assetType || "VIRTUAL",
+      dataTypesStored: assetEntry.dataTypesStored || "",
+      ownerId: assetEntry.owner?.id || "",
       vendorIds: vendorIds,
     },
   });
@@ -82,7 +83,7 @@ export default function AssetDetailsPage(props: Props) {
 
   const onSubmit = handleSubmit(async (formData) => {
     await updateAsset({
-      id: assetEntry?.id,
+      id: assetEntry.id!,
       ...formData,
     });
     reset(formData);
@@ -110,7 +111,7 @@ export default function AssetDetailsPage(props: Props) {
       <div className="flex justify-between items-start">
         <div className="flex items-center gap-4">
           <div className="text-2xl">{assetEntry?.name}</div>
-          <Badge variant={getAssetTypeVariant(assetEntry?.assetType)}>
+          <Badge variant={getAssetTypeVariant(assetEntry?.assetType ?? "VIRTUAL")}>
             {assetEntry?.assetType === "PHYSICAL" ? __("Physical") : __("Virtual")}
           </Badge>
         </div>

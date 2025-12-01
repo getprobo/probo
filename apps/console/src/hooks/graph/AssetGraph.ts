@@ -121,16 +121,12 @@ export const deleteAssetMutation = graphql`
 `;
 
 export const useDeleteAsset = (
-  asset?: { id?: string; name?: string },
-  connectionId?: string,
+  asset: { id?: string; name?: string },
+  connectionId: string,
 ) => {
   const [mutate] = useMutation(deleteAssetMutation);
   const confirm = useConfirm();
   const { __ } = useTranslate();
-
-  if (!asset) {
-    return () => {};
-  }
 
   return () => {
     if (!asset.id || !asset.name) {
@@ -141,7 +137,7 @@ export const useDeleteAsset = (
         promisifyMutation(mutate)({
           variables: {
             input: {
-              assetId: asset.id!,
+              assetId: asset.id,
             },
             connections: [connectionId],
           },
