@@ -22,6 +22,9 @@
   "graphql": {
     "schema": "./pkg/server/api/console/v1/schema.graphql"
   },
+  "overrides": {
+    "form-data": "^4.0.4"
+  },
   "license": "MIT",
   "packageManager": "npm@11.1.0",
   "volta": {
