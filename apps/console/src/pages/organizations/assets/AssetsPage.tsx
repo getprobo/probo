@@ -22,7 +22,7 @@ import { SnapshotBanner } from "/components/SnapshotBanner";
 import { CreateAssetDialog } from "./dialogs/CreateAssetDialog";
 import { Authorized, isAuthorized } from "/permissions";
 import { AssetsTable } from "../../../components/assets/AssetsTable";
-import { SnapshotAssetsTable } from "/components/assets/SnapshotAssetsTable";
+import { ReadOnlyAssetsTable } from "../../../components/assets/ReadOnlyAssetsTable";
 
 const paginatedAssetsFragment = graphql`
   fragment AssetsPageFragment on Organization
@@ -90,10 +90,10 @@ export default function AssetsPage(props: Props) {
   const assets = pagination.data.assets?.edges.map((edge) => edge.node);
   const connectionId = pagination.data.assets.__id;
 
-  const hasAnyAction =
-    !isSnapshotMode &&
-    (isAuthorized(organizationId, "Asset", "updateAsset") ||
-      isAuthorized(organizationId, "Asset", "deleteAsset"));
+  const canWrite = (
+    isAuthorized(organizationId, "Asset", "updateAsset") ||
+    isAuthorized(organizationId, "Asset", "deleteAsset")
+  );
   usePageTitle(__("Assets"));
 
   return (
@@ -116,14 +116,13 @@ export default function AssetsPage(props: Props) {
           </Authorized>
         )}
       </PageHeader>
-      {isSnapshotMode ?
-        <SnapshotAssetsTable pagination={pagination} assets={assets} />
+      {isSnapshotMode || !canWrite ?
+        <ReadOnlyAssetsTable pagination={pagination} assets={assets} />
         :
         <AssetsTable
           connectionId={connectionId}
           pagination={pagination}
           assets={assets}
-          hasAnyAction={hasAnyAction}
         />
       }
     </div>

@@ -20,7 +20,7 @@ type Props = {
   assets: AssetEntry[];
 };
 
-export function SnapshotAssetsTable(props: Props) {
+export function ReadOnlyAssetsTable(props: Props) {
   const { pagination, assets } = props;
   const { __ } = useTranslate();
 

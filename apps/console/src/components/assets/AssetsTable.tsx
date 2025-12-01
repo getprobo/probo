@@ -22,7 +22,6 @@ type Props = {
     AssetsPageFragment$data
   >;
   assets: AssetsPageFragment$data["assets"]["edges"][0]["node"][];
-  hasAnyAction: boolean;
 };
 
 const schema = z.object({
@@ -46,7 +45,7 @@ const defaultValue = {
 } satisfies z.infer<typeof schema>;
 
 export function AssetsTable(props: Props) {
-  const { connectionId, pagination, assets, hasAnyAction } = props;
+  const { connectionId, pagination, assets } = props;
 
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
@@ -74,23 +73,21 @@ export function AssetsTable(props: Props) {
         organizationId,
       }}
       action={({ item }) =>
-        hasAnyAction ? (
-          <ActionDropdown>
-            <DropdownItem asChild>
-              <Link to={`/organizations/${organizationId}/assets/${item.id}`}>
-                <IconPencil size={16} />
-                {__("Edit")}
-              </Link>
-            </DropdownItem>
-            <DropdownItem
-              onClick={() => deleteAsset(item)}
-              variant="danger"
-              icon={IconTrashCan}
-            >
-              {__("Delete")}
-            </DropdownItem>
-          </ActionDropdown>
-        ) : null
+        <ActionDropdown>
+          <DropdownItem asChild>
+            <Link to={`/organizations/${organizationId}/assets/${item.id}`}>
+              <IconPencil size={16} />
+              {__("Edit")}
+            </Link>
+          </DropdownItem>
+          <DropdownItem
+            onClick={() => deleteAsset(item)}
+            variant="danger"
+            icon={IconTrashCan}
+          >
+            {__("Delete")}
+          </DropdownItem>
+        </ActionDropdown>
       }
       row={({ item }) => (
         <>

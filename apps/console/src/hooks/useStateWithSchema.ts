@@ -31,7 +31,7 @@ export function useStateWithSchema<T extends ZodTypeAny>(
     value,
     errors,
     update: useCallback(
-      (key: keyof z.infer<T>, value: z.infer<T>[typeof key]) => {
+      <TKey extends keyof z.infer<T>>(key: TKey, value: z.infer<T>[TKey]) => {
         setState((prevState) => ({ ...prevState, [key]: value }));
       },
       [],
