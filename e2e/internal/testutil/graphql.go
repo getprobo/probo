@@ -26,19 +26,16 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// GraphQLRequest represents a GraphQL request payload.
 type GraphQLRequest struct {
 	Query     string         `json:"query"`
 	Variables map[string]any `json:"variables,omitempty"`
 }
 
-// GraphQLResponse represents a GraphQL response.
 type GraphQLResponse struct {
 	Data   json.RawMessage `json:"data"`
 	Errors []GraphQLError  `json:"errors,omitempty"`
 }
 
-// GraphQLError represents a GraphQL error.
 type GraphQLError struct {
 	Message    string         `json:"message"`
 	Path       []any          `json:"path,omitempty"`
@@ -49,7 +46,6 @@ func (e GraphQLError) Error() string {
 	return e.Message
 }
 
-// Code returns the error code from extensions, or empty string if not present.
 func (e GraphQLError) Code() string {
 	if e.Extensions == nil {
 		return ""
@@ -60,7 +56,6 @@ func (e GraphQLError) Code() string {
 	return ""
 }
 
-// GraphQLErrors is a collection of GraphQL errors.
 type GraphQLErrors []GraphQLError
 
 func (e GraphQLErrors) Error() string {
@@ -73,7 +68,6 @@ func (e GraphQLErrors) Error() string {
 	return fmt.Sprintf("%s (and %d more errors)", e[0].Message, len(e)-1)
 }
 
-// Do executes a raw GraphQL request and returns the response.
 func (c *Client) Do(query string, variables map[string]any) (*GraphQLResponse, error) {
 	reqBody := GraphQLRequest{
 		Query:     query,
@@ -118,30 +112,6 @@ func (c *Client) Do(query string, variables map[string]any) (*GraphQLResponse, e
 	return &gqlResp, nil
 }
 
-// Execute runs a GraphQL query/mutation and unmarshals the result into the provided struct.
-// The result should be a pointer to a struct that matches the expected response shape.
-//
-// Example:
-//
-//	var result struct {
-//		CreateVendor struct {
-//			VendorEdge struct {
-//				Node struct {
-//					ID   string `json:"id"`
-//					Name string `json:"name"`
-//				} `json:"node"`
-//			} `json:"vendorEdge"`
-//		} `json:"createVendor"`
-//	}
-//	err := client.Execute(`
-//		mutation($input: CreateVendorInput!) {
-//			createVendor(input: $input) {
-//				vendorEdge {
-//					node { id name }
-//				}
-//			}
-//		}
-//	`, map[string]any{"input": map[string]any{"organizationId": orgID, "name": "AWS"}}, &result)
 func (c *Client) Execute(query string, variables map[string]any, result any) error {
 	resp, err := c.Do(query, variables)
 	if err != nil {
@@ -157,15 +127,12 @@ func (c *Client) Execute(query string, variables map[string]any, result any) err
 	return nil
 }
 
-// MustExecute runs a GraphQL query/mutation and fails the test if there's an error.
 func (c *Client) MustExecute(query string, variables map[string]any, result any) {
 	c.T.Helper()
 	err := c.Execute(query, variables, result)
 	require.NoError(c.T, err, "GraphQL request failed")
 }
 
-// ExecuteShouldFail runs a GraphQL query/mutation and expects it to return an error.
-// Returns the error for further assertions.
 func (c *Client) ExecuteShouldFail(query string, variables map[string]any) error {
 	c.T.Helper()
 	_, err := c.Do(query, variables)
@@ -173,31 +140,24 @@ func (c *Client) ExecuteShouldFail(query string, variables map[string]any) error
 	return err
 }
 
-// HTTPClient returns the underlying HTTP client for making non-GraphQL requests.
 func (c *Client) HTTPClient() *http.Client {
 	return c.httpClient
 }
 
-// BaseURL returns the base URL of the test server.
 func (c *Client) BaseURL() string {
 	return c.baseURL
 }
 
-// UploadFile represents a file to be uploaded in a GraphQL mutation.
 type UploadFile struct {
 	Filename    string
 	ContentType string
 	Content     []byte
 }
 
-// ExecuteWithFile runs a GraphQL mutation with a file upload using multipart form data.
-// The variablePath specifies where in the variables the file should be placed (e.g., "input.file").
 func (c *Client) ExecuteWithFile(query string, variables map[string]any, variablePath string, file UploadFile, result any) error {
 	return c.executeMultipart(query, variables, map[string]UploadFile{variablePath: file}, result)
 }
 
-// ExecuteWithFiles runs a GraphQL mutation with multiple file uploads using multipart form data.
-// The files map specifies variable paths to files (e.g., {"input.file": file1, "input.attachment": file2}).
 func (c *Client) ExecuteWithFiles(query string, variables map[string]any, files map[string]UploadFile, result any) error {
 	return c.executeMultipart(query, variables, files, result)
 }

@@ -24,20 +24,16 @@ import (
 	"go.probo.inc/probo/e2e/internal/testutil"
 )
 
-// SafeName generates a name without special characters that might cause validation issues.
 func SafeName(prefix string) string {
 	return fmt.Sprintf("%s %s", prefix, gofakeit.LetterN(8))
 }
 
-// SafeEmail generates an email using example.com domain to avoid validation issues.
 func SafeEmail() string {
 	return fmt.Sprintf("%s@example.com", strings.ToLower(gofakeit.LetterN(12)))
 }
 
-// Attrs is a map of attribute overrides for factory functions.
 type Attrs map[string]any
 
-// get returns the value for key if present, otherwise returns defaultVal.
 func (a Attrs) get(key string, defaultVal any) any {
 	if a == nil {
 		return defaultVal
@@ -48,7 +44,6 @@ func (a Attrs) get(key string, defaultVal any) any {
 	return defaultVal
 }
 
-// getString returns the string value for key if present, otherwise returns defaultVal.
 func (a Attrs) getString(key string, defaultVal string) string {
 	if v, ok := a.get(key, defaultVal).(string); ok {
 		return v
@@ -56,7 +51,6 @@ func (a Attrs) getString(key string, defaultVal string) string {
 	return defaultVal
 }
 
-// getStringPtr returns a pointer to the string value for key if present.
 func (a Attrs) getStringPtr(key string) *string {
 	if a == nil {
 		return nil
@@ -69,7 +63,6 @@ func (a Attrs) getStringPtr(key string) *string {
 	return nil
 }
 
-// getInt returns the int value for key if present, otherwise returns defaultVal.
 func (a Attrs) getInt(key string, defaultVal int) int {
 	if a == nil {
 		return defaultVal
@@ -99,7 +92,6 @@ func (a Attrs) getBool(key string, defaultVal bool) bool {
 	return defaultVal
 }
 
-// CreateVendor creates a vendor with optional attribute overrides.
 func CreateVendor(c *testutil.Client, attrs ...Attrs) string {
 	c.T.Helper()
 
@@ -148,7 +140,6 @@ func CreateVendor(c *testutil.Client, attrs ...Attrs) string {
 	return result.CreateVendor.VendorEdge.Node.ID
 }
 
-// CreateFramework creates a framework with optional attribute overrides.
 func CreateFramework(c *testutil.Client, attrs ...Attrs) string {
 	c.T.Helper()
 
@@ -191,8 +182,6 @@ func CreateFramework(c *testutil.Client, attrs ...Attrs) string {
 	return result.CreateFramework.FrameworkEdge.Node.ID
 }
 
-// CreateControl creates a control with optional attribute overrides.
-// The frameworkId is required and must be passed in attrs.
 func CreateControl(c *testutil.Client, frameworkID string, attrs ...Attrs) string {
 	c.T.Helper()
 
@@ -235,7 +224,6 @@ func CreateControl(c *testutil.Client, frameworkID string, attrs ...Attrs) strin
 	return result.CreateControl.ControlEdge.Node.ID
 }
 
-// CreateMeasure creates a measure with optional attribute overrides.
 func CreateMeasure(c *testutil.Client, attrs ...Attrs) string {
 	c.T.Helper()
 
@@ -279,8 +267,6 @@ func CreateMeasure(c *testutil.Client, attrs ...Attrs) string {
 	return result.CreateMeasure.MeasureEdge.Node.ID
 }
 
-// CreateTask creates a task with optional attribute overrides.
-// The measureId is required.
 func CreateTask(c *testutil.Client, measureID string, attrs ...Attrs) string {
 	c.T.Helper()
 
@@ -324,7 +310,6 @@ func CreateTask(c *testutil.Client, measureID string, attrs ...Attrs) string {
 	return result.CreateTask.TaskEdge.Node.ID
 }
 
-// CreateRisk creates a risk with optional attribute overrides.
 func CreateRisk(c *testutil.Client, attrs ...Attrs) string {
 	c.T.Helper()
 
@@ -371,7 +356,6 @@ func CreateRisk(c *testutil.Client, attrs ...Attrs) string {
 	return result.CreateRisk.RiskEdge.Node.ID
 }
 
-// CreatePeople creates a people record with optional attribute overrides.
 func CreatePeople(c *testutil.Client, attrs ...Attrs) string {
 	c.T.Helper()
 
@@ -413,18 +397,11 @@ func CreatePeople(c *testutil.Client, attrs ...Attrs) string {
 	return result.CreatePeople.PeopleEdge.Node.ID
 }
 
-// =============================================================================
-// Builder-style wrappers for backward compatibility
-// These provide the fluent builder API that wraps the simpler factory functions
-// =============================================================================
-
-// VendorBuilder provides a fluent API for creating vendors.
 type VendorBuilder struct {
 	client *testutil.Client
 	attrs  Attrs
 }
 
-// NewVendor creates a new VendorBuilder.
 func NewVendor(c *testutil.Client) *VendorBuilder {
 	return &VendorBuilder{client: c, attrs: Attrs{}}
 }
@@ -453,13 +430,11 @@ func (b *VendorBuilder) Create() string {
 	return CreateVendor(b.client, b.attrs)
 }
 
-// FrameworkBuilder provides a fluent API for creating frameworks.
 type FrameworkBuilder struct {
 	client *testutil.Client
 	attrs  Attrs
 }
 
-// NewFramework creates a new FrameworkBuilder.
 func NewFramework(c *testutil.Client) *FrameworkBuilder {
 	return &FrameworkBuilder{client: c, attrs: Attrs{}}
 }
@@ -478,14 +453,12 @@ func (b *FrameworkBuilder) Create() string {
 	return CreateFramework(b.client, b.attrs)
 }
 
-// ControlBuilder provides a fluent API for creating controls.
 type ControlBuilder struct {
 	client      *testutil.Client
 	frameworkID string
 	attrs       Attrs
 }
 
-// NewControl creates a new ControlBuilder.
 func NewControl(c *testutil.Client, frameworkID string) *ControlBuilder {
 	return &ControlBuilder{client: c, frameworkID: frameworkID, attrs: Attrs{}}
 }
@@ -514,13 +487,11 @@ func (b *ControlBuilder) Create() string {
 	return CreateControl(b.client, b.frameworkID, b.attrs)
 }
 
-// MeasureBuilder provides a fluent API for creating measures.
 type MeasureBuilder struct {
 	client *testutil.Client
 	attrs  Attrs
 }
 
-// NewMeasure creates a new MeasureBuilder.
 func NewMeasure(c *testutil.Client) *MeasureBuilder {
 	return &MeasureBuilder{client: c, attrs: Attrs{}}
 }
@@ -544,14 +515,12 @@ func (b *MeasureBuilder) Create() string {
 	return CreateMeasure(b.client, b.attrs)
 }
 
-// TaskBuilder provides a fluent API for creating tasks.
 type TaskBuilder struct {
 	client    *testutil.Client
 	measureID string
 	attrs     Attrs
 }
 
-// NewTask creates a new TaskBuilder.
 func NewTask(c *testutil.Client, measureID string) *TaskBuilder {
 	return &TaskBuilder{client: c, measureID: measureID, attrs: Attrs{}}
 }
@@ -570,13 +539,11 @@ func (b *TaskBuilder) Create() string {
 	return CreateTask(b.client, b.measureID, b.attrs)
 }
 
-// RiskBuilder provides a fluent API for creating risks.
 type RiskBuilder struct {
 	client *testutil.Client
 	attrs  Attrs
 }
 
-// NewRisk creates a new RiskBuilder.
 func NewRisk(c *testutil.Client) *RiskBuilder {
 	return &RiskBuilder{client: c, attrs: Attrs{}}
 }
@@ -615,13 +582,11 @@ func (b *RiskBuilder) Create() string {
 	return CreateRisk(b.client, b.attrs)
 }
 
-// PeopleBuilder provides a fluent API for creating people.
 type PeopleBuilder struct {
 	client *testutil.Client
 	attrs  Attrs
 }
 
-// NewPeople creates a new PeopleBuilder.
 func NewPeople(c *testutil.Client) *PeopleBuilder {
 	return &PeopleBuilder{client: c, attrs: Attrs{}}
 }
@@ -640,8 +605,6 @@ func (b *PeopleBuilder) Create() string {
 	return CreatePeople(b.client, b.attrs)
 }
 
-// CreateAudit creates an audit with optional attribute overrides.
-// The frameworkId is required.
 func CreateAudit(c *testutil.Client, frameworkID string, attrs ...Attrs) string {
 	c.T.Helper()
 
@@ -685,14 +648,12 @@ func CreateAudit(c *testutil.Client, frameworkID string, attrs ...Attrs) string 
 	return result.CreateAudit.AuditEdge.Node.ID
 }
 
-// AuditBuilder provides a fluent API for creating audits.
 type AuditBuilder struct {
 	client      *testutil.Client
 	frameworkID string
 	attrs       Attrs
 }
 
-// NewAudit creates a new AuditBuilder.
 func NewAudit(c *testutil.Client, frameworkID string) *AuditBuilder {
 	return &AuditBuilder{client: c, frameworkID: frameworkID, attrs: Attrs{}}
 }
@@ -711,8 +672,6 @@ func (b *AuditBuilder) Create() string {
 	return CreateAudit(b.client, b.frameworkID, b.attrs)
 }
 
-// CreateDatum creates a datum with optional attribute overrides.
-// The ownerId (peopleId) is required.
 func CreateDatum(c *testutil.Client, ownerID string, attrs ...Attrs) string {
 	c.T.Helper()
 
@@ -757,14 +716,12 @@ func CreateDatum(c *testutil.Client, ownerID string, attrs ...Attrs) string {
 	return result.CreateDatum.DatumEdge.Node.ID
 }
 
-// DatumBuilder provides a fluent API for creating data.
 type DatumBuilder struct {
 	client  *testutil.Client
 	ownerID string
 	attrs   Attrs
 }
 
-// NewDatum creates a new DatumBuilder.
 func NewDatum(c *testutil.Client, ownerID string) *DatumBuilder {
 	return &DatumBuilder{client: c, ownerID: ownerID, attrs: Attrs{}}
 }
@@ -788,7 +745,6 @@ func (b *DatumBuilder) Create() string {
 	return CreateDatum(b.client, b.ownerID, b.attrs)
 }
 
-// CreateMeeting creates a meeting with optional attribute overrides.
 func CreateMeeting(c *testutil.Client, attrs ...Attrs) string {
 	c.T.Helper()
 
@@ -832,13 +788,11 @@ func CreateMeeting(c *testutil.Client, attrs ...Attrs) string {
 	return result.CreateMeeting.MeetingEdge.Node.ID
 }
 
-// MeetingBuilder provides a fluent API for creating meetings.
 type MeetingBuilder struct {
 	client *testutil.Client
 	attrs  Attrs
 }
 
-// NewMeeting creates a new MeetingBuilder.
 func NewMeeting(c *testutil.Client) *MeetingBuilder {
 	return &MeetingBuilder{client: c, attrs: Attrs{}}
 }
@@ -862,8 +816,6 @@ func (b *MeetingBuilder) Create() string {
 	return CreateMeeting(b.client, b.attrs)
 }
 
-// CreateDocument creates a document with optional attribute overrides.
-// The ownerId (peopleId) is required.
 func CreateDocument(c *testutil.Client, ownerID string, attrs ...Attrs) string {
 	c.T.Helper()
 
@@ -907,14 +859,12 @@ func CreateDocument(c *testutil.Client, ownerID string, attrs ...Attrs) string {
 	return result.CreateDocument.DocumentEdge.Node.ID
 }
 
-// DocumentBuilder provides a fluent API for creating documents.
 type DocumentBuilder struct {
 	client  *testutil.Client
 	ownerID string
 	attrs   Attrs
 }
 
-// NewDocument creates a new DocumentBuilder.
 func NewDocument(c *testutil.Client, ownerID string) *DocumentBuilder {
 	return &DocumentBuilder{client: c, ownerID: ownerID, attrs: Attrs{}}
 }
@@ -943,7 +893,6 @@ func (b *DocumentBuilder) Create() string {
 	return CreateDocument(b.client, b.ownerID, b.attrs)
 }
 
-// CreateProcessingActivity creates a processing activity with optional attribute overrides.
 func CreateProcessingActivity(c *testutil.Client, attrs ...Attrs) string {
 	c.T.Helper()
 
@@ -991,13 +940,11 @@ func CreateProcessingActivity(c *testutil.Client, attrs ...Attrs) string {
 	return result.CreateProcessingActivity.ProcessingActivityEdge.Node.ID
 }
 
-// ProcessingActivityBuilder provides a fluent API for creating processing activities.
 type ProcessingActivityBuilder struct {
 	client *testutil.Client
 	attrs  Attrs
 }
 
-// NewProcessingActivity creates a new ProcessingActivityBuilder.
 func NewProcessingActivity(c *testutil.Client) *ProcessingActivityBuilder {
 	return &ProcessingActivityBuilder{client: c, attrs: Attrs{}}
 }

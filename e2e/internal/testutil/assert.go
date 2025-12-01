@@ -24,8 +24,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// PageInfo represents GraphQL Relay-style pagination info.
-// This type can be embedded in result structs to avoid repeating the definition.
 type PageInfo struct {
 	HasNextPage     bool    `json:"hasNextPage"`
 	HasPreviousPage bool    `json:"hasPreviousPage"`
@@ -33,9 +31,6 @@ type PageInfo struct {
 	EndCursor       *string `json:"endCursor"`
 }
 
-// AssertFirstPage asserts that the response represents a valid first page of results.
-// It checks that the edge count matches expected, hasNextPage equals expectMore,
-// and hasPreviousPage is false.
 func AssertFirstPage(t *testing.T, edgeCount int, pageInfo PageInfo, expectedCount int, expectMore bool) {
 	t.Helper()
 	assert.Equal(t, expectedCount, edgeCount, "unexpected number of edges")
@@ -43,8 +38,6 @@ func AssertFirstPage(t *testing.T, edgeCount int, pageInfo PageInfo, expectedCou
 	assert.False(t, pageInfo.HasPreviousPage, "first page should not have previous page")
 }
 
-// AssertMiddlePage asserts that the response represents a valid middle page of results.
-// It checks that the edge count matches expected and both hasNextPage and hasPreviousPage are true.
 func AssertMiddlePage(t *testing.T, edgeCount int, pageInfo PageInfo, expectedCount int) {
 	t.Helper()
 	assert.Equal(t, expectedCount, edgeCount, "unexpected number of edges")
@@ -52,9 +45,6 @@ func AssertMiddlePage(t *testing.T, edgeCount int, pageInfo PageInfo, expectedCo
 	assert.True(t, pageInfo.HasPreviousPage, "middle page should have previous page")
 }
 
-// AssertLastPage asserts that the response represents a valid last page of results.
-// It checks that the edge count matches expected, hasNextPage is false,
-// and hasPreviousPage equals expectPrevious.
 func AssertLastPage(t *testing.T, edgeCount int, pageInfo PageInfo, expectedCount int, expectPrevious bool) {
 	t.Helper()
 	assert.Equal(t, expectedCount, edgeCount, "unexpected number of edges")
@@ -62,22 +52,18 @@ func AssertLastPage(t *testing.T, edgeCount int, pageInfo PageInfo, expectedCoun
 	assert.Equal(t, expectPrevious, pageInfo.HasPreviousPage, "hasPreviousPage mismatch")
 }
 
-// AssertHasMorePages asserts that there are more pages available after the current one.
 func AssertHasMorePages(t *testing.T, pageInfo PageInfo) {
 	t.Helper()
 	assert.True(t, pageInfo.HasNextPage, "expected more pages")
 	assert.NotNil(t, pageInfo.EndCursor, "endCursor should be set when there are more pages")
 }
 
-// AssertHasPreviousPages asserts that there are previous pages before the current one.
 func AssertHasPreviousPages(t *testing.T, pageInfo PageInfo) {
 	t.Helper()
 	assert.True(t, pageInfo.HasPreviousPage, "expected previous pages")
 	assert.NotNil(t, pageInfo.StartCursor, "startCursor should be set when there are previous pages")
 }
 
-// AssertTimestampsOnCreate validates that createdAt and updatedAt are properly set
-// after resource creation: both should be after beforeCreate and equal to each other.
 func AssertTimestampsOnCreate(t *testing.T, createdAt, updatedAt, beforeCreate time.Time) {
 	t.Helper()
 	assert.True(t, createdAt.After(beforeCreate), "createdAt should be after test start")
@@ -85,8 +71,6 @@ func AssertTimestampsOnCreate(t *testing.T, createdAt, updatedAt, beforeCreate t
 	assert.Equal(t, createdAt, updatedAt, "createdAt and updatedAt should be equal on create")
 }
 
-// AssertTimestampsOnUpdate validates that timestamps are properly updated:
-// createdAt should remain unchanged, updatedAt should be after the previous value.
 func AssertTimestampsOnUpdate(t *testing.T, createdAt, updatedAt, originalCreatedAt, originalUpdatedAt time.Time) {
 	t.Helper()
 	assert.Equal(t, originalCreatedAt, createdAt, "createdAt should not change on update")
@@ -94,8 +78,6 @@ func AssertTimestampsOnUpdate(t *testing.T, createdAt, updatedAt, originalCreate
 		"updatedAt should be >= previous updatedAt")
 }
 
-// AssertOptionalStringEqual validates optional string fields (pointers).
-// If expected is nil, actual must be nil. Otherwise, both must be non-nil and equal.
 func AssertOptionalStringEqual(t *testing.T, expected, actual *string, fieldName string) {
 	t.Helper()
 	if expected == nil {
@@ -106,13 +88,11 @@ func AssertOptionalStringEqual(t *testing.T, expected, actual *string, fieldName
 	}
 }
 
-// AssertOrderedAscending validates that a slice is sorted in ascending order.
 func AssertOrderedAscending[T cmp.Ordered](t *testing.T, values []T, fieldName string) {
 	t.Helper()
 	assert.True(t, slices.IsSorted(values), "%s should be in ascending order, got: %v", fieldName, values)
 }
 
-// AssertOrderedDescending validates that a slice is sorted in descending order.
 func AssertOrderedDescending[T cmp.Ordered](t *testing.T, values []T, fieldName string) {
 	t.Helper()
 	reversed := slices.Clone(values)
@@ -120,7 +100,6 @@ func AssertOrderedDescending[T cmp.Ordered](t *testing.T, values []T, fieldName 
 	assert.True(t, slices.IsSorted(reversed), "%s should be in descending order, got: %v", fieldName, values)
 }
 
-// AssertTimesOrderedAscending validates that times are in ascending order.
 func AssertTimesOrderedAscending(t *testing.T, times []time.Time, fieldName string) {
 	t.Helper()
 	isSorted := slices.IsSortedFunc(times, func(a, b time.Time) int {
@@ -129,7 +108,6 @@ func AssertTimesOrderedAscending(t *testing.T, times []time.Time, fieldName stri
 	assert.True(t, isSorted, "%s should be in ascending order", fieldName)
 }
 
-// AssertTimesOrderedDescending validates that times are in descending order.
 func AssertTimesOrderedDescending(t *testing.T, times []time.Time, fieldName string) {
 	t.Helper()
 	isSorted := slices.IsSortedFunc(times, func(a, b time.Time) int {
@@ -138,8 +116,6 @@ func AssertTimesOrderedDescending(t *testing.T, times []time.Time, fieldName str
 	assert.True(t, isSorted, "%s should be in descending order", fieldName)
 }
 
-// AssertNodeNotAccessible validates that a node query returns nil or an error
-// (used for tenant isolation tests).
 func AssertNodeNotAccessible(t *testing.T, err error, nodeIsNil bool, resourceType string) {
 	t.Helper()
 	if err == nil {
@@ -148,13 +124,11 @@ func AssertNodeNotAccessible(t *testing.T, err error, nodeIsNil bool, resourceTy
 	// If there's an error, that's also acceptable (access denied)
 }
 
-// RequireForbiddenError asserts that the error is a GraphQL FORBIDDEN error.
 func RequireForbiddenError(t *testing.T, err error, msgAndArgs ...any) {
 	t.Helper()
 	RequireErrorCode(t, err, "FORBIDDEN", msgAndArgs...)
 }
 
-// RequireErrorCode asserts that the error is a GraphQL error with the specified code.
 func RequireErrorCode(t *testing.T, err error, code string, msgAndArgs ...any) {
 	t.Helper()
 	require.Error(t, err, msgAndArgs...)

@@ -31,16 +31,12 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 )
 
-// generateUniqueID creates a unique identifier for test isolation.
-// It combines a timestamp with random bytes to ensure uniqueness
-// even when tests run in parallel.
 func generateUniqueID() string {
 	randomBytes := make([]byte, 4)
 	rand.Read(randomBytes)
 	return fmt.Sprintf("%d-%s", time.Now().UnixNano(), hex.EncodeToString(randomBytes))
 }
 
-// TestRole represents the role a test user should have
 type TestRole string
 
 const (
@@ -49,7 +45,6 @@ const (
 	RoleViewer TestRole = "VIEWER"
 )
 
-// Client is an authenticated HTTP client for making API requests
 type Client struct {
 	T              testing.TB
 	httpClient     *http.Client
@@ -59,8 +54,6 @@ type Client struct {
 	organizationID gid.GID
 }
 
-// NewClient creates a new authenticated test client with the specified role.
-// It creates a new user, organization, and sets up the membership with the given role.
 func NewClient(t testing.TB, role TestRole) *Client {
 	t.Helper()
 
@@ -82,8 +75,6 @@ func NewClient(t testing.TB, role TestRole) *Client {
 	return client
 }
 
-// NewClientInOrg creates a test client for a user in an existing organization.
-// The ownerClient must be an OWNER of the organization to invite the new user.
 func NewClientInOrg(t testing.TB, role TestRole, ownerClient *Client) *Client {
 	t.Helper()
 
@@ -335,17 +326,14 @@ func (c *Client) acceptInvitation(invitationID gid.GID) {
 	require.NoError(c.T, err, "acceptInvitation mutation failed")
 }
 
-// GetUserID returns the authenticated user's ID
 func (c *Client) GetUserID() gid.GID {
 	return c.userID
 }
 
-// GetOrganizationID returns the test organization's ID
 func (c *Client) GetOrganizationID() gid.GID {
 	return c.organizationID
 }
 
-// GetRole returns the client's role
 func (c *Client) GetRole() TestRole {
 	return c.role
 }
