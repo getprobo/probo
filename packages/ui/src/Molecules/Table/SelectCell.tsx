@@ -33,9 +33,8 @@ export function SelectCell<T>(props: Props<T>) {
     );
     const cellRef = useEditableCellRef();
     const { __ } = useTranslate();
-    const usedKeys = new Set<string>(
-        Array.isArray(value) ? value.map(getKey) : [getKey(value)],
-    );
+    const filteredValue = Array.isArray(value) ? value.filter(Boolean) : value ? [value] : [];
+    const usedKeys = new Set<string>(filteredValue.map(getKey).filter(Boolean) as string[]);
     const { onUpdate } = useEditableRowContext();
 
     const onSelect = (item: T) => {
@@ -88,7 +87,7 @@ export function SelectCell<T>(props: Props<T>) {
                 )}
                 <Command.List>
                     {props.items
-                        .filter((item) => !usedKeys.has(getKey(item)))
+                        .filter((item) => !usedKeys.has(getKey(item) ?? ""))
                         .map((item) => (
                             <Command.Item
                                 key={getKey(item)}

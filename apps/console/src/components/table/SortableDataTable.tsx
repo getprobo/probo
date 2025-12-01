@@ -93,6 +93,7 @@ export function SortableCellHead({
       <button
         className="flex items-center cursor-pointer hover:text-txt-primary"
         onClick={changeOrder}
+        type="button"
       >
         {children}
         <IconChevronTriangleDownSmall

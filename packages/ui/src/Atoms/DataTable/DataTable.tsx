@@ -92,7 +92,6 @@ export function RowButton({
     return (
         <button
             {...props}
-            type="button"
             className={clsx(
                 "py-2 bg-highlight hover:bg-highlight-hover active:bg-highlight-pressed cursor-pointer w-full flex gap-2 items-center justify-center text-sm text-txt-secondary",
                 props.className,

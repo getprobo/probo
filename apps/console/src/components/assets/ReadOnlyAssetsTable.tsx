@@ -58,7 +58,12 @@ function AssetRow({
   const vendors = entry.vendors?.edges.map((edge) => edge.node) ?? [];
 
   return (
-    <Tr to={`/organizations/${organizationId}/snapshots/${snapshotId}/assets/${entry.id}`}>
+    <Tr
+      to={
+        snapshotId ?
+          `/organizations/${organizationId}/snapshots/${snapshotId}/assets/${entry.id}` : `/organizations/${organizationId}/assets/${entry.id}`
+      }
+    >
       <Td>{entry.name}</Td>
       <Td>
         <Badge variant={getAssetTypeVariant(entry.assetType)}>

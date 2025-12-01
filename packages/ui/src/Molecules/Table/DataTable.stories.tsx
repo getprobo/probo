@@ -27,10 +27,10 @@ export const Default: Story = {
         });
         const updateField = (key: string, value: unknown) => {
             onUpdate(key, value);
-            setState({
-                ...state,
+            setState(prevState => ({
+                ...prevState,
                 [key]: value,
-            });
+            }));
         };
         return (
             <DataTable columns={["1fr", "1fr", "1fr"]}>

@@ -1,17 +1,17 @@
-import { type ReactNode, Suspense } from "react";
-import { useEditableCellRef } from "@probo/ui/src/Molecules/Table/EditableCell.tsx";
-import { getKey } from "@probo/ui/src/Molecules/Table/utils.ts";
 import { useStateWithRef } from "@probo/hooks";
+import { useTranslate } from "@probo/i18n";
+import { EditableCell, SelectValue, Spinner, selectCell } from "@probo/ui";
+import { useEditableCellRef } from "@probo/ui/src/Molecules/Table/EditableCell.tsx";
 import { useEditableRowContext } from "@probo/ui/src/Molecules/Table/EditableRow.tsx";
-import { EditableCell, selectCell, SelectValue, Spinner } from "@probo/ui";
+import { getKey } from "@probo/ui/src/Molecules/Table/utils.ts";
 import { Command } from "cmdk";
+import { Suspense, type ReactNode } from "react";
+import { useLazyLoadQuery } from "react-relay";
 import type {
   GraphQLTaggedNode,
   OperationType,
   VariablesOf,
 } from "relay-runtime";
-import { useLazyLoadQuery } from "react-relay";
-import { useTranslate } from "@probo/i18n";
 
 type Props<Q extends OperationType, T> = {
   name: string;
@@ -30,9 +30,8 @@ export function GraphQLCell<Q extends OperationType, T>(props: Props<Q, T>) {
   );
   const cellRef = useEditableCellRef();
   const { __ } = useTranslate();
-  const usedKeys = new Set<string>(
-    Array.isArray(value) ? value.map(getKey) : [getKey(value)],
-  );
+  const filteredValue = Array.isArray(value) ? value.filter(Boolean) : value ? [value] : [];
+  const usedKeys = new Set<string>(filteredValue.map(getKey).filter(Boolean) as string[]);
   const { onUpdate } = useEditableRowContext();
 
   const onSelect = (item: T) => {
@@ -122,7 +121,7 @@ function ItemList<Q extends OperationType, T>(
   return (
     <>
       {items
-        .filter((item) => !props.usedKeys.has(getKey(item)))
+        .filter((item) => !props.usedKeys.has(getKey(item) ?? ""))
         .map((item) => (
           <Command.Item
             key={getKey(item)}

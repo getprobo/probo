@@ -98,7 +98,7 @@ export function EditableTable<
           onSuccess={toggleAdd}
         />
       ) : (
-        <RowButton onClick={toggleAdd}>{props.addLabel}</RowButton>
+        <RowButton onClick={toggleAdd} type="button">{props.addLabel}</RowButton>
       )}
     </SortableDataTable>
   );

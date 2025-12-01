@@ -1,4 +1,4 @@
-export function getKey<T>(item: T): string {
+export function getKey<T>(item: T): string | undefined {
     if (
         item &&
         typeof item === "object" &&
@@ -11,7 +11,7 @@ export function getKey<T>(item: T): string {
         return item.toString();
     }
     if (item === undefined) {
-        return "";
+        return undefined;
     }
     console.error("Cannot compute a key from item", item);
     return "";
