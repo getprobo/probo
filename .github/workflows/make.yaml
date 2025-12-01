@@ -131,5 +131,3 @@ jobs:
               yaml.dump(config, f, default_flow_style=False, allow_unicode=True)
           EOF
       - run: "make test-e2e"
-        env:
-          PROBO_E2E_VERBOSE: "true"
