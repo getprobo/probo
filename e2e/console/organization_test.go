@@ -137,7 +137,40 @@ func TestOrganization_Update(t *testing.T) {
 }
 
 func TestOrganization_UpdateContext(t *testing.T) {
-	t.Skip("updateOrganizationContext mutation not implemented")
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	query := `
+		mutation UpdateOrganizationContext($input: UpdateOrganizationContextInput!) {
+			updateOrganizationContext(input: $input) {
+				context {
+					organizationId
+					summary
+				}
+			}
+		}
+	`
+
+	var result struct {
+		UpdateOrganizationContext struct {
+			Context struct {
+				OrganizationID string  `json:"organizationId"`
+				Summary        *string `json:"summary"`
+			} `json:"context"`
+		} `json:"updateOrganizationContext"`
+	}
+
+	err := owner.Execute(query, map[string]any{
+		"input": map[string]any{
+			"organizationId": owner.GetOrganizationID().String(),
+			"summary":        "Our organization provides compliance solutions.",
+		},
+	}, &result)
+	require.NoError(t, err)
+
+	assert.Equal(t, owner.GetOrganizationID().String(), result.UpdateOrganizationContext.Context.OrganizationID)
+	require.NotNil(t, result.UpdateOrganizationContext.Context.Summary)
+	assert.Equal(t, "Our organization provides compliance solutions.", *result.UpdateOrganizationContext.Context.Summary)
 }
 
 func TestOrganization_Get(t *testing.T) {
