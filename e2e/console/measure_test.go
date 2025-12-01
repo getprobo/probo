@@ -24,7 +24,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/e2e/internal/factory"
 	"go.probo.inc/probo/e2e/internal/testutil"
-	"go.probo.inc/probo/pkg/ref"
+	"go.gearno.de/x/ref"
 )
 
 func TestMeasure_Create(t *testing.T) {
