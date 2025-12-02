@@ -27,13 +27,13 @@ export const selectCell = tv({
     },
 });
 
-export function SelectCell<T>(props: Props<T>) {
+export function SelectCell<T extends NonNullable<unknown>>(props: Props<T>) {
     const [value, setValue, valueRef] = useStateWithRef<T | T[]>(
         props.defaultValue,
     );
     const cellRef = useEditableCellRef();
     const { __ } = useTranslate();
-    const filteredValue = Array.isArray(value) ? value.filter(Boolean) : value ? [value] : [];
+    const filteredValue = Array.isArray(value) ? value.filter(v => v !== undefined) : value ? [value] : [];
     const usedKeys = new Set<string>(filteredValue.map(getKey).filter(Boolean) as string[]);
     const { onUpdate } = useEditableRowContext();
 
@@ -103,12 +103,12 @@ export function SelectCell<T>(props: Props<T>) {
     );
 }
 
-export function SelectValue<T>(props: {
+export function SelectValue<T extends NonNullable<unknown>>(props: {
     itemRenderer: Props<T>["itemRenderer"];
     onValueChange?: (value: T | T[]) => void;
     value: T | T[] | undefined;
 }) {
-    if (!props.value) {
+    if (props.value === undefined) {
         return "";
     }
     if (!Array.isArray(props.value)) {

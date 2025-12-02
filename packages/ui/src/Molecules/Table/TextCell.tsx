@@ -24,7 +24,7 @@ export function TextCell(props: Props) {
         if (props.required && inputValue === "") {
             return;
         }
-        if (inputValue !== props.defaultValue) {
+        if (inputValue !== value) {
             setValue(inputValue);
             onUpdate(props.name, inputValue);
         }

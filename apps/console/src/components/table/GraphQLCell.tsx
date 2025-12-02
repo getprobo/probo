@@ -24,7 +24,7 @@ type Props<Q extends OperationType, T> = {
   | { defaultValue: T[]; multiple: true }
 );
 
-export function GraphQLCell<Q extends OperationType, T>(props: Props<Q, T>) {
+export function GraphQLCell<Q extends OperationType, T extends NonNullable<unknown>>(props: Props<Q, T>) {
   const [value, setValue, valueRef] = useStateWithRef<T | T[] | undefined>(
     props.defaultValue,
   );
