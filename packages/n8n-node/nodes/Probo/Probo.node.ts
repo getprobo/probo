@@ -63,6 +63,11 @@ export class Probo implements INodeType {
 				noDataExpression: true,
 				options: [
 					{
+						name: 'Asset',
+						value: 'asset',
+						description: 'Manage assets',
+					},
+					{
 						name: 'Control',
 						value: 'control',
 						description: 'Manage controls',
