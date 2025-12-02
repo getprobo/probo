@@ -39,7 +39,7 @@ export default function VendorCertificationsTab() {
           render={({ field }) => (
             <Certifications
               onValueChange={field.onChange}
-              value={field.value}
+              value={field.value ?? []}
             />
           )}
         />

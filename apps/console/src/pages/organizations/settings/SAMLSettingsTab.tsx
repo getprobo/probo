@@ -734,7 +734,7 @@ export default function SAMLSettingsTab() {
                 render={({ field }) => (
                   <div className="flex items-center gap-2">
                     <Checkbox
-                      checked={field.value}
+                      checked={field.value ?? false}
                       onChange={field.onChange}
                     />
                     <Label htmlFor="autoSignupEnabled" className="cursor-pointer">

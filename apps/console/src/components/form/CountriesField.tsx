@@ -18,7 +18,7 @@ export function CountriesField<T extends FieldValues = FieldValues>({ control, n
       name={name}
       render={({ field }) => (
         <CountriesFieldInput
-          value={field.value}
+          value={field.value ?? []}
           onValueChange={field.onChange}
           disabled={disabled}
         />

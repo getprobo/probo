@@ -243,7 +243,7 @@ export function CreateProcessingActivityDialog({
                     <Label>{__("International Transfers")}</Label>
                     <div className="mt-2 flex items-center gap-2">
                       <Checkbox
-                        checked={field.value}
+                        checked={field.value ?? false}
                         onChange={field.onChange}
                       />
                       <span>{__("Data is transferred internationally")}</span>

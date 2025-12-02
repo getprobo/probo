@@ -148,7 +148,7 @@ function InviteUserDialogContent({ children, connectionId, onRefetch }: Props) {
                 render={({ field }) => (
                   <>
                     <Checkbox
-                      checked={field.value}
+                      checked={field.value ?? false}
                       onChange={field.onChange}
                     />
                     <label
