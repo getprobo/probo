@@ -5,6 +5,7 @@ import * as datum from './datum';
 import * as execute from './execute';
 import * as framework from './framework';
 import * as measure from './measure';
+import * as meeting from './meeting';
 import * as organization from './organization';
 
 export interface ResourceModule {
@@ -24,6 +25,7 @@ export const resources: Record<string, ResourceModule> = {
 	execute: execute as ResourceModule,
 	framework: framework as ResourceModule,
 	measure: measure as ResourceModule,
+	meeting: meeting as ResourceModule,
 	organization: organization as ResourceModule,
 };
 
