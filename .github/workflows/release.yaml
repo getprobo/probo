@@ -132,8 +132,6 @@ jobs:
           node-version-file: ".nvmrc"
           cache: "npm"
           registry-url: "https://registry.npmjs.org"
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - run: npm ci
       - run: npm --workspace @probo/n8n-nodes-probo run build
@@ -162,8 +160,6 @@ jobs:
 
       - run: npm --workspace @probo/n8n-nodes-probo publish --access public --dry-run
       - run: npm --workspace @probo/n8n-nodes-probo publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - uses: actions/attest-sbom@v1
         with:
