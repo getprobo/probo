@@ -1,53 +1,54 @@
-import { Link, Navigate, Outlet, useParams } from "react-router";
+import { useTranslate } from "@probo/i18n";
 import {
+  Avatar,
+  Badge,
+  Button,
+  Dropdown,
+  DropdownItem,
   DropdownSeparator,
   IconArrowBoxLeft,
   IconBank,
   IconBook,
+  IconBox,
+  IconCalendar1,
   IconCheckmark1,
+  IconChevronGrabberVertical,
+  IconCircleProgress,
   IconCircleQuestionmark,
   IconClock,
   IconCrossLargeX,
   IconFire3,
   IconGroup1,
   IconInboxEmpty,
+  IconKey,
+  IconListStack,
+  IconLock,
+  IconMedal,
   IconPageTextLine,
+  IconPeopleAdd,
+  IconPlusLarge,
+  IconRotateCw,
   IconSettingsGear2,
+  IconShield,
   IconStore,
   IconTodo,
-  IconListStack,
-  IconBox,
-  IconShield,
-  IconRotateCw,
-  IconCircleProgress,
-  IconMedal,
-  IconCalendar1,
   Layout,
   SidebarItem,
-  UserDropdown as UserDropdownRoot,
-  UserDropdownItem,
   Skeleton,
-  Dropdown,
-  Button,
-  DropdownItem,
-  IconChevronGrabberVertical,
-  IconPlusLarge,
-  Avatar,
-  IconPeopleAdd,
-  Badge,
-  IconKey,
-  IconLock,
+  UserDropdownItem,
+  UserDropdown as UserDropdownRoot,
+  useToast,
 } from "@probo/ui";
-import { useTranslate } from "@probo/i18n";
-import { graphql } from "relay-runtime";
-import { useLazyLoadQuery } from "react-relay";
-import type { MainLayoutQuery as MainLayoutQueryType } from "./__generated__/MainLayoutQuery.graphql";
-import { Suspense, useState, useEffect } from "react";
-import { useToast } from "@probo/ui";
+import { Suspense, useEffect, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
+import { useLazyLoadQuery } from "react-relay";
+import { Link, Navigate, Outlet, useParams } from "react-router";
+import { graphql } from "relay-runtime";
+import type { MainLayoutQuery as MainLayoutQueryType } from "./__generated__/MainLayoutQuery.graphql";
 import { PageError } from "/components/PageError";
-import { buildEndpoint } from "/providers/RelayProviders";
 import { Authorized } from "/permissions";
+import { PermissionsProvider } from "/providers/PermissionsProvider";
+import { buildEndpoint } from "/providers/RelayProviders";
 
 const MainLayoutQuery = graphql`
   query MainLayoutQuery($organizationId: ID!) {
@@ -82,7 +83,9 @@ export function MainLayout() {
 
   return (
     <Suspense fallback={<Skeleton className="w-full h-screen" />}>
-      <MainLayoutContent organizationId={organizationId} prefix={prefix} />
+      <PermissionsProvider>
+        <MainLayoutContent organizationId={organizationId} prefix={prefix} />
+      </PermissionsProvider>
     </Suspense>
   );
 }

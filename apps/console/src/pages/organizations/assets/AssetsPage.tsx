@@ -1,28 +1,29 @@
+import { usePageTitle } from "@probo/hooks";
+import { useTranslate } from "@probo/i18n";
 import {
   Button,
   IconPlusLarge,
   PageHeader,
 } from "@probo/ui";
-import { useTranslate } from "@probo/i18n";
-import { usePageTitle } from "@probo/hooks";
+import { use } from "react";
 import {
   graphql,
-  type PreloadedQuery,
   usePaginationFragment,
   usePreloadedQuery,
+  type PreloadedQuery,
 } from "react-relay";
-import { useOrganizationId } from "/hooks/useOrganizationId";
 import { useParams } from "react-router";
+import { AssetsTable } from "../../../components/assets/AssetsTable";
+import { ReadOnlyAssetsTable } from "../../../components/assets/ReadOnlyAssetsTable";
+import type { AssetsPageFragment$key } from "./__generated__/AssetsPageFragment.graphql";
+import { CreateAssetDialog } from "./dialogs/CreateAssetDialog";
+import { SnapshotBanner } from "/components/SnapshotBanner";
 import {
   assetsQuery,
 } from "/hooks/graph/AssetGraph";
 import type { AssetGraphListQuery } from "/hooks/graph/__generated__/AssetGraphListQuery.graphql";
-import type { AssetsPageFragment$key } from "./__generated__/AssetsPageFragment.graphql";
-import { SnapshotBanner } from "/components/SnapshotBanner";
-import { CreateAssetDialog } from "./dialogs/CreateAssetDialog";
-import { Authorized, isAuthorized } from "/permissions";
-import { AssetsTable } from "../../../components/assets/AssetsTable";
-import { ReadOnlyAssetsTable } from "../../../components/assets/ReadOnlyAssetsTable";
+import { useOrganizationId } from "/hooks/useOrganizationId";
+import { PermissionsContext } from "/providers/PermissionsProvider";
 
 const paginatedAssetsFragment = graphql`
   fragment AssetsPageFragment on Organization
@@ -90,9 +91,10 @@ export default function AssetsPage(props: Props) {
   const assets = pagination.data.assets?.edges.map((edge) => edge.node);
   const connectionId = pagination.data.assets.__id;
 
+  const { isAuthorized } = use(PermissionsContext);
   const canWrite = (
-    isAuthorized(organizationId, "Asset", "updateAsset") ||
-    isAuthorized(organizationId, "Asset", "deleteAsset")
+    isAuthorized("Asset", "updateAsset") ||
+    isAuthorized("Asset", "deleteAsset")
   );
   usePageTitle(__("Assets"));
 
@@ -105,15 +107,13 @@ export default function AssetsPage(props: Props) {
           "Manage your organization's assets and their classifications.",
         )}
       >
-        {!isSnapshotMode && (
-          <Authorized entity="Organization" action="createAsset">
-            <CreateAssetDialog
-              connection={connectionId}
-              organizationId={organizationId}
-            >
-              <Button icon={IconPlusLarge}>{__("Add asset")}</Button>
-            </CreateAssetDialog>
-          </Authorized>
+        {!isSnapshotMode && isAuthorized("Organization", "createAsset") && (
+          <CreateAssetDialog
+            connection={connectionId}
+            organizationId={organizationId}
+          >
+            <Button icon={IconPlusLarge}>{__("Add asset")}</Button>
+          </CreateAssetDialog>
         )}
       </PageHeader>
       {isSnapshotMode || !canWrite ?
