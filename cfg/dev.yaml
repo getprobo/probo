@@ -9,7 +9,7 @@ unit:
     max-queue-size: 2048
 
 probod:
-  base-url: "https://gearnode.probo.engineering"
+  base-url: "localhost:5173"
   encryption-key: "thisisnotasecretAAAAAAAAAAAAAAAAAAAAAAAAAAA="
   chrome-dp-addr: "localhost:9222"
 
@@ -84,7 +84,6 @@ probod:
       directory: "https://localhost:14000/dir"
       email: "admin@getprobo.com"
       key-type: "EC256"
-      root-ca: ""
 
   connectors:
     - provider: "slack"
