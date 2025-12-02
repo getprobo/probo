@@ -11,7 +11,7 @@
     "release": "n8n-node release",
     "prepublishOnly": "n8n-node prerelease"
   },
-  "author": "",
+  "author": "Probo Inc",
   "files": [
     "dist"
   ],
@@ -23,8 +23,29 @@
     ],
     "nodes": []
   },
-  "license": "ISC",
-  "description": "",
+  "license": "MIT",
+  "description": "n8n nodes for integrating with the Probo compliance platform API",
+  "keywords": [
+    "n8n",
+    "n8n-nodes",
+    "probo",
+    "compliance",
+    "soc2",
+    "automation",
+    "n8n-community-node-package"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/getprobo/probo.git",
+    "directory": "packages/n8n-node"
+  },
+  "bugs": {
+    "url": "https://github.com/getprobo/probo/issues"
+  },
+  "homepage": "https://github.com/getprobo/probo#README",
+  "publishConfig": {
+    "access": "public"
+  },
   "peerDependencies": {
     "n8n-workflow": "*"
   },

@@ -12,7 +12,7 @@ permissions:
   attestations: write
 
 jobs:
-  release:
+  github-release:
     runs-on: ubuntu-latest
     outputs:
       hashes: ${{ steps.hash.outputs.hashes }}
@@ -27,15 +27,6 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: "1.25"
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version-file: ".nvmrc"
-          cache: "npm"
-
-      - name: Install dependencies
-        run: npm ci
 
       - name: Install Cosign
         uses: sigstore/cosign-installer@v3
@@ -123,4 +114,70 @@ jobs:
           path: |
             sbom.json
             checksums.txt
+          retention-days: 30
+
+  npm-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: "npm"
+          registry-url: "https://registry.npmjs.org"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - run: npm ci
+      - run: npm --workspace @probo/n8n-nodes-probo run build
+      - run: npm --workspace @probo/@probo/n8n-nodes-probo version --from-git --no-git-tag-version
+
+      - uses: anchore/sbom-action@da167eac915b4e86f08b264dbdbc867b61be6f0c #v0.20.5
+        with:
+          path: ./packages/n8n-node
+          format: cyclonedx-json
+          output-file: packages/n8n-node/sbom.json
+
+      - uses: anchore/scan-action@1638637db639e0ade3258b51db49a9a137574c3e #v6.5.1
+        with:
+          path: ./packages/n8n-node
+          fail-build: true
+          severity-cutoff: critical
+
+      - name: Generate checksums for dist files
+        id: checksum
+        run: |
+          cd packages/n8n-node/dist
+          find . -type f | while read file; do
+            echo "$(sha256sum "$file" | head -c 64)  $file"
+          done > ../checksums.txt
+          echo "hashes=$(cat ../checksums.txt | base64 -w0)" >> "$GITHUB_OUTPUT"
+
+      - run: npm --workspace @probo/n8n-nodes-probo publish --access public --dry-run
+      - run: npm --workspace @probo/n8n-nodes-probo publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - uses: actions/attest-sbom@v1
+        with:
+          subject-path: "packages/n8n-node/dist/**"
+          sbom-path: "packages/n8n-node/sbom.json"
+
+      - uses: actions/attest-build-provenance@v1
+        with:
+          subject-path: "packages/n8n-node/dist/**"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: npm-sbom
+          path: |
+            packages/n8n-node/sbom.json
+            packages/n8n-node/checksums.txt
           retention-days: 30
