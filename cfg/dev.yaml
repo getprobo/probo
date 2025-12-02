@@ -9,7 +9,7 @@ unit:
     max-queue-size: 2048
 
 probod:
-  base-url: "localhost:5173"
+  base-url: "http://localhost:5173"
   encryption-key: "thisisnotasecretAAAAAAAAAAAAAAAAAAAAAAAAAAA="
   chrome-dp-addr: "localhost:9222"
 
