@@ -21,7 +21,9 @@
     "credentials": [
       "dist/credentials/ProboApi.credentials.js"
     ],
-    "nodes": []
+    "nodes": [
+      "dist/nodes/Probo/Probo.node.js"
+    ]
   },
   "license": "MIT",
   "description": "n8n nodes for integrating with the Probo compliance platform API",
