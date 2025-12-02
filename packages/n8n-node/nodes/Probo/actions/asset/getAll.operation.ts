@@ -46,6 +46,35 @@ export const description: INodeProperties[] = [
 		default: 50,
 		description: 'Max number of results to return',
 	},
+	{
+		displayName: 'Options',
+		name: 'options',
+		type: 'collection',
+		placeholder: 'Add Option',
+		default: {},
+		displayOptions: {
+			show: {
+				resource: ['asset'],
+				operation: ['getAll'],
+			},
+		},
+		options: [
+			{
+				displayName: 'Include Owner',
+				name: 'includeOwner',
+				type: 'boolean',
+				default: false,
+				description: 'Whether to include owner details in the response',
+			},
+			{
+				displayName: 'Include Vendors',
+				name: 'includeVendors',
+				type: 'boolean',
+				default: false,
+				description: 'Whether to include vendors in the response',
+			},
+		],
+	},
 ];
 
 export async function execute(
@@ -55,6 +84,29 @@ export async function execute(
 	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
 	const returnAll = this.getNodeParameter('returnAll', itemIndex) as boolean;
 	const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
+	const options = this.getNodeParameter('options', itemIndex, {}) as {
+		includeOwner?: boolean;
+		includeVendors?: boolean;
+	};
+
+	const ownerFragment = options.includeOwner
+		? `owner {
+			id
+			fullName
+			primaryEmailAddress
+		}`
+		: '';
+
+	const vendorsFragment = options.includeVendors
+		? `vendors(first: 100) {
+			edges {
+				node {
+					id
+					name
+				}
+			}
+		}`
+		: '';
 
 	const query = `
 		query GetAssets($organizationId: ID!, $first: Int, $after: CursorKey) {
@@ -68,6 +120,8 @@ export async function execute(
 								amount
 								assetType
 								dataTypesStored
+								${ownerFragment}
+								${vendorsFragment}
 								createdAt
 								updatedAt
 							}
@@ -96,4 +150,3 @@ export async function execute(
 		pairedItem: { item: itemIndex },
 	};
 }
-

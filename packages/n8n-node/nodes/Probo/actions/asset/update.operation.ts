@@ -104,6 +104,35 @@ export const description: INodeProperties[] = [
 		default: '',
 		description: 'Comma-separated list of vendor IDs',
 	},
+	{
+		displayName: 'Options',
+		name: 'options',
+		type: 'collection',
+		placeholder: 'Add Option',
+		default: {},
+		displayOptions: {
+			show: {
+				resource: ['asset'],
+				operation: ['update'],
+			},
+		},
+		options: [
+			{
+				displayName: 'Include Owner',
+				name: 'includeOwner',
+				type: 'boolean',
+				default: false,
+				description: 'Whether to include owner details in the response',
+			},
+			{
+				displayName: 'Include Vendors',
+				name: 'includeVendors',
+				type: 'boolean',
+				default: false,
+				description: 'Whether to include vendors in the response',
+			},
+		],
+	},
 ];
 
 export async function execute(
@@ -117,6 +146,29 @@ export async function execute(
 	const assetType = this.getNodeParameter('assetType', itemIndex, '') as string;
 	const dataTypesStored = this.getNodeParameter('dataTypesStored', itemIndex, '') as string;
 	const vendorIdsStr = this.getNodeParameter('vendorIds', itemIndex, '') as string;
+	const options = this.getNodeParameter('options', itemIndex, {}) as {
+		includeOwner?: boolean;
+		includeVendors?: boolean;
+	};
+
+	const ownerFragment = options.includeOwner
+		? `owner {
+			id
+			fullName
+			primaryEmailAddress
+		}`
+		: '';
+
+	const vendorsFragment = options.includeVendors
+		? `vendors(first: 100) {
+			edges {
+				node {
+					id
+					name
+				}
+			}
+		}`
+		: '';
 
 	const query = `
 		mutation UpdateAsset($input: UpdateAssetInput!) {
@@ -127,6 +179,8 @@ export async function execute(
 					amount
 					assetType
 					dataTypesStored
+					${ownerFragment}
+					${vendorsFragment}
 					createdAt
 					updatedAt
 				}
@@ -152,4 +206,3 @@ export async function execute(
 		pairedItem: { item: itemIndex },
 	};
 }
-
