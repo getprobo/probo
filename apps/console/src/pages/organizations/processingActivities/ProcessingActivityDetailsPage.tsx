@@ -412,7 +412,7 @@ export default function ProcessingActivityDetailsPage(props: Props) {
 
             {!isSnapshotMode && (
               <div className="flex justify-end pt-4">
-                <Authorized entity="ProcessingActivity" action="updateProcessingActivity">
+                {isAuthorized("ProcessingActivity", "updateProcessingActivity") && (
                   <Button
                     type="submit"
                     variant="primary"
@@ -420,7 +420,7 @@ export default function ProcessingActivityDetailsPage(props: Props) {
                   >
                     {formState.isSubmitting ? __("Saving...") : __("Save Changes")}
                   </Button>
-                </Authorized>
+                )}
               </div>
             )}
           </form>

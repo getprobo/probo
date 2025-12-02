@@ -57,7 +57,7 @@ import {
   type BulkExportDialogRef,
 } from "/components/documents/BulkExportDialog";
 import type { DocumentsPageUserEmailQuery } from "./__generated__/DocumentsPageUserEmailQuery.graphql";
-import { PermissionsContext } from "/providers/PermissionsProvider.tsx";
+import { PermissionsContext } from "/providers/PermissionsContext";
 
 const documentsFragment = graphql`
   fragment DocumentsPageListFragment on Organization

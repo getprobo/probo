@@ -46,8 +46,9 @@ import { Link, Navigate, Outlet, useParams } from "react-router";
 import { graphql } from "relay-runtime";
 import type { MainLayoutQuery as MainLayoutQueryType } from "./__generated__/MainLayoutQuery.graphql";
 import { PageError } from "/components/PageError";
-import { PermissionsContext, PermissionsProvider } from "/providers/PermissionsProvider";
+import { PermissionsProvider } from "/providers/PermissionsProvider";
 import { buildEndpoint } from "/providers/RelayProviders";
+import { PermissionsContext } from "/providers/PermissionsContext";
 
 const MainLayoutQuery = graphql`
   query MainLayoutQuery($organizationId: ID!) {

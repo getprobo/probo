@@ -1,18 +1,18 @@
-export enum Role {
-  OWNER = "OWNER",
-  ADMIN = "ADMIN",
-  VIEWER = "VIEWER",
-}
+export const Role = {
+  OWNER: "OWNER",
+  ADMIN: "ADMIN",
+  VIEWER: "VIEWER",
+} as const
 
-export function getAssignableRoles(currentRole: Role): string[] {
-  if (!currentRole) return [];
+export type Role = (typeof Role)[keyof typeof Role];
 
-  if (currentRole === "OWNER") {
-    return ["OWNER", "ADMIN", "VIEWER"];
+export function getAssignableRoles(currentRole: Role): Role[] {
+  if (currentRole === Role.OWNER) {
+    return [Role.OWNER, Role.ADMIN, Role.VIEWER];
   }
 
-  if (currentRole === "ADMIN") {
-    return ["ADMIN", "VIEWER"];
+  if (currentRole === Role.ADMIN) {
+    return [Role.ADMIN, Role.VIEWER];
   }
 
   return [];

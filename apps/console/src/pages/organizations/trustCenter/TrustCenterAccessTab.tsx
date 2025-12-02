@@ -423,14 +423,14 @@ export default function TrustCenterAccessTab() {
           </p>
         </div>
         {organization.trustCenter?.id && (
-          {isAuthorized("TrustCenter", "createTrustCenterAccess") && (
+          isAuthorized("TrustCenter", "createTrustCenterAccess") && (
             <Button icon={IconPlusLarge} onClick={() => {
               inviteForm.reset();
               dialogRef.current?.open();
             }}>
               {__("Add Access")}
             </Button>
-          )}
+          )
         )}
       </div>
 
