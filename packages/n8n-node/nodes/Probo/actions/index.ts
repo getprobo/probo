@@ -5,6 +5,7 @@ import * as datum from './datum';
 import * as execute from './execute';
 import * as framework from './framework';
 import * as measure from './measure';
+import * as organization from './organization';
 
 export interface ResourceModule {
 	description: INodeProperties[];
@@ -23,6 +24,7 @@ export const resources: Record<string, ResourceModule> = {
 	execute: execute as ResourceModule,
 	framework: framework as ResourceModule,
 	measure: measure as ResourceModule,
+	organization: organization as ResourceModule,
 };
 
 export function getAllResourceOperations(): INodeProperties[] {
