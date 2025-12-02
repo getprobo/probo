@@ -51,7 +51,7 @@ export async function proboApiRequestAllItems(
 	const items: any[] = [];
 	let hasNextPage = true;
 	let cursor: string | null = null;
-	const pageSize = 50;
+	const pageSize = 100;
 
 	while (hasNextPage) {
 		const currentLimit = returnAll ? pageSize : Math.min(pageSize, limit - items.length);
