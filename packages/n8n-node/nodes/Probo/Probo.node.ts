@@ -5,7 +5,11 @@ import {
 	type INodeType,
 	type INodeTypeDescription,
 } from 'n8n-workflow';
-import { executeOperation } from './operations';
+import {
+	getAllResourceOperations,
+	getAllResourceFields,
+	getExecuteFunction,
+} from './actions';
 
 export class Probo implements INodeType {
 	description: INodeTypeDescription = {
@@ -14,7 +18,7 @@ export class Probo implements INodeType {
 		icon: { light: 'file:../../icons/probo.svg', dark: 'file:../../icons/probo.svg' },
 		group: ['input'],
 		version: 1,
-		subtitle: '={{$parameter["operation"]}}',
+		subtitle: '={{$parameter["resource"]}} / {{$parameter["operation"]}}',
 		description: 'Consume data from the Probo API',
 		defaults: {
 			name: 'Probo',
@@ -53,8 +57,8 @@ export class Probo implements INodeType {
 				default: 'apiKey',
 			},
 			{
-				displayName: 'Operation',
-				name: 'operation',
+				displayName: 'Resource',
+				name: 'resource',
 				type: 'options',
 				noDataExpression: true,
 				options: [
@@ -62,39 +66,17 @@ export class Probo implements INodeType {
 						name: 'Execute',
 						value: 'execute',
 						description: 'Execute a GraphQL query or mutation',
-						action: 'Execute a GraphQL operation',
+					},
+					{
+						name: 'Measure',
+						value: 'measure',
+						description: 'Manage measures',
 					},
 				],
 				default: 'execute',
 			},
-			{
-				displayName: 'Query',
-				name: 'query',
-				type: 'string',
-				typeOptions: {
-					rows: 5,
-				},
-				displayOptions: {
-					show: {
-						operation: ['execute'],
-					},
-				},
-				default: '',
-				description: 'The complete GraphQL operation including operation name and variable declarations (e.g., "query GetUser($userId: ID!) { node(id: $userId) { id } }" or "mutation UpdateUser($input: UpdateUserInput!) { updateUser(input: $input) { id } }")',
-				required: true,
-			},
-			{
-				displayName: 'Variables',
-				name: 'variables',
-				type: 'json',
-				displayOptions: {
-					show: {
-						operation: ['execute'],
-					},
-				},
-				default: '{}',
-				description: 'GraphQL variables as JSON object',
-			},
+			...getAllResourceOperations(),
+			...getAllResourceFields(),
 		],
 	};
 
@@ -103,8 +85,11 @@ export class Probo implements INodeType {
 		const returnData: INodeExecutionData[] = [];
 
 		for (let i = 0; i < items.length; i++) {
-			const operation = this.getNodeParameter('operation', i) as string;
-			const result = await executeOperation.call(this, operation, i);
+			const resource = this.getNodeParameter('resource', i) as string;
+			const operation = this.getNodeParameter('operation', i, 'execute') as string;
+
+			const executeFunction = getExecuteFunction(resource, operation);
+			const result = await executeFunction.call(this, i);
 			returnData.push(result);
 		}
 
