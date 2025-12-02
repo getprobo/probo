@@ -68,6 +68,11 @@ export class Probo implements INodeType {
 						description: 'Execute a GraphQL query or mutation',
 					},
 					{
+						name: 'Framework',
+						value: 'framework',
+						description: 'Manage frameworks',
+					},
+					{
 						name: 'Measure',
 						value: 'measure',
 						description: 'Manage measures',

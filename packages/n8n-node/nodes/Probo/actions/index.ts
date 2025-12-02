@@ -1,5 +1,6 @@
 import type { IExecuteFunctions, INodeExecutionData, INodeProperties } from 'n8n-workflow';
 import * as execute from './execute';
+import * as framework from './framework';
 import * as measure from './measure';
 
 export interface ResourceModule {
@@ -14,6 +15,7 @@ export interface OperationModule {
 
 export const resources: Record<string, ResourceModule> = {
 	execute: execute as ResourceModule,
+	framework: framework as ResourceModule,
 	measure: measure as ResourceModule,
 };
 
