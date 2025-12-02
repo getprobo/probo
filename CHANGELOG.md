@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.97.0] - 2025-12-02
+
+### Added
+
+- @probo/node-n8n-probo Meeting operations
+
+### Fixed
+
+- Console permissions initialisation
+- Probod dev config values
+
 ## [0.96.1] - 2025-12-02
 
 ### Fixed
