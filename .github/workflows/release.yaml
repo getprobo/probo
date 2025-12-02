@@ -132,6 +132,7 @@ jobs:
           node-version-file: ".nvmrc"
           cache: "npm"
           registry-url: "https://registry.npmjs.org"
+          scope: "@probo"
 
       - run: npm ci
       - run: npm --workspace @probo/n8n-nodes-probo run build
