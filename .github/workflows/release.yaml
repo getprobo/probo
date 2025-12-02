@@ -162,6 +162,9 @@ jobs:
           done > ../checksums.txt
           echo "hashes=$(cat ../checksums.txt | base64 -w0)" >> "$GITHUB_OUTPUT"
 
+      - name: Verify npm authentication
+        run: npm whoami --registry=https://registry.npmjs.org/
+
       - run: npm --workspace @probo/n8n-nodes-probo publish --access public --dry-run
       - run: npm --workspace @probo/n8n-nodes-probo publish --access public
 

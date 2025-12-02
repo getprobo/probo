@@ -40,7 +40,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/getprobo/probo.git",
+    "url": "git+https://github.com/getprobo/probo.git",
     "directory": "packages/n8n-node"
   },
   "bugs": {
