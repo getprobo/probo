@@ -77,8 +77,9 @@ export async function proboApiRequestAllItems(
 		}
 
 		if (connection?.pageInfo) {
-			hasNextPage = connection.pageInfo.hasNextPage;
-			cursor = connection.pageInfo.endCursor;
+			const pageInfo = connection.pageInfo as IDataObject;
+			hasNextPage = pageInfo.hasNextPage as boolean;
+			cursor = pageInfo.endCursor as string | null;
 		} else {
 			hasNextPage = false;
 		}

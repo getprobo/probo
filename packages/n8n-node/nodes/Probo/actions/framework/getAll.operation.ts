@@ -1,4 +1,4 @@
-import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import type { INodeProperties, IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
 import { proboApiRequestAllItems } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
@@ -84,7 +84,11 @@ export async function execute(
 		this,
 		query,
 		{ organizationId },
-		(response) => response?.data?.node?.frameworks,
+		(response) => {
+			const data = response?.data as IDataObject | undefined;
+			const node = data?.node as IDataObject | undefined;
+			return node?.frameworks as IDataObject | undefined;
+		},
 		returnAll,
 		limit,
 	);
