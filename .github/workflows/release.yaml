@@ -137,7 +137,7 @@ jobs:
 
       - run: npm ci
       - run: npm --workspace @probo/n8n-nodes-probo run build
-      - run: npm --workspace @probo/@probo/n8n-nodes-probo version --from-git --no-git-tag-version
+      - run: npm --workspace @probo/n8n-nodes-probo version --from-git --no-git-tag-version
 
       - uses: anchore/sbom-action@da167eac915b4e86f08b264dbdbc867b61be6f0c #v0.20.5
         with:

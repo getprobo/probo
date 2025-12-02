@@ -9,7 +9,7 @@
     "lint": "n8n-node lint",
     "lint:fix": "n8n-node lint --fix",
     "release": "n8n-node release",
-    "prepublishOnly": "n8n-node prerelease"
+    "prepublishOnly": "npm run build && npm run lint"
   },
   "author": {
     "name": "Probo Inc"
