@@ -59,6 +59,7 @@ export const description: INodeProperties[] = [
 		displayName: 'Email',
 		name: 'email',
 		type: 'string',
+		placeholder: 'name@example.com',
 		displayOptions: {
 			show: {
 				resource: ['organization'],
