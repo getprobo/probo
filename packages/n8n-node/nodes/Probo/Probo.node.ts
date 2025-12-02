@@ -73,6 +73,11 @@ export class Probo implements INodeType {
 						description: 'Manage controls',
 					},
 					{
+						name: 'Data',
+						value: 'datum',
+						description: 'Manage data',
+					},
+					{
 						name: 'Execute',
 						value: 'execute',
 						description: 'Execute a GraphQL query or mutation',
