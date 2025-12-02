@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.95.0] - 2025-12-02
+
+### Added
+
+- New UI EditableTable component + implementation on assets page.
+
 ## [0.94.2] - 2025-11-27
 
 ### Fixed
