@@ -135,7 +135,10 @@ jobs:
 
       - run: npm ci
       - run: npm --workspace @probo/n8n-nodes-probo run build
-      - run: npm --workspace @probo/n8n-nodes-probo version --from-git --no-git-tag-version
+      - name: Set package version from git tag
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          npm --workspace @probo/n8n-nodes-probo version "$VERSION" --no-git-tag-version
 
       - uses: anchore/sbom-action@da167eac915b4e86f08b264dbdbc867b61be6f0c #v0.20.5
         with:
