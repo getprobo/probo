@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.96.0] - 2025-12-02
+
+### Added
+
+- Add n8n-node package.
+
 ## [0.95.0] - 2025-12-02
 
 ### Added
