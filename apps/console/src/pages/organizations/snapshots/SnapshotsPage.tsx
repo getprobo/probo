@@ -34,8 +34,8 @@ import type { NodeOf } from "/types";
 import SnapshotFormDialog from "./dialog/SnapshotFormDialog";
 import { usePageTitle } from "@probo/hooks";
 import { useOrganizationId } from "/hooks/useOrganizationId";
-import { Authorized } from "/permissions";
-import { isAuthorized } from "/permissions";
+import { PermissionsContext } from "/providers/PermissionsContext";
+import { use } from "react";
 
 type Props = {
   queryRef: PreloadedQuery<SnapshotGraphListQuery>;
@@ -71,9 +71,10 @@ export default function SnapshotsPage(props: Props) {
   );
   const connectionId = data.snapshots.__id;
   const snapshots = data.snapshots.edges.map((edge) => edge.node);
+  const { isAuthorized } = use(PermissionsContext);
   usePageTitle(__("Snapshots"));
 
-  const hasAnyAction = isAuthorized(organizationId, "Snapshot", "deleteSnapshot");
+  const hasAnyAction = isAuthorized("Snapshot", "deleteSnapshot");
 
   return (
     <div className="space-y-6">
@@ -83,13 +84,13 @@ export default function SnapshotsPage(props: Props) {
           "Snapshots capture point-in-time views of your organization's compliance state. Create snapshots to track progress over time."
         )}
       >
-        <Authorized entity="Organization" action="createSnapshot">
+        {isAuthorized("Organization", "createSnapshot") && (
           <SnapshotFormDialog connection={connectionId}>
             <Button variant="primary" icon={IconPlusLarge}>
               {__("New snapshot")}
             </Button>
           </SnapshotFormDialog>
-        </Authorized>
+        )}
       </PageHeader>
 
       {snapshots.length > 0 ? (
@@ -139,7 +140,7 @@ type SnapshotRowProps = {
 function SnapshotRow(props: SnapshotRowProps) {
   const { __ } = useTranslate();
   const deleteSnapshot = useDeleteSnapshot(props.snapshot, props.connectionId);
-
+  const { isAuthorized } = use(PermissionsContext);
   const typePath = getSnapshotTypeUrlPath(props.snapshot.type);
 
   return (
@@ -159,7 +160,7 @@ function SnapshotRow(props: SnapshotRowProps) {
       {props.hasAnyAction && (
         <Td noLink width={50} className="text-end">
           <ActionDropdown>
-            <Authorized entity="Snapshot" action="deleteSnapshot">
+            {isAuthorized("Snapshot", "deleteSnapshot") && (
               <DropdownItem
                 onClick={deleteSnapshot}
                 variant="danger"
@@ -167,7 +168,7 @@ function SnapshotRow(props: SnapshotRowProps) {
               >
                 {__("Delete")}
               </DropdownItem>
-            </Authorized>
+            )}
           </ActionDropdown>
         </Td>
       )}

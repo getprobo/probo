@@ -32,14 +32,14 @@ import { CreateProcessingActivityDialog } from "./dialogs/CreateProcessingActivi
 import { deleteProcessingActivityMutation, ProcessingActivitiesConnectionKey } from "../../../hooks/graph/ProcessingActivityGraph";
 import { sprintf, promisifyMutation } from "@probo/helpers";
 import { SnapshotBanner } from "/components/SnapshotBanner";
-import { Authorized } from "/permissions";
-import { isAuthorized } from "/permissions";
 import type { NodeOf } from "/types";
 import type { ProcessingActivitiesPageQuery } from "./__generated__/ProcessingActivitiesPageQuery.graphql";
 import type {
   ProcessingActivitiesPageFragment$key,
   ProcessingActivitiesPageFragment$data,
 } from "./__generated__/ProcessingActivitiesPageFragment.graphql";
+import { PermissionsContext } from "/providers/PermissionsContext";
+import { use } from "react";
 
 interface ProcessingActivitiesPageProps {
   queryRef: PreloadedQuery<ProcessingActivitiesPageQuery>;
@@ -91,7 +91,7 @@ export default function ProcessingActivitiesPage({ queryRef }: ProcessingActivit
   const organizationId = useOrganizationId();
   const { snapshotId } = useParams<{ snapshotId?: string }>();
   const isSnapshotMode = Boolean(snapshotId);
-
+  const { isAuthorized } = use(PermissionsContext);
 
   usePageTitle(__("Processing Activities"));
 
@@ -129,8 +129,8 @@ export default function ProcessingActivitiesPage({ queryRef }: ProcessingActivit
   const activities = data?.processingActivities?.edges?.map((edge) => edge.node) ?? [];
 
   const hasAnyAction = !isSnapshotMode && (
-    isAuthorized(organizationId, "ProcessingActivity", "updateProcessingActivity") ||
-    isAuthorized(organizationId, "ProcessingActivity", "deleteProcessingActivity")
+    isAuthorized("ProcessingActivity", "updateProcessingActivity") ||
+    isAuthorized("ProcessingActivity", "deleteProcessingActivity")
   );
 
   return (
@@ -140,7 +140,7 @@ export default function ProcessingActivitiesPage({ queryRef }: ProcessingActivit
       )}
       <PageHeader title={__("Processing Activities")} description={__("Manage your processing activities under GDPR")}>
         {!isSnapshotMode && (
-          <Authorized entity="Organization" action="createProcessingActivity">
+          isAuthorized("Organization", "createProcessingActivity") && (
             <CreateProcessingActivityDialog
               organizationId={organizationId}
               connectionId={connectionId}
@@ -149,7 +149,7 @@ export default function ProcessingActivitiesPage({ queryRef }: ProcessingActivit
                 {__("Add processing activity")}
               </Button>
             </CreateProcessingActivityDialog>
-          </Authorized>
+          )
         )}
       </PageHeader>
 
@@ -222,6 +222,7 @@ function ActivityRow({
   const isSnapshotMode = Boolean(snapshotId);
   const [deleteActivity] = useMutation(deleteProcessingActivityMutation);
   const confirm = useConfirm();
+  const { isAuthorized } = use(PermissionsContext);
 
   const handleDelete = () => {
     confirm(
@@ -270,7 +271,7 @@ function ActivityRow({
       {hasAnyAction && (
         <Td noLink width={50} className="text-end">
           <ActionDropdown>
-            <Authorized entity="ProcessingActivity" action="deleteProcessingActivity">
+            {isAuthorized("ProcessingActivity", "deleteProcessingActivity") && (
               <DropdownItem
                 icon={IconTrashCan}
                 variant="danger"
@@ -278,7 +279,7 @@ function ActivityRow({
               >
                 {__("Delete")}
               </DropdownItem>
-            </Authorized>
+            )}
           </ActionDropdown>
         </Td>
       )}

@@ -8,7 +8,7 @@ import {
   Spinner,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
-import { Suspense, useState, useEffect, useRef } from "react";
+import { Suspense, useState, useEffect, useRef, use } from "react";
 import type { ItemOf, NodeOf } from "/types";
 import { graphql, useFragment, useRefetchableFragment } from "react-relay";
 import { usePeople } from "/hooks/graph/PeopleGraph.ts";
@@ -20,7 +20,7 @@ import { useOutletContext } from "react-router";
 import type { DocumentSignaturesTab_signature$key } from "/pages/organizations/documents/tabs/__generated__/DocumentSignaturesTab_signature.graphql.ts";
 import type { DocumentSignaturesTab_version$key } from "/pages/organizations/documents/tabs/__generated__/DocumentSignaturesTab_version.graphql.ts";
 import type { DocumentSignaturesTabRefetchQuery } from "./__generated__/DocumentSignaturesTabRefetchQuery.graphql";
-import { Authorized } from "/permissions";
+import { PermissionsContext } from "/providers/PermissionsContext";
 
 type Version = NodeOf<DocumentDetailPageDocumentFragment$data["versions"]>;
 
@@ -246,6 +246,7 @@ function SignatureItem(props: {
 }) {
   const signature = useFragment(signatureFragment, props.signature);
   const { __, dateTimeFormat } = useTranslate();
+  const { isAuthorized } = use(PermissionsContext);
   const [requestSignature, isSendingRequest] = useMutationWithToasts(
     requestSignatureMutation,
     {
@@ -275,26 +276,26 @@ function SignatureItem(props: {
           </div>
         </div>
         {props.signable && (
-          <Authorized entity="Document" action="requestSignature">
-          <Button
-            variant="secondary"
-            className="ml-auto"
-            disabled={isSendingRequest}
-            onClick={() => {
-              requestSignature({
-                variables: {
-                  input: {
-                    documentVersionId: props.versionId,
-                    signatoryId: props.people.id,
+          isAuthorized("Document", "requestSignature") && (
+            <Button
+              variant="secondary"
+              className="ml-auto"
+              disabled={isSendingRequest}
+              onClick={() => {
+                requestSignature({
+                  variables: {
+                    input: {
+                      documentVersionId: props.versionId,
+                      signatoryId: props.people.id,
+                    },
+                    connections: [props.connectionId],
                   },
-                  connections: [props.connectionId],
-                },
-              });
-            }}
-          >
-            {__("Request signature")}
-          </Button>
-          </Authorized>
+                });
+              }}
+            >
+              {__("Request signature")}
+            </Button>
+          )
         )}
       </div>
     );
@@ -331,25 +332,25 @@ function SignatureItem(props: {
           {__("Signed")}
         </Badge>
       ) : (
-        <Authorized entity="DocumentVersionSignature" action="cancelSignatureRequest">
-        <Button
-          variant="danger"
-          className="ml-auto"
-          disabled={isCancellingSignature}
-          onClick={() => {
-            cancelSignature({
-              variables: {
-                input: {
-                  documentVersionSignatureId: signature.id,
+        isAuthorized("DocumentVersionSignature", "cancelSignatureRequest") && (
+          <Button
+            variant="danger"
+            className="ml-auto"
+            disabled={isCancellingSignature}
+            onClick={() => {
+              cancelSignature({
+                variables: {
+                  input: {
+                    documentVersionSignatureId: signature.id,
+                  },
+                  connections: [props.connectionId],
                 },
-                connections: [props.connectionId],
-              },
-            });
-          }}
-        >
-          {__("Cancel request")}
-        </Button>
-        </Authorized>
+              });
+            }}
+          >
+            {__("Cancel request")}
+          </Button>
+        )
       )}
     </div>
   );

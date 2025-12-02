@@ -13,7 +13,7 @@ import {
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { useOutletContext } from "react-router";
-import { useState, useCallback } from "react";
+import { useState, useCallback, use } from "react";
 import z from "zod";
 import { getTrustCenterVisibilityOptions } from "@probo/helpers";
 import {
@@ -23,8 +23,8 @@ import {
 } from "/hooks/graph/TrustCenterFileGraph";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { TrustCenterFilesCard } from "/components/trustCenter/TrustCenterFilesCard";
-import { Authorized } from "/permissions";
 import type { TrustCenterFilesCardFragment$key } from "/components/trustCenter/__generated__/TrustCenterFilesCardFragment.graphql";
+import { PermissionsContext } from "/providers/PermissionsContext";
 
 type ContextType = {
   organization: {
@@ -41,7 +41,7 @@ type ContextType = {
 export default function TrustCenterFilesTab() {
   const { __ } = useTranslate();
   const { organization } = useOutletContext<ContextType>();
-
+  const { isAuthorized } = use(PermissionsContext);
   const createSchema = z.object({
     name: z.string().min(1, __("Name is required")),
     category: z.string().min(1, __("Category is required")),
@@ -201,11 +201,11 @@ export default function TrustCenterFilesTab() {
             {__("Upload and manage files for your trust center")}
           </p>
         </div>
-        <Authorized entity="Organization" action="createTrustCenterFile">
+        {isAuthorized("Organization", "createTrustCenterFile") && (
           <Button icon={IconPlusLarge} onClick={() => createDialogRef.current?.open()}>
             {__("Add File")}
           </Button>
-        </Authorized>
+        )}
       </div>
       {(isUpdating || isDeleting) && (
         <div className="flex items-center justify-center">

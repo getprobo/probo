@@ -14,11 +14,11 @@ import {
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { useFragment } from "react-relay";
-import { useMemo, useState, useCallback, useEffect } from "react";
+import { useMemo, useState, useCallback, useEffect, use } from "react";
 import { sprintf, getAuditStateVariant, getAuditStateLabel, formatDate, getTrustCenterVisibilityOptions } from "@probo/helpers";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import type { TrustCenterAuditsCardFragment$key } from "./__generated__/TrustCenterAuditsCardFragment.graphql";
-import { isAuthorized } from "/permissions";
+import { PermissionsContext } from "/providers/PermissionsContext";
 
 const trustCenterAuditFragment = graphql`
   fragment TrustCenterAuditsCardFragment on Audit {
@@ -124,8 +124,8 @@ function AuditRow(props: {
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
   const [optimisticValue, setOptimisticValue] = useState<string | null>(null);
-
-  const canUpdate = organizationId ? isAuthorized(organizationId, "TrustCenter", "updateTrustCenter") : false;
+  const { isAuthorized } = use(PermissionsContext);
+  const canUpdate = organizationId ? isAuthorized("TrustCenter", "updateTrustCenter") : false;
 
   const handleValueChange = useCallback((value: string | {}) => {
     const stringValue = typeof value === 'string' ? value : '';

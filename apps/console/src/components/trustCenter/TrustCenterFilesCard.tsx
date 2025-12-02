@@ -18,12 +18,10 @@ import {
 import { useTranslate } from "@probo/i18n";
 import type { TrustCenterFilesCardFragment$key, TrustCenterFilesCardFragment$data } from "./__generated__/TrustCenterFilesCardFragment.graphql";
 import { useFragment } from "react-relay";
-import { useMemo, useState, useCallback, useEffect } from "react";
+import { useMemo, useState, useCallback, useEffect, use } from "react";
 import { sprintf, getTrustCenterVisibilityOptions } from "@probo/helpers";
 import { formatDate } from "@probo/helpers";
-import { Authorized } from "/permissions";
-import { isAuthorized } from "/permissions";
-import { useParams } from "react-router";
+import { PermissionsContext } from "/providers/PermissionsContext";
 
 const trustCenterFileFragment = graphql`
   fragment TrustCenterFilesCardFragment on TrustCenterFile {
@@ -150,9 +148,8 @@ function FileRow(props: {
   const file = props.file;
   const { __ } = useTranslate();
   const [optimisticValue, setOptimisticValue] = useState<string | null>(null);
-  const { organizationId } = useParams();
-
-  const canUpdate = organizationId ? isAuthorized(organizationId, "TrustCenter", "updateTrustCenter") : false;
+  const { isAuthorized } = use(PermissionsContext);
+  const canUpdate = isAuthorized("TrustCenter", "updateTrustCenter");
 
   const handleValueChange = useCallback((value: string | {}) => {
     const stringValue = typeof value === 'string' ? value : '';
@@ -207,7 +204,7 @@ function FileRow(props: {
             onClick={() => window.open(file.fileUrl, '_blank', 'noopener,noreferrer')}
             title={__("Download")}
           />
-          <Authorized entity="TrustCenterFile" action="updateTrustCenterFile">
+          {isAuthorized("TrustCenterFile", "updateTrustCenterFile") && (
             <Button
               variant="secondary"
               icon={IconPencil}
@@ -215,8 +212,8 @@ function FileRow(props: {
               disabled={props.disabled}
               title={__("Edit")}
             />
-          </Authorized>
-          <Authorized entity="TrustCenterFile" action="deleteTrustCenterFile">
+          )}
+          {isAuthorized("TrustCenterFile", "deleteTrustCenterFile") && (
             <Button
               variant="danger"
               icon={IconTrashCan}
@@ -224,7 +221,7 @@ function FileRow(props: {
               disabled={props.disabled}
               title={__("Delete")}
             />
-          </Authorized>
+          )}
         </div>
       </Td>
     </Tr>

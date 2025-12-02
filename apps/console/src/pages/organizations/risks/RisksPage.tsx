@@ -29,8 +29,8 @@ import type { RiskGraphListQuery } from "/hooks/graph/__generated__/RiskGraphLis
 import type { RiskGraphFragment$data } from "/hooks/graph/__generated__/RiskGraphFragment.graphql";
 import { useParams } from "react-router";
 import { SnapshotBanner } from "/components/SnapshotBanner";
-import { Authorized } from "/permissions";
-import { isAuthorized } from "/permissions";
+import { use } from "react";
+import { PermissionsContext } from "/providers/PermissionsContext";
 
 type Props = {
   queryRef: PreloadedQuery<RiskGraphListQuery>;
@@ -41,6 +41,7 @@ export default function RisksPage(props: Props) {
   const organizationId = useOrganizationId();
   const { snapshotId } = useParams<{ snapshotId?: string }>();
   const isSnapshotMode = Boolean(snapshotId);
+  const { isAuthorized } = use(PermissionsContext);
 
   const { connectionId, risks, ...pagination } = useRisksQuery(props.queryRef);
 
@@ -57,8 +58,8 @@ export default function RisksPage(props: Props) {
   usePageTitle(__("Risks"));
 
   const hasAnyAction = !isSnapshotMode && (
-    isAuthorized(organizationId, "Risk", "updateRisk") ||
-    isAuthorized(organizationId, "Risk", "deleteRisk")
+    isAuthorized("Risk", "updateRisk") ||
+    isAuthorized("Risk", "deleteRisk")
   );
 
   return (
@@ -71,7 +72,7 @@ export default function RisksPage(props: Props) {
         )}
       >
         {!isSnapshotMode && (
-          <Authorized entity="Organization" action="createRisk">
+          isAuthorized("Organization", "createRisk") && (
             <FormRiskDialog
               connection={connectionId}
               onSuccess={() => {
@@ -79,7 +80,7 @@ export default function RisksPage(props: Props) {
               }}
               trigger={<Button icon={IconPlusLarge}>{__("New Risk")}</Button>}
             />
-          </Authorized>
+          )
         )}
       </PageHeader>
 
@@ -143,6 +144,7 @@ function RiskRow(props: RowProps) {
   const isSnapshotMode = Boolean(snapshotId);
   const [deleteRisk] = useDeleteRiskMutation();
   const confirm = useConfirm();
+  const { isAuthorized } = use(PermissionsContext);
   const onDelete = () => {
     confirm(
       () =>
@@ -194,16 +196,16 @@ function RiskRow(props: RowProps) {
         {props.hasAnyAction && (
           <Td noLink className="text-end">
             <ActionDropdown>
-              <Authorized entity="Risk" action="updateRisk">
+              {isAuthorized("Risk", "updateRisk") && (
                 <DropdownItem
                   icon={IconPencil}
                   onClick={() => formDialogRef.current?.open()}
                 >
                   {__("Edit")}
                 </DropdownItem>
-              </Authorized>
+              )}
 
-              <Authorized entity="Risk" action="deleteRisk">
+              {isAuthorized("Risk", "deleteRisk") && (
                 <DropdownItem
                   variant="danger"
                   icon={IconTrashCan}
@@ -211,7 +213,7 @@ function RiskRow(props: RowProps) {
                 >
                   {__("Delete")}
                 </DropdownItem>
-              </Authorized>
+              )}
             </ActionDropdown>
           </Td>
         )}

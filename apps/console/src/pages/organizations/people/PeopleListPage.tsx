@@ -23,8 +23,8 @@ import { usePageTitle } from "@probo/hooks";
 import { getRole } from "@probo/helpers";
 import { CreatePeopleDialog } from "./dialogs/CreatePeopleDialog";
 import { useOrganizationId } from "/hooks/useOrganizationId";
-import { Authorized } from "/permissions";
-import { isAuthorized } from "/permissions";
+import { PermissionsContext } from "/providers/PermissionsContext";
+import { use } from "react";
 
 type People = NodeOf<PeopleGraphPaginatedFragment$data["peoples"]>;
 
@@ -42,14 +42,14 @@ export default function PeopleListPage({
   queryRef: PreloadedQuery<PeopleGraphPaginatedQuery>;
 }) {
   const { __ } = useTranslate();
-  const organizationId = useOrganizationId();
+  const { isAuthorized } = use(PermissionsContext);
   const { people, refetch, connectionId, hasNext, loadNext, isLoadingNext } =
     usePeopleQuery(queryRef);
 
   usePageTitle(__("Members"));
 
-  const hasAnyAction = isAuthorized(organizationId, "People", "updatePeople") ||
-    isAuthorized(organizationId, "People", "deletePeople");
+  const hasAnyAction = isAuthorized("People", "updatePeople") ||
+    isAuthorized("People", "deletePeople");
 
   return (
     <div className="space-y-6">
@@ -59,11 +59,11 @@ export default function PeopleListPage({
           "Keep track of your company's workforce and their progress towards completing tasks assigned to them."
         )}
       >
-        <Authorized entity="Organization" action="createPeople">
+        {isAuthorized("Organization", "createPeople") && (
           <CreatePeopleDialog connectionId={connectionId}>
             <Button icon={IconPlusLarge}>{__("Add member")}</Button>
           </CreatePeopleDialog>
-        </Authorized>
+        )}
       </PageHeader>
       <SortableTable
         refetch={refetch}
@@ -107,6 +107,7 @@ function PeopleRow({
   const { __ } = useTranslate();
   const deletePeople = useDeletePeople(people, connectionId);
   const contractEnded = isContractEnded(people);
+  const { isAuthorized } = use(PermissionsContext);
 
   return (
     <Tr
@@ -129,7 +130,7 @@ function PeopleRow({
       {hasAnyAction && (
         <Td noLink width={50} className="text-end">
           <ActionDropdown>
-            <Authorized entity="People" action="deletePeople">
+            {isAuthorized("People", "deletePeople") && (
               <DropdownItem
                 icon={IconTrashCan}
                 variant="danger"
@@ -137,7 +138,7 @@ function PeopleRow({
               >
                 {__("Delete")}
               </DropdownItem>
-            </Authorized>
+            )}
           </ActionDropdown>
         </Td>
       )}

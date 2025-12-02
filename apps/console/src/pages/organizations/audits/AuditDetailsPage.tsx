@@ -34,7 +34,8 @@ import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import z from "zod";
 import { getAuditStateLabel, getAuditStateVariant, auditStates, fileSize, sprintf, formatDatetime, formatError, formatDate, type GraphQLError } from "@probo/helpers";
 import type { AuditGraphNodeQuery } from "/hooks/graph/__generated__/AuditGraphNodeQuery.graphql";
-import { Authorized } from "/permissions";
+import { use } from "react";
+import { PermissionsContext } from "/providers/PermissionsContext";
 
 const updateAuditSchema = z.object({
   name: z.string().nullable().optional(),
@@ -52,7 +53,7 @@ export default function AuditDetailsPage(props: Props) {
   const auditEntry = audit.node;
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
-
+  const { isAuthorized } = use(PermissionsContext);
   if (!auditEntry || !auditEntry.id || !auditEntry.framework) {
     return <div>{__("Audit not found")}</div>;
   }
@@ -146,7 +147,7 @@ export default function AuditDetailsPage(props: Props) {
           </Badge>
         </div>
         <ActionDropdown variant="secondary">
-          <Authorized entity="Audit" action="deleteAudit">
+          {isAuthorized("Audit", "deleteAudit") && (
             <DropdownItem
               variant="danger"
               icon={IconTrashCan}
@@ -154,7 +155,7 @@ export default function AuditDetailsPage(props: Props) {
             >
               {__("Delete")}
             </DropdownItem>
-          </Authorized>
+          )}
         </ActionDropdown>
       </div>
 
@@ -187,11 +188,11 @@ export default function AuditDetailsPage(props: Props) {
 
           <div className="flex justify-end">
             {formState.isDirty && (
-              <Authorized entity="Audit" action="updateAudit">
+              isAuthorized("Audit", "updateAudit") && (
                 <Button type="submit" disabled={formState.isSubmitting}>
                   {formState.isSubmitting ? __("Updating...") : __("Update")}
                 </Button>
-              </Authorized>
+              )
             )}
           </div>
         </form>

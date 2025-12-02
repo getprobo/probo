@@ -11,10 +11,9 @@ import {
 import { useOutletContext } from "react-router";
 import { useUpdateTrustCenterMutation, useUploadTrustCenterNDAMutation, useDeleteTrustCenterNDAMutation } from "/hooks/graph/TrustCenterGraph";
 import type { TrustCenterGraphQuery$data } from "/hooks/graph/__generated__/TrustCenterGraphQuery.graphql";
-import { useState } from "react";
+import { use, useState } from "react";
 import { SlackConnections } from "../../../components/organizations/SlackConnection";
-import { isAuthorized } from "/permissions";
-import { useParams } from "react-router";
+import { PermissionsContext } from "/providers/PermissionsContext";
 
 type ContextType = {
   organization: TrustCenterGraphQuery$data["organization"];
@@ -24,14 +23,14 @@ export default function TrustCenterOverviewTab() {
   const { __ } = useTranslate();
   const { toast } = useToast();
   const { organization } = useOutletContext<ContextType>();
-  const { organizationId } = useParams();
+  const { isAuthorized } = use(PermissionsContext);
 
   const [updateTrustCenter, isUpdating] = useUpdateTrustCenterMutation();
   const [uploadNDA, isUploadingNDA] = useUploadTrustCenterNDAMutation();
   const [deleteNDA, isDeletingNDA] = useDeleteTrustCenterNDAMutation();
   const [isActive, setIsActive] = useState(organization.trustCenter?.active || false);
 
-  const canUpdateTrustCenter = organizationId ? isAuthorized(organizationId, "TrustCenter", "updateTrustCenter") : false;
+  const canUpdateTrustCenter = isAuthorized("TrustCenter", "updateTrustCenter");
 
   const handleToggleActive = async (active: boolean) => {
     if (!organization.trustCenter?.id) {

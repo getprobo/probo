@@ -26,11 +26,10 @@ import {
 import { Link } from "react-router";
 import type { FrameworksPageCardFragment$key } from "./__generated__/FrameworksPageCardFragment.graphql";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
-import { useState, type ChangeEventHandler } from "react";
+import { useState, type ChangeEventHandler, use } from "react";
 import { FrameworkLogo } from "/components/FrameworkLogo";
 import { FrameworkFormDialog } from "./dialogs/FrameworkFormDialog";
-import { Authorized } from "/permissions";
-import { isAuthorized } from "/permissions";
+import { PermissionsContext } from "/providers/PermissionsContext";
 
 type Props = {
   queryRef: PreloadedQuery<FrameworkGraphListQuery>;
@@ -54,6 +53,7 @@ const importFrameworkMutation = graphql`
 
 export default function FrameworksPage(props: Props) {
   const { __ } = useTranslate();
+  const { isAuthorized } = use(PermissionsContext);
   usePageTitle(__("Frameworks"));
   const data = usePreloadedQuery(frameworksQuery, props.queryRef);
   const connectionId = data.organization.frameworks!.__id;
@@ -120,8 +120,8 @@ export default function FrameworksPage(props: Props) {
 
   const isLoading = isUploading || isImporting;
 
-  const hasAnyAction = isAuthorized(data.organization.id!, "Framework", "updateFramework") ||
-    isAuthorized(data.organization.id!, "Framework", "deleteFramework");
+  const hasAnyAction = isAuthorized("Framework", "updateFramework") ||
+    isAuthorized("Framework", "deleteFramework");
 
   return (
     <div className="space-y-6">
@@ -134,20 +134,22 @@ export default function FrameworksPage(props: Props) {
         title={__("Frameworks")}
         description={__("Manage your compliance frameworks")}
       >
-        <Authorized entity="Organization" action="createFramework">
-          <FileButton
-            variant="secondary"
-            icon={IconFolderUpload}
-            onChange={handleUpload}
-            disabled={isLoading}
-          >
-            {__("Import")}
-          </FileButton>
-          <FrameworkSelector
-            onSelect={importNamedFramework}
-            disabled={isLoading}
-          />
-        </Authorized>
+        {isAuthorized("Organization", "createFramework") && (
+          <>
+            <FileButton
+              variant="secondary"
+              icon={IconFolderUpload}
+              onChange={handleUpload}
+              disabled={isLoading}
+            >
+              {__("Import")}
+            </FileButton>
+            <FrameworkSelector
+              onSelect={importNamedFramework}
+              disabled={isLoading}
+            />
+          </>
+        )}
       </PageHeader>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -182,6 +184,7 @@ type FrameworkCardProps = {
 
 function FrameworkCard(props: FrameworkCardProps) {
   const framework = useFragment(frameworkCardFragment, props.framework);
+  const { isAuthorized } = use(PermissionsContext);
   const deleteFramework = useDeleteFrameworkMutation(
     framework,
     props.connectionId
@@ -200,7 +203,7 @@ function FrameworkCard(props: FrameworkCardProps) {
         <FrameworkLogo {...framework} />
         {props.hasAnyAction && (
           <ActionDropdown className="z-10 relative">
-            <Authorized entity="Framework" action="updateFramework">
+            {isAuthorized("Framework", "updateFramework") && (
               <DropdownItem
                 icon={IconPencil}
                 onClick={() => {
@@ -209,8 +212,8 @@ function FrameworkCard(props: FrameworkCardProps) {
               >
                 {__("Edit")}
               </DropdownItem>
-            </Authorized>
-            <Authorized entity="Framework" action="deleteFramework">
+            )}
+            {isAuthorized("Framework", "deleteFramework") && (
               <DropdownItem
                 icon={IconTrashCan}
                 onClick={() => deleteFramework()}
@@ -218,7 +221,7 @@ function FrameworkCard(props: FrameworkCardProps) {
               >
                 {__("Delete")}
               </DropdownItem>
-            </Authorized>
+            )}
           </ActionDropdown>
         )}
       </div>

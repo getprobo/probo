@@ -29,7 +29,8 @@ import { VendorsMultiSelectField } from "/components/form/VendorsMultiSelectFiel
 import type { AssetGraphNodeQuery } from "/hooks/graph/__generated__/AssetGraphNodeQuery.graphql";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { useOrganizationId } from "/hooks/useOrganizationId";
-import { Authorized } from "/permissions";
+import { use } from "react";
+import { PermissionsContext } from "/providers/PermissionsContext";
 
 const updateAssetSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -51,7 +52,7 @@ export default function AssetDetailsPage(props: Props) {
   const organizationId = useOrganizationId();
   const { snapshotId } = useParams<{ snapshotId?: string }>();
   const isSnapshotMode = Boolean(snapshotId);
-
+  const { isAuthorized } = use(PermissionsContext);
   if (!assetEntry || !assetEntry.id) {
     return <div>{__("Asset not found")}</div>;
   }
@@ -116,7 +117,7 @@ export default function AssetDetailsPage(props: Props) {
           </Badge>
         </div>
         {!isSnapshotMode && (
-          <Authorized entity="Asset" action="deleteAsset">
+          isAuthorized("Asset", "deleteAsset") && (
             <ActionDropdown variant="secondary">
               <DropdownItem
                 variant="danger"
@@ -126,7 +127,7 @@ export default function AssetDetailsPage(props: Props) {
                 {__("Delete")}
               </DropdownItem>
             </ActionDropdown>
-          </Authorized>
+          )
         )}
       </div>
 
@@ -182,11 +183,11 @@ export default function AssetDetailsPage(props: Props) {
 
         <div className="flex justify-end">
           {formState.isDirty && !isSnapshotMode && (
-            <Authorized entity="Asset" action="updateAsset">
+            isAuthorized("Asset", "updateAsset") && (
               <Button type="submit" disabled={formState.isSubmitting}>
                 {formState.isSubmitting ? __("Updating...") : __("Update")}
               </Button>
-            </Authorized>
+            )
           )}
         </div>
       </form>

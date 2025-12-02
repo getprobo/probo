@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import { useOutletContext } from "react-router";
 import { useFragment, graphql } from "react-relay";
 import { Controller } from "react-hook-form";
@@ -37,7 +37,7 @@ import {
   useVerifyDomainMutation,
 } from "/hooks/graph/SAMLConfigurationGraph";
 import type { SAMLSettingsTabFragment$key } from "./__generated__/SAMLSettingsTabFragment.graphql";
-import { Authorized } from "/permissions";
+import { PermissionsContext } from "/providers/PermissionsContext";
 
 const samlSettingsTabFragment = graphql`
   fragment SAMLSettingsTabFragment on Organization {
@@ -97,6 +97,7 @@ type SetupStep = "initiate" | "verify" | "configure";
 export default function SAMLSettingsTab() {
   const { __ } = useTranslate();
   const { organization: organizationKey } = useOutletContext<OutletContext>();
+  const { isAuthorized } = use(PermissionsContext);
   const organization = useFragment(samlSettingsTabFragment, organizationKey);
   const configs = organization.samlConfigurations;
 
@@ -372,11 +373,11 @@ export default function SAMLSettingsTab() {
       <div className="space-y-4">
         <div className="flex justify-between items-center">
           <h2 className="text-base font-medium">{__("SAML Single Sign-On")}</h2>
-          <Authorized entity="Organization" action="createSAMLConfiguration">
+          {isAuthorized("Organization", "createSAMLConfiguration") && (
             <Button onClick={() => handleOpenModal()}>
               {__("Add Configuration")}
             </Button>
-          </Authorized>
+          )}
         </div>
 
         {configs.length === 0 ? (
@@ -388,11 +389,11 @@ export default function SAMLSettingsTab() {
               <p className="text-gray-600 mb-6">
                 {__("Set up SAML 2.0 single sign-on for your organization by adding a configuration for each email domain.")}
               </p>
-              <Authorized entity="Organization" action="createSAMLConfiguration">
+              {isAuthorized("Organization", "createSAMLConfiguration") && (
                 <Button onClick={() => handleOpenModal()}>
                   {__("Add Your First Configuration")}
                 </Button>
-              </Authorized>
+              )}
             </div>
           </Card>
         ) : (
@@ -457,7 +458,7 @@ export default function SAMLSettingsTab() {
                     <div className="flex gap-2 justify-end">
                       {config.domainVerified ? (
                         <>
-                          <Authorized entity="SAMLConfiguration" action="updateSAMLConfiguration">
+                          {isAuthorized("SAMLConfiguration", "updateSAMLConfiguration") && (
                             <Button
                               variant={config.enabled ? "danger" : "primary"}
                               onClick={() => handleToggleEnabled(config)}
@@ -465,34 +466,34 @@ export default function SAMLSettingsTab() {
                             >
                               {config.enabled ? __("Disable") : __("Enable")}
                             </Button>
-                          </Authorized>
-                          <Authorized entity="SAMLConfiguration" action="updateSAMLConfiguration">
+                          )}
+                          {isAuthorized("SAMLConfiguration", "updateSAMLConfiguration") && (
                             <Button
                               variant="secondary"
                               onClick={() => handleOpenModal(config)}
                             >
                               {__("Edit")}
                             </Button>
-                          </Authorized>
+                          )}
                         </>
                       ) : (
                         <>
-                          <Authorized entity="Organization" action="verifyDomain">
+                          {isAuthorized("Organization", "verifyDomain") && (
                             <Button
                               variant="primary"
                               onClick={() => handleOpenModal(config)}
                             >
                               {__("Verify Domain")}
                             </Button>
-                          </Authorized>
-                          <Authorized entity="Organization" action="deleteOrganization">
+                          )}
+                          {isAuthorized("Organization", "deleteOrganization") && (
                             <Button
                               variant="danger"
                               onClick={() => handleDelete(config)}
                             >
                               {__("Delete")}
                             </Button>
-                          </Authorized>
+                          )}
                         </>
                       )}
                     </div>

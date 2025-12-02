@@ -29,7 +29,8 @@ import z from "zod";
 import { SnapshotBanner } from "/components/SnapshotBanner";
 import { validateSnapshotConsistency } from "@probo/helpers";
 import type { DatumGraphNodeQuery } from "/hooks/graph/__generated__/DatumGraphNodeQuery.graphql";
-import { Authorized } from "/permissions";
+import { use } from "react";
+import { PermissionsContext } from "/providers/PermissionsContext";
 
 const updateDatumSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -57,6 +58,7 @@ export default function DatumDetailsPage(props: Props) {
 
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
+  const { isAuthorized } = use(PermissionsContext);
 
   const deleteDatum = useDeleteDatum(
     datumEntry,
@@ -125,7 +127,7 @@ export default function DatumDetailsPage(props: Props) {
           <Badge variant="info">{datumEntry?.dataClassification}</Badge>
         </div>
         {!isSnapshotMode && (
-          <Authorized entity="Datum" action="deleteDatum">
+          isAuthorized("Datum", "deleteDatum") && (
             <ActionDropdown variant="secondary">
               <DropdownItem
                 variant="danger"
@@ -135,7 +137,7 @@ export default function DatumDetailsPage(props: Props) {
                 {__("Delete")}
               </DropdownItem>
             </ActionDropdown>
-          </Authorized>
+          )
         )}
       </div>
 
@@ -180,11 +182,11 @@ export default function DatumDetailsPage(props: Props) {
         {!isSnapshotMode && (
           <div className="flex justify-end">
             {formState.isDirty && (
-              <Authorized entity="Datum" action="updateDatum">
+              isAuthorized("Datum", "updateDatum") && (
                 <Button type="submit" disabled={formState.isSubmitting}>
                   {formState.isSubmitting ? __("Updating...") : __("Update")}
                 </Button>
-              </Authorized>
+              )
             )}
           </div>
         )}

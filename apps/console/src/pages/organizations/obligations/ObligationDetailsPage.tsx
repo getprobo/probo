@@ -35,7 +35,8 @@ import z from "zod";
 import { getObligationStatusVariant, getObligationStatusLabel, formatDatetime, getObligationStatusOptions, validateSnapshotConsistency } from "@probo/helpers";
 import { SnapshotBanner } from "/components/SnapshotBanner";
 import type { ObligationGraphNodeQuery } from "/hooks/graph/__generated__/ObligationGraphNodeQuery.graphql";
-import { Authorized } from "/permissions";
+import { use } from "react";
+import { PermissionsContext } from "/providers/PermissionsContext";
 
 const updateObligationSchema = z.object({
   area: z.string().optional(),
@@ -61,6 +62,7 @@ export default function ObligationDetailsPage(props: Props) {
   const organizationId = useOrganizationId();
   const { snapshotId } = useParams<{ snapshotId?: string }>();
   const isSnapshotMode = Boolean(snapshotId);
+  const { isAuthorized } = use(PermissionsContext);
 
   if (!obligation) {
     return <div>{__("Obligation not found")}</div>;
@@ -157,13 +159,13 @@ export default function ObligationDetailsPage(props: Props) {
       </div>
 
         {!isSnapshotMode && (
-          <Authorized entity="Obligation" action="deleteObligation">
+          isAuthorized("Obligation", "deleteObligation") && (
             <ActionDropdown>
               <DropdownItem icon={IconTrashCan} onClick={deleteObligation}>
                 {__("Delete")}
               </DropdownItem>
             </ActionDropdown>
-          </Authorized>
+          )
         )}
       </div>
 
@@ -301,14 +303,14 @@ export default function ObligationDetailsPage(props: Props) {
 
           {!isSnapshotMode && (
             <div className="flex justify-end">
-              <Authorized entity="Obligation" action="updateObligation">
+              {isAuthorized("Obligation", "updateObligation") && (
                 <Button
                   type="submit"
                   disabled={formState.isSubmitting}
                 >
                   {formState.isSubmitting ? __("Saving...") : __("Save Changes")}
                 </Button>
-              </Authorized>
+              )}
             </div>
           )}
         </form>

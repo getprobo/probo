@@ -14,14 +14,14 @@ import {
   IconPencil,
   IconArrowLink,
 } from "@probo/ui";
-import { type ReactNode, useRef, useState } from "react";
+import { type ReactNode, useRef, useState, use } from "react";
 import {
   useTrustCenterReferences,
   useUpdateTrustCenterReferenceRankMutation,
 } from "/hooks/graph/TrustCenterReferenceGraph";
 import { TrustCenterReferenceDialog, type TrustCenterReferenceDialogRef } from "./TrustCenterReferenceDialog";
 import { DeleteTrustCenterReferenceDialog } from "./DeleteTrustCenterReferenceDialog";
-import { Authorized } from "/permissions";
+import { PermissionsContext } from "/providers/PermissionsContext";
 
 type Props = {
   trustCenterId: string;
@@ -41,6 +41,7 @@ type Reference = {
 
 export function TrustCenterReferencesSection({ trustCenterId }: Props) {
   const { __ } = useTranslate();
+  const { isAuthorized } = use(PermissionsContext);
   const dialogRef = useRef<TrustCenterReferenceDialogRef>(null);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
@@ -112,14 +113,14 @@ export function TrustCenterReferencesSection({ trustCenterId }: Props) {
             {__("Showcase your customers and partners on your trust center")}
           </p>
         </div>
-        <Authorized entity="TrustCenter" action="createTrustCenterReference">
+        {isAuthorized("TrustCenter", "createTrustCenterReference") && (
           <Button
             icon={IconPlusLarge}
             onClick={handleCreate}
           >
             {__("Add Reference")}
           </Button>
-        </Authorized>
+        )}
       </div>
 
       <Table>
@@ -190,6 +191,7 @@ function ReferenceRow({
   onDrop,
 }: ReferenceRowProps) {
   const [isMouseDown, setIsMouseDown] = useState(false);
+  const { isAuthorized } = use(PermissionsContext);
 
   const className = [
     isDragging && "opacity-50 cursor-grabbing",
@@ -231,14 +233,14 @@ function ReferenceRow({
             icon={IconArrowLink}
             onClick={onVisitWebsite}
           />
-          <Authorized entity="TrustCenterReference" action="updateTrustCenterReference">
+          {isAuthorized("TrustCenterReference", "updateTrustCenterReference") && (
             <Button
               variant="secondary"
               icon={IconPencil}
               onClick={onEdit}
             />
-          </Authorized>
-          <Authorized entity="TrustCenterReference" action="deleteTrustCenterReference">
+          )}
+          {isAuthorized("TrustCenterReference", "deleteTrustCenterReference") && (
             <DeleteTrustCenterReferenceDialog
               referenceId={reference.id}
               referenceName={reference.name}
@@ -249,7 +251,7 @@ function ReferenceRow({
                 icon={IconTrashCan}
               />
             </DeleteTrustCenterReferenceDialog>
-          </Authorized>
+          )}
         </div>
       </Td>
     </Tr>

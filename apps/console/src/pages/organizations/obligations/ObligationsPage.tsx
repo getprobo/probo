@@ -31,12 +31,12 @@ import { deleteObligationMutation } from "../../../hooks/graph/ObligationGraph";
 import { promisifyMutation, getObligationStatusVariant, getObligationStatusLabel, formatDate } from "@probo/helpers";
 import { SnapshotBanner } from "/components/SnapshotBanner";
 import type { ObligationsPageQuery } from "./__generated__/ObligationsPageQuery.graphql";
-import { Authorized } from "/permissions";
-import { isAuthorized } from "/permissions";
 import type {
   ObligationsPageFragment$key,
   ObligationsPageFragment$data,
 } from "./__generated__/ObligationsPageFragment.graphql";
+import { use } from "react";
+import { PermissionsContext } from "/providers/PermissionsContext";
 
 type Obligation = ObligationsPageFragment$data['obligations']['edges'][number]['node'];
 
@@ -95,6 +95,7 @@ export default function ObligationsPage({ queryRef }: ObligationsPageProps) {
   const organizationId = useOrganizationId();
   const { snapshotId } = useParams<{ snapshotId?: string }>();
   const isSnapshotMode = Boolean(snapshotId);
+  const { isAuthorized } = use(PermissionsContext);
 
   usePageTitle(__("Obligations"));
 
@@ -120,8 +121,8 @@ export default function ObligationsPage({ queryRef }: ObligationsPageProps) {
   const obligations: Obligation[] = obligationsData?.obligations?.edges?.map((edge) => edge.node) ?? [];
 
   const hasAnyAction = !isSnapshotMode && (
-    isAuthorized(organizationId, "Obligation", "updateObligation") ||
-    isAuthorized(organizationId, "Obligation", "deleteObligation")
+    isAuthorized("Obligation", "updateObligation") ||
+    isAuthorized("Obligation", "deleteObligation")
   );
 
   return (
@@ -136,11 +137,11 @@ export default function ObligationsPage({ queryRef }: ObligationsPageProps) {
         )}
       >
         {!snapshotId && (
-          <Authorized entity="Organization" action="createObligation">
+          isAuthorized("Organization", "createObligation") && (
             <CreateObligationDialog organizationId={organizationId} connection={connectionId}>
               <Button icon={IconPlusLarge}>{__("Add obligation")}</Button>
             </CreateObligationDialog>
-          </Authorized>
+          )
         )}
       </PageHeader>
 
@@ -214,7 +215,7 @@ function ObligationRow({
   const [deleteObligation] = useMutation(deleteObligationMutation);
   const confirm = useConfirm();
   const isSnapshotMode = Boolean(snapshotId);
-
+  const { isAuthorized } = use(PermissionsContext);
 
   const handleDelete = () => {
     confirm(
@@ -261,7 +262,7 @@ function ObligationRow({
       {hasAnyAction && (
         <Td noLink width={50} className="text-end">
           <ActionDropdown>
-            <Authorized entity="Obligation" action="deleteObligation">
+            {isAuthorized("Obligation", "deleteObligation") && (
               <DropdownItem
                 icon={IconTrashCan}
                 variant="danger"
@@ -269,7 +270,7 @@ function ObligationRow({
               >
                 {__("Delete")}
               </DropdownItem>
-            </Authorized>
+            )}
           </ActionDropdown>
         </Td>
       )}

@@ -14,11 +14,11 @@ import {
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { useFragment } from "react-relay";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, use } from "react";
 import { sprintf } from "@probo/helpers";
 import { useOrganizationId } from "/hooks/useOrganizationId";
-import { isAuthorized } from "/permissions/permissions";
 import type { TrustCenterVendorsCardFragment$key } from "./__generated__/TrustCenterVendorsCardFragment.graphql";
+import { PermissionsContext } from "/providers/PermissionsContext";
 
 const trustCenterVendorFragment = graphql`
   fragment TrustCenterVendorsCardFragment on Vendor {
@@ -49,43 +49,13 @@ type Props<Params> = {
 
 export function TrustCenterVendorsCard<Params>(props: Props<Params>) {
   const { __ } = useTranslate();
-  const organizationId = useOrganizationId();
   const [limit, setLimit] = useState<number | null>(100);
-  const [canUpdate, setCanUpdate] = useState<boolean>(false);
-
+  const { isAuthorized } = use(PermissionsContext);
+  const canUpdate = isAuthorized("Vendor", "updateVendor");
   const vendors = useMemo(() => {
     return limit ? props.vendors.slice(0, limit) : props.vendors;
   }, [props.vendors, limit]);
   const showMoreButton = limit !== null && props.vendors.length > limit;
-
-  useEffect(() => {
-    if (!organizationId) {
-      setCanUpdate(false);
-      return;
-    }
-
-    try {
-      const authorized = isAuthorized(organizationId, "Vendor", "updateVendor");
-      setCanUpdate(authorized);
-    } catch (promise) {
-      if (promise instanceof Promise) {
-        promise
-          .then(() => {
-            try {
-              const authorized = isAuthorized(organizationId, "Vendor", "updateVendor");
-              setCanUpdate(authorized);
-            } catch {
-              setCanUpdate(false);
-            }
-          })
-          .catch(() => {
-            setCanUpdate(false);
-          });
-      } else {
-        setCanUpdate(false);
-      }
-    }
-  }, [organizationId]);
 
   const onToggleVisibility = (vendorId: string, showOnTrustCenter: boolean) => {
     props.onToggleVisibility({

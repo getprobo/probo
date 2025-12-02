@@ -6,7 +6,8 @@ import type { CustomDomainManagerDeleteMutation } from "./__generated__/CustomDo
 import { CreateCustomDomainDialog } from "./CreateCustomDomainDialog";
 import { DeleteCustomDomainDialog } from "./DeleteCustomDomainDialog";
 import { DomainDetailsDialog } from "./DomainDetailsDialog";
-import { Authorized } from "/permissions";
+import { PermissionsContext } from "/providers/PermissionsContext";
+import { use } from "react";
 
 const deleteCustomDomainMutation = graphql`
   mutation CustomDomainManagerDeleteMutation($input: DeleteCustomDomainInput!) {
@@ -45,7 +46,7 @@ export function CustomDomainManager({
   customDomain,
 }: CustomDomainManagerProps) {
   const { __ } = useTranslate();
-
+  const { isAuthorized } = use(PermissionsContext);
   const [deleteCustomDomain] =
     useMutationWithToasts<CustomDomainManagerDeleteMutation>(
       deleteCustomDomainMutation,
@@ -107,11 +108,11 @@ export function CustomDomainManager({
             )}
           </p>
           <div className="flex justify-center">
-            <Authorized entity="Organization" action="createCustomDomain">
+            {isAuthorized("Organization", "createCustomDomain") && (
               <CreateCustomDomainDialog organizationId={organizationId}>
                 <Button icon={IconPlusLarge}>{__("Add Domain")}</Button>
               </CreateCustomDomainDialog>
-            </Authorized>
+            )}
           </div>
         </div>
       </Card>
@@ -139,14 +140,14 @@ export function CustomDomainManager({
               <Button variant="secondary">{__("View Details")}</Button>
             </DomainDetailsDialog>
 
-            <Authorized entity="CustomDomain" action="deleteCustomDomain">
+            {isAuthorized("CustomDomain", "deleteCustomDomain") && (
               <DeleteCustomDomainDialog
                 domainName={domain.domain}
                 onConfirm={handleDeleteDomain}
               >
                 <Button variant="danger">{__("Delete")}</Button>
               </DeleteCustomDomainDialog>
-            </Authorized>
+            )}
           </div>
         </div>
       </div>

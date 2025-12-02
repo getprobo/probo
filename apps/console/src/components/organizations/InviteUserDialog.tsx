@@ -17,8 +17,9 @@ import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { z } from "zod";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { Controller } from "react-hook-form";
-import { Suspense } from "react";
-import { getAssignableRoles } from "/permissions";
+import { Suspense, use } from "react";
+import { getAssignableRoles } from "@probo/helpers";
+import { PermissionsContext } from "/providers/PermissionsContext";
 
 const inviteMutation = graphql`
   mutation InviteUserDialogMutation(
@@ -56,7 +57,8 @@ type Props = PropsWithChildren & {
 function InviteUserDialogContent({ children, connectionId, onRefetch }: Props) {
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
-  const assignableRoles = getAssignableRoles(organizationId);
+  const { role: currentUserRole } = use(PermissionsContext);
+  const assignableRoles = getAssignableRoles(currentUserRole);
   const [inviteUser, isInviting] = useMutationWithToasts(inviteMutation, {
     successMessage: __("Invitation sent successfully"),
     errorMessage: __("Failed to send invitation"),

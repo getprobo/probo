@@ -29,7 +29,7 @@ import {
   useLazyLoadQuery,
   type PreloadedQuery,
 } from "react-relay";
-import { useRef } from "react";
+import { use, useRef } from "react";
 import { graphql } from "relay-runtime";
 import type { DocumentGraphListQuery } from "/hooks/graph/__generated__/DocumentGraphListQuery.graphql";
 import {
@@ -57,8 +57,7 @@ import {
   type BulkExportDialogRef,
 } from "/components/documents/BulkExportDialog";
 import type { DocumentsPageUserEmailQuery } from "./__generated__/DocumentsPageUserEmailQuery.graphql";
-import { Authorized } from "/permissions";
-import { isAuthorized } from "/permissions";
+import { PermissionsContext } from "/providers/PermissionsProvider.tsx";
 
 const documentsFragment = graphql`
   fragment DocumentsPageListFragment on Organization
@@ -107,6 +106,7 @@ const UserEmailQuery = graphql`
 
 export default function DocumentsPage(props: Props) {
   const { __ } = useTranslate();
+  const { isAuthorized } = use(PermissionsContext);
 
   const organization = usePreloadedQuery(
     documentsQuery,
@@ -137,8 +137,8 @@ export default function DocumentsPage(props: Props) {
 
   usePageTitle(__("Documents"));
 
-  const hasAnyAction = isAuthorized(organization.id, "Document", "updateDocument") ||
-    isAuthorized(organization.id, "Document", "deleteDocument");
+  const hasAnyAction = isAuthorized("Document", "updateDocument") ||
+    isAuthorized("Document", "deleteDocument");
 
   const handleSendSigningNotifications = () => {
     sendSigningNotifications({
@@ -198,21 +198,21 @@ export default function DocumentsPage(props: Props) {
         description={__("Manage your organization's documents")}
       >
         <div className="flex gap-2">
-          <Authorized entity="Document" action="sendSigningNotifications">
-          <Button
-            icon={IconBell2}
-            variant="secondary"
-            onClick={handleSendSigningNotifications}
-          >
-            {__("Send signing notifications")}
-          </Button>
-          </Authorized>
-          <Authorized entity="Organization" action="createDocument">
+          {isAuthorized("Document", "sendSigningNotifications") && (
+            <Button
+              icon={IconBell2}
+              variant="secondary"
+              onClick={handleSendSigningNotifications}
+            >
+              {__("Send signing notifications")}
+            </Button>
+          )}
+          {isAuthorized("Organization", "createDocument") && (
             <CreateDocumentDialog
               connection={connectionId}
               trigger={<Button icon={IconPlusLarge}>{__("New document")}</Button>}
             />
-          </Authorized>
+          )}
         </div>
       </PageHeader>
       {documents.length > 0 ? (
@@ -258,7 +258,7 @@ export default function DocumentsPage(props: Props) {
                       </button>
                     </div>
                     <div className="flex gap-2 items-center">
-                      <Authorized entity="Document" action="updateDocument">
+                      {isAuthorized("Document", "updateDocument") && (
                         <PublishDocumentsDialog
                           documentIds={selection}
                           onSave={clear}
@@ -270,8 +270,8 @@ export default function DocumentsPage(props: Props) {
                             {__("Publish")}
                           </Button>
                         </PublishDocumentsDialog>
-                      </Authorized>
-                      <Authorized entity="Document" action="bulkRequestSignatures">
+                      )}
+                      {isAuthorized("Document", "bulkRequestSignatures") && (
                         <SignatureDocumentsDialog
                           documentIds={selection}
                           onSave={clear}
@@ -284,7 +284,7 @@ export default function DocumentsPage(props: Props) {
                             {__("Request signature")}
                           </Button>
                         </SignatureDocumentsDialog>
-                      </Authorized>
+                      )}
                       <BulkExportDialog
                         ref={bulkExportDialogRef}
                         onExport={handleBulkExport}
@@ -300,7 +300,7 @@ export default function DocumentsPage(props: Props) {
                           {__("Export")}
                         </Button>
                       </BulkExportDialog>
-                      <Authorized entity="Document" action="deleteDocument">
+                      {isAuthorized("Document", "deleteDocument") && (
                         <Button
                           variant="danger"
                           icon={IconTrashCan}
@@ -309,7 +309,7 @@ export default function DocumentsPage(props: Props) {
                         >
                           {__("Delete")}
                         </Button>
-                      </Authorized>
+                      )}
                     </div>
                   </div>
                 </Th>
@@ -392,6 +392,7 @@ function DocumentRow({
   onCheck: () => void;
   hasAnyAction: boolean;
 }) {
+  const { isAuthorized } = use(PermissionsContext);
   const document = useFragment<DocumentsPageRowFragment$key>(
     rowFragment,
     documentKey
@@ -465,7 +466,7 @@ function DocumentRow({
       {hasAnyAction && (
         <Td noLink width={50} className="text-end w-18">
           <ActionDropdown>
-            <Authorized entity="Document" action="deleteDocument">
+            {isAuthorized("Document", "deleteDocument") && (
               <DropdownItem
                 variant="danger"
                 icon={IconTrashCan}
@@ -473,7 +474,7 @@ function DocumentRow({
               >
                 {__("Delete")}
               </DropdownItem>
-            </Authorized>
+            )}
           </ActionDropdown>
         </Td>
       )}

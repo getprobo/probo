@@ -9,7 +9,8 @@ import type { PeopleGraphUpdateMutation } from "/hooks/graph/__generated__/Peopl
 import { updatePeopleMutation } from "/hooks/graph/PeopleGraph";
 import { Button, Card, Field, Input } from "@probo/ui";
 import { EmailsField } from "/components/form/EmailsField";
-import { Authorized } from "/permissions";
+import { PermissionsContext } from "/providers/PermissionsContext";
+import { use } from "react";
 
 const schema = z.object({
   fullName: z.string().min(1),
@@ -49,7 +50,7 @@ export default function PeopleProfileTab() {
       errorMessage: __("Failed to update member"),
     }
   );
-
+  const { isAuthorized } = use(PermissionsContext);
   const onSubmit = handleSubmit((data) => {
     const input = {
       id: people.id!,
@@ -95,11 +96,11 @@ export default function PeopleProfileTab() {
       </Card>
       <div className="flex justify-end">
         {formState.isDirty && (
-          <Authorized entity="People" action="updatePeople">
+          isAuthorized("People", "updatePeople") && (
             <Button type="submit" disabled={isMutating}>
               {__("Update")}
             </Button>
-          </Authorized>
+          )
         )}
       </div>
     </form>

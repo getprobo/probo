@@ -12,7 +12,8 @@ import { tasksQuery } from "/hooks/graph/TaskGraph";
 import { usePageTitle } from "@probo/hooks";
 import TasksCard from "/components/tasks/TasksCard";
 import TaskFormDialog from "/components/tasks/TaskFormDialog";
-import { Authorized } from "/permissions";
+import { PermissionsContext } from "/providers/PermissionsContext";
+import { use } from "react";
 
 const tasksFragment = graphql`
   fragment TasksPageFragment on Organization
@@ -66,7 +67,7 @@ export default function TasksPage({ queryRef }: Props) {
   );
   const tasks = data.tasks?.edges.map((edge) => edge.node);
   const connectionId = data.tasks.__id;
-
+  const { isAuthorized } = use(PermissionsContext);
   usePageTitle(__("Tasks"));
 
   return (
@@ -77,11 +78,11 @@ export default function TasksPage({ queryRef }: Props) {
           "Track your assigned compliance tasks and keep progress on track."
         )}
       >
-        <Authorized entity="Organization" action="createTask">
+        {isAuthorized("Organization", "createTask") && (
           <TaskFormDialog connection={connectionId}>
             <Button icon={IconPlusLarge}>{__("New task")}</Button>
           </TaskFormDialog>
-        </Authorized>
+        )}
       </PageHeader>
       <TasksCard connectionId={connectionId} tasks={tasks ?? []} />
     </div>

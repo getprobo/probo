@@ -42,7 +42,8 @@ import { Link } from "react-router";
 import { useState, useEffect, useRef } from "react";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import type { MeetingsPage_UpdateSummaryMutation } from "./__generated__/MeetingsPage_UpdateSummaryMutation.graphql";
-import { Authorized } from "/permissions";
+import { use } from "react";
+import { PermissionsContext } from "/providers/PermissionsContext";
 
 const meetingsFragment = graphql`
   fragment MeetingsPageListFragment on Organization
@@ -85,7 +86,7 @@ type Props = {
 
 export default function MeetingsPage(props: Props) {
   const { __ } = useTranslate();
-
+  const { isAuthorized } = use(PermissionsContext);
   const organization = usePreloadedQuery(
     meetingsQuery,
     props.queryRef
@@ -218,7 +219,7 @@ export default function MeetingsPage(props: Props) {
               <h3 className="text-sm font-semibold text-txt-secondary">
                 {__("Summary")}
               </h3>
-              <Authorized entity="Meeting" action="updateMeeting">
+              {isAuthorized("Meeting", "updateMeeting") && (
                 <Button
                   variant="quaternary"
                   icon={IconPencil}
@@ -226,7 +227,7 @@ export default function MeetingsPage(props: Props) {
                 >
                   {__("Edit")}
                 </Button>
-              </Authorized>
+              )}
             </div>
             <div className="w-full">
               {displayedSummary ? (
@@ -248,11 +249,11 @@ export default function MeetingsPage(props: Props) {
           "Track and manage your organization's meetings and their minutes."
         )}
       >
-        <Authorized entity="Organization" action="createMeeting">
+        {isAuthorized("Organization", "createMeeting") && (
           <CreateMeetingDialog connectionId={connectionId}>
             <Button icon={IconPlusLarge}>{__("Add meeting")}</Button>
           </CreateMeetingDialog>
-        </Authorized>
+        )}
       </PageHeader>
       {meetingNodes.length > 0 ? (
         <SortableTable {...pagination}>
@@ -320,7 +321,7 @@ function MeetingRow({
   const { __ } = useTranslate();
   const [deleteMeeting] = useDeleteMeetingMutation();
   const confirm = useConfirm();
-
+  const { isAuthorized } = use(PermissionsContext);
   const handleDelete = () => {
     confirm(
       () =>
@@ -370,7 +371,7 @@ function MeetingRow({
           </span>
         )}
       </Td>
-      <Authorized entity="Meeting" action="deleteMeeting">
+      {isAuthorized("Meeting", "deleteMeeting") && (
         <Td noLink width={50} className="text-end w-18">
           <ActionDropdown>
             <DropdownItem
@@ -382,7 +383,7 @@ function MeetingRow({
             </DropdownItem>
           </ActionDropdown>
         </Td>
-      </Authorized>
+      )}
     </Tr>
   );
 }

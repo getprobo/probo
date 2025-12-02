@@ -40,7 +40,7 @@ import type {
   MeasuresPageFragment$key,
 } from "./__generated__/MeasuresPageFragment.graphql";
 import { groupBy, objectKeys, slugify, sprintf } from "@probo/helpers";
-import { useMemo, useRef, useState, type ChangeEventHandler } from "react";
+import { useMemo, useRef, useState, type ChangeEventHandler, use } from "react";
 import type { NodeOf } from "/types";
 import type { MeasuresPageImportMutation } from "./__generated__/MeasuresPageImportMutation.graphql";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
@@ -48,8 +48,7 @@ import { useOrganizationId } from "/hooks/useOrganizationId";
 import { Link, useParams } from "react-router";
 import MeasureFormDialog from "./dialog/MeasureFormDialog";
 import { usePageTitle } from "@probo/hooks";
-import { Authorized } from "/permissions";
-import { isAuthorized } from "/permissions";
+import { PermissionsContext } from "/providers/PermissionsContext";
 
 type Props = {
   queryRef: PreloadedQuery<MeasureGraphListQuery>;
@@ -92,6 +91,7 @@ const importMeasuresMutation = graphql`
 
 export default function MeasuresPage(props: Props) {
   const { __ } = useTranslate();
+  const { isAuthorized } = use(PermissionsContext);
   const organization = usePreloadedQuery(
     measuresQuery,
     props.queryRef
@@ -115,8 +115,8 @@ export default function MeasuresPage(props: Props) {
   const importFileRef = useRef<HTMLInputElement>(null);
   usePageTitle(__("Measures"));
 
-  const hasAnyAction = isAuthorized(organization.id, "Measure", "updateMeasure") ||
-    isAuthorized(organization.id, "Measure", "deleteMeasure");
+  const hasAnyAction = isAuthorized("Measure", "updateMeasure") ||
+    isAuthorized("Measure", "deleteMeasure");
 
   const handleImport: ChangeEventHandler<HTMLInputElement> = (event) => {
     const file = event.target.files?.[0];
@@ -148,21 +148,23 @@ export default function MeasuresPage(props: Props) {
           "Measures are actions taken to reduce the risk. Add them to track their implementation status."
         )}
       >
-        <Authorized entity="Organization" action="createMeasure">
-          <FileButton
-            ref={importFileRef}
-            variant="secondary"
-            icon={IconFolderUpload}
-            onChange={handleImport}
-          >
-            {__("Import")}
-          </FileButton>
-          <MeasureFormDialog connection={connectionId}>
-            <Button variant="primary" icon={IconPlusLarge}>
-              {__("New measure")}
-            </Button>
-          </MeasureFormDialog>
-        </Authorized>
+        {isAuthorized("Organization", "createMeasure") && (
+          <>
+            <FileButton
+              ref={importFileRef}
+              variant="secondary"
+              icon={IconFolderUpload}
+              onChange={handleImport}
+            >
+              {__("Import")}
+            </FileButton>
+            <MeasureFormDialog connection={connectionId}>
+              <Button variant="primary" icon={IconPlusLarge}>
+                {__("New measure")}
+              </Button>
+            </MeasureFormDialog>
+          </>
+        )}
       </PageHeader>
       <MeasureImplementation measures={measures} className="my-10" />
       {objectKeys(measuresPerCategory)
@@ -269,6 +271,7 @@ function MeasureRow(props: MeasureRowProps) {
   const [deleteMeasure, isDeleting] = useDeleteMeasureMutation();
   const confirm = useConfirm();
   const organizationId = useOrganizationId();
+  const { isAuthorized } = use(PermissionsContext);
 
   const onDelete = () => {
     confirm(
@@ -306,15 +309,15 @@ function MeasureRow(props: MeasureRowProps) {
         {props.hasAnyAction && (
           <Td noLink width={50} className="text-end">
             <ActionDropdown>
-              <Authorized entity="Measure" action="updateMeasure">
+              {isAuthorized("Measure", "updateMeasure") && (
                 <DropdownItem
                   icon={IconPencil}
                   onClick={() => dialogRef.current?.open()}
                 >
                   {__("Edit")}
                 </DropdownItem>
-              </Authorized>
-              <Authorized entity="Measure" action="deleteMeasure">
+              )}
+              {isAuthorized("Measure", "deleteMeasure") && (
                 <DropdownItem
                   onClick={onDelete}
                   disabled={isDeleting}
@@ -323,7 +326,7 @@ function MeasureRow(props: MeasureRowProps) {
                 >
                   {__("Delete")}
                 </DropdownItem>
-              </Authorized>
+              )}
             </ActionDropdown>
           </Td>
         )}

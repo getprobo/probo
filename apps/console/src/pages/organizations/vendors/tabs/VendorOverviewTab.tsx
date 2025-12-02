@@ -6,7 +6,7 @@ import { PeopleSelectField } from "/components/form/PeopleSelectField";
 import { ControlledField } from "/components/form/ControlledField";
 import { CountriesField } from "/components/form/CountriesField";
 import { useOrganizationId } from "/hooks/useOrganizationId";
-import { useMemo } from "react";
+import { use, useMemo } from "react";
 import { usePageTitle } from "@probo/hooks";
 import { downloadFile, formatDate } from "@probo/helpers";
 import { useFragment, graphql } from "react-relay";
@@ -20,7 +20,7 @@ import type { useVendorFormFragment$key } from "/hooks/forms/__generated__/useVe
 import type { VendorOverviewTabBusinessAssociateAgreementFragment$key } from "./__generated__/VendorOverviewTabBusinessAssociateAgreementFragment.graphql";
 import type { VendorOverviewTabDataPrivacyAgreementFragment$key } from "./__generated__/VendorOverviewTabDataPrivacyAgreementFragment.graphql";
 import type { VendorCategory } from "@probo/vendors";
-import { Authorized } from "/permissions";
+import { PermissionsContext } from "/providers/PermissionsContext";
 
 const vendorBusinessAssociateAgreementFragment = graphql`
   fragment VendorOverviewTabBusinessAssociateAgreementFragment on Vendor {
@@ -58,7 +58,7 @@ export default function VendorOverviewTab() {
   }>();
 
   const { __ } = useTranslate();
-
+  const { isAuthorized } = use(PermissionsContext);
   const vendorCategories: { value: VendorCategory; label: string }[] = [
     { value: "ANALYTICS", label: __("Analytics") },
     { value: "CLOUD_MONITORING", label: __("Cloud Monitoring") },
@@ -396,11 +396,11 @@ export default function VendorOverviewTab() {
       {/* Submit */}
       {!isSnapshotMode && (
         <div className="flex justify-end">
-          <Authorized entity="Vendor" action="updateVendor">
+          {isAuthorized("Vendor", "updateVendor") && (
             <Button type="submit" disabled={isSubmitting}>
               {__("Update vendor")}
             </Button>
-          </Authorized>
+          )}
         </div>
       )}
     </form>

@@ -1,4 +1,4 @@
-import { useState, Suspense } from "react";
+import { useState, Suspense, use } from "react";
 import { useOutletContext } from "react-router";
 import { usePaginationFragment, graphql } from "react-relay";
 import {
@@ -29,11 +29,9 @@ import { useTranslate } from "@probo/i18n";
 import { SortableTable, SortableTh } from "/components/SortableTable";
 import { InviteUserDialog } from "/components/organizations/InviteUserDialog";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
-import { sprintf } from "@probo/helpers";
+import { getAssignableRoles, sprintf } from "@probo/helpers";
 import clsx from "clsx";
 import type { NodeOf } from "/types";
-import { Authorized } from "/permissions";
-import { getAssignableRoles, getUserRole } from "/permissions";
 import type {
   MembersSettingsTabMembershipsFragment$data,
   MembersSettingsTabMembershipsFragment$key
@@ -42,6 +40,7 @@ import type {
   MembersSettingsTabInvitationsFragment$data,
   MembersSettingsTabInvitationsFragment$key
 } from "./__generated__/MembersSettingsTabInvitationsFragment.graphql";
+import { PermissionsContext } from "/providers/PermissionsContext";
 
 const paginatedMembershipsFragment = graphql`
   fragment MembersSettingsTabMembershipsFragment on Organization
@@ -153,7 +152,7 @@ type OutletContext = {
 export default function MembersSettingsTab() {
   const { __ } = useTranslate();
   const { organization: organizationKey } = useOutletContext<OutletContext>();
-
+  const { isAuthorized } = use(PermissionsContext);
   const membershipsPagination = usePaginationFragment(
     paginatedMembershipsFragment,
     organizationKey as MembersSettingsTabMembershipsFragment$key
@@ -180,14 +179,14 @@ export default function MembersSettingsTab() {
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <h2 className="text-base font-medium">{__("Workspace members")}</h2>
-        <Authorized entity="Organization" action="inviteUser">
+        {isAuthorized("Organization", "inviteUser") && (
           <InviteUserDialog
             connectionId={invitationsPagination.data.invitations?.__id}
             onRefetch={refetchInvitations}
           >
             <Button variant="secondary">{__("Invite member")}</Button>
           </InviteUserDialog>
-        </Authorized>
+        )}
       </div>
 
       <Tabs>
@@ -314,6 +313,7 @@ function InvitationRow(props: {
 }) {
   const { __ } = useTranslate();
   const confirm = useConfirm();
+  const { isAuthorized } = use(PermissionsContext);
   const [deleteInvitation, isDeleting] = useMutationWithToasts(
     deleteInvitationMutation,
     {
@@ -376,7 +376,7 @@ function InvitationRow(props: {
           {isDeleting ? (
             <Spinner size={16} />
           ) : (
-            <Authorized entity="Invitation" action="deleteInvitation">
+            isAuthorized("Invitation", "deleteInvitation") && (
               <Button
                 variant="danger"
                 onClick={onDelete}
@@ -384,7 +384,7 @@ function InvitationRow(props: {
                 icon={IconTrashCan}
                 aria-label={__("Delete invitation")}
               />
-            </Authorized>
+            )
           )}
         </div>
       </Td>
@@ -399,9 +399,9 @@ function MembershipRowContent(props: {
   onRefetch: () => void;
 }) {
   const { __ } = useTranslate();
-  const availableRoles = getAssignableRoles(props.organizationId);
-  const currentUserRole = getUserRole(props.organizationId);
-
+  const { role: currentUserRole } = use(PermissionsContext);
+  const availableRoles = getAssignableRoles(currentUserRole);
+  const { isAuthorized } = use(PermissionsContext);
   const [removeMember, isRemoving] = useMutationWithToasts(removeMemberMutation, {
     successMessage: __("Member removed successfully"),
     errorMessage: __("Failed to remove member"),
@@ -494,31 +494,27 @@ function MembershipRowContent(props: {
             className="flex gap-2 justify-end"
             onClick={(e) => e.stopPropagation()}
           >
-            <Authorized entity="Organization" action="updateMembership">
-              {canEditThisRole && (
-                <Button
-                  variant="secondary"
-                  onClick={handleEditClick}
-                  disabled={isUpdating}
-                  icon={IconPencil}
-                  aria-label={__("Edit role")}
-                />
-              )}
-            </Authorized>
+            {isAuthorized("Organization", "updateMembership") && canEditThisRole && (
+              <Button
+                variant="secondary"
+                onClick={handleEditClick}
+                disabled={isUpdating}
+                icon={IconPencil}
+                aria-label={__("Edit role")}
+              />
+            )}
             {isRemoving ? (
               <Spinner size={16} />
             ) : (
-              <Authorized entity="Organization" action="removeMember">
-                {canEditThisRole && (
-                  <Button
-                    variant="danger"
-                    onClick={onRemove}
-                    disabled={isRemoving}
-                    icon={IconTrashCan}
-                    aria-label={__("Remove member")}
-                  />
-                )}
-              </Authorized>
+              isAuthorized("Organization", "removeMember") && canEditThisRole && (
+                <Button
+                  variant="danger"
+                  onClick={onRemove}
+                  disabled={isRemoving}
+                  icon={IconTrashCan}
+                  aria-label={__("Remove member")}
+                />
+              )
             )}
           </div>
         </Td>

@@ -31,7 +31,8 @@ import type { FrameworkDetailPageExportFrameworkMutation } from "./__generated__
 import { FrameworkFormDialog } from "./dialogs/FrameworkFormDialog";
 import { FrameworkControlDialog } from "./dialogs/FrameworkControlDialog";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
-import { Authorized } from "/permissions";
+import { use } from "react";
+import { PermissionsContext } from "/providers/PermissionsContext";
 
 const frameworkDetailFragment = graphql`
   fragment FrameworkDetailPageFragment on Framework {
@@ -103,7 +104,7 @@ export default function FrameworkDetailPage(props: Props) {
     framework,
     ConnectionHandler.getConnectionID(organizationId, connectionListKey)!
   );
-
+  const { isAuthorized } = use(PermissionsContext);
   const [generateFrameworkStateOfApplicability] =
     useMutationWithToasts<FrameworkDetailPageGenerateFrameworkStateOfApplicabilityMutation>(
       generateFrameworkStateOfApplicabilityMutation,
@@ -150,7 +151,7 @@ export default function FrameworkDetailPage(props: Props) {
           </>
         }
       >
-        <Authorized entity="Framework" action="updateFramework">
+        {isAuthorized("Framework", "updateFramework") && (
           <FrameworkFormDialog
             organizationId={organizationId}
             framework={framework}
@@ -159,7 +160,7 @@ export default function FrameworkDetailPage(props: Props) {
               {__("Edit")}
             </Button>
           </FrameworkFormDialog>
-        </Authorized>
+        )}
         <ActionDropdown variant="secondary">
           <DropdownItem
             variant="primary"
@@ -191,11 +192,11 @@ export default function FrameworkDetailPage(props: Props) {
           >
             {__("Export Framework")}
           </DropdownItem>
-          <Authorized entity="Framework" action="deleteFramework">
+          {isAuthorized("Framework", "deleteFramework") && (
             <DropdownItem icon={IconTrashCan} variant="danger" onClick={onDelete}>
               {__("Delete")}
             </DropdownItem>
-          </Authorized>
+          )}
         </ActionDropdown>
       </PageHeader>
       <div className="text-lg font-semibold">
@@ -216,7 +217,7 @@ export default function FrameworkDetailPage(props: Props) {
               active={selectedControl?.id === control.id}
             />
           ))}
-          <Authorized entity="Organization" action="createControl">
+          {isAuthorized("Organization", "createControl") && (
             <FrameworkControlDialog
               frameworkId={framework.id}
               connectionId={connectionId}
@@ -226,7 +227,7 @@ export default function FrameworkDetailPage(props: Props) {
                 {__("Add new control")}
               </button>
             </FrameworkControlDialog>
-          </Authorized>
+          )}
         </div>
         <Outlet context={{ framework }} />
       </div>

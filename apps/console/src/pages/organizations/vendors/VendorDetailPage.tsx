@@ -29,7 +29,8 @@ import { ImportAssessmentDialog } from "./dialogs/ImportAssessmentDialog";
 import { complianceReportsFragment } from "./tabs/VendorComplianceTab";
 import type { VendorComplianceTabFragment$key } from "./tabs/__generated__/VendorComplianceTabFragment.graphql";
 import { SnapshotBanner } from "/components/SnapshotBanner";
-import { Authorized } from "/permissions";
+import { use } from "react";
+import { PermissionsContext } from "/providers/PermissionsContext";
 
 type Props = {
   queryRef: PreloadedQuery<VendorGraphNodeQuery>;
@@ -42,6 +43,7 @@ export default function VendorDetailPage(props: Props) {
   const organizationId = useOrganizationId();
   const { snapshotId } = useParams<{ snapshotId?: string }>();
   const isSnapshotMode = Boolean(snapshotId);
+  const { isAuthorized } = use(PermissionsContext);
 
   if (!vendor) {
     return <div>{__("Vendor not found")}</div>;
@@ -98,7 +100,7 @@ export default function VendorDetailPage(props: Props) {
                 {__("Assessment From Website")}
               </Button>
             </ImportAssessmentDialog>
-            <Authorized entity="Vendor" action="deleteVendor">
+            {isAuthorized("Vendor", "deleteVendor") && (
               <ActionDropdown variant="secondary">
                 <DropdownItem
                   variant="danger"
@@ -108,7 +110,7 @@ export default function VendorDetailPage(props: Props) {
                   {__("Delete")}
                 </DropdownItem>
               </ActionDropdown>
-            </Authorized>
+            )}
           </div>
         )}
       </div>

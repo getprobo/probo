@@ -39,15 +39,14 @@ import {
   UserDropdown as UserDropdownRoot,
   useToast,
 } from "@probo/ui";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, use, useEffect, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { useLazyLoadQuery } from "react-relay";
 import { Link, Navigate, Outlet, useParams } from "react-router";
 import { graphql } from "relay-runtime";
 import type { MainLayoutQuery as MainLayoutQueryType } from "./__generated__/MainLayoutQuery.graphql";
 import { PageError } from "/components/PageError";
-import { Authorized } from "/permissions";
-import { PermissionsProvider } from "/providers/PermissionsProvider";
+import { PermissionsContext, PermissionsProvider } from "/providers/PermissionsProvider";
 import { buildEndpoint } from "/providers/RelayProviders";
 
 const MainLayoutQuery = graphql`
@@ -98,6 +97,7 @@ function MainLayoutContent({
   prefix: string;
 }) {
   const { __ } = useTranslate();
+  const { isAuthorized } = use(PermissionsContext);
   const data = useLazyLoadQuery<MainLayoutQueryType>(MainLayoutQuery, {
     organizationId,
   });
@@ -116,132 +116,132 @@ function MainLayoutContent({
       }
       sidebar={
         <ul className="space-y-[2px]">
-          <Authorized entity="Organization" action="listMeetings">
+          {isAuthorized("Organization", "listMeetings") && (
             <SidebarItem
               label={__("Meetings")}
               icon={IconCalendar1}
               to={`${prefix}/meetings`}
             />
-          </Authorized>
-          <Authorized entity="Organization" action="listTasks">
+          )}
+          {isAuthorized("Organization", "listTasks") && (
             <SidebarItem
               label={__("Tasks")}
               icon={IconInboxEmpty}
               to={`${prefix}/tasks`}
             />
-          </Authorized>
-          <Authorized entity="Organization" action="listMeasures">
+          )}
+          {isAuthorized("Organization", "listMeasures") && (
             <SidebarItem
               label={__("Measures")}
               icon={IconTodo}
               to={`${prefix}/measures`}
             />
-          </Authorized>
-          <Authorized entity="Organization" action="listRisks">
+          )}
+          {isAuthorized("Organization", "listRisks") && (
             <SidebarItem
               label={__("Risks")}
               icon={IconFire3}
               to={`${prefix}/risks`}
             />
-          </Authorized>
-          <Authorized entity="Organization" action="listFrameworks">
+          )}
+          {isAuthorized("Organization", "listFrameworks") && (
             <SidebarItem
               label={__("Frameworks")}
               icon={IconBank}
               to={`${prefix}/frameworks`}
             />
-          </Authorized>
-          <Authorized entity="Organization" action="listPeople">
+          )}
+          {isAuthorized("Organization", "listPeople") && (
             <SidebarItem
               label={__("People")}
               icon={IconGroup1}
               to={`${prefix}/people`}
             />
-          </Authorized>
-          <Authorized entity="Organization" action="listVendors">
+          )}
+          {isAuthorized("Organization", "listVendors") && (
             <SidebarItem
               label={__("Vendors")}
               icon={IconStore}
               to={`${prefix}/vendors`}
             />
-          </Authorized>
-          <Authorized entity="Organization" action="listDocuments">
+          )}
+          {isAuthorized("Organization", "listDocuments") && (
             <SidebarItem
               label={__("Documents")}
               icon={IconPageTextLine}
               to={`${prefix}/documents`}
             />
-          </Authorized>
-          <Authorized entity="Organization" action="listAssets">
+          )}
+          {isAuthorized("Organization", "listAssets") && (
             <SidebarItem
               label={__("Assets")}
               icon={IconBox}
               to={`${prefix}/assets`}
             />
-          </Authorized>
-          <Authorized entity="Organization" action="listData">
+          )}
+          {isAuthorized("Organization", "listData") && (
             <SidebarItem
               label={__("Data")}
               icon={IconListStack}
               to={`${prefix}/data`}
             />
-          </Authorized>
-          <Authorized entity="Organization" action="listAudits">
+          )}
+          {isAuthorized("Organization", "listAudits") && (
             <SidebarItem
               label={__("Audits")}
               icon={IconMedal}
               to={`${prefix}/audits`}
             />
-          </Authorized>
-          <Authorized entity="Organization" action="listNonconformities">
+          )}
+          {isAuthorized("Organization", "listNonconformities") && (
             <SidebarItem
               label={__("Nonconformities")}
               icon={IconCrossLargeX}
               to={`${prefix}/nonconformities`}
             />
-          </Authorized>
-          <Authorized entity="Organization" action="listObligations">
+          )}
+          {isAuthorized("Organization", "listObligations") && (
             <SidebarItem
               label={__("Obligations")}
               icon={IconBook}
               to={`${prefix}/obligations`}
             />
-          </Authorized>
-          <Authorized entity="Organization" action="listContinualImprovements">
+          )}
+          {isAuthorized("Organization", "listContinualImprovements") && (
             <SidebarItem
               label={__("Continual Improvements")}
               icon={IconRotateCw}
               to={`${prefix}/continual-improvements`}
             />
-          </Authorized>
-          <Authorized entity="Organization" action="listProcessingActivities">
+          )}
+          {isAuthorized("Organization", "listProcessingActivities") && (
             <SidebarItem
               label={__("Processing Activities")}
               icon={IconCircleProgress}
               to={`${prefix}/processing-activities`}
             />
-          </Authorized>
-          <Authorized entity="Organization" action="listSnapshots">
+          )}
+          {isAuthorized("Organization", "listSnapshots") && (
             <SidebarItem
               label={__("Snapshots")}
               icon={IconClock}
               to={`${prefix}/snapshots`}
             />
-          </Authorized>
-          <Authorized entity="Organization" action="getTrustCenter">
+          )}
+          {isAuthorized("Organization", "getTrustCenter") && (
             <SidebarItem
               label={__("Trust Center")}
               icon={IconShield}
               to={`${prefix}/trust-center`}
             />
-          </Authorized>
-          <Authorized entity="Organization" action="listMembers">
+          )}
+          {isAuthorized("Organization", "listMembers") && (
             <SidebarItem
               label={__("Settings")}
               icon={IconSettingsGear2}
               to={`${prefix}/settings`}
             />
-          </Authorized>
+          )}
         </ul>
       }
     >
@@ -255,6 +255,7 @@ function MainLayoutContent({
 function UserDropdown({ organizationId }: { organizationId: string }) {
   const { __ } = useTranslate();
   const { toast } = useToast();
+  const { isAuthorized } = use(PermissionsContext);
   const user = useLazyLoadQuery<MainLayoutQueryType>(MainLayoutQuery, {
     organizationId,
   }).viewer.user;
@@ -290,13 +291,13 @@ function UserDropdown({ organizationId }: { organizationId: string }) {
 
   return (
     <UserDropdownRoot fullName={user.fullName} email={user.email}>
-      <Authorized entity="Organization" action="deleteOrganization">
+      {isAuthorized("Organization", "deleteOrganization") && (
         <UserDropdownItem
           to="/api-keys"
           icon={IconKey}
           label={__("API Keys")}
         />
-      </Authorized>
+      )}
       <UserDropdownItem
         to="mailto:support@getprobo.com"
         icon={IconCircleQuestionmark}

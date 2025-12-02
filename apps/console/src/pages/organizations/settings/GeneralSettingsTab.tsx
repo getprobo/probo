@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, type ChangeEventHandler } from "react";
+import { useState, useRef, useEffect, type ChangeEventHandler, use } from "react";
 import { useOutletContext, useNavigate } from "react-router";
 import { useFragment, graphql } from "react-relay";
 import {
@@ -23,7 +23,7 @@ import { z } from "zod";
 import type { GeneralSettingsTabFragment$key } from "./__generated__/GeneralSettingsTabFragment.graphql";
 import { DeleteOrganizationDialog } from "/components/organizations/DeleteOrganizationDialog";
 import { useDeleteOrganizationMutation } from "/hooks/graph/OrganizationGraph";
-import { isAuthorized } from "/permissions";
+import { PermissionsContext } from "/providers/PermissionsContext";
 
 const generalSettingsTabFragment = graphql`
   fragment GeneralSettingsTabFragment on Organization {
@@ -90,9 +90,10 @@ export default function GeneralSettingsTab() {
   const { organization: organizationKey } = useOutletContext<OutletContext>();
   const organization = useFragment(generalSettingsTabFragment, organizationKey);
   const deleteDialogRef = useDialogRef();
+  const { isAuthorized } = use(PermissionsContext);
 
-  const canUpdate = isAuthorized(organization.id, "Organization", "updateOrganization");
-  const canDelete = isAuthorized(organization.id, "Organization", "deleteOrganization");
+  const canUpdate = isAuthorized("Organization", "updateOrganization");
+  const canDelete = isAuthorized("Organization", "deleteOrganization");
 
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [horizontalLogoPreview, setHorizontalLogoPreview] = useState<

@@ -43,7 +43,8 @@ import {
   sprintf,
 } from "@probo/helpers";
 import MeasureFormDialog from "./dialog/MeasureFormDialog";
-import { Authorized } from "/permissions";
+import { use } from "react";
+import { PermissionsContext } from "/providers/PermissionsContext";
 
 type Props = {
   queryRef: PreloadedQuery<MeasureGraphNodeQuery>;
@@ -59,7 +60,7 @@ export default function MeasureDetailPage(props: Props) {
   const navigate = useNavigate();
   const confirm = useConfirm();
   const [updateMeasure, isUpdating] = useUpdateMeasure();
-
+  const { isAuthorized } = use(PermissionsContext);
   if (!measureId) {
     throw new Error(
       "Cannot load measure detail page without measureId parameter",
@@ -136,33 +137,35 @@ export default function MeasureDetailPage(props: Props) {
       />
 
       <PageHeader title={measure.name} description={measure.description}>
-        <Authorized entity="Measure" action="updateMeasure">
-          <MeasureFormDialog measure={measure}>
-            <Button variant="secondary" icon={IconPencil}>
-              {__("Edit")}
-            </Button>
-          </MeasureFormDialog>
-          <Select
-            disabled={isUpdating}
-            onValueChange={onStateChange}
-            name="state"
-            placeholder={__("Select state")}
-            className="rounded-full"
-            value={measure.state}
-          >
-            {measureStates.map((state) => (
-              <Option key={state} value={state}>
-                {getMeasureStateLabel(__, state)}
-              </Option>
-            ))}
-          </Select>
-        </Authorized>
+        {isAuthorized("Measure", "updateMeasure") && (
+          <>
+            <MeasureFormDialog measure={measure}>
+              <Button variant="secondary" icon={IconPencil}>
+                {__("Edit")}
+              </Button>
+            </MeasureFormDialog>
+            <Select
+              disabled={isUpdating}
+              onValueChange={onStateChange}
+              name="state"
+              placeholder={__("Select state")}
+              className="rounded-full"
+              value={measure.state}
+            >
+              {measureStates.map((state) => (
+                <Option key={state} value={state}>
+                  {getMeasureStateLabel(__, state)}
+                </Option>
+              ))}
+            </Select>
+          </>
+        )}
         <ActionDropdown variant="secondary">
-          <Authorized entity="Measure" action="deleteMeasure">
+          {isAuthorized("Measure", "deleteMeasure") && (
             <DropdownItem variant="danger" icon={IconTrashCan} onClick={onDelete}>
               {__("Delete")}
             </DropdownItem>
-          </Authorized>
+          )}
         </ActionDropdown>
       </PageHeader>
 

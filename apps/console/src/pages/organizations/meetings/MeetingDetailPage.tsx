@@ -21,12 +21,12 @@ import {
   UpdateMeetingMinutesDialog,
   type UpdateMeetingMinutesDialogRef,
 } from "./dialogs/UpdateMeetingMinutesDialog";
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, use } from "react";
 import {
   meetingNodeQuery,
   useDeleteMeetingMutation,
 } from "/hooks/graph/MeetingGraph";
-import { isAuthorized } from "/permissions";
+import { PermissionsContext } from "/providers/PermissionsContext";
 
 const meetingFragment = graphql`
   fragment MeetingDetailPageMeetingFragment on Meeting {
@@ -54,6 +54,7 @@ export default function MeetingDetailPage(props: Props) {
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
   const navigate = useNavigate();
+  const { isAuthorized } = use(PermissionsContext);
 
   if (!meeting) {
     return <div>{__("Meeting not found")}</div>;
@@ -74,14 +75,14 @@ export default function MeetingDetailPage(props: Props) {
     }
 
     try {
-      const updateAuth = isAuthorized(organizationId, "Meeting", "updateMeeting");
+      const updateAuth = isAuthorized("Meeting", "updateMeeting");
       setCanUpdate(updateAuth);
     } catch (promise) {
       if (promise instanceof Promise) {
         promise
           .then(() => {
             try {
-              const updateAuth = isAuthorized(organizationId, "Meeting", "updateMeeting");
+              const updateAuth = isAuthorized("Meeting", "updateMeeting");
               setCanUpdate(updateAuth);
             } catch {
               setCanUpdate(false);
@@ -96,14 +97,14 @@ export default function MeetingDetailPage(props: Props) {
     }
 
     try {
-      const deleteAuth = isAuthorized(organizationId, "Meeting", "deleteMeeting");
+      const deleteAuth = isAuthorized("Meeting", "deleteMeeting");
       setCanDelete(deleteAuth);
     } catch (promise) {
       if (promise instanceof Promise) {
         promise
           .then(() => {
             try {
-              const deleteAuth = isAuthorized(organizationId, "Meeting", "deleteMeeting");
+              const deleteAuth = isAuthorized("Meeting", "deleteMeeting");
               setCanDelete(deleteAuth);
             } catch {
               setCanDelete(false);

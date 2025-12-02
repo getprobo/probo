@@ -2,7 +2,8 @@ import { Badge, Button, Card } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { sprintf } from "@probo/helpers";
 import type { TrustCenterGraphQuery$data } from "/hooks/graph/__generated__/TrustCenterGraphQuery.graphql";
-import { Authorized } from "/permissions";
+import { use } from "react";
+import { PermissionsContext } from "/providers/PermissionsContext";
 
 type Props = {
   organizationId: string;
@@ -11,7 +12,7 @@ type Props = {
 
 export function SlackConnections({ organizationId, slackConnections: connectedSlackConnections }: Props) {
   const { __, dateTimeFormat } = useTranslate();
-
+  const { isAuthorized } = use(PermissionsContext);
   const slackConnectionDefinitions = [
     {
       id: "SLACK",
@@ -77,11 +78,11 @@ export function SlackConnections({ organizationId, slackConnections: connectedSl
               </Badge>
             </div>
           ) : (
-            <Authorized entity="TrustCenter" action="updateTrustCenter">
+            isAuthorized("TrustCenter", "updateTrustCenter") && (
               <Button variant="secondary" asChild>
                 <a href={getUrl(slackConnection.id)}>{__("Connect")}</a>
               </Button>
-            </Authorized>
+            )
           )}
         </Card>
       ))}

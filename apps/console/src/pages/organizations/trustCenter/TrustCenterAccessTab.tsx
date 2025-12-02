@@ -24,7 +24,7 @@ import {
 import { useTranslate } from "@probo/i18n";
 import { formatDate } from "@probo/helpers";
 import { useOutletContext } from "react-router";
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useRef, use } from "react";
 import { useQueryLoader, usePreloadedQuery } from 'react-relay';
 import z from "zod";
 import {
@@ -36,7 +36,7 @@ import {
 } from "/hooks/graph/TrustCenterAccessGraph";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
-import { Authorized } from "/permissions";
+import { PermissionsContext } from "/providers/PermissionsContext";
 
 type ContextType = {
   organization: {
@@ -130,7 +130,7 @@ function DocumentAccessesLoader({
 export default function TrustCenterAccessTab() {
   const { __ } = useTranslate();
   const { organization } = useOutletContext<ContextType>();
-
+  const { isAuthorized } = use(PermissionsContext);
   const inviteSchema = z.object({
     name: z.string().min(1, __("Name is required")).min(2, __("Name must be at least 2 characters long")),
     email: z.string().min(1, __("Email is required")).email(__("Please enter a valid email address")),
@@ -423,14 +423,14 @@ export default function TrustCenterAccessTab() {
           </p>
         </div>
         {organization.trustCenter?.id && (
-          <Authorized entity="TrustCenter" action="createTrustCenterAccess">
+          {isAuthorized("TrustCenter", "createTrustCenterAccess") && (
             <Button icon={IconPlusLarge} onClick={() => {
               inviteForm.reset();
               dialogRef.current?.open();
             }}>
               {__("Add Access")}
             </Button>
-          </Authorized>
+          )}
         )}
       </div>
 
@@ -515,22 +515,22 @@ export default function TrustCenterAccessTab() {
                       className="flex gap-2 justify-end"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <Authorized entity="TrustCenterAccess" action="updateTrustCenterAccess">
+                      {isAuthorized("TrustCenterAccess", "updateTrustCenterAccess") && (
                         <Button
                           variant="secondary"
                           onClick={() => handleEditAccess(access)}
                           disabled={isUpdating}
                           icon={IconPencil}
                         />
-                      </Authorized>
-                      <Authorized entity="TrustCenterAccess" action="deleteTrustCenterAccess">
+                      )}
+                      {isAuthorized("TrustCenterAccess", "deleteTrustCenterAccess") && (
                         <Button
                           variant="danger"
                           onClick={() => handleDelete(access.id)}
                           disabled={isDeleting}
                           icon={IconTrashCan}
                         />
-                      </Authorized>
+                      )}
                     </div>
                   </Td>
                 </Tr>

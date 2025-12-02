@@ -1,27 +1,7 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { createContext, type PropsWithChildren } from "react";
+import { type PropsWithChildren } from "react";
 import { useOrganizationId } from "/hooks/useOrganizationId";
-
-enum Role {
-  OWNER = "OWNER",
-  ADMIN = "ADMIN",
-  VIEWER = "VIEWER",
-}
-
-type PermissionsResponse = {
-  permissions: Record<string, Record<string, boolean>>;
-  role: Role;
-};
-
-type PermissionsContextType = {
-  isAuthorized: (entity: string, action: string) => boolean;
-} & PermissionsResponse;
-
-export const PermissionsContext = createContext<PermissionsContextType>({
-  permissions: {},
-  role: Role.VIEWER,
-  isAuthorized: () => false,
-});
+import { PermissionsContext, type PermissionsResponse } from "./PermissionsContext";
 
 export function PermissionsProvider(props: PropsWithChildren) {
   const { children } = props;

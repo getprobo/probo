@@ -31,8 +31,8 @@ import type {
   AuditsPageFragment$key,
 } from "./__generated__/AuditsPageFragment.graphql";
 import { SortableTable } from "/components/SortableTable";
-import { Authorized } from "/permissions";
-import { isAuthorized } from "/permissions";
+import { PermissionsContext } from "/providers/PermissionsContext";
+import { use } from "react";
 
 const paginatedAuditsFragment = graphql`
   fragment AuditsPageFragment on Organization
@@ -83,6 +83,7 @@ type Props = {
 export default function AuditsPage(props: Props) {
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
+  const { isAuthorized } = use(PermissionsContext);
 
   const data = usePreloadedQuery(auditsQuery, props.queryRef);
   const pagination = usePaginationFragment(
@@ -94,8 +95,8 @@ export default function AuditsPage(props: Props) {
 
   usePageTitle(__("Audits"));
 
-  const hasAnyAction = isAuthorized(organizationId, "Audit", "updateAudit") ||
-    isAuthorized(organizationId, "Audit", "deleteAudit");
+  const hasAnyAction = isAuthorized("Audit", "updateAudit") ||
+    isAuthorized("Audit", "deleteAudit");
 
   return (
     <div className="space-y-6">
@@ -105,14 +106,14 @@ export default function AuditsPage(props: Props) {
           "Manage your organization's compliance audits and their progress."
         )}
       >
-        <Authorized entity="Organization" action="createAudit">
+        {isAuthorized("Organization", "createAudit") && (
           <CreateAuditDialog
             connection={connectionId}
             organizationId={organizationId}
           >
           <Button icon={IconPlusLarge}>{__("Add audit")}</Button>
           </CreateAuditDialog>
-        </Authorized>
+        )}
       </PageHeader>
       <SortableTable {...pagination}>
         <Thead>
@@ -153,6 +154,7 @@ function AuditRow({
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
   const deleteAudit = useDeleteAudit(entry, connectionId);
+  const { isAuthorized } = use(PermissionsContext);
 
   return (
     <Tr to={`/organizations/${organizationId}/audits/${entry.id}`}>
@@ -177,7 +179,7 @@ function AuditRow({
       {hasAnyAction && (
         <Td noLink width={50} className="text-end">
           <ActionDropdown>
-            <Authorized entity="Audit" action="deleteAudit">
+            {isAuthorized("Audit", "deleteAudit") && (
               <DropdownItem
                 onClick={deleteAudit}
                 variant="danger"
@@ -185,7 +187,7 @@ function AuditRow({
               >
                 {__("Delete")}
               </DropdownItem>
-            </Authorized>
+            )}
           </ActionDropdown>
         </Td>
       )}

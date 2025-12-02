@@ -34,7 +34,8 @@ import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import z from "zod";
 import { getStatusVariant, getStatusLabel, formatDatetime, validateSnapshotConsistency, getStatusOptions, formatError, type GraphQLError } from "@probo/helpers";
 import type { NonconformityGraphNodeQuery } from "/hooks/graph/__generated__/NonconformityGraphNodeQuery.graphql";
-import { Authorized } from "/permissions";
+import { PermissionsContext } from "/providers/PermissionsContext";
+import { use } from "react";
 
 const updateNonconformitySchema = z.object({
   referenceId: z.string().min(1, "Reference ID is required"),
@@ -63,6 +64,7 @@ export default function NonconformityDetailsPage(props: Props) {
   const organizationId = useOrganizationId();
   const { snapshotId } = useParams<{ snapshotId?: string }>();
   const isSnapshotMode = Boolean(snapshotId);
+  const { isAuthorized } = use(PermissionsContext);
 
   validateSnapshotConsistency(nonconformity, snapshotId);
 
@@ -162,7 +164,7 @@ export default function NonconformityDetailsPage(props: Props) {
         </div>
         {!isSnapshotMode && (
           <ActionDropdown variant="secondary">
-            <Authorized entity="Nonconformity" action="deleteNonconformity">
+            {isAuthorized("Nonconformity", "deleteNonconformity") && (
               <DropdownItem
                 variant="danger"
                 icon={IconTrashCan}
@@ -170,7 +172,7 @@ export default function NonconformityDetailsPage(props: Props) {
               >
                 {__("Delete")}
               </DropdownItem>
-            </Authorized>
+            )}
           </ActionDropdown>
         )}
       </div>
@@ -279,11 +281,11 @@ export default function NonconformityDetailsPage(props: Props) {
 
             <div className="flex justify-end">
               {formState.isDirty && !isSnapshotMode && (
-                <Authorized entity="Nonconformity" action="updateNonconformity">
+                isAuthorized("Nonconformity", "updateNonconformity") && (
                   <Button type="submit" disabled={formState.isSubmitting}>
                     {formState.isSubmitting ? __("Updating...") : __("Update")}
                   </Button>
-                </Authorized>
+                )
               )}
             </div>
           </form>

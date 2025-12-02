@@ -35,8 +35,8 @@ import type {
 import type { DataListQuery } from "./__generated__/DataListQuery.graphql";
 import { SortableTable } from "/components/SortableTable";
 import { SnapshotBanner } from "/components/SnapshotBanner";
-import { Authorized } from "/permissions";
-import { isAuthorized } from "/permissions";
+import { use } from "react";
+import { PermissionsContext } from "/providers/PermissionsContext";
 
 const paginatedDataFragment = graphql`
   fragment DataPageFragment on Organization
@@ -93,6 +93,7 @@ export default function DataPage(props: Props) {
   const organizationId = useOrganizationId();
   const { snapshotId } = useParams<{ snapshotId?: string }>();
   const isSnapshotMode = Boolean(snapshotId);
+  const { isAuthorized } = use(PermissionsContext);
 
   const queryData = usePreloadedQuery<DatumGraphListQuery>(
     dataQuery,
@@ -121,8 +122,9 @@ export default function DataPage(props: Props) {
 
   usePageTitle(__("Data"));
 
-  const hasAnyAction = !isSnapshotMode && (    isAuthorized(organizationId, "Datum", "updateDatum") ||
-    isAuthorized(organizationId, "Datum", "deleteDatum")
+  const hasAnyAction = !isSnapshotMode && (
+    isAuthorized("Datum", "updateDatum") ||
+    isAuthorized("Datum", "deleteDatum")
   );
 
   return (
@@ -137,7 +139,7 @@ export default function DataPage(props: Props) {
         )}
       >
         {!snapshotId && (
-          <Authorized entity="Organization" action="createDatum">
+          isAuthorized("Organization", "createDatum") && (
             <CreateDatumDialog
               connection={connectionId}
               organizationId={organizationId}
@@ -145,7 +147,7 @@ export default function DataPage(props: Props) {
             >
               <Button icon={IconPlusLarge}>{__("Add data")}</Button>
             </CreateDatumDialog>
-          </Authorized>
+          )
         )}
       </PageHeader>
       <SortableTable
@@ -186,7 +188,7 @@ function DataRow({
   const { __ } = useTranslate();
   const deleteDatum = useDeleteDatum(entry, connectionId);
   const vendors = entry.vendors?.edges.map((edge) => edge.node) ?? [];
-
+  const { isAuthorized } = use(PermissionsContext);
   const detailUrl = snapshotId
     ? `/organizations/${organizationId}/snapshots/${snapshotId}/data/${entry.id}`
     : `/organizations/${organizationId}/data/${entry.id}`;
@@ -228,7 +230,7 @@ function DataRow({
       {hasAnyAction && (
         <Td noLink width={50} className="text-end">
           <ActionDropdown>
-            <Authorized entity="Datum" action="deleteDatum">
+            {isAuthorized("Datum", "deleteDatum") && (
               <DropdownItem
                 onClick={deleteDatum}
                 variant="danger"
@@ -236,7 +238,7 @@ function DataRow({
               >
                 {__("Delete")}
               </DropdownItem>
-            </Authorized>
+            )}
           </ActionDropdown>
         </Td>
       )}

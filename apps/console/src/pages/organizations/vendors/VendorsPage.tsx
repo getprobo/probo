@@ -37,8 +37,8 @@ import type {
 } from "/hooks/graph/__generated__/VendorGraphPaginatedFragment.graphql";
 import { SortableTable, SortableTh } from "/components/SortableTable";
 import { SnapshotBanner } from "/components/SnapshotBanner";
-import { Authorized } from "/permissions";
-import { isAuthorized } from "/permissions";
+import { use } from "react";
+import { PermissionsContext } from "/providers/PermissionsContext";
 
 type Vendor = NodeOf<VendorGraphPaginatedFragment$data["vendors"]>;
 
@@ -51,6 +51,7 @@ export default function VendorsPage(props: Props) {
   const organizationId = useOrganizationId();
   const { snapshotId } = useParams<{ snapshotId?: string }>();
   const isSnapshotMode = Boolean(snapshotId);
+  const { isAuthorized } = use(PermissionsContext);
 
   const data = usePreloadedQuery(vendorsQuery, props.queryRef);
   const pagination = usePaginationFragment(
@@ -64,8 +65,8 @@ export default function VendorsPage(props: Props) {
   usePageTitle(__("Vendors"));
 
   const hasAnyAction = !isSnapshotMode && (
-    isAuthorized(organizationId, "Vendor", "updateVendor") ||
-    isAuthorized(organizationId, "Vendor", "deleteVendor")
+    isAuthorized("Vendor", "updateVendor") ||
+    isAuthorized("Vendor", "deleteVendor")
   );
 
   return (
@@ -78,14 +79,14 @@ export default function VendorsPage(props: Props) {
         )}
       >
         {!isSnapshotMode && (
-          <Authorized entity="Organization" action="createVendor">
+          isAuthorized("Organization", "createVendor") && (
             <CreateVendorDialog
               connection={connectionId}
               organizationId={organizationId}
             >
               <Button icon={IconPlusLarge}>{__("Add vendor")}</Button>
             </CreateVendorDialog>
-          </Authorized>
+          )
         )}
       </PageHeader>
       <SortableTable {...pagination}>
@@ -129,7 +130,7 @@ function VendorRow({
   const isSnapshotMode = Boolean(snapshotId);
   const { __ } = useTranslate();
   const latestAssessment = vendor.riskAssessments?.edges[0]?.node;
-
+  const { isAuthorized } = use(PermissionsContext);
   const deleteVendor = useDeleteVendor(vendor, connectionId);
 
   const vendorUrl = isSnapshotMode && snapshotId
@@ -159,7 +160,7 @@ function VendorRow({
         {hasAnyAction && (
           <Td noLink width={50} className="text-end">
             <ActionDropdown>
-              <Authorized entity="Vendor" action="deleteVendor">
+              {isAuthorized("Vendor", "deleteVendor") && (
                 <DropdownItem
                   onClick={deleteVendor}
                   variant="danger"
@@ -167,7 +168,7 @@ function VendorRow({
                 >
                   {__("Delete")}
                 </DropdownItem>
-              </Authorized>
+              )}
             </ActionDropdown>
           </Td>
         )}

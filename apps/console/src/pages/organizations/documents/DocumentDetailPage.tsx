@@ -67,7 +67,7 @@ import {
   PdfDownloadDialog,
   type PdfDownloadDialogRef,
 } from "/components/documents/PdfDownloadDialog";
-import { useRef, useState } from "react";
+import { use, useRef, useState } from "react";
 import type { NodeOf } from "/types.ts";
 import clsx from "clsx";
 import { PeopleSelectField } from "/components/form/PeopleSelectField";
@@ -76,7 +76,7 @@ import { DocumentTypeOptions } from "/components/form/DocumentTypeOptions";
 import { DocumentClassificationOptions } from "/components/form/DocumentClassificationOptions";
 import { z } from "zod";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
-import { Authorized } from "/permissions";
+import { PermissionsContext } from "/providers/PermissionsContext";
 
 type Props = {
   queryRef: PreloadedQuery<DocumentGraphNodeQuery>;
@@ -132,37 +132,6 @@ const documentFragment = graphql`
   }
 `;
 
-graphql`
-  fragment DocumentDetailPageRowFragment on Document {
-    id
-    title
-    description
-    documentType
-    classification
-    updatedAt
-    owner {
-      id
-      fullName
-    }
-    versions(first: 1) {
-      edges {
-        node {
-          id
-          status
-          signatures(first: 100) {
-            edges {
-              node {
-                id
-                state
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-`;
-
 const publishDocumentVersionMutation = graphql`
   mutation DocumentDetailPagePublishMutation(
     $input: PublishDocumentVersionInput!
@@ -170,7 +139,31 @@ const publishDocumentVersionMutation = graphql`
     publishDocumentVersion(input: $input) {
       document {
         id
-        ...DocumentDetailPageRowFragment
+        title
+        description
+        documentType
+        classification
+        updatedAt
+        owner {
+          id
+          fullName
+        }
+        versions(first: 1) {
+          edges {
+            node {
+              id
+              status
+              signatures(first: 100) {
+                edges {
+                  node {
+                    id
+                    state
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     }
   }
@@ -230,6 +223,7 @@ export default function DocumentDetailPage(props: Props) {
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
   const navigate = useNavigate();
+  const { isAuthorized } = use(PermissionsContext);
 
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [isEditingOwner, setIsEditingOwner] = useState(false);
@@ -522,16 +516,16 @@ export default function DocumentDetailPage(props: Props) {
             </Dropdown>
 
             <ActionDropdown variant="secondary">
-              <Authorized entity="Document" action="updateDocument">
+              {isAuthorized("Document", "updateDocument") && (
                 <DropdownItem
                   onClick={() => updateDialogRef.current?.open()}
                   icon={IconPencil}
                 >
                   {isDraft ? __("Edit draft document") : __("Create new draft")}
                 </DropdownItem>
-              </Authorized>
+              )}
               {isDraft && versions.length > 1 && (
-                <Authorized entity="Document" action="deleteDocument">
+                isAuthorized("Document", "deleteDocument") && (
                   <DropdownItem
                     onClick={handleDeleteDraft}
                     icon={IconTrashCan}
@@ -539,7 +533,7 @@ export default function DocumentDetailPage(props: Props) {
                   >
                     {__("Delete draft document")}
                   </DropdownItem>
-                </Authorized>
+                )
               )}
               <DropdownItem
                 onClick={() => pdfDownloadDialogRef.current?.open()}
@@ -548,7 +542,7 @@ export default function DocumentDetailPage(props: Props) {
               >
                 {__("Download PDF")}
               </DropdownItem>
-              <Authorized entity="Document" action="deleteDocument">
+              {isAuthorized("Document", "deleteDocument") && (
                 <DropdownItem
                   variant="danger"
                   icon={IconTrashCan}
@@ -557,7 +551,7 @@ export default function DocumentDetailPage(props: Props) {
                 >
                   {__("Delete document")}
                 </DropdownItem>
-              </Authorized>
+              )}
             </ActionDropdown>
           </div>
         </div>

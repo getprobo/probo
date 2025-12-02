@@ -1,3 +1,6 @@
+import { promisifyMutation } from "@probo/helpers";
+import { usePageTitle } from "@probo/hooks";
+import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
   Avatar,
@@ -15,21 +18,17 @@ import {
   useConfirm,
   useDialogRef,
 } from "@probo/ui";
-import { Fragment } from "react";
+import { Fragment, use } from "react";
 import { graphql, useMutation, useRelayEnvironment } from "react-relay";
-import { useTranslate } from "@probo/i18n";
-import { usePageTitle } from "@probo/hooks";
-import type { ItemOf } from "/types";
+import { Link, useLocation, useParams } from "react-router";
+import type { TaskFormDialogFragment$key } from "./__generated__/TaskFormDialogFragment.graphql";
 import TaskFormDialog, {
   taskUpdateMutation,
 } from "/components/tasks/TaskFormDialog";
-import { useOrganizationId } from "/hooks/useOrganizationId";
-import { Link, useLocation, useParams } from "react-router";
-import { promisifyMutation } from "@probo/helpers";
-import { Authorized } from "/permissions";
-import { isAuthorized } from "/permissions";
-import type { TaskFormDialogFragment$key } from "./__generated__/TaskFormDialogFragment.graphql";
 import { updateStoreCounter } from "/hooks/useMutationWithIncrement";
+import { useOrganizationId } from "/hooks/useOrganizationId";
+import { PermissionsContext } from "/providers/PermissionsContext";
+import type { ItemOf } from "/types";
 
 type Props = {
   tasks: ({
@@ -51,7 +50,6 @@ type Props = {
 
 export default function TasksCard({ tasks, connectionId }: Props) {
   const { __ } = useTranslate();
-  const organizationId = useOrganizationId();
   const hash = useLocation().hash.replace("#", "");
 
   const hashes = [
@@ -70,8 +68,10 @@ export default function TasksCard({ tasks, connectionId }: Props) {
 
   usePageTitle(__("Tasks"));
 
-  const hasAnyAction = isAuthorized(organizationId, "Task", "updateTask") ||
-    isAuthorized(organizationId, "Task", "deleteTask");
+  const { isAuthorized } = use(PermissionsContext);
+
+  const hasAnyAction = isAuthorized("Task", "updateTask") ||
+    isAuthorized("Task", "deleteTask");
 
   return (
     <div className="space-y-6">
@@ -151,6 +151,7 @@ function TaskRow(props: TaskRowProps) {
   const confirm = useConfirm();
   const [deleteTask] = useMutation(deleteMutation);
   const params = useParams<{ measureId?: string }>();
+  const { isAuthorized } = use(PermissionsContext);
 
   const relayEnv = useRelayEnvironment();
   const [updateTask, isUpdating] = useMutation(taskUpdateMutation);
@@ -232,15 +233,15 @@ function TaskRow(props: TaskRowProps) {
           )}
           {props.hasAnyAction && (
             <ActionDropdown>
-              <Authorized entity="Task" action="updateTask">
+              {isAuthorized("Task", "updateTask") && (
                 <DropdownItem
                   icon={IconPencil}
                   onClick={() => dialogRef.current?.open()}
                 >
                   {__("Edit")}
                 </DropdownItem>
-              </Authorized>
-              <Authorized entity="Task" action="deleteTask">
+              )}
+              {isAuthorized("Task", "deleteTask") && (
                 <DropdownItem
                   variant="danger"
                   icon={IconTrashCan}
@@ -248,7 +249,7 @@ function TaskRow(props: TaskRowProps) {
                 >
                   {__("Delete")}
                 </DropdownItem>
-              </Authorized>
+              )}
             </ActionDropdown>
           )}
         </div>

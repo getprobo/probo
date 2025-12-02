@@ -37,8 +37,8 @@ import type {
   ContinualImprovementsPageFragment$key,
   ContinualImprovementsPageFragment$data,
 } from "./__generated__/ContinualImprovementsPageFragment.graphql";
-import { Authorized } from "/permissions";
-import { isAuthorized } from "/permissions";
+import { use } from "react";
+import { PermissionsContext } from "/providers/PermissionsContext";
 
 interface ContinualImprovementsPageProps {
   queryRef: PreloadedQuery<ContinualImprovementsPageQuery>;
@@ -93,6 +93,7 @@ export default function ContinualImprovementsPage({ queryRef }: ContinualImprove
   const organizationId = useOrganizationId();
   const { snapshotId } = useParams<{ snapshotId?: string }>();
   const isSnapshotMode = Boolean(snapshotId);
+  const { isAuthorized } = use(PermissionsContext);
 
   usePageTitle(__("Continual Improvements"));
 
@@ -130,8 +131,8 @@ export default function ContinualImprovementsPage({ queryRef }: ContinualImprove
   const improvements = data?.continualImprovements?.edges?.map((edge) => edge.node) ?? [];
 
   const hasAnyAction = !isSnapshotMode && (
-    isAuthorized(organizationId, "ContinualImprovement", "updateContinualImprovement") ||
-    isAuthorized(organizationId, "ContinualImprovement", "deleteContinualImprovement")
+    isAuthorized("ContinualImprovement", "updateContinualImprovement") ||
+    isAuthorized("ContinualImprovement", "deleteContinualImprovement")
   );
 
   return (
@@ -141,7 +142,7 @@ export default function ContinualImprovementsPage({ queryRef }: ContinualImprove
       )}
       <PageHeader title={__("Continual Improvements")} description={__("Manage your continual improvements.")}>
         {!isSnapshotMode && (
-          <Authorized entity="Organization" action="createContinualImprovement">
+          isAuthorized("Organization", "createContinualImprovement") && (
             <CreateContinualImprovementDialog
               organizationId={organizationId}
               connectionId={connectionId}
@@ -150,7 +151,7 @@ export default function ContinualImprovementsPage({ queryRef }: ContinualImprove
                 {__("Add continual improvement")}
               </Button>
             </CreateContinualImprovementDialog>
-          </Authorized>
+          )
         )}
       </PageHeader>
 
@@ -225,6 +226,7 @@ function ImprovementRow({
   const [deleteImprovement] = useMutation(deleteContinualImprovementMutation);
   const confirm = useConfirm();
   const isSnapshotMode = Boolean(snapshotId);
+  const { isAuthorized } = use(PermissionsContext);
 
 
   const handleDelete = () => {
@@ -282,7 +284,7 @@ function ImprovementRow({
       {hasAnyAction && (
         <Td noLink width={50} className="text-end">
           <ActionDropdown>
-            <Authorized entity="ContinualImprovement" action="deleteContinualImprovement">
+            {isAuthorized("ContinualImprovement", "deleteContinualImprovement") && (
               <DropdownItem
                 icon={IconTrashCan}
                 variant="danger"
@@ -290,7 +292,7 @@ function ImprovementRow({
               >
                 {__("Delete")}
               </DropdownItem>
-            </Authorized>
+            )}
           </ActionDropdown>
         </Td>
       )}

@@ -41,7 +41,8 @@ import {
 } from "../../../components/form/ProcessingActivityEnumOptions";
 
 import type { ProcessingActivityGraphNodeQuery } from "/hooks/graph/__generated__/ProcessingActivityGraphNodeQuery.graphql";
-import { Authorized } from "/permissions";
+import { use } from "react";
+import { PermissionsContext } from "/providers/PermissionsContext";
 
 const updateProcessingActivitySchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -74,6 +75,7 @@ export default function ProcessingActivityDetailsPage(props: Props) {
   const organizationId = useOrganizationId();
   const { snapshotId } = useParams<{ snapshotId?: string }>();
   const isSnapshotMode = Boolean(snapshotId);
+  const { isAuthorized } = use(PermissionsContext);
 
   if (!activity) {
     return <div>{__("Processing activity not found")}</div>;
@@ -171,13 +173,13 @@ export default function ProcessingActivityDetailsPage(props: Props) {
           ]}
         />
         {!isSnapshotMode && (
-          <Authorized entity="ProcessingActivity" action="deleteProcessingActivity">
+          isAuthorized("ProcessingActivity", "deleteProcessingActivity") && (
             <ActionDropdown>
               <DropdownItem onClick={deleteActivity} variant="danger">
                 {__("Delete")}
               </DropdownItem>
             </ActionDropdown>
-          </Authorized>
+          )
         )}
       </div>
 

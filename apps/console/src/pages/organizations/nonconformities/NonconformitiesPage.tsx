@@ -31,13 +31,13 @@ import { deleteNonconformityMutation, NonconformitiesConnectionKey } from "../..
 import { sprintf, promisifyMutation, getStatusVariant, getStatusLabel, formatDate } from "@probo/helpers";
 import { SnapshotBanner } from "/components/SnapshotBanner";
 import { useParams } from "react-router";
-import { Authorized } from "/permissions";
-import { isAuthorized } from "/permissions";
 import type { NonconformitiesPageQuery } from "./__generated__/NonconformitiesPageQuery.graphql";
 import type {
   NonconformitiesPageFragment$key,
   NonconformitiesPageFragment$data,
 } from "./__generated__/NonconformitiesPageFragment.graphql";
+import { use } from "react";
+import { PermissionsContext } from "/providers/PermissionsContext";
 
 type Nonconformity = NonconformitiesPageFragment$data['nonconformities']['edges'][number]['node'];
 
@@ -103,6 +103,7 @@ export default function NonconformitiesPage({ queryRef }: NonconformitiesPagePro
   const organizationId = useOrganizationId();
   const { snapshotId } = useParams<{ snapshotId?: string }>();
   const isSnapshotMode = Boolean(snapshotId);
+  const { isAuthorized } = use(PermissionsContext);
 
   usePageTitle(__("Nonconformities"));
 
@@ -132,8 +133,8 @@ export default function NonconformitiesPage({ queryRef }: NonconformitiesPagePro
   const nonconformities: Nonconformity[] = nonconformitiesData?.nonconformities?.edges?.map((edge) => edge.node) ?? [];
 
   const hasAnyAction = !isSnapshotMode && (
-    isAuthorized(organizationId, "Nonconformity", "updateNonconformity") ||
-    isAuthorized(organizationId, "Nonconformity", "deleteNonconformity")
+    isAuthorized("Nonconformity", "updateNonconformity") ||
+    isAuthorized("Nonconformity", "deleteNonconformity")
   );
 
   return (
@@ -148,11 +149,11 @@ export default function NonconformitiesPage({ queryRef }: NonconformitiesPagePro
         )}
       >
         {!isSnapshotMode && (
-          <Authorized entity="Organization" action="createNonconformity">
+          isAuthorized("Organization", "createNonconformity") && (
             <CreateNonconformityDialog organizationId={organizationId} connection={connectionId}>
               <Button icon={IconPlusLarge}>{__("Add nonconformity")}</Button>
             </CreateNonconformityDialog>
-          </Authorized>
+          )
         )}
       </PageHeader>
 
@@ -231,7 +232,7 @@ function NonconformityRow({
   const { __ } = useTranslate();
   const confirm = useConfirm();
   const [deleteNonconformity] = useMutation(deleteNonconformityMutation);
-
+  const { isAuthorized } = use(PermissionsContext);
 
   const nonconformityDetailUrl = isSnapshotMode
     ? `/organizations/${organizationId}/snapshots/${snapshotId}/nonconformities/${nonconformity.id}`
@@ -298,7 +299,7 @@ function NonconformityRow({
       {hasAnyAction && (
         <Td noLink width={50} className="text-end">
           <ActionDropdown>
-            <Authorized entity="Nonconformity" action="deleteNonconformity">
+            {isAuthorized("Nonconformity", "deleteNonconformity") && (
               <DropdownItem
                 icon={IconTrashCan}
                 variant="danger"
@@ -306,7 +307,7 @@ function NonconformityRow({
               >
                 {__("Delete")}
               </DropdownItem>
-            </Authorized>
+            )}
           </ActionDropdown>
         </Td>
       )}

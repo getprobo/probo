@@ -23,7 +23,7 @@ import {
 } from "/hooks/graph/AssetGraph";
 import type { AssetGraphListQuery } from "/hooks/graph/__generated__/AssetGraphListQuery.graphql";
 import { useOrganizationId } from "/hooks/useOrganizationId";
-import { PermissionsContext } from "/providers/PermissionsProvider";
+import { PermissionsContext } from "/providers/PermissionsContext";
 
 const paginatedAssetsFragment = graphql`
   fragment AssetsPageFragment on Organization

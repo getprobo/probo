@@ -17,10 +17,10 @@ import {
 import { useTranslate } from "@probo/i18n";
 import type { TrustCenterDocumentsCardFragment$key } from "./__generated__/TrustCenterDocumentsCardFragment.graphql";
 import { useFragment } from "react-relay";
-import { useMemo, useState, useCallback, useEffect } from "react";
+import { useMemo, useState, useCallback, useEffect, use } from "react";
 import { sprintf, getTrustCenterVisibilityOptions } from "@probo/helpers";
 import { useOrganizationId } from "/hooks/useOrganizationId";
-import { isAuthorized } from "/permissions";
+import { PermissionsContext } from "/providers/PermissionsContext";
 
 const trustCenterDocumentFragment = graphql`
   fragment TrustCenterDocumentsCardFragment on Document {
@@ -129,8 +129,8 @@ function DocumentRow(props: {
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
   const [optimisticValue, setOptimisticValue] = useState<string | null>(null);
-
-  const canUpdate = organizationId ? isAuthorized(organizationId, "TrustCenter", "updateTrustCenter") : false;
+  const { isAuthorized } = use(PermissionsContext);
+  const canUpdate = isAuthorized("TrustCenter", "updateTrustCenter");
 
   const handleValueChange = useCallback((value: string | {}) => {
     const stringValue = typeof value === 'string' ? value : '';

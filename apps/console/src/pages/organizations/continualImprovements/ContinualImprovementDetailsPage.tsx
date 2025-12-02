@@ -35,7 +35,8 @@ import z from "zod";
 import { getStatusVariant, getStatusLabel, formatDatetime, validateSnapshotConsistency } from "@probo/helpers";
 import { SnapshotBanner } from "/components/SnapshotBanner";
 import type { ContinualImprovementGraphNodeQuery } from "/hooks/graph/__generated__/ContinualImprovementGraphNodeQuery.graphql";
-import { Authorized } from "/permissions";
+import { use } from "react";
+import { PermissionsContext } from "/providers/PermissionsContext";
 
 const updateImprovementSchema = z.object({
   referenceId: z.string().min(1, "Reference ID is required"),
@@ -59,7 +60,7 @@ export default function ContinualImprovementDetailsPage(props: Props) {
   const organizationId = useOrganizationId();
   const { snapshotId } = useParams<{ snapshotId?: string }>();
   const isSnapshotMode = Boolean(snapshotId);
-
+  const { isAuthorized } = use(PermissionsContext);
   if (!improvement) {
     return <div>{__("Continual improvement entry not found")}</div>;
   }
@@ -150,13 +151,13 @@ export default function ContinualImprovementDetailsPage(props: Props) {
           ]}
         />
         {!isSnapshotMode && (
-          <Authorized entity="ContinualImprovement" action="deleteContinualImprovement">
+          isAuthorized("ContinualImprovement", "deleteContinualImprovement") && (
             <ActionDropdown>
               <DropdownItem onClick={deleteImprovement} variant="danger">
                 {__("Delete")}
               </DropdownItem>
             </ActionDropdown>
-          </Authorized>
+          )
         )}
       </div>
 
@@ -289,7 +290,7 @@ export default function ContinualImprovementDetailsPage(props: Props) {
 
             {!isSnapshotMode && (
               <div className="flex justify-end pt-4">
-                <Authorized entity="ContinualImprovement" action="updateContinualImprovement">
+                {isAuthorized("ContinualImprovement", "updateContinualImprovement") && (
                   <Button
                     type="submit"
                     variant="primary"
@@ -297,7 +298,7 @@ export default function ContinualImprovementDetailsPage(props: Props) {
                   >
                     {formState.isSubmitting ? __("Saving...") : __("Save Changes")}
                   </Button>
-                </Authorized>
+                )}
               </div>
             )}
           </form>

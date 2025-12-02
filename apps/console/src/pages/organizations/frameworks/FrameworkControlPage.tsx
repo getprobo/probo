@@ -27,7 +27,8 @@ import { promisifyMutation } from "@probo/helpers";
 import type { FrameworkGraphControlNodeQuery } from "/hooks/graph/__generated__/FrameworkGraphControlNodeQuery.graphql";
 import { frameworkControlNodeQuery } from "/hooks/graph/FrameworkGraph";
 import type { FrameworkDetailPageFragment$data } from "./__generated__/FrameworkDetailPageFragment.graphql";
-import { Authorized } from "/permissions";
+import { use } from "react";
+import { PermissionsContext } from "/providers/PermissionsContext";
 
 const attachMeasureMutation = graphql`
   mutation FrameworkControlPageAttachMutation(
@@ -166,7 +167,7 @@ export default function FrameworkControlPage({ queryRef }: Props) {
   const organizationId = useOrganizationId();
   const confirm = useConfirm();
   const navigate = useNavigate();
-
+  const { isAuthorized } = use(PermissionsContext);
   const [detachMeasure, isDetachingMeasure] = useMutation(detachMeasureMutation);
   const [attachMeasure, isAttachingMeasure] = useMutation(attachMeasureMutation);
   const [detachDocument, isDetachingDocument] = useMutation(detachDocumentMutation);
@@ -236,7 +237,7 @@ export default function FrameworkControlPage({ queryRef }: Props) {
           </div>
         </div>
         <div className="flex gap-2">
-          <Authorized entity="Control" action="updateControl">
+          {isAuthorized("Control", "updateControl") && (
             <FrameworkControlDialog
               frameworkId={framework.id}
               connectionId={connectionId}
@@ -246,8 +247,8 @@ export default function FrameworkControlPage({ queryRef }: Props) {
                 {__("Edit control")}
               </Button>
             </FrameworkControlDialog>
-          </Authorized>
-          <Authorized entity="Control" action="deleteControl">
+          )}
+          {isAuthorized("Control", "deleteControl") && (
             <ActionDropdown variant="secondary">
               <DropdownItem
                 icon={IconTrashCan}
@@ -257,7 +258,7 @@ export default function FrameworkControlPage({ queryRef }: Props) {
                 {__("Delete")}
               </DropdownItem>
             </ActionDropdown>
-          </Authorized>
+          )}
         </div>
       </div>
 
