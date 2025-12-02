@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.96.1] - 2025-12-02
+
+### Fixed
+
+- Fix missing n8n placeholder.
+
 ## [0.96.0] - 2025-12-02
 
 ### Added
