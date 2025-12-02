@@ -15,7 +15,7 @@ export class Probo implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'Probo',
 		name: 'probo',
-		icon: { light: 'file:../../icons/probo.svg', dark: 'file:../../icons/probo.svg' },
+		icon: { light: 'file:../../icons/probo-light.svg', dark: 'file:../../icons/probo.svg' },
 		group: ['input'],
 		version: 1,
 		subtitle: '={{$parameter["resource"]}} / {{$parameter["operation"]}}',

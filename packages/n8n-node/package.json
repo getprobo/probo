@@ -11,7 +11,9 @@
     "release": "n8n-node release",
     "prepublishOnly": "n8n-node prerelease"
   },
-  "author": "Probo Inc",
+  "author": {
+    "name": "Probo Inc"
+  },
   "files": [
     "dist"
   ],

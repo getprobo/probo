@@ -11,7 +11,7 @@ export async function proboApiRequest(
 	this: IExecuteFunctions | IHookFunctions,
 	query: string,
 	variables: IDataObject = {},
-): Promise<any> {
+): Promise<IDataObject> {
 	const credentials = await this.getCredentials('proboApi');
 
 	if (!credentials?.apiKey) {
@@ -44,11 +44,11 @@ export async function proboApiRequestAllItems(
 	this: IExecuteFunctions,
 	query: string,
 	variables: IDataObject,
-	getConnection: (response: any) => any,
+	getConnection: (response: IDataObject) => IDataObject | undefined,
 	returnAll: boolean = true,
 	limit: number = 0,
-): Promise<any[]> {
-	const items: any[] = [];
+): Promise<IDataObject[]> {
+	const items: IDataObject[] = [];
 	let hasNextPage = true;
 	let cursor: string | null = null;
 	const pageSize = 100;
@@ -72,7 +72,8 @@ export async function proboApiRequestAllItems(
 		const connection = getConnection(responseData);
 
 		if (connection?.edges) {
-			items.push(...connection.edges.map((edge: any) => edge.node));
+			const edges = connection.edges as Array<{ node: IDataObject }>;
+			items.push(...edges.map((edge) => edge.node));
 		}
 
 		if (connection?.pageInfo) {

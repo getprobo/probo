@@ -75,7 +75,7 @@ export const description: INodeProperties[] = [
 				value: 'VIRTUAL',
 			},
 		],
-		default: '',
+		default: 'PHYSICAL',
 		description: 'The type of the asset',
 	},
 	{
@@ -188,7 +188,7 @@ export async function execute(
 		}
 	`;
 
-	const input: Record<string, any> = { id };
+	const input: Record<string, string | number | string[]> = { id };
 	if (name) input.name = name;
 	if (amount) input.amount = amount;
 	if (ownerId) input.ownerId = ownerId;

@@ -57,7 +57,7 @@ export const description: INodeProperties[] = [
 				value: 'SECRET',
 			},
 		],
-		default: '',
+		default: 'PUBLIC',
 		description: 'The classification of the data',
 	},
 	{
@@ -166,7 +166,7 @@ export async function execute(
 		}
 	`;
 
-	const input: Record<string, any> = { id };
+	const input: Record<string, string | string[]> = { id };
 	if (name) input.name = name;
 	if (dataClassification) input.dataClassification = dataClassification;
 	if (ownerId) input.ownerId = ownerId;

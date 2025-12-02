@@ -11,7 +11,7 @@ export class ProboApi implements ICredentialType {
 
 	displayName = 'Probo API';
 
-    icon: Icon = { light: 'file:../icons/probo.svg', dark: 'file:../icons/probo.svg' };
+    icon: Icon = { light: 'file:../icons/probo-light.svg', dark: 'file:../icons/probo.svg' };
 
 	documentationUrl = 'https://www.getprobo.com/docs';
 

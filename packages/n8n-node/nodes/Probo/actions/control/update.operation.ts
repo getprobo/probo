@@ -75,7 +75,7 @@ export const description: INodeProperties[] = [
 				value: 'EXCLUDED',
 			},
 		],
-		default: '',
+		default: 'INCLUDED',
 		description: 'The status of the control',
 	},
 	{
@@ -121,7 +121,7 @@ export async function execute(
 		}
 	`;
 
-	const input: Record<string, any> = { id };
+	const input: Record<string, string> = { id };
 	if (sectionTitle) input.sectionTitle = sectionTitle;
 	if (name) input.name = name;
 	if (description) input.description = description;

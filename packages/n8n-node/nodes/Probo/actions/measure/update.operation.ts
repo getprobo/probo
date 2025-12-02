@@ -83,7 +83,7 @@ export const description: INodeProperties[] = [
 				value: 'IMPLEMENTED',
 			},
 		],
-		default: '',
+		default: 'NOT_STARTED',
 		description: 'The state of the measure',
 	},
 ];
@@ -114,7 +114,7 @@ export async function execute(
 		}
 	`;
 
-	const input: Record<string, any> = { id };
+	const input: Record<string, string> = { id };
 	if (name) input.name = name;
 	if (description) input.description = description;
 	if (category) input.category = category;

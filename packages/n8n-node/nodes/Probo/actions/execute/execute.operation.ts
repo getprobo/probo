@@ -1,4 +1,3 @@
-import { parse, getOperationAST, type DocumentNode } from 'graphql';
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { proboApiRequest } from '../../GenericFunctions';
 
@@ -16,8 +15,7 @@ export const description: INodeProperties[] = [
 			},
 		},
 		default: '',
-		description:
-			'The complete GraphQL operation including operation name and variable declarations (e.g., "query GetUser($userId: ID!) { node(id: $userId) { id } }" or "mutation UpdateUser($input: UpdateUserInput!) { updateUser(input: $input) { id } }")',
+		description: 'The complete GraphQL operation including operation name and variable declarations (e.g., "query GetUser($userId: ID!) { node(ID: $userId) { ID } }" or "mutation UpdateUser($input: UpdateUserInput!) { updateUser(input: $input) { ID } }")',
 		required: true,
 	},
 	{
@@ -41,23 +39,17 @@ export async function execute(
 	const query = this.getNodeParameter('query', itemIndex) as string;
 	const variablesParam = this.getNodeParameter('variables', itemIndex) as string;
 
-	let document: DocumentNode;
-	try {
-		document = parse(query);
-	} catch (error) {
-		throw new Error(
-			`Invalid GraphQL operation: ${error instanceof Error ? error.message : String(error)}`,
-		);
+	// Basic validation: check if query contains a GraphQL operation
+	const trimmedQuery = query.trim();
+	if (!trimmedQuery) {
+		throw new Error('GraphQL query cannot be empty');
 	}
 
-	const operationAST = getOperationAST(document);
-	if (!operationAST) {
-		throw new Error('GraphQL operation must contain a query, mutation, or subscription');
-	}
-
-	if (!operationAST.name) {
+	// Check for operation type (query, mutation, or subscription)
+	const operationMatch = trimmedQuery.match(/^\s*(query|mutation|subscription)\s+(\w+)/i);
+	if (!operationMatch) {
 		throw new Error(
-			'GraphQL operation must have a name (e.g., "query GetUser { ... }" or "mutation UpdateUser { ... }")',
+			'GraphQL operation must start with "query", "mutation", or "subscription" followed by an operation name (e.g., "query GetUser { ... }" or "mutation UpdateUser { ... }")',
 		);
 	}
 
@@ -67,7 +59,7 @@ export async function execute(
 			variables =
 				typeof variablesParam === 'string' ? JSON.parse(variablesParam) : variablesParam;
 		} catch (error) {
-			throw new Error(`Invalid JSON in Variables: ${error}`);
+			throw new Error(`Invalid JSON in Variables: ${error instanceof Error ? error.message : String(error)}`);
 		}
 	}
 

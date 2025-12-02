@@ -36,10 +36,10 @@ export const description: INodeProperties[] = [
 				action: 'Get a datum',
 			},
 			{
-				name: 'Get All',
+				name: 'Get Many',
 				value: 'getAll',
-				description: 'Get all data',
-				action: 'Get all data',
+				description: 'Get many data',
+				action: 'Get many data',
 			},
 			{
 				name: 'Update',

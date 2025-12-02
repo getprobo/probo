@@ -8,7 +8,7 @@ import * as measure from './measure';
 
 export interface ResourceModule {
 	description: INodeProperties[];
-	[key: string]: OperationModule | INodeProperties[] | any;
+	[key: string]: OperationModule | INodeProperties[];
 }
 
 export interface OperationModule {

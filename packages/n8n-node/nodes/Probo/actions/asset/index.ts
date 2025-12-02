@@ -36,10 +36,10 @@ export const description: INodeProperties[] = [
 				action: 'Get an asset',
 			},
 			{
-				name: 'Get All',
+				name: 'Get Many',
 				value: 'getAll',
-				description: 'Get all assets',
-				action: 'Get all assets',
+				description: 'Get many assets',
+				action: 'Get many assets',
 			},
 			{
 				name: 'Update',

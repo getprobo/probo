@@ -17,7 +17,7 @@ export const description: INodeProperties[] = [
 				name: 'Execute',
 				value: 'execute',
 				description: 'Execute a GraphQL query or mutation',
-				action: 'Execute GraphQL',
+				action: 'Execute graphql',
 			},
 		],
 		default: 'execute',

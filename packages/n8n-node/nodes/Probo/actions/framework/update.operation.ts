@@ -66,7 +66,7 @@ export async function execute(
 		}
 	`;
 
-	const input: Record<string, any> = { id };
+	const input: Record<string, string> = { id };
 	if (name) input.name = name;
 	if (description) input.description = description;
 
