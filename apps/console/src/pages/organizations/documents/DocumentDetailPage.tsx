@@ -139,31 +139,6 @@ const publishDocumentVersionMutation = graphql`
     publishDocumentVersion(input: $input) {
       document {
         id
-        title
-        description
-        documentType
-        classification
-        updatedAt
-        owner {
-          id
-          fullName
-        }
-        versions(first: 1) {
-          edges {
-            node {
-              id
-              status
-              signatures(first: 100) {
-                edges {
-                  node {
-                    id
-                    state
-                  }
-                }
-              }
-            }
-          }
-        }
       }
     }
   }
