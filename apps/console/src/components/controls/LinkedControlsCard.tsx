@@ -91,7 +91,7 @@ export function LinkedControlsCard<Params>(props: Props<Params>) {
   };
 
   return (
-    <SortableTable refetch={props.refetch as any}>
+    <SortableTable refetch={props.refetch}>
       <Thead>
         <Tr>
           <SortableTh field="SECTION_TITLE">{__("Reference")}</SortableTh>

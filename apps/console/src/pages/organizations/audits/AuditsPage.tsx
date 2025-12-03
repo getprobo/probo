@@ -115,7 +115,7 @@ export default function AuditsPage(props: Props) {
           </CreateAuditDialog>
         )}
       </PageHeader>
-      <SortableTable {...pagination}>
+      <SortableTable {...pagination} pageSize={10}>
         <Thead>
           <Tr>
             <Th>{__("Name")}</Th>

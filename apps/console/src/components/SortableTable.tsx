@@ -15,11 +15,15 @@ import {
   useState,
   type ComponentProps,
 } from "react";
+import type { LoadMoreFn } from "react-relay";
+import type { OperationType } from "relay-runtime";
 
 type Order = {
   direction: string;
   field: string;
 };
+
+const defaultPageSize = 50;
 
 export const SortableContext = createContext({
   order: {
@@ -39,12 +43,14 @@ export function SortableTable({
   hasNext,
   loadNext,
   isLoadingNext,
+  pageSize = defaultPageSize,
   ...props
 }: ComponentProps<typeof Table> & {
   refetch: (o: { order: Order }) => void;
   hasNext?: boolean;
-  loadNext?: (...args: any[]) => void;
+  loadNext?: LoadMoreFn<OperationType>;
   isLoadingNext?: boolean;
+  pageSize?: number;
 }) {
   const { __ } = useTranslate();
   const [order, setOrder] = useState(defaultOrder);
@@ -61,7 +67,7 @@ export function SortableTable({
         {hasNext && loadNext && (
           <Button
             variant="tertiary"
-            onClick={() => loadNext()}
+            onClick={() => loadNext(pageSize)}
             className="mt-3 mx-auto"
             disabled={isLoadingNext}
             icon={isLoadingNext ? Spinner : IconChevronDown}

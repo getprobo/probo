@@ -153,6 +153,7 @@ export default function DataPage(props: Props) {
       <SortableTable
         {...pagination}
         refetch={refetch}
+        pageSize={10}
       >
         <Thead>
           <Tr>

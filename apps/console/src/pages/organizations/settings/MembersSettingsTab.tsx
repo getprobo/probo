@@ -223,6 +223,7 @@ export default function MembersSettingsTab() {
                   }
                 });
               }}
+              pageSize={20}
             >
               <Thead>
                 <Tr>
@@ -266,6 +267,7 @@ export default function MembersSettingsTab() {
                   }
                 });
               }}
+              pageSize={20}
             >
               <Thead>
                 <Tr>

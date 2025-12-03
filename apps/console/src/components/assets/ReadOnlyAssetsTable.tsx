@@ -25,7 +25,7 @@ export function ReadOnlyAssetsTable(props: Props) {
   const { __ } = useTranslate();
 
   return (
-    <SortableTable {...pagination}>
+    <SortableTable {...pagination} pageSize={10}>
         <Thead>
           <Tr>
             <Th>{__("Name")}</Th>
