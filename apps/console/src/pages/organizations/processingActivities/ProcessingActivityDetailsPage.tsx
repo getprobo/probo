@@ -77,10 +77,6 @@ export default function ProcessingActivityDetailsPage(props: Props) {
   const isSnapshotMode = Boolean(snapshotId);
   const { isAuthorized } = use(PermissionsContext);
 
-  if (!activity) {
-    return <div>{__("Processing activity not found")}</div>;
-  }
-
   validateSnapshotConsistency(activity, snapshotId);
 
   const updateActivity = useUpdateProcessingActivity();
@@ -119,6 +115,10 @@ export default function ProcessingActivityDetailsPage(props: Props) {
       },
     }
   );
+
+  if (!activity) {
+    return <div>{__("Processing activity not found")}</div>;
+  }
 
   const onSubmit = handleSubmit(async (formData) => {
     try {

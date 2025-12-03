@@ -61,9 +61,6 @@ export default function ContinualImprovementDetailsPage(props: Props) {
   const { snapshotId } = useParams<{ snapshotId?: string }>();
   const isSnapshotMode = Boolean(snapshotId);
   const { isAuthorized } = use(PermissionsContext);
-  if (!improvement) {
-    return <div>{__("Continual improvement entry not found")}</div>;
-  }
 
   validateSnapshotConsistency(improvement, snapshotId);
 
@@ -93,6 +90,10 @@ export default function ContinualImprovementDetailsPage(props: Props) {
       },
     }
   );
+
+  if (!improvement) {
+    return <div>{__("Continual improvement entry not found")}</div>;
+  }
 
   const onSubmit = handleSubmit(async (formData) => {
     try {

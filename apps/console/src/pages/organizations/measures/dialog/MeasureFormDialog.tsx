@@ -66,15 +66,16 @@ type Props = {
 
 export default function MeasureFormDialog(props: Props) {
   const { __ } = useTranslate();
+  const ref = useDialogRef();
+  const dialogRef = props.ref ?? ref;
   const measure = useFragment(measureFragment, props.measure);
-  const dialogRef = props.ref ?? useDialogRef();
   const organizationId = useOrganizationId();
-  const [mutate] = props.measure
-    ? useUpdateMeasure()
-    : useMutationWithToasts(measureCreateMutation, {
-        successMessage: __("Measure created successfully."),
-        errorMessage: __("Failed to create measure"),
-      });
+  const [updateMeasure] = useUpdateMeasure();
+  const [createMeasure] = useMutationWithToasts(measureCreateMutation, {
+    successMessage: __("Measure created successfully."),
+    errorMessage: __("Failed to create measure"),
+  });
+  const mutate = props.measure ? updateMeasure : createMeasure;
 
   const { control, handleSubmit, register, formState, reset } =
     useFormWithSchema(measureSchema, {

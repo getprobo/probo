@@ -83,15 +83,10 @@ export function FrameworkControlDialog(props: Props) {
   const { __ } = useTranslate();
   const frameworkControl = useFragment(controlFragment, props.control);
   const dialogRef = useDialogRef();
-  const [mutate, isMutating] = props.control
-    ? useMutationWithToasts(updateMutation, {
-        successMessage: __("Control updated successfully."),
-        errorMessage: __("Failed to update control"),
-      })
-    : useMutationWithToasts(createMutation, {
-        successMessage: __("Control created successfully."),
-        errorMessage: __("Failed to create control"),
-      });
+  const [mutate, isMutating] = useMutationWithToasts(props.control ? updateMutation : createMutation, {
+    successMessage: __(`Control ${props.control ? "updated" : "created"} successfully.`),
+    errorMessage: __(`Failed to ${props.control ? "update" : "create"} control`),
+  });
 
   const defaultValues = useMemo(() => ({
     name: frameworkControl?.name ?? "",

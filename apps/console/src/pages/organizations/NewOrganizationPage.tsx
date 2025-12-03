@@ -47,7 +47,16 @@ export default function NewOrganizationPage() {
   const handleSubmit: FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const name = formData.get("name")?.toString()!;
+    const name = formData.get("name")?.toString();
+    if (!name) {
+      toast({
+        title: __("Error"),
+        description: __("Name is required"),
+        variant: "error",
+      });
+      return;
+    }
+
     setIsFetching(true);
 
     createOrganization({

@@ -102,7 +102,7 @@ export default function SAMLSettingsTab() {
   const configs = organization.samlConfigurations;
 
   const dialogRef = useDialogRef();
-  const [editingConfig, setEditingConfig] = useState<typeof configs[0] | null>(null);
+  const [editingConfig, setEditingConfig] = useState<Partial<typeof configs[0]> & {id: string} | null>(null);
   const [currentStep, setCurrentStep] = useState<SetupStep>("initiate");
   const [dnsRecord, setDnsRecord] = useState<string>("");
 
@@ -222,7 +222,7 @@ export default function SAMLSettingsTab() {
       },
       onCompleted: (response) => {
         setDnsRecord(response.initiateDomainVerification.dnsRecord);
-        setEditingConfig(response.initiateDomainVerification.samlConfiguration as any);
+        setEditingConfig(response.initiateDomainVerification.samlConfiguration);
         setCurrentStep("verify");
       },
     });

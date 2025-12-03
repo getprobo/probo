@@ -336,7 +336,7 @@ export default function APIKeysPage() {
       const data: { key: string } = await response.json();
       setCurrentKey(data.key);
       keyDialogRef.current?.open();
-    } catch (error) {
+    } catch {
       toast({
         title: __("Error"),
         description: __("Failed to load API key"),
@@ -355,7 +355,7 @@ export default function APIKeysPage() {
         description: __("API key copied to clipboard"),
         variant: "success",
       });
-    } catch (error) {
+    } catch {
       toast({
         title: __("Error"),
         description: __("Failed to copy to clipboard"),

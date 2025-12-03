@@ -281,7 +281,7 @@ export default function FrameworkControlPage({ queryRef }: Props) {
             variant="card"
             measures={control.measures?.edges.map((edge) => edge.node) ?? []}
             params={{ controlId: control.id }}
-            connectionId={control.measures?.__id!}
+            connectionId={control.measures?.__id ?? ""}
             onAttach={withErrorHandling(attachMeasure, __("Failed to link measure"))}
             onDetach={withErrorHandling(detachMeasure, __("Failed to unlink measure"))}
             disabled={isAttachingMeasure || isDetachingMeasure}
@@ -292,7 +292,7 @@ export default function FrameworkControlPage({ queryRef }: Props) {
             variant="card"
             documents={control.documents?.edges.map((edge) => edge.node) ?? []}
             params={{ controlId: control.id }}
-            connectionId={control.documents?.__id!}
+            connectionId={control.documents?.__id ?? ""}
             onAttach={withErrorHandling(attachDocument, __("Failed to link document"))}
             onDetach={withErrorHandling(detachDocument, __("Failed to unlink document"))}
             disabled={isAttachingDocument || isDetachingDocument}
@@ -303,7 +303,7 @@ export default function FrameworkControlPage({ queryRef }: Props) {
             variant="card"
             audits={control.audits?.edges.map((edge) => edge.node) ?? []}
             params={{ controlId: control.id }}
-            connectionId={control.audits?.__id!}
+            connectionId={control.audits?.__id ?? ""}
             onAttach={withErrorHandling(attachAudit, __("Failed to link audit"))}
             onDetach={withErrorHandling(detachAudit, __("Failed to unlink audit"))}
             disabled={isAttachingAudit || isDetachingAudit}
@@ -314,7 +314,7 @@ export default function FrameworkControlPage({ queryRef }: Props) {
             variant="card"
             snapshots={control.snapshots?.edges.map((edge) => edge.node) ?? []}
             params={{ controlId: control.id }}
-            connectionId={control.snapshots?.__id!}
+            connectionId={control.snapshots?.__id ?? ""}
             onAttach={withErrorHandling(attachSnapshot, __("Failed to link snapshot"))}
             onDetach={withErrorHandling(detachSnapshot, __("Failed to unlink snapshot"))}
             disabled={isAttachingSnapshot || isDetachingSnapshot}

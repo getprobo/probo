@@ -68,7 +68,7 @@ function Certifications(props: CertificationsProps) {
       ([key, value]) =>
         [key, value.filter((c) => props.value.includes(c))] as const
     )
-    .filter(([_, certifications]) => certifications.length > 0);
+    .filter(([, certifications]) => certifications.length > 0);
   categories.push([
     "custom",
     props.value.filter((c) => !categorizedCertifications.includes(c)),

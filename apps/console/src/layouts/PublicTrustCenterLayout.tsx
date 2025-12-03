@@ -30,7 +30,7 @@ export function PublicTrustCenterLayout({ organizationName, organizationLogo, ch
       }
 
       window.location.reload();
-    } catch (error) {
+    } catch {
       toast({
         title: __("Error"),
         description: __("Logout failed"),

@@ -47,10 +47,10 @@ export default function LoginPage() {
       }
 
       window.location.href = "/";
-    } catch (e: any) {
+    } catch (e: unknown) {
       toast({
         title: __("Error"),
-        description: e.message as string,
+        description: e instanceof Error ? e.message : __("Failed to login"),
         variant: "error",
       });
     } finally {
@@ -90,10 +90,10 @@ export default function LoginPage() {
       } else {
         throw new Error(__("SSO not available for this email domain"));
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       toast({
         title: __("Error"),
-        description: e.message as string,
+        description: e instanceof Error ? e.message : __("Failed to login"),
         variant: "error",
       });
     } finally {

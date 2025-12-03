@@ -65,7 +65,8 @@ const schema = z.object({
  */
 export function FrameworkFormDialog(props: Props) {
   const { __ } = useTranslate();
-  const dialogRef = props.ref ?? useDialogRef();
+  const ref = useDialogRef();
+  const dialogRef = props.ref ?? ref;
   const { register, handleSubmit, reset } = useFormWithSchema(schema, {
     defaultValues: {
       name: props.framework?.name ?? "",

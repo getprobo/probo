@@ -30,11 +30,11 @@ export function ControlledField<TFieldValues extends FieldValues = FieldValues>(
   );
 }
 
-export function ControlledSelect({
+export function ControlledSelect<TFieldValues extends FieldValues = FieldValues>({
   control,
   name,
   ...props
-}: Props<typeof Select>) {
+}: Props<typeof Select, TFieldValues>) {
   return (
     <Controller
       control={control}

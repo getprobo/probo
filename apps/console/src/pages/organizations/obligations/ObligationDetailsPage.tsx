@@ -64,10 +64,6 @@ export default function ObligationDetailsPage(props: Props) {
   const isSnapshotMode = Boolean(snapshotId);
   const { isAuthorized } = use(PermissionsContext);
 
-  if (!obligation) {
-    return <div>{__("Obligation not found")}</div>;
-  }
-
   validateSnapshotConsistency(obligation, snapshotId);
 
   const updateObligation = useUpdateObligation();
@@ -79,7 +75,7 @@ export default function ObligationDetailsPage(props: Props) {
   );
 
   const deleteObligation = useDeleteObligation(
-    { id: obligation?.id! },
+    { id: obligation?.id ?? "" },
     connectionId
   );
 
@@ -103,6 +99,10 @@ export default function ObligationDetailsPage(props: Props) {
       },
     }
   );
+
+  if (!obligation) {
+    return <div>{__("Obligation not found")}</div>;
+  }
 
   const onSubmit = handleSubmit(async (formData) => {
     try {

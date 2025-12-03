@@ -19,6 +19,7 @@ type Document = {
   document_version_id: string;
   title: string;
   signed?: boolean;
+  organization_name: string;
 };
 
 type DocumentSigningResponse = {
@@ -86,7 +87,7 @@ export default function DocumentSigningRequestsPage() {
         // Extract organization name from the first document
         const organizationName =
           documents.length > 0
-            ? (documents[0] as any).organization_name || "Organization"
+            ? documents[0].organization_name || "Organization"
             : "Organization";
 
         setSigningData({

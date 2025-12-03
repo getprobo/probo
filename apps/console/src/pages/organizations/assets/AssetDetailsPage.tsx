@@ -63,8 +63,8 @@ export default function AssetDetailsPage(props: Props) {
   );
   const deleteAsset = useDeleteAsset(assetEntry, connectionId);
 
-  const vendors = assetEntry.vendors?.edges.map((edge: any) => edge.node) ?? [];
-  const vendorIds = vendors.map((vendor: any) => vendor.id);
+  const vendors = assetEntry.vendors?.edges.map((edge) => edge.node) ?? [];
+  const vendorIds = vendors.map((vendor) => vendor.id);
 
   const { control, formState, handleSubmit, register, reset } = useFormWithSchema(updateAssetSchema, {
     defaultValues: {

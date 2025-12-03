@@ -45,10 +45,6 @@ export default function VendorDetailPage(props: Props) {
   const isSnapshotMode = Boolean(snapshotId);
   const { isAuthorized } = use(PermissionsContext);
 
-  if (!vendor) {
-    return <div>{__("Vendor not found")}</div>;
-  }
-
   validateSnapshotConsistency(vendor, snapshotId);
   const deleteVendor = useDeleteVendor(
     vendor,
@@ -59,6 +55,10 @@ export default function VendorDetailPage(props: Props) {
     complianceReportsFragment,
     vendor as VendorComplianceTabFragment$key
   ).complianceReports.edges.length;
+
+  if (!vendor) {
+    return <div>{__("Vendor not found")}</div>;
+  }
 
   const vendorsUrl = isSnapshotMode && snapshotId
     ? `/organizations/${organizationId}/snapshots/${snapshotId}/vendors`

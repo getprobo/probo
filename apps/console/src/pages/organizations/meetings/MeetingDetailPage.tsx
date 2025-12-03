@@ -56,10 +56,6 @@ export default function MeetingDetailPage(props: Props) {
   const navigate = useNavigate();
   const { isAuthorized } = use(PermissionsContext);
 
-  if (!meeting) {
-    return <div>{__("Meeting not found")}</div>;
-  }
-
   const [deleteMeeting, isDeleting] = useDeleteMeetingMutation();
   const confirm = useConfirm();
   const updateMinutesDialogRef = useRef<UpdateMeetingMinutesDialogRef>(null);
@@ -117,11 +113,15 @@ export default function MeetingDetailPage(props: Props) {
         setCanDelete(false);
       }
     }
-  }, [organizationId]);
-
-  const hasAnyAction = canUpdate || canDelete;
+  }, [organizationId, isAuthorized]);
 
   usePageTitle(meeting.name);
+
+  if (!meeting) {
+    return <div>{__("Meeting not found")}</div>;
+  }
+
+  const hasAnyAction = canUpdate || canDelete;
 
   const handleDelete = () => {
     confirm(
