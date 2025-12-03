@@ -103,19 +103,15 @@ type Props = {
 
 export default function TaskFormDialog(props: Props) {
   const { __ } = useTranslate();
-  const dialogRef = props.ref ?? useDialogRef();
+  const ref = useDialogRef();
+  const dialogRef = props.ref ?? ref;
   const organizationId = useOrganizationId();
   const task = useFragment(taskFragment, props.task);
   const relayEnv = useRelayEnvironment();
-  const [mutate] = task
-    ? useMutationWithToasts(taskUpdateMutation, {
-        successMessage: __("Task updated successfully."),
-        errorMessage: __("Failed to update task"),
-      })
-    : useMutationWithToasts(taskCreateMutation, {
-        successMessage: __("Task created successfully."),
-        errorMessage: __("Failed to create task"),
-      });
+  const [mutate] = useMutationWithToasts(task? taskUpdateMutation : taskCreateMutation, {
+    successMessage: __(`Task ${task ? "updated" : "created"} successfully.`),
+    errorMessage: __(`Failed to ${task ? "update" : "create"} task`),
+  })
 
   const isUpdating = !!task;
 
