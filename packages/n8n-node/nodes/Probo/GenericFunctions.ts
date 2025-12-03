@@ -34,7 +34,19 @@ export async function proboApiRequest(
 	};
 
 	try {
-		return await this.helpers.httpRequest(options);
+		const response = await this.helpers.httpRequest(options);
+
+		if (response.errors && Array.isArray(response.errors) && response.errors.length > 0) {
+			const errorMessages = response.errors.map((err: IDataObject) => 
+				err.message || JSON.stringify(err)
+			).join('; ');
+			throw new NodeApiError(this.getNode(), {
+				message: `GraphQL errors: ${errorMessages}`,
+				httpCode: '200',
+			} as JsonObject);
+		}
+		
+		return response;
 	} catch (error) {
 		throw new NodeApiError(this.getNode(), error as JsonObject);
 	}
