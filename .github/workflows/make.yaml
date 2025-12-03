@@ -38,19 +38,43 @@ jobs:
           args: "release --clean --snapshot"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - uses: "aquasecurity/trivy-action@0.28.0"
+      - name: Scan Docker image with Trivy
+        if: github.ref == 'refs/heads/main'
+        uses: "aquasecurity/trivy-action@0.28.0"
         with:
           image-ref: "ghcr.io/getprobo/probo:latest-amd64"
           format: "sarif"
           output: "trivy-results.sarif"
+          exit-code: 0
+          ignore-unfixed: true
+          vuln-type: "os,library"
+          severity: "CRITICAL,HIGH"
+      - name: Scan Docker image with Trivy
+        if: github.ref != 'refs/heads/main'
+        uses: "aquasecurity/trivy-action@0.28.0"
+        with:
+          image-ref: "ghcr.io/getprobo/probo:latest-amd64"
+          format: "table"
           exit-code: 1
           ignore-unfixed: true
           vuln-type: "os,library"
           severity: "CRITICAL,HIGH"
       - name: Upload Trivy scan results to GitHub Security tab
+        if: github.ref == 'refs/heads/main'
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: "trivy-results.sarif"
+      - uses: anchore/sbom-action@da167eac915b4e86f08b264dbdbc867b61be6f0c #v0.20.5
+        with:
+          path: ./
+          format: cyclonedx-json
+          output-file: sbom.json
+      - uses: anchore/scan-action@1638637db639e0ade3258b51db49a9a137574c3e #v6.5.1
+        with:
+          path: ./
+          fail-build: true
+          severity-cutoff: critical
+          output-format: table
 
   test:
     name: "test"
@@ -77,17 +101,6 @@ jobs:
             coverage.html
           retention-days: 30
       - run: "make lint"
-      - uses: anchore/sbom-action@da167eac915b4e86f08b264dbdbc867b61be6f0c #v0.20.5
-        with:
-          path: ./
-          format: cyclonedx-json
-          output-file: sbom.json
-      - uses: anchore/scan-action@1638637db639e0ade3258b51db49a9a137574c3e #v6.5.1
-        with:
-          path: ./
-          fail-build: true
-          severity-cutoff: critical
-          output-format: table
 
   test-e2e:
     name: "test-e2e"
