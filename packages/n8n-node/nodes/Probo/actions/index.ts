@@ -7,6 +7,7 @@ import * as framework from './framework';
 import * as measure from './measure';
 import * as meeting from './meeting';
 import * as organization from './organization';
+import * as vendor from './vendor';
 
 export interface ResourceModule {
 	description: INodeProperties[];
@@ -27,6 +28,7 @@ export const resources: Record<string, ResourceModule> = {
 	measure: measure as ResourceModule,
 	meeting: meeting as ResourceModule,
 	organization: organization as ResourceModule,
+	vendor: vendor as ResourceModule,
 };
 
 export function getAllResourceOperations(): INodeProperties[] {
