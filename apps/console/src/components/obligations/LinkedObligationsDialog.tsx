@@ -103,7 +103,7 @@ function LinkedObligationsDialogContent(props: Omit<Props, "children">) {
   );
   const { __ } = useTranslate();
   const [search, setSearch] = useState("");
-  const obligations = data.obligations?.edges?.map((edge) => edge.node) ?? [];
+  const obligations = useMemo(() => data.obligations?.edges?.map((edge) => edge.node) ?? [], [data.obligations]);
   const linkedIds = useMemo(() => {
     return new Set(props.linkedObligations?.map((o) => o.id) ?? []);
   }, [props.linkedObligations]);

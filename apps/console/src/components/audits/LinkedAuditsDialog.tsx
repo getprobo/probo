@@ -103,7 +103,7 @@ function LinkedAuditsDialogContent(props: Omit<Props, "children">) {
   );
   const { __ } = useTranslate();
   const [search, setSearch] = useState("");
-  const audits = data.audits?.edges?.map((edge) => edge.node) ?? [];
+  const audits = useMemo(() => data.audits?.edges?.map((edge) => edge.node) ?? [], [data.audits]);
   const linkedIds = useMemo(() => {
     return new Set(props.linkedAudits?.map((a) => a.id) ?? []);
   }, [props.linkedAudits]);

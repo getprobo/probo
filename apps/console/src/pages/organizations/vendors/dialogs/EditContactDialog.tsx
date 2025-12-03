@@ -88,7 +88,7 @@ export function EditContactDialog({ contactId, contact, onClose }: Props) {
 
   useEffect(() => {
     dialogRef.current?.open();
-  }, []);
+  }, [dialogRef]);
 
   return (
     <Dialog

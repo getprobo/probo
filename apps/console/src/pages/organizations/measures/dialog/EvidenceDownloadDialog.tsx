@@ -52,7 +52,7 @@ function DownloadLink({ evidenceId, onClose }: Props) {
   useEffect(() => {
     downloadFile(evidence.file?.downloadUrl, evidence.file?.fileName ?? "evidence");
     onClose();
-  }, [evidence]);
+  }, [evidence.file?.downloadUrl, evidence.file?.fileName, onClose]);
 
   return null;
 }

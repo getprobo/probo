@@ -49,7 +49,7 @@ function LinkedMeasuresDialogContent(props: Omit<Props, "children">) {
   const { __ } = useTranslate();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<string | null>(null);
-  const measures = data.measures?.edges?.map((edge) => edge.node) ?? [];
+  const measures = useMemo(() => data.measures?.edges?.map((edge) => edge.node) ?? [], [data.measures]);
   const linkedIds = useMemo(() => {
     return new Set(props.linkedMeasures?.map((m) => m.id) ?? []);
   }, [props.linkedMeasures]);

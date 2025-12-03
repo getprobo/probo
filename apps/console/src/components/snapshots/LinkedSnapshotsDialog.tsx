@@ -102,7 +102,7 @@ function LinkedSnapshotsDialogContent(props: Omit<Props, "children">) {
 
   const { __ } = useTranslate();
   const [search, setSearch] = useState("");
-  const snapshots = data.snapshots?.edges?.map((edge) => edge.node) ?? [];
+  const snapshots = useMemo(() => data.snapshots?.edges?.map((edge) => edge.node) ?? [], [data.snapshots]);
   const linkedIds = useMemo(() => {
     return new Set(props.linkedSnapshots?.map((s) => s.id) ?? []);
   }, [props.linkedSnapshots]);

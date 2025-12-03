@@ -8,6 +8,7 @@ import { input } from "../Input/Input";
 import clsx from "clsx";
 
 type Props = TextareaHTMLAttributes<HTMLTextAreaElement> & {
+    variant?: "bordered" | "ghost" | "title";
     autogrow?: boolean;
     ref?: RefCallback<HTMLTextAreaElement>;
 };

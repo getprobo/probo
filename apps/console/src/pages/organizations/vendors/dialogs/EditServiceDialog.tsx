@@ -80,7 +80,7 @@ export function EditServiceDialog({ serviceId, service, onClose }: Props) {
 
   useEffect(() => {
     dialogRef.current?.open();
-  }, []);
+  }, [dialogRef]);
 
   return (
     <Dialog

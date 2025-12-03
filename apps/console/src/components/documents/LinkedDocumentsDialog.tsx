@@ -97,7 +97,7 @@ function LinkedDocumentsDialogContent(props: Omit<Props, "children">) {
   );
   const { __ } = useTranslate();
   const [search, setSearch] = useState("");
-  const documents = data.documents?.edges?.map((edge) => edge.node) ?? [];
+  const documents = useMemo(() => data.documents?.edges?.map((edge) => edge.node) ?? [], [data.documents]);
   const linkedIds = useMemo(() => {
     return new Set(props.linkedDocuments?.map((m) => m.id) ?? []);
   }, [props.linkedDocuments]);

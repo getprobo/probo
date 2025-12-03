@@ -101,7 +101,7 @@ function EvidencePreviewContent({
     return () => {
       abortController.abort();
     };
-  }, [evidence.file?.downloadUrl, isUriFile]);
+  }, [evidence.file?.downloadUrl, isUriFile, onClose, __, toast]);
 
   if (!evidence.file?.downloadUrl) {
     return null;

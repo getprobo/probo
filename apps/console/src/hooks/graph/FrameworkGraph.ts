@@ -73,7 +73,7 @@ export const useDeleteFrameworkMutation = (
         }
       );
     },
-    [framework, connectionId, commitDelete]
+    [framework, connectionId, commitDelete, confirm, __]
   );
 };
 

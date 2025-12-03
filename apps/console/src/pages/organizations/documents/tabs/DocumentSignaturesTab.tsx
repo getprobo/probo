@@ -120,10 +120,11 @@ function SignatureList(props: {
   version: Version;
   selectedStates: SignatureState[];
 }) {
+  const { version: propVersion, selectedStates } = props;
   const [version, refetch] = useRefetchableFragment<
     DocumentSignaturesTabRefetchQuery,
     DocumentSignaturesTab_version$key
-  >(versionFragment, props.version);
+  >(versionFragment, propVersion);
   const signatures = version.signatures?.edges?.map((edge) => edge.node) ?? [];
   const { __ } = useTranslate();
   const signatureMap = new Map(signatures.map((s) => [s.signedBy.id, s]));
@@ -140,10 +141,10 @@ function SignatureList(props: {
     }
 
     const filter =
-      props.selectedStates.length > 0 ? { states: props.selectedStates } : null;
+      selectedStates.length > 0 ? { states: selectedStates } : null;
 
     refetch({ signatureFilter: filter });
-  }, [JSON.stringify(props.selectedStates), refetch]);
+  }, [selectedStates, refetch]);
 
   if (!version.signatures) {
     return (
@@ -163,11 +164,11 @@ function SignatureList(props: {
 
   // When a filter is active, only show people who have signatures in the filtered results
   const filteredPeople =
-    props.selectedStates.length > 0
+    selectedStates.length > 0
       ? people.filter((p) => signatureMap.has(p.id))
       : people;
 
-  if (filteredPeople.length === 0 && props.selectedStates.length > 0) {
+  if (filteredPeople.length === 0 && selectedStates.length > 0) {
     return (
       <div className="text-center text-sm text-txt-tertiary py-3">
         {__("No signatures match the selected filters")}

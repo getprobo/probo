@@ -68,7 +68,7 @@ export function useMutationWithToasts<T extends MutationParameters>(
         })
       );
     },
-    [mutate, toast, __]
+    [mutate, toast, __, baseOptions]
   );
 
   return [mutateWithToast, isLoading] as const;

@@ -123,7 +123,7 @@ export default function VendorOverviewTab() {
         { name: "securityPageUrl", label: __("Security page URL") },
         { name: "trustPageUrl", label: __("Trust page URL") },
       ] as const,
-    [],
+    [__],
   );
 
   usePageTitle(vendor.name + " - " + __("Overview"));

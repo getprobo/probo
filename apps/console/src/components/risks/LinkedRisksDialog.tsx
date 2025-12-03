@@ -73,7 +73,7 @@ function LinkedRisksDialogContent(props: Omit<Props, "children">) {
   const { __ } = useTranslate();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<string | null>(null);
-  const risks = data.organization?.risks?.edges?.map((edge) => edge.node) ?? [];
+  const risks = useMemo(() => data.organization?.risks?.edges?.map((edge) => edge.node) ?? [], [data.organization?.risks]);
   const linkedIds = useMemo(() => {
     return new Set(props.linkedRisks?.map((r) => r.id) ?? []);
   }, [props.linkedRisks]);
