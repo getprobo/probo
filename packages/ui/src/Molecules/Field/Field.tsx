@@ -14,7 +14,7 @@ type BaseProps<T extends string, P> = {
     children?: ReactNode;
 } & P;
 
-type Props =
+type Props<T extends string | readonly string[] | number = string> =
     | BaseProps<never, ComponentProps<typeof Input>>
     | BaseProps<"text", ComponentProps<typeof Input>>
     | BaseProps<"email", ComponentProps<typeof Input>>
@@ -22,7 +22,7 @@ type Props =
     | BaseProps<"password", ComponentProps<typeof Input>>
     | BaseProps<"textarea", ComponentProps<typeof Textarea>>
     | BaseProps<"number", ComponentProps<typeof Input>>
-    | BaseProps<"select", ComponentProps<typeof Select>>;
+    | BaseProps<"select", ComponentProps<typeof Select<T>>>;
 
 const field = tv({
     slots: {
@@ -34,7 +34,7 @@ const field = tv({
 
 const { base: baseClass, label: labelClass, help: helpClass } = field();
 
-export function Field(props: Props) {
+export function Field<T extends string | readonly string[] | number = string>(props: Props<T>) {
     const showHelp = props.help && !props.error;
     const childrenAsInput = !props.type && props.children;
     return (
@@ -55,8 +55,8 @@ export function Field(props: Props) {
     );
 }
 
-function getInput(props: Props) {
-    const { label, error, onValueChange, type, ...restProps } = props;
+function getInput<T extends string | readonly string[] | number = string>(props: Props<T>) {
+    const { error, onValueChange, type, ...restProps } = props;
     const baseProps = {
         ["aria-invalid"]: !!error,
         name: props.name,
@@ -67,7 +67,7 @@ function getInput(props: Props) {
         case "select":
             return (
                 // @ts-expect-error Select is too dynamic
-                <Select
+                <Select<T>
                     {...baseProps}
                     {...restProps}
                     onValueChange={onValueChange}

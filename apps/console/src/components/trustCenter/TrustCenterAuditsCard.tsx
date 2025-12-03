@@ -94,7 +94,7 @@ export function TrustCenterAuditsCard<Params>(props: Props<Params>) {
           {audits.map((audit, index) => (
             <AuditRow
               key={index}
-              audit={audit}
+              auditFragmentRef={audit}
               onChangeVisibility={onChangeVisibility}
               disabled={props.disabled}
             />
@@ -116,23 +116,24 @@ export function TrustCenterAuditsCard<Params>(props: Props<Params>) {
 }
 
 function AuditRow(props: {
-  audit: TrustCenterAuditsCardFragment$key;
+  auditFragmentRef: TrustCenterAuditsCardFragment$key;
   onChangeVisibility: (auditId: string, trustCenterVisibility: "NONE" | "PRIVATE" | "PUBLIC") => void;
   disabled?: boolean;
 }) {
-  const audit = useFragment(trustCenterAuditFragment, props.audit);
+  const { auditFragmentRef, onChangeVisibility, disabled } = props;
+  const audit = useFragment(trustCenterAuditFragment, auditFragmentRef);
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
   const [optimisticValue, setOptimisticValue] = useState<string | null>(null);
   const { isAuthorized } = use(PermissionsContext);
   const canUpdate = organizationId ? isAuthorized("TrustCenter", "updateTrustCenter") : false;
 
-  const handleValueChange = useCallback((value: string | {}) => {
+  const handleValueChange = useCallback((value: string) => {
     const stringValue = typeof value === 'string' ? value : '';
     const typedValue = stringValue as "NONE" | "PRIVATE" | "PUBLIC";
     setOptimisticValue(typedValue);
-    props.onChangeVisibility(audit.id, typedValue);
-  }, [audit.id, props.onChangeVisibility]);
+    onChangeVisibility(audit.id, typedValue);
+  }, [audit.id, onChangeVisibility]);
 
   useEffect(() => {
     if (optimisticValue && audit.trustCenterVisibility === optimisticValue) {
@@ -167,7 +168,7 @@ function AuditRow(props: {
           type="select"
           value={currentValue}
           onValueChange={handleValueChange}
-          disabled={props.disabled || !canUpdate}
+          disabled={disabled || !canUpdate}
           className="w-[105px]"
         >
           {visibilityOptions.map((option) => (

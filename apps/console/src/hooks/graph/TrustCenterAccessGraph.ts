@@ -1,8 +1,9 @@
 import { graphql } from 'react-relay';
 import { useLazyLoadQuery, usePaginationFragment } from 'react-relay';
 import type {
-  TrustCenterAccessGraphQuery
+  TrustCenterAccessGraphQuery,
 } from "./__generated__/TrustCenterAccessGraphQuery.graphql";
+import type { TrustCenterAccessGraph_accesses$data, TrustCenterAccessGraph_accesses$key } from './__generated__/TrustCenterAccessGraph_accesses.graphql';
 
 export const trustCenterAccessesPaginationFragment = graphql`
   fragment TrustCenterAccessGraph_accesses on TrustCenter
@@ -140,7 +141,7 @@ export const loadTrustCenterAccessDocumentAccessesQuery = graphql`
 `;
 
 interface PaginatedData {
-  data: { node: any } | null;
+  data: TrustCenterAccessGraph_accesses$data | null;
   hasNext: boolean;
   loadMore: () => void;
   isLoadingNext: boolean;
@@ -157,6 +158,18 @@ export function useTrustCenterAccesses(trustCenterId: string): PaginatedData {
     { fetchPolicy: 'store-and-network' }
   );
 
+  const trustCenter = data?.node;
+
+  const {
+    data: paginationData,
+    loadNext,
+    hasNext,
+    isLoadingNext,
+  } = usePaginationFragment<TrustCenterAccessGraphQuery, TrustCenterAccessGraph_accesses$key>(
+    trustCenterAccessesPaginationFragment,
+    trustCenter
+  );
+
   if (!trustCenterId) {
     return {
       data: null,
@@ -166,24 +179,12 @@ export function useTrustCenterAccesses(trustCenterId: string): PaginatedData {
     };
   }
 
-  const trustCenter = data?.node as any;
-
-  const {
-    data: paginationData,
-    loadNext,
-    hasNext,
-    isLoadingNext,
-  } = usePaginationFragment(
-    trustCenterAccessesPaginationFragment,
-    trustCenter
-  );
-
   const loadMore = () => {
     loadNext(10);
   };
 
   return {
-    data: { node: paginationData },
+    data: paginationData,
     hasNext,
     loadMore,
     isLoadingNext,

@@ -98,7 +98,7 @@ export function TrustCenterDocumentsCard<Params>(props: Props<Params>) {
           {documents.map((document, index) => (
             <DocumentRow
               key={index}
-              document={document}
+              documentFragmentRef={document}
               onChangeVisibility={onChangeVisibility}
               disabled={props.disabled}
             />
@@ -121,23 +121,24 @@ export function TrustCenterDocumentsCard<Params>(props: Props<Params>) {
 }
 
 function DocumentRow(props: {
-  document: TrustCenterDocumentsCardFragment$key;
+  documentFragmentRef: TrustCenterDocumentsCardFragment$key;
   onChangeVisibility: (documentId: string, trustCenterVisibility: "NONE" | "PRIVATE" | "PUBLIC") => void;
   disabled?: boolean;
 }) {
-  const document = useFragment(trustCenterDocumentFragment, props.document);
+  const { documentFragmentRef, onChangeVisibility, disabled } = props;
+  const document = useFragment(trustCenterDocumentFragment, documentFragmentRef);
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
   const [optimisticValue, setOptimisticValue] = useState<string | null>(null);
   const { isAuthorized } = use(PermissionsContext);
   const canUpdate = isAuthorized("TrustCenter", "updateTrustCenter");
 
-  const handleValueChange = useCallback((value: string | {}) => {
+  const handleValueChange = useCallback((value: string) => {
     const stringValue = typeof value === 'string' ? value : '';
     const typedValue = stringValue as "NONE" | "PRIVATE" | "PUBLIC";
     setOptimisticValue(typedValue);
-    props.onChangeVisibility(document.id, typedValue);
-  }, [document.id, props.onChangeVisibility]);
+    onChangeVisibility(document.id, typedValue);
+  }, [document.id, onChangeVisibility]);
 
   useEffect(() => {
     if (optimisticValue && document.trustCenterVisibility === optimisticValue) {
@@ -167,7 +168,7 @@ function DocumentRow(props: {
           type="select"
           value={currentValue}
           onValueChange={handleValueChange}
-          disabled={props.disabled || !canUpdate}
+          disabled={disabled || !canUpdate}
           className="w-[105px]"
         >
           {visibilityOptions.map((option) => (

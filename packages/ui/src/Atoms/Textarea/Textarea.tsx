@@ -8,14 +8,13 @@ import { input } from "../Input/Input";
 import clsx from "clsx";
 
 type Props = TextareaHTMLAttributes<HTMLTextAreaElement> & {
-    variant?: "bordered" | "ghost" | "title";
     autogrow?: boolean;
     ref?: RefCallback<HTMLTextAreaElement>;
 };
 
 export function Textarea(props: Props) {
     const ref = useRef<HTMLTextAreaElement>(null);
-    const { autogrow, variant, ref: propsRef, ...restProps } = props;
+    const { autogrow, ref: propsRef, ...restProps } = props;
 
     const adjustHeight = () => {
         if (!autogrow || !ref.current) return;

@@ -24,8 +24,8 @@ import {
 import { useTranslate } from "@probo/i18n";
 import { formatDate } from "@probo/helpers";
 import { useOutletContext } from "react-router";
-import { useState, useCallback, useEffect, useRef, use } from "react";
-import { useQueryLoader, usePreloadedQuery } from 'react-relay';
+import { useState, useCallback, useEffect, useRef, use, useMemo } from "react";
+import { useQueryLoader, usePreloadedQuery, type PreloadedQuery } from 'react-relay';
 import z from "zod";
 import {
   useTrustCenterAccesses,
@@ -37,6 +37,7 @@ import {
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { PermissionsContext } from "/providers/PermissionsContext";
+import type { TrustCenterAccessGraphLoadDocumentAccessesQuery } from "/hooks/graph/__generated__/TrustCenterAccessGraphLoadDocumentAccessesQuery.graphql";
 
 type ContextType = {
   organization: {
@@ -80,7 +81,6 @@ type ContextType = {
 };
 
 type DocumentAccessInfo = {
-  id: string;
   active: boolean;
   requested: boolean;
   document?: {
@@ -91,12 +91,12 @@ type DocumentAccessInfo = {
   report?: {
     id: string;
     filename: string;
-    audit: {
+    audit?: {
       id: string;
       framework: {
         name: string;
       };
-    };
+    } | null;
   } | null;
   trustCenterFile?: {
     id: string;
@@ -109,16 +109,16 @@ function DocumentAccessesLoader({
   queryReference,
   onDataLoaded
 }: {
-  queryReference: any;
+  queryReference: PreloadedQuery<TrustCenterAccessGraphLoadDocumentAccessesQuery>;
   onDataLoaded: (documentAccesses: DocumentAccessInfo[]) => void;
 }) {
   const data = usePreloadedQuery(loadTrustCenterAccessDocumentAccessesQuery, queryReference);
 
   useEffect(() => {
     if (data && typeof data === 'object' && 'node' in data) {
-      const node = (data as any).node;
+      const node = data.node;
       if (node?.availableDocumentAccesses?.edges) {
-        const documentAccesses = node.availableDocumentAccesses.edges.map((edge: any) => edge.node);
+        const documentAccesses: DocumentAccessInfo[] = node.availableDocumentAccesses.edges.map((edge) => edge.node);
         onDataLoaded(documentAccesses);
       }
     }
@@ -157,10 +157,10 @@ export default function TrustCenterAccessTab() {
   const dialogRef = useDialogRef();
   const editDialogRef = useDialogRef();
   const [editingAccess, setEditingAccess] = useState<AccessType | null>(null);
-  const [editingDocumentAccesses, setEditingDocumentAccesses] = useState<DocumentAccessType[]>([]);
+  const [editingDocumentAccesses, setEditingDocumentAccesses] = useState<DocumentAccessInfo[]>([]);
   const [selectedDocumentAccesses, setSelectedDocumentAccesses] = useState<Set<string>>(new Set());
   const [pendingEditEmail, setPendingEditEmail] = useState<string | null>(null);
-  const [documentAccessesQueryReference, loadDocumentAccessesQuery] = useQueryLoader(loadTrustCenterAccessDocumentAccessesQuery);
+  const [documentAccessesQueryReference, loadDocumentAccessesQuery] = useQueryLoader<TrustCenterAccessGraphLoadDocumentAccessesQuery>(loadTrustCenterAccessDocumentAccessesQuery);
   const loadedAccessIdRef = useRef<string | null>(null);
   const [isLoadingDocumentAccesses, setIsLoadingDocumentAccesses] = useState(false);
 
@@ -197,37 +197,11 @@ export default function TrustCenterAccessTab() {
     defaultValues: { name: "", active: false },
   });
 
-  type DocumentAccessType = {
-    id: string;
-    active: boolean;
-    requested: boolean;
-    document?: {
-      id: string;
-      title: string;
-      documentType: string;
-    } | null;
-    report?: {
-      id: string;
-      filename: string;
-      audit: {
-        id: string;
-        framework: {
-          name: string;
-        };
-      };
-    } | null;
-    trustCenterFile?: {
-      id: string;
-      name: string;
-      category: string;
-    } | null;
-  };
-
   function getDocumentAccessInfo(
-    docAccess: DocumentAccessType,
+    docAccess: DocumentAccessInfo,
     __: (key: string) => string
   ) {
-    if (!!docAccess.document) {
+    if (docAccess.document) {
       return {
         variant: "info" as const,
         name: docAccess.document?.title,
@@ -238,7 +212,7 @@ export default function TrustCenterAccessTab() {
         active: docAccess.active,
       };
     }
-    if (!!docAccess.report) {
+    if (docAccess.report) {
       return {
         variant: "success" as const,
         name: docAccess.report?.filename,
@@ -249,7 +223,7 @@ export default function TrustCenterAccessTab() {
         active: docAccess.active,
       };
     }
-    if (!!docAccess.trustCenterFile) {
+    if (docAccess.trustCenterFile) {
       return {
         variant: "highlight" as const,
         name: docAccess.trustCenterFile?.name,
@@ -274,30 +248,21 @@ export default function TrustCenterAccessTab() {
     lastTokenExpiresAt: string | null;
     pendingRequestCount: number;
     activeCount: number;
-    documentAccesses?: DocumentAccessType[];
+    documentAccesses?: DocumentAccessInfo[];
   };
 
   const { data: trustCenterData, loadMore, hasNext, isLoadingNext } = useTrustCenterAccesses(organization.trustCenter?.id || "");
 
-  const accesses: AccessType[] = trustCenterData?.node?.accesses?.edges?.map((edge: any) => ({
-    id: edge.node.id,
-    email: edge.node.email,
-    name: edge.node.name,
-    active: edge.node.active,
-    hasAcceptedNonDisclosureAgreement: edge.node.hasAcceptedNonDisclosureAgreement,
-    createdAt: edge.node.createdAt,
-    lastTokenExpiresAt: edge.node.lastTokenExpiresAt,
-    pendingRequestCount: edge.node.pendingRequestCount || 0,
-    activeCount: edge.node.activeCount || 0,
-  })) ?? [];
-
+  const accesses: AccessType[] = useMemo(
+    () => trustCenterData?.accesses?.edges.map((edge) => edge.node) ?? [], [trustCenterData?.accesses?.edges]
+  );
 
   const handleInvite = inviteForm.handleSubmit(async (data) => {
     if (!organization.trustCenter?.id) {
       return;
     }
 
-    const connectionId = trustCenterData?.node?.accesses?.__id;
+    const connectionId = trustCenterData?.accesses?.__id;
     const email = data.email.trim();
 
     await createInvitation({
@@ -317,7 +282,7 @@ export default function TrustCenterAccessTab() {
   });
 
   const handleDelete = useCallback(async (id: string) => {
-    const connectionId = trustCenterData?.node?.accesses?.__id;
+    const connectionId = trustCenterData?.accesses?.__id;
 
     await deleteInvitation({
       variables: {

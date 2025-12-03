@@ -145,18 +145,18 @@ function FileRow(props: {
   onDelete: (id: string) => void;
   disabled?: boolean;
 }) {
-  const file = props.file;
+  const { file, onChangeVisibility, onEdit, onDelete, disabled } = props;
   const { __ } = useTranslate();
   const [optimisticValue, setOptimisticValue] = useState<string | null>(null);
   const { isAuthorized } = use(PermissionsContext);
   const canUpdate = isAuthorized("TrustCenter", "updateTrustCenter");
 
-  const handleValueChange = useCallback((value: string | {}) => {
+  const handleValueChange = useCallback((value: string) => {
     const stringValue = typeof value === 'string' ? value : '';
     const typedValue = stringValue as "NONE" | "PRIVATE" | "PUBLIC";
     setOptimisticValue(typedValue);
-    props.onChangeVisibility(file.id, typedValue);
-  }, [file.id, props.onChangeVisibility]);
+    onChangeVisibility(file.id, typedValue);
+  }, [file.id, onChangeVisibility]);
 
   useEffect(() => {
     if (optimisticValue && file.trustCenterVisibility === optimisticValue) {
@@ -182,7 +182,7 @@ function FileRow(props: {
           type="select"
           value={currentValue}
           onValueChange={handleValueChange}
-          disabled={props.disabled || !canUpdate}
+          disabled={disabled || !canUpdate}
           className="w-[105px]"
         >
           {visibilityOptions.map((option) => (
@@ -208,8 +208,8 @@ function FileRow(props: {
             <Button
               variant="secondary"
               icon={IconPencil}
-              onClick={() => props.onEdit({ id: file.id, name: file.name, category: file.category })}
-              disabled={props.disabled}
+              onClick={() => onEdit({ id: file.id, name: file.name, category: file.category })}
+              disabled={disabled}
               title={__("Edit")}
             />
           )}
@@ -217,8 +217,8 @@ function FileRow(props: {
             <Button
               variant="danger"
               icon={IconTrashCan}
-              onClick={() => props.onDelete(file.id)}
-              disabled={props.disabled}
+              onClick={() => onDelete(file.id)}
+              disabled={disabled}
               title={__("Delete")}
             />
           )}
