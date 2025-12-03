@@ -87,7 +87,8 @@ export default function FormRiskDialog({
 }: Props) {
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
-  const ref = refProps ?? useDialogRef();
+  const dialogRef = useDialogRef();
+  const ref = refProps ?? dialogRef;
 
   const { control, handleSubmit, setValue, register, watch, formState, reset } =
     useRiskForm(risk);
