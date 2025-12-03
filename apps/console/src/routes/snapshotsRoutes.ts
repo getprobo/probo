@@ -1,6 +1,6 @@
 import { loadQuery } from "react-relay";
 import { PageSkeleton } from "/components/skeletons/PageSkeleton";
-import { relayEnvironment } from "/providers/RelayProviders";
+import { consoleEnvironment } from "/environments";
 import { snapshotsQuery, snapshotNodeQuery } from "/hooks/graph/SnapshotGraph";
 import { lazy } from "@probo/react-lazy";
 import type { SnapshotGraphListQuery } from "/hooks/graph/__generated__/SnapshotGraphListQuery.graphql";
@@ -12,7 +12,7 @@ export const snapshotsRoutes = [
     path: "snapshots",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ organizationId }) =>
-      loadQuery<SnapshotGraphListQuery>(relayEnvironment, snapshotsQuery, { organizationId }),
+      loadQuery<SnapshotGraphListQuery>(consoleEnvironment, snapshotsQuery, { organizationId }),
     ),
     Component: withQueryRef(lazy(
       () => import("/pages/organizations/snapshots/SnapshotsPage")
@@ -22,7 +22,7 @@ export const snapshotsRoutes = [
     path: "snapshots/:snapshotId",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ snapshotId }) =>
-      loadQuery<SnapshotGraphNodeQuery>(relayEnvironment, snapshotNodeQuery, { snapshotId }),
+      loadQuery<SnapshotGraphNodeQuery>(consoleEnvironment, snapshotNodeQuery, { snapshotId }),
     ),
     Component: withQueryRef(lazy(
       () => import("/pages/organizations/snapshots/SnapshotDetailPage")

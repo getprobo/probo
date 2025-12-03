@@ -1,0 +1,289 @@
+// Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+// OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
+package iam
+
+import (
+	"fmt"
+
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/mail"
+)
+
+type ErrInvalidToken struct{ message string }
+
+func NewInvalidTokenError() error {
+	return &ErrInvalidToken{"invalid invitation token"}
+}
+
+func (e ErrInvalidToken) Error() string {
+	return e.message
+}
+
+type ErrInvitationAlreadyAccepted struct{ InvitationID gid.GID }
+
+func NewInvitationAlreadyAcceptedError(invitationID gid.GID) error {
+	return &ErrInvitationAlreadyAccepted{InvitationID: invitationID}
+}
+
+func (e ErrInvitationAlreadyAccepted) Error() string {
+	return fmt.Sprintf("invitation %q already accepted", e.InvitationID)
+}
+
+type ErrInvitationNotFound struct{ InvitationID gid.GID }
+
+func NewInvitationNotFoundError(invitationID gid.GID) error {
+	return &ErrInvitationNotFound{InvitationID: invitationID}
+}
+
+func (e ErrInvitationNotFound) Error() string {
+	return fmt.Sprintf("invitation %q not found", e.InvitationID)
+}
+
+type ErrInvitationExpired struct{ InvitationID gid.GID }
+
+func NewInvitationExpiredError(invitationID gid.GID) error {
+	return &ErrInvitationExpired{InvitationID: invitationID}
+}
+
+func (e ErrInvitationExpired) Error() string {
+	return fmt.Sprintf("invitation %q expired", e.InvitationID)
+}
+
+type ErrUserAlreadyExists struct{ EmailAddress mail.Addr }
+
+func NewUserAlreadyExistsError(emailAddress mail.Addr) error {
+	return &ErrUserAlreadyExists{EmailAddress: emailAddress}
+}
+
+func (e ErrUserAlreadyExists) Error() string {
+	return fmt.Sprintf("user %q already exists", e.EmailAddress.String())
+}
+
+type ErrEmailAlreadyVerified struct{ message string }
+
+func NewEmailAlreadyVerifiedError() error {
+	return &ErrEmailAlreadyVerified{"email already verified"}
+}
+
+func (e ErrEmailAlreadyVerified) Error() string {
+	return e.message
+}
+
+type ErrUserNotFound struct{ UserID gid.GID }
+
+func NewUserNotFoundError(userID gid.GID) error {
+	return &ErrUserNotFound{userID}
+}
+
+func (e ErrUserNotFound) Error() string {
+	return fmt.Sprintf("user %q not found", e.UserID)
+}
+
+type ErrInvalidPassword struct{ message string }
+
+func NewInvalidPasswordError(message string) error {
+	return &ErrInvalidPassword{message}
+}
+
+func (e ErrInvalidPassword) Error() string {
+	return e.message
+}
+
+type ErrEmailVerificationMismatch struct{ message string }
+
+func NewEmailVerificationMismatchError() error {
+	return &ErrEmailVerificationMismatch{"email verification mismatch"}
+}
+
+func (e ErrEmailVerificationMismatch) Error() string {
+	return e.message
+}
+
+type ErrMembershipNotFound struct {
+	MembershipID gid.GID
+}
+
+func NewMembershipNotFoundError(membershipID gid.GID) error {
+	return &ErrMembershipNotFound{MembershipID: membershipID}
+}
+
+func (e ErrMembershipNotFound) Error() string {
+	return fmt.Sprintf("membership %q not found", e.MembershipID)
+}
+
+type ErrOrganizationNotFound struct{ OrganizationID gid.GID }
+
+func NewOrganizationNotFoundError(organizationID gid.GID) error {
+	return &ErrOrganizationNotFound{OrganizationID: organizationID}
+}
+
+func (e ErrOrganizationNotFound) Error() string {
+	return fmt.Sprintf("organization %q not found", e.OrganizationID)
+}
+
+type ErrInsufficientPermissions struct {
+	IdentityID gid.GID
+	EntityID   gid.GID
+	Action     Action
+}
+
+func NewInsufficientPermissionsError(identityID gid.GID, entityID gid.GID, action Action) error {
+	return &ErrInsufficientPermissions{IdentityID: identityID, EntityID: entityID, Action: action}
+}
+
+func (e ErrInsufficientPermissions) Error() string {
+	return fmt.Sprintf("identity %q does not have sufficient permissions to perform action %s on entity %q", e.IdentityID, e.Action, e.EntityID)
+}
+
+type ErrSessionNotFound struct{ SessionID gid.GID }
+
+func NewSessionNotFoundError(sessionID gid.GID) error {
+	return &ErrSessionNotFound{SessionID: sessionID}
+}
+
+func (e ErrSessionNotFound) Error() string {
+	return fmt.Sprintf("session %q not found", e.SessionID)
+}
+
+type ErrSessionExpired struct{ SessionID gid.GID }
+
+func NewSessionExpiredError(sessionID gid.GID) error {
+	return &ErrSessionExpired{SessionID: sessionID}
+}
+
+func (e ErrSessionExpired) Error() string {
+	return fmt.Sprintf("session %q expired", e.SessionID)
+}
+
+type ErrMembershipAlreadyExists struct {
+	UserID         gid.GID
+	OrganizationID gid.GID
+}
+
+func NewMembershipAlreadyExistsError(userID gid.GID, organizationID gid.GID) error {
+	return &ErrMembershipAlreadyExists{UserID: userID, OrganizationID: organizationID}
+}
+
+func (e ErrMembershipAlreadyExists) Error() string {
+	return fmt.Sprintf("membership already exists for user %q in organization %q", e.UserID, e.OrganizationID)
+}
+
+type ErrSAMLConfigurationNotFound struct{ ConfigID gid.GID }
+
+func NewSAMLConfigurationNotFoundError(configID gid.GID) error {
+	return &ErrSAMLConfigurationNotFound{ConfigID: configID}
+}
+
+func (e ErrSAMLConfigurationNotFound) Error() string {
+	return fmt.Sprintf("SAML configuration %q not found", e.ConfigID)
+}
+
+type ErrUserAPIKeyNotFound struct{ UserAPIKeyID gid.GID }
+
+func NewUserAPIKeyNotFoundError(userAPIKeyID gid.GID) error {
+	return &ErrUserAPIKeyNotFound{UserAPIKeyID: userAPIKeyID}
+}
+
+func (e ErrUserAPIKeyNotFound) Error() string {
+	return fmt.Sprintf("user API key %q not found", e.UserAPIKeyID)
+}
+
+type ErrUserAPIKeyExpired struct{ UserAPIKeyID gid.GID }
+
+func NewUserAPIKeyExpiredError(userAPIKeyID gid.GID) error {
+	return &ErrUserAPIKeyExpired{UserAPIKeyID: userAPIKeyID}
+}
+
+func (e ErrUserAPIKeyExpired) Error() string {
+	return fmt.Sprintf("user API key %q expired", e.UserAPIKeyID)
+}
+
+type ErrSAMLConfigurationDomainNotVerified struct{ ConfigID gid.GID }
+
+func NewSAMLConfigurationDomainNotVerifiedError(configID gid.GID) error {
+	return &ErrSAMLConfigurationDomainNotVerified{ConfigID: configID}
+}
+
+func (e ErrSAMLConfigurationDomainNotVerified) Error() string {
+	return fmt.Sprintf("SAML configuration %q domain not verified", e.ConfigID)
+}
+
+type ErrUnsupportedPrincipalType struct{ EntityType uint16 }
+
+func NewUnsupportedPrincipalTypeError(entityType uint16) error {
+	return &ErrUnsupportedPrincipalType{EntityType: entityType}
+}
+
+func (e ErrUnsupportedPrincipalType) Error() string {
+	return fmt.Sprintf("unsupported principal type: %d", e.EntityType)
+}
+
+type ErrNoPermissionsDefined struct {
+	EntityModel string
+	Action      Action
+}
+
+func NewNoPermissionsDefinedError(entityModel string, action Action) error {
+	return &ErrNoPermissionsDefined{EntityModel: entityModel, Action: action}
+}
+
+func (e ErrNoPermissionsDefined) Error() string {
+	return fmt.Sprintf("no permissions defined for action %s on entity %s", e.Action, e.EntityModel)
+}
+
+type ErrSignupDisabled struct{}
+
+func NewErrSignupDisabled() error {
+	return &ErrSignupDisabled{}
+}
+
+func (e ErrSignupDisabled) Error() string {
+	return "signup is disabled"
+}
+
+type ErrInvalidCredentials struct{ message string }
+
+func NewInvalidCredentialsError(message string) error {
+	return &ErrInvalidCredentials{message}
+}
+
+func (e ErrInvalidCredentials) Error() string {
+	return e.message
+}
+
+type ErrInvitationNotPending struct{ InvitationID gid.GID }
+
+func NewInvitationNotPendingError(invitationID gid.GID) error {
+	return &ErrInvitationNotPending{InvitationID: invitationID}
+}
+
+func (e ErrInvitationNotPending) Error() string {
+	return fmt.Sprintf("invitation %q is not pending", e.InvitationID)
+}
+
+// TenantAccessError is used by API recovery middleware to translate authorization/tenant failures
+// into a consistent client-facing error response.
+//
+// NOTE: This is intentionally generic to avoid leaking resource existence.
+type TenantAccessError struct {
+	Message string
+}
+
+func (e *TenantAccessError) Error() string {
+	if e == nil || e.Message == "" {
+		return "tenant access denied"
+	}
+	return e.Message
+}

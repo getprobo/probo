@@ -19,9 +19,9 @@ import (
 	"fmt"
 	"time"
 
-	"go.probo.inc/probo/pkg/gid"
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/gid"
 )
 
 type SAMLRequest struct {
@@ -31,37 +31,18 @@ type SAMLRequest struct {
 	ExpiresAt      time.Time `db:"expires_at"`
 }
 
-type ErrSAMLRequestNotFound struct {
-	RequestID string
-}
-
-func (e ErrSAMLRequestNotFound) Error() string {
-	return fmt.Sprintf("SAML request ID %q not found", e.RequestID)
-}
-
-type ErrSAMLRequestExpired struct {
-	RequestID string
-	ExpiresAt time.Time
-}
-
-func (e ErrSAMLRequestExpired) Error() string {
-	return fmt.Sprintf("SAML request ID %q expired at %v", e.RequestID, e.ExpiresAt)
-}
-
 func (s *SAMLRequest) Insert(
 	ctx context.Context,
 	conn pg.Conn,
-	scope Scoper,
 ) error {
 	query := `
-INSERT INTO auth_saml_requests (id, organization_id, tenant_id, created_at, expires_at)
-VALUES (@id, @organization_id, @tenant_id, @created_at, @expires_at)
+INSERT INTO auth_saml_requests (id, organization_id, created_at, expires_at)
+VALUES (@id, @organization_id, @created_at, @expires_at)
 `
 
 	args := pgx.NamedArgs{
 		"id":              s.ID,
 		"organization_id": s.OrganizationID,
-		"tenant_id":       scope.GetTenantID(),
 		"created_at":      s.CreatedAt,
 		"expires_at":      s.ExpiresAt,
 	}
@@ -99,8 +80,9 @@ LIMIT 1
 
 	req, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[SAMLRequest])
 	if err == pgx.ErrNoRows {
-		return ErrSAMLRequestNotFound{RequestID: requestID}
+		return ErrResourceNotFound
 	}
+
 	if err != nil {
 		return fmt.Errorf("cannot collect saml_request: %w", err)
 	}

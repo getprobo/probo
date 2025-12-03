@@ -8,33 +8,27 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"go.gearno.de/kit/log"
 	mcpgenmcp "go.probo.inc/mcpgen/mcp"
-	"go.probo.inc/probo/pkg/auth"
-	"go.probo.inc/probo/pkg/authz"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/probo"
+	connect_v1 "go.probo.inc/probo/pkg/server/api/connect/v1"
 	"go.probo.inc/probo/pkg/server/api/mcp/mcputils"
 	"go.probo.inc/probo/pkg/server/api/mcp/v1/server"
-	serverauth "go.probo.inc/probo/pkg/server/auth"
 )
 
 func (r *Resolver) ProboService(ctx context.Context, objectID gid.GID) *probo.TenantService {
-	serverauth.RequireTenantAccess(ctx, objectID.TenantID())
 	return r.proboSvc.WithTenant(objectID.TenantID())
 }
 
-func NewMux(logger *log.Logger, proboSvc *probo.Service, authSvc *auth.Service, authzSvc *authz.Service, cfg Config) *chi.Mux {
+func NewMux(logger *log.Logger, proboSvc *probo.Service, iamSvc *iam.Service) *chi.Mux {
 	logger = logger.Named("mcp.v1")
 
-	logger.Info("initializing MCP server",
-		log.String("version", cfg.Version),
-		log.String("request_timeout", cfg.RequestTimeout.String()),
-	)
+	logger.Info("initializing MCP server")
 	// server.AddReceivingMiddleware(mcputils.LoggingMiddleware(logger))
 
 	resolver := &Resolver{
 		proboSvc: proboSvc,
-		authSvc:  authSvc,
-		authzSvc: authzSvc,
+		iamSvc:   iamSvc,
 		logger:   logger,
 	}
 
@@ -57,10 +51,9 @@ func NewMux(logger *log.Logger, proboSvc *probo.Service, authSvc *auth.Service, 
 		},
 	)
 
-	authHandler := WithMCPAuth(logger, authSvc, authzSvc, handler)
-
 	r := chi.NewMux()
-	r.Handle("/", authHandler)
+	r.Use(connect_v1.NewAPIKeyMiddleware(iamSvc))
+	r.Handle("/", RequireAPIKeyHandler(logger, handler))
 
 	logger.Info("MCP server initialized successfully")
 

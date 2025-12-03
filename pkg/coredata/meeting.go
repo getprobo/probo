@@ -39,23 +39,7 @@ type (
 	}
 
 	Meetings []*Meeting
-
-	ErrMeetingNotFound struct {
-		Identifier string
-	}
-
-	ErrMeetingAlreadyExists struct {
-		message string
-	}
 )
-
-func (e ErrMeetingNotFound) Error() string {
-	return fmt.Sprintf("meeting not found: %s", e.Identifier)
-}
-
-func (e ErrMeetingAlreadyExists) Error() string {
-	return e.message
-}
 
 func (m Meeting) CursorKey(orderBy MeetingOrderField) page.CursorKey {
 	switch orderBy {
@@ -106,7 +90,7 @@ LIMIT 1;
 	meeting, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Meeting])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrMeetingNotFound{Identifier: meetingID.String()}
+			return ErrResourceNotFound
 		}
 
 		return fmt.Errorf("cannot collect meeting: %w", err)
@@ -271,7 +255,7 @@ WHERE %s
 	}
 
 	if result.RowsAffected() == 0 {
-		return &ErrMeetingNotFound{Identifier: m.ID.String()}
+		return ErrResourceNotFound
 	}
 
 	return nil
@@ -300,7 +284,7 @@ WHERE %s
 	}
 
 	if result.RowsAffected() == 0 {
-		return &ErrMeetingNotFound{Identifier: m.ID.String()}
+		return ErrResourceNotFound
 	}
 
 	return nil

@@ -17,18 +17,15 @@ package mcp_v1
 import (
 	"net/http"
 
+	"errors"
+
+	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/auth"
-	"go.probo.inc/probo/pkg/authz"
-	serverauth "go.probo.inc/probo/pkg/server/auth"
+	connect_v1 "go.probo.inc/probo/pkg/server/api/connect/v1"
 )
 
-// WithMCPAuth wraps an HTTP handler with MCP authentication middleware
-// It authenticates using API keys from the Authorization header
-func WithMCPAuth(
+func RequireAPIKeyHandler(
 	logger *log.Logger,
-	authSvc *auth.Service,
-	authzSvc *authz.Service,
 	next http.Handler,
 ) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -43,27 +40,19 @@ func WithMCPAuth(
 			log.String("path", r.URL.Path),
 		)
 
-		// Authenticate using API key from shared function
-		authCtx := serverauth.AuthenticateWithAPIKey(ctx, r, authSvc, authzSvc)
-		if authCtx == nil {
-			logger.WarnCtx(ctx, "MCP auth: authentication required",
-				log.String("correlation_id", correlationID),
-			)
-			http.Error(w, "authentication required", http.StatusUnauthorized)
+		apiKey := connect_v1.APIKeyFromContext(ctx)
+		identity := connect_v1.UserFromContext(ctx)
+		if identity == nil {
+			httpserver.RenderError(w, http.StatusUnauthorized, errors.New("authentication required"))
 			return
 		}
 
-		user := serverauth.UserFromContext(authCtx)
-		userAPIKey := serverauth.UserAPIKeyFromContext(authCtx)
-		tenantAccess := serverauth.UserTenantAccessFromContext(authCtx)
-
-		logger.InfoCtx(authCtx, "MCP authentication successful",
+		logger.InfoCtx(ctx, "MCP authentication successful",
 			log.String("correlation_id", correlationID),
-			log.String("user_id", user.ID.String()),
-			log.String("api_key_id", userAPIKey.ID.String()),
-			log.Int("accessible_tenants", len(tenantAccess.TenantIDs)),
+			log.String("identity_id", identity.ID.String()),
+			log.String("api_key_id", apiKey.ID.String()),
 		)
 
-		next.ServeHTTP(w, r.WithContext(authCtx))
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

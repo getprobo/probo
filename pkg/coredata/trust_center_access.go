@@ -48,23 +48,7 @@ type (
 	}
 
 	TrustCenterAccesses []*TrustCenterAccess
-
-	ErrTrustCenterAccessNotFound struct {
-		Identifier string
-	}
-
-	ErrTrustCenterAccessAlreadyExists struct {
-		message string
-	}
 )
-
-func (e ErrTrustCenterAccessNotFound) Error() string {
-	return fmt.Sprintf("trust center access not found: %s", e.Identifier)
-}
-
-func (e ErrTrustCenterAccessAlreadyExists) Error() string {
-	return e.message
-}
 
 func (tca *TrustCenterAccess) CursorKey(orderBy TrustCenterAccessOrderField) page.CursorKey {
 	switch orderBy {
@@ -117,7 +101,7 @@ LIMIT 1;
 	access, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[TrustCenterAccess])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrTrustCenterAccessNotFound{Identifier: accessID.String()}
+			return ErrResourceNotFound
 		}
 
 		return fmt.Errorf("cannot collect trust center access: %w", err)
@@ -175,7 +159,7 @@ LIMIT 1;
 	access, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[TrustCenterAccess])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrTrustCenterAccessNotFound{Identifier: fmt.Sprintf("trust_center_id=%s, email=%s", trustCenterID, email)}
+			return ErrResourceNotFound
 		}
 
 		return fmt.Errorf("cannot collect trust center access: %w", err)
@@ -235,9 +219,7 @@ INSERT INTO trust_center_accesses (
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
 			if pgErr.Code == "23505" && pgErr.ConstraintName == "trust_center_accesses_trust_center_id_email_key" {
-				return &ErrTrustCenterAccessAlreadyExists{
-					message: "trust center access already exists",
-				}
+				return ErrResourceAlreadyExists
 			}
 		}
 		return fmt.Errorf("cannot insert trust center access: %w", err)

@@ -21,14 +21,14 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
-	"github.com/vektah/gqlparser/v2/ast"
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/auth"
-	"go.probo.inc/probo/pkg/authz"
+	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/probo"
-	"go.probo.inc/probo/pkg/saferedirect"
+	"go.probo.inc/probo/pkg/securecookie"
+	connect_v1 "go.probo.inc/probo/pkg/server/api/connect/v1"
 	console_v1 "go.probo.inc/probo/pkg/server/api/console/v1"
 	mcp_v1 "go.probo.inc/probo/pkg/server/api/mcp/v1"
 	slack_v1 "go.probo.inc/probo/pkg/server/api/slack/v1"
@@ -38,39 +38,16 @@ import (
 )
 
 type (
-	ConsoleAuthConfig struct {
-		CookieName      string
-		CookieDomain    string
-		SessionDuration time.Duration
-		CookieSecret    string
-		CookieSecure    bool
-	}
-
-	TrustAuthConfig struct {
-		CookieName        string
-		CookieDomain      string
-		CookieDuration    time.Duration
-		TokenDuration     time.Duration
-		ReportURLDuration time.Duration
-		TokenSecret       string
-		Scope             string
-		TokenType         string
-		CookieSecure      bool
-	}
-
 	Config struct {
+		BaseURL           *baseurl.BaseURL
 		AllowedOrigins    []string
 		Probo             *probo.Service
-		Auth              *auth.Service
-		Authz             *authz.Service
+		IAM               *iam.Service
 		Trust             *trust.Service
 		Slack             *slack.Service
-		SAML              *auth.SAMLService
-		ConsoleAuth       ConsoleAuthConfig
-		TrustAuth         TrustAuthConfig
-		MCPConfig         MCPConfig
+		Cookie            securecookie.Config
+		TokenSecret       string
 		ConnectorRegistry *connector.ConnectorRegistry
-		SafeRedirect      *saferedirect.SafeRedirect
 		CustomDomainCname string
 		Logger            *log.Logger
 	}
@@ -82,25 +59,20 @@ type (
 	}
 
 	Server struct {
-		cfg               Config
-		trustAPIHandler   http.Handler
-		consoleAPIHandler http.Handler
-		mcpAPIHandler     http.Handler
-		slackAPIHandler   http.Handler
+		cfg                   Config
+		compliancePageHandler http.Handler
+		consoleHandler        http.Handler
+		mcpHandler            http.Handler
+		slackHandler          http.Handler
+		connectHandler        http.Handler
 	}
 )
 
 var (
 	ErrMissingProboService = errors.New("server configuration requires a valid probo.Service instance")
-	ErrMissingAuthService  = errors.New("server configuration requires a valid auth.Service instance")
-	ErrMissingAuthzService = errors.New("server configuration requires a valid authz.Service instance")
+	ErrMissingIAMService   = errors.New("server configuration requires a valid iam.Service instance")
 	ErrMissingSlackService = errors.New("server configuration requires a valid slack.Service instance")
 )
-
-// GetConsoleSchema returns the GraphQL schema for the console API
-func GetConsoleSchema() *ast.Schema {
-	return console_v1.GetSchema()
-}
 
 func methodNotAllowed(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
@@ -131,91 +103,53 @@ func NewServer(cfg Config) (*Server, error) {
 		return nil, ErrMissingProboService
 	}
 
-	if cfg.Auth == nil {
-		return nil, ErrMissingAuthService
-	}
-
-	if cfg.Authz == nil {
-		return nil, ErrMissingAuthzService
+	if cfg.IAM == nil {
+		return nil, ErrMissingIAMService
 	}
 
 	if cfg.Slack == nil {
 		return nil, ErrMissingSlackService
 	}
 
-	trustAPIHandler := trust_v1.NewMux(
-		cfg.Logger.Named("trust.v1"),
-		cfg.Auth,
-		cfg.Authz,
-		cfg.Trust,
-		console_v1.AuthConfig{
-			CookieName:      cfg.ConsoleAuth.CookieName,
-			CookieDomain:    cfg.ConsoleAuth.CookieDomain,
-			SessionDuration: cfg.ConsoleAuth.SessionDuration,
-			CookieSecret:    cfg.ConsoleAuth.CookieSecret,
-			CookieSecure:    cfg.ConsoleAuth.CookieSecure,
-		},
-		trust_v1.TrustAuthConfig{
-			CookieName:        cfg.TrustAuth.CookieName,
-			CookieDomain:      cfg.TrustAuth.CookieDomain,
-			CookieDuration:    cfg.TrustAuth.CookieDuration,
-			TokenDuration:     cfg.TrustAuth.TokenDuration,
-			ReportURLDuration: cfg.TrustAuth.ReportURLDuration,
-			TokenSecret:       cfg.TrustAuth.TokenSecret,
-			Scope:             cfg.TrustAuth.Scope,
-			TokenType:         cfg.TrustAuth.TokenType,
-			CookieSecure:      cfg.TrustAuth.CookieSecure,
-		},
-		cfg.Slack,
-	)
-
-	consoleAPIHandler := console_v1.NewMux(
-		cfg.Logger.Named("console.v1"),
-		cfg.Probo,
-		cfg.Auth,
-		cfg.Authz,
-		console_v1.AuthConfig{
-			CookieName:      cfg.ConsoleAuth.CookieName,
-			CookieDomain:    cfg.ConsoleAuth.CookieDomain,
-			SessionDuration: cfg.ConsoleAuth.SessionDuration,
-			CookieSecret:    cfg.ConsoleAuth.CookieSecret,
-			CookieSecure:    cfg.ConsoleAuth.CookieSecure,
-		},
-		cfg.ConnectorRegistry,
-		cfg.SafeRedirect,
-		cfg.CustomDomainCname,
-		cfg.SAML,
-	)
-
-	mcpAPIHandler := mcp_v1.NewMux(
-		cfg.Logger.Named("mcp.v1"),
-		cfg.Probo,
-		cfg.Auth,
-		cfg.Authz,
-		mcp_v1.Config{
-			Version:        cfg.MCPConfig.Version,
-			RequestTimeout: cfg.MCPConfig.RequestTimeout,
-			MaxRequestSize: cfg.MCPConfig.MaxRequestSize,
-		},
-	)
-
-	slackAPIHandler := slack_v1.NewMux(
-		cfg.Logger.Named("slack.v1"),
-		cfg.Slack,
-		cfg.Trust,
-	)
-
 	return &Server{
-		cfg:               cfg,
-		trustAPIHandler:   trustAPIHandler,
-		consoleAPIHandler: consoleAPIHandler,
-		mcpAPIHandler:     mcpAPIHandler,
-		slackAPIHandler:   slackAPIHandler,
+		cfg: cfg,
+		compliancePageHandler: trust_v1.NewMux(
+			cfg.Logger.Named("trust.v1"),
+			cfg.IAM,
+			cfg.Trust,
+			cfg.Cookie,
+		),
+		consoleHandler: console_v1.NewMux(
+			cfg.Logger.Named("console.v1"),
+			cfg.Probo,
+			cfg.IAM,
+			cfg.Cookie,
+			cfg.TokenSecret,
+			cfg.ConnectorRegistry,
+			cfg.BaseURL,
+			cfg.CustomDomainCname,
+		),
+		mcpHandler: mcp_v1.NewMux(
+			cfg.Logger.Named("mcp.v1"),
+			cfg.Probo,
+			cfg.IAM,
+		),
+		slackHandler: slack_v1.NewMux(
+			cfg.Logger.Named("slack.v1"),
+			cfg.Slack,
+			cfg.Trust,
+		),
+		connectHandler: connect_v1.NewMux(
+			cfg.Logger.Named("connect.v1"),
+			cfg.IAM,
+			cfg.Cookie,
+			cfg.BaseURL,
+		),
 	}, nil
 }
 
-func (s *Server) TrustAPIHandler() http.Handler {
-	return s.trustAPIHandler
+func (s *Server) CompliancePageHandler() http.Handler {
+	return s.compliancePageHandler
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -223,7 +157,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		AllowedOrigins:     s.cfg.AllowedOrigins,
 		AllowedMethods:     []string{"GET", "POST", "PUT", "DELETE", "HEAD"},
 		AllowedHeaders:     []string{"content-type", "traceparent", "authorization"},
-		ExposedHeaders:     []string{"x-Request-id"},
+		ExposedHeaders:     []string{"x-request-id"},
 		AllowCredentials:   true,
 		MaxAge:             600, // 10 minutes (chrome >= 76 maximum value c.f. https://source.chromium.org/chromium/chromium/src/+/main:services/network/public/cpp/cors/preflight_result.cc;drc=52002151773d8cd9ffc5f557cd7cc880fddcae3e;l=36)
 		OptionsPassthrough: false,
@@ -243,10 +177,11 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	router.Use(cors.Handler(corsOpts))
 
-	router.Mount("/console/v1", s.consoleAPIHandler)
-	router.Mount("/trust/v1", s.trustAPIHandler)
-	router.Mount("/mcp/v1", s.mcpAPIHandler)
-	router.Mount("/slack/v1", s.slackAPIHandler)
+	router.Mount("/console/v1", s.consoleHandler)
+	router.Mount("/connect/v1", s.connectHandler)
+	router.Mount("/trust/v1", s.compliancePageHandler)
+	router.Mount("/mcp/v1", s.mcpHandler)
+	router.Mount("/slack/v1", s.slackHandler)
 
 	router.ServeHTTP(w, r)
 }

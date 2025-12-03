@@ -4,7 +4,6 @@ import { useTranslate } from "@probo/i18n";
 import { z } from "zod";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { usePageTitle } from "@probo/hooks";
-import { buildEndpoint } from "/providers/RelayProviders";
 import { useEffect } from "react";
 
 const schema = z.object({
@@ -50,21 +49,18 @@ export default function SignupFromInvitationPage() {
       return;
     }
 
-    const response = await fetch(
-      buildEndpoint("/connect/signup-from-invitation"),
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({
-          token: token,
-          password: data.password,
-          fullName: data.fullName,
-        }),
-      }
-    );
+    const response = await fetch("/connect/signup-from-invitation", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify({
+        token: token,
+        password: data.password,
+        fullName: data.fullName,
+      }),
+    });
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
@@ -78,7 +74,9 @@ export default function SignupFromInvitationPage() {
 
     toast({
       title: __("Success"),
-      description: __("Account created successfully. Please accept your invitation to join the organization."),
+      description: __(
+        "Account created successfully. Please accept your invitation to join the organization."
+      ),
       variant: "success",
     });
     navigate("/", { replace: true });

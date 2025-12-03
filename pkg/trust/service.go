@@ -20,12 +20,12 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
-	"go.probo.inc/probo/pkg/auth"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/html2pdf"
+	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/slack"
 )
@@ -38,19 +38,20 @@ type (
 	}
 
 	Service struct {
-		pg                *pg.Client
-		s3                *s3.Client
-		bucket            string
-		proboSvc          *probo.Service
-		encryptionKey     cipher.EncryptionKey
-		tokenSecret       string
-		baseURL           string
-		auth              *auth.Service
-		html2pdfConverter *html2pdf.Converter
-		fileManager       *filemanager.Service
-		logger            *log.Logger
-		trustConfig       TrustConfig
-		slack             *slack.Service
+		pg                 *pg.Client
+		s3                 *s3.Client
+		bucket             string
+		proboSvc           *probo.Service
+		encryptionKey      cipher.EncryptionKey
+		tokenSecret        string
+		slackSigningSecret string
+		baseURL            string
+		iam                *iam.Service
+		html2pdfConverter  *html2pdf.Converter
+		fileManager        *filemanager.Service
+		logger             *log.Logger
+		trustConfig        TrustConfig
+		slack              *slack.Service
 	}
 
 	TenantService struct {
@@ -62,7 +63,7 @@ type (
 		encryptionKey         cipher.EncryptionKey
 		tokenSecret           string
 		baseURL               string
-		auth                  *auth.Service
+		iam                   *iam.Service
 		html2pdfConverter     *html2pdf.Converter
 		fileManager           *filemanager.Service
 		logger                *log.Logger
@@ -88,7 +89,8 @@ func NewService(
 	baseURL string,
 	encryptionKey cipher.EncryptionKey,
 	tokenSecret string,
-	auth *auth.Service,
+	slackSigningSecret string,
+	iam *iam.Service,
 	html2pdfConverter *html2pdf.Converter,
 	fileManagerService *filemanager.Service,
 	logger *log.Logger,
@@ -96,18 +98,19 @@ func NewService(
 	slack *slack.Service,
 ) *Service {
 	return &Service{
-		pg:                pgClient,
-		s3:                s3Client,
-		bucket:            bucket,
-		encryptionKey:     encryptionKey,
-		tokenSecret:       tokenSecret,
-		baseURL:           baseURL,
-		auth:              auth,
-		html2pdfConverter: html2pdfConverter,
-		fileManager:       fileManagerService,
-		logger:            logger,
-		trustConfig:       trustConfig,
-		slack:             slack,
+		pg:                 pgClient,
+		s3:                 s3Client,
+		bucket:             bucket,
+		encryptionKey:      encryptionKey,
+		tokenSecret:        tokenSecret,
+		slackSigningSecret: slackSigningSecret,
+		baseURL:            baseURL,
+		iam:                iam,
+		html2pdfConverter:  html2pdfConverter,
+		fileManager:        fileManagerService,
+		logger:             logger,
+		trustConfig:        trustConfig,
+		slack:              slack,
 	}
 }
 
@@ -121,7 +124,7 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 		encryptionKey:     s.encryptionKey,
 		tokenSecret:       s.tokenSecret,
 		baseURL:           s.baseURL,
-		auth:              s.auth,
+		iam:               s.iam,
 		html2pdfConverter: s.html2pdfConverter,
 		fileManager:       s.fileManager,
 		logger:            s.logger,
@@ -133,7 +136,7 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 	tenantService.Audits = &AuditService{svc: tenantService}
 	tenantService.Vendors = &VendorService{svc: tenantService}
 	tenantService.Frameworks = &FrameworkService{svc: tenantService}
-	tenantService.TrustCenterAccesses = &TrustCenterAccessService{svc: tenantService, auth: s.auth, logger: s.logger}
+	tenantService.TrustCenterAccesses = &TrustCenterAccessService{svc: tenantService, iamSvc: s.iam, logger: s.logger}
 	tenantService.TrustCenterReferences = &TrustCenterReferenceService{svc: tenantService}
 	tenantService.TrustCenterFiles = &TrustCenterFileService{svc: tenantService}
 	tenantService.Reports = &ReportService{svc: tenantService}

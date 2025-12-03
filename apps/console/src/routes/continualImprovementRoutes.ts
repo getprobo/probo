@@ -1,5 +1,5 @@
 import { loadQuery } from "react-relay";
-import { relayEnvironment } from "/providers/RelayProviders";
+import { consoleEnvironment } from "/environments";
 import { PageSkeleton } from "/components/skeletons/PageSkeleton";
 import { lazy } from "@probo/react-lazy";
 import { continualImprovementsQuery, continualImprovementNodeQuery } from "/hooks/graph/ContinualImprovementGraph";
@@ -12,7 +12,7 @@ export const continualImprovementRoutes = [
     path: "continual-improvements",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ organizationId }) =>
-      loadQuery<ContinualImprovementGraphListQuery>(relayEnvironment, continualImprovementsQuery, {
+      loadQuery<ContinualImprovementGraphListQuery>(consoleEnvironment, continualImprovementsQuery, {
         organizationId,
         snapshotId: null
       }),
@@ -25,7 +25,7 @@ export const continualImprovementRoutes = [
     path: "snapshots/:snapshotId/continual-improvements",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ organizationId, snapshotId }) =>
-      loadQuery<ContinualImprovementGraphListQuery>(relayEnvironment, continualImprovementsQuery, {
+      loadQuery<ContinualImprovementGraphListQuery>(consoleEnvironment, continualImprovementsQuery, {
         organizationId,
         snapshotId,
       }),
@@ -38,7 +38,7 @@ export const continualImprovementRoutes = [
     path: "continual-improvements/:improvementId",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ improvementId }) =>
-      loadQuery<ContinualImprovementGraphNodeQuery>(relayEnvironment, continualImprovementNodeQuery, {
+      loadQuery<ContinualImprovementGraphNodeQuery>(consoleEnvironment, continualImprovementNodeQuery, {
         continualImprovementId: improvementId!,
       }),
     ),
@@ -50,7 +50,7 @@ export const continualImprovementRoutes = [
     path: "snapshots/:snapshotId/continual-improvements/:improvementId",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ improvementId }) =>
-      loadQuery<ContinualImprovementGraphNodeQuery>(relayEnvironment, continualImprovementNodeQuery, {
+      loadQuery<ContinualImprovementGraphNodeQuery>(consoleEnvironment, continualImprovementNodeQuery, {
         continualImprovementId: improvementId!,
       }),
     ),

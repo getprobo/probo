@@ -3,10 +3,6 @@
 package types
 
 import (
-	"bytes"
-	"fmt"
-	"io"
-	"strconv"
 	"time"
 
 	"github.com/99designs/gqlgen/graphql"
@@ -19,14 +15,6 @@ import (
 type Node interface {
 	IsNode()
 	GetID() gid.GID
-}
-
-type AcceptInvitationInput struct {
-	InvitationID gid.GID `json:"invitationId"`
-}
-
-type AcceptInvitationPayload struct {
-	Invitation *Invitation `json:"invitation"`
 }
 
 type AssessVendorInput struct {
@@ -141,14 +129,6 @@ type CancelSignatureRequestInput struct {
 
 type CancelSignatureRequestPayload struct {
 	DeletedDocumentVersionSignatureID gid.GID `json:"deletedDocumentVersionSignatureId"`
-}
-
-type ConfirmEmailInput struct {
-	Token string `json:"token"`
-}
-
-type ConfirmEmailPayload struct {
-	Success bool `json:"success"`
 }
 
 type ContinualImprovement struct {
@@ -422,14 +402,6 @@ type CreateObligationPayload struct {
 	ObligationEdge *ObligationEdge `json:"obligationEdge"`
 }
 
-type CreateOrganizationInput struct {
-	Name string `json:"name"`
-}
-
-type CreateOrganizationPayload struct {
-	OrganizationEdge *OrganizationEdge `json:"organizationEdge"`
-}
-
 type CreatePeopleInput struct {
 	OrganizationID           gid.GID             `json:"organizationId"`
 	FullName                 string              `json:"fullName"`
@@ -519,28 +491,6 @@ type CreateRiskObligationMappingPayload struct {
 
 type CreateRiskPayload struct {
 	RiskEdge *RiskEdge `json:"riskEdge"`
-}
-
-type CreateSAMLConfigurationInput struct {
-	OrganizationID     gid.GID                        `json:"organizationId"`
-	EmailDomain        string                         `json:"emailDomain"`
-	EnforcementPolicy  coredata.SAMLEnforcementPolicy `json:"enforcementPolicy"`
-	SpCertificate      *string                        `json:"spCertificate,omitempty"`
-	SpPrivateKey       *string                        `json:"spPrivateKey,omitempty"`
-	IdpMetadataXML     *string                        `json:"idpMetadataXml,omitempty"`
-	IdpEntityID        *string                        `json:"idpEntityId,omitempty"`
-	IdpSsoURL          *string                        `json:"idpSsoUrl,omitempty"`
-	IdpCertificate     *string                        `json:"idpCertificate,omitempty"`
-	IdpMetadataURL     *string                        `json:"idpMetadataUrl,omitempty"`
-	AttributeEmail     *string                        `json:"attributeEmail,omitempty"`
-	AttributeFirstname *string                        `json:"attributeFirstname,omitempty"`
-	AttributeLastname  *string                        `json:"attributeLastname,omitempty"`
-	AttributeRole      *string                        `json:"attributeRole,omitempty"`
-	AutoSignupEnabled  *bool                          `json:"autoSignupEnabled,omitempty"`
-}
-
-type CreateSAMLConfigurationPayload struct {
-	SamlConfiguration *SAMLConfiguration `json:"samlConfiguration"`
 }
 
 type CreateSnapshotInput struct {
@@ -871,14 +821,6 @@ type DeleteFrameworkPayload struct {
 	DeletedFrameworkID gid.GID `json:"deletedFrameworkId"`
 }
 
-type DeleteInvitationInput struct {
-	InvitationID gid.GID `json:"invitationId"`
-}
-
-type DeleteInvitationPayload struct {
-	DeletedInvitationID gid.GID `json:"deletedInvitationId"`
-}
-
 type DeleteMeasureInput struct {
 	MeasureID gid.GID `json:"measureId"`
 }
@@ -909,22 +851,6 @@ type DeleteObligationInput struct {
 
 type DeleteObligationPayload struct {
 	DeletedObligationID gid.GID `json:"deletedObligationId"`
-}
-
-type DeleteOrganizationHorizontalLogoInput struct {
-	OrganizationID gid.GID `json:"organizationId"`
-}
-
-type DeleteOrganizationHorizontalLogoPayload struct {
-	Organization *Organization `json:"organization"`
-}
-
-type DeleteOrganizationInput struct {
-	OrganizationID gid.GID `json:"organizationId"`
-}
-
-type DeleteOrganizationPayload struct {
-	DeletedOrganizationID gid.GID `json:"deletedOrganizationId"`
 }
 
 type DeletePeopleInput struct {
@@ -979,14 +905,6 @@ type DeleteRiskObligationMappingPayload struct {
 
 type DeleteRiskPayload struct {
 	DeletedRiskID gid.GID `json:"deletedRiskId"`
-}
-
-type DeleteSAMLConfigurationInput struct {
-	ID gid.GID `json:"id"`
-}
-
-type DeleteSAMLConfigurationPayload struct {
-	DeletedSAMLConfigurationID gid.GID `json:"deletedSAMLConfigurationId"`
 }
 
 type DeleteSnapshotInput struct {
@@ -1093,14 +1011,6 @@ type DeleteVendorServicePayload struct {
 	DeletedVendorServiceID gid.GID `json:"deletedVendorServiceId"`
 }
 
-type DisableSAMLInput struct {
-	ID gid.GID `json:"id"`
-}
-
-type DisableSAMLPayload struct {
-	SamlConfiguration *SAMLConfiguration `json:"samlConfiguration"`
-}
-
 type Document struct {
 	ID                      gid.GID                         `json:"id"`
 	Title                   string                          `json:"title"`
@@ -1174,14 +1084,6 @@ type DocumentVersionSignatureFilter struct {
 type DocumentVersionSignatureOrder struct {
 	Field     coredata.DocumentVersionSignatureOrderField `json:"field"`
 	Direction page.OrderDirection                         `json:"direction"`
-}
-
-type EnableSAMLInput struct {
-	ID gid.GID `json:"id"`
-}
-
-type EnableSAMLPayload struct {
-	SamlConfiguration *SAMLConfiguration `json:"samlConfiguration"`
 }
 
 type Evidence struct {
@@ -1316,57 +1218,6 @@ type ImportMeasurePayload struct {
 	MeasureEdges []*MeasureEdge `json:"measureEdges"`
 }
 
-type InitiateDomainVerificationInput struct {
-	OrganizationID gid.GID `json:"organizationId"`
-	EmailDomain    string  `json:"emailDomain"`
-}
-
-type InitiateDomainVerificationPayload struct {
-	SamlConfiguration *SAMLConfiguration `json:"samlConfiguration"`
-	DNSRecord         string             `json:"dnsRecord"`
-}
-
-type Invitation struct {
-	ID           gid.GID                   `json:"id"`
-	Email        mail.Addr                 `json:"email"`
-	FullName     string                    `json:"fullName"`
-	Role         coredata.MembershipRole   `json:"role"`
-	Status       coredata.InvitationStatus `json:"status"`
-	ExpiresAt    time.Time                 `json:"expiresAt"`
-	AcceptedAt   *time.Time                `json:"acceptedAt,omitempty"`
-	CreatedAt    time.Time                 `json:"createdAt"`
-	Organization *Organization             `json:"organization"`
-}
-
-func (Invitation) IsNode()             {}
-func (this Invitation) GetID() gid.GID { return this.ID }
-
-type InvitationEdge struct {
-	Cursor page.CursorKey `json:"cursor"`
-	Node   *Invitation    `json:"node"`
-}
-
-type InvitationFilter struct {
-	Statuses []coredata.InvitationStatus `json:"statuses,omitempty"`
-}
-
-type InvitationOrder struct {
-	Direction page.OrderDirection           `json:"direction"`
-	Field     coredata.InvitationOrderField `json:"field"`
-}
-
-type InviteUserInput struct {
-	OrganizationID gid.GID                 `json:"organizationId"`
-	Email          mail.Addr               `json:"email"`
-	FullName       string                  `json:"fullName"`
-	Role           coredata.MembershipRole `json:"role"`
-	CreatePeople   bool                    `json:"createPeople"`
-}
-
-type InviteUserPayload struct {
-	InvitationEdge *InvitationEdge `json:"invitationEdge"`
-}
-
 type Measure struct {
 	ID          gid.GID               `json:"id"`
 	Category    string                `json:"category"`
@@ -1411,26 +1262,6 @@ func (this Meeting) GetID() gid.GID { return this.ID }
 type MeetingEdge struct {
 	Cursor page.CursorKey `json:"cursor"`
 	Node   *Meeting       `json:"node"`
-}
-
-type Membership struct {
-	ID             gid.GID                 `json:"id"`
-	UserID         gid.GID                 `json:"userID"`
-	OrganizationID gid.GID                 `json:"organizationID"`
-	Role           coredata.MembershipRole `json:"role"`
-	FullName       string                  `json:"fullName"`
-	EmailAddress   mail.Addr               `json:"emailAddress"`
-	AuthMethod     coredata.UserAuthMethod `json:"authMethod"`
-	CreatedAt      time.Time               `json:"createdAt"`
-	UpdatedAt      time.Time               `json:"updatedAt"`
-}
-
-func (Membership) IsNode()             {}
-func (this Membership) GetID() gid.GID { return this.ID }
-
-type MembershipEdge struct {
-	Cursor page.CursorKey `json:"cursor"`
-	Node   *Membership    `json:"node"`
 }
 
 type Mutation struct {
@@ -1506,8 +1337,6 @@ type Organization struct {
 	Email                           *string                                   `json:"email,omitempty"`
 	HeadquarterAddress              *string                                   `json:"headquarterAddress,omitempty"`
 	Context                         *OrganizationContext                      `json:"context,omitempty"`
-	Memberships                     *MembershipConnection                     `json:"memberships"`
-	Invitations                     *InvitationConnection                     `json:"invitations"`
 	SlackConnections                *SlackConnectionConnection                `json:"slackConnections"`
 	Frameworks                      *FrameworkConnection                      `json:"frameworks"`
 	Controls                        *ControlConnection                        `json:"controls"`
@@ -1531,7 +1360,6 @@ type Organization struct {
 	TrustCenterFiles                *TrustCenterFileConnection                `json:"trustCenterFiles"`
 	TrustCenter                     *TrustCenter                              `json:"trustCenter,omitempty"`
 	CustomDomain                    *CustomDomain                             `json:"customDomain,omitempty"`
-	SamlConfigurations              []*SAMLConfiguration                      `json:"samlConfigurations"`
 	CreatedAt                       time.Time                                 `json:"createdAt"`
 	UpdatedAt                       time.Time                                 `json:"updatedAt"`
 }
@@ -1539,19 +1367,9 @@ type Organization struct {
 func (Organization) IsNode()             {}
 func (this Organization) GetID() gid.GID { return this.ID }
 
-type OrganizationConnection struct {
-	Edges    []*OrganizationEdge `json:"edges"`
-	PageInfo *PageInfo           `json:"pageInfo"`
-}
-
 type OrganizationContext struct {
 	OrganizationID gid.GID `json:"organizationId"`
 	Summary        *string `json:"summary,omitempty"`
-}
-
-type OrganizationEdge struct {
-	Cursor page.CursorKey `json:"cursor"`
-	Node   *Organization  `json:"node"`
 }
 
 type OrganizationOrder struct {
@@ -1647,15 +1465,6 @@ type PublishDocumentVersionPayload struct {
 type Query struct {
 }
 
-type RemoveMemberInput struct {
-	OrganizationID gid.GID `json:"organizationId"`
-	MemberID       gid.GID `json:"memberId"`
-}
-
-type RemoveMemberPayload struct {
-	DeletedMemberID gid.GID `json:"deletedMemberId"`
-}
-
 type Report struct {
 	ID          gid.GID   `json:"id"`
 	ObjectKey   string    `json:"objectKey"`
@@ -1727,35 +1536,6 @@ type RiskFilter struct {
 	Query      *string  `json:"query,omitempty"`
 	SnapshotID *gid.GID `json:"snapshotId,omitempty"`
 }
-
-type SAMLConfiguration struct {
-	ID                      gid.GID                        `json:"id"`
-	Organization            *Organization                  `json:"organization"`
-	EmailDomain             string                         `json:"emailDomain"`
-	Enabled                 bool                           `json:"enabled"`
-	EnforcementPolicy       coredata.SAMLEnforcementPolicy `json:"enforcementPolicy"`
-	DomainVerified          bool                           `json:"domainVerified"`
-	DomainVerificationToken *string                        `json:"domainVerificationToken,omitempty"`
-	DomainVerifiedAt        *time.Time                     `json:"domainVerifiedAt,omitempty"`
-	SpEntityID              string                         `json:"spEntityId"`
-	SpAcsURL                string                         `json:"spAcsUrl"`
-	SpMetadataURL           string                         `json:"spMetadataUrl"`
-	IdpEntityID             string                         `json:"idpEntityId"`
-	IdpSsoURL               string                         `json:"idpSsoUrl"`
-	IdpCertificate          string                         `json:"idpCertificate"`
-	IdpMetadataURL          *string                        `json:"idpMetadataUrl,omitempty"`
-	AttributeEmail          string                         `json:"attributeEmail"`
-	AttributeFirstname      string                         `json:"attributeFirstname"`
-	AttributeLastname       string                         `json:"attributeLastname"`
-	AttributeRole           string                         `json:"attributeRole"`
-	AutoSignupEnabled       bool                           `json:"autoSignupEnabled"`
-	TestLoginURL            string                         `json:"testLoginUrl"`
-	CreatedAt               time.Time                      `json:"createdAt"`
-	UpdatedAt               time.Time                      `json:"updatedAt"`
-}
-
-func (SAMLConfiguration) IsNode()             {}
-func (this SAMLConfiguration) GetID() gid.GID { return this.ID }
 
 type SendSigningNotificationsInput struct {
 	OrganizationID gid.GID `json:"organizationId"`
@@ -2104,16 +1884,6 @@ type UpdateMeetingPayload struct {
 	Meeting *Meeting `json:"meeting"`
 }
 
-type UpdateMembershipInput struct {
-	OrganizationID gid.GID                 `json:"organizationId"`
-	MemberID       gid.GID                 `json:"memberId"`
-	Role           coredata.MembershipRole `json:"role"`
-}
-
-type UpdateMembershipPayload struct {
-	Membership *Membership `json:"membership"`
-}
-
 type UpdateNonconformityInput struct {
 	ID                 gid.GID                       `json:"id"`
 	ReferenceID        *string                       `json:"referenceId,omitempty"`
@@ -2158,30 +1928,15 @@ type UpdateOrganizationContextPayload struct {
 	Context *OrganizationContext `json:"context"`
 }
 
-type UpdateOrganizationInput struct {
-	OrganizationID     gid.GID                    `json:"organizationId"`
-	Name               *string                    `json:"name,omitempty"`
-	Description        graphql.Omittable[*string] `json:"description,omitempty"`
-	WebsiteURL         graphql.Omittable[*string] `json:"websiteUrl,omitempty"`
-	Email              graphql.Omittable[*string] `json:"email,omitempty"`
-	HeadquarterAddress graphql.Omittable[*string] `json:"headquarterAddress,omitempty"`
-	LogoFile           *graphql.Upload            `json:"logoFile,omitempty"`
-	HorizontalLogoFile *graphql.Upload            `json:"horizontalLogoFile,omitempty"`
-}
-
-type UpdateOrganizationPayload struct {
-	Organization *Organization `json:"organization"`
-}
-
 type UpdatePeopleInput struct {
-	ID                       gid.GID                       `json:"id"`
-	FullName                 *string                       `json:"fullName,omitempty"`
-	PrimaryEmailAddress      *mail.Addr                    `json:"primaryEmailAddress,omitempty"`
-	AdditionalEmailAddresses []mail.Addr                   `json:"additionalEmailAddresses,omitempty"`
-	Kind                     *coredata.PeopleKind          `json:"kind,omitempty"`
-	Position                 graphql.Omittable[*string]    `json:"position,omitempty"`
-	ContractStartDate        graphql.Omittable[*time.Time] `json:"contractStartDate,omitempty"`
-	ContractEndDate          graphql.Omittable[*time.Time] `json:"contractEndDate,omitempty"`
+	ID                       gid.GID                        `json:"id"`
+	FullName                 *string                        `json:"fullName,omitempty"`
+	PrimaryEmailAddress      *mail.Addr                     `json:"primaryEmailAddress,omitempty"`
+	AdditionalEmailAddresses graphql.Omittable[[]mail.Addr] `json:"additionalEmailAddresses,omitempty"`
+	Kind                     *coredata.PeopleKind           `json:"kind,omitempty"`
+	Position                 graphql.Omittable[*string]     `json:"position,omitempty"`
+	ContractStartDate        graphql.Omittable[*time.Time]  `json:"contractStartDate,omitempty"`
+	ContractEndDate          graphql.Omittable[*time.Time]  `json:"contractEndDate,omitempty"`
 }
 
 type UpdatePeoplePayload struct {
@@ -2232,27 +1987,6 @@ type UpdateRiskInput struct {
 
 type UpdateRiskPayload struct {
 	Risk *Risk `json:"risk"`
-}
-
-type UpdateSAMLConfigurationInput struct {
-	ID                 gid.GID                         `json:"id"`
-	Enabled            *bool                           `json:"enabled,omitempty"`
-	EnforcementPolicy  *coredata.SAMLEnforcementPolicy `json:"enforcementPolicy,omitempty"`
-	SpCertificate      *string                         `json:"spCertificate,omitempty"`
-	SpPrivateKey       *string                         `json:"spPrivateKey,omitempty"`
-	IdpEntityID        *string                         `json:"idpEntityId,omitempty"`
-	IdpSsoURL          *string                         `json:"idpSsoUrl,omitempty"`
-	IdpCertificate     *string                         `json:"idpCertificate,omitempty"`
-	IdpMetadataURL     *string                         `json:"idpMetadataUrl,omitempty"`
-	AttributeEmail     *string                         `json:"attributeEmail,omitempty"`
-	AttributeFirstname *string                         `json:"attributeFirstname,omitempty"`
-	AttributeLastname  *string                         `json:"attributeLastname,omitempty"`
-	AttributeRole      *string                         `json:"attributeRole,omitempty"`
-	AutoSignupEnabled  *bool                           `json:"autoSignupEnabled,omitempty"`
-}
-
-type UpdateSAMLConfigurationPayload struct {
-	SamlConfiguration *SAMLConfiguration `json:"samlConfiguration"`
 }
 
 type UpdateTaskInput struct {
@@ -2463,22 +2197,6 @@ type UploadVendorDataPrivacyAgreementPayload struct {
 	VendorDataPrivacyAgreement *VendorDataPrivacyAgreement `json:"vendorDataPrivacyAgreement"`
 }
 
-type User struct {
-	ID        gid.GID   `json:"id"`
-	FullName  string    `json:"fullName"`
-	Email     mail.Addr `json:"email"`
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
-}
-
-func (User) IsNode()             {}
-func (this User) GetID() gid.GID { return this.ID }
-
-type UserEdge struct {
-	Cursor page.CursorKey `json:"cursor"`
-	Node   *User          `json:"node"`
-}
-
 type Vendor struct {
 	ID                            gid.GID                           `json:"id"`
 	SnapshotID                    *gid.GID                          `json:"snapshotId,omitempty"`
@@ -2654,80 +2372,8 @@ type VendorServiceEdge struct {
 	Node   *VendorService `json:"node"`
 }
 
-type VerifyDomainInput struct {
-	ID gid.GID `json:"id"`
-}
-
-type VerifyDomainPayload struct {
-	SamlConfiguration *SAMLConfiguration `json:"samlConfiguration"`
-	Verified          bool               `json:"verified"`
-}
-
 type Viewer struct {
 	ID                gid.GID                     `json:"id"`
-	User              *User                       `json:"user"`
-	Organizations     *OrganizationConnection     `json:"organizations"`
 	SignableDocuments *SignableDocumentConnection `json:"signableDocuments"`
 	SignableDocument  *SignableDocument           `json:"signableDocument,omitempty"`
-}
-
-type Role string
-
-const (
-	RoleOwner   Role = "OWNER"
-	RoleAdmin   Role = "ADMIN"
-	RoleViewer  Role = "VIEWER"
-	RoleAuditor Role = "AUDITOR"
-	RoleFull    Role = "FULL"
-)
-
-var AllRole = []Role{
-	RoleOwner,
-	RoleAdmin,
-	RoleViewer,
-	RoleAuditor,
-	RoleFull,
-}
-
-func (e Role) IsValid() bool {
-	switch e {
-	case RoleOwner, RoleAdmin, RoleViewer, RoleAuditor, RoleFull:
-		return true
-	}
-	return false
-}
-
-func (e Role) String() string {
-	return string(e)
-}
-
-func (e *Role) UnmarshalGQL(v any) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = Role(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid Role", str)
-	}
-	return nil
-}
-
-func (e Role) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
-func (e *Role) UnmarshalJSON(b []byte) error {
-	s, err := strconv.Unquote(string(b))
-	if err != nil {
-		return err
-	}
-	return e.UnmarshalGQL(s)
-}
-
-func (e Role) MarshalJSON() ([]byte, error) {
-	var buf bytes.Buffer
-	e.MarshalGQL(&buf)
-	return buf.Bytes(), nil
 }

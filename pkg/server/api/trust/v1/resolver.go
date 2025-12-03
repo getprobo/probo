@@ -18,29 +18,16 @@ package trust_v1
 
 import (
 	"context"
-	"fmt"
-	"net/http"
-	"strings"
 	"time"
 
-	"github.com/99designs/gqlgen/graphql/handler"
-	"github.com/99designs/gqlgen/graphql/handler/extension"
-	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/go-chi/chi/v5"
 	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/auth"
-	"go.probo.inc/probo/pkg/authz"
-	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/probo"
-	console_v1 "go.probo.inc/probo/pkg/server/api/console/v1"
-	slack_v1 "go.probo.inc/probo/pkg/server/api/slack/v1"
+	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/securecookie"
+	connect_v1 "go.probo.inc/probo/pkg/server/api/connect/v1"
 	"go.probo.inc/probo/pkg/server/api/trust/v1/schema"
-	"go.probo.inc/probo/pkg/server/api/trust/v1/trustauth"
 	"go.probo.inc/probo/pkg/server/gqlutils"
-	"go.probo.inc/probo/pkg/server/session"
-	"go.probo.inc/probo/pkg/slack"
-	"go.probo.inc/probo/pkg/statelesstoken"
 	"go.probo.inc/probo/pkg/trust"
 )
 
@@ -58,242 +45,42 @@ type (
 	}
 
 	Resolver struct {
-		trustCenterSvc *trust.Service
-		authCfg        console_v1.AuthConfig
-		trustAuthCfg   TrustAuthConfig
+		trust *trust.Service
 	}
-
-	ctxKey struct{ name string }
 )
-
-var (
-	sessionContextKey     = &ctxKey{name: "session"}
-	userContextKey        = &ctxKey{name: "user"}
-	userTenantContextKey  = &ctxKey{name: "user_tenants"}
-	tokenAccessContextKey = &ctxKey{name: "token_access"}
-)
-
-func SessionFromContext(ctx context.Context) *coredata.Session {
-	session, _ := ctx.Value(sessionContextKey).(*coredata.Session)
-	return session
-}
-
-func UserFromContext(ctx context.Context) *coredata.User {
-	user, _ := ctx.Value(userContextKey).(*coredata.User)
-	return user
-}
-
-func TokenAccessFromContext(ctx context.Context) *trustauth.TokenAccessData {
-	tokenAccess, _ := ctx.Value(tokenAccessContextKey).(*trustauth.TokenAccessData)
-	return tokenAccess
-}
-
-// UserFromContext implements trustauth.ContextAccessor interface
-func (r *Resolver) UserFromContext(ctx context.Context) *coredata.User {
-	return UserFromContext(ctx)
-}
-
-// TokenAccessFromContext implements trustauth.ContextAccessor interface
-func (r *Resolver) TokenAccessFromContext(ctx context.Context) *trustauth.TokenAccessData {
-	return TokenAccessFromContext(ctx)
-}
 
 func NewMux(
 	logger *log.Logger,
-	authSvc *auth.Service,
-	authzSvc *authz.Service,
+	iamSvc *iam.Service,
 	trustSvc *trust.Service,
-	authCfg console_v1.AuthConfig,
-	trustAuthCfg TrustAuthConfig,
-
-	// TODO: Remove this after successful migration to /slack/v1.
-	slackSvc *slack.Service,
+	cookieConfig securecookie.Config,
 ) *chi.Mux {
 	r := chi.NewMux()
 
-	r.Handle("/graphql", graphqlHandler(logger, authSvc, authzSvc, trustSvc, authCfg, trustAuthCfg))
+	sessionMiddleware := connect_v1.NewSessionMiddleware(iamSvc, cookieConfig)
+	r.Use(sessionMiddleware)
 
-	r.Post("/auth/authenticate", authTokenHandler(trustSvc, trustAuthCfg))
-	r.Delete("/auth/logout", trustCenterLogoutHandler(authCfg, trustAuthCfg))
+	config := schema.Config{Resolvers: &Resolver{trust: trustSvc}}
+	es := schema.NewExecutableSchema(config)
+	graphqlHandler := gqlutils.NewHandler(es, logger)
 
-	// Backward compatibility: support old /trust/v1/slack endpoint
-	// TODO: Remove this after successful migration to /slack/v1 and then make SlackHandler PRIVATE in slack_v1 package.
-	r.Post("/slack", slack_v1.SlackHandler(slackSvc, slackSvc.GetSlackSigningSecret(), logger, trustSvc))
+	r.Handle("/graphql", graphqlHandler)
 
 	return r
 }
 
-func graphqlHandler(logger *log.Logger, authSvc *auth.Service, authzSvc *authz.Service, trustSvc *trust.Service, authCfg console_v1.AuthConfig, trustAuthCfg TrustAuthConfig) http.HandlerFunc {
-	resolver := &Resolver{
-		trustCenterSvc: trustSvc,
-		authCfg:        authCfg,
-		trustAuthCfg:   trustAuthCfg,
-	}
-
-	c := schema.Config{
-		Resolvers: resolver,
-	}
-
-	c.Directives.MustBeAuthenticated = trustauth.MustBeAuthenticatedDirective(resolver)
-
-	es := schema.NewExecutableSchema(c)
-
-	srv := handler.New(es)
-
-	srv.AddTransport(transport.POST{})
-	srv.AddTransport(transport.GET{})
-	srv.AddTransport(transport.Options{})
-
-	srv.Use(extension.Introspection{})
-	srv.Use(gqlutils.NewTracingExtension(logger))
-
-	srv.SetRecoverFunc(gqlutils.RecoverFunc)
-
-	return WithSession(authSvc, authzSvc, trustSvc, authCfg, trustAuthCfg, srv.ServeHTTP)
-}
-
 func (r *Resolver) RootTrustService(ctx context.Context) *trust.TenantService {
-	return r.trustCenterSvc.WithTenant(gid.NewTenantID())
+	return r.trust.WithTenant(gid.NewTenantID())
 }
 
 func (r *Resolver) PublicTrustService(ctx context.Context, tenantID gid.TenantID) *trust.TenantService {
-	return r.trustCenterSvc.WithTenant(tenantID)
+	return r.trust.WithTenant(tenantID)
 }
 
 func (r *Resolver) PrivateTrustService(ctx context.Context, tenantID gid.TenantID) (*trust.TenantService, error) {
-	if err := trustauth.ValidateTenantAccess(ctx, r, userTenantContextKey, tenantID); err != nil {
-		return nil, fmt.Errorf("cannot access trust center: %w", err)
-	}
+	// if err := trustauth.ValidateTenantAccess(ctx, r, userTenantContextKey, tenantID); err != nil {
+	// 	return nil, fmt.Errorf("cannot access trust center: %w", err)
+	// }
 
-	return r.trustCenterSvc.WithTenant(tenantID), nil
-}
-
-func WithSession(authSvc *auth.Service, authzSvc *authz.Service, trustSvc *trust.Service, authCfg console_v1.AuthConfig, trustAuthCfg TrustAuthConfig, next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-
-		ip := extractIPAddress(r)
-		ctx = context.WithValue(ctx, coredata.ContextKeyIPAddress, ip)
-
-		if authCtx := tryTokenAuth(ctx, w, r, trustSvc, trustAuthCfg); authCtx != nil {
-			next(w, r.WithContext(authCtx))
-			return
-		}
-
-		if authCtx := trySessionAuth(ctx, w, r, authSvc, authzSvc, authCfg); authCtx != nil {
-			next(w, r.WithContext(authCtx))
-			updateSessionIfNeeded(authCtx, authSvc)
-			return
-		}
-
-		next(w, r.WithContext(ctx))
-	}
-}
-
-func trySessionAuth(ctx context.Context, w http.ResponseWriter, r *http.Request, authSvc *auth.Service, authzSvc *authz.Service, authCfg console_v1.AuthConfig) context.Context {
-	sessionAuthCfg := session.AuthConfig{
-		CookieName:   authCfg.CookieName,
-		CookieSecret: authCfg.CookieSecret,
-		CookieSecure: authCfg.CookieSecure,
-	}
-
-	errorHandler := session.ErrorHandler{
-		OnParseError: func(w http.ResponseWriter, authCfg session.AuthConfig) {
-			session.ClearCookie(w, authCfg)
-		},
-		OnSessionError: func(w http.ResponseWriter, authCfg session.AuthConfig) {
-			session.ClearCookie(w, authCfg)
-		},
-		OnUserError: func(w http.ResponseWriter, authCfg session.AuthConfig) {
-			session.ClearCookie(w, authCfg)
-		},
-		OnTenantError: func(err error) {
-			session.ClearCookie(w, sessionAuthCfg)
-		},
-	}
-
-	authResult := session.TryAuth(ctx, w, r, authSvc, authzSvc, sessionAuthCfg, errorHandler)
-	if authResult == nil {
-		return nil
-	}
-
-	ctx = context.WithValue(ctx, sessionContextKey, authResult.Session)
-	ctx = context.WithValue(ctx, userContextKey, authResult.User)
-	ctx = context.WithValue(ctx, userTenantContextKey, &authResult.TenantIDs)
-
-	return ctx
-}
-
-func tryTokenAuth(ctx context.Context, w http.ResponseWriter, r *http.Request, trustSvc *trust.Service, trustAuthCfg TrustAuthConfig) context.Context {
-	cookie, err := r.Cookie(trustAuthCfg.CookieName)
-	if err != nil {
-		return nil
-	}
-
-	basicPayload, err := statelesstoken.ValidateToken[probo.TrustCenterAccessData](
-		trustAuthCfg.TokenSecret,
-		trustAuthCfg.TokenType,
-		cookie.Value,
-	)
-	if err != nil {
-		clearTokenCookie(w, trustAuthCfg)
-		return nil
-	}
-
-	tenantID := basicPayload.Data.TrustCenterID.TenantID()
-
-	tenantSvc := trustSvc.WithTenant(tenantID)
-	if err := tenantSvc.TrustCenterAccesses.ValidateToken(ctx, basicPayload.Data.TrustCenterID, basicPayload.Data.Email); err != nil {
-		clearTokenCookie(w, trustAuthCfg)
-		return nil
-	}
-
-	tokenAccess := &trustauth.TokenAccessData{
-		TrustCenterID: basicPayload.Data.TrustCenterID,
-		Email:         basicPayload.Data.Email,
-		TenantID:      tenantID,
-		Scope:         trustAuthCfg.Scope,
-	}
-
-	return context.WithValue(ctx, tokenAccessContextKey, tokenAccess)
-}
-
-func clearTokenCookie(w http.ResponseWriter, trustAuthCfg TrustAuthConfig) {
-	http.SetCookie(w, &http.Cookie{
-		Name:     trustAuthCfg.CookieName,
-		Value:    "",
-		Domain:   trustAuthCfg.CookieDomain,
-		Path:     "/",
-		MaxAge:   -1,
-		Secure:   trustAuthCfg.CookieSecure,
-		HttpOnly: true,
-		SameSite: http.SameSiteStrictMode,
-	})
-}
-
-func updateSessionIfNeeded(ctx context.Context, authSvc *auth.Service) {
-	session := SessionFromContext(ctx)
-	if session != nil {
-		if _, err := authSvc.UpdateSession(ctx, session.ID); err != nil {
-			panic(fmt.Errorf("cannot update session: %w", err))
-		}
-	}
-}
-
-func extractIPAddress(r *http.Request) string {
-	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
-		if ip := strings.Split(xff, ",")[0]; ip != "" {
-			return strings.TrimSpace(ip)
-		}
-	}
-
-	if xri := r.Header.Get("X-Real-IP"); xri != "" {
-		return strings.TrimSpace(xri)
-	}
-
-	if ip := strings.Split(r.RemoteAddr, ":")[0]; ip != "" {
-		return ip
-	}
-
-	return "unknown"
+	return r.trust.WithTenant(tenantID), nil
 }

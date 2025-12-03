@@ -1,6 +1,6 @@
 import { lazy } from "@probo/react-lazy";
 import { loadQuery } from "react-relay";
-import { relayEnvironment } from "/providers/RelayProviders";
+import { consoleEnvironment } from "/environments";
 import { PageSkeleton } from "/components/skeletons/PageSkeleton.tsx";
 import {
   paginatedPeopleQuery,
@@ -16,7 +16,7 @@ export const peopleRoutes = [
     path: "people",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ organizationId }) =>
-      loadQuery<PeopleGraphPaginatedQuery>(relayEnvironment, paginatedPeopleQuery, { organizationId: organizationId! }),
+      loadQuery<PeopleGraphPaginatedQuery>(consoleEnvironment, paginatedPeopleQuery, { organizationId: organizationId! }),
     ),
     Component: withQueryRef(lazy(() => import("/pages/organizations/people/PeopleListPage"))),
   },
@@ -24,7 +24,7 @@ export const peopleRoutes = [
     path: "people/:peopleId",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ peopleId }) =>
-      loadQuery<PeopleGraphNodeQuery>(relayEnvironment, peopleNodeQuery, { peopleId: peopleId! }),
+      loadQuery<PeopleGraphNodeQuery>(consoleEnvironment, peopleNodeQuery, { peopleId: peopleId! }),
     ),
     Component: withQueryRef(lazy(
       () => import("/pages/organizations/people/PeopleDetailPage")
