@@ -4,7 +4,6 @@ import { useTranslate } from "@probo/i18n";
 import { z } from "zod";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { usePageTitle } from "@probo/hooks";
-import { buildEndpoint } from "/providers/RelayProviders";
 
 const schema = z.object({
   email: z.string().email(),
@@ -25,17 +24,14 @@ export default function RegisterPage() {
   });
 
   const onSubmit = handleSubmit(async (data) => {
-    const response = await fetch(
-      buildEndpoint("/connect/register"),
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify(data),
+    const response = await fetch("/connect/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
       },
-    );
+      credentials: "include",
+      body: JSON.stringify(data),
+    });
 
     // Registration failed
     if (!response.ok) {

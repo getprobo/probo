@@ -43,23 +43,7 @@ type (
 	}
 
 	Measures []*Measure
-
-	ErrMeasureNotFound struct {
-		Identifier string
-	}
-
-	ErrMeasureAlreadyExists struct {
-		message string
-	}
 )
-
-func (e ErrMeasureNotFound) Error() string {
-	return fmt.Sprintf("measure not found: %q", e.Identifier)
-}
-
-func (e ErrMeasureAlreadyExists) Error() string {
-	return e.message
-}
 
 func (m Measure) CursorKey(orderBy MeasureOrderField) page.CursorKey {
 	switch orderBy {
@@ -414,7 +398,7 @@ LIMIT 1;
 	measure, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Measure])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrMeasureNotFound{Identifier: measureID.String()}
+			return ErrResourceNotFound
 		}
 
 		return fmt.Errorf("cannot collect measures: %w", err)
@@ -552,9 +536,7 @@ VALUES (
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
 			if pgErr.Code == "23505" && pgErr.ConstraintName == "mitigations_org_ref_unique" {
-				return &ErrMeasureAlreadyExists{
-					message: fmt.Sprintf("measure with organization_id %s and reference_id %q already exists", m.OrganizationID, m.ReferenceID),
-				}
+				return ErrResourceAlreadyExists
 			}
 		}
 		return fmt.Errorf("cannot insert measure: %w", err)

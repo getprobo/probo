@@ -43,23 +43,7 @@ type (
 	}
 
 	Documents []*Document
-
-	ErrDocumentNotFound struct {
-		Identifier string
-	}
-
-	ErrDocumentAlreadyExists struct {
-		message string
-	}
 )
-
-func (e ErrDocumentNotFound) Error() string {
-	return fmt.Sprintf("document not found: %q", e.Identifier)
-}
-
-func (e ErrDocumentAlreadyExists) Error() string {
-	return e.message
-}
 
 func (p Document) CursorKey(orderBy DocumentOrderField) page.CursorKey {
 	switch orderBy {
@@ -114,7 +98,7 @@ LIMIT 1;
 	document, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Document])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrDocumentNotFound{Identifier: documentID.String()}
+			return ErrResourceNotFound
 		}
 
 		return fmt.Errorf("cannot collect document: %w", err)
@@ -168,7 +152,7 @@ LIMIT 1;
 	document, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Document])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrDocumentNotFound{Identifier: documentID.String()}
+			return ErrResourceNotFound
 		}
 
 		return fmt.Errorf("cannot collect document: %w", err)

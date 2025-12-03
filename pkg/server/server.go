@@ -23,52 +23,40 @@ import (
 	"github.com/go-chi/chi/v5"
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
-	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/agents"
-	"go.probo.inc/probo/pkg/auth"
-	"go.probo.inc/probo/pkg/authz"
+	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/connector"
-	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/probo"
-	"go.probo.inc/probo/pkg/saferedirect"
+	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api"
 	trust_v1 "go.probo.inc/probo/pkg/server/api/trust/v1"
-	auth_server "go.probo.inc/probo/pkg/server/auth"
-	authz_server "go.probo.inc/probo/pkg/server/authz"
-	"go.probo.inc/probo/pkg/server/trust"
-	"go.probo.inc/probo/pkg/server/web"
+	trust_web "go.probo.inc/probo/pkg/server/trust"
+	console_web "go.probo.inc/probo/pkg/server/web"
 	"go.probo.inc/probo/pkg/slack"
-	trust_pkg "go.probo.inc/probo/pkg/trust"
+	"go.probo.inc/probo/pkg/trust"
 )
 
 type Config struct {
+	BaseURL           *baseurl.BaseURL
 	AllowedOrigins    []string
 	ExtraHeaderFields map[string]string
 	Probo             *probo.Service
-	Auth              *auth.Service
-	Authz             *authz.Service
-	Trust             *trust_pkg.Service
+	IAM               *iam.Service
+	Trust             *trust.Service
 	Slack             *slack.Service
-	SAML              *auth.SAMLService
-	ConsoleAuth       api.ConsoleAuthConfig
-	TrustAuth         api.TrustAuthConfig
-	MCPConfig         api.MCPConfig
+	Cookie            securecookie.Config
 	ConnectorRegistry *connector.ConnectorRegistry
 	Agent             *agents.Agent
-	SafeRedirect      *saferedirect.SafeRedirect
 	CustomDomainCname string
-	FileManager       *filemanager.Service
-	PGClient          *pg.Client
 	Logger            *log.Logger
 }
 
 type Server struct {
 	apiServer         *api.Server
-	webServer         *web.Server
-	trustServer       *trust.Server
-	authServer        *auth_server.Server
-	authzServer       *authz_server.Server
+	consoleWebServer  *console_web.Server
+	trustWebServer    *trust_web.Server
 	router            *chi.Mux
 	extraHeaderFields map[string]string
 	proboService      *probo.Service
@@ -77,60 +65,29 @@ type Server struct {
 
 func NewServer(cfg Config) (*Server, error) {
 	apiCfg := api.Config{
+		BaseURL:           cfg.BaseURL,
 		AllowedOrigins:    cfg.AllowedOrigins,
 		Probo:             cfg.Probo,
-		Auth:              cfg.Auth,
-		Authz:             cfg.Authz,
+		IAM:               cfg.IAM,
 		Trust:             cfg.Trust,
 		Slack:             cfg.Slack,
-		SAML:              cfg.SAML,
-		ConsoleAuth:       cfg.ConsoleAuth,
-		TrustAuth:         cfg.TrustAuth,
-		MCPConfig:         cfg.MCPConfig,
+		Cookie:            cfg.Cookie,
 		ConnectorRegistry: cfg.ConnectorRegistry,
-		SafeRedirect:      cfg.SafeRedirect,
 		CustomDomainCname: cfg.CustomDomainCname,
 		Logger:            cfg.Logger.Named("api"),
 	}
+
 	apiServer, err := api.NewServer(apiCfg)
 	if err != nil {
 		return nil, err
 	}
 
-	webServer, err := web.NewServer()
+	consoleWebServer, err := console_web.NewServer()
 	if err != nil {
 		return nil, err
 	}
 
-	trustServer, err := trust.NewServer()
-	if err != nil {
-		return nil, err
-	}
-
-	authServer, err := auth_server.NewServer(auth_server.Config{
-		Auth:            cfg.Auth,
-		Authz:           cfg.Authz,
-		SAML:            cfg.SAML,
-		CookieName:      cfg.ConsoleAuth.CookieName,
-		CookieDomain:    cfg.ConsoleAuth.CookieDomain,
-		SessionDuration: cfg.ConsoleAuth.SessionDuration,
-		CookieSecret:    cfg.ConsoleAuth.CookieSecret,
-		CookieSecure:    cfg.ConsoleAuth.CookieSecure,
-		FileManager:     cfg.FileManager,
-		Logger:          cfg.Logger.Named("auth"),
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	authzServer, err := authz_server.NewServer(authz_server.Config{
-		Auth:         cfg.Auth,
-		Authz:        cfg.Authz,
-		Logger:       cfg.Logger.Named("authz"),
-		CookieName:   cfg.ConsoleAuth.CookieName,
-		CookieSecret: cfg.ConsoleAuth.CookieSecret,
-		CookieSecure: cfg.ConsoleAuth.CookieSecure,
-	})
+	trustWebServer, err := trust_web.NewServer()
 	if err != nil {
 		return nil, err
 	}
@@ -139,10 +96,8 @@ func NewServer(cfg Config) (*Server, error) {
 
 	server := &Server{
 		apiServer:         apiServer,
-		webServer:         webServer,
-		trustServer:       trustServer,
-		authServer:        authServer,
-		authzServer:       authzServer,
+		consoleWebServer:  consoleWebServer,
+		trustWebServer:    trustWebServer,
 		router:            router,
 		extraHeaderFields: cfg.ExtraHeaderFields,
 		proboService:      cfg.Probo,
@@ -156,8 +111,6 @@ func NewServer(cfg Config) (*Server, error) {
 
 func (s *Server) setupRoutes() {
 	s.router.Mount("/api", s.apiServer)
-	s.router.Mount("/connect", s.authServer)
-	s.router.Mount("/authz", s.authzServer)
 
 	s.router.Route("/trust/{slugOrId}", func(r chi.Router) {
 		r.Use(s.loadTrustCenterBySlugOrID)
@@ -165,7 +118,7 @@ func (s *Server) setupRoutes() {
 		r.Mount("/", s.trustCenterRouter())
 	})
 
-	s.router.Mount("/", s.webServer)
+	s.router.Mount("/", s.consoleWebServer)
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -286,7 +239,6 @@ func (s *Server) loadTrustCenterByDomain(next http.Handler) http.Handler {
 }
 
 func (s *Server) addTrustCenterToContext(ctx context.Context, tenantID, organizationID interface{}) context.Context {
-	ctx = context.WithValue(ctx, trust_v1.CustomDomainTenantIDKey, tenantID)
 	ctx = context.WithValue(ctx, trust_v1.CustomDomainOrganizationIDKey, organizationID)
 	return ctx
 }
@@ -313,8 +265,8 @@ func (s *Server) stripTrustPrefix(next http.Handler) http.Handler {
 func (s *Server) trustCenterRouter() chi.Router {
 	r := chi.NewRouter()
 
-	r.Mount("/api/trust/v1", s.apiServer.TrustAPIHandler())
-	r.Handle("/*", s.trustServer)
+	r.Mount("/api/trust/v1", s.apiServer.CompliancePageHandler())
+	r.Handle("/*", s.trustWebServer)
 
 	return r
 }

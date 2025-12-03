@@ -6,7 +6,7 @@ import {
 } from "react-router";
 import { Fragment } from "react";
 import {
-  relayEnvironment,
+  consoleEnvironment,
   UnAuthenticatedError,
 } from "./providers/RelayProviders.tsx";
 import { loadQuery } from "react-relay";
@@ -23,7 +23,12 @@ import { SubprocessorsPage } from "/pages/SubprocessorsPage";
 import { AccessPage } from "./pages/AccessPage.tsx";
 import { TabSkeleton } from "./components/Skeletons/TabSkeleton.tsx";
 import { MainSkeleton } from "./components/Skeletons/MainSkeleton.tsx";
-import { loaderFromQueryLoader, routeFromAppRoute, withQueryRef, type AppRoute } from "@probo/routes";
+import {
+  loaderFromQueryLoader,
+  routeFromAppRoute,
+  withQueryRef,
+  type AppRoute,
+} from "@probo/routes";
 
 /**
  * Top level error boundary
@@ -50,7 +55,9 @@ const routes = [
   // Custom domain routes (subdomain-based)
   {
     path: "/overview",
-    loader: loaderFromQueryLoader(() => loadQuery(relayEnvironment, currentTrustGraphQuery, {})),
+    loader: loaderFromQueryLoader(() =>
+      loadQuery(consoleEnvironment, currentTrustGraphQuery, {})
+    ),
     Component: withQueryRef(MainLayout),
     Fallback: MainSkeleton,
     ErrorBoundary: ErrorBoundary,
@@ -64,14 +71,18 @@ const routes = [
   },
   {
     path: "/documents",
-    loader: loaderFromQueryLoader(() => loadQuery(relayEnvironment, currentTrustGraphQuery, {})),
+    loader: loaderFromQueryLoader(() =>
+      loadQuery(consoleEnvironment, currentTrustGraphQuery, {})
+    ),
     Component: withQueryRef(MainLayout),
     Fallback: MainSkeleton,
     ErrorBoundary: ErrorBoundary,
     children: [
       {
         path: "",
-        loader: loaderFromQueryLoader(() => loadQuery(relayEnvironment, currentTrustDocumentsQuery, {})),
+        loader: loaderFromQueryLoader(() =>
+          loadQuery(consoleEnvironment, currentTrustDocumentsQuery, {})
+        ),
         Fallback: TabSkeleton,
         Component: withQueryRef(DocumentsPage),
       },
@@ -79,14 +90,18 @@ const routes = [
   },
   {
     path: "/subprocessors",
-    loader: loaderFromQueryLoader(() => loadQuery(relayEnvironment, currentTrustGraphQuery, {})),
+    loader: loaderFromQueryLoader(() =>
+      loadQuery(consoleEnvironment, currentTrustGraphQuery, {})
+    ),
     Component: withQueryRef(MainLayout),
     Fallback: MainSkeleton,
     ErrorBoundary: ErrorBoundary,
     children: [
       {
         path: "",
-        loader: loaderFromQueryLoader(() => loadQuery(relayEnvironment, currentTrustVendorsQuery, {})),
+        loader: loaderFromQueryLoader(() =>
+          loadQuery(consoleEnvironment, currentTrustVendorsQuery, {})
+        ),
         Fallback: TabSkeleton,
         Component: withQueryRef(SubprocessorsPage),
       },

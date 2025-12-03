@@ -10,7 +10,6 @@ import {
   IconCircleCheck,
 } from "@probo/ui";
 import { PDFPreview } from "../components/documents/PDFPreview";
-import { buildEndpoint } from "/providers/RelayProviders";
 import { useWindowSize } from "usehooks-ts";
 import clsx from "clsx";
 import { sprintf } from "@probo/helpers";
@@ -63,7 +62,7 @@ export default function DocumentSigningRequestsPage() {
     async function fetchDocuments() {
       try {
         const response = await fetch(
-          buildEndpoint("/api/console/v1/documents/signing-requests"),
+          "/api/console/v1/documents/signing-requests",
           {
             method: "GET",
             headers: {
@@ -114,9 +113,7 @@ export default function DocumentSigningRequestsPage() {
     setSigning(true);
     try {
       const response = await fetch(
-        buildEndpoint(
-          `/api/console/v1/documents/signing-requests/${docToSign.document_version_id}/sign`
-        ),
+        `/api/console/v1/documents/signing-requests/${docToSign.document_version_id}/sign`,
         {
           method: "POST",
           headers: {
@@ -235,9 +232,7 @@ export default function DocumentSigningRequestsPage() {
 
   // Build PDF URL with watermark
   const pdfUrl = token
-    ? `${buildEndpoint(
-        `/api/console/v1/documents/signing-requests/${currentDoc.document_version_id}/pdf`
-      )}?token=${encodeURIComponent(token)}`
+    ? `${`/api/console/v1/documents/signing-requests/${currentDoc.document_version_id}/pdf`}?token=${encodeURIComponent(token)}`
     : null;
 
   return (
@@ -250,7 +245,10 @@ export default function DocumentSigningRequestsPage() {
         <div className="grid lg:grid-cols-2 min-h-0 h-full">
           <div className="max-w-[440px] mx-auto py-20 overflow-y-auto scrollbar-hide">
             <h1 className="text-2xl font-semibold mb-6">
-              {sprintf(__("%s requests your signature"), signingData.organizationName)}
+              {sprintf(
+                __("%s requests your signature"),
+                signingData.organizationName
+              )}
             </h1>
             {allSigned ? (
               <p className="text-txt-secondary text-base">
@@ -266,7 +264,10 @@ export default function DocumentSigningRequestsPage() {
                 <Card className="mb-6 overflow-hidden">
                   <div className="divide-y divide-border-solid">
                     {(() => {
-                      const renderDocumentItem = (doc: Document, index: number) => (
+                      const renderDocumentItem = (
+                        doc: Document,
+                        index: number
+                      ) => (
                         <div
                           key={doc.document_version_id}
                           className={clsx(
@@ -307,15 +308,15 @@ export default function DocumentSigningRequestsPage() {
                                 doc.signed
                                   ? "bg-green-100 text-green-800"
                                   : index === currentDocIndex
-                                  ? "bg-blue-100 text-blue-800"
-                                  : "bg-gray-100 text-gray-700"
+                                    ? "bg-blue-100 text-blue-800"
+                                    : "bg-gray-100 text-gray-700"
                               )}
                             >
                               {doc.signed
                                 ? __("Signed")
                                 : index === currentDocIndex
-                                ? __("In review")
-                                : __("Waiting signature")}
+                                  ? __("In review")
+                                  : __("Waiting signature")}
                             </span>
                           </div>
                         </div>
@@ -352,8 +353,12 @@ export default function DocumentSigningRequestsPage() {
                       const currentIsLast = currentDocIndex === totalDocs - 1;
 
                       // Calculate hidden docs before and after current
-                      const hiddenBeforeCurrent = currentIsFirst ? 0 : currentDocIndex - 1;
-                      const hiddenAfterCurrent = currentIsLast ? 0 : totalDocs - currentDocIndex - 2;
+                      const hiddenBeforeCurrent = currentIsFirst
+                        ? 0
+                        : currentDocIndex - 1;
+                      const hiddenAfterCurrent = currentIsLast
+                        ? 0
+                        : totalDocs - currentDocIndex - 2;
 
                       return (
                         <>
@@ -367,12 +372,16 @@ export default function DocumentSigningRequestsPage() {
                               className="w-full py-3 px-4 text-sm text-txt-secondary hover:bg-level-1 transition-colors text-left flex items-center gap-2"
                             >
                               <span className="text-txt-tertiary">•••</span>
-                              {sprintf(__("Show %s more documents"), hiddenBeforeCurrent)}
+                              {sprintf(
+                                __("Show %s more documents"),
+                                hiddenBeforeCurrent
+                              )}
                             </button>
                           )}
 
                           {/* Current document (if not first) */}
-                          {!currentIsFirst && renderDocumentItem(currentDoc, currentDocIndex)}
+                          {!currentIsFirst &&
+                            renderDocumentItem(currentDoc, currentDocIndex)}
 
                           {/* Show more button for documents AFTER current (upcoming documents) */}
                           {hiddenAfterCurrent > 0 && (
@@ -381,7 +390,10 @@ export default function DocumentSigningRequestsPage() {
                               className="w-full py-3 px-4 text-sm text-txt-secondary hover:bg-level-1 transition-colors text-left flex items-center gap-2"
                             >
                               <span className="text-txt-tertiary">•••</span>
-                              {sprintf(__("Show %s more documents"), hiddenAfterCurrent)}
+                              {sprintf(
+                                __("Show %s more documents"),
+                                hiddenAfterCurrent
+                              )}
                             </button>
                           )}
                         </>
@@ -390,9 +402,7 @@ export default function DocumentSigningRequestsPage() {
                   </div>
                 </Card>
                 <p className="text-txt-secondary text-sm mb-6">
-                  {__(
-                    "Please review the document carefully before signing."
-                  )}
+                  {__("Please review the document carefully before signing.")}
                 </p>
               </>
             )}
@@ -421,10 +431,7 @@ export default function DocumentSigningRequestsPage() {
               </>
             )}
             {currentDoc.signed && !isLastDocument && (
-              <Button
-                onClick={handleNextDocument}
-                className="h-10 w-full mt-4"
-              >
+              <Button onClick={handleNextDocument} className="h-10 w-full mt-4">
                 {__("Next Document")}
               </Button>
             )}

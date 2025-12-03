@@ -146,7 +146,6 @@ services:
     command:
       - "start-dev"
       - "--import-realm"
-      - "--verbose"
     ports:
       - 8082:8080
     volumes:

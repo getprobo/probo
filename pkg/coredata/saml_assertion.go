@@ -16,12 +16,14 @@ package coredata
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
-	"go.probo.inc/probo/pkg/gid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/gid"
 )
 
 type SAMLAssertion struct {
@@ -31,27 +33,17 @@ type SAMLAssertion struct {
 	ExpiresAt      time.Time `db:"expires_at"`
 }
 
-type ErrAssertionAlreadyUsed struct {
-	AssertionID string
-}
-
-func (e ErrAssertionAlreadyUsed) Error() string {
-	return fmt.Sprintf("assertion ID %q has already been used (replay attack)", e.AssertionID)
-}
-
 func (s *SAMLAssertion) Insert(
 	ctx context.Context,
 	conn pg.Conn,
-	scope Scoper,
 ) error {
 	query := `
-INSERT INTO auth_saml_assertions (id, tenant_id, organization_id, used_at, expires_at)
-VALUES (@id, @tenant_id, @organization_id, @used_at, @expires_at)
+INSERT INTO auth_saml_assertions (id, organization_id, used_at, expires_at)
+VALUES (@id, @organization_id, @used_at, @expires_at)
 `
 
 	args := pgx.NamedArgs{
 		"id":              s.ID,
-		"tenant_id":       scope.GetTenantID(),
 		"organization_id": s.OrganizationID,
 		"used_at":         s.UsedAt,
 		"expires_at":      s.ExpiresAt,
@@ -59,6 +51,11 @@ VALUES (@id, @tenant_id, @organization_id, @used_at, @expires_at)
 
 	_, err := conn.Exec(ctx, query, args)
 	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" && pgErr.ConstraintName == "auth_saml_assertions_pkey" {
+			return ErrResourceAlreadyExists
+		}
+
 		return fmt.Errorf("cannot insert saml_assertion: %w", err)
 	}
 

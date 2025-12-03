@@ -25,6 +25,7 @@ type (
 		Password                            passwordConfig `json:"password"`
 		DisableSignup                       bool           `json:"disable-signup"`
 		InvitationConfirmationTokenValidity int            `json:"invitation-confirmation-token-validity"`
+		PasswordResetTokenValidity          int            `json:"password-reset-token-validity"`
 		SAML                                samlConfig     `json:"saml"`
 	}
 

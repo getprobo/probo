@@ -66,7 +66,7 @@ const fetchRelay: FetchFunction = async (
   request,
   variables,
   _,
-  uploadables,
+  uploadables
 ) => {
   const requestInit: RequestInit = {
     method: "POST",
@@ -82,7 +82,7 @@ const fetchRelay: FetchFunction = async (
         operationName: request.name,
         query: request.text,
         variables: variables,
-      }),
+      })
     );
 
     const uploadableMap: {
@@ -124,7 +124,7 @@ const fetchRelay: FetchFunction = async (
   // For custom domains at /overview, this resolves to /api/trust/v1/graphql
   const response = await fetch(
     buildEndpoint("./api/trust/v1/graphql"),
-    requestInit,
+    requestInit
   );
 
   if (response.status === 500) {
@@ -161,7 +161,7 @@ const store = new Store(source, {
   gcReleaseBufferSize: 20,
 });
 
-export const relayEnvironment = new Environment({
+export const consoleEnvironment = new Environment({
   network: Network.create(fetchRelay),
   store,
 });
@@ -171,7 +171,7 @@ export const relayEnvironment = new Environment({
  */
 export function RelayProvider({ children }: PropsWithChildren) {
   return (
-    <RelayEnvironmentProvider environment={relayEnvironment}>
+    <RelayEnvironmentProvider environment={consoleEnvironment}>
       {children}
     </RelayEnvironmentProvider>
   );

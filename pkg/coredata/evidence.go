@@ -45,23 +45,7 @@ type (
 	}
 
 	Evidences []*Evidence
-
-	ErrEvidenceNotFound struct {
-		Identifier string
-	}
-
-	ErrEvidenceAlreadyExists struct {
-		message string
-	}
 )
-
-func (e ErrEvidenceNotFound) Error() string {
-	return fmt.Sprintf("evidence not found: %q", e.Identifier)
-}
-
-func (e ErrEvidenceAlreadyExists) Error() string {
-	return e.message
-}
 
 func (e Evidence) CursorKey(orderBy EvidenceOrderField) page.CursorKey {
 	switch orderBy {
@@ -192,9 +176,7 @@ VALUES (
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
 			if pgErr.Code == "23505" && pgErr.ConstraintName == "evidences_reference_id_key" {
-				return &ErrEvidenceAlreadyExists{
-					message: fmt.Sprintf("evidence with task_id %s and reference_id %q already exists", e.TaskID, e.ReferenceID),
-				}
+				return ErrResourceAlreadyExists
 			}
 		}
 		return fmt.Errorf("cannot insert evidence: %w", err)

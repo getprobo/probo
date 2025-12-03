@@ -50,7 +50,6 @@ import { graphql } from "relay-runtime";
 import type { MainLayoutQuery as MainLayoutQueryType } from "./__generated__/MainLayoutQuery.graphql";
 import { PageError } from "/components/PageError";
 import { PermissionsProvider } from "/providers/PermissionsProvider";
-import { buildEndpoint } from "/providers/RelayProviders";
 import { PermissionsContext } from "/providers/PermissionsContext";
 
 const MainLayoutQuery = graphql`
@@ -283,7 +282,7 @@ function UserDropdown({ organizationId }: { organizationId: string }) {
   ) => {
     e.preventDefault();
 
-    fetch(buildEndpoint("/connect/logout"), {
+    fetch("/connect/logout", {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
@@ -370,7 +369,6 @@ interface Invitation {
 interface InvitationsResponse {
   invitations: Invitation[];
 }
-
 
 function OrganizationSelector({
   currentOrganization,

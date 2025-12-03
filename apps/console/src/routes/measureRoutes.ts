@@ -1,6 +1,6 @@
 import { Fragment } from "react";
 import { loadQuery } from "react-relay";
-import { relayEnvironment } from "/providers/RelayProviders";
+import { consoleEnvironment } from "/environments";
 import { measureNodeQuery, measuresQuery } from "/hooks/graph/MeasureGraph";
 import { PageSkeleton } from "/components/skeletons/PageSkeleton";
 import { redirect } from "react-router";
@@ -15,7 +15,7 @@ export const measureRoutes = [
     path: "measures",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ organizationId }) =>
-      loadQuery<MeasureGraphListQuery>(relayEnvironment, measuresQuery, { organizationId: organizationId! }),
+      loadQuery<MeasureGraphListQuery>(consoleEnvironment, measuresQuery, { organizationId: organizationId! }),
     ),
     Component: withQueryRef(lazy(() => import("/pages/organizations/measures/MeasuresPage"))),
     children: [
@@ -29,7 +29,7 @@ export const measureRoutes = [
     path: "measures/:measureId",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ measureId }) =>
-      loadQuery<MeasureGraphNodeQuery>(relayEnvironment, measureNodeQuery, { measureId: measureId! }),
+      loadQuery<MeasureGraphNodeQuery>(consoleEnvironment, measureNodeQuery, { measureId: measureId! }),
     ),
     Component: withQueryRef(lazy(() => import("/pages/organizations/measures/MeasureDetailPage"))),
     children: [

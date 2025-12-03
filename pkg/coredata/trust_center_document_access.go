@@ -42,23 +42,7 @@ type (
 	}
 
 	TrustCenterDocumentAccesses []*TrustCenterDocumentAccess
-
-	ErrTrustCenterDocumentAccessNotFound struct {
-		Identifier string
-	}
-
-	ErrTrustCenterDocumentAccessAlreadyExists struct {
-		message string
-	}
 )
-
-func (e ErrTrustCenterDocumentAccessNotFound) Error() string {
-	return fmt.Sprintf("trust center document access not found: %s", e.Identifier)
-}
-
-func (e ErrTrustCenterDocumentAccessAlreadyExists) Error() string {
-	return e.message
-}
 
 func (tcda *TrustCenterDocumentAccess) CursorKey(orderBy TrustCenterDocumentAccessOrderField) page.CursorKey {
 	switch orderBy {
@@ -107,7 +91,7 @@ LIMIT 1;
 	access, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[TrustCenterDocumentAccess])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrTrustCenterDocumentAccessNotFound{Identifier: accessID.String()}
+			return ErrResourceNotFound
 		}
 		return fmt.Errorf("cannot collect trust center document access: %w", err)
 	}
@@ -267,18 +251,10 @@ INSERT INTO trust_center_document_accesses (
 		if errors.As(err, &pgErr) {
 			if pgErr.Code == "23505" {
 				switch pgErr.ConstraintName {
-				case "trust_center_document_accesse_trust_center_access_id_docume_key":
-					return &ErrTrustCenterDocumentAccessAlreadyExists{
-						message: fmt.Sprintf("trust center document access with trust_center_access_id %s and document_id %s already exists", tcda.TrustCenterAccessID, tcda.DocumentID),
-					}
-				case "trust_center_document_accesse_trust_center_access_id_report_key":
-					return &ErrTrustCenterDocumentAccessAlreadyExists{
-						message: fmt.Sprintf("trust center document access with trust_center_access_id %s and report_id %s already exists", tcda.TrustCenterAccessID, tcda.ReportID),
-					}
-				case "trust_center_document_accesses_trust_center_file_id_key":
-					return &ErrTrustCenterDocumentAccessAlreadyExists{
-						message: fmt.Sprintf("trust center document access with trust_center_access_id %s and trust_center_file_id %s already exists", tcda.TrustCenterAccessID, tcda.TrustCenterFileID),
-					}
+				case "trust_center_document_accesse_trust_center_access_id_docume_key",
+					"trust_center_document_accesse_trust_center_access_id_report_key",
+					"trust_center_document_accesses_trust_center_file_id_key":
+					return ErrResourceAlreadyExists
 				}
 			}
 		}

@@ -1,6 +1,6 @@
 import { loadQuery } from "react-relay";
 import { PageSkeleton } from "/components/skeletons/PageSkeleton";
-import { relayEnvironment } from "/providers/RelayProviders";
+import { consoleEnvironment } from "/environments";
 import {
   frameworksQuery,
   frameworkNodeQuery,
@@ -19,7 +19,7 @@ export const frameworkRoutes = [
     path: "frameworks",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ organizationId }) =>
-      loadQuery<FrameworkGraphListQuery>(relayEnvironment, frameworksQuery, { organizationId: organizationId! }),
+      loadQuery<FrameworkGraphListQuery>(consoleEnvironment, frameworksQuery, { organizationId: organizationId! }),
     ),
     Component: withQueryRef(lazy(
       () => import("/pages/organizations/frameworks/FrameworksPage")
@@ -29,7 +29,7 @@ export const frameworkRoutes = [
     path: "frameworks/:frameworkId",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ frameworkId }) =>
-      loadQuery<FrameworkGraphNodeQuery>(relayEnvironment, frameworkNodeQuery, { frameworkId: frameworkId! }),
+      loadQuery<FrameworkGraphNodeQuery>(consoleEnvironment, frameworkNodeQuery, { frameworkId: frameworkId! }),
     ),
     Component: withQueryRef(lazy(
       () => import("/pages/organizations/frameworks/FrameworkDetailPage")
@@ -43,7 +43,7 @@ export const frameworkRoutes = [
         path: "controls/:controlId",
         Fallback: ControlSkeleton,
         loader: loaderFromQueryLoader(({ controlId }) =>
-          loadQuery<FrameworkGraphControlNodeQuery>(relayEnvironment, frameworkControlNodeQuery, { controlId: controlId! }),
+          loadQuery<FrameworkGraphControlNodeQuery>(consoleEnvironment, frameworkControlNodeQuery, { controlId: controlId! }),
         ),
         Component: withQueryRef(lazy(
           () => import("/pages/organizations/frameworks/FrameworkControlPage")

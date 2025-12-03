@@ -24,6 +24,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
+      "/environments": fileURLToPath(new URL("./src/environments", import.meta.url)),
       "/type": fileURLToPath(new URL("./src/type.ts", import.meta.url)),
       "/components": fileURLToPath(
         new URL("./src/components", import.meta.url),

@@ -1,5 +1,5 @@
 import { loadQuery } from "react-relay";
-import { relayEnvironment } from "/providers/RelayProviders";
+import { consoleEnvironment } from "/environments";
 import { PageSkeleton } from "/components/skeletons/PageSkeleton";
 import { lazy } from "@probo/react-lazy";
 import { obligationsQuery, obligationNodeQuery } from "/hooks/graph/ObligationGraph";
@@ -12,7 +12,7 @@ export const obligationRoutes = [
     path: "obligations",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ organizationId }) =>
-      loadQuery<ObligationGraphListQuery>(relayEnvironment, obligationsQuery, {
+      loadQuery<ObligationGraphListQuery>(consoleEnvironment, obligationsQuery, {
         organizationId,
         snapshotId: null
       }),
@@ -25,7 +25,7 @@ export const obligationRoutes = [
     path: "snapshots/:snapshotId/obligations",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ organizationId, snapshotId }) =>
-      loadQuery<ObligationGraphListQuery>(relayEnvironment, obligationsQuery, {
+      loadQuery<ObligationGraphListQuery>(consoleEnvironment, obligationsQuery, {
         organizationId,
         snapshotId,
       }),
@@ -38,7 +38,7 @@ export const obligationRoutes = [
     path: "obligations/:obligationId",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ obligationId }) =>
-      loadQuery<ObligationGraphNodeQuery>(relayEnvironment, obligationNodeQuery, {
+      loadQuery<ObligationGraphNodeQuery>(consoleEnvironment, obligationNodeQuery, {
         obligationId,
       }),
     ),
@@ -50,7 +50,7 @@ export const obligationRoutes = [
     path: "snapshots/:snapshotId/obligations/:obligationId",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ obligationId }) =>
-      loadQuery<ObligationGraphNodeQuery>(relayEnvironment, obligationNodeQuery, {
+      loadQuery<ObligationGraphNodeQuery>(consoleEnvironment, obligationNodeQuery, {
         obligationId,
       }),
     ),

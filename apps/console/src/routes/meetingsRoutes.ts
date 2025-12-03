@@ -1,6 +1,6 @@
 import { Fragment } from "react";
 import { loadQuery } from "react-relay";
-import { relayEnvironment } from "/providers/RelayProviders";
+import { consoleEnvironment } from "/environments";
 import { meetingsQuery } from "/hooks/graph/MeetingGraph";
 import { meetingNodeQuery } from "/hooks/graph/MeetingGraph";
 import { PageSkeleton } from "/components/skeletons/PageSkeleton";
@@ -40,7 +40,7 @@ export const meetingsRoutes = [
     path: "meetings",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ organizationId }) =>
-      loadQuery<MeetingGraphListQuery>(relayEnvironment, meetingsQuery, { organizationId }),
+      loadQuery<MeetingGraphListQuery>(consoleEnvironment, meetingsQuery, { organizationId }),
     ),
     Component: withQueryRef(lazy(
       () => import("/pages/organizations/meetings/MeetingsPage"),
@@ -50,7 +50,7 @@ export const meetingsRoutes = [
     path: "meetings/:meetingId",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ meetingId }) =>
-      loadQuery<MeetingGraphNodeQuery>(relayEnvironment, meetingNodeQuery, { meetingId }),
+      loadQuery<MeetingGraphNodeQuery>(consoleEnvironment, meetingNodeQuery, { meetingId }),
     ),
     Component: withQueryRef(lazy(
       () => import("../pages/organizations/meetings/MeetingDetailPage"),

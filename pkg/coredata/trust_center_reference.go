@@ -43,23 +43,7 @@ type (
 	}
 
 	TrustCenterReferences []*TrustCenterReference
-
-	ErrTrustCenterReferenceNotFound struct {
-		Identifier string
-	}
-
-	ErrTrustCenterReferenceAlreadyExists struct {
-		message string
-	}
 )
-
-func (e ErrTrustCenterReferenceNotFound) Error() string {
-	return fmt.Sprintf("trust center reference not found: %q", e.Identifier)
-}
-
-func (e ErrTrustCenterReferenceAlreadyExists) Error() string {
-	return e.message
-}
 
 func (t TrustCenterReference) CursorKey(orderBy TrustCenterReferenceOrderField) page.CursorKey {
 	switch orderBy {
@@ -174,9 +158,7 @@ RETURNING rank;
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
 			if pgErr.Code == "23505" && pgErr.ConstraintName == "trust_center_references_trust_center_id_rank_key" {
-				return &ErrTrustCenterReferenceAlreadyExists{
-					message: fmt.Sprintf("trust center reference with trust_center_id %s and rank already exists", t.TrustCenterID),
-				}
+				return ErrResourceAlreadyExists
 			}
 		}
 		return fmt.Errorf("cannot insert trust center reference: %w", err)
@@ -221,7 +203,7 @@ WHERE
 	}
 
 	if result.RowsAffected() == 0 {
-		return ErrTrustCenterReferenceNotFound{Identifier: t.ID.String()}
+		return ErrResourceNotFound
 	}
 
 	return nil

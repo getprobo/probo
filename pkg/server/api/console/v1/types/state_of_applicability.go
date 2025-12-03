@@ -65,7 +65,13 @@ func NewStateOfApplicabilityEdge(soa *coredata.StateOfApplicability, orderBy cor
 
 func NewStateOfApplicability(soa *coredata.StateOfApplicability) *StateOfApplicability {
 	return &StateOfApplicability{
-		ID:         soa.ID,
+		ID: soa.ID,
+		Organization: &Organization{
+			ID: soa.OrganizationID,
+		},
+		Owner: &People{
+			ID: soa.OwnerID,
+		},
 		Name:       soa.Name,
 		SourceID:   soa.SourceID,
 		SnapshotID: soa.SnapshotID,

@@ -2,7 +2,7 @@ import { useLocation, useRouteError } from "react-router";
 import { IconPageCross } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { useEffect, useRef } from "react";
-import { AuthenticationRequiredError } from "/providers/RelayProviders";
+import { AuthenticationRequiredError } from "@probo/relay";
 
 const classNames = {
   wrapper: "py-10 text-center space-y-2 ",

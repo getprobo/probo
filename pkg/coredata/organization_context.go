@@ -33,15 +33,7 @@ type (
 		CreatedAt      time.Time `db:"created_at"`
 		UpdatedAt      time.Time `db:"updated_at"`
 	}
-
-	ErrOrganizationContextNotFound struct {
-		Identifier string
-	}
 )
-
-func (e ErrOrganizationContextNotFound) Error() string {
-	return fmt.Sprintf("organization context not found: %q", e.Identifier)
-}
 
 func (oc *OrganizationContext) LoadByOrganizationID(
 	ctx context.Context,
@@ -76,7 +68,7 @@ LIMIT 1;
 	orgContext, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[OrganizationContext])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrOrganizationContextNotFound{Identifier: organizationID.String()}
+			return ErrResourceNotFound
 		}
 
 		return fmt.Errorf("cannot collect organization context: %w", err)
@@ -155,7 +147,7 @@ WHERE
 	}
 
 	if result.RowsAffected() == 0 {
-		return &ErrOrganizationContextNotFound{Identifier: oc.OrganizationID.String()}
+		return ErrResourceNotFound
 	}
 
 	return nil

@@ -16,32 +16,7 @@ package types
 
 import (
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/page"
 )
-
-type (
-	OrganizationOrderBy OrderBy[coredata.OrganizationOrderField]
-)
-
-func NewOrganizationConnection(page *page.Page[*coredata.Organization, coredata.OrganizationOrderField]) *OrganizationConnection {
-	var edges = make([]*OrganizationEdge, len(page.Data))
-
-	for i := range edges {
-		edges[i] = NewOrganizationEdge(page.Data[i], page.Cursor.OrderBy.Field)
-	}
-
-	return &OrganizationConnection{
-		Edges:    edges,
-		PageInfo: NewPageInfo(page),
-	}
-}
-
-func NewOrganizationEdge(o *coredata.Organization, orderBy coredata.OrganizationOrderField) *OrganizationEdge {
-	return &OrganizationEdge{
-		Cursor: o.CursorKey(orderBy),
-		Node:   NewOrganization(o),
-	}
-}
 
 func NewOrganization(o *coredata.Organization) *Organization {
 	return &Organization{

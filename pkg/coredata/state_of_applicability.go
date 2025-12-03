@@ -41,23 +41,7 @@ type (
 	}
 
 	StatesOfApplicability []*StateOfApplicability
-
-	ErrStateOfApplicabilityNotFound struct {
-		Identifier string
-	}
-
-	ErrStateOfApplicabilityAlreadyExists struct {
-		message string
-	}
 )
-
-func (e ErrStateOfApplicabilityNotFound) Error() string {
-	return fmt.Sprintf("state of applicability not found: %s", e.Identifier)
-}
-
-func (e ErrStateOfApplicabilityAlreadyExists) Error() string {
-	return e.message
-}
 
 func (s StateOfApplicability) CursorKey(orderBy StateOfApplicabilityOrderField) page.CursorKey {
 	switch orderBy {
@@ -107,7 +91,7 @@ LIMIT 1;
 	stateOfApplicability, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[StateOfApplicability])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrStateOfApplicabilityNotFound{Identifier: stateOfApplicabilityID.String()}
+			return ErrResourceNotFound
 		}
 
 		return fmt.Errorf("cannot collect state_of_applicability: %w", err)
@@ -246,9 +230,7 @@ VALUES (
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
 			if pgErr.Code == "23505" {
-				return &ErrStateOfApplicabilityAlreadyExists{
-					message: fmt.Sprintf("state of applicability with name %q already exists", s.Name),
-				}
+				return ErrResourceAlreadyExists
 			}
 		}
 		return fmt.Errorf("cannot insert state_of_applicability: %w", err)
@@ -287,16 +269,14 @@ WHERE %s
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
 			if pgErr.Code == "23505" {
-				return &ErrStateOfApplicabilityAlreadyExists{
-					message: fmt.Sprintf("state of applicability with name %q already exists", s.Name),
-				}
+				return ErrResourceAlreadyExists
 			}
 		}
 		return fmt.Errorf("cannot update state_of_applicability: %w", err)
 	}
 
 	if result.RowsAffected() == 0 {
-		return &ErrStateOfApplicabilityNotFound{Identifier: s.ID.String()}
+		return ErrResourceNotFound
 	}
 
 	return nil
@@ -325,7 +305,7 @@ WHERE %s
 	}
 
 	if result.RowsAffected() == 0 {
-		return &ErrStateOfApplicabilityNotFound{Identifier: s.ID.String()}
+		return ErrResourceNotFound
 	}
 
 	return nil

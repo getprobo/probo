@@ -4,7 +4,6 @@ import { useTranslate } from "@probo/i18n";
 import { z } from "zod";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { usePageTitle } from "@probo/hooks";
-import { buildEndpoint } from "/providers/RelayProviders";
 
 const schema = z
   .object({
@@ -20,15 +19,12 @@ export default function ResetPasswordPage() {
   const { __ } = useTranslate();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { register, handleSubmit, formState } = useFormWithSchema(
-    schema,
-    {
-      defaultValues: {
-        password: "",
-        confirmPassword: "",
-      },
-    }
-  );
+  const { register, handleSubmit, formState } = useFormWithSchema(schema, {
+    defaultValues: {
+      password: "",
+      confirmPassword: "",
+    },
+  });
 
   const onSubmit = handleSubmit(async (data) => {
     const searchParams = new URLSearchParams(location.search);
@@ -43,20 +39,17 @@ export default function ResetPasswordPage() {
       return;
     }
 
-    const response = await fetch(
-      buildEndpoint("/connect/reset-password"),
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({
-          token: token,
-          password: data.password,
-        }),
-      }
-    );
+    const response = await fetch("/connect/reset-password", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify({
+        token: token,
+        password: data.password,
+      }),
+    });
 
     // Reset failed
     if (!response.ok) {

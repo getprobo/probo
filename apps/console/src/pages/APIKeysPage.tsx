@@ -31,7 +31,7 @@ import { formatDate } from "@probo/helpers";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { Controller } from "react-hook-form";
 import { z } from "zod";
-import { UnAuthenticatedError } from "/providers/RelayProviders";
+import { UnAuthenticatedError } from "@probo/relay";
 
 interface APIKey {
   id: string;
@@ -56,10 +56,14 @@ interface Organization {
 const createSchema = z.object({
   name: z.string().min(1, "Name is required"),
   expiresIn: z.enum(["1month", "3months", "6months", "1year"]),
-  organizations: z.array(z.object({
-    organizationId: z.string(),
-    role: z.string(),
-  })).min(1, "At least one organization is required"),
+  organizations: z
+    .array(
+      z.object({
+        organizationId: z.string(),
+        role: z.string(),
+      })
+    )
+    .min(1, "At least one organization is required"),
 });
 
 type CreateFormData = z.infer<typeof createSchema>;
@@ -79,19 +83,24 @@ export default function APIKeysPage() {
   const [isCreating, setIsCreating] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [selectedOrganizations, setSelectedOrganizations] = useState<string[]>([]);
-  const [organizationRoles, setOrganizationRoles] = useState<Record<string, string>>({});
+  const [selectedOrganizations, setSelectedOrganizations] = useState<string[]>(
+    []
+  );
+  const [organizationRoles, setOrganizationRoles] = useState<
+    Record<string, string>
+  >({});
   const [editingAPIKey, setEditingAPIKey] = useState<APIKey | null>(null);
   const [editingName, setEditingName] = useState<string>("");
   const [error, setError] = useState<Error | null>(null);
 
-  const { formState, handleSubmit, reset, control, setValue, register } = useFormWithSchema(createSchema, {
-    defaultValues: {
-      name: new Date().toISOString().split('T')[0],
-      expiresIn: "1month",
-      organizations: [],
-    },
-  });
+  const { formState, handleSubmit, reset, control, setValue, register } =
+    useFormWithSchema(createSchema, {
+      defaultValues: {
+        name: new Date().toISOString().split("T")[0],
+        expiresIn: "1month",
+        organizations: [],
+      },
+    });
 
   if (error) {
     throw error;
@@ -99,14 +108,16 @@ export default function APIKeysPage() {
 
   const fetchAPIKeys = async () => {
     try {
-      const response = await fetch('/connect/api-keys', { credentials: 'include' });
+      const response = await fetch("/connect/api-keys", {
+        credentials: "include",
+      });
       if (!response.ok) {
-        throw new Error('Failed to fetch API keys');
+        throw new Error("Failed to fetch API keys");
       }
       const data: { apiKeys: APIKey[] } = await response.json();
       setApiKeys(data.apiKeys);
     } catch (err) {
-      console.error('Failed to fetch API keys:', err);
+      console.error("Failed to fetch API keys:", err);
       toast({
         title: __("Error"),
         description: __("Failed to load API keys"),
@@ -119,32 +130,40 @@ export default function APIKeysPage() {
     const fetchData = async () => {
       try {
         const [apiKeysResponse, organizationsResponse] = await Promise.all([
-          fetch('/connect/api-keys', { credentials: 'include' }),
-          fetch('/connect/organizations?role=OWNER', { credentials: 'include' }),
+          fetch("/connect/api-keys", { credentials: "include" }),
+          fetch("/connect/organizations?role=OWNER", {
+            credentials: "include",
+          }),
         ]);
 
-        if (apiKeysResponse.status === 401 || organizationsResponse.status === 401) {
+        if (
+          apiKeysResponse.status === 401 ||
+          organizationsResponse.status === 401
+        ) {
           setError(new UnAuthenticatedError());
           return;
         }
 
         if (!apiKeysResponse.ok) {
-          throw new Error('Failed to fetch API keys');
+          throw new Error("Failed to fetch API keys");
         }
 
         if (!organizationsResponse.ok) {
-          throw new Error('Failed to fetch organizations');
+          throw new Error("Failed to fetch organizations");
         }
 
         const apiKeysData: { apiKeys: APIKey[] } = await apiKeysResponse.json();
-        const orgsData: { organizations: Organization[] } = await organizationsResponse.json();
+        const orgsData: { organizations: Organization[] } =
+          await organizationsResponse.json();
 
-        const authenticatedOrgs = orgsData.organizations.filter(org => org.authStatus === "authenticated");
+        const authenticatedOrgs = orgsData.organizations.filter(
+          (org) => org.authStatus === "authenticated"
+        );
 
         setApiKeys(apiKeysData.apiKeys);
         setOrganizations(authenticatedOrgs);
       } catch (err) {
-        console.error('Failed to fetch data:', err);
+        console.error("Failed to fetch data:", err);
         toast({
           title: __("Error"),
           description: __("Failed to load data"),
@@ -179,12 +198,12 @@ export default function APIKeysPage() {
 
     setIsCreating(true);
     try {
-      const response = await fetch('/connect/api-keys', {
-        method: 'POST',
+      const response = await fetch("/connect/api-keys", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        credentials: 'include',
+        credentials: "include",
         body: JSON.stringify({
           name: formData.name,
           expiresAt: expiresAt.toISOString(),
@@ -193,7 +212,7 @@ export default function APIKeysPage() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create API key');
+        throw new Error("Failed to create API key");
       }
 
       const data: { apiKey: APIKey; key: string } = await response.json();
@@ -224,9 +243,9 @@ export default function APIKeysPage() {
   const handleEdit = (apiKey: APIKey) => {
     setEditingAPIKey(apiKey);
     setEditingName(apiKey.name);
-    const orgIds = apiKey.organizations.map(org => org.organizationId);
+    const orgIds = apiKey.organizations.map((org) => org.organizationId);
     const roles: Record<string, string> = {};
-    apiKey.organizations.forEach(org => {
+    apiKey.organizations.forEach((org) => {
       roles[org.organizationId] = org.role;
     });
     setSelectedOrganizations(orgIds);
@@ -239,16 +258,16 @@ export default function APIKeysPage() {
 
     setIsUpdating(true);
     try {
-      const response = await fetch('/connect/api-keys', {
-        method: 'PUT',
+      const response = await fetch("/connect/api-keys", {
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        credentials: 'include',
+        credentials: "include",
         body: JSON.stringify({
           id: editingAPIKey.id,
           name: editingName,
-          organizations: selectedOrganizations.map(id => ({
+          organizations: selectedOrganizations.map((id) => ({
             organizationId: id,
             role: organizationRoles[id] || "FULL",
           })),
@@ -256,7 +275,7 @@ export default function APIKeysPage() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to update API key');
+        throw new Error("Failed to update API key");
       }
 
       await fetchAPIKeys();
@@ -286,20 +305,20 @@ export default function APIKeysPage() {
       async () => {
         setIsDeleting(true);
         try {
-          const response = await fetch('/connect/api-keys', {
-            method: 'DELETE',
+          const response = await fetch("/connect/api-keys", {
+            method: "DELETE",
             headers: {
-              'Content-Type': 'application/json',
+              "Content-Type": "application/json",
             },
-            credentials: 'include',
+            credentials: "include",
             body: JSON.stringify({ id }),
           });
 
           if (!response.ok) {
-            throw new Error('Failed to delete API key');
+            throw new Error("Failed to delete API key");
           }
 
-          setApiKeys(apiKeys.filter(key => key.id !== id));
+          setApiKeys(apiKeys.filter((key) => key.id !== id));
           toast({
             title: __("Success"),
             description: __("API Key deleted successfully"),
@@ -317,7 +336,9 @@ export default function APIKeysPage() {
         }
       },
       {
-        message: __(`Are you sure you want to delete the API key "${name}"? This action cannot be undone.`),
+        message: __(
+          `Are you sure you want to delete the API key "${name}"? This action cannot be undone.`
+        ),
       }
     );
   };
@@ -326,11 +347,11 @@ export default function APIKeysPage() {
     setIsLoadingKey(true);
     try {
       const response = await fetch(`/connect/api-keys/${id}`, {
-        credentials: 'include',
+        credentials: "include",
       });
 
       if (!response.ok) {
-        throw new Error('Failed to load API key');
+        throw new Error("Failed to load API key");
       }
 
       const data: { key: string } = await response.json();
@@ -400,7 +421,7 @@ export default function APIKeysPage() {
 
             return (
               <Card key={apiKey.id} padded className="w-full">
-                  <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 space-y-2">
                     <div className="flex items-center gap-2">
                       <h3 className="text-lg font-semibold">{apiKey.name}</h3>
@@ -464,7 +485,9 @@ export default function APIKeysPage() {
             {__("Create an API key")}
           </h2>
           <p className="text-txt-tertiary mb-4">
-            {__("Generate a new API key for programmatic access to your organization")}
+            {__(
+              "Generate a new API key for programmatic access to your organization"
+            )}
           </p>
           <Button
             onClick={() => dialogRef.current?.open()}
@@ -516,31 +539,34 @@ export default function APIKeysPage() {
                     type="button"
                     variant="tertiary"
                     onClick={() => {
-                      const allSelected = selectedOrganizations.length === organizations.length;
+                      const allSelected =
+                        selectedOrganizations.length === organizations.length;
                       if (allSelected) {
                         setSelectedOrganizations([]);
                         setOrganizationRoles({});
                         setValue("organizations", []);
                       } else {
-                        const allOrgIds = organizations.map(org => org.id);
+                        const allOrgIds = organizations.map((org) => org.id);
                         const newRoles: Record<string, string> = {};
-                        allOrgIds.forEach(id => {
+                        allOrgIds.forEach((id) => {
                           newRoles[id] = organizationRoles[id] || "FULL";
                         });
                         setSelectedOrganizations(allOrgIds);
                         setOrganizationRoles(newRoles);
                         setValue(
                           "organizations",
-                          allOrgIds.map(id => ({
+                          allOrgIds.map((id) => ({
                             organizationId: id,
-                            role: newRoles[id]
+                            role: newRoles[id],
                           }))
                         );
                       }
                     }}
                     className="text-xs h-7 min-h-7"
                   >
-                    {selectedOrganizations.length === organizations.length ? __("Clear All") : __("Select All")}
+                    {selectedOrganizations.length === organizations.length
+                      ? __("Clear All")
+                      : __("Select All")}
                   </Button>
                 )}
               </div>
@@ -556,9 +582,7 @@ export default function APIKeysPage() {
                         <Th>{__("Name")}</Th>
                         <Th width={180}>{__("Role")}</Th>
                         <Th width={100}>
-                          <div className="flex justify-end">
-                            {__("Access")}
-                          </div>
+                          <div className="flex justify-end">{__("Access")}</div>
                         </Th>
                       </Tr>
                     </Thead>
@@ -570,30 +594,33 @@ export default function APIKeysPage() {
                               {org.name}
                             </div>
                           </Td>
-                        <Td>
-                          <div className="min-h-[36px] flex items-center">
-                            {selectedOrganizations.includes(org.id) ? (
-                              <Select
-                                value={organizationRoles[org.id] || "FULL"}
-                                onValueChange={(role) => {
-                                  const newRoles = { ...organizationRoles, [org.id]: role };
-                                  setOrganizationRoles(newRoles);
-                                  setValue(
-                                    "organizations",
-                                    selectedOrganizations.map(id => ({
-                                      organizationId: id,
-                                      role: newRoles[id] || "FULL"
-                                    }))
-                                  );
-                                }}
-                              >
-                                <Option value="FULL">{__("Full")}</Option>
-                              </Select>
-                            ) : (
-                              <span className="text-txt-tertiary">—</span>
-                            )}
-                          </div>
-                        </Td>
+                          <Td>
+                            <div className="min-h-[36px] flex items-center">
+                              {selectedOrganizations.includes(org.id) ? (
+                                <Select
+                                  value={organizationRoles[org.id] || "FULL"}
+                                  onValueChange={(role) => {
+                                    const newRoles = {
+                                      ...organizationRoles,
+                                      [org.id]: role,
+                                    };
+                                    setOrganizationRoles(newRoles);
+                                    setValue(
+                                      "organizations",
+                                      selectedOrganizations.map((id) => ({
+                                        organizationId: id,
+                                        role: newRoles[id] || "FULL",
+                                      }))
+                                    );
+                                  }}
+                                >
+                                  <Option value="FULL">{__("Full")}</Option>
+                                </Select>
+                              ) : (
+                                <span className="text-txt-tertiary">—</span>
+                              )}
+                            </div>
+                          </Td>
                           <Td>
                             <div className="flex justify-end">
                               <Checkbox
@@ -602,21 +629,26 @@ export default function APIKeysPage() {
                                   let newSelected: string[];
                                   const newRoles = { ...organizationRoles };
                                   if (checked) {
-                                    newSelected = [...selectedOrganizations, org.id];
+                                    newSelected = [
+                                      ...selectedOrganizations,
+                                      org.id,
+                                    ];
                                     if (!newRoles[org.id]) {
                                       newRoles[org.id] = "FULL";
                                     }
                                   } else {
-                                    newSelected = selectedOrganizations.filter(id => id !== org.id);
+                                    newSelected = selectedOrganizations.filter(
+                                      (id) => id !== org.id
+                                    );
                                     delete newRoles[org.id];
                                   }
                                   setSelectedOrganizations(newSelected);
                                   setOrganizationRoles(newRoles);
                                   setValue(
                                     "organizations",
-                                    newSelected.map(id => ({
+                                    newSelected.map((id) => ({
                                       organizationId: id,
-                                      role: newRoles[id] || "FULL"
+                                      role: newRoles[id] || "FULL",
                                     }))
                                   );
                                 }}
@@ -660,14 +692,15 @@ export default function APIKeysPage() {
                   type="button"
                   variant="tertiary"
                   onClick={() => {
-                    const allSelected = selectedOrganizations.length === organizations.length;
+                    const allSelected =
+                      selectedOrganizations.length === organizations.length;
                     if (allSelected) {
                       setSelectedOrganizations([]);
                       setOrganizationRoles({});
                     } else {
-                      const allOrgIds = organizations.map(org => org.id);
+                      const allOrgIds = organizations.map((org) => org.id);
                       const newRoles: Record<string, string> = {};
-                      allOrgIds.forEach(id => {
+                      allOrgIds.forEach((id) => {
                         newRoles[id] = organizationRoles[id] || "FULL";
                       });
                       setSelectedOrganizations(allOrgIds);
@@ -676,7 +709,9 @@ export default function APIKeysPage() {
                   }}
                   className="text-xs h-7 min-h-7"
                 >
-                  {selectedOrganizations.length === organizations.length ? __("Clear All") : __("Select All")}
+                  {selectedOrganizations.length === organizations.length
+                    ? __("Clear All")
+                    : __("Select All")}
                 </Button>
               )}
             </div>
@@ -692,9 +727,7 @@ export default function APIKeysPage() {
                       <Th>{__("Name")}</Th>
                       <Th width={180}>{__("Role")}</Th>
                       <Th width={100}>
-                        <div className="flex justify-end">
-                          {__("Access")}
-                        </div>
+                        <div className="flex justify-end">{__("Access")}</div>
                       </Th>
                     </Tr>
                   </Thead>
@@ -712,7 +745,10 @@ export default function APIKeysPage() {
                               <Select
                                 value={organizationRoles[org.id] || "FULL"}
                                 onValueChange={(role) => {
-                                  const newRoles = { ...organizationRoles, [org.id]: role };
+                                  const newRoles = {
+                                    ...organizationRoles,
+                                    [org.id]: role,
+                                  };
                                   setOrganizationRoles(newRoles);
                                 }}
                               >
@@ -731,12 +767,17 @@ export default function APIKeysPage() {
                                 let newSelected: string[];
                                 const newRoles = { ...organizationRoles };
                                 if (checked) {
-                                  newSelected = [...selectedOrganizations, org.id];
+                                  newSelected = [
+                                    ...selectedOrganizations,
+                                    org.id,
+                                  ];
                                   if (!newRoles[org.id]) {
                                     newRoles[org.id] = "FULL";
                                   }
                                 } else {
-                                  newSelected = selectedOrganizations.filter(id => id !== org.id);
+                                  newSelected = selectedOrganizations.filter(
+                                    (id) => id !== org.id
+                                  );
                                   delete newRoles[org.id];
                                 }
                                 setSelectedOrganizations(newSelected);
@@ -754,7 +795,13 @@ export default function APIKeysPage() {
           </div>
         </DialogContent>
         <DialogFooter>
-          <Button onClick={handleUpdate} disabled={isUpdating || (selectedOrganizations.length === 0 && !editingName.trim())}>
+          <Button
+            onClick={handleUpdate}
+            disabled={
+              isUpdating ||
+              (selectedOrganizations.length === 0 && !editingName.trim())
+            }
+          >
             {isUpdating ? __("Updating...") : __("Update")}
           </Button>
         </DialogFooter>

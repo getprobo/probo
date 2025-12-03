@@ -79,7 +79,7 @@ LIMIT 1;
 	report, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Report])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrDocumentNotFound{Identifier: reportID.String()}
+			return ErrResourceNotFound
 		}
 
 		return fmt.Errorf("cannot collect report: %w", err)

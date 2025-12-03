@@ -1,5 +1,5 @@
 import { loadQuery } from "react-relay";
-import { relayEnvironment } from "/providers/RelayProviders";
+import { consoleEnvironment } from "/environments";
 import { PageSkeleton } from "/components/skeletons/PageSkeleton";
 import { lazy } from "@probo/react-lazy";
 import { assetsQuery, assetNodeQuery } from "../hooks/graph/AssetGraph";
@@ -12,7 +12,7 @@ export const assetRoutes = [
     path: "assets",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ organizationId }) =>
-      loadQuery<AssetGraphListQuery>(relayEnvironment, assetsQuery, {
+      loadQuery<AssetGraphListQuery>(consoleEnvironment, assetsQuery, {
         organizationId: organizationId,
         snapshotId: null,
       }),
@@ -23,7 +23,7 @@ export const assetRoutes = [
     path: "snapshots/:snapshotId/assets",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ organizationId, snapshotId }) =>
-      loadQuery<AssetGraphListQuery>(relayEnvironment, assetsQuery, {
+      loadQuery<AssetGraphListQuery>(consoleEnvironment, assetsQuery, {
         organizationId: organizationId,
         snapshotId: snapshotId,
       }),
@@ -34,7 +34,7 @@ export const assetRoutes = [
     path: "assets/:assetId",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ assetId }) =>
-      loadQuery<AssetGraphNodeQuery>(relayEnvironment, assetNodeQuery, { assetId }),
+      loadQuery<AssetGraphNodeQuery>(consoleEnvironment, assetNodeQuery, { assetId }),
     ),
     Component: withQueryRef(lazy(
       () => import("/pages/organizations/assets/AssetDetailsPage"),
@@ -44,7 +44,7 @@ export const assetRoutes = [
     path: "snapshots/:snapshotId/assets/:assetId",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ assetId }) =>
-      loadQuery<AssetGraphNodeQuery>(relayEnvironment, assetNodeQuery, { assetId }),
+      loadQuery<AssetGraphNodeQuery>(consoleEnvironment, assetNodeQuery, { assetId }),
     ),
     Component: withQueryRef(lazy(
       () => import("/pages/organizations/assets/AssetDetailsPage"),

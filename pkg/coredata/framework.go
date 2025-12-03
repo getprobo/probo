@@ -42,32 +42,7 @@ type (
 	}
 
 	Frameworks []*Framework
-
-	ErrFrameworkNotFound struct {
-		Identifier string
-	}
-
-	ErrFrameworkAlreadyExists struct {
-		message string
-	}
-
-	ErrFrameworkReferenceIDAlreadyExists struct {
-		ReferenceID    string
-		OrganizationID gid.GID
-	}
 )
-
-func (e ErrFrameworkNotFound) Error() string {
-	return fmt.Sprintf("framework not found: %q", e.Identifier)
-}
-
-func (e ErrFrameworkAlreadyExists) Error() string {
-	return e.message
-}
-
-func (e ErrFrameworkReferenceIDAlreadyExists) Error() string {
-	return fmt.Sprintf("framework with reference ID %q already exists for organization %s", e.ReferenceID, e.OrganizationID)
-}
 
 func (f *Framework) CursorKey(orderBy FrameworkOrderField) page.CursorKey {
 	switch orderBy {
@@ -192,7 +167,7 @@ LIMIT 1;
 	framework, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Framework])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrFrameworkNotFound{Identifier: referenceID}
+			return ErrResourceNotFound
 		}
 
 		return fmt.Errorf("cannot collect framework: %w", err)
@@ -240,7 +215,7 @@ LIMIT 1;
 	framework, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Framework])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrFrameworkNotFound{Identifier: frameworkID.String()}
+			return ErrResourceNotFound
 		}
 
 		return fmt.Errorf("cannot collect framework: %w", err)
@@ -302,10 +277,7 @@ VALUES (
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
 			if pgErr.Code == "23505" && pgErr.ConstraintName == "frameworks_org_ref_unique" {
-				return &ErrFrameworkReferenceIDAlreadyExists{
-					ReferenceID:    f.ReferenceID,
-					OrganizationID: f.OrganizationID,
-				}
+				return ErrResourceAlreadyExists
 			}
 		}
 

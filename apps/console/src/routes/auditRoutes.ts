@@ -1,5 +1,5 @@
 import { loadQuery } from "react-relay";
-import { relayEnvironment } from "/providers/RelayProviders";
+import { consoleEnvironment } from "/environments";
 import { PageSkeleton } from "/components/skeletons/PageSkeleton";
 import { lazy } from "@probo/react-lazy";
 import { auditsQuery, auditNodeQuery } from "../hooks/graph/AuditGraph";
@@ -12,7 +12,7 @@ export const auditRoutes = [
     path: "audits",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ organizationId }) =>
-      loadQuery<AuditGraphListQuery>(relayEnvironment, auditsQuery, { organizationId }),
+      loadQuery<AuditGraphListQuery>(consoleEnvironment, auditsQuery, { organizationId }),
     ),
     Component: withQueryRef(lazy(
       () => import("/pages/organizations/audits/AuditsPage")
@@ -22,7 +22,7 @@ export const auditRoutes = [
     path: "audits/:auditId",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ auditId }) =>
-      loadQuery<AuditGraphNodeQuery>(relayEnvironment, auditNodeQuery, { auditId }),
+      loadQuery<AuditGraphNodeQuery>(consoleEnvironment, auditNodeQuery, { auditId }),
     ),
     Component: withQueryRef(lazy(
       () => import("/pages/organizations/audits/AuditDetailsPage")

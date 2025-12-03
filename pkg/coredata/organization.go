@@ -44,23 +44,7 @@ type (
 	}
 
 	Organizations []*Organization
-
-	ErrOrganizationNotFound struct {
-		Identifier string
-	}
-
-	ErrOrganizationAlreadyExists struct {
-		message string
-	}
 )
-
-func (e ErrOrganizationNotFound) Error() string {
-	return fmt.Sprintf("organization not found: %q", e.Identifier)
-}
-
-func (e ErrOrganizationAlreadyExists) Error() string {
-	return e.message
-}
 
 func (o Organization) CursorKey(orderBy OrganizationOrderField) page.CursorKey {
 	switch orderBy {
@@ -116,7 +100,7 @@ LIMIT 1;
 	organization, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Organization])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrOrganizationNotFound{Identifier: organizationID.String()}
+			return ErrResourceNotFound
 		}
 
 		return fmt.Errorf("cannot collect organization: %w", err)
@@ -442,19 +426,14 @@ WHERE
 func (o *Organization) Delete(
 	ctx context.Context,
 	conn pg.Conn,
-	scope Scoper,
+	organizationID gid.GID,
 ) error {
 	q := `
 DELETE FROM organizations
-WHERE
-    %s
-    AND id = @id
+WHERE id = @id
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
 	args := pgx.StrictNamedArgs{"id": o.ID}
-	maps.Copy(args, scope.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
@@ -505,7 +484,7 @@ LIMIT 1
 	organization, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Organization])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrOrganizationNotFound{Identifier: customDomainID.String()}
+			return ErrResourceNotFound
 		}
 
 		return fmt.Errorf("cannot collect organization: %w", err)

@@ -1,6 +1,6 @@
 import { lazy } from "@probo/react-lazy";
 import { loadQuery } from "react-relay";
-import { relayEnvironment } from "/providers/RelayProviders";
+import { consoleEnvironment } from "/environments";
 import { PageSkeleton } from "/components/skeletons/PageSkeleton";
 import { vendorNodeQuery, vendorsQuery } from "/hooks/graph/VendorGraph";
 import { LinkCardSkeleton } from "/components/skeletons/LinkCardSkeleton";
@@ -13,7 +13,7 @@ export const vendorRoutes = [
     path: "vendors",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ organizationId }) =>
-      loadQuery<VendorGraphListQuery>(relayEnvironment, vendorsQuery, {
+      loadQuery<VendorGraphListQuery>(consoleEnvironment, vendorsQuery, {
         organizationId: organizationId!,
         snapshotId: null
       }),
@@ -24,7 +24,7 @@ export const vendorRoutes = [
     path: "snapshots/:snapshotId/vendors",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ organizationId, snapshotId }) =>
-      loadQuery<VendorGraphListQuery>(relayEnvironment, vendorsQuery, {
+      loadQuery<VendorGraphListQuery>(consoleEnvironment, vendorsQuery, {
         organizationId: organizationId!,
         snapshotId
       }),
@@ -35,7 +35,7 @@ export const vendorRoutes = [
     path: "vendors/:vendorId",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ vendorId }) =>
-      loadQuery<VendorGraphNodeQuery>(relayEnvironment, vendorNodeQuery, {
+      loadQuery<VendorGraphNodeQuery>(consoleEnvironment, vendorNodeQuery, {
         vendorId: vendorId!,
       }),
     ),
@@ -100,7 +100,7 @@ export const vendorRoutes = [
     path: "snapshots/:snapshotId/vendors/:vendorId",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ vendorId }) =>
-      loadQuery<VendorGraphNodeQuery>(relayEnvironment, vendorNodeQuery, {
+      loadQuery<VendorGraphNodeQuery>(consoleEnvironment, vendorNodeQuery, {
         vendorId: vendorId!,
       }),
     ),

@@ -24,21 +24,17 @@ import (
 	"go.gearno.de/kit/httpserver"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/probo"
-	console_v1 "go.probo.inc/probo/pkg/server/api/console/v1"
-	"go.probo.inc/probo/pkg/server/session"
 	"go.probo.inc/probo/pkg/statelesstoken"
 	"go.probo.inc/probo/pkg/trust"
 )
 
+type ctxKey struct {
+	name string
+}
+
 var (
-	CustomDomainTenantIDKey       = &ctxKey{name: "custom_domain_tenant_id"}
 	CustomDomainOrganizationIDKey = &ctxKey{name: "custom_domain_organization_id"}
 )
-
-func GetCustomDomainTenantID(ctx context.Context) (gid.TenantID, bool) {
-	tenantID, ok := ctx.Value(CustomDomainTenantIDKey).(gid.TenantID)
-	return tenantID, ok
-}
 
 func GetCustomDomainOrganizationID(ctx context.Context) (gid.GID, bool) {
 	organizationID, ok := ctx.Value(CustomDomainOrganizationIDKey).(gid.GID)
@@ -140,38 +136,4 @@ func validateTrustCenterAccessToken(ctx context.Context, trustSvc *trust.Service
 	}
 
 	return &token.Data, nil
-}
-
-func trustCenterLogoutHandler(authCfg console_v1.AuthConfig, trustAuthCfg TrustAuthConfig) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		// Determine cookie domain: use custom domain if present, otherwise use configured domain
-		cookieDomain := trustAuthCfg.CookieDomain
-		if _, ok := GetCustomDomainOrganizationID(r.Context()); ok {
-			// On custom domain, use the request host
-			if r.TLS != nil && r.TLS.ServerName != "" {
-				cookieDomain = r.TLS.ServerName
-			}
-		}
-
-		http.SetCookie(w, &http.Cookie{
-			Name:     trustAuthCfg.CookieName,
-			Value:    "",
-			Domain:   cookieDomain,
-			Path:     "/",
-			MaxAge:   -1,
-			Secure:   trustAuthCfg.CookieSecure,
-			HttpOnly: true,
-			SameSite: http.SameSiteStrictMode,
-		})
-
-		session.ClearCookie(w, session.AuthConfig{
-			CookieName:   authCfg.CookieName,
-			CookieSecret: authCfg.CookieSecret,
-			CookieSecure: authCfg.CookieSecure,
-		})
-
-		httpserver.RenderJSON(w, http.StatusOK, map[string]string{
-			"message": "Logged out successfully",
-		})
-	}
 }

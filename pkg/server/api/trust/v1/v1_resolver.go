@@ -7,18 +7,15 @@ package trust_v1
 
 import (
 	"context"
-	"encoding/base64"
 	"fmt"
 	"time"
 
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/server/api/trust/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/trust/v1/types"
-	"go.probo.inc/probo/pkg/trust"
 )
 
 // Framework is the resolver for the framework field.
@@ -61,63 +58,65 @@ func (r *auditResolver) Report(ctx context.Context, obj *types.Audit) (*types.Re
 
 // IsUserAuthorized is the resolver for the isUserAuthorized field.
 func (r *documentResolver) IsUserAuthorized(ctx context.Context, obj *types.Document) (bool, error) {
-	publicTrustService := r.PublicTrustService(ctx, obj.ID.TenantID())
+	// publicTrustService := r.PublicTrustService(ctx, obj.ID.TenantID())
 
-	document, err := publicTrustService.Documents.Get(ctx, obj.ID)
-	if err != nil {
-		panic(fmt.Errorf("cannot load document: %w", err))
-	}
+	// document, err := publicTrustService.Documents.Get(ctx, obj.ID)
+	// if err != nil {
+	// 	panic(fmt.Errorf("cannot load document: %w", err))
+	// }
 
-	if document.TrustCenterVisibility == coredata.TrustCenterVisibilityPublic {
-		return true, nil
-	}
+	// if document.TrustCenterVisibility == coredata.TrustCenterVisibilityPublic {
+	// 	return true, nil
+	// }
 
-	privateTrustService, err := r.PrivateTrustService(ctx, obj.ID.TenantID())
-	if err != nil {
-		return false, nil
-	}
+	// privateTrustService, err := r.PrivateTrustService(ctx, obj.ID.TenantID())
+	// if err != nil {
+	// 	return false, nil
+	// }
 
-	userData := r.UserFromContext(ctx)
-	if userData != nil {
-		return true, nil
-	}
+	// userData := connect_v1.UserFromContext(ctx)
+	// if userData != nil {
+	// 	return true, nil
+	// }
 
-	tokenData := TokenAccessFromContext(ctx)
-	if tokenData != nil {
-		documentAccess, err := privateTrustService.TrustCenterAccesses.LoadDocumentAccess(ctx, tokenData.TrustCenterID, tokenData.Email, obj.ID)
-		if err != nil {
-			return false, nil
-		}
+	// tokenData := TokenAccessFromContext(ctx)
+	// if tokenData != nil {
+	// 	documentAccess, err := privateTrustService.TrustCenterAccesses.LoadDocumentAccess(ctx, tokenData.TrustCenterID, tokenData.Email, obj.ID)
+	// 	if err != nil {
+	// 		return false, nil
+	// 	}
 
-		return documentAccess.Status == coredata.TrustCenterDocumentAccessStatusGranted, nil
-	}
+	// 	return documentAccess.Status == coredata.TrustCenterDocumentAccessStatusGranted, nil
+	// }
 
 	panic(fmt.Errorf("no user or token data found"))
 }
 
 // HasUserRequestedAccess is the resolver for the hasUserRequestedAccess field.
 func (r *documentResolver) HasUserRequestedAccess(ctx context.Context, obj *types.Document) (bool, error) {
-	privateTrustService, err := r.PrivateTrustService(ctx, obj.ID.TenantID())
-	if err != nil {
-		return false, nil
-	}
+	// privateTrustService, err := r.PrivateTrustService(ctx, obj.ID.TenantID())
+	// if err != nil {
+	// 	return false, nil
+	// }
 
-	userData := r.UserFromContext(ctx)
-	if userData != nil {
-		return false, nil
-	}
+	// userData := r.UserFromContext(ctx)
+	// if userData != nil {
+	// 	return false, nil
+	// }
 
-	tokenData := TokenAccessFromContext(ctx)
-	if tokenData != nil {
-		// Try to load document access - if it exists (regardless of active status), user has requested it
-		_, err := privateTrustService.TrustCenterAccesses.LoadDocumentAccess(ctx, tokenData.TrustCenterID, tokenData.Email, obj.ID)
-		if err != nil {
-			return false, nil // No access requested or error
-		}
-		return true, nil // Access exists (requested)
-	}
+	// tokenData := TokenAccessFromContext(ctx)
+	// if tokenData != nil {
+	// 	// Try to load document access - if it exists (regardless of active status), user has requested it
+	// 	_, err := privateTrustService.TrustCenterAccesses.LoadDocumentAccess(ctx, tokenData.TrustCenterID, tokenData.Email, obj.ID)
+	// 	if err != nil {
+	// 		return false, nil // No access requested or error
+	// 	}
+	// 	return true, nil // Access exists (requested)
+	// }
 
-	return false, nil
+	// return false, nil
+
+	panic(fmt.Errorf("no user or token data found"))
 }
 
 // LightLogoURL is the resolver for the lightLogoURL field.
@@ -136,449 +135,461 @@ func (r *frameworkResolver) DarkLogoURL(ctx context.Context, obj *types.Framewor
 
 // RequestAllAccesses is the resolver for the requestAllAccesses field.
 func (r *mutationResolver) RequestAllAccesses(ctx context.Context, input types.RequestAllAccessesInput) (*types.RequestAccessesPayload, error) {
-	publicTrustService := r.PublicTrustService(ctx, input.TrustCenterID.TenantID())
+	// publicTrustService := r.PublicTrustService(ctx, input.TrustCenterID.TenantID())
 
-	userData := r.UserFromContext(ctx)
-	if userData != nil {
-		return nil, fmt.Errorf("session users cannot request trust center access")
-	}
+	// userData := r.UserFromContext(ctx)
+	// if userData != nil {
+	// 	return nil, fmt.Errorf("session users cannot request trust center access")
+	// }
 
-	email := input.Email
-	tokenData := TokenAccessFromContext(ctx)
-	if tokenData != nil {
-		if email != nil || input.Name != nil {
-			return nil, fmt.Errorf("email and name are not allowed for authenticated users")
-		}
+	// email := input.Email
+	// tokenData := TokenAccessFromContext(ctx)
+	// if tokenData != nil {
+	// 	if email != nil || input.Name != nil {
+	// 		return nil, fmt.Errorf("email and name are not allowed for authenticated users")
+	// 	}
 
-		email = &tokenData.Email
-	}
-	if email == nil {
-		return nil, fmt.Errorf("email is required for unauthenticated users")
-	}
+	// 	email = &tokenData.Email
+	// }
+	// if email == nil {
+	// 	return nil, fmt.Errorf("email is required for unauthenticated users")
+	// }
 
-	access, err := publicTrustService.TrustCenterAccesses.Request(ctx, &trust.TrustCenterAccessRequest{
-		TrustCenterID: input.TrustCenterID,
-		Email:         *email,
-		Name:          input.Name,
-		DocumentIDs:   nil,
-		ReportIDs:     nil,
-	})
-	if err != nil {
-		panic(fmt.Errorf("cannot create trust center access: %w", err))
-	}
+	// access, err := publicTrustService.TrustCenterAccesses.Request(ctx, &trust.TrustCenterAccessRequest{
+	// 	TrustCenterID: input.TrustCenterID,
+	// 	Email:         *email,
+	// 	Name:          input.Name,
+	// 	DocumentIDs:   nil,
+	// 	ReportIDs:     nil,
+	// })
+	// if err != nil {
+	// 	panic(fmt.Errorf("cannot create trust center access: %w", err))
+	// }
 
-	return &types.RequestAccessesPayload{
-		TrustCenterAccess: &types.TrustCenterAccess{
-			ID:        access.ID,
-			Email:     access.Email,
-			Name:      access.Name,
-			CreatedAt: access.CreatedAt,
-			UpdatedAt: access.UpdatedAt,
-		},
-	}, nil
+	// return &types.RequestAccessesPayload{
+	// 	TrustCenterAccess: &types.TrustCenterAccess{
+	// 		ID:        access.ID,
+	// 		Email:     access.Email,
+	// 		Name:      access.Name,
+	// 		CreatedAt: access.CreatedAt,
+	// 		UpdatedAt: access.UpdatedAt,
+	// 	},
+	// }, nil
+
+	panic(fmt.Errorf("no user or token data found"))
 }
 
 // ExportDocumentPDF is the resolver for the exportDocumentPDF field.
 func (r *mutationResolver) ExportDocumentPDF(ctx context.Context, input types.ExportDocumentPDFInput) (*types.ExportDocumentPDFPayload, error) {
-	publicTrustService := r.PublicTrustService(ctx, input.DocumentID.TenantID())
+	// publicTrustService := r.PublicTrustService(ctx, input.DocumentID.TenantID())
 
-	document, err := publicTrustService.Documents.Get(ctx, input.DocumentID)
-	if err != nil {
-		panic(fmt.Errorf("cannot load document: %w", err))
-	}
+	// document, err := publicTrustService.Documents.Get(ctx, input.DocumentID)
+	// if err != nil {
+	// 	panic(fmt.Errorf("cannot load document: %w", err))
+	// }
 
-	if document.TrustCenterVisibility == coredata.TrustCenterVisibilityPublic {
-		pdf, err := publicTrustService.Documents.ExportPDFWithoutWatermark(ctx, input.DocumentID)
-		if err != nil {
-			panic(fmt.Errorf("cannot export document PDF: %w", err))
-		}
+	// if document.TrustCenterVisibility == coredata.TrustCenterVisibilityPublic {
+	// 	pdf, err := publicTrustService.Documents.ExportPDFWithoutWatermark(ctx, input.DocumentID)
+	// 	if err != nil {
+	// 		panic(fmt.Errorf("cannot export document PDF: %w", err))
+	// 	}
 
-		return &types.ExportDocumentPDFPayload{
-			Data: fmt.Sprintf("data:application/pdf;base64,%s", base64.StdEncoding.EncodeToString(pdf)),
-		}, nil
-	}
+	// 	return &types.ExportDocumentPDFPayload{
+	// 		Data: fmt.Sprintf("data:application/pdf;base64,%s", base64.StdEncoding.EncodeToString(pdf)),
+	// 	}, nil
+	// }
 
-	privateTrustService, err := r.PrivateTrustService(ctx, input.DocumentID.TenantID())
-	if err != nil {
-		panic(fmt.Errorf("cannot export document PDF: %w", err))
-	}
+	// privateTrustService, err := r.PrivateTrustService(ctx, input.DocumentID.TenantID())
+	// if err != nil {
+	// 	panic(fmt.Errorf("cannot export document PDF: %w", err))
+	// }
 
-	tokenData := TokenAccessFromContext(ctx)
-	if tokenData != nil {
-		ndaExists := true
-		hasAcceptedNDA := false
+	// tokenData := TokenAccessFromContext(ctx)
+	// if tokenData != nil {
+	// 	ndaExists := true
+	// 	hasAcceptedNDA := false
 
-		trustCenter, _, err := privateTrustService.TrustCenters.Get(ctx, tokenData.TrustCenterID)
-		if err != nil {
-			panic(fmt.Errorf("cannot get trust center: %w", err))
-		}
-		if trustCenter.NonDisclosureAgreementFileID == nil {
-			ndaExists = false
-		}
+	// 	trustCenter, _, err := privateTrustService.TrustCenters.Get(ctx, tokenData.TrustCenterID)
+	// 	if err != nil {
+	// 		panic(fmt.Errorf("cannot get trust center: %w", err))
+	// 	}
+	// 	if trustCenter.NonDisclosureAgreementFileID == nil {
+	// 		ndaExists = false
+	// 	}
 
-		if ndaExists {
-			tokenData := TokenAccessFromContext(ctx)
-			hasAcceptedNDA, err = privateTrustService.TrustCenterAccesses.HasAcceptedNonDisclosureAgreement(ctx, tokenData.TrustCenterID, tokenData.Email)
-			if err != nil {
-				panic(fmt.Errorf("cannot check if user has accepted NDA: %w", err))
-			}
-		}
+	// 	if ndaExists {
+	// 		tokenData := TokenAccessFromContext(ctx)
+	// 		hasAcceptedNDA, err = privateTrustService.TrustCenterAccesses.HasAcceptedNonDisclosureAgreement(ctx, tokenData.TrustCenterID, tokenData.Email)
+	// 		if err != nil {
+	// 			panic(fmt.Errorf("cannot check if user has accepted NDA: %w", err))
+	// 		}
+	// 	}
 
-		documentAccess, err := privateTrustService.TrustCenterAccesses.LoadDocumentAccess(ctx, tokenData.TrustCenterID, tokenData.Email, input.DocumentID)
-		if err != nil {
-			panic(fmt.Errorf("cannot check document access: %w", err))
-		}
+	// 	documentAccess, err := privateTrustService.TrustCenterAccesses.LoadDocumentAccess(ctx, tokenData.TrustCenterID, tokenData.Email, input.DocumentID)
+	// 	if err != nil {
+	// 		panic(fmt.Errorf("cannot check document access: %w", err))
+	// 	}
 
-		if documentAccess.Status != coredata.TrustCenterDocumentAccessStatusGranted {
-			return nil, fmt.Errorf("access denied: no permission to access this document")
-		}
+	// 	if documentAccess.Status != coredata.TrustCenterDocumentAccessStatusGranted {
+	// 		return nil, fmt.Errorf("access denied: no permission to access this document")
+	// 	}
 
-		if ndaExists && !hasAcceptedNDA {
-			return nil, fmt.Errorf("user has not accepted NDA")
-		}
-	}
+	// 	if ndaExists && !hasAcceptedNDA {
+	// 		return nil, fmt.Errorf("user has not accepted NDA")
+	// 	}
+	// }
 
-	userData := UserFromContext(ctx)
-	var userEmail mail.Addr
-	if userData != nil {
-		userEmail = userData.EmailAddress
-	}
-	if tokenData != nil {
-		userEmail = tokenData.Email
-	}
+	// userData := UserFromContext(ctx)
+	// var userEmail mail.Addr
+	// if userData != nil {
+	// 	userEmail = userData.EmailAddress
+	// }
+	// if tokenData != nil {
+	// 	userEmail = tokenData.Email
+	// }
 
-	pdf, err := privateTrustService.Documents.ExportPDF(ctx, input.DocumentID, userEmail)
-	if err != nil {
-		panic(fmt.Errorf("cannot export document PDF: %w", err))
-	}
+	// pdf, err := privateTrustService.Documents.ExportPDF(ctx, input.DocumentID, userEmail)
+	// if err != nil {
+	// 	panic(fmt.Errorf("cannot export document PDF: %w", err))
+	// }
 
-	return &types.ExportDocumentPDFPayload{
-		Data: fmt.Sprintf("data:application/pdf;base64,%s", base64.StdEncoding.EncodeToString(pdf)),
-	}, nil
+	// return &types.ExportDocumentPDFPayload{
+	// 	Data: fmt.Sprintf("data:application/pdf;base64,%s", base64.StdEncoding.EncodeToString(pdf)),
+	// }, nil
+
+	panic(fmt.Errorf("no user or token data found"))
 }
 
 // ExportReportPDF is the resolver for the exportReportPDF field.
 func (r *mutationResolver) ExportReportPDF(ctx context.Context, input types.ExportReportPDFInput) (*types.ExportReportPDFPayload, error) {
-	publicTrustService := r.PublicTrustService(ctx, input.ReportID.TenantID())
+	// publicTrustService := r.PublicTrustService(ctx, input.ReportID.TenantID())
 
-	audit, err := publicTrustService.Audits.GetByReportID(ctx, input.ReportID)
-	if err != nil {
-		panic(fmt.Errorf("cannot load audit: %w", err))
-	}
+	// audit, err := publicTrustService.Audits.GetByReportID(ctx, input.ReportID)
+	// if err != nil {
+	// 	panic(fmt.Errorf("cannot load audit: %w", err))
+	// }
 
-	if audit.TrustCenterVisibility == coredata.TrustCenterVisibilityPublic {
-		pdf, err := publicTrustService.Reports.ExportPDFWithoutWatermark(ctx, input.ReportID)
-		if err != nil {
-			panic(fmt.Errorf("cannot export report PDF: %w", err))
-		}
+	// if audit.TrustCenterVisibility == coredata.TrustCenterVisibilityPublic {
+	// 	pdf, err := publicTrustService.Reports.ExportPDFWithoutWatermark(ctx, input.ReportID)
+	// 	if err != nil {
+	// 		panic(fmt.Errorf("cannot export report PDF: %w", err))
+	// 	}
 
-		return &types.ExportReportPDFPayload{
-			Data: fmt.Sprintf("data:application/pdf;base64,%s", base64.StdEncoding.EncodeToString(pdf)),
-		}, nil
-	}
+	// 	return &types.ExportReportPDFPayload{
+	// 		Data: fmt.Sprintf("data:application/pdf;base64,%s", base64.StdEncoding.EncodeToString(pdf)),
+	// 	}, nil
+	// }
 
-	privateTrustService, err := r.PrivateTrustService(ctx, input.ReportID.TenantID())
-	if err != nil {
-		return nil, fmt.Errorf("cannot export report PDF: %w", err)
-	}
+	// privateTrustService, err := r.PrivateTrustService(ctx, input.ReportID.TenantID())
+	// if err != nil {
+	// 	return nil, fmt.Errorf("cannot export report PDF: %w", err)
+	// }
 
-	tokenData := TokenAccessFromContext(ctx)
-	if tokenData != nil {
-		ndaExists := true
-		hasAcceptedNDA := false
+	// tokenData := TokenAccessFromContext(ctx)
+	// if tokenData != nil {
+	// 	ndaExists := true
+	// 	hasAcceptedNDA := false
 
-		trustCenter, _, err := privateTrustService.TrustCenters.Get(ctx, tokenData.TrustCenterID)
-		if err != nil {
-			panic(fmt.Errorf("cannot get trust center: %w", err))
-		}
-		if trustCenter.NonDisclosureAgreementFileID == nil {
-			ndaExists = false
-		}
+	// 	trustCenter, _, err := privateTrustService.TrustCenters.Get(ctx, tokenData.TrustCenterID)
+	// 	if err != nil {
+	// 		panic(fmt.Errorf("cannot get trust center: %w", err))
+	// 	}
+	// 	if trustCenter.NonDisclosureAgreementFileID == nil {
+	// 		ndaExists = false
+	// 	}
 
-		if ndaExists {
-			hasAcceptedNDA, err = privateTrustService.TrustCenterAccesses.HasAcceptedNonDisclosureAgreement(ctx, tokenData.TrustCenterID, tokenData.Email)
-			if err != nil {
-				panic(fmt.Errorf("cannot check if user has accepted NDA: %w", err))
-			}
-		}
+	// 	if ndaExists {
+	// 		hasAcceptedNDA, err = privateTrustService.TrustCenterAccesses.HasAcceptedNonDisclosureAgreement(ctx, tokenData.TrustCenterID, tokenData.Email)
+	// 		if err != nil {
+	// 			panic(fmt.Errorf("cannot check if user has accepted NDA: %w", err))
+	// 		}
+	// 	}
 
-		reportAccess, err := privateTrustService.TrustCenterAccesses.LoadReportAccess(ctx, tokenData.TrustCenterID, tokenData.Email, input.ReportID)
-		if err != nil {
-			panic(fmt.Errorf("cannot check report access: %w", err))
-		}
+	// 	reportAccess, err := privateTrustService.TrustCenterAccesses.LoadReportAccess(ctx, tokenData.TrustCenterID, tokenData.Email, input.ReportID)
+	// 	if err != nil {
+	// 		panic(fmt.Errorf("cannot check report access: %w", err))
+	// 	}
 
-		if reportAccess.Status != coredata.TrustCenterDocumentAccessStatusGranted {
-			return nil, fmt.Errorf("access denied: no permission to access this report")
-		}
+	// 	if reportAccess.Status != coredata.TrustCenterDocumentAccessStatusGranted {
+	// 		return nil, fmt.Errorf("access denied: no permission to access this report")
+	// 	}
 
-		if ndaExists && !hasAcceptedNDA {
-			return nil, fmt.Errorf("user has not accepted NDA")
-		}
-	}
+	// 	if ndaExists && !hasAcceptedNDA {
+	// 		return nil, fmt.Errorf("user has not accepted NDA")
+	// 	}
+	// }
 
-	userData := UserFromContext(ctx)
-	var userEmail mail.Addr
-	if userData != nil {
-		userEmail = userData.EmailAddress
-	}
-	if tokenData != nil {
-		userEmail = tokenData.Email
-	}
+	// userData := UserFromContext(ctx)
+	// var userEmail mail.Addr
+	// if userData != nil {
+	// 	userEmail = userData.EmailAddress
+	// }
+	// if tokenData != nil {
+	// 	userEmail = tokenData.Email
+	// }
 
-	pdf, err := privateTrustService.Reports.ExportPDF(ctx, input.ReportID, userEmail)
-	if err != nil {
-		panic(fmt.Errorf("cannot export report PDF: %w", err))
-	}
+	// pdf, err := privateTrustService.Reports.ExportPDF(ctx, input.ReportID, userEmail)
+	// if err != nil {
+	// 	panic(fmt.Errorf("cannot export report PDF: %w", err))
+	// }
 
-	return &types.ExportReportPDFPayload{
-		Data: fmt.Sprintf("data:application/pdf;base64,%s", base64.StdEncoding.EncodeToString(pdf)),
-	}, nil
+	// return &types.ExportReportPDFPayload{
+	// 	Data: fmt.Sprintf("data:application/pdf;base64,%s", base64.StdEncoding.EncodeToString(pdf)),
+	// }, nil
+
+	panic(fmt.Errorf("no user or token data found"))
 }
 
 // AcceptNonDisclosureAgreement is the resolver for the acceptNonDisclosureAgreement field.
 func (r *mutationResolver) AcceptNonDisclosureAgreement(ctx context.Context, input types.AcceptNonDisclosureAgreementInput) (*types.AcceptNonDisclosureAgreementPayload, error) {
-	privateTrustService, err := r.PrivateTrustService(ctx, input.TrustCenterID.TenantID())
-	if err != nil {
-		return nil, fmt.Errorf("cannot accept NDA: %w", err)
-	}
+	// privateTrustService, err := r.PrivateTrustService(ctx, input.TrustCenterID.TenantID())
+	// if err != nil {
+	// 	return nil, fmt.Errorf("cannot accept NDA: %w", err)
+	// }
 
-	tokenData := TokenAccessFromContext(ctx)
-	if tokenData == nil {
-		return nil, fmt.Errorf("token not found")
-	}
+	// tokenData := TokenAccessFromContext(ctx)
+	// if tokenData == nil {
+	// 	return nil, fmt.Errorf("token not found")
+	// }
 
-	err = privateTrustService.TrustCenterAccesses.AcceptNonDisclosureAgreement(ctx, input.TrustCenterID, tokenData.Email)
-	if err != nil {
-		return nil, fmt.Errorf("cannot accept NDA: %w", err)
-	}
+	// err = privateTrustService.TrustCenterAccesses.AcceptNonDisclosureAgreement(ctx, input.TrustCenterID, tokenData.Email)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("cannot accept NDA: %w", err)
+	// }
 
-	return &types.AcceptNonDisclosureAgreementPayload{Success: true}, nil
+	// return &types.AcceptNonDisclosureAgreementPayload{Success: true}, nil
+
+	panic(fmt.Errorf("no user or token data found"))
 }
 
 // RequestDocumentAccess is the resolver for the requestDocumentAccess field.
 func (r *mutationResolver) RequestDocumentAccess(ctx context.Context, input types.RequestDocumentAccessInput) (*types.RequestAccessesPayload, error) {
-	publicTrustService := r.PublicTrustService(ctx, input.TrustCenterID.TenantID())
+	// publicTrustService := r.PublicTrustService(ctx, input.TrustCenterID.TenantID())
 
-	document, err := publicTrustService.Documents.Get(ctx, input.DocumentID)
-	if err != nil {
-		panic(fmt.Errorf("cannot load document: %w", err))
-	}
+	// var (
+	// 	email    mail.Addr
+	// 	fullname string
+	// )
 
-	if document.TrustCenterVisibility == coredata.TrustCenterVisibilityPublic {
-		return nil, fmt.Errorf("document is publicly available and does not require access request")
-	}
+	// identity := connect_v1.UserFromContext(ctx)
+	// if identity != nil {
+	// 	email = identity.EmailAddress
+	// 	fullname = identity.FullName
+	// } else if input.Email != nil && input.Name != nil {
+	// 	email = *input.Email
+	// 	fullname = *input.Name
+	// } else {
+	// 	return nil, gqlutils.Invalid(fmt.Errorf("email and name are required"), nil)
+	// }
 
-	userData := r.UserFromContext(ctx)
-	if userData != nil {
-		return nil, fmt.Errorf("sessions users cannot request trust center access")
-	}
+	// access, err := publicTrustService.TrustCenterAccesses.Request(
+	// 	ctx,
+	// 	&trust.TrustCenterAccessRequest{
+	// 		TrustCenterID: input.TrustCenterID,
+	// 		Email:         email,
+	// 		Name:          fullname,
+	// 		DocumentIDs:   []gid.GID{input.DocumentID},
+	// 		ReportIDs:     []gid.GID{},
+	// 	},
+	// )
+	// if err != nil {
+	// 	panic(fmt.Errorf("cannot request document access: %w", err))
+	// }
 
-	email := input.Email
-	tokenData := TokenAccessFromContext(ctx)
-	if tokenData != nil {
-		email = &tokenData.Email
-	}
-	if email == nil {
-		return nil, fmt.Errorf("email is required for unauthenticated users")
-	}
+	// return &types.RequestAccessesPayload{
+	// 	TrustCenterAccess: &types.TrustCenterAccess{
+	// 		ID:        access.ID,
+	// 		Email:     access.Email,
+	// 		Name:      access.Name,
+	// 		CreatedAt: access.CreatedAt,
+	// 		UpdatedAt: access.UpdatedAt,
+	// 	},
+	// }, nil
 
-	access, err := publicTrustService.TrustCenterAccesses.Request(ctx, &trust.TrustCenterAccessRequest{
-		TrustCenterID: input.TrustCenterID,
-		Email:         *email,
-		Name:          input.Name,
-		DocumentIDs:   []gid.GID{input.DocumentID},
-		ReportIDs:     []gid.GID{},
-	})
-	if err != nil {
-		panic(fmt.Errorf("cannot request document access: %w", err))
-	}
-
-	return &types.RequestAccessesPayload{
-		TrustCenterAccess: &types.TrustCenterAccess{
-			ID:        access.ID,
-			Email:     access.Email,
-			Name:      access.Name,
-			CreatedAt: access.CreatedAt,
-			UpdatedAt: access.UpdatedAt,
-		},
-	}, nil
+	panic(fmt.Errorf("no user or token data found"))
 }
 
 // RequestReportAccess is the resolver for the requestReportAccess field.
 func (r *mutationResolver) RequestReportAccess(ctx context.Context, input types.RequestReportAccessInput) (*types.RequestAccessesPayload, error) {
-	publicTrustService := r.PublicTrustService(ctx, input.TrustCenterID.TenantID())
+	// publicTrustService := r.PublicTrustService(ctx, input.TrustCenterID.TenantID())
 
-	audit, err := publicTrustService.Audits.GetByReportID(ctx, input.ReportID)
-	if err != nil {
-		panic(fmt.Errorf("cannot load audit: %w", err))
-	}
+	// audit, err := publicTrustService.Audits.GetByReportID(ctx, input.ReportID)
+	// if err != nil {
+	// 	panic(fmt.Errorf("cannot load audit: %w", err))
+	// }
 
-	if audit.TrustCenterVisibility == coredata.TrustCenterVisibilityPublic {
-		return nil, fmt.Errorf("report is publicly available and does not require access request")
-	}
+	// if audit.TrustCenterVisibility == coredata.TrustCenterVisibilityPublic {
+	// 	return nil, fmt.Errorf("report is publicly available and does not require access request")
+	// }
 
-	userData := r.UserFromContext(ctx)
-	if userData != nil {
-		return nil, fmt.Errorf("session users cannot request trust center access")
-	}
+	// userData := r.UserFromContext(ctx)
+	// if userData != nil {
+	// 	return nil, fmt.Errorf("session users cannot request trust center access")
+	// }
 
-	email := input.Email
-	tokenData := TokenAccessFromContext(ctx)
-	if tokenData != nil {
-		email = &tokenData.Email
-	}
-	if email == nil {
-		return nil, fmt.Errorf("email is required for unauthenticated users")
-	}
+	// email := input.Email
+	// tokenData := TokenAccessFromContext(ctx)
+	// if tokenData != nil {
+	// 	*email = tokenData.Email
+	// }
+	// if email == nil {
+	// 	return nil, fmt.Errorf("email is required for unauthenticated users")
+	// }
 
-	access, err := publicTrustService.TrustCenterAccesses.Request(ctx, &trust.TrustCenterAccessRequest{
-		TrustCenterID: input.TrustCenterID,
-		Email:         *email,
-		Name:          input.Name,
-		DocumentIDs:   []gid.GID{},
-		ReportIDs:     []gid.GID{input.ReportID},
-	})
-	if err != nil {
-		panic(fmt.Errorf("cannot request report access: %w", err))
-	}
+	// access, err := publicTrustService.TrustCenterAccesses.Request(ctx, &trust.TrustCenterAccessRequest{
+	// 	TrustCenterID: input.TrustCenterID,
+	// 	Email:         *email,
+	// 	Name:          input.Name,
+	// 	DocumentIDs:   []gid.GID{},
+	// 	ReportIDs:     []gid.GID{input.ReportID},
+	// })
+	// if err != nil {
+	// 	panic(fmt.Errorf("cannot request report access: %w", err))
+	// }
 
-	return &types.RequestAccessesPayload{
-		TrustCenterAccess: &types.TrustCenterAccess{
-			ID:        access.ID,
-			Email:     access.Email,
-			Name:      access.Name,
-			CreatedAt: access.CreatedAt,
-			UpdatedAt: access.UpdatedAt,
-		},
-	}, nil
+	// return &types.RequestAccessesPayload{
+	// 	TrustCenterAccess: &types.TrustCenterAccess{
+	// 		ID:        access.ID,
+	// 		Email:     access.Email,
+	// 		Name:      access.Name,
+	// 		CreatedAt: access.CreatedAt,
+	// 		UpdatedAt: access.UpdatedAt,
+	// 	},
+	// }, nil
+
+	panic(fmt.Errorf("no user or token data found"))
 }
 
 // RequestTrustCenterFileAccess is the resolver for the requestTrustCenterFileAccess field.
 func (r *mutationResolver) RequestTrustCenterFileAccess(ctx context.Context, input types.RequestTrustCenterFileAccessInput) (*types.RequestAccessesPayload, error) {
-	publicTrustService := r.PublicTrustService(ctx, input.TrustCenterID.TenantID())
+	// publicTrustService := r.PublicTrustService(ctx, input.TrustCenterID.TenantID())
 
-	trustCenterFile, err := publicTrustService.TrustCenterFiles.Get(ctx, input.TrustCenterFileID)
-	if err != nil {
-		panic(fmt.Errorf("cannot load trust center file: %w", err))
-	}
+	// trustCenterFile, err := publicTrustService.TrustCenterFiles.Get(ctx, input.TrustCenterFileID)
+	// if err != nil {
+	// 	panic(fmt.Errorf("cannot load trust center file: %w", err))
+	// }
 
-	if trustCenterFile.TrustCenterVisibility == coredata.TrustCenterVisibilityPublic {
-		return nil, fmt.Errorf("trust center file is publicly available and does not require access request")
-	}
+	// if trustCenterFile.TrustCenterVisibility == coredata.TrustCenterVisibilityPublic {
+	// 	return nil, fmt.Errorf("trust center file is publicly available and does not require access request")
+	// }
 
-	userData := r.UserFromContext(ctx)
-	if userData != nil {
-		return nil, fmt.Errorf("session users cannot request trust center access")
-	}
+	// userData := r.UserFromContext(ctx)
+	// if userData != nil {
+	// 	return nil, fmt.Errorf("session users cannot request trust center access")
+	// }
 
-	email := input.Email
-	tokenData := TokenAccessFromContext(ctx)
-	if tokenData != nil {
-		email = &tokenData.Email
-	}
-	if email == nil {
-		return nil, fmt.Errorf("email is required for unauthenticated users")
-	}
+	// email := input.Email
+	// tokenData := TokenAccessFromContext(ctx)
+	// if tokenData != nil {
+	// 	email = &tokenData.Email
+	// }
+	// if email == nil {
+	// 	return nil, fmt.Errorf("email is required for unauthenticated users")
+	// }
 
-	access, err := publicTrustService.TrustCenterAccesses.Request(ctx, &trust.TrustCenterAccessRequest{
-		TrustCenterID:      input.TrustCenterID,
-		Email:              *email,
-		Name:               input.Name,
-		DocumentIDs:        []gid.GID{},
-		ReportIDs:          []gid.GID{},
-		TrustCenterFileIDs: []gid.GID{input.TrustCenterFileID},
-	})
-	if err != nil {
-		panic(fmt.Errorf("cannot request trust center file access: %w", err))
-	}
+	// access, err := publicTrustService.TrustCenterAccesses.Request(ctx, &trust.TrustCenterAccessRequest{
+	// 	TrustCenterID:      input.TrustCenterID,
+	// 	Email:              *email,
+	// 	Name:               input.Name,
+	// 	DocumentIDs:        []gid.GID{},
+	// 	ReportIDs:          []gid.GID{},
+	// 	TrustCenterFileIDs: []gid.GID{input.TrustCenterFileID},
+	// })
+	// if err != nil {
+	// 	panic(fmt.Errorf("cannot request trust center file access: %w", err))
+	// }
 
-	return &types.RequestAccessesPayload{
-		TrustCenterAccess: &types.TrustCenterAccess{
-			ID:        access.ID,
-			Email:     access.Email,
-			Name:      access.Name,
-			CreatedAt: access.CreatedAt,
-			UpdatedAt: access.UpdatedAt,
-		},
-	}, nil
+	// return &types.RequestAccessesPayload{
+	// 	TrustCenterAccess: &types.TrustCenterAccess{
+	// 		ID:        access.ID,
+	// 		Email:     access.Email,
+	// 		Name:      access.Name,
+	// 		CreatedAt: access.CreatedAt,
+	// 		UpdatedAt: access.UpdatedAt,
+	// 	},
+	// }, nil
+
+	panic(fmt.Errorf("no user or token data found"))
 }
 
 // ExportTrustCenterFile is the resolver for the exportTrustCenterFile field.
 func (r *mutationResolver) ExportTrustCenterFile(ctx context.Context, input types.ExportTrustCenterFileInput) (*types.ExportTrustCenterFilePayload, error) {
-	publicTrustService := r.PublicTrustService(ctx, input.TrustCenterFileID.TenantID())
+	// publicTrustService := r.PublicTrustService(ctx, input.TrustCenterFileID.TenantID())
 
-	trustCenterFile, err := publicTrustService.TrustCenterFiles.Get(ctx, input.TrustCenterFileID)
-	if err != nil {
-		panic(fmt.Errorf("cannot load trust center file: %w", err))
-	}
+	// trustCenterFile, err := publicTrustService.TrustCenterFiles.Get(ctx, input.TrustCenterFileID)
+	// if err != nil {
+	// 	panic(fmt.Errorf("cannot load trust center file: %w", err))
+	// }
 
-	if trustCenterFile.TrustCenterVisibility == coredata.TrustCenterVisibilityPublic {
-		fileData, err := publicTrustService.TrustCenterFiles.ExportFileWithoutWatermark(ctx, input.TrustCenterFileID)
-		if err != nil {
-			panic(fmt.Errorf("cannot export trust center file: %w", err))
-		}
+	// if trustCenterFile.TrustCenterVisibility == coredata.TrustCenterVisibilityPublic {
+	// 	fileData, err := publicTrustService.TrustCenterFiles.ExportFileWithoutWatermark(ctx, input.TrustCenterFileID)
+	// 	if err != nil {
+	// 		panic(fmt.Errorf("cannot export trust center file: %w", err))
+	// 	}
 
-		return &types.ExportTrustCenterFilePayload{
-			Data: fmt.Sprintf("data:application/pdf;base64,%s", base64.StdEncoding.EncodeToString(fileData)),
-		}, nil
-	}
+	// 	return &types.ExportTrustCenterFilePayload{
+	// 		Data: fmt.Sprintf("data:application/pdf;base64,%s", base64.StdEncoding.EncodeToString(fileData)),
+	// 	}, nil
+	// }
 
-	privateTrustService, err := r.PrivateTrustService(ctx, input.TrustCenterFileID.TenantID())
-	if err != nil {
-		return nil, fmt.Errorf("cannot export trust center file: %w", err)
-	}
+	// privateTrustService, err := r.PrivateTrustService(ctx, input.TrustCenterFileID.TenantID())
+	// if err != nil {
+	// 	return nil, fmt.Errorf("cannot export trust center file: %w", err)
+	// }
 
-	tokenData := TokenAccessFromContext(ctx)
-	if tokenData != nil {
-		ndaExists := true
-		hasAcceptedNDA := false
+	// tokenData := TokenAccessFromContext(ctx)
+	// if tokenData != nil {
+	// 	ndaExists := true
+	// 	hasAcceptedNDA := false
 
-		trustCenter, _, err := privateTrustService.TrustCenters.Get(ctx, tokenData.TrustCenterID)
-		if err != nil {
-			panic(fmt.Errorf("cannot get trust center: %w", err))
-		}
-		if trustCenter.NonDisclosureAgreementFileID == nil {
-			ndaExists = false
-		}
+	// 	trustCenter, _, err := privateTrustService.TrustCenters.Get(ctx, tokenData.TrustCenterID)
+	// 	if err != nil {
+	// 		panic(fmt.Errorf("cannot get trust center: %w", err))
+	// 	}
+	// 	if trustCenter.NonDisclosureAgreementFileID == nil {
+	// 		ndaExists = false
+	// 	}
 
-		if ndaExists {
-			hasAcceptedNDA, err = privateTrustService.TrustCenterAccesses.HasAcceptedNonDisclosureAgreement(ctx, tokenData.TrustCenterID, tokenData.Email)
-			if err != nil {
-				panic(fmt.Errorf("cannot check if user has accepted NDA: %w", err))
-			}
-		}
+	// 	if ndaExists {
+	// 		hasAcceptedNDA, err = privateTrustService.TrustCenterAccesses.HasAcceptedNonDisclosureAgreement(ctx, tokenData.TrustCenterID, tokenData.Email)
+	// 		if err != nil {
+	// 			panic(fmt.Errorf("cannot check if user has accepted NDA: %w", err))
+	// 		}
+	// 	}
 
-		fileAccess, err := privateTrustService.TrustCenterAccesses.LoadTrustCenterFileAccess(ctx, tokenData.TrustCenterID, tokenData.Email, input.TrustCenterFileID)
-		if err != nil {
-			panic(fmt.Errorf("cannot check trust center file access: %w", err))
-		}
+	// 	fileAccess, err := privateTrustService.TrustCenterAccesses.LoadTrustCenterFileAccess(ctx, tokenData.TrustCenterID, tokenData.Email, input.TrustCenterFileID)
+	// 	if err != nil {
+	// 		panic(fmt.Errorf("cannot check trust center file access: %w", err))
+	// 	}
 
-		if fileAccess.Status != coredata.TrustCenterDocumentAccessStatusGranted {
-			return nil, fmt.Errorf("access denied: no permission to access this file")
-		}
+	// 	if fileAccess.Status != coredata.TrustCenterDocumentAccessStatusGranted {
+	// 		return nil, fmt.Errorf("access denied: no permission to access this file")
+	// 	}
 
-		if ndaExists && !hasAcceptedNDA {
-			return nil, fmt.Errorf("user has not accepted NDA")
-		}
-	}
+	// 	if ndaExists && !hasAcceptedNDA {
+	// 		return nil, fmt.Errorf("user has not accepted NDA")
+	// 	}
+	// }
 
-	userData := UserFromContext(ctx)
-	var userEmail mail.Addr
-	if userData != nil {
-		userEmail = userData.EmailAddress
-	}
-	if tokenData != nil {
-		userEmail = tokenData.Email
-	}
+	// userData := UserFromContext(ctx)
+	// var userEmail mail.Addr
+	// if userData != nil {
+	// 	userEmail = userData.EmailAddress
+	// }
+	// if tokenData != nil {
+	// 	userEmail = tokenData.Email
+	// }
 
-	fileData, err := privateTrustService.TrustCenterFiles.ExportFile(ctx, input.TrustCenterFileID, userEmail)
-	if err != nil {
-		panic(fmt.Errorf("cannot export trust center file: %w", err))
-	}
+	// fileData, err := privateTrustService.TrustCenterFiles.ExportFile(ctx, input.TrustCenterFileID, userEmail)
+	// if err != nil {
+	// 	panic(fmt.Errorf("cannot export trust center file: %w", err))
+	// }
 
-	return &types.ExportTrustCenterFilePayload{
-		Data: fmt.Sprintf("data:application/pdf;base64,%s", base64.StdEncoding.EncodeToString(fileData)),
-	}, nil
+	// return &types.ExportTrustCenterFilePayload{
+	// 	Data: fmt.Sprintf("data:application/pdf;base64,%s", base64.StdEncoding.EncodeToString(fileData)),
+	// }, nil
+
+	panic(fmt.Errorf("no user or token data found"))
 }
 
 // LogoURL is the resolver for the logoUrl field.
@@ -685,101 +696,107 @@ func (r *queryResolver) TrustCenterBySlug(ctx context.Context, slug string) (*ty
 
 // CurrentTrustCenter is the resolver for the currentTrustCenter field.
 func (r *queryResolver) CurrentTrustCenter(ctx context.Context) (*types.TrustCenter, error) {
-	// Get organization and tenant from custom domain context
-	organizationID, ok := GetCustomDomainOrganizationID(ctx)
-	if !ok {
-		return nil, fmt.Errorf("organization not found for custom domain")
-	}
+	// // Get organization and tenant from custom domain context
+	// organizationID, ok := GetCustomDomainOrganizationID(ctx)
+	// if !ok {
+	// 	return nil, fmt.Errorf("organization not found for custom domain")
+	// }
 
-	tenantID, ok := GetCustomDomainTenantID(ctx)
-	if !ok {
-		return nil, fmt.Errorf("tenant not found for custom domain")
-	}
+	// tenantID, ok := GetCustomDomainTenantID(ctx)
+	// if !ok {
+	// 	return nil, fmt.Errorf("tenant not found for custom domain")
+	// }
 
-	publicTrustService := r.PublicTrustService(ctx, tenantID)
+	// publicTrustService := r.PublicTrustService(ctx, tenantID)
 
-	trustCenter, err := publicTrustService.TrustCenters.GetByOrganizationID(ctx, organizationID)
-	if err != nil {
-		return nil, fmt.Errorf("cannot load trust center: %w", err)
-	}
+	// trustCenter, err := publicTrustService.TrustCenters.GetByOrganizationID(ctx, organizationID)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("cannot load trust center: %w", err)
+	// }
 
-	if !trustCenter.Active {
-		return nil, nil
-	}
+	// if !trustCenter.Active {
+	// 	return nil, nil
+	// }
 
-	trustCenter, file, err := publicTrustService.TrustCenters.Get(ctx, trustCenter.ID)
-	if err != nil {
-		panic(fmt.Errorf("cannot get trust center: %w", err))
-	}
+	// trustCenter, file, err := publicTrustService.TrustCenters.Get(ctx, trustCenter.ID)
+	// if err != nil {
+	// 	panic(fmt.Errorf("cannot get trust center: %w", err))
+	// }
 
-	org, err := publicTrustService.Organizations.Get(ctx, organizationID)
-	if err != nil {
-		panic(fmt.Errorf("cannot get organization: %w", err))
-	}
-	response := types.NewTrustCenter(trustCenter, file)
-	response.Organization = types.NewOrganization(org)
+	// org, err := publicTrustService.Organizations.Get(ctx, organizationID)
+	// if err != nil {
+	// 	panic(fmt.Errorf("cannot get organization: %w", err))
+	// }
+	// response := types.NewTrustCenter(trustCenter, file)
+	// response.Organization = types.NewOrganization(org)
 
-	return response, nil
+	// return response, nil
+
+	panic(fmt.Errorf("no user or token data found"))
 }
 
 // IsUserAuthorized is the resolver for the isUserAuthorized field.
 func (r *reportResolver) IsUserAuthorized(ctx context.Context, obj *types.Report) (bool, error) {
-	publicTrustService := r.PublicTrustService(ctx, obj.ID.TenantID())
+	// publicTrustService := r.PublicTrustService(ctx, obj.ID.TenantID())
 
-	audit, err := publicTrustService.Audits.GetByReportID(ctx, obj.ID)
-	if err != nil {
-		panic(fmt.Errorf("cannot load document: %w", err))
-	}
+	// audit, err := publicTrustService.Audits.GetByReportID(ctx, obj.ID)
+	// if err != nil {
+	// 	panic(fmt.Errorf("cannot load document: %w", err))
+	// }
 
-	if audit.TrustCenterVisibility == coredata.TrustCenterVisibilityPublic {
-		return true, nil
-	}
+	// if audit.TrustCenterVisibility == coredata.TrustCenterVisibilityPublic {
+	// 	return true, nil
+	// }
 
-	privateTrustService, err := r.PrivateTrustService(ctx, obj.ID.TenantID())
-	if err != nil {
-		return false, nil
-	}
+	// privateTrustService, err := r.PrivateTrustService(ctx, obj.ID.TenantID())
+	// if err != nil {
+	// 	return false, nil
+	// }
 
-	userData := r.UserFromContext(ctx)
-	if userData != nil {
-		return true, nil
-	}
+	// userData := r.UserFromContext(ctx)
+	// if userData != nil {
+	// 	return true, nil
+	// }
 
-	tokenData := TokenAccessFromContext(ctx)
-	if tokenData != nil {
-		reportAccess, err := privateTrustService.TrustCenterAccesses.LoadReportAccess(ctx, tokenData.TrustCenterID, tokenData.Email, obj.ID)
-		if err != nil {
-			return false, nil
-		}
+	// tokenData := TokenAccessFromContext(ctx)
+	// if tokenData != nil {
+	// 	reportAccess, err := privateTrustService.TrustCenterAccesses.LoadReportAccess(ctx, tokenData.TrustCenterID, tokenData.Email, obj.ID)
+	// 	if err != nil {
+	// 		return false, nil
+	// 	}
 
-		return reportAccess.Status == coredata.TrustCenterDocumentAccessStatusGranted, nil
-	}
+	// 	return reportAccess.Status == coredata.TrustCenterDocumentAccessStatusGranted, nil
+	// }
+
+	// panic(fmt.Errorf("no user or token data found"))
 
 	panic(fmt.Errorf("no user or token data found"))
 }
 
 // HasUserRequestedAccess is the resolver for the hasUserRequestedAccess field.
 func (r *reportResolver) HasUserRequestedAccess(ctx context.Context, obj *types.Report) (bool, error) {
-	privateTrustService, err := r.PrivateTrustService(ctx, obj.ID.TenantID())
-	if err != nil {
-		return false, nil
-	}
+	// privateTrustService, err := r.PrivateTrustService(ctx, obj.ID.TenantID())
+	// if err != nil {
+	// 	return false, nil
+	// }
 
-	userData := r.UserFromContext(ctx)
-	if userData != nil {
-		return false, nil
-	}
+	// userData := r.UserFromContext(ctx)
+	// if userData != nil {
+	// 	return false, nil
+	// }
 
-	tokenData := TokenAccessFromContext(ctx)
-	if tokenData != nil {
-		_, err := privateTrustService.TrustCenterAccesses.LoadReportAccess(ctx, tokenData.TrustCenterID, tokenData.Email, obj.ID)
-		if err != nil {
-			return false, nil
-		}
-		return true, nil
-	}
+	// tokenData := TokenAccessFromContext(ctx)
+	// if tokenData != nil {
+	// 	_, err := privateTrustService.TrustCenterAccesses.LoadReportAccess(ctx, tokenData.TrustCenterID, tokenData.Email, obj.ID)
+	// 	if err != nil {
+	// 		return false, nil
+	// 	}
+	// 	return true, nil
+	// }
 
-	return false, nil
+	// return false, nil
+
+	panic(fmt.Errorf("no user or token data found"))
 }
 
 // NdaFileURL is the resolver for the ndaFileUrl field.
@@ -814,24 +831,26 @@ func (r *trustCenterResolver) IsUserAuthenticated(ctx context.Context, obj *type
 
 // HasAcceptedNonDisclosureAgreement is the resolver for the hasAcceptedNonDisclosureAgreement field.
 func (r *trustCenterResolver) HasAcceptedNonDisclosureAgreement(ctx context.Context, obj *types.TrustCenter) (bool, error) {
-	privateTrustService, err := r.PrivateTrustService(ctx, obj.ID.TenantID())
-	if err != nil {
-		return false, nil
-	}
+	// privateTrustService, err := r.PrivateTrustService(ctx, obj.ID.TenantID())
+	// if err != nil {
+	// 	return false, nil
+	// }
 
-	userData := UserFromContext(ctx)
-	if userData != nil {
-		return true, nil
-	}
+	// userData := UserFromContext(ctx)
+	// if userData != nil {
+	// 	return true, nil
+	// }
 
-	tokenData := TokenAccessFromContext(ctx)
-	if tokenData != nil {
-		hasAcceptedNDA, err := privateTrustService.TrustCenterAccesses.HasAcceptedNonDisclosureAgreement(ctx, obj.ID, tokenData.Email)
-		if err != nil {
-			panic(fmt.Errorf("cannot check if user has accepted NDA: %w", err))
-		}
-		return hasAcceptedNDA, nil
-	}
+	// tokenData := TokenAccessFromContext(ctx)
+	// if tokenData != nil {
+	// 	hasAcceptedNDA, err := privateTrustService.TrustCenterAccesses.HasAcceptedNonDisclosureAgreement(ctx, obj.ID, tokenData.Email)
+	// 	if err != nil {
+	// 		panic(fmt.Errorf("cannot check if user has accepted NDA: %w", err))
+	// 	}
+	// 	return hasAcceptedNDA, nil
+	// }
+
+	// panic(fmt.Errorf("no user or token data found"))
 
 	panic(fmt.Errorf("no user or token data found"))
 }
@@ -928,62 +947,66 @@ func (r *trustCenterResolver) TrustCenterFiles(ctx context.Context, obj *types.T
 
 // IsUserAuthorized is the resolver for the isUserAuthorized field.
 func (r *trustCenterFileResolver) IsUserAuthorized(ctx context.Context, obj *types.TrustCenterFile) (bool, error) {
-	publicTrustService := r.PublicTrustService(ctx, obj.ID.TenantID())
+	// publicTrustService := r.PublicTrustService(ctx, obj.ID.TenantID())
 
-	trustCenterFile, err := publicTrustService.TrustCenterFiles.Get(ctx, obj.ID)
-	if err != nil {
-		panic(fmt.Errorf("cannot load trust center file: %w", err))
-	}
+	// trustCenterFile, err := publicTrustService.TrustCenterFiles.Get(ctx, obj.ID)
+	// if err != nil {
+	// 	panic(fmt.Errorf("cannot load trust center file: %w", err))
+	// }
 
-	if trustCenterFile.TrustCenterVisibility == coredata.TrustCenterVisibilityPublic {
-		return true, nil
-	}
+	// if trustCenterFile.TrustCenterVisibility == coredata.TrustCenterVisibilityPublic {
+	// 	return true, nil
+	// }
 
-	privateTrustService, err := r.PrivateTrustService(ctx, obj.ID.TenantID())
-	if err != nil {
-		return false, nil
-	}
+	// privateTrustService, err := r.PrivateTrustService(ctx, obj.ID.TenantID())
+	// if err != nil {
+	// 	return false, nil
+	// }
 
-	userData := r.UserFromContext(ctx)
-	if userData != nil {
-		return true, nil
-	}
+	// userData := r.UserFromContext(ctx)
+	// if userData != nil {
+	// 	return true, nil
+	// }
 
-	tokenData := TokenAccessFromContext(ctx)
-	if tokenData != nil {
-		fileAccess, err := privateTrustService.TrustCenterAccesses.LoadTrustCenterFileAccess(ctx, tokenData.TrustCenterID, tokenData.Email, obj.ID)
-		if err != nil {
-			return false, nil
-		}
+	// tokenData := TokenAccessFromContext(ctx)
+	// if tokenData != nil {
+	// 	fileAccess, err := privateTrustService.TrustCenterAccesses.LoadTrustCenterFileAccess(ctx, tokenData.TrustCenterID, tokenData.Email, obj.ID)
+	// 	if err != nil {
+	// 		return false, nil
+	// 	}
 
-		return fileAccess.Status == coredata.TrustCenterDocumentAccessStatusGranted, nil
-	}
+	// 	return fileAccess.Status == coredata.TrustCenterDocumentAccessStatusGranted, nil
+	// }
+
+	// panic(fmt.Errorf("no user or token data found"))
 
 	panic(fmt.Errorf("no user or token data found"))
 }
 
 // HasUserRequestedAccess is the resolver for the hasUserRequestedAccess field.
 func (r *trustCenterFileResolver) HasUserRequestedAccess(ctx context.Context, obj *types.TrustCenterFile) (bool, error) {
-	privateTrustService, err := r.PrivateTrustService(ctx, obj.ID.TenantID())
-	if err != nil {
-		return false, nil
-	}
+	// privateTrustService, err := r.PrivateTrustService(ctx, obj.ID.TenantID())
+	// if err != nil {
+	// 	return false, nil
+	// }
 
-	userData := r.UserFromContext(ctx)
-	if userData != nil {
-		return false, nil
-	}
+	// userData := r.UserFromContext(ctx)
+	// if userData != nil {
+	// 	return false, nil
+	// }
 
-	tokenData := TokenAccessFromContext(ctx)
-	if tokenData != nil {
-		_, err := privateTrustService.TrustCenterAccesses.LoadTrustCenterFileAccess(ctx, tokenData.TrustCenterID, tokenData.Email, obj.ID)
-		if err != nil {
-			return false, nil
-		}
-		return true, nil
-	}
+	// tokenData := TokenAccessFromContext(ctx)
+	// if tokenData != nil {
+	// 	_, err := privateTrustService.TrustCenterAccesses.LoadTrustCenterFileAccess(ctx, tokenData.TrustCenterID, tokenData.Email, obj.ID)
+	// 	if err != nil {
+	// 		return false, nil
+	// 	}
+	// 	return true, nil
+	// }
 
-	return false, nil
+	// return false, nil
+
+	panic(fmt.Errorf("no user or token data found"))
 }
 
 // LogoURL is the resolver for the logoUrl field.

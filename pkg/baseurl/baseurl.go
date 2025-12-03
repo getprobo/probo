@@ -109,10 +109,10 @@ func (b *BaseURL) Port() string {
 
 // URLBuilder provides a fluent interface for building URLs.
 type URLBuilder struct {
-	base   *BaseURL
-	path   string
-	query  url.Values
-	err    error
+	base  *BaseURL
+	path  string
+	query url.Values
+	err   error
 }
 
 // WithPath returns a URLBuilder with the specified path.
@@ -223,4 +223,13 @@ func (b *BaseURL) MarshalText() ([]byte, error) {
 		return []byte(""), nil
 	}
 	return []byte(b.raw), nil
+}
+
+func (b *URLBuilder) URL() url.URL {
+	return url.URL{
+		Scheme:   b.base.Scheme(),
+		Host:     b.base.Host(),
+		Path:     b.path,
+		RawQuery: b.query.Encode(),
+	}
 }

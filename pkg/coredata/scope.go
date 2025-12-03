@@ -17,8 +17,8 @@ package coredata
 import (
 	"fmt"
 
-	"go.probo.inc/probo/pkg/gid"
 	"github.com/jackc/pgx/v5"
+	"go.probo.inc/probo/pkg/gid"
 )
 
 type (
@@ -60,6 +60,10 @@ func NewScope(tenantID gid.TenantID) *Scope {
 	return &Scope{
 		tenantID: tenantID,
 	}
+}
+
+func NewScopeFromObjectID(objectID gid.GID) *Scope {
+	return NewScope(objectID.TenantID())
 }
 
 func (s *Scope) SQLArguments() pgx.StrictNamedArgs {

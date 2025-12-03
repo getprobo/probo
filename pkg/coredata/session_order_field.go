@@ -20,9 +20,20 @@ type (
 
 const (
 	SessionOrderFieldCreatedAt SessionOrderField = "CREATED_AT"
+	SessionOrderFieldExpiredAt SessionOrderField = "EXPIRED_AT"
+	SessionOrderFieldUpdatedAt SessionOrderField = "UPDATED_AT"
 )
 
 func (p SessionOrderField) Column() string {
+	switch p {
+	case SessionOrderFieldCreatedAt:
+		return "created_at"
+	case SessionOrderFieldExpiredAt:
+		return "expired_at"
+	case SessionOrderFieldUpdatedAt:
+		return "updated_at"
+	}
+
 	return string(p)
 }
 

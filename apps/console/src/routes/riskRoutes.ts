@@ -1,7 +1,7 @@
 import { Fragment } from "react";
 import { loadQuery } from "react-relay";
 import { RisksPageSkeleton } from "/components/skeletons/RisksPageSkeleton.tsx";
-import { relayEnvironment } from "/providers/RelayProviders";
+import { consoleEnvironment } from "/environments";
 import { riskNodeQuery, risksQuery } from "/hooks/graph/RiskGraph";
 import { PageSkeleton } from "/components/skeletons/PageSkeleton";
 import { redirect } from "react-router";
@@ -16,7 +16,7 @@ export const riskRoutes = [
     path: "risks",
     Fallback: RisksPageSkeleton,
     loader: loaderFromQueryLoader(({ organizationId }) =>
-      loadQuery<RiskGraphListQuery>(relayEnvironment, risksQuery, {
+      loadQuery<RiskGraphListQuery>(consoleEnvironment, risksQuery, {
         organizationId: organizationId!,
         snapshotId: null
       }),
@@ -27,7 +27,7 @@ export const riskRoutes = [
     path: "snapshots/:snapshotId/risks",
     Fallback: RisksPageSkeleton,
     loader: loaderFromQueryLoader(({ organizationId, snapshotId }) =>
-      loadQuery<RiskGraphListQuery>(relayEnvironment, risksQuery, {
+      loadQuery<RiskGraphListQuery>(consoleEnvironment, risksQuery, {
         organizationId: organizationId!,
         snapshotId: snapshotId!
       }),
@@ -38,7 +38,7 @@ export const riskRoutes = [
     path: "risks/:riskId",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ riskId }) =>
-      loadQuery<RiskGraphNodeQuery>(relayEnvironment, riskNodeQuery, { riskId: riskId! }),
+      loadQuery<RiskGraphNodeQuery>(consoleEnvironment, riskNodeQuery, { riskId: riskId! }),
     ),
     Component: withQueryRef(lazy(() => import("/pages/organizations/risks/RiskDetailPage"))),
     children: [
@@ -90,7 +90,7 @@ export const riskRoutes = [
     path: "snapshots/:snapshotId/risks/:riskId",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ riskId }) =>
-      loadQuery<RiskGraphNodeQuery>(relayEnvironment, riskNodeQuery, { riskId: riskId! }),
+      loadQuery<RiskGraphNodeQuery>(consoleEnvironment, riskNodeQuery, { riskId: riskId! }),
     ),
     Component: withQueryRef(lazy(() => import("/pages/organizations/risks/RiskDetailPage"))),
     children: [

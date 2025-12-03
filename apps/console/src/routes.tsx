@@ -7,12 +7,6 @@ import {
 import { MainLayout } from "./layouts/MainLayout";
 import { EmployeeLayout } from "./layouts/EmployeeLayout";
 import { AuthLayout, CenteredLayout, CenteredLayoutSkeleton } from "@probo/ui";
-import {
-  relayEnvironment,
-  UnAuthenticatedError,
-  UnauthorizedError,
-  ForbiddenError,
-} from "./providers/RelayProviders";
 import { PageSkeleton } from "./components/skeletons/PageSkeleton.tsx";
 import { loadQuery } from "react-relay";
 import { riskRoutes } from "./routes/riskRoutes.ts";
@@ -37,12 +31,24 @@ import { rightsRequestRoutes } from "./routes/rightsRequestRoutes.ts";
 import { processingActivityRoutes } from "./routes/processingActivityRoutes.ts";
 import { statesOfApplicabilityRoutes } from "./routes/statesOfApplicabilityRoutes.ts";
 import { lazy } from "@probo/react-lazy";
-import { loaderFromQueryLoader, routeFromAppRoute, withQueryRef, type AppRoute } from "@probo/routes";
+import {
+  loaderFromQueryLoader,
+  routeFromAppRoute,
+  withQueryRef,
+  type AppRoute,
+} from "@probo/routes";
 import { employeeDocumentsQuery } from "./pages/organizations/employee/EmployeeDocumentsPage";
 import { employeeDocumentSignatureQuery } from "./pages/organizations/employee/EmployeeDocumentSignaturePage";
 import { Role } from "@probo/helpers";
 import { PermissionsContext } from "./providers/PermissionsContext";
 import { use } from "react";
+import { RelayEnvironmentProvider } from "react-relay";
+import { connectEnvironment, consoleEnvironment } from "./environments.ts";
+import {
+  ForbiddenError,
+  UnAuthenticatedError,
+  UnauthorizedError,
+} from "@probo/relay";
 
 /**
  * Top level error boundary
@@ -68,7 +74,11 @@ function ErrorBoundary({ error: propsError }: { error?: string }) {
 const routes = [
   {
     path: "/auth",
-    Component: AuthLayout,
+    Component: () => (
+      <RelayEnvironmentProvider environment={connectEnvironment}>
+        <AuthLayout />
+      </RelayEnvironmentProvider>
+    ),
     children: [
       {
         path: "login",
@@ -98,7 +108,11 @@ const routes = [
   },
   {
     path: "/",
-    Component: CenteredLayout,
+    Component: () => (
+      <RelayEnvironmentProvider environment={consoleEnvironment}>
+        <CenteredLayout />
+      </RelayEnvironmentProvider>
+    ),
     Fallback: CenteredLayoutSkeleton,
     ErrorBoundary: ErrorBoundary,
     children: [
@@ -132,35 +146,42 @@ const routes = [
       {
         path: "",
         Fallback: PageSkeleton,
-        loader: loaderFromQueryLoader(
-          ({ organizationId }) =>
-            loadQuery(relayEnvironment, employeeDocumentsQuery, {
-              organizationId: organizationId!,
-            })
+        loader: loaderFromQueryLoader(({ organizationId }) =>
+          loadQuery(consoleEnvironment, employeeDocumentsQuery, {
+            organizationId: organizationId!,
+          })
         ),
-        Component: withQueryRef(lazy(
-          () => import("./pages/organizations/employee/EmployeeDocumentsPage")
-        )),
+        Component: withQueryRef(
+          lazy(
+            () => import("./pages/organizations/employee/EmployeeDocumentsPage")
+          )
+        ),
       },
       {
         path: ":documentId",
         Fallback: PageSkeleton,
         ErrorBoundary: ErrorBoundary,
-        loader: loaderFromQueryLoader(
-          ({ documentId }) =>
-            loadQuery(relayEnvironment, employeeDocumentSignatureQuery, {
-              documentId: documentId!,
-            })
+        loader: loaderFromQueryLoader(({ documentId }) =>
+          loadQuery(consoleEnvironment, employeeDocumentSignatureQuery, {
+            documentId: documentId!,
+          })
         ),
-        Component: withQueryRef(lazy(
-          () => import("./pages/organizations/employee/EmployeeDocumentSignaturePage")
-        )),
+        Component: withQueryRef(
+          lazy(
+            () =>
+              import("./pages/organizations/employee/EmployeeDocumentSignaturePage")
+          )
+        ),
       },
     ],
   },
   {
     path: "/organizations/:organizationId",
-    Component: MainLayout,
+    Component: () => (
+      <RelayEnvironmentProvider environment={consoleEnvironment}>
+        <MainLayout />
+      </RelayEnvironmentProvider>
+    ),
     ErrorBoundary: ErrorBoundary,
     children: [
       {
@@ -180,13 +201,14 @@ const routes = [
       {
         path: "settings",
         Fallback: PageSkeleton,
-        loader: loaderFromQueryLoader(
-          ({ organizationId }) =>
-            loadQuery(relayEnvironment, organizationViewQuery, {
-              organizationId: organizationId!,
-            })
+        loader: loaderFromQueryLoader(({ organizationId }) =>
+          loadQuery(consoleEnvironment, organizationViewQuery, {
+            organizationId: organizationId!,
+          })
         ),
-        Component: withQueryRef(lazy(() => import("./pages/organizations/SettingsPage"))),
+        Component: withQueryRef(
+          lazy(() => import("./pages/organizations/SettingsPage"))
+        ),
         children: [
           {
             path: "",
@@ -196,19 +218,27 @@ const routes = [
           },
           {
             path: "general",
-            Component: lazy(() => import("./pages/organizations/settings/GeneralSettingsTab")),
+            Component: lazy(
+              () => import("./pages/organizations/settings/GeneralSettingsTab")
+            ),
           },
           {
             path: "members",
-            Component: lazy(() => import("./pages/organizations/settings/MembersSettingsTab")),
+            Component: lazy(
+              () => import("./pages/organizations/settings/MembersSettingsTab")
+            ),
           },
           {
             path: "domain",
-            Component: lazy(() => import("./pages/organizations/settings/DomainSettingsTab")),
+            Component: lazy(
+              () => import("./pages/organizations/settings/DomainSettingsTab")
+            ),
           },
           {
             path: "saml-sso",
-            Component: lazy(() => import("./pages/organizations/settings/SAMLSettingsTab")),
+            Component: lazy(
+              () => import("./pages/organizations/settings/SAMLSettingsTab")
+            ),
           },
         ],
       },
