@@ -22,6 +22,7 @@ import { useToggle } from "@probo/hooks";
 import { useStateWithSchema } from "/hooks/useStateWithSchema.ts";
 import clsx from "clsx";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts.ts";
+import { defaultPageSize } from "/components/table/SortableDataTable.tsx";
 
 type ColumnDefinition = { label: string; field: string } | string;
 
@@ -60,6 +61,7 @@ export function EditableTable<
   addLabel: string;
   // Default value used when creating a new item
   defaultValue: z.infer<S>;
+  pageSize?: number;
 }) {
   const { update } = useMutateField(props.updateMutation);
   const [showAdd, toggleAdd] = useToggle(false);
@@ -71,6 +73,7 @@ export function EditableTable<
       hasNext={props.pagination.hasNext}
       isLoadingNext={props.pagination.isLoadingNext}
       loadNext={props.pagination.loadNext}
+      pageSize={props.pageSize ?? defaultPageSize}
     >
       <Row>
         {props.columns.map((column, index) => (
@@ -104,13 +107,13 @@ export function EditableTable<
   );
 }
 
-function NewItemRow<S extends z.ZodSchema>(props: {
+function NewItemRow<T extends { id: string }, S extends z.ZodSchema>(props: {
   schema: S;
   defaultValue: z.infer<S>;
   connectionId: string;
   mutation: GraphQLTaggedNode;
   onSuccess: () => void;
-  row: (props: EditableTableRowProps<any, S>) => ReactNode;
+  row: (props: EditableTableRowProps<T, S>) => ReactNode;
 }) {
   const { update, errors, value } = useStateWithSchema(
     props.schema,

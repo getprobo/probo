@@ -53,6 +53,7 @@ export function AssetsTable(props: Props) {
 
   return (
     <EditableTable
+      pageSize={10}
       connectionId={connectionId}
       pagination={pagination}
       items={assets}
