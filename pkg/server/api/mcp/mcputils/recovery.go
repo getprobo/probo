@@ -22,7 +22,7 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/authz"
+	"go.probo.inc/probo/pkg/iam"
 )
 
 func RecoveryMiddleware(logger *log.Logger) func(mcp.MethodHandler) mcp.MethodHandler {
@@ -47,14 +47,14 @@ func convertPanicToError(ctx context.Context, logger *log.Logger, panicValue any
 		return fmt.Errorf("internal server error")
 	}
 
-	var tenantAccessErr *authz.TenantAccessError
+	var tenantAccessErr *iam.TenantAccessError
 	if errTyped, ok := panicValue.(error); ok && errors.As(errTyped, &tenantAccessErr) {
 		return fmt.Errorf("not authorized: %s", tenantAccessErr.Message)
 	}
 
-	var permissionDeniedErr *authz.PermissionDeniedError
+	var permissionDeniedErr *iam.ErrInsufficientPermissions
 	if errTyped, ok := panicValue.(error); ok && errors.As(errTyped, &permissionDeniedErr) {
-		return fmt.Errorf("permission denied: %s", permissionDeniedErr.Message)
+		return fmt.Errorf("permission denied: %s", permissionDeniedErr.Error())
 	}
 
 	if err, ok := panicValue.(error); ok {

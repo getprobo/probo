@@ -1,5 +1,5 @@
 import { loadQuery } from "react-relay";
-import { relayEnvironment } from "/providers/RelayProviders";
+import { consoleEnvironment } from "/environments";
 import { PageSkeleton } from "/components/skeletons/PageSkeleton";
 import { lazy } from "@probo/react-lazy";
 import { processingActivitiesQuery, processingActivityNodeQuery } from "/hooks/graph/ProcessingActivityGraph";
@@ -12,7 +12,7 @@ export const processingActivityRoutes = [
     path: "processing-activities",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ organizationId }) =>
-      loadQuery<ProcessingActivityGraphListQuery>(relayEnvironment, processingActivitiesQuery, {
+      loadQuery<ProcessingActivityGraphListQuery>(consoleEnvironment, processingActivitiesQuery, {
         organizationId: organizationId!,
         snapshotId: null
       }),
@@ -25,7 +25,7 @@ export const processingActivityRoutes = [
     path: "snapshots/:snapshotId/processing-activities",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ organizationId, snapshotId }) =>
-      loadQuery<ProcessingActivityGraphListQuery>(relayEnvironment, processingActivitiesQuery, {
+      loadQuery<ProcessingActivityGraphListQuery>(consoleEnvironment, processingActivitiesQuery, {
         organizationId: organizationId!,
         snapshotId,
       }),
@@ -38,7 +38,7 @@ export const processingActivityRoutes = [
     path: "processing-activities/:activityId",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ activityId }) =>
-      loadQuery<ProcessingActivityGraphNodeQuery>(relayEnvironment, processingActivityNodeQuery, {
+      loadQuery<ProcessingActivityGraphNodeQuery>(consoleEnvironment, processingActivityNodeQuery, {
         processingActivityId: activityId!,
       }),
     ),
@@ -50,7 +50,7 @@ export const processingActivityRoutes = [
     path: "snapshots/:snapshotId/processing-activities/:activityId",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ activityId }) =>
-      loadQuery<ProcessingActivityGraphNodeQuery>(relayEnvironment, processingActivityNodeQuery, {
+      loadQuery<ProcessingActivityGraphNodeQuery>(consoleEnvironment, processingActivityNodeQuery, {
         processingActivityId: activityId!,
       }),
     ),

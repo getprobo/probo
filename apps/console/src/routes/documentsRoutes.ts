@@ -1,6 +1,6 @@
 import { Fragment } from "react";
 import { loadQuery } from "react-relay";
-import { relayEnvironment } from "/providers/RelayProviders";
+import { consoleEnvironment } from "/environments";
 import { documentsQuery } from "/hooks/graph/DocumentGraph";
 import { documentNodeQuery } from "/hooks/graph/DocumentGraph";
 import { PageSkeleton } from "/components/skeletons/PageSkeleton";
@@ -58,7 +58,7 @@ export const documentsRoutes = [
     path: "documents",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ organizationId }) =>
-      loadQuery<DocumentGraphListQuery>(relayEnvironment, documentsQuery, { organizationId: organizationId! }),
+      loadQuery<DocumentGraphListQuery>(consoleEnvironment, documentsQuery, { organizationId: organizationId! }),
     ),
     Component: withQueryRef(lazy(
       () => import("/pages/organizations/documents/DocumentsPage"),
@@ -68,7 +68,7 @@ export const documentsRoutes = [
     path: "documents/:documentId",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ documentId }) =>
-      loadQuery<DocumentGraphNodeQuery>(relayEnvironment, documentNodeQuery, { documentId: documentId! }),
+      loadQuery<DocumentGraphNodeQuery>(consoleEnvironment, documentNodeQuery, { documentId: documentId! }),
     ),
     Component: withQueryRef(lazy(
       () => import("../pages/organizations/documents/DocumentDetailPage"),

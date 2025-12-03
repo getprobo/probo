@@ -3,7 +3,6 @@ import { Button, Field, IconChevronLeft, useToast } from "@probo/ui";
 import type { FormEventHandler } from "react";
 import { useState } from "react";
 import { Link, useSearchParams } from "react-router";
-import { buildEndpoint } from "/providers/RelayProviders";
 
 export default function LoginPage() {
   const { __ } = useTranslate();
@@ -33,7 +32,7 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const res = await fetch(buildEndpoint("/connect/login"), {
+      const res = await fetch("/connect/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -68,7 +67,7 @@ export default function LoginPage() {
     setIsChecking(true);
 
     try {
-      const res = await fetch(buildEndpoint("/connect/check-sso"), {
+      const res = await fetch("/connect/check-sso", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -78,15 +77,15 @@ export default function LoginPage() {
 
       if (!res.ok) {
         const error = await res.json();
-        throw new Error(error.message || __("SSO not available for this email domain"));
+        throw new Error(
+          error.message || __("SSO not available for this email domain")
+        );
       }
 
       const data = await res.json();
 
       if (data.ssoAvailable && data.samlConfigId) {
-        window.location.href = buildEndpoint(
-          `/connect/saml/login/${data.samlConfigId}`
-        );
+        window.location.href = `/connect/saml/login/${data.samlConfigId}`;
       } else {
         throw new Error(__("SSO not available for this email domain"));
       }
@@ -115,10 +114,7 @@ export default function LoginPage() {
           {__("Choose your login method")}
         </p>
 
-        <Button
-          className="w-full"
-          onClick={() => setMode("password")}
-        >
+        <Button className="w-full" onClick={() => setMode("password")}>
           {__("Login with Email")}
         </Button>
 
@@ -146,7 +142,10 @@ export default function LoginPage() {
 
         <div className="text-center mt-6 text-sm text-txt-secondary">
           {__("Don't have an account ?")}{" "}
-          <Link to="/auth/register" className="underline hover:text-txt-primary">
+          <Link
+            to="/auth/register"
+            className="underline hover:text-txt-primary"
+          >
             {__("Register")}
           </Link>
         </div>
@@ -206,7 +205,10 @@ export default function LoginPage() {
 
         <div className="text-center mt-6 text-sm text-txt-secondary">
           {__("Don't have an account ?")}{" "}
-          <Link to="/auth/register" className="underline hover:text-txt-primary">
+          <Link
+            to="/auth/register"
+            className="underline hover:text-txt-primary"
+          >
             {__("Register")}
           </Link>
         </div>
@@ -235,9 +237,7 @@ export default function LoginPage() {
         <span className="text-sm">{__("Back")}</span>
       </button>
 
-      <h1 className="text-center text-2xl font-bold">
-        {__("Login with SSO")}
-      </h1>
+      <h1 className="text-center text-2xl font-bold">{__("Login with SSO")}</h1>
       <p className="text-center text-txt-tertiary mt-1 mb-6">
         {__("Enter your work email to continue with SSO")}
       </p>

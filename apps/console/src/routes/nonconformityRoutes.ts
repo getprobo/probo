@@ -1,5 +1,5 @@
 import { loadQuery } from "react-relay";
-import { relayEnvironment } from "/providers/RelayProviders";
+import { consoleEnvironment } from "/environments";
 import { PageSkeleton } from "/components/skeletons/PageSkeleton";
 import { lazy } from "@probo/react-lazy";
 import { nonconformitiesQuery, nonconformityNodeQuery } from "../hooks/graph/NonconformityGraph";
@@ -12,7 +12,7 @@ export const nonconformityRoutes = [
     path: "nonconformities",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ organizationId }) =>
-      loadQuery<NonconformityGraphListQuery>(relayEnvironment, nonconformitiesQuery, {
+      loadQuery<NonconformityGraphListQuery>(consoleEnvironment, nonconformitiesQuery, {
         organizationId,
         snapshotId: null
       }),
@@ -25,7 +25,7 @@ export const nonconformityRoutes = [
     path: "snapshots/:snapshotId/nonconformities",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ organizationId, snapshotId }) =>
-      loadQuery<NonconformityGraphListQuery>(relayEnvironment, nonconformitiesQuery, {
+      loadQuery<NonconformityGraphListQuery>(consoleEnvironment, nonconformitiesQuery, {
         organizationId,
         snapshotId,
       }),
@@ -38,7 +38,7 @@ export const nonconformityRoutes = [
     path: "nonconformities/:nonconformityId",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ nonconformityId }) =>
-      loadQuery<NonconformityGraphNodeQuery>(relayEnvironment, nonconformityNodeQuery, {
+      loadQuery<NonconformityGraphNodeQuery>(consoleEnvironment, nonconformityNodeQuery, {
         nonconformityId,
       }),
     ),
@@ -50,7 +50,7 @@ export const nonconformityRoutes = [
     path: "snapshots/:snapshotId/nonconformities/:nonconformityId",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ nonconformityId }) =>
-      loadQuery<NonconformityGraphNodeQuery>(relayEnvironment, nonconformityNodeQuery, {
+      loadQuery<NonconformityGraphNodeQuery>(consoleEnvironment, nonconformityNodeQuery, {
         nonconformityId: nonconformityId
       }),
     ),

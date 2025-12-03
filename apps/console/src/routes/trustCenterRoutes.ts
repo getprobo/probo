@@ -1,5 +1,5 @@
 import { loadQuery } from "react-relay";
-import { relayEnvironment } from "/providers/RelayProviders";
+import { consoleEnvironment } from "/environments";
 import { PageSkeleton } from "/components/skeletons/PageSkeleton";
 import { LinkCardSkeleton } from "/components/skeletons/LinkCardSkeleton";
 import { lazy } from "@probo/react-lazy";
@@ -12,7 +12,7 @@ export const trustCenterRoutes = [
     path: "trust-center",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ organizationId }) =>
-      loadQuery<TrustCenterGraphQuery>(relayEnvironment, trustCenterQuery, { organizationId }, { fetchPolicy: "network-only" }),
+      loadQuery<TrustCenterGraphQuery>(consoleEnvironment, trustCenterQuery, { organizationId }, { fetchPolicy: "network-only" }),
     ),
     Component: withQueryRef(lazy(
       () => import("/pages/organizations/trustCenter/TrustCenterPage")

@@ -52,23 +52,7 @@ type (
 	}
 
 	CustomDomains []*CustomDomain
-
-	ErrCustomDomainNotFound struct {
-		Identifier string
-	}
-
-	ErrCustomDomainAlreadyExists struct {
-		message string
-	}
 )
-
-func (e ErrCustomDomainNotFound) Error() string {
-	return fmt.Sprintf("custom domain not found: %q", e.Identifier)
-}
-
-func (e ErrCustomDomainAlreadyExists) Error() string {
-	return e.message
-}
 
 func NewCustomDomain(tenantID gid.TenantID, domain string) *CustomDomain {
 	now := time.Now()
@@ -385,9 +369,7 @@ INSERT INTO custom_domains (
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
 			if pgErr.Code == "23505" && pgErr.ConstraintName == "custom_domains_domain_key" {
-				return &ErrCustomDomainAlreadyExists{
-					message: fmt.Sprintf("custom domain with domain %q already exists", cd.Domain),
-				}
+				return ErrResourceAlreadyExists
 			}
 		}
 		return fmt.Errorf("cannot insert custom domain: %w", err)

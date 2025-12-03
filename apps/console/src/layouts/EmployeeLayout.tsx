@@ -32,7 +32,6 @@ import type { EmployeeLayoutQuery as EmployeeLayoutQueryType } from "./__generat
 import { Suspense, useState, useEffect, useMemo, use } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { PageError } from "/components/PageError";
-import { buildEndpoint } from "/providers/RelayProviders";
 import { PermissionsProvider } from "/providers/PermissionsProvider";
 import { PermissionsContext } from "/providers/PermissionsContext";
 
@@ -71,11 +70,7 @@ export function EmployeeLayout() {
   );
 }
 
-function EmployeeLayoutContent({
-  organizationId,
-}: {
-  organizationId: string;
-}) {
+function EmployeeLayoutContent({ organizationId }: { organizationId: string }) {
   const data = useLazyLoadQuery<EmployeeLayoutQueryType>(EmployeeLayoutQuery, {
     organizationId,
   });
@@ -352,7 +347,7 @@ function UserDropdown({ organizationId }: { organizationId: string }) {
   ) => {
     e.preventDefault();
 
-    fetch(buildEndpoint("/connect/logout"), {
+    fetch("/connect/logout", {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",

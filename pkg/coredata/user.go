@@ -43,23 +43,7 @@ type (
 	}
 
 	Users []*User
-
-	ErrUserNotFound struct {
-		Identifier string
-	}
-
-	ErrUserAlreadyExists struct {
-		message string
-	}
 )
-
-func (e ErrUserNotFound) Error() string {
-	return fmt.Sprintf("user not found: %q", e.Identifier)
-}
-
-func (e ErrUserAlreadyExists) Error() string {
-	return e.message
-}
 
 func (u User) CursorKey(orderBy UserOrderField) page.CursorKey {
 	switch orderBy {
@@ -180,7 +164,7 @@ LIMIT 1;
 	user, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[User])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrUserNotFound{Identifier: email.String()}
+			return ErrResourceNotFound
 		}
 
 		return fmt.Errorf("cannot collect user: %w", err)
@@ -224,7 +208,7 @@ LIMIT 1;
 	user, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[User])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrUserNotFound{Identifier: userID.String()}
+			return ErrResourceNotFound
 		}
 
 		return fmt.Errorf("cannot collect user: %w", err)
@@ -238,7 +222,6 @@ LIMIT 1;
 func (u *User) Insert(
 	ctx context.Context,
 	conn pg.Conn,
-	scope Scoper,
 ) error {
 	q := `
 INSERT INTO
@@ -272,79 +255,12 @@ VALUES (
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
 			if pgErr.Code == "23505" && strings.Contains(pgErr.ConstraintName, "email_address") {
-				return &ErrUserAlreadyExists{
-					message: fmt.Sprintf("user with email %s already exists", u.EmailAddress),
-				}
+				return ErrResourceAlreadyExists
 			}
 		}
 
 		return err
 	}
-
-	return nil
-}
-
-func (u *User) UpdateEmailVerification(
-	ctx context.Context,
-	conn pg.Conn,
-	verified bool,
-) error {
-	q := `
-UPDATE
-    users
-SET
-    email_address_verified = @email_address_verified,
-    updated_at = @updated_at
-WHERE
-    id = @user_id
-`
-
-	args := pgx.StrictNamedArgs{
-		"user_id":                u.ID,
-		"email_address_verified": verified,
-		"updated_at":             time.Now(),
-	}
-
-	_, err := conn.Exec(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot update user email verification: %w", err)
-	}
-
-	u.EmailAddressVerified = verified
-	u.UpdatedAt = args["updated_at"].(time.Time)
-
-	return nil
-}
-
-func (u *User) UpdatePassword(
-	ctx context.Context,
-	conn pg.Conn,
-	hashedPassword []byte,
-) error {
-	q := `
-UPDATE
-    users
-SET
-    hashed_password = @hashed_password,
-    updated_at = @updated_at
-WHERE
-    id = @user_id
-`
-
-	now := time.Now()
-	args := pgx.StrictNamedArgs{
-		"user_id":         u.ID,
-		"hashed_password": hashedPassword,
-		"updated_at":      now,
-	}
-
-	_, err := conn.Exec(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot update user password: %w", err)
-	}
-
-	u.HashedPassword = hashedPassword
-	u.UpdatedAt = now
 
 	return nil
 }
@@ -357,6 +273,8 @@ SET
     email_address = @email_address,
     email_address_verified = @email_address_verified,
     saml_subject = @saml_subject,
+	fullname = @fullname,
+	hashed_password = @hashed_password,
     updated_at = @updated_at
 WHERE
     id = @user_id
@@ -368,11 +286,17 @@ WHERE
 		"email_address_verified": u.EmailAddressVerified,
 		"saml_subject":           u.SAMLSubject,
 		"updated_at":             u.UpdatedAt,
+		"fullname":               u.FullName,
+		"hashed_password":        u.HashedPassword,
 	}
 
-	_, err := conn.Exec(ctx, q, args)
+	result, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot update user: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return ErrResourceNotFound
 	}
 
 	return nil
@@ -411,7 +335,7 @@ LIMIT 1;
 	user, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[User])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrUserNotFound{Identifier: samlSubject}
+			return ErrResourceNotFound
 		}
 
 		return fmt.Errorf("cannot collect user: %w", err)
@@ -421,10 +345,6 @@ LIMIT 1;
 
 	return nil
 }
-
-// LoadByEmailAndTenant, LoadByEmailGlobal, and IsTenantUser methods removed
-// All users are now global (no tenant_id distinction)
-// Use LoadByEmail() for all email-based lookups
 
 func (u *User) CountMemberships(
 	ctx context.Context,

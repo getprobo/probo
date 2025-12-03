@@ -1,5 +1,5 @@
 import { loadQuery } from "react-relay";
-import { relayEnvironment } from "/providers/RelayProviders";
+import { consoleEnvironment } from "/environments";
 import { PageSkeleton } from "/components/skeletons/PageSkeleton";
 import { lazy } from "@probo/react-lazy";
 import { dataQuery, datumNodeQuery } from "../hooks/graph/DatumGraph";
@@ -12,7 +12,7 @@ export const dataRoutes = [
     path: "data",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ organizationId }) =>
-      loadQuery<DatumGraphListQuery>(relayEnvironment, dataQuery, {
+      loadQuery<DatumGraphListQuery>(consoleEnvironment, dataQuery, {
         organizationId: organizationId,
         snapshotId: null
       }),
@@ -25,7 +25,7 @@ export const dataRoutes = [
     path: "snapshots/:snapshotId/data",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ organizationId, snapshotId }) =>
-      loadQuery<DatumGraphListQuery>(relayEnvironment, dataQuery, {
+      loadQuery<DatumGraphListQuery>(consoleEnvironment, dataQuery, {
         organizationId,
         snapshotId,
       }),
@@ -38,7 +38,7 @@ export const dataRoutes = [
     path: "data/:dataId",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ dataId }) =>
-      loadQuery<DatumGraphNodeQuery>(relayEnvironment, datumNodeQuery, { dataId }),
+      loadQuery<DatumGraphNodeQuery>(consoleEnvironment, datumNodeQuery, { dataId }),
     ),
     Component: withQueryRef(lazy(
       () => import("../pages/organizations/data/DatumDetailsPage")
@@ -48,7 +48,7 @@ export const dataRoutes = [
     path: "snapshots/:snapshotId/data/:dataId",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ dataId }) =>
-      loadQuery<DatumGraphNodeQuery>(relayEnvironment, datumNodeQuery, { dataId }),
+      loadQuery<DatumGraphNodeQuery>(consoleEnvironment, datumNodeQuery, { dataId }),
     ),
     Component: withQueryRef(lazy(
       () => import("../pages/organizations/data/DatumDetailsPage")

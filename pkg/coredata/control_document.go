@@ -21,10 +21,10 @@ import (
 	"maps"
 	"time"
 
-	"go.probo.inc/probo/pkg/gid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/gid"
 )
 
 type (
@@ -37,16 +37,7 @@ type (
 	}
 
 	ControlDocuments []*ControlDocument
-
-	ErrControlDocumentMappingAlreadyExists struct {
-		ControlID  gid.GID
-		DocumentID gid.GID
-	}
 )
-
-func (e ErrControlDocumentMappingAlreadyExists) Error() string {
-	return fmt.Sprintf("control %s is already mapped to document %s", e.ControlID, e.DocumentID)
-}
 
 func (cp ControlDocument) Insert(
 	ctx context.Context,
@@ -84,10 +75,7 @@ VALUES (
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
 			if pgErr.Code == "23505" && pgErr.ConstraintName == "controls_policies_pkey" {
-				return &ErrControlDocumentMappingAlreadyExists{
-					ControlID:  cp.ControlID,
-					DocumentID: cp.DocumentID,
-				}
+				return ErrResourceAlreadyExists
 			}
 		}
 

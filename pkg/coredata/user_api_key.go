@@ -23,27 +23,30 @@ import (
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 )
 
 type (
 	UserAPIKey struct {
-		ID        gid.GID   `db:"id"`
-		UserID    gid.GID   `db:"user_id"`
-		Name      string    `db:"name"`
-		ExpiresAt time.Time `db:"expires_at"`
-		CreatedAt time.Time `db:"created_at"`
-		UpdatedAt time.Time `db:"updated_at"`
+		ID           gid.GID       `db:"id"`
+		UserID       gid.GID       `db:"user_id"`
+		Name         string        `db:"name"`
+		ExpiresAt    time.Time     `db:"expires_at"`
+		ExpireReason *ExpireReason `db:"expire_reason"`
+		CreatedAt    time.Time     `db:"created_at"`
+		UpdatedAt    time.Time     `db:"updated_at"`
 	}
 
 	UserAPIKeys []*UserAPIKey
-
-	ErrUserAPIKeyNotFound struct {
-		Identifier string
-	}
 )
 
-func (e ErrUserAPIKeyNotFound) Error() string {
-	return fmt.Sprintf("user api key not found: %q", e.Identifier)
+func (a *UserAPIKey) CursorKey(orderBy UserAPIKeyOrderField) page.CursorKey {
+	switch orderBy {
+	case UserAPIKeyOrderFieldCreatedAt:
+		return page.NewCursorKey(a.ID, a.CreatedAt)
+	}
+
+	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
 func (a *UserAPIKey) LoadByID(
@@ -57,6 +60,7 @@ SELECT
     user_id,
     name,
     expires_at,
+    expire_reason,
     created_at,
     updated_at
 FROM
@@ -76,7 +80,7 @@ LIMIT 1;
 	apiKey, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[UserAPIKey])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrUserAPIKeyNotFound{Identifier: apiKeyID.String()}
+			return ErrResourceNotFound
 		}
 
 		return fmt.Errorf("cannot collect user api key: %w", err)
@@ -98,6 +102,7 @@ SELECT
     user_id,
     name,
     expires_at,
+    expire_reason,
     created_at,
     updated_at
 FROM
@@ -124,30 +129,53 @@ ORDER BY created_at DESC;
 	return nil
 }
 
+func (a *UserAPIKeys) CountByUserID(ctx context.Context, conn pg.Conn, userID gid.GID) (int, error) {
+	q := `
+SELECT
+    COUNT(*)
+FROM
+    auth_user_api_keys
+WHERE
+    user_id = @user_id
+ORDER BY created_at DESC;
+`
+
+	args := pgx.StrictNamedArgs{"user_id": userID}
+	row := conn.QueryRow(ctx, q, args)
+	var count int
+	if err := row.Scan(&count); err != nil {
+		return 0, fmt.Errorf("cannot scan count: %w", err)
+	}
+
+	return count, nil
+}
+
 func (a *UserAPIKey) Insert(
 	ctx context.Context,
 	conn pg.Conn,
 ) error {
 	q := `
 INSERT INTO
-    auth_user_api_keys (id, user_id, name, expires_at, created_at, updated_at)
+    auth_user_api_keys (id, user_id, name, expires_at, expire_reason, created_at, updated_at)
 VALUES (
     @api_key_id,
     @user_id,
     @name,
     @expires_at,
+    @expire_reason,
     @created_at,
     @updated_at
 )
 `
 
 	args := pgx.StrictNamedArgs{
-		"api_key_id": a.ID,
-		"user_id":    a.UserID,
-		"name":       a.Name,
-		"expires_at": a.ExpiresAt,
-		"created_at": a.CreatedAt,
-		"updated_at": a.UpdatedAt,
+		"api_key_id":    a.ID,
+		"user_id":       a.UserID,
+		"name":          a.Name,
+		"expires_at":    a.ExpiresAt,
+		"expire_reason": a.ExpireReason,
+		"created_at":    a.CreatedAt,
+		"updated_at":    a.UpdatedAt,
 	}
 
 	_, err := conn.Exec(ctx, q, args)
@@ -168,16 +196,18 @@ UPDATE
 SET
     name = @name,
     expires_at = @expires_at,
+    expire_reason = @expire_reason,
     updated_at = @updated_at
 WHERE
     id = @api_key_id
 `
 
 	args := pgx.StrictNamedArgs{
-		"api_key_id": a.ID,
-		"name":       a.Name,
-		"expires_at": a.ExpiresAt,
-		"updated_at": a.UpdatedAt,
+		"api_key_id":    a.ID,
+		"name":          a.Name,
+		"expires_at":    a.ExpiresAt,
+		"expire_reason": a.ExpireReason,
+		"updated_at":    a.UpdatedAt,
 	}
 
 	_, err := conn.Exec(ctx, q, args)

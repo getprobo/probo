@@ -4,7 +4,6 @@ import { useTranslate } from "@probo/i18n";
 import { z } from "zod";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { usePageTitle } from "@probo/hooks";
-import { buildEndpoint } from "/providers/RelayProviders";
 import { useState } from "react";
 
 const schema = z.object({
@@ -22,17 +21,14 @@ export default function ForgotPasswordPage() {
   });
 
   const onSubmit = handleSubmit(async (data) => {
-    const response = await fetch(
-      buildEndpoint("/connect/forget-password"),
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify(data),
-      }
-    );
+    const response = await fetch("/connect/forget-password", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify(data),
+    });
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
