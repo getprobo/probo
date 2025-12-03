@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Added
+
+- Add n8n vendor operations.
+
+### Fixed
+
+- Fix n8n node always returns success.
+
+### Security
+
+- Upgrade golang to 1.25.5
+
 ## [0.97.0] - 2025-12-02
 
 ### Added
