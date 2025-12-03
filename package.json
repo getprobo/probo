@@ -29,8 +29,5 @@
   "packageManager": "npm@11.1.0",
   "volta": {
     "node": "24.4.0"
-  },
-  "dependencies": {
-    "react-dom": "^19.2.1"
   }
 }

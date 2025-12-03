@@ -25,17 +25,14 @@ import (
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/agents"
-	"go.probo.inc/probo/pkg/auth"
-	"go.probo.inc/probo/pkg/authz"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/saferedirect"
 	"go.probo.inc/probo/pkg/server/api"
 	trust_v1 "go.probo.inc/probo/pkg/server/api/trust/v1"
-	auth_server "go.probo.inc/probo/pkg/server/auth"
-	authz_server "go.probo.inc/probo/pkg/server/authz"
 	"go.probo.inc/probo/pkg/server/trust"
 	"go.probo.inc/probo/pkg/server/web"
 	"go.probo.inc/probo/pkg/slack"
@@ -46,11 +43,9 @@ type Config struct {
 	AllowedOrigins    []string
 	ExtraHeaderFields map[string]string
 	Probo             *probo.Service
-	Auth              *auth.Service
-	Authz             *authz.Service
+	IAM               *iam.Service
 	Trust             *trust_pkg.Service
 	Slack             *slack.Service
-	SAML              *auth.SAMLService
 	ConsoleAuth       api.ConsoleAuthConfig
 	TrustAuth         api.TrustAuthConfig
 	MCPConfig         api.MCPConfig
@@ -67,8 +62,6 @@ type Server struct {
 	apiServer         *api.Server
 	webServer         *web.Server
 	trustServer       *trust.Server
-	authServer        *auth_server.Server
-	authzServer       *authz_server.Server
 	router            *chi.Mux
 	extraHeaderFields map[string]string
 	proboService      *probo.Service
@@ -79,11 +72,9 @@ func NewServer(cfg Config) (*Server, error) {
 	apiCfg := api.Config{
 		AllowedOrigins:    cfg.AllowedOrigins,
 		Probo:             cfg.Probo,
-		Auth:              cfg.Auth,
-		Authz:             cfg.Authz,
+		IAM:               cfg.IAM,
 		Trust:             cfg.Trust,
 		Slack:             cfg.Slack,
-		SAML:              cfg.SAML,
 		ConsoleAuth:       cfg.ConsoleAuth,
 		TrustAuth:         cfg.TrustAuth,
 		MCPConfig:         cfg.MCPConfig,
@@ -107,42 +98,12 @@ func NewServer(cfg Config) (*Server, error) {
 		return nil, err
 	}
 
-	authServer, err := auth_server.NewServer(auth_server.Config{
-		Auth:            cfg.Auth,
-		Authz:           cfg.Authz,
-		SAML:            cfg.SAML,
-		CookieName:      cfg.ConsoleAuth.CookieName,
-		CookieDomain:    cfg.ConsoleAuth.CookieDomain,
-		SessionDuration: cfg.ConsoleAuth.SessionDuration,
-		CookieSecret:    cfg.ConsoleAuth.CookieSecret,
-		CookieSecure:    cfg.ConsoleAuth.CookieSecure,
-		FileManager:     cfg.FileManager,
-		Logger:          cfg.Logger.Named("auth"),
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	authzServer, err := authz_server.NewServer(authz_server.Config{
-		Auth:         cfg.Auth,
-		Authz:        cfg.Authz,
-		Logger:       cfg.Logger.Named("authz"),
-		CookieName:   cfg.ConsoleAuth.CookieName,
-		CookieSecret: cfg.ConsoleAuth.CookieSecret,
-		CookieSecure: cfg.ConsoleAuth.CookieSecure,
-	})
-	if err != nil {
-		return nil, err
-	}
-
 	router := chi.NewRouter()
 
 	server := &Server{
 		apiServer:         apiServer,
 		webServer:         webServer,
 		trustServer:       trustServer,
-		authServer:        authServer,
-		authzServer:       authzServer,
 		router:            router,
 		extraHeaderFields: cfg.ExtraHeaderFields,
 		proboService:      cfg.Probo,
@@ -156,8 +117,6 @@ func NewServer(cfg Config) (*Server, error) {
 
 func (s *Server) setupRoutes() {
 	s.router.Mount("/api", s.apiServer)
-	s.router.Mount("/connect", s.authServer)
-	s.router.Mount("/authz", s.authzServer)
 
 	s.router.Route("/trust/{slugOrId}", func(r chi.Router) {
 		r.Use(s.loadTrustCenterBySlugOrID)

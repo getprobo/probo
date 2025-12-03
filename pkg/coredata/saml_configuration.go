@@ -16,35 +16,65 @@ package coredata
 
 import (
 	"context"
+	"crypto/x509"
+	"encoding/pem"
 	"fmt"
 	"maps"
 	"time"
 
-	"go.probo.inc/probo/pkg/gid"
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 )
 
-type SAMLConfiguration struct {
-	ID                      gid.GID               `db:"id"`
-	OrganizationID          gid.GID               `db:"organization_id"`
-	EmailDomain             string                `db:"email_domain"`
-	Enabled                 bool                  `db:"enabled"`
-	EnforcementPolicy       SAMLEnforcementPolicy `db:"enforcement_policy"`
-	IdPEntityID             string                `db:"idp_entity_id"`
-	IdPSsoURL               string                `db:"idp_sso_url"`
-	IdPCertificate          string                `db:"idp_certificate"`
-	IdPMetadataURL          *string               `db:"idp_metadata_url"`
-	AttributeEmail          string                `db:"attribute_email"`
-	AttributeFirstname      string                `db:"attribute_firstname"`
-	AttributeLastname       string                `db:"attribute_lastname"`
-	AttributeRole           string                `db:"attribute_role"`
-	AutoSignupEnabled       bool                  `db:"auto_signup_enabled"`
-	DomainVerified          bool                  `db:"domain_verified"`
-	DomainVerificationToken *string               `db:"domain_verification_token"`
-	DomainVerifiedAt        *time.Time            `db:"domain_verified_at"`
-	CreatedAt               time.Time             `db:"created_at"`
-	UpdatedAt               time.Time             `db:"updated_at"`
+type (
+	SAMLConfiguration struct {
+		ID                      gid.GID                 `db:"id"`
+		OrganizationID          gid.GID                 `db:"organization_id"`
+		EmailDomain             string                  `db:"email_domain"`
+		Status                  SAMLConfigurationStatus `db:"status"`
+		EnforcementPolicy       SAMLEnforcementPolicy   `db:"enforcement_policy"`
+		IdPEntityID             string                  `db:"idp_entity_id"`
+		IdPSsoURL               string                  `db:"idp_sso_url"`
+		IdPCertificate          string                  `db:"idp_certificate"`
+		IdPMetadataURL          *string                 `db:"idp_metadata_url"`
+		AttributeEmail          string                  `db:"attribute_email"`
+		AttributeFirstname      string                  `db:"attribute_firstname"`
+		AttributeLastname       string                  `db:"attribute_lastname"`
+		AttributeRole           string                  `db:"attribute_role"`
+		AutoSignupEnabled       bool                    `db:"auto_signup_enabled"`
+		DomainVerified          bool                    `db:"domain_verified"`
+		DomainVerificationToken *string                 `db:"domain_verification_token"`
+		DomainVerifiedAt        *time.Time              `db:"domain_verified_at"`
+		CreatedAt               time.Time               `db:"created_at"`
+		UpdatedAt               time.Time               `db:"updated_at"`
+	}
+
+	SAMLConfigurations []*SAMLConfiguration
+)
+
+func (s *SAMLConfiguration) CursorKey(orderBy SAMLConfigurationOrderField) page.CursorKey {
+	switch orderBy {
+	case SAMLConfigurationOrderFieldCreatedAt:
+		return page.NewCursorKey(s.ID, s.CreatedAt)
+	}
+
+	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
+}
+
+func (s *SAMLConfiguration) GetIdPCertificate() (*x509.Certificate, error) {
+	block, _ := pem.Decode([]byte(s.IdPCertificate))
+	if block == nil {
+		return nil, fmt.Errorf("cannot decode PEM block from IdP certificate")
+	}
+
+	cert, err := x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse X.509 certificate: %w", err)
+	}
+
+	return cert, nil
 }
 
 func (s *SAMLConfiguration) LoadByOrganizationIDAndEmailDomain(
@@ -154,6 +184,10 @@ LIMIT 1;
 
 	config, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[SAMLConfiguration])
 	if err != nil {
+		if err == pgx.ErrNoRows {
+			return ErrResourceNotFound
+		}
+
 		return fmt.Errorf("cannot collect saml_configuration: %w", err)
 	}
 
@@ -328,12 +362,12 @@ WHERE
 	return nil
 }
 
-func LoadSAMLConfigurationsByOrganizationID(
+func (s *SAMLConfigurations) LoadByOrganizationID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
 	organizationID gid.GID,
-) ([]*SAMLConfiguration, error) {
+) error {
 	q := `
 SELECT
     id,
@@ -370,20 +404,17 @@ ORDER BY email_domain ASC;
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return nil, fmt.Errorf("cannot query auth_saml_configurations: %w", err)
+		return fmt.Errorf("cannot query auth_saml_configurations: %w", err)
 	}
 
-	configs, err := pgx.CollectRows(rows, pgx.RowToStructByName[SAMLConfiguration])
+	samlConfigurations, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[SAMLConfiguration])
 	if err != nil {
-		return nil, fmt.Errorf("cannot collect saml_configurations: %w", err)
+		return fmt.Errorf("cannot collect saml_configurations: %w", err)
 	}
 
-	result := make([]*SAMLConfiguration, len(configs))
-	for i := range configs {
-		result[i] = &configs[i]
-	}
+	*s = samlConfigurations
 
-	return result, nil
+	return nil
 }
 
 // LoadAllEnabledSAMLConfigurationsByEmailDomain loads all enabled SAML configurations for a given email domain
@@ -502,4 +533,39 @@ WHERE
 	}
 
 	return result, nil
+}
+
+func (s *SAMLConfigurations) CountByOrganizationID(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	organizationID gid.GID,
+) (int, error) {
+	q := `
+SELECT
+    COUNT(*)
+FROM
+    auth_saml_configurations
+WHERE
+    %s
+    AND organization_id = @organization_id
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"organization_id": organizationID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return 0, fmt.Errorf("cannot query auth_saml_configurations: %w", err)
+	}
+
+	var count int
+	err = rows.Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("cannot collect count: %w", err)
+	}
+
+	return count, nil
 }

@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"slices"
 	"strings"
 	"time"
 
@@ -35,15 +36,13 @@ import (
 	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/auth"
-	"go.probo.inc/probo/pkg/authz"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/saferedirect"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
-	serverauth "go.probo.inc/probo/pkg/server/auth"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 	"go.probo.inc/probo/pkg/server/session"
 	"go.probo.inc/probo/pkg/statelesstoken"
@@ -60,19 +59,25 @@ type (
 
 	Resolver struct {
 		proboSvc          *probo.Service
-		authSvc           *auth.Service
-		authzSvc          *authz.Service
-		samlSvc           *auth.SAMLService
+		iamSvc            *iam.Service
 		authCfg           AuthConfig
 		customDomainCname string
 		schema            *ast.Schema
 	}
 
 	ctxKey struct{ name string }
+
+	userTenantAccess struct {
+		tenantIDs  []gid.TenantID
+		authErrors map[gid.TenantID]error
+	}
 )
 
 var (
-	sessionContextKey = &ctxKey{name: "session"}
+	sessionContextKey    = &ctxKey{name: "session"}
+	userContextKey       = &ctxKey{name: "user"}
+	userTenantContextKey = &ctxKey{name: "user_tenants"}
+	userAPIKeyContextKey = &ctxKey{name: "user_api_key"}
 )
 
 func SessionFromContext(ctx context.Context) *coredata.Session {
@@ -81,23 +86,23 @@ func SessionFromContext(ctx context.Context) *coredata.Session {
 }
 
 func UserFromContext(ctx context.Context) *coredata.User {
-	return serverauth.UserFromContext(ctx)
+	user, _ := ctx.Value(userContextKey).(*coredata.User)
+	return user
 }
 
 func UserAPIKeyFromContext(ctx context.Context) *coredata.UserAPIKey {
-	return serverauth.UserAPIKeyFromContext(ctx)
+	userAPIKey, _ := ctx.Value(userAPIKeyContextKey).(*coredata.UserAPIKey)
+	return userAPIKey
 }
 
 func NewMux(
 	logger *log.Logger,
 	proboSvc *probo.Service,
-	authSvc *auth.Service,
-	authzSvc *authz.Service,
+	iamSvc *iam.Service,
 	authCfg AuthConfig,
 	connectorRegistry *connector.ConnectorRegistry,
 	safeRedirect *saferedirect.SafeRedirect,
 	customDomainCname string,
-	samlSvc *auth.SAMLService,
 ) *chi.Mux {
 	r := chi.NewMux()
 
@@ -217,7 +222,7 @@ func NewMux(
 		},
 	)
 
-	r.Get("/connectors/initiate", WithSession(authSvc, authzSvc, authCfg, func(w http.ResponseWriter, r *http.Request) {
+	r.Get("/connectors/initiate", WithSession(iamSvc, authCfg, func(w http.ResponseWriter, r *http.Request) {
 		provider := r.URL.Query().Get("provider")
 		if provider != "SLACK" {
 			httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("unsupported provider"))
@@ -294,7 +299,7 @@ func NewMux(
 	})
 
 	r.Get("/", playground.Handler("GraphQL", "/api/console/v1/query"))
-	r.Post("/query", graphqlHandler(logger, proboSvc, authSvc, authzSvc, samlSvc, authCfg, customDomainCname))
+	r.Post("/query", graphqlHandler(logger, proboSvc, iamSvc, authCfg, customDomainCname))
 
 	return r
 }
@@ -306,7 +311,7 @@ func GetSchema() *ast.Schema {
 	return execSchema.Schema()
 }
 
-func graphqlHandler(logger *log.Logger, proboSvc *probo.Service, authSvc *auth.Service, authzSvc *authz.Service, samlSvc *auth.SAMLService, authCfg AuthConfig, customDomainCname string) http.HandlerFunc {
+func graphqlHandler(logger *log.Logger, proboSvc *probo.Service, iamSvc *iam.Service, authCfg AuthConfig, customDomainCname string) http.HandlerFunc {
 	var mb int64 = 1 << 20
 
 	// Parse the schema first to make it available to resolvers
@@ -315,9 +320,7 @@ func graphqlHandler(logger *log.Logger, proboSvc *probo.Service, authSvc *auth.S
 	cfg := schema.Config{
 		Resolvers: &Resolver{
 			proboSvc:          proboSvc,
-			authSvc:           authSvc,
-			authzSvc:          authzSvc,
-			samlSvc:           samlSvc,
+			iamSvc:            iamSvc,
 			authCfg:           authCfg,
 			customDomainCname: customDomainCname,
 			schema:            execSchema.Schema(),
@@ -360,14 +363,14 @@ func graphqlHandler(logger *log.Logger, proboSvc *probo.Service, authSvc *auth.S
 		},
 	)
 
-	return WithSession(authSvc, authzSvc, authCfg, srv.ServeHTTP)
+	return WithSession(iamSvc, authCfg, srv.ServeHTTP)
 }
 
-func WithSession(authSvc *auth.Service, authzSvc *authz.Service, authCfg AuthConfig, next http.HandlerFunc) http.HandlerFunc {
+func WithSession(iamSvc *iam.Service, authCfg AuthConfig, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		if authCtx := serverauth.AuthenticateWithAPIKey(ctx, r, authSvc, authzSvc); authCtx != nil {
+		if authCtx := tryAPIKeyAuth(ctx, r, iamSvc); authCtx != nil {
 			next(w, r.WithContext(authCtx))
 			return
 		}
@@ -396,38 +399,67 @@ func WithSession(authSvc *auth.Service, authzSvc *authz.Service, authCfg AuthCon
 			},
 		}
 
-		authResult := session.TryAuth(ctx, w, r, authSvc, authzSvc, sessionAuthCfg, errorHandler)
+		authResult := session.TryAuth(ctx, w, r, iamSvc, sessionAuthCfg, errorHandler)
 		if authResult == nil {
 			next(w, r)
 			return
 		}
 
 		ctx = context.WithValue(ctx, sessionContextKey, authResult.Session)
-		ctx = context.WithValue(ctx, serverauth.UserContextKey, authResult.User)
-		ctx = context.WithValue(ctx, serverauth.UserTenantContextKey, &serverauth.UserTenantAccess{
-			TenantIDs:  authResult.TenantIDs,
-			AuthErrors: authResult.AuthErrors,
+		ctx = context.WithValue(ctx, userContextKey, authResult.User)
+		ctx = context.WithValue(ctx, userTenantContextKey, &userTenantAccess{
+			tenantIDs:  authResult.TenantIDs,
+			authErrors: authResult.AuthErrors,
 		})
 
 		next(w, r.WithContext(ctx))
 
 		// Update session after the handler completes
-		if _, err := authSvc.UpdateSession(ctx, authResult.Session.ID); err != nil {
+		if _, err := iamSvc.UpdateSession(ctx, authResult.Session.ID); err != nil {
 			panic(fmt.Errorf("cannot update session: %w", err))
 		}
 	}
 }
 
+func tryAPIKeyAuth(ctx context.Context, r *http.Request, iamSvc *iam.Service) context.Context {
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" {
+		return nil
+	}
+
+	if !strings.HasPrefix(authHeader, "Bearer ") {
+		return nil
+	}
+
+	apiKeyString := strings.TrimPrefix(authHeader, "Bearer ")
+
+	user, userAPIKey, err := iamSvc.ValidateUserAPIKey(ctx, apiKeyString)
+	if err != nil {
+		return nil
+	}
+
+	organizations, err := iamSvc.GetAllOrganizationsForUserAPIKeyId(ctx, userAPIKey.ID)
+	if err != nil {
+		return nil
+	}
+
+	tenantIDs := make([]gid.TenantID, 0, len(organizations))
+	for _, org := range organizations {
+		tenantIDs = append(tenantIDs, org.ID.TenantID())
+	}
+
+	ctx = context.WithValue(ctx, userContextKey, user)
+	ctx = context.WithValue(ctx, userAPIKeyContextKey, userAPIKey)
+	ctx = context.WithValue(ctx, userTenantContextKey, &userTenantAccess{
+		tenantIDs:  tenantIDs,
+		authErrors: make(map[gid.TenantID]error),
+	})
+
+	return ctx
+}
+
 func (r *Resolver) ProboService(ctx context.Context, tenantID gid.TenantID) *probo.TenantService {
 	return GetTenantService(ctx, r.proboSvc, tenantID)
-}
-
-func (r *Resolver) AuthzService(ctx context.Context, tenantID gid.TenantID) *authz.TenantAuthzService {
-	return GetTenantAuthzService(ctx, r.authzSvc, tenantID)
-}
-
-func (r *Resolver) AuthService(ctx context.Context, tenantID gid.TenantID) *auth.TenantAuthService {
-	return GetTenantAuthService(ctx, r.authSvc, tenantID)
 }
 
 func UnwrapOmittable[T any](field graphql.Omittable[T]) *T {
@@ -439,27 +471,35 @@ func UnwrapOmittable[T any](field graphql.Omittable[T]) *T {
 }
 
 func GetTenantService(ctx context.Context, proboSvc *probo.Service, tenantID gid.TenantID) *probo.TenantService {
-	serverauth.RequireTenantAccess(ctx, tenantID)
+	validateTenantAccess(ctx, tenantID)
 	return proboSvc.WithTenant(tenantID)
 }
 
-func GetTenantAuthzService(ctx context.Context, authzSvc *authz.Service, tenantID gid.TenantID) *authz.TenantAuthzService {
-	serverauth.RequireTenantAccess(ctx, tenantID)
-	return authzSvc.WithTenant(tenantID)
-}
+func validateTenantAccess(ctx context.Context, tenantID gid.TenantID) {
+	access, _ := ctx.Value(userTenantContextKey).(*userTenantAccess)
 
-func GetTenantAuthService(ctx context.Context, authSvc *auth.Service, tenantID gid.TenantID) *auth.TenantAuthService {
-	serverauth.RequireTenantAccess(ctx, tenantID)
-	return authSvc.WithTenant(tenantID)
-}
-
-func (r *Resolver) MustBeAuthorized(ctx context.Context, entityID gid.GID, action authz.Action) {
-	user := UserFromContext(ctx)
-	apiKey := UserAPIKeyFromContext(ctx)
-
-	authzSvc := r.AuthzService(ctx, entityID.TenantID())
-	err := authzSvc.Authorize(ctx, user, apiKey, entityID, action)
-	if err != nil {
-		panic(err)
+	if access == nil {
+		panic(&iam.TenantAccessError{Message: "tenant not found"})
 	}
+
+	if !slices.Contains(access.tenantIDs, tenantID) {
+		if access.authErrors != nil {
+			if authErr := access.authErrors[tenantID]; authErr != nil {
+				panic(authErr)
+			}
+		}
+
+		panic(&iam.TenantAccessError{Message: "tenant not found"})
+	}
+}
+
+func (r *Resolver) MustBeAuthorized(ctx context.Context, entityID gid.GID, action iam.Action) {
+	// TODO ACL here
+	// user := UserFromContext(ctx)
+	// apiKey := UserAPIKeyFromContext(ctx)
+
+	// // err := iamSvc.Authorize(ctx, user, apiKey, entityID, action)
+	// // if err != nil {
+	// // 	panic(err)
+	// // }
 }

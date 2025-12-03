@@ -13,6 +13,21 @@ probod:
   encryption-key: "thisisnotasecretAAAAAAAAAAAAAAAAAAAAAAAAAAA="
   chrome-dp-addr: "localhost:9222"
 
+  identity-and-access-management:
+    signup:
+      enabled: true
+      invitation-token-validity: 3600
+    password:
+      pepper: "this-is-a-secure-pepper-for-password-hashing-at-least-32-bytes"
+    session:
+      duration: 7d
+      cookie:
+        name: "SSID"
+        domain: "localhost"
+        secret: "this-is-a-secure-secret-for-cookie-signing-at-least-32-bytes"
+        duration: 24
+        secure: true
+
   trust-center:
     http-addr: ":8085"
     https-addr: ":8443"

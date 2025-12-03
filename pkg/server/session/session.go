@@ -19,10 +19,9 @@ import (
 	"errors"
 	"net/http"
 
-	"go.probo.inc/probo/pkg/auth"
-	"go.probo.inc/probo/pkg/authz"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/securecookie"
 )
 
@@ -51,8 +50,7 @@ func TryAuth(
 	ctx context.Context,
 	w http.ResponseWriter,
 	r *http.Request,
-	authSvc *auth.Service,
-	authzSvc *authz.Service,
+	iamSvc *iam.Service,
 	authCfg AuthConfig,
 	errorHandler ErrorHandler,
 ) *AuthResult {
@@ -76,7 +74,7 @@ func TryAuth(
 		return nil
 	}
 
-	session, err := authSvc.GetSession(ctx, sessionID)
+	session, err := iamSvc.GetSession(ctx, sessionID)
 	if err != nil {
 		if errorHandler.OnSessionError != nil {
 			errorHandler.OnSessionError(w, authCfg)
@@ -84,7 +82,7 @@ func TryAuth(
 		return nil
 	}
 
-	user, err := authSvc.GetUserBySession(ctx, sessionID)
+	user, err := iamSvc.GetUserBySession(ctx, sessionID)
 	if err != nil {
 		if errorHandler.OnUserError != nil {
 			errorHandler.OnUserError(w, authCfg)
@@ -92,7 +90,7 @@ func TryAuth(
 		return nil
 	}
 
-	organizations, err := authzSvc.GetAllUserOrganizations(ctx, user.ID)
+	organizations, err := iamSvc.GetAllUserOrganizations(ctx, user.ID)
 	if err != nil {
 		if errorHandler.OnTenantError != nil {
 			errorHandler.OnTenantError(err)
@@ -112,7 +110,7 @@ func TryAuth(
 	}
 
 	// Batch check access to all organizations in a single query
-	accessResults, err := authSvc.CheckOrganizationAccess(ctx, user, orgIDs, session)
+	accessResults, err := iamSvc.CheckOrganizationAccess(ctx, user, orgIDs, session)
 	if err != nil {
 		if errorHandler.OnTenantError != nil {
 			errorHandler.OnTenantError(err)
@@ -128,7 +126,7 @@ func TryAuth(
 			allowedTenantIDs = append(allowedTenantIDs, org.ID.TenantID())
 		} else {
 			// Store the authentication error for later use
-			authErrors[org.ID.TenantID()] = result.ToError(authSvc.BaseURL())
+			authErrors[org.ID.TenantID()] = result.ToError(iamSvc.BaseURL())
 		}
 	}
 

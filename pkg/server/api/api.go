@@ -24,9 +24,8 @@ import (
 	"github.com/vektah/gqlparser/v2/ast"
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/auth"
-	"go.probo.inc/probo/pkg/authz"
 	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/saferedirect"
 	console_v1 "go.probo.inc/probo/pkg/server/api/console/v1"
@@ -61,11 +60,9 @@ type (
 	Config struct {
 		AllowedOrigins    []string
 		Probo             *probo.Service
-		Auth              *auth.Service
-		Authz             *authz.Service
+		IAM               *iam.Service
 		Trust             *trust.Service
 		Slack             *slack.Service
-		SAML              *auth.SAMLService
 		ConsoleAuth       ConsoleAuthConfig
 		TrustAuth         TrustAuthConfig
 		MCPConfig         MCPConfig
@@ -92,8 +89,7 @@ type (
 
 var (
 	ErrMissingProboService = errors.New("server configuration requires a valid probo.Service instance")
-	ErrMissingAuthService  = errors.New("server configuration requires a valid auth.Service instance")
-	ErrMissingAuthzService = errors.New("server configuration requires a valid authz.Service instance")
+	ErrMissingIAMService   = errors.New("server configuration requires a valid iam.Service instance")
 	ErrMissingSlackService = errors.New("server configuration requires a valid slack.Service instance")
 )
 
@@ -131,12 +127,8 @@ func NewServer(cfg Config) (*Server, error) {
 		return nil, ErrMissingProboService
 	}
 
-	if cfg.Auth == nil {
-		return nil, ErrMissingAuthService
-	}
-
-	if cfg.Authz == nil {
-		return nil, ErrMissingAuthzService
+	if cfg.IAM == nil {
+		return nil, ErrMissingIAMService
 	}
 
 	if cfg.Slack == nil {
@@ -145,8 +137,7 @@ func NewServer(cfg Config) (*Server, error) {
 
 	trustAPIHandler := trust_v1.NewMux(
 		cfg.Logger.Named("trust.v1"),
-		cfg.Auth,
-		cfg.Authz,
+		cfg.IAM,
 		cfg.Trust,
 		console_v1.AuthConfig{
 			CookieName:      cfg.ConsoleAuth.CookieName,
@@ -172,8 +163,7 @@ func NewServer(cfg Config) (*Server, error) {
 	consoleAPIHandler := console_v1.NewMux(
 		cfg.Logger.Named("console.v1"),
 		cfg.Probo,
-		cfg.Auth,
-		cfg.Authz,
+		cfg.IAM,
 		console_v1.AuthConfig{
 			CookieName:      cfg.ConsoleAuth.CookieName,
 			CookieDomain:    cfg.ConsoleAuth.CookieDomain,
@@ -184,14 +174,12 @@ func NewServer(cfg Config) (*Server, error) {
 		cfg.ConnectorRegistry,
 		cfg.SafeRedirect,
 		cfg.CustomDomainCname,
-		cfg.SAML,
 	)
 
 	mcpAPIHandler := mcp_v1.NewMux(
 		cfg.Logger.Named("mcp.v1"),
 		cfg.Probo,
-		cfg.Auth,
-		cfg.Authz,
+		cfg.IAM,
 		mcp_v1.Config{
 			Version:        cfg.MCPConfig.Version,
 			RequestTimeout: cfg.MCPConfig.RequestTimeout,

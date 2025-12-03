@@ -17,14 +17,18 @@ package probod
 import (
 	"context"
 	"crypto"
+	"crypto/rsa"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"net"
 	"net/http"
 	"sync"
 	"time"
+
+	pemutil "go.probo.inc/probo/pkg/crypto/pem"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/prometheus/client_golang/prometheus"
@@ -36,8 +40,6 @@ import (
 	"go.gearno.de/kit/unit"
 	"go.opentelemetry.io/otel/trace"
 	"go.probo.inc/probo/pkg/agents"
-	"go.probo.inc/probo/pkg/auth"
-	"go.probo.inc/probo/pkg/authz"
 	"go.probo.inc/probo/pkg/awsconfig"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/certmanager"
@@ -46,9 +48,9 @@ import (
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/crypto/keys"
 	"go.probo.inc/probo/pkg/crypto/passwdhash"
-	"go.probo.inc/probo/pkg/crypto/pem"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/html2pdf"
+	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/mailer"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/saferedirect"
@@ -271,51 +273,60 @@ func (impl *Implm) Run(
 
 	agent := agents.NewAgent(l.Named("agent"), agentConfig)
 
-	authService, err := auth.NewService(
-		ctx,
-		pgClient,
-		impl.cfg.EncryptionKey,
-		hp,
-		impl.cfg.Auth.Cookie.Secret,
-		impl.cfg.BaseURL.String(),
-		impl.cfg.Auth.DisableSignup,
-		time.Duration(impl.cfg.Auth.InvitationConfirmationTokenValidity)*time.Second,
-	)
-	if err != nil {
-		return fmt.Errorf("cannot create auth service: %w", err)
-	}
-
-	authzService, err := authz.NewService(
-		ctx,
-		pgClient,
-		impl.cfg.BaseURL.String(),
-		impl.cfg.Auth.Cookie.Secret,
-		time.Duration(impl.cfg.Auth.InvitationConfirmationTokenValidity)*time.Second,
-	)
-	if err != nil {
-		return fmt.Errorf("cannot create authz service: %w", err)
-	}
-
 	fileManagerService := filemanager.NewService(s3Client)
 
-	samlService, err := auth.NewSAMLService(
+	var samlCert *x509.Certificate
+	var samlKey *rsa.PrivateKey
+	if impl.cfg.Auth.SAML.Certificate != "" && impl.cfg.Auth.SAML.PrivateKey != "" {
+		// Decode certificate
+		certBlock, _ := pem.Decode([]byte(impl.cfg.Auth.SAML.Certificate))
+		if certBlock == nil {
+			return fmt.Errorf("cannot decode SAML certificate PEM block")
+		}
+		var err error
+		samlCert, err = x509.ParseCertificate(certBlock.Bytes)
+		if err != nil {
+			return fmt.Errorf("cannot parse SAML certificate: %w", err)
+		}
+
+		// Decode private key
+		signer, err := pemutil.DecodePrivateKey([]byte(impl.cfg.Auth.SAML.PrivateKey))
+		if err != nil {
+			return fmt.Errorf("cannot decode SAML private key: %w", err)
+		}
+		var ok bool
+		samlKey, ok = signer.(*rsa.PrivateKey)
+		if !ok {
+			return fmt.Errorf("SAML private key is not an RSA key")
+		}
+	}
+
+	iamService, err := iam.NewService(
+		ctx,
 		pgClient,
-		impl.cfg.EncryptionKey,
-		impl.cfg.BaseURL.String(),
-		impl.cfg.Auth.SAML.SessionDurationTime(),
-		impl.cfg.Auth.Cookie.Name,
-		impl.cfg.Auth.Cookie.Secret,
-		impl.cfg.Auth.SAML.Certificate,
-		impl.cfg.Auth.SAML.PrivateKey,
-		l.Named("saml"),
+		fileManagerService,
+		hp,
+		iam.Config{
+			DisableSignup:              impl.cfg.Auth.DisableSignup,
+			InvitationTokenValidity:    time.Duration(impl.cfg.Auth.InvitationConfirmationTokenValidity) * time.Second,
+			PasswordResetTokenValidity: 0, // TODO: add to config if needed
+			SessionDuration:            time.Duration(impl.cfg.Auth.Cookie.Duration) * time.Hour,
+			Bucket:                     impl.cfg.AWS.Bucket,
+			TokenSecret:                impl.cfg.Auth.Cookie.Secret,
+			BaseURL:                    impl.cfg.BaseURL.String(),
+			EncryptionKey:              impl.cfg.EncryptionKey,
+			Certificate:                samlCert,
+			PrivateKey:                 samlKey,
+			Logger:                     l.Named("iam"),
+		},
 	)
 	if err != nil {
-		return fmt.Errorf("cannot create SAML service: %w", err)
+		return fmt.Errorf("cannot create iam service: %w", err)
 	}
 
 	var accountKey crypto.Signer
 	if impl.cfg.CustomDomains.ACME.AccountKey != "" {
-		accountKey, err = pem.DecodePrivateKey([]byte(impl.cfg.CustomDomains.ACME.AccountKey))
+		accountKey, err = pemutil.DecodePrivateKey([]byte(impl.cfg.CustomDomains.ACME.AccountKey))
 		if err != nil {
 			return fmt.Errorf("cannot decode ACME account key: %w", err)
 		}
@@ -364,8 +375,6 @@ func (impl *Implm) Run(
 		html2pdfConverter,
 		acmeService,
 		fileManagerService,
-		authService,
-		authzService,
 		l.Named("probo"),
 		slackService,
 	)
@@ -380,7 +389,8 @@ func (impl *Implm) Run(
 		impl.cfg.BaseURL.String(),
 		impl.cfg.EncryptionKey,
 		impl.cfg.TrustAuth.TokenSecret,
-		authService,
+		impl.cfg.GetSlackSigningSecret(),
+		iamService,
 		html2pdfConverter,
 		fileManagerService,
 		l,
@@ -397,11 +407,9 @@ func (impl *Implm) Run(
 			AllowedOrigins:    impl.cfg.Api.Cors.AllowedOrigins,
 			ExtraHeaderFields: impl.cfg.Api.ExtraHeaderFields,
 			Probo:             proboService,
-			Auth:              authService,
-			Authz:             authzService,
+			IAM:               iamService,
 			Trust:             trustService,
 			Slack:             slackService,
-			SAML:              samlService,
 			ConnectorRegistry: defaultConnectorRegistry,
 			Agent:             agent,
 			SafeRedirect:      &saferedirect.SafeRedirect{AllowedHost: impl.cfg.BaseURL.Host()},
@@ -488,16 +496,13 @@ func (impl *Implm) Run(
 		},
 	)
 
-	samlCleanerCtx, stopSAMLCleaner := context.WithCancel(context.Background())
-	samlCleaner := auth.NewCleaner(
-		pgClient,
-		impl.cfg.Auth.SAML.CleanupInterval(),
-		l.Named("saml-cleaner"),
-	)
+	samlServiceCtx, stopSAMLService := context.WithCancel(context.Background())
 	wg.Go(
 		func() {
-			if err := samlCleaner.Run(samlCleanerCtx); err != nil {
-				cancel(fmt.Errorf("saml cleaner crashed: %w", err))
+			if iamService.SAMLService != nil {
+				if err := iamService.SAMLService.Run(samlServiceCtx); err != nil {
+					cancel(fmt.Errorf("saml service crashed: %w", err))
+				}
 			}
 		},
 	)
@@ -517,7 +522,7 @@ func (impl *Implm) Run(
 	stopMailer()
 	stopSlackSender()
 	stopExportJobExporter()
-	stopSAMLCleaner()
+	stopSAMLService()
 	stopApiServer()
 	stopTrustCenterServer()
 

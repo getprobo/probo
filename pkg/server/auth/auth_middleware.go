@@ -20,9 +20,8 @@ import (
 	"net/http"
 
 	"go.gearno.de/kit/httpserver"
-	authsvc "go.probo.inc/probo/pkg/auth"
-	"go.probo.inc/probo/pkg/authz"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/server/session"
 )
 
@@ -30,11 +29,11 @@ type ctxKey struct{ name string }
 
 var (
 	sessionContextKey = &ctxKey{name: "session"}
+	userContextKey    = &ctxKey{name: "user"}
 )
 
 func RequireAuth(
-	authSvc *authsvc.Service,
-	authzSvc *authz.Service,
+	iamSvc *iam.Service,
 	cookieName string,
 	cookieSecret string,
 	cookieSecure bool,
@@ -70,14 +69,14 @@ func RequireAuth(
 			},
 		}
 
-		authResult := session.TryAuth(ctx, w, r, authSvc, authzSvc, sessionAuthCfg, errorHandler)
+		authResult := session.TryAuth(ctx, w, r, iamSvc, sessionAuthCfg, errorHandler)
 		if authResult == nil {
 			httpserver.RenderError(w, http.StatusUnauthorized, fmt.Errorf("authentication required"))
 			return
 		}
 
 		ctx = context.WithValue(ctx, sessionContextKey, authResult.Session)
-		ctx = context.WithValue(ctx, UserContextKey, authResult.User)
+		ctx = context.WithValue(ctx, userContextKey, authResult.User)
 
 		next(w, r.WithContext(ctx))
 	}

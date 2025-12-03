@@ -16,48 +16,7 @@ package types
 
 import (
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/page"
 )
-
-type (
-	UserConnection struct {
-		TotalCount int         `json:"totalCount"`
-		Edges      []*UserEdge `json:"edges"`
-		PageInfo   *PageInfo   `json:"pageInfo"`
-
-		Resolver any
-		ParentID gid.GID
-	}
-
-	UserOrderBy OrderBy[coredata.UserOrderField]
-)
-
-func NewUserConnection(
-	p *page.Page[*coredata.User, coredata.UserOrderField],
-	resolver any,
-	parentID gid.GID,
-) *UserConnection {
-	var edges = make([]*UserEdge, len(p.Data))
-
-	for i := range edges {
-		edges[i] = NewUserEdge(p.Data[i], p.Cursor.OrderBy.Field)
-	}
-
-	return &UserConnection{
-		Edges:    edges,
-		PageInfo: NewPageInfo(p),
-		Resolver: resolver,
-		ParentID: parentID,
-	}
-}
-
-func NewUserEdge(user *coredata.User, orderBy coredata.UserOrderField) *UserEdge {
-	return &UserEdge{
-		Cursor: user.CursorKey(orderBy),
-		Node:   NewUser(user),
-	}
-}
 
 func NewUser(u *coredata.User) *User {
 	return &User{

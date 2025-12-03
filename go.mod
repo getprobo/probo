@@ -24,8 +24,8 @@ require (
 	github.com/vektah/gqlparser/v2 v2.5.31
 	github.com/xuri/excelize/v2 v2.10.0
 	github.com/yuin/goldmark v1.7.13
-	go.gearno.de/crypto/uuid v0.1.0
-	go.gearno.de/kit v0.0.0-20251207095431-33c583469655
+	go.gearno.de/crypto/uuid v0.1.1-0.20251208105319-3f587312a712
+	go.gearno.de/kit v0.0.0-20251205115211-84aa307c1069
 	go.gearno.de/x/ref v0.0.0-20240502200927-d74926fcb14c
 	go.opentelemetry.io/otel v1.38.0
 	go.opentelemetry.io/otel/trace v1.38.0
