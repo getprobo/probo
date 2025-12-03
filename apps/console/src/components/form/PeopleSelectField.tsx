@@ -1,29 +1,29 @@
 import { Avatar, Field, Option, Select } from "@probo/ui";
 import { Suspense, type ComponentProps } from "react";
 import { useTranslate } from "@probo/i18n";
-import { type Control, Controller } from "react-hook-form";
+import { type Control, Controller, type FieldPath, type FieldValues } from "react-hook-form";
 import { usePeople } from "/hooks/graph/PeopleGraph.ts";
 
-type Props = {
+type Props<TFieldValues extends FieldValues = FieldValues, TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>> = {
   organizationId: string;
-  control: Control<any>;
-  name: string;
+  control: Control<TFieldValues>;
+  name: TName;
   label?: string;
   error?: string;
   optional?: boolean;
 } & ComponentProps<typeof Field>;
 
-export function PeopleSelectField({
+export function PeopleSelectField<TFieldValues extends FieldValues = FieldValues>({
   organizationId,
   control,
   ...props
-}: Props) {
+}: Props<TFieldValues>) {
   return (
     <Field {...props}>
       <Suspense
         fallback={<Select variant="editor" loading placeholder="Loading..." />}
       >
-        <PeopleSelectWithQuery
+        <PeopleSelectWithQuery<TFieldValues>
           organizationId={organizationId}
           control={control}
           name={props.name}
@@ -35,9 +35,9 @@ export function PeopleSelectField({
   );
 }
 
-function PeopleSelectWithQuery(
+function PeopleSelectWithQuery<TFieldValues extends FieldValues = FieldValues>(
   props: Pick<
-    Props,
+    Props<TFieldValues>,
     "organizationId" | "control" | "name" | "disabled" | "optional"
   >,
 ) {

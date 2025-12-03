@@ -1,19 +1,16 @@
-import type { ComponentProps, JSX, JSXElementConstructor } from "react";
+import type { ComponentProps } from "react";
 import { Field } from "@probo/ui";
-import { Controller, type Control } from "react-hook-form";
+import { Controller, type FieldValues } from "react-hook-form";
 import { Select } from "@probo/ui";
 
-type Props<T extends keyof JSX.IntrinsicElements | JSXElementConstructor<any>> =
-  ComponentProps<T> & {
-    control: Control<any>;
-    name: string;
-  };
+type Props<T extends typeof Field | typeof Select, TFieldValues extends FieldValues = FieldValues> =
+  ComponentProps<T> & Omit<ComponentProps<typeof Controller<TFieldValues>>, "render">;
 
-export function ControlledField({
+export function ControlledField<TFieldValues extends FieldValues = FieldValues>({
   control,
   name,
   ...props
-}: Props<typeof Field>) {
+}: Props<typeof Field, TFieldValues>) {
   return (
     <Controller
       control={control}

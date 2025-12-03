@@ -1,30 +1,30 @@
 import { Field, Combobox, ComboboxItem } from "@probo/ui";
 import { Suspense, useMemo, useState, type ComponentProps } from "react";
 import { useTranslate } from "@probo/i18n";
-import { type Control, Controller } from "react-hook-form";
+import { type Control, Controller, type FieldPath, type FieldValues } from "react-hook-form";
 import { usePaginatedMeasures } from "/hooks/graph/usePaginatedMeasures";
 
-type Props = {
+type Props<TFieldValues extends FieldValues = FieldValues, TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>> = {
   organizationId: string;
-  control: Control<any>;
-  name: string;
+  control: Control<TFieldValues>;
+  name: TName;
   label?: string;
   error?: string;
   disabled?: boolean;
 } & ComponentProps<typeof Field>;
 
-export function MeasureSelectField({
+export function MeasureSelectField<TFieldValues extends FieldValues = FieldValues>({
   organizationId,
   control,
   disabled,
   ...props
-}: Props) {
+}: Props<TFieldValues>) {
   return (
     <Field {...props}>
       <Suspense
         fallback={<Combobox onSearch={() => {}} placeholder="Loading..." disabled><div /></Combobox>}
       >
-        <MeasureSelectWithQuery
+        <MeasureSelectWithQuery<TFieldValues>
           organizationId={organizationId}
           control={control}
           name={props.name}
@@ -35,8 +35,8 @@ export function MeasureSelectField({
   );
 }
 
-function MeasureSelectWithQuery(
-  props: Pick<Props, "organizationId" | "control" | "name" | "disabled">
+function MeasureSelectWithQuery<TFieldValues extends FieldValues = FieldValues>(
+  props: Pick<Props<TFieldValues>, "organizationId" | "control" | "name" | "disabled">
 ) {
   const { __ } = useTranslate();
   const { name, organizationId, control, disabled } = props;

@@ -53,9 +53,6 @@ export default function AssetDetailsPage(props: Props) {
   const { snapshotId } = useParams<{ snapshotId?: string }>();
   const isSnapshotMode = Boolean(snapshotId);
   const { isAuthorized } = use(PermissionsContext);
-  if (!assetEntry || !assetEntry.id) {
-    return <div>{__("Asset not found")}</div>;
-  }
 
   validateSnapshotConsistency(assetEntry, snapshotId);
 
@@ -81,6 +78,10 @@ export default function AssetDetailsPage(props: Props) {
   });
 
   const updateAsset = useUpdateAsset();
+
+  if (!assetEntry || !assetEntry.id) {
+    return <div>{__("Asset not found")}</div>;
+  }
 
   const onSubmit = handleSubmit(async (formData) => {
     await updateAsset({

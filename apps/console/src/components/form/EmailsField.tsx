@@ -1,21 +1,21 @@
 import { Button, IconPlusLarge, IconTrashCan, Input, Label } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { useFieldArray } from "react-hook-form";
-import type { Control } from "react-hook-form";
+import type { ArrayPath, Control, FieldValue, FieldValues, Path } from "react-hook-form";
 import type { UseFormRegister } from "react-hook-form";
 
-type Props = {
-  control: Control<any>;
-  register: UseFormRegister<any>;
+type Props<TFieldValues extends FieldValues = FieldValues> = {
+  control: Control<TFieldValues>;
+  register: UseFormRegister<TFieldValues>;
 };
 
 /**
  * A field to handle multiple emails
  */
-export function EmailsField({ control, register }: Props) {
+export function EmailsField<TFieldValues extends FieldValues = FieldValues>({ control, register }: Props<TFieldValues>) {
   const { __ } = useTranslate();
   const { fields, append, remove } = useFieldArray({
-    name: "additionalEmailAddresses",
+    name: "additionalEmailAddresses" as ArrayPath<TFieldValues>,
     control,
   });
 
@@ -26,7 +26,7 @@ export function EmailsField({ control, register }: Props) {
         <div key={field.id} className="flex items-stretch">
           <Input
             className="w-full"
-            {...register(`additionalEmailAddresses.${index}`)}
+            {...register(`additionalEmailAddresses.${index}` as Path<TFieldValues>)}
             type="email"
           />
           <Button
@@ -40,7 +40,7 @@ export function EmailsField({ control, register }: Props) {
         variant="tertiary"
         type="button"
         icon={IconPlusLarge}
-        onClick={() => append("")}
+        onClick={() => append("" as FieldValue<TFieldValues>)}
       >
         {__("Add email")}
       </Button>

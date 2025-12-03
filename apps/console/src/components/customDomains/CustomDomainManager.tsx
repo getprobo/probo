@@ -17,28 +17,27 @@ const deleteCustomDomainMutation = graphql`
   }
 `;
 
+type CustomDomain = {
+  readonly id: string;
+  readonly domain: string;
+  readonly sslStatus: string;
+  readonly dnsRecords?:
+    | readonly {
+        readonly type: string;
+        readonly name: string;
+        readonly value: string;
+        readonly ttl?: number;
+        readonly purpose: string;
+      }[]
+    | null;
+  readonly createdAt?: string | null;
+  readonly updatedAt?: string | null;
+  readonly sslExpiresAt?: string | null;
+};
+
 interface CustomDomainManagerProps {
   organizationId: string;
-  customDomain:
-    | {
-        readonly id: string;
-        readonly domain: string;
-        readonly sslStatus: string;
-        readonly dnsRecords?:
-          | readonly {
-              readonly type: string;
-              readonly name: string;
-              readonly value: string;
-              readonly ttl?: number;
-              readonly purpose: string;
-            }[]
-          | null;
-        readonly createdAt?: string | null;
-        readonly updatedAt?: string | null;
-        readonly sslExpiresAt?: string | null;
-      }
-    | null
-    | undefined;
+  customDomain: CustomDomain | null | undefined;
 }
 
 export function CustomDomainManager({
@@ -58,7 +57,7 @@ export function CustomDomainManager({
 
   const domain = customDomain;
 
-  const getStatusBadge = (domain: any) => {
+  const getStatusBadge = (domain: CustomDomain) => {
     if (domain.sslStatus === "ACTIVE") {
       return <Badge variant="success">{__("Active")}</Badge>;
     }
