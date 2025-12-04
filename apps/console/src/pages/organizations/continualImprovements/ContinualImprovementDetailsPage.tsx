@@ -91,10 +91,6 @@ export default function ContinualImprovementDetailsPage(props: Props) {
     }
   );
 
-  if (!improvement) {
-    return <div>{__("Continual improvement entry not found")}</div>;
-  }
-
   const onSubmit = handleSubmit(async (formData) => {
     try {
       await updateImprovement({

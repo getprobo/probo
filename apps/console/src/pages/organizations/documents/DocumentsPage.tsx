@@ -399,7 +399,7 @@ function DocumentRow({
   );
   const lastVersion = document.versions.edges?.[0]?.node;
 
-  const isDraft = lastVersion.status === "DRAFT";
+  const isDraft = lastVersion?.status === "DRAFT";
   const { __ } = useTranslate();
 
   const [deleteDocument] = useDeleteDocumentMutation();

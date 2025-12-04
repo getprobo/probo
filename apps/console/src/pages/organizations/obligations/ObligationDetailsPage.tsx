@@ -100,10 +100,6 @@ export default function ObligationDetailsPage(props: Props) {
     }
   );
 
-  if (!obligation) {
-    return <div>{__("Obligation not found")}</div>;
-  }
-
   const onSubmit = handleSubmit(async (formData) => {
     try {
       await updateObligation({

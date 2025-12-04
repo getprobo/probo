@@ -79,10 +79,6 @@ export default function AssetDetailsPage(props: Props) {
 
   const updateAsset = useUpdateAsset();
 
-  if (!assetEntry || !assetEntry.id) {
-    return <div>{__("Asset not found")}</div>;
-  }
-
   const onSubmit = handleSubmit(async (formData) => {
     await updateAsset({
       id: assetEntry.id!,

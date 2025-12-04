@@ -27,22 +27,22 @@ import {
 } from "react-relay";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { CreateNonconformityDialog } from "./dialogs/CreateNonconformityDialog";
-import { deleteNonconformityMutation, NonconformitiesConnectionKey } from "../../../hooks/graph/NonconformityGraph";
+import { deleteNonconformityMutation, NonconformitiesConnectionKey, nonconformitiesQuery } from "../../../hooks/graph/NonconformityGraph";
 import { sprintf, promisifyMutation, getStatusVariant, getStatusLabel, formatDate } from "@probo/helpers";
 import { SnapshotBanner } from "/components/SnapshotBanner";
 import { useParams } from "react-router";
-import type { NonconformitiesPageQuery } from "./__generated__/NonconformitiesPageQuery.graphql";
 import type {
   NonconformitiesPageFragment$key,
   NonconformitiesPageFragment$data,
 } from "./__generated__/NonconformitiesPageFragment.graphql";
 import { use } from "react";
 import { PermissionsContext } from "/providers/PermissionsContext";
+import type { NonconformityGraphListQuery } from "/hooks/graph/__generated__/NonconformityGraphListQuery.graphql";
 
 type Nonconformity = NonconformitiesPageFragment$data['nonconformities']['edges'][number]['node'];
 
 interface NonconformitiesPageProps {
-  queryRef: PreloadedQuery<NonconformitiesPageQuery>;
+  queryRef: PreloadedQuery<NonconformityGraphListQuery>;
 }
 
 const nonconformitiesPageFragment = graphql`
@@ -108,15 +108,7 @@ export default function NonconformitiesPage({ queryRef }: NonconformitiesPagePro
   usePageTitle(__("Nonconformities"));
 
   const organization = usePreloadedQuery(
-    graphql`
-      query NonconformitiesPageQuery($organizationId: ID!, $snapshotId: ID) {
-        node(id: $organizationId) {
-          ... on Organization {
-            ...NonconformitiesPageFragment @arguments(snapshotId: $snapshotId)
-          }
-        }
-      }
-    `,
+    nonconformitiesQuery,
     queryRef
   );
 

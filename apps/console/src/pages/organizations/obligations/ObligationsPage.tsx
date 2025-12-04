@@ -27,21 +27,21 @@ import {
 import { useParams } from "react-router";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { CreateObligationDialog } from "./dialogs/CreateObligationDialog";
-import { deleteObligationMutation } from "../../../hooks/graph/ObligationGraph";
+import { deleteObligationMutation, obligationsQuery } from "../../../hooks/graph/ObligationGraph";
 import { promisifyMutation, getObligationStatusVariant, getObligationStatusLabel, formatDate } from "@probo/helpers";
 import { SnapshotBanner } from "/components/SnapshotBanner";
-import type { ObligationsPageQuery } from "./__generated__/ObligationsPageQuery.graphql";
 import type {
   ObligationsPageFragment$key,
   ObligationsPageFragment$data,
 } from "./__generated__/ObligationsPageFragment.graphql";
 import { use } from "react";
 import { PermissionsContext } from "/providers/PermissionsContext";
+import type { ObligationGraphListQuery } from "/hooks/graph/__generated__/ObligationGraphListQuery.graphql";
 
 type Obligation = ObligationsPageFragment$data['obligations']['edges'][number]['node'];
 
 interface ObligationsPageProps {
-  queryRef: PreloadedQuery<ObligationsPageQuery>;
+  queryRef: PreloadedQuery<ObligationGraphListQuery>;
 }
 
 const obligationsPageFragment = graphql`
@@ -100,15 +100,7 @@ export default function ObligationsPage({ queryRef }: ObligationsPageProps) {
   usePageTitle(__("Obligations"));
 
   const organization = usePreloadedQuery(
-    graphql`
-      query ObligationsPageQuery($organizationId: ID!, $snapshotId: ID) {
-        node(id: $organizationId) {
-          ... on Organization {
-            ...ObligationsPageFragment @arguments(snapshotId: $snapshotId)
-          }
-        }
-      }
-    `,
+    obligationsQuery,
     queryRef
   );
 

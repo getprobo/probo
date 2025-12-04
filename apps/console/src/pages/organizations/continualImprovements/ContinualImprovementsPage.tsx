@@ -28,20 +28,20 @@ import {
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { useParams } from "react-router";
 import { CreateContinualImprovementDialog } from "./dialogs/CreateContinualImprovementDialog";
-import { deleteContinualImprovementMutation, ContinualImprovementsConnectionKey } from "../../../hooks/graph/ContinualImprovementGraph";
+import { deleteContinualImprovementMutation, ContinualImprovementsConnectionKey, continualImprovementsQuery } from "../../../hooks/graph/ContinualImprovementGraph";
 import { sprintf, promisifyMutation, getStatusVariant, getStatusLabel, formatDate } from "@probo/helpers";
 import { SnapshotBanner } from "/components/SnapshotBanner";
 import type { NodeOf } from "/types";
-import type { ContinualImprovementsPageQuery } from "./__generated__/ContinualImprovementsPageQuery.graphql";
 import type {
   ContinualImprovementsPageFragment$key,
   ContinualImprovementsPageFragment$data,
 } from "./__generated__/ContinualImprovementsPageFragment.graphql";
 import { use } from "react";
 import { PermissionsContext } from "/providers/PermissionsContext";
+import type { ContinualImprovementGraphListQuery } from "/hooks/graph/__generated__/ContinualImprovementGraphListQuery.graphql";
 
 interface ContinualImprovementsPageProps {
-  queryRef: PreloadedQuery<ContinualImprovementsPageQuery>;
+  queryRef: PreloadedQuery<ContinualImprovementGraphListQuery>;
 }
 
 const continualImprovementsPageFragment = graphql`
@@ -98,15 +98,7 @@ export default function ContinualImprovementsPage({ queryRef }: ContinualImprove
   usePageTitle(__("Continual Improvements"));
 
   const organization = usePreloadedQuery(
-    graphql`
-      query ContinualImprovementsPageQuery($organizationId: ID!, $snapshotId: ID) {
-        node(id: $organizationId) {
-          ... on Organization {
-            ...ContinualImprovementsPageFragment @arguments(snapshotId: $snapshotId)
-          }
-        }
-      }
-    `,
+    continualImprovementsQuery,
     queryRef
   );
 
@@ -116,12 +108,9 @@ export default function ContinualImprovementsPage({ queryRef }: ContinualImprove
     hasNext,
     isLoadingNext,
   } = usePaginationFragment<
-    ContinualImprovementsPageQuery,
+    ContinualImprovementGraphListQuery,
     ContinualImprovementsPageFragment$key
   >(continualImprovementsPageFragment, organization.node);
-  if (!data) {
-    return <div>{__("Organization not found")}</div>;
-  }
 
   const connectionId = ConnectionHandler.getConnectionID(
     organizationId,

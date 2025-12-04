@@ -116,10 +116,6 @@ export default function ProcessingActivityDetailsPage(props: Props) {
     }
   );
 
-  if (!activity) {
-    return <div>{__("Processing activity not found")}</div>;
-  }
-
   const onSubmit = handleSubmit(async (formData) => {
     try {
       await updateActivity({

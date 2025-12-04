@@ -56,10 +56,6 @@ export default function VendorDetailPage(props: Props) {
     vendor as VendorComplianceTabFragment$key
   ).complianceReports.edges.length;
 
-  if (!vendor) {
-    return <div>{__("Vendor not found")}</div>;
-  }
-
   const vendorsUrl = isSnapshotMode && snapshotId
     ? `/organizations/${organizationId}/snapshots/${snapshotId}/vendors`
     : `/organizations/${organizationId}/vendors`;

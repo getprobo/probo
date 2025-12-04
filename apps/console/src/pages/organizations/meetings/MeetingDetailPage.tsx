@@ -117,10 +117,6 @@ export default function MeetingDetailPage(props: Props) {
 
   usePageTitle(meeting.name);
 
-  if (!meeting) {
-    return <div>{__("Meeting not found")}</div>;
-  }
-
   const hasAnyAction = canUpdate || canDelete;
 
   const handleDelete = () => {

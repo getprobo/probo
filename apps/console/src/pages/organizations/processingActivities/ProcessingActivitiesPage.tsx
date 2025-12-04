@@ -29,20 +29,20 @@ import {
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { useParams } from "react-router";
 import { CreateProcessingActivityDialog } from "./dialogs/CreateProcessingActivityDialog";
-import { deleteProcessingActivityMutation, ProcessingActivitiesConnectionKey } from "../../../hooks/graph/ProcessingActivityGraph";
+import { deleteProcessingActivityMutation, ProcessingActivitiesConnectionKey, processingActivitiesQuery } from "../../../hooks/graph/ProcessingActivityGraph";
 import { sprintf, promisifyMutation } from "@probo/helpers";
 import { SnapshotBanner } from "/components/SnapshotBanner";
 import type { NodeOf } from "/types";
-import type { ProcessingActivitiesPageQuery } from "./__generated__/ProcessingActivitiesPageQuery.graphql";
 import type {
   ProcessingActivitiesPageFragment$key,
   ProcessingActivitiesPageFragment$data,
 } from "./__generated__/ProcessingActivitiesPageFragment.graphql";
 import { PermissionsContext } from "/providers/PermissionsContext";
 import { use } from "react";
+import type { ProcessingActivityGraphListQuery } from "/hooks/graph/__generated__/ProcessingActivityGraphListQuery.graphql";
 
 interface ProcessingActivitiesPageProps {
-  queryRef: PreloadedQuery<ProcessingActivitiesPageQuery>;
+  queryRef: PreloadedQuery<ProcessingActivityGraphListQuery>;
 }
 
 const processingActivitiesPageFragment = graphql`
@@ -96,15 +96,7 @@ export default function ProcessingActivitiesPage({ queryRef }: ProcessingActivit
   usePageTitle(__("Processing Activities"));
 
   const organization = usePreloadedQuery(
-    graphql`
-      query ProcessingActivitiesPageQuery($organizationId: ID!, $snapshotId: ID) {
-        node(id: $organizationId) {
-          ... on Organization {
-            ...ProcessingActivitiesPageFragment @arguments(snapshotId: $snapshotId)
-          }
-        }
-      }
-    `,
+    processingActivitiesQuery,
     queryRef
   );
 
@@ -114,12 +106,9 @@ export default function ProcessingActivitiesPage({ queryRef }: ProcessingActivit
     hasNext,
     isLoadingNext,
   } = usePaginationFragment<
-    ProcessingActivitiesPageQuery,
+    ProcessingActivityGraphListQuery,
     ProcessingActivitiesPageFragment$key
   >(processingActivitiesPageFragment, organization.node);
-  if (!data) {
-    return <div>{__("Organization not found")}</div>;
-  }
 
   const connectionId = ConnectionHandler.getConnectionID(
     organizationId,

@@ -56,7 +56,7 @@ export default function AuditDetailsPage(props: Props) {
   const { isAuthorized } = use(PermissionsContext);
 
   const deleteAudit = useDeleteAudit(
-    { id: auditEntry.id!, framework: { name: auditEntry.framework!.name } },
+    { id: auditEntry.id!, framework: { name: auditEntry.framework!.name} },
     ConnectionHandler.getConnectionID(organizationId, "AuditsPage_audits")
   );
 
@@ -74,10 +74,6 @@ export default function AuditDetailsPage(props: Props) {
   const deleteAuditReport = useDeleteAuditReport();
   const confirm = useConfirm();
   const { toast } = useToast();
-
-  if (!auditEntry || !auditEntry.id || !auditEntry.framework) {
-    return <div>{__("Audit not found")}</div>;
-  }
 
   const onSubmit = handleSubmit(async (formData) => {
     if (!auditEntry.id) return;
