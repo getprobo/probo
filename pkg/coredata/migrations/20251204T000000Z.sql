@@ -5,4 +5,4 @@ SET
 FROM
     audits a
 WHERE
-    reports.tenant_id = a.tenant_id;
+    reports.id = a.report_id;
