@@ -11,7 +11,7 @@ export default {
 type Story = StoryObj<typeof Toasts>;
 
 export const Default: Story = {
-    render() {
+    render: function Render() {
         const { toast } = useToast();
         return (
             <>

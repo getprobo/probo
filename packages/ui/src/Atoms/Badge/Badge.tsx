@@ -40,6 +40,6 @@ const badge = tv({
 
 export function Badge(props: Props) {
     const Component = props.asChild ? Slot : "div";
-    const { asChild, size, variant, ...restProps } = props;
-    return <Component {...restProps} className={badge(props)} />;
+    const { size, variant, ...restProps } = props;
+    return <Component {...restProps} className={badge({ size, variant })} />;
 }

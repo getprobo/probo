@@ -18,7 +18,7 @@ export function InfiniteScrollTrigger({ children, onView, loading }: Props) {
     const onViewRef = useRefSync(onView);
     useEffect(() => {
         if (inView && !loading) onViewRef.current();
-    }, [inView, loading]);
+    }, [inView, loading, onViewRef]);
 
     return (
         <div

@@ -34,8 +34,9 @@ export function Input({
     onValueChange,
     ...props
 }: Props) {
+    const [focus, setFocus] = useState(false);
+
     if (IconComponent) {
-        const [focus, setFocus] = useState(false);
         return (
             <div
                 className={input({

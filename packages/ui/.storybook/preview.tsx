@@ -4,6 +4,7 @@ import "../src/theme.css";
 import "./preview.css";
 import { BrowserRouter } from "react-router";
 import { useEffect } from "react";
+import React from "react";
 
 const preview: Preview = {
     parameters: {
@@ -15,7 +16,7 @@ const preview: Preview = {
         },
     },
     decorators: [
-        (Story, { parameters }) => {
+        (Story) => {
             useEffect(() => {
                 document.body.classList.add("bg-level-0");
             }, []);

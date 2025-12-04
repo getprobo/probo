@@ -78,7 +78,7 @@ export function Drawer({
         return () => {
             setDrawer(false);
         };
-    }, []);
+    }, [setDrawer]);
     return createPortal(
         <aside
             className={clsx(

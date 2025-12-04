@@ -19,7 +19,7 @@ export default {
 type Story = StoryObj<Component>;
 
 export const Default: Story = {
-    render: ({ onUpdate }) => {
+    render: function Render({ onUpdate }) {
         const [state, setState] = useState({
             name: "John",
             status: "delivered",

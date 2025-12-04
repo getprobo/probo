@@ -59,7 +59,7 @@ export function RisksChart({ organizationId, type, risks }: Props) {
         return groupBy(risks ?? [], (risk) =>
             cellKey(risk[impactField], risk[likelihoodField]),
         );
-    }, [organizationId, risks]);
+    }, [impactField, likelihoodField, risks]);
 
     return (
         <Card padded className="text-txt-primary">

@@ -59,7 +59,7 @@ export function useConfirm() {
                 label: props.label ?? __("Delete"),
             });
         },
-        [open],
+        [open, __],
     );
 }
 

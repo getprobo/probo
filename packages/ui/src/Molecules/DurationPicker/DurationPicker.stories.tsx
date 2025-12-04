@@ -11,7 +11,7 @@ export default {
 type Story = StoryObj<typeof DurationPicker>;
 
 export const Default: Story = {
-    render() {
+    render: function Render() {
         const [value, setValue] = useState<string | null>("PT1H");
         return <DurationPicker value={value} onValueChange={setValue} />;
     },
