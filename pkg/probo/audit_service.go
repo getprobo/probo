@@ -346,13 +346,14 @@ func (s AuditService) UploadReport(
 			}
 
 			report := &coredata.Report{
-				ID:        reportID,
-				ObjectKey: objectKey.String(),
-				MimeType:  req.File.ContentType,
-				Filename:  req.File.Filename,
-				Size:      req.File.Size,
-				CreatedAt: now,
-				UpdatedAt: now,
+				ID:             reportID,
+				OrganizationID: audit.OrganizationID,
+				ObjectKey:      objectKey.String(),
+				MimeType:       req.File.ContentType,
+				Filename:       req.File.Filename,
+				Size:           req.File.Size,
+				CreatedAt:      now,
+				UpdatedAt:      now,
 			}
 
 			if err := report.Insert(ctx, conn, s.svc.scope); err != nil {
