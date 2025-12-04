@@ -2,18 +2,15 @@ import {
   createBrowserRouter,
   Navigate,
   redirect,
-  type RouteObject,
-  useLoaderData,
   useRouteError,
 } from "react-router";
-import { type ComponentType, Fragment, Suspense } from "react";
+import { Fragment } from "react";
 import {
   relayEnvironment,
   UnAuthenticatedError,
-} from "./providers/RelayProviders";
-import { loadQuery, type PreloadedQuery } from "react-relay";
-import { useCleanup } from "./hooks/useDelayedEffect";
-import { PageError } from "./components/PageError";
+} from "./providers/RelayProviders.tsx";
+import { loadQuery } from "react-relay";
+import { PageError } from "./components/PageError.tsx";
 import { MainLayout } from "/layouts/MainLayout";
 import {
   currentTrustGraphQuery,
@@ -24,15 +21,9 @@ import { OverviewPage } from "/pages/OverviewPage";
 import { DocumentsPage } from "/pages/DocumentsPage";
 import { SubprocessorsPage } from "/pages/SubprocessorsPage";
 import { AccessPage } from "./pages/AccessPage.tsx";
-import { TabSkeleton } from "./components/Skeletons/TabSkeleton";
-import { MainSkeleton } from "./components/Skeletons/MainSkeleton";
-
-export type AppRoute = Omit<RouteObject, "Component" | "children"> & {
-  Component?: ComponentType<any>;
-  children?: AppRoute[];
-  fallback?: ComponentType;
-  queryLoader?: (params: any) => PreloadedQuery<any>;
-};
+import { TabSkeleton } from "./components/Skeletons/TabSkeleton.tsx";
+import { MainSkeleton } from "./components/Skeletons/MainSkeleton.tsx";
+import { loaderFromQueryLoader, routeFromAppRoute, withQueryRef, type AppRoute } from "@probo/routes";
 
 /**
  * Top level error boundary
@@ -59,47 +50,45 @@ const routes = [
   // Custom domain routes (subdomain-based)
   {
     path: "/overview",
-    queryLoader: () => loadQuery(relayEnvironment, currentTrustGraphQuery, {}),
-    Component: MainLayout,
-    fallback: MainSkeleton,
+    loader: loaderFromQueryLoader(() => loadQuery(relayEnvironment, currentTrustGraphQuery, {})),
+    Component: withQueryRef(MainLayout),
+    Fallback: MainSkeleton,
     ErrorBoundary: ErrorBoundary,
     children: [
       {
         path: "",
-        fallback: TabSkeleton,
+        Fallback: TabSkeleton,
         Component: OverviewPage,
       },
     ],
   },
   {
     path: "/documents",
-    queryLoader: () => loadQuery(relayEnvironment, currentTrustGraphQuery, {}),
-    Component: MainLayout,
-    fallback: MainSkeleton,
+    loader: loaderFromQueryLoader(() => loadQuery(relayEnvironment, currentTrustGraphQuery, {})),
+    Component: withQueryRef(MainLayout),
+    Fallback: MainSkeleton,
     ErrorBoundary: ErrorBoundary,
     children: [
       {
         path: "",
-        queryLoader: () =>
-          loadQuery(relayEnvironment, currentTrustDocumentsQuery, {}),
-        fallback: TabSkeleton,
-        Component: DocumentsPage,
+        loader: loaderFromQueryLoader(() => loadQuery(relayEnvironment, currentTrustDocumentsQuery, {})),
+        Fallback: TabSkeleton,
+        Component: withQueryRef(DocumentsPage),
       },
     ],
   },
   {
     path: "/subprocessors",
-    queryLoader: () => loadQuery(relayEnvironment, currentTrustGraphQuery, {}),
-    Component: MainLayout,
-    fallback: MainSkeleton,
+    loader: loaderFromQueryLoader(() => loadQuery(relayEnvironment, currentTrustGraphQuery, {})),
+    Component: withQueryRef(MainLayout),
+    Fallback: MainSkeleton,
     ErrorBoundary: ErrorBoundary,
     children: [
       {
         path: "",
-        queryLoader: () =>
-          loadQuery(relayEnvironment, currentTrustVendorsQuery, {}),
-        fallback: TabSkeleton,
-        Component: SubprocessorsPage,
+        loader: loaderFromQueryLoader(() => loadQuery(relayEnvironment, currentTrustVendorsQuery, {})),
+        Fallback: TabSkeleton,
+        Component: withQueryRef(SubprocessorsPage),
       },
     ],
   },
@@ -115,56 +104,6 @@ const routes = [
   },
 ] satisfies AppRoute[];
 
-/**
- * Wrap components with suspense to handle lazy loading & relay loading states
- */
-function routeTransformer({
-  fallback: FallbackComponent,
-  queryLoader,
-  ...route
-}: AppRoute): RouteObject {
-  let result = { ...route };
-  if (FallbackComponent && route.Component) {
-    const OriginalComponent = route.Component;
-    result = {
-      ...result,
-      Component: (props) => (
-        <Suspense fallback={<FallbackComponent />}>
-          <OriginalComponent {...props} />
-        </Suspense>
-      ),
-    };
-  }
-  if (queryLoader && route.Component) {
-    const OriginalComponent = route.Component;
-    result = {
-      ...result,
-      loader: ({ params }) => {
-        const query = queryLoader(params as Record<string, string>);
-        return {
-          queryRef: query,
-          dispose: query.dispose,
-        };
-      },
-      Component: () => {
-        const { queryRef, dispose } = useLoaderData();
-
-        useCleanup(dispose, 1000);
-
-        return (
-          <Suspense fallback={FallbackComponent ? <FallbackComponent /> : null}>
-            <OriginalComponent queryRef={queryRef} />
-          </Suspense>
-        );
-      },
-    };
-  }
-  return {
-    ...result,
-    children: route.children?.map(routeTransformer),
-  } as RouteObject;
-}
-
 // Detect basename from current URL path
 // If URL starts with /trust/{slug}, extract that as the basename
 // Otherwise, use "/" for custom domains
@@ -174,6 +113,6 @@ function getBasename(): string {
   return trustMatch ? trustMatch[0] : "/";
 }
 
-export const router = createBrowserRouter(routes.map(routeTransformer), {
+export const router = createBrowserRouter(routes.map(routeFromAppRoute), {
   basename: getBasename(),
 });

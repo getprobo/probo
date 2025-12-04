@@ -175,7 +175,7 @@ function Subprocessors({
   }
 
   const hasAnyCountries = vendors.some((vendor) => {
-    const vendorData = vendor.node as any;
+    const vendorData = vendor.node;
     return vendorData.countries && vendorData.countries.length > 0;
   });
 
