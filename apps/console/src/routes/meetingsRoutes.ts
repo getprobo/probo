@@ -9,7 +9,7 @@ import { lazy } from "@probo/react-lazy";
 import { LinkCardSkeleton } from "/components/skeletons/LinkCardSkeleton";
 import type { MeetingGraphListQuery } from "/hooks/graph/__generated__/MeetingGraphListQuery.graphql";
 import type { MeetingGraphNodeQuery } from "/hooks/graph/__generated__/MeetingGraphNodeQuery.graphql";
-import { loaderFromQueryLoader, withQueryRef } from "/routes";
+import { loaderFromQueryLoader, withQueryRef, type AppRoute } from "@probo/routes";
 
 const meetingTabs = (prefix: string) => {
   return [
@@ -24,7 +24,7 @@ const meetingTabs = (prefix: string) => {
     },
     {
       path: `${prefix}minutes`,
-      fallback: LinkCardSkeleton,
+      Fallback: LinkCardSkeleton,
       Component: lazy(
         () =>
           import(
@@ -38,7 +38,7 @@ const meetingTabs = (prefix: string) => {
 export const meetingsRoutes = [
   {
     path: "meetings",
-    fallback: PageSkeleton,
+    Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ organizationId }) =>
       loadQuery<MeetingGraphListQuery>(relayEnvironment, meetingsQuery, { organizationId }),
     ),
@@ -48,7 +48,7 @@ export const meetingsRoutes = [
   },
   {
     path: "meetings/:meetingId",
-    fallback: PageSkeleton,
+    Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ meetingId }) =>
       loadQuery<MeetingGraphNodeQuery>(relayEnvironment, meetingNodeQuery, { meetingId }),
     ),
@@ -57,5 +57,5 @@ export const meetingsRoutes = [
     )),
     children: [...meetingTabs("")],
   },
-];
+] satisfies AppRoute[];
 

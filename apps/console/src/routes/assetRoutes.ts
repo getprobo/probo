@@ -5,12 +5,12 @@ import { lazy } from "@probo/react-lazy";
 import { assetsQuery, assetNodeQuery } from "../hooks/graph/AssetGraph";
 import type { AssetGraphListQuery } from "/hooks/graph/__generated__/AssetGraphListQuery.graphql";
 import type { AssetGraphNodeQuery } from "/hooks/graph/__generated__/AssetGraphNodeQuery.graphql";
-import { loaderFromQueryLoader, withQueryRef, type AppRoute } from "/routes";
+import { loaderFromQueryLoader, withQueryRef, type AppRoute } from "@probo/routes";
 
 export const assetRoutes = [
   {
     path: "assets",
-    fallback: PageSkeleton,
+    Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ organizationId }) =>
       loadQuery<AssetGraphListQuery>(relayEnvironment, assetsQuery, {
         organizationId: organizationId,
@@ -21,7 +21,7 @@ export const assetRoutes = [
   },
   {
     path: "snapshots/:snapshotId/assets",
-    fallback: PageSkeleton,
+    Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ organizationId, snapshotId }) =>
       loadQuery<AssetGraphListQuery>(relayEnvironment, assetsQuery, {
         organizationId: organizationId,
@@ -32,7 +32,7 @@ export const assetRoutes = [
   },
   {
     path: "assets/:assetId",
-    fallback: PageSkeleton,
+    Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ assetId }) =>
       loadQuery<AssetGraphNodeQuery>(relayEnvironment, assetNodeQuery, { assetId }),
     ),
@@ -42,7 +42,7 @@ export const assetRoutes = [
   },
   {
     path: "snapshots/:snapshotId/assets/:assetId",
-    fallback: PageSkeleton,
+    Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ assetId }) =>
       loadQuery<AssetGraphNodeQuery>(relayEnvironment, assetNodeQuery, { assetId }),
     ),

@@ -2,15 +2,11 @@ import {
   createBrowserRouter,
   Navigate,
   redirect,
-  useLoaderData,
   useRouteError,
-  type LoaderFunction,
-  type LoaderFunctionArgs,
-  type RouteObject,
 } from "react-router";
 import { MainLayout } from "./layouts/MainLayout";
 import { AuthLayout, CenteredLayout, CenteredLayoutSkeleton } from "@probo/ui";
-import { Fragment, Suspense, type ComponentType, type LazyExoticComponent } from "react";
+import { Fragment } from "react";
 import {
   relayEnvironment,
   UnAuthenticatedError,
@@ -18,8 +14,7 @@ import {
   ForbiddenError,
 } from "./providers/RelayProviders";
 import { PageSkeleton } from "./components/skeletons/PageSkeleton.tsx";
-import { loadQuery, type EnvironmentProviderOptions, type PreloadedQuery } from "react-relay";
-import { useCleanup } from "./hooks/useDelayedEffect.ts";
+import { loadQuery } from "react-relay";
 import { riskRoutes } from "./routes/riskRoutes.ts";
 import { measureRoutes } from "./routes/measureRoutes.ts";
 import { documentsRoutes } from "./routes/documentsRoutes.ts";
@@ -40,42 +35,7 @@ import { snapshotsRoutes } from "./routes/snapshotsRoutes.ts";
 import { continualImprovementRoutes } from "./routes/continualImprovementRoutes.ts";
 import { processingActivityRoutes } from "./routes/processingActivityRoutes.ts";
 import { lazy } from "@probo/react-lazy";
-import type { OperationType } from "relay-runtime";
-
-export function withQueryRef<
-  TQuery extends OperationType,
-  TEnvironmentProviderOptions = EnvironmentProviderOptions
->(
-  Component: LazyExoticComponent<ComponentType<{ queryRef: PreloadedQuery<TQuery, TEnvironmentProviderOptions> }>>,
-) {
-  return () => {
-    const { queryRef, dispose } = useLoaderData();
-
-    useCleanup(dispose, 1000);
-
-    return <Component queryRef={queryRef} />
-  }
-}
-
-export function loaderFromQueryLoader<
-  TQuery extends OperationType,
-  TEnvironmentProviderOptions = EnvironmentProviderOptions
->(
-  queryLoader: (params: Record<string, string>) => PreloadedQuery<TQuery, TEnvironmentProviderOptions>
-): LoaderFunction {
-  return ({ params }: LoaderFunctionArgs) => {
-    const query = queryLoader(params as Record<string, string>);
-    return {
-      queryRef: query,
-      dispose: query.dispose,
-    };
-  }
-}
-
-export type AppRoute = Omit<RouteObject, "children"> & {
-  children?: AppRoute[];
-  fallback?: ComponentType;
-}
+import { loaderFromQueryLoader, routeFromAppRoute, withQueryRef, type AppRoute } from "@probo/routes";
 
 /**
  * Top level error boundary
@@ -132,7 +92,7 @@ const routes = [
   {
     path: "/",
     Component: CenteredLayout,
-    fallback: CenteredLayoutSkeleton,
+    Fallback: CenteredLayoutSkeleton,
     ErrorBoundary: ErrorBoundary,
     children: [
       {
@@ -171,7 +131,7 @@ const routes = [
       },
       {
         path: "settings",
-        fallback: PageSkeleton,
+        Fallback: PageSkeleton,
         loader: loaderFromQueryLoader(
           ({ organizationId }) =>
             loadQuery(relayEnvironment, organizationViewQuery, {
@@ -234,34 +194,4 @@ const routes = [
   },
 ] satisfies AppRoute[];
 
-/**
- * Wrap components with suspense to handle lazy loading & relay loading states
- */
-function routeTransformer({
-  Component,
-  fallback: FallbackComponent,
-  children,
-  ...rest
-}: AppRoute): RouteObject {
-  let route: RouteObject = { ...rest };
-
-  if (Component && FallbackComponent) {
-    const OriginalComponent = Component as ComponentType;
-
-    route = {
-      ...route,
-      Component: () => (
-        <Suspense fallback={<FallbackComponent />}>
-          <OriginalComponent />
-        </Suspense>
-      ),
-    };
-  }
-
-  return {
-    ...route,
-    children: children?.map(routeTransformer),
-  } as RouteObject;
-}
-
-export const router = createBrowserRouter(routes.map(routeTransformer));
+export const router = createBrowserRouter(routes.map(routeFromAppRoute));

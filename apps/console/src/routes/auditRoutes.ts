@@ -5,12 +5,12 @@ import { lazy } from "@probo/react-lazy";
 import { auditsQuery, auditNodeQuery } from "../hooks/graph/AuditGraph";
 import type { AuditGraphListQuery } from "/hooks/graph/__generated__/AuditGraphListQuery.graphql";
 import type { AuditGraphNodeQuery } from "/hooks/graph/__generated__/AuditGraphNodeQuery.graphql";
-import { loaderFromQueryLoader, withQueryRef } from "/routes";
+import { loaderFromQueryLoader, withQueryRef, type AppRoute } from "@probo/routes";
 
 export const auditRoutes = [
   {
     path: "audits",
-    fallback: PageSkeleton,
+    Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ organizationId }) =>
       loadQuery<AuditGraphListQuery>(relayEnvironment, auditsQuery, { organizationId }),
     ),
@@ -20,7 +20,7 @@ export const auditRoutes = [
   },
   {
     path: "audits/:auditId",
-    fallback: PageSkeleton,
+    Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ auditId }) =>
       loadQuery<AuditGraphNodeQuery>(relayEnvironment, auditNodeQuery, { auditId }),
     ),
@@ -28,4 +28,4 @@ export const auditRoutes = [
       () => import("/pages/organizations/audits/AuditDetailsPage")
     )),
   },
-];
+] satisfies AppRoute[];

@@ -7,7 +7,7 @@ import { PageSkeleton } from "/components/skeletons/PageSkeleton";
 import { redirect, type LoaderFunctionArgs } from "react-router";
 import { lazy } from "@probo/react-lazy";
 import { LinkCardSkeleton } from "/components/skeletons/LinkCardSkeleton";
-import { loaderFromQueryLoader, withQueryRef, type AppRoute } from "/routes";
+import { loaderFromQueryLoader, withQueryRef, type AppRoute } from "@probo/routes";
 import type { DocumentGraphListQuery } from "/hooks/graph/__generated__/DocumentGraphListQuery.graphql";
 import type { DocumentGraphNodeQuery } from "/hooks/graph/__generated__/DocumentGraphNodeQuery.graphql";
 
@@ -26,7 +26,7 @@ const documentTabs = (prefix: string) => {
     },
     {
       path: `${prefix}description`,
-      fallback: LinkCardSkeleton,
+      Fallback: LinkCardSkeleton,
       Component: lazy(
         () =>
           import(
@@ -36,7 +36,7 @@ const documentTabs = (prefix: string) => {
     },
     {
       path: `${prefix}controls`,
-      fallback: LinkCardSkeleton,
+      Fallback: LinkCardSkeleton,
       Component: lazy(
         () =>
           import("../pages/organizations/documents/tabs/DocumentControlsTab"),
@@ -44,7 +44,7 @@ const documentTabs = (prefix: string) => {
     },
     {
       path: `${prefix}signatures`,
-      fallback: LinkCardSkeleton,
+      Fallback: LinkCardSkeleton,
       Component: lazy(
         () =>
           import("../pages/organizations/documents/tabs/DocumentSignaturesTab"),
@@ -56,7 +56,7 @@ const documentTabs = (prefix: string) => {
 export const documentsRoutes = [
   {
     path: "documents",
-    fallback: PageSkeleton,
+    Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ organizationId }) =>
       loadQuery<DocumentGraphListQuery>(relayEnvironment, documentsQuery, { organizationId: organizationId! }),
     ),
@@ -66,7 +66,7 @@ export const documentsRoutes = [
   },
   {
     path: "documents/:documentId",
-    fallback: PageSkeleton,
+    Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ documentId }) =>
       loadQuery<DocumentGraphNodeQuery>(relayEnvironment, documentNodeQuery, { documentId: documentId! }),
     ),

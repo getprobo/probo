@@ -5,12 +5,12 @@ import { lazy } from "@probo/react-lazy";
 import { nonconformitiesQuery, nonconformityNodeQuery } from "../hooks/graph/NonconformityGraph";
 import type { NonconformityGraphListQuery } from "/hooks/graph/__generated__/NonconformityGraphListQuery.graphql";
 import type { NonconformityGraphNodeQuery } from "/hooks/graph/__generated__/NonconformityGraphNodeQuery.graphql";
-import { loaderFromQueryLoader, withQueryRef, type AppRoute } from "/routes";
+import { loaderFromQueryLoader, withQueryRef, type AppRoute } from "@probo/routes";
 
 export const nonconformityRoutes = [
   {
     path: "nonconformities",
-    fallback: PageSkeleton,
+    Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ organizationId }) =>
       loadQuery<NonconformityGraphListQuery>(relayEnvironment, nonconformitiesQuery, {
         organizationId,
@@ -23,7 +23,7 @@ export const nonconformityRoutes = [
   },
   {
     path: "snapshots/:snapshotId/nonconformities",
-    fallback: PageSkeleton,
+    Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ organizationId, snapshotId }) =>
       loadQuery<NonconformityGraphListQuery>(relayEnvironment, nonconformitiesQuery, {
         organizationId,
@@ -36,7 +36,7 @@ export const nonconformityRoutes = [
   },
   {
     path: "nonconformities/:nonconformityId",
-    fallback: PageSkeleton,
+    Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ nonconformityId }) =>
       loadQuery<NonconformityGraphNodeQuery>(relayEnvironment, nonconformityNodeQuery, {
         nonconformityId,
@@ -48,7 +48,7 @@ export const nonconformityRoutes = [
   },
   {
     path: "snapshots/:snapshotId/nonconformities/:nonconformityId",
-    fallback: PageSkeleton,
+    Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ nonconformityId }) =>
       loadQuery<NonconformityGraphNodeQuery>(relayEnvironment, nonconformityNodeQuery, {
         nonconformityId: nonconformityId

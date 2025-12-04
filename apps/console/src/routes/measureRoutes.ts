@@ -6,14 +6,14 @@ import { PageSkeleton } from "/components/skeletons/PageSkeleton";
 import { redirect } from "react-router";
 import { lazy } from "@probo/react-lazy";
 import { LinkCardSkeleton } from "/components/skeletons/LinkCardSkeleton";
-import { loaderFromQueryLoader, withQueryRef, type AppRoute } from "/routes";
+import { loaderFromQueryLoader, withQueryRef, type AppRoute } from "@probo/routes";
 import type { MeasureGraphListQuery } from "/hooks/graph/__generated__/MeasureGraphListQuery.graphql";
 import type { MeasureGraphNodeQuery } from "/hooks/graph/__generated__/MeasureGraphNodeQuery.graphql";
 
 export const measureRoutes = [
   {
     path: "measures",
-    fallback: PageSkeleton,
+    Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ organizationId }) =>
       loadQuery<MeasureGraphListQuery>(relayEnvironment, measuresQuery, { organizationId: organizationId! }),
     ),
@@ -27,7 +27,7 @@ export const measureRoutes = [
   },
   {
     path: "measures/:measureId",
-    fallback: PageSkeleton,
+    Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ measureId }) =>
       loadQuery<MeasureGraphNodeQuery>(relayEnvironment, measureNodeQuery, { measureId: measureId! }),
     ),
@@ -42,21 +42,21 @@ export const measureRoutes = [
       },
       {
         path: "risks",
-        fallback: LinkCardSkeleton,
+        Fallback: LinkCardSkeleton,
         Component: lazy(
           () => import("/pages/organizations/measures/tabs/MeasureRisksTab.tsx")
         ),
       },
       {
         path: "tasks",
-        fallback: LinkCardSkeleton,
+        Fallback: LinkCardSkeleton,
         Component: lazy(
           () => import("/pages/organizations/measures/tabs/MeasureTasksTab.tsx")
         ),
       },
       {
         path: "controls",
-        fallback: LinkCardSkeleton,
+        Fallback: LinkCardSkeleton,
         Component: lazy(
           () =>
             import("/pages/organizations/measures/tabs/MeasureControlsTab.tsx")
@@ -64,7 +64,7 @@ export const measureRoutes = [
       },
       {
         path: "evidences/:evidenceId?",
-        fallback: LinkCardSkeleton,
+        Fallback: LinkCardSkeleton,
         Component: lazy(
           () =>
             import("/pages/organizations/measures/tabs/MeasureEvidencesTab.tsx")

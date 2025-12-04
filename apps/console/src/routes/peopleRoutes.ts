@@ -7,14 +7,14 @@ import {
   peopleNodeQuery,
 } from "/hooks/graph/PeopleGraph";
 import { LinkCardSkeleton } from "/components/skeletons/LinkCardSkeleton";
-import { loaderFromQueryLoader, withQueryRef, type AppRoute } from "/routes";
+import { loaderFromQueryLoader, withQueryRef, type AppRoute } from "@probo/routes";
 import type { PeopleGraphPaginatedQuery } from "/hooks/graph/__generated__/PeopleGraphPaginatedQuery.graphql";
 import type { PeopleGraphNodeQuery } from "/hooks/graph/__generated__/PeopleGraphNodeQuery.graphql";
 
 export const peopleRoutes = [
   {
     path: "people",
-    fallback: PageSkeleton,
+    Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ organizationId }) =>
       loadQuery<PeopleGraphPaginatedQuery>(relayEnvironment, paginatedPeopleQuery, { organizationId: organizationId! }),
     ),
@@ -22,7 +22,7 @@ export const peopleRoutes = [
   },
   {
     path: "people/:peopleId",
-    fallback: PageSkeleton,
+    Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ peopleId }) =>
       loadQuery<PeopleGraphNodeQuery>(relayEnvironment, peopleNodeQuery, { peopleId: peopleId! }),
     ),
@@ -32,21 +32,21 @@ export const peopleRoutes = [
     children: [
       {
         path: "tasks",
-        fallback: LinkCardSkeleton,
+        Fallback: LinkCardSkeleton,
         Component: lazy(
           () => import("/pages/organizations/people/tabs/PeopleTasksTab")
         ),
       },
       {
         path: "role",
-        fallback: LinkCardSkeleton,
+        Fallback: LinkCardSkeleton,
         Component: lazy(
           () => import("/pages/organizations/people/tabs/PeopleRoleTab")
         ),
       },
       {
         path: "profile",
-        fallback: LinkCardSkeleton,
+        Fallback: LinkCardSkeleton,
         Component: lazy(
           () => import("/pages/organizations/people/tabs/PeopleProfileTab")
         ),

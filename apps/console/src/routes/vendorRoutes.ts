@@ -4,14 +4,14 @@ import { relayEnvironment } from "/providers/RelayProviders";
 import { PageSkeleton } from "/components/skeletons/PageSkeleton";
 import { vendorNodeQuery, vendorsQuery } from "/hooks/graph/VendorGraph";
 import { LinkCardSkeleton } from "/components/skeletons/LinkCardSkeleton";
-import { loaderFromQueryLoader, withQueryRef, type AppRoute } from "/routes";
+import { loaderFromQueryLoader, withQueryRef, type AppRoute } from "@probo/routes";
 import type { VendorGraphListQuery } from "/hooks/graph/__generated__/VendorGraphListQuery.graphql";
 import type { VendorGraphNodeQuery } from "/hooks/graph/__generated__/VendorGraphNodeQuery.graphql";
 
 export const vendorRoutes = [
   {
     path: "vendors",
-    fallback: PageSkeleton,
+    Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ organizationId }) =>
       loadQuery<VendorGraphListQuery>(relayEnvironment, vendorsQuery, {
         organizationId: organizationId!,
@@ -22,7 +22,7 @@ export const vendorRoutes = [
   },
   {
     path: "snapshots/:snapshotId/vendors",
-    fallback: PageSkeleton,
+    Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ organizationId, snapshotId }) =>
       loadQuery<VendorGraphListQuery>(relayEnvironment, vendorsQuery, {
         organizationId: organizationId!,
@@ -33,7 +33,7 @@ export const vendorRoutes = [
   },
   {
     path: "vendors/:vendorId",
-    fallback: PageSkeleton,
+    Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ vendorId }) =>
       loadQuery<VendorGraphNodeQuery>(relayEnvironment, vendorNodeQuery, {
         vendorId: vendorId!,
@@ -45,14 +45,14 @@ export const vendorRoutes = [
     children: [
       {
         path: "overview",
-        fallback: LinkCardSkeleton,
+        Fallback: LinkCardSkeleton,
         Component: lazy(
           () => import("../pages/organizations/vendors/tabs/VendorOverviewTab")
         ),
       },
       {
         path: "certifications",
-        fallback: LinkCardSkeleton,
+        Fallback: LinkCardSkeleton,
         Component: lazy(
           () =>
             import(
@@ -62,7 +62,7 @@ export const vendorRoutes = [
       },
       {
         path: "compliance",
-        fallback: LinkCardSkeleton,
+        Fallback: LinkCardSkeleton,
         Component: lazy(
           () =>
             import("../pages/organizations/vendors/tabs/VendorComplianceTab")
@@ -70,7 +70,7 @@ export const vendorRoutes = [
       },
       {
         path: "risks",
-        fallback: LinkCardSkeleton,
+        Fallback: LinkCardSkeleton,
         Component: lazy(
           () =>
             import(
@@ -80,7 +80,7 @@ export const vendorRoutes = [
       },
       {
         path: "contacts",
-        fallback: LinkCardSkeleton,
+        Fallback: LinkCardSkeleton,
         Component: lazy(
           () =>
             import("../pages/organizations/vendors/tabs/VendorContactsTab")
@@ -88,7 +88,7 @@ export const vendorRoutes = [
       },
       {
         path: "services",
-        fallback: LinkCardSkeleton,
+        Fallback: LinkCardSkeleton,
         Component: lazy(
           () =>
             import("../pages/organizations/vendors/tabs/VendorServicesTab")
@@ -98,7 +98,7 @@ export const vendorRoutes = [
   },
   {
     path: "snapshots/:snapshotId/vendors/:vendorId",
-    fallback: PageSkeleton,
+    Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ vendorId }) =>
       loadQuery<VendorGraphNodeQuery>(relayEnvironment, vendorNodeQuery, {
         vendorId: vendorId!,
@@ -110,14 +110,14 @@ export const vendorRoutes = [
     children: [
       {
         path: "overview",
-        fallback: LinkCardSkeleton,
+        Fallback: LinkCardSkeleton,
         Component: lazy(
           () => import("../pages/organizations/vendors/tabs/VendorOverviewTab")
         ),
       },
       {
         path: "certifications",
-        fallback: LinkCardSkeleton,
+        Fallback: LinkCardSkeleton,
         Component: lazy(
           () =>
             import(
@@ -127,7 +127,7 @@ export const vendorRoutes = [
       },
       {
         path: "compliance",
-        fallback: LinkCardSkeleton,
+        Fallback: LinkCardSkeleton,
         Component: lazy(
           () =>
             import("../pages/organizations/vendors/tabs/VendorComplianceTab")
@@ -135,7 +135,7 @@ export const vendorRoutes = [
       },
       {
         path: "risks",
-        fallback: LinkCardSkeleton,
+        Fallback: LinkCardSkeleton,
         Component: lazy(
           () =>
             import(
@@ -145,7 +145,7 @@ export const vendorRoutes = [
       },
       {
         path: "contacts",
-        fallback: LinkCardSkeleton,
+        Fallback: LinkCardSkeleton,
         Component: lazy(
           () =>
             import("../pages/organizations/vendors/tabs/VendorContactsTab")
@@ -153,7 +153,7 @@ export const vendorRoutes = [
       },
       {
         path: "services",
-        fallback: LinkCardSkeleton,
+        Fallback: LinkCardSkeleton,
         Component: lazy(
           () =>
             import("../pages/organizations/vendors/tabs/VendorServicesTab")

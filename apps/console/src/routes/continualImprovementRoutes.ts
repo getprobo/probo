@@ -5,12 +5,12 @@ import { lazy } from "@probo/react-lazy";
 import { continualImprovementsQuery, continualImprovementNodeQuery } from "/hooks/graph/ContinualImprovementGraph";
 import type { ContinualImprovementGraphListQuery } from "/hooks/graph/__generated__/ContinualImprovementGraphListQuery.graphql";
 import type { ContinualImprovementGraphNodeQuery } from "/hooks/graph/__generated__/ContinualImprovementGraphNodeQuery.graphql";
-import { loaderFromQueryLoader, withQueryRef, type AppRoute } from "/routes";
+import { loaderFromQueryLoader, withQueryRef, type AppRoute } from "@probo/routes";
 
 export const continualImprovementRoutes = [
   {
     path: "continual-improvements",
-    fallback: PageSkeleton,
+    Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ organizationId }) =>
       loadQuery<ContinualImprovementGraphListQuery>(relayEnvironment, continualImprovementsQuery, {
         organizationId,
@@ -23,7 +23,7 @@ export const continualImprovementRoutes = [
   },
   {
     path: "snapshots/:snapshotId/continual-improvements",
-    fallback: PageSkeleton,
+    Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ organizationId, snapshotId }) =>
       loadQuery<ContinualImprovementGraphListQuery>(relayEnvironment, continualImprovementsQuery, {
         organizationId,
@@ -36,7 +36,7 @@ export const continualImprovementRoutes = [
   },
   {
     path: "continual-improvements/:improvementId",
-    fallback: PageSkeleton,
+    Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ improvementId }) =>
       loadQuery<ContinualImprovementGraphNodeQuery>(relayEnvironment, continualImprovementNodeQuery, {
         continualImprovementId: improvementId!,
@@ -48,7 +48,7 @@ export const continualImprovementRoutes = [
   },
   {
     path: "snapshots/:snapshotId/continual-improvements/:improvementId",
-    fallback: PageSkeleton,
+    Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ improvementId }) =>
       loadQuery<ContinualImprovementGraphNodeQuery>(relayEnvironment, continualImprovementNodeQuery, {
         continualImprovementId: improvementId!,

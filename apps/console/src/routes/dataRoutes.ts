@@ -5,12 +5,12 @@ import { lazy } from "@probo/react-lazy";
 import { dataQuery, datumNodeQuery } from "../hooks/graph/DatumGraph";
 import type { DatumGraphListQuery } from "/hooks/graph/__generated__/DatumGraphListQuery.graphql";
 import type { DatumGraphNodeQuery } from "/hooks/graph/__generated__/DatumGraphNodeQuery.graphql";
-import { loaderFromQueryLoader, withQueryRef, type AppRoute } from "/routes";
+import { loaderFromQueryLoader, withQueryRef, type AppRoute } from "@probo/routes";
 
 export const dataRoutes = [
   {
     path: "data",
-    fallback: PageSkeleton,
+    Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ organizationId }) =>
       loadQuery<DatumGraphListQuery>(relayEnvironment, dataQuery, {
         organizationId: organizationId,
@@ -23,7 +23,7 @@ export const dataRoutes = [
   },
   {
     path: "snapshots/:snapshotId/data",
-    fallback: PageSkeleton,
+    Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ organizationId, snapshotId }) =>
       loadQuery<DatumGraphListQuery>(relayEnvironment, dataQuery, {
         organizationId,
@@ -36,7 +36,7 @@ export const dataRoutes = [
   },
   {
     path: "data/:dataId",
-    fallback: PageSkeleton,
+    Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ dataId }) =>
       loadQuery<DatumGraphNodeQuery>(relayEnvironment, datumNodeQuery, { dataId }),
     ),
@@ -46,7 +46,7 @@ export const dataRoutes = [
   },
   {
     path: "snapshots/:snapshotId/data/:dataId",
-    fallback: PageSkeleton,
+    Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ dataId }) =>
       loadQuery<DatumGraphNodeQuery>(relayEnvironment, datumNodeQuery, { dataId }),
     ),
