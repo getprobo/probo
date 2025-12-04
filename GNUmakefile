@@ -42,7 +42,7 @@ PROBOD_SRC=	cmd/probod/main.go
 all: build
 
 .PHONY: lint
-lint: vet # npm-lint
+lint: vet npm-lint
 
 .PHONY: vet
 vet: @probo/emails
