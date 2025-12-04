@@ -1,7 +1,7 @@
-import { ComponentType } from "react";
-import { EnvironmentProviderOptions, PreloadedQuery } from "react-relay";
-import { LoaderFunction, LoaderFunctionArgs, useLoaderData } from "react-router";
-import { OperationType } from "relay-runtime";
+import { type ComponentType } from "react";
+import type { EnvironmentProviderOptions, PreloadedQuery } from "react-relay";
+import { type LoaderFunction, type LoaderFunctionArgs, useLoaderData } from "react-router";
+import { type OperationType } from "relay-runtime";
 import { useCleanup } from "@probo/hooks";
 
 export function withQueryRef<

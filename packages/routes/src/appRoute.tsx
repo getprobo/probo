@@ -1,5 +1,5 @@
-import { ComponentType, Suspense } from "react";
-import { RouteObject } from "react-router";
+import { type ComponentType, Suspense } from "react";
+import { type RouteObject } from "react-router";
 
 export type AppRoute = Omit<RouteObject, "children"> & {
   children?: AppRoute[];
