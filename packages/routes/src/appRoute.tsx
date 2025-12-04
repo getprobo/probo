@@ -11,15 +11,18 @@ export function routeFromAppRoute(appRoute: AppRoute): RouteObject {
   let route = { ...rest } as RouteObject;
 
   if (Component && Fallback) {
-    const OriginalComponent = Component as ComponentType;
-
     route = {
       ...route,
       Component: () => (
         <Suspense fallback={<Fallback />}>
-          <OriginalComponent />
+          <Component />
         </Suspense>
       ),
+    };
+  } else if (Component) {
+    route = {
+      ...route,
+      Component,
     };
   }
 
