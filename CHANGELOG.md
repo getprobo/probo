@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.98.1] - 2025-12-04
+
+### Fixed
+
+- Missing organization_id on Report
+- ESLint issues
+
 ## [0.98.0] - 2025-12-03
 
 ### Added
