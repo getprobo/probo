@@ -4,17 +4,19 @@ import { PageSkeleton } from "/components/skeletons/PageSkeleton";
 import { LinkCardSkeleton } from "/components/skeletons/LinkCardSkeleton";
 import { lazy } from "@probo/react-lazy";
 import { trustCenterQuery } from "../hooks/graph/TrustCenterGraph";
-import type { AppRoute } from "/routes";
+import type { TrustCenterGraphQuery } from "/hooks/graph/__generated__/TrustCenterGraphQuery.graphql";
+import { loaderFromQueryLoader, withQueryRef, type AppRoute } from "/routes";
 
 export const trustCenterRoutes = [
   {
     path: "trust-center",
     fallback: PageSkeleton,
-    queryLoader: ({ organizationId }) =>
-      loadQuery(relayEnvironment, trustCenterQuery, { organizationId }, { fetchPolicy: "network-only" }),
-    Component: lazy(
-      () => import("/pages/organizations/trustCenter/TrustCenterPage")
+    loader: loaderFromQueryLoader(({ organizationId }) =>
+      loadQuery<TrustCenterGraphQuery>(relayEnvironment, trustCenterQuery, { organizationId }, { fetchPolicy: "network-only" }),
     ),
+    Component: withQueryRef(lazy(
+      () => import("/pages/organizations/trustCenter/TrustCenterPage")
+    )),
     children: [
       {
         index: true,

@@ -1,41 +1,46 @@
 import { Fragment } from "react";
 import { loadQuery } from "react-relay";
 import { RisksPageSkeleton } from "/components/skeletons/RisksPageSkeleton.tsx";
-import type { AppRoute } from "/routes.tsx";
 import { relayEnvironment } from "/providers/RelayProviders";
 import { riskNodeQuery, risksQuery } from "/hooks/graph/RiskGraph";
 import { PageSkeleton } from "/components/skeletons/PageSkeleton";
 import { redirect } from "react-router";
 import { lazy } from "@probo/react-lazy";
 import { LinkCardSkeleton } from "/components/skeletons/LinkCardSkeleton";
+import type { RiskGraphNodeQuery } from "/hooks/graph/__generated__/RiskGraphNodeQuery.graphql";
+import { loaderFromQueryLoader, withQueryRef, type AppRoute } from "/routes";
+import type { RiskGraphListQuery } from "/hooks/graph/__generated__/RiskGraphListQuery.graphql";
 
 export const riskRoutes = [
   {
     path: "risks",
     fallback: RisksPageSkeleton,
-    queryLoader: ({ organizationId }) =>
-      loadQuery(relayEnvironment, risksQuery, {
-        organizationId,
+    loader: loaderFromQueryLoader(({ organizationId }) =>
+      loadQuery<RiskGraphListQuery>(relayEnvironment, risksQuery, {
+        organizationId: organizationId!,
         snapshotId: null
       }),
-    Component: lazy(() => import("/pages/organizations/risks/RisksPage")),
+    ),
+    Component: withQueryRef(lazy(() => import("/pages/organizations/risks/RisksPage"))),
   },
   {
     path: "snapshots/:snapshotId/risks",
     fallback: RisksPageSkeleton,
-    queryLoader: ({ organizationId, snapshotId }) =>
-      loadQuery(relayEnvironment, risksQuery, {
-        organizationId,
-        snapshotId
+    loader: loaderFromQueryLoader(({ organizationId, snapshotId }) =>
+      loadQuery<RiskGraphListQuery>(relayEnvironment, risksQuery, {
+        organizationId: organizationId!,
+        snapshotId: snapshotId!
       }),
-    Component: lazy(() => import("/pages/organizations/risks/RisksPage")),
+    ),
+    Component: withQueryRef(lazy(() => import("/pages/organizations/risks/RisksPage"))),
   },
   {
     path: "risks/:riskId",
     fallback: PageSkeleton,
-    queryLoader: ({ riskId }) =>
-      loadQuery(relayEnvironment, riskNodeQuery, { riskId }),
-    Component: lazy(() => import("/pages/organizations/risks/RiskDetailPage")),
+    loader: loaderFromQueryLoader(({ riskId }) =>
+      loadQuery<RiskGraphNodeQuery>(relayEnvironment, riskNodeQuery, { riskId: riskId! }),
+    ),
+    Component: withQueryRef(lazy(() => import("/pages/organizations/risks/RiskDetailPage"))),
     children: [
       {
         path: "",
@@ -84,9 +89,10 @@ export const riskRoutes = [
   {
     path: "snapshots/:snapshotId/risks/:riskId",
     fallback: PageSkeleton,
-    queryLoader: ({ riskId }) =>
-      loadQuery(relayEnvironment, riskNodeQuery, { riskId }),
-    Component: lazy(() => import("/pages/organizations/risks/RiskDetailPage")),
+    loader: loaderFromQueryLoader(({ riskId }) =>
+      loadQuery<RiskGraphNodeQuery>(relayEnvironment, riskNodeQuery, { riskId: riskId! }),
+    ),
+    Component: withQueryRef(lazy(() => import("/pages/organizations/risks/RiskDetailPage"))),
     children: [
       {
         path: "",

@@ -1,6 +1,5 @@
 import { lazy } from "@probo/react-lazy";
 import { loadQuery } from "react-relay";
-import type { AppRoute } from "/routes.tsx";
 import { relayEnvironment } from "/providers/RelayProviders";
 import { PageSkeleton } from "/components/skeletons/PageSkeleton.tsx";
 import {
@@ -8,23 +7,28 @@ import {
   peopleNodeQuery,
 } from "/hooks/graph/PeopleGraph";
 import { LinkCardSkeleton } from "/components/skeletons/LinkCardSkeleton";
+import { loaderFromQueryLoader, withQueryRef, type AppRoute } from "/routes";
+import type { PeopleGraphPaginatedQuery } from "/hooks/graph/__generated__/PeopleGraphPaginatedQuery.graphql";
+import type { PeopleGraphNodeQuery } from "/hooks/graph/__generated__/PeopleGraphNodeQuery.graphql";
 
 export const peopleRoutes = [
   {
     path: "people",
     fallback: PageSkeleton,
-    queryLoader: ({ organizationId }) =>
-      loadQuery(relayEnvironment, paginatedPeopleQuery, { organizationId }),
-    Component: lazy(() => import("/pages/organizations/people/PeopleListPage")),
+    loader: loaderFromQueryLoader(({ organizationId }) =>
+      loadQuery<PeopleGraphPaginatedQuery>(relayEnvironment, paginatedPeopleQuery, { organizationId: organizationId! }),
+    ),
+    Component: withQueryRef(lazy(() => import("/pages/organizations/people/PeopleListPage"))),
   },
   {
     path: "people/:peopleId",
     fallback: PageSkeleton,
-    queryLoader: ({ peopleId }) =>
-      loadQuery(relayEnvironment, peopleNodeQuery, { peopleId }),
-    Component: lazy(
-      () => import("/pages/organizations/people/PeopleDetailPage")
+    loader: loaderFromQueryLoader(({ peopleId }) =>
+      loadQuery<PeopleGraphNodeQuery>(relayEnvironment, peopleNodeQuery, { peopleId: peopleId! }),
     ),
+    Component: withQueryRef(lazy(
+      () => import("/pages/organizations/people/PeopleDetailPage")
+    )),
     children: [
       {
         path: "tasks",

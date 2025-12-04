@@ -3,24 +3,29 @@ import { relayEnvironment } from "/providers/RelayProviders";
 import { PageSkeleton } from "/components/skeletons/PageSkeleton";
 import { lazy } from "@probo/react-lazy";
 import { auditsQuery, auditNodeQuery } from "../hooks/graph/AuditGraph";
+import type { AuditGraphListQuery } from "/hooks/graph/__generated__/AuditGraphListQuery.graphql";
+import type { AuditGraphNodeQuery } from "/hooks/graph/__generated__/AuditGraphNodeQuery.graphql";
+import { loaderFromQueryLoader, withQueryRef } from "/routes";
 
 export const auditRoutes = [
   {
     path: "audits",
     fallback: PageSkeleton,
-    queryLoader: (params: Record<string, string>) =>
-      loadQuery(relayEnvironment, auditsQuery, { organizationId: params.organizationId }),
-    Component: lazy(
-      () => import("/pages/organizations/audits/AuditsPage")
+    loader: loaderFromQueryLoader(({ organizationId }) =>
+      loadQuery<AuditGraphListQuery>(relayEnvironment, auditsQuery, { organizationId }),
     ),
+    Component: withQueryRef(lazy(
+      () => import("/pages/organizations/audits/AuditsPage")
+    )),
   },
   {
     path: "audits/:auditId",
     fallback: PageSkeleton,
-    queryLoader: (params: Record<string, string>) =>
-      loadQuery(relayEnvironment, auditNodeQuery, { auditId: params.auditId }),
-    Component: lazy(
-      () => import("/pages/organizations/audits/AuditDetailsPage")
+    loader: loaderFromQueryLoader(({ auditId }) =>
+      loadQuery<AuditGraphNodeQuery>(relayEnvironment, auditNodeQuery, { auditId }),
     ),
+    Component: withQueryRef(lazy(
+      () => import("/pages/organizations/audits/AuditDetailsPage")
+    )),
   },
 ];

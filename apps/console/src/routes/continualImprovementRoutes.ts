@@ -3,53 +3,59 @@ import { relayEnvironment } from "/providers/RelayProviders";
 import { PageSkeleton } from "/components/skeletons/PageSkeleton";
 import { lazy } from "@probo/react-lazy";
 import { continualImprovementsQuery, continualImprovementNodeQuery } from "/hooks/graph/ContinualImprovementGraph";
-import type { AppRoute } from "/routes";
+import type { ContinualImprovementGraphListQuery } from "/hooks/graph/__generated__/ContinualImprovementGraphListQuery.graphql";
+import type { ContinualImprovementGraphNodeQuery } from "/hooks/graph/__generated__/ContinualImprovementGraphNodeQuery.graphql";
+import { loaderFromQueryLoader, withQueryRef, type AppRoute } from "/routes";
 
 export const continualImprovementRoutes = [
   {
     path: "continual-improvements",
     fallback: PageSkeleton,
-    queryLoader: (params: Record<string, string>) =>
-      loadQuery(relayEnvironment, continualImprovementsQuery, {
-        organizationId: params.organizationId,
+    loader: loaderFromQueryLoader(({ organizationId }) =>
+      loadQuery<ContinualImprovementGraphListQuery>(relayEnvironment, continualImprovementsQuery, {
+        organizationId,
         snapshotId: null
       }),
-    Component: lazy(
-      () => import("/pages/organizations/continualImprovements/ContinualImprovementsPage")
     ),
+    Component: withQueryRef(lazy(
+      () => import("/pages/organizations/continualImprovements/ContinualImprovementsPage")
+    )),
   },
   {
     path: "snapshots/:snapshotId/continual-improvements",
     fallback: PageSkeleton,
-    queryLoader: (params: Record<string, string>) =>
-      loadQuery(relayEnvironment, continualImprovementsQuery, {
-        organizationId: params.organizationId,
-        snapshotId: params.snapshotId
+    loader: loaderFromQueryLoader(({ organizationId, snapshotId }) =>
+      loadQuery<ContinualImprovementGraphListQuery>(relayEnvironment, continualImprovementsQuery, {
+        organizationId,
+        snapshotId,
       }),
-    Component: lazy(
-      () => import("/pages/organizations/continualImprovements/ContinualImprovementsPage")
     ),
+    Component: withQueryRef(lazy(
+      () => import("/pages/organizations/continualImprovements/ContinualImprovementsPage")
+    )),
   },
   {
     path: "continual-improvements/:improvementId",
     fallback: PageSkeleton,
-    queryLoader: (params: Record<string, string>) =>
-      loadQuery(relayEnvironment, continualImprovementNodeQuery, {
-        continualImprovementId: params.improvementId
+    loader: loaderFromQueryLoader(({ improvementId }) =>
+      loadQuery<ContinualImprovementGraphNodeQuery>(relayEnvironment, continualImprovementNodeQuery, {
+        continualImprovementId: improvementId!,
       }),
-    Component: lazy(
-      () => import("/pages/organizations/continualImprovements/ContinualImprovementDetailsPage")
     ),
+    Component: withQueryRef(lazy(
+      () => import("/pages/organizations/continualImprovements/ContinualImprovementDetailsPage")
+    )),
   },
   {
     path: "snapshots/:snapshotId/continual-improvements/:improvementId",
     fallback: PageSkeleton,
-    queryLoader: (params: Record<string, string>) =>
-      loadQuery(relayEnvironment, continualImprovementNodeQuery, {
-        continualImprovementId: params.improvementId
+    loader: loaderFromQueryLoader(({ improvementId }) =>
+      loadQuery<ContinualImprovementGraphNodeQuery>(relayEnvironment, continualImprovementNodeQuery, {
+        continualImprovementId: improvementId!,
       }),
-    Component: lazy(
-      () => import("/pages/organizations/continualImprovements/ContinualImprovementDetailsPage")
     ),
+    Component: withQueryRef(lazy(
+      () => import("/pages/organizations/continualImprovements/ContinualImprovementDetailsPage")
+    )),
   },
 ] satisfies AppRoute[];

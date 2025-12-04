@@ -3,53 +3,59 @@ import { relayEnvironment } from "/providers/RelayProviders";
 import { PageSkeleton } from "/components/skeletons/PageSkeleton";
 import { lazy } from "@probo/react-lazy";
 import { obligationsQuery, obligationNodeQuery } from "/hooks/graph/ObligationGraph";
-import type { AppRoute } from "/routes";
+import type { ObligationGraphListQuery } from "/hooks/graph/__generated__/ObligationGraphListQuery.graphql";
+import type { ObligationGraphNodeQuery } from "/hooks/graph/__generated__/ObligationGraphNodeQuery.graphql";
+import { loaderFromQueryLoader, withQueryRef } from "/routes";
 
 export const obligationRoutes = [
   {
     path: "obligations",
     fallback: PageSkeleton,
-    queryLoader: (params: Record<string, string>) =>
-      loadQuery(relayEnvironment, obligationsQuery, {
-        organizationId: params.organizationId,
+    loader: loaderFromQueryLoader(({ organizationId }) =>
+      loadQuery<ObligationGraphListQuery>(relayEnvironment, obligationsQuery, {
+        organizationId,
         snapshotId: null
       }),
-    Component: lazy(
-      () => import("/pages/organizations/obligations/ObligationsPage")
     ),
+    Component: withQueryRef(lazy(
+      () => import("/pages/organizations/obligations/ObligationsPage")
+    )),
   },
   {
     path: "snapshots/:snapshotId/obligations",
     fallback: PageSkeleton,
-    queryLoader: (params: Record<string, string>) =>
-      loadQuery(relayEnvironment, obligationsQuery, {
-        organizationId: params.organizationId,
-        snapshotId: params.snapshotId
+    loader: loaderFromQueryLoader(({ organizationId, snapshotId }) =>
+      loadQuery<ObligationGraphListQuery>(relayEnvironment, obligationsQuery, {
+        organizationId,
+        snapshotId,
       }),
-    Component: lazy(
-      () => import("/pages/organizations/obligations/ObligationsPage")
     ),
+    Component: withQueryRef(lazy(
+      () => import("/pages/organizations/obligations/ObligationsPage")
+    )),
   },
   {
     path: "obligations/:obligationId",
     fallback: PageSkeleton,
-    queryLoader: (params: Record<string, string>) =>
-      loadQuery(relayEnvironment, obligationNodeQuery, {
-        obligationId: params.obligationId
+    loader: loaderFromQueryLoader(({ obligationId }) =>
+      loadQuery<ObligationGraphNodeQuery>(relayEnvironment, obligationNodeQuery, {
+        obligationId,
       }),
-    Component: lazy(
-      () => import("/pages/organizations/obligations/ObligationDetailsPage")
     ),
+    Component: withQueryRef(lazy(
+      () => import("/pages/organizations/obligations/ObligationDetailsPage")
+    )),
   },
   {
     path: "snapshots/:snapshotId/obligations/:obligationId",
     fallback: PageSkeleton,
-    queryLoader: (params: Record<string, string>) =>
-      loadQuery(relayEnvironment, obligationNodeQuery, {
-        obligationId: params.obligationId
+    loader: loaderFromQueryLoader(({ obligationId }) =>
+      loadQuery<ObligationGraphNodeQuery>(relayEnvironment, obligationNodeQuery, {
+        obligationId,
       }),
-    Component: lazy(
-      () => import("/pages/organizations/obligations/ObligationDetailsPage")
     ),
+    Component: withQueryRef(lazy(
+      () => import("/pages/organizations/obligations/ObligationDetailsPage")
+    )),
   },
-] satisfies AppRoute[];
+];

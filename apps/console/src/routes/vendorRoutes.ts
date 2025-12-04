@@ -1,42 +1,47 @@
 import { lazy } from "@probo/react-lazy";
 import { loadQuery } from "react-relay";
-import type { AppRoute } from "/routes.tsx";
 import { relayEnvironment } from "/providers/RelayProviders";
 import { PageSkeleton } from "/components/skeletons/PageSkeleton";
 import { vendorNodeQuery, vendorsQuery } from "/hooks/graph/VendorGraph";
 import { LinkCardSkeleton } from "/components/skeletons/LinkCardSkeleton";
+import { loaderFromQueryLoader, withQueryRef, type AppRoute } from "/routes";
+import type { VendorGraphListQuery } from "/hooks/graph/__generated__/VendorGraphListQuery.graphql";
+import type { VendorGraphNodeQuery } from "/hooks/graph/__generated__/VendorGraphNodeQuery.graphql";
 
 export const vendorRoutes = [
   {
     path: "vendors",
     fallback: PageSkeleton,
-    queryLoader: ({ organizationId }) =>
-      loadQuery(relayEnvironment, vendorsQuery, {
-        organizationId,
+    loader: loaderFromQueryLoader(({ organizationId }) =>
+      loadQuery<VendorGraphListQuery>(relayEnvironment, vendorsQuery, {
+        organizationId: organizationId!,
         snapshotId: null
       }),
-    Component: lazy(() => import("/pages/organizations/vendors/VendorsPage")),
+    ),
+    Component: withQueryRef(lazy(() => import("/pages/organizations/vendors/VendorsPage"))),
   },
   {
     path: "snapshots/:snapshotId/vendors",
     fallback: PageSkeleton,
-    queryLoader: ({ organizationId, snapshotId }) =>
-      loadQuery(relayEnvironment, vendorsQuery, {
-        organizationId,
+    loader: loaderFromQueryLoader(({ organizationId, snapshotId }) =>
+      loadQuery<VendorGraphListQuery>(relayEnvironment, vendorsQuery, {
+        organizationId: organizationId!,
         snapshotId
       }),
-    Component: lazy(() => import("/pages/organizations/vendors/VendorsPage")),
+    ),
+    Component: withQueryRef(lazy(() => import("/pages/organizations/vendors/VendorsPage"))),
   },
   {
     path: "vendors/:vendorId",
     fallback: PageSkeleton,
-    queryLoader: ({ vendorId }) =>
-      loadQuery(relayEnvironment, vendorNodeQuery, {
-        vendorId,
+    loader: loaderFromQueryLoader(({ vendorId }) =>
+      loadQuery<VendorGraphNodeQuery>(relayEnvironment, vendorNodeQuery, {
+        vendorId: vendorId!,
       }),
-    Component: lazy(
-      () => import("../pages/organizations/vendors/VendorDetailPage")
     ),
+    Component: withQueryRef(lazy(
+      () => import("../pages/organizations/vendors/VendorDetailPage")
+    )),
     children: [
       {
         path: "overview",
@@ -94,13 +99,14 @@ export const vendorRoutes = [
   {
     path: "snapshots/:snapshotId/vendors/:vendorId",
     fallback: PageSkeleton,
-    queryLoader: ({ vendorId }) =>
-      loadQuery(relayEnvironment, vendorNodeQuery, {
-        vendorId,
+    loader: loaderFromQueryLoader(({ vendorId }) =>
+      loadQuery<VendorGraphNodeQuery>(relayEnvironment, vendorNodeQuery, {
+        vendorId: vendorId!,
       }),
-    Component: lazy(
-      () => import("../pages/organizations/vendors/VendorDetailPage")
     ),
+    Component: withQueryRef(lazy(
+      () => import("../pages/organizations/vendors/VendorDetailPage")
+    )),
     children: [
       {
         path: "overview",

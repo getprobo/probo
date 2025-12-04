@@ -5,6 +5,7 @@ import {
   useLoaderData,
   useRouteError,
   type LoaderFunction,
+  type LoaderFunctionArgs,
   type RouteObject,
 } from "react-router";
 import { MainLayout } from "./layouts/MainLayout";
@@ -39,25 +40,42 @@ import { snapshotsRoutes } from "./routes/snapshotsRoutes.ts";
 import { continualImprovementRoutes } from "./routes/continualImprovementRoutes.ts";
 import { processingActivityRoutes } from "./routes/processingActivityRoutes.ts";
 import { lazy } from "@probo/react-lazy";
-import type { OperationType, VariablesOf } from "relay-runtime";
-import type { OrganizationGraph_ViewQuery } from "./hooks/graph/__generated__/OrganizationGraph_ViewQuery.graphql.ts";
+import type { OperationType } from "relay-runtime";
 
-type AppRouteWithoutQuery<TQuery extends OperationType> = Omit<RouteObject, "Component" | "children"> & {
-  Component?: React.ComponentType;
-  children?: AppRoute<TQuery>[];
-  fallback?: React.ComponentType;
-  queryLoader?: undefined;
+export function withQueryRef<
+  TQuery extends OperationType,
+  TEnvironmentProviderOptions = EnvironmentProviderOptions
+>(
+  Component: LazyExoticComponent<ComponentType<{ queryRef: PreloadedQuery<TQuery, TEnvironmentProviderOptions> }>>,
+) {
+  return () => {
+    const { queryRef, dispose } = useLoaderData();
+
+    useCleanup(dispose, 1000);
+
+    return <Component queryRef={queryRef} />
+  }
 }
 
-type AppRouteWithQuery<TQuery extends OperationType> = Omit<RouteObject, "Component" | "children"> & {
-  Component?:
-    LazyExoticComponent<ComponentType<{ queryRef: PreloadedQuery<TQuery, EnvironmentProviderOptions> }>>;
-  children?: AppRoute<TQuery>[];
-  fallback?: React.ComponentType;
-  queryLoader?: (params: VariablesOf<TQuery>) => PreloadedQuery<TQuery, EnvironmentProviderOptions>;
+export function loaderFromQueryLoader<
+  TQuery extends OperationType,
+  TEnvironmentProviderOptions = EnvironmentProviderOptions
+>(
+  queryLoader: (params: Record<string, string>) => PreloadedQuery<TQuery, TEnvironmentProviderOptions>
+): LoaderFunction {
+  return ({ params }: LoaderFunctionArgs) => {
+    const query = queryLoader(params as Record<string, string>);
+    return {
+      queryRef: query,
+      dispose: query.dispose,
+    };
+  }
 }
 
-export type AppRoute<TQuery extends OperationType> = AppRouteWithoutQuery<TQuery> | AppRouteWithQuery<TQuery>;
+export type AppRoute = Omit<RouteObject, "children"> & {
+  children?: AppRoute[];
+  fallback?: ComponentType;
+}
 
 /**
  * Top level error boundary
@@ -154,11 +172,13 @@ const routes = [
       {
         path: "settings",
         fallback: PageSkeleton,
-        queryLoader: ({ organizationId }: VariablesOf<OrganizationGraph_ViewQuery>) =>
-          loadQuery(relayEnvironment, organizationViewQuery, {
-            organizationId,
-          }),
-        Component: lazy(() => import("./pages/organizations/SettingsPage")),
+        loader: loaderFromQueryLoader(
+          ({ organizationId }) =>
+            loadQuery(relayEnvironment, organizationViewQuery, {
+              organizationId: organizationId!,
+            })
+        ),
+        Component: withQueryRef(lazy(() => import("./pages/organizations/SettingsPage"))),
         children: [
           {
             path: "",
@@ -212,70 +232,35 @@ const routes = [
     path: "*",
     Component: PageError,
   },
-] as AppRoute<OperationType>[];
+] satisfies AppRoute[];
 
 /**
  * Wrap components with suspense to handle lazy loading & relay loading states
  */
-function routeTransformer<TQuery extends OperationType>({
+function routeTransformer({
   Component,
   fallback: FallbackComponent,
-  queryLoader,
   children,
   ...rest
-}: AppRoute<TQuery>): RouteObject {
+}: AppRoute): RouteObject {
   let route: RouteObject = { ...rest };
 
-  if (Component) {
-    let RouteComponent = Component;
+  if (Component && FallbackComponent) {
+    const OriginalComponent = Component as ComponentType;
 
-    if (FallbackComponent && typeof queryLoader === "undefined") {
-      const OriginalComponent = Component as ComponentType;
-
-      RouteComponent = () => (
+    route = {
+      ...route,
+      Component: () => (
         <Suspense fallback={<FallbackComponent />}>
           <OriginalComponent />
         </Suspense>
-      );
-
-      route = {
-        ...route,
-        Component: RouteComponent,
-      };
-    } else if (queryLoader) {
-      const OriginalComponent = Component as LazyExoticComponent<ComponentType<{ queryRef: PreloadedQuery<TQuery, EnvironmentProviderOptions> }>>;
-
-      RouteComponent = () => {
-        const { queryRef, dispose } = useLoaderData();
-
-        useCleanup(dispose, 1000);
-
-        return (
-          <Suspense fallback={FallbackComponent ? <FallbackComponent /> : null}>
-            <OriginalComponent queryRef={queryRef} />
-          </Suspense>
-        );
-      };
-
-      const loader: LoaderFunction = ({ params }) => {
-        const query = queryLoader(params as VariablesOf<TQuery>);
-        return {
-          queryRef: query,
-          dispose: query.dispose,
-        };
-      };
-
-      route = {
-        ...route,
-        loader: loader,
-        Component: RouteComponent,
-      };
-    }
+      ),
+    };
   }
 
   return {
     ...route,
-    children: children?.map(routeTransformer<TQuery>),
+    children: children?.map(routeTransformer),
   } as RouteObject;
 }
 

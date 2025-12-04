@@ -3,16 +3,17 @@ import { PageSkeleton } from "/components/skeletons/PageSkeleton";
 import { loadQuery } from "react-relay";
 import { relayEnvironment } from "/providers/RelayProviders";
 import { tasksQuery } from "/hooks/graph/TaskGraph";
-import type { AppRoute } from "/routes.tsx";
-
+import { loaderFromQueryLoader, withQueryRef, type AppRoute } from "/routes";
+import type { TaskGraphQuery } from "/hooks/graph/__generated__/TaskGraphQuery.graphql";
 export const taskRoutes = [
   {
     path: "tasks",
     fallback: PageSkeleton,
-    queryLoader: ({ organizationId }) =>
-      loadQuery(relayEnvironment, tasksQuery, {
+    loader: loaderFromQueryLoader(({ organizationId }) =>
+      loadQuery<TaskGraphQuery>(relayEnvironment, tasksQuery, {
         organizationId,
       }),
-    Component: lazy(() => import("/pages/organizations/tasks/TasksPage")),
+    ),
+    Component: withQueryRef(lazy(() => import("/pages/organizations/tasks/TasksPage"))),
   },
 ] satisfies AppRoute[];

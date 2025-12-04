@@ -1,19 +1,21 @@
 import { Fragment } from "react";
 import { loadQuery } from "react-relay";
-import type { AppRoute } from "/routes.tsx";
 import { relayEnvironment } from "/providers/RelayProviders";
 import { documentsQuery } from "/hooks/graph/DocumentGraph";
 import { documentNodeQuery } from "/hooks/graph/DocumentGraph";
 import { PageSkeleton } from "/components/skeletons/PageSkeleton";
-import { redirect } from "react-router";
+import { redirect, type LoaderFunctionArgs } from "react-router";
 import { lazy } from "@probo/react-lazy";
 import { LinkCardSkeleton } from "/components/skeletons/LinkCardSkeleton";
+import { loaderFromQueryLoader, withQueryRef, type AppRoute } from "/routes";
+import type { DocumentGraphListQuery } from "/hooks/graph/__generated__/DocumentGraphListQuery.graphql";
+import type { DocumentGraphNodeQuery } from "/hooks/graph/__generated__/DocumentGraphNodeQuery.graphql";
 
 const documentTabs = (prefix: string) => {
   return [
     {
       path: `${prefix}`,
-      queryLoader: ({ organizationId, documentId, versionId }) => {
+      loader: ({ params: { organizationId, documentId, versionId } }: LoaderFunctionArgs) => {
         const basePath = `/organizations/${organizationId}/documents/${documentId}`;
         const redirectPath = versionId
           ? `${basePath}/versions/${versionId}/description`
@@ -48,27 +50,29 @@ const documentTabs = (prefix: string) => {
           import("../pages/organizations/documents/tabs/DocumentSignaturesTab"),
       ),
     },
-  ] satisfies AppRoute[];
+  ];
 };
 
 export const documentsRoutes = [
   {
     path: "documents",
     fallback: PageSkeleton,
-    queryLoader: ({ organizationId }) =>
-      loadQuery(relayEnvironment, documentsQuery, { organizationId }),
-    Component: lazy(
-      () => import("/pages/organizations/documents/DocumentsPage"),
+    loader: loaderFromQueryLoader(({ organizationId }) =>
+      loadQuery<DocumentGraphListQuery>(relayEnvironment, documentsQuery, { organizationId: organizationId! }),
     ),
+    Component: withQueryRef(lazy(
+      () => import("/pages/organizations/documents/DocumentsPage"),
+    )),
   },
   {
     path: "documents/:documentId",
     fallback: PageSkeleton,
-    queryLoader: ({ documentId }) =>
-      loadQuery(relayEnvironment, documentNodeQuery, { documentId }),
-    Component: lazy(
-      () => import("../pages/organizations/documents/DocumentDetailPage"),
+    loader: loaderFromQueryLoader(({ documentId }) =>
+      loadQuery<DocumentGraphNodeQuery>(relayEnvironment, documentNodeQuery, { documentId: documentId! }),
     ),
+    Component: withQueryRef(lazy(
+      () => import("../pages/organizations/documents/DocumentDetailPage"),
+    )),
     children: [...documentTabs(""), ...documentTabs("versions/:versionId/")],
   },
 ] satisfies AppRoute[];

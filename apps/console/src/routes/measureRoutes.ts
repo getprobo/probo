@@ -1,20 +1,23 @@
 import { Fragment } from "react";
 import { loadQuery } from "react-relay";
-import type { AppRoute } from "/routes.tsx";
 import { relayEnvironment } from "/providers/RelayProviders";
 import { measureNodeQuery, measuresQuery } from "/hooks/graph/MeasureGraph";
 import { PageSkeleton } from "/components/skeletons/PageSkeleton";
 import { redirect } from "react-router";
 import { lazy } from "@probo/react-lazy";
 import { LinkCardSkeleton } from "/components/skeletons/LinkCardSkeleton";
+import { loaderFromQueryLoader, withQueryRef, type AppRoute } from "/routes";
+import type { MeasureGraphListQuery } from "/hooks/graph/__generated__/MeasureGraphListQuery.graphql";
+import type { MeasureGraphNodeQuery } from "/hooks/graph/__generated__/MeasureGraphNodeQuery.graphql";
 
 export const measureRoutes = [
   {
     path: "measures",
     fallback: PageSkeleton,
-    queryLoader: ({ organizationId }) =>
-      loadQuery(relayEnvironment, measuresQuery, { organizationId }),
-    Component: lazy(() => import("/pages/organizations/measures/MeasuresPage")),
+    loader: loaderFromQueryLoader(({ organizationId }) =>
+      loadQuery<MeasureGraphListQuery>(relayEnvironment, measuresQuery, { organizationId: organizationId! }),
+    ),
+    Component: withQueryRef(lazy(() => import("/pages/organizations/measures/MeasuresPage"))),
     children: [
       {
         path: "category/:categoryId",
@@ -25,11 +28,10 @@ export const measureRoutes = [
   {
     path: "measures/:measureId",
     fallback: PageSkeleton,
-    queryLoader: ({ measureId }) =>
-      loadQuery(relayEnvironment, measureNodeQuery, { measureId }),
-    Component: lazy(
-      () => import("/pages/organizations/measures/MeasureDetailPage")
+    loader: loaderFromQueryLoader(({ measureId }) =>
+      loadQuery<MeasureGraphNodeQuery>(relayEnvironment, measureNodeQuery, { measureId: measureId! }),
     ),
+    Component: withQueryRef(lazy(() => import("/pages/organizations/measures/MeasureDetailPage"))),
     children: [
       {
         path: "",
