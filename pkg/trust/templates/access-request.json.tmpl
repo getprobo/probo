@@ -34,6 +34,16 @@
           "type": "button",
           "text": {
             "type": "plain_text",
+            "text": "❌ Reject All"
+          },
+          "action_id": "reject_all",
+          "value": "{{.SlackMessageID}}",
+          "style": "danger"
+        },
+        {
+          "type": "button",
+          "text": {
+            "type": "plain_text",
             "text": "👁️ View Requests"
           },
           "url": "https://{{.Domain}}/organizations/{{.OrganizationID}}/trust-center/access"
