@@ -16,6 +16,7 @@ package coredata
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"maps"
 	"time"
@@ -77,10 +78,58 @@ LIMIT 1;
 
 	report, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Report])
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return &ErrDocumentNotFound{Identifier: reportID.String()}
+		}
+
 		return fmt.Errorf("cannot collect report: %w", err)
 	}
 
 	*r = report
+
+	return nil
+}
+
+func (r *Reports) LoadByIDs(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	reportIDs []gid.GID,
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	object_key,
+	mime_type,
+	filename,
+	size,
+	created_at,
+	updated_at
+FROM
+	reports
+WHERE
+	%s
+	AND id IN (SELECT id FROM UNNEST(@report_ids::text[]) AS t(id))
+LIMIT 1;
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"report_ids": reportIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query report: %w", err)
+	}
+
+	reports, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Report])
+	if err != nil {
+		return fmt.Errorf("cannot collect reports: %w", err)
+	}
+
+	*r = reports
 
 	return nil
 }

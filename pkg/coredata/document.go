@@ -132,23 +132,23 @@ func (p *Document) LoadByIDWithFilter(
 	filter *DocumentFilter,
 ) error {
 	q := `
-SELECT
-    id,
-    organization_id,
-    owner_id,
-    title,
-    document_type,
-    classification,
-    current_published_version,
-    trust_center_visibility,
-    created_at,
-    updated_at
-FROM
-    documents
-WHERE
-    %s
-    AND deleted_at IS NULL
-    AND id = @document_id
+	SELECT
+			id,
+			organization_id,
+			owner_id,
+			title,
+			document_type,
+			classification,
+			current_published_version,
+			trust_center_visibility,
+			created_at,
+			updated_at
+	FROM
+			documents
+	WHERE
+			%s
+			AND deleted_at IS NULL
+AND id = @document_id
     AND %s
 LIMIT 1;
 `
@@ -174,6 +174,52 @@ LIMIT 1;
 	}
 
 	*p = document
+
+	return nil
+}
+
+func (p *Documents) LoadByIDs(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	documentIDs []gid.GID,
+) error {
+	q := `
+SELECT
+    id,
+    organization_id,
+    owner_id,
+    title,
+    document_type,
+    classification,
+    current_published_version,
+    trust_center_visibility,
+    created_at,
+    updated_at
+FROM
+    documents
+WHERE
+    %s
+    AND deleted_at IS NULL
+    AND id IN (SELECT id FROM UNNEST(@document_ids::text[]) AS t(id));;
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"document_ids": documentIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query documents: %w", err)
+	}
+
+	documents, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Document])
+	if err != nil {
+		return fmt.Errorf("cannot collect documents: %w", err)
+	}
+
+	*p = documents
 
 	return nil
 }

@@ -1,7 +1,7 @@
 import { render } from '@react-email/components';
-import { copyFile, mkdir, writeFile } from 'fs/promises';
-import { dirname, join } from 'path';
-import { fileURLToPath } from 'url';
+import { copyFile, mkdir, writeFile } from 'node:fs/promises';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import * as React from 'react';
 
 import ConfirmEmail from '../src/ConfirmEmail';
@@ -11,6 +11,7 @@ import FrameworkExport from '../src/FrameworkExport';
 import Invitation from '../src/Invitation';
 import PasswordReset from '../src/PasswordReset';
 import TrustCenterAccess from '../src/TrustCenterAccess';
+import TrustCenterDocumentAccessRejected from '../src/TrustCenterDocumentAccessRejected';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -48,6 +49,10 @@ const templates: TemplateConfig[] = [
   {
     name: 'trust-center-access',
     render: () => TrustCenterAccess()
+  },
+  {
+    name: 'trust-center-document-access-rejected',
+    render: () => TrustCenterDocumentAccessRejected()
   },
 ];
 
