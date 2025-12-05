@@ -572,20 +572,20 @@ func (s *TrustCenterAccessService) RejectByIDs(
 
 		if len(documentIDs) > 0 {
 			shouldSendEmail = true
-			if err := coredata.DeleteByDocumentIDs(ctx, tx, s.svc.scope, access.ID, documentIDs); err != nil {
-				return fmt.Errorf("cannot delete document accesses: %w", err)
+			if err := coredata.RejectByDocumentIDs(ctx, tx, s.svc.scope, access.ID, documentIDs); err != nil {
+				return fmt.Errorf("cannot reject document accesses: %w", err)
 			}
 		}
 		if len(reportIDs) > 0 {
 			shouldSendEmail = true
-			if err := coredata.DeleteByReportIDs(ctx, tx, s.svc.scope, access.ID, reportIDs); err != nil {
-				return fmt.Errorf("cannot delete report accesses: %w", err)
+			if err := coredata.RejectByReportIDs(ctx, tx, s.svc.scope, access.ID, reportIDs); err != nil {
+				return fmt.Errorf("cannot reject report accesses: %w", err)
 			}
 		}
 		if len(fileIDs) > 0 {
 			shouldSendEmail = true
-			if err := coredata.DeleteByTrustCenterFileIDs(ctx, tx, s.svc.scope, access.ID, fileIDs); err != nil {
-				return fmt.Errorf("cannot delete trust center file accesses: %w", err)
+			if err := coredata.RejectByTrustCenterFileIDs(ctx, tx, s.svc.scope, access.ID, fileIDs); err != nil {
+				return fmt.Errorf("cannot reject trust center file accesses: %w", err)
 			}
 		}
 

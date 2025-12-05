@@ -397,8 +397,8 @@ func (s TrustCenterAccessService) upsertDocumentAccesses(
 		return nil
 	}
 
-	if err := coredata.DeactivateByTrustCenterAccessID(ctx, tx, s.svc.scope, accessID, now); err != nil {
-		return fmt.Errorf("cannot deactivate existing document accesses: %w", err)
+	if err := coredata.DeleteByTrustCenterAccessID(ctx, tx, s.svc.scope, accessID, now); err != nil {
+		return fmt.Errorf("cannot delete existing document accesses: %w", err)
 	}
 
 	if documentIDs != nil {

@@ -66,14 +66,28 @@
         "type": "mrkdwn",
         "text": "<https://{{$.Domain}}/organizations/{{$.OrganizationID}}/documents/{{.ID}}|{{jsonEscape .Title}}>"
       },
-      "accessory": {{if .Granted}}{
+      "accessory": {{if eq .Status "GRANTED"}}{
         "type": "button",
         "text": {
           "type": "plain_text",
           "text": "✓ Granted"
         },
         "url": "https://{{$.Domain}}/organizations/{{$.OrganizationID}}/trust-center/access"
-      }{{else}}{
+      }{{else if eq .Status "REJECTED"}}{
+        "type": "button",
+        "text": {
+          "type": "plain_text",
+          "text": "✗ Rejected"
+        },
+        "url": "https://{{$.Domain}}/organizations/{{$.OrganizationID}}/trust-center/access"
+      }{{else if eq .Status "REVOKED"}}{
+        "type": "button",
+        "text": {
+          "type": "plain_text",
+          "text": "✗ Revoked"
+        },
+        "url": "https://{{$.Domain}}/organizations/{{$.OrganizationID}}/trust-center/access"
+      }{{else if eq .Status "REQUESTED"}}{
         "type": "button",
         "text": {
           "type": "plain_text",

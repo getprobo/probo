@@ -91,17 +91,18 @@ enum InvitationStatus
     @goEnum(value: "go.probo.inc/probo/pkg/coredata.InvitationStatusExpired")
 }
 
-enum MembershipRole @goModel(model: "go.probo.inc/probo/pkg/coredata.MembershipRole") {
+enum MembershipRole
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.MembershipRole") {
   OWNER @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleOwner")
   ADMIN @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleAdmin")
-  EMPLOYEE @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleEmployee")
+  EMPLOYEE
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleEmployee")
   VIEWER @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleViewer")
 }
 
 enum APIRole @goModel(model: "go.probo.inc/probo/pkg/coredata.APIRole") {
   FULL @goEnum(value: "go.probo.inc/probo/pkg/coredata.APIRoleFull")
 }
-
 
 enum DocumentStatus
   @goModel(model: "go.probo.inc/probo/pkg/coredata.DocumentStatus") {
@@ -169,6 +170,28 @@ enum TrustCenterVisibility
   PUBLIC
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.TrustCenterVisibilityPublic"
+    )
+}
+
+enum TrustCenterDocumentAccessStatus
+  @goModel(
+    model: "go.probo.inc/probo/pkg/coredata.TrustCenterDocumentAccessStatus"
+  ) {
+  REQUESTED
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.TrustCenterDocumentAccessStatusRequested"
+    )
+  GRANTED
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.TrustCenterDocumentAccessStatusGranted"
+    )
+  REJECTED
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.TrustCenterDocumentAccessStatusRejected"
+    )
+  REVOKED
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.TrustCenterDocumentAccessStatusRevoked"
     )
 }
 
@@ -1740,7 +1763,7 @@ type Vendor implements Node {
   ): VendorComplianceReportConnection! @goField(forceResolver: true)
 
   businessAssociateAgreement: VendorBusinessAssociateAgreement
- @goField(forceResolver: true)
+    @goField(forceResolver: true)
   dataPrivacyAgreement: VendorDataPrivacyAgreement @goField(forceResolver: true)
 
   contacts(
@@ -1864,7 +1887,8 @@ type Framework implements Node {
   updatedAt: Datetime!
 }
 
-type Control implements Node  @goModel(
+type Control implements Node
+  @goModel(
     model: "go.probo.inc/probo/pkg/server/api/console/v1/types.Control"
   ) {
   id: ID!
@@ -2032,9 +2056,10 @@ type Document implements Node {
   updatedAt: Datetime!
 }
 
-type SignableDocument @goModel(
+type SignableDocument
+  @goModel(
     model: "go.probo.inc/probo/pkg/server/api/console/v1/types.SignableDocument"
-  ){
+  ) {
   id: ID!
   title: String!
   description: String
@@ -2339,6 +2364,7 @@ type TrustCenterDocumentAccess
     model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TrustCenterDocumentAccess"
   ) {
   active: Boolean!
+  status: TrustCenterDocumentAccessStatus!
   requested: Boolean!
   document: Document @goField(forceResolver: true)
   report: Report @goField(forceResolver: true)
@@ -2784,7 +2810,8 @@ type Mutation {
   # Organization mutations
   createOrganization(
     input: CreateOrganizationInput!
-  ): CreateOrganizationPayload!  updateOrganization(
+  ): CreateOrganizationPayload!
+  updateOrganization(
     input: UpdateOrganizationInput!
   ): UpdateOrganizationPayload!
   updateOrganizationContext(
@@ -2792,7 +2819,8 @@ type Mutation {
   ): UpdateOrganizationContextPayload!
   deleteOrganizationHorizontalLogo(
     input: DeleteOrganizationHorizontalLogoInput!
-  ): DeleteOrganizationHorizontalLogoPayload!  deleteOrganization(
+  ): DeleteOrganizationHorizontalLogoPayload!
+  deleteOrganization(
     input: DeleteOrganizationInput!
   ): DeleteOrganizationPayload!
   updateTrustCenter(input: UpdateTrustCenterInput!): UpdateTrustCenterPayload!
@@ -2839,96 +2867,138 @@ type Mutation {
   confirmEmail(input: ConfirmEmailInput!): ConfirmEmailPayload!
   inviteUser(input: InviteUserInput!): InviteUserPayload!
   acceptInvitation(input: AcceptInvitationInput!): AcceptInvitationPayload!
-  deleteInvitation(input: DeleteInvitationInput!): DeleteInvitationPayload!  removeMember(input: RemoveMemberInput!): RemoveMemberPayload!
+  deleteInvitation(input: DeleteInvitationInput!): DeleteInvitationPayload!
+  removeMember(input: RemoveMemberInput!): RemoveMemberPayload!
   updateMembership(input: UpdateMembershipInput!): UpdateMembershipPayload!
   # People mutations
-  createPeople(input: CreatePeopleInput!): CreatePeoplePayload!  updatePeople(input: UpdatePeopleInput!): UpdatePeoplePayload!  deletePeople(input: DeletePeopleInput!): DeletePeoplePayload!
+  createPeople(input: CreatePeopleInput!): CreatePeoplePayload!
+  updatePeople(input: UpdatePeopleInput!): UpdatePeoplePayload!
+  deletePeople(input: DeletePeopleInput!): DeletePeoplePayload!
   # Vendor mutations
-  createVendor(input: CreateVendorInput!): CreateVendorPayload!  updateVendor(input: UpdateVendorInput!): UpdateVendorPayload!  deleteVendor(input: DeleteVendorInput!): DeleteVendorPayload!
+  createVendor(input: CreateVendorInput!): CreateVendorPayload!
+  updateVendor(input: UpdateVendorInput!): UpdateVendorPayload!
+  deleteVendor(input: DeleteVendorInput!): DeleteVendorPayload!
   # Vendor Contact mutations
   createVendorContact(
     input: CreateVendorContactInput!
-  ): CreateVendorContactPayload!  updateVendorContact(
+  ): CreateVendorContactPayload!
+  updateVendorContact(
     input: UpdateVendorContactInput!
-  ): UpdateVendorContactPayload!  deleteVendorContact(
+  ): UpdateVendorContactPayload!
+  deleteVendorContact(
     input: DeleteVendorContactInput!
   ): DeleteVendorContactPayload!
   # Vendor Service mutations
   createVendorService(
     input: CreateVendorServiceInput!
-  ): CreateVendorServicePayload!  updateVendorService(
+  ): CreateVendorServicePayload!
+  updateVendorService(
     input: UpdateVendorServiceInput!
-  ): UpdateVendorServicePayload!  deleteVendorService(
+  ): UpdateVendorServicePayload!
+  deleteVendorService(
     input: DeleteVendorServiceInput!
   ): DeleteVendorServicePayload!
   # Framework mutations
-  createFramework(input: CreateFrameworkInput!): CreateFrameworkPayload!  updateFramework(input: UpdateFrameworkInput!): UpdateFrameworkPayload!  importFramework(input: ImportFrameworkInput!): ImportFrameworkPayload!  deleteFramework(input: DeleteFrameworkInput!): DeleteFrameworkPayload!  generateFrameworkStateOfApplicability(
+  createFramework(input: CreateFrameworkInput!): CreateFrameworkPayload!
+  updateFramework(input: UpdateFrameworkInput!): UpdateFrameworkPayload!
+  importFramework(input: ImportFrameworkInput!): ImportFrameworkPayload!
+  deleteFramework(input: DeleteFrameworkInput!): DeleteFrameworkPayload!
+  generateFrameworkStateOfApplicability(
     input: GenerateFrameworkStateOfApplicabilityInput!
-  ): GenerateFrameworkStateOfApplicabilityPayload!  exportFramework(input: ExportFrameworkInput!): ExportFrameworkPayload!
+  ): GenerateFrameworkStateOfApplicabilityPayload!
+  exportFramework(input: ExportFrameworkInput!): ExportFrameworkPayload!
   # Control mutations
-  createControl(input: CreateControlInput!): CreateControlPayload!  updateControl(input: UpdateControlInput!): UpdateControlPayload!  deleteControl(input: DeleteControlInput!): DeleteControlPayload!
+  createControl(input: CreateControlInput!): CreateControlPayload!
+  updateControl(input: UpdateControlInput!): UpdateControlPayload!
+  deleteControl(input: DeleteControlInput!): DeleteControlPayload!
   # Measure mutations
-  createMeasure(input: CreateMeasureInput!): CreateMeasurePayload!  updateMeasure(input: UpdateMeasureInput!): UpdateMeasurePayload!  importMeasure(input: ImportMeasureInput!): ImportMeasurePayload!  deleteMeasure(input: DeleteMeasureInput!): DeleteMeasurePayload!
+  createMeasure(input: CreateMeasureInput!): CreateMeasurePayload!
+  updateMeasure(input: UpdateMeasureInput!): UpdateMeasurePayload!
+  importMeasure(input: ImportMeasureInput!): ImportMeasurePayload!
+  deleteMeasure(input: DeleteMeasureInput!): DeleteMeasurePayload!
   # Control mutations
   createControlMeasureMapping(
     input: CreateControlMeasureMappingInput!
-  ): CreateControlMeasureMappingPayload!  createControlDocumentMapping(
+  ): CreateControlMeasureMappingPayload!
+  createControlDocumentMapping(
     input: CreateControlDocumentMappingInput!
-  ): CreateControlDocumentMappingPayload!  deleteControlMeasureMapping(
+  ): CreateControlDocumentMappingPayload!
+  deleteControlMeasureMapping(
     input: DeleteControlMeasureMappingInput!
-  ): DeleteControlMeasureMappingPayload!  deleteControlDocumentMapping(
+  ): DeleteControlMeasureMappingPayload!
+  deleteControlDocumentMapping(
     input: DeleteControlDocumentMappingInput!
-  ): DeleteControlDocumentMappingPayload!  createControlAuditMapping(
+  ): DeleteControlDocumentMappingPayload!
+  createControlAuditMapping(
     input: CreateControlAuditMappingInput!
-  ): CreateControlAuditMappingPayload!  deleteControlAuditMapping(
+  ): CreateControlAuditMappingPayload!
+  deleteControlAuditMapping(
     input: DeleteControlAuditMappingInput!
-  ): DeleteControlAuditMappingPayload!  createControlSnapshotMapping(
+  ): DeleteControlAuditMappingPayload!
+  createControlSnapshotMapping(
     input: CreateControlSnapshotMappingInput!
-  ): CreateControlSnapshotMappingPayload!  deleteControlSnapshotMapping(
+  ): CreateControlSnapshotMappingPayload!
+  deleteControlSnapshotMapping(
     input: DeleteControlSnapshotMappingInput!
   ): DeleteControlSnapshotMappingPayload!
   # Task mutations
-  createTask(input: CreateTaskInput!): CreateTaskPayload!  updateTask(input: UpdateTaskInput!): UpdateTaskPayload!  deleteTask(input: DeleteTaskInput!): DeleteTaskPayload!  assignTask(input: AssignTaskInput!): AssignTaskPayload!  unassignTask(input: UnassignTaskInput!): UnassignTaskPayload!
+  createTask(input: CreateTaskInput!): CreateTaskPayload!
+  updateTask(input: UpdateTaskInput!): UpdateTaskPayload!
+  deleteTask(input: DeleteTaskInput!): DeleteTaskPayload!
+  assignTask(input: AssignTaskInput!): AssignTaskPayload!
+  unassignTask(input: UnassignTaskInput!): UnassignTaskPayload!
   # Risk mutations
-  createRisk(input: CreateRiskInput!): CreateRiskPayload!  updateRisk(input: UpdateRiskInput!): UpdateRiskPayload!  deleteRisk(input: DeleteRiskInput!): DeleteRiskPayload!  createRiskMeasureMapping(
+  createRisk(input: CreateRiskInput!): CreateRiskPayload!
+  updateRisk(input: UpdateRiskInput!): UpdateRiskPayload!
+  deleteRisk(input: DeleteRiskInput!): DeleteRiskPayload!
+  createRiskMeasureMapping(
     input: CreateRiskMeasureMappingInput!
-  ): CreateRiskMeasureMappingPayload!  deleteRiskMeasureMapping(
+  ): CreateRiskMeasureMappingPayload!
+  deleteRiskMeasureMapping(
     input: DeleteRiskMeasureMappingInput!
   ): DeleteRiskMeasureMappingPayload!
   createRiskDocumentMapping(
     input: CreateRiskDocumentMappingInput!
-  ): CreateRiskDocumentMappingPayload!  deleteRiskDocumentMapping(
+  ): CreateRiskDocumentMappingPayload!
+  deleteRiskDocumentMapping(
     input: DeleteRiskDocumentMappingInput!
   ): DeleteRiskDocumentMappingPayload!
   createRiskObligationMapping(
     input: CreateRiskObligationMappingInput!
-  ): CreateRiskObligationMappingPayload!  deleteRiskObligationMapping(
+  ): CreateRiskObligationMappingPayload!
+  deleteRiskObligationMapping(
     input: DeleteRiskObligationMappingInput!
   ): DeleteRiskObligationMappingPayload!
   # Evidence mutations
-  deleteEvidence(input: DeleteEvidenceInput!): DeleteEvidencePayload!  uploadMeasureEvidence(
+  deleteEvidence(input: DeleteEvidenceInput!): DeleteEvidencePayload!
+  uploadMeasureEvidence(
     input: UploadMeasureEvidenceInput!
   ): UploadMeasureEvidencePayload!
   # Vendor Compliance Report mutations
   uploadVendorComplianceReport(
     input: UploadVendorComplianceReportInput!
-  ): UploadVendorComplianceReportPayload!  deleteVendorComplianceReport(
+  ): UploadVendorComplianceReportPayload!
+  deleteVendorComplianceReport(
     input: DeleteVendorComplianceReportInput!
   ): DeleteVendorComplianceReportPayload!
   # Vendor Business Associate Agreement mutations
   uploadVendorBusinessAssociateAgreement(
     input: UploadVendorBusinessAssociateAgreementInput!
-  ): UploadVendorBusinessAssociateAgreementPayload!  updateVendorBusinessAssociateAgreement(
+  ): UploadVendorBusinessAssociateAgreementPayload!
+  updateVendorBusinessAssociateAgreement(
     input: UpdateVendorBusinessAssociateAgreementInput!
-  ): UpdateVendorBusinessAssociateAgreementPayload!  deleteVendorBusinessAssociateAgreement(
+  ): UpdateVendorBusinessAssociateAgreementPayload!
+  deleteVendorBusinessAssociateAgreement(
     input: DeleteVendorBusinessAssociateAgreementInput!
   ): DeleteVendorBusinessAssociateAgreementPayload!
   # Vendor Data Privacy Agreement mutations
   uploadVendorDataPrivacyAgreement(
     input: UploadVendorDataPrivacyAgreementInput!
-  ): UploadVendorDataPrivacyAgreementPayload!  updateVendorDataPrivacyAgreement(
+  ): UploadVendorDataPrivacyAgreementPayload!
+  updateVendorDataPrivacyAgreement(
     input: UpdateVendorDataPrivacyAgreementInput!
-  ): UpdateVendorDataPrivacyAgreementPayload!  deleteVendorDataPrivacyAgreement(
+  ): UpdateVendorDataPrivacyAgreementPayload!
+  deleteVendorDataPrivacyAgreement(
     input: DeleteVendorDataPrivacyAgreementInput!
   ): DeleteVendorDataPrivacyAgreementPayload!
   # Document mutations
@@ -2941,30 +3011,39 @@ type Mutation {
   deleteMeeting(input: DeleteMeetingInput!): DeleteMeetingPayload!
   publishDocumentVersion(
     input: PublishDocumentVersionInput!
-  ): PublishDocumentVersionPayload!  bulkPublishDocumentVersions(
+  ): PublishDocumentVersionPayload!
+  bulkPublishDocumentVersions(
     input: BulkPublishDocumentVersionsInput!
-  ): BulkPublishDocumentVersionsPayload!  bulkDeleteDocuments(
+  ): BulkPublishDocumentVersionsPayload!
+  bulkDeleteDocuments(
     input: BulkDeleteDocumentsInput!
-  ): BulkDeleteDocumentsPayload!  bulkExportDocuments(
+  ): BulkDeleteDocumentsPayload!
+  bulkExportDocuments(
     input: BulkExportDocumentsInput!
-  ): BulkExportDocumentsPayload!  generateDocumentChangelog(
+  ): BulkExportDocumentsPayload!
+  generateDocumentChangelog(
     input: GenerateDocumentChangelogInput!
-  ): GenerateDocumentChangelogPayload!  createDraftDocumentVersion(
+  ): GenerateDocumentChangelogPayload!
+  createDraftDocumentVersion(
     input: CreateDraftDocumentVersionInput!
-  ): CreateDraftDocumentVersionPayload!  deleteDraftDocumentVersion(
+  ): CreateDraftDocumentVersionPayload!
+  deleteDraftDocumentVersion(
     input: DeleteDraftDocumentVersionInput!
-  ): DeleteDraftDocumentVersionPayload!  updateDocumentVersion(
+  ): DeleteDraftDocumentVersionPayload!
+  updateDocumentVersion(
     input: UpdateDocumentVersionInput!
-  ): UpdateDocumentVersionPayload!  requestSignature(input: RequestSignatureInput!): RequestSignaturePayload!  bulkRequestSignatures(
+  ): UpdateDocumentVersionPayload!
+  requestSignature(input: RequestSignatureInput!): RequestSignaturePayload!
+  bulkRequestSignatures(
     input: BulkRequestSignaturesInput!
-  ): BulkRequestSignaturesPayload!  sendSigningNotifications(
+  ): BulkRequestSignaturesPayload!
+  sendSigningNotifications(
     input: SendSigningNotificationsInput!
-  ): SendSigningNotificationsPayload!  cancelSignatureRequest(
+  ): SendSigningNotificationsPayload!
+  cancelSignatureRequest(
     input: CancelSignatureRequestInput!
   ): CancelSignatureRequestPayload!
-  signDocument(
-    input: SignDocumentInput!
-  ): SignDocumentPayload!
+  signDocument(input: SignDocumentInput!): SignDocumentPayload!
   exportDocumentVersionPDF(
     input: ExportDocumentVersionPDFInput!
   ): ExportDocumentVersionPDFPayload!
@@ -2975,41 +3054,59 @@ type Mutation {
     input: CreateVendorRiskAssessmentInput!
   ): CreateVendorRiskAssessmentPayload!
   assessVendor(input: AssessVendorInput!): AssessVendorPayload!
-  createAsset(input: CreateAssetInput!): CreateAssetPayload!  updateAsset(input: UpdateAssetInput!): UpdateAssetPayload!  deleteAsset(input: DeleteAssetInput!): DeleteAssetPayload!
-  createDatum(input: CreateDatumInput!): CreateDatumPayload!  updateDatum(input: UpdateDatumInput!): UpdateDatumPayload!  deleteDatum(input: DeleteDatumInput!): DeleteDatumPayload!
-  createAudit(input: CreateAuditInput!): CreateAuditPayload!  updateAudit(input: UpdateAuditInput!): UpdateAuditPayload!  deleteAudit(input: DeleteAuditInput!): DeleteAuditPayload!  uploadAuditReport(input: UploadAuditReportInput!): UploadAuditReportPayload!  deleteAuditReport(input: DeleteAuditReportInput!): DeleteAuditReportPayload!
+  createAsset(input: CreateAssetInput!): CreateAssetPayload!
+  updateAsset(input: UpdateAssetInput!): UpdateAssetPayload!
+  deleteAsset(input: DeleteAssetInput!): DeleteAssetPayload!
+  createDatum(input: CreateDatumInput!): CreateDatumPayload!
+  updateDatum(input: UpdateDatumInput!): UpdateDatumPayload!
+  deleteDatum(input: DeleteDatumInput!): DeleteDatumPayload!
+  createAudit(input: CreateAuditInput!): CreateAuditPayload!
+  updateAudit(input: UpdateAuditInput!): UpdateAuditPayload!
+  deleteAudit(input: DeleteAuditInput!): DeleteAuditPayload!
+  uploadAuditReport(input: UploadAuditReportInput!): UploadAuditReportPayload!
+  deleteAuditReport(input: DeleteAuditReportInput!): DeleteAuditReportPayload!
   # Nonconformity mutations
   createNonconformity(
     input: CreateNonconformityInput!
-  ): CreateNonconformityPayload!  updateNonconformity(
+  ): CreateNonconformityPayload!
+  updateNonconformity(
     input: UpdateNonconformityInput!
-  ): UpdateNonconformityPayload!  deleteNonconformity(
+  ): UpdateNonconformityPayload!
+  deleteNonconformity(
     input: DeleteNonconformityInput!
   ): DeleteNonconformityPayload!
   # Obligation mutations
-  createObligation(input: CreateObligationInput!): CreateObligationPayload!  updateObligation(input: UpdateObligationInput!): UpdateObligationPayload!  deleteObligation(input: DeleteObligationInput!): DeleteObligationPayload!
+  createObligation(input: CreateObligationInput!): CreateObligationPayload!
+  updateObligation(input: UpdateObligationInput!): UpdateObligationPayload!
+  deleteObligation(input: DeleteObligationInput!): DeleteObligationPayload!
   # Continual Improvement mutations
   createContinualImprovement(
     input: CreateContinualImprovementInput!
-  ): CreateContinualImprovementPayload!  updateContinualImprovement(
+  ): CreateContinualImprovementPayload!
+  updateContinualImprovement(
     input: UpdateContinualImprovementInput!
-  ): UpdateContinualImprovementPayload!  deleteContinualImprovement(
+  ): UpdateContinualImprovementPayload!
+  deleteContinualImprovement(
     input: DeleteContinualImprovementInput!
   ): DeleteContinualImprovementPayload!
   # Processing Activity mutations
   createProcessingActivity(
     input: CreateProcessingActivityInput!
-  ): CreateProcessingActivityPayload!  updateProcessingActivity(
+  ): CreateProcessingActivityPayload!
+  updateProcessingActivity(
     input: UpdateProcessingActivityInput!
-  ): UpdateProcessingActivityPayload!  deleteProcessingActivity(
+  ): UpdateProcessingActivityPayload!
+  deleteProcessingActivity(
     input: DeleteProcessingActivityInput!
   ): DeleteProcessingActivityPayload!
   # Snapshot mutations
-  createSnapshot(input: CreateSnapshotInput!): CreateSnapshotPayload!  deleteSnapshot(input: DeleteSnapshotInput!): DeleteSnapshotPayload!
+  createSnapshot(input: CreateSnapshotInput!): CreateSnapshotPayload!
+  deleteSnapshot(input: DeleteSnapshotInput!): DeleteSnapshotPayload!
   # Custom Domain mutations
   createCustomDomain(
     input: CreateCustomDomainInput!
-  ): CreateCustomDomainPayload!  deleteCustomDomain(
+  ): CreateCustomDomainPayload!
+  deleteCustomDomain(
     input: DeleteCustomDomainInput!
   ): DeleteCustomDomainPayload!
   # SAML Configuration mutations (OWNER/ADMIN only)
@@ -3022,11 +3119,16 @@ type Mutation {
   # Step 3: Configure SAML (only allowed after domain is verified)
   createSAMLConfiguration(
     input: CreateSAMLConfigurationInput!
-  ): CreateSAMLConfigurationPayload!  updateSAMLConfiguration(
+  ): CreateSAMLConfigurationPayload!
+  updateSAMLConfiguration(
     input: UpdateSAMLConfigurationInput!
-  ): UpdateSAMLConfigurationPayload!  deleteSAMLConfiguration(
+  ): UpdateSAMLConfigurationPayload!
+  deleteSAMLConfiguration(
     input: DeleteSAMLConfigurationInput!
-  ): DeleteSAMLConfigurationPayload!  enableSAML(input: EnableSAMLInput!): EnableSAMLPayload!  disableSAML(input: DisableSAMLInput!): DisableSAMLPayload!}
+  ): DeleteSAMLConfigurationPayload!
+  enableSAML(input: EnableSAMLInput!): EnableSAMLPayload!
+  disableSAML(input: DisableSAMLInput!): DisableSAMLPayload!
+}
 
 # Input Types
 input GenerateFrameworkStateOfApplicabilityInput {
@@ -4228,7 +4330,10 @@ type DeleteMeasurePayload {
   deletedMeasureId: ID!
 }
 
-type DocumentVersion implements Node @goModel(model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DocumentVersion") {
+type DocumentVersion implements Node
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DocumentVersion"
+  ) {
   id: ID!
   document: Document! @goField(forceResolver: true)
   status: DocumentStatus!
@@ -4523,7 +4628,8 @@ type DeleteAssetPayload {
   deletedAssetId: ID!
 }
 
-type Datum implements Node @goModel(model: "go.probo.inc/probo/pkg/server/api/console/v1/types.Datum") {
+type Datum implements Node
+  @goModel(model: "go.probo.inc/probo/pkg/server/api/console/v1/types.Datum") {
   id: ID!
   snapshotId: ID
   name: String!

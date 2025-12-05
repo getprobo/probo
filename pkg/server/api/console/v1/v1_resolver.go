@@ -6492,6 +6492,11 @@ func (r *trustCenterAccessResolver) AvailableDocumentAccesses(ctx context.Contex
 	return types.NewTrustCenterDocumentAccessConnection(result, obj, obj.ID), nil
 }
 
+// Status is the resolver for the status field.
+func (r *trustCenterDocumentAccessResolver) Status(ctx context.Context, obj *types.TrustCenterDocumentAccess) (coredata.TrustCenterDocumentAccessStatus, error) {
+	panic(fmt.Errorf("not implemented: Status - status"))
+}
+
 // Document is the resolver for the document field.
 func (r *trustCenterDocumentAccessResolver) Document(ctx context.Context, obj *types.TrustCenterDocumentAccess) (*types.Document, error) {
 	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGet)
