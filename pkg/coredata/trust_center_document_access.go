@@ -688,6 +688,37 @@ WHERE
 	return nil
 }
 
+func DeleteByDocumentIDs(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	trustCenterAccessID gid.GID,
+	documentIDs []gid.GID,
+) error {
+	q := `
+DELETE FROM trust_center_document_accesses
+WHERE
+	%s
+	AND trust_center_access_id = @trust_center_access_id
+	AND document_id = ANY(@document_ids)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"trust_center_access_id": trustCenterAccessID,
+		"document_ids":           documentIDs,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	_, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot delete trust center document accesses by document IDs: %w", err)
+	}
+
+	return nil
+}
+
 func ActivateByReportIDs(
 	ctx context.Context,
 	conn pg.Conn,
@@ -717,6 +748,37 @@ WHERE
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot activate trust center document accesses by report IDs: %w", err)
+	}
+
+	return nil
+}
+
+func DeleteByReportIDs(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	trustCenterAccessID gid.GID,
+	reportIDs []gid.GID,
+) error {
+	q := `
+DELETE FROM trust_center_document_accesses
+WHERE
+	%s
+	AND trust_center_access_id = @trust_center_access_id
+	AND report_id = ANY(@report_ids)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"trust_center_access_id": trustCenterAccessID,
+		"report_ids":             reportIDs,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	_, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot delete trust center document accesses by report IDs: %w", err)
 	}
 
 	return nil
@@ -909,6 +971,37 @@ WHERE
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot activate trust center document accesses by trust center file IDs: %w", err)
+	}
+
+	return nil
+}
+
+func DeleteByTrustCenterFileIDs(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	trustCenterAccessID gid.GID,
+	trustCenterFileIDs []gid.GID,
+) error {
+	q := `
+DELETE FROM trust_center_document_accesses
+WHERE
+	%s
+	AND trust_center_access_id = @trust_center_access_id
+	AND trust_center_file_id = ANY(@trust_center_file_ids)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"trust_center_access_id": trustCenterAccessID,
+		"trust_center_file_ids":  trustCenterFileIDs,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	_, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot delete trust center document accesses by trust center file IDs: %w", err)
 	}
 
 	return nil

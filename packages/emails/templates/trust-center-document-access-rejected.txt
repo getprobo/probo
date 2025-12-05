@@ -1,0 +1,11 @@
+Probo
+
+Hi {{.FullName}},
+
+Your access request to the following files in {{.OrganizationName}}'s Trust Center has been rejected:
+
+{{range .FileNames}}
+- {{.}}
+{{end}}
+
+Probo Inc, 490 Post St, STE 640, San Francisco, CA, 94102, US

@@ -549,6 +549,127 @@ func (s *TrustCenterAccessService) sendTrustCenterAccessEmail(
 	return nil
 }
 
+func (s *TrustCenterAccessService) RejectByIDs(
+	ctx context.Context,
+	organizationID gid.GID,
+	email string,
+	documentIDs []gid.GID,
+	reportIDs []gid.GID,
+	fileIDs []gid.GID,
+) error {
+	return s.svc.pg.WithTx(ctx, func(tx pg.Conn) error {
+		trustCenter := &coredata.TrustCenter{}
+		if err := trustCenter.LoadByOrganizationID(ctx, tx, s.svc.scope, organizationID); err != nil {
+			return fmt.Errorf("cannot load trust center: %w", err)
+		}
+
+		access := &coredata.TrustCenterAccess{}
+		if err := access.LoadByTrustCenterIDAndEmail(ctx, tx, s.svc.scope, trustCenter.ID, email); err != nil {
+			return fmt.Errorf("cannot load trust center access: %w", err)
+		}
+
+		shouldSendEmail := false
+
+		if len(documentIDs) > 0 {
+			shouldSendEmail = true
+			if err := coredata.DeleteByDocumentIDs(ctx, tx, s.svc.scope, access.ID, documentIDs); err != nil {
+				return fmt.Errorf("cannot delete document accesses: %w", err)
+			}
+		}
+		if len(reportIDs) > 0 {
+			shouldSendEmail = true
+			if err := coredata.DeleteByReportIDs(ctx, tx, s.svc.scope, access.ID, reportIDs); err != nil {
+				return fmt.Errorf("cannot delete report accesses: %w", err)
+			}
+		}
+		if len(fileIDs) > 0 {
+			shouldSendEmail = true
+			if err := coredata.DeleteByTrustCenterFileIDs(ctx, tx, s.svc.scope, access.ID, fileIDs); err != nil {
+				return fmt.Errorf("cannot delete trust center file accesses: %w", err)
+			}
+		}
+
+		if shouldSendEmail {
+			if err := s.sendDocumentAccessRejectedEmail(ctx, tx, access, documentIDs, reportIDs, fileIDs); err != nil {
+				return fmt.Errorf("cannot send access email: %w", err)
+			}
+		}
+
+		return nil
+	})
+}
+
+func (s *TrustCenterAccessService) sendDocumentAccessRejectedEmail(
+	ctx context.Context,
+	tx pg.Conn,
+	access *coredata.TrustCenterAccess,
+	documentIDs []gid.GID,
+	reportIDs []gid.GID,
+	fileIDs []gid.GID,
+) error {
+	trustCenter := &coredata.TrustCenter{}
+	if err := trustCenter.LoadByID(ctx, tx, s.svc.scope, access.TrustCenterID); err != nil {
+		return fmt.Errorf("cannot load trust center: %w", err)
+	}
+
+	organization := &coredata.Organization{}
+	if err := organization.LoadByID(ctx, tx, s.svc.scope, trustCenter.OrganizationID); err != nil {
+		return fmt.Errorf("cannot load organization: %w", err)
+	}
+
+	var fileNames []string
+	var documents coredata.Documents
+	if len(documentIDs) > 0 {
+		if err := documents.LoadByIDs(ctx, tx, s.svc.scope, documentIDs); err != nil {
+			return fmt.Errorf("cannot load documents by IDs: %w", err)
+		}
+		for _, d := range documents {
+			fileNames = append(fileNames, d.Title)
+		}
+	}
+	var reports coredata.Reports
+	if len(reportIDs) > 0 {
+		if err := reports.LoadByIDs(ctx, tx, s.svc.scope, reportIDs); err != nil {
+			return fmt.Errorf("cannot load reports by IDs: %w", err)
+		}
+		for _, r := range reports {
+			fileNames = append(fileNames, r.Filename)
+		}
+	}
+	var files coredata.Files
+	if len(fileIDs) > 0 {
+		if err := files.LoadByIDs(ctx, tx, s.svc.scope, fileIDs); err != nil {
+			return fmt.Errorf("cannot load files by IDs: %w", err)
+		}
+		for _, f := range files {
+			fileNames = append(fileNames, f.FileName)
+		}
+	}
+
+	subject, textBody, htmlBody, err := emails.RenderTrustCenterDocumentAccessRejected(
+		s.svc.baseURL,
+		access.Name,
+		organization.Name,
+		fileNames,
+	)
+	if err != nil {
+		return fmt.Errorf("cannot render trust center documents access rejected email: %w", err)
+	}
+
+	accessEmail := coredata.NewEmail(
+		access.Name,
+		access.Email,
+		subject,
+		textBody,
+		htmlBody,
+	)
+
+	if err := accessEmail.Insert(ctx, tx); err != nil {
+		return fmt.Errorf("cannot insert access email: %w", err)
+	}
+	return nil
+}
+
 func extractExistingIDs(accesses coredata.TrustCenterDocumentAccesses) ([]gid.GID, []gid.GID, []gid.GID) {
 	var documentIDs []gid.GID
 	var reportIDs []gid.GID
