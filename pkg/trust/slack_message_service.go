@@ -22,11 +22,11 @@ import (
 	"fmt"
 	"time"
 
+	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/slack"
-	"go.gearno.de/kit/pg"
 )
 
 const (
@@ -40,23 +40,23 @@ type (
 	}
 
 	SlackMessageDocument struct {
-		ID      string
-		Title   string
-		Granted bool
+		ID     string
+		Title  string
+		Status string
 	}
 
 	SlackMessageReport struct {
 		ID      string
 		Title   string
 		AuditID string
-		Granted bool
+		Status  string
 	}
 
 	SlackMessageFile struct {
 		ID       string
 		Name     string
 		Category string
-		Granted  bool
+		Status   string
 	}
 
 	SlackMessageMetadata struct {
@@ -336,9 +336,9 @@ func (s *SlackMessageService) loadDocumentsReportsAndFilesFromAccesses(
 				return nil, nil, nil, fmt.Errorf("cannot load document: %w", err)
 			}
 			documents = append(documents, SlackMessageDocument{
-				ID:      access.DocumentID.String(),
-				Title:   doc.Title,
-				Granted: access.Active,
+				ID:     access.DocumentID.String(),
+				Title:  doc.Title,
+				Status: access.Status.String(),
 			})
 		}
 
@@ -366,7 +366,7 @@ func (s *SlackMessageService) loadDocumentsReportsAndFilesFromAccesses(
 				ID:      access.ReportID.String(),
 				Title:   label,
 				AuditID: audit.ID.String(),
-				Granted: access.Active,
+				Status:  access.Status.String(),
 			})
 		}
 
@@ -379,7 +379,7 @@ func (s *SlackMessageService) loadDocumentsReportsAndFilesFromAccesses(
 				ID:       access.TrustCenterFileID.String(),
 				Name:     file.Name,
 				Category: file.Category,
-				Granted:  access.Active,
+				Status:   access.Status.String(),
 			})
 		}
 	}
