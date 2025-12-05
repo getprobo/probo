@@ -17,13 +17,13 @@ package main
 import (
 	"context"
 
-	"go.probo.inc/probo/pkg/probod"
 	"go.gearno.de/kit/unit"
+	"go.probo.inc/probo/pkg/probod"
 )
 
 var (
 	version string = "unknown"
-	env     string = "unknow"
+	env     string = "unknown"
 )
 
 func main() {

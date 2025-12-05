@@ -5,7 +5,7 @@ distributor:
   receivers:
     otlp:
       protocols:
-        grpc:
+        http:
           endpoint: "0.0.0.0:4317"
 
 ingester:
@@ -38,4 +38,3 @@ storage:
 
 usage_report:
   reporting_enabled: false
-
