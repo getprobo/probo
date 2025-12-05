@@ -179,18 +179,18 @@ func (s TrustCenterAccessService) Request(
 				return fmt.Errorf("invalid email address")
 			}
 
-		access = &coredata.TrustCenterAccess{
-			ID:                                gid.New(s.svc.scope.GetTenantID(), coredata.TrustCenterAccessEntityType),
-			OrganizationID:                    organizationID,
-			TenantID:                          s.svc.scope.GetTenantID(),
-			TrustCenterID:                     req.TrustCenterID,
-			Email:                             req.Email,
-			Name:                              *req.Name,
-			Active:                            false,
-			HasAcceptedNonDisclosureAgreement: false,
-			CreatedAt:                         now,
-			UpdatedAt:                         now,
-		}
+			access = &coredata.TrustCenterAccess{
+				ID:                                gid.New(s.svc.scope.GetTenantID(), coredata.TrustCenterAccessEntityType),
+				OrganizationID:                    organizationID,
+				TenantID:                          s.svc.scope.GetTenantID(),
+				TrustCenterID:                     req.TrustCenterID,
+				Email:                             req.Email,
+				Name:                              *req.Name,
+				Active:                            false,
+				HasAcceptedNonDisclosureAgreement: false,
+				CreatedAt:                         now,
+				UpdatedAt:                         now,
+			}
 
 			if err := access.Insert(ctx, tx, s.svc.scope); err != nil {
 				return fmt.Errorf("cannot insert trust center access: %w", err)
@@ -207,19 +207,19 @@ func (s TrustCenterAccessService) Request(
 		newReportIDs := filterExistingIDs(reportIDs, existingReportIDs)
 		newTrustCenterFileIDs := filterExistingIDs(trustCenterFileIDs, existingTrustCenterFileIDs)
 
-	var accesses coredata.TrustCenterDocumentAccesses
+		var accesses coredata.TrustCenterDocumentAccesses
 
-	if err := accesses.BulkInsertDocumentAccesses(ctx, tx, s.svc.scope, access.ID, access.OrganizationID, newDocumentIDs, true, now); err != nil {
-		return fmt.Errorf("cannot bulk insert trust center document accesses: %w", err)
-	}
+		if err := accesses.BulkInsertDocumentAccesses(ctx, tx, s.svc.scope, access.ID, access.OrganizationID, newDocumentIDs, true, now); err != nil {
+			return fmt.Errorf("cannot bulk insert trust center document accesses: %w", err)
+		}
 
-	if err := accesses.BulkInsertReportAccesses(ctx, tx, s.svc.scope, access.ID, access.OrganizationID, newReportIDs, true, now); err != nil {
-		return fmt.Errorf("cannot bulk insert trust center report accesses: %w", err)
-	}
+		if err := accesses.BulkInsertReportAccesses(ctx, tx, s.svc.scope, access.ID, access.OrganizationID, newReportIDs, true, now); err != nil {
+			return fmt.Errorf("cannot bulk insert trust center report accesses: %w", err)
+		}
 
-	if err := accesses.BulkInsertTrustCenterFileAccesses(ctx, tx, s.svc.scope, access.ID, access.OrganizationID, newTrustCenterFileIDs, true, now); err != nil {
-		return fmt.Errorf("cannot bulk insert trust center file accesses: %w", err)
-	}
+		if err := accesses.BulkInsertTrustCenterFileAccesses(ctx, tx, s.svc.scope, access.ID, access.OrganizationID, newTrustCenterFileIDs, true, now); err != nil {
+			return fmt.Errorf("cannot bulk insert trust center file accesses: %w", err)
+		}
 
 		return nil
 	})
