@@ -23,11 +23,11 @@ import (
 	"strings"
 	"time"
 
+	"go.gearno.de/kit/httpserver"
+	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/slack"
 	"go.probo.inc/probo/pkg/trust"
-	"go.gearno.de/kit/httpserver"
-	"go.gearno.de/kit/log"
 )
 
 type (
@@ -151,7 +151,7 @@ func slackHandler(trustSvc *trust.Service, slackSigningSecret string, logger *lo
 		var fileIDs []gid.GID
 
 		switch action.ActionID {
-		case "accept_all":
+		case "accept_all", "reject_all":
 			currentMessageId, err := gid.ParseGID(action.Value)
 			if err != nil {
 				httpserver.RenderJSON(w, http.StatusBadRequest, SlackInteractiveResponse{Success: false, Message: "invalid message ID"})
@@ -164,7 +164,6 @@ func slackHandler(trustSvc *trust.Service, slackSigningSecret string, logger *lo
 				httpserver.RenderJSON(w, http.StatusInternalServerError, SlackInteractiveResponse{Success: false, Message: "internal server error"})
 				return
 			}
-
 		case "accept_document":
 			docID, err := gid.ParseGID(action.Value)
 			if err != nil {
@@ -194,17 +193,34 @@ func slackHandler(trustSvc *trust.Service, slackSigningSecret string, logger *lo
 			return
 		}
 
-		if err := tenantSvc.TrustCenterAccesses.AcceptByIDs(
-			ctx,
-			initialSlackMessage.OrganizationID,
-			requesterEmail,
-			documentIDs,
-			reportIDs,
-			fileIDs,
-		); err != nil {
-			logger.ErrorCtx(ctx, "cannot grant access", log.Error(err))
-			httpserver.RenderJSON(w, http.StatusInternalServerError, SlackInteractiveResponse{Success: false, Message: "internal server error"})
-			return
+		if strings.HasPrefix(action.ActionID, "accept_") {
+			if err := tenantSvc.TrustCenterAccesses.AcceptByIDs(
+				ctx,
+				initialSlackMessage.OrganizationID,
+				requesterEmail,
+				documentIDs,
+				reportIDs,
+				fileIDs,
+			); err != nil {
+				logger.ErrorCtx(ctx, "cannot grant access", log.Error(err))
+				httpserver.RenderJSON(w, http.StatusInternalServerError, SlackInteractiveResponse{Success: false, Message: "internal server error"})
+				return
+			}
+		}
+
+		if strings.HasPrefix(action.ActionID, "reject_") {
+			if err := tenantSvc.TrustCenterAccesses.RejectByIDs(
+				ctx,
+				initialSlackMessage.OrganizationID,
+				requesterEmail,
+				documentIDs,
+				reportIDs,
+				fileIDs,
+			); err != nil {
+				logger.ErrorCtx(ctx, "cannot reject access", log.Error(err))
+				httpserver.RenderJSON(w, http.StatusInternalServerError, SlackInteractiveResponse{Success: false, Message: "internal server error"})
+				return
+			}
 		}
 
 		if err := tenantSvc.SlackMessages.UpdateSlackAccessMessage(

@@ -1601,11 +1601,7 @@ func (s *DocumentService) Export(
 					return fmt.Errorf("cannot load document version for %q: %w", documentID, err)
 				}
 
-				pdfOptions := ExportPDFOptions{
-					WithWatermark:  options.WithWatermark,
-					WatermarkEmail: options.WatermarkEmail,
-					WithSignatures: options.WithSignatures,
-				}
+				pdfOptions := ExportPDFOptions(options)
 
 				exportedPDF, err := exportDocumentPDF(
 					ctx,

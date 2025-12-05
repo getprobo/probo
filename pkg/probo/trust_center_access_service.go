@@ -338,14 +338,8 @@ func (s TrustCenterAccessService) Update(
 				return fmt.Errorf("cannot update trust center access: %w", err)
 			}
 
-		if err := s.upsertDocumentAccesses(ctx, tx, access.ID, access.OrganizationID, req.DocumentIDs, req.ReportIDs, req.TrustCenterFileIDs, now); err != nil {
-			return fmt.Errorf("cannot upsert document accesses: %w", err)
-		}
-
-			if req.ReportIDs != nil {
-				if err := coredata.ActivateByReportIDs(ctx, tx, s.svc.scope, access.ID, req.ReportIDs, now); err != nil {
-					return fmt.Errorf("cannot activate report accesses: %w", err)
-				}
+			if err := s.upsertDocumentAccesses(ctx, tx, access.ID, access.OrganizationID, req.DocumentIDs, req.ReportIDs, req.TrustCenterFileIDs, now); err != nil {
+				return fmt.Errorf("cannot upsert document accesses: %w", err)
 			}
 
 			if shouldSendEmail {
@@ -403,8 +397,8 @@ func (s TrustCenterAccessService) upsertDocumentAccesses(
 		return nil
 	}
 
-	if err := coredata.DeactivateByTrustCenterAccessID(ctx, tx, s.svc.scope, accessID, now); err != nil {
-		return fmt.Errorf("cannot deactivate existing document accesses: %w", err)
+	if err := coredata.DeleteByTrustCenterAccessID(ctx, tx, s.svc.scope, accessID, now); err != nil {
+		return fmt.Errorf("cannot delete existing document accesses: %w", err)
 	}
 
 	if documentIDs != nil {

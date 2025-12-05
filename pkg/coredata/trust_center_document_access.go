@@ -30,16 +30,17 @@ import (
 
 type (
 	TrustCenterDocumentAccess struct {
-		ID                  gid.GID   `db:"id"`
-		OrganizationID      gid.GID   `db:"organization_id"`
-		TrustCenterAccessID gid.GID   `db:"trust_center_access_id"`
-		DocumentID          *gid.GID  `db:"document_id"`
-		ReportID            *gid.GID  `db:"report_id"`
-		TrustCenterFileID   *gid.GID  `db:"trust_center_file_id"`
-		Active              bool      `db:"active"`
-		Requested           bool      `db:"requested"`
-		CreatedAt           time.Time `db:"created_at"`
-		UpdatedAt           time.Time `db:"updated_at"`
+		ID                  gid.GID                         `db:"id"`
+		OrganizationID      gid.GID                         `db:"organization_id"`
+		TrustCenterAccessID gid.GID                         `db:"trust_center_access_id"`
+		DocumentID          *gid.GID                        `db:"document_id"`
+		ReportID            *gid.GID                        `db:"report_id"`
+		TrustCenterFileID   *gid.GID                        `db:"trust_center_file_id"`
+		Active              bool                            `db:"active"`
+		Status              TrustCenterDocumentAccessStatus `db:"status"`
+		Requested           bool                            `db:"requested"`
+		CreatedAt           time.Time                       `db:"created_at"`
+		UpdatedAt           time.Time                       `db:"updated_at"`
 	}
 
 	TrustCenterDocumentAccesses []*TrustCenterDocumentAccess
@@ -85,6 +86,7 @@ SELECT
 	report_id,
 	trust_center_file_id,
 	active,
+	status,
 	requested,
 	created_at,
 	updated_at
@@ -135,6 +137,7 @@ SELECT
 	report_id,
 	trust_center_file_id,
 	active,
+	status,
 	requested,
 	created_at,
 	updated_at
@@ -186,6 +189,7 @@ SELECT
 	report_id,
 	trust_center_file_id,
 	active,
+	status,
 	requested,
 	created_at,
 	updated_at
@@ -236,6 +240,7 @@ INSERT INTO trust_center_document_accesses (
 	report_id,
 	trust_center_file_id,
 	active,
+	status,
 	requested,
 	created_at,
 	updated_at
@@ -248,6 +253,7 @@ INSERT INTO trust_center_document_accesses (
 	@report_id,
 	@trust_center_file_id,
 	@active,
+	@status::trust_center_document_access_status,
 	@requested,
 	@created_at,
 	@updated_at
@@ -262,6 +268,7 @@ INSERT INTO trust_center_document_accesses (
 		"document_id":            tcda.DocumentID,
 		"report_id":              tcda.ReportID,
 		"trust_center_file_id":   tcda.TrustCenterFileID,
+		"status":                 tcda.Status,
 		"active":                 tcda.Active,
 		"requested":              tcda.Requested,
 		"created_at":             tcda.CreatedAt,
@@ -302,7 +309,7 @@ func (tcda *TrustCenterDocumentAccess) Update(
 ) error {
 	q := `
 UPDATE trust_center_document_accesses SET
-	active = @active,
+	status = @status::trust_center_document_access_status,
 	updated_at = @updated_at
 WHERE
 	%s
@@ -313,7 +320,7 @@ WHERE
 
 	args := pgx.StrictNamedArgs{
 		"id":         tcda.ID,
-		"active":     tcda.Active,
+		"status":     tcda.Status,
 		"updated_at": tcda.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
@@ -401,7 +408,7 @@ WHERE
 	%s
 	AND trust_center_access_id = @trust_center_access_id
 	AND requested = true
-	AND active = false
+	AND status = 'REQUESTED'::trust_center_document_access_status
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -435,7 +442,7 @@ FROM
 WHERE
 	%s
 	AND trust_center_access_id = @trust_center_access_id
-	AND active = true
+	AND status = 'GRANTED'::trust_center_document_access_status
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -525,6 +532,7 @@ final_items AS (
 		ai.report_id,
 		ai.trust_center_file_id,
 		COALESCE(tcda.active, false) AS active,
+		COALESCE(tcda.status, 'REQUESTED'::trust_center_document_access_status) AS status,
 		COALESCE(tcda.requested, false) AS requested,
 		COALESCE(tcda.created_at, ai.item_created_at) AS created_at,
 		COALESCE(tcda.updated_at, ai.item_updated_at) AS updated_at
@@ -546,6 +554,7 @@ SELECT
 	report_id,
 	trust_center_file_id,
 	active,
+	status,
 	requested,
 	created_at,
 	updated_at
@@ -591,6 +600,7 @@ SELECT
 	report_id,
 	trust_center_file_id,
 	active,
+	status,
 	requested,
 	created_at,
 	updated_at
@@ -623,7 +633,7 @@ WHERE
 	return nil
 }
 
-func DeactivateByTrustCenterAccessID(
+func DeleteByTrustCenterAccessID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
@@ -631,8 +641,7 @@ func DeactivateByTrustCenterAccessID(
 	updatedAt time.Time,
 ) error {
 	q := `
-UPDATE trust_center_document_accesses
-SET active = false, updated_at = @updated_at
+DELETE FROM trust_center_document_accesses
 WHERE
 	%s
 	AND trust_center_access_id = @trust_center_access_id
@@ -648,7 +657,7 @@ WHERE
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot deactivate trust center document accesses: %w", err)
+		return fmt.Errorf("cannot delete trust center document accesses: %w", err)
 	}
 
 	return nil
@@ -664,7 +673,7 @@ func ActivateByDocumentIDs(
 ) error {
 	q := `
 UPDATE trust_center_document_accesses
-SET active = true, updated_at = @updated_at
+SET status = 'GRANTED'::trust_center_document_access_status, updated_at = @updated_at
 WHERE
 	%s
 	AND trust_center_access_id = @trust_center_access_id
@@ -688,6 +697,38 @@ WHERE
 	return nil
 }
 
+func RejectByDocumentIDs(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	trustCenterAccessID gid.GID,
+	documentIDs []gid.GID,
+) error {
+	q := `
+UPDATE trust_center_document_accesses
+SET status = 'REJECTED'::trust_center_document_access_status
+WHERE
+	%s
+	AND trust_center_access_id = @trust_center_access_id
+	AND document_id = ANY(@document_ids)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"trust_center_access_id": trustCenterAccessID,
+		"document_ids":           documentIDs,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	_, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot reject trust center document accesses by document IDs: %w", err)
+	}
+
+	return nil
+}
+
 func ActivateByReportIDs(
 	ctx context.Context,
 	conn pg.Conn,
@@ -698,7 +739,7 @@ func ActivateByReportIDs(
 ) error {
 	q := `
 UPDATE trust_center_document_accesses
-SET active = true, updated_at = @updated_at
+SET status = 'GRANTED'::trust_center_document_access_status, updated_at = @updated_at
 WHERE
 	%s
 	AND trust_center_access_id = @trust_center_access_id
@@ -717,6 +758,38 @@ WHERE
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot activate trust center document accesses by report IDs: %w", err)
+	}
+
+	return nil
+}
+
+func RejectByReportIDs(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	trustCenterAccessID gid.GID,
+	reportIDs []gid.GID,
+) error {
+	q := `
+UPDATE trust_center_document_accesses
+SET status = 'REJECTED'::trust_center_document_access_status
+WHERE
+	%s
+	AND trust_center_access_id = @trust_center_access_id
+	AND report_id = ANY(@report_ids)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"trust_center_access_id": trustCenterAccessID,
+		"report_ids":             reportIDs,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	_, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot reject trust center document accesses by report IDs: %w", err)
 	}
 
 	return nil
@@ -747,12 +820,24 @@ WITH document_access_data AS (
 		null::text AS report_id,
 		null::text AS trust_center_file_id,
 		false AS active,
+		'REQUESTED'::trust_center_document_access_status AS status,
 		@requested::boolean AS requested,
 		@created_at::timestamptz AS created_at,
 		@updated_at::timestamptz AS updated_at
 )
 INSERT INTO trust_center_document_accesses (
-	id, tenant_id, organization_id, trust_center_access_id, document_id, report_id, trust_center_file_id, active, requested, created_at, updated_at
+	id,
+	tenant_id,
+	organization_id,
+	trust_center_access_id,
+	document_id,
+	report_id,
+	trust_center_file_id,
+	active,
+	status,
+	requested,
+	created_at,
+	updated_at
 )
 SELECT * FROM document_access_data
 ON CONFLICT DO NOTHING
@@ -845,6 +930,7 @@ SELECT
 	report_id,
 	trust_center_file_id,
 	active,
+	status,
 	requested,
 	created_at,
 	updated_at
@@ -890,7 +976,7 @@ func ActivateByTrustCenterFileIDs(
 ) error {
 	q := `
 UPDATE trust_center_document_accesses
-SET active = true, updated_at = @updated_at
+SET status = 'GRANTED'::trust_center_document_access_status, updated_at = @updated_at
 WHERE
 	%s
 	AND trust_center_access_id = @trust_center_access_id
@@ -909,6 +995,38 @@ WHERE
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot activate trust center document accesses by trust center file IDs: %w", err)
+	}
+
+	return nil
+}
+
+func RejectByTrustCenterFileIDs(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	trustCenterAccessID gid.GID,
+	trustCenterFileIDs []gid.GID,
+) error {
+	q := `
+UPDATE trust_center_document_accesses
+SET status = 'REJECTED'::trust_center_document_access_status
+WHERE
+	%s
+	AND trust_center_access_id = @trust_center_access_id
+	AND trust_center_file_id = ANY(@trust_center_file_ids)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"trust_center_access_id": trustCenterAccessID,
+		"trust_center_file_ids":  trustCenterFileIDs,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	_, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot reject trust center document accesses by trust center file IDs: %w", err)
 	}
 
 	return nil
@@ -935,12 +1053,24 @@ WITH trust_center_file_access_data AS (
 		null::text AS report_id,
 		unnest(@trust_center_file_ids::text[]) AS trust_center_file_id,
 		false AS active,
+		'REQUESTED'::trust_center_document_access_status AS status,
 		@requested::boolean AS requested,
 		@created_at::timestamptz AS created_at,
 		@updated_at::timestamptz AS updated_at
 )
 INSERT INTO trust_center_document_accesses (
-	id, tenant_id, organization_id, trust_center_access_id, document_id, report_id, trust_center_file_id, active, requested, created_at, updated_at
+	id,
+	tenant_id,
+	organization_id,
+	trust_center_access_id,
+	document_id,
+	report_id,
+	trust_center_file_id,
+	active,
+	status,
+	requested,
+	created_at,
+	updated_at
 )
 SELECT * FROM trust_center_file_access_data
 ON CONFLICT DO NOTHING
