@@ -209,15 +209,42 @@ func (s TrustCenterAccessService) Request(
 
 		var accesses coredata.TrustCenterDocumentAccesses
 
-		if err := accesses.BulkInsertDocumentAccesses(ctx, tx, s.svc.scope, access.ID, access.OrganizationID, newDocumentIDs, true, now); err != nil {
+		if err := accesses.BulkInsertDocumentAccesses(
+			ctx,
+			tx,
+			s.svc.scope,
+			access.ID,
+			access.OrganizationID,
+			newDocumentIDs,
+			coredata.TrustCenterDocumentAccessStatusRequested,
+			now,
+		); err != nil {
 			return fmt.Errorf("cannot bulk insert trust center document accesses: %w", err)
 		}
 
-		if err := accesses.BulkInsertReportAccesses(ctx, tx, s.svc.scope, access.ID, access.OrganizationID, newReportIDs, true, now); err != nil {
+		if err := accesses.BulkInsertReportAccesses(
+			ctx,
+			tx,
+			s.svc.scope,
+			access.ID,
+			access.OrganizationID,
+			newReportIDs,
+			coredata.TrustCenterDocumentAccessStatusRequested,
+			now,
+		); err != nil {
 			return fmt.Errorf("cannot bulk insert trust center report accesses: %w", err)
 		}
 
-		if err := accesses.BulkInsertTrustCenterFileAccesses(ctx, tx, s.svc.scope, access.ID, access.OrganizationID, newTrustCenterFileIDs, true, now); err != nil {
+		if err := accesses.BulkInsertTrustCenterFileAccesses(
+			ctx,
+			tx,
+			s.svc.scope,
+			access.ID,
+			access.OrganizationID,
+			newTrustCenterFileIDs,
+			coredata.TrustCenterDocumentAccessStatusRequested,
+			now,
+		); err != nil {
 			return fmt.Errorf("cannot bulk insert trust center file accesses: %w", err)
 		}
 

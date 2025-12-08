@@ -355,7 +355,16 @@ func (s TrustCenterAccessService) upsertDocumentAccesses(
 
 	if documentIDs != nil {
 		var documentAccesses coredata.TrustCenterDocumentAccesses
-		if err := documentAccesses.BulkInsertDocumentAccesses(ctx, tx, s.svc.scope, accessID, organizationID, documentIDs, false, now); err != nil {
+		if err := documentAccesses.BulkInsertDocumentAccesses(
+			ctx,
+			tx,
+			s.svc.scope,
+			accessID,
+			organizationID,
+			documentIDs,
+			coredata.TrustCenterDocumentAccessStatusGranted,
+			now,
+		); err != nil {
 			return fmt.Errorf("cannot create document accesses: %w", err)
 		}
 		if err := coredata.GrantByDocumentIDs(ctx, tx, s.svc.scope, accessID, documentIDs, now); err != nil {
@@ -365,7 +374,16 @@ func (s TrustCenterAccessService) upsertDocumentAccesses(
 
 	if reportIDs != nil {
 		var documentAccesses coredata.TrustCenterDocumentAccesses
-		if err := documentAccesses.BulkInsertReportAccesses(ctx, tx, s.svc.scope, accessID, organizationID, reportIDs, false, now); err != nil {
+		if err := documentAccesses.BulkInsertReportAccesses(
+			ctx,
+			tx,
+			s.svc.scope,
+			accessID,
+			organizationID,
+			reportIDs,
+			coredata.TrustCenterDocumentAccessStatusGranted,
+			now,
+		); err != nil {
 			return fmt.Errorf("cannot create report accesses: %w", err)
 		}
 		if err := coredata.GrantByReportIDs(ctx, tx, s.svc.scope, accessID, reportIDs, now); err != nil {
@@ -375,7 +393,16 @@ func (s TrustCenterAccessService) upsertDocumentAccesses(
 
 	if trustCenterFileIDs != nil {
 		var documentAccesses coredata.TrustCenterDocumentAccesses
-		if err := documentAccesses.BulkInsertTrustCenterFileAccesses(ctx, tx, s.svc.scope, accessID, organizationID, trustCenterFileIDs, false, now); err != nil {
+		if err := documentAccesses.BulkInsertTrustCenterFileAccesses(
+			ctx,
+			tx,
+			s.svc.scope,
+			accessID,
+			organizationID,
+			trustCenterFileIDs,
+			coredata.TrustCenterDocumentAccessStatusGranted,
+			now,
+		); err != nil {
 			return fmt.Errorf("cannot create trust center file accesses: %w", err)
 		}
 		if err := coredata.GrantByTrustCenterFileIDs(ctx, tx, s.svc.scope, accessID, trustCenterFileIDs, now); err != nil {

@@ -5,6 +5,12 @@ ALTER TABLE
 ADD
     COLUMN status trust_center_document_access_status;
 
+DELETE FROM
+    trust_center_document_accesses
+WHERE
+    active = 'F'
+    AND requested = 'F';
+
 UPDATE
     trust_center_document_accesses
 SET

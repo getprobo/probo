@@ -800,7 +800,7 @@ func (tcdas TrustCenterDocumentAccesses) BulkInsertDocumentAccesses(
 	trustCenterAccessID gid.GID,
 	organizationID gid.GID,
 	documentIDs []gid.GID,
-	requested bool,
+	status TrustCenterDocumentAccessStatus,
 	createdAt time.Time,
 ) error {
 	if len(documentIDs) == 0 {
@@ -818,8 +818,8 @@ WITH document_access_data AS (
 		null::text AS report_id,
 		null::text AS trust_center_file_id,
 		false AS active,
-		'REQUESTED'::trust_center_document_access_status AS status,
-		@requested::boolean AS requested,
+		@status::trust_center_document_access_status AS status,
+		false AS requested,
 		@created_at::timestamptz AS created_at,
 		@updated_at::timestamptz AS updated_at
 )
@@ -847,7 +847,7 @@ ON CONFLICT DO NOTHING
 		"trust_center_access_id": trustCenterAccessID,
 		"document_ids":           documentIDs,
 		"trust_center_document_access_entity_type": TrustCenterDocumentAccessEntityType,
-		"requested":  requested,
+		"status":     status,
 		"created_at": createdAt,
 		"updated_at": createdAt,
 	}
@@ -866,7 +866,7 @@ func (tcdas TrustCenterDocumentAccesses) BulkInsertReportAccesses(
 	trustCenterAccessID gid.GID,
 	organizationID gid.GID,
 	reportIDs []gid.GID,
-	requested bool,
+	status TrustCenterDocumentAccessStatus,
 	createdAt time.Time,
 ) error {
 	if len(reportIDs) == 0 {
@@ -884,8 +884,8 @@ WITH report_access_data AS (
 		unnest(@report_ids::text[]) AS report_id,
 		null::text AS trust_center_file_id,
 		false AS active,
-		'REQUESTED'::trust_center_document_access_status AS status,
-		@requested::boolean AS requested,
+		@status::trust_center_document_access_status AS status,
+		false AS requested,
 		@created_at::timestamptz AS created_at,
 		@updated_at::timestamptz AS updated_at
 )
@@ -913,7 +913,7 @@ ON CONFLICT DO NOTHING
 		"trust_center_document_access_entity_type": TrustCenterDocumentAccessEntityType,
 		"trust_center_access_id":                   trustCenterAccessID,
 		"report_ids":                               reportIDs,
-		"requested":                                requested,
+		"requested":                                status,
 		"created_at":                               createdAt,
 		"updated_at":                               createdAt,
 	}
@@ -1049,7 +1049,7 @@ func (tcdas TrustCenterDocumentAccesses) BulkInsertTrustCenterFileAccesses(
 	trustCenterAccessID gid.GID,
 	organizationID gid.GID,
 	trustCenterFileIDs []gid.GID,
-	requested bool,
+	status TrustCenterDocumentAccessStatus,
 	createdAt time.Time,
 ) error {
 	q := `
@@ -1063,8 +1063,8 @@ WITH trust_center_file_access_data AS (
 		null::text AS report_id,
 		unnest(@trust_center_file_ids::text[]) AS trust_center_file_id,
 		false AS active,
-		'REQUESTED'::trust_center_document_access_status AS status,
-		@requested::boolean AS requested,
+		@status::trust_center_document_access_status AS status,
+		false AS requested,
 		@created_at::timestamptz AS created_at,
 		@updated_at::timestamptz AS updated_at
 )
@@ -1092,7 +1092,7 @@ ON CONFLICT DO NOTHING
 		"trust_center_document_access_entity_type": TrustCenterDocumentAccessEntityType,
 		"trust_center_access_id":                   trustCenterAccessID,
 		"trust_center_file_ids":                    trustCenterFileIDs,
-		"requested":                                requested,
+		"status":                                   status,
 		"created_at":                               createdAt,
 		"updated_at":                               createdAt,
 	}
