@@ -638,7 +638,6 @@ func DeleteByTrustCenterAccessID(
 	conn pg.Conn,
 	scope Scoper,
 	trustCenterAccessID gid.GID,
-	updatedAt time.Time,
 ) error {
 	q := `
 DELETE FROM trust_center_document_accesses
@@ -651,7 +650,6 @@ WHERE
 
 	args := pgx.StrictNamedArgs{
 		"trust_center_access_id": trustCenterAccessID,
-		"updated_at":             updatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -886,12 +884,24 @@ WITH report_access_data AS (
 		unnest(@report_ids::text[]) AS report_id,
 		null::text AS trust_center_file_id,
 		false AS active,
+		'REQUESTED'::trust_center_document_access_status AS status,
 		@requested::boolean AS requested,
 		@created_at::timestamptz AS created_at,
 		@updated_at::timestamptz AS updated_at
 )
 INSERT INTO trust_center_document_accesses (
-	id, tenant_id, organization_id, trust_center_access_id, document_id, report_id, trust_center_file_id, active, requested, created_at, updated_at
+	id,
+	tenant_id,
+	organization_id,
+	trust_center_access_id,
+	document_id,
+	report_id,
+	trust_center_file_id,
+	active,
+	status,
+	requested,
+	created_at,
+	updated_at
 )
 SELECT * FROM report_access_data
 ON CONFLICT DO NOTHING
