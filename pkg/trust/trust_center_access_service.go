@@ -391,7 +391,7 @@ func (s TrustCenterAccessService) LoadTrustCenterFileAccess(
 	return fileAccess, nil
 }
 
-func (s *TrustCenterAccessService) AcceptByIDs(
+func (s *TrustCenterAccessService) GrantByIDs(
 	ctx context.Context,
 	organizationID gid.GID,
 	email string,
@@ -414,18 +414,18 @@ func (s *TrustCenterAccessService) AcceptByIDs(
 		now := time.Now()
 
 		if len(documentIDs) > 0 {
-			if err := coredata.ActivateByDocumentIDs(ctx, tx, s.svc.scope, access.ID, documentIDs, now); err != nil {
-				return fmt.Errorf("cannot activate document accesses: %w", err)
+			if err := coredata.GrantByDocumentIDs(ctx, tx, s.svc.scope, access.ID, documentIDs, now); err != nil {
+				return fmt.Errorf("cannot grant document accesses: %w", err)
 			}
 		}
 		if len(reportIDs) > 0 {
-			if err := coredata.ActivateByReportIDs(ctx, tx, s.svc.scope, access.ID, reportIDs, now); err != nil {
-				return fmt.Errorf("cannot activate report accesses: %w", err)
+			if err := coredata.GrantByReportIDs(ctx, tx, s.svc.scope, access.ID, reportIDs, now); err != nil {
+				return fmt.Errorf("cannot grant report accesses: %w", err)
 			}
 		}
 		if len(fileIDs) > 0 {
-			if err := coredata.ActivateByTrustCenterFileIDs(ctx, tx, s.svc.scope, access.ID, fileIDs, now); err != nil {
-				return fmt.Errorf("cannot activate trust center file accesses: %w", err)
+			if err := coredata.GrantByTrustCenterFileIDs(ctx, tx, s.svc.scope, access.ID, fileIDs, now); err != nil {
+				return fmt.Errorf("cannot grant trust center file accesses: %w", err)
 			}
 		}
 

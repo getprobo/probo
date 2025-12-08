@@ -663,7 +663,7 @@ WHERE
 	return nil
 }
 
-func ActivateByDocumentIDs(
+func GrantByDocumentIDs(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
@@ -691,7 +691,7 @@ WHERE
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot activate trust center document accesses by document IDs: %w", err)
+		return fmt.Errorf("cannot grant trust center document accesses by document IDs: %w", err)
 	}
 
 	return nil
@@ -729,7 +729,7 @@ WHERE
 	return nil
 }
 
-func ActivateByReportIDs(
+func GrantByReportIDs(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
@@ -757,7 +757,7 @@ WHERE
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot activate trust center document accesses by report IDs: %w", err)
+		return fmt.Errorf("cannot grant trust center document accesses by report IDs: %w", err)
 	}
 
 	return nil
@@ -966,7 +966,7 @@ LIMIT 1;
 	return nil
 }
 
-func ActivateByTrustCenterFileIDs(
+func GrantByTrustCenterFileIDs(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
@@ -994,7 +994,7 @@ WHERE
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot activate trust center document accesses by trust center file IDs: %w", err)
+		return fmt.Errorf("cannot grant trust center document accesses by trust center file IDs: %w", err)
 	}
 
 	return nil

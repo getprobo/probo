@@ -194,7 +194,7 @@ func slackHandler(trustSvc *trust.Service, slackSigningSecret string, logger *lo
 		}
 
 		if strings.HasPrefix(action.ActionID, "accept_") {
-			if err := tenantSvc.TrustCenterAccesses.AcceptByIDs(
+			if err := tenantSvc.TrustCenterAccesses.GrantByIDs(
 				ctx,
 				initialSlackMessage.OrganizationID,
 				requesterEmail,

@@ -406,8 +406,8 @@ func (s TrustCenterAccessService) upsertDocumentAccesses(
 		if err := documentAccesses.BulkInsertDocumentAccesses(ctx, tx, s.svc.scope, accessID, organizationID, documentIDs, false, now); err != nil {
 			return fmt.Errorf("cannot create document accesses: %w", err)
 		}
-		if err := coredata.ActivateByDocumentIDs(ctx, tx, s.svc.scope, accessID, documentIDs, now); err != nil {
-			return fmt.Errorf("cannot activate document accesses: %w", err)
+		if err := coredata.GrantByDocumentIDs(ctx, tx, s.svc.scope, accessID, documentIDs, now); err != nil {
+			return fmt.Errorf("cannot grant document accesses: %w", err)
 		}
 	}
 
@@ -416,8 +416,8 @@ func (s TrustCenterAccessService) upsertDocumentAccesses(
 		if err := documentAccesses.BulkInsertReportAccesses(ctx, tx, s.svc.scope, accessID, organizationID, reportIDs, false, now); err != nil {
 			return fmt.Errorf("cannot create report accesses: %w", err)
 		}
-		if err := coredata.ActivateByReportIDs(ctx, tx, s.svc.scope, accessID, reportIDs, now); err != nil {
-			return fmt.Errorf("cannot activate report accesses: %w", err)
+		if err := coredata.GrantByReportIDs(ctx, tx, s.svc.scope, accessID, reportIDs, now); err != nil {
+			return fmt.Errorf("cannot grant report accesses: %w", err)
 		}
 	}
 
@@ -426,8 +426,8 @@ func (s TrustCenterAccessService) upsertDocumentAccesses(
 		if err := documentAccesses.BulkInsertTrustCenterFileAccesses(ctx, tx, s.svc.scope, accessID, organizationID, trustCenterFileIDs, false, now); err != nil {
 			return fmt.Errorf("cannot create trust center file accesses: %w", err)
 		}
-		if err := coredata.ActivateByTrustCenterFileIDs(ctx, tx, s.svc.scope, accessID, trustCenterFileIDs, now); err != nil {
-			return fmt.Errorf("cannot activate trust center file accesses: %w", err)
+		if err := coredata.GrantByTrustCenterFileIDs(ctx, tx, s.svc.scope, accessID, trustCenterFileIDs, now); err != nil {
+			return fmt.Errorf("cannot grant trust center file accesses: %w", err)
 		}
 	}
 
