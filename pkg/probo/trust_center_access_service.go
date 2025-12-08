@@ -145,26 +145,6 @@ func (s TrustCenterAccessService) Get(
 	return &access, nil
 }
 
-func (s TrustCenterAccessService) GetDocumentAccess(
-	ctx context.Context,
-	documentAccessID gid.GID,
-) (*coredata.TrustCenterDocumentAccess, error) {
-	var documentAccess coredata.TrustCenterDocumentAccess
-
-	err := s.svc.pg.WithConn(
-		ctx,
-		func(conn pg.Conn) error {
-			return documentAccess.LoadByID(ctx, conn, s.svc.scope, documentAccessID)
-		},
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return &documentAccess, nil
-}
-
 func (s TrustCenterAccessService) CountDocumentAccesses(
 	ctx context.Context,
 	trustCenterAccessID gid.GID,
@@ -229,34 +209,6 @@ func (s TrustCenterAccessService) CountActiveDocumentAccesses(
 	}
 
 	return count, nil
-}
-
-func (s TrustCenterAccessService) ValidateToken(
-	ctx context.Context,
-	tokenString string,
-) (*TrustCenterAccessData, error) {
-	token, err := statelesstoken.ValidateToken[TrustCenterAccessData](
-		s.svc.trustConfig.TokenSecret,
-		s.svc.trustConfig.TokenType,
-		tokenString,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("cannot validate trust center access token: %w", err)
-	}
-
-	access := &coredata.TrustCenterAccess{}
-	err = s.svc.pg.WithConn(
-		ctx,
-		func(conn pg.Conn) error {
-			return access.LoadByTrustCenterIDAndEmail(ctx, conn, s.svc.scope, token.Data.TrustCenterID, token.Data.Email)
-		},
-	)
-
-	if err != nil {
-		return nil, fmt.Errorf("access not found or revoked: %w", err)
-	}
-
-	return &token.Data, nil
 }
 
 func (s TrustCenterAccessService) Create(
@@ -536,74 +488,4 @@ func (s TrustCenterAccessService) sendTrustCenterAccessEmail(
 		return fmt.Errorf("cannot insert access email: %w", err)
 	}
 	return nil
-}
-
-func (s TrustCenterAccessService) LoadDocumentAccess(
-	ctx context.Context,
-	trustCenterID gid.GID,
-	email string,
-	documentID gid.GID,
-) (*coredata.TrustCenterDocumentAccess, error) {
-	var documentAccess *coredata.TrustCenterDocumentAccess
-
-	err := s.svc.pg.WithConn(ctx, func(conn pg.Conn) error {
-		access := &coredata.TrustCenterAccess{}
-		err := access.LoadByTrustCenterIDAndEmail(ctx, conn, s.svc.scope, trustCenterID, email)
-		if err != nil {
-			return fmt.Errorf("cannot load trust center access: %w", err)
-		}
-
-		if !access.Active {
-			return fmt.Errorf("trust center access is not active")
-		}
-
-		documentAccess = &coredata.TrustCenterDocumentAccess{}
-		err = documentAccess.LoadByTrustCenterAccessIDAndDocumentID(ctx, conn, s.svc.scope, access.ID, documentID)
-		if err != nil {
-			return fmt.Errorf("cannot load document access: %w", err)
-		}
-
-		return nil
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return documentAccess, nil
-}
-
-func (s TrustCenterAccessService) LoadReportAccess(
-	ctx context.Context,
-	trustCenterID gid.GID,
-	email string,
-	reportID gid.GID,
-) (*coredata.TrustCenterDocumentAccess, error) {
-	var reportAccess *coredata.TrustCenterDocumentAccess
-
-	err := s.svc.pg.WithConn(ctx, func(conn pg.Conn) error {
-		access := &coredata.TrustCenterAccess{}
-		err := access.LoadByTrustCenterIDAndEmail(ctx, conn, s.svc.scope, trustCenterID, email)
-		if err != nil {
-			return fmt.Errorf("cannot load trust center access: %w", err)
-		}
-
-		if !access.Active {
-			return fmt.Errorf("trust center access is not active")
-		}
-
-		reportAccess = &coredata.TrustCenterDocumentAccess{}
-		err = reportAccess.LoadByTrustCenterAccessIDAndReportID(ctx, conn, s.svc.scope, access.ID, reportID)
-		if err != nil {
-			return fmt.Errorf("cannot load report access: %w", err)
-		}
-
-		return nil
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return reportAccess, nil
 }
