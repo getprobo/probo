@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Fixed
+
+- Fix invations never deleted when organization is deleted.
+- Fix otel network error locally.
+
+### Security
+
+- Update kit.
+
 ## [0.98.1] - 2025-12-04
 
 ### Fixed
