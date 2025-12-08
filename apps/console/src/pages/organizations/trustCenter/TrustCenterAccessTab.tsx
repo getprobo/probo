@@ -82,6 +82,7 @@ type ContextType = {
 
 type DocumentAccessInfo = {
   active: boolean;
+  status: string;
   requested: boolean;
   document?: {
     id: string;
@@ -185,7 +186,7 @@ export default function TrustCenterAccessTab() {
     setIsLoadingDocumentAccesses(false);
   }, []);
 
-  const formattedDocumentAccesses = editingDocumentAccesses
+  const formattedDocumentAccesses: NonNullable<ReturnType<typeof getDocumentAccessInfo>>[] = editingDocumentAccesses
     ?.map((docAccess) => getDocumentAccessInfo(docAccess, __))
     ?.filter((info) => info !== null) ?? [];
 
@@ -210,6 +211,7 @@ export default function TrustCenterAccessTab() {
         id: docAccess.document?.id,
         requested: docAccess.requested,
         active: docAccess.active,
+        status: docAccess.status,
       };
     }
     if (docAccess.report) {
@@ -221,6 +223,7 @@ export default function TrustCenterAccessTab() {
         id: docAccess.report?.id,
         requested: docAccess.requested,
         active: docAccess.active,
+        status: docAccess.status,
       };
     }
     if (docAccess.trustCenterFile) {
@@ -232,10 +235,11 @@ export default function TrustCenterAccessTab() {
         id: docAccess.trustCenterFile?.id,
         requested: docAccess.requested,
         active: docAccess.active,
+        status: docAccess.status,
       };
     }
 
-    return null;
+    throw new Error("Unknown trust center access document type");
   }
 
   type AccessType = {
@@ -638,17 +642,15 @@ export default function TrustCenterAccessTab() {
                         <Th>{__("Name")}</Th>
                         <Th>{__("Type")}</Th>
                         <Th>{__("Category")}</Th>
-                        <Th></Th>
                         <Th>
-                          <div className="flex justify-end">
-                            {__("Access")}
-                          </div>
+                          {__("Access")}
                         </Th>
+                        <Th></Th>
                       </Tr>
                     </Thead>
                     <Tbody>
                       {formattedDocumentAccesses.map((info) => {
-                        const { variant, name, type, category, id, requested } = info;
+                        const { variant, name, type, category, id, status } = info;
 
                         return (
                           <Tr key={id}>
@@ -668,20 +670,13 @@ export default function TrustCenterAccessTab() {
                               </div>
                             </Td>
                             <Td>
-                              {requested && (
-                                <Badge variant="warning">
-                                  {__("Requested")}
-                                </Badge>
-                              )}
+                              <Badge variant="info">
+                                {status}
+                              </Badge>
                             </Td>
                             <Td>
                               <div className="flex justify-end">
-                                <Checkbox
-                                  checked={selectedDocumentAccesses.has(id)}
-                                  onChange={(active) => {
-                                    if (id) handleToggleDocumentAccess(id, active);
-                                  }}
-                                />
+                                <Button onClick={() => handleToggleDocumentAccess(id, true)}>Grant</Button>
                               </div>
                             </Td>
                           </Tr>

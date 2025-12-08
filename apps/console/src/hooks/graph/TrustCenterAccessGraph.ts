@@ -112,6 +112,7 @@ export const loadTrustCenterAccessDocumentAccessesQuery = graphql`
             node {
               active
               requested
+              status
               document {
                 id
                 title

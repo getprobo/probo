@@ -35,16 +35,17 @@ type (
 	}
 
 	TrustCenterDocumentAccess struct {
-		ID                gid.GID            `json:"id"`
-		OrganizationID    gid.GID            `json:"-"`
-		Active            bool               `json:"active"`
-		Requested         bool               `json:"requested"`
-		CreatedAt         time.Time          `json:"createdAt"`
-		UpdatedAt         time.Time          `json:"updatedAt"`
-		TrustCenterAccess *TrustCenterAccess `json:"trustCenterAccess"`
-		Document          *Document          `json:"document,omitempty"`
-		Report            *Report            `json:"report,omitempty"`
-		TrustCenterFile   *TrustCenterFile   `json:"trustCenterFile,omitempty"`
+		ID                gid.GID                                  `json:"id"`
+		OrganizationID    gid.GID                                  `json:"-"`
+		Active            bool                                     `json:"active"`
+		Status            coredata.TrustCenterDocumentAccessStatus `json:"status"`
+		Requested         bool                                     `json:"requested"`
+		CreatedAt         time.Time                                `json:"createdAt"`
+		UpdatedAt         time.Time                                `json:"updatedAt"`
+		TrustCenterAccess *TrustCenterAccess                       `json:"trustCenterAccess"`
+		Document          *Document                                `json:"document,omitempty"`
+		Report            *Report                                  `json:"report,omitempty"`
+		TrustCenterFile   *TrustCenterFile                         `json:"trustCenterFile,omitempty"`
 
 		// Internal fields used by resolvers
 		TrustCenterAccessID gid.GID  `json:"-"`
@@ -59,6 +60,7 @@ func NewTrustCenterDocumentAccess(tcda *coredata.TrustCenterDocumentAccess) *Tru
 		ID:                  tcda.ID,
 		OrganizationID:      tcda.OrganizationID,
 		Active:              tcda.Active,
+		Status:              tcda.Status,
 		Requested:           tcda.Requested,
 		CreatedAt:           tcda.CreatedAt,
 		UpdatedAt:           tcda.UpdatedAt,

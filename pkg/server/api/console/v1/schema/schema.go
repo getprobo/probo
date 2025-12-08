@@ -2224,8 +2224,6 @@ type TrustCenterAccessResolver interface {
 	AvailableDocumentAccesses(ctx context.Context, obj *types.TrustCenterAccess, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterDocumentAccessOrderField]) (*types.TrustCenterDocumentAccessConnection, error)
 }
 type TrustCenterDocumentAccessResolver interface {
-	Status(ctx context.Context, obj *types.TrustCenterDocumentAccess) (coredata.TrustCenterDocumentAccessStatus, error)
-
 	Document(ctx context.Context, obj *types.TrustCenterDocumentAccess) (*types.Document, error)
 	Report(ctx context.Context, obj *types.TrustCenterDocumentAccess) (*types.Report, error)
 	TrustCenterFile(ctx context.Context, obj *types.TrustCenterDocumentAccess) (*types.TrustCenterFile, error)
@@ -47161,7 +47159,7 @@ func (ec *executionContext) _TrustCenterDocumentAccess_status(ctx context.Contex
 		field,
 		ec.fieldContext_TrustCenterDocumentAccess_status,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.TrustCenterDocumentAccess().Status(ctx, obj)
+			return obj.Status, nil
 		},
 		nil,
 		ec.marshalNTrustCenterDocumentAccessStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐTrustCenterDocumentAccessStatus,
@@ -47174,8 +47172,8 @@ func (ec *executionContext) fieldContext_TrustCenterDocumentAccess_status(_ cont
 	fc = &graphql.FieldContext{
 		Object:     "TrustCenterDocumentAccess",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type TrustCenterDocumentAccessStatus does not have child fields")
 		},
@@ -78827,41 +78825,10 @@ func (ec *executionContext) _TrustCenterDocumentAccess(ctx context.Context, sel 
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "status":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._TrustCenterDocumentAccess_status(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._TrustCenterDocumentAccess_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
 			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "requested":
 			out.Values[i] = ec._TrustCenterDocumentAccess_requested(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
