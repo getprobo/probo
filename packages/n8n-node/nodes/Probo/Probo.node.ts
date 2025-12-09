@@ -103,6 +103,11 @@ export class Probo implements INodeType {
 						description: 'Manage organizations',
 					},
 					{
+						name: 'People',
+						value: 'people',
+						description: 'Manage people',
+					},
+					{
 						name: 'Vendor',
 						value: 'vendor',
 						description: 'Manage vendors',
