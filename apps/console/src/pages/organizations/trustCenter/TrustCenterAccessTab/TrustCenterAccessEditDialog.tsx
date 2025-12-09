@@ -64,7 +64,7 @@ export function TrustCenterAccessEditForm(props: TrustCenterAccessEditFormProps)
     queryRef,
   )
 
-  const initialDocumentAccesses = (data.node.availableDocumentAccesses?.edges.map(edge => edge.node) ?? []).map(da => getTrustCenterDocumentAccessInfo(da, __))
+  const initialDocumentAccesses = data.node.availableDocumentAccesses?.edges.map(edge => getTrustCenterDocumentAccessInfo(edge.node, __)) ?? []
   const initialStatusByID = initialDocumentAccesses.reduce<Record<string, TrustCenterDocumentAccessStatus>>((acc, docAccess) => {
     acc[docAccess.id] = docAccess.status;
     return acc

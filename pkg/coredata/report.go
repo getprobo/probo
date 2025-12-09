@@ -110,7 +110,7 @@ FROM
 	reports
 WHERE
 	%s
-	AND id IN (SELECT id FROM UNNEST(@report_ids::text[]) AS t(id))
+	AND id = ANY(@report_ids)
 LIMIT 1;
 `
 

@@ -295,8 +295,42 @@ func (s TrustCenterAccessService) Update(
 				return fmt.Errorf("cannot update trust center access: %w", err)
 			}
 
-			if err := s.upsertDocumentAccesses(ctx, tx, access.ID, access.OrganizationID, req.DocumentIDs, req.ReportIDs, req.TrustCenterFileIDs, now); err != nil {
-				return fmt.Errorf("cannot upsert document accesses: %w", err)
+			var tcdas coredata.TrustCenterDocumentAccesses
+
+			var documentData []coredata.MergeTrustCenterDocumentAccessesData
+			for _, d := range req.DocumentAccesses {
+				documentData = append(documentData, coredata.MergeTrustCenterDocumentAccessesData{
+					ID:     d.ID,
+					Status: d.Status,
+				})
+			}
+
+			if err := tcdas.MergeDocumentAccesses(ctx, tx, s.svc.scope, access.OrganizationID, access.ID, documentData); err != nil {
+				return fmt.Errorf("cannot merge document accesses: %w", err)
+			}
+
+			var reportData []coredata.MergeTrustCenterDocumentAccessesData
+			for _, d := range req.ReportAccesses {
+				reportData = append(reportData, coredata.MergeTrustCenterDocumentAccessesData{
+					ID:     d.ID,
+					Status: d.Status,
+				})
+			}
+
+			if err := tcdas.MergeReportAccesses(ctx, tx, s.svc.scope, access.OrganizationID, access.ID, reportData); err != nil {
+				return fmt.Errorf("cannot merge report accesses: %w", err)
+			}
+
+			var fileData []coredata.MergeTrustCenterDocumentAccessesData
+			for _, d := range req.TrustCenterFileAccesses {
+				fileData = append(fileData, coredata.MergeTrustCenterDocumentAccessesData{
+					ID:     d.ID,
+					Status: d.Status,
+				})
+			}
+
+			if err := tcdas.MergeTrustCenterFileAccesses(ctx, tx, s.svc.scope, access.OrganizationID, access.ID, fileData); err != nil {
+				return fmt.Errorf("cannot merge trust center file accesses: %w", err)
 			}
 
 			if shouldSendEmail {
@@ -338,84 +372,6 @@ func (s TrustCenterAccessService) Delete(
 	)
 
 	return err
-}
-
-func (s TrustCenterAccessService) upsertDocumentAccesses(
-	ctx context.Context,
-	tx pg.Conn,
-	accessID gid.GID,
-	organizationID gid.GID,
-	documentIDs []gid.GID,
-	reportIDs []gid.GID,
-	trustCenterFileIDs []gid.GID,
-	now time.Time,
-) error {
-	if documentIDs == nil && reportIDs == nil && trustCenterFileIDs == nil {
-		return nil
-	}
-
-	if err := coredata.DeleteByTrustCenterAccessID(ctx, tx, s.svc.scope, accessID); err != nil {
-		return fmt.Errorf("cannot delete existing document accesses: %w", err)
-	}
-
-	if documentIDs != nil {
-		var documentAccesses coredata.TrustCenterDocumentAccesses
-		if err := documentAccesses.BulkInsertDocumentAccesses(
-			ctx,
-			tx,
-			s.svc.scope,
-			accessID,
-			organizationID,
-			documentIDs,
-			coredata.TrustCenterDocumentAccessStatusGranted,
-			now,
-		); err != nil {
-			return fmt.Errorf("cannot create document accesses: %w", err)
-		}
-		if err := coredata.GrantByDocumentIDs(ctx, tx, s.svc.scope, accessID, documentIDs, now); err != nil {
-			return fmt.Errorf("cannot grant document accesses: %w", err)
-		}
-	}
-
-	if reportIDs != nil {
-		var documentAccesses coredata.TrustCenterDocumentAccesses
-		if err := documentAccesses.BulkInsertReportAccesses(
-			ctx,
-			tx,
-			s.svc.scope,
-			accessID,
-			organizationID,
-			reportIDs,
-			coredata.TrustCenterDocumentAccessStatusGranted,
-			now,
-		); err != nil {
-			return fmt.Errorf("cannot create report accesses: %w", err)
-		}
-		if err := coredata.GrantByReportIDs(ctx, tx, s.svc.scope, accessID, reportIDs, now); err != nil {
-			return fmt.Errorf("cannot grant report accesses: %w", err)
-		}
-	}
-
-	if trustCenterFileIDs != nil {
-		var documentAccesses coredata.TrustCenterDocumentAccesses
-		if err := documentAccesses.BulkInsertTrustCenterFileAccesses(
-			ctx,
-			tx,
-			s.svc.scope,
-			accessID,
-			organizationID,
-			trustCenterFileIDs,
-			coredata.TrustCenterDocumentAccessStatusGranted,
-			now,
-		); err != nil {
-			return fmt.Errorf("cannot create trust center file accesses: %w", err)
-		}
-		if err := coredata.GrantByTrustCenterFileIDs(ctx, tx, s.svc.scope, accessID, trustCenterFileIDs, now); err != nil {
-			return fmt.Errorf("cannot grant trust center file accesses: %w", err)
-		}
-	}
-
-	return nil
 }
 
 func (s TrustCenterAccessService) sendAccessEmail(ctx context.Context, tx pg.Conn, access *coredata.TrustCenterAccess) error {

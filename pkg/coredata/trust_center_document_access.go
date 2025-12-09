@@ -79,22 +79,22 @@ func (tcda *TrustCenterDocumentAccess) LoadByID(
 ) error {
 	q := `
 SELECT
-	id,
-	organization_id,
-	trust_center_access_id,
-	document_id,
-	report_id,
-	trust_center_file_id,
-	active,
-	status,
-	requested,
-	created_at,
-	updated_at
+  id,
+  organization_id,
+  trust_center_access_id,
+  document_id,
+  report_id,
+  trust_center_file_id,
+  active,
+  status,
+  requested,
+  created_at,
+  updated_at
 FROM
-	trust_center_document_accesses
+  trust_center_document_accesses
 WHERE
-	%s
-	AND id = @access_id
+  %s
+  AND id = @access_id
 LIMIT 1;
 `
 
@@ -130,23 +130,23 @@ func (tcda *TrustCenterDocumentAccess) LoadByTrustCenterAccessIDAndDocumentID(
 ) error {
 	q := `
 SELECT
-	id,
-	organization_id,
-	trust_center_access_id,
-	document_id,
-	report_id,
-	trust_center_file_id,
-	active,
-	status,
-	requested,
-	created_at,
-	updated_at
+  id,
+  organization_id,
+  trust_center_access_id,
+  document_id,
+  report_id,
+  trust_center_file_id,
+  active,
+  status,
+  requested,
+  created_at,
+  updated_at
 FROM
-	trust_center_document_accesses
+  trust_center_document_accesses
 WHERE
-	%s
-	AND trust_center_access_id = @trust_center_access_id
-	AND document_id = @document_id
+  %s
+  AND trust_center_access_id = @trust_center_access_id
+  AND document_id = @document_id
 LIMIT 1;
 `
 
@@ -182,23 +182,23 @@ func (tcda *TrustCenterDocumentAccess) LoadByTrustCenterAccessIDAndReportID(
 ) error {
 	q := `
 SELECT
-	id,
-	organization_id,
-	trust_center_access_id,
-	document_id,
-	report_id,
-	trust_center_file_id,
-	active,
-	status,
-	requested,
-	created_at,
-	updated_at
+  id,
+  organization_id,
+  trust_center_access_id,
+  document_id,
+  report_id,
+  trust_center_file_id,
+  active,
+  status,
+  requested,
+  created_at,
+  updated_at
 FROM
-	trust_center_document_accesses
+  trust_center_document_accesses
 WHERE
-	%s
-	AND trust_center_access_id = @trust_center_access_id
-	AND report_id = @report_id
+  %s
+  AND trust_center_access_id = @trust_center_access_id
+  AND report_id = @report_id
 LIMIT 1;
 `
 
@@ -232,31 +232,31 @@ func (tcda *TrustCenterDocumentAccess) Insert(
 ) error {
 	q := `
 INSERT INTO trust_center_document_accesses (
-	id,
-	tenant_id,
-	organization_id,
-	trust_center_access_id,
-	document_id,
-	report_id,
-	trust_center_file_id,
-	active,
-	status,
-	requested,
-	created_at,
-	updated_at
+  id,
+  tenant_id,
+  organization_id,
+  trust_center_access_id,
+  document_id,
+  report_id,
+  trust_center_file_id,
+  active,
+  status,
+  requested,
+  created_at,
+  updated_at
 ) VALUES (
-	@id,
-	@tenant_id,
-	@organization_id,
-	@trust_center_access_id,
-	@document_id,
-	@report_id,
-	@trust_center_file_id,
-	@active,
-	@status::trust_center_document_access_status,
-	@requested,
-	@created_at,
-	@updated_at
+  @id,
+  @tenant_id,
+  @organization_id,
+  @trust_center_access_id,
+  @document_id,
+  @report_id,
+  @trust_center_file_id,
+  @active,
+  @status::trust_center_document_access_status,
+  @requested,
+  @created_at,
+  @updated_at
 )
 `
 
@@ -309,11 +309,11 @@ func (tcda *TrustCenterDocumentAccess) Update(
 ) error {
 	q := `
 UPDATE trust_center_document_accesses SET
-	status = @status::trust_center_document_access_status,
-	updated_at = @updated_at
+  status = @status::trust_center_document_access_status,
+  updated_at = @updated_at
 WHERE
-	%s
-	AND id = @id
+  %s
+  AND id = @id
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -341,8 +341,8 @@ func (tcda *TrustCenterDocumentAccess) Delete(
 	q := `
 DELETE FROM trust_center_document_accesses
 WHERE
-	%s
-	AND id = @id
+  %s
+  AND id = @id
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -368,12 +368,12 @@ func (tcdas *TrustCenterDocumentAccesses) CountByTrustCenterAccessID(
 ) (int, error) {
 	q := `
 SELECT
-	COUNT(id)
+  COUNT(id)
 FROM
-	trust_center_document_accesses
+  trust_center_document_accesses
 WHERE
-	%s
-	AND trust_center_access_id = @trust_center_access_id
+  %s
+  AND trust_center_access_id = @trust_center_access_id
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -401,14 +401,14 @@ func (tcdas *TrustCenterDocumentAccesses) CountPendingRequestByTrustCenterAccess
 ) (int, error) {
 	q := `
 SELECT
-	COUNT(id)
+  COUNT(id)
 FROM
-	trust_center_document_accesses
+  trust_center_document_accesses
 WHERE
-	%s
-	AND trust_center_access_id = @trust_center_access_id
-	AND requested = true
-	AND status = 'REQUESTED'::trust_center_document_access_status
+  %s
+  AND trust_center_access_id = @trust_center_access_id
+  AND requested = true
+  AND status = 'REQUESTED'::trust_center_document_access_status
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -436,13 +436,13 @@ func (tcdas *TrustCenterDocumentAccesses) CountActiveByTrustCenterAccessID(
 ) (int, error) {
 	q := `
 SELECT
-	COUNT(id)
+  COUNT(id)
 FROM
-	trust_center_document_accesses
+  trust_center_document_accesses
 WHERE
-	%s
-	AND trust_center_access_id = @trust_center_access_id
-	AND status = 'GRANTED'::trust_center_document_access_status
+  %s
+  AND trust_center_access_id = @trust_center_access_id
+  AND status = 'GRANTED'::trust_center_document_access_status
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -471,93 +471,93 @@ func (tcdas *TrustCenterDocumentAccesses) LoadAvailableByTrustCenterAccessID(
 ) error {
 	q := `
 WITH organization AS (
-	SELECT tc.organization_id
-	FROM trust_center_accesses tca
-	INNER JOIN trust_centers tc ON tca.trust_center_id = tc.id
-	WHERE tca.tenant_id = @tenant_id
-		AND tca.id = @trust_center_access_id
+  SELECT tc.organization_id
+  FROM trust_center_accesses tca
+  INNER JOIN trust_centers tc ON tca.trust_center_id = tc.id
+  WHERE tca.tenant_id = @tenant_id
+    AND tca.id = @trust_center_access_id
 ),
 tenant_organization AS (
-	SELECT o.id AS organization_id
-	FROM organizations o
-	WHERE %s
+  SELECT o.id AS organization_id
+  FROM organizations o
+  WHERE %s
 ),
 all_items AS (
-	SELECT
-		d.id AS item_id,
-		d.id AS document_id,
-		NULL::text AS report_id,
-		NULL::text AS trust_center_file_id,
-		d.created_at AS item_created_at,
-		d.updated_at AS item_updated_at
-	FROM documents d, tenant_organization o
-	WHERE d.organization_id = o.organization_id
-		AND d.deleted_at IS NULL
-		AND d.trust_center_visibility = 'PRIVATE'::trust_center_visibility
+  SELECT
+    d.id AS item_id,
+    d.id AS document_id,
+    NULL::text AS report_id,
+    NULL::text AS trust_center_file_id,
+    d.created_at AS item_created_at,
+    d.updated_at AS item_updated_at
+  FROM documents d, tenant_organization o
+  WHERE d.organization_id = o.organization_id
+    AND d.deleted_at IS NULL
+    AND d.trust_center_visibility = 'PRIVATE'::trust_center_visibility
 
-	UNION ALL
+  UNION ALL
 
-	SELECT
-		r.report_id AS item_id,
-		NULL::text AS document_id,
-		r.report_id AS report_id,
-		NULL::text AS trust_center_file_id,
-		r.created_at AS item_created_at,
-		r.updated_at AS item_updated_at
-	FROM audits r, tenant_organization o
-	WHERE r.organization_id = o.organization_id
-		AND r.trust_center_visibility = 'PRIVATE'::trust_center_visibility
-		AND r.report_id IS NOT NULL
+  SELECT
+    r.report_id AS item_id,
+    NULL::text AS document_id,
+    r.report_id AS report_id,
+    NULL::text AS trust_center_file_id,
+    r.created_at AS item_created_at,
+    r.updated_at AS item_updated_at
+  FROM audits r, tenant_organization o
+  WHERE r.organization_id = o.organization_id
+    AND r.trust_center_visibility = 'PRIVATE'::trust_center_visibility
+    AND r.report_id IS NOT NULL
 
-	UNION ALL
+  UNION ALL
 
-	SELECT
-		tcf.id AS item_id,
-		NULL::text AS document_id,
-		NULL::text AS report_id,
-		tcf.id AS trust_center_file_id,
-		tcf.created_at AS item_created_at,
-		tcf.updated_at AS item_updated_at
-	FROM trust_center_files tcf, tenant_organization o
-	WHERE tcf.organization_id = o.organization_id
-		AND tcf.trust_center_visibility = 'PRIVATE'::trust_center_visibility
+  SELECT
+    tcf.id AS item_id,
+    NULL::text AS document_id,
+    NULL::text AS report_id,
+    tcf.id AS trust_center_file_id,
+    tcf.created_at AS item_created_at,
+    tcf.updated_at AS item_updated_at
+  FROM trust_center_files tcf, tenant_organization o
+  WHERE tcf.organization_id = o.organization_id
+    AND tcf.trust_center_visibility = 'PRIVATE'::trust_center_visibility
 ),
 final_items AS (
-	SELECT
-		COALESCE(tcda.id, ai.item_id) AS id,
-		tcda.tenant_id,
-		(SELECT organization_id FROM organization) AS organization_id,
-		@trust_center_access_id AS trust_center_access_id,
-		ai.document_id,
-		ai.report_id,
-		ai.trust_center_file_id,
-		COALESCE(tcda.active, false) AS active,
-		COALESCE(tcda.status, 'REQUESTED'::trust_center_document_access_status) AS status,
-		COALESCE(tcda.requested, false) AS requested,
-		COALESCE(tcda.created_at, ai.item_created_at) AS created_at,
-		COALESCE(tcda.updated_at, ai.item_updated_at) AS updated_at
-	FROM all_items ai
-	LEFT JOIN trust_center_document_accesses tcda ON (
-		tcda.trust_center_access_id = @trust_center_access_id
-		AND (
-			(tcda.document_id = ai.document_id AND ai.document_id IS NOT NULL)
-			OR (tcda.report_id = ai.report_id AND ai.report_id IS NOT NULL)
-			OR (tcda.trust_center_file_id = ai.trust_center_file_id AND ai.trust_center_file_id IS NOT NULL)
-		)
-	)
+  SELECT
+    COALESCE(tcda.id, ai.item_id) AS id,
+    tcda.tenant_id,
+    (SELECT organization_id FROM organization) AS organization_id,
+    @trust_center_access_id AS trust_center_access_id,
+    ai.document_id,
+    ai.report_id,
+    ai.trust_center_file_id,
+    COALESCE(tcda.active, false) AS active,
+    COALESCE(tcda.status, 'REQUESTED'::trust_center_document_access_status) AS status,
+    COALESCE(tcda.requested, false) AS requested,
+    COALESCE(tcda.created_at, ai.item_created_at) AS created_at,
+    COALESCE(tcda.updated_at, ai.item_updated_at) AS updated_at
+  FROM all_items ai
+  LEFT JOIN trust_center_document_accesses tcda ON (
+    tcda.trust_center_access_id = @trust_center_access_id
+    AND (
+      (tcda.document_id = ai.document_id AND ai.document_id IS NOT NULL)
+      OR (tcda.report_id = ai.report_id AND ai.report_id IS NOT NULL)
+      OR (tcda.trust_center_file_id = ai.trust_center_file_id AND ai.trust_center_file_id IS NOT NULL)
+    )
+  )
 )
 SELECT
-	id,
-	organization_id,
-	trust_center_access_id,
-	document_id,
-	report_id,
-	trust_center_file_id,
-	active,
-	status,
-	requested,
-	created_at,
-	updated_at
+  id,
+  organization_id,
+  trust_center_access_id,
+  document_id,
+  report_id,
+  trust_center_file_id,
+  active,
+  status,
+  requested,
+  created_at,
+  updated_at
 FROM final_items
 WHERE %s
 `
@@ -593,22 +593,22 @@ func (tcdas *TrustCenterDocumentAccesses) LoadAllByTrustCenterAccessID(
 ) error {
 	q := `
 SELECT
-	id,
-	organization_id,
-	trust_center_access_id,
-	document_id,
-	report_id,
-	trust_center_file_id,
-	active,
-	status,
-	requested,
-	created_at,
-	updated_at
+  id,
+  organization_id,
+  trust_center_access_id,
+  document_id,
+  report_id,
+  trust_center_file_id,
+  active,
+  status,
+  requested,
+  created_at,
+  updated_at
 FROM
-	trust_center_document_accesses
+  trust_center_document_accesses
 WHERE
-	%s
-	AND trust_center_access_id = @trust_center_access_id
+  %s
+  AND trust_center_access_id = @trust_center_access_id
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -633,34 +633,6 @@ WHERE
 	return nil
 }
 
-func DeleteByTrustCenterAccessID(
-	ctx context.Context,
-	conn pg.Conn,
-	scope Scoper,
-	trustCenterAccessID gid.GID,
-) error {
-	q := `
-DELETE FROM trust_center_document_accesses
-WHERE
-	%s
-	AND trust_center_access_id = @trust_center_access_id
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{
-		"trust_center_access_id": trustCenterAccessID,
-	}
-	maps.Copy(args, scope.SQLArguments())
-
-	_, err := conn.Exec(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot delete trust center document accesses: %w", err)
-	}
-
-	return nil
-}
-
 func GrantByDocumentIDs(
 	ctx context.Context,
 	conn pg.Conn,
@@ -673,9 +645,9 @@ func GrantByDocumentIDs(
 UPDATE trust_center_document_accesses
 SET status = 'GRANTED'::trust_center_document_access_status, updated_at = @updated_at
 WHERE
-	%s
-	AND trust_center_access_id = @trust_center_access_id
-	AND document_id = ANY(@document_ids)
+  %s
+  AND trust_center_access_id = @trust_center_access_id
+  AND document_id = ANY(@document_ids)
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -706,9 +678,9 @@ func RejectByDocumentIDs(
 UPDATE trust_center_document_accesses
 SET status = 'REJECTED'::trust_center_document_access_status
 WHERE
-	%s
-	AND trust_center_access_id = @trust_center_access_id
-	AND document_id = ANY(@document_ids)
+  %s
+  AND trust_center_access_id = @trust_center_access_id
+  AND document_id = ANY(@document_ids)
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -739,9 +711,9 @@ func GrantByReportIDs(
 UPDATE trust_center_document_accesses
 SET status = 'GRANTED'::trust_center_document_access_status, updated_at = @updated_at
 WHERE
-	%s
-	AND trust_center_access_id = @trust_center_access_id
-	AND report_id = ANY(@report_ids)
+  %s
+  AND trust_center_access_id = @trust_center_access_id
+  AND report_id = ANY(@report_ids)
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -772,9 +744,9 @@ func RejectByReportIDs(
 UPDATE trust_center_document_accesses
 SET status = 'REJECTED'::trust_center_document_access_status
 WHERE
-	%s
-	AND trust_center_access_id = @trust_center_access_id
-	AND report_id = ANY(@report_ids)
+  %s
+  AND trust_center_access_id = @trust_center_access_id
+  AND report_id = ANY(@report_ids)
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -788,6 +760,230 @@ WHERE
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot reject trust center document accesses by report IDs: %w", err)
+	}
+
+	return nil
+}
+
+type MergeTrustCenterDocumentAccessesData struct {
+	ID     gid.GID
+	Status TrustCenterDocumentAccessStatus
+}
+
+func (tcdas TrustCenterDocumentAccesses) MergeDocumentAccesses(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	organizationID gid.GID,
+	trustCenterAccessID gid.GID,
+	data []MergeTrustCenterDocumentAccessesData,
+) error {
+	q := `
+WITH data AS (
+  SELECT
+    id,
+    status
+  FROM
+    json_to_recordset(@data) AS t(id text, status trust_center_document_access_status)
+)
+MERGE INTO trust_center_document_accesses tcda
+USING data
+ON data.id = tcda.document_id
+WHEN MATCHED
+  THEN UPDATE SET tcda.status = data.status, tcda.updated_at = @now
+WHEN NOT MATCHED BY SOURCE
+  AND tcda.tenant_id = @tenant_id
+  AND tcda.trust_center_access_id = @trust_center_access_id
+  AND tcda.document_id IS NOT NULL
+  THEN DELETE
+WHEN NOT MATCHED
+  THEN INSERT (
+    id,
+    tenant_id,
+    organization_id,
+    trust_center_access_id,
+    document_id,
+    report_id,
+    trust_center_file_id,
+    active,
+    status,
+    requested,
+    created_at,
+    updated_at
+  )
+  VALUES (
+    generate_gid(decode_base64_unpadded(@tenant_id), @trust_center_document_access_entity_type) AS id,
+    @tenant_id AS tenant_id,
+    @organization_id AS organization_id,
+    @trust_center_access_id AS trust_center_access_id,
+    data.id AS document_id,
+    NULL AS report_id,
+    NULL AS trust_center_file_id,
+    false AS active,
+    data.status AS status,
+    false AS requested,
+    @now AS created_at,
+    @now AS updated_at
+  )
+`
+
+	args := pgx.StrictNamedArgs{
+		"trust_center_document_access_entity_type": TrustCenterDocumentAccessEntityType,
+		"tenant_id":              scope.GetTenantID(),
+		"trust_center_access_id": trustCenterAccessID,
+		"organization_id":        organizationID,
+		"now":                    time.Now(),
+		"data":                   data,
+	}
+
+	if _, err := conn.Exec(ctx, q, args); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (tcdas TrustCenterDocumentAccesses) MergeReportAccesses(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	organizationID gid.GID,
+	trustCenterAccessID gid.GID,
+	data []MergeTrustCenterDocumentAccessesData,
+) error {
+	q := `
+WITH data AS (
+  SELECT
+    id,
+    status
+  FROM
+    json_to_recordset(@data) AS t(id text, status trust_center_document_access_status)
+)
+MERGE INTO trust_center_document_accesses tcda
+USING data
+ON data.id = tcda.report_id
+WHEN MATCHED
+  THEN UPDATE SET tcda.status = data.status, tcda.updated_at = @now
+WHEN NOT MATCHED BY SOURCE
+  AND tcda.tenant_id = @tenant_id
+  AND tcda.trust_center_access_id = @trust_center_access_id
+  AND tcda.report_id IS NOT NULL
+  THEN DELETE
+WHEN NOT MATCHED
+  THEN INSERT (
+    id,
+    tenant_id,
+    organization_id,
+    trust_center_access_id,
+    document_id,
+    report_id,
+    trust_center_file_id,
+    active,
+    status,
+    requested,
+    created_at,
+    updated_at
+  )
+  VALUES (
+    generate_gid(decode_base64_unpadded(@tenant_id), @trust_center_document_access_entity_type) AS id,
+    @tenant_id AS tenant_id,
+    @organization_id AS organization_id,
+    @trust_center_access_id AS trust_center_access_id,
+    NULL AS document_id,
+    data.id AS report_id,
+    NULL AS trust_center_file_id,
+    false AS active,
+    data.status AS status,
+    false AS requested,
+    @now AS created_at,
+    @now AS updated_at
+  )
+`
+
+	args := pgx.StrictNamedArgs{
+		"trust_center_document_access_entity_type": TrustCenterDocumentAccessEntityType,
+		"tenant_id":              scope.GetTenantID(),
+		"trust_center_access_id": trustCenterAccessID,
+		"organization_id":        organizationID,
+		"now":                    time.Now(),
+		"data":                   data,
+	}
+
+	if _, err := conn.Exec(ctx, q, args); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (tcdas TrustCenterDocumentAccesses) MergeTrustCenterFileAccesses(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	organizationID gid.GID,
+	trustCenterAccessID gid.GID,
+	data []MergeTrustCenterDocumentAccessesData,
+) error {
+	q := `
+WITH data AS (
+  SELECT
+    id,
+    status
+  FROM
+    json_to_recordset(@data) AS t(id text, status trust_center_document_access_status)
+)
+MERGE INTO trust_center_document_accesses tcda
+USING data
+ON data.id = tcda.trust_center_file_id
+WHEN MATCHED
+  THEN UPDATE SET tcda.status = data.status, tcda.updated_at = @now
+WHEN NOT MATCHED BY SOURCE
+  AND tcda.tenant_id = @tenant_id
+  AND tcda.trust_center_access_id = @trust_center_access_id
+  AND tcda.trust_center_file_id IS NOT NULL
+  THEN DELETE
+WHEN NOT MATCHED
+  THEN INSERT (
+    id,
+    tenant_id,
+    organization_id,
+    trust_center_access_id,
+    document_id,
+    report_id,
+    trust_center_file_id,
+    active,
+    status,
+    requested,
+    created_at,
+    updated_at
+  )
+  VALUES (
+    generate_gid(decode_base64_unpadded(@tenant_id), @trust_center_document_access_entity_type) AS id,
+    @tenant_id AS tenant_id,
+    @organization_id AS organization_id,
+    @trust_center_access_id AS trust_center_access_id,
+    NULL AS document_id,
+    NULL AS report_id,
+    data.id AS trust_center_file_id,
+    false AS active,
+    data.status AS status,
+    false AS requested,
+    @now AS created_at,
+    @now AS updated_at
+  )
+`
+
+	args := pgx.StrictNamedArgs{
+		"trust_center_document_access_entity_type": TrustCenterDocumentAccessEntityType,
+		"tenant_id":              scope.GetTenantID(),
+		"trust_center_access_id": trustCenterAccessID,
+		"organization_id":        organizationID,
+		"now":                    time.Now(),
+		"data":                   data,
+	}
+
+	if _, err := conn.Exec(ctx, q, args); err != nil {
+		return err
 	}
 
 	return nil
@@ -809,33 +1005,33 @@ func (tcdas TrustCenterDocumentAccesses) BulkInsertDocumentAccesses(
 
 	q := `
 WITH document_access_data AS (
-	SELECT
-		generate_gid(decode_base64_unpadded(@tenant_id), @trust_center_document_access_entity_type) AS id,
-		@tenant_id AS tenant_id,
-		@organization_id AS organization_id,
-		@trust_center_access_id AS trust_center_access_id,
-		unnest(@document_ids::text[]) AS document_id,
-		null::text AS report_id,
-		null::text AS trust_center_file_id,
-		false AS active,
-		@status::trust_center_document_access_status AS status,
-		false AS requested,
-		@created_at::timestamptz AS created_at,
-		@updated_at::timestamptz AS updated_at
+  SELECT
+    generate_gid(decode_base64_unpadded(@tenant_id), @trust_center_document_access_entity_type) AS id,
+    @tenant_id AS tenant_id,
+    @organization_id AS organization_id,
+    @trust_center_access_id AS trust_center_access_id,
+    unnest(@document_ids::text[]) AS document_id,
+    null::text AS report_id,
+    null::text AS trust_center_file_id,
+    false AS active,
+    @status::trust_center_document_access_status AS status,
+    false AS requested,
+    @created_at::timestamptz AS created_at,
+    @updated_at::timestamptz AS updated_at
 )
 INSERT INTO trust_center_document_accesses (
-	id,
-	tenant_id,
-	organization_id,
-	trust_center_access_id,
-	document_id,
-	report_id,
-	trust_center_file_id,
-	active,
-	status,
-	requested,
-	created_at,
-	updated_at
+  id,
+  tenant_id,
+  organization_id,
+  trust_center_access_id,
+  document_id,
+  report_id,
+  trust_center_file_id,
+  active,
+  status,
+  requested,
+  created_at,
+  updated_at
 )
 SELECT * FROM document_access_data
 ON CONFLICT DO NOTHING
@@ -875,33 +1071,33 @@ func (tcdas TrustCenterDocumentAccesses) BulkInsertReportAccesses(
 
 	q := `
 WITH report_access_data AS (
-	SELECT
-		generate_gid(decode_base64_unpadded(@tenant_id), @trust_center_document_access_entity_type) AS id,
-		@tenant_id AS tenant_id,
-		@organization_id AS organization_id,
-		@trust_center_access_id AS trust_center_access_id,
-		null::text AS document_id,
-		unnest(@report_ids::text[]) AS report_id,
-		null::text AS trust_center_file_id,
-		false AS active,
-		@status::trust_center_document_access_status AS status,
-		false AS requested,
-		@created_at::timestamptz AS created_at,
-		@updated_at::timestamptz AS updated_at
+  SELECT
+    generate_gid(decode_base64_unpadded(@tenant_id), @trust_center_document_access_entity_type) AS id,
+    @tenant_id AS tenant_id,
+    @organization_id AS organization_id,
+    @trust_center_access_id AS trust_center_access_id,
+    null::text AS document_id,
+    unnest(@report_ids::text[]) AS report_id,
+    null::text AS trust_center_file_id,
+    false AS active,
+    @status::trust_center_document_access_status AS status,
+    false AS requested,
+    @created_at::timestamptz AS created_at,
+    @updated_at::timestamptz AS updated_at
 )
 INSERT INTO trust_center_document_accesses (
-	id,
-	tenant_id,
-	organization_id,
-	trust_center_access_id,
-	document_id,
-	report_id,
-	trust_center_file_id,
-	active,
-	status,
-	requested,
-	created_at,
-	updated_at
+  id,
+  tenant_id,
+  organization_id,
+  trust_center_access_id,
+  document_id,
+  report_id,
+  trust_center_file_id,
+  active,
+  status,
+  requested,
+  created_at,
+  updated_at
 )
 SELECT * FROM report_access_data
 ON CONFLICT DO NOTHING
@@ -934,22 +1130,22 @@ func (tcda *TrustCenterDocumentAccess) LoadByTrustCenterAccessIDAndTrustCenterFi
 ) error {
 	q := `
 SELECT
-	id,
-	trust_center_access_id,
-	document_id,
-	report_id,
-	trust_center_file_id,
-	active,
-	status,
-	requested,
-	created_at,
-	updated_at
+  id,
+  trust_center_access_id,
+  document_id,
+  report_id,
+  trust_center_file_id,
+  active,
+  status,
+  requested,
+  created_at,
+  updated_at
 FROM
-	trust_center_document_accesses
+  trust_center_document_accesses
 WHERE
-	%s
-	AND trust_center_access_id = @trust_center_access_id
-	AND trust_center_file_id = @trust_center_file_id
+  %s
+  AND trust_center_access_id = @trust_center_access_id
+  AND trust_center_file_id = @trust_center_file_id
 LIMIT 1;
 `
 
@@ -988,9 +1184,9 @@ func GrantByTrustCenterFileIDs(
 UPDATE trust_center_document_accesses
 SET status = 'GRANTED'::trust_center_document_access_status, updated_at = @updated_at
 WHERE
-	%s
-	AND trust_center_access_id = @trust_center_access_id
-	AND trust_center_file_id = ANY(@trust_center_file_ids)
+  %s
+  AND trust_center_access_id = @trust_center_access_id
+  AND trust_center_file_id = ANY(@trust_center_file_ids)
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -1021,9 +1217,9 @@ func RejectByTrustCenterFileIDs(
 UPDATE trust_center_document_accesses
 SET status = 'REJECTED'::trust_center_document_access_status
 WHERE
-	%s
-	AND trust_center_access_id = @trust_center_access_id
-	AND trust_center_file_id = ANY(@trust_center_file_ids)
+  %s
+  AND trust_center_access_id = @trust_center_access_id
+  AND trust_center_file_id = ANY(@trust_center_file_ids)
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -1054,33 +1250,33 @@ func (tcdas TrustCenterDocumentAccesses) BulkInsertTrustCenterFileAccesses(
 ) error {
 	q := `
 WITH trust_center_file_access_data AS (
-	SELECT
-		generate_gid(decode_base64_unpadded(@tenant_id), @trust_center_document_access_entity_type) AS id,
-		@tenant_id AS tenant_id,
-		@organization_id AS organization_id,
-		@trust_center_access_id AS trust_center_access_id,
-		null::text AS document_id,
-		null::text AS report_id,
-		unnest(@trust_center_file_ids::text[]) AS trust_center_file_id,
-		false AS active,
-		@status::trust_center_document_access_status AS status,
-		false AS requested,
-		@created_at::timestamptz AS created_at,
-		@updated_at::timestamptz AS updated_at
+  SELECT
+    generate_gid(decode_base64_unpadded(@tenant_id), @trust_center_document_access_entity_type) AS id,
+    @tenant_id AS tenant_id,
+    @organization_id AS organization_id,
+    @trust_center_access_id AS trust_center_access_id,
+    null::text AS document_id,
+    null::text AS report_id,
+    unnest(@trust_center_file_ids::text[]) AS trust_center_file_id,
+    false AS active,
+    @status::trust_center_document_access_status AS status,
+    false AS requested,
+    @created_at::timestamptz AS created_at,
+    @updated_at::timestamptz AS updated_at
 )
 INSERT INTO trust_center_document_accesses (
-	id,
-	tenant_id,
-	organization_id,
-	trust_center_access_id,
-	document_id,
-	report_id,
-	trust_center_file_id,
-	active,
-	status,
-	requested,
-	created_at,
-	updated_at
+  id,
+  tenant_id,
+  organization_id,
+  trust_center_access_id,
+  document_id,
+  report_id,
+  trust_center_file_id,
+  active,
+  status,
+  requested,
+  created_at,
+  updated_at
 )
 SELECT * FROM trust_center_file_access_data
 ON CONFLICT DO NOTHING

@@ -1664,19 +1664,19 @@ func (r *mutationResolver) UpdateTrustCenterAccess(ctx context.Context, input ty
 	var documentAccesses []probo.UpdateTrustCenterDocumentAccessRequest
 	var reportAccesses []probo.UpdateTrustCenterDocumentAccessRequest
 	var fileAccesses []probo.UpdateTrustCenterDocumentAccessRequest
-	for _, documentAccess := range documentAccesses {
+	for _, documentAccess := range input.Documents {
 		documentAccesses = append(documentAccesses, probo.UpdateTrustCenterDocumentAccessRequest{
 			ID:     documentAccess.ID,
 			Status: documentAccess.Status,
 		})
 	}
-	for _, reportAccess := range reportAccesses {
+	for _, reportAccess := range input.Reports {
 		reportAccesses = append(reportAccesses, probo.UpdateTrustCenterDocumentAccessRequest{
 			ID:     reportAccess.ID,
 			Status: reportAccess.Status,
 		})
 	}
-	for _, fileAccess := range fileAccesses {
+	for _, fileAccess := range input.TrustCenterFiles {
 		fileAccesses = append(fileAccesses, probo.UpdateTrustCenterDocumentAccessRequest{
 			ID:     fileAccess.ID,
 			Status: fileAccess.Status,

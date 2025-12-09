@@ -133,7 +133,7 @@ FROM
     files
 WHERE
     %s
-    AND id (SELECT id FROM UNNEST(@file_ids::text[]) AS t(id))
+    AND id = ANY(@file_ids)
 LIMIT 1;
 `
 

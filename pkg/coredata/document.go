@@ -201,7 +201,7 @@ FROM
 WHERE
     %s
     AND deleted_at IS NULL
-    AND id IN (SELECT id FROM UNNEST(@document_ids::text[]) AS t(id));;
+    AND id = ANY(@document_ids)
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
