@@ -9,11 +9,11 @@ export type Role = (typeof Role)[keyof typeof Role];
 
 export function getAssignableRoles(currentRole: Role): Role[] {
   if (currentRole === Role.OWNER) {
-    return [Role.OWNER, Role.ADMIN, Role.VIEWER];
+    return [Role.OWNER, Role.ADMIN, Role.VIEWER, Role.EMPLOYEE];
   }
 
   if (currentRole === Role.ADMIN) {
-    return [Role.ADMIN, Role.VIEWER];
+    return [Role.ADMIN, Role.VIEWER, Role.EMPLOYEE];
   }
 
   return [];
