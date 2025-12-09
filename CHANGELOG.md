@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.100.0] - 2025-12-09
+
+### Changed
+
+- Allow non conformities without audit
+
+### Fix
+
+- Fix audit and framework deletion
+- Make employee role assignable
+
 ## [0.99.0] - 2025-12-09
 
 ### Added
