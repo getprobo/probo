@@ -94,6 +94,7 @@ var (
 	ErrMissingProboService = errors.New("server configuration requires a valid probo.Service instance")
 	ErrMissingAuthService  = errors.New("server configuration requires a valid auth.Service instance")
 	ErrMissingAuthzService = errors.New("server configuration requires a valid authz.Service instance")
+	ErrMissingSlackService = errors.New("server configuration requires a valid slack.Service instance")
 )
 
 // GetConsoleSchema returns the GraphQL schema for the console API
@@ -136,6 +137,10 @@ func NewServer(cfg Config) (*Server, error) {
 
 	if cfg.Authz == nil {
 		return nil, ErrMissingAuthzService
+	}
+
+	if cfg.Slack == nil {
+		return nil, ErrMissingSlackService
 	}
 
 	trustAPIHandler := trust_v1.NewMux(
