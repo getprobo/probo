@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.99.0] - 2025-12-09
+
 ### Added
 
 - Add employee page
