@@ -342,6 +342,15 @@ func (impl *Implm) Run(
 		return fmt.Errorf("cannot initialize ACME service: %w", err)
 	}
 
+	slackService := slack.NewService(
+		pgClient,
+		impl.cfg.GetSlackSigningSecret(),
+		impl.cfg.BaseURL.String(),
+		impl.cfg.EncryptionKey,
+		impl.cfg.Auth.Cookie.Secret,
+		l.Named("slack"),
+	)
+
 	proboService, err := probo.NewService(
 		ctx,
 		impl.cfg.EncryptionKey,
@@ -358,6 +367,7 @@ func (impl *Implm) Run(
 		authService,
 		authzService,
 		l.Named("probo"),
+		slackService,
 	)
 	if err != nil {
 		return fmt.Errorf("cannot create probo service: %w", err)
@@ -370,7 +380,6 @@ func (impl *Implm) Run(
 		impl.cfg.BaseURL.String(),
 		impl.cfg.EncryptionKey,
 		impl.cfg.TrustAuth.TokenSecret,
-		impl.cfg.GetSlackSigningSecret(),
 		authService,
 		html2pdfConverter,
 		fileManagerService,
@@ -380,6 +389,7 @@ func (impl *Implm) Run(
 			TokenDuration: time.Duration(impl.cfg.TrustAuth.TokenDuration) * time.Hour,
 			TokenType:     impl.cfg.TrustAuth.TokenType,
 		},
+		slackService,
 	)
 
 	serverHandler, err := server.NewServer(
@@ -390,6 +400,7 @@ func (impl *Implm) Run(
 			Auth:              authService,
 			Authz:             authzService,
 			Trust:             trustService,
+			Slack:             slackService,
 			SAML:              samlService,
 			ConnectorRegistry: defaultConnectorRegistry,
 			Agent:             agent,

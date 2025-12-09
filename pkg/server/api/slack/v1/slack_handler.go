@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package trust_v1
+package slack_v1
 
 import (
 	"bytes"
@@ -57,7 +57,7 @@ const (
 	StatusReject = "reject"
 )
 
-func slackHandler(trustSvc *trust.Service, slackSigningSecret string, logger *log.Logger) http.HandlerFunc {
+func SlackHandler(slackSvc *slack.Service, slackSigningSecret string, logger *log.Logger, trustSvc *trust.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
@@ -132,7 +132,7 @@ func slackHandler(trustSvc *trust.Service, slackSigningSecret string, logger *lo
 			return
 		}
 
-		initialSlackMessage, err := trustSvc.GetInitialSlackMessageByChannelAndTS(ctx, slackPayload.Container.ChannelID, slackPayload.Container.MessageTS)
+		initialSlackMessage, err := slackSvc.GetInitialSlackMessageByChannelAndTS(ctx, slackPayload.Container.ChannelID, slackPayload.Container.MessageTS)
 		if err != nil {
 			logger.ErrorCtx(ctx, "cannot load slack message", log.Error(err))
 			httpserver.RenderJSON(w, http.StatusInternalServerError, SlackInteractiveResponse{Success: false, Message: "internal server error"})
@@ -168,7 +168,7 @@ func slackHandler(trustSvc *trust.Service, slackSigningSecret string, logger *lo
 				return
 			}
 
-			documentIDs, reportIDs, fileIDs, err = tenantSvc.SlackMessages.GetSlackMessageDocumentIDs(ctx, currentMessageId)
+			documentIDs, reportIDs, fileIDs, err = slackSvc.WithTenant(initialSlackMessage.OrganizationID.TenantID()).GetSlackMessageService().GetSlackMessageDocumentIDs(ctx, currentMessageId)
 			if err != nil {
 				logger.ErrorCtx(ctx, "cannot load slack message document ids", log.Error(err))
 				httpserver.RenderJSON(w, http.StatusInternalServerError, SlackInteractiveResponse{Success: false, Message: "internal server error"})
@@ -261,7 +261,7 @@ func slackHandler(trustSvc *trust.Service, slackSigningSecret string, logger *lo
 			return
 		}
 
-		if err := tenantSvc.SlackMessages.UpdateSlackAccessMessage(
+		if err := slackSvc.WithTenant(initialSlackMessage.OrganizationID.TenantID()).GetSlackMessageService().UpdateSlackAccessMessage(
 			ctx,
 			initialSlackMessage.ID,
 			slackPayload.ResponseURL,

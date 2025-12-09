@@ -273,6 +273,8 @@ func (s TrustCenterAccessService) Update(
 
 	now := time.Now()
 	var access *coredata.TrustCenterAccess
+	var trustCenterAcessActivated bool
+	var shouldUpdateSlackMessage bool
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(tx pg.Conn) error {
@@ -282,7 +284,7 @@ func (s TrustCenterAccessService) Update(
 				return fmt.Errorf("cannot load trust center access: %w", err)
 			}
 
-			shouldSendEmail := req.Active != nil && *req.Active && !access.Active
+			trustCenterAcessActivated = req.Active != nil && *req.Active && !access.Active
 			if req.Name != nil {
 				access.Name = *req.Name
 			}
@@ -339,11 +341,17 @@ func (s TrustCenterAccessService) Update(
 				}
 			}
 
-			if shouldSendEmail {
+			if trustCenterAcessActivated {
 				if err := s.sendAccessEmail(ctx, tx, access); err != nil {
 					return fmt.Errorf("cannot send access email: %w", err)
 				}
 			}
+
+			shouldUpdateSlackMessage = trustCenterAcessActivated ||
+				len(req.DocumentAccesses) > 0 ||
+				len(req.ReportAccesses) > 0 ||
+				len(req.TrustCenterFileAccesses) > 0 ||
+				req.Name != nil
 
 			return nil
 		},
@@ -351,6 +359,12 @@ func (s TrustCenterAccessService) Update(
 
 	if err != nil {
 		return nil, err
+	}
+
+	if shouldUpdateSlackMessage {
+		if err := s.svc.Slack.GetSlackMessageService().QueueSlackAccessMessageUpdate(ctx, access.Email, access.TrustCenterID); err != nil {
+			return nil, fmt.Errorf("cannot queue slack access message update: %w", err)
+		}
 	}
 
 	return access, nil

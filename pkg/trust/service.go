@@ -18,6 +18,8 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"go.gearno.de/kit/log"
+	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/auth"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
@@ -26,8 +28,6 @@ import (
 	"go.probo.inc/probo/pkg/html2pdf"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/slack"
-	"go.gearno.de/kit/log"
-	"go.gearno.de/kit/pg"
 )
 
 type (
@@ -38,19 +38,19 @@ type (
 	}
 
 	Service struct {
-		pg                 *pg.Client
-		s3                 *s3.Client
-		bucket             string
-		proboSvc           *probo.Service
-		encryptionKey      cipher.EncryptionKey
-		tokenSecret        string
-		slackSigningSecret string
-		baseURL            string
-		auth               *auth.Service
-		html2pdfConverter  *html2pdf.Converter
-		fileManager        *filemanager.Service
-		logger             *log.Logger
-		trustConfig        TrustConfig
+		pg                *pg.Client
+		s3                *s3.Client
+		bucket            string
+		proboSvc          *probo.Service
+		encryptionKey     cipher.EncryptionKey
+		tokenSecret       string
+		baseURL           string
+		auth              *auth.Service
+		html2pdfConverter *html2pdf.Converter
+		fileManager       *filemanager.Service
+		logger            *log.Logger
+		trustConfig       TrustConfig
+		slack             *slack.Service
 	}
 
 	TenantService struct {
@@ -77,7 +77,7 @@ type (
 		TrustCenterFiles      *TrustCenterFileService
 		Reports               *ReportService
 		Organizations         *OrganizationService
-		SlackMessages         *SlackMessageService
+		slack                 *slack.TenantService
 	}
 )
 
@@ -88,26 +88,26 @@ func NewService(
 	baseURL string,
 	encryptionKey cipher.EncryptionKey,
 	tokenSecret string,
-	slackSigningSecret string,
 	auth *auth.Service,
 	html2pdfConverter *html2pdf.Converter,
 	fileManagerService *filemanager.Service,
 	logger *log.Logger,
 	trustConfig TrustConfig,
+	slack *slack.Service,
 ) *Service {
 	return &Service{
-		pg:                 pgClient,
-		s3:                 s3Client,
-		bucket:             bucket,
-		encryptionKey:      encryptionKey,
-		tokenSecret:        tokenSecret,
-		slackSigningSecret: slackSigningSecret,
-		baseURL:            baseURL,
-		auth:               auth,
-		html2pdfConverter:  html2pdfConverter,
-		fileManager:        fileManagerService,
-		logger:             logger,
-		trustConfig:        trustConfig,
+		pg:                pgClient,
+		s3:                s3Client,
+		bucket:            bucket,
+		encryptionKey:     encryptionKey,
+		tokenSecret:       tokenSecret,
+		baseURL:           baseURL,
+		auth:              auth,
+		html2pdfConverter: html2pdfConverter,
+		fileManager:       fileManagerService,
+		logger:            logger,
+		trustConfig:       trustConfig,
+		slack:             slack,
 	}
 }
 
@@ -126,9 +126,8 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 		fileManager:       s.fileManager,
 		logger:            s.logger,
 		trustConfig:       s.trustConfig,
+		slack:             s.slack.WithTenant(tenantID),
 	}
-
-	slackClient := slack.NewClient(s.logger)
 
 	tenantService.TrustCenters = &TrustCenterService{svc: tenantService}
 	tenantService.Documents = &DocumentService{svc: tenantService, html2pdfConverter: s.html2pdfConverter}
@@ -140,15 +139,10 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 	tenantService.TrustCenterFiles = &TrustCenterFileService{svc: tenantService}
 	tenantService.Reports = &ReportService{svc: tenantService}
 	tenantService.Organizations = &OrganizationService{svc: tenantService}
-	tenantService.SlackMessages = &SlackMessageService{svc: tenantService, slackClient: slackClient}
 
 	return tenantService
 }
 
 func (s *Service) GetTokenSecret() string {
 	return s.tokenSecret
-}
-
-func (s *Service) GetSlackSigningSecret() string {
-	return s.slackSigningSecret
 }

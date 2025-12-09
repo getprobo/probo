@@ -31,7 +31,9 @@ import (
 	"go.probo.inc/probo/pkg/saferedirect"
 	console_v1 "go.probo.inc/probo/pkg/server/api/console/v1"
 	mcp_v1 "go.probo.inc/probo/pkg/server/api/mcp/v1"
+	slack_v1 "go.probo.inc/probo/pkg/server/api/slack/v1"
 	trust_v1 "go.probo.inc/probo/pkg/server/api/trust/v1"
+	"go.probo.inc/probo/pkg/slack"
 	"go.probo.inc/probo/pkg/trust"
 )
 
@@ -62,6 +64,7 @@ type (
 		Auth              *auth.Service
 		Authz             *authz.Service
 		Trust             *trust.Service
+		Slack             *slack.Service
 		SAML              *auth.SAMLService
 		ConsoleAuth       ConsoleAuthConfig
 		TrustAuth         TrustAuthConfig
@@ -83,6 +86,7 @@ type (
 		trustAPIHandler   http.Handler
 		consoleAPIHandler http.Handler
 		mcpAPIHandler     http.Handler
+		slackAPIHandler   http.Handler
 	}
 )
 
@@ -157,6 +161,7 @@ func NewServer(cfg Config) (*Server, error) {
 			TokenType:         cfg.TrustAuth.TokenType,
 			CookieSecure:      cfg.TrustAuth.CookieSecure,
 		},
+		cfg.Slack,
 	)
 
 	consoleAPIHandler := console_v1.NewMux(
@@ -189,11 +194,18 @@ func NewServer(cfg Config) (*Server, error) {
 		},
 	)
 
+	slackAPIHandler := slack_v1.NewMux(
+		cfg.Logger.Named("slack.v1"),
+		cfg.Slack,
+		cfg.Trust,
+	)
+
 	return &Server{
 		cfg:               cfg,
 		trustAPIHandler:   trustAPIHandler,
 		consoleAPIHandler: consoleAPIHandler,
 		mcpAPIHandler:     mcpAPIHandler,
+		slackAPIHandler:   slackAPIHandler,
 	}, nil
 }
 
@@ -229,6 +241,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	router.Mount("/console/v1", s.consoleAPIHandler)
 	router.Mount("/trust/v1", s.trustAPIHandler)
 	router.Mount("/mcp/v1", s.mcpAPIHandler)
+	router.Mount("/slack/v1", s.slackAPIHandler)
 
 	router.ServeHTTP(w, r)
 }

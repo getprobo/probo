@@ -38,6 +38,7 @@ import (
 	authz_server "go.probo.inc/probo/pkg/server/authz"
 	"go.probo.inc/probo/pkg/server/trust"
 	"go.probo.inc/probo/pkg/server/web"
+	"go.probo.inc/probo/pkg/slack"
 	trust_pkg "go.probo.inc/probo/pkg/trust"
 )
 
@@ -48,6 +49,7 @@ type Config struct {
 	Auth              *auth.Service
 	Authz             *authz.Service
 	Trust             *trust_pkg.Service
+	Slack             *slack.Service
 	SAML              *auth.SAMLService
 	ConsoleAuth       api.ConsoleAuthConfig
 	TrustAuth         api.TrustAuthConfig
@@ -80,6 +82,7 @@ func NewServer(cfg Config) (*Server, error) {
 		Auth:              cfg.Auth,
 		Authz:             cfg.Authz,
 		Trust:             cfg.Trust,
+		Slack:             cfg.Slack,
 		SAML:              cfg.SAML,
 		ConsoleAuth:       cfg.ConsoleAuth,
 		TrustAuth:         cfg.TrustAuth,

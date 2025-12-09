@@ -33,6 +33,7 @@ import (
 	"go.probo.inc/probo/pkg/filevalidation"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/html2pdf"
+	"go.probo.inc/probo/pkg/slack"
 )
 
 const (
@@ -68,6 +69,7 @@ type (
 		auth              *auth.Service
 		authz             *authz.Service
 		logger            *log.Logger
+		slack             *slack.Service
 	}
 
 	TenantService struct {
@@ -113,6 +115,7 @@ type (
 		ProcessingActivities              *ProcessingActivityService
 		Files                             *FileService
 		CustomDomains                     *CustomDomainService
+		Slack                             *slack.TenantService
 	}
 )
 
@@ -132,6 +135,7 @@ func NewService(
 	authService *auth.Service,
 	authzService *authz.Service,
 	logger *log.Logger,
+	slackService *slack.Service,
 ) (*Service, error) {
 	if bucket == "" {
 		return nil, fmt.Errorf("bucket is required")
@@ -152,6 +156,7 @@ func NewService(
 		auth:              authService,
 		authz:             authzService,
 		logger:            logger,
+		slack:             slackService,
 	}
 
 	return svc, nil
@@ -169,6 +174,7 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 		trustConfig:   s.trustConfig,
 		agent:         agents.NewAgent(nil, s.agentConfig),
 		fileManager:   s.fileManager,
+		Slack:         s.slack.WithTenant(tenantID),
 	}
 
 	tenantService.Frameworks = &FrameworkService{

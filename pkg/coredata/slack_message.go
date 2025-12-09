@@ -92,6 +92,8 @@ INSERT INTO slack_messages (
 	requester_email,
 	metadata,
 	initial_slack_message_id,
+	message_ts,
+	channel_id,
 	created_at,
 	updated_at
 )
@@ -104,6 +106,8 @@ VALUES (
 	@requester_email,
 	@metadata,
 	@initial_slack_message_id,
+	@message_ts,
+	@channel_id,
 	@created_at,
 	@updated_at
 )
@@ -118,6 +122,8 @@ VALUES (
 		"requester_email":          s.RequesterEmail,
 		"metadata":                 s.Metadata,
 		"initial_slack_message_id": s.InitialSlackMessageID,
+		"message_ts":               s.MessageTS,
+		"channel_id":               s.ChannelID,
 		"created_at":               s.CreatedAt,
 		"updated_at":               s.UpdatedAt,
 	}

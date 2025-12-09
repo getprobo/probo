@@ -21,8 +21,6 @@ import (
 	"fmt"
 	"net/mail"
 	"net/url"
-	"strings"
-	"text/template"
 	"time"
 
 	"go.gearno.de/kit/log"
@@ -33,30 +31,6 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/statelesstoken"
-)
-
-var (
-	accessRequestTemplate = template.Must(
-		template.New("access-request.json.tmpl").
-			Funcs(template.FuncMap{
-				"jsonEscape": func(s string) string {
-					b, _ := json.Marshal(s)
-					return string(b[1 : len(b)-1])
-				},
-				"buildAcceptAllValue": func(docIDs, repIDs []string) string {
-					value := map[string][]string{
-						"document_ids": docIDs,
-						"report_ids":   repIDs,
-					}
-					b, _ := json.Marshal(value)
-					s := string(b)
-					s = strings.ReplaceAll(s, `\`, `\\`)
-					s = strings.ReplaceAll(s, `"`, `\"`)
-					return s
-				},
-			}).
-			ParseFS(Templates, "templates/access-request.json.tmpl"),
-	)
 )
 
 type (
@@ -258,7 +232,8 @@ func (s TrustCenterAccessService) Request(
 		return nil, err
 	}
 
-	if err := s.svc.SlackMessages.QueueSlackNotification(ctx, access.Email, req.TrustCenterID); err != nil {
+	slackMessageService := s.svc.slack.GetSlackMessageService()
+	if err := slackMessageService.QueueSlackNotification(ctx, access.Email, req.TrustCenterID); err != nil {
 		s.logger.ErrorCtx(ctx, "cannot queue slack notification", log.Error(err))
 	}
 

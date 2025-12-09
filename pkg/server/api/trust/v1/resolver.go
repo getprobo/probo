@@ -34,10 +34,12 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/probo"
 	console_v1 "go.probo.inc/probo/pkg/server/api/console/v1"
+	slack_v1 "go.probo.inc/probo/pkg/server/api/slack/v1"
 	"go.probo.inc/probo/pkg/server/api/trust/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/trust/v1/trustauth"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 	"go.probo.inc/probo/pkg/server/session"
+	"go.probo.inc/probo/pkg/slack"
 	"go.probo.inc/probo/pkg/statelesstoken"
 	"go.probo.inc/probo/pkg/trust"
 )
@@ -103,6 +105,9 @@ func NewMux(
 	trustSvc *trust.Service,
 	authCfg console_v1.AuthConfig,
 	trustAuthCfg TrustAuthConfig,
+
+	// TODO: Remove this after successful migration to /slack/v1.
+	slackSvc *slack.Service,
 ) *chi.Mux {
 	r := chi.NewMux()
 
@@ -111,7 +116,9 @@ func NewMux(
 	r.Post("/auth/authenticate", authTokenHandler(trustSvc, trustAuthCfg))
 	r.Delete("/auth/logout", trustCenterLogoutHandler(authCfg, trustAuthCfg))
 
-	r.Post("/slack", slackHandler(trustSvc, trustSvc.GetSlackSigningSecret(), logger))
+	// Backward compatibility: support old /trust/v1/slack endpoint
+	// TODO: Remove this after successful migration to /slack/v1 and then make SlackHandler PRIVATE in slack_v1 package.
+	r.Post("/slack", slack_v1.SlackHandler(slackSvc, slackSvc.GetSlackSigningSecret(), logger, trustSvc))
 
 	return r
 }

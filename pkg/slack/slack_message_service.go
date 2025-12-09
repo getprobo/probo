@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package trust
+package slack
 
 import (
 	"bytes"
@@ -26,7 +26,6 @@ import (
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/slack"
 )
 
 const (
@@ -35,8 +34,7 @@ const (
 
 type (
 	SlackMessageService struct {
-		svc         *TenantService
-		slackClient *slack.Client
+		svc *TenantService
 	}
 
 	SlackMessageDocument struct {
@@ -72,28 +70,6 @@ func (m SlackMessageMetadata) toMap() map[string]any {
 		"reports":   m.Reports,
 		"files":     m.Files,
 	}
-}
-
-func (s *Service) GetInitialSlackMessageByChannelAndTS(
-	ctx context.Context,
-	channelID string,
-	messageTS string,
-) (*coredata.SlackMessage, error) {
-	var slackMessage coredata.SlackMessage
-
-	err := s.pg.WithConn(ctx, func(conn pg.Conn) error {
-		if err := slackMessage.LoadInitialByChannelAndTS(ctx, conn, coredata.NewNoScope(), channelID, messageTS); err != nil {
-			return fmt.Errorf("cannot load slack message: %w", err)
-		}
-
-		return nil
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return &slackMessage, nil
 }
 
 func (s *SlackMessageService) GetSlackMessageDocumentIDs(
@@ -132,7 +108,6 @@ func (s *SlackMessageService) UpdateSlackAccessMessage(
 		if err := slackMessage.LoadById(ctx, tx, s.svc.scope, slackMessageID); err != nil {
 			return fmt.Errorf("cannot load slack message: %w", err)
 		}
-
 		var trustCenter coredata.TrustCenter
 		if err := trustCenter.LoadByOrganizationID(ctx, tx, s.svc.scope, slackMessage.OrganizationID); err != nil {
 			return fmt.Errorf("cannot load trust center: %w", err)
@@ -189,7 +164,7 @@ func (s *SlackMessageService) UpdateSlackAccessMessage(
 			return fmt.Errorf("cannot insert slack message: %w", err)
 		}
 
-		if err := s.slackClient.UpdateInteractiveMessage(ctx, responseURL, updatedBody); err != nil {
+		if err := s.svc.GetSlackClient().UpdateInteractiveMessage(ctx, responseURL, updatedBody); err != nil {
 			return fmt.Errorf("cannot update Slack message: %w", err)
 		}
 
@@ -303,6 +278,102 @@ func (s *SlackMessageService) QueueSlackNotification(
 
 		slackMessage.InitialSlackMessageID = slackMessageID
 		if err := slackMessage.Insert(ctx, tx, s.svc.scope); err != nil {
+			return fmt.Errorf("cannot insert slack message: %w", err)
+		}
+
+		return nil
+	})
+}
+
+func (s *SlackMessageService) QueueSlackAccessMessageUpdate(
+	ctx context.Context,
+	requesterEmail string,
+	trustCenterID gid.GID,
+) error {
+	return s.svc.pg.WithTx(ctx, func(tx pg.Conn) error {
+		var trustCenter coredata.TrustCenter
+		if err := trustCenter.LoadByID(ctx, tx, s.svc.scope, trustCenterID); err != nil {
+			return fmt.Errorf("cannot load trust center: %w", err)
+		}
+
+		var trustCenterAccess coredata.TrustCenterAccess
+		if err := trustCenterAccess.LoadByTrustCenterIDAndEmail(ctx, tx, s.svc.scope, trustCenterID, requesterEmail); err != nil {
+			return fmt.Errorf("cannot load trust center access: %w", err)
+		}
+
+		var existingMessage coredata.SlackMessage
+		err := existingMessage.LoadLatestByRequesterEmailAndType(
+			ctx,
+			tx,
+			s.svc.scope,
+			trustCenter.OrganizationID,
+			requesterEmail,
+			coredata.SlackMessageTypeTrustCenterAccessRequest,
+			time.Time{},
+		)
+		if err != nil {
+			var notFoundErr coredata.ErrSlackMessageNotFound
+			if errors.Is(err, notFoundErr) {
+				return nil
+			}
+			return fmt.Errorf("cannot load existing slack message: %w", err)
+		}
+
+		if existingMessage.MessageTS == nil || existingMessage.ChannelID == nil {
+			return nil
+		}
+
+		if existingMessage.ID != existingMessage.InitialSlackMessageID {
+			var originalMessage coredata.SlackMessage
+			if err := originalMessage.LoadById(ctx, tx, s.svc.scope, existingMessage.InitialSlackMessageID); err != nil {
+				return nil
+			}
+			existingMessage = originalMessage
+		}
+
+		documents, reports, files, err := s.loadDocumentsReportsAndFilesFromAccesses(ctx, tx, trustCenterAccess.ID)
+		if err != nil {
+			return fmt.Errorf("cannot load documents, reports and files: %w", err)
+		}
+
+		newSlackMessageID := gid.New(s.svc.scope.GetTenantID(), coredata.SlackMessageEntityType)
+
+		updatedBody, err := s.buildAccessRequestMessage(
+			newSlackMessageID,
+			trustCenterAccess.Name,
+			requesterEmail,
+			trustCenter.OrganizationID,
+			documents,
+			reports,
+			files,
+		)
+		if err != nil {
+			return fmt.Errorf("cannot build access request message: %w", err)
+		}
+
+		metadata := SlackMessageMetadata{
+			Documents: documents,
+			Reports:   reports,
+			Files:     files,
+		}
+
+		now := time.Now()
+		newSlackMessage := &coredata.SlackMessage{
+			ID:                    newSlackMessageID,
+			OrganizationID:        existingMessage.OrganizationID,
+			Type:                  existingMessage.Type,
+			Body:                  updatedBody,
+			MessageTS:             existingMessage.MessageTS,
+			ChannelID:             existingMessage.ChannelID,
+			RequesterEmail:        existingMessage.RequesterEmail,
+			Metadata:              metadata.toMap(),
+			InitialSlackMessageID: existingMessage.InitialSlackMessageID,
+			CreatedAt:             now,
+			UpdatedAt:             now,
+			SentAt:                nil,
+		}
+
+		if err := newSlackMessage.Insert(ctx, tx, s.svc.scope); err != nil {
 			return fmt.Errorf("cannot insert slack message: %w", err)
 		}
 
