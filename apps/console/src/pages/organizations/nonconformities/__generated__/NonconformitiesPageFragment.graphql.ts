@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<b53ef2729d5b435baeb0d3b068be8cef>>
+ * @generated SignedSource<<310dfd9974ac15af86b8e8ecf21d2b5c>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -24,7 +24,7 @@ export type NonconformitiesPageFragment$data = {
           };
           readonly id: string;
           readonly name: string | null | undefined;
-        };
+        } | null | undefined;
         readonly correctiveAction: string | null | undefined;
         readonly createdAt: any;
         readonly dateIdentified: any | null | undefined;

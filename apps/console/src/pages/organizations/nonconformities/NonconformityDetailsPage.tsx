@@ -47,7 +47,7 @@ const updateNonconformitySchema = z.object({
   effectivenessCheck: z.string().optional(),
   status: z.enum(["OPEN", "IN_PROGRESS", "CLOSED"]),
   ownerId: z.string().min(1, "Owner is required"),
-  auditId: z.string().min(1, "Audit is required"),
+  auditId: z.string().optional(),
 });
 
 type Props = {
@@ -198,7 +198,6 @@ export default function NonconformityDetailsPage(props: Props) {
               name="auditId"
               label={__("Audit")}
               error={formState.errors.auditId?.message}
-              required
               disabled={isSnapshotMode}
             />
 

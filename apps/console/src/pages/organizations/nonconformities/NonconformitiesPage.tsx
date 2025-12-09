@@ -273,9 +273,11 @@ function NonconformityRow({
         </Badge>
       </Td>
       <Td>
-        {nonconformity.audit.name
-          ? `${nonconformity.audit.framework.name} - ${nonconformity.audit.name}`
-          : nonconformity.audit.framework.name
+        {nonconformity.audit
+          ? nonconformity.audit.name
+            ? `${nonconformity.audit.framework?.name} - ${nonconformity.audit.name}`
+            : nonconformity.audit.framework?.name
+          : <span className="text-txt-tertiary">{__("No audit")}</span>
         }
       </Td>
       <Td>{nonconformity.owner.fullName}</Td>

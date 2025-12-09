@@ -377,7 +377,7 @@ type CreateNonconformityInput struct {
 	OrganizationID     gid.GID                      `json:"organizationId"`
 	ReferenceID        string                       `json:"referenceId"`
 	Description        *string                      `json:"description,omitempty"`
-	AuditID            gid.GID                      `json:"auditId"`
+	AuditID            *gid.GID                     `json:"auditId,omitempty"`
 	DateIdentified     *time.Time                   `json:"dateIdentified,omitempty"`
 	RootCause          string                       `json:"rootCause"`
 	CorrectiveAction   *string                      `json:"correctiveAction,omitempty"`
@@ -1368,7 +1368,7 @@ type Nonconformity struct {
 	Organization       *Organization                `json:"organization"`
 	ReferenceID        string                       `json:"referenceId"`
 	Description        *string                      `json:"description,omitempty"`
-	Audit              *Audit                       `json:"audit"`
+	Audit              *Audit                       `json:"audit,omitempty"`
 	DateIdentified     *time.Time                   `json:"dateIdentified,omitempty"`
 	RootCause          string                       `json:"rootCause"`
 	CorrectiveAction   *string                      `json:"correctiveAction,omitempty"`
@@ -1997,7 +1997,7 @@ type UpdateNonconformityInput struct {
 	RootCause          *string                       `json:"rootCause,omitempty"`
 	CorrectiveAction   graphql.Omittable[*string]    `json:"correctiveAction,omitempty"`
 	OwnerID            *gid.GID                      `json:"ownerId,omitempty"`
-	AuditID            *gid.GID                      `json:"auditId,omitempty"`
+	AuditID            graphql.Omittable[*gid.GID]   `json:"auditId,omitempty"`
 	DueDate            graphql.Omittable[*time.Time] `json:"dueDate,omitempty"`
 	Status             *coredata.NonconformityStatus `json:"status,omitempty"`
 	EffectivenessCheck graphql.Omittable[*string]    `json:"effectivenessCheck,omitempty"`

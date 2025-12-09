@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<a7d4ac5eee7f07fadad4e2c1f25e87e5>>
+ * @generated SignedSource<<db7fca9f154989ebab9e5c9b0f5bfd85>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,7 +11,7 @@
 import { ConcreteRequest } from 'relay-runtime';
 export type NonconformityStatus = "CLOSED" | "IN_PROGRESS" | "OPEN";
 export type CreateNonconformityInput = {
-  auditId: string;
+  auditId?: string | null | undefined;
   correctiveAction?: string | null | undefined;
   dateIdentified?: any | null | undefined;
   description?: string | null | undefined;
@@ -36,7 +36,7 @@ export type NonconformityGraphCreateMutation$data = {
             readonly name: string;
           };
           readonly id: string;
-        };
+        } | null | undefined;
         readonly createdAt: any;
         readonly dateIdentified: any | null | undefined;
         readonly description: string | null | undefined;

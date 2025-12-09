@@ -34,7 +34,7 @@ type (
 		SourceID           *gid.GID            `db:"source_id"`
 		ReferenceID        string              `db:"reference_id"`
 		Description        *string             `db:"description"`
-		AuditID            gid.GID             `db:"audit_id"`
+		AuditID            *gid.GID            `db:"audit_id"`
 		DateIdentified     *time.Time          `db:"date_identified"`
 		RootCause          string              `db:"root_cause"`
 		CorrectiveAction   *string             `db:"corrective_action"`

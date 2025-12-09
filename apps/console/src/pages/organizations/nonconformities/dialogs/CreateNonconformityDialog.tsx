@@ -27,7 +27,7 @@ import { formatDatetime, getStatusOptions } from "@probo/helpers";
 const schema = z.object({
   referenceId: z.string().min(1, "Reference ID is required"),
   description: z.string().optional(),
-  auditId: z.string().min(1, "Audit is required"),
+  auditId: z.string().optional(),
   dateIdentified: z.string().optional(),
   rootCause: z.string().min(1, "Root cause is required"),
   correctiveAction: z.string().optional(),
@@ -78,7 +78,7 @@ export function CreateNonconformityDialog({
         organizationId,
         referenceId: formData.referenceId,
         description: formData.description || undefined,
-        auditId: formData.auditId,
+        auditId: formData.auditId || undefined,
         dateIdentified: formatDatetime(formData.dateIdentified),
         rootCause: formData.rootCause,
         correctiveAction: formData.correctiveAction || undefined,
@@ -128,7 +128,6 @@ export function CreateNonconformityDialog({
             name="auditId"
             label={__("Audit")}
             error={formState.errors.auditId?.message}
-            required
           />
 
           <div className="space-y-2">

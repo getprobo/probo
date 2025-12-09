@@ -2155,7 +2155,7 @@ type Nonconformity implements Node {
   organization: Organization! @goField(forceResolver: true)
   referenceId: String!
   description: String
-  audit: Audit! @goField(forceResolver: true)
+  audit: Audit @goField(forceResolver: true)
   dateIdentified: Datetime
   rootCause: String!
   correctiveAction: String
@@ -3661,7 +3661,7 @@ input CreateNonconformityInput {
   organizationId: ID!
   referenceId: String!
   description: String
-  auditId: ID!
+  auditId: ID
   dateIdentified: Datetime
   rootCause: String!
   correctiveAction: String
@@ -3679,7 +3679,7 @@ input UpdateNonconformityInput {
   rootCause: String
   correctiveAction: String @goField(omittable: true)
   ownerId: ID
-  auditId: ID
+  auditId: ID @goField(omittable: true)
   dueDate: Datetime @goField(omittable: true)
   status: NonconformityStatus
   effectivenessCheck: String @goField(omittable: true)

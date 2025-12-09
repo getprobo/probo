@@ -168,7 +168,7 @@ export const useCreateNonconformity = (connectionId: string) => {
     organizationId: string;
     referenceId: string;
     description?: string;
-    auditId: string;
+    auditId?: string;
     dateIdentified?: string;
     rootCause: string;
     correctiveAction?: string;
@@ -183,9 +183,6 @@ export const useCreateNonconformity = (connectionId: string) => {
     if (!input.referenceId) {
       return alert(__("Failed to create nonconformity: reference ID is required"));
     }
-    if (!input.auditId) {
-      return alert(__("Failed to create nonconformity: audit is required"));
-    }
     if (!input.ownerId) {
       return alert(__("Failed to create nonconformity: owner is required"));
     }
@@ -199,7 +196,7 @@ export const useCreateNonconformity = (connectionId: string) => {
           organizationId: input.organizationId,
           referenceId: input.referenceId,
           description: input.description,
-          auditId: input.auditId,
+          auditId: input.auditId || undefined,
           dateIdentified: input.dateIdentified,
           rootCause: input.rootCause,
           correctiveAction: input.correctiveAction,
@@ -226,7 +223,7 @@ export const useUpdateNonconformity = () => {
     rootCause?: string;
     correctiveAction?: string;
     ownerId?: string;
-    auditId?: string;
+    auditId?: string | null;
     dueDate?: string | null;
     status?: string;
     effectivenessCheck?: string;
@@ -237,7 +234,10 @@ export const useUpdateNonconformity = () => {
 
     return promisifyMutation(mutate)({
       variables: {
-        input,
+        input: {
+          ...input,
+          auditId: input.auditId || null,
+        },
       },
     });
   };

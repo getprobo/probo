@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<9c7a235f3dc4f691c8f9d036536cf272>>
+ * @generated SignedSource<<2f4ca0549a2e01d68d9fb752298beb4c>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -35,7 +35,7 @@ export type NonconformityGraphUpdateMutation$data = {
           readonly name: string;
         };
         readonly id: string;
-      };
+      } | null | undefined;
       readonly correctiveAction: string | null | undefined;
       readonly dateIdentified: any | null | undefined;
       readonly description: string | null | undefined;

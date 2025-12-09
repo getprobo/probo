@@ -35,7 +35,7 @@ type (
 		OrganizationID     gid.GID
 		ReferenceID        string
 		Description        *string
-		AuditID            gid.GID
+		AuditID            *gid.GID
 		DateIdentified     *time.Time
 		RootCause          string
 		CorrectiveAction   *string
@@ -53,7 +53,7 @@ type (
 		RootCause          *string
 		CorrectiveAction   **string
 		OwnerID            *gid.GID
-		AuditID            *gid.GID
+		AuditID            **gid.GID
 		DueDate            **time.Time
 		Status             *coredata.NonconformityStatus
 		EffectivenessCheck **string
@@ -66,7 +66,7 @@ func (cnr *CreateNonconformityRequest) Validate() error {
 	v.Check(cnr.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
 	v.Check(cnr.ReferenceID, "reference_id", validator.Required(), validator.SafeText(NameMaxLength))
 	v.Check(cnr.Description, "description", validator.SafeText(ContentMaxLength))
-	v.Check(cnr.AuditID, "audit_id", validator.Required(), validator.GID(coredata.AuditEntityType))
+	v.Check(cnr.AuditID, "audit_id", validator.GID(coredata.AuditEntityType))
 	v.Check(cnr.RootCause, "root_cause", validator.Required(), validator.SafeText(ContentMaxLength))
 	v.Check(cnr.CorrectiveAction, "corrective_action", validator.SafeText(ContentMaxLength))
 	v.Check(cnr.OwnerID, "owner_id", validator.Required(), validator.GID(coredata.PeopleEntityType))
@@ -149,9 +149,11 @@ func (s *NonconformityService) Create(
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
-			audit := &coredata.Audit{}
-			if err := audit.LoadByID(ctx, conn, s.svc.scope, req.AuditID); err != nil {
-				return fmt.Errorf("cannot load audit: %w", err)
+			if req.AuditID != nil {
+				audit := &coredata.Audit{}
+				if err := audit.LoadByID(ctx, conn, s.svc.scope, *req.AuditID); err != nil {
+					return fmt.Errorf("cannot load audit: %w", err)
+				}
 			}
 
 			people := &coredata.People{}

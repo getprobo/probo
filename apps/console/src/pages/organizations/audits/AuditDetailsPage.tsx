@@ -36,6 +36,7 @@ import { getAuditStateLabel, getAuditStateVariant, auditStates, fileSize, sprint
 import type { AuditGraphNodeQuery } from "/hooks/graph/__generated__/AuditGraphNodeQuery.graphql";
 import { use } from "react";
 import { PermissionsContext } from "/providers/PermissionsContext";
+import { useNavigate } from "react-router";
 
 const updateAuditSchema = z.object({
   name: z.string().nullable().optional(),
@@ -54,10 +55,12 @@ export default function AuditDetailsPage(props: Props) {
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
   const { isAuthorized } = use(PermissionsContext);
+  const navigate = useNavigate();
 
   const deleteAudit = useDeleteAudit(
     { id: auditEntry.id!, framework: { name: auditEntry.framework!.name} },
-    ConnectionHandler.getConnectionID(organizationId, "AuditsPage_audits")
+    ConnectionHandler.getConnectionID(organizationId, "AuditsPage_audits"),
+    () => navigate(`/organizations/${organizationId}/audits`)
   );
 
   const { control, formState, handleSubmit, register, reset } = useFormWithSchema(updateAuditSchema, {

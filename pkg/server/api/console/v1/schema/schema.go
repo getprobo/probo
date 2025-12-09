@@ -11708,7 +11708,7 @@ type Nonconformity implements Node {
   organization: Organization! @goField(forceResolver: true)
   referenceId: String!
   description: String
-  audit: Audit! @goField(forceResolver: true)
+  audit: Audit @goField(forceResolver: true)
   dateIdentified: Datetime
   rootCause: String!
   correctiveAction: String
@@ -13214,7 +13214,7 @@ input CreateNonconformityInput {
   organizationId: ID!
   referenceId: String!
   description: String
-  auditId: ID!
+  auditId: ID
   dateIdentified: Datetime
   rootCause: String!
   correctiveAction: String
@@ -13232,7 +13232,7 @@ input UpdateNonconformityInput {
   rootCause: String
   correctiveAction: String @goField(omittable: true)
   ownerId: ID
-  auditId: ID
+  auditId: ID @goField(omittable: true)
   dueDate: Datetime @goField(omittable: true)
   status: NonconformityStatus
   effectivenessCheck: String @goField(omittable: true)
@@ -37092,9 +37092,9 @@ func (ec *executionContext) _Nonconformity_audit(ctx context.Context, field grap
 			return ec.resolvers.Nonconformity().Audit(ctx, obj)
 		},
 		nil,
-		ec.marshalNAudit2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAudit,
+		ec.marshalOAudit2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAudit,
 		true,
-		true,
+		false,
 	)
 }
 
@@ -57528,7 +57528,7 @@ func (ec *executionContext) unmarshalInputCreateNonconformityInput(ctx context.C
 			it.Description = data
 		case "auditId":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("auditId"))
-			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			data, err := ec.unmarshalOID2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -62420,7 +62420,7 @@ func (ec *executionContext) unmarshalInputUpdateNonconformityInput(ctx context.C
 			if err != nil {
 				return it, err
 			}
-			it.AuditID = data
+			it.AuditID = graphql.OmittableOf(data)
 		case "dueDate":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dueDate"))
 			data, err := ec.unmarshalODatetime2ᚖtimeᚐTime(ctx, v)
@@ -73824,16 +73824,13 @@ func (ec *executionContext) _Nonconformity(ctx context.Context, sel ast.Selectio
 		case "audit":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._Nonconformity_audit(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
 				return res
 			}
 
@@ -83345,10 +83342,6 @@ func (ec *executionContext) marshalNAssignTaskPayload2ᚖgoᚗproboᚗincᚋprob
 		return graphql.Null
 	}
 	return ec._AssignTaskPayload(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNAudit2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAudit(ctx context.Context, sel ast.SelectionSet, v types.Audit) graphql.Marshaler {
-	return ec._Audit(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNAudit2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAudit(ctx context.Context, sel ast.SelectionSet, v *types.Audit) graphql.Marshaler {

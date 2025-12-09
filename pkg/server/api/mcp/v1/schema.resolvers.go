@@ -784,7 +784,7 @@ func (r *Resolver) UpdateNonconformityTool(ctx context.Context, req *mcp.CallToo
 			RootCause:          input.RootCause,
 			CorrectiveAction:   UnwrapOmittable(input.CorrectiveAction),
 			OwnerID:            input.OwnerID,
-			AuditID:            input.AuditID,
+			AuditID:            UnwrapOmittable(input.AuditID),
 			DueDate:            UnwrapOmittable(input.DueDate),
 			Status:             input.Status,
 			EffectivenessCheck: UnwrapOmittable(input.EffectivenessCheck),

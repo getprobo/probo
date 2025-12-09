@@ -1496,7 +1496,6 @@ components:
         - id
         - organization_id
         - reference_id
-        - audit_id
         - root_cause
         - owner_id
         - status
@@ -1525,7 +1524,11 @@ components:
             - "null"
           description: Description
         audit_id:
-          $ref: "#/components/schemas/GID"
+          anyOf:
+            - $ref: "#/components/schemas/GID"
+              description: Audit ID
+            - type: "null"
+              description: No audit
           description: Audit ID
         date_identified:
           type:
@@ -1626,7 +1629,6 @@ components:
       required:
         - organization_id
         - reference_id
-        - audit_id
         - root_cause
         - owner_id
         - status
@@ -1641,7 +1643,11 @@ components:
           type: string
           description: Description
         audit_id:
-          $ref: "#/components/schemas/GID"
+          anyOf:
+            - $ref: "#/components/schemas/GID"
+              description: Audit ID
+            - type: "null"
+              description: No audit
           description: Audit ID
         date_identified:
           type: string
@@ -1718,6 +1724,7 @@ components:
               $ref: "#/components/schemas/GID"
             - type: "null"
           description: Audit ID
+          go.probo.inc/mcpgen/omittable: true
         due_date:
           type: ["string", "null"]
           format: date-time

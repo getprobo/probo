@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<125cf1d460b37ac442d0f30c14e5af11>>
+ * @generated SignedSource<<526115183274c5c81a5a70c16012591e>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -21,7 +21,7 @@ export type NonconformityGraphNodeQuery$data = {
         readonly name: string;
       };
       readonly id: string;
-    };
+    } | null | undefined;
     readonly correctiveAction?: string | null | undefined;
     readonly createdAt?: any;
     readonly dateIdentified?: any | null | undefined;

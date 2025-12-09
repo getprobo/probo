@@ -3984,7 +3984,7 @@ func (r *mutationResolver) UpdateNonconformity(ctx context.Context, input types.
 		RootCause:          input.RootCause,
 		CorrectiveAction:   UnwrapOmittable(input.CorrectiveAction),
 		OwnerID:            input.OwnerID,
-		AuditID:            input.AuditID,
+		AuditID:            UnwrapOmittable(input.AuditID),
 		DueDate:            UnwrapOmittable(input.DueDate),
 		Status:             input.Status,
 		EffectivenessCheck: UnwrapOmittable(input.EffectivenessCheck),
@@ -4596,7 +4596,11 @@ func (r *nonconformityResolver) Audit(ctx context.Context, obj *types.Nonconform
 		panic(fmt.Errorf("cannot get nonconformity: %w", err))
 	}
 
-	audit, err := prb.Audits.Get(ctx, nonconformity.AuditID)
+	if nonconformity.AuditID == nil {
+		return nil, nil
+	}
+
+	audit, err := prb.Audits.Get(ctx, *nonconformity.AuditID)
 	if err != nil {
 		var errNotFound *coredata.ErrAuditNotFound
 		if errors.As(err, &errNotFound) {

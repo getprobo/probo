@@ -112,7 +112,8 @@ export const deleteAuditMutation = graphql`
 
 export const useDeleteAudit = (
   audit: { id: string; framework: { name: string } },
-  connectionId: string
+  connectionId: string,
+  onSuccess?: () => void
 ) => {
   const { __ } = useTranslate();
   const [mutate] = useMutationWithToasts(deleteAuditMutation, {
@@ -123,15 +124,17 @@ export const useDeleteAudit = (
 
   return () => {
     confirm(
-      () =>
-        mutate({
+      async () => {
+        await mutate({
           variables: {
             input: {
               auditId: audit.id!,
             },
             connections: [connectionId],
           },
-        }),
+        });
+        onSuccess?.();
+      },
       {
         message: sprintf(
           __(
