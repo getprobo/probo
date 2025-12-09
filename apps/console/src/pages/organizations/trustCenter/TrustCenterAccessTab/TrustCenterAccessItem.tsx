@@ -1,5 +1,5 @@
+import type { TrustCenterAccess } from "@probo/coredata";
 import { Button, IconCheckmark1, IconCrossLargeX, IconPencil, IconTrashCan, Td, Tr } from "@probo/ui";
-import type { TrustCenterAccess } from "/coredata/TrustCenterAccess";
 import { formatDate } from "@probo/helpers";
 import { use, useCallback, useState } from "react";
 import { PermissionsContext } from "/providers/PermissionsContext";

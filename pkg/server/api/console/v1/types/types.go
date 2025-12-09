@@ -1807,6 +1807,11 @@ type TrustCenterDocumentAccessEdge struct {
 	Node   *TrustCenterDocumentAccess `json:"node"`
 }
 
+type TrustCenterDocumentAccessInput struct {
+	ID     gid.GID                                  `json:"id"`
+	Status coredata.TrustCenterDocumentAccessStatus `json:"status"`
+}
+
 type TrustCenterEdge struct {
 	Cursor page.CursorKey `json:"cursor"`
 	Node   *TrustCenter   `json:"node"`
@@ -2140,12 +2145,12 @@ type UpdateTaskPayload struct {
 }
 
 type UpdateTrustCenterAccessInput struct {
-	ID                 gid.GID   `json:"id"`
-	Name               *string   `json:"name,omitempty"`
-	Active             *bool     `json:"active,omitempty"`
-	DocumentIds        []gid.GID `json:"documentIds,omitempty"`
-	ReportIds          []gid.GID `json:"reportIds,omitempty"`
-	TrustCenterFileIds []gid.GID `json:"trustCenterFileIds,omitempty"`
+	ID               gid.GID                           `json:"id"`
+	Name             *string                           `json:"name,omitempty"`
+	Active           *bool                             `json:"active,omitempty"`
+	Documents        []*TrustCenterDocumentAccessInput `json:"documents,omitempty"`
+	Reports          []*TrustCenterDocumentAccessInput `json:"reports,omitempty"`
+	TrustCenterFiles []*TrustCenterDocumentAccessInput `json:"trustCenterFiles,omitempty"`
 }
 
 type UpdateTrustCenterAccessPayload struct {

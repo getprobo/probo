@@ -1,6 +1,15 @@
+export const trustCenterDocumentAccessStatus = {
+  REQUESTED: "REQUESTED",
+  GRANTED: "GRANTED",
+  REJECTED: "REJECTED",
+  REVOKED: "REVOKED",
+} as const;
+
+export type TrustCenterDocumentAccessStatus = (typeof trustCenterDocumentAccessStatus)[keyof typeof trustCenterDocumentAccessStatus];
+
 export type TrustCenterDocumentAccess = {
   active: boolean;
-  status: string;
+  status: TrustCenterDocumentAccessStatus;
   requested: boolean;
   document?: {
     id: string;

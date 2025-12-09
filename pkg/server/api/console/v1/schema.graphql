@@ -3189,13 +3189,18 @@ input CreateTrustCenterAccessInput {
   active: Boolean!
 }
 
+input TrustCenterDocumentAccessInput {
+  id: ID!
+  status: TrustCenterDocumentAccessStatus!
+}
+
 input UpdateTrustCenterAccessInput {
   id: ID!
   name: String
   active: Boolean
-  documentIds: [ID!]
-  reportIds: [ID!]
-  trustCenterFileIds: [ID!]
+  documents: [TrustCenterDocumentAccessInput!]
+  reports: [TrustCenterDocumentAccessInput!]
+  trustCenterFiles: [TrustCenterDocumentAccessInput!]
 }
 
 input DeleteTrustCenterAccessInput {

@@ -66,3 +66,8 @@ export { formatDatetime, formatDate } from "./date";
 export { getLogoUrl, getTrustCenterUrl } from "./trustCenter";
 export { formatError, type GraphQLError } from "./error";
 export { Role, getAssignableRoles } from "./roles";
+export {
+    getTrustCenterDocumentAccessInfo,
+    getTrustCenterDocumentAccessStatusBadgeVariant,
+    type TrustCenterDocumentAccessInfo,
+} from "./trustCenterDocumentAccess";

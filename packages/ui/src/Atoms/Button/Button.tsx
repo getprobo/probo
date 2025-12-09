@@ -21,6 +21,7 @@ export const button = tv({
             quaternary:
                 "bg-highlight text-txt-primary hover:bg-highlight-hover active:bg-highlight-pressed",
             danger: "bg-danger-plain text-txt-invert hover:bg-danger-hover shadow-base hover:shadow-hover active:bg-danger-pressed border border-border-danger",
+            success: "bg-success-plain text-txt-invert hover:text-invert hover:bg-success-hover shadow-base hover:shadow-hover active:bg-success-pressed border border-border-success",
         },
         disabled: {
             true: "opacity-60 cursor-default",
@@ -47,7 +48,8 @@ type Props = PropsWithChildren<
             | "secondary"
             | "tertiary"
             | "quaternary"
-            | "danger";
+            | "danger"
+            | "success";
         to?: string;
         asChild?: boolean;
     } & VariantProps<typeof button>

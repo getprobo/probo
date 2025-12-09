@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.0.1",
+    "@probo/coredata": "^1.0.0",
     "@probo/helpers": "^1.0.0",
     "@probo/hooks": "1.0.0",
     "@probo/i18n": "1.0.0",

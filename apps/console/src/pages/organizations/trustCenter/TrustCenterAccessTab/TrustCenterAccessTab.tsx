@@ -26,8 +26,8 @@ import {
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { PermissionsContext } from "/providers/PermissionsContext";
-import type { TrustCenterAccess } from "/coredata/TrustCenterAccess";
 import { TrustCenterAccessItem } from "./TrustCenterAccessItem";
+import type { TrustCenterAccess } from "@probo/coredata";
 
 type ContextType = {
   organization: {

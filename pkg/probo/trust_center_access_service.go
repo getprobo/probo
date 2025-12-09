@@ -40,13 +40,18 @@ type (
 		Name          string
 	}
 
+	UpdateTrustCenterDocumentAccessRequest struct {
+		ID     gid.GID
+		Status coredata.TrustCenterDocumentAccessStatus
+	}
+
 	UpdateTrustCenterAccessRequest struct {
-		ID                 gid.GID
-		Name               *string
-		Active             *bool
-		DocumentIDs        []gid.GID
-		ReportIDs          []gid.GID
-		TrustCenterFileIDs []gid.GID
+		ID                      gid.GID
+		Name                    *string
+		Active                  *bool
+		DocumentAccesses        []UpdateTrustCenterDocumentAccessRequest
+		ReportAccesses          []UpdateTrustCenterDocumentAccessRequest
+		TrustCenterFileAccesses []UpdateTrustCenterDocumentAccessRequest
 	}
 
 	TrustCenterAccessData struct {
@@ -70,15 +75,15 @@ func (utcar *UpdateTrustCenterAccessRequest) Validate() error {
 
 	v.Check(utcar.ID, "id", validator.Required(), validator.GID(coredata.TrustCenterAccessEntityType))
 	v.Check(utcar.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
-	v.CheckEach(utcar.DocumentIDs, "document_ids", func(index int, item any) {
-		v.Check(item, fmt.Sprintf("document_ids[%d]", index), validator.Required(), validator.GID(coredata.DocumentEntityType))
-	})
-	v.CheckEach(utcar.ReportIDs, "report_ids", func(index int, item any) {
-		v.Check(item, fmt.Sprintf("report_ids[%d]", index), validator.Required(), validator.GID(coredata.ReportEntityType))
-	})
-	v.CheckEach(utcar.TrustCenterFileIDs, "trust_center_file_ids", func(index int, item any) {
-		v.Check(item, fmt.Sprintf("trust_center_file_ids[%d]", index), validator.Required(), validator.GID(coredata.TrustCenterFileEntityType))
-	})
+	for i, docAccess := range utcar.DocumentAccesses {
+		v.Check(docAccess, fmt.Sprintf("documentAccesses[%d].ID", i), validator.Required(), validator.GID(coredata.DocumentEntityType))
+	}
+	for i, reportAccess := range utcar.ReportAccesses {
+		v.Check(reportAccess, fmt.Sprintf("reportAccesses[%d].ID", i), validator.Required(), validator.GID(coredata.ReportEntityType))
+	}
+	for i, reportAccess := range utcar.TrustCenterFileAccesses {
+		v.Check(reportAccess, fmt.Sprintf("trustCenterFileAccesses[%d].ID", i), validator.Required(), validator.GID(coredata.TrustCenterFileEntityType))
+	}
 
 	return v.Error()
 }

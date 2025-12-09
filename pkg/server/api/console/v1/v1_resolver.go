@@ -1661,13 +1661,34 @@ func (r *mutationResolver) UpdateTrustCenterAccess(ctx context.Context, input ty
 
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
+	var documentAccesses []probo.UpdateTrustCenterDocumentAccessRequest
+	var reportAccesses []probo.UpdateTrustCenterDocumentAccessRequest
+	var fileAccesses []probo.UpdateTrustCenterDocumentAccessRequest
+	for _, documentAccess := range documentAccesses {
+		documentAccesses = append(documentAccesses, probo.UpdateTrustCenterDocumentAccessRequest{
+			ID:     documentAccess.ID,
+			Status: documentAccess.Status,
+		})
+	}
+	for _, reportAccess := range reportAccesses {
+		reportAccesses = append(reportAccesses, probo.UpdateTrustCenterDocumentAccessRequest{
+			ID:     reportAccess.ID,
+			Status: reportAccess.Status,
+		})
+	}
+	for _, fileAccess := range fileAccesses {
+		fileAccesses = append(fileAccesses, probo.UpdateTrustCenterDocumentAccessRequest{
+			ID:     fileAccess.ID,
+			Status: fileAccess.Status,
+		})
+	}
 	access, err := prb.TrustCenterAccesses.Update(ctx, &probo.UpdateTrustCenterAccessRequest{
-		ID:                 input.ID,
-		Name:               input.Name,
-		Active:             input.Active,
-		DocumentIDs:        input.DocumentIds,
-		ReportIDs:          input.ReportIds,
-		TrustCenterFileIDs: input.TrustCenterFileIds,
+		ID:                      input.ID,
+		Name:                    input.Name,
+		Active:                  input.Active,
+		DocumentAccesses:        documentAccesses,
+		ReportAccesses:          reportAccesses,
+		TrustCenterFileAccesses: fileAccesses,
 	})
 	if err != nil {
 		panic(fmt.Errorf("cannot update trust center access: %w", err))

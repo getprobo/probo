@@ -9414,6 +9414,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputSnapshotOrder,
 		ec.unmarshalInputTaskOrder,
 		ec.unmarshalInputTrustCenterAccessOrder,
+		ec.unmarshalInputTrustCenterDocumentAccessInput,
 		ec.unmarshalInputTrustCenterDocumentAccessOrder,
 		ec.unmarshalInputTrustCenterFileOrder,
 		ec.unmarshalInputTrustCenterReferenceOrder,
@@ -12749,13 +12750,18 @@ input CreateTrustCenterAccessInput {
   active: Boolean!
 }
 
+input TrustCenterDocumentAccessInput {
+  id: ID!
+  status: TrustCenterDocumentAccessStatus!
+}
+
 input UpdateTrustCenterAccessInput {
   id: ID!
   name: String
   active: Boolean
-  documentIds: [ID!]
-  reportIds: [ID!]
-  trustCenterFileIds: [ID!]
+  documents: [TrustCenterDocumentAccessInput!]
+  reports: [TrustCenterDocumentAccessInput!]
+  trustCenterFiles: [TrustCenterDocumentAccessInput!]
 }
 
 input DeleteTrustCenterAccessInput {
@@ -61747,6 +61753,40 @@ func (ec *executionContext) unmarshalInputTrustCenterAccessOrder(ctx context.Con
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputTrustCenterDocumentAccessInput(ctx context.Context, obj any) (types.TrustCenterDocumentAccessInput, error) {
+	var it types.TrustCenterDocumentAccessInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"id", "status"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ID = data
+		case "status":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+			data, err := ec.unmarshalNTrustCenterDocumentAccessStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐTrustCenterDocumentAccessStatus(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Status = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputTrustCenterDocumentAccessOrder(ctx context.Context, obj any) (types.OrderBy[coredata.TrustCenterDocumentAccessOrderField], error) {
 	var it types.OrderBy[coredata.TrustCenterDocumentAccessOrderField]
 	asMap := map[string]any{}
@@ -63291,7 +63331,7 @@ func (ec *executionContext) unmarshalInputUpdateTrustCenterAccessInput(ctx conte
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"id", "name", "active", "documentIds", "reportIds", "trustCenterFileIds"}
+	fieldsInOrder := [...]string{"id", "name", "active", "documents", "reports", "trustCenterFiles"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -63319,27 +63359,27 @@ func (ec *executionContext) unmarshalInputUpdateTrustCenterAccessInput(ctx conte
 				return it, err
 			}
 			it.Active = data
-		case "documentIds":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("documentIds"))
-			data, err := ec.unmarshalOID2ᚕgoᚗproboᚗincᚋproboᚋpkgᚋgidᚐGIDᚄ(ctx, v)
+		case "documents":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("documents"))
+			data, err := ec.unmarshalOTrustCenterDocumentAccessInput2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐTrustCenterDocumentAccessInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.DocumentIds = data
-		case "reportIds":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("reportIds"))
-			data, err := ec.unmarshalOID2ᚕgoᚗproboᚗincᚋproboᚋpkgᚋgidᚐGIDᚄ(ctx, v)
+			it.Documents = data
+		case "reports":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("reports"))
+			data, err := ec.unmarshalOTrustCenterDocumentAccessInput2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐTrustCenterDocumentAccessInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.ReportIds = data
-		case "trustCenterFileIds":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("trustCenterFileIds"))
-			data, err := ec.unmarshalOID2ᚕgoᚗproboᚗincᚋproboᚋpkgᚋgidᚐGIDᚄ(ctx, v)
+			it.Reports = data
+		case "trustCenterFiles":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("trustCenterFiles"))
+			data, err := ec.unmarshalOTrustCenterDocumentAccessInput2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐTrustCenterDocumentAccessInputᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.TrustCenterFileIds = data
+			it.TrustCenterFiles = data
 		}
 	}
 
@@ -89828,6 +89868,11 @@ func (ec *executionContext) marshalNTrustCenterDocumentAccessEdge2ᚖgoᚗprobo�
 	return ec._TrustCenterDocumentAccessEdge(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNTrustCenterDocumentAccessInput2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐTrustCenterDocumentAccessInput(ctx context.Context, v any) (*types.TrustCenterDocumentAccessInput, error) {
+	res, err := ec.unmarshalInputTrustCenterDocumentAccessInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalNTrustCenterDocumentAccessOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐTrustCenterDocumentAccessOrderField(ctx context.Context, v any) (coredata.TrustCenterDocumentAccessOrderField, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := unmarshalNTrustCenterDocumentAccessOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐTrustCenterDocumentAccessOrderField[tmp]
@@ -93380,6 +93425,24 @@ func (ec *executionContext) unmarshalOTrustCenterAccessOrder2ᚖgoᚗproboᚗinc
 	}
 	res, err := ec.unmarshalInputTrustCenterAccessOrder(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOTrustCenterDocumentAccessInput2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐTrustCenterDocumentAccessInputᚄ(ctx context.Context, v any) ([]*types.TrustCenterDocumentAccessInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []any
+	vSlice = graphql.CoerceList(v)
+	var err error
+	res := make([]*types.TrustCenterDocumentAccessInput, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNTrustCenterDocumentAccessInput2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐTrustCenterDocumentAccessInput(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
 }
 
 func (ec *executionContext) unmarshalOTrustCenterDocumentAccessOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐOrderBy(ctx context.Context, v any) (*types.OrderBy[coredata.TrustCenterDocumentAccessOrderField], error) {

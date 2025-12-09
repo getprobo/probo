@@ -1,73 +1,15 @@
-import {
-  Badge,
-  Button,
-  Checkbox,
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  Field,
-  Spinner,
-  Table,
-  Tbody,
-  Td,
-  Th,
-  Thead,
-  Tr,
-} from "@probo/ui";
+import type { TrustCenterAccess, TrustCenterDocumentAccessStatus } from "@probo/coredata";
+import { getTrustCenterDocumentAccessInfo, type TrustCenterDocumentAccessInfo } from "@probo/helpers";
+import { Button, Checkbox, Dialog, DialogContent, DialogFooter, Field, Spinner } from "@probo/ui";
 import { usePreloadedQuery, type PreloadedQuery, useQueryLoader } from "react-relay";
 import type { TrustCenterAccessGraphLoadDocumentAccessesQuery } from "/hooks/graph/__generated__/TrustCenterAccessGraphLoadDocumentAccessesQuery.graphql";
-import type { TrustCenterDocumentAccess } from "/coredata/TrustCenterDocumentAccess";
 import { loadTrustCenterAccessDocumentAccessesQuery, updateTrustCenterAccessMutation } from "/hooks/graph/TrustCenterAccessGraph";
 import { useTranslate } from "@probo/i18n";
 import z from "zod";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
-import type { TrustCenterAccess } from "/coredata/TrustCenterAccess";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
-import { Suspense, useEffect } from "react";
-
-function getDocumentAccessInfo(
-  docAccess: TrustCenterDocumentAccess,
-  __: (key: string) => string
-) {
-  if (docAccess.document) {
-    return {
-      variant: "info" as const,
-      name: docAccess.document?.title,
-      type: __("Document"),
-      category: docAccess.document?.documentType,
-      id: docAccess.document?.id,
-      requested: docAccess.requested,
-      active: docAccess.active,
-      status: docAccess.status,
-    };
-  }
-  if (docAccess.report) {
-    return {
-      variant: "success" as const,
-      name: docAccess.report?.filename,
-      type: __("Report"),
-      category: docAccess.report?.audit?.framework?.name,
-      id: docAccess.report?.id,
-      requested: docAccess.requested,
-      active: docAccess.active,
-      status: docAccess.status,
-    };
-  }
-  if (docAccess.trustCenterFile) {
-    return {
-      variant: "highlight" as const,
-      name: docAccess.trustCenterFile?.name,
-      type: __("File"),
-      category: docAccess.trustCenterFile?.category,
-      id: docAccess.trustCenterFile?.id,
-      requested: docAccess.requested,
-      active: docAccess.active,
-      status: docAccess.status,
-    };
-  }
-
-  throw new Error("Unknown trust center access document type");
-}
+import { Suspense, useCallback, useEffect, useState } from "react";
+import { TrustCenterDocumentAccessList } from "./TrustCenterDocumentAccessList";
 
 interface TrustCenterAccessEditDialogProps {
   access: TrustCenterAccess;
@@ -121,7 +63,30 @@ export function TrustCenterAccessEditForm(props: TrustCenterAccessEditFormProps)
     loadTrustCenterAccessDocumentAccessesQuery,
     queryRef,
   )
-  const documentAccesses: TrustCenterDocumentAccess[] = data.node.availableDocumentAccesses?.edges.map(edge => edge.node) ?? [];
+
+  const initialDocumentAccesses = (data.node.availableDocumentAccesses?.edges.map(edge => edge.node) ?? []).map(da => getTrustCenterDocumentAccessInfo(da, __))
+  const initialStatusByID = initialDocumentAccesses.reduce<Record<string, TrustCenterDocumentAccessStatus>>((acc, docAccess) => {
+    acc[docAccess.id] = docAccess.status;
+    return acc
+  }, {})
+  const [documentAccesses, setDocumentAccesses] = useState<TrustCenterDocumentAccessInfo[]>(initialDocumentAccesses);
+
+  const handleUpdateDocumentAccessStatus = useCallback((documentAccess: TrustCenterDocumentAccessInfo, status: TrustCenterDocumentAccessStatus) => {
+    setDocumentAccesses((prev) => {
+      const nextDocumentAccesses = [...prev];
+      const docAccessIndex = nextDocumentAccesses.findIndex(element => element.id === documentAccess.id)
+      const previousDocAccess = nextDocumentAccesses[docAccessIndex];
+      nextDocumentAccesses.splice(docAccessIndex, 1, { ...previousDocAccess, status });
+
+      return nextDocumentAccesses;
+    })
+  }, [])
+  const handleGrantAllDocumentAccess = useCallback(() => {
+    setDocumentAccesses((prev) => prev.map(element => ({...element, status: "GRANTED"})))
+  }, [])
+  const handleRejectOrRevokeAllDocumentAccess = useCallback(() => {
+    setDocumentAccesses((prev) => prev.map(element => ({...element, status: initialStatusByID[element.id] === "GRANTED" ? "REVOKED" : "REJECTED"})))
+  }, [initialStatusByID])
 
   const editSchema = z.object({
     name: z.string().min(1, __("Name is required")).min(2, __("Name must be at least 2 characters long")),
@@ -137,20 +102,23 @@ export function TrustCenterAccessEditForm(props: TrustCenterAccessEditFormProps)
   });
 
   const handleSubmit = editForm.handleSubmit(async (data) => {
-    const { documentIds, reportIds, trustCenterFileIds } = documentAccesses.reduce(
-      (acc, docAccess) => {
-        // TODO status update
-        if (docAccess.document?.id) {
-          acc.documentIds.push(docAccess.document.id);
-        } else if (docAccess.report?.id) {
-          acc.reportIds.push(docAccess.report.id);
-        } else if (docAccess.trustCenterFile?.id) {
-          acc.trustCenterFileIds.push(docAccess.trustCenterFile.id);
-        }
-        return acc;
-      },
-      { documentIds: [] as string[], reportIds: [] as string[], trustCenterFileIds: [] as string[] }
-    );
+    const documents: {id: string, status: TrustCenterDocumentAccessStatus}[] = []
+    const reports: {id: string, status: TrustCenterDocumentAccessStatus}[] = []
+    const trustCenterFiles: {id: string, status: TrustCenterDocumentAccessStatus}[] = [];
+
+    for (const docAccess of documentAccesses) {
+      switch (docAccess.type) {
+        case "document":
+          documents.push({id: docAccess.id, status: docAccess.status});
+          break;
+        case "report":
+          reports.push({id: docAccess.id, status: docAccess.status});
+          break;
+        case "file":
+          trustCenterFiles.push({id: docAccess.id, status: docAccess.status});
+          break;
+      }
+    }
 
     await updateTrustCenterAccess({
       variables: {
@@ -158,14 +126,12 @@ export function TrustCenterAccessEditForm(props: TrustCenterAccessEditFormProps)
           id: access.id,
           name: data.name.trim(),
           active: data.active,
-          documentIds,
-          reportIds,
-          trustCenterFileIds,
+          documents,
+          reports,
+          trustCenterFiles,
         },
       },
-      onSuccess: () => {
-        onSubmit();
-      },
+      onSuccess: onSubmit,
     });
   });
 
@@ -201,7 +167,13 @@ export function TrustCenterAccessEditForm(props: TrustCenterAccessEditFormProps)
           </div>
         </div>
 
-        <TrustCenterDocumentAccessList documentAccesses={documentAccesses} />
+        <TrustCenterDocumentAccessList
+          documentAccesses={documentAccesses}
+          initialStatusByID={initialStatusByID}
+          onGrantAll={handleGrantAllDocumentAccess}
+          onRejectOrRevokeAll={handleRejectOrRevokeAllDocumentAccess}
+          onUpdateStatus={handleUpdateDocumentAccessStatus}
+        />
       </DialogContent>
 
       <DialogFooter>
@@ -212,104 +184,4 @@ export function TrustCenterAccessEditForm(props: TrustCenterAccessEditFormProps)
       </DialogFooter>
     </form>
   );
-}
-
-function TrustCenterDocumentAccessList(props: {
-  documentAccesses: TrustCenterDocumentAccess[];
-}) {
-  const { documentAccesses } = props;
-
-  const { __ } = useTranslate();
-  const formattedDocumentAccesses: NonNullable<ReturnType<typeof getDocumentAccessInfo>>[] = documentAccesses
-    ?.map((docAccess) => getDocumentAccessInfo(docAccess, __)) ?? [];
-
-  const showGrantCTA = formattedDocumentAccesses.some(da => da.status !== "GRANTED");
-  const showRejectCTA = formattedDocumentAccesses.some(da => da.status !== "REJECTED" && da.status !== "REVOKED");
-
-  return (
-    <div>
-      <div className="flex justify-between items-center mb-4">
-        <h4 className="font-medium text-txt-primary">
-          {__("Document Access Permissions")}
-        </h4>
-        {showGrantCTA &&
-          <Button
-            type="button"
-            variant="tertiary"
-            // TODO onClick
-            className="text-xs h-7 min-h-7"
-          >
-            {__("Grant All")}
-          </Button>
-        }
-        {showRejectCTA &&
-          <Button
-            type="button"
-            variant="danger"
-            // TODO onCLick
-            className="text-xs h-7 min-h-7"
-          >
-            {__("Reject All")}
-          </Button>
-        }
-      </div>
-
-      {formattedDocumentAccesses.length > 0 ? (
-        <div className="bg-bg-secondary rounded-lg overflow-hidden">
-          <Table>
-            <Thead>
-              <Tr>
-                <Th>{__("Name")}</Th>
-                <Th>{__("Type")}</Th>
-                <Th>{__("Category")}</Th>
-                <Th>
-                  {__("Access")}
-                </Th>
-                <Th></Th>
-              </Tr>
-            </Thead>
-            <Tbody>
-              {formattedDocumentAccesses.map((info) => {
-                const { variant, name, type, category, id, status } = info;
-
-                return (
-                  <Tr key={id}>
-                    <Td>
-                      <div className="font-medium text-txt-primary">
-                        {name}
-                      </div>
-                    </Td>
-                    <Td>
-                      <Badge variant={variant}>
-                        {type}
-                      </Badge>
-                    </Td>
-                    <Td>
-                      <div className="text-txt-secondary">
-                        {category || "-"}
-                      </div>
-                    </Td>
-                    <Td>
-                      <Badge variant="info">
-                        {status}
-                      </Badge>
-                    </Td>
-                    <Td>
-                      <div className="flex justify-end">
-                        {/* TODO DROPDOWN */}
-                      </div>
-                    </Td>
-                  </Tr>
-                );
-              })}
-            </Tbody>
-          </Table>
-        </div>
-      ) : (
-        <div className="text-center text-txt-tertiary py-8">
-          {__("No documents available")}
-        </div>
-      )}
-    </div>
-  )
 }

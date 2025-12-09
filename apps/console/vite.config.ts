@@ -28,6 +28,9 @@ export default defineConfig({
       "/components": fileURLToPath(
         new URL("./src/components", import.meta.url),
       ),
+      "/coredata": fileURLToPath(
+        new URL("./src/coredata", import.meta.url),
+      ),
       "/hooks": fileURLToPath(new URL("./src/hooks", import.meta.url)),
       "/layouts": fileURLToPath(new URL("./src/layouts", import.meta.url)),
       "/pages": fileURLToPath(new URL("./src/pages", import.meta.url)),

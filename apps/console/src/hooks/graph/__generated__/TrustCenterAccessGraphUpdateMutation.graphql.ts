@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<25b79c235754d47097b2ca28f1f3e9a0>>
+ * @generated SignedSource<<4d6afeeeed479773202c8516eeb63620>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,13 +9,18 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
+export type TrustCenterDocumentAccessStatus = "GRANTED" | "REJECTED" | "REQUESTED" | "REVOKED";
 export type UpdateTrustCenterAccessInput = {
   active?: boolean | null | undefined;
-  documentIds?: ReadonlyArray<string> | null | undefined;
+  documents?: ReadonlyArray<TrustCenterDocumentAccessInput> | null | undefined;
   id: string;
   name?: string | null | undefined;
-  reportIds?: ReadonlyArray<string> | null | undefined;
-  trustCenterFileIds?: ReadonlyArray<string> | null | undefined;
+  reports?: ReadonlyArray<TrustCenterDocumentAccessInput> | null | undefined;
+  trustCenterFiles?: ReadonlyArray<TrustCenterDocumentAccessInput> | null | undefined;
+};
+export type TrustCenterDocumentAccessInput = {
+  id: string;
+  status: TrustCenterDocumentAccessStatus;
 };
 export type TrustCenterAccessGraphUpdateMutation$variables = {
   input: UpdateTrustCenterAccessInput;
