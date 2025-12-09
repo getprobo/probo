@@ -64,7 +64,7 @@ export const trustCenterRoutes = [
         path: "access",
         Fallback: LinkCardSkeleton,
         Component: lazy(
-          () => import("/pages/organizations/trustCenter/TrustCenterAccessTab")
+          () => import("/pages/organizations/trustCenter/TrustCenterAccessTab/TrustCenterAccessTab")
         ),
       },
     ],

@@ -1,0 +1,105 @@
+import { Button, IconCheckmark1, IconCrossLargeX, IconPencil, IconTrashCan, Td, Tr } from "@probo/ui";
+import type { TrustCenterAccess } from "/coredata/TrustCenterAccess";
+import { formatDate } from "@probo/helpers";
+import { use, useCallback, useState } from "react";
+import { PermissionsContext } from "/providers/PermissionsContext";
+import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
+import { deleteTrustCenterAccessMutation } from "/hooks/graph/TrustCenterAccessGraph";
+import { useTranslate } from "@probo/i18n";
+import { TrustCenterAccessEditDialog } from "./TrustCenterAccessEditDialog";
+
+interface TrustCenterAccessItemProps {
+  openDialog: boolean,
+  access: TrustCenterAccess
+  connectionId?: string;
+}
+
+export function TrustCenterAccessItem(props: TrustCenterAccessItemProps) {
+  // TODO openDialog after access creation
+  const { access, connectionId } = props;
+
+  const { __ } = useTranslate();
+  const { isAuthorized } = use(PermissionsContext);
+  const [dialogOpen, setDialogOpen] = useState<boolean>(false)
+
+  const [deleteInvitation, isDeleting] = useMutationWithToasts(deleteTrustCenterAccessMutation, {
+    successMessage: __("Access deleted successfully"),
+    errorMessage: __("Failed to delete access"),
+  });
+
+  const handleDelete = useCallback(async (id: string) => {
+    await deleteInvitation({
+      variables: {
+        input: { id },
+        connections: connectionId ? [connectionId] : [],
+      },
+    });
+  }, [deleteInvitation, connectionId]);
+
+  const isExpired = access.lastTokenExpiresAt ? new Date(access.lastTokenExpiresAt) < new Date() : false;
+
+  return (
+    <>
+      <Tr
+        key={access.id}
+        onClick={() => setDialogOpen(true)}
+        className="cursor-pointer hover:bg-bg-secondary transition-colors"
+      >
+        <Td className="font-medium">{access.name}</Td>
+        <Td>{access.email}</Td>
+        <Td>
+          {formatDate(access.createdAt)}
+        </Td>
+        <Td className={isExpired ? "text-txt-danger" : ""}>
+          {access.lastTokenExpiresAt ? formatDate(access.lastTokenExpiresAt) : "-"}
+        </Td>
+        <Td>
+          <div className="flex justify-center">
+            {access.active ? (
+              <IconCheckmark1 size={16} className="text-txt-success" />
+            ) : (
+              <IconCrossLargeX size={16} className="text-txt-danger" />
+            )}
+          </div>
+        </Td>
+        <Td className="text-center">
+          {access.activeCount}
+        </Td>
+        <Td className="text-center">
+          {access.pendingRequestCount > 0 ? access.pendingRequestCount : ""}
+        </Td>
+        <Td>
+          <div className="flex justify-center">
+            {access.hasAcceptedNonDisclosureAgreement && (
+              <IconCheckmark1 size={16} className="text-txt-success" />
+            )}
+          </div>
+        </Td>
+        <Td noLink width={160} className="text-end">
+          <div
+            className="flex gap-2 justify-end"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {isAuthorized("TrustCenterAccess", "updateTrustCenterAccess") && (
+              <Button
+                variant="secondary"
+                onClick={() => setDialogOpen(true)}
+                icon={IconPencil}
+              />
+            )}
+            {isAuthorized("TrustCenterAccess", "deleteTrustCenterAccess") && (
+              <Button
+                variant="danger"
+                onClick={() => handleDelete(access.id)}
+                disabled={isDeleting}
+                icon={IconTrashCan}
+              />
+            )}
+          </div>
+        </Td>
+      </Tr>
+
+      {dialogOpen && <TrustCenterAccessEditDialog access={access} onClose={() => setDialogOpen(false)} />}
+    </>
+  );
+}
