@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Added
+
+- Add employee page
+
 ### Fixed
 
 - Fix invations never deleted when organization is deleted.
