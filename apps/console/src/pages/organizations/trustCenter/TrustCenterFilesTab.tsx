@@ -38,6 +38,23 @@ type ContextType = {
   };
 };
 
+const acceptedFileTypes = {
+  "application/json": [".json"],
+  "application/msword": [".doc"],
+  "application/pdf": [".pdf"],
+  "application/vnd.ms-excel": [".xls"],
+  "application/vnd.ms-powerpoint": [".ppt"],
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation": [".pptx"],
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"],
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx"],
+  "image/jpeg": [".jpeg", ".jpg"],
+  "image/png": [".png"],
+  "image/svg+xml": [".svg"],
+  "image/webp": [".webp"],
+  "text/csv": [".csv"],
+  "text/markdown": [".md"],
+}
+
 export default function TrustCenterFilesTab() {
   const { __ } = useTranslate();
   const { organization } = useOutletContext<ContextType>();
@@ -80,10 +97,10 @@ export default function TrustCenterFilesTab() {
     if (acceptedFiles.length > 0) {
       const file = acceptedFiles[0];
 
-      if (file.type !== "application/pdf") {
+      if (!Object.keys(acceptedFileTypes).includes(file.type)) {
         createForm.setError("root", {
           type: "manual",
-          message: __("Only PDF files are allowed"),
+          message: __("File type is not allowed"),
         });
         return;
       }
@@ -225,11 +242,11 @@ export default function TrustCenterFilesTab() {
         <form onSubmit={handleCreate}>
           <DialogContent padded className="space-y-4">
             <Dropzone
-              description={__("Upload PDF file (max 10MB)")}
+              description={__("Upload file (max 10MB)")}
               isUploading={isUploading}
               onDrop={handleFileUpload}
               maxSize={10}
-              accept={{ "application/pdf": [".pdf"] }}
+              accept={acceptedFileTypes}
             />
             {uploadedFile && (
               <div className="text-sm text-txt-secondary">
