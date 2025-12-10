@@ -3384,6 +3384,10 @@ func (r *mutationResolver) BulkPublishDocumentVersions(ctx context.Context, inpu
 		},
 	)
 	if err != nil {
+		var errNoChanges *coredata.ErrDocumentVersionNoChanges
+		if errors.As(err, &errNoChanges) {
+			return nil, gqlutils.Invalid(errNoChanges, nil)
+		}
 		panic(fmt.Errorf("cannot bulk publish document versions: %w", err))
 	}
 

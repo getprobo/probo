@@ -138,7 +138,7 @@ const publishDocumentVersionMutation = graphql`
   ) {
     publishDocumentVersion(input: $input) {
       document {
-        id
+        ...DocumentDetailPageDocumentFragment
       }
     }
   }
