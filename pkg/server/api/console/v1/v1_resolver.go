@@ -6516,7 +6516,7 @@ func (r *trustCenterDocumentAccessResolver) Document(ctx context.Context, obj *t
 
 // Report is the resolver for the report field.
 func (r *trustCenterDocumentAccessResolver) Report(ctx context.Context, obj *types.TrustCenterDocumentAccess) (*types.Report, error) {
-	r.MustBeAuthorized(ctx, obj.TrustCenterAccessID, authz.ActionReport)
+	r.MustBeAuthorized(ctx, obj.TrustCenterAccessID, authz.ActionGetReport)
 
 	if obj.ReportID == nil {
 		return nil, nil
@@ -6534,7 +6534,7 @@ func (r *trustCenterDocumentAccessResolver) Report(ctx context.Context, obj *typ
 
 // TrustCenterFile is the resolver for the trustCenterFile field.
 func (r *trustCenterDocumentAccessResolver) TrustCenterFile(ctx context.Context, obj *types.TrustCenterDocumentAccess) (*types.TrustCenterFile, error) {
-	r.MustBeAuthorized(ctx, obj.TrustCenterAccessID, authz.ActionTrustCenterFile)
+	r.MustBeAuthorized(ctx, obj.TrustCenterAccessID, authz.ActionGetTrustCenterFile)
 
 	if obj.TrustCenterFileID == nil {
 		return nil, nil

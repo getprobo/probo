@@ -45,6 +45,7 @@ const (
 	ActionGetCustomDomain               Action = "getCustomDomain"
 	ActionGetDataPrivacyAgreement       Action = "getDataPrivacyAgreement"
 	ActionGetDocument                   Action = "getDocument"
+	ActionGetReport                     Action = "getReport"
 	ActionGetFile                       Action = "getFile"
 	ActionGetFileUrl                    Action = "getFileUrl"
 	ActionGetFramework                  Action = "getFramework"
@@ -351,6 +352,8 @@ var Permissions = map[uint16]map[Action][]Role{
 		ActionActiveCount:               NonEmployeeRoles,
 		ActionPendingRequestCount:       NonEmployeeRoles,
 		ActionAvailableDocumentAccesses: NonEmployeeRoles,
+		ActionGetTrustCenterFile:        NonEmployeeRoles,
+		ActionGetReport:                 NonEmployeeRoles,
 
 		ActionUpdateTrustCenterAccess: EditRoles,
 		ActionDeleteTrustCenterAccess: EditRoles,
