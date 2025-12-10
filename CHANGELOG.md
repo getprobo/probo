@@ -4,9 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.101.1] - 2025-12-10
+
 ### Fix
 
 - Fix missing validation on relation existence
+- Fix permissions for trust center access
 
 ## [0.101.0] - 2025-12-10
 
