@@ -111,6 +111,19 @@ func (s TaskService) Create(
 	err = s.svc.pg.WithTx(
 		ctx,
 		func(conn pg.Conn) error {
+			if req.MeasureID != nil {
+				measure := &coredata.Measure{}
+				if err := measure.LoadByID(ctx, conn, s.svc.scope, *req.MeasureID); err != nil {
+					return fmt.Errorf("cannot load measure: %w", err)
+				}
+			}
+
+			if req.AssignedToID != nil {
+				people := &coredata.People{}
+				if err := people.LoadByID(ctx, conn, s.svc.scope, *req.AssignedToID); err != nil {
+					return fmt.Errorf("cannot load assignee: %w", err)
+				}
+			}
 
 			if err := task.Insert(ctx, conn, s.svc.scope); err != nil {
 				return fmt.Errorf("cannot insert task: %w", err)
@@ -157,6 +170,11 @@ func (s TaskService) Assign(
 		func(conn pg.Conn) error {
 			if err := task.LoadByID(ctx, conn, s.svc.scope, taskID); err != nil {
 				return fmt.Errorf("cannot load task %q: %w", taskID, err)
+			}
+
+			people := &coredata.People{}
+			if err := people.LoadByID(ctx, conn, s.svc.scope, assignedToID); err != nil {
+				return fmt.Errorf("cannot load assignee: %w", err)
 			}
 
 			task.AssignedToID = &assignedToID

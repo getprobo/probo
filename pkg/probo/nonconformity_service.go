@@ -209,9 +209,19 @@ func (s *NonconformityService) Update(
 				nonconformity.CorrectiveAction = *req.CorrectiveAction
 			}
 			if req.OwnerID != nil {
+				people := &coredata.People{}
+				if err := people.LoadByID(ctx, conn, s.svc.scope, *req.OwnerID); err != nil {
+					return fmt.Errorf("cannot load owner: %w", err)
+				}
 				nonconformity.OwnerID = *req.OwnerID
 			}
 			if req.AuditID != nil {
+				if *req.AuditID != nil {
+					audit := &coredata.Audit{}
+					if err := audit.LoadByID(ctx, conn, s.svc.scope, **req.AuditID); err != nil {
+						return fmt.Errorf("cannot load audit: %w", err)
+					}
+				}
 				nonconformity.AuditID = *req.AuditID
 			}
 			if req.DueDate != nil {

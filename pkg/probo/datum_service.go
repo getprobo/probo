@@ -196,6 +196,10 @@ func (s DatumService) Update(
 			datum.DataClassification = *req.DataClassification
 		}
 		if req.OwnerID != nil {
+			people := &coredata.People{}
+			if err := people.LoadByID(ctx, conn, s.svc.scope, *req.OwnerID); err != nil {
+				return fmt.Errorf("cannot load owner: %w", err)
+			}
 			datum.OwnerID = *req.OwnerID
 		}
 		datum.UpdatedAt = now
@@ -245,6 +249,11 @@ func (s DatumService) Create(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(conn pg.Conn) error {
+			people := &coredata.People{}
+			if err := people.LoadByID(ctx, conn, s.svc.scope, req.OwnerID); err != nil {
+				return fmt.Errorf("cannot load owner: %w", err)
+			}
+
 			if err := datum.Insert(ctx, conn, s.svc.scope); err != nil {
 				return fmt.Errorf("cannot insert datum: %w", err)
 			}

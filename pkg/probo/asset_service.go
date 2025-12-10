@@ -189,6 +189,10 @@ func (s AssetService) Update(
 			asset.Amount = *req.Amount
 		}
 		if req.OwnerID != nil {
+			people := &coredata.People{}
+			if err := people.LoadByID(ctx, conn, s.svc.scope, *req.OwnerID); err != nil {
+				return fmt.Errorf("cannot load owner: %w", err)
+			}
 			asset.OwnerID = *req.OwnerID
 		}
 		if req.AssetType != nil {
@@ -243,6 +247,11 @@ func (s AssetService) Create(
 	}
 
 	err := s.svc.pg.WithTx(ctx, func(conn pg.Conn) error {
+		people := &coredata.People{}
+		if err := people.LoadByID(ctx, conn, s.svc.scope, req.OwnerID); err != nil {
+			return fmt.Errorf("cannot load owner: %w", err)
+		}
+
 		if err := asset.Insert(ctx, conn, s.svc.scope); err != nil {
 			return fmt.Errorf("cannot insert asset: %w", err)
 		}
