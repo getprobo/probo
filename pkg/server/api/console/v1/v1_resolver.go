@@ -3406,7 +3406,7 @@ func (r *mutationResolver) BulkExportDocuments(ctx context.Context, input types.
 
 	user := UserFromContext(ctx)
 
-	options := probo.BulkExportOptions{
+	options := probo.ExportPDFOptions{
 		WithWatermark:  input.WithWatermark,
 		WithSignatures: input.WithSignatures,
 		WatermarkEmail: input.WatermarkEmail,

@@ -1034,7 +1034,7 @@ func (s *DocumentService) RequestExport(
 	documentIDs []gid.GID,
 	recipientEmail string,
 	recipientName string,
-	options BulkExportOptions,
+	options ExportPDFOptions,
 ) (*coredata.ExportJob, error) {
 	var exportJobID gid.GID
 	exportJob := &coredata.ExportJob{}
@@ -1442,12 +1442,6 @@ type ExportPDFOptions struct {
 	WithSignatures bool
 }
 
-type BulkExportOptions struct {
-	WithWatermark  bool
-	WatermarkEmail *string
-	WithSignatures bool
-}
-
 func (s *DocumentService) ExportPDF(
 	ctx context.Context,
 	documentVersionID gid.GID,
@@ -1512,7 +1506,7 @@ func (s *DocumentService) BuildAndUploadExport(ctx context.Context, exportJobID 
 				return fmt.Errorf("cannot get export arguments: %w", err)
 			}
 
-			exportOptions := BulkExportOptions{
+			exportOptions := ExportPDFOptions{
 				WithWatermark:  exportArgs.WithWatermark,
 				WatermarkEmail: exportArgs.WatermarkEmail,
 				WithSignatures: exportArgs.WithSignatures,
@@ -1719,7 +1713,7 @@ func (s *DocumentService) Export(
 	ctx context.Context,
 	documentIDs []gid.GID,
 	file io.Writer,
-	options BulkExportOptions,
+	options ExportPDFOptions,
 ) (err error) {
 	archive := zip.NewWriter(file)
 	defer func() {
@@ -1742,8 +1736,6 @@ func (s *DocumentService) Export(
 					return fmt.Errorf("cannot load document version for %q: %w", documentID, err)
 				}
 
-				pdfOptions := ExportPDFOptions(options)
-
 				exportedPDF, err := exportDocumentPDF(
 					ctx,
 					s.svc,
@@ -1751,7 +1743,7 @@ func (s *DocumentService) Export(
 					conn,
 					s.svc.scope,
 					documentVersion.ID,
-					pdfOptions,
+					options,
 				)
 				if err != nil {
 					return fmt.Errorf("cannot export document PDF for %q: %w", documentID, err)
