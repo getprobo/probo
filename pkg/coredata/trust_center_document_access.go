@@ -667,7 +667,7 @@ WHERE
 	return nil
 }
 
-func RejectByDocumentIDs(
+func RejectOrRevokeByDocumentIDs(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
@@ -676,7 +676,11 @@ func RejectByDocumentIDs(
 ) error {
 	q := `
 UPDATE trust_center_document_accesses
-SET status = 'REJECTED'::trust_center_document_access_status
+SET
+  status = CASE
+    WHEN status = 'GRANTED'::trust_center_document_access_status THEN 'REVOKED'::trust_center_document_access_status
+    ELSE 'REJECTED'::trust_center_document_access_status
+  END
 WHERE
   %s
   AND trust_center_access_id = @trust_center_access_id
@@ -733,7 +737,7 @@ WHERE
 	return nil
 }
 
-func RejectByReportIDs(
+func RejectOrRevokeByReportIDs(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
@@ -742,7 +746,11 @@ func RejectByReportIDs(
 ) error {
 	q := `
 UPDATE trust_center_document_accesses
-SET status = 'REJECTED'::trust_center_document_access_status
+SET
+  status = CASE
+    WHEN status = 'GRANTED'::trust_center_document_access_status THEN 'REVOKED'::trust_center_document_access_status
+    ELSE 'REJECTED'::trust_center_document_access_status
+  END
 WHERE
   %s
   AND trust_center_access_id = @trust_center_access_id
@@ -1044,7 +1052,7 @@ ON CONFLICT DO NOTHING
 		"trust_center_document_access_entity_type": TrustCenterDocumentAccessEntityType,
 		"trust_center_access_id":                   trustCenterAccessID,
 		"report_ids":                               reportIDs,
-		"requested":                                status,
+		"status":                                   status,
 		"created_at":                               createdAt,
 		"updated_at":                               createdAt,
 	}
@@ -1141,7 +1149,7 @@ WHERE
 	return nil
 }
 
-func RejectByTrustCenterFileIDs(
+func RejectOrRevokeByTrustCenterFileIDs(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
@@ -1150,7 +1158,11 @@ func RejectByTrustCenterFileIDs(
 ) error {
 	q := `
 UPDATE trust_center_document_accesses
-SET status = 'REJECTED'::trust_center_document_access_status
+SET
+  status = CASE
+    WHEN status = 'GRANTED'::trust_center_document_access_status THEN 'REVOKED'::trust_center_document_access_status
+    ELSE 'REJECTED'::trust_center_document_access_status
+  END
 WHERE
   %s
   AND trust_center_access_id = @trust_center_access_id

@@ -62,36 +62,57 @@
     }{{range .Documents}},
     {
       "type": "section",
-      "text": {
-        "type": "mrkdwn",
-        "text": "<https://{{$.Domain}}/organizations/{{$.OrganizationID}}/documents/{{.ID}}|{{jsonEscape .Title}}>"
-      },
+      "fields": [
+        {
+          "type": "mrkdwn",
+          "text": "<https://{{$.Domain}}/organizations/{{$.OrganizationID}}/documents/{{.ID}}|{{jsonEscape .Title}}>"
+        },
+        {
+          "type": "mrkdwn",
+          {{if eq .Status "GRANTED"}}
+          "text": "<https://{{$.Domain}}/organizations/{{$.OrganizationID}}/trust-center/access|✓ Granted>"
+          {{else if eq .Status "REJECTED"}}
+          "text": "✗ Rejected"
+          {{else if eq .Status "REVOKED"}}
+          "text": "✗ Revoked"
+          {{else}}
+          "text": "Requested"
+          {{end}}
+        }
+      ],
       "accessory": {{if eq .Status "GRANTED"}}{
         "type": "button",
         "text": {
           "type": "plain_text",
-          "text": "✓ Granted"
+          "text": "Revoke"
         },
-        "url": "https://{{$.Domain}}/organizations/{{$.OrganizationID}}/trust-center/access"
-      }{{else if eq .Status "REJECTED"}}{
-        "type": "button",
-        "text": {
-          "type": "plain_text",
-          "text": "✗ Rejected"
-        },
-        "url": "https://{{$.Domain}}/organizations/{{$.OrganizationID}}/trust-center/access"
-      }{{else if eq .Status "REVOKED"}}{
-        "type": "button",
-        "text": {
-          "type": "plain_text",
-          "text": "✗ Revoked"
-        },
-        "url": "https://{{$.Domain}}/organizations/{{$.OrganizationID}}/trust-center/access"
+        "action_id": "reject_document",
+        "value": "{{.ID}}",
+        "style": "danger"
       }{{else if eq .Status "REQUESTED"}}{
+        "type": "overflow",
+        "options": [
+          {
+            "text": {
+              "type": "plain_text",
+              "text": "Accept"
+            },
+            "value": "accept/{{.ID}}"
+          },
+          {
+            "text": {
+              "type": "plain_text",
+              "text": "Reject"
+            },
+            "value": "reject/{{.ID}}"
+          }
+        ],
+        "action_id": "handle_document"
+      }{{else}}{
         "type": "button",
         "text": {
           "type": "plain_text",
-          "text": "Accept"
+          "text": "Grant"
         },
         "action_id": "accept_document",
         "value": "{{.ID}}",
@@ -110,22 +131,57 @@
     }{{range .Reports}},
     {
       "type": "section",
-      "text": {
-        "type": "mrkdwn",
-        "text": "<https://{{$.Domain}}/organizations/{{$.OrganizationID}}/audits/{{.AuditID}}|{{jsonEscape .Title}}>"
-      },
-      "accessory": {{if .Granted}}{
+      "fields": [
+        {
+          "type": "mrkdwn",
+          "text": "<https://{{$.Domain}}/organizations/{{$.OrganizationID}}/audits/{{.AuditID}}|{{jsonEscape .Title}}>"
+        },
+        {
+          "type": "mrkdwn",
+          {{if eq .Status "GRANTED"}}
+          "text": "<https://{{$.Domain}}/organizations/{{$.OrganizationID}}/trust-center/access|✓ Granted>"
+          {{else if eq .Status "REJECTED"}}
+          "text": "✗ Rejected"
+          {{else if eq .Status "REVOKED"}}
+          "text": "✗ Revoked"
+          {{else}}
+          "text": "Requested"
+          {{end}}
+        }
+      ],
+      "accessory": {{if eq .Status "GRANTED"}}{
         "type": "button",
         "text": {
           "type": "plain_text",
-          "text": "✓ Granted"
+          "text": "Revoke"
         },
-        "url": "https://{{$.Domain}}/organizations/{{$.OrganizationID}}/trust-center/access"
+        "action_id": "reject_report",
+        "value": "{{.ID}}",
+        "style": "danger"
+      }{{else if eq .Status "REQUESTED"}}{
+        "type": "overflow",
+        "options": [
+          {
+            "text": {
+              "type": "plain_text",
+              "text": "Accept"
+            },
+            "value": "accept/{{.ID}}"
+          },
+          {
+            "text": {
+              "type": "plain_text",
+              "text": "Reject"
+            },
+            "value": "reject/{{.ID}}"
+          }
+        ],
+        "action_id": "handle_report"
       }{{else}}{
         "type": "button",
         "text": {
           "type": "plain_text",
-          "text": "Accept"
+          "text": "Revoke"
         },
         "action_id": "accept_report",
         "value": "{{.ID}}",
@@ -144,22 +200,57 @@
     }{{range .Files}},
     {
       "type": "section",
-      "text": {
-        "type": "mrkdwn",
-        "text": "<https://{{$.Domain}}/organizations/{{$.OrganizationID}}/trust-center/files|{{jsonEscape .Name}}>{{if .Category}} ({{jsonEscape .Category}}){{end}}"
-      },
-      "accessory": {{if .Granted}}{
+      "fields": [
+        {
+          "type": "mrkdwn",
+          "text": "<https://{{$.Domain}}/organizations/{{$.OrganizationID}}/trust-center/files|{{jsonEscape .Name}}>{{if .Category}} ({{jsonEscape .Category}}){{end}}"
+        },
+        {
+          "type": "mrkdwn",
+          {{if eq .Status "GRANTED"}}
+          "text": "<https://{{$.Domain}}/organizations/{{$.OrganizationID}}/trust-center/access|✓ Granted>"
+          {{else if eq .Status "REJECTED"}}
+          "text": "✗ Rejected"
+          {{else if eq .Status "REVOKED"}}
+          "text": "✗ Revoked"
+          {{else}}
+          "text": "Requested"
+          {{end}}
+        }
+      ],
+      "accessory": {{if eq .Status "GRANTED"}}{
         "type": "button",
         "text": {
           "type": "plain_text",
-          "text": "✓ Granted"
+          "text": "Revoke"
         },
-        "url": "https://{{$.Domain}}/organizations/{{$.OrganizationID}}/trust-center/access"
+        "action_id": "reject_file",
+        "value": "{{.ID}}",
+        "style": "danger"
+      }{{else if eq .Status "REQUESTED"}}{
+        "type": "overflow",
+        "options": [
+          {
+            "text": {
+              "type": "plain_text",
+              "text": "Accept"
+            },
+            "value": "accept/{{.ID}}"
+          },
+          {
+            "text": {
+              "type": "plain_text",
+              "text": "Reject"
+            },
+            "value": "reject/{{.ID}}"
+          }
+        ],
+        "action_id": "handle_file"
       }{{else}}{
         "type": "button",
         "text": {
           "type": "plain_text",
-          "text": "Accept"
+          "text": "Grant"
         },
         "action_id": "accept_file",
         "value": "{{.ID}}",

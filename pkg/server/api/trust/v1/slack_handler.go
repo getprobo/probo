@@ -17,7 +17,6 @@ package trust_v1
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -25,6 +24,7 @@ import (
 
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/slack"
 	"go.probo.inc/probo/pkg/trust"
@@ -34,8 +34,11 @@ type (
 	SlackInteractivePayload struct {
 		ResponseURL string `json:"response_url"`
 		Actions     []struct {
-			ActionID string `json:"action_id"`
-			Value    string `json:"value"`
+			ActionID       string `json:"action_id"`
+			Value          string `json:"value"`
+			SelectedOption struct {
+				Value string `json:"value"`
+			} `json:"selected_option"`
 		} `json:"actions"`
 		Container struct {
 			MessageTS string `json:"message_ts"`
@@ -47,6 +50,11 @@ type (
 		Success bool   `json:"success"`
 		Message string `json:"message,omitempty"`
 	}
+)
+
+const (
+	StatusAccept = "accept"
+	StatusReject = "reject"
 )
 
 func slackHandler(trustSvc *trust.Service, slackSigningSecret string, logger *log.Logger) http.HandlerFunc {
@@ -102,8 +110,9 @@ func slackHandler(trustSvc *trust.Service, slackSigningSecret string, logger *lo
 			httpserver.RenderJSON(w, http.StatusOK, SlackInteractiveResponse{Success: true, Message: "no action required"})
 			return
 		}
+
 		action := slackPayload.Actions[0]
-		if action.Value == "" {
+		if action.Value == "" && action.SelectedOption.Value == "" {
 			httpserver.RenderJSON(w, http.StatusOK, SlackInteractiveResponse{Success: true, Message: "no action required"})
 			return
 		}
@@ -149,9 +158,10 @@ func slackHandler(trustSvc *trust.Service, slackSigningSecret string, logger *lo
 		var documentIDs []gid.GID
 		var reportIDs []gid.GID
 		var fileIDs []gid.GID
+		var statusAction string
 
-		switch action.ActionID {
-		case "accept_all", "reject_all":
+		// accept_all, reject_all
+		if strings.HasSuffix(action.ActionID, "_all") {
 			currentMessageId, err := gid.ParseGID(action.Value)
 			if err != nil {
 				httpserver.RenderJSON(w, http.StatusBadRequest, SlackInteractiveResponse{Success: false, Message: "invalid message ID"})
@@ -164,36 +174,57 @@ func slackHandler(trustSvc *trust.Service, slackSigningSecret string, logger *lo
 				httpserver.RenderJSON(w, http.StatusInternalServerError, SlackInteractiveResponse{Success: false, Message: "internal server error"})
 				return
 			}
-		case "accept_document", "reject_document":
-			docID, err := gid.ParseGID(action.Value)
-			if err != nil {
-				httpserver.RenderJSON(w, http.StatusBadRequest, SlackInteractiveResponse{Success: false, Message: "invalid document ID"})
+
+			if strings.HasPrefix(action.ActionID, "accept_") {
+				statusAction = "accept"
+			} else {
+				statusAction = "reject"
+			}
+		} else {
+			var gID gid.GID
+
+			// handle_<document|report|file> is used in an overflow menu (a select) to choose between grant and reject on requested accesses
+			if strings.HasPrefix(action.ActionID, "handle_") {
+				// action value is the select option value. <accept|reject>-<ID>
+				params := strings.Split(action.SelectedOption.Value, "/")
+				statusAction = params[0]
+
+				gID, err = gid.ParseGID(params[1])
+				if err != nil {
+					httpserver.RenderJSON(w, http.StatusBadRequest, SlackInteractiveResponse{Success: false, Message: "invalid ID"})
+					return
+				}
+			} else {
+				// accept_<document|report|file>, reject_<document|report|file>, revoke_<document|report|file>
+				gID, err = gid.ParseGID(action.Value)
+				if err != nil {
+					httpserver.RenderJSON(w, http.StatusBadRequest, SlackInteractiveResponse{Success: false, Message: "invalid ID"})
+					return
+				}
+
+				if strings.HasPrefix(action.ActionID, "accept_") {
+					statusAction = StatusAccept
+				} else {
+					statusAction = StatusReject
+				}
+			}
+
+			switch gID.EntityType() {
+			case coredata.DocumentEntityType:
+				documentIDs = []gid.GID{gID}
+			case coredata.ReportEntityType:
+				reportIDs = []gid.GID{gID}
+			case coredata.TrustCenterFileEntityType:
+				fileIDs = []gid.GID{gID}
+			default:
+				logger.ErrorCtx(ctx, "unknown entity type", log.Error(err))
+				httpserver.RenderJSON(w, http.StatusInternalServerError, SlackInteractiveResponse{Success: false, Message: "internal server error"})
 				return
 			}
-			documentIDs = []gid.GID{docID}
-
-		case "accept_report", "reject_report":
-			repID, err := gid.ParseGID(action.Value)
-			if err != nil {
-				httpserver.RenderJSON(w, http.StatusBadRequest, SlackInteractiveResponse{Success: false, Message: "invalid report ID"})
-				return
-			}
-			reportIDs = []gid.GID{repID}
-
-		case "accept_file", "reject_file":
-			fileID, err := gid.ParseGID(action.Value)
-			if err != nil {
-				httpserver.RenderJSON(w, http.StatusBadRequest, SlackInteractiveResponse{Success: false, Message: "invalid file ID"})
-				return
-			}
-			fileIDs = []gid.GID{fileID}
-
-		default:
-			httpserver.RenderJSON(w, http.StatusBadRequest, SlackInteractiveResponse{Success: false, Message: fmt.Sprintf("unknown action: %s", action.ActionID)})
-			return
 		}
 
-		if strings.HasPrefix(action.ActionID, "accept_") {
+		switch statusAction {
+		case StatusAccept:
 			if err := tenantSvc.TrustCenterAccesses.GrantByIDs(
 				ctx,
 				initialSlackMessage.OrganizationID,
@@ -206,10 +237,8 @@ func slackHandler(trustSvc *trust.Service, slackSigningSecret string, logger *lo
 				httpserver.RenderJSON(w, http.StatusInternalServerError, SlackInteractiveResponse{Success: false, Message: "internal server error"})
 				return
 			}
-		}
-
-		if strings.HasPrefix(action.ActionID, "reject_") {
-			if err := tenantSvc.TrustCenterAccesses.RejectByIDs(
+		case StatusReject:
+			if err := tenantSvc.TrustCenterAccesses.RejectOrRevokeByIDs(
 				ctx,
 				initialSlackMessage.OrganizationID,
 				requesterEmail,
@@ -221,6 +250,10 @@ func slackHandler(trustSvc *trust.Service, slackSigningSecret string, logger *lo
 				httpserver.RenderJSON(w, http.StatusInternalServerError, SlackInteractiveResponse{Success: false, Message: "internal server error"})
 				return
 			}
+		default:
+			logger.ErrorCtx(ctx, "unknown status action access", log.Error(err))
+			httpserver.RenderJSON(w, http.StatusInternalServerError, SlackInteractiveResponse{Success: false, Message: "internal server error"})
+			return
 		}
 
 		if err := tenantSvc.SlackMessages.UpdateSlackAccessMessage(
