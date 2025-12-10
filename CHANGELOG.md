@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Fix
+
+- Fix missing validation on relation existence
+
 ## [0.101.0] - 2025-12-10
 
 ### Added
