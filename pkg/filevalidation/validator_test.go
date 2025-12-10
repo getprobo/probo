@@ -60,7 +60,7 @@ func TestNewValidator(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			v := NewValidator(tc.categories...)
+			v := NewValidator(WithCategories(tc.categories...))
 
 			// Test expected mime types are allowed
 			for _, mime := range tc.expectedMimes {
@@ -123,7 +123,7 @@ func TestValidate(t *testing.T) {
 	}{
 		{
 			name:        "Valid PDF file",
-			validator:   NewValidator(CategoryDocument),
+			validator:   NewValidator(WithCategories(CategoryDocument)),
 			filename:    "test.pdf",
 			contentType: "application/pdf",
 			fileSize:    1024 * 1024, // 1MB
@@ -140,7 +140,7 @@ func TestValidate(t *testing.T) {
 		},
 		{
 			name:        "Disallowed content type",
-			validator:   NewValidator(CategoryDocument),
+			validator:   NewValidator(WithCategories(CategoryDocument)),
 			filename:    "test.jpg",
 			contentType: "image/jpeg",
 			fileSize:    1024 * 1024,
@@ -158,7 +158,7 @@ func TestValidate(t *testing.T) {
 		},
 		{
 			name:        "Disallowed file extension",
-			validator:   NewValidator(CategoryDocument),
+			validator:   NewValidator(WithCategories(CategoryDocument)),
 			filename:    "test.exe",
 			contentType: "application/octet-stream",
 			fileSize:    1024,
@@ -176,7 +176,7 @@ func TestValidate(t *testing.T) {
 		},
 		{
 			name:        "Valid image file",
-			validator:   NewValidator(CategoryImage),
+			validator:   NewValidator(WithCategories(CategoryImage)),
 			filename:    "test.jpg",
 			contentType: "image/jpeg",
 			fileSize:    1024 * 1024,
@@ -184,7 +184,7 @@ func TestValidate(t *testing.T) {
 		},
 		{
 			name:        "Valid with multiple categories",
-			validator:   NewValidator(CategoryImage, CategoryDocument),
+			validator:   NewValidator(WithCategories(CategoryImage, CategoryDocument)),
 			filename:    "test.jpg",
 			contentType: "image/jpeg",
 			fileSize:    1024 * 1024,
@@ -315,7 +315,7 @@ func TestFileCategories(t *testing.T) {
 
 	for _, tc := range categoryTests {
 		t.Run(tc.category, func(t *testing.T) {
-			v := NewValidator(tc.category)
+			v := NewValidator(WithCategories(tc.category))
 
 			// Test that the validator accepts files of this category
 			err := v.Validate("test"+tc.validExt, tc.validMimeType, 1024)
@@ -381,7 +381,7 @@ func TestMultipleExtensionsPerMimeType(t *testing.T) {
 	// Test MIME types that have multiple allowed extensions
 	for _, fileType := range FileTypes {
 		if len(fileType.Extensions) > 1 {
-			v := NewValidator(fileType.Category)
+			v := NewValidator(WithCategories(fileType.Category))
 
 			// All extensions for this MIME type should be valid
 			for _, ext := range fileType.Extensions {
@@ -434,7 +434,7 @@ func BenchmarkValidate(b *testing.B) {
 // BenchmarkNewValidator benchmarks the NewValidator function
 func BenchmarkNewValidator(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		_ = NewValidator(CategoryDocument, CategoryImage)
+		_ = NewValidator(WithCategories(CategoryDocument, CategoryImage))
 	}
 }
 

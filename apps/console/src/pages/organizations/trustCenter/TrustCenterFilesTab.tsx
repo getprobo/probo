@@ -39,20 +39,32 @@ type ContextType = {
 };
 
 const acceptedFileTypes = {
+  "application/csv": [".csv"],
   "application/json": [".json"],
   "application/msword": [".doc"],
   "application/pdf": [".pdf"],
   "application/vnd.ms-excel": [".xls"],
   "application/vnd.ms-powerpoint": [".ppt"],
+  "application/vnd.oasis.opendocument.presentation": [".odp"],
+  "application/vnd.oasis.opendocument.spreadsheet": [".ods"],
+  "application/vnd.oasis.opendocument.text": [".odt"],
   "application/vnd.openxmlformats-officedocument.presentationml.presentation": [".pptx"],
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"],
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx"],
+  "application/yaml": [".yaml", ".yml"],
+  "image/gif": [".gif"],
   "image/jpeg": [".jpeg", ".jpg"],
   "image/png": [".png"],
   "image/svg+xml": [".svg"],
   "image/webp": [".webp"],
   "text/csv": [".csv"],
+  "text/json": [".json"],
   "text/markdown": [".md"],
+  "text/plain": [".txt"],
+  "text/uri-list; charset=utf-8": [".uri"],
+  "text/uri-list": [".uri"],
+  "text/x-log": [".log"],
+  "text/yaml": [".yaml", ".yml"],
 }
 
 export default function TrustCenterFilesTab() {

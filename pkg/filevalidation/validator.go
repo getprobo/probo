@@ -105,35 +105,55 @@ type FileValidator struct {
 	Categories []string
 }
 
+type Opt func(v *FileValidator) *FileValidator
+
+func WithCategories(categories ...string) Opt {
+	return func(v *FileValidator) *FileValidator {
+		v.Categories = categories
+
+		categoryMap := make(map[string]bool)
+		for _, category := range categories {
+			categoryMap[category] = true
+		}
+
+		for _, fileType := range FileTypes {
+			if categoryMap[fileType.Category] {
+				v.AllowedMimeTypes[fileType.MimeType] = true
+				for _, ext := range fileType.Extensions {
+					if v.AllowedExtensions[ext] == nil {
+						v.AllowedExtensions[ext] = []string{}
+					}
+					v.AllowedExtensions[ext] = append(v.AllowedExtensions[ext], fileType.MimeType)
+				}
+			}
+		}
+
+		return v
+	}
+}
+
+func WithMaxFileSize(maxFileSize int64) Opt {
+	return func(v *FileValidator) *FileValidator {
+		v.MaxFileSize = maxFileSize
+
+		return v
+	}
+}
+
 // NewValidator creates a new file validator using supported file types
-func NewValidator(categories ...string) *FileValidator {
+func NewValidator(opts ...Opt) *FileValidator {
 	v := &FileValidator{
 		MaxFileSize:       DefaultMaxFileSize,
 		AllowedMimeTypes:  make(map[string]bool),
 		AllowedExtensions: make(map[string][]string),
-		Categories:        categories,
 	}
 
-	if len(categories) == 0 {
+	for _, opt := range opts {
+		v = opt(v)
+	}
+
+	if len(v.Categories) == 0 {
 		for _, fileType := range FileTypes {
-			v.AllowedMimeTypes[fileType.MimeType] = true
-			for _, ext := range fileType.Extensions {
-				if v.AllowedExtensions[ext] == nil {
-					v.AllowedExtensions[ext] = []string{}
-				}
-				v.AllowedExtensions[ext] = append(v.AllowedExtensions[ext], fileType.MimeType)
-			}
-		}
-		return v
-	}
-
-	categoryMap := make(map[string]bool)
-	for _, category := range categories {
-		categoryMap[category] = true
-	}
-
-	for _, fileType := range FileTypes {
-		if categoryMap[fileType.Category] {
 			v.AllowedMimeTypes[fileType.MimeType] = true
 			for _, ext := range fileType.Extensions {
 				if v.AllowedExtensions[ext] == nil {

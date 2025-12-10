@@ -180,13 +180,15 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 	tenantService.Evidences = &EvidenceService{
 		svc: tenantService,
 		fileValidator: filevalidation.NewValidator(
-			filevalidation.CategoryDocument,
-			filevalidation.CategorySpreadsheet,
-			filevalidation.CategoryPresentation,
-			filevalidation.CategoryData,
-			filevalidation.CategoryText,
-			filevalidation.CategoryImage,
-			filevalidation.CategoryVideo,
+			filevalidation.WithCategories(
+				filevalidation.CategoryDocument,
+				filevalidation.CategorySpreadsheet,
+				filevalidation.CategoryPresentation,
+				filevalidation.CategoryData,
+				filevalidation.CategoryText,
+				filevalidation.CategoryImage,
+				filevalidation.CategoryVideo,
+			),
 		),
 	}
 	tenantService.Peoples = &PeopleService{svc: tenantService}
@@ -198,12 +200,17 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 	tenantService.Organizations = &OrganizationService{
 		svc: tenantService,
 		fileValidator: filevalidation.NewValidator(
-			filevalidation.CategoryImage,
+			filevalidation.WithCategories(filevalidation.CategoryImage),
 		),
 	}
 	tenantService.Controls = &ControlService{svc: tenantService}
 	tenantService.Risks = &RiskService{svc: tenantService}
-	tenantService.VendorComplianceReports = &VendorComplianceReportService{svc: tenantService, fileValidator: filevalidation.NewValidator(filevalidation.CategoryDocument)}
+	tenantService.VendorComplianceReports = &VendorComplianceReportService{
+		svc: tenantService,
+		fileValidator: filevalidation.NewValidator(
+			filevalidation.WithCategories(filevalidation.CategoryDocument),
+		),
+	}
 	tenantService.VendorBusinessAssociateAgreements = &VendorBusinessAssociateAgreementService{svc: tenantService}
 	tenantService.VendorContacts = &VendorContactService{svc: tenantService}
 	tenantService.VendorDataPrivacyAgreements = &VendorDataPrivacyAgreementService{svc: tenantService}
@@ -219,42 +226,17 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 	tenantService.TrustCenterReferences = &TrustCenterReferenceService{svc: tenantService}
 	tenantService.TrustCenterFiles = &TrustCenterFileService{
 		svc: tenantService,
-		fileValidator: &filevalidation.FileValidator{
-			MaxFileSize: 10 * 1024 * 1024, // 10MB
-			AllowedMimeTypes: map[string]bool{
-				"application/json":              true,
-				"application/msword":            true,
-				"application/pdf":               true,
-				"application/vnd.ms-excel":      true,
-				"application/vnd.ms-powerpoint": true,
-				"application/vnd.openxmlformats-officedocument.presentationml.presentation": true,
-				"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":         true,
-				"application/vnd.openxmlformats-officedocument.wordprocessingml.document":   true,
-				"image/jpeg":    true,
-				"image/png":     true,
-				"image/svg+xml": true,
-				"image/webp":    true,
-				"text/csv":      true,
-				"text/markdown": true,
-			},
-			AllowedExtensions: map[string][]string{
-				".csv":  {"text/csv"},
-				".doc":  {"application/msword"},
-				".docx": {"application/vnd.openxmlformats-officedocument.wordprocessingml.document"},
-				".jpeg": {"image/jpeg"},
-				".jpg":  {"image/jpeg"},
-				".json": {"application/json"},
-				".md":   {"text/markdown"},
-				".pdf":  {"application/pdf"},
-				".png":  {"image/png"},
-				".ppt":  {"application/vnd.ms-powerpoint"},
-				".pptx": {"application/vnd.openxmlformats-officedocument.presentationml.presentation"},
-				".svg":  {"image/svg+xml"},
-				".webp": {"image/webp"},
-				".xls":  {"application/vnd.ms-excel"},
-				".xlsx": {"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"},
-			},
-		},
+		fileValidator: filevalidation.NewValidator(
+			filevalidation.WithCategories(
+				filevalidation.CategoryData,
+				filevalidation.CategoryDocument,
+				filevalidation.CategoryImage,
+				filevalidation.CategoryPresentation,
+				filevalidation.CategorySpreadsheet,
+				filevalidation.CategoryText,
+			),
+			filevalidation.WithMaxFileSize(10*1024*1024), // 10MB
+		),
 	}
 	tenantService.Nonconformities = &NonconformityService{svc: tenantService}
 	tenantService.Obligations = &ObligationService{svc: tenantService}
