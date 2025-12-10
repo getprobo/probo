@@ -198,10 +198,10 @@ export default function TrustCenterAccessTab() {
             <Tbody>
               {accesses.map((access) => (
                 <TrustCenterAccessItem
-                  key={access.id}
+                  key={`${access.id}-${editingAccess?.id === access.id}`}
                   access={access}
                   connectionId={trustCenterData?.accesses?.__id}
-                  openDialog={editingAccess?.id === access.id}
+                  dialogOpen={editingAccess?.id === access.id}
                 />
               ))}
             </Tbody>

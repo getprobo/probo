@@ -9,18 +9,17 @@ import { useTranslate } from "@probo/i18n";
 import { TrustCenterAccessEditDialog } from "./TrustCenterAccessEditDialog";
 
 interface TrustCenterAccessItemProps {
-  openDialog: boolean,
   access: TrustCenterAccess
   connectionId?: string;
+  dialogOpen: boolean,
 }
 
 export function TrustCenterAccessItem(props: TrustCenterAccessItemProps) {
-  // TODO openDialog after access creation
-  const { access, connectionId } = props;
+  const { access, connectionId, dialogOpen: initialDialogOpen } = props;
 
   const { __ } = useTranslate();
   const { isAuthorized } = use(PermissionsContext);
-  const [dialogOpen, setDialogOpen] = useState<boolean>(false)
+  const [dialogOpen, setDialogOpen] = useState<boolean>(initialDialogOpen)
 
   const [deleteInvitation, isDeleting] = useMutationWithToasts(deleteTrustCenterAccessMutation, {
     successMessage: __("Access deleted successfully"),
