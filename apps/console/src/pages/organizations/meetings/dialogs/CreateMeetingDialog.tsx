@@ -82,7 +82,7 @@ export function CreateMeetingDialog({ children, connectionId }: Props) {
   return (
     <Dialog ref={dialogRef} trigger={children} title={__("Create meeting")}>
       <form onSubmit={onSubmit}>
-        <DialogContent>
+        <DialogContent padded className="space-y-4">
           <Field label={__("Meeting name")} required>
             <Input
               {...register("name")}
