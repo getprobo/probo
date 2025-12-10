@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.101.0] - 2025-12-10
+
+### Added
+
+- Enable svg support for company logos
+
 ## [0.100.0] - 2025-12-09
 
 ### Changed
