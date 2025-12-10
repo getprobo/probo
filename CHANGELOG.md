@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.102.0] - 2025-12-10
+
+### Added
+
+- New mime types for truct center files
+
 ## [0.101.1] - 2025-12-10
 
 ### Fix
