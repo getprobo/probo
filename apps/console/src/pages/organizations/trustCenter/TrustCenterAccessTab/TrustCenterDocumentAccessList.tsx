@@ -29,7 +29,7 @@ export function TrustCenterDocumentAccessList(props: TrustCenterDocumentAccessLi
           {showGrantCTA &&
             <Button
               type="button"
-              variant="success"
+              variant="quaternary"
               onClick={onGrantAll}
               className="text-xs h-7 min-h-7"
             >
@@ -93,7 +93,7 @@ export function TrustCenterDocumentAccessList(props: TrustCenterDocumentAccessLi
                       {docAccess.status !== "GRANTED" &&
                         <Button
                           type="button"
-                          variant="success"
+                          variant="quaternary"
                           onClick={() => onUpdateStatus(docAccess, "GRANTED")}
                           className="text-xs h-7 min-h-7"
                         >

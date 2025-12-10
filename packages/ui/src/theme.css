@@ -61,7 +61,6 @@
     --color-subtle-hover: #0027000d;
     --color-highlight-hover: #022a0213;
     --color-accent-hover: #1e2c1c;
-    --color-success-hover: #1e2c1c;
     --color-active-hover: #d7f2b0;
     --color-danger-hover: #cf393f;
 
@@ -73,7 +72,6 @@
     --color-subtle-pressed: #022a0213;
     --color-highlight-pressed: #02210219;
     --color-accent-pressed: #293a25;
-    --color-success-pressed: #293a25;
     --color-active-pressed: #c9e894;
     --color-danger-pressed: #c6373c;
 
@@ -199,7 +197,6 @@
         --color-highlight: rgba(214, 251, 196, 0.06);
         --color-active: rgba(239, 254, 226, 0.08);
         --color-accent: #c4f042;
-        --color-success-plain: #c4f042;
         --color-danger: rgba(254, 58, 61, 0.13);
         --color-danger-plain: rgba(254, 58, 61, 0.13);
         --color-danger-dark: rgba(255, 89, 95, 0.94);
@@ -228,7 +225,6 @@
         --color-subtle-hover: rgba(214, 251, 196, 0.06);
         --color-highlight-hover: rgba(233, 254, 223, 0.1);
         --color-accent-hover: rgba(183, 255, 50, 0.82);
-        --color-success-hover: rgba(183, 255, 50, 0.82);
         --color-active-hover: rgba(233, 254, 223, 0.1);
         --color-danger-hover: rgba(254, 58, 61, 0.7);
 
@@ -240,7 +236,6 @@
         --color-subtle-pressed: rgba(239, 254, 226, 0.08);
         --color-highlight-pressed: rgba(236, 254, 229, 0.13);
         --color-accent-pressed: rgba(209, 255, 70, 0.94);
-        --color-success-pressed: rgba(209, 255, 70, 0.94);
         --color-active-pressed: rgba(236, 254, 229, 0.13);
         --color-danger-pressed: rgba(254, 58, 61, 0.5);
     }
