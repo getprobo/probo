@@ -140,7 +140,6 @@ func WithMaxFileSize(maxFileSize int64) Opt {
 	}
 }
 
-// NewValidator creates a new file validator using supported file types
 func NewValidator(opts ...Opt) *FileValidator {
 	v := &FileValidator{
 		MaxFileSize:       DefaultMaxFileSize,
