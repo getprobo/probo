@@ -51,6 +51,7 @@ type Props<Params> = {
   connectionId: string;
   disabled?: boolean;
   variant?: "card" | "table";
+  readOnly?: boolean;
 
   params: Params;
 
@@ -102,17 +103,19 @@ export function LinkedObligationsCard<Params>(props: Props<Params>) {
       {variant === "card" && (
         <div className="flex justify-between">
           <div className="text-lg font-semibold">{__("Obligations")}</div>
-          <LinkedObligationDialog
-            connectionId={props.connectionId}
-            disabled={props.disabled}
-            linkedObligations={props.obligations}
-            onLink={onAttach}
-            onUnlink={onDetach}
-          >
-            <Button variant="tertiary" icon={IconPlusLarge}>
-              {__("Link obligation")}
-            </Button>
-          </LinkedObligationDialog>
+          {!props.readOnly && (
+            <LinkedObligationDialog
+              connectionId={props.connectionId}
+              disabled={props.disabled}
+              linkedObligations={props.obligations}
+              onLink={onAttach}
+              onUnlink={onDetach}
+            >
+              <Button variant="tertiary" icon={IconPlusLarge}>
+                {__("Link obligation")}
+              </Button>
+            </LinkedObligationDialog>
+          )}
         </div>
       )}
       <Table className={clsx(variant === "card" && "bg-invert")}>
@@ -122,21 +125,21 @@ export function LinkedObligationsCard<Params>(props: Props<Params>) {
             <Th>{__("Source")}</Th>
             <Th>{__("Status")}</Th>
             <Th>{__("Owner")}</Th>
-            <Th></Th>
+            {!props.readOnly && <Th></Th>}
           </Tr>
         </Thead>
         <Tbody>
           {obligations.length === 0 && (
             <Tr>
-              <Td colSpan={4} className="text-center text-txt-secondary">
+              <Td colSpan={props.readOnly ? 4 : 5} className="text-center text-txt-secondary">
                 {__("No obligations linked")}
               </Td>
             </Tr>
           )}
           {obligations.map((obligation) => (
-            <ObligationRow key={obligation.id} obligation={obligation} onClick={onDetach} />
+            <ObligationRow key={obligation.id} obligation={obligation} onClick={onDetach} readOnly={props.readOnly} />
           ))}
-          {variant === "table" && (
+          {variant === "table" && !props.readOnly && (
             <LinkedObligationDialog
               connectionId={props.connectionId}
               disabled={props.disabled}
@@ -168,6 +171,7 @@ export function LinkedObligationsCard<Params>(props: Props<Params>) {
 function ObligationRow(props: {
   obligation: LinkedObligationsCardFragment$key & { id: string };
   onClick: (obligationId: string) => void;
+  readOnly?: boolean;
 }) {
   const { __ } = useTranslate();
   const obligation = useFragment(linkedObligationFragment, props.obligation);
@@ -199,15 +203,17 @@ function ObligationRow(props: {
       <Td>
         {obligation.owner?.fullName || __("Unassigned")}
       </Td>
-      <Td noLink width={50} className="text-end">
-        <Button
-          variant="secondary"
-          icon={IconTrashCan}
-          onClick={onDetach}
-        >
-          {__("Unlink")}
-        </Button>
-      </Td>
+      {!props.readOnly && (
+        <Td noLink width={50} className="text-end">
+          <Button
+            variant="secondary"
+            icon={IconTrashCan}
+            onClick={onDetach}
+          >
+            {__("Unlink")}
+          </Button>
+        </Td>
+      )}
     </Tr>
   );
 }

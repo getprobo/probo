@@ -45,7 +45,7 @@ const inviteMutation = graphql`
 const schema = z.object({
   email: z.string().email(),
   fullName: z.string(),
-  role: z.enum(["OWNER", "ADMIN", "FULL", "VIEWER", "EMPLOYEE"]).default("VIEWER"),
+  role: z.enum(["OWNER", "ADMIN", "FULL", "VIEWER", "AUDITOR", "EMPLOYEE"]).default("VIEWER"),
   createPeople: z.boolean().default(false),
 });
 
@@ -126,6 +126,7 @@ function InviteUserDialogContent({ children, connectionId, onRefetch }: Props) {
                     {assignableRoles.includes("OWNER") && <Option value="OWNER">{__("Owner")}</Option>}
                     {assignableRoles.includes("ADMIN") && <Option value="ADMIN">{__("Admin")}</Option>}
                     {assignableRoles.includes("VIEWER") && <Option value="VIEWER">{__("Viewer")}</Option>}
+                    {assignableRoles.includes("AUDITOR") && <Option value="AUDITOR">{__("Auditor")}</Option>}
                     {assignableRoles.includes("EMPLOYEE") && <Option value="EMPLOYEE">{__("Employee")}</Option>}
                   </Select>
                   <div className="mt-2 text-sm text-txt-tertiary">
@@ -137,6 +138,9 @@ function InviteUserDialogContent({ children, connectionId, onRefetch }: Props) {
                     )}
                     {field.value === "VIEWER" && (
                       <p>{__("Read-only access")}</p>
+                    )}
+                    {field.value === "AUDITOR" && (
+                      <p>{__("Read-only access without settings, tasks and meetings")}</p>
                     )}
                     {field.value === "EMPLOYEE" && (
                       <p>{__("Access to employee page")}</p>

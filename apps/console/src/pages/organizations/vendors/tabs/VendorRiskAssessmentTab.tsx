@@ -21,7 +21,8 @@ import type { VendorRiskAssessmentTabFragment_assessment$key } from "./__generat
 import { SortableTable, SortableTh } from "/components/SortableTable";
 import { CreateRiskAssessmentDialog } from "../dialogs/CreateRiskAssessmentDialog";
 import clsx from "clsx";
-import { useState } from "react";
+import { use, useState } from "react";
+import { PermissionsContext } from "/providers/PermissionsContext";
 
 const riskAssessmentsFragment = graphql`
   fragment VendorRiskAssessmentTabFragment on Vendor
@@ -81,6 +82,8 @@ export default function VendorRiskAssessmentTab() {
   const { snapshotId } = useParams<{ snapshotId?: string }>();
   const isSnapshotMode = Boolean(snapshotId);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const { isAuthorized } = use(PermissionsContext);
+  const canCreateRiskAssessment = isAuthorized("Vendor", "createVendorRiskAssessment");
 
   usePageTitle(vendor.name + " - " + __("Risk Assessments"));
 
@@ -88,7 +91,7 @@ export default function VendorRiskAssessmentTab() {
     return (
       <div className="text-center text-sm py-6 text-txt-secondary flex flex-col items-center gap-2">
         {__("No risk assessments found")}
-        {!isSnapshotMode && (
+        {!isSnapshotMode && canCreateRiskAssessment && (
           <CreateRiskAssessmentDialog
             vendorId={vendor.id}
             connection={data.riskAssessments.__id}
@@ -116,7 +119,7 @@ export default function VendorRiskAssessmentTab() {
             </Tr>
           </Thead>
           <Tbody>
-            {!isSnapshotMode && (
+            {!isSnapshotMode && canCreateRiskAssessment && (
               <CreateRiskAssessmentDialog
                 vendorId={vendor.id}
                 connection={data.riskAssessments.__id}

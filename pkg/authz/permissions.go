@@ -31,6 +31,7 @@ const (
 	RoleAdmin    Role = "ADMIN"
 	RoleEmployee Role = "EMPLOYEE"
 	RoleViewer   Role = "VIEWER"
+	RoleAuditor  Role = "AUDITOR"
 	RoleFull     Role = "FULL"
 )
 
@@ -257,33 +258,32 @@ const (
 )
 
 var (
-	AllRoles         = []Role{RoleOwner, RoleAdmin, RoleEmployee, RoleViewer, RoleFull}
-	NonEmployeeRoles = []Role{RoleOwner, RoleAdmin, RoleViewer, RoleFull}
-	EditRoles        = []Role{RoleOwner, RoleAdmin, RoleFull}
+	AllRoles = []Role{RoleOwner, RoleAdmin, RoleEmployee, RoleViewer, RoleAuditor, RoleFull}
+
+	EditRoles = []Role{RoleOwner, RoleAdmin, RoleFull}
+
+	CoreRoles        = []Role{RoleOwner, RoleAdmin, RoleViewer, RoleFull}
+	NonEmployeeRoles = []Role{RoleOwner, RoleAdmin, RoleViewer, RoleAuditor, RoleFull}
+	InternalRoles    = []Role{RoleOwner, RoleAdmin, RoleViewer, RoleEmployee, RoleFull}
 )
 
 var Permissions = map[uint16]map[Action][]Role{
 	coredata.OrganizationEntityType: {
-		ActionGet:                   AllRoles,
-		ActionListSignableDocuments: AllRoles,
-		ActionGetLogoUrl:            AllRoles,
+		ActionGet:        AllRoles,
+		ActionGetLogoUrl: AllRoles,
+
+		ActionListSignableDocuments: InternalRoles,
 
 		ActionListDocuments:             NonEmployeeRoles,
 		ActionGetHorizontalLogoUrl:      NonEmployeeRoles,
-		ActionMemberships:               NonEmployeeRoles,
 		ActionPeoples:                   NonEmployeeRoles,
 		ActionTotalCount:                NonEmployeeRoles,
-		ActionListMembers:               NonEmployeeRoles,
-		ActionListInvitations:           NonEmployeeRoles,
-		ActionListSlackConnections:      NonEmployeeRoles,
 		ActionListFrameworks:            NonEmployeeRoles,
 		ActionListControls:              NonEmployeeRoles,
 		ActionListVendors:               NonEmployeeRoles,
 		ActionListPeople:                NonEmployeeRoles,
-		ActionListMeetings:              NonEmployeeRoles,
 		ActionListMeasures:              NonEmployeeRoles,
 		ActionListRisks:                 NonEmployeeRoles,
-		ActionListTasks:                 NonEmployeeRoles,
 		ActionListAssets:                NonEmployeeRoles,
 		ActionListData:                  NonEmployeeRoles,
 		ActionListAudits:                NonEmployeeRoles,
@@ -292,12 +292,19 @@ var Permissions = map[uint16]map[Action][]Role{
 		ActionListContinualImprovements: NonEmployeeRoles,
 		ActionListProcessingActivities:  NonEmployeeRoles,
 		ActionListSnapshots:             NonEmployeeRoles,
-		ActionListTrustCenterFiles:      NonEmployeeRoles,
-		ActionGetTrustCenter:            NonEmployeeRoles,
-		ActionGetCustomDomain:           NonEmployeeRoles,
-		ActionListSAMLConfigurations:    NonEmployeeRoles,
 		ActionConfirmEmail:              NonEmployeeRoles,
 		ActionAcceptInvitation:          NonEmployeeRoles,
+
+		ActionListTrustCenterFiles:   CoreRoles,
+		ActionGetTrustCenter:         CoreRoles,
+		ActionMemberships:            CoreRoles,
+		ActionListMembers:            CoreRoles,
+		ActionListInvitations:        CoreRoles,
+		ActionListSlackConnections:   CoreRoles,
+		ActionGetCustomDomain:        CoreRoles,
+		ActionListSAMLConfigurations: CoreRoles,
+		ActionListMeetings:           CoreRoles,
+		ActionListTasks:              CoreRoles,
 
 		ActionUpdateOrganization:               EditRoles,
 		ActionDeleteOrganizationHorizontalLogo: EditRoles,
@@ -336,11 +343,11 @@ var Permissions = map[uint16]map[Action][]Role{
 		ActionDeleteOrganization:         {RoleOwner},
 	},
 	coredata.TrustCenterEntityType: {
-		ActionGet:             NonEmployeeRoles,
-		ActionGetNdaFileUrl:   NonEmployeeRoles,
-		ActionGetOrganization: NonEmployeeRoles,
-		ActionListAccesses:    NonEmployeeRoles,
-		ActionListReferences:  NonEmployeeRoles,
+		ActionGet:             CoreRoles,
+		ActionGetNdaFileUrl:   CoreRoles,
+		ActionGetOrganization: CoreRoles,
+		ActionListAccesses:    CoreRoles,
+		ActionListReferences:  CoreRoles,
 
 		ActionUpdateTrustCenter:          EditRoles,
 		ActionUploadTrustCenterNDA:       EditRoles,
@@ -349,26 +356,26 @@ var Permissions = map[uint16]map[Action][]Role{
 		ActionCreateTrustCenterReference: EditRoles,
 	},
 	coredata.TrustCenterAccessEntityType: {
-		ActionGet:                       NonEmployeeRoles,
-		ActionActiveCount:               NonEmployeeRoles,
-		ActionPendingRequestCount:       NonEmployeeRoles,
-		ActionAvailableDocumentAccesses: NonEmployeeRoles,
-		ActionGetTrustCenterFile:        NonEmployeeRoles,
-		ActionGetReport:                 NonEmployeeRoles,
+		ActionGet:                       CoreRoles,
+		ActionActiveCount:               CoreRoles,
+		ActionPendingRequestCount:       CoreRoles,
+		ActionAvailableDocumentAccesses: CoreRoles,
+		ActionGetTrustCenterFile:        CoreRoles,
+		ActionGetReport:                 CoreRoles,
 
 		ActionUpdateTrustCenterAccess: EditRoles,
 		ActionDeleteTrustCenterAccess: EditRoles,
 	},
 	coredata.TrustCenterReferenceEntityType: {
-		ActionGet:        NonEmployeeRoles,
-		ActionGetLogoUrl: NonEmployeeRoles,
+		ActionGet:        CoreRoles,
+		ActionGetLogoUrl: CoreRoles,
 
 		ActionUpdateTrustCenterReference: EditRoles,
 		ActionDeleteTrustCenterReference: EditRoles,
 	},
 	coredata.TrustCenterFileEntityType: {
-		ActionGet:        NonEmployeeRoles,
-		ActionGetFileUrl: NonEmployeeRoles,
+		ActionGet:        CoreRoles,
+		ActionGetFileUrl: CoreRoles,
 
 		ActionUpdateTrustCenterFile: EditRoles,
 		ActionGetTrustCenterFile:    EditRoles,
@@ -487,9 +494,10 @@ var Permissions = map[uint16]map[Action][]Role{
 		ActionDeleteControlSnapshotMapping: EditRoles,
 	},
 	coredata.MeasureEntityType: {
+		ActionListTasks: CoreRoles,
+
 		ActionGet:           NonEmployeeRoles,
 		ActionListEvidences: NonEmployeeRoles,
-		ActionListTasks:     NonEmployeeRoles,
 		ActionListRisks:     NonEmployeeRoles,
 		ActionListControls:  NonEmployeeRoles,
 		ActionTotalCount:    NonEmployeeRoles,
@@ -499,11 +507,11 @@ var Permissions = map[uint16]map[Action][]Role{
 		ActionUploadMeasureEvidence: EditRoles,
 	},
 	coredata.TaskEntityType: {
-		ActionGet:             NonEmployeeRoles,
-		ActionGetAssignedTo:   NonEmployeeRoles,
-		ActionGetOrganization: NonEmployeeRoles,
-		ActionGetMeasure:      NonEmployeeRoles,
-		ActionListEvidences:   NonEmployeeRoles,
+		ActionGet:             CoreRoles,
+		ActionGetAssignedTo:   CoreRoles,
+		ActionGetOrganization: CoreRoles,
+		ActionGetMeasure:      CoreRoles,
+		ActionListEvidences:   CoreRoles,
 
 		ActionUpdateTask:   EditRoles,
 		ActionDeleteTask:   EditRoles,
@@ -513,7 +521,7 @@ var Permissions = map[uint16]map[Action][]Role{
 	coredata.EvidenceEntityType: {
 		ActionGet:        NonEmployeeRoles,
 		ActionGetFile:    NonEmployeeRoles,
-		ActionGetTask:    NonEmployeeRoles,
+		ActionGetTask:    CoreRoles,
 		ActionGetMeasure: NonEmployeeRoles,
 
 		ActionDeleteEvidence: EditRoles,
@@ -521,7 +529,8 @@ var Permissions = map[uint16]map[Action][]Role{
 	coredata.DocumentEntityType: {
 		ActionListSignableDocumentVersion: AllRoles,
 		ActionGetSigned:                   AllRoles,
-		ActionGetSignableDocument:         AllRoles,
+
+		ActionGetSignableDocument: InternalRoles,
 
 		ActionGet:                 NonEmployeeRoles,
 		ActionGetOwner:            NonEmployeeRoles,
@@ -689,14 +698,14 @@ var Permissions = map[uint16]map[Action][]Role{
 		ActionDownloadUrl: NonEmployeeRoles,
 	},
 	coredata.TrustCenterDocumentAccessEntityType: {
-		ActionGet:             NonEmployeeRoles,
-		ActionReport:          NonEmployeeRoles,
-		ActionTrustCenterFile: NonEmployeeRoles,
+		ActionGet:             CoreRoles,
+		ActionReport:          CoreRoles,
+		ActionTrustCenterFile: CoreRoles,
 	},
 	coredata.MeetingEntityType: {
-		ActionGet:             NonEmployeeRoles,
-		ActionGetOrganization: NonEmployeeRoles,
-		ActionTotalCount:      NonEmployeeRoles,
+		ActionGet:             CoreRoles,
+		ActionGetOrganization: CoreRoles,
+		ActionTotalCount:      CoreRoles,
 
 		ActionUpdateMeeting: EditRoles,
 		ActionDeleteMeeting: EditRoles,

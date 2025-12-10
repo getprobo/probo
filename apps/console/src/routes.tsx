@@ -165,10 +165,14 @@ const routes = [
         path: "",
         Component: () => {
           const { role } = use(PermissionsContext);
-          if (role === Role.EMPLOYEE) {
-            return <Navigate to="employee" />;
+          switch (role) {
+            case Role.EMPLOYEE:
+              return <Navigate to="employee" />;
+            case Role.AUDITOR:
+              return <Navigate to="measures" />;
+            default:
+              return <Navigate to="tasks" />;
           }
-          return <Navigate to="tasks" />;
         },
       },
       {

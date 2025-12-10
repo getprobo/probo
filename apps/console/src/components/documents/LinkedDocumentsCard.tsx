@@ -64,6 +64,7 @@ type Props<Params> = {
   // Mutation to detach a document (will receive {documentId, ...params})
   onDetach: Mutation<Params>;
   variant?: "card" | "table";
+  readOnly?: boolean;
 };
 
 /**
@@ -109,17 +110,19 @@ export function LinkedDocumentsCard<Params>(props: Props<Params>) {
       {variant === "card" && (
         <div className="flex justify-between">
           <div className="text-lg font-semibold">{__("Documents")}</div>
-          <LinkedDocumentDialog
-            connectionId={props.connectionId}
-            disabled={props.disabled}
-            linkedDocuments={props.documents}
-            onLink={onAttach}
-            onUnlink={onDetach}
-          >
-            <Button variant="tertiary" icon={IconPlusLarge}>
-              {__("Link document")}
-            </Button>
-          </LinkedDocumentDialog>
+          {!props.readOnly && (
+            <LinkedDocumentDialog
+              connectionId={props.connectionId}
+              disabled={props.disabled}
+              linkedDocuments={props.documents}
+              onLink={onAttach}
+              onUnlink={onDetach}
+            >
+              <Button variant="tertiary" icon={IconPlusLarge}>
+                {__("Link document")}
+              </Button>
+            </LinkedDocumentDialog>
+          )}
         </div>
       )}
       <Table className={clsx(variant === "card" && "bg-invert")}>
@@ -128,13 +131,13 @@ export function LinkedDocumentsCard<Params>(props: Props<Params>) {
             <Th>{__("Name")}</Th>
             <Th>{__("Type")}</Th>
             <Th>{__("State")}</Th>
-            <Th></Th>
+            {!props.readOnly && <Th></Th>}
           </Tr>
         </Thead>
         <Tbody>
           {documents.length === 0 && (
             <Tr>
-              <Td colSpan={4} className="text-center text-txt-secondary">
+              <Td colSpan={props.readOnly ? 3 : 4} className="text-center text-txt-secondary">
                 {__("No documents linked")}
               </Td>
             </Tr>
@@ -144,9 +147,10 @@ export function LinkedDocumentsCard<Params>(props: Props<Params>) {
               key={document.id}
               document={document}
               onClick={onDetach}
+              readOnly={props.readOnly}
             />
           ))}
-          {variant === "table" && (
+          {variant === "table" && !props.readOnly && (
             <LinkedDocumentDialog
               connectionId={props.connectionId}
               disabled={props.disabled}
@@ -178,6 +182,7 @@ export function LinkedDocumentsCard<Params>(props: Props<Params>) {
 function DocumentRow(props: {
   document: LinkedDocumentsCardFragment$key & { id: string };
   onClick: (documentId: string) => void;
+  readOnly?: boolean;
 }) {
   const document = useFragment(linkedDocumentFragment, props.document);
   const organizationId = useOrganizationId();
@@ -203,15 +208,17 @@ function DocumentRow(props: {
       <Td>
         <DocumentVersionBadge state={document.versions.edges[0].node.status} />
       </Td>
-      <Td noLink width={50} className="text-end">
-        <Button
-          variant="secondary"
-          onClick={() => props.onClick(document.id)}
-          icon={IconTrashCan}
-        >
-          {__("Unlink")}
-        </Button>
-      </Td>
+      {!props.readOnly && (
+        <Td noLink width={50} className="text-end">
+          <Button
+            variant="secondary"
+            onClick={() => props.onClick(document.id)}
+            icon={IconTrashCan}
+          >
+            {__("Unlink")}
+          </Button>
+        </Td>
+      )}
     </Tr>
   );
 }

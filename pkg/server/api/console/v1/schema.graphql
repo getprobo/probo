@@ -38,6 +38,7 @@ enum Role {
   OWNER
   ADMIN
   VIEWER
+  AUDITOR
   FULL
 }
 
@@ -98,6 +99,7 @@ enum MembershipRole
   EMPLOYEE
     @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleEmployee")
   VIEWER @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleViewer")
+  AUDITOR @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleAuditor")
 }
 
 enum APIRole @goModel(model: "go.probo.inc/probo/pkg/coredata.APIRole") {

@@ -1,6 +1,6 @@
 import { useTranslate } from "@probo/i18n";
 import { Button, Card, IconCheckmark1 } from "@probo/ui";
-import type { PropsWithChildren } from "react";
+import { use, type PropsWithChildren } from "react";
 import z from "zod";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { ControlledField } from "/components/form/ControlledField";
@@ -11,6 +11,7 @@ import { useOutletContext } from "react-router";
 import { updatePeopleMutation } from "/hooks/graph/PeopleGraph";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import type { PeopleGraphUpdateMutation } from "/hooks/graph/__generated__/PeopleGraphUpdateMutation.graphql";
+import { PermissionsContext } from "/providers/PermissionsContext";
 
 const schema = z.object({
   kind: z.enum(peopleRoles),
@@ -21,6 +22,8 @@ export default function PeopleRoleTab() {
     people: PeopleGraphNodeQuery$data["node"];
   }>();
   const { __ } = useTranslate();
+  const { isAuthorized } = use(PermissionsContext);
+  const canUpdatePeople = isAuthorized("People", "updatePeople");
   const { control, formState, handleSubmit, reset } = useFormWithSchema(
     schema,
     {
@@ -65,6 +68,7 @@ export default function PeopleRoleTab() {
           name="kind"
           type="select"
           label={__("Role")}
+          disabled={!canUpdatePeople}
         >
           {getRoles(__).map((role) => (
             <Option key={role.value} value={role.value}>
@@ -93,13 +97,15 @@ export default function PeopleRoleTab() {
           </ul>
         </div>
       </Card>
-      <div className="flex justify-end">
-        {formState.isDirty && (
-          <Button type="submit" disabled={isMutating}>
-            {__("Update")}
-          </Button>
-        )}
-      </div>
+      {canUpdatePeople && (
+        <div className="flex justify-end">
+          {formState.isDirty && (
+            <Button type="submit" disabled={isMutating}>
+              {__("Update")}
+            </Button>
+          )}
+        </div>
+      )}
     </form>
   );
 }

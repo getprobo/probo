@@ -220,7 +220,7 @@ var entityRegistry = map[uint16]EntityInfo{
 		Table: "trust_center_references",
 	},
 	TrustCenterDocumentAccessEntityType: {
-		Model: "",
+		Model: "TrustCenterDocumentAccess",
 		Table: "trust_center_document_accesses",
 	},
 	CustomDomainEntityType: {

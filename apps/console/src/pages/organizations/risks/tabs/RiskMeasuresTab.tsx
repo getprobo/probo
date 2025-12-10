@@ -3,6 +3,8 @@ import type { RiskMeasuresTabFragment$key } from "./__generated__/RiskMeasuresTa
 import { useOutletContext } from "react-router";
 import { LinkedMeasuresCard } from "/components/measures/LinkedMeasuresCard";
 import { useMutationWithIncrement } from "/hooks/useMutationWithIncrement";
+import { use } from "react";
+import { PermissionsContext } from "/providers/PermissionsContext";
 
 export const measuresFragment = graphql`
   fragment RiskMeasuresTabFragment on Risk {
@@ -53,6 +55,12 @@ export default function RiskMeasuresTab() {
   const data = useFragment(measuresFragment, risk);
   const connectionId = data.measures.__id;
   const measures = data.measures?.edges?.map((edge) => edge.node) ?? [];
+  const { isAuthorized } = use(PermissionsContext);
+
+  const canLinkMeasure = isAuthorized("Risk", "createRiskMeasureMapping");
+  const canUnlinkMeasure = isAuthorized("Risk", "deleteRiskMeasureMapping");
+  const readOnly = !canLinkMeasure && !canUnlinkMeasure;
+
   const incrementOptions = {
     id: data.id,
     node: "measures(first:0)",
@@ -81,6 +89,7 @@ export default function RiskMeasuresTab() {
       onDetach={detachMeasure}
       params={{ riskId: data.id }}
       connectionId={connectionId}
+      readOnly={readOnly}
     />
   );
 }

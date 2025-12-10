@@ -91,11 +91,13 @@ export default function VendorDetailPage(props: Props) {
         </div>
         {!isSnapshotMode && (
           <div className="flex gap-2 items-center">
-            <ImportAssessmentDialog vendorId={vendor.id!}>
-              <Button icon={IconPageTextLine} variant="secondary">
-                {__("Assessment From Website")}
-              </Button>
-            </ImportAssessmentDialog>
+            {isAuthorized("Vendor", "assessVendor") && (
+              <ImportAssessmentDialog vendorId={vendor.id!}>
+                <Button icon={IconPageTextLine} variant="secondary">
+                  {__("Assessment From Website")}
+                </Button>
+              </ImportAssessmentDialog>
+            )}
             {isAuthorized("Vendor", "deleteVendor") && (
               <ActionDropdown variant="secondary">
                 <DropdownItem

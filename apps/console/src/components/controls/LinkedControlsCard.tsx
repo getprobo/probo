@@ -54,6 +54,7 @@ type Props<Params> = {
   onAttach?: Mutation<Params>;
   // Allow sorting in the table
   refetch: ComponentProps<typeof SortableTable>["refetch"];
+  readOnly?: boolean;
 };
 
 /**
@@ -96,13 +97,13 @@ export function LinkedControlsCard<Params>(props: Props<Params>) {
         <Tr>
           <SortableTh field="SECTION_TITLE">{__("Reference")}</SortableTh>
           <Th>{__("Name")}</Th>
-          <Th></Th>
+          {!props.readOnly && <Th></Th>}
         </Tr>
       </Thead>
       <Tbody>
         {controls.length === 0 && (
           <Tr>
-            <Td colSpan={4} className="text-center text-txt-secondary">
+            <Td colSpan={props.readOnly ? 2 : 3} className="text-center text-txt-secondary">
               {__("No controls linked")}
             </Td>
           </Tr>
@@ -113,17 +114,20 @@ export function LinkedControlsCard<Params>(props: Props<Params>) {
             control={control}
             onClick={onDetach}
             onAttach={onAttach}
+            readOnly={props.readOnly}
           />
         ))}
-        <LinkedControlsDialog
-          connectionId={props.connectionId}
-          disabled={props.disabled}
-          linkedControls={controls}
-          onLink={onAttach}
-          onUnlink={onDetach}
-        >
-          <TrButton colspan={3}>{__("Link control")}</TrButton>
-        </LinkedControlsDialog>
+        {!props.readOnly && (
+          <LinkedControlsDialog
+            connectionId={props.connectionId}
+            disabled={props.disabled}
+            linkedControls={controls}
+            onLink={onAttach}
+            onUnlink={onDetach}
+          >
+            <TrButton colspan={3}>{__("Link control")}</TrButton>
+          </LinkedControlsDialog>
+        )}
       </Tbody>
     </SortableTable>
   );
@@ -133,6 +137,7 @@ function ControlRow(props: {
   control: LinkedControlsCardFragment$key & { id: string };
   onClick: (controlId: string) => void;
   onAttach?: (controlId: string) => void;
+  readOnly?: boolean;
 }) {
   const control = useFragment(linkedControlFragment, props.control);
   const organizationId = useOrganizationId();
@@ -149,15 +154,17 @@ function ControlRow(props: {
         </span>
       </Td>
       <Td>{control.name}</Td>
-      <Td noLink width={50} className="text-end">
-        <Button
-          variant="secondary"
-          onClick={() => props.onClick(control.id)}
-          icon={IconTrashCan}
-        >
-          {__("Unlink")}
-        </Button>
-      </Td>
+      {!props.readOnly && (
+        <Td noLink width={50} className="text-end">
+          <Button
+            variant="secondary"
+            onClick={() => props.onClick(control.id)}
+            icon={IconTrashCan}
+          >
+            {__("Unlink")}
+          </Button>
+        </Td>
+      )}
     </Tr>
   );
 }

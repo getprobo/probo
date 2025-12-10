@@ -9592,6 +9592,7 @@ enum Role {
   OWNER
   ADMIN
   VIEWER
+  AUDITOR
   FULL
 }
 
@@ -9652,6 +9653,7 @@ enum MembershipRole
   EMPLOYEE
     @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleEmployee")
   VIEWER @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleViewer")
+  AUDITOR @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleAuditor")
 }
 
 enum APIRole @goModel(model: "go.probo.inc/probo/pkg/coredata.APIRole") {
@@ -87915,12 +87917,14 @@ var (
 		"ADMIN":    coredata.MembershipRoleAdmin,
 		"EMPLOYEE": coredata.MembershipRoleEmployee,
 		"VIEWER":   coredata.MembershipRoleViewer,
+		"AUDITOR":  coredata.MembershipRoleAuditor,
 	}
 	marshalNMembershipRole2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipRole = map[coredata.MembershipRole]string{
 		coredata.MembershipRoleOwner:    "OWNER",
 		coredata.MembershipRoleAdmin:    "ADMIN",
 		coredata.MembershipRoleEmployee: "EMPLOYEE",
 		coredata.MembershipRoleViewer:   "VIEWER",
+		coredata.MembershipRoleAuditor:  "AUDITOR",
 	}
 )
 

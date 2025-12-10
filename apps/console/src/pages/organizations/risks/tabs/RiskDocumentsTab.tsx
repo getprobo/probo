@@ -3,6 +3,8 @@ import { useOutletContext } from "react-router";
 import { LinkedDocumentsCard } from "/components/documents/LinkedDocumentsCard";
 import type { RiskDocumentsTabFragment$key } from "./__generated__/RiskDocumentsTabFragment.graphql";
 import { useMutationWithIncrement } from "/hooks/useMutationWithIncrement";
+import { use } from "react";
+import { PermissionsContext } from "/providers/PermissionsContext";
 
 export const documentsFragment = graphql`
   fragment RiskDocumentsTabFragment on Risk {
@@ -53,6 +55,11 @@ export default function RiskDocumentsTab() {
   const data = useFragment(documentsFragment, risk);
   const connectionId = data.documents.__id;
   const documents = data.documents?.edges?.map((edge) => edge.node) ?? [];
+  const { isAuthorized } = use(PermissionsContext);
+
+  const canLinkDocument = isAuthorized("Risk", "createRiskDocumentMapping");
+  const canUnlinkDocument = isAuthorized("Risk", "deleteRiskDocumentMapping");
+  const readOnly = !canLinkDocument && !canUnlinkDocument;
 
   const incrementOptions = {
     id: data.id,
@@ -82,6 +89,7 @@ export default function RiskDocumentsTab() {
       onDetach={detachDocument}
       params={{ riskId: data.id }}
       connectionId={connectionId}
+      readOnly={readOnly}
     />
   );
 }

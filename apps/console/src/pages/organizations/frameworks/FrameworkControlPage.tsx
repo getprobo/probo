@@ -178,6 +178,22 @@ export default function FrameworkControlPage({ queryRef }: Props) {
   const [attachSnapshot, isAttachingSnapshot] = useMutation(attachSnapshotMutation);
   const [deleteControl] = useMutation(deleteControlMutation);
 
+  const canLinkMeasure = isAuthorized("Control", "createControlMeasureMapping");
+  const canUnlinkMeasure = isAuthorized("Control", "deleteControlMeasureMapping");
+  const measuresReadOnly = !canLinkMeasure && !canUnlinkMeasure;
+
+  const canLinkDocument = isAuthorized("Control", "createControlDocumentMapping");
+  const canUnlinkDocument = isAuthorized("Control", "deleteControlDocumentMapping");
+  const documentsReadOnly = !canLinkDocument && !canUnlinkDocument;
+
+  const canLinkAudit = isAuthorized("Control", "createControlAuditMapping");
+  const canUnlinkAudit = isAuthorized("Control", "deleteControlAuditMapping");
+  const auditsReadOnly = !canLinkAudit && !canUnlinkAudit;
+
+  const canLinkSnapshot = isAuthorized("Control", "createControlSnapshotMapping");
+  const canUnlinkSnapshot = isAuthorized("Control", "deleteControlSnapshotMapping");
+  const snapshotsReadOnly = !canLinkSnapshot && !canUnlinkSnapshot;
+
   const withErrorHandling = <T extends MutationParameters>(
     mutationFn: (config: UseMutationConfig<T>) => void,
     errorMessage: string
@@ -285,6 +301,7 @@ export default function FrameworkControlPage({ queryRef }: Props) {
             onAttach={withErrorHandling(attachMeasure, __("Failed to link measure"))}
             onDetach={withErrorHandling(detachMeasure, __("Failed to unlink measure"))}
             disabled={isAttachingMeasure || isDetachingMeasure}
+            readOnly={measuresReadOnly}
           />
         </div>
         <div className="mb-4">
@@ -296,6 +313,7 @@ export default function FrameworkControlPage({ queryRef }: Props) {
             onAttach={withErrorHandling(attachDocument, __("Failed to link document"))}
             onDetach={withErrorHandling(detachDocument, __("Failed to unlink document"))}
             disabled={isAttachingDocument || isDetachingDocument}
+            readOnly={documentsReadOnly}
           />
         </div>
         <div className="mb-4">
@@ -307,6 +325,7 @@ export default function FrameworkControlPage({ queryRef }: Props) {
             onAttach={withErrorHandling(attachAudit, __("Failed to link audit"))}
             onDetach={withErrorHandling(detachAudit, __("Failed to unlink audit"))}
             disabled={isAttachingAudit || isDetachingAudit}
+            readOnly={auditsReadOnly}
           />
         </div>
         <div className="mb-4">
@@ -318,6 +337,7 @@ export default function FrameworkControlPage({ queryRef }: Props) {
             onAttach={withErrorHandling(attachSnapshot, __("Failed to link snapshot"))}
             onDetach={withErrorHandling(detachSnapshot, __("Failed to unlink snapshot"))}
             disabled={isAttachingSnapshot || isDetachingSnapshot}
+            readOnly={snapshotsReadOnly}
           />
         </div>
       </div>

@@ -1,0 +1,1 @@
+ALTER TYPE authz_role ADD VALUE 'AUDITOR';

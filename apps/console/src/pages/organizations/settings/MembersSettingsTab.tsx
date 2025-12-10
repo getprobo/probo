@@ -535,6 +535,7 @@ function MembershipRowContent(props: {
                   {availableRoles.includes("OWNER") && <Option value="OWNER">{__("Owner")}</Option>}
                   {availableRoles.includes("ADMIN") && <Option value="ADMIN">{__("Admin")}</Option>}
                   {availableRoles.includes("VIEWER") && <Option value="VIEWER">{__("Viewer")}</Option>}
+                  {availableRoles.includes("AUDITOR") && <Option value="AUDITOR">{__("Auditor")}</Option>}
                   {availableRoles.includes("EMPLOYEE") && <Option value="EMPLOYEE">{__("Employee")}</Option>}
                 </Select>
               </Field>
@@ -548,6 +549,9 @@ function MembershipRowContent(props: {
                 )}
                 {selectedRole === "VIEWER" && (
                   <p>{__("Read-only access")}</p>
+                )}
+                {selectedRole === "AUDITOR" && (
+                  <p>{__("Read-only access without settings, tasks and meetings")}</p>
                 )}
                 {selectedRole === "EMPLOYEE" && (
                   <p>{__("Access to employee page")}</p>

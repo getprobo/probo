@@ -26,10 +26,13 @@ import { MeasureBadge } from "@probo/ui/src/Molecules/Badge/MeasureBadge";
 import { useTranslate } from "@probo/i18n";
 import {
   ConnectionHandler,
+  graphql,
   type PreloadedQuery,
+  useLazyLoadQuery,
   usePreloadedQuery,
 } from "react-relay";
 import type { MeasureGraphNodeQuery } from "/hooks/graph/__generated__/MeasureGraphNodeQuery.graphql";
+import type { MeasureDetailPageTasksCountQuery } from "./__generated__/MeasureDetailPageTasksCountQuery.graphql";
 import {
   MeasureConnectionKey,
   measureNodeQuery,
@@ -43,8 +46,29 @@ import {
   sprintf,
 } from "@probo/helpers";
 import MeasureFormDialog from "./dialog/MeasureFormDialog";
-import { use } from "react";
+import { Suspense, use } from "react";
 import { PermissionsContext } from "/providers/PermissionsContext";
+
+const tasksCountQuery = graphql`
+  query MeasureDetailPageTasksCountQuery($measureId: ID!) {
+    node(id: $measureId) {
+      ... on Measure {
+        tasks(first: 0) {
+          totalCount
+        }
+      }
+    }
+  }
+`;
+
+function TasksCountBadge({ measureId }: { measureId: string }) {
+  const data = useLazyLoadQuery<MeasureDetailPageTasksCountQuery>(
+    tasksCountQuery,
+    { measureId }
+  );
+  const count = data.node?.tasks?.totalCount ?? 0;
+  return <TabBadge>{count}</TabBadge>;
+}
 
 type Props = {
   queryRef: PreloadedQuery<MeasureGraphNodeQuery>;
@@ -67,7 +91,7 @@ export default function MeasureDetailPage(props: Props) {
     );
   }
 
-  const tasksCount = measure.tasksInfos?.totalCount ?? 0;
+  const canViewTasks = isAuthorized("Measure", "listTasks");
   const evidencesCount = measure.evidencesInfos?.totalCount ?? 0;
   const controlsCount = measure.controlsInfos?.totalCount ?? 0;
   const risksCount = measure.risksInfos?.totalCount ?? 0;
@@ -160,13 +184,13 @@ export default function MeasureDetailPage(props: Props) {
             </Select>
           </>
         )}
-        <ActionDropdown variant="secondary">
-          {isAuthorized("Measure", "deleteMeasure") && (
+        {isAuthorized("Measure", "deleteMeasure") && (
+          <ActionDropdown variant="secondary">
             <DropdownItem variant="danger" icon={IconTrashCan} onClick={onDelete}>
               {__("Delete")}
             </DropdownItem>
-          )}
-        </ActionDropdown>
+          </ActionDropdown>
+        )}
       </PageHeader>
 
       <Tabs>
@@ -177,13 +201,17 @@ export default function MeasureDetailPage(props: Props) {
           {__("Evidences")}
           <TabBadge>{evidencesCount}</TabBadge>
         </TabLink>
-        <TabLink
-          to={`/organizations/${organizationId}/measures/${measureId}/tasks`}
-        >
-          <IconCheckmark1 size={20} />
-          {__("Tasks")}
-          <TabBadge>{tasksCount}</TabBadge>
-        </TabLink>
+        {canViewTasks && (
+          <TabLink
+            to={`/organizations/${organizationId}/measures/${measureId}/tasks`}
+          >
+            <IconCheckmark1 size={20} />
+            {__("Tasks")}
+            <Suspense fallback={<TabBadge>-</TabBadge>}>
+              <TasksCountBadge measureId={measureId} />
+            </Suspense>
+          </TabLink>
+        )}
         <TabLink
           to={`/organizations/${organizationId}/measures/${measureId}/controls`}
         >

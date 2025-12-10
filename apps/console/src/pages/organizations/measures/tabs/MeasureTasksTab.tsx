@@ -1,26 +1,31 @@
 import { graphql } from "relay-runtime";
-import type { MeasureTasksTabFragment$key } from "./__generated__/MeasureTasksTabFragment.graphql";
+import type { MeasureTasksTabQuery } from "./__generated__/MeasureTasksTabQuery.graphql";
 import { useOutletContext } from "react-router";
-import { useFragment } from "react-relay";
+import { useLazyLoadQuery } from "react-relay";
 import TasksCard from "/components/tasks/TasksCard";
 import { Button, IconPlusLarge } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import TaskFormDialog from "/components/tasks/TaskFormDialog";
 
-export const tasksFragment = graphql`
-  fragment MeasureTasksTabFragment on Measure {
-    tasks(first: 100) @connection(key: "Measure__tasks") {
-      __id
-      edges {
-        node {
-          id
-          name
-          state
-          description
-          ...TaskFormDialogFragment
-          assignedTo {
-            id
-            fullName
+const tasksQuery = graphql`
+  query MeasureTasksTabQuery($measureId: ID!) {
+    node(id: $measureId) {
+      ... on Measure {
+        id
+        tasks(first: 100) @connection(key: "Measure__tasks") {
+          __id
+          edges {
+            node {
+              id
+              name
+              state
+              description
+              ...TaskFormDialogFragment
+              assignedTo {
+                id
+                fullName
+              }
+            }
           }
         }
       }
@@ -31,11 +36,17 @@ export const tasksFragment = graphql`
 export default function MeasureTasksTab() {
   const { __ } = useTranslate();
   const { measure } = useOutletContext<{
-    measure: MeasureTasksTabFragment$key & { id: string };
+    measure: { id: string };
   }>();
-  const data = useFragment(tasksFragment, measure);
-  const connectionId = data.tasks.__id;
-  const tasks = data.tasks?.edges?.map((edge) => edge.node) ?? [];
+  const data = useLazyLoadQuery<MeasureTasksTabQuery>(tasksQuery, {
+    measureId: measure.id,
+  });
+  const node = data.node;
+  if (!node || !node.tasks) {
+    return null;
+  }
+  const connectionId = node.tasks.__id;
+  const tasks = node.tasks.edges?.map((edge) => edge.node) ?? [];
 
   return (
     <div className="relative">

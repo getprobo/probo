@@ -3,6 +3,8 @@ import type { RiskObligationsTabFragment$key } from "./__generated__/RiskObligat
 import { useOutletContext } from "react-router";
 import { LinkedObligationsCard } from "/components/obligations/LinkedObligationsCard";
 import { useMutationWithIncrement } from "/hooks/useMutationWithIncrement";
+import { use } from "react";
+import { PermissionsContext } from "/providers/PermissionsContext";
 
 export const obligationsFragment = graphql`
   fragment RiskObligationsTabFragment on Risk {
@@ -53,6 +55,12 @@ export default function RiskObligationsTab() {
   const data = useFragment(obligationsFragment, risk);
   const connectionId = data.obligations.__id;
   const obligations = data.obligations?.edges?.map((edge) => edge.node) ?? [];
+  const { isAuthorized } = use(PermissionsContext);
+
+  const canLinkObligation = isAuthorized("Risk", "createRiskObligationMapping");
+  const canUnlinkObligation = isAuthorized("Risk", "deleteRiskObligationMapping");
+  const readOnly = !canLinkObligation && !canUnlinkObligation;
+
   const incrementOptions = {
     id: data.id,
     node: "obligations(first:0)",
@@ -82,6 +90,7 @@ export default function RiskObligationsTab() {
       params={{ riskId: data.id }}
       connectionId={connectionId}
       variant="table"
+      readOnly={readOnly}
     />
   );
 }

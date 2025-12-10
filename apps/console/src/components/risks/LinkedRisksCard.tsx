@@ -48,6 +48,7 @@ type Props<Params> = {
   onAttach: Mutation<Params>;
   // Mutation to detach a risk (will receive {riskId, ...params})
   onDetach: Mutation<Params>;
+  readOnly?: boolean;
 };
 
 /**
@@ -88,29 +89,31 @@ export function LinkedRisksCard<Params>(props: Props<Params>) {
             <Th>{__("Name")}</Th>
             <Th>{__("Inherent Risk")}</Th>
             <Th>{__("Residual Risk")}</Th>
-            <Th></Th>
+            {!props.readOnly && <Th></Th>}
           </Tr>
         </Thead>
         <Tbody>
           {props.risks.length === 0 && (
             <Tr>
-              <Td colSpan={4} className="text-center text-txt-secondary">
+              <Td colSpan={props.readOnly ? 3 : 4} className="text-center text-txt-secondary">
                 {__("No risks linked")}
               </Td>
             </Tr>
           )}
           {props.risks.map((risk) => (
-            <RiskRow key={risk.id} risk={risk} onClick={onDetach} />
+            <RiskRow key={risk.id} risk={risk} onClick={onDetach} readOnly={props.readOnly} />
           ))}
-          <LinkedRisksDialog
-            connectionId={props.connectionId}
-            disabled={props.disabled}
-            linkedRisks={props.risks}
-            onLink={onAttach}
-            onUnlink={onDetach}
-          >
-            <TrButton colspan={4}>{__("Link risk")}</TrButton>
-          </LinkedRisksDialog>
+          {!props.readOnly && (
+            <LinkedRisksDialog
+              connectionId={props.connectionId}
+              disabled={props.disabled}
+              linkedRisks={props.risks}
+              onLink={onAttach}
+              onUnlink={onDetach}
+            >
+              <TrButton colspan={4}>{__("Link risk")}</TrButton>
+            </LinkedRisksDialog>
+          )}
         </Tbody>
       </Table>
     </div>
@@ -120,6 +123,7 @@ export function LinkedRisksCard<Params>(props: Props<Params>) {
 function RiskRow(props: {
   risk: LinkedRisksCardFragment$key & { id: string };
   onClick: (riskId: string) => void;
+  readOnly?: boolean;
 }) {
   const risk = useFragment(linkedRiskFragment, props.risk);
   const organizationId = useOrganizationId();
@@ -134,15 +138,17 @@ function RiskRow(props: {
       <Td>
         <RiskBadge level={risk.residualRiskScore} />
       </Td>
-      <Td noLink width={50} className="text-end">
-        <Button
-          variant="secondary"
-          onClick={() => props.onClick(risk.id)}
-          icon={IconTrashCan}
-        >
-          {__("Unlink")}
-        </Button>
-      </Td>
+      {!props.readOnly && (
+        <Td noLink width={50} className="text-end">
+          <Button
+            variant="secondary"
+            onClick={() => props.onClick(risk.id)}
+            icon={IconTrashCan}
+          >
+            {__("Unlink")}
+          </Button>
+        </Td>
+      )}
     </Tr>
   );
 }

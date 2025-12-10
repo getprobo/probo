@@ -461,7 +461,7 @@ export default function DocumentDetailPage(props: Props) {
             ]}
           />
           <div className="flex gap-2">
-            {isDraft && (
+            {isDraft && isAuthorized("Document", "publishDocumentVersion") && (
               <Button
                 onClick={handlePublish}
                 icon={IconCheckmark1}
@@ -499,16 +499,14 @@ export default function DocumentDetailPage(props: Props) {
                   {isDraft ? __("Edit draft document") : __("Create new draft")}
                 </DropdownItem>
               )}
-              {isDraft && versions.length > 1 && (
-                isAuthorized("Document", "deleteDocument") && (
-                  <DropdownItem
-                    onClick={handleDeleteDraft}
-                    icon={IconTrashCan}
-                    disabled={isDeletingDraft}
-                  >
-                    {__("Delete draft document")}
-                  </DropdownItem>
-                )
+              {isDraft && versions.length > 1 && isAuthorized("Document", "deleteDraftDocumentVersion") && (
+                <DropdownItem
+                  onClick={handleDeleteDraft}
+                  icon={IconTrashCan}
+                  disabled={isDeletingDraft}
+                >
+                  {__("Delete draft document")}
+                </DropdownItem>
               )}
               <DropdownItem
                 onClick={() => pdfDownloadDialogRef.current?.open()}
@@ -567,11 +565,13 @@ export default function DocumentDetailPage(props: Props) {
             ) : (
               <div className="flex items-center gap-2">
                 <span>{document.title}</span>
-                <Button
-                  variant="quaternary"
-                  icon={IconPencil}
-                  onClick={() => setIsEditingTitle(true)}
-                />
+                {isAuthorized("Document", "updateDocument") && (
+                  <Button
+                    variant="quaternary"
+                    icon={IconPencil}
+                    onClick={() => setIsEditingTitle(true)}
+                  />
+                )}
               </div>
             )
           }
@@ -616,7 +616,7 @@ export default function DocumentDetailPage(props: Props) {
               />
             </EditablePropertyContent>
           ) : (
-            <ReadOnlyPropertyContent onEdit={() => setIsEditingOwner(true)}>
+            <ReadOnlyPropertyContent onEdit={() => setIsEditingOwner(true)} canEdit={isAuthorized("Document", "updateDocument")}>
               <Badge variant="highlight" size="md" className="gap-2">
                 <Avatar name={currentVersion.owner?.fullName ?? ""} />
                 {currentVersion.owner?.fullName}
@@ -643,7 +643,7 @@ export default function DocumentDetailPage(props: Props) {
               </ControlledField>
             </EditablePropertyContent>
           ) : (
-            <ReadOnlyPropertyContent onEdit={() => setIsEditingType(true)}>
+            <ReadOnlyPropertyContent onEdit={() => setIsEditingType(true)} canEdit={isAuthorized("Document", "updateDocument")}>
               <div className="text-sm text-txt-secondary">
                 {getDocumentTypeLabel(__, document.documentType)}
               </div>
@@ -671,6 +671,7 @@ export default function DocumentDetailPage(props: Props) {
           ) : (
             <ReadOnlyPropertyContent
               onEdit={() => setIsEditingClassification(true)}
+              canEdit={isAuthorized("Document", "updateDocument")}
             >
               <div className="text-sm text-txt-secondary">
                 {getDocumentClassificationLabel(__, currentVersion.classification)}
@@ -739,14 +740,16 @@ function EditablePropertyContent({
 function ReadOnlyPropertyContent({
   children,
   onEdit,
+  canEdit = true,
 }: {
   children: React.ReactNode;
   onEdit: () => void;
+  canEdit?: boolean;
 }) {
   return (
     <div className="flex items-center justify-between gap-3">
       {children}
-      <Button variant="quaternary" icon={IconPencil} onClick={onEdit} />
+      {canEdit && <Button variant="quaternary" icon={IconPencil} onClick={onEdit} />}
     </div>
   );
 }

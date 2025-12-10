@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<0bd95d20e79294c530610625c86e88d7>>
+ * @generated SignedSource<<dd7d5d34935f87fcfb658ca6cfc5e794>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,7 +10,7 @@
 
 import { ReaderFragment } from 'relay-runtime';
 export type InvitationStatus = "ACCEPTED" | "EXPIRED" | "PENDING";
-export type MembershipRole = "ADMIN" | "EMPLOYEE" | "OWNER" | "VIEWER";
+export type MembershipRole = "ADMIN" | "AUDITOR" | "EMPLOYEE" | "OWNER" | "VIEWER";
 import { FragmentRefs } from "relay-runtime";
 export type MembersSettingsTabInvitationsFragment$data = {
   readonly id: string;

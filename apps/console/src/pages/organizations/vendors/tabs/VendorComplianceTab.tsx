@@ -20,6 +20,8 @@ import type { VendorComplianceTabFragment_report$key } from "./__generated__/Ven
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { sprintf, fileSize, formatDate } from "@probo/helpers";
 import { SortableTable, SortableTh } from "/components/SortableTable";
+import { use } from "react";
+import { PermissionsContext } from "/providers/PermissionsContext";
 
 export const complianceReportsFragment = graphql`
   fragment VendorComplianceTabFragment on Vendor
@@ -103,6 +105,9 @@ export default function VendorComplianceTab() {
   const { __ } = useTranslate();
   const { snapshotId } = useParams<{ snapshotId?: string }>();
   const isSnapshotMode = Boolean(snapshotId);
+  const { isAuthorized } = use(PermissionsContext);
+  const canUploadReport = isAuthorized("Vendor", "uploadVendorComplianceReport");
+  const canDeleteReport = isAuthorized("VendorComplianceReport", "deleteVendorComplianceReport");
 
   usePageTitle(vendor.name + " - " + __("Compliance reports"));
 
@@ -130,7 +135,7 @@ export default function VendorComplianceTab() {
 
   return (
     <div className="space-y-6">
-      {!isSnapshotMode && (
+      {!isSnapshotMode && canUploadReport && (
         <Dropzone
           description={__("Only PDF files up to 10MB are allowed")}
           isUploading={isMutating}
@@ -148,7 +153,7 @@ export default function VendorComplianceTab() {
             <SortableTh field="REPORT_DATE">{__("Report date")}</SortableTh>
             <Th>{__("Valid until")}</Th>
             <Th>{__("File size")}</Th>
-            {!isSnapshotMode && <Th>{__("Actions")}</Th>}
+            {!isSnapshotMode && canDeleteReport && <Th>{__("Actions")}</Th>}
           </Tr>
         </Thead>
         <Tbody>
@@ -158,6 +163,7 @@ export default function VendorComplianceTab() {
               reportKey={report}
               connectionId={connectionId}
               isSnapshotMode={isSnapshotMode}
+              canDelete={canDeleteReport}
             />
           ))}
         </Tbody>
@@ -170,6 +176,7 @@ type ReportRowProps = {
   reportKey: VendorComplianceTabFragment_report$key;
   connectionId: string;
   isSnapshotMode: boolean;
+  canDelete?: boolean;
 };
 
 function ReportRow(props: ReportRowProps) {
@@ -212,7 +219,7 @@ function ReportRow(props: ReportRowProps) {
       <Td>{formatDate(report.reportDate)}</Td>
       <Td>{formatDate(report.validUntil)}</Td>
       <Td>{fileSize(__, report.file?.size)}</Td>
-      {!props.isSnapshotMode && (
+      {!props.isSnapshotMode && props.canDelete && (
         <Td width={50} className="text-end">
           <ActionDropdown>
             <DropdownItem

@@ -55,6 +55,7 @@ type Props<Params> = {
   // Mutation to detach a measure (will receive {measureId, ...params})
   onDetach: Mutation<Params>;
   variant?: "card" | "table";
+  readOnly?: boolean;
 };
 
 /**
@@ -102,17 +103,19 @@ export function LinkedMeasuresCard<Params>(props: Props<Params>) {
       {variant === "card" && (
         <div className="flex justify-between">
           <div className="text-lg font-semibold">{__("Measures")}</div>
-          <LinkedMeasureDialog
-            connectionId={props.connectionId}
-            disabled={props.disabled}
-            linkedMeasures={props.measures}
-            onLink={onAttach}
-            onUnlink={onDetach}
-          >
-            <Button variant="tertiary" icon={IconPlusLarge}>
-              {__("Link measure")}
-            </Button>
-          </LinkedMeasureDialog>
+          {!props.readOnly && (
+            <LinkedMeasureDialog
+              connectionId={props.connectionId}
+              disabled={props.disabled}
+              linkedMeasures={props.measures}
+              onLink={onAttach}
+              onUnlink={onDetach}
+            >
+              <Button variant="tertiary" icon={IconPlusLarge}>
+                {__("Link measure")}
+              </Button>
+            </LinkedMeasureDialog>
+          )}
         </div>
       )}
       <Table className={clsx(variant === "card" && "bg-invert")}>
@@ -120,21 +123,21 @@ export function LinkedMeasuresCard<Params>(props: Props<Params>) {
           <Tr>
             <Th>{__("Name")}</Th>
             <Th>{__("State")}</Th>
-            <Th></Th>
+            {!props.readOnly && <Th></Th>}
           </Tr>
         </Thead>
         <Tbody>
           {measures.length === 0 && (
             <Tr>
-              <Td colSpan={3} className="text-center text-txt-secondary">
+              <Td colSpan={props.readOnly ? 2 : 3} className="text-center text-txt-secondary">
                 {__("No measures linked")}
               </Td>
             </Tr>
           )}
           {measures.map((measure) => (
-            <MeasureRow key={measure.id} measure={measure} onClick={onDetach} />
+            <MeasureRow key={measure.id} measure={measure} onClick={onDetach} readOnly={props.readOnly} />
           ))}
-          {variant === "table" && (
+          {variant === "table" && !props.readOnly && (
             <LinkedMeasureDialog
               connectionId={props.connectionId}
               disabled={props.disabled}
@@ -166,6 +169,7 @@ export function LinkedMeasuresCard<Params>(props: Props<Params>) {
 function MeasureRow(props: {
   measure: LinkedMeasuresCardFragment$key & { id: string };
   onClick: (measureId: string) => void;
+  readOnly?: boolean;
 }) {
   const measure = useFragment(linkedMeasureFragment, props.measure);
   const organizationId = useOrganizationId();
@@ -177,15 +181,17 @@ function MeasureRow(props: {
       <Td>
         <MeasureBadge state={measure.state} />
       </Td>
-      <Td noLink width={50} className="text-end">
-        <Button
-          variant="secondary"
-          onClick={() => props.onClick(measure.id)}
-          icon={IconTrashCan}
-        >
-          {__("Unlink")}
-        </Button>
-      </Td>
+      {!props.readOnly && (
+        <Td noLink width={50} className="text-end">
+          <Button
+            variant="secondary"
+            onClick={() => props.onClick(measure.id)}
+            icon={IconTrashCan}
+          >
+            {__("Unlink")}
+          </Button>
+        </Td>
+      )}
     </Tr>
   );
 }

@@ -26,6 +26,7 @@ const (
 	MembershipRoleAdmin    MembershipRole = "ADMIN"
 	MembershipRoleEmployee MembershipRole = "EMPLOYEE"
 	MembershipRoleViewer   MembershipRole = "VIEWER"
+	MembershipRoleAuditor  MembershipRole = "AUDITOR"
 )
 
 func (r MembershipRole) String() string {
@@ -52,6 +53,8 @@ func (r *MembershipRole) Scan(value any) error {
 		*r = MembershipRoleEmployee
 	case "VIEWER":
 		*r = MembershipRoleViewer
+	case "AUDITOR":
+		*r = MembershipRoleAuditor
 	default:
 		return fmt.Errorf("invalid MembershipRole value: %q", s)
 	}

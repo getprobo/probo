@@ -25,7 +25,8 @@ import { sprintf } from "@probo/helpers";
 import { SortableTable, SortableTh } from "/components/SortableTable";
 import { CreateServiceDialog } from "../dialogs/CreateServiceDialog";
 import { EditServiceDialog } from "../dialogs/EditServiceDialog";
-import { useState } from "react";
+import { use, useState } from "react";
+import { PermissionsContext } from "/providers/PermissionsContext";
 
 export const vendorServicesFragment = graphql`
   fragment VendorServicesTabFragment on Vendor
@@ -94,6 +95,11 @@ export default function VendorServicesTab() {
     name: string;
     description?: string | null;
   } | null>(null);
+  const { isAuthorized } = use(PermissionsContext);
+  const canCreateService = isAuthorized("Vendor", "createVendorService");
+  const canUpdateService = isAuthorized("VendorService", "updateVendorService");
+  const canDeleteService = isAuthorized("VendorService", "deleteVendorService");
+  const hasAnyAction = canUpdateService || canDeleteService;
 
   usePageTitle(vendor.name + " - " + __("Services"));
 
@@ -103,7 +109,7 @@ export default function VendorServicesTab() {
         title={__("Services")}
         description={__("Manage services provided by this vendor.")}
       >
-        {!isSnapshotMode && (
+        {!isSnapshotMode && canCreateService && (
           <CreateServiceDialog
             vendorId={vendor.id}
             connectionId={connectionId}
@@ -118,7 +124,7 @@ export default function VendorServicesTab() {
           <Tr>
             <SortableTh field="NAME">{__("Name")}</SortableTh>
             <Th>{__("Description")}</Th>
-            {!isSnapshotMode && <Th>{__("Actions")}</Th>}
+            {!isSnapshotMode && hasAnyAction && <Th>{__("Actions")}</Th>}
           </Tr>
         </Thead>
         <Tbody>
@@ -129,12 +135,14 @@ export default function VendorServicesTab() {
               connectionId={connectionId}
               onEdit={setEditingService}
               isSnapshotMode={isSnapshotMode}
+              canUpdate={canUpdateService}
+              canDelete={canDeleteService}
             />
           ))}
         </Tbody>
       </SortableTable>
 
-      {editingService && !isSnapshotMode && (
+      {editingService && !isSnapshotMode && canUpdateService && (
         <EditServiceDialog
           serviceId={editingService.id}
           service={editingService}
@@ -154,6 +162,8 @@ type ServiceRowProps = {
     description?: string | null;
   }) => void;
   isSnapshotMode: boolean;
+  canUpdate?: boolean;
+  canDelete?: boolean;
 };
 
 function ServiceRow(props: ServiceRowProps) {
@@ -167,6 +177,7 @@ function ServiceRow(props: ServiceRowProps) {
     successMessage: __("Service deleted successfully"),
     errorMessage: __("Failed to delete service"),
   });
+  const hasAnyAction = props.canUpdate || props.canDelete;
 
   const handleDelete = () => {
     confirm(
@@ -194,26 +205,30 @@ function ServiceRow(props: ServiceRowProps) {
     <Tr>
       <Td>{service.name}</Td>
       <Td>{service.description || __("—")}</Td>
-      {!props.isSnapshotMode && (
+      {!props.isSnapshotMode && hasAnyAction && (
         <Td width={50} className="text-end">
           <ActionDropdown>
-            <DropdownItem
-              icon={IconPencil}
-              onClick={() => props.onEdit({
-                id: service.id,
-                name: service.name,
-                description: service.description,
-              })}
-            >
-              {__("Edit")}
-            </DropdownItem>
-            <DropdownItem
-              icon={IconTrashCan}
-              onClick={handleDelete}
-              variant="danger"
-            >
-              {__("Delete")}
-            </DropdownItem>
+            {props.canUpdate && (
+              <DropdownItem
+                icon={IconPencil}
+                onClick={() => props.onEdit({
+                  id: service.id,
+                  name: service.name,
+                  description: service.description,
+                })}
+              >
+                {__("Edit")}
+              </DropdownItem>
+            )}
+            {props.canDelete && (
+              <DropdownItem
+                icon={IconTrashCan}
+                onClick={handleDelete}
+                variant="danger"
+              >
+                {__("Delete")}
+              </DropdownItem>
+            )}
           </ActionDropdown>
         </Td>
       )}

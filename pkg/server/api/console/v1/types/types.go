@@ -2537,22 +2537,24 @@ type Viewer struct {
 type Role string
 
 const (
-	RoleOwner  Role = "OWNER"
-	RoleAdmin  Role = "ADMIN"
-	RoleViewer Role = "VIEWER"
-	RoleFull   Role = "FULL"
+	RoleOwner   Role = "OWNER"
+	RoleAdmin   Role = "ADMIN"
+	RoleViewer  Role = "VIEWER"
+	RoleAuditor Role = "AUDITOR"
+	RoleFull    Role = "FULL"
 )
 
 var AllRole = []Role{
 	RoleOwner,
 	RoleAdmin,
 	RoleViewer,
+	RoleAuditor,
 	RoleFull,
 }
 
 func (e Role) IsValid() bool {
 	switch e {
-	case RoleOwner, RoleAdmin, RoleViewer, RoleFull:
+	case RoleOwner, RoleAdmin, RoleViewer, RoleAuditor, RoleFull:
 		return true
 	}
 	return false

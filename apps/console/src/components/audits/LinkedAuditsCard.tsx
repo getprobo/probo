@@ -55,6 +55,7 @@ type Props<Params> = {
   onAttach: Mutation<Params>;
   onDetach: Mutation<Params>;
   variant?: "card" | "table";
+  readOnly?: boolean;
 };
 
 export function LinkedAuditsCard<Params>(props: Props<Params>) {
@@ -97,16 +98,18 @@ export function LinkedAuditsCard<Params>(props: Props<Params>) {
       {variant === "card" && (
         <div className="flex justify-between">
           <div className="text-lg font-semibold">{__("Audits")}</div>
-          <LinkedAuditsDialog
-            disabled={props.disabled}
-            linkedAudits={props.audits}
-            onLink={onAttach}
-            onUnlink={onDetach}
-          >
-            <Button variant="tertiary" icon={IconPlusLarge}>
-              {__("Link audit")}
-            </Button>
-          </LinkedAuditsDialog>
+          {!props.readOnly && (
+            <LinkedAuditsDialog
+              disabled={props.disabled}
+              linkedAudits={props.audits}
+              onLink={onAttach}
+              onUnlink={onDetach}
+            >
+              <Button variant="tertiary" icon={IconPlusLarge}>
+                {__("Link audit")}
+              </Button>
+            </LinkedAuditsDialog>
+          )}
         </div>
       )}
       <Table className={clsx(variant === "card" && "bg-invert")}>
@@ -114,13 +117,13 @@ export function LinkedAuditsCard<Params>(props: Props<Params>) {
           <Tr>
             <Th>{__("Name")}</Th>
             <Th>{__("State")}</Th>
-            <Th></Th>
+            {!props.readOnly && <Th></Th>}
           </Tr>
         </Thead>
         <Tbody>
           {audits.length === 0 && (
             <Tr>
-              <Td colSpan={3} className="text-center text-txt-secondary">
+              <Td colSpan={props.readOnly ? 2 : 3} className="text-center text-txt-secondary">
                 {__("No audits linked")}
               </Td>
             </Tr>
@@ -130,9 +133,10 @@ export function LinkedAuditsCard<Params>(props: Props<Params>) {
               key={audit.id}
               audit={audit}
               onClick={onDetach}
+              readOnly={props.readOnly}
             />
           ))}
-          {variant === "table" && (
+          {variant === "table" && !props.readOnly && (
             <LinkedAuditsDialog
               disabled={props.disabled}
               linkedAudits={props.audits}
@@ -163,6 +167,7 @@ export function LinkedAuditsCard<Params>(props: Props<Params>) {
 function AuditRow(props: {
   audit: LinkedAuditsCardFragment$key & { id: string };
   onClick: (auditId: string) => void;
+  readOnly?: boolean;
 }) {
   const audit = useFragment(linkedAuditFragment, props.audit);
   const organizationId = useOrganizationId();
@@ -187,15 +192,17 @@ function AuditRow(props: {
           {audit.state.replace(/_/g, " ")}
         </Badge>
       </Td>
-      <Td noLink width={50} className="text-end">
-        <Button
-          variant="secondary"
-          onClick={() => props.onClick(audit.id)}
-          icon={IconTrashCan}
-        >
-          {__("Unlink")}
-        </Button>
-      </Td>
+      {!props.readOnly && (
+        <Td noLink width={50} className="text-end">
+          <Button
+            variant="secondary"
+            onClick={() => props.onClick(audit.id)}
+            icon={IconTrashCan}
+          >
+            {__("Unlink")}
+          </Button>
+        </Td>
+      )}
     </Tr>
   );
 }

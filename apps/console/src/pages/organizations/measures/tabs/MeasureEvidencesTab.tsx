@@ -29,10 +29,11 @@ import { fileSize, fileType, sprintf, formatDate } from "@probo/helpers";
 import { EvidencePreviewDialog } from "../dialog/EvidencePreviewDialog";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { CreateEvidenceDialog } from "../dialog/CreateEvidenceDialog";
-import { useState } from "react";
+import { use, useState } from "react";
 import { EvidenceDownloadDialog } from "../dialog/EvidenceDownloadDialog";
 import { updateStoreCounter } from "/hooks/useMutationWithIncrement";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
+import { PermissionsContext } from "/providers/PermissionsContext";
 
 export const evidencesFragment = graphql`
   fragment MeasureEvidencesTabFragment on Measure
@@ -107,6 +108,10 @@ export default function MeasureEvidencesTab() {
   const organizationId = useOrganizationId();
   const dialogRef = useDialogRef();
   const isSnapshotMode = Boolean(snapshotId);
+  const { isAuthorized } = use(PermissionsContext);
+
+  const canAddEvidence = isAuthorized("Measure", "uploadMeasureEvidence");
+  const canDeleteEvidence = isAuthorized("Evidence", "deleteEvidence");
 
   usePageTitle(measure.name + " - " + __("Evidences"));
 
@@ -131,10 +136,11 @@ export default function MeasureEvidencesTab() {
               organizationId={organizationId}
               connectionId={connectionId}
               hideActions={isSnapshotMode}
+              canDelete={canDeleteEvidence}
               snapshotId={snapshotId}
             />
           ))}
-          {!isSnapshotMode && (
+          {!isSnapshotMode && canAddEvidence && (
             <TrButton
               colspan={5}
               onClick={() => dialogRef.current?.open()}
@@ -158,7 +164,7 @@ export default function MeasureEvidencesTab() {
           filename={evidence.file?.fileName || ""}
         />
       )}
-      {!isSnapshotMode && (
+      {!isSnapshotMode && canAddEvidence && (
         <CreateEvidenceDialog
           ref={dialogRef}
           measureId={measure.id}
@@ -175,6 +181,7 @@ function EvidenceRow(props: {
   organizationId: string;
   connectionId: string;
   hideActions?: boolean;
+  canDelete?: boolean;
   snapshotId?: string;
 }) {
   const evidence = useFragment(evidenceFragment, props.evidenceKey);
@@ -249,14 +256,16 @@ function EvidenceRow(props: {
                   <IconArrowInbox size={16} />
                   {__("Download")}
                 </DropdownItem>
-                <DropdownItem
-                  variant="danger"
-                  icon={IconTrashCan}
-                  onClick={handleDelete}
-                  disabled={isDeleting}
-                >
-                  {__("Delete")}
-                </DropdownItem>
+                {props.canDelete && (
+                  <DropdownItem
+                    variant="danger"
+                    icon={IconTrashCan}
+                    onClick={handleDelete}
+                    disabled={isDeleting}
+                  >
+                    {__("Delete")}
+                  </DropdownItem>
+                )}
               </ActionDropdown>
             </div>
           )}

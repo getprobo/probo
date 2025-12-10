@@ -11,14 +11,15 @@ import {
 import { Controller } from "react-hook-form";
 import { useVendorForm } from "/hooks/forms/useVendorForm";
 import type { useVendorFormFragment$key } from "/hooks/forms/__generated__/useVendorFormFragment.graphql";
-import { useOutletContext } from "react-router";
+import { useOutletContext, useParams } from "react-router";
 import {
   certificationCategoryLabel,
   certifications,
   objectEntries,
 } from "@probo/helpers";
-import { useRef, useState } from "react";
+import { use, useRef, useState } from "react";
 import clsx from "clsx";
+import { PermissionsContext } from "/providers/PermissionsContext";
 
 /**
  * Vendor certifications tab
@@ -29,9 +30,13 @@ export default function VendorCertificationsTab() {
   }>();
   const { __ } = useTranslate();
   const { control, handleSubmit } = useVendorForm(vendor);
+  const { snapshotId } = useParams<{ snapshotId?: string }>();
+  const isSnapshotMode = Boolean(snapshotId);
+  const { isAuthorized } = use(PermissionsContext);
+  const canUpdateVendor = isAuthorized("Vendor", "updateVendor");
 
   return (
-    <form className="space-y-4" onSubmit={handleSubmit}>
+    <form className="space-y-4" onSubmit={!isSnapshotMode && canUpdateVendor ? handleSubmit : undefined}>
       <Card padded>
         <Controller
           control={control}
@@ -40,13 +45,16 @@ export default function VendorCertificationsTab() {
             <Certifications
               onValueChange={field.onChange}
               value={field.value ?? []}
+              readOnly={isSnapshotMode || !canUpdateVendor}
             />
           )}
         />
       </Card>
-      <div className="flex justify-end">
-        <Button type="submit">{__("Update vendor")}</Button>
-      </div>
+      {!isSnapshotMode && canUpdateVendor && (
+        <div className="flex justify-end">
+          <Button type="submit">{__("Update vendor")}</Button>
+        </div>
+      )}
     </form>
   );
 }
@@ -54,6 +62,7 @@ export default function VendorCertificationsTab() {
 type CertificationsProps = {
   value: string[];
   onValueChange: (value: string[]) => void;
+  readOnly?: boolean;
 };
 
 /**
@@ -94,31 +103,37 @@ function Certifications(props: CertificationsProps) {
           <div className="flex flex-wrap gap-2">
             {certifications.map((certification) => (
               <Badge asChild size="md" key={certification}>
-                <button
-                  onClick={() => removeCertificate(certification)}
-                  type="button"
-                  className={clsx(
-                    "hover:bg-subtle-hover cursor-pointer",
-                    animateBadge.current &&
-                      "starting:opacity-0 starting:w-0 w-max transition-all duration-500 starting:bg-accent"
-                  )}
-                >
-                  {certification}
-                  <div className="w-0 overflow-hidden group-hover:w-4 duration-200">
-                    <IconCrossLargeX size={12} />
-                  </div>
-                </button>
+                {props.readOnly ? (
+                  <span>{certification}</span>
+                ) : (
+                  <button
+                    onClick={() => removeCertificate(certification)}
+                    type="button"
+                    className={clsx(
+                      "hover:bg-subtle-hover cursor-pointer",
+                      animateBadge.current &&
+                        "starting:opacity-0 starting:w-0 w-max transition-all duration-500 starting:bg-accent"
+                    )}
+                  >
+                    {certification}
+                    <div className="w-0 overflow-hidden group-hover:w-4 duration-200">
+                      <IconCrossLargeX size={12} />
+                    </div>
+                  </button>
+                )}
               </Badge>
             ))}
           </div>
         </div>
       ))}
-      <CertificationInput
-        certifications={categorizedCertifications.filter(
-          (c) => !props.value.includes(c)
-        )}
-        onAdd={addCertificate}
-      />
+      {!props.readOnly && (
+        <CertificationInput
+          certifications={categorizedCertifications.filter(
+            (c) => !props.value.includes(c)
+          )}
+          onAdd={addCertificate}
+        />
+      )}
     </div>
   );
 }

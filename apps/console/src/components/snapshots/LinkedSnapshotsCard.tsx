@@ -50,6 +50,7 @@ type Props<Params> = {
   onAttach: Mutation<Params>;
   onDetach: Mutation<Params>;
   variant?: "card" | "table";
+  readOnly?: boolean;
 };
 
 export function LinkedSnapshotsCard<Params>(props: Props<Params>) {
@@ -87,21 +88,26 @@ export function LinkedSnapshotsCard<Params>(props: Props<Params>) {
 
   const Wrapper = variant === "card" ? Card : "div";
 
+  const colSpanTable = props.readOnly ? 4 : 5;
+  const colSpanCard = props.readOnly ? 3 : 4;
+
   return (
     <Wrapper padded className="space-y-[10px]">
       {variant === "card" && (
         <div className="flex justify-between">
           <div className="text-lg font-semibold">{__("Snapshots")}</div>
-          <LinkedSnapshotsDialog
-            disabled={props.disabled}
-            linkedSnapshots={props.snapshots}
-            onLink={onAttach}
-            onUnlink={onDetach}
-          >
-            <Button variant="tertiary" icon={IconPlusLarge}>
-              {__("Link snapshot")}
-            </Button>
-          </LinkedSnapshotsDialog>
+          {!props.readOnly && (
+            <LinkedSnapshotsDialog
+              disabled={props.disabled}
+              linkedSnapshots={props.snapshots}
+              onLink={onAttach}
+              onUnlink={onDetach}
+            >
+              <Button variant="tertiary" icon={IconPlusLarge}>
+                {__("Link snapshot")}
+              </Button>
+            </LinkedSnapshotsDialog>
+          )}
         </div>
       )}
       <Table className={clsx(variant === "card" && "bg-invert")}>
@@ -111,13 +117,13 @@ export function LinkedSnapshotsCard<Params>(props: Props<Params>) {
             <Th>{__("Type")}</Th>
             {variant === "table" && <Th>{__("Description")}</Th>}
             <Th>{__("Created")}</Th>
-            <Th></Th>
+            {!props.readOnly && <Th></Th>}
           </Tr>
         </Thead>
         <Tbody>
           {snapshots.length === 0 && (
             <Tr>
-              <Td colSpan={variant === "table" ? 5 : 3} className="text-center text-txt-secondary">
+              <Td colSpan={variant === "table" ? colSpanTable : colSpanCard} className="text-center text-txt-secondary">
                 {__("No snapshots linked")}
               </Td>
             </Tr>
@@ -128,16 +134,17 @@ export function LinkedSnapshotsCard<Params>(props: Props<Params>) {
               snapshot={snapshot}
               onClick={onDetach}
               variant={variant}
+              readOnly={props.readOnly}
             />
           ))}
-          {variant === "table" && (
+          {variant === "table" && !props.readOnly && (
             <LinkedSnapshotsDialog
               disabled={props.disabled}
               linkedSnapshots={props.snapshots}
               onLink={onAttach}
               onUnlink={onDetach}
             >
-              <TrButton colspan={variant === "table" ? 5 : 3} icon={IconPlusLarge}>
+              <TrButton colspan={colSpanTable} icon={IconPlusLarge}>
                 {__("Link snapshot")}
               </TrButton>
             </LinkedSnapshotsDialog>
@@ -162,6 +169,7 @@ function SnapshotRow(props: {
   snapshot: LinkedSnapshotsCardFragment$key & { id: string };
   onClick: (snapshotId: string) => void;
   variant: "card" | "table";
+  readOnly?: boolean;
 }) {
   const snapshot = useFragment(linkedSnapshotFragment, props.snapshot);
   const organizationId = useOrganizationId();
@@ -186,15 +194,17 @@ function SnapshotRow(props: {
       <Td className="text-txt-tertiary">
         {formatDate(snapshot.createdAt)}
       </Td>
-      <Td noLink width={50} className="text-end">
-        <Button
-          variant="secondary"
-          onClick={() => props.onClick(snapshot.id)}
-          icon={IconTrashCan}
-        >
-          {__("Unlink")}
-        </Button>
-      </Td>
+      {!props.readOnly && (
+        <Td noLink width={50} className="text-end">
+          <Button
+            variant="secondary"
+            onClick={() => props.onClick(snapshot.id)}
+            icon={IconTrashCan}
+          >
+            {__("Unlink")}
+          </Button>
+        </Td>
+      )}
     </Tr>
   );
 }

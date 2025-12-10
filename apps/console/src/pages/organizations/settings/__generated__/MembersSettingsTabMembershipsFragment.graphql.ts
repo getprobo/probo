@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<8fcd99714c4bf7dba138fcb0de398a3a>>
+ * @generated SignedSource<<c3bf3676d3f8688315fc342efcf54547>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,7 +9,7 @@
 // @ts-nocheck
 
 import { ReaderFragment } from 'relay-runtime';
-export type MembershipRole = "ADMIN" | "EMPLOYEE" | "OWNER" | "VIEWER";
+export type MembershipRole = "ADMIN" | "AUDITOR" | "EMPLOYEE" | "OWNER" | "VIEWER";
 export type UserAuthMethod = "PASSWORD" | "SAML";
 import { FragmentRefs } from "relay-runtime";
 export type MembersSettingsTabMembershipsFragment$data = {

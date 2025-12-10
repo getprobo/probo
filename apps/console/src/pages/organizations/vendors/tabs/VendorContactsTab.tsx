@@ -25,7 +25,8 @@ import { sprintf } from "@probo/helpers";
 import { SortableTable, SortableTh } from "/components/SortableTable";
 import { CreateContactDialog } from "../dialogs/CreateContactDialog";
 import { EditContactDialog } from "../dialogs/EditContactDialog";
-import { useState } from "react";
+import { use, useState } from "react";
+import { PermissionsContext } from "/providers/PermissionsContext";
 
 export const vendorContactsFragment = graphql`
   fragment VendorContactsTabFragment on Vendor
@@ -98,6 +99,11 @@ export default function VendorContactsTab() {
     phone?: string | null;
     role?: string | null;
   } | null>(null);
+  const { isAuthorized } = use(PermissionsContext);
+  const canCreateContact = isAuthorized("Vendor", "createVendorContact");
+  const canUpdateContact = isAuthorized("VendorContact", "updateVendorContact");
+  const canDeleteContact = isAuthorized("VendorContact", "deleteVendorContact");
+  const hasAnyAction = canUpdateContact || canDeleteContact;
 
   usePageTitle(vendor.name + " - " + __("Contacts"));
 
@@ -107,7 +113,7 @@ export default function VendorContactsTab() {
         title={__("Contacts")}
         description={__("Manage vendor contacts and their information.")}
       >
-        {!isSnapshotMode && (
+        {!isSnapshotMode && canCreateContact && (
           <CreateContactDialog
             vendorId={vendor.id}
             connectionId={connectionId}
@@ -124,7 +130,7 @@ export default function VendorContactsTab() {
             <SortableTh field="EMAIL">{__("Email")}</SortableTh>
             <Th>{__("Phone")}</Th>
             <Th>{__("Role")}</Th>
-            {!isSnapshotMode && <Th>{__("Actions")}</Th>}
+            {!isSnapshotMode && hasAnyAction && <Th>{__("Actions")}</Th>}
           </Tr>
         </Thead>
         <Tbody>
@@ -135,12 +141,14 @@ export default function VendorContactsTab() {
               connectionId={connectionId}
               onEdit={setEditingContact}
               isSnapshotMode={isSnapshotMode}
+              canUpdate={canUpdateContact}
+              canDelete={canDeleteContact}
             />
           ))}
         </Tbody>
       </SortableTable>
 
-      {editingContact && !isSnapshotMode && (
+      {editingContact && !isSnapshotMode && canUpdateContact && (
         <EditContactDialog
           contactId={editingContact.id}
           contact={editingContact}
@@ -162,6 +170,8 @@ type ContactRowProps = {
     role?: string | null;
   }) => void;
   isSnapshotMode: boolean;
+  canUpdate?: boolean;
+  canDelete?: boolean;
 };
 
 function ContactRow(props: ContactRowProps) {
@@ -175,6 +185,7 @@ function ContactRow(props: ContactRowProps) {
     successMessage: __("Contact deleted successfully"),
     errorMessage: __("Failed to delete contact"),
   });
+  const hasAnyAction = props.canUpdate || props.canDelete;
 
   const handleDelete = () => {
     confirm(
@@ -226,28 +237,32 @@ function ContactRow(props: ContactRowProps) {
         )}
       </Td>
       <Td>{contact.role || __("—")}</Td>
-      {!props.isSnapshotMode && (
+      {!props.isSnapshotMode && hasAnyAction && (
         <Td width={50} className="text-end">
           <ActionDropdown>
-            <DropdownItem
-              icon={IconPencil}
-              onClick={() => props.onEdit({
-                id: contact.id,
-                fullName: contact.fullName,
-                email: contact.email,
-                phone: contact.phone,
-                role: contact.role,
-              })}
-            >
-              {__("Edit")}
-            </DropdownItem>
-            <DropdownItem
-              icon={IconTrashCan}
-              onClick={handleDelete}
-              variant="danger"
-            >
-              {__("Delete")}
-            </DropdownItem>
+            {props.canUpdate && (
+              <DropdownItem
+                icon={IconPencil}
+                onClick={() => props.onEdit({
+                  id: contact.id,
+                  fullName: contact.fullName,
+                  email: contact.email,
+                  phone: contact.phone,
+                  role: contact.role,
+                })}
+              >
+                {__("Edit")}
+              </DropdownItem>
+            )}
+            {props.canDelete && (
+              <DropdownItem
+                icon={IconTrashCan}
+                onClick={handleDelete}
+                variant="danger"
+              >
+                {__("Delete")}
+              </DropdownItem>
+            )}
           </ActionDropdown>
         </Td>
       )}
