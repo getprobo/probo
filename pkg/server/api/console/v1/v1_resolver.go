@@ -5827,14 +5827,14 @@ func (r *reportResolver) DownloadURL(ctx context.Context, obj *types.Report) (*s
 
 // Audit is the resolver for the audit field.
 func (r *reportResolver) Audit(ctx context.Context, obj *types.Report) (*types.Audit, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetAudit)
+
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	audit, err := prb.Audits.GetByReportID(ctx, obj.ID)
 	if err != nil {
 		panic(fmt.Errorf("cannot load audit for report: %w", err))
 	}
-
-	r.MustBeAuthorized(ctx, audit.OrganizationID, authz.ActionAudit)
 
 	return types.NewAudit(audit), nil
 }

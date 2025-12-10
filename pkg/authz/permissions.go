@@ -47,6 +47,7 @@ const (
 	ActionGetDocument                   Action = "getDocument"
 	ActionGetReport                     Action = "getReport"
 	ActionGetFile                       Action = "getFile"
+	ActionGetAudit                      Action = "getAudit"
 	ActionGetFileUrl                    Action = "getFileUrl"
 	ActionGetFramework                  Action = "getFramework"
 	ActionGetHorizontalLogoUrl          Action = "getHorizontalLogoUrl"
@@ -557,8 +558,9 @@ var Permissions = map[uint16]map[Action][]Role{
 		ActionSignatures:               NonEmployeeRoles,
 		ActionExportDocumentVersionPDF: NonEmployeeRoles,
 
-		ActionUpdateDocumentVersion: EditRoles,
-		ActionRequestSignature:      EditRoles,
+		ActionUpdateDocumentVersion:      EditRoles,
+		ActionRequestSignature:           EditRoles,
+		ActionDeleteDraftDocumentVersion: EditRoles,
 	},
 	coredata.DocumentVersionSignatureEntityType: {
 		ActionGet:             NonEmployeeRoles,
@@ -619,6 +621,7 @@ var Permissions = map[uint16]map[Action][]Role{
 	},
 	coredata.ReportEntityType: {
 		ActionGet:             NonEmployeeRoles,
+		ActionGetAudit:        NonEmployeeRoles,
 		ActionGetFile:         NonEmployeeRoles,
 		ActionGetOrganization: NonEmployeeRoles,
 		ActionGetSnapshot:     NonEmployeeRoles,
