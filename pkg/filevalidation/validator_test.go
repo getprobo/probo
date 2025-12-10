@@ -31,9 +31,9 @@ func TestNewValidator(t *testing.T) {
 		{
 			name:           "No categories (all types)",
 			categories:     []string{},
-			expectedMimes:  []string{"application/pdf", "image/jpeg", "text/plain", "video/mp4"},
-			expectedExts:   []string{".pdf", ".jpg", ".txt", ".mp4"},
-			unexpectedMime: "application/octet-stream",
+			expectedMimes:  []string{},
+			expectedExts:   []string{},
+			unexpectedMime: "application/pdf",
 		},
 		{
 			name:           "Only documents",
@@ -131,7 +131,7 @@ func TestValidate(t *testing.T) {
 		},
 		{
 			name:        "File too large",
-			validator:   NewValidator().WithMaxFileSize(1024 * 1024), // 1MB max
+			validator:   NewValidator(WithCategories(CategoryDocument)).WithMaxFileSize(1024 * 1024), // 1MB max
 			filename:    "test.pdf",
 			contentType: "application/pdf",
 			fileSize:    2 * 1024 * 1024, // 2MB
@@ -149,7 +149,7 @@ func TestValidate(t *testing.T) {
 		},
 		{
 			name:        "Missing file extension",
-			validator:   NewValidator(),
+			validator:   NewValidator(WithCategories(CategoryDocument)),
 			filename:    "testfile",
 			contentType: "application/pdf",
 			fileSize:    1024,
@@ -167,7 +167,7 @@ func TestValidate(t *testing.T) {
 		},
 		{
 			name:        "Content type doesn't match extension",
-			validator:   NewValidator(),
+			validator:   NewValidator(WithCategories(CategoryImage, CategoryDocument)),
 			filename:    "test.pdf",
 			contentType: "image/jpeg",
 			fileSize:    1024,
@@ -225,7 +225,7 @@ func TestValidateEdgeCases(t *testing.T) {
 	}{
 		{
 			name:        "Zero file size",
-			validator:   NewValidator(),
+			validator:   NewValidator(WithCategories(CategoryText)),
 			filename:    "empty.txt",
 			contentType: "text/plain",
 			fileSize:    0,
@@ -233,7 +233,7 @@ func TestValidateEdgeCases(t *testing.T) {
 		},
 		{
 			name:        "Exact max file size",
-			validator:   NewValidator().WithMaxFileSize(1024),
+			validator:   NewValidator(WithCategories(CategoryText)).WithMaxFileSize(1024),
 			filename:    "exact.txt",
 			contentType: "text/plain",
 			fileSize:    1024,
@@ -241,7 +241,7 @@ func TestValidateEdgeCases(t *testing.T) {
 		},
 		{
 			name:        "File with uppercase extension",
-			validator:   NewValidator(),
+			validator:   NewValidator(WithCategories(CategoryDocument)),
 			filename:    "test.PDF",
 			contentType: "application/pdf",
 			fileSize:    1024,
@@ -258,7 +258,7 @@ func TestValidateEdgeCases(t *testing.T) {
 		},
 		{
 			name:        "Empty filename",
-			validator:   NewValidator(),
+			validator:   NewValidator(WithCategories(CategoryText)),
 			filename:    "",
 			contentType: "text/plain",
 			fileSize:    1024,
@@ -267,7 +267,7 @@ func TestValidateEdgeCases(t *testing.T) {
 		},
 		{
 			name:        "Empty content type",
-			validator:   NewValidator(),
+			validator:   NewValidator(WithCategories(CategoryText)),
 			filename:    "test.txt",
 			contentType: "",
 			fileSize:    1024,
@@ -407,7 +407,17 @@ func TestExtensionsWithMultipleMimeTypes(t *testing.T) {
 	// Find extensions that have multiple MIME types
 	for ext, mimeTypes := range extToMimes {
 		if len(mimeTypes) > 1 {
-			v := NewValidator()
+			v := NewValidator(
+				WithCategories(
+					CategoryData,
+					CategoryDocument,
+					CategoryImage,
+					CategoryPresentation,
+					CategorySpreadsheet,
+					CategoryText,
+					CategoryVideo,
+				),
+			)
 
 			// All MIME types for this extension should be valid
 			for _, mimeType := range mimeTypes {
@@ -423,7 +433,7 @@ func TestExtensionsWithMultipleMimeTypes(t *testing.T) {
 
 // BenchmarkValidate benchmarks the Validate function
 func BenchmarkValidate(b *testing.B) {
-	v := NewValidator()
+	v := NewValidator(WithCategories(CategoryDocument))
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {

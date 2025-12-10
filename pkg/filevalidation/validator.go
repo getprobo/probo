@@ -105,9 +105,9 @@ type FileValidator struct {
 	Categories []string
 }
 
-type Opt func(v *FileValidator) *FileValidator
+type Option func(v *FileValidator) *FileValidator
 
-func WithCategories(categories ...string) Opt {
+func WithCategories(categories ...string) Option {
 	return func(v *FileValidator) *FileValidator {
 		v.Categories = categories
 
@@ -132,7 +132,7 @@ func WithCategories(categories ...string) Opt {
 	}
 }
 
-func WithMaxFileSize(maxFileSize int64) Opt {
+func WithMaxFileSize(maxFileSize int64) Option {
 	return func(v *FileValidator) *FileValidator {
 		v.MaxFileSize = maxFileSize
 
@@ -140,7 +140,7 @@ func WithMaxFileSize(maxFileSize int64) Opt {
 	}
 }
 
-func NewValidator(opts ...Opt) *FileValidator {
+func NewValidator(opts ...Option) *FileValidator {
 	v := &FileValidator{
 		MaxFileSize:       DefaultMaxFileSize,
 		AllowedMimeTypes:  make(map[string]bool),
@@ -149,18 +149,6 @@ func NewValidator(opts ...Opt) *FileValidator {
 
 	for _, opt := range opts {
 		v = opt(v)
-	}
-
-	if len(v.Categories) == 0 {
-		for _, fileType := range FileTypes {
-			v.AllowedMimeTypes[fileType.MimeType] = true
-			for _, ext := range fileType.Extensions {
-				if v.AllowedExtensions[ext] == nil {
-					v.AllowedExtensions[ext] = []string{}
-				}
-				v.AllowedExtensions[ext] = append(v.AllowedExtensions[ext], fileType.MimeType)
-			}
-		}
 	}
 
 	return v
