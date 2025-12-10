@@ -164,7 +164,7 @@ func slackHandler(trustSvc *trust.Service, slackSigningSecret string, logger *lo
 				httpserver.RenderJSON(w, http.StatusInternalServerError, SlackInteractiveResponse{Success: false, Message: "internal server error"})
 				return
 			}
-		case "accept_document":
+		case "accept_document", "reject_document":
 			docID, err := gid.ParseGID(action.Value)
 			if err != nil {
 				httpserver.RenderJSON(w, http.StatusBadRequest, SlackInteractiveResponse{Success: false, Message: "invalid document ID"})
@@ -172,7 +172,7 @@ func slackHandler(trustSvc *trust.Service, slackSigningSecret string, logger *lo
 			}
 			documentIDs = []gid.GID{docID}
 
-		case "accept_report":
+		case "accept_report", "reject_report":
 			repID, err := gid.ParseGID(action.Value)
 			if err != nil {
 				httpserver.RenderJSON(w, http.StatusBadRequest, SlackInteractiveResponse{Success: false, Message: "invalid report ID"})
@@ -180,7 +180,7 @@ func slackHandler(trustSvc *trust.Service, slackSigningSecret string, logger *lo
 			}
 			reportIDs = []gid.GID{repID}
 
-		case "accept_file":
+		case "accept_file", "reject_file":
 			fileID, err := gid.ParseGID(action.Value)
 			if err != nil {
 				httpserver.RenderJSON(w, http.StatusBadRequest, SlackInteractiveResponse{Success: false, Message: "invalid file ID"})
