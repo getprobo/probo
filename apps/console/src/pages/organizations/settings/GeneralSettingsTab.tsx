@@ -278,7 +278,7 @@ export default function GeneralSettingsTab() {
                   onChange={handleLogoChange}
                   variant="secondary"
                   className="ml-auto"
-                  accept="image/png,image/jpeg,image/jpg"
+                  accept="image/png,image/jpeg,image/jpg,image/svg+xml"
                 >
                   {isUpdatingOrganization
                     ? __("Uploading...")
@@ -313,7 +313,7 @@ export default function GeneralSettingsTab() {
                   disabled={formState.isSubmitting || isUpdatingOrganization}
                   onChange={handleHorizontalLogoChange}
                   variant="secondary"
-                  accept="image/png,image/jpeg,image/jpg"
+                  accept="image/png,image/jpeg,image/jpg,image/svg+xml"
                 >
                   {isUpdatingOrganization
                     ? __("Uploading...")
