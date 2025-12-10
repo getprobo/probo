@@ -8,6 +8,7 @@ export const trustCenterDocumentAccessStatus = {
 export type TrustCenterDocumentAccessStatus = (typeof trustCenterDocumentAccessStatus)[keyof typeof trustCenterDocumentAccessStatus];
 
 export type TrustCenterDocumentAccess = {
+  id: string;
   active: boolean;
   status: TrustCenterDocumentAccessStatus;
   requested: boolean;

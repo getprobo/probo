@@ -12,7 +12,21 @@ export function getTrustCenterDocumentAccessStatusBadgeVariant(status: TrustCent
   }
 }
 
+export function getTrustCenterDocumentAccessStatusLabel(status: TrustCenterDocumentAccessStatus, __: (key: string) => string) {
+  switch (status) {
+    case "REQUESTED":
+      return __("requested");
+    case "GRANTED":
+      return __("granted");
+    case "REJECTED":
+      return __("rejected");
+    case "REVOKED":
+      return __("revoked");
+  }
+}
+
 export type TrustCenterDocumentAccessInfo = {
+  persisted: boolean;
   variant: "info",
   name: string,
   type: "document",
@@ -23,6 +37,7 @@ export type TrustCenterDocumentAccessInfo = {
   active: boolean;
   status: TrustCenterDocumentAccessStatus;
 } | {
+  persisted: boolean;
   variant: "success",
   name: string,
   type: "report",
@@ -33,6 +48,7 @@ export type TrustCenterDocumentAccessInfo = {
   active: boolean;
   status: TrustCenterDocumentAccessStatus;
 } | {
+  persisted: boolean;
   variant: "highlight",
   name: string,
   type: "file",
@@ -50,6 +66,7 @@ export function getTrustCenterDocumentAccessInfo(
 ): TrustCenterDocumentAccessInfo {
   if (docAccess.document) {
     return {
+      persisted: docAccess.id !== docAccess.document.id,
       variant: "info" as const,
       name: docAccess.document.title,
       type: "document",
@@ -63,6 +80,7 @@ export function getTrustCenterDocumentAccessInfo(
   }
   if (docAccess.report) {
     return {
+      persisted: docAccess.id !== docAccess.report.id,
       variant: "success" as const,
       name: docAccess.report.filename,
       type: "report",
@@ -76,6 +94,7 @@ export function getTrustCenterDocumentAccessInfo(
   }
   if (docAccess.trustCenterFile) {
     return {
+      persisted: docAccess.id !== docAccess.trustCenterFile.id,
       variant: "highlight" as const,
       name: docAccess.trustCenterFile.name,
       type: "file",

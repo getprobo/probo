@@ -69,5 +69,6 @@ export { Role, getAssignableRoles } from "./roles";
 export {
     getTrustCenterDocumentAccessInfo,
     getTrustCenterDocumentAccessStatusBadgeVariant,
+    getTrustCenterDocumentAccessStatusLabel,
     type TrustCenterDocumentAccessInfo,
 } from "./trustCenterDocumentAccess";

@@ -76,13 +76,13 @@ func (utcar *UpdateTrustCenterAccessRequest) Validate() error {
 	v.Check(utcar.ID, "id", validator.Required(), validator.GID(coredata.TrustCenterAccessEntityType))
 	v.Check(utcar.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
 	for i, docAccess := range utcar.DocumentAccesses {
-		v.Check(docAccess, fmt.Sprintf("documentAccesses[%d].ID", i), validator.Required(), validator.GID(coredata.DocumentEntityType))
+		v.Check(docAccess.ID, fmt.Sprintf("documentAccesses[%d].ID", i), validator.Required(), validator.GID(coredata.DocumentEntityType))
 	}
 	for i, reportAccess := range utcar.ReportAccesses {
-		v.Check(reportAccess, fmt.Sprintf("reportAccesses[%d].ID", i), validator.Required(), validator.GID(coredata.ReportEntityType))
+		v.Check(reportAccess.ID, fmt.Sprintf("reportAccesses[%d].ID", i), validator.Required(), validator.GID(coredata.ReportEntityType))
 	}
 	for i, reportAccess := range utcar.TrustCenterFileAccesses {
-		v.Check(reportAccess, fmt.Sprintf("trustCenterFileAccesses[%d].ID", i), validator.Required(), validator.GID(coredata.TrustCenterFileEntityType))
+		v.Check(reportAccess.ID, fmt.Sprintf("trustCenterFileAccesses[%d].ID", i), validator.Required(), validator.GID(coredata.TrustCenterFileEntityType))
 	}
 
 	return v.Error()
@@ -297,40 +297,46 @@ func (s TrustCenterAccessService) Update(
 
 			var tcdas coredata.TrustCenterDocumentAccesses
 
-			var documentData []coredata.MergeTrustCenterDocumentAccessesData
-			for _, d := range req.DocumentAccesses {
-				documentData = append(documentData, coredata.MergeTrustCenterDocumentAccessesData{
-					ID:     d.ID,
-					Status: d.Status,
-				})
+			if len(req.DocumentAccesses) > 0 {
+				var documentData []coredata.MergeTrustCenterDocumentAccessesData
+				for _, d := range req.DocumentAccesses {
+					documentData = append(documentData, coredata.MergeTrustCenterDocumentAccessesData{
+						ID:     d.ID,
+						Status: d.Status,
+					})
+				}
+
+				if err := tcdas.MergeDocumentAccesses(ctx, tx, s.svc.scope, access.OrganizationID, access.ID, documentData); err != nil {
+					return fmt.Errorf("cannot merge document accesses: %w", err)
+				}
 			}
 
-			if err := tcdas.MergeDocumentAccesses(ctx, tx, s.svc.scope, access.OrganizationID, access.ID, documentData); err != nil {
-				return fmt.Errorf("cannot merge document accesses: %w", err)
+			if len(req.ReportAccesses) > 0 {
+				var reportData []coredata.MergeTrustCenterDocumentAccessesData
+				for _, d := range req.ReportAccesses {
+					reportData = append(reportData, coredata.MergeTrustCenterDocumentAccessesData{
+						ID:     d.ID,
+						Status: d.Status,
+					})
+				}
+
+				if err := tcdas.MergeReportAccesses(ctx, tx, s.svc.scope, access.OrganizationID, access.ID, reportData); err != nil {
+					return fmt.Errorf("cannot merge report accesses: %w", err)
+				}
 			}
 
-			var reportData []coredata.MergeTrustCenterDocumentAccessesData
-			for _, d := range req.ReportAccesses {
-				reportData = append(reportData, coredata.MergeTrustCenterDocumentAccessesData{
-					ID:     d.ID,
-					Status: d.Status,
-				})
-			}
+			if len(req.TrustCenterFileAccesses) > 0 {
+				var fileData []coredata.MergeTrustCenterDocumentAccessesData
+				for _, d := range req.TrustCenterFileAccesses {
+					fileData = append(fileData, coredata.MergeTrustCenterDocumentAccessesData{
+						ID:     d.ID,
+						Status: d.Status,
+					})
+				}
 
-			if err := tcdas.MergeReportAccesses(ctx, tx, s.svc.scope, access.OrganizationID, access.ID, reportData); err != nil {
-				return fmt.Errorf("cannot merge report accesses: %w", err)
-			}
-
-			var fileData []coredata.MergeTrustCenterDocumentAccessesData
-			for _, d := range req.TrustCenterFileAccesses {
-				fileData = append(fileData, coredata.MergeTrustCenterDocumentAccessesData{
-					ID:     d.ID,
-					Status: d.Status,
-				})
-			}
-
-			if err := tcdas.MergeTrustCenterFileAccesses(ctx, tx, s.svc.scope, access.OrganizationID, access.ID, fileData); err != nil {
-				return fmt.Errorf("cannot merge trust center file accesses: %w", err)
+				if err := tcdas.MergeTrustCenterFileAccesses(ctx, tx, s.svc.scope, access.OrganizationID, access.ID, fileData); err != nil {
+					return fmt.Errorf("cannot merge trust center file accesses: %w", err)
+				}
 			}
 
 			if shouldSendEmail {

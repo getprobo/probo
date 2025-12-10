@@ -2363,6 +2363,7 @@ type TrustCenterDocumentAccess
   @goModel(
     model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TrustCenterDocumentAccess"
   ) {
+  id: ID!
   active: Boolean!
   status: TrustCenterDocumentAccessStatus!
   requested: Boolean!

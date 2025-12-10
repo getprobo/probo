@@ -766,8 +766,8 @@ WHERE
 }
 
 type MergeTrustCenterDocumentAccessesData struct {
-	ID     gid.GID
-	Status TrustCenterDocumentAccessStatus
+	ID     gid.GID                         `json:"id"`
+	Status TrustCenterDocumentAccessStatus `json:"status"`
 }
 
 func (tcdas TrustCenterDocumentAccesses) MergeDocumentAccesses(
@@ -781,16 +781,20 @@ func (tcdas TrustCenterDocumentAccesses) MergeDocumentAccesses(
 	q := `
 WITH data AS (
   SELECT
-    id,
-    status
-  FROM
-    json_to_recordset(@data) AS t(id text, status trust_center_document_access_status)
+    t.*
+  FROM json_to_recordset(@data)
+    AS t(
+      id text,
+      status trust_center_document_access_status
+    )
 )
-MERGE INTO trust_center_document_accesses tcda
+MERGE INTO trust_center_document_accesses AS tcda
 USING data
-ON data.id = tcda.document_id
+  ON data.id = tcda.document_id
+  AND tcda.tenant_id = @tenant_id
+  AND tcda.trust_center_access_id = @trust_center_access_id
 WHEN MATCHED
-  THEN UPDATE SET tcda.status = data.status, tcda.updated_at = @now
+  THEN UPDATE SET status = data.status, updated_at = @now::timestamptz
 WHEN NOT MATCHED BY SOURCE
   AND tcda.tenant_id = @tenant_id
   AND tcda.trust_center_access_id = @trust_center_access_id
@@ -812,164 +816,18 @@ WHEN NOT MATCHED
     updated_at
   )
   VALUES (
-    generate_gid(decode_base64_unpadded(@tenant_id), @trust_center_document_access_entity_type) AS id,
-    @tenant_id AS tenant_id,
-    @organization_id AS organization_id,
-    @trust_center_access_id AS trust_center_access_id,
-    data.id AS document_id,
-    NULL AS report_id,
-    NULL AS trust_center_file_id,
-    false AS active,
-    data.status AS status,
-    false AS requested,
-    @now AS created_at,
-    @now AS updated_at
-  )
-`
-
-	args := pgx.StrictNamedArgs{
-		"trust_center_document_access_entity_type": TrustCenterDocumentAccessEntityType,
-		"tenant_id":              scope.GetTenantID(),
-		"trust_center_access_id": trustCenterAccessID,
-		"organization_id":        organizationID,
-		"now":                    time.Now(),
-		"data":                   data,
-	}
-
-	if _, err := conn.Exec(ctx, q, args); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (tcdas TrustCenterDocumentAccesses) MergeReportAccesses(
-	ctx context.Context,
-	conn pg.Conn,
-	scope Scoper,
-	organizationID gid.GID,
-	trustCenterAccessID gid.GID,
-	data []MergeTrustCenterDocumentAccessesData,
-) error {
-	q := `
-WITH data AS (
-  SELECT
-    id,
-    status
-  FROM
-    json_to_recordset(@data) AS t(id text, status trust_center_document_access_status)
-)
-MERGE INTO trust_center_document_accesses tcda
-USING data
-ON data.id = tcda.report_id
-WHEN MATCHED
-  THEN UPDATE SET tcda.status = data.status, tcda.updated_at = @now
-WHEN NOT MATCHED BY SOURCE
-  AND tcda.tenant_id = @tenant_id
-  AND tcda.trust_center_access_id = @trust_center_access_id
-  AND tcda.report_id IS NOT NULL
-  THEN DELETE
-WHEN NOT MATCHED
-  THEN INSERT (
-    id,
-    tenant_id,
-    organization_id,
-    trust_center_access_id,
-    document_id,
-    report_id,
-    trust_center_file_id,
-    active,
-    status,
-    requested,
-    created_at,
-    updated_at
-  )
-  VALUES (
-    generate_gid(decode_base64_unpadded(@tenant_id), @trust_center_document_access_entity_type) AS id,
-    @tenant_id AS tenant_id,
-    @organization_id AS organization_id,
-    @trust_center_access_id AS trust_center_access_id,
-    NULL AS document_id,
-    data.id AS report_id,
-    NULL AS trust_center_file_id,
-    false AS active,
-    data.status AS status,
-    false AS requested,
-    @now AS created_at,
-    @now AS updated_at
-  )
-`
-
-	args := pgx.StrictNamedArgs{
-		"trust_center_document_access_entity_type": TrustCenterDocumentAccessEntityType,
-		"tenant_id":              scope.GetTenantID(),
-		"trust_center_access_id": trustCenterAccessID,
-		"organization_id":        organizationID,
-		"now":                    time.Now(),
-		"data":                   data,
-	}
-
-	if _, err := conn.Exec(ctx, q, args); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (tcdas TrustCenterDocumentAccesses) MergeTrustCenterFileAccesses(
-	ctx context.Context,
-	conn pg.Conn,
-	scope Scoper,
-	organizationID gid.GID,
-	trustCenterAccessID gid.GID,
-	data []MergeTrustCenterDocumentAccessesData,
-) error {
-	q := `
-WITH data AS (
-  SELECT
-    id,
-    status
-  FROM
-    json_to_recordset(@data) AS t(id text, status trust_center_document_access_status)
-)
-MERGE INTO trust_center_document_accesses tcda
-USING data
-ON data.id = tcda.trust_center_file_id
-WHEN MATCHED
-  THEN UPDATE SET tcda.status = data.status, tcda.updated_at = @now
-WHEN NOT MATCHED BY SOURCE
-  AND tcda.tenant_id = @tenant_id
-  AND tcda.trust_center_access_id = @trust_center_access_id
-  AND tcda.trust_center_file_id IS NOT NULL
-  THEN DELETE
-WHEN NOT MATCHED
-  THEN INSERT (
-    id,
-    tenant_id,
-    organization_id,
-    trust_center_access_id,
-    document_id,
-    report_id,
-    trust_center_file_id,
-    active,
-    status,
-    requested,
-    created_at,
-    updated_at
-  )
-  VALUES (
-    generate_gid(decode_base64_unpadded(@tenant_id), @trust_center_document_access_entity_type) AS id,
-    @tenant_id AS tenant_id,
-    @organization_id AS organization_id,
-    @trust_center_access_id AS trust_center_access_id,
-    NULL AS document_id,
-    NULL AS report_id,
-    data.id AS trust_center_file_id,
-    false AS active,
-    data.status AS status,
-    false AS requested,
-    @now AS created_at,
-    @now AS updated_at
+    generate_gid(decode_base64_unpadded(@tenant_id), @trust_center_document_access_entity_type),
+    @tenant_id,
+    @organization_id,
+    @trust_center_access_id,
+    data.id,
+    NULL,
+    NULL,
+    false,
+    data.status,
+    false,
+    @now::timestamptz,
+    @now::timestamptz
   )
 `
 
@@ -1050,6 +908,83 @@ ON CONFLICT DO NOTHING
 
 	if _, err := conn.Exec(ctx, q, args); err != nil {
 		return fmt.Errorf("cannot bulk insert trust center document accesses: %w", err)
+	}
+
+	return nil
+}
+
+func (tcdas TrustCenterDocumentAccesses) MergeReportAccesses(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	organizationID gid.GID,
+	trustCenterAccessID gid.GID,
+	data []MergeTrustCenterDocumentAccessesData,
+) error {
+	q := `
+WITH data AS (
+  SELECT
+    t.*
+  FROM json_to_recordset(@data)
+    AS t(
+      id text,
+      status trust_center_document_access_status
+    )
+)
+MERGE INTO trust_center_document_accesses AS tcda
+USING data
+  ON data.id = tcda.report_id
+  AND tcda.tenant_id = @tenant_id
+  AND tcda.trust_center_access_id = @trust_center_access_id
+WHEN MATCHED
+  THEN UPDATE SET status = data.status, updated_at = @now::timestamptz
+WHEN NOT MATCHED BY SOURCE
+  AND tcda.tenant_id = @tenant_id
+  AND tcda.trust_center_access_id = @trust_center_access_id
+  AND tcda.report_id IS NOT NULL
+  THEN DELETE
+WHEN NOT MATCHED
+  THEN INSERT (
+    id,
+    tenant_id,
+    organization_id,
+    trust_center_access_id,
+    document_id,
+    report_id,
+    trust_center_file_id,
+    active,
+    status,
+    requested,
+    created_at,
+    updated_at
+  )
+  VALUES (
+    generate_gid(decode_base64_unpadded(@tenant_id), @trust_center_document_access_entity_type),
+    @tenant_id,
+    @organization_id,
+    @trust_center_access_id,
+    NULL,
+    data.id,
+    NULL,
+    false,
+    data.status,
+    false,
+    @now::timestamptz,
+    @now::timestamptz
+  )
+`
+
+	args := pgx.StrictNamedArgs{
+		"trust_center_document_access_entity_type": TrustCenterDocumentAccessEntityType,
+		"tenant_id":              scope.GetTenantID(),
+		"trust_center_access_id": trustCenterAccessID,
+		"organization_id":        organizationID,
+		"now":                    time.Now(),
+		"data":                   data,
+	}
+
+	if _, err := conn.Exec(ctx, q, args); err != nil {
+		return err
 	}
 
 	return nil
@@ -1233,6 +1168,83 @@ WHERE
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot reject trust center document accesses by trust center file IDs: %w", err)
+	}
+
+	return nil
+}
+
+func (tcdas TrustCenterDocumentAccesses) MergeTrustCenterFileAccesses(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	organizationID gid.GID,
+	trustCenterAccessID gid.GID,
+	data []MergeTrustCenterDocumentAccessesData,
+) error {
+	q := `
+WITH data AS (
+  SELECT
+    t.*
+  FROM json_to_recordset(@data)
+    AS t(
+      id text,
+      status trust_center_document_access_status
+    )
+)
+MERGE INTO trust_center_document_accesses AS tcda
+USING data
+  ON data.id = tcda.trust_center_file_id
+  AND tcda.tenant_id = @tenant_id
+  AND tcda.trust_center_access_id = @trust_center_access_id
+WHEN MATCHED
+  THEN UPDATE SET status = data.status, updated_at = @now::timestamptz
+WHEN NOT MATCHED BY SOURCE
+  AND tcda.tenant_id = @tenant_id
+  AND tcda.trust_center_access_id = @trust_center_access_id
+  AND tcda.trust_center_file_id IS NOT NULL
+  THEN DELETE
+WHEN NOT MATCHED
+  THEN INSERT (
+    id,
+    tenant_id,
+    organization_id,
+    trust_center_access_id,
+    document_id,
+    report_id,
+    trust_center_file_id,
+    active,
+    status,
+    requested,
+    created_at,
+    updated_at
+  )
+  VALUES (
+    generate_gid(decode_base64_unpadded(@tenant_id), @trust_center_document_access_entity_type),
+    @tenant_id,
+    @organization_id,
+    @trust_center_access_id,
+    NULL,
+    data.id,
+    NULL,
+    false,
+    data.status,
+    false,
+    @now::timestamptz,
+    @now::timestamptz
+  )
+`
+
+	args := pgx.StrictNamedArgs{
+		"trust_center_document_access_entity_type": TrustCenterDocumentAccessEntityType,
+		"tenant_id":              scope.GetTenantID(),
+		"trust_center_access_id": trustCenterAccessID,
+		"organization_id":        organizationID,
+		"now":                    time.Now(),
+		"data":                   data,
+	}
+
+	if _, err := conn.Exec(ctx, q, args); err != nil {
+		return err
 	}
 
 	return nil

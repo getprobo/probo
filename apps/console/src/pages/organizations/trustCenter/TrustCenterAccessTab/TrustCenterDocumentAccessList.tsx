@@ -1,5 +1,5 @@
 import type { TrustCenterDocumentAccessStatus } from "@probo/coredata";
-import { getTrustCenterDocumentAccessStatusBadgeVariant, type TrustCenterDocumentAccessInfo } from "@probo/helpers";
+import { getTrustCenterDocumentAccessStatusBadgeVariant, getTrustCenterDocumentAccessStatusLabel, type TrustCenterDocumentAccessInfo } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import { Badge, Button, Table, Tbody, Td, Th, Thead, Tr } from "@probo/ui";
 
@@ -25,7 +25,7 @@ export function TrustCenterDocumentAccessList(props: TrustCenterDocumentAccessLi
         <h4 className="font-medium text-txt-primary">
           {__("Document Access Permissions")}
         </h4>
-        <div className="ml-auto flex items-center gap-4">
+        <div className="ml-auto flex items-center gap-2">
           {showGrantCTA &&
             <Button
               type="button"
@@ -83,11 +83,13 @@ export function TrustCenterDocumentAccessList(props: TrustCenterDocumentAccessLi
                       </div>
                     </Td>
                     <Td>
-                      <Badge variant={getTrustCenterDocumentAccessStatusBadgeVariant(docAccess.status)}>
-                        {docAccess.status}
-                      </Badge>
+                      {(docAccess.persisted || docAccess.status !== "REQUESTED") &&
+                        <Badge variant={getTrustCenterDocumentAccessStatusBadgeVariant(docAccess.status)}>
+                          {getTrustCenterDocumentAccessStatusLabel(docAccess.status, __)}
+                        </Badge>
+                      }
                     </Td>
-                    <Td className="flex justify-end">
+                    <Td className="flex justify-end gap-2">
                       {docAccess.status !== "GRANTED" &&
                         <Button
                           type="button"
@@ -102,10 +104,13 @@ export function TrustCenterDocumentAccessList(props: TrustCenterDocumentAccessLi
                         <Button
                           type="button"
                           variant="danger"
-                          onClick={() => onUpdateStatus(docAccess, initialStatusByID[docAccess.id] === "GRANTED" ? "REVOKED" : "REJECTED")}
+                          onClick={() => onUpdateStatus(
+                            docAccess,
+                            docAccess.id && initialStatusByID[docAccess.id] === "GRANTED" ? "REVOKED" : "REJECTED"
+                          )}
                           className="text-xs h-7 min-h-7"
                         >
-                          {initialStatusByID[docAccess.id] === "GRANTED" ? __("Revoke") : __("Reject")}
+                          {docAccess.id && initialStatusByID[docAccess.id] === "GRANTED" ? __("Revoke") : __("Reject")}
                         </Button>
                       }
                     </Td>

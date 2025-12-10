@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<bf1055f4f2fe5eb7a428afdd30f4f672>>
+ * @generated SignedSource<<3d9ccb3632d0373c627c87f6e6585673>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -25,6 +25,7 @@ export type TrustCenterAccessGraphLoadDocumentAccessesQuery$data = {
             readonly id: string;
             readonly title: string;
           } | null | undefined;
+          readonly id: string;
           readonly report: {
             readonly audit: {
               readonly framework: {
@@ -214,6 +215,7 @@ return {
                         "name": "node",
                         "plural": false,
                         "selections": [
+                          (v2/*: any*/),
                           (v4/*: any*/),
                           (v5/*: any*/),
                           (v6/*: any*/),
@@ -325,6 +327,7 @@ return {
                         "name": "node",
                         "plural": false,
                         "selections": [
+                          (v2/*: any*/),
                           (v4/*: any*/),
                           (v5/*: any*/),
                           (v6/*: any*/),
@@ -387,16 +390,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "a764b27e48509dfdf4a7a03c5f00ea59",
+    "cacheID": "a590c829b3c88e4fa4fe146771c723b9",
     "id": null,
     "metadata": {},
     "name": "TrustCenterAccessGraphLoadDocumentAccessesQuery",
     "operationKind": "query",
-    "text": "query TrustCenterAccessGraphLoadDocumentAccessesQuery(\n  $accessId: ID!\n) {\n  node(id: $accessId) {\n    __typename\n    ... on TrustCenterAccess {\n      id\n      availableDocumentAccesses(first: 100, orderBy: {field: CREATED_AT, direction: DESC}) {\n        edges {\n          node {\n            active\n            requested\n            status\n            document {\n              id\n              title\n              documentType\n            }\n            report {\n              id\n              filename\n              audit {\n                id\n                framework {\n                  name\n                  id\n                }\n              }\n            }\n            trustCenterFile {\n              id\n              name\n              category\n            }\n          }\n        }\n      }\n    }\n    id\n  }\n}\n"
+    "text": "query TrustCenterAccessGraphLoadDocumentAccessesQuery(\n  $accessId: ID!\n) {\n  node(id: $accessId) {\n    __typename\n    ... on TrustCenterAccess {\n      id\n      availableDocumentAccesses(first: 100, orderBy: {field: CREATED_AT, direction: DESC}) {\n        edges {\n          node {\n            id\n            active\n            requested\n            status\n            document {\n              id\n              title\n              documentType\n            }\n            report {\n              id\n              filename\n              audit {\n                id\n                framework {\n                  name\n                  id\n                }\n              }\n            }\n            trustCenterFile {\n              id\n              name\n              category\n            }\n          }\n        }\n      }\n    }\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "f40dbb607d0bd5adb85b0a8377b96b32";
+(node as any).hash = "1145528ffc9c1576b8e5dd6d58e64a9c";
 
 export default node;

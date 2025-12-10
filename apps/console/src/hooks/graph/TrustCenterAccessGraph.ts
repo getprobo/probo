@@ -110,6 +110,7 @@ export const loadTrustCenterAccessDocumentAccessesQuery = graphql`
         availableDocumentAccesses(first: 100, orderBy: { field: CREATED_AT, direction: DESC }) {
           edges {
             node {
+              id
               active
               requested
               status

@@ -85,7 +85,9 @@ export function TrustCenterAccessEditForm(props: TrustCenterAccessEditFormProps)
     setDocumentAccesses((prev) => prev.map(element => ({...element, status: "GRANTED"})))
   }, [])
   const handleRejectOrRevokeAllDocumentAccess = useCallback(() => {
-    setDocumentAccesses((prev) => prev.map(element => ({...element, status: initialStatusByID[element.id] === "GRANTED" ? "REVOKED" : "REJECTED"})))
+    setDocumentAccesses((prev) => prev
+      .map(element => ({...element, status: initialStatusByID[element.id] === "GRANTED" ? "REVOKED" : "REJECTED"}))
+    )
   }, [initialStatusByID])
 
   const editSchema = z.object({
@@ -102,21 +104,23 @@ export function TrustCenterAccessEditForm(props: TrustCenterAccessEditFormProps)
   });
 
   const handleSubmit = editForm.handleSubmit(async (data) => {
-    const documents: {id: string, status: TrustCenterDocumentAccessStatus}[] = []
-    const reports: {id: string, status: TrustCenterDocumentAccessStatus}[] = []
-    const trustCenterFiles: {id: string, status: TrustCenterDocumentAccessStatus}[] = [];
+    const documents: { id: string, status: TrustCenterDocumentAccessStatus }[] = []
+    const reports: { id: string, status: TrustCenterDocumentAccessStatus }[] = []
+    const trustCenterFiles: { id: string, status: TrustCenterDocumentAccessStatus }[] = []
 
     for (const docAccess of documentAccesses) {
-      switch (docAccess.type) {
-        case "document":
-          documents.push({id: docAccess.id, status: docAccess.status});
-          break;
-        case "report":
-          reports.push({id: docAccess.id, status: docAccess.status});
-          break;
-        case "file":
-          trustCenterFiles.push({id: docAccess.id, status: docAccess.status});
-          break;
+      if (docAccess.persisted || docAccess.status !== "REQUESTED") {
+        switch (docAccess.type) {
+          case "document":
+            documents.push({id: docAccess.id, status: docAccess.status});
+            break;
+          case "report":
+            reports.push({id: docAccess.id, status: docAccess.status});
+            break;
+          case "file":
+            trustCenterFiles.push({id: docAccess.id, status: docAccess.status});
+            break;
+        }
       }
     }
 
