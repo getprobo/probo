@@ -31,6 +31,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/statelesstoken"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 type (
@@ -53,6 +54,14 @@ type (
 const (
 	TrustCenterAccessURLFormat = "https://%s/organizations/%s/trust-center/access"
 )
+
+func (tcar *TrustCenterAccessRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(tcar.Email, "email", validator.NotOneOfSlice([]string{}))
+
+	return nil
+}
 
 func (s TrustCenterAccessService) ValidateToken(
 	ctx context.Context,
