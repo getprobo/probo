@@ -16,13 +16,11 @@ import { ProboLogo } from './ProboLogo';
 interface EmailLayoutProps {
   subject: string;
   children: React.ReactNode;
-  organizationName?: string;
 }
 
 export const EmailLayout = ({
   subject,
   children,
-  organizationName,
 }: EmailLayoutProps) => {
   return (
     <Html lang="en">

@@ -393,7 +393,6 @@ FROM
 WHERE
     %s
     AND trust_center_access_id = @trust_center_access_id
-    AND requested = true
     AND status = 'REQUESTED'::trust_center_document_access_status
 `
 

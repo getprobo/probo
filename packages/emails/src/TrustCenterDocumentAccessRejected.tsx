@@ -4,7 +4,7 @@ import EmailLayout, { bodyText } from './components/EmailLayout';
 
 export const TrustCenterDocumentAccessRejected = () => {
   return (
-    <EmailLayout subject={`Trust Center Access Invitation - ${'{{.OrganizationName}}'}`} organizationName={'{{.OrganizationName}}'}>
+    <EmailLayout subject={`Trust Center Document Access Rejected - ${'{{.OrganizationName}}'}`}>
       <Text style={bodyText}>
         Your access request to the following files in <strong>{'{{.OrganizationName}}'}</strong>'s Trust Center has been rejected:
       </Text>

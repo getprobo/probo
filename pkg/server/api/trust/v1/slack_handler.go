@@ -176,9 +176,9 @@ func slackHandler(trustSvc *trust.Service, slackSigningSecret string, logger *lo
 			}
 
 			if strings.HasPrefix(action.ActionID, "accept_") {
-				statusAction = "accept"
+				statusAction = StatusAccept
 			} else {
-				statusAction = "reject"
+				statusAction = StatusReject
 			}
 		} else {
 			var gID gid.GID
@@ -256,7 +256,7 @@ func slackHandler(trustSvc *trust.Service, slackSigningSecret string, logger *lo
 				return
 			}
 		default:
-			logger.ErrorCtx(ctx, "unknown status action access", log.Error(err))
+			logger.ErrorCtx(ctx, "unknown status action", log.String("status_action", statusAction))
 			httpserver.RenderJSON(w, http.StatusInternalServerError, SlackInteractiveResponse{Success: false, Message: "internal server error"})
 			return
 		}

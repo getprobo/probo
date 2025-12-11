@@ -25,3 +25,7 @@ ALTER COLUMN
     status
 SET
     NOT NULL;
+
+ALTER TABLE
+    trust_center_document_accesses DROP COLUMN active,
+    DROP COLUMN requested;
