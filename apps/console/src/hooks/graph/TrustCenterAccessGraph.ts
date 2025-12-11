@@ -111,8 +111,6 @@ export const loadTrustCenterAccessDocumentAccessesQuery = graphql`
           edges {
             node {
               id
-              active
-              requested
               status
               document {
                 id

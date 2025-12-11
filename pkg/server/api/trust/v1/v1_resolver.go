@@ -87,7 +87,7 @@ func (r *documentResolver) IsUserAuthorized(ctx context.Context, obj *types.Docu
 			return false, nil
 		}
 
-		return documentAccess.Active, nil
+		return documentAccess.Status == coredata.TrustCenterDocumentAccessStatusGranted, nil
 	}
 
 	panic(fmt.Errorf("no user or token data found"))
@@ -213,7 +213,7 @@ func (r *mutationResolver) ExportDocumentPDF(ctx context.Context, input types.Ex
 			panic(fmt.Errorf("cannot check document access: %w", err))
 		}
 
-		if !documentAccess.Active {
+		if documentAccess.Status != coredata.TrustCenterDocumentAccessStatusGranted {
 			return nil, fmt.Errorf("access denied: no permission to access this document")
 		}
 
@@ -291,7 +291,7 @@ func (r *mutationResolver) ExportReportPDF(ctx context.Context, input types.Expo
 			panic(fmt.Errorf("cannot check report access: %w", err))
 		}
 
-		if !reportAccess.Active {
+		if reportAccess.Status != coredata.TrustCenterDocumentAccessStatusGranted {
 			return nil, fmt.Errorf("access denied: no permission to access this report")
 		}
 
@@ -549,7 +549,7 @@ func (r *mutationResolver) ExportTrustCenterFile(ctx context.Context, input type
 			panic(fmt.Errorf("cannot check trust center file access: %w", err))
 		}
 
-		if !fileAccess.Active {
+		if fileAccess.Status != coredata.TrustCenterDocumentAccessStatusGranted {
 			return nil, fmt.Errorf("access denied: no permission to access this file")
 		}
 
@@ -748,7 +748,7 @@ func (r *reportResolver) IsUserAuthorized(ctx context.Context, obj *types.Report
 			return false, nil
 		}
 
-		return reportAccess.Active, nil
+		return reportAccess.Status == coredata.TrustCenterDocumentAccessStatusGranted, nil
 	}
 
 	panic(fmt.Errorf("no user or token data found"))
@@ -952,7 +952,7 @@ func (r *trustCenterFileResolver) IsUserAuthorized(ctx context.Context, obj *typ
 			return false, nil
 		}
 
-		return fileAccess.Active, nil
+		return fileAccess.Status == coredata.TrustCenterDocumentAccessStatusGranted, nil
 	}
 
 	panic(fmt.Errorf("no user or token data found"))

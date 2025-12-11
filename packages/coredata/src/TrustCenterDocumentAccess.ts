@@ -9,9 +9,7 @@ export type TrustCenterDocumentAccessStatus = (typeof trustCenterDocumentAccessS
 
 export type TrustCenterDocumentAccess = {
   id: string;
-  active: boolean;
   status: TrustCenterDocumentAccessStatus;
-  requested: boolean;
   document?: {
     id: string;
     title: string;

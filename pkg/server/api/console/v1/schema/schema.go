@@ -1452,11 +1452,9 @@ type ComplexityRoot struct {
 	}
 
 	TrustCenterDocumentAccess struct {
-		Active          func(childComplexity int) int
 		Document        func(childComplexity int) int
 		ID              func(childComplexity int) int
 		Report          func(childComplexity int) int
-		Requested       func(childComplexity int) int
 		Status          func(childComplexity int) int
 		TrustCenterFile func(childComplexity int) int
 	}
@@ -8011,12 +8009,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.TrustCenterConnection.PageInfo(childComplexity), true
 
-	case "TrustCenterDocumentAccess.active":
-		if e.complexity.TrustCenterDocumentAccess.Active == nil {
-			break
-		}
-
-		return e.complexity.TrustCenterDocumentAccess.Active(childComplexity), true
 	case "TrustCenterDocumentAccess.document":
 		if e.complexity.TrustCenterDocumentAccess.Document == nil {
 			break
@@ -8035,12 +8027,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.TrustCenterDocumentAccess.Report(childComplexity), true
-	case "TrustCenterDocumentAccess.requested":
-		if e.complexity.TrustCenterDocumentAccess.Requested == nil {
-			break
-		}
-
-		return e.complexity.TrustCenterDocumentAccess.Requested(childComplexity), true
 	case "TrustCenterDocumentAccess.status":
 		if e.complexity.TrustCenterDocumentAccess.Status == nil {
 			break
@@ -11932,9 +11918,7 @@ type TrustCenterDocumentAccess
     model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TrustCenterDocumentAccess"
   ) {
   id: ID!
-  active: Boolean!
   status: TrustCenterDocumentAccessStatus!
-  requested: Boolean!
   document: Document @goField(forceResolver: true)
   report: Report @goField(forceResolver: true)
   trustCenterFile: TrustCenterFile @goField(forceResolver: true)
@@ -47166,35 +47150,6 @@ func (ec *executionContext) fieldContext_TrustCenterDocumentAccess_id(_ context.
 	return fc, nil
 }
 
-func (ec *executionContext) _TrustCenterDocumentAccess_active(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenterDocumentAccess) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_TrustCenterDocumentAccess_active,
-		func(ctx context.Context) (any, error) {
-			return obj.Active, nil
-		},
-		nil,
-		ec.marshalNBoolean2bool,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_TrustCenterDocumentAccess_active(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "TrustCenterDocumentAccess",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _TrustCenterDocumentAccess_status(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenterDocumentAccess) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -47219,35 +47174,6 @@ func (ec *executionContext) fieldContext_TrustCenterDocumentAccess_status(_ cont
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type TrustCenterDocumentAccessStatus does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _TrustCenterDocumentAccess_requested(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenterDocumentAccess) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_TrustCenterDocumentAccess_requested,
-		func(ctx context.Context) (any, error) {
-			return obj.Requested, nil
-		},
-		nil,
-		ec.marshalNBoolean2bool,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_TrustCenterDocumentAccess_requested(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "TrustCenterDocumentAccess",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	return fc, nil
@@ -47564,12 +47490,8 @@ func (ec *executionContext) fieldContext_TrustCenterDocumentAccessEdge_node(_ co
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_TrustCenterDocumentAccess_id(ctx, field)
-			case "active":
-				return ec.fieldContext_TrustCenterDocumentAccess_active(ctx, field)
 			case "status":
 				return ec.fieldContext_TrustCenterDocumentAccess_status(ctx, field)
-			case "requested":
-				return ec.fieldContext_TrustCenterDocumentAccess_requested(ctx, field)
 			case "document":
 				return ec.fieldContext_TrustCenterDocumentAccess_document(ctx, field)
 			case "report":
@@ -78903,18 +78825,8 @@ func (ec *executionContext) _TrustCenterDocumentAccess(ctx context.Context, sel 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
-		case "active":
-			out.Values[i] = ec._TrustCenterDocumentAccess_active(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
 		case "status":
 			out.Values[i] = ec._TrustCenterDocumentAccess_status(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "requested":
-			out.Values[i] = ec._TrustCenterDocumentAccess_requested(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}

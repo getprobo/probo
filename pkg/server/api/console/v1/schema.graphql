@@ -2364,9 +2364,7 @@ type TrustCenterDocumentAccess
     model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TrustCenterDocumentAccess"
   ) {
   id: ID!
-  active: Boolean!
   status: TrustCenterDocumentAccessStatus!
-  requested: Boolean!
   document: Document @goField(forceResolver: true)
   report: Report @goField(forceResolver: true)
   trustCenterFile: TrustCenterFile @goField(forceResolver: true)

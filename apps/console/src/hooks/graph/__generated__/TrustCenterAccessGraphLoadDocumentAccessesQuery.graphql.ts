@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<3d9ccb3632d0373c627c87f6e6585673>>
+ * @generated SignedSource<<72bab693664bbf68879e863c85f980b5>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -19,7 +19,6 @@ export type TrustCenterAccessGraphLoadDocumentAccessesQuery$data = {
     readonly availableDocumentAccesses?: {
       readonly edges: ReadonlyArray<{
         readonly node: {
-          readonly active: boolean;
           readonly document: {
             readonly documentType: DocumentType;
             readonly id: string;
@@ -36,7 +35,6 @@ export type TrustCenterAccessGraphLoadDocumentAccessesQuery$data = {
             readonly filename: string;
             readonly id: string;
           } | null | undefined;
-          readonly requested: boolean;
           readonly status: TrustCenterDocumentAccessStatus;
           readonly trustCenterFile: {
             readonly category: string;
@@ -95,24 +93,10 @@ v4 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "active",
-  "storageKey": null
-},
-v5 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "requested",
-  "storageKey": null
-},
-v6 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
   "name": "status",
   "storageKey": null
 },
-v7 = {
+v5 = {
   "alias": null,
   "args": null,
   "concreteType": "Document",
@@ -138,21 +122,21 @@ v7 = {
   ],
   "storageKey": null
 },
-v8 = {
+v6 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "filename",
   "storageKey": null
 },
-v9 = {
+v7 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "name",
   "storageKey": null
 },
-v10 = {
+v8 = {
   "alias": null,
   "args": null,
   "concreteType": "TrustCenterFile",
@@ -161,7 +145,7 @@ v10 = {
   "plural": false,
   "selections": [
     (v2/*: any*/),
-    (v9/*: any*/),
+    (v7/*: any*/),
     {
       "alias": null,
       "args": null,
@@ -218,8 +202,6 @@ return {
                           (v2/*: any*/),
                           (v4/*: any*/),
                           (v5/*: any*/),
-                          (v6/*: any*/),
-                          (v7/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -229,7 +211,7 @@ return {
                             "plural": false,
                             "selections": [
                               (v2/*: any*/),
-                              (v8/*: any*/),
+                              (v6/*: any*/),
                               {
                                 "alias": null,
                                 "args": null,
@@ -247,7 +229,7 @@ return {
                                     "name": "framework",
                                     "plural": false,
                                     "selections": [
-                                      (v9/*: any*/)
+                                      (v7/*: any*/)
                                     ],
                                     "storageKey": null
                                   }
@@ -257,7 +239,7 @@ return {
                             ],
                             "storageKey": null
                           },
-                          (v10/*: any*/)
+                          (v8/*: any*/)
                         ],
                         "storageKey": null
                       }
@@ -330,8 +312,6 @@ return {
                           (v2/*: any*/),
                           (v4/*: any*/),
                           (v5/*: any*/),
-                          (v6/*: any*/),
-                          (v7/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -341,7 +321,7 @@ return {
                             "plural": false,
                             "selections": [
                               (v2/*: any*/),
-                              (v8/*: any*/),
+                              (v6/*: any*/),
                               {
                                 "alias": null,
                                 "args": null,
@@ -359,7 +339,7 @@ return {
                                     "name": "framework",
                                     "plural": false,
                                     "selections": [
-                                      (v9/*: any*/),
+                                      (v7/*: any*/),
                                       (v2/*: any*/)
                                     ],
                                     "storageKey": null
@@ -370,7 +350,7 @@ return {
                             ],
                             "storageKey": null
                           },
-                          (v10/*: any*/)
+                          (v8/*: any*/)
                         ],
                         "storageKey": null
                       }
@@ -390,16 +370,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "a590c829b3c88e4fa4fe146771c723b9",
+    "cacheID": "a3c6d83c3fae9bd8ab3e474706423115",
     "id": null,
     "metadata": {},
     "name": "TrustCenterAccessGraphLoadDocumentAccessesQuery",
     "operationKind": "query",
-    "text": "query TrustCenterAccessGraphLoadDocumentAccessesQuery(\n  $accessId: ID!\n) {\n  node(id: $accessId) {\n    __typename\n    ... on TrustCenterAccess {\n      id\n      availableDocumentAccesses(first: 100, orderBy: {field: CREATED_AT, direction: DESC}) {\n        edges {\n          node {\n            id\n            active\n            requested\n            status\n            document {\n              id\n              title\n              documentType\n            }\n            report {\n              id\n              filename\n              audit {\n                id\n                framework {\n                  name\n                  id\n                }\n              }\n            }\n            trustCenterFile {\n              id\n              name\n              category\n            }\n          }\n        }\n      }\n    }\n    id\n  }\n}\n"
+    "text": "query TrustCenterAccessGraphLoadDocumentAccessesQuery(\n  $accessId: ID!\n) {\n  node(id: $accessId) {\n    __typename\n    ... on TrustCenterAccess {\n      id\n      availableDocumentAccesses(first: 100, orderBy: {field: CREATED_AT, direction: DESC}) {\n        edges {\n          node {\n            id\n            status\n            document {\n              id\n              title\n              documentType\n            }\n            report {\n              id\n              filename\n              audit {\n                id\n                framework {\n                  name\n                  id\n                }\n              }\n            }\n            trustCenterFile {\n              id\n              name\n              category\n            }\n          }\n        }\n      }\n    }\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "1145528ffc9c1576b8e5dd6d58e64a9c";
+(node as any).hash = "f2fad3a04a700d1a9b045d1fa09e470c";
 
 export default node;

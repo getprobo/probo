@@ -36,9 +36,7 @@ type (
 		DocumentID          *gid.GID                        `db:"document_id"`
 		ReportID            *gid.GID                        `db:"report_id"`
 		TrustCenterFileID   *gid.GID                        `db:"trust_center_file_id"`
-		Active              bool                            `db:"active"`
 		Status              TrustCenterDocumentAccessStatus `db:"status"`
-		Requested           bool                            `db:"requested"`
 		CreatedAt           time.Time                       `db:"created_at"`
 		UpdatedAt           time.Time                       `db:"updated_at"`
 	}
@@ -239,9 +237,7 @@ INSERT INTO trust_center_document_accesses (
   document_id,
   report_id,
   trust_center_file_id,
-  active,
   status,
-  requested,
   created_at,
   updated_at
 ) VALUES (
@@ -252,9 +248,7 @@ INSERT INTO trust_center_document_accesses (
   @document_id,
   @report_id,
   @trust_center_file_id,
-  @active,
   @status::trust_center_document_access_status,
-  @requested,
   @created_at,
   @updated_at
 )
@@ -269,8 +263,6 @@ INSERT INTO trust_center_document_accesses (
 		"report_id":              tcda.ReportID,
 		"trust_center_file_id":   tcda.TrustCenterFileID,
 		"status":                 tcda.Status,
-		"active":                 tcda.Active,
-		"requested":              tcda.Requested,
 		"created_at":             tcda.CreatedAt,
 		"updated_at":             tcda.UpdatedAt,
 	}
@@ -522,7 +514,7 @@ all_items AS (
   WHERE tcf.organization_id = o.organization_id
     AND (
       tcf.trust_center_visibility = 'PRIVATE'::trust_center_visibility
-      ORtcf.trust_center_visibility = 'NONE'::trust_center_visibility
+      OR tcf.trust_center_visibility = 'NONE'::trust_center_visibility
     )
 ),
 final_items AS (
@@ -534,9 +526,7 @@ final_items AS (
     ai.document_id,
     ai.report_id,
     ai.trust_center_file_id,
-    COALESCE(tcda.active, false) AS active,
     COALESCE(tcda.status, 'REQUESTED'::trust_center_document_access_status) AS status,
-    COALESCE(tcda.requested, false) AS requested,
     COALESCE(tcda.created_at, ai.item_created_at) AS created_at,
     COALESCE(tcda.updated_at, ai.item_updated_at) AS updated_at
   FROM all_items ai
@@ -556,9 +546,7 @@ SELECT
   document_id,
   report_id,
   trust_center_file_id,
-  active,
   status,
-  requested,
   created_at,
   updated_at
 FROM final_items
@@ -602,9 +590,7 @@ SELECT
   document_id,
   report_id,
   trust_center_file_id,
-  active,
   status,
-  requested,
   created_at,
   updated_at
 FROM
@@ -827,9 +813,7 @@ WHEN NOT MATCHED
     document_id,
     report_id,
     trust_center_file_id,
-    active,
     status,
-    requested,
     created_at,
     updated_at
   )
@@ -841,9 +825,7 @@ WHEN NOT MATCHED
     data.id,
     NULL,
     NULL,
-    false,
     data.status,
-    false,
     @now::timestamptz,
     @now::timestamptz
   )
@@ -889,9 +871,7 @@ WITH document_access_data AS (
     unnest(@document_ids::text[]) AS document_id,
     null::text AS report_id,
     null::text AS trust_center_file_id,
-    false AS active,
     @status::trust_center_document_access_status AS status,
-    false AS requested,
     @created_at::timestamptz AS created_at,
     @updated_at::timestamptz AS updated_at
 )
@@ -903,9 +883,7 @@ INSERT INTO trust_center_document_accesses (
   document_id,
   report_id,
   trust_center_file_id,
-  active,
   status,
-  requested,
   created_at,
   updated_at
 )
@@ -970,9 +948,7 @@ WHEN NOT MATCHED
     document_id,
     report_id,
     trust_center_file_id,
-    active,
     status,
-    requested,
     created_at,
     updated_at
   )
@@ -984,9 +960,7 @@ WHEN NOT MATCHED
     NULL,
     data.id,
     NULL,
-    false,
     data.status,
-    false,
     @now::timestamptz,
     @now::timestamptz
   )
@@ -1032,9 +1006,7 @@ WITH report_access_data AS (
     null::text AS document_id,
     unnest(@report_ids::text[]) AS report_id,
     null::text AS trust_center_file_id,
-    false AS active,
     @status::trust_center_document_access_status AS status,
-    false AS requested,
     @created_at::timestamptz AS created_at,
     @updated_at::timestamptz AS updated_at
 )
@@ -1046,9 +1018,7 @@ INSERT INTO trust_center_document_accesses (
   document_id,
   report_id,
   trust_center_file_id,
-  active,
   status,
-  requested,
   created_at,
   updated_at
 )
@@ -1088,9 +1058,7 @@ SELECT
   document_id,
   report_id,
   trust_center_file_id,
-  active,
   status,
-  requested,
   created_at,
   updated_at
 FROM
@@ -1237,9 +1205,7 @@ WHEN NOT MATCHED
     document_id,
     report_id,
     trust_center_file_id,
-    active,
     status,
-    requested,
     created_at,
     updated_at
   )
@@ -1251,9 +1217,7 @@ WHEN NOT MATCHED
     NULL,
     NULL,
     data.id,
-    false,
     data.status,
-    false,
     @now::timestamptz,
     @now::timestamptz
   )
@@ -1295,9 +1259,7 @@ WITH trust_center_file_access_data AS (
     null::text AS document_id,
     null::text AS report_id,
     unnest(@trust_center_file_ids::text[]) AS trust_center_file_id,
-    false AS active,
     @status::trust_center_document_access_status AS status,
-    false AS requested,
     @created_at::timestamptz AS created_at,
     @updated_at::timestamptz AS updated_at
 )
@@ -1309,9 +1271,7 @@ INSERT INTO trust_center_document_accesses (
   document_id,
   report_id,
   trust_center_file_id,
-  active,
   status,
-  requested,
   created_at,
   updated_at
 )

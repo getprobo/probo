@@ -25,40 +25,29 @@ export function getTrustCenterDocumentAccessStatusLabel(status: TrustCenterDocum
   }
 }
 
-export type TrustCenterDocumentAccessInfo = {
+interface ITrustCenterDocumentAccessInfo {
+  variant: string;
+  type: string;
   persisted: boolean;
-  variant: "info",
   name: string,
-  type: "document",
   typeLabel: string,
   category: string;
   id: string;
-  requested: boolean;
-  active: boolean;
-  status: TrustCenterDocumentAccessStatus;
-} | {
-  persisted: boolean;
-  variant: "success",
-  name: string,
-  type: "report",
-  typeLabel: string,
-  category: string;
-  id: string;
-  requested: boolean;
-  active: boolean;
-  status: TrustCenterDocumentAccessStatus;
-} | {
-  persisted: boolean;
-  variant: "highlight",
-  name: string,
-  type: "file",
-  typeLabel: string,
-  category: string;
-  id: string;
-  requested: boolean;
-  active: boolean;
   status: TrustCenterDocumentAccessStatus;
 }
+
+export type TrustCenterDocumentAccessInfo = ITrustCenterDocumentAccessInfo & (
+  {
+    variant: "info",
+    type: "document",
+  } | {
+    variant: "success",
+    type: "report",
+  } | {
+    variant: "highlight",
+    type: "file",
+  }
+)
 
 export function getTrustCenterDocumentAccessInfo(
   docAccess: TrustCenterDocumentAccess,
@@ -73,8 +62,6 @@ export function getTrustCenterDocumentAccessInfo(
       typeLabel: __("Document"),
       category: docAccess.document.documentType,
       id: docAccess.document.id,
-      requested: docAccess.requested,
-      active: docAccess.active,
       status: docAccess.status,
     };
   }
@@ -87,8 +74,6 @@ export function getTrustCenterDocumentAccessInfo(
       typeLabel: __("Report"),
       category: docAccess.report.audit?.framework.name ?? "",
       id: docAccess.report.id,
-      requested: docAccess.requested,
-      active: docAccess.active,
       status: docAccess.status,
     };
   }
@@ -101,8 +86,6 @@ export function getTrustCenterDocumentAccessInfo(
       typeLabel: __("File"),
       category: docAccess.trustCenterFile.category,
       id: docAccess.trustCenterFile.id,
-      requested: docAccess.requested,
-      active: docAccess.active,
       status: docAccess.status,
     };
   }
