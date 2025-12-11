@@ -1,8 +1,6 @@
 <div align="center">
 <h1>Probo - Open Source Compliance</h1>
 
-![probo banner](.github/cover_v3.png)
-
 [![Discord](https://img.shields.io/discord/1326589224811757568?color=7289da&label=Discord&logo=discord&logoColor=ffffff)](https://discord.gg/8qfdJYfvpY)
 [![GitHub License](https://img.shields.io/github/license/getprobo/probo)](LICENSE)
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/getprobo/probo/make.yaml)
@@ -13,34 +11,8 @@ Probo is an open-source compliance platform built for startups that helps you
 achieve SOC-2 compliance quickly and efficiently. Unlike traditional solutions,
 Probo is designed to be accessible, transparent, and community-driven.
 
-## ✨ Features
-
-- 💡 **Focus on relevance**
-
-  - Tailored program: only what matters, so you get SOC-2 ready in just 20
-    hours.
-  - Context-aware security controls.
-  - Smart task prioritization based on your risk profile.
-
-- ⚡️ **Smart automation**
-
-  - Automated risk assessment.
-  - AI-powered policy generation tailored to your stack.
-  - Pre-filled vendor risk assessment.
-
-- 🔓 **No Vendor Lock-in**
-
-  - Own your compliance data.
-  - Export everything, anytime.
-  - Open-source transparency.
-
-- 💰 **Cost-Effective**
-  - Free to use.
-  - Pay for the services you need only.
-  - No hidden fees or forced costs.
-
 ## 🚀 Getting Started
-
+📖 [Official Documentation](https://www.getprobo.com/docs)
 ### Prerequisites
 
 - Go 1.21+
@@ -100,22 +72,7 @@ For detailed setup instructions, see our [Contributing Guide](CONTRIBUTING.md).
 ## 🏗️ Current Status
 
 Probo is in early development, focusing on building a solid foundation for
-compliance management. Here's our current focus:
-
-### Under Development (V0)
-
-- 🎯 **Core Compliance Engine**
-
-  - SOC 2 control framework implementation
-  - Basic policy management
-  - Evidence collection system
-  - User and organization management
-
-- 📋 **Essential Features**
-  - Control tracking and status
-  - Basic task management
-  - Simple evidence attachments
-  - Team collaboration tools
+compliance management. 
 
 ## 🛠️ Tech Stack
 
@@ -157,20 +114,10 @@ We love contributions from our community! There are many ways to contribute:
 Please read our [Contributing Guide](CONTRIBUTING.md) before making a pull
 request.
 
-## 🌟 Why Probo?
-
-1. **Accessible Compliance**: Traditional solutions are often behind expensive
-   paywalls. We believe security measures should be accessible to all.
-
-2. **Fresh Approach**: Built from scratch, learning from past issues to create a
-   better compliance experience.
-
-3. **Community-Driven**: As an open-source project, we believe the entire
-   ecosystem should benefit from improvements and innovations.
 
 ## 📚 Documentation
 
-- 📖 [Official Documentation](coming soon)
+- 📖 [Official Documentation](https://www.getprobo.com/docs)
 - 💬 [Discord Community](https://discord.gg/8qfdJYfvpY)
 - 📝 [Blog](https://www.getprobo.com/blog)
 
