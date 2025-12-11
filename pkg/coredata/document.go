@@ -132,22 +132,22 @@ func (p *Document) LoadByIDWithFilter(
 	filter *DocumentFilter,
 ) error {
 	q := `
-	SELECT
-			id,
-			organization_id,
-			owner_id,
-			title,
-			document_type,
-			classification,
-			current_published_version,
-			trust_center_visibility,
-			created_at,
-			updated_at
-	FROM
-			documents
-	WHERE
-			%s
-			AND deleted_at IS NULL
+SELECT
+    id,
+    organization_id,
+    owner_id,
+    title,
+    document_type,
+    classification,
+    current_published_version,
+    trust_center_visibility,
+    created_at,
+    updated_at
+FROM
+    documents
+WHERE
+    %s
+    AND deleted_at IS NULL
 AND id = @document_id
     AND %s
 LIMIT 1;
@@ -186,22 +186,22 @@ func (p *Documents) LoadByIDs(
 ) error {
 	q := `
 SELECT
-  id,
-  organization_id,
-  owner_id,
-  title,
-  document_type,
-  classification,
-  current_published_version,
-  trust_center_visibility,
-  created_at,
-  updated_at
+    id,
+    organization_id,
+    owner_id,
+    title,
+    document_type,
+    classification,
+    current_published_version,
+    trust_center_visibility,
+    created_at,
+    updated_at
 FROM
-  documents
+    documents
 WHERE
-  %s
-  AND deleted_at IS NULL
-  AND id = ANY(@document_ids)
+    %s
+    AND deleted_at IS NULL
+    AND id = ANY(@document_ids)
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())

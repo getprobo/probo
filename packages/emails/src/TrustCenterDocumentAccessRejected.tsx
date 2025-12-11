@@ -1,6 +1,6 @@
-import { Column, Row, Text } from '@react-email/components';
+import { Text } from '@react-email/components';
 import * as React from 'react';
-import EmailLayout, { bodyText, footerText } from './components/EmailLayout';
+import EmailLayout, { bodyText } from './components/EmailLayout';
 
 export const TrustCenterDocumentAccessRejected = () => {
   return (
