@@ -520,7 +520,10 @@ all_items AS (
     tcf.updated_at AS item_updated_at
   FROM trust_center_files tcf, tenant_organization o
   WHERE tcf.organization_id = o.organization_id
-    AND tcf.trust_center_visibility = 'PRIVATE'::trust_center_visibility
+    AND (
+      tcf.trust_center_visibility = 'PRIVATE'::trust_center_visibility
+      ORtcf.trust_center_visibility = 'NONE'::trust_center_visibility
+    )
 ),
 final_items AS (
   SELECT

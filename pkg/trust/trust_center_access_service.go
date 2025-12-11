@@ -150,8 +150,11 @@ func (s TrustCenterAccessService) Request(
 		trustCenterFileIDs := req.TrustCenterFileIDs
 		if req.TrustCenterFileIDs == nil {
 			var allTrustCenterFiles coredata.TrustCenterFiles
+			filter := coredata.NewTrustCenterFileFilter(
+				coredata.WithTrustCenterFileVisibilities(coredata.TrustCenterVisibilityPrivate, coredata.TrustCenterVisibilityNone),
+			)
 
-			if err := allTrustCenterFiles.LoadAllByOrganizationID(ctx, tx, s.svc.scope, organizationID); err != nil {
+			if err := allTrustCenterFiles.LoadAllByOrganizationID(ctx, tx, s.svc.scope, organizationID, filter); err != nil {
 				return fmt.Errorf("cannot list trust center files: %w", err)
 			}
 
