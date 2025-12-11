@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.103.0] - 2025-12-11
+
+### Added
+
+- Reject/Revoke trust center document accesses via slack app or console
+
 ## [0.102.0] - 2025-12-10
 
 ### Added
