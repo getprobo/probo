@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.104.0] - 2025-12-11
+
+### Added
+
+- Add risk management to N8N
+
 ## [0.103.0] - 2025-12-11
 
 ### Added
