@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.105.0] - 2025-12-11
+
+### Added
+
+- Update trust center access slack message on console actions
+
 ## [0.104.0] - 2025-12-11
 
 ### Added
