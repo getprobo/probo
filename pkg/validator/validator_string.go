@@ -225,6 +225,25 @@ func OneOfSlice[T any](allowed []T) ValidatorFunc {
 	}
 }
 
+// NotOneOfSlice validates that a value is not one of the values in the slice.
+// Accepts a slice of any type. Compares by value first, then by string representation.
+func NotOneOfSlice[T any](disallowed []T) ValidatorFunc {
+	oneOfSlice := OneOfSlice(disallowed)
+
+	return func(value any) *ValidationError {
+		err := oneOfSlice(disallowed)
+
+		if err == nil {
+			return newValidationError(
+				ErrorCodeInvalidEnum,
+				"must not be one of the disallowed values",
+			)
+		}
+
+		return nil
+	}
+}
+
 // OneOf validates that a value is one of the allowed values.
 // Accepts strings or types that implement fmt.Stringer as variadic arguments.
 func OneOf(allowed ...any) ValidatorFunc {
