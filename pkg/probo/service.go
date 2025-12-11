@@ -115,7 +115,7 @@ type (
 		ProcessingActivities              *ProcessingActivityService
 		Files                             *FileService
 		CustomDomains                     *CustomDomainService
-		Slack                             *slack.TenantService
+		SlackMessages                     *slack.SlackMessageService
 	}
 )
 
@@ -174,7 +174,6 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 		trustConfig:   s.trustConfig,
 		agent:         agents.NewAgent(nil, s.agentConfig),
 		fileManager:   s.fileManager,
-		Slack:         s.slack.WithTenant(tenantID),
 	}
 
 	tenantService.Frameworks = &FrameworkService{
@@ -256,6 +255,7 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 		acmeService:   s.acmeService,
 		logger:        s.logger.Named("custom_domains"),
 	}
+	tenantService.SlackMessages = s.slack.WithTenant(tenantID).SlackMessages
 
 	return tenantService
 }

@@ -362,7 +362,7 @@ func (s TrustCenterAccessService) Update(
 	}
 
 	if shouldUpdateSlackMessage {
-		if err := s.svc.Slack.GetSlackMessageService().QueueSlackAccessMessageUpdate(ctx, access.Email, access.TrustCenterID); err != nil {
+		if err := s.svc.SlackMessages.QueueSlackAccessMessageUpdate(ctx, access.Email, access.TrustCenterID); err != nil {
 			return nil, fmt.Errorf("cannot queue slack access message update: %w", err)
 		}
 	}

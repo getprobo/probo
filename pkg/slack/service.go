@@ -27,6 +27,7 @@ type TenantService struct {
 	baseURL       string
 	encryptionKey cipher.EncryptionKey
 	tokenSecret   string
+	SlackMessages *SlackMessageService
 }
 
 func NewService(
@@ -56,6 +57,7 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 		encryptionKey: s.encryptionKey,
 		tokenSecret:   s.tokenSecret,
 	}
+	tenantService.SlackMessages = &SlackMessageService{svc: tenantService}
 
 	return tenantService
 }

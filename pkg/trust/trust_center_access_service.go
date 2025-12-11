@@ -232,8 +232,7 @@ func (s TrustCenterAccessService) Request(
 		return nil, err
 	}
 
-	slackMessageService := s.svc.slack.GetSlackMessageService()
-	if err := slackMessageService.QueueSlackNotification(ctx, access.Email, req.TrustCenterID); err != nil {
+	if err := s.svc.SlackMessages.QueueSlackNotification(ctx, access.Email, req.TrustCenterID); err != nil {
 		s.logger.ErrorCtx(ctx, "cannot queue slack notification", log.Error(err))
 	}
 

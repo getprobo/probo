@@ -159,6 +159,7 @@ func SlackHandler(slackSvc *slack.Service, slackSigningSecret string, logger *lo
 		var reportIDs []gid.GID
 		var fileIDs []gid.GID
 		var statusAction string
+		tenantSlackSvc := slackSvc.WithTenant(initialSlackMessage.OrganizationID.TenantID())
 
 		// accept_all, reject_all
 		if strings.HasSuffix(action.ActionID, "_all") {
@@ -168,7 +169,7 @@ func SlackHandler(slackSvc *slack.Service, slackSigningSecret string, logger *lo
 				return
 			}
 
-			documentIDs, reportIDs, fileIDs, err = slackSvc.WithTenant(initialSlackMessage.OrganizationID.TenantID()).GetSlackMessageService().GetSlackMessageDocumentIDs(ctx, currentMessageId)
+			documentIDs, reportIDs, fileIDs, err = tenantSlackSvc.SlackMessages.GetSlackMessageDocumentIDs(ctx, currentMessageId)
 			if err != nil {
 				logger.ErrorCtx(ctx, "cannot load slack message document ids", log.Error(err))
 				httpserver.RenderJSON(w, http.StatusInternalServerError, SlackInteractiveResponse{Success: false, Message: "internal server error"})
@@ -261,7 +262,7 @@ func SlackHandler(slackSvc *slack.Service, slackSigningSecret string, logger *lo
 			return
 		}
 
-		if err := slackSvc.WithTenant(initialSlackMessage.OrganizationID.TenantID()).GetSlackMessageService().UpdateSlackAccessMessage(
+		if err := tenantSlackSvc.SlackMessages.UpdateSlackAccessMessage(
 			ctx,
 			initialSlackMessage.ID,
 			slackPayload.ResponseURL,

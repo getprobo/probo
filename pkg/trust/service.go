@@ -77,7 +77,7 @@ type (
 		TrustCenterFiles      *TrustCenterFileService
 		Reports               *ReportService
 		Organizations         *OrganizationService
-		slack                 *slack.TenantService
+		SlackMessages         *slack.SlackMessageService
 	}
 )
 
@@ -126,7 +126,6 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 		fileManager:       s.fileManager,
 		logger:            s.logger,
 		trustConfig:       s.trustConfig,
-		slack:             s.slack.WithTenant(tenantID),
 	}
 
 	tenantService.TrustCenters = &TrustCenterService{svc: tenantService}
@@ -139,6 +138,7 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 	tenantService.TrustCenterFiles = &TrustCenterFileService{svc: tenantService}
 	tenantService.Reports = &ReportService{svc: tenantService}
 	tenantService.Organizations = &OrganizationService{svc: tenantService}
+	tenantService.SlackMessages = s.slack.WithTenant(tenantID).SlackMessages
 
 	return tenantService
 }
