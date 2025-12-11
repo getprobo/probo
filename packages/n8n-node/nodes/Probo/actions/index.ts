@@ -8,6 +8,7 @@ import * as measure from './measure';
 import * as meeting from './meeting';
 import * as organization from './organization';
 import * as people from './people';
+import * as risk from './risk';
 import * as vendor from './vendor';
 
 export interface ResourceModule {
@@ -30,6 +31,7 @@ export const resources: Record<string, ResourceModule> = {
 	meeting: meeting as ResourceModule,
 	organization: organization as ResourceModule,
 	people: people as ResourceModule,
+	risk: risk as ResourceModule,
 	vendor: vendor as ResourceModule,
 };
 
