@@ -27,6 +27,8 @@ export function TrustCenterAccessEditDialog(props: TrustCenterAccessEditDialogPr
   useEffect(() => {
     loadDocumentAccessesQuery({
       accessId: access.id
+    }, {
+      fetchPolicy: "network-only",
     });
   }, [access.id, loadDocumentAccessesQuery])
 
