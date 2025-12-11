@@ -49,7 +49,12 @@ export function Combobox({
                 className={input()}
             />
             {showDropdown && (
-                <ComboboxPopover gutter={4} sameWidth className={dropdown()}>
+                <ComboboxPopover
+                    gutter={4}
+                    sameWidth
+                    className={dropdown()}
+                    style={{ maxHeight: "var(--popover-available-height)" }}
+                >
                     {children}
                 </ComboboxPopover>
             )}
