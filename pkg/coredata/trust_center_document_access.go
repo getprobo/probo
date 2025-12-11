@@ -609,7 +609,7 @@ FROM
 WHERE
   %s
   AND trust_center_access_id = @trust_center_access_id
-ORDER BY created_at ASC
+ORDER BY id ASC
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -683,7 +683,7 @@ SET
     WHEN status = 'GRANTED'::trust_center_document_access_status THEN 'REVOKED'::trust_center_document_access_status
     ELSE 'REJECTED'::trust_center_document_access_status
   END,
-	updated_at = @updated_at
+  updated_at = @updated_at
 WHERE
   %s
   AND trust_center_access_id = @trust_center_access_id
@@ -756,7 +756,7 @@ SET
     WHEN status = 'GRANTED'::trust_center_document_access_status THEN 'REVOKED'::trust_center_document_access_status
     ELSE 'REJECTED'::trust_center_document_access_status
   END,
-	updated_at = @updated_at
+  updated_at = @updated_at
 WHERE
   %s
   AND trust_center_access_id = @trust_center_access_id
@@ -1170,7 +1170,8 @@ SET
   status = CASE
     WHEN status = 'GRANTED'::trust_center_document_access_status THEN 'REVOKED'::trust_center_document_access_status
     ELSE 'REJECTED'::trust_center_document_access_status
-  END
+  END,
+  updated_at = @updated_at
 WHERE
   %s
   AND trust_center_access_id = @trust_center_access_id

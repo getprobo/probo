@@ -396,20 +396,6 @@ func (s *SlackMessageService) buildAccessRequestMessage(
 	reports []SlackMessageReport,
 	files []SlackMessageFile,
 ) (map[string]any, error) {
-	var documentIDs []string
-	var reportIDs []string
-	var fileIDs []string
-
-	for _, doc := range documents {
-		documentIDs = append(documentIDs, doc.ID)
-	}
-	for _, rep := range reports {
-		reportIDs = append(reportIDs, rep.ID)
-	}
-	for _, file := range files {
-		fileIDs = append(fileIDs, file.ID)
-	}
-
 	base, err := baseurl.Parse(s.svc.baseURL)
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse base URL: %w", err)
@@ -421,9 +407,6 @@ func (s *SlackMessageService) buildAccessRequestMessage(
 		OrganizationID string
 		Domain         string
 		SlackMessageID string
-		DocumentIDs    []string
-		ReportIDs      []string
-		FileIDs        []string
 		Documents      []SlackMessageDocument
 		Reports        []SlackMessageReport
 		Files          []SlackMessageFile
@@ -433,9 +416,6 @@ func (s *SlackMessageService) buildAccessRequestMessage(
 		OrganizationID: organizationID.String(),
 		Domain:         base.Host(),
 		SlackMessageID: slackMessageID.String(),
-		DocumentIDs:    documentIDs,
-		ReportIDs:      reportIDs,
-		FileIDs:        fileIDs,
 		Documents:      documents,
 		Reports:        reports,
 		Files:          files,
