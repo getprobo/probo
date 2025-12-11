@@ -187,8 +187,13 @@ func slackHandler(trustSvc *trust.Service, slackSigningSecret string, logger *lo
 			if strings.HasPrefix(action.ActionID, "handle_") {
 				// action value is the select option value. <accept|reject>-<ID>
 				params := strings.Split(action.SelectedOption.Value, "/")
-				statusAction = params[0]
 
+				if len(params) < 2 {
+					httpserver.RenderJSON(w, http.StatusBadRequest, SlackInteractiveResponse{Success: false, Message: "invalid selected option format"})
+					return
+				}
+
+				statusAction = params[0]
 				gID, err = gid.ParseGID(params[1])
 				if err != nil {
 					httpserver.RenderJSON(w, http.StatusBadRequest, SlackInteractiveResponse{Success: false, Message: "invalid ID"})

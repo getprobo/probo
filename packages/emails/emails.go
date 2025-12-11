@@ -30,13 +30,14 @@ var Templates embed.FS
 const (
 	logoURLPath = "/logos/probo.png"
 
-	subjectConfirmEmail      = "Confirm your email address"
-	subjectPasswordReset     = "Reset your password"
-	subjectInvitation        = "Invitation to join %s on Probo"
-	subjectDocumentSigning   = "Action Required – Please review and sign %s compliance documents"
-	subjectDocumentExport    = "Your document export is ready"
-	subjectFrameworkExport   = "Your framework export is ready"
-	subjectTrustCenterAccess = "Trust Center Document Access Rejected - %s"
+	subjectConfirmEmail                      = "Confirm your email address"
+	subjectPasswordReset                     = "Reset your password"
+	subjectInvitation                        = "Invitation to join %s on Probo"
+	subjectDocumentSigning                   = "Action Required – Please review and sign %s compliance documents"
+	subjectDocumentExport                    = "Your document export is ready"
+	subjectFrameworkExport                   = "Your framework export is ready"
+	subjectTrustCenterAccess                 = "Trust Center Access Invitation - %s"
+	subjectTrustCenterDocumentAccessRejected = "Trust Center Document Access Rejected - %s"
 )
 
 var (
@@ -192,7 +193,7 @@ func RenderTrustCenterDocumentAccessRejected(
 	}
 
 	textBody, htmlBody, err = renderEmail(trustCenterDocumentAccessRejectedTextTemplate, trustCenterDocumentAccessRejectedHTMLTemplate, data)
-	return fmt.Sprintf(subjectTrustCenterAccess, organizationName), textBody, htmlBody, err
+	return fmt.Sprintf(subjectTrustCenterDocumentAccessRejected, organizationName), textBody, htmlBody, err
 }
 
 func renderEmail(textTemplate *texttemplate.Template, htmlTemplate *htmltemplate.Template, data any) (textBody string, htmlBody *string, err error) {

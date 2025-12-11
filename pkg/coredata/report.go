@@ -50,19 +50,19 @@ func (r *Report) LoadByID(
 ) error {
 	q := `
 SELECT
-	id,
-	organization_id,
-	object_key,
-	mime_type,
-	filename,
-	size,
-	created_at,
-	updated_at
+  id,
+  organization_id,
+  object_key,
+  mime_type,
+  filename,
+  size,
+  created_at,
+  updated_at
 FROM
-	reports
+  reports
 WHERE
-	%s
-	AND id = @report_id
+  %s
+  AND id = @report_id
 LIMIT 1;
 `
 
@@ -98,20 +98,19 @@ func (r *Reports) LoadByIDs(
 ) error {
 	q := `
 SELECT
-	id,
-	organization_id,
-	object_key,
-	mime_type,
-	filename,
-	size,
-	created_at,
-	updated_at
+  id,
+  organization_id,
+  object_key,
+  mime_type,
+  filename,
+  size,
+  created_at,
+  updated_at
 FROM
-	reports
+  reports
 WHERE
-	%s
-	AND id = ANY(@report_ids)
-LIMIT 1;
+  %s
+  AND id = ANY(@report_ids);
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -141,25 +140,25 @@ func (r *Report) Insert(
 ) error {
 	q := `
 INSERT INTO reports (
-	id,
-	tenant_id,
-	organization_id,
-	object_key,
-	mime_type,
-	filename,
-	size,
-	created_at,
-	updated_at
+  id,
+  tenant_id,
+  organization_id,
+  object_key,
+  mime_type,
+  filename,
+  size,
+  created_at,
+  updated_at
 ) VALUES (
-	@id,
-	@tenant_id,
-	@organization_id,
-	@object_key,
-	@mime_type,
-	@filename,
-	@size,
-	@created_at,
-	@updated_at
+  @id,
+  @tenant_id,
+  @organization_id,
+  @object_key,
+  @mime_type,
+  @filename,
+  @size,
+  @created_at,
+  @updated_at
 )
 `
 
@@ -191,14 +190,14 @@ func (r *Report) Update(
 	q := `
 UPDATE reports
 SET
-	object_key = @object_key,
-	mime_type = @mime_type,
-	filename = @filename,
-	size = @size,
-	updated_at = @updated_at
+  object_key = @object_key,
+  mime_type = @mime_type,
+  filename = @filename,
+  size = @size,
+  updated_at = @updated_at
 WHERE
-	%s
-	AND id = @id
+  %s
+  AND id = @id
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -229,8 +228,8 @@ func (r *Report) Delete(
 	q := `
 DELETE FROM reports
 WHERE
-	%s
-	AND id = @id
+  %s
+  AND id = @id
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())

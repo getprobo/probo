@@ -96,6 +96,52 @@ LIMIT 1;
 	return nil
 }
 
+func (f *TrustCenterFiles) LoadByIDs(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	trustCenterFileIDs []gid.GID,
+) error {
+	q := `
+SELECT
+    id,
+    organization_id,
+    bucket_name,
+    mime_type,
+    file_name,
+    file_key,
+    file_size,
+    created_at,
+    updated_at,
+    deleted_at
+FROM
+    files
+WHERE
+    %s
+    AND id = ANY(@ids);
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"ids": trustCenterFileIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query file: %w", err)
+	}
+	defer rows.Close()
+
+	files, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[TrustCenterFile])
+	if err != nil {
+		return fmt.Errorf("cannot collect file: %w", err)
+	}
+
+	*f = files
+
+	return nil
+}
+
 func (t TrustCenterFile) Insert(
 	ctx context.Context,
 	conn pg.Conn,
@@ -322,7 +368,7 @@ FROM
     trust_center_files
 WHERE
     %s
-    %s
+    AND %s
     AND organization_id = @organization_id
 ORDER BY
     created_at DESC

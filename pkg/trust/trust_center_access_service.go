@@ -667,13 +667,13 @@ func (s *TrustCenterAccessService) sendDocumentAccessRejectedEmail(
 			fileNames = append(fileNames, r.Filename)
 		}
 	}
-	var files coredata.Files
+	var files coredata.TrustCenterFiles
 	if len(fileIDs) > 0 {
 		if err := files.LoadByIDs(ctx, tx, s.svc.scope, fileIDs); err != nil {
 			return fmt.Errorf("cannot load files by IDs: %w", err)
 		}
 		for _, f := range files {
-			fileNames = append(fileNames, f.FileName)
+			fileNames = append(fileNames, f.Name)
 		}
 	}
 
