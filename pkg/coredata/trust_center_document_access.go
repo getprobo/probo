@@ -609,6 +609,7 @@ FROM
 WHERE
   %s
   AND trust_center_access_id = @trust_center_access_id
+ORDER BY created_at ASC
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -673,6 +674,7 @@ func RejectOrRevokeByDocumentIDs(
 	scope Scoper,
 	trustCenterAccessID gid.GID,
 	documentIDs []gid.GID,
+	updatedAt time.Time,
 ) error {
 	q := `
 UPDATE trust_center_document_accesses
@@ -680,7 +682,8 @@ SET
   status = CASE
     WHEN status = 'GRANTED'::trust_center_document_access_status THEN 'REVOKED'::trust_center_document_access_status
     ELSE 'REJECTED'::trust_center_document_access_status
-  END
+  END,
+	updated_at = @updated_at
 WHERE
   %s
   AND trust_center_access_id = @trust_center_access_id
@@ -692,6 +695,7 @@ WHERE
 	args := pgx.StrictNamedArgs{
 		"trust_center_access_id": trustCenterAccessID,
 		"document_ids":           documentIDs,
+		"updated_at":             updatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -743,6 +747,7 @@ func RejectOrRevokeByReportIDs(
 	scope Scoper,
 	trustCenterAccessID gid.GID,
 	reportIDs []gid.GID,
+	updatedAt time.Time,
 ) error {
 	q := `
 UPDATE trust_center_document_accesses
@@ -750,7 +755,8 @@ SET
   status = CASE
     WHEN status = 'GRANTED'::trust_center_document_access_status THEN 'REVOKED'::trust_center_document_access_status
     ELSE 'REJECTED'::trust_center_document_access_status
-  END
+  END,
+	updated_at = @updated_at
 WHERE
   %s
   AND trust_center_access_id = @trust_center_access_id
@@ -762,6 +768,7 @@ WHERE
 	args := pgx.StrictNamedArgs{
 		"trust_center_access_id": trustCenterAccessID,
 		"report_ids":             reportIDs,
+		"updated_at":             updatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -1155,6 +1162,7 @@ func RejectOrRevokeByTrustCenterFileIDs(
 	scope Scoper,
 	trustCenterAccessID gid.GID,
 	trustCenterFileIDs []gid.GID,
+	updatedAt time.Time,
 ) error {
 	q := `
 UPDATE trust_center_document_accesses
@@ -1174,6 +1182,7 @@ WHERE
 	args := pgx.StrictNamedArgs{
 		"trust_center_access_id": trustCenterAccessID,
 		"trust_center_file_ids":  trustCenterFileIDs,
+		"updated_at":             updatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 

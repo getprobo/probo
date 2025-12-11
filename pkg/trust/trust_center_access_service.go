@@ -596,22 +596,23 @@ func (s *TrustCenterAccessService) RejectOrRevokeByIDs(
 		}
 
 		shouldSendEmail := false
+		now := time.Now()
 
 		if len(documentIDs) > 0 {
 			shouldSendEmail = true
-			if err := coredata.RejectOrRevokeByDocumentIDs(ctx, tx, s.svc.scope, access.ID, documentIDs); err != nil {
+			if err := coredata.RejectOrRevokeByDocumentIDs(ctx, tx, s.svc.scope, access.ID, documentIDs, now); err != nil {
 				return fmt.Errorf("cannot reject/revoke document accesses: %w", err)
 			}
 		}
 		if len(reportIDs) > 0 {
 			shouldSendEmail = true
-			if err := coredata.RejectOrRevokeByReportIDs(ctx, tx, s.svc.scope, access.ID, reportIDs); err != nil {
+			if err := coredata.RejectOrRevokeByReportIDs(ctx, tx, s.svc.scope, access.ID, reportIDs, now); err != nil {
 				return fmt.Errorf("cannot reject/revoke report accesses: %w", err)
 			}
 		}
 		if len(fileIDs) > 0 {
 			shouldSendEmail = true
-			if err := coredata.RejectOrRevokeByTrustCenterFileIDs(ctx, tx, s.svc.scope, access.ID, fileIDs); err != nil {
+			if err := coredata.RejectOrRevokeByTrustCenterFileIDs(ctx, tx, s.svc.scope, access.ID, fileIDs, now); err != nil {
 				return fmt.Errorf("cannot reject/revoke trust center file accesses: %w", err)
 			}
 		}
