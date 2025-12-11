@@ -106,16 +106,14 @@ func (f *TrustCenterFiles) LoadByIDs(
 SELECT
     id,
     organization_id,
-    bucket_name,
-    mime_type,
-    file_name,
-    file_key,
-    file_size,
+    name,
+    category,
+    file_id,
+    trust_center_visibility,
     created_at,
-    updated_at,
-    deleted_at
+    updated_at
 FROM
-    files
+    trust_center_files
 WHERE
     %s
     AND id = ANY(@ids);

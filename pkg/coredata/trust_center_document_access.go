@@ -83,9 +83,7 @@ SELECT
   document_id,
   report_id,
   trust_center_file_id,
-  active,
   status,
-  requested,
   created_at,
   updated_at
 FROM
@@ -134,9 +132,7 @@ SELECT
   document_id,
   report_id,
   trust_center_file_id,
-  active,
   status,
-  requested,
   created_at,
   updated_at
 FROM
@@ -186,9 +182,7 @@ SELECT
   document_id,
   report_id,
   trust_center_file_id,
-  active,
   status,
-  requested,
   created_at,
   updated_at
 FROM
