@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.106.0] - 2025-12-12
+
+### Added
+
+- Add auditor role
+
 ### Fix
 
 - Fix the “no change” error display in documents bulk update
