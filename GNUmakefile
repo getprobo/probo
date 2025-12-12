@@ -1,13 +1,17 @@
-NPM?=	npm
-NPX?=	npx
-PRETTIER?=	$(NPX) prettier
-GO?=	go
-DOCKER?=	docker
-SYFT ?= syft
-GRYPE ?= grype
-CP ?= cp
-MKDIR ?= mkdir -p
-MKCERT ?= mkcert
+CAT ?=	cat
+CP ?=	cp
+DOCKER ?=	docker
+GO ?=	go
+GRYPE ?=	grype
+MKCERT ?=	mkcert
+MKDIR ?=	mkdir -p
+NPM ?=	npm
+NPX ?=	npx
+OPENSSL ?=	openssl
+PRETTIER ?=	$(NPX) prettier
+SED ?= sed
+SYFT ?=	syft
+TAIL ?= tail
 
 DOCKER_BUILD_FLAGS?=
 DOCKER_BUILD=	DOCKER_BUILDKIT=1 $(DOCKER) build $(DOCKER_BUILD_FLAGS)
@@ -95,8 +99,8 @@ test-e2e-coverage: bin/probod-coverage ## Run e2e tests with coverage
 
 .PHONY: coverage-combined
 coverage-combined: coverage-report test-e2e-coverage ## Generate combined coverage report (unit + e2e)
-	@cat coverage.out > coverage-combined.out
-	@tail -n +2 coverage-e2e.out >> coverage-combined.out
+	@$(CAT) coverage.out > coverage-combined.out
+	@$(TAIL) -n +2 coverage-e2e.out >> coverage-combined.out
 	$(GO) tool cover -html=coverage-combined.out -o=coverage-combined.html
 
 .PHONY: build
@@ -206,7 +210,7 @@ clean: ## Clean the project (node_modules and build artifacts)
 	$(RM) -rf coverage/
 
 .PHONY: stack-up
-stack-up: compose/pebble/certs/rootCA.pem ## Start the docker stack as a deamon
+stack-up: compose/pebble/certs/rootCA.pem compose/keycloak/probo-realm.json ## Start the docker stack as a deamon
 	$(DOCKER_COMPOSE) up -d
 
 .PHONY: stack-down
@@ -230,9 +234,19 @@ goreleaser-check: ## Check goreleaser configuration
 	goreleaser check
 
 compose/pebble/certs/rootCA.pem:
-	@$(MKDIR) -p compose/pebble/certs
+	@$(MKDIR) compose/pebble/certs
 	$(MKCERT) -cert-file compose/pebble/certs/pebble.crt \
 		-key-file compose/pebble/certs/pebble.key \
 		localhost 127.0.0.1 ::1 pebble
 	$(CP) "$$($(MKCERT) -CAROOT)/rootCA.pem" compose/pebble/certs/rootCA.pem
 	$(CP) "$$($(MKCERT) -CAROOT)/rootCA-key.pem" compose/pebble/certs/rootCA-key.pem
+
+compose/keycloak/certs/cert.pem:
+	$(MKDIR) ./compose/keycloak/certs
+	$(OPENSSL) req -x509 -newkey rsa:2048 -keyout compose/keycloak/certs/private-key.pem -out compose/keycloak/certs/cert.pem -days 3650 -nodes -subj "/CN=keycloak-saml-signing"
+
+compose/keycloak/probo-realm.json: compose/keycloak/probo-realm.json.tmpl compose/keycloak/certs/cert.pem
+	$(SED) \
+	-e "s|CERTIFICATE_PLACEHOLDER|$$(awk 'NR==1 {printf "%s", $$0; next} {printf "\\\\n%s", $$0}' compose/keycloak/certs/cert.pem)|g" \
+	-e "s|PRIVATE_KEY_PLACEHOLDER|$$(awk 'NR==1 {printf "%s", $$0; next} {printf "\\\\n%s", $$0}' compose/keycloak/certs/private-key.pem)|g" \
+	$@.tmpl > $@

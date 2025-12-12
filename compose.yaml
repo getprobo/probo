@@ -19,7 +19,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-  
+
   minio:
     image: "quay.io/minio/minio"
     entrypoint: "sh"
@@ -33,7 +33,7 @@ services:
     environment:
       MINIO_ROOT_USER: "probod"
       MINIO_ROOT_PASSWORD: "thisisnotasecret"
-      
+
   grafana:
     image: "grafana/grafana:latest"
     ports:
@@ -129,9 +129,34 @@ services:
       - "8056:8056" # Management API
     command: -dns01 ":8053" -http01 ":8055" -management ":8056"
 
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    user: root
+    environment:
+      KC_HOSTNAME: localhost
+      KC_HOSTNAME_PORT: 8082
+      KC_HOSTNAME_STRICT: false
+      KC_HOSTNAME_STRICT_HTTPS: false
+
+      KC_LOG_LEVEL: info
+      KC_METRICS_ENABLED: true
+      KC_HEALTH_ENABLED: true
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    command:
+      - "start-dev"
+      - "--import-realm"
+      - "--verbose"
+    ports:
+      - 8082:8080
+    volumes:
+      - "./compose/keycloak:/opt/keycloak/data/import:ro"
+      - "keycloak-data:/opt/keycloak/data/h2:rw"
+
 volumes:
   postgres-data:
   minio-data:
   grafana-data:
   prometheus-data:
   tempo-data:
+  keycloak-data:

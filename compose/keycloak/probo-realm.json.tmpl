@@ -1,0 +1,194 @@
+{
+  "id": "probo",
+  "realm": "probo",
+  "displayName": "Probo",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": true,
+  "roles": {
+    "realm": [
+      {
+        "name": "admin",
+        "description": "Administrator role"
+      },
+      {
+        "name": "member",
+        "description": "Regular member role"
+      },
+      {
+        "name": "viewer",
+        "description": "Read-only viewer role"
+      }
+    ]
+  },
+  "defaultRoles": ["member"],
+  "clients": [
+    {
+      "clientId": "http://localhost:5173/connect/saml/metadata",
+      "name": "Probo Console",
+      "description": "Probo GRC Platform - SAML Service Provider",
+      "enabled": true,
+      "protocol": "saml",
+      "fullScopeAllowed": true,
+      "frontchannelLogout": true,
+      "attributes": {
+        "saml.assertion.signature": "true",
+        "saml.force.post.binding": "true",
+        "saml.multivalued.roles": "false",
+        "saml.encrypt": "false",
+        "saml.server.signature": "true",
+        "saml.server.signature.keyinfo.ext": "false",
+        "saml.signature.algorithm": "RSA_SHA256",
+        "saml_force_name_id_format": "true",
+        "saml_name_id_format": "email",
+        "saml.client.signature": "false",
+        "saml.authnstatement": "true",
+        "saml_single_logout_service_url_post": "http://localhost:5173/connect/saml/logout",
+        "saml_single_logout_service_url_redirect": "http://localhost:5173/connect/saml/logout",
+        "saml.onetimeuse.condition": "false"
+      },
+      "rootUrl": "http://localhost:5173",
+      "baseUrl": "/",
+      "adminUrl": "http://localhost:5173/connect/saml/consume",
+      "redirectUris": ["http://localhost:5173/*"],
+      "webOrigins": ["http://localhost:5173"],
+      "protocolMappers": [
+        {
+          "name": "email",
+          "protocol": "saml",
+          "protocolMapper": "saml-user-property-mapper",
+          "consentRequired": false,
+          "config": {
+            "attribute.nameformat": "Basic",
+            "user.attribute": "email",
+            "friendly.name": "email",
+            "attribute.name": "email"
+          }
+        },
+        {
+          "name": "firstName",
+          "protocol": "saml",
+          "protocolMapper": "saml-user-property-mapper",
+          "consentRequired": false,
+          "config": {
+            "attribute.nameformat": "Basic",
+            "user.attribute": "firstName",
+            "friendly.name": "firstName",
+            "attribute.name": "firstName"
+          }
+        },
+        {
+          "name": "lastName",
+          "protocol": "saml",
+          "protocolMapper": "saml-user-property-mapper",
+          "consentRequired": false,
+          "config": {
+            "attribute.nameformat": "Basic",
+            "user.attribute": "lastName",
+            "friendly.name": "lastName",
+            "attribute.name": "lastName"
+          }
+        },
+        {
+          "name": "role",
+          "protocol": "saml",
+          "protocolMapper": "saml-role-list-mapper",
+          "consentRequired": false,
+          "config": {
+            "single": "true",
+            "attribute.nameformat": "Basic",
+            "friendly.name": "role",
+            "attribute.name": "role"
+          }
+        }
+      ]
+    }
+  ],
+  "components": {
+    "org.keycloak.keys.KeyProvider": [
+      {
+        "name": "custom-saml-signing",
+        "providerId": "rsa",
+        "config": {
+          "priority": ["200"],
+          "enabled": ["true"],
+          "active": ["true"],
+
+          "certificate": ["CERTIFICATE_PLACEHOLDER"],
+          "privateKey": ["PRIVATE_KEY_PLACEHOLDER"]
+        }
+      }
+    ]
+  },
+  "users": [
+    {
+      "username": "owner@example.com",
+      "email": "owner@example.com",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Owner",
+      "lastName": "User",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "owner@example.com",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["owner"]
+    },
+    {
+      "username": "admin@example.com",
+      "email": "admin@example.com",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Admin",
+      "lastName": "User",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "admin@example.com",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["admin"]
+    },
+    {
+      "username": "member@example.com",
+      "email": "member@example.com",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Member",
+      "lastName": "User",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "member123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["member"]
+    },
+    {
+      "username": "viewer@example.com",
+      "email": "viewer@example.com",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Viewer",
+      "lastName": "User",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "viewer@example.com",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["viewer"]
+    }
+  ]
+}

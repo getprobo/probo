@@ -12,3 +12,4 @@ sbom-docker.json
 *.pem
 *.crt
 *.key
+compose/keycloak/probo-realm.json
