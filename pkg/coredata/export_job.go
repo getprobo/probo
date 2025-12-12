@@ -11,31 +11,32 @@ import (
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/mail"
 )
 
 type (
 	ExportJob struct {
-		ID             gid.GID         `db:"id"`
-		OrganizationID gid.GID         `db:"organization_id"`
-		Type           ExportJobType   `db:"type"`
-		Arguments      json.RawMessage `db:"arguments"`
-		Error          *string         `db:"error"`
-		Status         ExportJobStatus `db:"status"`
-		FileID         *gid.GID        `db:"file_id"`
-		RecipientEmail string          `db:"recipient_email"`
-		RecipientName  string          `db:"recipient_name"`
-		CreatedAt      time.Time       `db:"created_at"`
-		StartedAt      *time.Time      `db:"started_at"`
-		CompletedAt    *time.Time      `db:"completed_at"`
+		ID             gid.GID                   `db:"id"`
+		OrganizationID gid.GID                   `db:"organization_id"`
+		Type           ExportJobType             `db:"type"`
+		Arguments      json.RawMessage           `db:"arguments"`
+		Error          *string                   `db:"error"`
+		Status         ExportJobStatus           `db:"status"`
+		FileID         *gid.GID                  `db:"file_id"`
+		RecipientEmail mail.Addr `db:"recipient_email"`
+		RecipientName  string                    `db:"recipient_name"`
+		CreatedAt      time.Time                 `db:"created_at"`
+		StartedAt      *time.Time                `db:"started_at"`
+		CompletedAt    *time.Time                `db:"completed_at"`
 	}
 
 	ExportJobs []*ExportJob
 
 	DocumentExportArguments struct {
-		DocumentIDs    []gid.GID `json:"document_ids"`
-		WithWatermark  bool      `json:"with_watermark"`
-		WatermarkEmail *string   `json:"watermark_email"`
-		WithSignatures bool      `json:"with_signatures"`
+		DocumentIDs    []gid.GID  `json:"document_ids"`
+		WithWatermark  bool       `json:"with_watermark"`
+		WatermarkEmail *mail.Addr `json:"watermark_email"`
+		WithSignatures bool       `json:"with_signatures"`
 	}
 
 	FrameworkExportArguments struct {

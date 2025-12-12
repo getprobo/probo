@@ -19,13 +19,14 @@ import (
 	"fmt"
 	"io"
 
+	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/docgen"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/html2pdf"
+	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/watermarkpdf"
-	"go.gearno.de/kit/pg"
 )
 
 type (
@@ -88,7 +89,7 @@ func (s *DocumentService) ListForOrganizationId(
 func (s *DocumentService) ExportPDF(
 	ctx context.Context,
 	documentID gid.GID,
-	email string,
+	email mail.Addr,
 ) ([]byte, error) {
 	pdfData, err := s.exportPDFData(ctx, documentID)
 	if err != nil {

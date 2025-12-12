@@ -87,9 +87,7 @@ func AcceptInvitationHandler(authSvc *authsvc.Service, authzSvc *authz.Service, 
 			return
 		}
 
-		response := AcceptInvitationResponse{
-			InvitationID: req.InvitationID,
-		}
+		response := AcceptInvitationResponse(req)
 
 		httpserver.RenderJSON(w, http.StatusOK, response)
 	}

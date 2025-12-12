@@ -26,6 +26,7 @@ import (
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/mail"
 )
 
 const (
@@ -101,7 +102,7 @@ func (s *SlackMessageService) UpdateSlackAccessMessage(
 	ctx context.Context,
 	slackMessageID gid.GID,
 	responseURL string,
-	requesterEmail string,
+	requesterEmail mail.Addr,
 ) error {
 	return s.svc.pg.WithTx(ctx, func(tx pg.Conn) error {
 		var slackMessage coredata.SlackMessage
@@ -174,7 +175,7 @@ func (s *SlackMessageService) UpdateSlackAccessMessage(
 
 func (s *SlackMessageService) QueueSlackNotification(
 	ctx context.Context,
-	requesterEmail string,
+	requesterEmail mail.Addr,
 	trustCenterID gid.GID,
 ) error {
 	return s.svc.pg.WithTx(ctx, func(tx pg.Conn) error {
@@ -287,7 +288,7 @@ func (s *SlackMessageService) QueueSlackNotification(
 
 func (s *SlackMessageService) QueueSlackAccessMessageUpdate(
 	ctx context.Context,
-	requesterEmail string,
+	requesterEmail mail.Addr,
 	trustCenterID gid.GID,
 ) error {
 	return s.svc.pg.WithTx(ctx, func(tx pg.Conn) error {
@@ -461,7 +462,7 @@ func (s *SlackMessageService) loadDocumentsReportsAndFilesFromAccesses(
 func (s *SlackMessageService) buildAccessRequestMessage(
 	slackMessageID gid.GID,
 	requesterName string,
-	requesterEmail string,
+	requesterEmail mail.Addr,
 	organizationID gid.GID,
 	documents []SlackMessageDocument,
 	reports []SlackMessageReport,
@@ -483,7 +484,7 @@ func (s *SlackMessageService) buildAccessRequestMessage(
 		Files          []SlackMessageFile
 	}{
 		RequesterName:  requesterName,
-		RequesterEmail: requesterEmail,
+		RequesterEmail: requesterEmail.String(),
 		OrganizationID: organizationID.String(),
 		Domain:         base.Host(),
 		SlackMessageID: slackMessageID.String(),

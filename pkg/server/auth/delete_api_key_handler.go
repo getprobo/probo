@@ -75,9 +75,7 @@ func DeleteUserAPIKeyHandler(authSvc *authsvc.Service) http.HandlerFunc {
 			return
 		}
 
-		response := DeleteUserAPIKeyResponse{
-			ID: req.ID,
-		}
+		response := DeleteUserAPIKeyResponse(req)
 
 		httpserver.RenderJSON(w, http.StatusOK, response)
 	}

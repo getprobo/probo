@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<c3bf3676d3f8688315fc342efcf54547>>
+ * @generated SignedSource<<21ae595420b0098920e8d7f28834c7af>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -20,7 +20,7 @@ export type MembersSettingsTabMembershipsFragment$data = {
       readonly node: {
         readonly authMethod: UserAuthMethod;
         readonly createdAt: any;
-        readonly emailAddress: string;
+        readonly emailAddress: any;
         readonly fullName: string;
         readonly id: string;
         readonly role: MembershipRole;

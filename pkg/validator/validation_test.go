@@ -19,13 +19,15 @@ import (
 	"testing"
 
 	"go.gearno.de/x/ref"
+	"go.probo.inc/probo/pkg/mail"
 )
 
 func TestValidator_Validate(t *testing.T) {
 	t.Run("single field validation", func(t *testing.T) {
 		v := New()
-		email := "test@example.com"
-		v.Check(&email, "email", Required(), Email())
+		email := mail.Addr("test@example.com")
+
+		v.Check(&email, "email", Required(), NotEmpty())
 
 		if v.HasErrors() {
 			t.Errorf("expected no errors, got: %v", v.Errors())
@@ -34,10 +36,10 @@ func TestValidator_Validate(t *testing.T) {
 
 	t.Run("multiple field validations", func(t *testing.T) {
 		v := New()
-		email := ""
+		email := mail.Nil
 		password := "123"
 
-		v.Check(&email, "email", Required(), Email())
+		v.Check(email, "email", NotEmpty())
 		v.Check(&password, "password", Required(), MinLen(8))
 
 		if !v.HasErrors() {
@@ -69,8 +71,8 @@ func TestValidator_CheckNested(t *testing.T) {
 	v := New()
 
 	v.CheckNested("user", func(nv *Validator) {
-		email := "invalid"
-		nv.Check(&email, "email", Email())
+		email := mail.Nil
+		nv.Check(&email, "email", NotEmpty())
 
 		nv.CheckNested("address", func(av *Validator) {
 			city := ""
@@ -186,7 +188,7 @@ func TestOptionalFieldExample(t *testing.T) {
 
 	v := New()
 
-	v.Check(&req.Email, "email", Required(), Email())
+	v.Check(&req.Email, "email", Required(), NotEmpty())
 	v.Check(&req.Name, "name", Required(), MinLen(2))
 	v.Check(req.Website, "website", URL())
 	v.Check(req.PhoneNumber, "phoneNumber", MinLen(10))
@@ -232,7 +234,7 @@ func TestRealWorldExample(t *testing.T) {
 	}
 
 	user := User{
-		Email:    "invalid-email",
+		Email:    "",
 		Password: "123",
 		Age:      15,
 		Website:  ref.Ref("not-a-url"),
@@ -245,7 +247,7 @@ func TestRealWorldExample(t *testing.T) {
 	v := New()
 
 	// Validate user fields
-	v.Check(&user.Email, "email", Required(), Email())
+	v.Check(&user.Email, "email", Required(), NotEmpty())
 	v.Check(&user.Password, "password", Required(), MinLen(8))
 	v.Check(&user.Age, "age", Min(18), Max(120))
 	v.Check(user.Website, "website", URL())
@@ -262,7 +264,7 @@ func TestRealWorldExample(t *testing.T) {
 
 	errors := v.Errors()
 	expectedErrors := map[string]ErrorCode{
-		"email":        ErrorCodeInvalidEmail,
+		"email":        ErrorCodeRequired,
 		"password":     ErrorCodeTooShort,
 		"age":          ErrorCodeOutOfRange,
 		"website":      ErrorCodeInvalidURL,
@@ -373,10 +375,10 @@ func TestDuplicateValidators(t *testing.T) {
 		}
 	})
 
-	t.Run("duplicate Email creates two errors", func(t *testing.T) {
+	t.Run("duplicate NotEmpty creates two errors", func(t *testing.T) {
 		v := New()
-		email := "invalid"
-		v.Check(&email, "email", Email(), Email())
+		email := mail.Nil
+		v.Check(&email, "email", NotEmpty(), NotEmpty())
 
 		errors := v.Errors()
 		if len(errors) != 2 {
@@ -405,22 +407,23 @@ func TestDuplicateValidators(t *testing.T) {
 
 func TestStandardErrorPattern(t *testing.T) {
 	// Simulates a typical validation function
-	validateUser := func(email, password string) error {
+	validateUser := func(email mail.Addr, password string) error {
 		v := New()
-		v.Check(&email, "email", Required(), Email())
+		v.Check(&email, "email", Required(), NotEmpty())
 		v.Check(&password, "password", Required(), MinLen(8))
 		return v.Error()
 	}
 
 	t.Run("valid data returns nil", func(t *testing.T) {
-		err := validateUser("user@example.com", "password123")
-		if err != nil {
+		email := mail.Addr("user@example.com")
+
+		if err := validateUser(email, "password123"); err != nil {
 			t.Errorf("expected nil, got: %v", err)
 		}
 	})
 
 	t.Run("invalid data returns ValidationErrors as error", func(t *testing.T) {
-		err := validateUser("", "123")
+		err := validateUser(mail.Nil, "123")
 		if err == nil {
 			t.Fatal("expected validation errors")
 		}

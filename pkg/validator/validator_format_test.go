@@ -21,35 +21,6 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 )
 
-func TestEmail(t *testing.T) {
-	tests := []struct {
-		name      string
-		value     any
-		wantError bool
-	}{
-		{"valid email", "test@example.com", false},
-		{"valid email with plus", "test+tag@example.com", false},
-		{"invalid email no @", "testexample.com", true},
-		{"invalid email no domain", "test@", true},
-		{"invalid email no TLD", "test@example", true},
-		{"empty string", "", false},            // Empty is allowed, use Required() to enforce
-		{"nil pointer", (*string)(nil), false}, // Skip validation
-		{"non-string", 123, true},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := Email()(tt.value)
-			if (err != nil) != tt.wantError {
-				t.Errorf("Email() error = %v, wantError %v", err, tt.wantError)
-			}
-			if err != nil && err.Code != ErrorCodeInvalidEmail {
-				t.Errorf("Expected error code %s, got %s", ErrorCodeInvalidEmail, err.Code)
-			}
-		})
-	}
-}
-
 func TestURL(t *testing.T) {
 	tests := []struct {
 		name      string

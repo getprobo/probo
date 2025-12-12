@@ -25,13 +25,14 @@ import (
 	authsvc "go.probo.inc/probo/pkg/auth"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/securecookie"
 )
 
 type (
 	SignInRequest struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
+		Email    mail.Addr `json:"email"`
+		Password string    `json:"password"`
 	}
 
 	SignInResponse struct {
@@ -40,7 +41,7 @@ type (
 
 	UserResponse struct {
 		ID        gid.GID   `json:"id"`
-		Email     string    `json:"email"`
+		Email     mail.Addr `json:"email"`
 		FullName  string    `json:"fullName"`
 		CreatedAt time.Time `json:"createdAt"`
 		UpdatedAt time.Time `json:"updatedAt"`

@@ -12,45 +12,35 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package coredata
+package mail
 
 import (
-	"github.com/jackc/pgx/v5"
+	"errors"
+	"io"
+	"strconv"
+
+	"github.com/99designs/gqlgen/graphql"
 	"go.probo.inc/probo/pkg/mail"
 )
 
-type (
-	DocumentVersionFilter struct {
-		userEmail *mail.Addr
+type AddrScalar = mail.Addr
+
+func MarshalAddrScalar(a mail.Addr) graphql.Marshaler {
+	return graphql.WriterFunc(func(w io.Writer) {
+		w.Write([]byte(strconv.Quote(a.String())))
+	})
+}
+
+func UnmarshalAddrScalar(v interface{}) (mail.Addr, error) {
+	s, ok := v.(string)
+	if !ok {
+		return mail.Nil, errors.New("must be a string")
 	}
-)
 
-func NewDocumentVersionFilter() *DocumentVersionFilter {
-	return &DocumentVersionFilter{}
-}
-
-func (f *DocumentVersionFilter) WithUserEmail(userEmail *mail.Addr) *DocumentVersionFilter {
-	f.userEmail = userEmail
-	return f
-}
-
-func (f *DocumentVersionFilter) SQLArguments() pgx.StrictNamedArgs {
-	return pgx.StrictNamedArgs{
-		"user_email": f.userEmail,
+	a, err := mail.ParseAddr(s)
+	if err != nil {
+		return mail.Nil, err
 	}
-}
 
-func (f *DocumentVersionFilter) SQLFragment() string {
-	return `
-(
-	@user_email::text IS NULL
-	OR EXISTS (
-		SELECT 1
-		FROM document_version_signatures dvs
-		INNER JOIN peoples p ON dvs.signed_by = p.id
-		WHERE dvs.document_version_id = document_versions.id
-			AND p.primary_email_address = @user_email::text
-			AND dvs.state IN ('REQUESTED', 'SIGNED')
-		)
-)`
+	return a, nil
 }

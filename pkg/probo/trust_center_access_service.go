@@ -24,6 +24,7 @@ import (
 	"go.probo.inc/probo/packages/emails"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/statelesstoken"
 	"go.probo.inc/probo/pkg/validator"
@@ -36,7 +37,7 @@ type (
 
 	CreateTrustCenterAccessRequest struct {
 		TrustCenterID gid.GID
-		Email         string
+		Email         mail.Addr
 		Name          string
 	}
 
@@ -55,8 +56,8 @@ type (
 	}
 
 	TrustCenterAccessData struct {
-		TrustCenterID gid.GID `json:"trust_center_id"`
-		Email         string  `json:"email"`
+		TrustCenterID gid.GID   `json:"trust_center_id"`
+		Email         mail.Addr `json:"email"`
 	}
 )
 
@@ -64,7 +65,7 @@ func (ctcar *CreateTrustCenterAccessRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(ctcar.TrustCenterID, "trust_center_id", validator.Required(), validator.GID(coredata.TrustCenterEntityType))
-	v.Check(ctcar.Email, "email", validator.Required(), validator.Email())
+	v.Check(ctcar.Email, "email", validator.Required(), validator.NotEmpty())
 	v.Check(ctcar.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
 
 	return v.Error()
@@ -469,7 +470,7 @@ func (s TrustCenterAccessService) sendTrustCenterAccessEmail(
 	ctx context.Context,
 	tx pg.Conn,
 	name string,
-	email string,
+	email mail.Addr,
 	companyName string,
 	accessURL string,
 ) error {

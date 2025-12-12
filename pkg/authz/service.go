@@ -26,6 +26,7 @@ import (
 	"go.probo.inc/probo/packages/emails"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/statelesstoken"
 )
@@ -242,7 +243,7 @@ func (s *Service) AcceptInvitationByID(
 
 type UserInvitation struct {
 	ID             gid.GID
-	Email          string
+	Email          mail.Addr
 	FullName       string
 	Role           coredata.MembershipRole
 	ExpiresAt      time.Time
@@ -259,7 +260,7 @@ type OrganizationSummary struct {
 
 func (s *Service) GetUserPendingInvitations(
 	ctx context.Context,
-	email string,
+	email mail.Addr,
 ) ([]*UserInvitation, error) {
 	userInvitations := []*UserInvitation{}
 
@@ -679,7 +680,7 @@ func (s *TenantAuthzService) UpdateMembershipRole(
 func (s *TenantAuthzService) InviteUserToOrganization(
 	ctx context.Context,
 	organizationID gid.GID,
-	emailAddress string,
+	emailAddress mail.Addr,
 	fullName string,
 	role coredata.MembershipRole,
 ) (*coredata.Invitation, error) {

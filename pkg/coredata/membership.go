@@ -26,6 +26,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
 )
 
@@ -36,7 +37,7 @@ type (
 		OrganizationID gid.GID        `db:"organization_id"`
 		Role           MembershipRole `db:"role"`
 		FullName       string         `db:"full_name"`
-		EmailAddress   string         `db:"email_address"`
+		EmailAddress   mail.Addr      `db:"email_address"`
 		CreatedAt      time.Time      `db:"created_at"`
 		UpdatedAt      time.Time      `db:"updated_at"`
 	}

@@ -5,6 +5,11 @@ info:
 
 components:
   schemas:
+    EmailAddress:
+      type: string
+      format: string
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/mail.Addr
+
     Duration:
       type: string
       description: A duration
@@ -89,12 +94,12 @@ components:
           type: string
           description: Full name
         primary_email_address:
-          type: string
+          $ref: "#/components/schemas/EmailAddress"
           description: Primary email address
         additional_email_addresses:
           type: array
           items:
-            type: string
+            $ref: "#/components/schemas/EmailAddress"
           description: Additional email addresses
         kind:
           $ref: "#/components/schemas/PeopleKind"
@@ -372,12 +377,12 @@ components:
           type: string
           description: Full name
         primary_email_address:
-          type: string
+          $ref: "#/components/schemas/EmailAddress"
           description: Primary email address
         additional_email_addresses:
           type: array
           items:
-            type: string
+            $ref: "#/components/schemas/EmailAddress"
           description: Additional email addresses
         kind:
           $ref: "#/components/schemas/PeopleKind"
@@ -414,13 +419,13 @@ components:
           type: string
           description: Full name
         primary_email_address:
-          type: string
+          $ref: "#/components/schemas/EmailAddress"
           description: Primary email address
         additional_email_addresses:
           anyOf:
             - type: array
               items:
-                type: string
+                $ref: "#/components/schemas/EmailAddress"
             - type: "null"
               description: No additional email addresses
           description: Additional email addresses

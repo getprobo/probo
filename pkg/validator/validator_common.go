@@ -17,6 +17,8 @@ package validator
 import (
 	"reflect"
 	"strings"
+
+	"go.probo.inc/probo/pkg/mail"
 )
 
 // Required validates that a field has a value.
@@ -57,6 +59,10 @@ func NotEmpty() ValidatorFunc {
 		switch v := actualValue.(type) {
 		case string:
 			if strings.TrimSpace(v) == "" {
+				return newValidationError(ErrorCodeRequired, "field cannot be empty")
+			}
+		case mail.Addr:
+			if v == mail.Nil {
 				return newValidationError(ErrorCodeRequired, "field cannot be empty")
 			}
 		default:

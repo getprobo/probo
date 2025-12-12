@@ -21,7 +21,6 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"net/mail"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -32,6 +31,7 @@ import (
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/crypto/passwdhash"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/statelesstoken"
 )
 
@@ -102,8 +102,8 @@ type (
 	ErrSAMLAutoSignupDisabled struct{}
 
 	EmailConfirmationData struct {
-		UserID gid.GID `json:"uid"`
-		Email  string  `json:"email"`
+		UserID gid.GID   `json:"uid"`
+		Email  mail.Addr `json:"email"`
 	}
 
 	InvitationData struct {
@@ -113,7 +113,7 @@ type (
 		CreatePeople   bool    `json:"create_people"`
 	}
 	PasswordResetData struct {
-		Email string `json:"email"`
+		Email mail.Addr `json:"email"`
 	}
 
 	ErrSAMLAuthRequired struct {
@@ -262,7 +262,7 @@ func (s Service) CanCreateOrganization(ctx context.Context, userID gid.GID) erro
 
 func (s Service) ForgetPassword(
 	ctx context.Context,
-	email string,
+	email mail.Addr,
 ) error {
 	// Always generate a new token to avoid timing attacks and leaking information
 	// about existing emails
@@ -329,17 +329,12 @@ func (s Service) ForgetPassword(
 
 func (s Service) SignUp(
 	ctx context.Context,
-	emailAddress string,
+	emailAddress mail.Addr,
 	password string,
 	fullName string,
 ) (*coredata.User, *coredata.Session, error) {
 	if s.disableSignup {
 		return nil, nil, &ErrSignupDisabled{}
-	}
-
-	emailAddress2, err := mail.ParseAddress(emailAddress)
-	if err != nil {
-		return nil, nil, &ErrInvalidEmail{emailAddress}
 	}
 
 	if len(password) < 8 || len(password) > 128 {
@@ -358,7 +353,7 @@ func (s Service) SignUp(
 	now := time.Now()
 	user := &coredata.User{
 		ID:                   gid.New(gid.NilTenant, coredata.UserEntityType),
-		EmailAddress:         emailAddress2.Address,
+		EmailAddress:         emailAddress,
 		HashedPassword:       hashedPassword,
 		EmailAddressVerified: false,
 		FullName:             fullName,
@@ -453,16 +448,12 @@ func (s Service) ProvisionSAMLUser(
 	ctx context.Context,
 	samlConfigID gid.GID,
 	organizationID gid.GID,
-	emailAddress string,
+	emailAddress mail.Addr,
 	fullName string,
 	samlSubject string,
 	existingSession *coredata.Session,
 	sessionDuration time.Duration,
 ) (*coredata.Session, *coredata.User, error) {
-	if _, err := mail.ParseAddress(emailAddress); err != nil {
-		return nil, nil, &ErrInvalidEmail{emailAddress}
-	}
-
 	if fullName == "" {
 		return nil, nil, &ErrInvalidFullName{fullName}
 	}
@@ -566,14 +557,10 @@ func (s Service) ProvisionSAMLUser(
 
 func (s Service) SignIn(
 	ctx context.Context,
-	emailAddress string,
+	emailAddress mail.Addr,
 	password string,
 	existingSession *coredata.Session,
 ) (*coredata.Session, *coredata.User, error) {
-	if _, err := mail.ParseAddress(emailAddress); err != nil {
-		return nil, nil, &ErrInvalidCredentials{"invalid email or password"}
-	}
-
 	user := &coredata.User{}
 	session := &coredata.Session{}
 
@@ -868,10 +855,6 @@ func (s Service) SignupFromInvitation(
 		return nil, nil, &ErrInvalidPassword{minLength: 8, maxLength: 128}
 	}
 
-	if _, err := mail.ParseAddress(payload.Data.Email); err != nil {
-		return nil, nil, &ErrInvalidEmail{payload.Data.Email}
-	}
-
 	if fullName == "" {
 		fullName = payload.Data.FullName
 	}
@@ -980,7 +963,7 @@ func (s *TenantAuthService) GetUserAuthMethod(
 			}
 
 			// User has SAML subject - check if there's SAML config for this org + user's domain
-			domain := extractDomain(user.EmailAddress)
+			domain := user.EmailAddress.Domain()
 			if domain == "" {
 				authMethod = coredata.UserAuthMethodPassword
 				return nil
@@ -1005,20 +988,6 @@ func (s *TenantAuthService) GetUserAuthMethod(
 	return authMethod, err
 }
 
-func extractDomain(email string) string {
-	atIndex := -1
-	for i := 0; i < len(email); i++ {
-		if email[i] == '@' {
-			atIndex = i
-			break
-		}
-	}
-	if atIndex == -1 || atIndex == len(email)-1 {
-		return ""
-	}
-	return email[atIndex+1:]
-}
-
 // CheckOrganizationAccess checks access to multiple organizations in a single database query
 // Always uses batch processing to avoid N+1 query problems
 func (s Service) CheckOrganizationAccess(
@@ -1029,7 +998,7 @@ func (s Service) CheckOrganizationAccess(
 ) (map[gid.GID]AccessResult, error) {
 	results := make(map[gid.GID]AccessResult, len(organizationIDs))
 
-	domain := extractDomain(user.EmailAddress)
+	domain := user.EmailAddress.Domain()
 	if domain == "" {
 		// All organizations fail with invalid email
 		for _, orgID := range organizationIDs {

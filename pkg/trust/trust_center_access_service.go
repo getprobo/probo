@@ -19,7 +19,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net/mail"
 	"net/url"
 	"time"
 
@@ -29,6 +28,7 @@ import (
 	"go.probo.inc/probo/pkg/auth"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/statelesstoken"
 	"go.probo.inc/probo/pkg/validator"
@@ -43,7 +43,7 @@ type (
 
 	TrustCenterAccessRequest struct {
 		TrustCenterID      gid.GID
-		Email              string
+		Email              mail.Addr
 		Name               *string
 		DocumentIDs        []gid.GID
 		ReportIDs          []gid.GID
@@ -66,7 +66,7 @@ func (tcar *TrustCenterAccessRequest) Validate() error {
 func (s TrustCenterAccessService) ValidateToken(
 	ctx context.Context,
 	trustCenterID gid.GID,
-	email string,
+	email mail.Addr,
 ) error {
 	return s.svc.pg.WithConn(ctx, func(conn pg.Conn) error {
 		access := &coredata.TrustCenterAccess{}
@@ -87,6 +87,10 @@ func (s TrustCenterAccessService) Request(
 	ctx context.Context,
 	req *TrustCenterAccessRequest,
 ) (*coredata.TrustCenterAccess, error) {
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid request arguments")
+	}
+
 	now := time.Now()
 
 	var access *coredata.TrustCenterAccess
@@ -159,10 +163,6 @@ func (s TrustCenterAccessService) Request(
 
 			if req.Name == nil || *req.Name == "" {
 				return fmt.Errorf("name is required for new access requests")
-			}
-
-			if _, err := mail.ParseAddress(req.Email); err != nil {
-				return fmt.Errorf("invalid email address")
 			}
 
 			access = &coredata.TrustCenterAccess{
@@ -248,7 +248,7 @@ func (s TrustCenterAccessService) Request(
 	return access, nil
 }
 
-func (s TrustCenterAccessService) HasAcceptedNonDisclosureAgreement(ctx context.Context, trustCenterID gid.GID, email string) (bool, error) {
+func (s TrustCenterAccessService) HasAcceptedNonDisclosureAgreement(ctx context.Context, trustCenterID gid.GID, email mail.Addr) (bool, error) {
 	access := &coredata.TrustCenterAccess{}
 	err := s.svc.pg.WithConn(ctx, func(conn pg.Conn) error {
 		err := access.LoadByTrustCenterIDAndEmail(ctx, conn, s.svc.scope, trustCenterID, email)
@@ -266,7 +266,7 @@ func (s TrustCenterAccessService) HasAcceptedNonDisclosureAgreement(ctx context.
 	return access.HasAcceptedNonDisclosureAgreement, nil
 }
 
-func (s TrustCenterAccessService) AcceptNonDisclosureAgreement(ctx context.Context, trustCenterID gid.GID, email string) error {
+func (s TrustCenterAccessService) AcceptNonDisclosureAgreement(ctx context.Context, trustCenterID gid.GID, email mail.Addr) error {
 	return s.svc.pg.WithTx(ctx, func(tx pg.Conn) error {
 		access := &coredata.TrustCenterAccess{}
 		if err := access.LoadByTrustCenterIDAndEmail(ctx, tx, s.svc.scope, trustCenterID, email); err != nil {
@@ -279,7 +279,7 @@ func (s TrustCenterAccessService) AcceptNonDisclosureAgreement(ctx context.Conte
 		}
 
 		acceptationLogs, err := json.Marshal(map[string]string{
-			"email":     email,
+			"email":     email.String(),
 			"timestamp": time.Now().Format(time.RFC3339),
 			"ip":        ctx.Value(coredata.ContextKeyIPAddress).(string),
 		})
@@ -302,7 +302,7 @@ func (s TrustCenterAccessService) AcceptNonDisclosureAgreement(ctx context.Conte
 func (s TrustCenterAccessService) LoadDocumentAccess(
 	ctx context.Context,
 	trustCenterID gid.GID,
-	email string,
+	email mail.Addr,
 	documentID gid.GID,
 ) (*coredata.TrustCenterDocumentAccess, error) {
 	var documentAccess *coredata.TrustCenterDocumentAccess
@@ -337,7 +337,7 @@ func (s TrustCenterAccessService) LoadDocumentAccess(
 func (s TrustCenterAccessService) LoadReportAccess(
 	ctx context.Context,
 	trustCenterID gid.GID,
-	email string,
+	email mail.Addr,
 	reportID gid.GID,
 ) (*coredata.TrustCenterDocumentAccess, error) {
 	var reportAccess *coredata.TrustCenterDocumentAccess
@@ -372,7 +372,7 @@ func (s TrustCenterAccessService) LoadReportAccess(
 func (s TrustCenterAccessService) LoadTrustCenterFileAccess(
 	ctx context.Context,
 	trustCenterID gid.GID,
-	email string,
+	email mail.Addr,
 	trustCenterFileID gid.GID,
 ) (*coredata.TrustCenterDocumentAccess, error) {
 	var fileAccess *coredata.TrustCenterDocumentAccess
@@ -407,7 +407,7 @@ func (s TrustCenterAccessService) LoadTrustCenterFileAccess(
 func (s *TrustCenterAccessService) GrantByIDs(
 	ctx context.Context,
 	organizationID gid.GID,
-	email string,
+	email mail.Addr,
 	documentIDs []gid.GID,
 	reportIDs []gid.GID,
 	fileIDs []gid.GID,
@@ -533,7 +533,7 @@ func (s *TrustCenterAccessService) sendTrustCenterAccessEmail(
 	ctx context.Context,
 	tx pg.Conn,
 	name string,
-	email string,
+	email mail.Addr,
 	companyName string,
 	accessURL string,
 ) error {
@@ -565,7 +565,7 @@ func (s *TrustCenterAccessService) sendTrustCenterAccessEmail(
 func (s *TrustCenterAccessService) RejectOrRevokeByIDs(
 	ctx context.Context,
 	organizationID gid.GID,
-	email string,
+	email mail.Addr,
 	documentIDs []gid.GID,
 	reportIDs []gid.GID,
 	fileIDs []gid.GID,

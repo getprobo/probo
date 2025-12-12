@@ -16,6 +16,7 @@ package coredata
 
 import (
 	"github.com/jackc/pgx/v5"
+	"go.probo.inc/probo/pkg/mail"
 )
 
 type (
@@ -23,7 +24,7 @@ type (
 		query                   *string
 		trustCenterVisibilities []TrustCenterVisibility
 		published               *bool
-		userEmail               *string
+		userEmail               *mail.Addr
 	}
 )
 
@@ -47,7 +48,7 @@ func (f *DocumentFilter) WithPublished(published *bool) *DocumentFilter {
 	return f
 }
 
-func (f *DocumentFilter) WithUserEmail(userEmail *string) *DocumentFilter {
+func (f *DocumentFilter) WithUserEmail(userEmail *mail.Addr) *DocumentFilter {
 	f.userEmail = userEmail
 	return f
 }

@@ -23,35 +23,9 @@ import (
 
 var (
 	emailRegex  = regexp.MustCompile(`^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$`)
-	gidRegex    = regexp.MustCompile(`^gid://[a-zA-Z0-9\-_]+/[a-zA-Z0-9\-_]+/[a-zA-Z0-9\-_]+$`)
 	uuidRegex   = regexp.MustCompile(`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$`)
 	domainRegex = regexp.MustCompile(`^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)*[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$`)
 )
-
-// Email validates that a string is a valid email address.
-func Email() ValidatorFunc {
-	return func(value any) *ValidationError {
-		actualValue, isNil := dereferenceValue(value)
-		if isNil {
-			return nil
-		}
-
-		str, ok := actualValue.(string)
-		if !ok {
-			return newValidationError(ErrorCodeInvalidEmail, "value must be a string")
-		}
-
-		if str == "" {
-			return nil
-		}
-
-		if !emailRegex.MatchString(str) {
-			return newValidationError(ErrorCodeInvalidEmail, "invalid email address")
-		}
-
-		return nil
-	}
-}
 
 // URL validates that a string is a valid URL with http or https scheme.
 func URL() ValidatorFunc {

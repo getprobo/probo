@@ -19,13 +19,14 @@ import (
 	"fmt"
 	"net/http"
 
-	authsvc "go.probo.inc/probo/pkg/auth"
 	"go.gearno.de/kit/httpserver"
+	authsvc "go.probo.inc/probo/pkg/auth"
+	"go.probo.inc/probo/pkg/mail"
 )
 
 type (
 	ForgetPasswordRequest struct {
-		Email string `json:"email"`
+		Email mail.Addr `json:"email"`
 	}
 
 	ForgetPasswordResponse struct {

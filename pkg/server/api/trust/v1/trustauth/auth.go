@@ -21,18 +21,15 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/server/api/trust/v1/types"
 )
 
 type TokenAccessData struct {
 	TrustCenterID gid.GID
-	Email         string
+	Email         mail.Addr
 	TenantID      gid.TenantID
 	Scope         string
-}
-
-func (t *TokenAccessData) GetEmail() string {
-	return t.Email
 }
 
 type ContextAccessor interface {

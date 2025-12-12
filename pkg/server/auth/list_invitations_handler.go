@@ -18,9 +18,10 @@ import (
 	"fmt"
 	"net/http"
 
+	"go.gearno.de/kit/httpserver"
 	"go.probo.inc/probo/pkg/authz"
 	"go.probo.inc/probo/pkg/gid"
-	"go.gearno.de/kit/httpserver"
+	"go.probo.inc/probo/pkg/mail"
 )
 
 type (
@@ -30,7 +31,7 @@ type (
 
 	InvitationResponse struct {
 		ID           gid.GID                     `json:"id"`
-		Email        string                      `json:"email"`
+		Email        mail.Addr                   `json:"email"`
 		FullName     string                      `json:"fullName"`
 		Role         string                      `json:"role"`
 		ExpiresAt    string                      `json:"expiresAt"`

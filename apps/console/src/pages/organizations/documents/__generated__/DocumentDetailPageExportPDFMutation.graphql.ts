@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<f860e097afe4111c629ecf78d873a84e>>
+ * @generated SignedSource<<3a082179d9ea9d47824b7ee925418b95>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,7 +11,7 @@
 import { ConcreteRequest } from 'relay-runtime';
 export type ExportDocumentVersionPDFInput = {
   documentVersionId: string;
-  watermarkEmail?: string | null | undefined;
+  watermarkEmail?: any | null | undefined;
   withSignatures: boolean;
   withWatermark: boolean;
 };

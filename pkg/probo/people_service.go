@@ -22,6 +22,7 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/validator"
 )
@@ -34,8 +35,8 @@ type (
 	CreatePeopleRequest struct {
 		OrganizationID           gid.GID
 		FullName                 string
-		PrimaryEmailAddress      string
-		AdditionalEmailAddresses []string
+		PrimaryEmailAddress      mail.Addr
+		AdditionalEmailAddresses []mail.Addr
 		Kind                     coredata.PeopleKind
 		Position                 *string
 		ContractStartDate        *time.Time
@@ -46,8 +47,8 @@ type (
 		ID                       gid.GID
 		Kind                     *coredata.PeopleKind
 		FullName                 *string
-		PrimaryEmailAddress      *string
-		AdditionalEmailAddresses *[]string
+		PrimaryEmailAddress      *mail.Addr
+		AdditionalEmailAddresses *[]mail.Addr
 		Position                 **string
 		ContractStartDate        **time.Time
 		ContractEndDate          **time.Time
@@ -59,9 +60,9 @@ func (cpr *CreatePeopleRequest) Validate() error {
 
 	v.Check(cpr.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
 	v.Check(cpr.FullName, "full_name", validator.SafeTextNoNewLine(NameMaxLength))
-	v.Check(cpr.PrimaryEmailAddress, "primary_email_address", validator.Required(), validator.NotEmpty(), validator.Email())
+	v.Check(cpr.PrimaryEmailAddress, "primary_email_address", validator.Required(), validator.NotEmpty())
 	v.CheckEach(cpr.AdditionalEmailAddresses, "additional_email_addresses", func(index int, item any) {
-		v.Check(item, fmt.Sprintf("additional_email_addresses[%d]", index), validator.Required(), validator.NotEmpty(), validator.Email())
+		v.Check(item, fmt.Sprintf("additional_email_addresses[%d]", index), validator.Required(), validator.NotEmpty())
 	})
 	v.Check(cpr.Kind, "kind", validator.Required(), validator.OneOfSlice(coredata.PeopleKinds()))
 	v.Check(cpr.Position, "position", validator.SafeText(TitleMaxLength))
@@ -77,9 +78,9 @@ func (upr *UpdatePeopleRequest) Validate() error {
 	v.Check(upr.ID, "id", validator.Required(), validator.GID(coredata.PeopleEntityType))
 	v.Check(upr.Kind, "kind", validator.OneOfSlice(coredata.PeopleKinds()))
 	v.Check(upr.FullName, "full_name", validator.SafeTextNoNewLine(NameMaxLength))
-	v.Check(upr.PrimaryEmailAddress, "primary_email_address", validator.NotEmpty(), validator.Email())
+	v.Check(upr.PrimaryEmailAddress, "primary_email_address", validator.NotEmpty())
 	v.CheckEach(upr.AdditionalEmailAddresses, "additional_email_addresses", func(index int, item any) {
-		v.Check(item, fmt.Sprintf("additional_email_addresses[%d]", index), validator.Required(), validator.NotEmpty(), validator.Email())
+		v.Check(item, fmt.Sprintf("additional_email_addresses[%d]", index), validator.Required(), validator.NotEmpty())
 	})
 	v.Check(upr.Position, "position", validator.SafeText(TitleMaxLength))
 	v.Check(upr.ContractStartDate, "contract_start_date", validator.Before(upr.ContractEndDate))
@@ -110,7 +111,7 @@ func (s PeopleService) Get(
 
 func (s PeopleService) GetByEmailAndOrganizationID(
 	ctx context.Context,
-	primaryEmailAddress string,
+	primaryEmailAddress mail.Addr,
 	organizationID gid.GID,
 ) (*coredata.People, error) {
 	people := &coredata.People{}

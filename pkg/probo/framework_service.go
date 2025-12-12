@@ -32,6 +32,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/html2pdf"
+	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/slug"
 	"go.probo.inc/probo/pkg/soagen"
@@ -97,7 +98,7 @@ func (ufr *UpdateFrameworkRequest) Validate() error {
 func (s FrameworkService) RequestExport(
 	ctx context.Context,
 	frameworkID gid.GID,
-	recipientEmail string,
+	recipientEmail mail.Addr,
 	recipientName string,
 ) (error, *coredata.ExportJob) {
 	var exportJobID gid.GID
@@ -725,7 +726,7 @@ func (s FrameworkService) SendExportEmail(
 	ctx context.Context,
 	fileID gid.GID,
 	recipientName string,
-	recipientEmail string,
+	recipientEmail mail.Addr,
 ) error {
 	return s.svc.pg.WithTx(
 		ctx,

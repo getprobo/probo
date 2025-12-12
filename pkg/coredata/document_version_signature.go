@@ -25,6 +25,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
 )
 
@@ -424,7 +425,7 @@ func (pvs *DocumentVersionSignature) IsSignedByUserEmail(
 	conn pg.Conn,
 	scope Scoper,
 	documentVersionID gid.GID,
-	userEmail string,
+	userEmail mail.Addr,
 ) (bool, error) {
 	q := `
 SELECT EXISTS (

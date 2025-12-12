@@ -19,8 +19,9 @@ enum Role {
   USER
 }
 
-scalar Datetime
 scalar CursorKey
+scalar Datetime
+scalar EmailAddr
 
 interface Node {
   id: ID!
@@ -46,11 +47,9 @@ type Organization implements Node {
 
 enum DocumentType
   @goModel(model: "go.probo.inc/probo/pkg/coredata.DocumentType") {
-  OTHER
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypeOther")
+  OTHER @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypeOther")
   ISMS @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypeISMS")
-  POLICY
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypePolicy")
+  POLICY @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypePolicy")
   PROCEDURE
     @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypeProcedure")
 }
@@ -357,9 +356,7 @@ enum CountryCode
 enum VendorCategory
   @goModel(model: "go.probo.inc/probo/pkg/coredata.VendorCategory") {
   ANALYTICS
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryAnalytics"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorCategoryAnalytics")
   CLOUD_MONITORING
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.VendorCategoryCloudMonitoring"
@@ -389,28 +386,21 @@ enum VendorCategory
       value: "go.probo.inc/probo/pkg/coredata.VendorCategoryEmployeeManagement"
     )
   ENGINEERING
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryEngineering"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorCategoryEngineering")
   FINANCE
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryFinance"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorCategoryFinance")
   IDENTITY_PROVIDER
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.VendorCategoryIdentityProvider"
     )
   IT @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorCategoryIT")
   MARKETING
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryMarketing"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorCategoryMarketing")
   OFFICE_OPERATIONS
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.VendorCategoryOfficeOperations"
     )
-  OTHER
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorCategoryOther")
+  OTHER @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorCategoryOther")
   PASSWORD_MANAGEMENT
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.VendorCategoryPasswordManagement"
@@ -424,15 +414,10 @@ enum VendorCategory
       value: "go.probo.inc/probo/pkg/coredata.VendorCategoryProfessionalServices"
     )
   RECRUITING
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryRecruiting"
-    )
-  SALES
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorCategorySales")
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorCategoryRecruiting")
+  SALES @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorCategorySales")
   SECURITY
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.VendorCategorySecurity"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorCategorySecurity")
   VERSION_CONTROL
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.VendorCategoryVersionControl"
@@ -542,7 +527,7 @@ type TrustCenter implements Node {
 
 type TrustCenterAccess implements Node {
   id: ID!
-  email: String!
+  email: EmailAddr!
   name: String!
   createdAt: Datetime!
   updatedAt: Datetime!
@@ -550,7 +535,7 @@ type TrustCenterAccess implements Node {
 
 input RequestAllAccessesInput {
   trustCenterId: ID!
-  email: String
+  email: EmailAddr
   name: String
 }
 
@@ -573,21 +558,21 @@ input AcceptNonDisclosureAgreementInput {
 input RequestDocumentAccessInput {
   trustCenterId: ID!
   documentId: ID!
-  email: String
+  email: EmailAddr
   name: String
 }
 
 input RequestReportAccessInput {
   trustCenterId: ID!
   reportId: ID!
-  email: String
+  email: EmailAddr
   name: String
 }
 
 input RequestTrustCenterFileAccessInput {
   trustCenterId: ID!
   trustCenterFileId: ID!
-  email: String
+  email: EmailAddr
   name: String
 }
 

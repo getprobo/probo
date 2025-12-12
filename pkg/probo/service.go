@@ -31,6 +31,7 @@ import (
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/filevalidation"
+	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/html2pdf"
 	"go.probo.inc/probo/pkg/slack"
@@ -44,7 +45,7 @@ const (
 
 type ExportService interface {
 	BuildAndUploadExport(ctx context.Context, exportJobID gid.GID) (*coredata.ExportJob, error)
-	SendExportEmail(ctx context.Context, fileID gid.GID, recipientName, recipientEmail string) error
+	SendExportEmail(ctx context.Context, fileID gid.GID, recipientName string, recipientEmail mail.Addr) error
 }
 
 type (

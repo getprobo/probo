@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<e263259b92f7b1fe14bca5fca49b20bf>>
+ * @generated SignedSource<<5175c19e84ee71ec4a3e9e35e515991e>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -15,14 +15,14 @@ export type PeopleGraphNodeQuery$variables = {
 };
 export type PeopleGraphNodeQuery$data = {
   readonly node: {
-    readonly additionalEmailAddresses?: ReadonlyArray<string>;
+    readonly additionalEmailAddresses?: ReadonlyArray<any>;
     readonly contractEndDate?: any | null | undefined;
     readonly contractStartDate?: any | null | undefined;
     readonly fullName?: string;
     readonly id?: string;
     readonly kind?: PeopleKind;
     readonly position?: string | null | undefined;
-    readonly primaryEmailAddress?: string;
+    readonly primaryEmailAddress?: any;
   };
 };
 export type PeopleGraphNodeQuery = {

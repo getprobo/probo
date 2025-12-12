@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<271260153dc611541b234266fbdd0c74>>
+ * @generated SignedSource<<213636cdb170859b30c372b29ddbf752>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,7 +11,7 @@
 import { ConcreteRequest } from 'relay-runtime';
 export type CreateTrustCenterAccessInput = {
   active: boolean;
-  email: string;
+  email: any;
   name: string;
   trustCenterId: string;
 };
@@ -27,7 +27,7 @@ export type TrustCenterAccessGraphCreateMutation$data = {
         readonly active: boolean;
         readonly activeCount: number;
         readonly createdAt: any;
-        readonly email: string;
+        readonly email: any;
         readonly hasAcceptedNonDisclosureAgreement: boolean;
         readonly id: string;
         readonly lastTokenExpiresAt: any | null | undefined;

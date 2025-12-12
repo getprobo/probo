@@ -24,6 +24,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
 )
 
@@ -701,7 +702,7 @@ func (p *Document) IsLastSignableVersionSignedByUserEmail(
 	conn pg.Conn,
 	scope Scoper,
 	documentID gid.GID,
-	userEmail string,
+	userEmail mail.Addr,
 ) (bool, error) {
 	q := `
 WITH last_signable_version AS (

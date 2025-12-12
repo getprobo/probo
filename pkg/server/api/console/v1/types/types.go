@@ -12,6 +12,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
 )
 
@@ -105,10 +106,10 @@ type BulkDeleteDocumentsPayload struct {
 }
 
 type BulkExportDocumentsInput struct {
-	DocumentIds    []gid.GID `json:"documentIds"`
-	WithWatermark  bool      `json:"withWatermark"`
-	WatermarkEmail *string   `json:"watermarkEmail,omitempty"`
-	WithSignatures bool      `json:"withSignatures"`
+	DocumentIds    []gid.GID  `json:"documentIds"`
+	WithWatermark  bool       `json:"withWatermark"`
+	WatermarkEmail *mail.Addr `json:"watermarkEmail,omitempty"`
+	WithSignatures bool       `json:"withSignatures"`
 }
 
 type BulkExportDocumentsPayload struct {
@@ -419,8 +420,8 @@ type CreateOrganizationPayload struct {
 type CreatePeopleInput struct {
 	OrganizationID           gid.GID             `json:"organizationId"`
 	FullName                 string              `json:"fullName"`
-	PrimaryEmailAddress      string              `json:"primaryEmailAddress"`
-	AdditionalEmailAddresses []string            `json:"additionalEmailAddresses,omitempty"`
+	PrimaryEmailAddress      mail.Addr           `json:"primaryEmailAddress"`
+	AdditionalEmailAddresses []*mail.Addr        `json:"additionalEmailAddresses,omitempty"`
 	Kind                     coredata.PeopleKind `json:"kind"`
 	Position                 *string             `json:"position,omitempty"`
 	ContractStartDate        *time.Time          `json:"contractStartDate,omitempty"`
@@ -551,10 +552,10 @@ type CreateTaskPayload struct {
 }
 
 type CreateTrustCenterAccessInput struct {
-	TrustCenterID gid.GID `json:"trustCenterId"`
-	Email         string  `json:"email"`
-	Name          string  `json:"name"`
-	Active        bool    `json:"active"`
+	TrustCenterID gid.GID   `json:"trustCenterId"`
+	Email         mail.Addr `json:"email"`
+	Name          string    `json:"name"`
+	Active        bool      `json:"active"`
 }
 
 type CreateTrustCenterAccessPayload struct {
@@ -586,11 +587,11 @@ type CreateTrustCenterReferencePayload struct {
 }
 
 type CreateVendorContactInput struct {
-	VendorID gid.GID `json:"vendorId"`
-	FullName *string `json:"fullName,omitempty"`
-	Email    *string `json:"email,omitempty"`
-	Phone    *string `json:"phone,omitempty"`
-	Role     *string `json:"role,omitempty"`
+	VendorID gid.GID    `json:"vendorId"`
+	FullName *string    `json:"fullName,omitempty"`
+	Email    *mail.Addr `json:"email,omitempty"`
+	Phone    *string    `json:"phone,omitempty"`
+	Role     *string    `json:"role,omitempty"`
 }
 
 type CreateVendorContactPayload struct {
@@ -1135,10 +1136,10 @@ type EvidenceEdge struct {
 }
 
 type ExportDocumentVersionPDFInput struct {
-	DocumentVersionID gid.GID `json:"documentVersionId"`
-	WithWatermark     bool    `json:"withWatermark"`
-	WatermarkEmail    *string `json:"watermarkEmail,omitempty"`
-	WithSignatures    bool    `json:"withSignatures"`
+	DocumentVersionID gid.GID    `json:"documentVersionId"`
+	WithWatermark     bool       `json:"withWatermark"`
+	WatermarkEmail    *mail.Addr `json:"watermarkEmail,omitempty"`
+	WithSignatures    bool       `json:"withSignatures"`
 }
 
 type ExportDocumentVersionPDFPayload struct {
@@ -1254,7 +1255,7 @@ type InitiateDomainVerificationPayload struct {
 
 type Invitation struct {
 	ID           gid.GID                   `json:"id"`
-	Email        string                    `json:"email"`
+	Email        mail.Addr                 `json:"email"`
 	FullName     string                    `json:"fullName"`
 	Role         coredata.MembershipRole   `json:"role"`
 	Status       coredata.InvitationStatus `json:"status"`
@@ -1283,7 +1284,7 @@ type InvitationOrder struct {
 
 type InviteUserInput struct {
 	OrganizationID gid.GID                 `json:"organizationId"`
-	Email          string                  `json:"email"`
+	Email          mail.Addr               `json:"email"`
 	FullName       string                  `json:"fullName"`
 	Role           coredata.MembershipRole `json:"role"`
 	CreatePeople   bool                    `json:"createPeople"`
@@ -1345,7 +1346,7 @@ type Membership struct {
 	OrganizationID gid.GID                 `json:"organizationID"`
 	Role           coredata.MembershipRole `json:"role"`
 	FullName       string                  `json:"fullName"`
-	EmailAddress   string                  `json:"emailAddress"`
+	EmailAddress   mail.Addr               `json:"emailAddress"`
 	AuthMethod     coredata.UserAuthMethod `json:"authMethod"`
 	CreatedAt      time.Time               `json:"createdAt"`
 	UpdatedAt      time.Time               `json:"updatedAt"`
@@ -1493,8 +1494,8 @@ type PageInfo struct {
 type People struct {
 	ID                       gid.GID             `json:"id"`
 	FullName                 string              `json:"fullName"`
-	PrimaryEmailAddress      string              `json:"primaryEmailAddress"`
-	AdditionalEmailAddresses []string            `json:"additionalEmailAddresses"`
+	PrimaryEmailAddress      mail.Addr           `json:"primaryEmailAddress"`
+	AdditionalEmailAddresses []*mail.Addr        `json:"additionalEmailAddresses"`
 	Kind                     coredata.PeopleKind `json:"kind"`
 	Position                 *string             `json:"position,omitempty"`
 	ContractStartDate        *time.Time          `json:"contractStartDate,omitempty"`
@@ -1772,7 +1773,7 @@ func (this TrustCenter) GetID() gid.GID { return this.ID }
 
 type TrustCenterAccess struct {
 	ID                                gid.GID                              `json:"id"`
-	Email                             string                               `json:"email"`
+	Email                             mail.Addr                            `json:"email"`
 	Name                              string                               `json:"name"`
 	Active                            bool                                 `json:"active"`
 	HasAcceptedNonDisclosureAgreement bool                                 `json:"hasAcceptedNonDisclosureAgreement"`
@@ -2056,8 +2057,8 @@ type UpdateOrganizationPayload struct {
 type UpdatePeopleInput struct {
 	ID                       gid.GID                       `json:"id"`
 	FullName                 *string                       `json:"fullName,omitempty"`
-	PrimaryEmailAddress      *string                       `json:"primaryEmailAddress,omitempty"`
-	AdditionalEmailAddresses []string                      `json:"additionalEmailAddresses,omitempty"`
+	PrimaryEmailAddress      *mail.Addr                    `json:"primaryEmailAddress,omitempty"`
+	AdditionalEmailAddresses []*mail.Addr                  `json:"additionalEmailAddresses,omitempty"`
 	Kind                     *coredata.PeopleKind          `json:"kind,omitempty"`
 	Position                 graphql.Omittable[*string]    `json:"position,omitempty"`
 	ContractStartDate        graphql.Omittable[*time.Time] `json:"contractStartDate,omitempty"`
@@ -2201,11 +2202,11 @@ type UpdateVendorBusinessAssociateAgreementPayload struct {
 }
 
 type UpdateVendorContactInput struct {
-	ID       gid.GID                    `json:"id"`
-	FullName graphql.Omittable[*string] `json:"fullName,omitempty"`
-	Email    graphql.Omittable[*string] `json:"email,omitempty"`
-	Phone    graphql.Omittable[*string] `json:"phone,omitempty"`
-	Role     graphql.Omittable[*string] `json:"role,omitempty"`
+	ID       gid.GID                       `json:"id"`
+	FullName graphql.Omittable[*string]    `json:"fullName,omitempty"`
+	Email    graphql.Omittable[*mail.Addr] `json:"email,omitempty"`
+	Phone    graphql.Omittable[*string]    `json:"phone,omitempty"`
+	Role     graphql.Omittable[*string]    `json:"role,omitempty"`
 }
 
 type UpdateVendorContactPayload struct {
@@ -2329,7 +2330,7 @@ type UploadVendorDataPrivacyAgreementPayload struct {
 type User struct {
 	ID        gid.GID   `json:"id"`
 	FullName  string    `json:"fullName"`
-	Email     string    `json:"email"`
+	Email     mail.Addr `json:"email"`
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
 }
@@ -2419,14 +2420,14 @@ type VendorComplianceReportEdge struct {
 }
 
 type VendorContact struct {
-	ID        gid.GID   `json:"id"`
-	Vendor    *Vendor   `json:"vendor"`
-	FullName  *string   `json:"fullName,omitempty"`
-	Email     *string   `json:"email,omitempty"`
-	Phone     *string   `json:"phone,omitempty"`
-	Role      *string   `json:"role,omitempty"`
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
+	ID        gid.GID    `json:"id"`
+	Vendor    *Vendor    `json:"vendor"`
+	FullName  *string    `json:"fullName,omitempty"`
+	Email     *mail.Addr `json:"email,omitempty"`
+	Phone     *string    `json:"phone,omitempty"`
+	Role      *string    `json:"role,omitempty"`
+	CreatedAt time.Time  `json:"createdAt"`
+	UpdatedAt time.Time  `json:"updatedAt"`
 }
 
 func (VendorContact) IsNode()             {}
