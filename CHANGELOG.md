@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Fix
+
+- Fix the “no change” error display in documents bulk update
+- Update the front end after a document is published
+
 ## [0.105.0] - 2025-12-11
 
 ### Added
