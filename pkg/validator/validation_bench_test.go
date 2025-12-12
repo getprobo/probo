@@ -25,7 +25,7 @@ func BenchmarkValidate_SingleField(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		v := New()
-		v.Check(&email, "email", Required(), Email())
+		v.Check(&email, "email", Required(), NotEmpty())
 	}
 }
 
@@ -37,7 +37,7 @@ func BenchmarkValidate_MultipleFields(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		v := New()
-		v.Check(&email, "email", Required(), Email())
+		v.Check(&email, "email", Required(), NotEmpty())
 		v.Check(&password, "password", Required(), MinLen(8))
 		v.Check(&age, "age", Min(18), Max(120))
 	}
@@ -105,16 +105,6 @@ func BenchmarkValidate_ArrayValidation(b *testing.B) {
 				_ = j
 			})
 		}
-	}
-}
-
-func BenchmarkEmail(b *testing.B) {
-	email := "test@example.com"
-	validator := Email()
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = validator(&email)
 	}
 }
 
@@ -214,7 +204,7 @@ func BenchmarkValidate_WithErrors(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		v := New()
-		v.Check(&email, "email", Required(), Email())
+		v.Check(&email, "email", Required(), NotEmpty())
 		if !v.HasErrors() {
 			b.Fatal("expected validation error")
 		}
@@ -256,7 +246,7 @@ func BenchmarkValidate_ComplexForm(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		v := New()
-		v.Check(&user.Email, "email", Required(), Email())
+		v.Check(&user.Email, "email", Required(), NotEmpty())
 		v.Check(&user.Name, "name", Required(), MinLen(2))
 		v.Check(&user.Age, "age", Min(18), Max(120))
 		v.Check(user.Website, "website", URL())

@@ -22,6 +22,7 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/validator"
 )
@@ -34,7 +35,7 @@ type (
 	CreateVendorContactRequest struct {
 		VendorID gid.GID
 		FullName *string
-		Email    *string
+		Email    *mail.Addr
 		Phone    *string
 		Role     *string
 	}
@@ -42,7 +43,7 @@ type (
 	UpdateVendorContactRequest struct {
 		ID       gid.GID
 		FullName **string
-		Email    **string
+		Email    **mail.Addr
 		Phone    **string
 		Role     **string
 	}
@@ -53,7 +54,6 @@ func (cvcr *CreateVendorContactRequest) Validate() error {
 
 	v.Check(cvcr.VendorID, "vendor_id", validator.Required(), validator.GID(coredata.VendorEntityType))
 	v.Check(cvcr.FullName, "fullName", validator.SafeTextNoNewLine(TitleMaxLength))
-	v.Check(cvcr.Email, "email", validator.Email())
 	v.Check(cvcr.Phone, "phone", validator.SafeText(NameMaxLength))
 	v.Check(cvcr.Role, "role", validator.SafeText(TitleMaxLength))
 
@@ -65,7 +65,6 @@ func (uvcr *UpdateVendorContactRequest) Validate() error {
 
 	v.Check(uvcr.ID, "id", validator.Required(), validator.GID(coredata.VendorContactEntityType))
 	v.Check(uvcr.FullName, "fullName", validator.SafeTextNoNewLine(TitleMaxLength))
-	v.Check(uvcr.Email, "email", validator.Email())
 	v.Check(uvcr.Phone, "phone", validator.SafeText(NameMaxLength))
 	v.Check(uvcr.Role, "role", validator.SafeText(TitleMaxLength))
 

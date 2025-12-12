@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<626f9dd0bec23ddd103042d53539363a>>
+ * @generated SignedSource<<abb20ee18aca56681898a0390db03bfc>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -21,7 +21,7 @@ export type EmployeeLayoutQuery$data = {
   readonly viewer: {
     readonly id: string;
     readonly user: {
-      readonly email: string;
+      readonly email: any;
       readonly fullName: string;
     };
   };

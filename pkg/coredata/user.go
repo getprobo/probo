@@ -22,23 +22,24 @@ import (
 	"strings"
 	"time"
 
-	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/page"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/mail"
+	"go.probo.inc/probo/pkg/page"
 )
 
 type (
 	User struct {
 		ID                   gid.GID   `db:"id"`
-		EmailAddress         string    `db:"email_address"`
-		HashedPassword       []byte    `db:"hashed_password"`
-		FullName             string    `db:"fullname"`
-		EmailAddressVerified bool      `db:"email_address_verified"`
-		SAMLSubject          *string   `db:"saml_subject"`
-		CreatedAt            time.Time `db:"created_at"`
-		UpdatedAt            time.Time `db:"updated_at"`
+		EmailAddress         mail.Addr `db:"email_address"`
+		HashedPassword       []byte                    `db:"hashed_password"`
+		FullName             string                    `db:"fullname"`
+		EmailAddressVerified bool                      `db:"email_address_verified"`
+		SAMLSubject          *string                   `db:"saml_subject"`
+		CreatedAt            time.Time                 `db:"created_at"`
+		UpdatedAt            time.Time                 `db:"updated_at"`
 	}
 
 	Users []*User
@@ -150,7 +151,7 @@ WHERE
 func (u *User) LoadByEmail(
 	ctx context.Context,
 	conn pg.Conn,
-	email string,
+	email mail.Addr,
 ) error {
 	q := `
 SELECT
@@ -179,7 +180,7 @@ LIMIT 1;
 	user, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[User])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrUserNotFound{Identifier: email}
+			return &ErrUserNotFound{Identifier: email.String()}
 		}
 
 		return fmt.Errorf("cannot collect user: %w", err)
@@ -362,11 +363,11 @@ WHERE
 `
 
 	args := pgx.StrictNamedArgs{
-		"user_id":                 u.ID,
-		"email_address":           u.EmailAddress,
-		"email_address_verified":  u.EmailAddressVerified,
-		"saml_subject":            u.SAMLSubject,
-		"updated_at":              u.UpdatedAt,
+		"user_id":                u.ID,
+		"email_address":          u.EmailAddress,
+		"email_address_verified": u.EmailAddressVerified,
+		"saml_subject":           u.SAMLSubject,
+		"updated_at":             u.UpdatedAt,
 	}
 
 	_, err := conn.Exec(ctx, q, args)

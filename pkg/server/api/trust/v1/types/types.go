@@ -11,6 +11,7 @@ import (
 
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
 )
 
@@ -140,30 +141,30 @@ type RequestAccessesPayload struct {
 }
 
 type RequestAllAccessesInput struct {
-	TrustCenterID gid.GID `json:"trustCenterId"`
-	Email         *string `json:"email,omitempty"`
-	Name          *string `json:"name,omitempty"`
+	TrustCenterID gid.GID    `json:"trustCenterId"`
+	Email         *mail.Addr `json:"email,omitempty"`
+	Name          *string    `json:"name,omitempty"`
 }
 
 type RequestDocumentAccessInput struct {
-	TrustCenterID gid.GID `json:"trustCenterId"`
-	DocumentID    gid.GID `json:"documentId"`
-	Email         *string `json:"email,omitempty"`
-	Name          *string `json:"name,omitempty"`
+	TrustCenterID gid.GID    `json:"trustCenterId"`
+	DocumentID    gid.GID    `json:"documentId"`
+	Email         *mail.Addr `json:"email,omitempty"`
+	Name          *string    `json:"name,omitempty"`
 }
 
 type RequestReportAccessInput struct {
-	TrustCenterID gid.GID `json:"trustCenterId"`
-	ReportID      gid.GID `json:"reportId"`
-	Email         *string `json:"email,omitempty"`
-	Name          *string `json:"name,omitempty"`
+	TrustCenterID gid.GID    `json:"trustCenterId"`
+	ReportID      gid.GID    `json:"reportId"`
+	Email         *mail.Addr `json:"email,omitempty"`
+	Name          *string    `json:"name,omitempty"`
 }
 
 type RequestTrustCenterFileAccessInput struct {
-	TrustCenterID     gid.GID `json:"trustCenterId"`
-	TrustCenterFileID gid.GID `json:"trustCenterFileId"`
-	Email             *string `json:"email,omitempty"`
-	Name              *string `json:"name,omitempty"`
+	TrustCenterID     gid.GID    `json:"trustCenterId"`
+	TrustCenterFileID gid.GID    `json:"trustCenterFileId"`
+	Email             *mail.Addr `json:"email,omitempty"`
+	Name              *string    `json:"name,omitempty"`
 }
 
 type TrustCenter struct {
@@ -187,7 +188,7 @@ func (this TrustCenter) GetID() gid.GID { return this.ID }
 
 type TrustCenterAccess struct {
 	ID        gid.GID   `json:"id"`
-	Email     string    `json:"email"`
+	Email     mail.Addr `json:"email"`
 	Name      string    `json:"name"`
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`

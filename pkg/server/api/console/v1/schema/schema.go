@@ -18,11 +18,13 @@ import (
 	"github.com/vektah/gqlparser/v2/ast"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils/types/bigint"
 	"go.probo.inc/probo/pkg/server/gqlutils/types/cursor"
 	gid1 "go.probo.inc/probo/pkg/server/gqlutils/types/gid"
+	mail1 "go.probo.inc/probo/pkg/server/gqlutils/types/mail"
 )
 
 // region    ************************** generated!.gotpl **************************
@@ -9573,6 +9575,7 @@ scalar Datetime
 scalar Upload
 scalar Duration
 scalar BigInt
+scalar EmailAddr
 
 # Interfaces
 interface Node {
@@ -9653,7 +9656,8 @@ enum MembershipRole
   EMPLOYEE
     @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleEmployee")
   VIEWER @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleViewer")
-  AUDITOR @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleAuditor")
+  AUDITOR
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleAuditor")
 }
 
 enum APIRole @goModel(model: "go.probo.inc/probo/pkg/coredata.APIRole") {
@@ -11241,7 +11245,7 @@ type Organization implements Node {
 type User implements Node {
   id: ID!
   fullName: String!
-  email: String!
+  email: EmailAddr!
   createdAt: Datetime!
   updatedAt: Datetime!
 }
@@ -11252,7 +11256,7 @@ type Membership implements Node {
   organizationID: ID!
   role: MembershipRole!
   fullName: String!
-  emailAddress: String!
+  emailAddress: EmailAddr!
   authMethod: UserAuthMethod! @goField(forceResolver: true)
   createdAt: Datetime!
   updatedAt: Datetime!
@@ -11260,7 +11264,7 @@ type Membership implements Node {
 
 type Invitation implements Node {
   id: ID!
-  email: String!
+  email: EmailAddr!
   fullName: String!
   role: MembershipRole!
   status: InvitationStatus!
@@ -11291,8 +11295,8 @@ type SlackConnectionEdge {
 type People implements Node {
   id: ID!
   fullName: String!
-  primaryEmailAddress: String!
-  additionalEmailAddresses: [String!]!
+  primaryEmailAddress: EmailAddr!
+  additionalEmailAddresses: [EmailAddr!]!
   kind: PeopleKind!
   position: String
   contractStartDate: Datetime
@@ -11395,7 +11399,7 @@ type VendorContact implements Node {
   id: ID!
   vendor: Vendor! @goField(forceResolver: true)
   fullName: String
-  email: String
+  email: EmailAddr
   phone: String
   role: String
   createdAt: Datetime!
@@ -11896,7 +11900,7 @@ type TrustCenterEdge {
 
 type TrustCenterAccess implements Node {
   id: ID!
-  email: String!
+  email: EmailAddr!
   name: String!
   active: Boolean!
   hasAcceptedNonDisclosureAgreement: Boolean!
@@ -12739,7 +12743,7 @@ input DeleteTrustCenterNDAInput {
 
 input CreateTrustCenterAccessInput {
   trustCenterId: ID!
-  email: String!
+  email: EmailAddr!
   name: String!
   active: Boolean!
 }
@@ -12860,7 +12864,7 @@ input DeleteVendorInput {
 input CreateVendorContactInput {
   vendorId: ID!
   fullName: String
-  email: String
+  email: EmailAddr
   phone: String
   role: String
 }
@@ -12868,7 +12872,7 @@ input CreateVendorContactInput {
 input UpdateVendorContactInput {
   id: ID!
   fullName: String @goField(omittable: true)
-  email: String @goField(omittable: true)
+  email: EmailAddr @goField(omittable: true)
   phone: String @goField(omittable: true)
   role: String @goField(omittable: true)
 }
@@ -12900,8 +12904,8 @@ input DeleteVendorServiceInput {
 input CreatePeopleInput {
   organizationId: ID!
   fullName: String!
-  primaryEmailAddress: String!
-  additionalEmailAddresses: [String!]
+  primaryEmailAddress: EmailAddr!
+  additionalEmailAddresses: [EmailAddr!]
   kind: PeopleKind!
   position: String
   contractStartDate: Datetime
@@ -12911,8 +12915,8 @@ input CreatePeopleInput {
 input UpdatePeopleInput {
   id: ID!
   fullName: String
-  primaryEmailAddress: String
-  additionalEmailAddresses: [String!]
+  primaryEmailAddress: EmailAddr
+  additionalEmailAddresses: [EmailAddr!]
   kind: PeopleKind
   position: String @goField(omittable: true)
   contractStartDate: Datetime @goField(omittable: true)
@@ -13200,7 +13204,7 @@ input UpdateDocumentInput {
 input ExportDocumentVersionPDFInput {
   documentVersionId: ID!
   withWatermark: Boolean!
-  watermarkEmail: String
+  watermarkEmail: EmailAddr
   withSignatures: Boolean!
 }
 
@@ -13238,7 +13242,7 @@ input ConfirmEmailInput {
 
 input InviteUserInput {
   organizationId: ID!
-  email: String!
+  email: EmailAddr!
   fullName: String!
   role: MembershipRole!
   createPeople: Boolean!
@@ -14013,7 +14017,7 @@ input BulkDeleteDocumentsInput {
 input BulkExportDocumentsInput {
   documentIds: [ID!]!
   withWatermark: Boolean!
-  watermarkEmail: String
+  watermarkEmail: EmailAddr
   withSignatures: Boolean!
 }
 
@@ -28689,7 +28693,7 @@ func (ec *executionContext) _Invitation_email(ctx context.Context, field graphql
 			return obj.Email, nil
 		},
 		nil,
-		ec.marshalNString2string,
+		ec.marshalNEmailAddr2goᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr,
 		true,
 		true,
 	)
@@ -28702,7 +28706,7 @@ func (ec *executionContext) fieldContext_Invitation_email(_ context.Context, fie
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type EmailAddr does not have child fields")
 		},
 	}
 	return fc, nil
@@ -30443,7 +30447,7 @@ func (ec *executionContext) _Membership_emailAddress(ctx context.Context, field 
 			return obj.EmailAddress, nil
 		},
 		nil,
-		ec.marshalNString2string,
+		ec.marshalNEmailAddr2goᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr,
 		true,
 		true,
 	)
@@ -30456,7 +30460,7 @@ func (ec *executionContext) fieldContext_Membership_emailAddress(_ context.Conte
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type EmailAddr does not have child fields")
 		},
 	}
 	return fc, nil
@@ -40421,7 +40425,7 @@ func (ec *executionContext) _People_primaryEmailAddress(ctx context.Context, fie
 			return obj.PrimaryEmailAddress, nil
 		},
 		nil,
-		ec.marshalNString2string,
+		ec.marshalNEmailAddr2goᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr,
 		true,
 		true,
 	)
@@ -40434,7 +40438,7 @@ func (ec *executionContext) fieldContext_People_primaryEmailAddress(_ context.Co
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type EmailAddr does not have child fields")
 		},
 	}
 	return fc, nil
@@ -40450,7 +40454,7 @@ func (ec *executionContext) _People_additionalEmailAddresses(ctx context.Context
 			return obj.AdditionalEmailAddresses, nil
 		},
 		nil,
-		ec.marshalNString2ᚕstringᚄ,
+		ec.marshalNEmailAddr2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddrᚄ,
 		true,
 		true,
 	)
@@ -40463,7 +40467,7 @@ func (ec *executionContext) fieldContext_People_additionalEmailAddresses(_ conte
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type EmailAddr does not have child fields")
 		},
 	}
 	return fc, nil
@@ -46593,7 +46597,7 @@ func (ec *executionContext) _TrustCenterAccess_email(ctx context.Context, field 
 			return obj.Email, nil
 		},
 		nil,
-		ec.marshalNString2string,
+		ec.marshalNEmailAddr2goᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr,
 		true,
 		true,
 	)
@@ -46606,7 +46610,7 @@ func (ec *executionContext) fieldContext_TrustCenterAccess_email(_ context.Conte
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type EmailAddr does not have child fields")
 		},
 	}
 	return fc, nil
@@ -50525,7 +50529,7 @@ func (ec *executionContext) _User_email(ctx context.Context, field graphql.Colle
 			return obj.Email, nil
 		},
 		nil,
-		ec.marshalNString2string,
+		ec.marshalNEmailAddr2goᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr,
 		true,
 		true,
 	)
@@ -50538,7 +50542,7 @@ func (ec *executionContext) fieldContext_User_email(_ context.Context, field gra
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type EmailAddr does not have child fields")
 		},
 	}
 	return fc, nil
@@ -52953,7 +52957,7 @@ func (ec *executionContext) _VendorContact_email(ctx context.Context, field grap
 			return obj.Email, nil
 		},
 		nil,
-		ec.marshalOString2ᚖstring,
+		ec.marshalOEmailAddr2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr,
 		true,
 		false,
 	)
@@ -52966,7 +52970,7 @@ func (ec *executionContext) fieldContext_VendorContact_email(_ context.Context, 
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type EmailAddr does not have child fields")
 		},
 	}
 	return fc, nil
@@ -56539,7 +56543,7 @@ func (ec *executionContext) unmarshalInputBulkExportDocumentsInput(ctx context.C
 			it.WithWatermark = data
 		case "watermarkEmail":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("watermarkEmail"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOEmailAddr2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -57848,14 +57852,14 @@ func (ec *executionContext) unmarshalInputCreatePeopleInput(ctx context.Context,
 			it.FullName = data
 		case "primaryEmailAddress":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("primaryEmailAddress"))
-			data, err := ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNEmailAddr2goᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.PrimaryEmailAddress = data
 		case "additionalEmailAddresses":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("additionalEmailAddresses"))
-			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			data, err := ec.unmarshalOEmailAddr2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddrᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -58497,7 +58501,7 @@ func (ec *executionContext) unmarshalInputCreateTrustCenterAccessInput(ctx conte
 			it.TrustCenterID = data
 		case "email":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
-			data, err := ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNEmailAddr2goᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -58662,7 +58666,7 @@ func (ec *executionContext) unmarshalInputCreateVendorContactInput(ctx context.C
 			it.FullName = data
 		case "email":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOEmailAddr2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -60475,7 +60479,7 @@ func (ec *executionContext) unmarshalInputExportDocumentVersionPDFInput(ctx cont
 			it.WithWatermark = data
 		case "watermarkEmail":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("watermarkEmail"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOEmailAddr2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -60896,7 +60900,7 @@ func (ec *executionContext) unmarshalInputInviteUserInput(ctx context.Context, o
 			it.OrganizationID = data
 		case "email":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
-			data, err := ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNEmailAddr2goᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -62825,14 +62829,14 @@ func (ec *executionContext) unmarshalInputUpdatePeopleInput(ctx context.Context,
 			it.FullName = data
 		case "primaryEmailAddress":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("primaryEmailAddress"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOEmailAddr2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.PrimaryEmailAddress = data
 		case "additionalEmailAddresses":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("additionalEmailAddresses"))
-			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			data, err := ec.unmarshalOEmailAddr2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddrᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -63564,7 +63568,7 @@ func (ec *executionContext) unmarshalInputUpdateVendorContactInput(ctx context.C
 			it.FullName = graphql.OmittableOf(data)
 		case "email":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOEmailAddr2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -86860,6 +86864,74 @@ var (
 	}
 )
 
+func (ec *executionContext) unmarshalNEmailAddr2goᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr(ctx context.Context, v any) (mail.Addr, error) {
+	res, err := mail1.UnmarshalAddrScalar(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNEmailAddr2goᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr(ctx context.Context, sel ast.SelectionSet, v mail.Addr) graphql.Marshaler {
+	_ = sel
+	res := mail1.MarshalAddrScalar(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNEmailAddr2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddrᚄ(ctx context.Context, v any) ([]*mail.Addr, error) {
+	var vSlice []any
+	vSlice = graphql.CoerceList(v)
+	var err error
+	res := make([]*mail.Addr, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNEmailAddr2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalNEmailAddr2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddrᚄ(ctx context.Context, sel ast.SelectionSet, v []*mail.Addr) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNEmailAddr2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) unmarshalNEmailAddr2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr(ctx context.Context, v any) (*mail.Addr, error) {
+	res, err := mail1.UnmarshalAddrScalar(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNEmailAddr2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr(ctx context.Context, sel ast.SelectionSet, v *mail.Addr) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	_ = sel
+	res := mail1.MarshalAddrScalar(*v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
 func (ec *executionContext) unmarshalNEnableSAMLInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐEnableSAMLInput(ctx context.Context, v any) (types.EnableSAMLInput, error) {
 	res, err := ec.unmarshalInputEnableSAMLInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -92567,6 +92639,60 @@ func (ec *executionContext) marshalODuration2ᚖtimeᚐDuration(ctx context.Cont
 	_ = sel
 	_ = ctx
 	res := graphql.MarshalDuration(*v)
+	return res
+}
+
+func (ec *executionContext) unmarshalOEmailAddr2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddrᚄ(ctx context.Context, v any) ([]*mail.Addr, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []any
+	vSlice = graphql.CoerceList(v)
+	var err error
+	res := make([]*mail.Addr, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNEmailAddr2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalOEmailAddr2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddrᚄ(ctx context.Context, sel ast.SelectionSet, v []*mail.Addr) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNEmailAddr2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) unmarshalOEmailAddr2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr(ctx context.Context, v any) (*mail.Addr, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := mail1.UnmarshalAddrScalar(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOEmailAddr2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr(ctx context.Context, sel ast.SelectionSet, v *mail.Addr) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := mail1.MarshalAddrScalar(*v)
 	return res
 }
 

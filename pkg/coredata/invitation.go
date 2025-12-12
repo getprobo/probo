@@ -24,6 +24,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
 )
 
@@ -31,9 +32,9 @@ type (
 	Invitation struct {
 		ID             gid.GID          `db:"id"`
 		OrganizationID gid.GID          `db:"organization_id"`
-		Email          string           `db:"email"`
+		Email          mail.Addr        `db:"email"`
 		FullName       string           `db:"full_name"`
-		Role           MembershipRole       `db:"role"`
+		Role           MembershipRole   `db:"role"`
 		Status         InvitationStatus `db:"status"`
 		ExpiresAt      time.Time        `db:"expires_at"`
 		AcceptedAt     *time.Time       `db:"accepted_at"`
@@ -43,10 +44,10 @@ type (
 	Invitations []*Invitation
 
 	InvitationData struct {
-		InvitationID   gid.GID    `json:"invitation_id"`
-		OrganizationID gid.GID    `json:"organization_id"`
-		Email          string     `json:"email"`
-		FullName       string     `json:"full_name"`
+		InvitationID   gid.GID        `json:"invitation_id"`
+		OrganizationID gid.GID        `json:"organization_id"`
+		Email          mail.Addr      `json:"email"`
+		FullName       string         `json:"full_name"`
 		Role           MembershipRole `json:"role"`
 	}
 
@@ -241,7 +242,7 @@ func (i *Invitations) LoadByEmail(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
-	email string,
+	email mail.Addr,
 	cursor *page.Cursor[InvitationOrderField],
 	filter *InvitationFilter,
 ) error {

@@ -24,23 +24,24 @@ import (
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/mail"
 )
 
 type (
 	SlackMessage struct {
-		ID                    gid.GID          `db:"id"`
-		OrganizationID        gid.GID          `db:"organization_id"`
-		Type                  SlackMessageType `db:"type"`
-		Body                  map[string]any   `db:"body"`
-		MessageTS             *string          `db:"message_ts"`
-		ChannelID             *string          `db:"channel_id"`
-		RequesterEmail        *string          `db:"requester_email"`
-		Metadata              map[string]any   `db:"metadata"`
-		InitialSlackMessageID gid.GID          `db:"initial_slack_message_id"`
-		CreatedAt             time.Time        `db:"created_at"`
-		UpdatedAt             time.Time        `db:"updated_at"`
-		SentAt                *time.Time       `db:"sent_at"`
-		Error                 *string          `db:"error"`
+		ID                    gid.GID                    `db:"id"`
+		OrganizationID        gid.GID                    `db:"organization_id"`
+		Type                  SlackMessageType           `db:"type"`
+		Body                  map[string]any             `db:"body"`
+		MessageTS             *string                    `db:"message_ts"`
+		ChannelID             *string                    `db:"channel_id"`
+		RequesterEmail        *mail.Addr `db:"requester_email"`
+		Metadata              map[string]any             `db:"metadata"`
+		InitialSlackMessageID gid.GID                    `db:"initial_slack_message_id"`
+		CreatedAt             time.Time                  `db:"created_at"`
+		UpdatedAt             time.Time                  `db:"updated_at"`
+		SentAt                *time.Time                 `db:"sent_at"`
+		Error                 *string                    `db:"error"`
 	}
 
 	ErrNoUnsentSlackMessage struct{}
@@ -61,7 +62,6 @@ func NewSlackMessage(
 	organizationID gid.GID,
 	messageType SlackMessageType,
 	body map[string]any,
-	requesterEmail *string,
 ) *SlackMessage {
 	now := time.Now()
 	id := gid.New(scope.GetTenantID(), SlackMessageEntityType)
@@ -70,7 +70,6 @@ func NewSlackMessage(
 		OrganizationID:        organizationID,
 		Type:                  messageType,
 		Body:                  body,
-		RequesterEmail:        requesterEmail,
 		InitialSlackMessageID: id,
 		CreatedAt:             now,
 		UpdatedAt:             now,
@@ -438,7 +437,7 @@ func (s *SlackMessage) LoadLatestByRequesterEmailAndType(
 	conn pg.Conn,
 	scope Scoper,
 	organizationID gid.GID,
-	requesterEmail string,
+	requesterEmail mail.Addr,
 	messageType SlackMessageType,
 	since time.Time,
 ) error {

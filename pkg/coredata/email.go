@@ -23,6 +23,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/mail"
 )
 
 type (
@@ -45,7 +46,7 @@ var (
 
 func NewEmail(
 	recipientName string,
-	recipientEmail string,
+	recipientEmail mail.Addr,
 	subject string,
 	textBody string,
 	htmlBody *string,
@@ -54,7 +55,7 @@ func NewEmail(
 	return &Email{
 		ID:             gid.New(gid.NilTenant, EmailEntityType),
 		RecipientName:  recipientName,
-		RecipientEmail: recipientEmail,
+		RecipientEmail: recipientEmail.String(),
 		Subject:        subject,
 		TextBody:       textBody,
 		HtmlBody:       htmlBody,

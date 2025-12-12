@@ -24,22 +24,23 @@ import (
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
 )
 
 type (
 	VendorContact struct {
-		ID             gid.GID   `db:"id"`
-		OrganizationID gid.GID   `db:"organization_id"`
-		VendorID       gid.GID   `db:"vendor_id"`
-		FullName       *string   `db:"full_name"`
-		Email          *string   `db:"email"`
-		Phone          *string   `db:"phone"`
-		Role           *string   `db:"role"`
-		SnapshotID     *gid.GID  `db:"snapshot_id"`
-		SourceID       *gid.GID  `db:"source_id"`
-		CreatedAt      time.Time `db:"created_at"`
-		UpdatedAt      time.Time `db:"updated_at"`
+		ID             gid.GID    `db:"id"`
+		OrganizationID gid.GID    `db:"organization_id"`
+		VendorID       gid.GID    `db:"vendor_id"`
+		FullName       *string    `db:"full_name"`
+		Email          *mail.Addr `db:"email"`
+		Phone          *string    `db:"phone"`
+		Role           *string    `db:"role"`
+		SnapshotID     *gid.GID   `db:"snapshot_id"`
+		SourceID       *gid.GID   `db:"source_id"`
+		CreatedAt      time.Time  `db:"created_at"`
+		UpdatedAt      time.Time  `db:"updated_at"`
 	}
 
 	VendorContacts []*VendorContact

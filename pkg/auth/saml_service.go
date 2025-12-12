@@ -32,6 +32,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/mail"
 )
 
 type (
@@ -372,7 +373,7 @@ func (s *SAMLService) InitiateSAMLLogin(
 }
 
 type SAMLUserInfo struct {
-	Email          string
+	Email          mail.Addr
 	FullName       string
 	Role           *coredata.MembershipRole
 	SAMLSubject    string
@@ -516,13 +517,8 @@ func (s *SAMLService) HandleSAMLAssertion(
 		return nil, ErrCannotExtractUserAttributes{Err: err}
 	}
 
-	actualEmailDomain, err := ExtractEmailDomain(email)
-	if err != nil {
-		return nil, ErrCannotExtractUserAttributes{Err: fmt.Errorf("cannot extract domain from email: %w", err)}
-	}
-
-	if actualEmailDomain != config.EmailDomain {
-		return nil, fmt.Errorf("email domain mismatch: assertion contains email with domain %s but SAML config is for domain %s", actualEmailDomain, config.EmailDomain)
+	if email.Domain() != config.EmailDomain {
+		return nil, fmt.Errorf("email domain mismatch: assertion contains email with domain %s but SAML config is for domain %s", email.Domain(), config.EmailDomain)
 	}
 
 	systemRole := MapSAMLRoleToSystemRole(samlRole)

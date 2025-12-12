@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<7ff59bf602dca8eafe0a671cb7e95aad>>
+ * @generated SignedSource<<959a59c16a4d27856820501f80379429>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -13,7 +13,7 @@ export type DocumentsPageUserEmailQuery$variables = Record<PropertyKey, never>;
 export type DocumentsPageUserEmailQuery$data = {
   readonly viewer: {
     readonly user: {
-      readonly email: string;
+      readonly email: any;
     };
   };
 };

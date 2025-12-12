@@ -20,6 +20,7 @@ import (
 
 	"github.com/crewjam/saml"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/mail"
 )
 
 func ExtractAttributeValue(assertion *saml.Assertion, attributeName string) (string, error) {
@@ -98,24 +99,31 @@ func isValidRole(role string) bool {
 func ExtractUserAttributes(
 	assertion *saml.Assertion,
 	attributeEmail, attributeFirstname, attributeLastname, attributeRole string,
-) (email, fullname, role string, err error) {
+) (email mail.Addr, fullname, role string, err error) {
 	if len(assertion.AttributeStatements) == 0 {
 		if assertion.Subject != nil && assertion.Subject.NameID != nil {
-			email = assertion.Subject.NameID.Value
-			fullname = email
+			email, err = mail.ParseAddr(assertion.Subject.NameID.Value)
+			if err != nil {
+				return mail.Nil, "", "", fmt.Errorf("invalid nameID as email address")
+			}
+			fullname = email.String()
 			role = ""
 			return email, fullname, role, nil
 		}
-		return "", "", "", fmt.Errorf("no attribute statement and no NameID in assertion")
+		return mail.Nil, "", "", fmt.Errorf("no attribute statement and no NameID in assertion")
 	}
 
-	email, err = ExtractAttributeValue(assertion, attributeEmail)
+	emailString, err := ExtractAttributeValue(assertion, attributeEmail)
 	if err != nil {
 		if assertion.Subject != nil && assertion.Subject.NameID != nil {
-			email = assertion.Subject.NameID.Value
+			emailString = assertion.Subject.NameID.Value
 		} else {
-			return "", "", "", fmt.Errorf("cannot extract email: %w", err)
+			return mail.Nil, "", "", fmt.Errorf("cannot extract email: %w", err)
 		}
+	}
+	email, err = mail.ParseAddr(emailString)
+	if err != nil {
+		return mail.Nil, "", "", fmt.Errorf("invalid attribute email")
 	}
 
 	firstname, err := ExtractAttributeValue(assertion, attributeFirstname)
@@ -135,7 +143,7 @@ func ExtractUserAttributes(
 	} else if lastname != "" {
 		fullname = lastname
 	} else {
-		fullname = email
+		fullname = email.String()
 	}
 
 	role, err = ExtractAttributeValue(assertion, attributeRole)

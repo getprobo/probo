@@ -19,6 +19,7 @@ scalar Datetime
 scalar Upload
 scalar Duration
 scalar BigInt
+scalar EmailAddr
 
 # Interfaces
 interface Node {
@@ -99,7 +100,8 @@ enum MembershipRole
   EMPLOYEE
     @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleEmployee")
   VIEWER @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleViewer")
-  AUDITOR @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleAuditor")
+  AUDITOR
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleAuditor")
 }
 
 enum APIRole @goModel(model: "go.probo.inc/probo/pkg/coredata.APIRole") {
@@ -1687,7 +1689,7 @@ type Organization implements Node {
 type User implements Node {
   id: ID!
   fullName: String!
-  email: String!
+  email: EmailAddr!
   createdAt: Datetime!
   updatedAt: Datetime!
 }
@@ -1698,7 +1700,7 @@ type Membership implements Node {
   organizationID: ID!
   role: MembershipRole!
   fullName: String!
-  emailAddress: String!
+  emailAddress: EmailAddr!
   authMethod: UserAuthMethod! @goField(forceResolver: true)
   createdAt: Datetime!
   updatedAt: Datetime!
@@ -1706,7 +1708,7 @@ type Membership implements Node {
 
 type Invitation implements Node {
   id: ID!
-  email: String!
+  email: EmailAddr!
   fullName: String!
   role: MembershipRole!
   status: InvitationStatus!
@@ -1737,8 +1739,8 @@ type SlackConnectionEdge {
 type People implements Node {
   id: ID!
   fullName: String!
-  primaryEmailAddress: String!
-  additionalEmailAddresses: [String!]!
+  primaryEmailAddress: EmailAddr!
+  additionalEmailAddresses: [EmailAddr!]!
   kind: PeopleKind!
   position: String
   contractStartDate: Datetime
@@ -1841,7 +1843,7 @@ type VendorContact implements Node {
   id: ID!
   vendor: Vendor! @goField(forceResolver: true)
   fullName: String
-  email: String
+  email: EmailAddr
   phone: String
   role: String
   createdAt: Datetime!
@@ -2342,7 +2344,7 @@ type TrustCenterEdge {
 
 type TrustCenterAccess implements Node {
   id: ID!
-  email: String!
+  email: EmailAddr!
   name: String!
   active: Boolean!
   hasAcceptedNonDisclosureAgreement: Boolean!
@@ -3185,7 +3187,7 @@ input DeleteTrustCenterNDAInput {
 
 input CreateTrustCenterAccessInput {
   trustCenterId: ID!
-  email: String!
+  email: EmailAddr!
   name: String!
   active: Boolean!
 }
@@ -3306,7 +3308,7 @@ input DeleteVendorInput {
 input CreateVendorContactInput {
   vendorId: ID!
   fullName: String
-  email: String
+  email: EmailAddr
   phone: String
   role: String
 }
@@ -3314,7 +3316,7 @@ input CreateVendorContactInput {
 input UpdateVendorContactInput {
   id: ID!
   fullName: String @goField(omittable: true)
-  email: String @goField(omittable: true)
+  email: EmailAddr @goField(omittable: true)
   phone: String @goField(omittable: true)
   role: String @goField(omittable: true)
 }
@@ -3346,8 +3348,8 @@ input DeleteVendorServiceInput {
 input CreatePeopleInput {
   organizationId: ID!
   fullName: String!
-  primaryEmailAddress: String!
-  additionalEmailAddresses: [String!]
+  primaryEmailAddress: EmailAddr!
+  additionalEmailAddresses: [EmailAddr!]
   kind: PeopleKind!
   position: String
   contractStartDate: Datetime
@@ -3357,8 +3359,8 @@ input CreatePeopleInput {
 input UpdatePeopleInput {
   id: ID!
   fullName: String
-  primaryEmailAddress: String
-  additionalEmailAddresses: [String!]
+  primaryEmailAddress: EmailAddr
+  additionalEmailAddresses: [EmailAddr!]
   kind: PeopleKind
   position: String @goField(omittable: true)
   contractStartDate: Datetime @goField(omittable: true)
@@ -3646,7 +3648,7 @@ input UpdateDocumentInput {
 input ExportDocumentVersionPDFInput {
   documentVersionId: ID!
   withWatermark: Boolean!
-  watermarkEmail: String
+  watermarkEmail: EmailAddr
   withSignatures: Boolean!
 }
 
@@ -3684,7 +3686,7 @@ input ConfirmEmailInput {
 
 input InviteUserInput {
   organizationId: ID!
-  email: String!
+  email: EmailAddr!
   fullName: String!
   role: MembershipRole!
   createPeople: Boolean!
@@ -4459,7 +4461,7 @@ input BulkDeleteDocumentsInput {
 input BulkExportDocumentsInput {
   documentIds: [ID!]!
   withWatermark: Boolean!
-  watermarkEmail: String
+  watermarkEmail: EmailAddr
   withSignatures: Boolean!
 }
 

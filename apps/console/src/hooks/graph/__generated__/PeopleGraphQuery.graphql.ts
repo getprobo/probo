@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<3b196ff5779051fcd1ed9cca6b7be112>>
+ * @generated SignedSource<<8d8fcf4db72f5417db8a4f32129a687a>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -23,7 +23,7 @@ export type PeopleGraphQuery$data = {
         readonly node: {
           readonly fullName: string;
           readonly id: string;
-          readonly primaryEmailAddress: string;
+          readonly primaryEmailAddress: any;
         };
       }>;
     };
