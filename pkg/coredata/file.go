@@ -42,23 +42,7 @@ type (
 	}
 
 	Files []*File
-
-	ErrFileNotFound struct {
-		Identifier string
-	}
-
-	ErrFileAlreadyExists struct {
-		message string
-	}
 )
-
-func (e ErrFileNotFound) Error() string {
-	return fmt.Sprintf("file not found: %q", e.Identifier)
-}
-
-func (e ErrFileAlreadyExists) Error() string {
-	return e.message
-}
 
 func (f *File) LoadByID(
 	ctx context.Context,
@@ -100,7 +84,7 @@ LIMIT 1;
 	file, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[File])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrFileNotFound{Identifier: fileID.String()}
+			return ErrResourceNotFound
 		}
 
 		return fmt.Errorf("cannot collect file: %w", err)
@@ -165,9 +149,7 @@ VALUES (
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
 			if pgErr.Code == "23505" && pgErr.ConstraintName == "files_file_key_key" {
-				return &ErrFileAlreadyExists{
-					message: fmt.Sprintf("file with file_key %q already exists", f.FileKey),
-				}
+				return ErrResourceAlreadyExists
 			}
 		}
 		return fmt.Errorf("cannot insert file: %w", err)

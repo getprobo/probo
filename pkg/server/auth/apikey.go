@@ -20,10 +20,9 @@ import (
 	"slices"
 	"strings"
 
-	"go.probo.inc/probo/pkg/auth"
-	"go.probo.inc/probo/pkg/authz"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam"
 )
 
 var (
@@ -62,7 +61,7 @@ func UserTenantAccessFromContext(ctx context.Context) *UserTenantAccess {
 // It returns a context with authentication information if successful, or nil if no API key
 // was provided or authentication failed. This function does not return errors - it silently
 // fails to allow fallback to other authentication methods.
-func AuthenticateWithAPIKey(ctx context.Context, r *http.Request, authSvc *auth.Service, authzSvc *authz.Service) context.Context {
+func AuthenticateWithAPIKey(ctx context.Context, r *http.Request, iamSvc *iam.Service) context.Context {
 	authHeader := r.Header.Get("Authorization")
 	if authHeader == "" {
 		return nil
@@ -74,12 +73,12 @@ func AuthenticateWithAPIKey(ctx context.Context, r *http.Request, authSvc *auth.
 
 	apiKeyString := strings.TrimPrefix(authHeader, "Bearer ")
 
-	user, userAPIKey, err := authSvc.ValidateUserAPIKey(ctx, apiKeyString)
+	user, userAPIKey, err := iamSvc.ValidateUserAPIKey(ctx, apiKeyString)
 	if err != nil {
 		return nil
 	}
 
-	organizations, err := authzSvc.GetAllOrganizationsForUserAPIKeyId(ctx, userAPIKey.ID)
+	organizations, err := iamSvc.GetAllOrganizationsForUserAPIKeyId(ctx, userAPIKey.ID)
 	if err != nil {
 		return nil
 	}
@@ -105,7 +104,7 @@ func RequireTenantAccess(ctx context.Context, tenantID gid.TenantID) {
 	access := UserTenantAccessFromContext(ctx)
 
 	if access == nil {
-		panic(&authz.TenantAccessError{Message: "tenant not found"})
+		panic(&iam.TenantAccessError{Message: "tenant not found"})
 	}
 
 	if !slices.Contains(access.TenantIDs, tenantID) {
@@ -115,6 +114,6 @@ func RequireTenantAccess(ctx context.Context, tenantID gid.TenantID) {
 			}
 		}
 
-		panic(&authz.TenantAccessError{Message: "tenant not found"})
+		panic(&iam.TenantAccessError{Message: "tenant not found"})
 	}
 }

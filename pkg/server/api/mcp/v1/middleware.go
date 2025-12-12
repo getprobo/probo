@@ -18,8 +18,7 @@ import (
 	"net/http"
 
 	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/auth"
-	"go.probo.inc/probo/pkg/authz"
+	"go.probo.inc/probo/pkg/iam"
 	serverauth "go.probo.inc/probo/pkg/server/auth"
 )
 
@@ -27,8 +26,7 @@ import (
 // It authenticates using API keys from the Authorization header
 func WithMCPAuth(
 	logger *log.Logger,
-	authSvc *auth.Service,
-	authzSvc *authz.Service,
+	iamSvc *iam.Service,
 	next http.Handler,
 ) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -44,7 +42,7 @@ func WithMCPAuth(
 		)
 
 		// Authenticate using API key from shared function
-		authCtx := serverauth.AuthenticateWithAPIKey(ctx, r, authSvc, authzSvc)
+		authCtx := serverauth.AuthenticateWithAPIKey(ctx, r, iamSvc)
 		if authCtx == nil {
 			logger.WarnCtx(ctx, "MCP auth: authentication required",
 				log.String("correlation_id", correlationID),

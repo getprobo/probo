@@ -33,7 +33,7 @@ type (
 		OrganizationID gid.GID          `db:"organization_id"`
 		Email          string           `db:"email"`
 		FullName       string           `db:"full_name"`
-		Role           MembershipRole       `db:"role"`
+		Role           MembershipRole   `db:"role"`
 		Status         InvitationStatus `db:"status"`
 		ExpiresAt      time.Time        `db:"expires_at"`
 		AcceptedAt     *time.Time       `db:"accepted_at"`
@@ -41,23 +41,7 @@ type (
 	}
 
 	Invitations []*Invitation
-
-	InvitationData struct {
-		InvitationID   gid.GID    `json:"invitation_id"`
-		OrganizationID gid.GID    `json:"organization_id"`
-		Email          string     `json:"email"`
-		FullName       string     `json:"full_name"`
-		Role           MembershipRole `json:"role"`
-	}
-
-	ErrInvitationNotFound struct {
-		ID string
-	}
 )
-
-func (e ErrInvitationNotFound) Error() string {
-	return fmt.Sprintf("invitation not found: %s", e.ID)
-}
 
 func (i Invitation) CursorKey(orderBy InvitationOrderField) page.CursorKey {
 	switch orderBy {
@@ -82,7 +66,7 @@ func (i Invitation) CursorKey(orderBy InvitationOrderField) page.CursorKey {
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (i *Invitation) Create(ctx context.Context, conn pg.Conn, scope Scoper) error {
+func (i *Invitation) Insert(ctx context.Context, conn pg.Conn, scope Scoper) error {
 	query := `
 INSERT INTO
     authz_invitations (
@@ -169,8 +153,9 @@ WHERE
 	invitation, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Invitation])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return ErrInvitationNotFound{ID: id.String()}
+			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect invitation: %w", err)
 	}
 
@@ -203,25 +188,25 @@ WHERE
 	}
 
 	if result.RowsAffected() == 0 {
-		return ErrInvitationNotFound{ID: i.ID.String()}
+		return ErrResourceNotFound
 	}
 
 	return nil
 }
 
-func (i *Invitation) Delete(ctx context.Context, conn pg.Conn, scope Scoper) error {
+func (i *Invitation) Delete(ctx context.Context, conn pg.Conn, scope Scoper, invitationID gid.GID) error {
 	query := `
 DELETE FROM
     authz_invitations
 WHERE
-    id = @id
-    AND %s
+    %s
+	AND id = @invitation_id
 `
 
 	query = fmt.Sprintf(query, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"id": i.ID,
+		"invitation_id": invitationID,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -231,13 +216,13 @@ WHERE
 	}
 
 	if result.RowsAffected() == 0 {
-		return ErrInvitationNotFound{ID: i.ID.String()}
+		return ErrResourceNotFound
 	}
 
 	return nil
 }
 
-func (i *Invitations) LoadByEmail(
+func (i *Invitations) LoadByIdentityID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,

@@ -64,14 +64,10 @@ type ResolverRoot interface {
 	File() FileResolver
 	Framework() FrameworkResolver
 	FrameworkConnection() FrameworkConnectionResolver
-	Invitation() InvitationResolver
-	InvitationConnection() InvitationConnectionResolver
 	Measure() MeasureResolver
 	MeasureConnection() MeasureConnectionResolver
 	Meeting() MeetingResolver
 	MeetingConnection() MeetingConnectionResolver
-	Membership() MembershipResolver
-	MembershipConnection() MembershipConnectionResolver
 	Mutation() MutationResolver
 	Nonconformity() NonconformityResolver
 	NonconformityConnection() NonconformityConnectionResolver
@@ -85,8 +81,11 @@ type ResolverRoot interface {
 	Report() ReportResolver
 	Risk() RiskResolver
 	RiskConnection() RiskConnectionResolver
+<<<<<<< HEAD
 	SAMLConfiguration() SAMLConfigurationResolver
 	SignableDocument() SignableDocumentResolver
+=======
+>>>>>>> 66b095fd (WIP)
 	Snapshot() SnapshotResolver
 	SnapshotConnection() SnapshotConnectionResolver
 	Task() TaskResolver
@@ -99,7 +98,6 @@ type ResolverRoot interface {
 	TrustCenterFileConnection() TrustCenterFileConnectionResolver
 	TrustCenterReference() TrustCenterReferenceResolver
 	TrustCenterReferenceConnection() TrustCenterReferenceConnectionResolver
-	UserConnection() UserConnectionResolver
 	Vendor() VendorResolver
 	VendorBusinessAssociateAgreement() VendorBusinessAssociateAgreementResolver
 	VendorComplianceReport() VendorComplianceReportResolver
@@ -115,10 +113,6 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
-	AcceptInvitationPayload struct {
-		Invitation func(childComplexity int) int
-	}
-
 	AssessVendorPayload struct {
 		Vendor func(childComplexity int) int
 	}
@@ -198,10 +192,6 @@ type ComplexityRoot struct {
 
 	CancelSignatureRequestPayload struct {
 		DeletedDocumentVersionSignatureID func(childComplexity int) int
-	}
-
-	ConfirmEmailPayload struct {
-		Success func(childComplexity int) int
 	}
 
 	ContinualImprovement struct {
@@ -335,10 +325,6 @@ type ComplexityRoot struct {
 		ObligationEdge func(childComplexity int) int
 	}
 
-	CreateOrganizationPayload struct {
-		OrganizationEdge func(childComplexity int) int
-	}
-
 	CreatePeoplePayload struct {
 		PeopleEdge func(childComplexity int) int
 	}
@@ -364,10 +350,6 @@ type ComplexityRoot struct {
 
 	CreateRiskPayload struct {
 		RiskEdge func(childComplexity int) int
-	}
-
-	CreateSAMLConfigurationPayload struct {
-		SamlConfiguration func(childComplexity int) int
 	}
 
 	CreateSnapshotPayload struct {
@@ -512,10 +494,6 @@ type ComplexityRoot struct {
 		DeletedFrameworkID func(childComplexity int) int
 	}
 
-	DeleteInvitationPayload struct {
-		DeletedInvitationID func(childComplexity int) int
-	}
-
 	DeleteMeasurePayload struct {
 		DeletedMeasureID func(childComplexity int) int
 	}
@@ -530,14 +508,6 @@ type ComplexityRoot struct {
 
 	DeleteObligationPayload struct {
 		DeletedObligationID func(childComplexity int) int
-	}
-
-	DeleteOrganizationHorizontalLogoPayload struct {
-		Organization func(childComplexity int) int
-	}
-
-	DeleteOrganizationPayload struct {
-		DeletedOrganizationID func(childComplexity int) int
 	}
 
 	DeletePeoplePayload struct {
@@ -565,10 +535,6 @@ type ComplexityRoot struct {
 
 	DeleteRiskPayload struct {
 		DeletedRiskID func(childComplexity int) int
-	}
-
-	DeleteSAMLConfigurationPayload struct {
-		DeletedSAMLConfigurationID func(childComplexity int) int
 	}
 
 	DeleteSnapshotPayload struct {
@@ -617,10 +583,6 @@ type ComplexityRoot struct {
 
 	DeleteVendorServicePayload struct {
 		DeletedVendorServiceID func(childComplexity int) int
-	}
-
-	DisableSAMLPayload struct {
-		SamlConfiguration func(childComplexity int) int
 	}
 
 	Document struct {
@@ -696,10 +658,6 @@ type ComplexityRoot struct {
 	DocumentVersionSignatureEdge struct {
 		Cursor func(childComplexity int) int
 		Node   func(childComplexity int) int
-	}
-
-	EnableSAMLPayload struct {
-		SamlConfiguration func(childComplexity int) int
 	}
 
 	Evidence struct {
@@ -794,38 +752,6 @@ type ComplexityRoot struct {
 		MeasureEdges func(childComplexity int) int
 	}
 
-	InitiateDomainVerificationPayload struct {
-		DNSRecord         func(childComplexity int) int
-		SamlConfiguration func(childComplexity int) int
-	}
-
-	Invitation struct {
-		AcceptedAt   func(childComplexity int) int
-		CreatedAt    func(childComplexity int) int
-		Email        func(childComplexity int) int
-		ExpiresAt    func(childComplexity int) int
-		FullName     func(childComplexity int) int
-		ID           func(childComplexity int) int
-		Organization func(childComplexity int) int
-		Role         func(childComplexity int) int
-		Status       func(childComplexity int) int
-	}
-
-	InvitationConnection struct {
-		Edges      func(childComplexity int) int
-		PageInfo   func(childComplexity int) int
-		TotalCount func(childComplexity int) int
-	}
-
-	InvitationEdge struct {
-		Cursor func(childComplexity int) int
-		Node   func(childComplexity int) int
-	}
-
-	InviteUserPayload struct {
-		InvitationEdge func(childComplexity int) int
-	}
-
 	Measure struct {
 		Category    func(childComplexity int) int
 		Controls    func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) int
@@ -873,31 +799,7 @@ type ComplexityRoot struct {
 		Node   func(childComplexity int) int
 	}
 
-	Membership struct {
-		AuthMethod     func(childComplexity int) int
-		CreatedAt      func(childComplexity int) int
-		EmailAddress   func(childComplexity int) int
-		FullName       func(childComplexity int) int
-		ID             func(childComplexity int) int
-		OrganizationID func(childComplexity int) int
-		Role           func(childComplexity int) int
-		UpdatedAt      func(childComplexity int) int
-		UserID         func(childComplexity int) int
-	}
-
-	MembershipConnection struct {
-		Edges      func(childComplexity int) int
-		PageInfo   func(childComplexity int) int
-		TotalCount func(childComplexity int) int
-	}
-
-	MembershipEdge struct {
-		Cursor func(childComplexity int) int
-		Node   func(childComplexity int) int
-	}
-
 	Mutation struct {
-		AcceptInvitation                       func(childComplexity int, input types.AcceptInvitationInput) int
 		AssessVendor                           func(childComplexity int, input types.AssessVendorInput) int
 		AssignTask                             func(childComplexity int, input types.AssignTaskInput) int
 		BulkDeleteDocuments                    func(childComplexity int, input types.BulkDeleteDocumentsInput) int
@@ -905,7 +807,6 @@ type ComplexityRoot struct {
 		BulkPublishDocumentVersions            func(childComplexity int, input types.BulkPublishDocumentVersionsInput) int
 		BulkRequestSignatures                  func(childComplexity int, input types.BulkRequestSignaturesInput) int
 		CancelSignatureRequest                 func(childComplexity int, input types.CancelSignatureRequestInput) int
-		ConfirmEmail                           func(childComplexity int, input types.ConfirmEmailInput) int
 		CreateAsset                            func(childComplexity int, input types.CreateAssetInput) int
 		CreateAudit                            func(childComplexity int, input types.CreateAuditInput) int
 		CreateContinualImprovement             func(childComplexity int, input types.CreateContinualImprovementInput) int
@@ -923,14 +824,12 @@ type ComplexityRoot struct {
 		CreateMeeting                          func(childComplexity int, input types.CreateMeetingInput) int
 		CreateNonconformity                    func(childComplexity int, input types.CreateNonconformityInput) int
 		CreateObligation                       func(childComplexity int, input types.CreateObligationInput) int
-		CreateOrganization                     func(childComplexity int, input types.CreateOrganizationInput) int
 		CreatePeople                           func(childComplexity int, input types.CreatePeopleInput) int
 		CreateProcessingActivity               func(childComplexity int, input types.CreateProcessingActivityInput) int
 		CreateRisk                             func(childComplexity int, input types.CreateRiskInput) int
 		CreateRiskDocumentMapping              func(childComplexity int, input types.CreateRiskDocumentMappingInput) int
 		CreateRiskMeasureMapping               func(childComplexity int, input types.CreateRiskMeasureMappingInput) int
 		CreateRiskObligationMapping            func(childComplexity int, input types.CreateRiskObligationMappingInput) int
-		CreateSAMLConfiguration                func(childComplexity int, input types.CreateSAMLConfigurationInput) int
 		CreateSnapshot                         func(childComplexity int, input types.CreateSnapshotInput) int
 		CreateTask                             func(childComplexity int, input types.CreateTaskInput) int
 		CreateTrustCenterAccess                func(childComplexity int, input types.CreateTrustCenterAccessInput) int
@@ -955,20 +854,16 @@ type ComplexityRoot struct {
 		DeleteDraftDocumentVersion             func(childComplexity int, input types.DeleteDraftDocumentVersionInput) int
 		DeleteEvidence                         func(childComplexity int, input types.DeleteEvidenceInput) int
 		DeleteFramework                        func(childComplexity int, input types.DeleteFrameworkInput) int
-		DeleteInvitation                       func(childComplexity int, input types.DeleteInvitationInput) int
 		DeleteMeasure                          func(childComplexity int, input types.DeleteMeasureInput) int
 		DeleteMeeting                          func(childComplexity int, input types.DeleteMeetingInput) int
 		DeleteNonconformity                    func(childComplexity int, input types.DeleteNonconformityInput) int
 		DeleteObligation                       func(childComplexity int, input types.DeleteObligationInput) int
-		DeleteOrganization                     func(childComplexity int, input types.DeleteOrganizationInput) int
-		DeleteOrganizationHorizontalLogo       func(childComplexity int, input types.DeleteOrganizationHorizontalLogoInput) int
 		DeletePeople                           func(childComplexity int, input types.DeletePeopleInput) int
 		DeleteProcessingActivity               func(childComplexity int, input types.DeleteProcessingActivityInput) int
 		DeleteRisk                             func(childComplexity int, input types.DeleteRiskInput) int
 		DeleteRiskDocumentMapping              func(childComplexity int, input types.DeleteRiskDocumentMappingInput) int
 		DeleteRiskMeasureMapping               func(childComplexity int, input types.DeleteRiskMeasureMappingInput) int
 		DeleteRiskObligationMapping            func(childComplexity int, input types.DeleteRiskObligationMappingInput) int
-		DeleteSAMLConfiguration                func(childComplexity int, input types.DeleteSAMLConfigurationInput) int
 		DeleteSnapshot                         func(childComplexity int, input types.DeleteSnapshotInput) int
 		DeleteTask                             func(childComplexity int, input types.DeleteTaskInput) int
 		DeleteTrustCenterAccess                func(childComplexity int, input types.DeleteTrustCenterAccessInput) int
@@ -981,8 +876,6 @@ type ComplexityRoot struct {
 		DeleteVendorContact                    func(childComplexity int, input types.DeleteVendorContactInput) int
 		DeleteVendorDataPrivacyAgreement       func(childComplexity int, input types.DeleteVendorDataPrivacyAgreementInput) int
 		DeleteVendorService                    func(childComplexity int, input types.DeleteVendorServiceInput) int
-		DisableSaml                            func(childComplexity int, input types.DisableSAMLInput) int
-		EnableSaml                             func(childComplexity int, input types.EnableSAMLInput) int
 		ExportDocumentVersionPDF               func(childComplexity int, input types.ExportDocumentVersionPDFInput) int
 		ExportFramework                        func(childComplexity int, input types.ExportFrameworkInput) int
 		ExportSignableVersionDocumentPDF       func(childComplexity int, input types.ExportSignableDocumentVersionPDFInput) int
@@ -991,10 +884,7 @@ type ComplexityRoot struct {
 		GetTrustCenterFile                     func(childComplexity int, input types.GetTrustCenterFileInput) int
 		ImportFramework                        func(childComplexity int, input types.ImportFrameworkInput) int
 		ImportMeasure                          func(childComplexity int, input types.ImportMeasureInput) int
-		InitiateDomainVerification             func(childComplexity int, input types.InitiateDomainVerificationInput) int
-		InviteUser                             func(childComplexity int, input types.InviteUserInput) int
 		PublishDocumentVersion                 func(childComplexity int, input types.PublishDocumentVersionInput) int
-		RemoveMember                           func(childComplexity int, input types.RemoveMemberInput) int
 		RequestSignature                       func(childComplexity int, input types.RequestSignatureInput) int
 		SendSigningNotifications               func(childComplexity int, input types.SendSigningNotificationsInput) int
 		SignDocument                           func(childComplexity int, input types.SignDocumentInput) int
@@ -1009,15 +899,12 @@ type ComplexityRoot struct {
 		UpdateFramework                        func(childComplexity int, input types.UpdateFrameworkInput) int
 		UpdateMeasure                          func(childComplexity int, input types.UpdateMeasureInput) int
 		UpdateMeeting                          func(childComplexity int, input types.UpdateMeetingInput) int
-		UpdateMembership                       func(childComplexity int, input types.UpdateMembershipInput) int
 		UpdateNonconformity                    func(childComplexity int, input types.UpdateNonconformityInput) int
 		UpdateObligation                       func(childComplexity int, input types.UpdateObligationInput) int
-		UpdateOrganization                     func(childComplexity int, input types.UpdateOrganizationInput) int
 		UpdateOrganizationContext              func(childComplexity int, input types.UpdateOrganizationContextInput) int
 		UpdatePeople                           func(childComplexity int, input types.UpdatePeopleInput) int
 		UpdateProcessingActivity               func(childComplexity int, input types.UpdateProcessingActivityInput) int
 		UpdateRisk                             func(childComplexity int, input types.UpdateRiskInput) int
-		UpdateSAMLConfiguration                func(childComplexity int, input types.UpdateSAMLConfigurationInput) int
 		UpdateTask                             func(childComplexity int, input types.UpdateTaskInput) int
 		UpdateTrustCenter                      func(childComplexity int, input types.UpdateTrustCenterInput) int
 		UpdateTrustCenterAccess                func(childComplexity int, input types.UpdateTrustCenterAccessInput) int
@@ -1034,7 +921,6 @@ type ComplexityRoot struct {
 		UploadVendorBusinessAssociateAgreement func(childComplexity int, input types.UploadVendorBusinessAssociateAgreementInput) int
 		UploadVendorComplianceReport           func(childComplexity int, input types.UploadVendorComplianceReportInput) int
 		UploadVendorDataPrivacyAgreement       func(childComplexity int, input types.UploadVendorDataPrivacyAgreementInput) int
-		VerifyDomain                           func(childComplexity int, input types.VerifyDomainInput) int
 	}
 
 	Nonconformity struct {
@@ -1111,18 +997,15 @@ type ComplexityRoot struct {
 		HeadquarterAddress    func(childComplexity int) int
 		HorizontalLogoURL     func(childComplexity int) int
 		ID                    func(childComplexity int) int
-		Invitations           func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.InvitationOrder, filter *types.InvitationFilter) int
 		LogoURL               func(childComplexity int) int
 		Measures              func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy, filter *types.MeasureFilter) int
 		Meetings              func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeetingOrderBy) int
-		Memberships           func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MembershipOrderBy) int
 		Name                  func(childComplexity int) int
 		Nonconformities       func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.NonconformityOrderBy, filter *types.NonconformityFilter) int
 		Obligations           func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ObligationOrderBy, filter *types.ObligationFilter) int
 		Peoples               func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.PeopleOrderBy, filter *types.PeopleFilter) int
 		ProcessingActivities  func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityOrderBy, filter *types.ProcessingActivityFilter) int
 		Risks                 func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskOrderBy, filter *types.RiskFilter) int
-		SamlConfigurations    func(childComplexity int) int
 		SlackConnections      func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
 		Snapshots             func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.SnapshotOrderBy) int
 		Tasks                 func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TaskOrderBy) int
@@ -1225,10 +1108,6 @@ type ComplexityRoot struct {
 		Viewer func(childComplexity int) int
 	}
 
-	RemoveMemberPayload struct {
-		DeletedMemberID func(childComplexity int) int
-	}
-
 	Report struct {
 		Audit       func(childComplexity int) int
 		CreatedAt   func(childComplexity int) int
@@ -1282,32 +1161,6 @@ type ComplexityRoot struct {
 	RiskEdge struct {
 		Cursor func(childComplexity int) int
 		Node   func(childComplexity int) int
-	}
-
-	SAMLConfiguration struct {
-		AttributeEmail          func(childComplexity int) int
-		AttributeFirstname      func(childComplexity int) int
-		AttributeLastname       func(childComplexity int) int
-		AttributeRole           func(childComplexity int) int
-		AutoSignupEnabled       func(childComplexity int) int
-		CreatedAt               func(childComplexity int) int
-		DomainVerificationToken func(childComplexity int) int
-		DomainVerified          func(childComplexity int) int
-		DomainVerifiedAt        func(childComplexity int) int
-		EmailDomain             func(childComplexity int) int
-		Enabled                 func(childComplexity int) int
-		EnforcementPolicy       func(childComplexity int) int
-		ID                      func(childComplexity int) int
-		IdpCertificate          func(childComplexity int) int
-		IdpEntityID             func(childComplexity int) int
-		IdpMetadataURL          func(childComplexity int) int
-		IdpSsoURL               func(childComplexity int) int
-		Organization            func(childComplexity int) int
-		SpAcsURL                func(childComplexity int) int
-		SpEntityID              func(childComplexity int) int
-		SpMetadataURL           func(childComplexity int) int
-		TestLoginURL            func(childComplexity int) int
-		UpdatedAt               func(childComplexity int) int
 	}
 
 	SendSigningNotificationsPayload struct {
@@ -1563,10 +1416,6 @@ type ComplexityRoot struct {
 		Meeting func(childComplexity int) int
 	}
 
-	UpdateMembershipPayload struct {
-		Membership func(childComplexity int) int
-	}
-
 	UpdateNonconformityPayload struct {
 		Nonconformity func(childComplexity int) int
 	}
@@ -1579,10 +1428,6 @@ type ComplexityRoot struct {
 		Context func(childComplexity int) int
 	}
 
-	UpdateOrganizationPayload struct {
-		Organization func(childComplexity int) int
-	}
-
 	UpdatePeoplePayload struct {
 		People func(childComplexity int) int
 	}
@@ -1593,10 +1438,6 @@ type ComplexityRoot struct {
 
 	UpdateRiskPayload struct {
 		Risk func(childComplexity int) int
-	}
-
-	UpdateSAMLConfigurationPayload struct {
-		SamlConfiguration func(childComplexity int) int
 	}
 
 	UpdateTaskPayload struct {
@@ -1669,17 +1510,6 @@ type ComplexityRoot struct {
 		FullName  func(childComplexity int) int
 		ID        func(childComplexity int) int
 		UpdatedAt func(childComplexity int) int
-	}
-
-	UserConnection struct {
-		Edges      func(childComplexity int) int
-		PageInfo   func(childComplexity int) int
-		TotalCount func(childComplexity int) int
-	}
-
-	UserEdge struct {
-		Cursor func(childComplexity int) int
-		Node   func(childComplexity int) int
 	}
 
 	Vendor struct {
@@ -1833,11 +1663,6 @@ type ComplexityRoot struct {
 		Node   func(childComplexity int) int
 	}
 
-	VerifyDomainPayload struct {
-		SamlConfiguration func(childComplexity int) int
-		Verified          func(childComplexity int) int
-	}
-
 	Viewer struct {
 		ID                func(childComplexity int) int
 		Organizations     func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrganizationOrder) int
@@ -1850,7 +1675,6 @@ type ComplexityRoot struct {
 type AssetResolver interface {
 	Owner(ctx context.Context, obj *types.Asset) (*types.People, error)
 	Vendors(ctx context.Context, obj *types.Asset, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorOrderBy) (*types.VendorConnection, error)
-	AssetType(ctx context.Context, obj *types.Asset) (coredata.AssetType, error)
 
 	Organization(ctx context.Context, obj *types.Asset) (*types.Organization, error)
 }
@@ -1935,12 +1759,6 @@ type FrameworkResolver interface {
 type FrameworkConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.FrameworkConnection) (int, error)
 }
-type InvitationResolver interface {
-	Organization(ctx context.Context, obj *types.Invitation) (*types.Organization, error)
-}
-type InvitationConnectionResolver interface {
-	TotalCount(ctx context.Context, obj *types.InvitationConnection) (int, error)
-}
 type MeasureResolver interface {
 	Evidences(ctx context.Context, obj *types.Measure, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.EvidenceOrderBy) (*types.EvidenceConnection, error)
 	Tasks(ctx context.Context, obj *types.Measure, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TaskOrderBy) (*types.TaskConnection, error)
@@ -1957,18 +1775,8 @@ type MeetingResolver interface {
 type MeetingConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.MeetingConnection) (int, error)
 }
-type MembershipResolver interface {
-	AuthMethod(ctx context.Context, obj *types.Membership) (coredata.UserAuthMethod, error)
-}
-type MembershipConnectionResolver interface {
-	TotalCount(ctx context.Context, obj *types.MembershipConnection) (int, error)
-}
 type MutationResolver interface {
-	CreateOrganization(ctx context.Context, input types.CreateOrganizationInput) (*types.CreateOrganizationPayload, error)
-	UpdateOrganization(ctx context.Context, input types.UpdateOrganizationInput) (*types.UpdateOrganizationPayload, error)
 	UpdateOrganizationContext(ctx context.Context, input types.UpdateOrganizationContextInput) (*types.UpdateOrganizationContextPayload, error)
-	DeleteOrganizationHorizontalLogo(ctx context.Context, input types.DeleteOrganizationHorizontalLogoInput) (*types.DeleteOrganizationHorizontalLogoPayload, error)
-	DeleteOrganization(ctx context.Context, input types.DeleteOrganizationInput) (*types.DeleteOrganizationPayload, error)
 	UpdateTrustCenter(ctx context.Context, input types.UpdateTrustCenterInput) (*types.UpdateTrustCenterPayload, error)
 	UploadTrustCenterNda(ctx context.Context, input types.UploadTrustCenterNDAInput) (*types.UploadTrustCenterNDAPayload, error)
 	DeleteTrustCenterNda(ctx context.Context, input types.DeleteTrustCenterNDAInput) (*types.DeleteTrustCenterNDAPayload, error)
@@ -1982,12 +1790,6 @@ type MutationResolver interface {
 	UpdateTrustCenterFile(ctx context.Context, input types.UpdateTrustCenterFileInput) (*types.UpdateTrustCenterFilePayload, error)
 	GetTrustCenterFile(ctx context.Context, input types.GetTrustCenterFileInput) (*types.GetTrustCenterFilePayload, error)
 	DeleteTrustCenterFile(ctx context.Context, input types.DeleteTrustCenterFileInput) (*types.DeleteTrustCenterFilePayload, error)
-	ConfirmEmail(ctx context.Context, input types.ConfirmEmailInput) (*types.ConfirmEmailPayload, error)
-	InviteUser(ctx context.Context, input types.InviteUserInput) (*types.InviteUserPayload, error)
-	AcceptInvitation(ctx context.Context, input types.AcceptInvitationInput) (*types.AcceptInvitationPayload, error)
-	DeleteInvitation(ctx context.Context, input types.DeleteInvitationInput) (*types.DeleteInvitationPayload, error)
-	RemoveMember(ctx context.Context, input types.RemoveMemberInput) (*types.RemoveMemberPayload, error)
-	UpdateMembership(ctx context.Context, input types.UpdateMembershipInput) (*types.UpdateMembershipPayload, error)
 	CreatePeople(ctx context.Context, input types.CreatePeopleInput) (*types.CreatePeoplePayload, error)
 	UpdatePeople(ctx context.Context, input types.UpdatePeopleInput) (*types.UpdatePeoplePayload, error)
 	DeletePeople(ctx context.Context, input types.DeletePeopleInput) (*types.DeletePeoplePayload, error)
@@ -2095,13 +1897,6 @@ type MutationResolver interface {
 	DeleteSnapshot(ctx context.Context, input types.DeleteSnapshotInput) (*types.DeleteSnapshotPayload, error)
 	CreateCustomDomain(ctx context.Context, input types.CreateCustomDomainInput) (*types.CreateCustomDomainPayload, error)
 	DeleteCustomDomain(ctx context.Context, input types.DeleteCustomDomainInput) (*types.DeleteCustomDomainPayload, error)
-	InitiateDomainVerification(ctx context.Context, input types.InitiateDomainVerificationInput) (*types.InitiateDomainVerificationPayload, error)
-	VerifyDomain(ctx context.Context, input types.VerifyDomainInput) (*types.VerifyDomainPayload, error)
-	CreateSAMLConfiguration(ctx context.Context, input types.CreateSAMLConfigurationInput) (*types.CreateSAMLConfigurationPayload, error)
-	UpdateSAMLConfiguration(ctx context.Context, input types.UpdateSAMLConfigurationInput) (*types.UpdateSAMLConfigurationPayload, error)
-	DeleteSAMLConfiguration(ctx context.Context, input types.DeleteSAMLConfigurationInput) (*types.DeleteSAMLConfigurationPayload, error)
-	EnableSaml(ctx context.Context, input types.EnableSAMLInput) (*types.EnableSAMLPayload, error)
-	DisableSaml(ctx context.Context, input types.DisableSAMLInput) (*types.DisableSAMLPayload, error)
 }
 type NonconformityResolver interface {
 	Organization(ctx context.Context, obj *types.Nonconformity) (*types.Organization, error)
@@ -2126,8 +1921,6 @@ type OrganizationResolver interface {
 	HorizontalLogoURL(ctx context.Context, obj *types.Organization) (*string, error)
 
 	Context(ctx context.Context, obj *types.Organization) (*types.OrganizationContext, error)
-	Memberships(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MembershipOrderBy) (*types.MembershipConnection, error)
-	Invitations(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.InvitationOrder, filter *types.InvitationFilter) (*types.InvitationConnection, error)
 	SlackConnections(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.SlackConnectionConnection, error)
 	Frameworks(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.FrameworkOrderBy) (*types.FrameworkConnection, error)
 	Controls(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) (*types.ControlConnection, error)
@@ -2149,7 +1942,6 @@ type OrganizationResolver interface {
 	TrustCenterFiles(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterFileOrderField]) (*types.TrustCenterFileConnection, error)
 	TrustCenter(ctx context.Context, obj *types.Organization) (*types.TrustCenter, error)
 	CustomDomain(ctx context.Context, obj *types.Organization) (*types.CustomDomain, error)
-	SamlConfigurations(ctx context.Context, obj *types.Organization) ([]*types.SAMLConfiguration, error)
 }
 type PeopleConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.PeopleConnection) (int, error)
@@ -2182,6 +1974,7 @@ type RiskResolver interface {
 type RiskConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.RiskConnection) (int, error)
 }
+<<<<<<< HEAD
 type SAMLConfigurationResolver interface {
 	Organization(ctx context.Context, obj *types.SAMLConfiguration) (*types.Organization, error)
 
@@ -2193,6 +1986,8 @@ type SignableDocumentResolver interface {
 	Signed(ctx context.Context, obj *types.SignableDocument) (bool, error)
 	Versions(ctx context.Context, obj *types.SignableDocument, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentVersionOrderBy, filter *types.DocumentVersionFilter) (*types.DocumentVersionConnection, error)
 }
+=======
+>>>>>>> 66b095fd (WIP)
 type SnapshotResolver interface {
 	Organization(ctx context.Context, obj *types.Snapshot) (*types.Organization, error)
 
@@ -2243,9 +2038,6 @@ type TrustCenterReferenceResolver interface {
 }
 type TrustCenterReferenceConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.TrustCenterReferenceConnection) (int, error)
-}
-type UserConnectionResolver interface {
-	TotalCount(ctx context.Context, obj *types.UserConnection) (int, error)
 }
 type VendorResolver interface {
 	Organization(ctx context.Context, obj *types.Vendor) (*types.Organization, error)
@@ -2309,13 +2101,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 	ec := executionContext{nil, e, 0, 0, nil}
 	_ = ec
 	switch typeName + "." + field {
-
-	case "AcceptInvitationPayload.invitation":
-		if e.complexity.AcceptInvitationPayload.Invitation == nil {
-			break
-		}
-
-		return e.complexity.AcceptInvitationPayload.Invitation(childComplexity), true
 
 	case "AssessVendorPayload.vendor":
 		if e.complexity.AssessVendorPayload.Vendor == nil {
@@ -2591,13 +2376,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.CancelSignatureRequestPayload.DeletedDocumentVersionSignatureID(childComplexity), true
-
-	case "ConfirmEmailPayload.success":
-		if e.complexity.ConfirmEmailPayload.Success == nil {
-			break
-		}
-
-		return e.complexity.ConfirmEmailPayload.Success(childComplexity), true
 
 	case "ContinualImprovement.createdAt":
 		if e.complexity.ContinualImprovement.CreatedAt == nil {
@@ -2997,13 +2775,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.CreateObligationPayload.ObligationEdge(childComplexity), true
 
-	case "CreateOrganizationPayload.organizationEdge":
-		if e.complexity.CreateOrganizationPayload.OrganizationEdge == nil {
-			break
-		}
-
-		return e.complexity.CreateOrganizationPayload.OrganizationEdge(childComplexity), true
-
 	case "CreatePeoplePayload.peopleEdge":
 		if e.complexity.CreatePeoplePayload.PeopleEdge == nil {
 			break
@@ -3063,13 +2834,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.CreateRiskPayload.RiskEdge(childComplexity), true
-
-	case "CreateSAMLConfigurationPayload.samlConfiguration":
-		if e.complexity.CreateSAMLConfigurationPayload.SamlConfiguration == nil {
-			break
-		}
-
-		return e.complexity.CreateSAMLConfigurationPayload.SamlConfiguration(childComplexity), true
 
 	case "CreateSnapshotPayload.snapshotEdge":
 		if e.complexity.CreateSnapshotPayload.SnapshotEdge == nil {
@@ -3435,13 +3199,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.DeleteFrameworkPayload.DeletedFrameworkID(childComplexity), true
 
-	case "DeleteInvitationPayload.deletedInvitationId":
-		if e.complexity.DeleteInvitationPayload.DeletedInvitationID == nil {
-			break
-		}
-
-		return e.complexity.DeleteInvitationPayload.DeletedInvitationID(childComplexity), true
-
 	case "DeleteMeasurePayload.deletedMeasureId":
 		if e.complexity.DeleteMeasurePayload.DeletedMeasureID == nil {
 			break
@@ -3469,20 +3226,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.DeleteObligationPayload.DeletedObligationID(childComplexity), true
-
-	case "DeleteOrganizationHorizontalLogoPayload.organization":
-		if e.complexity.DeleteOrganizationHorizontalLogoPayload.Organization == nil {
-			break
-		}
-
-		return e.complexity.DeleteOrganizationHorizontalLogoPayload.Organization(childComplexity), true
-
-	case "DeleteOrganizationPayload.deletedOrganizationId":
-		if e.complexity.DeleteOrganizationPayload.DeletedOrganizationID == nil {
-			break
-		}
-
-		return e.complexity.DeleteOrganizationPayload.DeletedOrganizationID(childComplexity), true
 
 	case "DeletePeoplePayload.deletedPeopleId":
 		if e.complexity.DeletePeoplePayload.DeletedPeopleID == nil {
@@ -3543,13 +3286,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.DeleteRiskPayload.DeletedRiskID(childComplexity), true
-
-	case "DeleteSAMLConfigurationPayload.deletedSAMLConfigurationId":
-		if e.complexity.DeleteSAMLConfigurationPayload.DeletedSAMLConfigurationID == nil {
-			break
-		}
-
-		return e.complexity.DeleteSAMLConfigurationPayload.DeletedSAMLConfigurationID(childComplexity), true
 
 	case "DeleteSnapshotPayload.deletedSnapshotId":
 		if e.complexity.DeleteSnapshotPayload.DeletedSnapshotID == nil {
@@ -3634,13 +3370,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.DeleteVendorServicePayload.DeletedVendorServiceID(childComplexity), true
-
-	case "DisableSAMLPayload.samlConfiguration":
-		if e.complexity.DisableSAMLPayload.SamlConfiguration == nil {
-			break
-		}
-
-		return e.complexity.DisableSAMLPayload.SamlConfiguration(childComplexity), true
 
 	case "Document.classification":
 		if e.complexity.Document.Classification == nil {
@@ -3954,13 +3683,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.DocumentVersionSignatureEdge.Node(childComplexity), true
 
-	case "EnableSAMLPayload.samlConfiguration":
-		if e.complexity.EnableSAMLPayload.SamlConfiguration == nil {
-			break
-		}
-
-		return e.complexity.EnableSAMLPayload.SamlConfiguration(childComplexity), true
-
 	case "Evidence.createdAt":
 		if e.complexity.Evidence.CreatedAt == nil {
 			break
@@ -4246,113 +3968,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.ImportMeasurePayload.MeasureEdges(childComplexity), true
 
-	case "InitiateDomainVerificationPayload.dnsRecord":
-		if e.complexity.InitiateDomainVerificationPayload.DNSRecord == nil {
-			break
-		}
-
-		return e.complexity.InitiateDomainVerificationPayload.DNSRecord(childComplexity), true
-	case "InitiateDomainVerificationPayload.samlConfiguration":
-		if e.complexity.InitiateDomainVerificationPayload.SamlConfiguration == nil {
-			break
-		}
-
-		return e.complexity.InitiateDomainVerificationPayload.SamlConfiguration(childComplexity), true
-
-	case "Invitation.acceptedAt":
-		if e.complexity.Invitation.AcceptedAt == nil {
-			break
-		}
-
-		return e.complexity.Invitation.AcceptedAt(childComplexity), true
-	case "Invitation.createdAt":
-		if e.complexity.Invitation.CreatedAt == nil {
-			break
-		}
-
-		return e.complexity.Invitation.CreatedAt(childComplexity), true
-	case "Invitation.email":
-		if e.complexity.Invitation.Email == nil {
-			break
-		}
-
-		return e.complexity.Invitation.Email(childComplexity), true
-	case "Invitation.expiresAt":
-		if e.complexity.Invitation.ExpiresAt == nil {
-			break
-		}
-
-		return e.complexity.Invitation.ExpiresAt(childComplexity), true
-	case "Invitation.fullName":
-		if e.complexity.Invitation.FullName == nil {
-			break
-		}
-
-		return e.complexity.Invitation.FullName(childComplexity), true
-	case "Invitation.id":
-		if e.complexity.Invitation.ID == nil {
-			break
-		}
-
-		return e.complexity.Invitation.ID(childComplexity), true
-	case "Invitation.organization":
-		if e.complexity.Invitation.Organization == nil {
-			break
-		}
-
-		return e.complexity.Invitation.Organization(childComplexity), true
-	case "Invitation.role":
-		if e.complexity.Invitation.Role == nil {
-			break
-		}
-
-		return e.complexity.Invitation.Role(childComplexity), true
-	case "Invitation.status":
-		if e.complexity.Invitation.Status == nil {
-			break
-		}
-
-		return e.complexity.Invitation.Status(childComplexity), true
-
-	case "InvitationConnection.edges":
-		if e.complexity.InvitationConnection.Edges == nil {
-			break
-		}
-
-		return e.complexity.InvitationConnection.Edges(childComplexity), true
-	case "InvitationConnection.pageInfo":
-		if e.complexity.InvitationConnection.PageInfo == nil {
-			break
-		}
-
-		return e.complexity.InvitationConnection.PageInfo(childComplexity), true
-	case "InvitationConnection.totalCount":
-		if e.complexity.InvitationConnection.TotalCount == nil {
-			break
-		}
-
-		return e.complexity.InvitationConnection.TotalCount(childComplexity), true
-
-	case "InvitationEdge.cursor":
-		if e.complexity.InvitationEdge.Cursor == nil {
-			break
-		}
-
-		return e.complexity.InvitationEdge.Cursor(childComplexity), true
-	case "InvitationEdge.node":
-		if e.complexity.InvitationEdge.Node == nil {
-			break
-		}
-
-		return e.complexity.InvitationEdge.Node(childComplexity), true
-
-	case "InviteUserPayload.invitationEdge":
-		if e.complexity.InviteUserPayload.InvitationEdge == nil {
-			break
-		}
-
-		return e.complexity.InviteUserPayload.InvitationEdge(childComplexity), true
-
 	case "Measure.category":
 		if e.complexity.Measure.Category == nil {
 			break
@@ -4553,104 +4168,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.MeetingEdge.Node(childComplexity), true
 
-	case "Membership.authMethod":
-		if e.complexity.Membership.AuthMethod == nil {
-			break
-		}
-
-		return e.complexity.Membership.AuthMethod(childComplexity), true
-	case "Membership.createdAt":
-		if e.complexity.Membership.CreatedAt == nil {
-			break
-		}
-
-		return e.complexity.Membership.CreatedAt(childComplexity), true
-	case "Membership.emailAddress":
-		if e.complexity.Membership.EmailAddress == nil {
-			break
-		}
-
-		return e.complexity.Membership.EmailAddress(childComplexity), true
-	case "Membership.fullName":
-		if e.complexity.Membership.FullName == nil {
-			break
-		}
-
-		return e.complexity.Membership.FullName(childComplexity), true
-	case "Membership.id":
-		if e.complexity.Membership.ID == nil {
-			break
-		}
-
-		return e.complexity.Membership.ID(childComplexity), true
-	case "Membership.organizationID":
-		if e.complexity.Membership.OrganizationID == nil {
-			break
-		}
-
-		return e.complexity.Membership.OrganizationID(childComplexity), true
-	case "Membership.role":
-		if e.complexity.Membership.Role == nil {
-			break
-		}
-
-		return e.complexity.Membership.Role(childComplexity), true
-	case "Membership.updatedAt":
-		if e.complexity.Membership.UpdatedAt == nil {
-			break
-		}
-
-		return e.complexity.Membership.UpdatedAt(childComplexity), true
-	case "Membership.userID":
-		if e.complexity.Membership.UserID == nil {
-			break
-		}
-
-		return e.complexity.Membership.UserID(childComplexity), true
-
-	case "MembershipConnection.edges":
-		if e.complexity.MembershipConnection.Edges == nil {
-			break
-		}
-
-		return e.complexity.MembershipConnection.Edges(childComplexity), true
-	case "MembershipConnection.pageInfo":
-		if e.complexity.MembershipConnection.PageInfo == nil {
-			break
-		}
-
-		return e.complexity.MembershipConnection.PageInfo(childComplexity), true
-	case "MembershipConnection.totalCount":
-		if e.complexity.MembershipConnection.TotalCount == nil {
-			break
-		}
-
-		return e.complexity.MembershipConnection.TotalCount(childComplexity), true
-
-	case "MembershipEdge.cursor":
-		if e.complexity.MembershipEdge.Cursor == nil {
-			break
-		}
-
-		return e.complexity.MembershipEdge.Cursor(childComplexity), true
-	case "MembershipEdge.node":
-		if e.complexity.MembershipEdge.Node == nil {
-			break
-		}
-
-		return e.complexity.MembershipEdge.Node(childComplexity), true
-
-	case "Mutation.acceptInvitation":
-		if e.complexity.Mutation.AcceptInvitation == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_acceptInvitation_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.AcceptInvitation(childComplexity, args["input"].(types.AcceptInvitationInput)), true
 	case "Mutation.assessVendor":
 		if e.complexity.Mutation.AssessVendor == nil {
 			break
@@ -4728,17 +4245,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.CancelSignatureRequest(childComplexity, args["input"].(types.CancelSignatureRequestInput)), true
-	case "Mutation.confirmEmail":
-		if e.complexity.Mutation.ConfirmEmail == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_confirmEmail_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.ConfirmEmail(childComplexity, args["input"].(types.ConfirmEmailInput)), true
 	case "Mutation.createAsset":
 		if e.complexity.Mutation.CreateAsset == nil {
 			break
@@ -4926,17 +4432,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.CreateObligation(childComplexity, args["input"].(types.CreateObligationInput)), true
-	case "Mutation.createOrganization":
-		if e.complexity.Mutation.CreateOrganization == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_createOrganization_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.CreateOrganization(childComplexity, args["input"].(types.CreateOrganizationInput)), true
 	case "Mutation.createPeople":
 		if e.complexity.Mutation.CreatePeople == nil {
 			break
@@ -5003,17 +4498,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.CreateRiskObligationMapping(childComplexity, args["input"].(types.CreateRiskObligationMappingInput)), true
-	case "Mutation.createSAMLConfiguration":
-		if e.complexity.Mutation.CreateSAMLConfiguration == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_createSAMLConfiguration_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.CreateSAMLConfiguration(childComplexity, args["input"].(types.CreateSAMLConfigurationInput)), true
 	case "Mutation.createSnapshot":
 		if e.complexity.Mutation.CreateSnapshot == nil {
 			break
@@ -5278,17 +4762,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.DeleteFramework(childComplexity, args["input"].(types.DeleteFrameworkInput)), true
-	case "Mutation.deleteInvitation":
-		if e.complexity.Mutation.DeleteInvitation == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_deleteInvitation_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.DeleteInvitation(childComplexity, args["input"].(types.DeleteInvitationInput)), true
 	case "Mutation.deleteMeasure":
 		if e.complexity.Mutation.DeleteMeasure == nil {
 			break
@@ -5333,28 +4806,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.DeleteObligation(childComplexity, args["input"].(types.DeleteObligationInput)), true
-	case "Mutation.deleteOrganization":
-		if e.complexity.Mutation.DeleteOrganization == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_deleteOrganization_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.DeleteOrganization(childComplexity, args["input"].(types.DeleteOrganizationInput)), true
-	case "Mutation.deleteOrganizationHorizontalLogo":
-		if e.complexity.Mutation.DeleteOrganizationHorizontalLogo == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_deleteOrganizationHorizontalLogo_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.DeleteOrganizationHorizontalLogo(childComplexity, args["input"].(types.DeleteOrganizationHorizontalLogoInput)), true
 	case "Mutation.deletePeople":
 		if e.complexity.Mutation.DeletePeople == nil {
 			break
@@ -5421,17 +4872,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.DeleteRiskObligationMapping(childComplexity, args["input"].(types.DeleteRiskObligationMappingInput)), true
-	case "Mutation.deleteSAMLConfiguration":
-		if e.complexity.Mutation.DeleteSAMLConfiguration == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_deleteSAMLConfiguration_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.DeleteSAMLConfiguration(childComplexity, args["input"].(types.DeleteSAMLConfigurationInput)), true
 	case "Mutation.deleteSnapshot":
 		if e.complexity.Mutation.DeleteSnapshot == nil {
 			break
@@ -5564,28 +5004,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.DeleteVendorService(childComplexity, args["input"].(types.DeleteVendorServiceInput)), true
-	case "Mutation.disableSAML":
-		if e.complexity.Mutation.DisableSaml == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_disableSAML_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.DisableSaml(childComplexity, args["input"].(types.DisableSAMLInput)), true
-	case "Mutation.enableSAML":
-		if e.complexity.Mutation.EnableSaml == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_enableSAML_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.EnableSaml(childComplexity, args["input"].(types.EnableSAMLInput)), true
 	case "Mutation.exportDocumentVersionPDF":
 		if e.complexity.Mutation.ExportDocumentVersionPDF == nil {
 			break
@@ -5674,28 +5092,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.ImportMeasure(childComplexity, args["input"].(types.ImportMeasureInput)), true
-	case "Mutation.initiateDomainVerification":
-		if e.complexity.Mutation.InitiateDomainVerification == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_initiateDomainVerification_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.InitiateDomainVerification(childComplexity, args["input"].(types.InitiateDomainVerificationInput)), true
-	case "Mutation.inviteUser":
-		if e.complexity.Mutation.InviteUser == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_inviteUser_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.InviteUser(childComplexity, args["input"].(types.InviteUserInput)), true
 	case "Mutation.publishDocumentVersion":
 		if e.complexity.Mutation.PublishDocumentVersion == nil {
 			break
@@ -5707,17 +5103,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.PublishDocumentVersion(childComplexity, args["input"].(types.PublishDocumentVersionInput)), true
-	case "Mutation.removeMember":
-		if e.complexity.Mutation.RemoveMember == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_removeMember_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.RemoveMember(childComplexity, args["input"].(types.RemoveMemberInput)), true
 	case "Mutation.requestSignature":
 		if e.complexity.Mutation.RequestSignature == nil {
 			break
@@ -5872,17 +5257,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.UpdateMeeting(childComplexity, args["input"].(types.UpdateMeetingInput)), true
-	case "Mutation.updateMembership":
-		if e.complexity.Mutation.UpdateMembership == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_updateMembership_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.UpdateMembership(childComplexity, args["input"].(types.UpdateMembershipInput)), true
 	case "Mutation.updateNonconformity":
 		if e.complexity.Mutation.UpdateNonconformity == nil {
 			break
@@ -5905,17 +5279,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.UpdateObligation(childComplexity, args["input"].(types.UpdateObligationInput)), true
-	case "Mutation.updateOrganization":
-		if e.complexity.Mutation.UpdateOrganization == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_updateOrganization_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.UpdateOrganization(childComplexity, args["input"].(types.UpdateOrganizationInput)), true
 	case "Mutation.updateOrganizationContext":
 		if e.complexity.Mutation.UpdateOrganizationContext == nil {
 			break
@@ -5960,17 +5323,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.UpdateRisk(childComplexity, args["input"].(types.UpdateRiskInput)), true
-	case "Mutation.updateSAMLConfiguration":
-		if e.complexity.Mutation.UpdateSAMLConfiguration == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_updateSAMLConfiguration_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.UpdateSAMLConfiguration(childComplexity, args["input"].(types.UpdateSAMLConfigurationInput)), true
 	case "Mutation.updateTask":
 		if e.complexity.Mutation.UpdateTask == nil {
 			break
@@ -6147,17 +5499,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.UploadVendorDataPrivacyAgreement(childComplexity, args["input"].(types.UploadVendorDataPrivacyAgreementInput)), true
-	case "Mutation.verifyDomain":
-		if e.complexity.Mutation.VerifyDomain == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_verifyDomain_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.VerifyDomain(childComplexity, args["input"].(types.VerifyDomainInput)), true
 
 	case "Nonconformity.audit":
 		if e.complexity.Nonconformity.Audit == nil {
@@ -6530,17 +5871,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Organization.ID(childComplexity), true
-	case "Organization.invitations":
-		if e.complexity.Organization.Invitations == nil {
-			break
-		}
-
-		args, err := ec.field_Organization_invitations_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Organization.Invitations(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.InvitationOrder), args["filter"].(*types.InvitationFilter)), true
 	case "Organization.logoUrl":
 		if e.complexity.Organization.LogoURL == nil {
 			break
@@ -6569,17 +5899,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Organization.Meetings(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.MeetingOrderBy)), true
-	case "Organization.memberships":
-		if e.complexity.Organization.Memberships == nil {
-			break
-		}
-
-		args, err := ec.field_Organization_memberships_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Organization.Memberships(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.MembershipOrderBy)), true
 	case "Organization.name":
 		if e.complexity.Organization.Name == nil {
 			break
@@ -6641,12 +5960,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Organization.Risks(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.RiskOrderBy), args["filter"].(*types.RiskFilter)), true
-	case "Organization.samlConfigurations":
-		if e.complexity.Organization.SamlConfigurations == nil {
-			break
-		}
-
-		return e.complexity.Organization.SamlConfigurations(childComplexity), true
 	case "Organization.slackConnections":
 		if e.complexity.Organization.SlackConnections == nil {
 			break
@@ -7079,13 +6392,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Query.Viewer(childComplexity), true
 
-	case "RemoveMemberPayload.deletedMemberId":
-		if e.complexity.RemoveMemberPayload.DeletedMemberID == nil {
-			break
-		}
-
-		return e.complexity.RemoveMemberPayload.DeletedMemberID(childComplexity), true
-
 	case "Report.audit":
 		if e.complexity.Report.Audit == nil {
 			break
@@ -7333,145 +6639,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.RiskEdge.Node(childComplexity), true
-
-	case "SAMLConfiguration.attributeEmail":
-		if e.complexity.SAMLConfiguration.AttributeEmail == nil {
-			break
-		}
-
-		return e.complexity.SAMLConfiguration.AttributeEmail(childComplexity), true
-	case "SAMLConfiguration.attributeFirstname":
-		if e.complexity.SAMLConfiguration.AttributeFirstname == nil {
-			break
-		}
-
-		return e.complexity.SAMLConfiguration.AttributeFirstname(childComplexity), true
-	case "SAMLConfiguration.attributeLastname":
-		if e.complexity.SAMLConfiguration.AttributeLastname == nil {
-			break
-		}
-
-		return e.complexity.SAMLConfiguration.AttributeLastname(childComplexity), true
-	case "SAMLConfiguration.attributeRole":
-		if e.complexity.SAMLConfiguration.AttributeRole == nil {
-			break
-		}
-
-		return e.complexity.SAMLConfiguration.AttributeRole(childComplexity), true
-	case "SAMLConfiguration.autoSignupEnabled":
-		if e.complexity.SAMLConfiguration.AutoSignupEnabled == nil {
-			break
-		}
-
-		return e.complexity.SAMLConfiguration.AutoSignupEnabled(childComplexity), true
-	case "SAMLConfiguration.createdAt":
-		if e.complexity.SAMLConfiguration.CreatedAt == nil {
-			break
-		}
-
-		return e.complexity.SAMLConfiguration.CreatedAt(childComplexity), true
-	case "SAMLConfiguration.domainVerificationToken":
-		if e.complexity.SAMLConfiguration.DomainVerificationToken == nil {
-			break
-		}
-
-		return e.complexity.SAMLConfiguration.DomainVerificationToken(childComplexity), true
-	case "SAMLConfiguration.domainVerified":
-		if e.complexity.SAMLConfiguration.DomainVerified == nil {
-			break
-		}
-
-		return e.complexity.SAMLConfiguration.DomainVerified(childComplexity), true
-	case "SAMLConfiguration.domainVerifiedAt":
-		if e.complexity.SAMLConfiguration.DomainVerifiedAt == nil {
-			break
-		}
-
-		return e.complexity.SAMLConfiguration.DomainVerifiedAt(childComplexity), true
-	case "SAMLConfiguration.emailDomain":
-		if e.complexity.SAMLConfiguration.EmailDomain == nil {
-			break
-		}
-
-		return e.complexity.SAMLConfiguration.EmailDomain(childComplexity), true
-	case "SAMLConfiguration.enabled":
-		if e.complexity.SAMLConfiguration.Enabled == nil {
-			break
-		}
-
-		return e.complexity.SAMLConfiguration.Enabled(childComplexity), true
-	case "SAMLConfiguration.enforcementPolicy":
-		if e.complexity.SAMLConfiguration.EnforcementPolicy == nil {
-			break
-		}
-
-		return e.complexity.SAMLConfiguration.EnforcementPolicy(childComplexity), true
-	case "SAMLConfiguration.id":
-		if e.complexity.SAMLConfiguration.ID == nil {
-			break
-		}
-
-		return e.complexity.SAMLConfiguration.ID(childComplexity), true
-	case "SAMLConfiguration.idpCertificate":
-		if e.complexity.SAMLConfiguration.IdpCertificate == nil {
-			break
-		}
-
-		return e.complexity.SAMLConfiguration.IdpCertificate(childComplexity), true
-	case "SAMLConfiguration.idpEntityId":
-		if e.complexity.SAMLConfiguration.IdpEntityID == nil {
-			break
-		}
-
-		return e.complexity.SAMLConfiguration.IdpEntityID(childComplexity), true
-	case "SAMLConfiguration.idpMetadataUrl":
-		if e.complexity.SAMLConfiguration.IdpMetadataURL == nil {
-			break
-		}
-
-		return e.complexity.SAMLConfiguration.IdpMetadataURL(childComplexity), true
-	case "SAMLConfiguration.idpSsoUrl":
-		if e.complexity.SAMLConfiguration.IdpSsoURL == nil {
-			break
-		}
-
-		return e.complexity.SAMLConfiguration.IdpSsoURL(childComplexity), true
-	case "SAMLConfiguration.organization":
-		if e.complexity.SAMLConfiguration.Organization == nil {
-			break
-		}
-
-		return e.complexity.SAMLConfiguration.Organization(childComplexity), true
-	case "SAMLConfiguration.spAcsUrl":
-		if e.complexity.SAMLConfiguration.SpAcsURL == nil {
-			break
-		}
-
-		return e.complexity.SAMLConfiguration.SpAcsURL(childComplexity), true
-	case "SAMLConfiguration.spEntityId":
-		if e.complexity.SAMLConfiguration.SpEntityID == nil {
-			break
-		}
-
-		return e.complexity.SAMLConfiguration.SpEntityID(childComplexity), true
-	case "SAMLConfiguration.spMetadataUrl":
-		if e.complexity.SAMLConfiguration.SpMetadataURL == nil {
-			break
-		}
-
-		return e.complexity.SAMLConfiguration.SpMetadataURL(childComplexity), true
-	case "SAMLConfiguration.testLoginUrl":
-		if e.complexity.SAMLConfiguration.TestLoginURL == nil {
-			break
-		}
-
-		return e.complexity.SAMLConfiguration.TestLoginURL(childComplexity), true
-	case "SAMLConfiguration.updatedAt":
-		if e.complexity.SAMLConfiguration.UpdatedAt == nil {
-			break
-		}
-
-		return e.complexity.SAMLConfiguration.UpdatedAt(childComplexity), true
 
 	case "SendSigningNotificationsPayload.success":
 		if e.complexity.SendSigningNotificationsPayload.Success == nil {
@@ -8324,13 +7491,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.UpdateMeetingPayload.Meeting(childComplexity), true
 
-	case "UpdateMembershipPayload.membership":
-		if e.complexity.UpdateMembershipPayload.Membership == nil {
-			break
-		}
-
-		return e.complexity.UpdateMembershipPayload.Membership(childComplexity), true
-
 	case "UpdateNonconformityPayload.nonconformity":
 		if e.complexity.UpdateNonconformityPayload.Nonconformity == nil {
 			break
@@ -8352,13 +7512,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.UpdateOrganizationContextPayload.Context(childComplexity), true
 
-	case "UpdateOrganizationPayload.organization":
-		if e.complexity.UpdateOrganizationPayload.Organization == nil {
-			break
-		}
-
-		return e.complexity.UpdateOrganizationPayload.Organization(childComplexity), true
-
 	case "UpdatePeoplePayload.people":
 		if e.complexity.UpdatePeoplePayload.People == nil {
 			break
@@ -8379,13 +7532,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.UpdateRiskPayload.Risk(childComplexity), true
-
-	case "UpdateSAMLConfigurationPayload.samlConfiguration":
-		if e.complexity.UpdateSAMLConfigurationPayload.SamlConfiguration == nil {
-			break
-		}
-
-		return e.complexity.UpdateSAMLConfigurationPayload.SamlConfiguration(childComplexity), true
 
 	case "UpdateTaskPayload.task":
 		if e.complexity.UpdateTaskPayload.Task == nil {
@@ -8529,38 +7675,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.User.UpdatedAt(childComplexity), true
-
-	case "UserConnection.edges":
-		if e.complexity.UserConnection.Edges == nil {
-			break
-		}
-
-		return e.complexity.UserConnection.Edges(childComplexity), true
-	case "UserConnection.pageInfo":
-		if e.complexity.UserConnection.PageInfo == nil {
-			break
-		}
-
-		return e.complexity.UserConnection.PageInfo(childComplexity), true
-	case "UserConnection.totalCount":
-		if e.complexity.UserConnection.TotalCount == nil {
-			break
-		}
-
-		return e.complexity.UserConnection.TotalCount(childComplexity), true
-
-	case "UserEdge.cursor":
-		if e.complexity.UserEdge.Cursor == nil {
-			break
-		}
-
-		return e.complexity.UserEdge.Cursor(childComplexity), true
-	case "UserEdge.node":
-		if e.complexity.UserEdge.Node == nil {
-			break
-		}
-
-		return e.complexity.UserEdge.Node(childComplexity), true
 
 	case "Vendor.businessAssociateAgreement":
 		if e.complexity.Vendor.BusinessAssociateAgreement == nil {
@@ -9199,19 +8313,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.VendorServiceEdge.Node(childComplexity), true
 
-	case "VerifyDomainPayload.samlConfiguration":
-		if e.complexity.VerifyDomainPayload.SamlConfiguration == nil {
-			break
-		}
-
-		return e.complexity.VerifyDomainPayload.SamlConfiguration(childComplexity), true
-	case "VerifyDomainPayload.verified":
-		if e.complexity.VerifyDomainPayload.Verified == nil {
-			break
-		}
-
-		return e.complexity.VerifyDomainPayload.Verified(childComplexity), true
-
 	case "Viewer.id":
 		if e.complexity.Viewer.ID == nil {
 			break
@@ -9266,7 +8367,6 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	opCtx := graphql.GetOperationContext(ctx)
 	ec := executionContext{opCtx, e, 0, 0, make(chan graphql.DeferredResult)}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
-		ec.unmarshalInputAcceptInvitationInput,
 		ec.unmarshalInputAssessVendorInput,
 		ec.unmarshalInputAssetFilter,
 		ec.unmarshalInputAssetOrder,
@@ -9277,7 +8377,6 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputBulkPublishDocumentVersionsInput,
 		ec.unmarshalInputBulkRequestSignaturesInput,
 		ec.unmarshalInputCancelSignatureRequestInput,
-		ec.unmarshalInputConfirmEmailInput,
 		ec.unmarshalInputContinualImprovementFilter,
 		ec.unmarshalInputContinualImprovementOrder,
 		ec.unmarshalInputControlFilter,
@@ -9300,14 +8399,12 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputCreateMeetingInput,
 		ec.unmarshalInputCreateNonconformityInput,
 		ec.unmarshalInputCreateObligationInput,
-		ec.unmarshalInputCreateOrganizationInput,
 		ec.unmarshalInputCreatePeopleInput,
 		ec.unmarshalInputCreateProcessingActivityInput,
 		ec.unmarshalInputCreateRiskDocumentMappingInput,
 		ec.unmarshalInputCreateRiskInput,
 		ec.unmarshalInputCreateRiskMeasureMappingInput,
 		ec.unmarshalInputCreateRiskObligationMappingInput,
-		ec.unmarshalInputCreateSAMLConfigurationInput,
 		ec.unmarshalInputCreateSnapshotInput,
 		ec.unmarshalInputCreateTaskInput,
 		ec.unmarshalInputCreateTrustCenterAccessInput,
@@ -9334,20 +8431,16 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputDeleteDraftDocumentVersionInput,
 		ec.unmarshalInputDeleteEvidenceInput,
 		ec.unmarshalInputDeleteFrameworkInput,
-		ec.unmarshalInputDeleteInvitationInput,
 		ec.unmarshalInputDeleteMeasureInput,
 		ec.unmarshalInputDeleteMeetingInput,
 		ec.unmarshalInputDeleteNonconformityInput,
 		ec.unmarshalInputDeleteObligationInput,
-		ec.unmarshalInputDeleteOrganizationHorizontalLogoInput,
-		ec.unmarshalInputDeleteOrganizationInput,
 		ec.unmarshalInputDeletePeopleInput,
 		ec.unmarshalInputDeleteProcessingActivityInput,
 		ec.unmarshalInputDeleteRiskDocumentMappingInput,
 		ec.unmarshalInputDeleteRiskInput,
 		ec.unmarshalInputDeleteRiskMeasureMappingInput,
 		ec.unmarshalInputDeleteRiskObligationMappingInput,
-		ec.unmarshalInputDeleteSAMLConfigurationInput,
 		ec.unmarshalInputDeleteSnapshotInput,
 		ec.unmarshalInputDeleteTaskInput,
 		ec.unmarshalInputDeleteTrustCenterAccessInput,
@@ -9360,14 +8453,12 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputDeleteVendorDataPrivacyAgreementInput,
 		ec.unmarshalInputDeleteVendorInput,
 		ec.unmarshalInputDeleteVendorServiceInput,
-		ec.unmarshalInputDisableSAMLInput,
 		ec.unmarshalInputDocumentFilter,
 		ec.unmarshalInputDocumentOrder,
 		ec.unmarshalInputDocumentVersionFilter,
 		ec.unmarshalInputDocumentVersionOrder,
 		ec.unmarshalInputDocumentVersionSignatureFilter,
 		ec.unmarshalInputDocumentVersionSignatureOrder,
-		ec.unmarshalInputEnableSAMLInput,
 		ec.unmarshalInputEvidenceOrder,
 		ec.unmarshalInputExportDocumentVersionPDFInput,
 		ec.unmarshalInputExportFrameworkInput,
@@ -9379,14 +8470,9 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputGetTrustCenterFileInput,
 		ec.unmarshalInputImportFrameworkInput,
 		ec.unmarshalInputImportMeasureInput,
-		ec.unmarshalInputInitiateDomainVerificationInput,
-		ec.unmarshalInputInvitationFilter,
-		ec.unmarshalInputInvitationOrder,
-		ec.unmarshalInputInviteUserInput,
 		ec.unmarshalInputMeasureFilter,
 		ec.unmarshalInputMeasureOrder,
 		ec.unmarshalInputMeetingOrder,
-		ec.unmarshalInputMembershipOrder,
 		ec.unmarshalInputNonconformityFilter,
 		ec.unmarshalInputNonconformityOrder,
 		ec.unmarshalInputObligationFilter,
@@ -9397,7 +8483,6 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputProcessingActivityFilter,
 		ec.unmarshalInputProcessingActivityOrder,
 		ec.unmarshalInputPublishDocumentVersionInput,
-		ec.unmarshalInputRemoveMemberInput,
 		ec.unmarshalInputRequestEvidenceInput,
 		ec.unmarshalInputRequestSignatureInput,
 		ec.unmarshalInputRiskFilter,
@@ -9422,15 +8507,12 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputUpdateFrameworkInput,
 		ec.unmarshalInputUpdateMeasureInput,
 		ec.unmarshalInputUpdateMeetingInput,
-		ec.unmarshalInputUpdateMembershipInput,
 		ec.unmarshalInputUpdateNonconformityInput,
 		ec.unmarshalInputUpdateObligationInput,
 		ec.unmarshalInputUpdateOrganizationContextInput,
-		ec.unmarshalInputUpdateOrganizationInput,
 		ec.unmarshalInputUpdatePeopleInput,
 		ec.unmarshalInputUpdateProcessingActivityInput,
 		ec.unmarshalInputUpdateRiskInput,
-		ec.unmarshalInputUpdateSAMLConfigurationInput,
 		ec.unmarshalInputUpdateTaskInput,
 		ec.unmarshalInputUpdateTrustCenterAccessInput,
 		ec.unmarshalInputUpdateTrustCenterFileInput,
@@ -9447,14 +8529,12 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputUploadVendorBusinessAssociateAgreementInput,
 		ec.unmarshalInputUploadVendorComplianceReportInput,
 		ec.unmarshalInputUploadVendorDataPrivacyAgreementInput,
-		ec.unmarshalInputUserOrder,
 		ec.unmarshalInputVendorComplianceReportOrder,
 		ec.unmarshalInputVendorContactOrder,
 		ec.unmarshalInputVendorFilter,
 		ec.unmarshalInputVendorOrder,
 		ec.unmarshalInputVendorRiskAssessmentOrder,
 		ec.unmarshalInputVendorServiceOrder,
-		ec.unmarshalInputVerifyDomainInput,
 	)
 	first := true
 
@@ -9635,6 +8715,7 @@ enum PeopleKind @goModel(model: "go.probo.inc/probo/pkg/coredata.PeopleKind") {
     @goEnum(value: "go.probo.inc/probo/pkg/coredata.PeopleKindServiceAccount")
 }
 
+<<<<<<< HEAD
 enum InvitationStatus
   @goModel(model: "go.probo.inc/probo/pkg/coredata.InvitationStatus") {
   PENDING
@@ -9654,6 +8735,8 @@ enum MembershipRole
   VIEWER @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleViewer")
 }
 
+=======
+>>>>>>> 66b095fd (WIP)
 enum APIRole @goModel(model: "go.probo.inc/probo/pkg/coredata.APIRole") {
   FULL @goEnum(value: "go.probo.inc/probo/pkg/coredata.APIRoleFull")
 }
@@ -9691,26 +8774,6 @@ enum AuditState @goModel(model: "go.probo.inc/probo/pkg/coredata.AuditState") {
     @goEnum(value: "go.probo.inc/probo/pkg/coredata.AuditStateCompleted")
   REJECTED @goEnum(value: "go.probo.inc/probo/pkg/coredata.AuditStateRejected")
   OUTDATED @goEnum(value: "go.probo.inc/probo/pkg/coredata.AuditStateOutdated")
-}
-
-enum SAMLEnforcementPolicy
-  @goModel(model: "go.probo.inc/probo/pkg/coredata.SAMLEnforcementPolicy") {
-  OFF @goEnum(value: "go.probo.inc/probo/pkg/coredata.SAMLEnforcementPolicyOff")
-  OPTIONAL
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.SAMLEnforcementPolicyOptional"
-    )
-  REQUIRED
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.SAMLEnforcementPolicyRequired"
-    )
-}
-
-enum UserAuthMethod
-  @goModel(model: "go.probo.inc/probo/pkg/coredata.UserAuthMethod") {
-  PASSWORD
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.UserAuthMethodPassword")
-  SAML @goEnum(value: "go.probo.inc/probo/pkg/coredata.UserAuthMethodSAML")
 }
 
 enum TrustCenterVisibility
@@ -9917,12 +8980,6 @@ enum ProcessingActivityTransferImpactAssessment
 }
 
 # Order Field Enums
-enum UserOrderField
-  @goModel(model: "go.probo.inc/probo/pkg/coredata.UserOrderField") {
-  CREATED_AT
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.UserOrderFieldCreatedAt")
-}
-
 enum PeopleOrderField
   @goModel(model: "go.probo.inc/probo/pkg/coredata.PeopleOrderField") {
   FULL_NAME
@@ -10687,57 +9744,7 @@ enum SnapshotOrderField
   TYPE @goEnum(value: "go.probo.inc/probo/pkg/coredata.SnapshotOrderFieldType")
 }
 
-enum MembershipOrderField
-  @goModel(model: "go.probo.inc/probo/pkg/coredata.MembershipOrderField") {
-  FULL_NAME
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.MembershipOrderFieldFullName"
-    )
-  EMAIL_ADDRESS
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.MembershipOrderFieldEmailAddress"
-    )
-  ROLE
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipOrderFieldRole")
-  CREATED_AT
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.MembershipOrderFieldCreatedAt"
-    )
-}
-
-enum InvitationOrderField
-  @goModel(model: "go.probo.inc/probo/pkg/coredata.InvitationOrderField") {
-  FULL_NAME
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.InvitationOrderFieldFullName"
-    )
-  EMAIL
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.InvitationOrderFieldEmail")
-  ROLE
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.InvitationOrderFieldRole")
-  CREATED_AT
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.InvitationOrderFieldCreatedAt"
-    )
-  EXPIRES_AT
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.InvitationOrderFieldExpiresAt"
-    )
-  ACCEPTED_AT
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.InvitationOrderFieldAcceptedAt"
-    )
-}
-
 # Input Types
-input UserOrder
-  @goModel(
-    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.UserOrderBy"
-  ) {
-  direction: OrderDirection!
-  field: UserOrderField!
-}
-
 input PeopleOrder
   @goModel(
     model: "go.probo.inc/probo/pkg/server/api/console/v1/types.PeopleOrderBy"
@@ -10935,23 +9942,6 @@ input SnapshotOrder
   field: SnapshotOrderField!
 }
 
-input MembershipOrder
-  @goModel(
-    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.MembershipOrderBy"
-  ) {
-  direction: OrderDirection!
-  field: MembershipOrderField!
-}
-
-input InvitationOrder {
-  direction: OrderDirection!
-  field: InvitationOrderField!
-}
-
-input InvitationFilter {
-  statuses: [InvitationStatus!]
-}
-
 input DocumentVersionFilter {
   status: DocumentStatus
 }
@@ -11045,23 +10035,6 @@ type Organization implements Node {
   email: String
   headquarterAddress: String
   context: OrganizationContext @goField(forceResolver: true)
-
-  memberships(
-    first: Int
-    after: CursorKey
-    last: Int
-    before: CursorKey
-    orderBy: MembershipOrder
-  ): MembershipConnection! @goField(forceResolver: true)
-
-  invitations(
-    first: Int
-    after: CursorKey
-    last: Int
-    before: CursorKey
-    orderBy: InvitationOrder
-    filter: InvitationFilter
-  ): InvitationConnection! @goField(forceResolver: true)
 
   slackConnections(
     first: Int
@@ -11230,8 +10203,6 @@ type Organization implements Node {
 
   customDomain: CustomDomain @goField(forceResolver: true)
 
-  samlConfigurations: [SAMLConfiguration!]! @goField(forceResolver: true)
-
   createdAt: Datetime!
   updatedAt: Datetime!
 }
@@ -11242,30 +10213,6 @@ type User implements Node {
   email: String!
   createdAt: Datetime!
   updatedAt: Datetime!
-}
-
-type Membership implements Node {
-  id: ID!
-  userID: ID!
-  organizationID: ID!
-  role: MembershipRole!
-  fullName: String!
-  emailAddress: String!
-  authMethod: UserAuthMethod! @goField(forceResolver: true)
-  createdAt: Datetime!
-  updatedAt: Datetime!
-}
-
-type Invitation implements Node {
-  id: ID!
-  email: String!
-  fullName: String!
-  role: MembershipRole!
-  status: InvitationStatus!
-  expiresAt: Datetime!
-  acceptedAt: Datetime
-  createdAt: Datetime!
-  organization: Organization! @goField(forceResolver: true)
 }
 
 type SlackConnection {
@@ -11998,34 +10945,6 @@ type TrustCenterFileEdge {
   node: TrustCenterFile!
 }
 
-type UserConnection
-  @goModel(
-    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.UserConnection"
-  ) {
-  totalCount: Int! @goField(forceResolver: true)
-  edges: [UserEdge!]!
-  pageInfo: PageInfo!
-}
-
-type MembershipConnection
-  @goModel(
-    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.MembershipConnection"
-  ) {
-  totalCount: Int! @goField(forceResolver: true)
-  edges: [MembershipEdge!]!
-  pageInfo: PageInfo!
-}
-
-type MembershipEdge {
-  cursor: CursorKey!
-  node: Membership!
-}
-
-type UserEdge {
-  cursor: CursorKey!
-  node: User!
-}
-
 type PeopleConnection
   @goModel(
     model: "go.probo.inc/probo/pkg/server/api/console/v1/types.PeopleConnection"
@@ -12339,20 +11258,6 @@ type File {
   updatedAt: Datetime!
 }
 
-type InvitationConnection
-  @goModel(
-    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.InvitationConnection"
-  ) {
-  totalCount: Int! @goField(forceResolver: true)
-  edges: [InvitationEdge!]!
-  pageInfo: PageInfo!
-}
-
-type InvitationEdge {
-  cursor: CursorKey!
-  node: Invitation!
-}
-
 # Root Types
 type Query {
   node(id: ID!): Node!
@@ -12360,6 +11265,7 @@ type Query {
 }
 
 type Mutation {
+<<<<<<< HEAD
   # Organization mutations
   createOrganization(
     input: CreateOrganizationInput!
@@ -12376,6 +11282,11 @@ type Mutation {
   deleteOrganization(
     input: DeleteOrganizationInput!
   ): DeleteOrganizationPayload!
+=======
+  updateOrganizationContext(
+    input: UpdateOrganizationContextInput!
+  ): UpdateOrganizationContextPayload!
+>>>>>>> 66b095fd (WIP)
   updateTrustCenter(input: UpdateTrustCenterInput!): UpdateTrustCenterPayload!
   uploadTrustCenterNDA(
     input: UploadTrustCenterNDAInput!
@@ -12416,6 +11327,7 @@ type Mutation {
   deleteTrustCenterFile(
     input: DeleteTrustCenterFileInput!
   ): DeleteTrustCenterFilePayload!
+<<<<<<< HEAD
   # User mutations
   confirmEmail(input: ConfirmEmailInput!): ConfirmEmailPayload!
   inviteUser(input: InviteUserInput!): InviteUserPayload!
@@ -12423,6 +11335,8 @@ type Mutation {
   deleteInvitation(input: DeleteInvitationInput!): DeleteInvitationPayload!
   removeMember(input: RemoveMemberInput!): RemoveMemberPayload!
   updateMembership(input: UpdateMembershipInput!): UpdateMembershipPayload!
+=======
+>>>>>>> 66b095fd (WIP)
   # People mutations
   createPeople(input: CreatePeopleInput!): CreatePeoplePayload!
   updatePeople(input: UpdatePeopleInput!): UpdatePeoplePayload!
@@ -12596,7 +11510,10 @@ type Mutation {
   cancelSignatureRequest(
     input: CancelSignatureRequestInput!
   ): CancelSignatureRequestPayload!
+<<<<<<< HEAD
   signDocument(input: SignDocumentInput!): SignDocumentPayload!
+=======
+>>>>>>> 66b095fd (WIP)
   exportDocumentVersionPDF(
     input: ExportDocumentVersionPDFInput!
   ): ExportDocumentVersionPDFPayload!
@@ -12662,6 +11579,7 @@ type Mutation {
   deleteCustomDomain(
     input: DeleteCustomDomainInput!
   ): DeleteCustomDomainPayload!
+<<<<<<< HEAD
   # SAML Configuration mutations (OWNER/ADMIN only)
   # Step 1: Initiate domain verification (creates SAML config with unverified domain)
   initiateDomainVerification(
@@ -12681,6 +11599,8 @@ type Mutation {
   ): DeleteSAMLConfigurationPayload!
   enableSAML(input: EnableSAMLInput!): EnableSAMLPayload!
   disableSAML(input: DisableSAMLInput!): DisableSAMLPayload!
+=======
+>>>>>>> 66b095fd (WIP)
 }
 
 # Input Types
@@ -12692,32 +11612,9 @@ type GenerateFrameworkStateOfApplicabilityPayload {
   data: String!
 }
 
-input CreateOrganizationInput {
-  name: String!
-}
-
-input UpdateOrganizationInput {
-  organizationId: ID!
-  name: String
-  description: String @goField(omittable: true)
-  websiteUrl: String @goField(omittable: true)
-  email: String @goField(omittable: true)
-  headquarterAddress: String @goField(omittable: true)
-  logoFile: Upload
-  horizontalLogoFile: Upload
-}
-
 input UpdateOrganizationContextInput {
   organizationId: ID!
   summary: String @goField(omittable: true)
-}
-
-input DeleteOrganizationHorizontalLogoInput {
-  organizationId: ID!
-}
-
-input DeleteOrganizationInput {
-  organizationId: ID!
 }
 
 input UpdateTrustCenterInput {
@@ -13230,37 +12127,6 @@ input DeleteMeetingInput {
   meetingId: ID!
 }
 
-input ConfirmEmailInput {
-  token: String!
-}
-
-input InviteUserInput {
-  organizationId: ID!
-  email: String!
-  fullName: String!
-  role: MembershipRole!
-  createPeople: Boolean!
-}
-
-input AcceptInvitationInput {
-  invitationId: ID!
-}
-
-input DeleteInvitationInput {
-  invitationId: ID!
-}
-
-input RemoveMemberInput {
-  organizationId: ID!
-  memberId: ID!
-}
-
-input UpdateMembershipInput {
-  organizationId: ID!
-  memberId: ID!
-  role: MembershipRole!
-}
-
 input CreateControlInput {
   frameworkId: ID!
   sectionTitle: String!
@@ -13462,13 +12328,6 @@ input DeleteSnapshotInput {
 }
 
 # Payload Types
-type CreateOrganizationPayload {
-  organizationEdge: OrganizationEdge!
-}
-
-type UpdateOrganizationPayload {
-  organization: Organization!
-}
 
 type UpdateOrganizationContextPayload {
   context: OrganizationContext!
@@ -13477,14 +12336,6 @@ type UpdateOrganizationContextPayload {
 type OrganizationContext {
   organizationId: ID!
   summary: String
-}
-
-type DeleteOrganizationHorizontalLogoPayload {
-  organization: Organization!
-}
-
-type DeleteOrganizationPayload {
-  deletedOrganizationId: ID!
 }
 
 type UpdateTrustCenterPayload {
@@ -13814,30 +12665,6 @@ type DeleteMeetingPayload {
   deletedMeetingId: ID!
 }
 
-type ConfirmEmailPayload {
-  success: Boolean!
-}
-
-type InviteUserPayload {
-  invitationEdge: InvitationEdge!
-}
-
-type AcceptInvitationPayload {
-  invitation: Invitation!
-}
-
-type DeleteInvitationPayload {
-  deletedInvitationId: ID!
-}
-
-type RemoveMemberPayload {
-  deletedMemberId: ID!
-}
-
-type UpdateMembershipPayload {
-  membership: Membership!
-}
-
 input VendorRiskAssessmentOrder {
   field: VendorRiskAssessmentOrderField!
   direction: OrderDirection!
@@ -14121,7 +12948,7 @@ type Asset implements Node {
     before: CursorKey
     orderBy: VendorOrder
   ): VendorConnection! @goField(forceResolver: true)
-  assetType: AssetType! @goField(forceResolver: true)
+  assetType: AssetType!
   dataTypesStored: String!
   organization: Organization! @goField(forceResolver: true)
   createdAt: Datetime!
@@ -14384,165 +13211,6 @@ type CreateCustomDomainPayload {
 
 type DeleteCustomDomainPayload {
   deletedCustomDomainId: ID!
-}
-
-# ============================================
-# SAML Configuration Types
-# ============================================
-
-type SAMLConfiguration implements Node {
-  id: ID!
-  organization: Organization! @goField(forceResolver: true)
-  emailDomain: String!
-  enabled: Boolean!
-  enforcementPolicy: SAMLEnforcementPolicy!
-
-  # Domain verification (required before SAML can be configured)
-  domainVerified: Boolean!
-  domainVerificationToken: String
-  domainVerifiedAt: Datetime
-
-  # Service Provider metadata (read-only, auto-generated)
-  spEntityId: String!
-  spAcsUrl: String!
-  spMetadataUrl: String! @goField(forceResolver: true)
-
-  # Identity Provider configuration
-  idpEntityId: String!
-  idpSsoUrl: String!
-  idpCertificate: String!
-  idpMetadataUrl: String
-
-  # Attribute mapping
-  attributeEmail: String!
-  attributeFirstname: String!
-  attributeLastname: String!
-  attributeRole: String!
-
-  # Auto-signup
-  autoSignupEnabled: Boolean!
-
-  # Test login URL for this configuration
-  testLoginUrl: String! @goField(forceResolver: true)
-
-  createdAt: Datetime!
-  updatedAt: Datetime!
-}
-
-# ============================================
-# SAML Configuration Inputs
-# ============================================
-
-input CreateSAMLConfigurationInput {
-  organizationId: ID!
-
-  # Email domain this config applies to
-  emailDomain: String!
-
-  # Enforcement policy for this SAML configuration
-  enforcementPolicy: SAMLEnforcementPolicy!
-
-  # SP configuration (optional - auto-generated if not provided)
-  spCertificate: String
-  spPrivateKey: String
-
-  # IdP configuration - Option 1: Provide metadata XML (recommended for Google Workspace)
-  # This will automatically extract entityId, ssoUrl, and certificate from the metadata
-  idpMetadataXml: String
-
-  # IdP configuration - Option 2: Provide individual fields manually
-  # Required if idpMetadataXml is not provided
-  idpEntityId: String
-  idpSsoUrl: String
-  idpCertificate: String
-  idpMetadataUrl: String
-
-  # Attribute mapping (optional, defaults provided)
-  attributeEmail: String
-  attributeFirstname: String
-  attributeLastname: String
-  attributeRole: String
-
-  autoSignupEnabled: Boolean
-}
-
-input UpdateSAMLConfigurationInput {
-  id: ID!
-
-  enabled: Boolean
-  enforcementPolicy: SAMLEnforcementPolicy
-  spCertificate: String
-  spPrivateKey: String
-  idpEntityId: String
-  idpSsoUrl: String
-  idpCertificate: String
-  idpMetadataUrl: String
-  attributeEmail: String
-  attributeFirstname: String
-  attributeLastname: String
-  attributeRole: String
-  autoSignupEnabled: Boolean
-}
-
-# ============================================
-# Domain Verification Inputs
-# ============================================
-
-input InitiateDomainVerificationInput {
-  organizationId: ID!
-  emailDomain: String!
-}
-
-input VerifyDomainInput {
-  id: ID!
-}
-
-input DeleteSAMLConfigurationInput {
-  id: ID!
-}
-
-input EnableSAMLInput {
-  id: ID!
-}
-
-input DisableSAMLInput {
-  id: ID!
-}
-
-# ============================================
-# SAML Configuration Payloads
-# ============================================
-
-type InitiateDomainVerificationPayload {
-  samlConfiguration: SAMLConfiguration!
-  # The TXT record value that needs to be added to DNS
-  # Format: probo-verification={token}
-  dnsRecord: String!
-}
-
-type VerifyDomainPayload {
-  samlConfiguration: SAMLConfiguration!
-  verified: Boolean!
-}
-
-type CreateSAMLConfigurationPayload {
-  samlConfiguration: SAMLConfiguration!
-}
-
-type UpdateSAMLConfigurationPayload {
-  samlConfiguration: SAMLConfiguration!
-}
-
-type DeleteSAMLConfigurationPayload {
-  deletedSAMLConfigurationId: ID!
-}
-
-type EnableSAMLPayload {
-  samlConfiguration: SAMLConfiguration!
-}
-
-type DisableSAMLPayload {
-  samlConfiguration: SAMLConfiguration!
 }
 `, BuiltIn: false},
 }
@@ -15062,17 +13730,6 @@ func (ec *executionContext) field_Measure_tasks_args(ctx context.Context, rawArg
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_acceptInvitation_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNAcceptInvitationInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAcceptInvitationInput)
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
 func (ec *executionContext) field_Mutation_assessVendor_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -15143,17 +13800,6 @@ func (ec *executionContext) field_Mutation_cancelSignatureRequest_args(ctx conte
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCancelSignatureRequestInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCancelSignatureRequestInput)
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_confirmEmail_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNConfirmEmailInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐConfirmEmailInput)
 	if err != nil {
 		return nil, err
 	}
@@ -15348,17 +13994,6 @@ func (ec *executionContext) field_Mutation_createObligation_args(ctx context.Con
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_createOrganization_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateOrganizationInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateOrganizationInput)
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
 func (ec *executionContext) field_Mutation_createPeople_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -15418,17 +14053,6 @@ func (ec *executionContext) field_Mutation_createRisk_args(ctx context.Context, 
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateRiskInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateRiskInput)
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_createSAMLConfiguration_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateSAMLConfigurationInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateSAMLConfigurationInput)
 	if err != nil {
 		return nil, err
 	}
@@ -15700,17 +14324,6 @@ func (ec *executionContext) field_Mutation_deleteFramework_args(ctx context.Cont
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_deleteInvitation_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNDeleteInvitationInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteInvitationInput)
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
 func (ec *executionContext) field_Mutation_deleteMeasure_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -15748,28 +14361,6 @@ func (ec *executionContext) field_Mutation_deleteObligation_args(ctx context.Con
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNDeleteObligationInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteObligationInput)
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_deleteOrganizationHorizontalLogo_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNDeleteOrganizationHorizontalLogoInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteOrganizationHorizontalLogoInput)
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_deleteOrganization_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNDeleteOrganizationInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteOrganizationInput)
 	if err != nil {
 		return nil, err
 	}
@@ -15836,17 +14427,6 @@ func (ec *executionContext) field_Mutation_deleteRisk_args(ctx context.Context, 
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNDeleteRiskInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteRiskInput)
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_deleteSAMLConfiguration_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNDeleteSAMLConfigurationInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteSAMLConfigurationInput)
 	if err != nil {
 		return nil, err
 	}
@@ -15986,28 +14566,6 @@ func (ec *executionContext) field_Mutation_deleteVendor_args(ctx context.Context
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_disableSAML_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNDisableSAMLInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDisableSAMLInput)
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_enableSAML_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNEnableSAMLInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐEnableSAMLInput)
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
 func (ec *executionContext) field_Mutation_exportDocumentVersionPDF_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -16096,43 +14654,10 @@ func (ec *executionContext) field_Mutation_importMeasure_args(ctx context.Contex
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_initiateDomainVerification_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNInitiateDomainVerificationInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐInitiateDomainVerificationInput)
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_inviteUser_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNInviteUserInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐInviteUserInput)
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
 func (ec *executionContext) field_Mutation_publishDocumentVersion_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNPublishDocumentVersionInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPublishDocumentVersionInput)
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_removeMember_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNRemoveMemberInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐRemoveMemberInput)
 	if err != nil {
 		return nil, err
 	}
@@ -16294,17 +14819,6 @@ func (ec *executionContext) field_Mutation_updateMeeting_args(ctx context.Contex
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_updateMembership_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateMembershipInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateMembershipInput)
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
 func (ec *executionContext) field_Mutation_updateNonconformity_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -16338,17 +14852,6 @@ func (ec *executionContext) field_Mutation_updateOrganizationContext_args(ctx co
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_updateOrganization_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateOrganizationInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateOrganizationInput)
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
 func (ec *executionContext) field_Mutation_updatePeople_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -16375,17 +14878,6 @@ func (ec *executionContext) field_Mutation_updateRisk_args(ctx context.Context, 
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateRiskInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateRiskInput)
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_updateSAMLConfiguration_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateSAMLConfigurationInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateSAMLConfigurationInput)
 	if err != nil {
 		return nil, err
 	}
@@ -16562,17 +15054,6 @@ func (ec *executionContext) field_Mutation_uploadVendorDataPrivacyAgreement_args
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUploadVendorDataPrivacyAgreementInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUploadVendorDataPrivacyAgreementInput)
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_verifyDomain_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNVerifyDomainInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐVerifyDomainInput)
 	if err != nil {
 		return nil, err
 	}
@@ -16822,42 +15303,6 @@ func (ec *executionContext) field_Organization_frameworks_args(ctx context.Conte
 	return args, nil
 }
 
-func (ec *executionContext) field_Organization_invitations_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "first", ec.unmarshalOInt2ᚖint)
-	if err != nil {
-		return nil, err
-	}
-	args["first"] = arg0
-	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "after", ec.unmarshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey)
-	if err != nil {
-		return nil, err
-	}
-	args["after"] = arg1
-	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "last", ec.unmarshalOInt2ᚖint)
-	if err != nil {
-		return nil, err
-	}
-	args["last"] = arg2
-	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "before", ec.unmarshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey)
-	if err != nil {
-		return nil, err
-	}
-	args["before"] = arg3
-	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "orderBy", ec.unmarshalOInvitationOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐInvitationOrder)
-	if err != nil {
-		return nil, err
-	}
-	args["orderBy"] = arg4
-	arg5, err := graphql.ProcessArgField(ctx, rawArgs, "filter", ec.unmarshalOInvitationFilter2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐInvitationFilter)
-	if err != nil {
-		return nil, err
-	}
-	args["filter"] = arg5
-	return args, nil
-}
-
 func (ec *executionContext) field_Organization_measures_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -16918,37 +15363,6 @@ func (ec *executionContext) field_Organization_meetings_args(ctx context.Context
 	}
 	args["before"] = arg3
 	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "orderBy", ec.unmarshalOMeetingOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐMeetingOrderBy)
-	if err != nil {
-		return nil, err
-	}
-	args["orderBy"] = arg4
-	return args, nil
-}
-
-func (ec *executionContext) field_Organization_memberships_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "first", ec.unmarshalOInt2ᚖint)
-	if err != nil {
-		return nil, err
-	}
-	args["first"] = arg0
-	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "after", ec.unmarshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey)
-	if err != nil {
-		return nil, err
-	}
-	args["after"] = arg1
-	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "last", ec.unmarshalOInt2ᚖint)
-	if err != nil {
-		return nil, err
-	}
-	args["last"] = arg2
-	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "before", ec.unmarshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey)
-	if err != nil {
-		return nil, err
-	}
-	args["before"] = arg3
-	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "orderBy", ec.unmarshalOMembershipOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐMembershipOrderBy)
 	if err != nil {
 		return nil, err
 	}
@@ -17938,55 +16352,6 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 
 // region    **************************** field.gotpl *****************************
 
-func (ec *executionContext) _AcceptInvitationPayload_invitation(ctx context.Context, field graphql.CollectedField, obj *types.AcceptInvitationPayload) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_AcceptInvitationPayload_invitation,
-		func(ctx context.Context) (any, error) {
-			return obj.Invitation, nil
-		},
-		nil,
-		ec.marshalNInvitation2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐInvitation,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_AcceptInvitationPayload_invitation(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "AcceptInvitationPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Invitation_id(ctx, field)
-			case "email":
-				return ec.fieldContext_Invitation_email(ctx, field)
-			case "fullName":
-				return ec.fieldContext_Invitation_fullName(ctx, field)
-			case "role":
-				return ec.fieldContext_Invitation_role(ctx, field)
-			case "status":
-				return ec.fieldContext_Invitation_status(ctx, field)
-			case "expiresAt":
-				return ec.fieldContext_Invitation_expiresAt(ctx, field)
-			case "acceptedAt":
-				return ec.fieldContext_Invitation_acceptedAt(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Invitation_createdAt(ctx, field)
-			case "organization":
-				return ec.fieldContext_Invitation_organization(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Invitation", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _AssessVendorPayload_vendor(ctx context.Context, field graphql.CollectedField, obj *types.AssessVendorPayload) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -18303,7 +16668,7 @@ func (ec *executionContext) _Asset_assetType(ctx context.Context, field graphql.
 		field,
 		ec.fieldContext_Asset_assetType,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.Asset().AssetType(ctx, obj)
+			return obj.AssetType, nil
 		},
 		nil,
 		ec.marshalNAssetType2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐAssetType,
@@ -18316,8 +16681,8 @@ func (ec *executionContext) fieldContext_Asset_assetType(_ context.Context, fiel
 	fc = &graphql.FieldContext{
 		Object:     "Asset",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type AssetType does not have child fields")
 		},
@@ -18396,10 +16761,6 @@ func (ec *executionContext) fieldContext_Asset_organization(_ context.Context, f
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
-			case "memberships":
-				return ec.fieldContext_Organization_memberships(ctx, field)
-			case "invitations":
-				return ec.fieldContext_Organization_invitations(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
 			case "frameworks":
@@ -18442,8 +16803,6 @@ func (ec *executionContext) fieldContext_Asset_organization(_ context.Context, f
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
 			case "customDomain":
 				return ec.fieldContext_Organization_customDomain(ctx, field)
-			case "samlConfigurations":
-				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -18853,10 +17212,6 @@ func (ec *executionContext) fieldContext_Audit_organization(_ context.Context, f
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
-			case "memberships":
-				return ec.fieldContext_Organization_memberships(ctx, field)
-			case "invitations":
-				return ec.fieldContext_Organization_invitations(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
 			case "frameworks":
@@ -18899,8 +17254,6 @@ func (ec *executionContext) fieldContext_Audit_organization(_ context.Context, f
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
 			case "customDomain":
 				return ec.fieldContext_Organization_customDomain(ctx, field)
-			case "samlConfigurations":
-				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -19639,35 +17992,6 @@ func (ec *executionContext) fieldContext_CancelSignatureRequestPayload_deletedDo
 	return fc, nil
 }
 
-func (ec *executionContext) _ConfirmEmailPayload_success(ctx context.Context, field graphql.CollectedField, obj *types.ConfirmEmailPayload) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_ConfirmEmailPayload_success,
-		func(ctx context.Context) (any, error) {
-			return obj.Success, nil
-		},
-		nil,
-		ec.marshalNBoolean2bool,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_ConfirmEmailPayload_success(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ConfirmEmailPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _ContinualImprovement_id(ctx context.Context, field graphql.CollectedField, obj *types.ContinualImprovement) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -19797,10 +18121,6 @@ func (ec *executionContext) fieldContext_ContinualImprovement_organization(_ con
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
-			case "memberships":
-				return ec.fieldContext_Organization_memberships(ctx, field)
-			case "invitations":
-				return ec.fieldContext_Organization_invitations(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
 			case "frameworks":
@@ -19843,8 +18163,6 @@ func (ec *executionContext) fieldContext_ContinualImprovement_organization(_ con
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
 			case "customDomain":
 				return ec.fieldContext_Organization_customDomain(ctx, field)
-			case "samlConfigurations":
-				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -21807,41 +20125,6 @@ func (ec *executionContext) fieldContext_CreateObligationPayload_obligationEdge(
 	return fc, nil
 }
 
-func (ec *executionContext) _CreateOrganizationPayload_organizationEdge(ctx context.Context, field graphql.CollectedField, obj *types.CreateOrganizationPayload) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_CreateOrganizationPayload_organizationEdge,
-		func(ctx context.Context) (any, error) {
-			return obj.OrganizationEdge, nil
-		},
-		nil,
-		ec.marshalNOrganizationEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐOrganizationEdge,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_CreateOrganizationPayload_organizationEdge(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "CreateOrganizationPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "cursor":
-				return ec.fieldContext_OrganizationEdge_cursor(ctx, field)
-			case "node":
-				return ec.fieldContext_OrganizationEdge_node(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type OrganizationEdge", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _CreatePeoplePayload_peopleEdge(ctx context.Context, field graphql.CollectedField, obj *types.CreatePeoplePayload) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -22152,83 +20435,6 @@ func (ec *executionContext) fieldContext_CreateRiskPayload_riskEdge(_ context.Co
 				return ec.fieldContext_RiskEdge_node(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type RiskEdge", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _CreateSAMLConfigurationPayload_samlConfiguration(ctx context.Context, field graphql.CollectedField, obj *types.CreateSAMLConfigurationPayload) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_CreateSAMLConfigurationPayload_samlConfiguration,
-		func(ctx context.Context) (any, error) {
-			return obj.SamlConfiguration, nil
-		},
-		nil,
-		ec.marshalNSAMLConfiguration2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐSAMLConfiguration,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_CreateSAMLConfigurationPayload_samlConfiguration(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "CreateSAMLConfigurationPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_SAMLConfiguration_id(ctx, field)
-			case "organization":
-				return ec.fieldContext_SAMLConfiguration_organization(ctx, field)
-			case "emailDomain":
-				return ec.fieldContext_SAMLConfiguration_emailDomain(ctx, field)
-			case "enabled":
-				return ec.fieldContext_SAMLConfiguration_enabled(ctx, field)
-			case "enforcementPolicy":
-				return ec.fieldContext_SAMLConfiguration_enforcementPolicy(ctx, field)
-			case "domainVerified":
-				return ec.fieldContext_SAMLConfiguration_domainVerified(ctx, field)
-			case "domainVerificationToken":
-				return ec.fieldContext_SAMLConfiguration_domainVerificationToken(ctx, field)
-			case "domainVerifiedAt":
-				return ec.fieldContext_SAMLConfiguration_domainVerifiedAt(ctx, field)
-			case "spEntityId":
-				return ec.fieldContext_SAMLConfiguration_spEntityId(ctx, field)
-			case "spAcsUrl":
-				return ec.fieldContext_SAMLConfiguration_spAcsUrl(ctx, field)
-			case "spMetadataUrl":
-				return ec.fieldContext_SAMLConfiguration_spMetadataUrl(ctx, field)
-			case "idpEntityId":
-				return ec.fieldContext_SAMLConfiguration_idpEntityId(ctx, field)
-			case "idpSsoUrl":
-				return ec.fieldContext_SAMLConfiguration_idpSsoUrl(ctx, field)
-			case "idpCertificate":
-				return ec.fieldContext_SAMLConfiguration_idpCertificate(ctx, field)
-			case "idpMetadataUrl":
-				return ec.fieldContext_SAMLConfiguration_idpMetadataUrl(ctx, field)
-			case "attributeEmail":
-				return ec.fieldContext_SAMLConfiguration_attributeEmail(ctx, field)
-			case "attributeFirstname":
-				return ec.fieldContext_SAMLConfiguration_attributeFirstname(ctx, field)
-			case "attributeLastname":
-				return ec.fieldContext_SAMLConfiguration_attributeLastname(ctx, field)
-			case "attributeRole":
-				return ec.fieldContext_SAMLConfiguration_attributeRole(ctx, field)
-			case "autoSignupEnabled":
-				return ec.fieldContext_SAMLConfiguration_autoSignupEnabled(ctx, field)
-			case "testLoginUrl":
-				return ec.fieldContext_SAMLConfiguration_testLoginUrl(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_SAMLConfiguration_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_SAMLConfiguration_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type SAMLConfiguration", field.Name)
 		},
 	}
 	return fc, nil
@@ -22620,10 +20826,6 @@ func (ec *executionContext) fieldContext_CustomDomain_organization(_ context.Con
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
-			case "memberships":
-				return ec.fieldContext_Organization_memberships(ctx, field)
-			case "invitations":
-				return ec.fieldContext_Organization_invitations(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
 			case "frameworks":
@@ -22666,8 +20868,6 @@ func (ec *executionContext) fieldContext_CustomDomain_organization(_ context.Con
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
 			case "customDomain":
 				return ec.fieldContext_Organization_customDomain(ctx, field)
-			case "samlConfigurations":
-				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -23268,10 +21468,6 @@ func (ec *executionContext) fieldContext_Datum_organization(_ context.Context, f
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
-			case "memberships":
-				return ec.fieldContext_Organization_memberships(ctx, field)
-			case "invitations":
-				return ec.fieldContext_Organization_invitations(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
 			case "frameworks":
@@ -23314,8 +21510,6 @@ func (ec *executionContext) fieldContext_Datum_organization(_ context.Context, f
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
 			case "customDomain":
 				return ec.fieldContext_Organization_customDomain(ctx, field)
-			case "samlConfigurations":
-				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -24145,35 +22339,6 @@ func (ec *executionContext) fieldContext_DeleteFrameworkPayload_deletedFramework
 	return fc, nil
 }
 
-func (ec *executionContext) _DeleteInvitationPayload_deletedInvitationId(ctx context.Context, field graphql.CollectedField, obj *types.DeleteInvitationPayload) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_DeleteInvitationPayload_deletedInvitationId,
-		func(ctx context.Context) (any, error) {
-			return obj.DeletedInvitationID, nil
-		},
-		nil,
-		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_DeleteInvitationPayload_deletedInvitationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "DeleteInvitationPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _DeleteMeasurePayload_deletedMeasureId(ctx context.Context, field graphql.CollectedField, obj *types.DeleteMeasurePayload) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -24280,136 +22445,6 @@ func (ec *executionContext) _DeleteObligationPayload_deletedObligationId(ctx con
 func (ec *executionContext) fieldContext_DeleteObligationPayload_deletedObligationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "DeleteObligationPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _DeleteOrganizationHorizontalLogoPayload_organization(ctx context.Context, field graphql.CollectedField, obj *types.DeleteOrganizationHorizontalLogoPayload) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_DeleteOrganizationHorizontalLogoPayload_organization,
-		func(ctx context.Context) (any, error) {
-			return obj.Organization, nil
-		},
-		nil,
-		ec.marshalNOrganization2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐOrganization,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_DeleteOrganizationHorizontalLogoPayload_organization(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "DeleteOrganizationHorizontalLogoPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Organization_id(ctx, field)
-			case "name":
-				return ec.fieldContext_Organization_name(ctx, field)
-			case "logoUrl":
-				return ec.fieldContext_Organization_logoUrl(ctx, field)
-			case "horizontalLogoUrl":
-				return ec.fieldContext_Organization_horizontalLogoUrl(ctx, field)
-			case "description":
-				return ec.fieldContext_Organization_description(ctx, field)
-			case "websiteUrl":
-				return ec.fieldContext_Organization_websiteUrl(ctx, field)
-			case "email":
-				return ec.fieldContext_Organization_email(ctx, field)
-			case "headquarterAddress":
-				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
-			case "context":
-				return ec.fieldContext_Organization_context(ctx, field)
-			case "memberships":
-				return ec.fieldContext_Organization_memberships(ctx, field)
-			case "invitations":
-				return ec.fieldContext_Organization_invitations(ctx, field)
-			case "slackConnections":
-				return ec.fieldContext_Organization_slackConnections(ctx, field)
-			case "frameworks":
-				return ec.fieldContext_Organization_frameworks(ctx, field)
-			case "controls":
-				return ec.fieldContext_Organization_controls(ctx, field)
-			case "vendors":
-				return ec.fieldContext_Organization_vendors(ctx, field)
-			case "peoples":
-				return ec.fieldContext_Organization_peoples(ctx, field)
-			case "documents":
-				return ec.fieldContext_Organization_documents(ctx, field)
-			case "meetings":
-				return ec.fieldContext_Organization_meetings(ctx, field)
-			case "measures":
-				return ec.fieldContext_Organization_measures(ctx, field)
-			case "risks":
-				return ec.fieldContext_Organization_risks(ctx, field)
-			case "tasks":
-				return ec.fieldContext_Organization_tasks(ctx, field)
-			case "assets":
-				return ec.fieldContext_Organization_assets(ctx, field)
-			case "data":
-				return ec.fieldContext_Organization_data(ctx, field)
-			case "audits":
-				return ec.fieldContext_Organization_audits(ctx, field)
-			case "nonconformities":
-				return ec.fieldContext_Organization_nonconformities(ctx, field)
-			case "obligations":
-				return ec.fieldContext_Organization_obligations(ctx, field)
-			case "continualImprovements":
-				return ec.fieldContext_Organization_continualImprovements(ctx, field)
-			case "processingActivities":
-				return ec.fieldContext_Organization_processingActivities(ctx, field)
-			case "snapshots":
-				return ec.fieldContext_Organization_snapshots(ctx, field)
-			case "trustCenterFiles":
-				return ec.fieldContext_Organization_trustCenterFiles(ctx, field)
-			case "trustCenter":
-				return ec.fieldContext_Organization_trustCenter(ctx, field)
-			case "customDomain":
-				return ec.fieldContext_Organization_customDomain(ctx, field)
-			case "samlConfigurations":
-				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Organization_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_Organization_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _DeleteOrganizationPayload_deletedOrganizationId(ctx context.Context, field graphql.CollectedField, obj *types.DeleteOrganizationPayload) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_DeleteOrganizationPayload_deletedOrganizationId,
-		func(ctx context.Context) (any, error) {
-			return obj.DeletedOrganizationID, nil
-		},
-		nil,
-		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_DeleteOrganizationPayload_deletedOrganizationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "DeleteOrganizationPayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -24671,35 +22706,6 @@ func (ec *executionContext) _DeleteRiskPayload_deletedRiskId(ctx context.Context
 func (ec *executionContext) fieldContext_DeleteRiskPayload_deletedRiskId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "DeleteRiskPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _DeleteSAMLConfigurationPayload_deletedSAMLConfigurationId(ctx context.Context, field graphql.CollectedField, obj *types.DeleteSAMLConfigurationPayload) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_DeleteSAMLConfigurationPayload_deletedSAMLConfigurationId,
-		func(ctx context.Context) (any, error) {
-			return obj.DeletedSAMLConfigurationID, nil
-		},
-		nil,
-		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_DeleteSAMLConfigurationPayload_deletedSAMLConfigurationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "DeleteSAMLConfigurationPayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -25078,83 +23084,6 @@ func (ec *executionContext) fieldContext_DeleteVendorServicePayload_deletedVendo
 	return fc, nil
 }
 
-func (ec *executionContext) _DisableSAMLPayload_samlConfiguration(ctx context.Context, field graphql.CollectedField, obj *types.DisableSAMLPayload) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_DisableSAMLPayload_samlConfiguration,
-		func(ctx context.Context) (any, error) {
-			return obj.SamlConfiguration, nil
-		},
-		nil,
-		ec.marshalNSAMLConfiguration2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐSAMLConfiguration,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_DisableSAMLPayload_samlConfiguration(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "DisableSAMLPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_SAMLConfiguration_id(ctx, field)
-			case "organization":
-				return ec.fieldContext_SAMLConfiguration_organization(ctx, field)
-			case "emailDomain":
-				return ec.fieldContext_SAMLConfiguration_emailDomain(ctx, field)
-			case "enabled":
-				return ec.fieldContext_SAMLConfiguration_enabled(ctx, field)
-			case "enforcementPolicy":
-				return ec.fieldContext_SAMLConfiguration_enforcementPolicy(ctx, field)
-			case "domainVerified":
-				return ec.fieldContext_SAMLConfiguration_domainVerified(ctx, field)
-			case "domainVerificationToken":
-				return ec.fieldContext_SAMLConfiguration_domainVerificationToken(ctx, field)
-			case "domainVerifiedAt":
-				return ec.fieldContext_SAMLConfiguration_domainVerifiedAt(ctx, field)
-			case "spEntityId":
-				return ec.fieldContext_SAMLConfiguration_spEntityId(ctx, field)
-			case "spAcsUrl":
-				return ec.fieldContext_SAMLConfiguration_spAcsUrl(ctx, field)
-			case "spMetadataUrl":
-				return ec.fieldContext_SAMLConfiguration_spMetadataUrl(ctx, field)
-			case "idpEntityId":
-				return ec.fieldContext_SAMLConfiguration_idpEntityId(ctx, field)
-			case "idpSsoUrl":
-				return ec.fieldContext_SAMLConfiguration_idpSsoUrl(ctx, field)
-			case "idpCertificate":
-				return ec.fieldContext_SAMLConfiguration_idpCertificate(ctx, field)
-			case "idpMetadataUrl":
-				return ec.fieldContext_SAMLConfiguration_idpMetadataUrl(ctx, field)
-			case "attributeEmail":
-				return ec.fieldContext_SAMLConfiguration_attributeEmail(ctx, field)
-			case "attributeFirstname":
-				return ec.fieldContext_SAMLConfiguration_attributeFirstname(ctx, field)
-			case "attributeLastname":
-				return ec.fieldContext_SAMLConfiguration_attributeLastname(ctx, field)
-			case "attributeRole":
-				return ec.fieldContext_SAMLConfiguration_attributeRole(ctx, field)
-			case "autoSignupEnabled":
-				return ec.fieldContext_SAMLConfiguration_autoSignupEnabled(ctx, field)
-			case "testLoginUrl":
-				return ec.fieldContext_SAMLConfiguration_testLoginUrl(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_SAMLConfiguration_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_SAMLConfiguration_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type SAMLConfiguration", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Document_id(ctx context.Context, field graphql.CollectedField, obj *types.Document) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -25451,10 +23380,6 @@ func (ec *executionContext) fieldContext_Document_organization(_ context.Context
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
-			case "memberships":
-				return ec.fieldContext_Organization_memberships(ctx, field)
-			case "invitations":
-				return ec.fieldContext_Organization_invitations(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
 			case "frameworks":
@@ -25497,8 +23422,6 @@ func (ec *executionContext) fieldContext_Document_organization(_ context.Context
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
 			case "customDomain":
 				return ec.fieldContext_Organization_customDomain(ctx, field)
-			case "samlConfigurations":
-				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -26923,83 +24846,6 @@ func (ec *executionContext) fieldContext_DocumentVersionSignatureEdge_node(_ con
 	return fc, nil
 }
 
-func (ec *executionContext) _EnableSAMLPayload_samlConfiguration(ctx context.Context, field graphql.CollectedField, obj *types.EnableSAMLPayload) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_EnableSAMLPayload_samlConfiguration,
-		func(ctx context.Context) (any, error) {
-			return obj.SamlConfiguration, nil
-		},
-		nil,
-		ec.marshalNSAMLConfiguration2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐSAMLConfiguration,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_EnableSAMLPayload_samlConfiguration(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "EnableSAMLPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_SAMLConfiguration_id(ctx, field)
-			case "organization":
-				return ec.fieldContext_SAMLConfiguration_organization(ctx, field)
-			case "emailDomain":
-				return ec.fieldContext_SAMLConfiguration_emailDomain(ctx, field)
-			case "enabled":
-				return ec.fieldContext_SAMLConfiguration_enabled(ctx, field)
-			case "enforcementPolicy":
-				return ec.fieldContext_SAMLConfiguration_enforcementPolicy(ctx, field)
-			case "domainVerified":
-				return ec.fieldContext_SAMLConfiguration_domainVerified(ctx, field)
-			case "domainVerificationToken":
-				return ec.fieldContext_SAMLConfiguration_domainVerificationToken(ctx, field)
-			case "domainVerifiedAt":
-				return ec.fieldContext_SAMLConfiguration_domainVerifiedAt(ctx, field)
-			case "spEntityId":
-				return ec.fieldContext_SAMLConfiguration_spEntityId(ctx, field)
-			case "spAcsUrl":
-				return ec.fieldContext_SAMLConfiguration_spAcsUrl(ctx, field)
-			case "spMetadataUrl":
-				return ec.fieldContext_SAMLConfiguration_spMetadataUrl(ctx, field)
-			case "idpEntityId":
-				return ec.fieldContext_SAMLConfiguration_idpEntityId(ctx, field)
-			case "idpSsoUrl":
-				return ec.fieldContext_SAMLConfiguration_idpSsoUrl(ctx, field)
-			case "idpCertificate":
-				return ec.fieldContext_SAMLConfiguration_idpCertificate(ctx, field)
-			case "idpMetadataUrl":
-				return ec.fieldContext_SAMLConfiguration_idpMetadataUrl(ctx, field)
-			case "attributeEmail":
-				return ec.fieldContext_SAMLConfiguration_attributeEmail(ctx, field)
-			case "attributeFirstname":
-				return ec.fieldContext_SAMLConfiguration_attributeFirstname(ctx, field)
-			case "attributeLastname":
-				return ec.fieldContext_SAMLConfiguration_attributeLastname(ctx, field)
-			case "attributeRole":
-				return ec.fieldContext_SAMLConfiguration_attributeRole(ctx, field)
-			case "autoSignupEnabled":
-				return ec.fieldContext_SAMLConfiguration_autoSignupEnabled(ctx, field)
-			case "testLoginUrl":
-				return ec.fieldContext_SAMLConfiguration_testLoginUrl(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_SAMLConfiguration_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_SAMLConfiguration_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type SAMLConfiguration", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Evidence_id(ctx context.Context, field graphql.CollectedField, obj *types.Evidence) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -27989,10 +25835,6 @@ func (ec *executionContext) fieldContext_Framework_organization(_ context.Contex
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
-			case "memberships":
-				return ec.fieldContext_Organization_memberships(ctx, field)
-			case "invitations":
-				return ec.fieldContext_Organization_invitations(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
 			case "frameworks":
@@ -28035,8 +25877,6 @@ func (ec *executionContext) fieldContext_Framework_organization(_ context.Contex
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
 			case "customDomain":
 				return ec.fieldContext_Organization_customDomain(ctx, field)
-			case "samlConfigurations":
-				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -28537,661 +26377,6 @@ func (ec *executionContext) fieldContext_ImportMeasurePayload_measureEdges(_ con
 				return ec.fieldContext_MeasureEdge_node(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type MeasureEdge", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _InitiateDomainVerificationPayload_samlConfiguration(ctx context.Context, field graphql.CollectedField, obj *types.InitiateDomainVerificationPayload) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_InitiateDomainVerificationPayload_samlConfiguration,
-		func(ctx context.Context) (any, error) {
-			return obj.SamlConfiguration, nil
-		},
-		nil,
-		ec.marshalNSAMLConfiguration2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐSAMLConfiguration,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_InitiateDomainVerificationPayload_samlConfiguration(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "InitiateDomainVerificationPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_SAMLConfiguration_id(ctx, field)
-			case "organization":
-				return ec.fieldContext_SAMLConfiguration_organization(ctx, field)
-			case "emailDomain":
-				return ec.fieldContext_SAMLConfiguration_emailDomain(ctx, field)
-			case "enabled":
-				return ec.fieldContext_SAMLConfiguration_enabled(ctx, field)
-			case "enforcementPolicy":
-				return ec.fieldContext_SAMLConfiguration_enforcementPolicy(ctx, field)
-			case "domainVerified":
-				return ec.fieldContext_SAMLConfiguration_domainVerified(ctx, field)
-			case "domainVerificationToken":
-				return ec.fieldContext_SAMLConfiguration_domainVerificationToken(ctx, field)
-			case "domainVerifiedAt":
-				return ec.fieldContext_SAMLConfiguration_domainVerifiedAt(ctx, field)
-			case "spEntityId":
-				return ec.fieldContext_SAMLConfiguration_spEntityId(ctx, field)
-			case "spAcsUrl":
-				return ec.fieldContext_SAMLConfiguration_spAcsUrl(ctx, field)
-			case "spMetadataUrl":
-				return ec.fieldContext_SAMLConfiguration_spMetadataUrl(ctx, field)
-			case "idpEntityId":
-				return ec.fieldContext_SAMLConfiguration_idpEntityId(ctx, field)
-			case "idpSsoUrl":
-				return ec.fieldContext_SAMLConfiguration_idpSsoUrl(ctx, field)
-			case "idpCertificate":
-				return ec.fieldContext_SAMLConfiguration_idpCertificate(ctx, field)
-			case "idpMetadataUrl":
-				return ec.fieldContext_SAMLConfiguration_idpMetadataUrl(ctx, field)
-			case "attributeEmail":
-				return ec.fieldContext_SAMLConfiguration_attributeEmail(ctx, field)
-			case "attributeFirstname":
-				return ec.fieldContext_SAMLConfiguration_attributeFirstname(ctx, field)
-			case "attributeLastname":
-				return ec.fieldContext_SAMLConfiguration_attributeLastname(ctx, field)
-			case "attributeRole":
-				return ec.fieldContext_SAMLConfiguration_attributeRole(ctx, field)
-			case "autoSignupEnabled":
-				return ec.fieldContext_SAMLConfiguration_autoSignupEnabled(ctx, field)
-			case "testLoginUrl":
-				return ec.fieldContext_SAMLConfiguration_testLoginUrl(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_SAMLConfiguration_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_SAMLConfiguration_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type SAMLConfiguration", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _InitiateDomainVerificationPayload_dnsRecord(ctx context.Context, field graphql.CollectedField, obj *types.InitiateDomainVerificationPayload) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_InitiateDomainVerificationPayload_dnsRecord,
-		func(ctx context.Context) (any, error) {
-			return obj.DNSRecord, nil
-		},
-		nil,
-		ec.marshalNString2string,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_InitiateDomainVerificationPayload_dnsRecord(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "InitiateDomainVerificationPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Invitation_id(ctx context.Context, field graphql.CollectedField, obj *types.Invitation) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Invitation_id,
-		func(ctx context.Context) (any, error) {
-			return obj.ID, nil
-		},
-		nil,
-		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Invitation_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Invitation",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Invitation_email(ctx context.Context, field graphql.CollectedField, obj *types.Invitation) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Invitation_email,
-		func(ctx context.Context) (any, error) {
-			return obj.Email, nil
-		},
-		nil,
-		ec.marshalNString2string,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Invitation_email(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Invitation",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Invitation_fullName(ctx context.Context, field graphql.CollectedField, obj *types.Invitation) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Invitation_fullName,
-		func(ctx context.Context) (any, error) {
-			return obj.FullName, nil
-		},
-		nil,
-		ec.marshalNString2string,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Invitation_fullName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Invitation",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Invitation_role(ctx context.Context, field graphql.CollectedField, obj *types.Invitation) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Invitation_role,
-		func(ctx context.Context) (any, error) {
-			return obj.Role, nil
-		},
-		nil,
-		ec.marshalNMembershipRole2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipRole,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Invitation_role(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Invitation",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type MembershipRole does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Invitation_status(ctx context.Context, field graphql.CollectedField, obj *types.Invitation) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Invitation_status,
-		func(ctx context.Context) (any, error) {
-			return obj.Status, nil
-		},
-		nil,
-		ec.marshalNInvitationStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐInvitationStatus,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Invitation_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Invitation",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type InvitationStatus does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Invitation_expiresAt(ctx context.Context, field graphql.CollectedField, obj *types.Invitation) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Invitation_expiresAt,
-		func(ctx context.Context) (any, error) {
-			return obj.ExpiresAt, nil
-		},
-		nil,
-		ec.marshalNDatetime2timeᚐTime,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Invitation_expiresAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Invitation",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Datetime does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Invitation_acceptedAt(ctx context.Context, field graphql.CollectedField, obj *types.Invitation) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Invitation_acceptedAt,
-		func(ctx context.Context) (any, error) {
-			return obj.AcceptedAt, nil
-		},
-		nil,
-		ec.marshalODatetime2ᚖtimeᚐTime,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_Invitation_acceptedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Invitation",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Datetime does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Invitation_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.Invitation) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Invitation_createdAt,
-		func(ctx context.Context) (any, error) {
-			return obj.CreatedAt, nil
-		},
-		nil,
-		ec.marshalNDatetime2timeᚐTime,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Invitation_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Invitation",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Datetime does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Invitation_organization(ctx context.Context, field graphql.CollectedField, obj *types.Invitation) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Invitation_organization,
-		func(ctx context.Context) (any, error) {
-			return ec.resolvers.Invitation().Organization(ctx, obj)
-		},
-		nil,
-		ec.marshalNOrganization2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐOrganization,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Invitation_organization(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Invitation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Organization_id(ctx, field)
-			case "name":
-				return ec.fieldContext_Organization_name(ctx, field)
-			case "logoUrl":
-				return ec.fieldContext_Organization_logoUrl(ctx, field)
-			case "horizontalLogoUrl":
-				return ec.fieldContext_Organization_horizontalLogoUrl(ctx, field)
-			case "description":
-				return ec.fieldContext_Organization_description(ctx, field)
-			case "websiteUrl":
-				return ec.fieldContext_Organization_websiteUrl(ctx, field)
-			case "email":
-				return ec.fieldContext_Organization_email(ctx, field)
-			case "headquarterAddress":
-				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
-			case "context":
-				return ec.fieldContext_Organization_context(ctx, field)
-			case "memberships":
-				return ec.fieldContext_Organization_memberships(ctx, field)
-			case "invitations":
-				return ec.fieldContext_Organization_invitations(ctx, field)
-			case "slackConnections":
-				return ec.fieldContext_Organization_slackConnections(ctx, field)
-			case "frameworks":
-				return ec.fieldContext_Organization_frameworks(ctx, field)
-			case "controls":
-				return ec.fieldContext_Organization_controls(ctx, field)
-			case "vendors":
-				return ec.fieldContext_Organization_vendors(ctx, field)
-			case "peoples":
-				return ec.fieldContext_Organization_peoples(ctx, field)
-			case "documents":
-				return ec.fieldContext_Organization_documents(ctx, field)
-			case "meetings":
-				return ec.fieldContext_Organization_meetings(ctx, field)
-			case "measures":
-				return ec.fieldContext_Organization_measures(ctx, field)
-			case "risks":
-				return ec.fieldContext_Organization_risks(ctx, field)
-			case "tasks":
-				return ec.fieldContext_Organization_tasks(ctx, field)
-			case "assets":
-				return ec.fieldContext_Organization_assets(ctx, field)
-			case "data":
-				return ec.fieldContext_Organization_data(ctx, field)
-			case "audits":
-				return ec.fieldContext_Organization_audits(ctx, field)
-			case "nonconformities":
-				return ec.fieldContext_Organization_nonconformities(ctx, field)
-			case "obligations":
-				return ec.fieldContext_Organization_obligations(ctx, field)
-			case "continualImprovements":
-				return ec.fieldContext_Organization_continualImprovements(ctx, field)
-			case "processingActivities":
-				return ec.fieldContext_Organization_processingActivities(ctx, field)
-			case "snapshots":
-				return ec.fieldContext_Organization_snapshots(ctx, field)
-			case "trustCenterFiles":
-				return ec.fieldContext_Organization_trustCenterFiles(ctx, field)
-			case "trustCenter":
-				return ec.fieldContext_Organization_trustCenter(ctx, field)
-			case "customDomain":
-				return ec.fieldContext_Organization_customDomain(ctx, field)
-			case "samlConfigurations":
-				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Organization_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_Organization_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _InvitationConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *types.InvitationConnection) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_InvitationConnection_totalCount,
-		func(ctx context.Context) (any, error) {
-			return ec.resolvers.InvitationConnection().TotalCount(ctx, obj)
-		},
-		nil,
-		ec.marshalNInt2int,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_InvitationConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "InvitationConnection",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _InvitationConnection_edges(ctx context.Context, field graphql.CollectedField, obj *types.InvitationConnection) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_InvitationConnection_edges,
-		func(ctx context.Context) (any, error) {
-			return obj.Edges, nil
-		},
-		nil,
-		ec.marshalNInvitationEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐInvitationEdgeᚄ,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_InvitationConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "InvitationConnection",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "cursor":
-				return ec.fieldContext_InvitationEdge_cursor(ctx, field)
-			case "node":
-				return ec.fieldContext_InvitationEdge_node(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type InvitationEdge", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _InvitationConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *types.InvitationConnection) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_InvitationConnection_pageInfo,
-		func(ctx context.Context) (any, error) {
-			return obj.PageInfo, nil
-		},
-		nil,
-		ec.marshalNPageInfo2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPageInfo,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_InvitationConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "InvitationConnection",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "hasNextPage":
-				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
-			case "hasPreviousPage":
-				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
-			case "startCursor":
-				return ec.fieldContext_PageInfo_startCursor(ctx, field)
-			case "endCursor":
-				return ec.fieldContext_PageInfo_endCursor(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _InvitationEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *types.InvitationEdge) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_InvitationEdge_cursor,
-		func(ctx context.Context) (any, error) {
-			return obj.Cursor, nil
-		},
-		nil,
-		ec.marshalNCursorKey2goᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_InvitationEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "InvitationEdge",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type CursorKey does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _InvitationEdge_node(ctx context.Context, field graphql.CollectedField, obj *types.InvitationEdge) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_InvitationEdge_node,
-		func(ctx context.Context) (any, error) {
-			return obj.Node, nil
-		},
-		nil,
-		ec.marshalNInvitation2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐInvitation,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_InvitationEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "InvitationEdge",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Invitation_id(ctx, field)
-			case "email":
-				return ec.fieldContext_Invitation_email(ctx, field)
-			case "fullName":
-				return ec.fieldContext_Invitation_fullName(ctx, field)
-			case "role":
-				return ec.fieldContext_Invitation_role(ctx, field)
-			case "status":
-				return ec.fieldContext_Invitation_status(ctx, field)
-			case "expiresAt":
-				return ec.fieldContext_Invitation_expiresAt(ctx, field)
-			case "acceptedAt":
-				return ec.fieldContext_Invitation_acceptedAt(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Invitation_createdAt(ctx, field)
-			case "organization":
-				return ec.fieldContext_Invitation_organization(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Invitation", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _InviteUserPayload_invitationEdge(ctx context.Context, field graphql.CollectedField, obj *types.InviteUserPayload) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_InviteUserPayload_invitationEdge,
-		func(ctx context.Context) (any, error) {
-			return obj.InvitationEdge, nil
-		},
-		nil,
-		ec.marshalNInvitationEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐInvitationEdge,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_InviteUserPayload_invitationEdge(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "InviteUserPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "cursor":
-				return ec.fieldContext_InvitationEdge_cursor(ctx, field)
-			case "node":
-				return ec.fieldContext_InvitationEdge_node(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type InvitationEdge", field.Name)
 		},
 	}
 	return fc, nil
@@ -29990,10 +27175,6 @@ func (ec *executionContext) fieldContext_Meeting_organization(_ context.Context,
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
-			case "memberships":
-				return ec.fieldContext_Organization_memberships(ctx, field)
-			case "invitations":
-				return ec.fieldContext_Organization_invitations(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
 			case "frameworks":
@@ -30036,8 +27217,6 @@ func (ec *executionContext) fieldContext_Meeting_organization(_ context.Context,
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
 			case "customDomain":
 				return ec.fieldContext_Organization_customDomain(ctx, field)
-			case "samlConfigurations":
-				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -30286,538 +27465,6 @@ func (ec *executionContext) fieldContext_MeetingEdge_node(_ context.Context, fie
 	return fc, nil
 }
 
-func (ec *executionContext) _Membership_id(ctx context.Context, field graphql.CollectedField, obj *types.Membership) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Membership_id,
-		func(ctx context.Context) (any, error) {
-			return obj.ID, nil
-		},
-		nil,
-		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Membership_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Membership",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Membership_userID(ctx context.Context, field graphql.CollectedField, obj *types.Membership) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Membership_userID,
-		func(ctx context.Context) (any, error) {
-			return obj.UserID, nil
-		},
-		nil,
-		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Membership_userID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Membership",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Membership_organizationID(ctx context.Context, field graphql.CollectedField, obj *types.Membership) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Membership_organizationID,
-		func(ctx context.Context) (any, error) {
-			return obj.OrganizationID, nil
-		},
-		nil,
-		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Membership_organizationID(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Membership",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Membership_role(ctx context.Context, field graphql.CollectedField, obj *types.Membership) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Membership_role,
-		func(ctx context.Context) (any, error) {
-			return obj.Role, nil
-		},
-		nil,
-		ec.marshalNMembershipRole2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipRole,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Membership_role(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Membership",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type MembershipRole does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Membership_fullName(ctx context.Context, field graphql.CollectedField, obj *types.Membership) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Membership_fullName,
-		func(ctx context.Context) (any, error) {
-			return obj.FullName, nil
-		},
-		nil,
-		ec.marshalNString2string,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Membership_fullName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Membership",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Membership_emailAddress(ctx context.Context, field graphql.CollectedField, obj *types.Membership) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Membership_emailAddress,
-		func(ctx context.Context) (any, error) {
-			return obj.EmailAddress, nil
-		},
-		nil,
-		ec.marshalNString2string,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Membership_emailAddress(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Membership",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Membership_authMethod(ctx context.Context, field graphql.CollectedField, obj *types.Membership) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Membership_authMethod,
-		func(ctx context.Context) (any, error) {
-			return ec.resolvers.Membership().AuthMethod(ctx, obj)
-		},
-		nil,
-		ec.marshalNUserAuthMethod2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐUserAuthMethod,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Membership_authMethod(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Membership",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type UserAuthMethod does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Membership_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.Membership) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Membership_createdAt,
-		func(ctx context.Context) (any, error) {
-			return obj.CreatedAt, nil
-		},
-		nil,
-		ec.marshalNDatetime2timeᚐTime,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Membership_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Membership",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Datetime does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Membership_updatedAt(ctx context.Context, field graphql.CollectedField, obj *types.Membership) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Membership_updatedAt,
-		func(ctx context.Context) (any, error) {
-			return obj.UpdatedAt, nil
-		},
-		nil,
-		ec.marshalNDatetime2timeᚐTime,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Membership_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Membership",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Datetime does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _MembershipConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *types.MembershipConnection) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_MembershipConnection_totalCount,
-		func(ctx context.Context) (any, error) {
-			return ec.resolvers.MembershipConnection().TotalCount(ctx, obj)
-		},
-		nil,
-		ec.marshalNInt2int,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_MembershipConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "MembershipConnection",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _MembershipConnection_edges(ctx context.Context, field graphql.CollectedField, obj *types.MembershipConnection) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_MembershipConnection_edges,
-		func(ctx context.Context) (any, error) {
-			return obj.Edges, nil
-		},
-		nil,
-		ec.marshalNMembershipEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐMembershipEdgeᚄ,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_MembershipConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "MembershipConnection",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "cursor":
-				return ec.fieldContext_MembershipEdge_cursor(ctx, field)
-			case "node":
-				return ec.fieldContext_MembershipEdge_node(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type MembershipEdge", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _MembershipConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *types.MembershipConnection) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_MembershipConnection_pageInfo,
-		func(ctx context.Context) (any, error) {
-			return obj.PageInfo, nil
-		},
-		nil,
-		ec.marshalNPageInfo2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPageInfo,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_MembershipConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "MembershipConnection",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "hasNextPage":
-				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
-			case "hasPreviousPage":
-				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
-			case "startCursor":
-				return ec.fieldContext_PageInfo_startCursor(ctx, field)
-			case "endCursor":
-				return ec.fieldContext_PageInfo_endCursor(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _MembershipEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *types.MembershipEdge) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_MembershipEdge_cursor,
-		func(ctx context.Context) (any, error) {
-			return obj.Cursor, nil
-		},
-		nil,
-		ec.marshalNCursorKey2goᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_MembershipEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "MembershipEdge",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type CursorKey does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _MembershipEdge_node(ctx context.Context, field graphql.CollectedField, obj *types.MembershipEdge) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_MembershipEdge_node,
-		func(ctx context.Context) (any, error) {
-			return obj.Node, nil
-		},
-		nil,
-		ec.marshalNMembership2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐMembership,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_MembershipEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "MembershipEdge",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Membership_id(ctx, field)
-			case "userID":
-				return ec.fieldContext_Membership_userID(ctx, field)
-			case "organizationID":
-				return ec.fieldContext_Membership_organizationID(ctx, field)
-			case "role":
-				return ec.fieldContext_Membership_role(ctx, field)
-			case "fullName":
-				return ec.fieldContext_Membership_fullName(ctx, field)
-			case "emailAddress":
-				return ec.fieldContext_Membership_emailAddress(ctx, field)
-			case "authMethod":
-				return ec.fieldContext_Membership_authMethod(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Membership_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_Membership_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Membership", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_createOrganization(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Mutation_createOrganization,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().CreateOrganization(ctx, fc.Args["input"].(types.CreateOrganizationInput))
-		},
-		nil,
-		ec.marshalNCreateOrganizationPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateOrganizationPayload,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Mutation_createOrganization(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "organizationEdge":
-				return ec.fieldContext_CreateOrganizationPayload_organizationEdge(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type CreateOrganizationPayload", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_createOrganization_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_updateOrganization(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Mutation_updateOrganization,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().UpdateOrganization(ctx, fc.Args["input"].(types.UpdateOrganizationInput))
-		},
-		nil,
-		ec.marshalNUpdateOrganizationPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateOrganizationPayload,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Mutation_updateOrganization(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "organization":
-				return ec.fieldContext_UpdateOrganizationPayload_organization(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type UpdateOrganizationPayload", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_updateOrganization_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Mutation_updateOrganizationContext(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -30857,96 +27504,6 @@ func (ec *executionContext) fieldContext_Mutation_updateOrganizationContext(ctx 
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_updateOrganizationContext_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_deleteOrganizationHorizontalLogo(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Mutation_deleteOrganizationHorizontalLogo,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().DeleteOrganizationHorizontalLogo(ctx, fc.Args["input"].(types.DeleteOrganizationHorizontalLogoInput))
-		},
-		nil,
-		ec.marshalNDeleteOrganizationHorizontalLogoPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteOrganizationHorizontalLogoPayload,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Mutation_deleteOrganizationHorizontalLogo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "organization":
-				return ec.fieldContext_DeleteOrganizationHorizontalLogoPayload_organization(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type DeleteOrganizationHorizontalLogoPayload", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_deleteOrganizationHorizontalLogo_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_deleteOrganization(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Mutation_deleteOrganization,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().DeleteOrganization(ctx, fc.Args["input"].(types.DeleteOrganizationInput))
-		},
-		nil,
-		ec.marshalNDeleteOrganizationPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteOrganizationPayload,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Mutation_deleteOrganization(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "deletedOrganizationId":
-				return ec.fieldContext_DeleteOrganizationPayload_deletedOrganizationId(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type DeleteOrganizationPayload", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_deleteOrganization_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -31532,276 +28089,6 @@ func (ec *executionContext) fieldContext_Mutation_deleteTrustCenterFile(ctx cont
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_deleteTrustCenterFile_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_confirmEmail(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Mutation_confirmEmail,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().ConfirmEmail(ctx, fc.Args["input"].(types.ConfirmEmailInput))
-		},
-		nil,
-		ec.marshalNConfirmEmailPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐConfirmEmailPayload,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Mutation_confirmEmail(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "success":
-				return ec.fieldContext_ConfirmEmailPayload_success(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type ConfirmEmailPayload", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_confirmEmail_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_inviteUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Mutation_inviteUser,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().InviteUser(ctx, fc.Args["input"].(types.InviteUserInput))
-		},
-		nil,
-		ec.marshalNInviteUserPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐInviteUserPayload,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Mutation_inviteUser(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "invitationEdge":
-				return ec.fieldContext_InviteUserPayload_invitationEdge(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type InviteUserPayload", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_inviteUser_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_acceptInvitation(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Mutation_acceptInvitation,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().AcceptInvitation(ctx, fc.Args["input"].(types.AcceptInvitationInput))
-		},
-		nil,
-		ec.marshalNAcceptInvitationPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAcceptInvitationPayload,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Mutation_acceptInvitation(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "invitation":
-				return ec.fieldContext_AcceptInvitationPayload_invitation(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type AcceptInvitationPayload", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_acceptInvitation_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_deleteInvitation(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Mutation_deleteInvitation,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().DeleteInvitation(ctx, fc.Args["input"].(types.DeleteInvitationInput))
-		},
-		nil,
-		ec.marshalNDeleteInvitationPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteInvitationPayload,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Mutation_deleteInvitation(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "deletedInvitationId":
-				return ec.fieldContext_DeleteInvitationPayload_deletedInvitationId(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type DeleteInvitationPayload", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_deleteInvitation_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_removeMember(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Mutation_removeMember,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().RemoveMember(ctx, fc.Args["input"].(types.RemoveMemberInput))
-		},
-		nil,
-		ec.marshalNRemoveMemberPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐRemoveMemberPayload,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Mutation_removeMember(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "deletedMemberId":
-				return ec.fieldContext_RemoveMemberPayload_deletedMemberId(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type RemoveMemberPayload", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_removeMember_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_updateMembership(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Mutation_updateMembership,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().UpdateMembership(ctx, fc.Args["input"].(types.UpdateMembershipInput))
-		},
-		nil,
-		ec.marshalNUpdateMembershipPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateMembershipPayload,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Mutation_updateMembership(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "membership":
-				return ec.fieldContext_UpdateMembershipPayload_membership(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type UpdateMembershipPayload", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_updateMembership_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -36657,325 +32944,6 @@ func (ec *executionContext) fieldContext_Mutation_deleteCustomDomain(ctx context
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_initiateDomainVerification(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Mutation_initiateDomainVerification,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().InitiateDomainVerification(ctx, fc.Args["input"].(types.InitiateDomainVerificationInput))
-		},
-		nil,
-		ec.marshalNInitiateDomainVerificationPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐInitiateDomainVerificationPayload,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Mutation_initiateDomainVerification(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "samlConfiguration":
-				return ec.fieldContext_InitiateDomainVerificationPayload_samlConfiguration(ctx, field)
-			case "dnsRecord":
-				return ec.fieldContext_InitiateDomainVerificationPayload_dnsRecord(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type InitiateDomainVerificationPayload", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_initiateDomainVerification_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_verifyDomain(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Mutation_verifyDomain,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().VerifyDomain(ctx, fc.Args["input"].(types.VerifyDomainInput))
-		},
-		nil,
-		ec.marshalNVerifyDomainPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐVerifyDomainPayload,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Mutation_verifyDomain(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "samlConfiguration":
-				return ec.fieldContext_VerifyDomainPayload_samlConfiguration(ctx, field)
-			case "verified":
-				return ec.fieldContext_VerifyDomainPayload_verified(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type VerifyDomainPayload", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_verifyDomain_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_createSAMLConfiguration(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Mutation_createSAMLConfiguration,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().CreateSAMLConfiguration(ctx, fc.Args["input"].(types.CreateSAMLConfigurationInput))
-		},
-		nil,
-		ec.marshalNCreateSAMLConfigurationPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateSAMLConfigurationPayload,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Mutation_createSAMLConfiguration(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "samlConfiguration":
-				return ec.fieldContext_CreateSAMLConfigurationPayload_samlConfiguration(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type CreateSAMLConfigurationPayload", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_createSAMLConfiguration_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_updateSAMLConfiguration(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Mutation_updateSAMLConfiguration,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().UpdateSAMLConfiguration(ctx, fc.Args["input"].(types.UpdateSAMLConfigurationInput))
-		},
-		nil,
-		ec.marshalNUpdateSAMLConfigurationPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateSAMLConfigurationPayload,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Mutation_updateSAMLConfiguration(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "samlConfiguration":
-				return ec.fieldContext_UpdateSAMLConfigurationPayload_samlConfiguration(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type UpdateSAMLConfigurationPayload", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_updateSAMLConfiguration_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_deleteSAMLConfiguration(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Mutation_deleteSAMLConfiguration,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().DeleteSAMLConfiguration(ctx, fc.Args["input"].(types.DeleteSAMLConfigurationInput))
-		},
-		nil,
-		ec.marshalNDeleteSAMLConfigurationPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteSAMLConfigurationPayload,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Mutation_deleteSAMLConfiguration(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "deletedSAMLConfigurationId":
-				return ec.fieldContext_DeleteSAMLConfigurationPayload_deletedSAMLConfigurationId(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type DeleteSAMLConfigurationPayload", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_deleteSAMLConfiguration_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_enableSAML(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Mutation_enableSAML,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().EnableSaml(ctx, fc.Args["input"].(types.EnableSAMLInput))
-		},
-		nil,
-		ec.marshalNEnableSAMLPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐEnableSAMLPayload,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Mutation_enableSAML(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "samlConfiguration":
-				return ec.fieldContext_EnableSAMLPayload_samlConfiguration(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type EnableSAMLPayload", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_enableSAML_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_disableSAML(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Mutation_disableSAML,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().DisableSaml(ctx, fc.Args["input"].(types.DisableSAMLInput))
-		},
-		nil,
-		ec.marshalNDisableSAMLPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDisableSAMLPayload,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Mutation_disableSAML(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "samlConfiguration":
-				return ec.fieldContext_DisableSAMLPayload_samlConfiguration(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type DisableSAMLPayload", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_disableSAML_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Nonconformity_id(ctx context.Context, field graphql.CollectedField, obj *types.Nonconformity) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -37076,10 +33044,6 @@ func (ec *executionContext) fieldContext_Nonconformity_organization(_ context.Co
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
-			case "memberships":
-				return ec.fieldContext_Organization_memberships(ctx, field)
-			case "invitations":
-				return ec.fieldContext_Organization_invitations(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
 			case "frameworks":
@@ -37122,8 +33086,6 @@ func (ec *executionContext) fieldContext_Nonconformity_organization(_ context.Co
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
 			case "customDomain":
 				return ec.fieldContext_Organization_customDomain(ctx, field)
-			case "samlConfigurations":
-				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -37855,10 +33817,6 @@ func (ec *executionContext) fieldContext_Obligation_organization(_ context.Conte
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
-			case "memberships":
-				return ec.fieldContext_Organization_memberships(ctx, field)
-			case "invitations":
-				return ec.fieldContext_Organization_invitations(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
 			case "frameworks":
@@ -37901,8 +33859,6 @@ func (ec *executionContext) fieldContext_Obligation_organization(_ context.Conte
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
 			case "customDomain":
 				return ec.fieldContext_Organization_customDomain(ctx, field)
-			case "samlConfigurations":
-				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -38711,104 +34667,6 @@ func (ec *executionContext) fieldContext_Organization_context(_ context.Context,
 			}
 			return nil, fmt.Errorf("no field named %q was found under type OrganizationContext", field.Name)
 		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Organization_memberships(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Organization_memberships,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Organization().Memberships(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.MembershipOrderBy))
-		},
-		nil,
-		ec.marshalNMembershipConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐMembershipConnection,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Organization_memberships(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Organization",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "totalCount":
-				return ec.fieldContext_MembershipConnection_totalCount(ctx, field)
-			case "edges":
-				return ec.fieldContext_MembershipConnection_edges(ctx, field)
-			case "pageInfo":
-				return ec.fieldContext_MembershipConnection_pageInfo(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type MembershipConnection", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Organization_memberships_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Organization_invitations(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Organization_invitations,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Organization().Invitations(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.InvitationOrder), fc.Args["filter"].(*types.InvitationFilter))
-		},
-		nil,
-		ec.marshalNInvitationConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐInvitationConnection,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Organization_invitations(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Organization",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "totalCount":
-				return ec.fieldContext_InvitationConnection_totalCount(ctx, field)
-			case "edges":
-				return ec.fieldContext_InvitationConnection_edges(ctx, field)
-			case "pageInfo":
-				return ec.fieldContext_InvitationConnection_pageInfo(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type InvitationConnection", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Organization_invitations_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
 	}
 	return fc, nil
 }
@@ -39838,83 +35696,6 @@ func (ec *executionContext) fieldContext_Organization_customDomain(_ context.Con
 	return fc, nil
 }
 
-func (ec *executionContext) _Organization_samlConfigurations(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Organization_samlConfigurations,
-		func(ctx context.Context) (any, error) {
-			return ec.resolvers.Organization().SamlConfigurations(ctx, obj)
-		},
-		nil,
-		ec.marshalNSAMLConfiguration2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐSAMLConfigurationᚄ,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Organization_samlConfigurations(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Organization",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_SAMLConfiguration_id(ctx, field)
-			case "organization":
-				return ec.fieldContext_SAMLConfiguration_organization(ctx, field)
-			case "emailDomain":
-				return ec.fieldContext_SAMLConfiguration_emailDomain(ctx, field)
-			case "enabled":
-				return ec.fieldContext_SAMLConfiguration_enabled(ctx, field)
-			case "enforcementPolicy":
-				return ec.fieldContext_SAMLConfiguration_enforcementPolicy(ctx, field)
-			case "domainVerified":
-				return ec.fieldContext_SAMLConfiguration_domainVerified(ctx, field)
-			case "domainVerificationToken":
-				return ec.fieldContext_SAMLConfiguration_domainVerificationToken(ctx, field)
-			case "domainVerifiedAt":
-				return ec.fieldContext_SAMLConfiguration_domainVerifiedAt(ctx, field)
-			case "spEntityId":
-				return ec.fieldContext_SAMLConfiguration_spEntityId(ctx, field)
-			case "spAcsUrl":
-				return ec.fieldContext_SAMLConfiguration_spAcsUrl(ctx, field)
-			case "spMetadataUrl":
-				return ec.fieldContext_SAMLConfiguration_spMetadataUrl(ctx, field)
-			case "idpEntityId":
-				return ec.fieldContext_SAMLConfiguration_idpEntityId(ctx, field)
-			case "idpSsoUrl":
-				return ec.fieldContext_SAMLConfiguration_idpSsoUrl(ctx, field)
-			case "idpCertificate":
-				return ec.fieldContext_SAMLConfiguration_idpCertificate(ctx, field)
-			case "idpMetadataUrl":
-				return ec.fieldContext_SAMLConfiguration_idpMetadataUrl(ctx, field)
-			case "attributeEmail":
-				return ec.fieldContext_SAMLConfiguration_attributeEmail(ctx, field)
-			case "attributeFirstname":
-				return ec.fieldContext_SAMLConfiguration_attributeFirstname(ctx, field)
-			case "attributeLastname":
-				return ec.fieldContext_SAMLConfiguration_attributeLastname(ctx, field)
-			case "attributeRole":
-				return ec.fieldContext_SAMLConfiguration_attributeRole(ctx, field)
-			case "autoSignupEnabled":
-				return ec.fieldContext_SAMLConfiguration_autoSignupEnabled(ctx, field)
-			case "testLoginUrl":
-				return ec.fieldContext_SAMLConfiguration_testLoginUrl(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_SAMLConfiguration_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_SAMLConfiguration_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type SAMLConfiguration", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Organization_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -40176,10 +35957,6 @@ func (ec *executionContext) fieldContext_OrganizationEdge_node(_ context.Context
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
-			case "memberships":
-				return ec.fieldContext_Organization_memberships(ctx, field)
-			case "invitations":
-				return ec.fieldContext_Organization_invitations(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
 			case "frameworks":
@@ -40222,8 +35999,6 @@ func (ec *executionContext) fieldContext_OrganizationEdge_node(_ context.Context
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
 			case "customDomain":
 				return ec.fieldContext_Organization_customDomain(ctx, field)
-			case "samlConfigurations":
-				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -40953,10 +36728,6 @@ func (ec *executionContext) fieldContext_ProcessingActivity_organization(_ conte
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
-			case "memberships":
-				return ec.fieldContext_Organization_memberships(ctx, field)
-			case "invitations":
-				return ec.fieldContext_Organization_invitations(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
 			case "frameworks":
@@ -40999,8 +36770,6 @@ func (ec *executionContext) fieldContext_ProcessingActivity_organization(_ conte
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
 			case "customDomain":
 				return ec.fieldContext_Organization_customDomain(ctx, field)
-			case "samlConfigurations":
-				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -42067,35 +37836,6 @@ func (ec *executionContext) fieldContext_Query___schema(_ context.Context, field
 	return fc, nil
 }
 
-func (ec *executionContext) _RemoveMemberPayload_deletedMemberId(ctx context.Context, field graphql.CollectedField, obj *types.RemoveMemberPayload) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_RemoveMemberPayload_deletedMemberId,
-		func(ctx context.Context) (any, error) {
-			return obj.DeletedMemberID, nil
-		},
-		nil,
-		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_RemoveMemberPayload_deletedMemberId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "RemoveMemberPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Report_id(ctx context.Context, field graphql.CollectedField, obj *types.Report) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -42925,10 +38665,6 @@ func (ec *executionContext) fieldContext_Risk_organization(_ context.Context, fi
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
-			case "memberships":
-				return ec.fieldContext_Organization_memberships(ctx, field)
-			case "invitations":
-				return ec.fieldContext_Organization_invitations(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
 			case "frameworks":
@@ -42971,8 +38707,6 @@ func (ec *executionContext) fieldContext_Risk_organization(_ context.Context, fi
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
 			case "customDomain":
 				return ec.fieldContext_Organization_customDomain(ctx, field)
-			case "samlConfigurations":
-				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -43438,745 +39172,6 @@ func (ec *executionContext) fieldContext_RiskEdge_node(_ context.Context, field 
 				return ec.fieldContext_Risk_updatedAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Risk", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SAMLConfiguration_id(ctx context.Context, field graphql.CollectedField, obj *types.SAMLConfiguration) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_SAMLConfiguration_id,
-		func(ctx context.Context) (any, error) {
-			return obj.ID, nil
-		},
-		nil,
-		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_SAMLConfiguration_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SAMLConfiguration",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SAMLConfiguration_organization(ctx context.Context, field graphql.CollectedField, obj *types.SAMLConfiguration) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_SAMLConfiguration_organization,
-		func(ctx context.Context) (any, error) {
-			return ec.resolvers.SAMLConfiguration().Organization(ctx, obj)
-		},
-		nil,
-		ec.marshalNOrganization2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐOrganization,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_SAMLConfiguration_organization(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SAMLConfiguration",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Organization_id(ctx, field)
-			case "name":
-				return ec.fieldContext_Organization_name(ctx, field)
-			case "logoUrl":
-				return ec.fieldContext_Organization_logoUrl(ctx, field)
-			case "horizontalLogoUrl":
-				return ec.fieldContext_Organization_horizontalLogoUrl(ctx, field)
-			case "description":
-				return ec.fieldContext_Organization_description(ctx, field)
-			case "websiteUrl":
-				return ec.fieldContext_Organization_websiteUrl(ctx, field)
-			case "email":
-				return ec.fieldContext_Organization_email(ctx, field)
-			case "headquarterAddress":
-				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
-			case "context":
-				return ec.fieldContext_Organization_context(ctx, field)
-			case "memberships":
-				return ec.fieldContext_Organization_memberships(ctx, field)
-			case "invitations":
-				return ec.fieldContext_Organization_invitations(ctx, field)
-			case "slackConnections":
-				return ec.fieldContext_Organization_slackConnections(ctx, field)
-			case "frameworks":
-				return ec.fieldContext_Organization_frameworks(ctx, field)
-			case "controls":
-				return ec.fieldContext_Organization_controls(ctx, field)
-			case "vendors":
-				return ec.fieldContext_Organization_vendors(ctx, field)
-			case "peoples":
-				return ec.fieldContext_Organization_peoples(ctx, field)
-			case "documents":
-				return ec.fieldContext_Organization_documents(ctx, field)
-			case "meetings":
-				return ec.fieldContext_Organization_meetings(ctx, field)
-			case "measures":
-				return ec.fieldContext_Organization_measures(ctx, field)
-			case "risks":
-				return ec.fieldContext_Organization_risks(ctx, field)
-			case "tasks":
-				return ec.fieldContext_Organization_tasks(ctx, field)
-			case "assets":
-				return ec.fieldContext_Organization_assets(ctx, field)
-			case "data":
-				return ec.fieldContext_Organization_data(ctx, field)
-			case "audits":
-				return ec.fieldContext_Organization_audits(ctx, field)
-			case "nonconformities":
-				return ec.fieldContext_Organization_nonconformities(ctx, field)
-			case "obligations":
-				return ec.fieldContext_Organization_obligations(ctx, field)
-			case "continualImprovements":
-				return ec.fieldContext_Organization_continualImprovements(ctx, field)
-			case "processingActivities":
-				return ec.fieldContext_Organization_processingActivities(ctx, field)
-			case "snapshots":
-				return ec.fieldContext_Organization_snapshots(ctx, field)
-			case "trustCenterFiles":
-				return ec.fieldContext_Organization_trustCenterFiles(ctx, field)
-			case "trustCenter":
-				return ec.fieldContext_Organization_trustCenter(ctx, field)
-			case "customDomain":
-				return ec.fieldContext_Organization_customDomain(ctx, field)
-			case "samlConfigurations":
-				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Organization_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_Organization_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SAMLConfiguration_emailDomain(ctx context.Context, field graphql.CollectedField, obj *types.SAMLConfiguration) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_SAMLConfiguration_emailDomain,
-		func(ctx context.Context) (any, error) {
-			return obj.EmailDomain, nil
-		},
-		nil,
-		ec.marshalNString2string,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_SAMLConfiguration_emailDomain(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SAMLConfiguration",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SAMLConfiguration_enabled(ctx context.Context, field graphql.CollectedField, obj *types.SAMLConfiguration) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_SAMLConfiguration_enabled,
-		func(ctx context.Context) (any, error) {
-			return obj.Enabled, nil
-		},
-		nil,
-		ec.marshalNBoolean2bool,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_SAMLConfiguration_enabled(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SAMLConfiguration",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SAMLConfiguration_enforcementPolicy(ctx context.Context, field graphql.CollectedField, obj *types.SAMLConfiguration) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_SAMLConfiguration_enforcementPolicy,
-		func(ctx context.Context) (any, error) {
-			return obj.EnforcementPolicy, nil
-		},
-		nil,
-		ec.marshalNSAMLEnforcementPolicy2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐSAMLEnforcementPolicy,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_SAMLConfiguration_enforcementPolicy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SAMLConfiguration",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type SAMLEnforcementPolicy does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SAMLConfiguration_domainVerified(ctx context.Context, field graphql.CollectedField, obj *types.SAMLConfiguration) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_SAMLConfiguration_domainVerified,
-		func(ctx context.Context) (any, error) {
-			return obj.DomainVerified, nil
-		},
-		nil,
-		ec.marshalNBoolean2bool,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_SAMLConfiguration_domainVerified(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SAMLConfiguration",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SAMLConfiguration_domainVerificationToken(ctx context.Context, field graphql.CollectedField, obj *types.SAMLConfiguration) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_SAMLConfiguration_domainVerificationToken,
-		func(ctx context.Context) (any, error) {
-			return obj.DomainVerificationToken, nil
-		},
-		nil,
-		ec.marshalOString2ᚖstring,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_SAMLConfiguration_domainVerificationToken(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SAMLConfiguration",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SAMLConfiguration_domainVerifiedAt(ctx context.Context, field graphql.CollectedField, obj *types.SAMLConfiguration) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_SAMLConfiguration_domainVerifiedAt,
-		func(ctx context.Context) (any, error) {
-			return obj.DomainVerifiedAt, nil
-		},
-		nil,
-		ec.marshalODatetime2ᚖtimeᚐTime,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_SAMLConfiguration_domainVerifiedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SAMLConfiguration",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Datetime does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SAMLConfiguration_spEntityId(ctx context.Context, field graphql.CollectedField, obj *types.SAMLConfiguration) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_SAMLConfiguration_spEntityId,
-		func(ctx context.Context) (any, error) {
-			return obj.SpEntityID, nil
-		},
-		nil,
-		ec.marshalNString2string,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_SAMLConfiguration_spEntityId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SAMLConfiguration",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SAMLConfiguration_spAcsUrl(ctx context.Context, field graphql.CollectedField, obj *types.SAMLConfiguration) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_SAMLConfiguration_spAcsUrl,
-		func(ctx context.Context) (any, error) {
-			return obj.SpAcsURL, nil
-		},
-		nil,
-		ec.marshalNString2string,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_SAMLConfiguration_spAcsUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SAMLConfiguration",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SAMLConfiguration_spMetadataUrl(ctx context.Context, field graphql.CollectedField, obj *types.SAMLConfiguration) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_SAMLConfiguration_spMetadataUrl,
-		func(ctx context.Context) (any, error) {
-			return ec.resolvers.SAMLConfiguration().SpMetadataURL(ctx, obj)
-		},
-		nil,
-		ec.marshalNString2string,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_SAMLConfiguration_spMetadataUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SAMLConfiguration",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SAMLConfiguration_idpEntityId(ctx context.Context, field graphql.CollectedField, obj *types.SAMLConfiguration) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_SAMLConfiguration_idpEntityId,
-		func(ctx context.Context) (any, error) {
-			return obj.IdpEntityID, nil
-		},
-		nil,
-		ec.marshalNString2string,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_SAMLConfiguration_idpEntityId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SAMLConfiguration",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SAMLConfiguration_idpSsoUrl(ctx context.Context, field graphql.CollectedField, obj *types.SAMLConfiguration) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_SAMLConfiguration_idpSsoUrl,
-		func(ctx context.Context) (any, error) {
-			return obj.IdpSsoURL, nil
-		},
-		nil,
-		ec.marshalNString2string,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_SAMLConfiguration_idpSsoUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SAMLConfiguration",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SAMLConfiguration_idpCertificate(ctx context.Context, field graphql.CollectedField, obj *types.SAMLConfiguration) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_SAMLConfiguration_idpCertificate,
-		func(ctx context.Context) (any, error) {
-			return obj.IdpCertificate, nil
-		},
-		nil,
-		ec.marshalNString2string,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_SAMLConfiguration_idpCertificate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SAMLConfiguration",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SAMLConfiguration_idpMetadataUrl(ctx context.Context, field graphql.CollectedField, obj *types.SAMLConfiguration) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_SAMLConfiguration_idpMetadataUrl,
-		func(ctx context.Context) (any, error) {
-			return obj.IdpMetadataURL, nil
-		},
-		nil,
-		ec.marshalOString2ᚖstring,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_SAMLConfiguration_idpMetadataUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SAMLConfiguration",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SAMLConfiguration_attributeEmail(ctx context.Context, field graphql.CollectedField, obj *types.SAMLConfiguration) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_SAMLConfiguration_attributeEmail,
-		func(ctx context.Context) (any, error) {
-			return obj.AttributeEmail, nil
-		},
-		nil,
-		ec.marshalNString2string,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_SAMLConfiguration_attributeEmail(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SAMLConfiguration",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SAMLConfiguration_attributeFirstname(ctx context.Context, field graphql.CollectedField, obj *types.SAMLConfiguration) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_SAMLConfiguration_attributeFirstname,
-		func(ctx context.Context) (any, error) {
-			return obj.AttributeFirstname, nil
-		},
-		nil,
-		ec.marshalNString2string,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_SAMLConfiguration_attributeFirstname(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SAMLConfiguration",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SAMLConfiguration_attributeLastname(ctx context.Context, field graphql.CollectedField, obj *types.SAMLConfiguration) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_SAMLConfiguration_attributeLastname,
-		func(ctx context.Context) (any, error) {
-			return obj.AttributeLastname, nil
-		},
-		nil,
-		ec.marshalNString2string,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_SAMLConfiguration_attributeLastname(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SAMLConfiguration",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SAMLConfiguration_attributeRole(ctx context.Context, field graphql.CollectedField, obj *types.SAMLConfiguration) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_SAMLConfiguration_attributeRole,
-		func(ctx context.Context) (any, error) {
-			return obj.AttributeRole, nil
-		},
-		nil,
-		ec.marshalNString2string,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_SAMLConfiguration_attributeRole(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SAMLConfiguration",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SAMLConfiguration_autoSignupEnabled(ctx context.Context, field graphql.CollectedField, obj *types.SAMLConfiguration) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_SAMLConfiguration_autoSignupEnabled,
-		func(ctx context.Context) (any, error) {
-			return obj.AutoSignupEnabled, nil
-		},
-		nil,
-		ec.marshalNBoolean2bool,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_SAMLConfiguration_autoSignupEnabled(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SAMLConfiguration",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SAMLConfiguration_testLoginUrl(ctx context.Context, field graphql.CollectedField, obj *types.SAMLConfiguration) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_SAMLConfiguration_testLoginUrl,
-		func(ctx context.Context) (any, error) {
-			return ec.resolvers.SAMLConfiguration().TestLoginURL(ctx, obj)
-		},
-		nil,
-		ec.marshalNString2string,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_SAMLConfiguration_testLoginUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SAMLConfiguration",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SAMLConfiguration_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.SAMLConfiguration) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_SAMLConfiguration_createdAt,
-		func(ctx context.Context) (any, error) {
-			return obj.CreatedAt, nil
-		},
-		nil,
-		ec.marshalNDatetime2timeᚐTime,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_SAMLConfiguration_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SAMLConfiguration",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Datetime does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SAMLConfiguration_updatedAt(ctx context.Context, field graphql.CollectedField, obj *types.SAMLConfiguration) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_SAMLConfiguration_updatedAt,
-		func(ctx context.Context) (any, error) {
-			return obj.UpdatedAt, nil
-		},
-		nil,
-		ec.marshalNDatetime2timeᚐTime,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_SAMLConfiguration_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SAMLConfiguration",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Datetime does not have child fields")
 		},
 	}
 	return fc, nil
@@ -45107,10 +40102,6 @@ func (ec *executionContext) fieldContext_Snapshot_organization(_ context.Context
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
-			case "memberships":
-				return ec.fieldContext_Organization_memberships(ctx, field)
-			case "invitations":
-				return ec.fieldContext_Organization_invitations(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
 			case "frameworks":
@@ -45153,8 +40144,6 @@ func (ec *executionContext) fieldContext_Snapshot_organization(_ context.Context
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
 			case "customDomain":
 				return ec.fieldContext_Organization_customDomain(ctx, field)
-			case "samlConfigurations":
-				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -45775,10 +40764,6 @@ func (ec *executionContext) fieldContext_Task_organization(_ context.Context, fi
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
-			case "memberships":
-				return ec.fieldContext_Organization_memberships(ctx, field)
-			case "invitations":
-				return ec.fieldContext_Organization_invitations(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
 			case "frameworks":
@@ -45821,8 +40806,6 @@ func (ec *executionContext) fieldContext_Task_organization(_ context.Context, fi
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
 			case "customDomain":
 				return ec.fieldContext_Organization_customDomain(ctx, field)
-			case "samlConfigurations":
-				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -46397,10 +41380,6 @@ func (ec *executionContext) fieldContext_TrustCenter_organization(_ context.Cont
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
-			case "memberships":
-				return ec.fieldContext_Organization_memberships(ctx, field)
-			case "invitations":
-				return ec.fieldContext_Organization_invitations(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
 			case "frameworks":
@@ -46443,8 +41422,6 @@ func (ec *executionContext) fieldContext_TrustCenter_organization(_ context.Cont
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
 			case "customDomain":
 				return ec.fieldContext_Organization_customDomain(ctx, field)
-			case "samlConfigurations":
-				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -47828,10 +42805,6 @@ func (ec *executionContext) fieldContext_TrustCenterFile_organization(_ context.
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
-			case "memberships":
-				return ec.fieldContext_Organization_memberships(ctx, field)
-			case "invitations":
-				return ec.fieldContext_Organization_invitations(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
 			case "frameworks":
@@ -47874,8 +42847,6 @@ func (ec *executionContext) fieldContext_TrustCenterFile_organization(_ context.
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
 			case "customDomain":
 				return ec.fieldContext_Organization_customDomain(ctx, field)
-			case "samlConfigurations":
-				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -49066,55 +44037,6 @@ func (ec *executionContext) fieldContext_UpdateMeetingPayload_meeting(_ context.
 	return fc, nil
 }
 
-func (ec *executionContext) _UpdateMembershipPayload_membership(ctx context.Context, field graphql.CollectedField, obj *types.UpdateMembershipPayload) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_UpdateMembershipPayload_membership,
-		func(ctx context.Context) (any, error) {
-			return obj.Membership, nil
-		},
-		nil,
-		ec.marshalNMembership2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐMembership,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_UpdateMembershipPayload_membership(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "UpdateMembershipPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Membership_id(ctx, field)
-			case "userID":
-				return ec.fieldContext_Membership_userID(ctx, field)
-			case "organizationID":
-				return ec.fieldContext_Membership_organizationID(ctx, field)
-			case "role":
-				return ec.fieldContext_Membership_role(ctx, field)
-			case "fullName":
-				return ec.fieldContext_Membership_fullName(ctx, field)
-			case "emailAddress":
-				return ec.fieldContext_Membership_emailAddress(ctx, field)
-			case "authMethod":
-				return ec.fieldContext_Membership_authMethod(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Membership_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_Membership_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Membership", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _UpdateNonconformityPayload_nonconformity(ctx context.Context, field graphql.CollectedField, obj *types.UpdateNonconformityPayload) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -49267,107 +44189,6 @@ func (ec *executionContext) fieldContext_UpdateOrganizationContextPayload_contex
 				return ec.fieldContext_OrganizationContext_summary(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type OrganizationContext", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _UpdateOrganizationPayload_organization(ctx context.Context, field graphql.CollectedField, obj *types.UpdateOrganizationPayload) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_UpdateOrganizationPayload_organization,
-		func(ctx context.Context) (any, error) {
-			return obj.Organization, nil
-		},
-		nil,
-		ec.marshalNOrganization2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐOrganization,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_UpdateOrganizationPayload_organization(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "UpdateOrganizationPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Organization_id(ctx, field)
-			case "name":
-				return ec.fieldContext_Organization_name(ctx, field)
-			case "logoUrl":
-				return ec.fieldContext_Organization_logoUrl(ctx, field)
-			case "horizontalLogoUrl":
-				return ec.fieldContext_Organization_horizontalLogoUrl(ctx, field)
-			case "description":
-				return ec.fieldContext_Organization_description(ctx, field)
-			case "websiteUrl":
-				return ec.fieldContext_Organization_websiteUrl(ctx, field)
-			case "email":
-				return ec.fieldContext_Organization_email(ctx, field)
-			case "headquarterAddress":
-				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
-			case "context":
-				return ec.fieldContext_Organization_context(ctx, field)
-			case "memberships":
-				return ec.fieldContext_Organization_memberships(ctx, field)
-			case "invitations":
-				return ec.fieldContext_Organization_invitations(ctx, field)
-			case "slackConnections":
-				return ec.fieldContext_Organization_slackConnections(ctx, field)
-			case "frameworks":
-				return ec.fieldContext_Organization_frameworks(ctx, field)
-			case "controls":
-				return ec.fieldContext_Organization_controls(ctx, field)
-			case "vendors":
-				return ec.fieldContext_Organization_vendors(ctx, field)
-			case "peoples":
-				return ec.fieldContext_Organization_peoples(ctx, field)
-			case "documents":
-				return ec.fieldContext_Organization_documents(ctx, field)
-			case "meetings":
-				return ec.fieldContext_Organization_meetings(ctx, field)
-			case "measures":
-				return ec.fieldContext_Organization_measures(ctx, field)
-			case "risks":
-				return ec.fieldContext_Organization_risks(ctx, field)
-			case "tasks":
-				return ec.fieldContext_Organization_tasks(ctx, field)
-			case "assets":
-				return ec.fieldContext_Organization_assets(ctx, field)
-			case "data":
-				return ec.fieldContext_Organization_data(ctx, field)
-			case "audits":
-				return ec.fieldContext_Organization_audits(ctx, field)
-			case "nonconformities":
-				return ec.fieldContext_Organization_nonconformities(ctx, field)
-			case "obligations":
-				return ec.fieldContext_Organization_obligations(ctx, field)
-			case "continualImprovements":
-				return ec.fieldContext_Organization_continualImprovements(ctx, field)
-			case "processingActivities":
-				return ec.fieldContext_Organization_processingActivities(ctx, field)
-			case "snapshots":
-				return ec.fieldContext_Organization_snapshots(ctx, field)
-			case "trustCenterFiles":
-				return ec.fieldContext_Organization_trustCenterFiles(ctx, field)
-			case "trustCenter":
-				return ec.fieldContext_Organization_trustCenter(ctx, field)
-			case "customDomain":
-				return ec.fieldContext_Organization_customDomain(ctx, field)
-			case "samlConfigurations":
-				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Organization_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_Organization_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
 		},
 	}
 	return fc, nil
@@ -49567,83 +44388,6 @@ func (ec *executionContext) fieldContext_UpdateRiskPayload_risk(_ context.Contex
 				return ec.fieldContext_Risk_updatedAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Risk", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _UpdateSAMLConfigurationPayload_samlConfiguration(ctx context.Context, field graphql.CollectedField, obj *types.UpdateSAMLConfigurationPayload) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_UpdateSAMLConfigurationPayload_samlConfiguration,
-		func(ctx context.Context) (any, error) {
-			return obj.SamlConfiguration, nil
-		},
-		nil,
-		ec.marshalNSAMLConfiguration2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐSAMLConfiguration,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_UpdateSAMLConfigurationPayload_samlConfiguration(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "UpdateSAMLConfigurationPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_SAMLConfiguration_id(ctx, field)
-			case "organization":
-				return ec.fieldContext_SAMLConfiguration_organization(ctx, field)
-			case "emailDomain":
-				return ec.fieldContext_SAMLConfiguration_emailDomain(ctx, field)
-			case "enabled":
-				return ec.fieldContext_SAMLConfiguration_enabled(ctx, field)
-			case "enforcementPolicy":
-				return ec.fieldContext_SAMLConfiguration_enforcementPolicy(ctx, field)
-			case "domainVerified":
-				return ec.fieldContext_SAMLConfiguration_domainVerified(ctx, field)
-			case "domainVerificationToken":
-				return ec.fieldContext_SAMLConfiguration_domainVerificationToken(ctx, field)
-			case "domainVerifiedAt":
-				return ec.fieldContext_SAMLConfiguration_domainVerifiedAt(ctx, field)
-			case "spEntityId":
-				return ec.fieldContext_SAMLConfiguration_spEntityId(ctx, field)
-			case "spAcsUrl":
-				return ec.fieldContext_SAMLConfiguration_spAcsUrl(ctx, field)
-			case "spMetadataUrl":
-				return ec.fieldContext_SAMLConfiguration_spMetadataUrl(ctx, field)
-			case "idpEntityId":
-				return ec.fieldContext_SAMLConfiguration_idpEntityId(ctx, field)
-			case "idpSsoUrl":
-				return ec.fieldContext_SAMLConfiguration_idpSsoUrl(ctx, field)
-			case "idpCertificate":
-				return ec.fieldContext_SAMLConfiguration_idpCertificate(ctx, field)
-			case "idpMetadataUrl":
-				return ec.fieldContext_SAMLConfiguration_idpMetadataUrl(ctx, field)
-			case "attributeEmail":
-				return ec.fieldContext_SAMLConfiguration_attributeEmail(ctx, field)
-			case "attributeFirstname":
-				return ec.fieldContext_SAMLConfiguration_attributeFirstname(ctx, field)
-			case "attributeLastname":
-				return ec.fieldContext_SAMLConfiguration_attributeLastname(ctx, field)
-			case "attributeRole":
-				return ec.fieldContext_SAMLConfiguration_attributeRole(ctx, field)
-			case "autoSignupEnabled":
-				return ec.fieldContext_SAMLConfiguration_autoSignupEnabled(ctx, field)
-			case "testLoginUrl":
-				return ec.fieldContext_SAMLConfiguration_testLoginUrl(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_SAMLConfiguration_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_SAMLConfiguration_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type SAMLConfiguration", field.Name)
 		},
 	}
 	return fc, nil
@@ -50600,179 +45344,6 @@ func (ec *executionContext) fieldContext_User_updatedAt(_ context.Context, field
 	return fc, nil
 }
 
-func (ec *executionContext) _UserConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *types.UserConnection) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_UserConnection_totalCount,
-		func(ctx context.Context) (any, error) {
-			return ec.resolvers.UserConnection().TotalCount(ctx, obj)
-		},
-		nil,
-		ec.marshalNInt2int,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_UserConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "UserConnection",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _UserConnection_edges(ctx context.Context, field graphql.CollectedField, obj *types.UserConnection) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_UserConnection_edges,
-		func(ctx context.Context) (any, error) {
-			return obj.Edges, nil
-		},
-		nil,
-		ec.marshalNUserEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUserEdgeᚄ,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_UserConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "UserConnection",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "cursor":
-				return ec.fieldContext_UserEdge_cursor(ctx, field)
-			case "node":
-				return ec.fieldContext_UserEdge_node(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type UserEdge", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _UserConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *types.UserConnection) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_UserConnection_pageInfo,
-		func(ctx context.Context) (any, error) {
-			return obj.PageInfo, nil
-		},
-		nil,
-		ec.marshalNPageInfo2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPageInfo,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_UserConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "UserConnection",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "hasNextPage":
-				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
-			case "hasPreviousPage":
-				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
-			case "startCursor":
-				return ec.fieldContext_PageInfo_startCursor(ctx, field)
-			case "endCursor":
-				return ec.fieldContext_PageInfo_endCursor(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _UserEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *types.UserEdge) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_UserEdge_cursor,
-		func(ctx context.Context) (any, error) {
-			return obj.Cursor, nil
-		},
-		nil,
-		ec.marshalNCursorKey2goᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_UserEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "UserEdge",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type CursorKey does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _UserEdge_node(ctx context.Context, field graphql.CollectedField, obj *types.UserEdge) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_UserEdge_node,
-		func(ctx context.Context) (any, error) {
-			return obj.Node, nil
-		},
-		nil,
-		ec.marshalNUser2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUser,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_UserEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "UserEdge",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_User_id(ctx, field)
-			case "fullName":
-				return ec.fieldContext_User_fullName(ctx, field)
-			case "email":
-				return ec.fieldContext_User_email(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_User_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_User_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Vendor_id(ctx context.Context, field graphql.CollectedField, obj *types.Vendor) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -50960,10 +45531,6 @@ func (ec *executionContext) fieldContext_Vendor_organization(_ context.Context, 
 				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
 			case "context":
 				return ec.fieldContext_Organization_context(ctx, field)
-			case "memberships":
-				return ec.fieldContext_Organization_memberships(ctx, field)
-			case "invitations":
-				return ec.fieldContext_Organization_invitations(ctx, field)
 			case "slackConnections":
 				return ec.fieldContext_Organization_slackConnections(ctx, field)
 			case "frameworks":
@@ -51006,8 +45573,6 @@ func (ec *executionContext) fieldContext_Vendor_organization(_ context.Context, 
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
 			case "customDomain":
 				return ec.fieldContext_Organization_customDomain(ctx, field)
-			case "samlConfigurations":
-				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -54513,112 +49078,6 @@ func (ec *executionContext) fieldContext_VendorServiceEdge_node(_ context.Contex
 	return fc, nil
 }
 
-func (ec *executionContext) _VerifyDomainPayload_samlConfiguration(ctx context.Context, field graphql.CollectedField, obj *types.VerifyDomainPayload) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_VerifyDomainPayload_samlConfiguration,
-		func(ctx context.Context) (any, error) {
-			return obj.SamlConfiguration, nil
-		},
-		nil,
-		ec.marshalNSAMLConfiguration2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐSAMLConfiguration,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_VerifyDomainPayload_samlConfiguration(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VerifyDomainPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_SAMLConfiguration_id(ctx, field)
-			case "organization":
-				return ec.fieldContext_SAMLConfiguration_organization(ctx, field)
-			case "emailDomain":
-				return ec.fieldContext_SAMLConfiguration_emailDomain(ctx, field)
-			case "enabled":
-				return ec.fieldContext_SAMLConfiguration_enabled(ctx, field)
-			case "enforcementPolicy":
-				return ec.fieldContext_SAMLConfiguration_enforcementPolicy(ctx, field)
-			case "domainVerified":
-				return ec.fieldContext_SAMLConfiguration_domainVerified(ctx, field)
-			case "domainVerificationToken":
-				return ec.fieldContext_SAMLConfiguration_domainVerificationToken(ctx, field)
-			case "domainVerifiedAt":
-				return ec.fieldContext_SAMLConfiguration_domainVerifiedAt(ctx, field)
-			case "spEntityId":
-				return ec.fieldContext_SAMLConfiguration_spEntityId(ctx, field)
-			case "spAcsUrl":
-				return ec.fieldContext_SAMLConfiguration_spAcsUrl(ctx, field)
-			case "spMetadataUrl":
-				return ec.fieldContext_SAMLConfiguration_spMetadataUrl(ctx, field)
-			case "idpEntityId":
-				return ec.fieldContext_SAMLConfiguration_idpEntityId(ctx, field)
-			case "idpSsoUrl":
-				return ec.fieldContext_SAMLConfiguration_idpSsoUrl(ctx, field)
-			case "idpCertificate":
-				return ec.fieldContext_SAMLConfiguration_idpCertificate(ctx, field)
-			case "idpMetadataUrl":
-				return ec.fieldContext_SAMLConfiguration_idpMetadataUrl(ctx, field)
-			case "attributeEmail":
-				return ec.fieldContext_SAMLConfiguration_attributeEmail(ctx, field)
-			case "attributeFirstname":
-				return ec.fieldContext_SAMLConfiguration_attributeFirstname(ctx, field)
-			case "attributeLastname":
-				return ec.fieldContext_SAMLConfiguration_attributeLastname(ctx, field)
-			case "attributeRole":
-				return ec.fieldContext_SAMLConfiguration_attributeRole(ctx, field)
-			case "autoSignupEnabled":
-				return ec.fieldContext_SAMLConfiguration_autoSignupEnabled(ctx, field)
-			case "testLoginUrl":
-				return ec.fieldContext_SAMLConfiguration_testLoginUrl(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_SAMLConfiguration_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_SAMLConfiguration_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type SAMLConfiguration", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VerifyDomainPayload_verified(ctx context.Context, field graphql.CollectedField, obj *types.VerifyDomainPayload) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_VerifyDomainPayload_verified,
-		func(ctx context.Context) (any, error) {
-			return obj.Verified, nil
-		},
-		nil,
-		ec.marshalNBoolean2bool,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_VerifyDomainPayload_verified(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VerifyDomainPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Viewer_id(ctx context.Context, field graphql.CollectedField, obj *types.Viewer) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -56290,33 +50749,6 @@ func (ec *executionContext) fieldContext___Type_isOneOf(_ context.Context, field
 
 // region    **************************** input.gotpl *****************************
 
-func (ec *executionContext) unmarshalInputAcceptInvitationInput(ctx context.Context, obj any) (types.AcceptInvitationInput, error) {
-	var it types.AcceptInvitationInput
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"invitationId"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "invitationId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("invitationId"))
-			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.InvitationID = data
-		}
-	}
-
-	return it, nil
-}
-
 func (ec *executionContext) unmarshalInputAssessVendorInput(ctx context.Context, obj any) (types.AssessVendorInput, error) {
 	var it types.AssessVendorInput
 	asMap := map[string]any{}
@@ -56644,33 +51076,6 @@ func (ec *executionContext) unmarshalInputCancelSignatureRequestInput(ctx contex
 				return it, err
 			}
 			it.DocumentVersionSignatureID = data
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputConfirmEmailInput(ctx context.Context, obj any) (types.ConfirmEmailInput, error) {
-	var it types.ConfirmEmailInput
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"token"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "token":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("token"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Token = data
 		}
 	}
 
@@ -57789,33 +52194,6 @@ func (ec *executionContext) unmarshalInputCreateObligationInput(ctx context.Cont
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputCreateOrganizationInput(ctx context.Context, obj any) (types.CreateOrganizationInput, error) {
-	var it types.CreateOrganizationInput
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"name"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "name":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Name = data
-		}
-	}
-
-	return it, nil
-}
-
 func (ec *executionContext) unmarshalInputCreatePeopleInput(ctx context.Context, obj any) (types.CreatePeopleInput, error) {
 	var it types.CreatePeopleInput
 	asMap := map[string]any{}
@@ -58224,131 +52602,6 @@ func (ec *executionContext) unmarshalInputCreateRiskObligationMappingInput(ctx c
 				return it, err
 			}
 			it.ObligationID = data
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputCreateSAMLConfigurationInput(ctx context.Context, obj any) (types.CreateSAMLConfigurationInput, error) {
-	var it types.CreateSAMLConfigurationInput
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"organizationId", "emailDomain", "enforcementPolicy", "spCertificate", "spPrivateKey", "idpMetadataXml", "idpEntityId", "idpSsoUrl", "idpCertificate", "idpMetadataUrl", "attributeEmail", "attributeFirstname", "attributeLastname", "attributeRole", "autoSignupEnabled"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "organizationId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("organizationId"))
-			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.OrganizationID = data
-		case "emailDomain":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("emailDomain"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.EmailDomain = data
-		case "enforcementPolicy":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("enforcementPolicy"))
-			data, err := ec.unmarshalNSAMLEnforcementPolicy2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐSAMLEnforcementPolicy(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.EnforcementPolicy = data
-		case "spCertificate":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("spCertificate"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.SpCertificate = data
-		case "spPrivateKey":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("spPrivateKey"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.SpPrivateKey = data
-		case "idpMetadataXml":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idpMetadataXml"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.IdpMetadataXML = data
-		case "idpEntityId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idpEntityId"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.IdpEntityID = data
-		case "idpSsoUrl":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idpSsoUrl"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.IdpSsoURL = data
-		case "idpCertificate":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idpCertificate"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.IdpCertificate = data
-		case "idpMetadataUrl":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idpMetadataUrl"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.IdpMetadataURL = data
-		case "attributeEmail":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("attributeEmail"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.AttributeEmail = data
-		case "attributeFirstname":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("attributeFirstname"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.AttributeFirstname = data
-		case "attributeLastname":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("attributeLastname"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.AttributeLastname = data
-		case "attributeRole":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("attributeRole"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.AttributeRole = data
-		case "autoSignupEnabled":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("autoSignupEnabled"))
-			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.AutoSignupEnabled = data
 		}
 	}
 
@@ -59449,33 +53702,6 @@ func (ec *executionContext) unmarshalInputDeleteFrameworkInput(ctx context.Conte
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputDeleteInvitationInput(ctx context.Context, obj any) (types.DeleteInvitationInput, error) {
-	var it types.DeleteInvitationInput
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"invitationId"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "invitationId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("invitationId"))
-			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.InvitationID = data
-		}
-	}
-
-	return it, nil
-}
-
 func (ec *executionContext) unmarshalInputDeleteMeasureInput(ctx context.Context, obj any) (types.DeleteMeasureInput, error) {
 	var it types.DeleteMeasureInput
 	asMap := map[string]any{}
@@ -59578,60 +53804,6 @@ func (ec *executionContext) unmarshalInputDeleteObligationInput(ctx context.Cont
 				return it, err
 			}
 			it.ObligationID = data
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputDeleteOrganizationHorizontalLogoInput(ctx context.Context, obj any) (types.DeleteOrganizationHorizontalLogoInput, error) {
-	var it types.DeleteOrganizationHorizontalLogoInput
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"organizationId"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "organizationId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("organizationId"))
-			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.OrganizationID = data
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputDeleteOrganizationInput(ctx context.Context, obj any) (types.DeleteOrganizationInput, error) {
-	var it types.DeleteOrganizationInput
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"organizationId"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "organizationId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("organizationId"))
-			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.OrganizationID = data
 		}
 	}
 
@@ -59815,33 +53987,6 @@ func (ec *executionContext) unmarshalInputDeleteRiskObligationMappingInput(ctx c
 				return it, err
 			}
 			it.ObligationID = data
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputDeleteSAMLConfigurationInput(ctx context.Context, obj any) (types.DeleteSAMLConfigurationInput, error) {
-	var it types.DeleteSAMLConfigurationInput
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"id"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "id":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ID = data
 		}
 	}
 
@@ -60172,33 +54317,6 @@ func (ec *executionContext) unmarshalInputDeleteVendorServiceInput(ctx context.C
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputDisableSAMLInput(ctx context.Context, obj any) (types.DisableSAMLInput, error) {
-	var it types.DisableSAMLInput
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"id"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "id":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ID = data
-		}
-	}
-
-	return it, nil
-}
-
 func (ec *executionContext) unmarshalInputDocumentFilter(ctx context.Context, obj any) (types.DocumentFilter, error) {
 	var it types.DocumentFilter
 	asMap := map[string]any{}
@@ -60376,33 +54494,6 @@ func (ec *executionContext) unmarshalInputDocumentVersionSignatureOrder(ctx cont
 				return it, err
 			}
 			it.Direction = data
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputEnableSAMLInput(ctx context.Context, obj any) (types.EnableSAMLInput, error) {
-	var it types.EnableSAMLInput
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"id"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "id":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ID = data
 		}
 	}
 
@@ -60776,156 +54867,6 @@ func (ec *executionContext) unmarshalInputImportMeasureInput(ctx context.Context
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputInitiateDomainVerificationInput(ctx context.Context, obj any) (types.InitiateDomainVerificationInput, error) {
-	var it types.InitiateDomainVerificationInput
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"organizationId", "emailDomain"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "organizationId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("organizationId"))
-			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.OrganizationID = data
-		case "emailDomain":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("emailDomain"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.EmailDomain = data
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputInvitationFilter(ctx context.Context, obj any) (types.InvitationFilter, error) {
-	var it types.InvitationFilter
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"statuses"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "statuses":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("statuses"))
-			data, err := ec.unmarshalOInvitationStatus2ᚕgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐInvitationStatusᚄ(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Statuses = data
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputInvitationOrder(ctx context.Context, obj any) (types.InvitationOrder, error) {
-	var it types.InvitationOrder
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"direction", "field"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "direction":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("direction"))
-			data, err := ec.unmarshalNOrderDirection2goᚗproboᚗincᚋproboᚋpkgᚋpageᚐOrderDirection(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Direction = data
-		case "field":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
-			data, err := ec.unmarshalNInvitationOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐInvitationOrderField(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Field = data
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputInviteUserInput(ctx context.Context, obj any) (types.InviteUserInput, error) {
-	var it types.InviteUserInput
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"organizationId", "email", "fullName", "role", "createPeople"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "organizationId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("organizationId"))
-			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.OrganizationID = data
-		case "email":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Email = data
-		case "fullName":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fullName"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.FullName = data
-		case "role":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("role"))
-			data, err := ec.unmarshalNMembershipRole2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipRole(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Role = data
-		case "createPeople":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createPeople"))
-			data, err := ec.unmarshalNBoolean2bool(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.CreatePeople = data
-		}
-	}
-
-	return it, nil
-}
-
 func (ec *executionContext) unmarshalInputMeasureFilter(ctx context.Context, obj any) (types.MeasureFilter, error) {
 	var it types.MeasureFilter
 	asMap := map[string]any{}
@@ -61018,40 +54959,6 @@ func (ec *executionContext) unmarshalInputMeetingOrder(ctx context.Context, obj 
 		case "field":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
 			data, err := ec.unmarshalNMeetingOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMeetingOrderField(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Field = data
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputMembershipOrder(ctx context.Context, obj any) (types.MembershipOrderBy, error) {
-	var it types.MembershipOrderBy
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"direction", "field"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "direction":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("direction"))
-			data, err := ec.unmarshalNOrderDirection2goᚗproboᚗincᚋproboᚋpkgᚋpageᚐOrderDirection(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Direction = data
-		case "field":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
-			data, err := ec.unmarshalNMembershipOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipOrderField(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -61368,40 +55275,6 @@ func (ec *executionContext) unmarshalInputPublishDocumentVersionInput(ctx contex
 				return it, err
 			}
 			it.Changelog = data
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputRemoveMemberInput(ctx context.Context, obj any) (types.RemoveMemberInput, error) {
-	var it types.RemoveMemberInput
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"organizationId", "memberId"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "organizationId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("organizationId"))
-			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.OrganizationID = data
-		case "memberId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("memberId"))
-			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.MemberID = data
 		}
 	}
 
@@ -62455,47 +56328,6 @@ func (ec *executionContext) unmarshalInputUpdateMeetingInput(ctx context.Context
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputUpdateMembershipInput(ctx context.Context, obj any) (types.UpdateMembershipInput, error) {
-	var it types.UpdateMembershipInput
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"organizationId", "memberId", "role"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "organizationId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("organizationId"))
-			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.OrganizationID = data
-		case "memberId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("memberId"))
-			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.MemberID = data
-		case "role":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("role"))
-			data, err := ec.unmarshalNMembershipRole2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipRole(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Role = data
-		}
-	}
-
-	return it, nil
-}
-
 func (ec *executionContext) unmarshalInputUpdateNonconformityInput(ctx context.Context, obj any) (types.UpdateNonconformityInput, error) {
 	var it types.UpdateNonconformityInput
 	asMap := map[string]any{}
@@ -62711,82 +56543,6 @@ func (ec *executionContext) unmarshalInputUpdateOrganizationContextInput(ctx con
 				return it, err
 			}
 			it.Summary = graphql.OmittableOf(data)
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputUpdateOrganizationInput(ctx context.Context, obj any) (types.UpdateOrganizationInput, error) {
-	var it types.UpdateOrganizationInput
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"organizationId", "name", "description", "websiteUrl", "email", "headquarterAddress", "logoFile", "horizontalLogoFile"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "organizationId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("organizationId"))
-			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.OrganizationID = data
-		case "name":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Name = data
-		case "description":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Description = graphql.OmittableOf(data)
-		case "websiteUrl":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("websiteUrl"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.WebsiteURL = graphql.OmittableOf(data)
-		case "email":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Email = graphql.OmittableOf(data)
-		case "headquarterAddress":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("headquarterAddress"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.HeadquarterAddress = graphql.OmittableOf(data)
-		case "logoFile":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("logoFile"))
-			data, err := ec.unmarshalOUpload2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.LogoFile = data
-		case "horizontalLogoFile":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("horizontalLogoFile"))
-			data, err := ec.unmarshalOUpload2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.HorizontalLogoFile = data
 		}
 	}
 
@@ -63099,124 +56855,6 @@ func (ec *executionContext) unmarshalInputUpdateRiskInput(ctx context.Context, o
 				return it, err
 			}
 			it.Note = data
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputUpdateSAMLConfigurationInput(ctx context.Context, obj any) (types.UpdateSAMLConfigurationInput, error) {
-	var it types.UpdateSAMLConfigurationInput
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"id", "enabled", "enforcementPolicy", "spCertificate", "spPrivateKey", "idpEntityId", "idpSsoUrl", "idpCertificate", "idpMetadataUrl", "attributeEmail", "attributeFirstname", "attributeLastname", "attributeRole", "autoSignupEnabled"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "id":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ID = data
-		case "enabled":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("enabled"))
-			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Enabled = data
-		case "enforcementPolicy":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("enforcementPolicy"))
-			data, err := ec.unmarshalOSAMLEnforcementPolicy2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐSAMLEnforcementPolicy(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.EnforcementPolicy = data
-		case "spCertificate":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("spCertificate"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.SpCertificate = data
-		case "spPrivateKey":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("spPrivateKey"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.SpPrivateKey = data
-		case "idpEntityId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idpEntityId"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.IdpEntityID = data
-		case "idpSsoUrl":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idpSsoUrl"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.IdpSsoURL = data
-		case "idpCertificate":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idpCertificate"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.IdpCertificate = data
-		case "idpMetadataUrl":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("idpMetadataUrl"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.IdpMetadataURL = data
-		case "attributeEmail":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("attributeEmail"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.AttributeEmail = data
-		case "attributeFirstname":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("attributeFirstname"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.AttributeFirstname = data
-		case "attributeLastname":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("attributeLastname"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.AttributeLastname = data
-		case "attributeRole":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("attributeRole"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.AttributeRole = data
-		case "autoSignupEnabled":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("autoSignupEnabled"))
-			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.AutoSignupEnabled = data
 		}
 	}
 
@@ -64124,40 +57762,6 @@ func (ec *executionContext) unmarshalInputUploadVendorDataPrivacyAgreementInput(
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputUserOrder(ctx context.Context, obj any) (types.UserOrderBy, error) {
-	var it types.UserOrderBy
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"direction", "field"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "direction":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("direction"))
-			data, err := ec.unmarshalNOrderDirection2goᚗproboᚗincᚋproboᚋpkgᚋpageᚐOrderDirection(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Direction = data
-		case "field":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
-			data, err := ec.unmarshalNUserOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐUserOrderField(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Field = data
-		}
-	}
-
-	return it, nil
-}
-
 func (ec *executionContext) unmarshalInputVendorComplianceReportOrder(ctx context.Context, obj any) (types.VendorComplianceReportOrderBy, error) {
 	var it types.VendorComplianceReportOrderBy
 	asMap := map[string]any{}
@@ -64355,33 +57959,6 @@ func (ec *executionContext) unmarshalInputVendorServiceOrder(ctx context.Context
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputVerifyDomainInput(ctx context.Context, obj any) (types.VerifyDomainInput, error) {
-	var it types.VerifyDomainInput
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"id"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "id":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ID = data
-		}
-	}
-
-	return it, nil
-}
-
 // endregion **************************** input.gotpl *****************************
 
 // region    ************************** interface.gotpl ***************************
@@ -64481,13 +58058,6 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._Snapshot(ctx, sel, obj)
-	case types.SAMLConfiguration:
-		return ec._SAMLConfiguration(ctx, sel, &obj)
-	case *types.SAMLConfiguration:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._SAMLConfiguration(ctx, sel, obj)
 	case types.Risk:
 		return ec._Risk(ctx, sel, &obj)
 	case *types.Risk:
@@ -64537,13 +58107,6 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._Nonconformity(ctx, sel, obj)
-	case types.Membership:
-		return ec._Membership(ctx, sel, &obj)
-	case *types.Membership:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._Membership(ctx, sel, obj)
 	case types.Meeting:
 		return ec._Meeting(ctx, sel, &obj)
 	case *types.Meeting:
@@ -64558,13 +58121,6 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._Measure(ctx, sel, obj)
-	case types.Invitation:
-		return ec._Invitation(ctx, sel, &obj)
-	case *types.Invitation:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._Invitation(ctx, sel, obj)
 	case types.Framework:
 		return ec._Framework(ctx, sel, &obj)
 	case *types.Framework:
@@ -64650,45 +58206,6 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 // endregion ************************** interface.gotpl ***************************
 
 // region    **************************** object.gotpl ****************************
-
-var acceptInvitationPayloadImplementors = []string{"AcceptInvitationPayload"}
-
-func (ec *executionContext) _AcceptInvitationPayload(ctx context.Context, sel ast.SelectionSet, obj *types.AcceptInvitationPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, acceptInvitationPayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("AcceptInvitationPayload")
-		case "invitation":
-			out.Values[i] = ec._AcceptInvitationPayload_invitation(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
 
 var assessVendorPayloadImplementors = []string{"AssessVendorPayload"}
 
@@ -64830,41 +58347,10 @@ func (ec *executionContext) _Asset(ctx context.Context, sel ast.SelectionSet, ob
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "assetType":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Asset_assetType(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._Asset_assetType(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
 			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "dataTypesStored":
 			out.Values[i] = ec._Asset_dataTypesStored(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -65639,45 +59125,6 @@ func (ec *executionContext) _CancelSignatureRequestPayload(ctx context.Context, 
 			out.Values[i] = graphql.MarshalString("CancelSignatureRequestPayload")
 		case "deletedDocumentVersionSignatureId":
 			out.Values[i] = ec._CancelSignatureRequestPayload_deletedDocumentVersionSignatureId(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var confirmEmailPayloadImplementors = []string{"ConfirmEmailPayload"}
-
-func (ec *executionContext) _ConfirmEmailPayload(ctx context.Context, sel ast.SelectionSet, obj *types.ConfirmEmailPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, confirmEmailPayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("ConfirmEmailPayload")
-		case "success":
-			out.Values[i] = ec._ConfirmEmailPayload_success(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -67073,45 +60520,6 @@ func (ec *executionContext) _CreateObligationPayload(ctx context.Context, sel as
 	return out
 }
 
-var createOrganizationPayloadImplementors = []string{"CreateOrganizationPayload"}
-
-func (ec *executionContext) _CreateOrganizationPayload(ctx context.Context, sel ast.SelectionSet, obj *types.CreateOrganizationPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, createOrganizationPayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("CreateOrganizationPayload")
-		case "organizationEdge":
-			out.Values[i] = ec._CreateOrganizationPayload_organizationEdge(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
 var createPeoplePayloadImplementors = []string{"CreatePeoplePayload"}
 
 func (ec *executionContext) _CreatePeoplePayload(ctx context.Context, sel ast.SelectionSet, obj *types.CreatePeoplePayload) graphql.Marshaler {
@@ -67335,45 +60743,6 @@ func (ec *executionContext) _CreateRiskPayload(ctx context.Context, sel ast.Sele
 			out.Values[i] = graphql.MarshalString("CreateRiskPayload")
 		case "riskEdge":
 			out.Values[i] = ec._CreateRiskPayload_riskEdge(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var createSAMLConfigurationPayloadImplementors = []string{"CreateSAMLConfigurationPayload"}
-
-func (ec *executionContext) _CreateSAMLConfigurationPayload(ctx context.Context, sel ast.SelectionSet, obj *types.CreateSAMLConfigurationPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, createSAMLConfigurationPayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("CreateSAMLConfigurationPayload")
-		case "samlConfiguration":
-			out.Values[i] = ec._CreateSAMLConfigurationPayload_samlConfiguration(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -68779,45 +62148,6 @@ func (ec *executionContext) _DeleteFrameworkPayload(ctx context.Context, sel ast
 	return out
 }
 
-var deleteInvitationPayloadImplementors = []string{"DeleteInvitationPayload"}
-
-func (ec *executionContext) _DeleteInvitationPayload(ctx context.Context, sel ast.SelectionSet, obj *types.DeleteInvitationPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, deleteInvitationPayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("DeleteInvitationPayload")
-		case "deletedInvitationId":
-			out.Values[i] = ec._DeleteInvitationPayload_deletedInvitationId(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
 var deleteMeasurePayloadImplementors = []string{"DeleteMeasurePayload"}
 
 func (ec *executionContext) _DeleteMeasurePayload(ctx context.Context, sel ast.SelectionSet, obj *types.DeleteMeasurePayload) graphql.Marshaler {
@@ -68948,84 +62278,6 @@ func (ec *executionContext) _DeleteObligationPayload(ctx context.Context, sel as
 			out.Values[i] = graphql.MarshalString("DeleteObligationPayload")
 		case "deletedObligationId":
 			out.Values[i] = ec._DeleteObligationPayload_deletedObligationId(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var deleteOrganizationHorizontalLogoPayloadImplementors = []string{"DeleteOrganizationHorizontalLogoPayload"}
-
-func (ec *executionContext) _DeleteOrganizationHorizontalLogoPayload(ctx context.Context, sel ast.SelectionSet, obj *types.DeleteOrganizationHorizontalLogoPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, deleteOrganizationHorizontalLogoPayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("DeleteOrganizationHorizontalLogoPayload")
-		case "organization":
-			out.Values[i] = ec._DeleteOrganizationHorizontalLogoPayload_organization(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var deleteOrganizationPayloadImplementors = []string{"DeleteOrganizationPayload"}
-
-func (ec *executionContext) _DeleteOrganizationPayload(ctx context.Context, sel ast.SelectionSet, obj *types.DeleteOrganizationPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, deleteOrganizationPayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("DeleteOrganizationPayload")
-		case "deletedOrganizationId":
-			out.Values[i] = ec._DeleteOrganizationPayload_deletedOrganizationId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -69275,45 +62527,6 @@ func (ec *executionContext) _DeleteRiskPayload(ctx context.Context, sel ast.Sele
 			out.Values[i] = graphql.MarshalString("DeleteRiskPayload")
 		case "deletedRiskId":
 			out.Values[i] = ec._DeleteRiskPayload_deletedRiskId(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var deleteSAMLConfigurationPayloadImplementors = []string{"DeleteSAMLConfigurationPayload"}
-
-func (ec *executionContext) _DeleteSAMLConfigurationPayload(ctx context.Context, sel ast.SelectionSet, obj *types.DeleteSAMLConfigurationPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, deleteSAMLConfigurationPayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("DeleteSAMLConfigurationPayload")
-		case "deletedSAMLConfigurationId":
-			out.Values[i] = ec._DeleteSAMLConfigurationPayload_deletedSAMLConfigurationId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -69782,45 +62995,6 @@ func (ec *executionContext) _DeleteVendorServicePayload(ctx context.Context, sel
 			out.Values[i] = graphql.MarshalString("DeleteVendorServicePayload")
 		case "deletedVendorServiceId":
 			out.Values[i] = ec._DeleteVendorServicePayload_deletedVendorServiceId(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var disableSAMLPayloadImplementors = []string{"DisableSAMLPayload"}
-
-func (ec *executionContext) _DisableSAMLPayload(ctx context.Context, sel ast.SelectionSet, obj *types.DisableSAMLPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, disableSAMLPayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("DisableSAMLPayload")
-		case "samlConfiguration":
-			out.Values[i] = ec._DisableSAMLPayload_samlConfiguration(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -70696,45 +63870,6 @@ func (ec *executionContext) _DocumentVersionSignatureEdge(ctx context.Context, s
 			}
 		case "node":
 			out.Values[i] = ec._DocumentVersionSignatureEdge_node(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var enableSAMLPayloadImplementors = []string{"EnableSAMLPayload"}
-
-func (ec *executionContext) _EnableSAMLPayload(ctx context.Context, sel ast.SelectionSet, obj *types.EnableSAMLPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, enableSAMLPayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("EnableSAMLPayload")
-		case "samlConfiguration":
-			out.Values[i] = ec._EnableSAMLPayload_samlConfiguration(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -71758,320 +64893,6 @@ func (ec *executionContext) _ImportMeasurePayload(ctx context.Context, sel ast.S
 	return out
 }
 
-var initiateDomainVerificationPayloadImplementors = []string{"InitiateDomainVerificationPayload"}
-
-func (ec *executionContext) _InitiateDomainVerificationPayload(ctx context.Context, sel ast.SelectionSet, obj *types.InitiateDomainVerificationPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, initiateDomainVerificationPayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("InitiateDomainVerificationPayload")
-		case "samlConfiguration":
-			out.Values[i] = ec._InitiateDomainVerificationPayload_samlConfiguration(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "dnsRecord":
-			out.Values[i] = ec._InitiateDomainVerificationPayload_dnsRecord(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var invitationImplementors = []string{"Invitation", "Node"}
-
-func (ec *executionContext) _Invitation(ctx context.Context, sel ast.SelectionSet, obj *types.Invitation) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, invitationImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("Invitation")
-		case "id":
-			out.Values[i] = ec._Invitation_id(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "email":
-			out.Values[i] = ec._Invitation_email(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "fullName":
-			out.Values[i] = ec._Invitation_fullName(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "role":
-			out.Values[i] = ec._Invitation_role(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "status":
-			out.Values[i] = ec._Invitation_status(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "expiresAt":
-			out.Values[i] = ec._Invitation_expiresAt(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "acceptedAt":
-			out.Values[i] = ec._Invitation_acceptedAt(ctx, field, obj)
-		case "createdAt":
-			out.Values[i] = ec._Invitation_createdAt(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "organization":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Invitation_organization(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var invitationConnectionImplementors = []string{"InvitationConnection"}
-
-func (ec *executionContext) _InvitationConnection(ctx context.Context, sel ast.SelectionSet, obj *types.InvitationConnection) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, invitationConnectionImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("InvitationConnection")
-		case "totalCount":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._InvitationConnection_totalCount(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "edges":
-			out.Values[i] = ec._InvitationConnection_edges(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "pageInfo":
-			out.Values[i] = ec._InvitationConnection_pageInfo(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var invitationEdgeImplementors = []string{"InvitationEdge"}
-
-func (ec *executionContext) _InvitationEdge(ctx context.Context, sel ast.SelectionSet, obj *types.InvitationEdge) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, invitationEdgeImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("InvitationEdge")
-		case "cursor":
-			out.Values[i] = ec._InvitationEdge_cursor(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "node":
-			out.Values[i] = ec._InvitationEdge_node(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var inviteUserPayloadImplementors = []string{"InviteUserPayload"}
-
-func (ec *executionContext) _InviteUserPayload(ctx context.Context, sel ast.SelectionSet, obj *types.InviteUserPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, inviteUserPayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("InviteUserPayload")
-		case "invitationEdge":
-			out.Values[i] = ec._InviteUserPayload_invitationEdge(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
 var measureImplementors = []string{"Measure", "Node"}
 
 func (ec *executionContext) _Measure(ctx context.Context, sel ast.SelectionSet, obj *types.Measure) graphql.Marshaler {
@@ -72663,240 +65484,6 @@ func (ec *executionContext) _MeetingEdge(ctx context.Context, sel ast.SelectionS
 	return out
 }
 
-var membershipImplementors = []string{"Membership", "Node"}
-
-func (ec *executionContext) _Membership(ctx context.Context, sel ast.SelectionSet, obj *types.Membership) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, membershipImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("Membership")
-		case "id":
-			out.Values[i] = ec._Membership_id(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "userID":
-			out.Values[i] = ec._Membership_userID(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "organizationID":
-			out.Values[i] = ec._Membership_organizationID(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "role":
-			out.Values[i] = ec._Membership_role(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "fullName":
-			out.Values[i] = ec._Membership_fullName(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "emailAddress":
-			out.Values[i] = ec._Membership_emailAddress(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "authMethod":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Membership_authMethod(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "createdAt":
-			out.Values[i] = ec._Membership_createdAt(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "updatedAt":
-			out.Values[i] = ec._Membership_updatedAt(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var membershipConnectionImplementors = []string{"MembershipConnection"}
-
-func (ec *executionContext) _MembershipConnection(ctx context.Context, sel ast.SelectionSet, obj *types.MembershipConnection) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, membershipConnectionImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("MembershipConnection")
-		case "totalCount":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._MembershipConnection_totalCount(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "edges":
-			out.Values[i] = ec._MembershipConnection_edges(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "pageInfo":
-			out.Values[i] = ec._MembershipConnection_pageInfo(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var membershipEdgeImplementors = []string{"MembershipEdge"}
-
-func (ec *executionContext) _MembershipEdge(ctx context.Context, sel ast.SelectionSet, obj *types.MembershipEdge) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, membershipEdgeImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("MembershipEdge")
-		case "cursor":
-			out.Values[i] = ec._MembershipEdge_cursor(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "node":
-			out.Values[i] = ec._MembershipEdge_node(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
 var mutationImplementors = []string{"Mutation"}
 
 func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
@@ -72916,37 +65503,9 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Mutation")
-		case "createOrganization":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_createOrganization(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "updateOrganization":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_updateOrganization(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "updateOrganizationContext":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_updateOrganizationContext(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "deleteOrganizationHorizontalLogo":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_deleteOrganizationHorizontalLogo(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "deleteOrganization":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_deleteOrganization(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -73038,48 +65597,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "deleteTrustCenterFile":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_deleteTrustCenterFile(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "confirmEmail":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_confirmEmail(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "inviteUser":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_inviteUser(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "acceptInvitation":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_acceptInvitation(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "deleteInvitation":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_deleteInvitation(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "removeMember":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_removeMember(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "updateMembership":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_updateMembership(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -73833,55 +66350,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "initiateDomainVerification":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_initiateDomainVerification(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "verifyDomain":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_verifyDomain(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "createSAMLConfiguration":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_createSAMLConfiguration(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "updateSAMLConfiguration":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_updateSAMLConfiguration(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "deleteSAMLConfiguration":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_deleteSAMLConfiguration(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "enableSAML":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_enableSAML(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "disableSAML":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_disableSAML(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -74583,78 +67051,6 @@ func (ec *executionContext) _Organization(ctx context.Context, sel ast.Selection
 					}
 				}()
 				res = ec._Organization_context(ctx, field, obj)
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "memberships":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Organization_memberships(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "invitations":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Organization_invitations(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
 				return res
 			}
 
@@ -75405,42 +67801,6 @@ func (ec *executionContext) _Organization(ctx context.Context, sel ast.Selection
 					}
 				}()
 				res = ec._Organization_customDomain(ctx, field, obj)
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "samlConfigurations":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Organization_samlConfigurations(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
 				return res
 			}
 
@@ -76308,45 +68668,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 	return out
 }
 
-var removeMemberPayloadImplementors = []string{"RemoveMemberPayload"}
-
-func (ec *executionContext) _RemoveMemberPayload(ctx context.Context, sel ast.SelectionSet, obj *types.RemoveMemberPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, removeMemberPayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("RemoveMemberPayload")
-		case "deletedMemberId":
-			out.Values[i] = ec._RemoveMemberPayload_deletedMemberId(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
 var reportImplementors = []string{"Report", "Node"}
 
 func (ec *executionContext) _Report(ctx context.Context, sel ast.SelectionSet, obj *types.Report) graphql.Marshaler {
@@ -76976,239 +69297,6 @@ func (ec *executionContext) _RiskEdge(ctx context.Context, sel ast.SelectionSet,
 			out.Values[i] = ec._RiskEdge_node(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var sAMLConfigurationImplementors = []string{"SAMLConfiguration", "Node"}
-
-func (ec *executionContext) _SAMLConfiguration(ctx context.Context, sel ast.SelectionSet, obj *types.SAMLConfiguration) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, sAMLConfigurationImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("SAMLConfiguration")
-		case "id":
-			out.Values[i] = ec._SAMLConfiguration_id(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "organization":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._SAMLConfiguration_organization(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "emailDomain":
-			out.Values[i] = ec._SAMLConfiguration_emailDomain(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "enabled":
-			out.Values[i] = ec._SAMLConfiguration_enabled(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "enforcementPolicy":
-			out.Values[i] = ec._SAMLConfiguration_enforcementPolicy(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "domainVerified":
-			out.Values[i] = ec._SAMLConfiguration_domainVerified(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "domainVerificationToken":
-			out.Values[i] = ec._SAMLConfiguration_domainVerificationToken(ctx, field, obj)
-		case "domainVerifiedAt":
-			out.Values[i] = ec._SAMLConfiguration_domainVerifiedAt(ctx, field, obj)
-		case "spEntityId":
-			out.Values[i] = ec._SAMLConfiguration_spEntityId(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "spAcsUrl":
-			out.Values[i] = ec._SAMLConfiguration_spAcsUrl(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "spMetadataUrl":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._SAMLConfiguration_spMetadataUrl(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "idpEntityId":
-			out.Values[i] = ec._SAMLConfiguration_idpEntityId(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "idpSsoUrl":
-			out.Values[i] = ec._SAMLConfiguration_idpSsoUrl(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "idpCertificate":
-			out.Values[i] = ec._SAMLConfiguration_idpCertificate(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "idpMetadataUrl":
-			out.Values[i] = ec._SAMLConfiguration_idpMetadataUrl(ctx, field, obj)
-		case "attributeEmail":
-			out.Values[i] = ec._SAMLConfiguration_attributeEmail(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "attributeFirstname":
-			out.Values[i] = ec._SAMLConfiguration_attributeFirstname(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "attributeLastname":
-			out.Values[i] = ec._SAMLConfiguration_attributeLastname(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "attributeRole":
-			out.Values[i] = ec._SAMLConfiguration_attributeRole(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "autoSignupEnabled":
-			out.Values[i] = ec._SAMLConfiguration_autoSignupEnabled(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "testLoginUrl":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._SAMLConfiguration_testLoginUrl(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "createdAt":
-			out.Values[i] = ec._SAMLConfiguration_createdAt(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "updatedAt":
-			out.Values[i] = ec._SAMLConfiguration_updatedAt(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -80035,45 +72123,6 @@ func (ec *executionContext) _UpdateMeetingPayload(ctx context.Context, sel ast.S
 	return out
 }
 
-var updateMembershipPayloadImplementors = []string{"UpdateMembershipPayload"}
-
-func (ec *executionContext) _UpdateMembershipPayload(ctx context.Context, sel ast.SelectionSet, obj *types.UpdateMembershipPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, updateMembershipPayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("UpdateMembershipPayload")
-		case "membership":
-			out.Values[i] = ec._UpdateMembershipPayload_membership(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
 var updateNonconformityPayloadImplementors = []string{"UpdateNonconformityPayload"}
 
 func (ec *executionContext) _UpdateNonconformityPayload(ctx context.Context, sel ast.SelectionSet, obj *types.UpdateNonconformityPayload) graphql.Marshaler {
@@ -80191,45 +72240,6 @@ func (ec *executionContext) _UpdateOrganizationContextPayload(ctx context.Contex
 	return out
 }
 
-var updateOrganizationPayloadImplementors = []string{"UpdateOrganizationPayload"}
-
-func (ec *executionContext) _UpdateOrganizationPayload(ctx context.Context, sel ast.SelectionSet, obj *types.UpdateOrganizationPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, updateOrganizationPayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("UpdateOrganizationPayload")
-		case "organization":
-			out.Values[i] = ec._UpdateOrganizationPayload_organization(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
 var updatePeoplePayloadImplementors = []string{"UpdatePeoplePayload"}
 
 func (ec *executionContext) _UpdatePeoplePayload(ctx context.Context, sel ast.SelectionSet, obj *types.UpdatePeoplePayload) graphql.Marshaler {
@@ -80321,45 +72331,6 @@ func (ec *executionContext) _UpdateRiskPayload(ctx context.Context, sel ast.Sele
 			out.Values[i] = graphql.MarshalString("UpdateRiskPayload")
 		case "risk":
 			out.Values[i] = ec._UpdateRiskPayload_risk(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var updateSAMLConfigurationPayloadImplementors = []string{"UpdateSAMLConfigurationPayload"}
-
-func (ec *executionContext) _UpdateSAMLConfigurationPayload(ctx context.Context, sel ast.SelectionSet, obj *types.UpdateSAMLConfigurationPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, updateSAMLConfigurationPayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("UpdateSAMLConfigurationPayload")
-		case "samlConfiguration":
-			out.Values[i] = ec._UpdateSAMLConfigurationPayload_samlConfiguration(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -81043,130 +73014,6 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			}
 		case "updatedAt":
 			out.Values[i] = ec._User_updatedAt(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var userConnectionImplementors = []string{"UserConnection"}
-
-func (ec *executionContext) _UserConnection(ctx context.Context, sel ast.SelectionSet, obj *types.UserConnection) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, userConnectionImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("UserConnection")
-		case "totalCount":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._UserConnection_totalCount(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "edges":
-			out.Values[i] = ec._UserConnection_edges(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "pageInfo":
-			out.Values[i] = ec._UserConnection_pageInfo(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var userEdgeImplementors = []string{"UserEdge"}
-
-func (ec *executionContext) _UserEdge(ctx context.Context, sel ast.SelectionSet, obj *types.UserEdge) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, userEdgeImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("UserEdge")
-		case "cursor":
-			out.Values[i] = ec._UserEdge_cursor(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "node":
-			out.Values[i] = ec._UserEdge_node(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -82770,50 +74617,6 @@ func (ec *executionContext) _VendorServiceEdge(ctx context.Context, sel ast.Sele
 	return out
 }
 
-var verifyDomainPayloadImplementors = []string{"VerifyDomainPayload"}
-
-func (ec *executionContext) _VerifyDomainPayload(ctx context.Context, sel ast.SelectionSet, obj *types.VerifyDomainPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, verifyDomainPayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("VerifyDomainPayload")
-		case "samlConfiguration":
-			out.Values[i] = ec._VerifyDomainPayload_samlConfiguration(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "verified":
-			out.Values[i] = ec._VerifyDomainPayload_verified(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
 var viewerImplementors = []string{"Viewer"}
 
 func (ec *executionContext) _Viewer(ctx context.Context, sel ast.SelectionSet, obj *types.Viewer) graphql.Marshaler {
@@ -83298,25 +75101,6 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
-func (ec *executionContext) unmarshalNAcceptInvitationInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAcceptInvitationInput(ctx context.Context, v any) (types.AcceptInvitationInput, error) {
-	res, err := ec.unmarshalInputAcceptInvitationInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNAcceptInvitationPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAcceptInvitationPayload(ctx context.Context, sel ast.SelectionSet, v types.AcceptInvitationPayload) graphql.Marshaler {
-	return ec._AcceptInvitationPayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNAcceptInvitationPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAcceptInvitationPayload(ctx context.Context, sel ast.SelectionSet, v *types.AcceptInvitationPayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._AcceptInvitationPayload(ctx, sel, v)
-}
-
 func (ec *executionContext) unmarshalNAssessVendorInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAssessVendorInput(ctx context.Context, v any) (types.AssessVendorInput, error) {
 	res, err := ec.unmarshalInputAssessVendorInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -83790,25 +75574,6 @@ func (ec *executionContext) marshalNCancelSignatureRequestPayload2ᚖgoᚗprobo�
 		return graphql.Null
 	}
 	return ec._CancelSignatureRequestPayload(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalNConfirmEmailInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐConfirmEmailInput(ctx context.Context, v any) (types.ConfirmEmailInput, error) {
-	res, err := ec.unmarshalInputConfirmEmailInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNConfirmEmailPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐConfirmEmailPayload(ctx context.Context, sel ast.SelectionSet, v types.ConfirmEmailPayload) graphql.Marshaler {
-	return ec._ConfirmEmailPayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNConfirmEmailPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐConfirmEmailPayload(ctx context.Context, sel ast.SelectionSet, v *types.ConfirmEmailPayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._ConfirmEmailPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNContinualImprovement2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐContinualImprovement(ctx context.Context, sel ast.SelectionSet, v *types.ContinualImprovement) graphql.Marshaler {
@@ -85021,25 +76786,6 @@ func (ec *executionContext) marshalNCreateObligationPayload2ᚖgoᚗproboᚗinc�
 	return ec._CreateObligationPayload(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNCreateOrganizationInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateOrganizationInput(ctx context.Context, v any) (types.CreateOrganizationInput, error) {
-	res, err := ec.unmarshalInputCreateOrganizationInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNCreateOrganizationPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateOrganizationPayload(ctx context.Context, sel ast.SelectionSet, v types.CreateOrganizationPayload) graphql.Marshaler {
-	return ec._CreateOrganizationPayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNCreateOrganizationPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateOrganizationPayload(ctx context.Context, sel ast.SelectionSet, v *types.CreateOrganizationPayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._CreateOrganizationPayload(ctx, sel, v)
-}
-
 func (ec *executionContext) unmarshalNCreatePeopleInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreatePeopleInput(ctx context.Context, v any) (types.CreatePeopleInput, error) {
 	res, err := ec.unmarshalInputCreatePeopleInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -85152,25 +76898,6 @@ func (ec *executionContext) marshalNCreateRiskPayload2ᚖgoᚗproboᚗincᚋprob
 		return graphql.Null
 	}
 	return ec._CreateRiskPayload(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalNCreateSAMLConfigurationInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateSAMLConfigurationInput(ctx context.Context, v any) (types.CreateSAMLConfigurationInput, error) {
-	res, err := ec.unmarshalInputCreateSAMLConfigurationInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNCreateSAMLConfigurationPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateSAMLConfigurationPayload(ctx context.Context, sel ast.SelectionSet, v types.CreateSAMLConfigurationPayload) graphql.Marshaler {
-	return ec._CreateSAMLConfigurationPayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNCreateSAMLConfigurationPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateSAMLConfigurationPayload(ctx context.Context, sel ast.SelectionSet, v *types.CreateSAMLConfigurationPayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._CreateSAMLConfigurationPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNCreateSnapshotInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateSnapshotInput(ctx context.Context, v any) (types.CreateSnapshotInput, error) {
@@ -85899,25 +77626,6 @@ func (ec *executionContext) marshalNDeleteFrameworkPayload2ᚖgoᚗproboᚗinc�
 	return ec._DeleteFrameworkPayload(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNDeleteInvitationInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteInvitationInput(ctx context.Context, v any) (types.DeleteInvitationInput, error) {
-	res, err := ec.unmarshalInputDeleteInvitationInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNDeleteInvitationPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteInvitationPayload(ctx context.Context, sel ast.SelectionSet, v types.DeleteInvitationPayload) graphql.Marshaler {
-	return ec._DeleteInvitationPayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNDeleteInvitationPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteInvitationPayload(ctx context.Context, sel ast.SelectionSet, v *types.DeleteInvitationPayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._DeleteInvitationPayload(ctx, sel, v)
-}
-
 func (ec *executionContext) unmarshalNDeleteMeasureInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteMeasureInput(ctx context.Context, v any) (types.DeleteMeasureInput, error) {
 	res, err := ec.unmarshalInputDeleteMeasureInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -85992,44 +77700,6 @@ func (ec *executionContext) marshalNDeleteObligationPayload2ᚖgoᚗproboᚗinc�
 		return graphql.Null
 	}
 	return ec._DeleteObligationPayload(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalNDeleteOrganizationHorizontalLogoInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteOrganizationHorizontalLogoInput(ctx context.Context, v any) (types.DeleteOrganizationHorizontalLogoInput, error) {
-	res, err := ec.unmarshalInputDeleteOrganizationHorizontalLogoInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNDeleteOrganizationHorizontalLogoPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteOrganizationHorizontalLogoPayload(ctx context.Context, sel ast.SelectionSet, v types.DeleteOrganizationHorizontalLogoPayload) graphql.Marshaler {
-	return ec._DeleteOrganizationHorizontalLogoPayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNDeleteOrganizationHorizontalLogoPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteOrganizationHorizontalLogoPayload(ctx context.Context, sel ast.SelectionSet, v *types.DeleteOrganizationHorizontalLogoPayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._DeleteOrganizationHorizontalLogoPayload(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalNDeleteOrganizationInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteOrganizationInput(ctx context.Context, v any) (types.DeleteOrganizationInput, error) {
-	res, err := ec.unmarshalInputDeleteOrganizationInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNDeleteOrganizationPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteOrganizationPayload(ctx context.Context, sel ast.SelectionSet, v types.DeleteOrganizationPayload) graphql.Marshaler {
-	return ec._DeleteOrganizationPayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNDeleteOrganizationPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteOrganizationPayload(ctx context.Context, sel ast.SelectionSet, v *types.DeleteOrganizationPayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._DeleteOrganizationPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNDeletePeopleInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeletePeopleInput(ctx context.Context, v any) (types.DeletePeopleInput, error) {
@@ -86144,25 +77814,6 @@ func (ec *executionContext) marshalNDeleteRiskPayload2ᚖgoᚗproboᚗincᚋprob
 		return graphql.Null
 	}
 	return ec._DeleteRiskPayload(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalNDeleteSAMLConfigurationInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteSAMLConfigurationInput(ctx context.Context, v any) (types.DeleteSAMLConfigurationInput, error) {
-	res, err := ec.unmarshalInputDeleteSAMLConfigurationInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNDeleteSAMLConfigurationPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteSAMLConfigurationPayload(ctx context.Context, sel ast.SelectionSet, v types.DeleteSAMLConfigurationPayload) graphql.Marshaler {
-	return ec._DeleteSAMLConfigurationPayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNDeleteSAMLConfigurationPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteSAMLConfigurationPayload(ctx context.Context, sel ast.SelectionSet, v *types.DeleteSAMLConfigurationPayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._DeleteSAMLConfigurationPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNDeleteSnapshotInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteSnapshotInput(ctx context.Context, v any) (types.DeleteSnapshotInput, error) {
@@ -86391,25 +78042,6 @@ func (ec *executionContext) marshalNDeleteVendorServicePayload2ᚖgoᚗproboᚗi
 		return graphql.Null
 	}
 	return ec._DeleteVendorServicePayload(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalNDisableSAMLInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDisableSAMLInput(ctx context.Context, v any) (types.DisableSAMLInput, error) {
-	res, err := ec.unmarshalInputDisableSAMLInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNDisableSAMLPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDisableSAMLPayload(ctx context.Context, sel ast.SelectionSet, v types.DisableSAMLPayload) graphql.Marshaler {
-	return ec._DisableSAMLPayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNDisableSAMLPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDisableSAMLPayload(ctx context.Context, sel ast.SelectionSet, v *types.DisableSAMLPayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._DisableSAMLPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNDocument2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocument(ctx context.Context, sel ast.SelectionSet, v types.Document) graphql.Marshaler {
@@ -86857,25 +78489,6 @@ var (
 		coredata.DocumentVersionSignatureStateSigned:    "SIGNED",
 	}
 )
-
-func (ec *executionContext) unmarshalNEnableSAMLInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐEnableSAMLInput(ctx context.Context, v any) (types.EnableSAMLInput, error) {
-	res, err := ec.unmarshalInputEnableSAMLInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNEnableSAMLPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐEnableSAMLPayload(ctx context.Context, sel ast.SelectionSet, v types.EnableSAMLPayload) graphql.Marshaler {
-	return ec._EnableSAMLPayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNEnableSAMLPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐEnableSAMLPayload(ctx context.Context, sel ast.SelectionSet, v *types.EnableSAMLPayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._EnableSAMLPayload(ctx, sel, v)
-}
 
 func (ec *executionContext) marshalNEvidence2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐEvidence(ctx context.Context, sel ast.SelectionSet, v *types.Evidence) graphql.Marshaler {
 	if v == nil {
@@ -87334,25 +78947,6 @@ func (ec *executionContext) marshalNImportMeasurePayload2ᚖgoᚗproboᚗincᚋp
 	return ec._ImportMeasurePayload(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNInitiateDomainVerificationInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐInitiateDomainVerificationInput(ctx context.Context, v any) (types.InitiateDomainVerificationInput, error) {
-	res, err := ec.unmarshalInputInitiateDomainVerificationInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNInitiateDomainVerificationPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐInitiateDomainVerificationPayload(ctx context.Context, sel ast.SelectionSet, v types.InitiateDomainVerificationPayload) graphql.Marshaler {
-	return ec._InitiateDomainVerificationPayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNInitiateDomainVerificationPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐInitiateDomainVerificationPayload(ctx context.Context, sel ast.SelectionSet, v *types.InitiateDomainVerificationPayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._InitiateDomainVerificationPayload(ctx, sel, v)
-}
-
 func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v any) (int, error) {
 	res, err := graphql.UnmarshalInt(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -87367,169 +78961,6 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 		}
 	}
 	return res
-}
-
-func (ec *executionContext) marshalNInvitation2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐInvitation(ctx context.Context, sel ast.SelectionSet, v *types.Invitation) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._Invitation(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNInvitationConnection2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐInvitationConnection(ctx context.Context, sel ast.SelectionSet, v types.InvitationConnection) graphql.Marshaler {
-	return ec._InvitationConnection(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNInvitationConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐInvitationConnection(ctx context.Context, sel ast.SelectionSet, v *types.InvitationConnection) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._InvitationConnection(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNInvitationEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐInvitationEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.InvitationEdge) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNInvitationEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐInvitationEdge(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
-func (ec *executionContext) marshalNInvitationEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐInvitationEdge(ctx context.Context, sel ast.SelectionSet, v *types.InvitationEdge) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._InvitationEdge(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalNInvitationOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐInvitationOrderField(ctx context.Context, v any) (coredata.InvitationOrderField, error) {
-	tmp, err := graphql.UnmarshalString(v)
-	res := unmarshalNInvitationOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐInvitationOrderField[tmp]
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNInvitationOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐInvitationOrderField(ctx context.Context, sel ast.SelectionSet, v coredata.InvitationOrderField) graphql.Marshaler {
-	_ = sel
-	res := graphql.MarshalString(marshalNInvitationOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐInvitationOrderField[v])
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-	}
-	return res
-}
-
-var (
-	unmarshalNInvitationOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐInvitationOrderField = map[string]coredata.InvitationOrderField{
-		"FULL_NAME":   coredata.InvitationOrderFieldFullName,
-		"EMAIL":       coredata.InvitationOrderFieldEmail,
-		"ROLE":        coredata.InvitationOrderFieldRole,
-		"CREATED_AT":  coredata.InvitationOrderFieldCreatedAt,
-		"EXPIRES_AT":  coredata.InvitationOrderFieldExpiresAt,
-		"ACCEPTED_AT": coredata.InvitationOrderFieldAcceptedAt,
-	}
-	marshalNInvitationOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐInvitationOrderField = map[coredata.InvitationOrderField]string{
-		coredata.InvitationOrderFieldFullName:   "FULL_NAME",
-		coredata.InvitationOrderFieldEmail:      "EMAIL",
-		coredata.InvitationOrderFieldRole:       "ROLE",
-		coredata.InvitationOrderFieldCreatedAt:  "CREATED_AT",
-		coredata.InvitationOrderFieldExpiresAt:  "EXPIRES_AT",
-		coredata.InvitationOrderFieldAcceptedAt: "ACCEPTED_AT",
-	}
-)
-
-func (ec *executionContext) unmarshalNInvitationStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐInvitationStatus(ctx context.Context, v any) (coredata.InvitationStatus, error) {
-	tmp, err := graphql.UnmarshalString(v)
-	res := unmarshalNInvitationStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐInvitationStatus[tmp]
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNInvitationStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐInvitationStatus(ctx context.Context, sel ast.SelectionSet, v coredata.InvitationStatus) graphql.Marshaler {
-	_ = sel
-	res := graphql.MarshalString(marshalNInvitationStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐInvitationStatus[v])
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-	}
-	return res
-}
-
-var (
-	unmarshalNInvitationStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐInvitationStatus = map[string]coredata.InvitationStatus{
-		"PENDING":  coredata.InvitationStatusPending,
-		"ACCEPTED": coredata.InvitationStatusAccepted,
-		"EXPIRED":  coredata.InvitationStatusExpired,
-	}
-	marshalNInvitationStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐInvitationStatus = map[coredata.InvitationStatus]string{
-		coredata.InvitationStatusPending:  "PENDING",
-		coredata.InvitationStatusAccepted: "ACCEPTED",
-		coredata.InvitationStatusExpired:  "EXPIRED",
-	}
-)
-
-func (ec *executionContext) unmarshalNInviteUserInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐInviteUserInput(ctx context.Context, v any) (types.InviteUserInput, error) {
-	res, err := ec.unmarshalInputInviteUserInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNInviteUserPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐInviteUserPayload(ctx context.Context, sel ast.SelectionSet, v types.InviteUserPayload) graphql.Marshaler {
-	return ec._InviteUserPayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNInviteUserPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐInviteUserPayload(ctx context.Context, sel ast.SelectionSet, v *types.InviteUserPayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._InviteUserPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNMeasure2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐMeasure(ctx context.Context, sel ast.SelectionSet, v types.Measure) graphql.Marshaler {
@@ -87782,6 +79213,7 @@ var (
 	}
 )
 
+<<<<<<< HEAD
 func (ec *executionContext) marshalNMembership2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐMembership(ctx context.Context, sel ast.SelectionSet, v *types.Membership) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -87924,6 +79356,8 @@ var (
 	}
 )
 
+=======
+>>>>>>> 66b095fd (WIP)
 func (ec *executionContext) marshalNNode2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐNode(ctx context.Context, sel ast.SelectionSet, v types.Node) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -88813,25 +80247,6 @@ func (ec *executionContext) marshalNPublishDocumentVersionPayload2ᚖgoᚗprobo�
 	return ec._PublishDocumentVersionPayload(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNRemoveMemberInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐRemoveMemberInput(ctx context.Context, v any) (types.RemoveMemberInput, error) {
-	res, err := ec.unmarshalInputRemoveMemberInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNRemoveMemberPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐRemoveMemberPayload(ctx context.Context, sel ast.SelectionSet, v types.RemoveMemberPayload) graphql.Marshaler {
-	return ec._RemoveMemberPayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNRemoveMemberPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐRemoveMemberPayload(ctx context.Context, sel ast.SelectionSet, v *types.RemoveMemberPayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._RemoveMemberPayload(ctx, sel, v)
-}
-
 func (ec *executionContext) unmarshalNRequestSignatureInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐRequestSignatureInput(ctx context.Context, v any) (types.RequestSignatureInput, error) {
 	res, err := ec.unmarshalInputRequestSignatureInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -88998,90 +80413,6 @@ var (
 		coredata.RiskTreatmentAccepted:    "ACCEPTED",
 		coredata.RiskTreatmentAvoided:     "AVOIDED",
 		coredata.RiskTreatmentTransferred: "TRANSFERRED",
-	}
-)
-
-func (ec *executionContext) marshalNSAMLConfiguration2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐSAMLConfigurationᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.SAMLConfiguration) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNSAMLConfiguration2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐSAMLConfiguration(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
-func (ec *executionContext) marshalNSAMLConfiguration2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐSAMLConfiguration(ctx context.Context, sel ast.SelectionSet, v *types.SAMLConfiguration) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._SAMLConfiguration(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalNSAMLEnforcementPolicy2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐSAMLEnforcementPolicy(ctx context.Context, v any) (coredata.SAMLEnforcementPolicy, error) {
-	tmp, err := graphql.UnmarshalString(v)
-	res := unmarshalNSAMLEnforcementPolicy2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐSAMLEnforcementPolicy[tmp]
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNSAMLEnforcementPolicy2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐSAMLEnforcementPolicy(ctx context.Context, sel ast.SelectionSet, v coredata.SAMLEnforcementPolicy) graphql.Marshaler {
-	_ = sel
-	res := graphql.MarshalString(marshalNSAMLEnforcementPolicy2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐSAMLEnforcementPolicy[v])
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-	}
-	return res
-}
-
-var (
-	unmarshalNSAMLEnforcementPolicy2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐSAMLEnforcementPolicy = map[string]coredata.SAMLEnforcementPolicy{
-		"OFF":      coredata.SAMLEnforcementPolicyOff,
-		"OPTIONAL": coredata.SAMLEnforcementPolicyOptional,
-		"REQUIRED": coredata.SAMLEnforcementPolicyRequired,
-	}
-	marshalNSAMLEnforcementPolicy2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐSAMLEnforcementPolicy = map[coredata.SAMLEnforcementPolicy]string{
-		coredata.SAMLEnforcementPolicyOff:      "OFF",
-		coredata.SAMLEnforcementPolicyOptional: "OPTIONAL",
-		coredata.SAMLEnforcementPolicyRequired: "REQUIRED",
 	}
 )
 
@@ -90398,25 +81729,6 @@ func (ec *executionContext) marshalNUpdateMeetingPayload2ᚖgoᚗproboᚗincᚋp
 	return ec._UpdateMeetingPayload(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNUpdateMembershipInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateMembershipInput(ctx context.Context, v any) (types.UpdateMembershipInput, error) {
-	res, err := ec.unmarshalInputUpdateMembershipInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNUpdateMembershipPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateMembershipPayload(ctx context.Context, sel ast.SelectionSet, v types.UpdateMembershipPayload) graphql.Marshaler {
-	return ec._UpdateMembershipPayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNUpdateMembershipPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateMembershipPayload(ctx context.Context, sel ast.SelectionSet, v *types.UpdateMembershipPayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._UpdateMembershipPayload(ctx, sel, v)
-}
-
 func (ec *executionContext) unmarshalNUpdateNonconformityInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateNonconformityInput(ctx context.Context, v any) (types.UpdateNonconformityInput, error) {
 	res, err := ec.unmarshalInputUpdateNonconformityInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -90474,25 +81786,6 @@ func (ec *executionContext) marshalNUpdateOrganizationContextPayload2ᚖgoᚗpro
 	return ec._UpdateOrganizationContextPayload(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNUpdateOrganizationInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateOrganizationInput(ctx context.Context, v any) (types.UpdateOrganizationInput, error) {
-	res, err := ec.unmarshalInputUpdateOrganizationInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNUpdateOrganizationPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateOrganizationPayload(ctx context.Context, sel ast.SelectionSet, v types.UpdateOrganizationPayload) graphql.Marshaler {
-	return ec._UpdateOrganizationPayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNUpdateOrganizationPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateOrganizationPayload(ctx context.Context, sel ast.SelectionSet, v *types.UpdateOrganizationPayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._UpdateOrganizationPayload(ctx, sel, v)
-}
-
 func (ec *executionContext) unmarshalNUpdatePeopleInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdatePeopleInput(ctx context.Context, v any) (types.UpdatePeopleInput, error) {
 	res, err := ec.unmarshalInputUpdatePeopleInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -90548,25 +81841,6 @@ func (ec *executionContext) marshalNUpdateRiskPayload2ᚖgoᚗproboᚗincᚋprob
 		return graphql.Null
 	}
 	return ec._UpdateRiskPayload(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalNUpdateSAMLConfigurationInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateSAMLConfigurationInput(ctx context.Context, v any) (types.UpdateSAMLConfigurationInput, error) {
-	res, err := ec.unmarshalInputUpdateSAMLConfigurationInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNUpdateSAMLConfigurationPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateSAMLConfigurationPayload(ctx context.Context, sel ast.SelectionSet, v types.UpdateSAMLConfigurationPayload) graphql.Marshaler {
-	return ec._UpdateSAMLConfigurationPayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNUpdateSAMLConfigurationPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateSAMLConfigurationPayload(ctx context.Context, sel ast.SelectionSet, v *types.UpdateSAMLConfigurationPayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._UpdateSAMLConfigurationPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNUpdateTaskInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateTaskInput(ctx context.Context, v any) (types.UpdateTaskInput, error) {
@@ -90898,114 +82172,6 @@ func (ec *executionContext) marshalNUser2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋser
 	}
 	return ec._User(ctx, sel, v)
 }
-
-func (ec *executionContext) unmarshalNUserAuthMethod2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐUserAuthMethod(ctx context.Context, v any) (coredata.UserAuthMethod, error) {
-	tmp, err := graphql.UnmarshalString(v)
-	res := unmarshalNUserAuthMethod2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐUserAuthMethod[tmp]
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNUserAuthMethod2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐUserAuthMethod(ctx context.Context, sel ast.SelectionSet, v coredata.UserAuthMethod) graphql.Marshaler {
-	_ = sel
-	res := graphql.MarshalString(marshalNUserAuthMethod2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐUserAuthMethod[v])
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-	}
-	return res
-}
-
-var (
-	unmarshalNUserAuthMethod2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐUserAuthMethod = map[string]coredata.UserAuthMethod{
-		"PASSWORD": coredata.UserAuthMethodPassword,
-		"SAML":     coredata.UserAuthMethodSAML,
-	}
-	marshalNUserAuthMethod2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐUserAuthMethod = map[coredata.UserAuthMethod]string{
-		coredata.UserAuthMethodPassword: "PASSWORD",
-		coredata.UserAuthMethodSAML:     "SAML",
-	}
-)
-
-func (ec *executionContext) marshalNUserEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUserEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.UserEdge) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNUserEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUserEdge(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
-func (ec *executionContext) marshalNUserEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUserEdge(ctx context.Context, sel ast.SelectionSet, v *types.UserEdge) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._UserEdge(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalNUserOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐUserOrderField(ctx context.Context, v any) (coredata.UserOrderField, error) {
-	tmp, err := graphql.UnmarshalString(v)
-	res := unmarshalNUserOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐUserOrderField[tmp]
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNUserOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐUserOrderField(ctx context.Context, sel ast.SelectionSet, v coredata.UserOrderField) graphql.Marshaler {
-	_ = sel
-	res := graphql.MarshalString(marshalNUserOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐUserOrderField[v])
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-	}
-	return res
-}
-
-var (
-	unmarshalNUserOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐUserOrderField = map[string]coredata.UserOrderField{
-		"CREATED_AT": coredata.UserOrderFieldCreatedAt,
-	}
-	marshalNUserOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐUserOrderField = map[coredata.UserOrderField]string{
-		coredata.UserOrderFieldCreatedAt: "CREATED_AT",
-	}
-)
 
 func (ec *executionContext) marshalNVendor2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐVendor(ctx context.Context, sel ast.SelectionSet, v types.Vendor) graphql.Marshaler {
 	return ec._Vendor(ctx, sel, &v)
@@ -91632,25 +82798,6 @@ var (
 		coredata.VendorServiceOrderFieldName:      "NAME",
 	}
 )
-
-func (ec *executionContext) unmarshalNVerifyDomainInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐVerifyDomainInput(ctx context.Context, v any) (types.VerifyDomainInput, error) {
-	res, err := ec.unmarshalInputVerifyDomainInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNVerifyDomainPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐVerifyDomainPayload(ctx context.Context, sel ast.SelectionSet, v types.VerifyDomainPayload) graphql.Marshaler {
-	return ec._VerifyDomainPayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNVerifyDomainPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐVerifyDomainPayload(ctx context.Context, sel ast.SelectionSet, v *types.VerifyDomainPayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._VerifyDomainPayload(ctx, sel, v)
-}
 
 func (ec *executionContext) marshalNViewer2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐViewer(ctx context.Context, sel ast.SelectionSet, v types.Viewer) graphql.Marshaler {
 	return ec._Viewer(ctx, sel, &v)
@@ -92661,87 +83808,6 @@ func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.Sele
 	return res
 }
 
-func (ec *executionContext) unmarshalOInvitationFilter2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐInvitationFilter(ctx context.Context, v any) (*types.InvitationFilter, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := ec.unmarshalInputInvitationFilter(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) unmarshalOInvitationOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐInvitationOrder(ctx context.Context, v any) (*types.InvitationOrder, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := ec.unmarshalInputInvitationOrder(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) unmarshalOInvitationStatus2ᚕgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐInvitationStatusᚄ(ctx context.Context, v any) ([]coredata.InvitationStatus, error) {
-	if v == nil {
-		return nil, nil
-	}
-	var vSlice []any
-	vSlice = graphql.CoerceList(v)
-	var err error
-	res := make([]coredata.InvitationStatus, len(vSlice))
-	for i := range vSlice {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNInvitationStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐInvitationStatus(ctx, vSlice[i])
-		if err != nil {
-			return nil, err
-		}
-	}
-	return res, nil
-}
-
-func (ec *executionContext) marshalOInvitationStatus2ᚕgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐInvitationStatusᚄ(ctx context.Context, sel ast.SelectionSet, v []coredata.InvitationStatus) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNInvitationStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐInvitationStatus(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
 func (ec *executionContext) marshalOMeasure2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐMeasure(ctx context.Context, sel ast.SelectionSet, v *types.Measure) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -92804,14 +83870,6 @@ func (ec *executionContext) unmarshalOMeetingOrder2ᚖgoᚗproboᚗincᚋprobo�
 		return nil, nil
 	}
 	res, err := ec.unmarshalInputMeetingOrder(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) unmarshalOMembershipOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐMembershipOrderBy(ctx context.Context, v any) (*types.MembershipOrderBy, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := ec.unmarshalInputMembershipOrder(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -93222,6 +84280,7 @@ var (
 	}
 )
 
+<<<<<<< HEAD
 func (ec *executionContext) unmarshalOSAMLEnforcementPolicy2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐSAMLEnforcementPolicy(ctx context.Context, v any) (*coredata.SAMLEnforcementPolicy, error) {
 	if v == nil {
 		return nil, nil
@@ -93261,6 +84320,8 @@ func (ec *executionContext) marshalOSignableDocument2ᚖgoᚗproboᚗincᚋprobo
 	return ec._SignableDocument(ctx, sel, v)
 }
 
+=======
+>>>>>>> 66b095fd (WIP)
 func (ec *executionContext) unmarshalOSnapshotOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐSnapshotOrderBy(ctx context.Context, v any) (*types.SnapshotOrderBy, error) {
 	if v == nil {
 		return nil, nil

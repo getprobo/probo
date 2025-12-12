@@ -28,10 +28,9 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/go-chi/chi/v5"
 	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/auth"
-	"go.probo.inc/probo/pkg/authz"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/probo"
 	console_v1 "go.probo.inc/probo/pkg/server/api/console/v1"
 	slack_v1 "go.probo.inc/probo/pkg/server/api/slack/v1"
@@ -100,8 +99,7 @@ func (r *Resolver) TokenAccessFromContext(ctx context.Context) *trustauth.TokenA
 
 func NewMux(
 	logger *log.Logger,
-	authSvc *auth.Service,
-	authzSvc *authz.Service,
+	iamSvc *iam.Service,
 	trustSvc *trust.Service,
 	authCfg console_v1.AuthConfig,
 	trustAuthCfg TrustAuthConfig,
@@ -111,7 +109,7 @@ func NewMux(
 ) *chi.Mux {
 	r := chi.NewMux()
 
-	r.Handle("/graphql", graphqlHandler(logger, authSvc, authzSvc, trustSvc, authCfg, trustAuthCfg))
+	r.Handle("/graphql", graphqlHandler(logger, iamSvc, trustSvc, authCfg, trustAuthCfg))
 
 	r.Post("/auth/authenticate", authTokenHandler(trustSvc, trustAuthCfg))
 	r.Delete("/auth/logout", trustCenterLogoutHandler(authCfg, trustAuthCfg))
@@ -123,7 +121,7 @@ func NewMux(
 	return r
 }
 
-func graphqlHandler(logger *log.Logger, authSvc *auth.Service, authzSvc *authz.Service, trustSvc *trust.Service, authCfg console_v1.AuthConfig, trustAuthCfg TrustAuthConfig) http.HandlerFunc {
+func graphqlHandler(logger *log.Logger, iamSvc *iam.Service, trustSvc *trust.Service, authCfg console_v1.AuthConfig, trustAuthCfg TrustAuthConfig) http.HandlerFunc {
 	resolver := &Resolver{
 		trustCenterSvc: trustSvc,
 		authCfg:        authCfg,
@@ -149,7 +147,7 @@ func graphqlHandler(logger *log.Logger, authSvc *auth.Service, authzSvc *authz.S
 
 	srv.SetRecoverFunc(gqlutils.RecoverFunc)
 
-	return WithSession(authSvc, authzSvc, trustSvc, authCfg, trustAuthCfg, srv.ServeHTTP)
+	return WithSession(iamSvc, trustSvc, authCfg, trustAuthCfg, srv.ServeHTTP)
 }
 
 func (r *Resolver) RootTrustService(ctx context.Context) *trust.TenantService {
@@ -168,7 +166,7 @@ func (r *Resolver) PrivateTrustService(ctx context.Context, tenantID gid.TenantI
 	return r.trustCenterSvc.WithTenant(tenantID), nil
 }
 
-func WithSession(authSvc *auth.Service, authzSvc *authz.Service, trustSvc *trust.Service, authCfg console_v1.AuthConfig, trustAuthCfg TrustAuthConfig, next http.HandlerFunc) http.HandlerFunc {
+func WithSession(iamSvc *iam.Service, trustSvc *trust.Service, authCfg console_v1.AuthConfig, trustAuthCfg TrustAuthConfig, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
@@ -180,9 +178,9 @@ func WithSession(authSvc *auth.Service, authzSvc *authz.Service, trustSvc *trust
 			return
 		}
 
-		if authCtx := trySessionAuth(ctx, w, r, authSvc, authzSvc, authCfg); authCtx != nil {
+		if authCtx := trySessionAuth(ctx, w, r, iamSvc, authCfg); authCtx != nil {
 			next(w, r.WithContext(authCtx))
-			updateSessionIfNeeded(authCtx, authSvc)
+			updateSessionIfNeeded(authCtx, iamSvc)
 			return
 		}
 
@@ -190,7 +188,7 @@ func WithSession(authSvc *auth.Service, authzSvc *authz.Service, trustSvc *trust
 	}
 }
 
-func trySessionAuth(ctx context.Context, w http.ResponseWriter, r *http.Request, authSvc *auth.Service, authzSvc *authz.Service, authCfg console_v1.AuthConfig) context.Context {
+func trySessionAuth(ctx context.Context, w http.ResponseWriter, r *http.Request, iamSvc *iam.Service, authCfg console_v1.AuthConfig) context.Context {
 	sessionAuthCfg := session.AuthConfig{
 		CookieName:   authCfg.CookieName,
 		CookieSecret: authCfg.CookieSecret,
@@ -212,7 +210,7 @@ func trySessionAuth(ctx context.Context, w http.ResponseWriter, r *http.Request,
 		},
 	}
 
-	authResult := session.TryAuth(ctx, w, r, authSvc, authzSvc, sessionAuthCfg, errorHandler)
+	authResult := session.TryAuth(ctx, w, r, iamSvc, sessionAuthCfg, errorHandler)
 	if authResult == nil {
 		return nil
 	}
@@ -271,10 +269,10 @@ func clearTokenCookie(w http.ResponseWriter, trustAuthCfg TrustAuthConfig) {
 	})
 }
 
-func updateSessionIfNeeded(ctx context.Context, authSvc *auth.Service) {
+func updateSessionIfNeeded(ctx context.Context, iamSvc *iam.Service) {
 	session := SessionFromContext(ctx)
 	if session != nil {
-		if _, err := authSvc.UpdateSession(ctx, session.ID); err != nil {
+		if _, err := iamSvc.UpdateSession(ctx, session.ID); err != nil {
 			panic(fmt.Errorf("cannot update session: %w", err))
 		}
 	}
