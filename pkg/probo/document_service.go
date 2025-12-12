@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"net/mail"
 	"net/url"
 	"os"
 	"regexp"
@@ -24,6 +23,7 @@ import (
 	"go.probo.inc/probo/pkg/docgen"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/html2pdf"
+	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/statelesstoken"
 	"go.probo.inc/probo/pkg/validator"
@@ -608,7 +608,7 @@ func (s *DocumentService) SignDocumentVersion(
 func (s *DocumentService) SignDocumentVersionByEmail(
 	ctx context.Context,
 	documentVersionID gid.GID,
-	userEmail string,
+	userEmail mail.Addr,
 ) (*coredata.DocumentVersionSignature, error) {
 	var documentVersionSignature *coredata.DocumentVersionSignature
 
@@ -887,7 +887,7 @@ func (s *DocumentService) ListSignatures(
 func (s *DocumentService) IsVersionSignedByUserEmail(
 	ctx context.Context,
 	documentVersionID gid.GID,
-	userEmail string,
+	userEmail mail.Addr,
 ) (bool, error) {
 	documentVersionSignature := &coredata.DocumentVersionSignature{}
 
@@ -1032,7 +1032,7 @@ func (s *DocumentService) BulkSoftDelete(
 func (s *DocumentService) RequestExport(
 	ctx context.Context,
 	documentIDs []gid.GID,
-	recipientEmail string,
+	recipientEmail mail.Addr,
 	recipientName string,
 	options ExportPDFOptions,
 ) (*coredata.ExportJob, error) {
@@ -1042,9 +1042,6 @@ func (s *DocumentService) RequestExport(
 	if options.WithWatermark {
 		if options.WatermarkEmail == nil {
 			return nil, fmt.Errorf("watermark email is required when with watermark is true")
-		}
-		if _, err := mail.ParseAddress(*options.WatermarkEmail); err != nil {
-			return nil, fmt.Errorf("invalid email address")
 		}
 	}
 
@@ -1149,7 +1146,7 @@ func (s *DocumentService) GetVersion(
 func (s *DocumentService) IsSigned(
 	ctx context.Context,
 	documentID gid.GID,
-	userEmail string,
+	userEmail mail.Addr,
 ) (bool, error) {
 	document := &coredata.Document{}
 
@@ -1438,7 +1435,7 @@ func (s *DocumentService) CancelSignatureRequest(
 
 type ExportPDFOptions struct {
 	WithWatermark  bool
-	WatermarkEmail *string
+	WatermarkEmail *mail.Addr
 	WithSignatures bool
 }
 
@@ -1695,9 +1692,6 @@ func exportDocumentPDF(
 		if options.WatermarkEmail == nil {
 			return nil, fmt.Errorf("watermark email is required with watermark enabled")
 		}
-		if _, err := mail.ParseAddress(*options.WatermarkEmail); err != nil {
-			return nil, fmt.Errorf("invalid email address")
-		}
 
 		watermarkedPDF, err := watermarkpdf.AddConfidentialWithTimestamp(pdfData, *options.WatermarkEmail)
 		if err != nil {
@@ -1770,7 +1764,7 @@ func (s *DocumentService) SendExportEmail(
 	ctx context.Context,
 	fileID gid.GID,
 	recipientName string,
-	recipientEmail string,
+	recipientEmail mail.Addr,
 ) error {
 	return s.svc.pg.WithTx(
 		ctx,

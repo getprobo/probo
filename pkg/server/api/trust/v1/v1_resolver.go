@@ -13,6 +13,7 @@ import (
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/server/api/trust/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/trust/v1/types"
@@ -82,7 +83,7 @@ func (r *documentResolver) IsUserAuthorized(ctx context.Context, obj *types.Docu
 
 	tokenData := TokenAccessFromContext(ctx)
 	if tokenData != nil {
-		documentAccess, err := privateTrustService.TrustCenterAccesses.LoadDocumentAccess(ctx, tokenData.TrustCenterID, tokenData.GetEmail(), obj.ID)
+		documentAccess, err := privateTrustService.TrustCenterAccesses.LoadDocumentAccess(ctx, tokenData.TrustCenterID, tokenData.Email, obj.ID)
 		if err != nil {
 			return false, nil
 		}
@@ -108,7 +109,7 @@ func (r *documentResolver) HasUserRequestedAccess(ctx context.Context, obj *type
 	tokenData := TokenAccessFromContext(ctx)
 	if tokenData != nil {
 		// Try to load document access - if it exists (regardless of active status), user has requested it
-		_, err := privateTrustService.TrustCenterAccesses.LoadDocumentAccess(ctx, tokenData.TrustCenterID, tokenData.GetEmail(), obj.ID)
+		_, err := privateTrustService.TrustCenterAccesses.LoadDocumentAccess(ctx, tokenData.TrustCenterID, tokenData.Email, obj.ID)
 		if err != nil {
 			return false, nil // No access requested or error
 		}
@@ -133,8 +134,8 @@ func (r *mutationResolver) RequestAllAccesses(ctx context.Context, input types.R
 		if email != nil || input.Name != nil {
 			return nil, fmt.Errorf("email and name are not allowed for authenticated users")
 		}
-		emailValue := tokenData.GetEmail()
-		email = &emailValue
+
+		*email = tokenData.Email
 	}
 	if email == nil {
 		return nil, fmt.Errorf("email is required for unauthenticated users")
@@ -202,13 +203,13 @@ func (r *mutationResolver) ExportDocumentPDF(ctx context.Context, input types.Ex
 
 		if ndaExists {
 			tokenData := TokenAccessFromContext(ctx)
-			hasAcceptedNDA, err = privateTrustService.TrustCenterAccesses.HasAcceptedNonDisclosureAgreement(ctx, tokenData.TrustCenterID, tokenData.GetEmail())
+			hasAcceptedNDA, err = privateTrustService.TrustCenterAccesses.HasAcceptedNonDisclosureAgreement(ctx, tokenData.TrustCenterID, tokenData.Email)
 			if err != nil {
 				panic(fmt.Errorf("cannot check if user has accepted NDA: %w", err))
 			}
 		}
 
-		documentAccess, err := privateTrustService.TrustCenterAccesses.LoadDocumentAccess(ctx, tokenData.TrustCenterID, tokenData.GetEmail(), input.DocumentID)
+		documentAccess, err := privateTrustService.TrustCenterAccesses.LoadDocumentAccess(ctx, tokenData.TrustCenterID, tokenData.Email, input.DocumentID)
 		if err != nil {
 			panic(fmt.Errorf("cannot check document access: %w", err))
 		}
@@ -223,12 +224,12 @@ func (r *mutationResolver) ExportDocumentPDF(ctx context.Context, input types.Ex
 	}
 
 	userData := UserFromContext(ctx)
-	userEmail := ""
+	var userEmail mail.Addr
 	if userData != nil {
 		userEmail = userData.EmailAddress
 	}
 	if tokenData != nil {
-		userEmail = tokenData.GetEmail()
+		userEmail = tokenData.Email
 	}
 
 	pdf, err := privateTrustService.Documents.ExportPDF(ctx, input.DocumentID, userEmail)
@@ -280,13 +281,13 @@ func (r *mutationResolver) ExportReportPDF(ctx context.Context, input types.Expo
 		}
 
 		if ndaExists {
-			hasAcceptedNDA, err = privateTrustService.TrustCenterAccesses.HasAcceptedNonDisclosureAgreement(ctx, tokenData.TrustCenterID, tokenData.GetEmail())
+			hasAcceptedNDA, err = privateTrustService.TrustCenterAccesses.HasAcceptedNonDisclosureAgreement(ctx, tokenData.TrustCenterID, tokenData.Email)
 			if err != nil {
 				panic(fmt.Errorf("cannot check if user has accepted NDA: %w", err))
 			}
 		}
 
-		reportAccess, err := privateTrustService.TrustCenterAccesses.LoadReportAccess(ctx, tokenData.TrustCenterID, tokenData.GetEmail(), input.ReportID)
+		reportAccess, err := privateTrustService.TrustCenterAccesses.LoadReportAccess(ctx, tokenData.TrustCenterID, tokenData.Email, input.ReportID)
 		if err != nil {
 			panic(fmt.Errorf("cannot check report access: %w", err))
 		}
@@ -301,12 +302,12 @@ func (r *mutationResolver) ExportReportPDF(ctx context.Context, input types.Expo
 	}
 
 	userData := UserFromContext(ctx)
-	userEmail := ""
+	var userEmail mail.Addr
 	if userData != nil {
 		userEmail = userData.EmailAddress
 	}
 	if tokenData != nil {
-		userEmail = tokenData.GetEmail()
+		userEmail = tokenData.Email
 	}
 
 	pdf, err := privateTrustService.Reports.ExportPDF(ctx, input.ReportID, userEmail)
@@ -331,7 +332,7 @@ func (r *mutationResolver) AcceptNonDisclosureAgreement(ctx context.Context, inp
 		return nil, fmt.Errorf("token not found")
 	}
 
-	err = privateTrustService.TrustCenterAccesses.AcceptNonDisclosureAgreement(ctx, input.TrustCenterID, tokenData.GetEmail())
+	err = privateTrustService.TrustCenterAccesses.AcceptNonDisclosureAgreement(ctx, input.TrustCenterID, tokenData.Email)
 	if err != nil {
 		return nil, fmt.Errorf("cannot accept NDA: %w", err)
 	}
@@ -360,11 +361,7 @@ func (r *mutationResolver) RequestDocumentAccess(ctx context.Context, input type
 	email := input.Email
 	tokenData := TokenAccessFromContext(ctx)
 	if tokenData != nil {
-		if email != nil || input.Name != nil {
-			return nil, fmt.Errorf("email and name are not allowed for authenticated users")
-		}
-		emailValue := tokenData.GetEmail()
-		email = &emailValue
+		*email = tokenData.Email
 	}
 	if email == nil {
 		return nil, fmt.Errorf("email is required for unauthenticated users")
@@ -413,11 +410,7 @@ func (r *mutationResolver) RequestReportAccess(ctx context.Context, input types.
 	email := input.Email
 	tokenData := TokenAccessFromContext(ctx)
 	if tokenData != nil {
-		if email != nil || input.Name != nil {
-			return nil, fmt.Errorf("email and name are not allowed for authenticated users")
-		}
-		emailValue := tokenData.GetEmail()
-		email = &emailValue
+		*email = tokenData.Email
 	}
 	if email == nil {
 		return nil, fmt.Errorf("email is required for unauthenticated users")
@@ -466,11 +459,7 @@ func (r *mutationResolver) RequestTrustCenterFileAccess(ctx context.Context, inp
 	email := input.Email
 	tokenData := TokenAccessFromContext(ctx)
 	if tokenData != nil {
-		if email != nil || input.Name != nil {
-			return nil, fmt.Errorf("email and name are not allowed for authenticated users")
-		}
-		emailValue := tokenData.GetEmail()
-		email = &emailValue
+		*email = tokenData.Email
 	}
 	if email == nil {
 		return nil, fmt.Errorf("email is required for unauthenticated users")
@@ -538,13 +527,13 @@ func (r *mutationResolver) ExportTrustCenterFile(ctx context.Context, input type
 		}
 
 		if ndaExists {
-			hasAcceptedNDA, err = privateTrustService.TrustCenterAccesses.HasAcceptedNonDisclosureAgreement(ctx, tokenData.TrustCenterID, tokenData.GetEmail())
+			hasAcceptedNDA, err = privateTrustService.TrustCenterAccesses.HasAcceptedNonDisclosureAgreement(ctx, tokenData.TrustCenterID, tokenData.Email)
 			if err != nil {
 				panic(fmt.Errorf("cannot check if user has accepted NDA: %w", err))
 			}
 		}
 
-		fileAccess, err := privateTrustService.TrustCenterAccesses.LoadTrustCenterFileAccess(ctx, tokenData.TrustCenterID, tokenData.GetEmail(), input.TrustCenterFileID)
+		fileAccess, err := privateTrustService.TrustCenterAccesses.LoadTrustCenterFileAccess(ctx, tokenData.TrustCenterID, tokenData.Email, input.TrustCenterFileID)
 		if err != nil {
 			panic(fmt.Errorf("cannot check trust center file access: %w", err))
 		}
@@ -559,12 +548,12 @@ func (r *mutationResolver) ExportTrustCenterFile(ctx context.Context, input type
 	}
 
 	userData := UserFromContext(ctx)
-	userEmail := ""
+	var userEmail mail.Addr
 	if userData != nil {
 		userEmail = userData.EmailAddress
 	}
 	if tokenData != nil {
-		userEmail = tokenData.GetEmail()
+		userEmail = tokenData.Email
 	}
 
 	fileData, err := privateTrustService.TrustCenterFiles.ExportFile(ctx, input.TrustCenterFileID, userEmail)
@@ -743,7 +732,7 @@ func (r *reportResolver) IsUserAuthorized(ctx context.Context, obj *types.Report
 
 	tokenData := TokenAccessFromContext(ctx)
 	if tokenData != nil {
-		reportAccess, err := privateTrustService.TrustCenterAccesses.LoadReportAccess(ctx, tokenData.TrustCenterID, tokenData.GetEmail(), obj.ID)
+		reportAccess, err := privateTrustService.TrustCenterAccesses.LoadReportAccess(ctx, tokenData.TrustCenterID, tokenData.Email, obj.ID)
 		if err != nil {
 			return false, nil
 		}
@@ -768,7 +757,7 @@ func (r *reportResolver) HasUserRequestedAccess(ctx context.Context, obj *types.
 
 	tokenData := TokenAccessFromContext(ctx)
 	if tokenData != nil {
-		_, err := privateTrustService.TrustCenterAccesses.LoadReportAccess(ctx, tokenData.TrustCenterID, tokenData.GetEmail(), obj.ID)
+		_, err := privateTrustService.TrustCenterAccesses.LoadReportAccess(ctx, tokenData.TrustCenterID, tokenData.Email, obj.ID)
 		if err != nil {
 			return false, nil
 		}
@@ -822,7 +811,7 @@ func (r *trustCenterResolver) HasAcceptedNonDisclosureAgreement(ctx context.Cont
 
 	tokenData := TokenAccessFromContext(ctx)
 	if tokenData != nil {
-		hasAcceptedNDA, err := privateTrustService.TrustCenterAccesses.HasAcceptedNonDisclosureAgreement(ctx, obj.ID, tokenData.GetEmail())
+		hasAcceptedNDA, err := privateTrustService.TrustCenterAccesses.HasAcceptedNonDisclosureAgreement(ctx, obj.ID, tokenData.Email)
 		if err != nil {
 			panic(fmt.Errorf("cannot check if user has accepted NDA: %w", err))
 		}
@@ -947,7 +936,7 @@ func (r *trustCenterFileResolver) IsUserAuthorized(ctx context.Context, obj *typ
 
 	tokenData := TokenAccessFromContext(ctx)
 	if tokenData != nil {
-		fileAccess, err := privateTrustService.TrustCenterAccesses.LoadTrustCenterFileAccess(ctx, tokenData.TrustCenterID, tokenData.GetEmail(), obj.ID)
+		fileAccess, err := privateTrustService.TrustCenterAccesses.LoadTrustCenterFileAccess(ctx, tokenData.TrustCenterID, tokenData.Email, obj.ID)
 		if err != nil {
 			return false, nil
 		}
@@ -972,7 +961,7 @@ func (r *trustCenterFileResolver) HasUserRequestedAccess(ctx context.Context, ob
 
 	tokenData := TokenAccessFromContext(ctx)
 	if tokenData != nil {
-		_, err := privateTrustService.TrustCenterAccesses.LoadTrustCenterFileAccess(ctx, tokenData.TrustCenterID, tokenData.GetEmail(), obj.ID)
+		_, err := privateTrustService.TrustCenterAccesses.LoadTrustCenterFileAccess(ctx, tokenData.TrustCenterID, tokenData.Email, obj.ID)
 		if err != nil {
 			return false, nil
 		}

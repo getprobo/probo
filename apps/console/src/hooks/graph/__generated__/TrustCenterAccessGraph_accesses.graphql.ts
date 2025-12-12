@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<a3da155281753945ab0645a04f0b74fb>>
+ * @generated SignedSource<<5b0e12ba40232dd4328c0fd766513fb2>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -19,7 +19,7 @@ export type TrustCenterAccessGraph_accesses$data = {
         readonly active: boolean;
         readonly activeCount: number;
         readonly createdAt: any;
-        readonly email: string;
+        readonly email: any;
         readonly hasAcceptedNonDisclosureAgreement: boolean;
         readonly id: string;
         readonly lastTokenExpiresAt: any | null | undefined;

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<d22f20fafedcdddc50cd21917a8a5c28>>
+ * @generated SignedSource<<00c307339357baa16c237c563b8f32bd>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,7 +11,7 @@
 import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type UpdateVendorContactInput = {
-  email?: string | null | undefined;
+  email?: any | null | undefined;
   fullName?: string | null | undefined;
   id: string;
   phone?: string | null | undefined;

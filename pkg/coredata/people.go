@@ -24,22 +24,23 @@ import (
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
 )
 
 type (
 	People struct {
-		ID                       gid.GID    `db:"id"`
-		OrganizationID           gid.GID    `db:"organization_id"`
-		Kind                     PeopleKind `db:"kind"`
-		FullName                 string     `db:"full_name"`
-		PrimaryEmailAddress      string     `db:"primary_email_address"`
-		AdditionalEmailAddresses []string   `db:"additional_email_addresses"`
-		Position                 *string    `db:"position"`
-		ContractStartDate        *time.Time `db:"contract_start_date"`
-		ContractEndDate          *time.Time `db:"contract_end_date"`
-		CreatedAt                time.Time  `db:"created_at"`
-		UpdatedAt                time.Time  `db:"updated_at"`
+		ID                       gid.GID     `db:"id"`
+		OrganizationID           gid.GID     `db:"organization_id"`
+		Kind                     PeopleKind  `db:"kind"`
+		FullName                 string      `db:"full_name"`
+		PrimaryEmailAddress      mail.Addr   `db:"primary_email_address"`
+		AdditionalEmailAddresses []mail.Addr `db:"additional_email_addresses"`
+		Position                 *string     `db:"position"`
+		ContractStartDate        *time.Time  `db:"contract_start_date"`
+		ContractEndDate          *time.Time  `db:"contract_end_date"`
+		CreatedAt                time.Time   `db:"created_at"`
+		UpdatedAt                time.Time   `db:"updated_at"`
 	}
 
 	Peoples []*People
@@ -180,7 +181,7 @@ func (p *People) LoadByEmailAndOrganizationID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
-	primaryEmailAddress string,
+	primaryEmailAddress mail.Addr,
 	organizationID gid.GID,
 ) error {
 	q := `
@@ -221,7 +222,7 @@ LIMIT 1;
 	people, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[People])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrPeopleNotFound{Identifier: primaryEmailAddress}
+			return &ErrPeopleNotFound{Identifier: primaryEmailAddress.String()}
 		}
 
 		return fmt.Errorf("cannot collect people: %w", err)

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<9b84adc0253186c6f0a5f47837d83d7f>>
+ * @generated SignedSource<<f9018169cee4d71768fca395e5dd59a9>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,7 +11,7 @@
 import { ConcreteRequest } from 'relay-runtime';
 export type BulkExportDocumentsInput = {
   documentIds: ReadonlyArray<string>;
-  watermarkEmail?: string | null | undefined;
+  watermarkEmail?: any | null | undefined;
   withSignatures: boolean;
   withWatermark: boolean;
 };

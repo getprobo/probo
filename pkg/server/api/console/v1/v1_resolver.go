@@ -19,6 +19,7 @@ import (
 	"go.probo.inc/probo/pkg/authz"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
@@ -1458,7 +1459,7 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input types.C
 			OrganizationID:           organization.ID,
 			FullName:                 currentUser.FullName,
 			PrimaryEmailAddress:      currentUser.EmailAddress,
-			AdditionalEmailAddresses: []string{},
+			AdditionalEmailAddresses: []mail.Addr{},
 			Kind:                     coredata.PeopleKindEmployee,
 		},
 	)
@@ -1903,7 +1904,7 @@ func (r *mutationResolver) InviteUser(ctx context.Context, input types.InviteUse
 			OrganizationID:           input.OrganizationID,
 			FullName:                 input.FullName,
 			PrimaryEmailAddress:      input.Email,
-			AdditionalEmailAddresses: []string{},
+			AdditionalEmailAddresses: []mail.Addr{},
 			Kind:                     coredata.PeopleKindEmployee,
 		})
 		if err != nil {
@@ -1993,7 +1994,7 @@ func (r *mutationResolver) CreatePeople(ctx context.Context, input types.CreateP
 		OrganizationID:           input.OrganizationID,
 		FullName:                 input.FullName,
 		PrimaryEmailAddress:      input.PrimaryEmailAddress,
-		AdditionalEmailAddresses: []string{},
+		AdditionalEmailAddresses: []mail.Addr{},
 		Kind:                     input.Kind,
 		Position:                 input.Position,
 		ContractStartDate:        input.ContractStartDate,
@@ -2019,11 +2020,15 @@ func (r *mutationResolver) UpdatePeople(ctx context.Context, input types.UpdateP
 
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
+	var emailAddresses []mail.Addr
+	for _, emailAddress := range input.AdditionalEmailAddresses {
+		emailAddresses = append(emailAddresses, *emailAddress)
+	}
 	people, err := prb.Peoples.Update(ctx, probo.UpdatePeopleRequest{
 		ID:                       input.ID,
 		FullName:                 input.FullName,
 		PrimaryEmailAddress:      input.PrimaryEmailAddress,
-		AdditionalEmailAddresses: &input.AdditionalEmailAddresses,
+		AdditionalEmailAddresses: &emailAddresses,
 		Kind:                     input.Kind,
 		Position:                 UnwrapOmittable(input.Position),
 		ContractStartDate:        UnwrapOmittable(input.ContractStartDate),

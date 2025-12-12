@@ -37,3 +37,6 @@ models:
   BigInt:
     model:
       - "go.probo.inc/probo/pkg/server/gqlutils/types/bigint.BigIntScalar"
+  EmailAddr:
+    model:
+      - "go.probo.inc/probo/pkg/server/gqlutils/types/mail.AddrScalar"

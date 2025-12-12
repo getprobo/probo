@@ -25,6 +25,7 @@ import (
 
 	"github.com/pdfcpu/pdfcpu/pkg/api"
 	"github.com/pdfcpu/pdfcpu/pkg/pdfcpu/types"
+	"go.probo.inc/probo/pkg/mail"
 	"golang.org/x/image/font"
 	"golang.org/x/image/font/gofont/goregular"
 	"golang.org/x/image/font/opentype"
@@ -46,12 +47,12 @@ var (
 	fontColor     = color.RGBA{0, 0, 0, 255}
 )
 
-func AddConfidentialWithTimestamp(pdfData []byte, email string) ([]byte, error) {
+func AddConfidentialWithTimestamp(pdfData []byte, email mail.Addr) ([]byte, error) {
 	reader := bytes.NewReader(pdfData)
 
 	watermarkLines := []string{
 		"Confidential",
-		email,
+		email.String(),
 		time.Now().Format("2006-01-02"),
 	}
 

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<74bc40a8998c962930b3f0b63dc6acd9>>
+ * @generated SignedSource<<858effd78b88a123430edcf6fcb100ed>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,7 +10,7 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 export type RequestReportAccessInput = {
-  email?: string | null | undefined;
+  email?: any | null | undefined;
   name?: string | null | undefined;
   reportId: string;
   trustCenterId: string;

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<dd7d5d34935f87fcfb658ca6cfc5e794>>
+ * @generated SignedSource<<e3763975ef1132c3e2f909019b6cd98c>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -20,7 +20,7 @@ export type MembersSettingsTabInvitationsFragment$data = {
       readonly node: {
         readonly acceptedAt: any | null | undefined;
         readonly createdAt: any;
-        readonly email: string;
+        readonly email: any;
         readonly expiresAt: any;
         readonly fullName: string;
         readonly id: string;

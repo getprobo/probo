@@ -22,14 +22,15 @@ import (
 
 	"go.gearno.de/kit/httpserver"
 	authsvc "go.probo.inc/probo/pkg/auth"
+	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/securecookie"
 )
 
 type (
 	SignUpRequest struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
-		FullName string `json:"fullName"`
+		Email    mail.Addr `json:"email"`
+		Password string    `json:"password"`
+		FullName string    `json:"fullName"`
 	}
 
 	SignUpResponse struct {

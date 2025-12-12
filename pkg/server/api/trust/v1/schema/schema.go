@@ -18,10 +18,12 @@ import (
 	"github.com/vektah/gqlparser/v2/ast"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/server/api/trust/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils/types/cursor"
 	gid1 "go.probo.inc/probo/pkg/server/gqlutils/types/gid"
+	mail1 "go.probo.inc/probo/pkg/server/gqlutils/types/mail"
 )
 
 // region    ************************** generated!.gotpl **************************
@@ -1115,8 +1117,9 @@ enum Role {
   USER
 }
 
-scalar Datetime
 scalar CursorKey
+scalar Datetime
+scalar EmailAddr
 
 interface Node {
   id: ID!
@@ -1142,11 +1145,9 @@ type Organization implements Node {
 
 enum DocumentType
   @goModel(model: "go.probo.inc/probo/pkg/coredata.DocumentType") {
-  OTHER
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypeOther")
+  OTHER @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypeOther")
   ISMS @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypeISMS")
-  POLICY
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypePolicy")
+  POLICY @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypePolicy")
   PROCEDURE
     @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypeProcedure")
 }
@@ -1453,9 +1454,7 @@ enum CountryCode
 enum VendorCategory
   @goModel(model: "go.probo.inc/probo/pkg/coredata.VendorCategory") {
   ANALYTICS
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryAnalytics"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorCategoryAnalytics")
   CLOUD_MONITORING
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.VendorCategoryCloudMonitoring"
@@ -1485,28 +1484,21 @@ enum VendorCategory
       value: "go.probo.inc/probo/pkg/coredata.VendorCategoryEmployeeManagement"
     )
   ENGINEERING
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryEngineering"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorCategoryEngineering")
   FINANCE
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryFinance"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorCategoryFinance")
   IDENTITY_PROVIDER
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.VendorCategoryIdentityProvider"
     )
   IT @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorCategoryIT")
   MARKETING
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryMarketing"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorCategoryMarketing")
   OFFICE_OPERATIONS
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.VendorCategoryOfficeOperations"
     )
-  OTHER
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorCategoryOther")
+  OTHER @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorCategoryOther")
   PASSWORD_MANAGEMENT
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.VendorCategoryPasswordManagement"
@@ -1520,15 +1512,10 @@ enum VendorCategory
       value: "go.probo.inc/probo/pkg/coredata.VendorCategoryProfessionalServices"
     )
   RECRUITING
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryRecruiting"
-    )
-  SALES
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorCategorySales")
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorCategoryRecruiting")
+  SALES @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorCategorySales")
   SECURITY
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.VendorCategorySecurity"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorCategorySecurity")
   VERSION_CONTROL
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.VendorCategoryVersionControl"
@@ -1638,7 +1625,7 @@ type TrustCenter implements Node {
 
 type TrustCenterAccess implements Node {
   id: ID!
-  email: String!
+  email: EmailAddr!
   name: String!
   createdAt: Datetime!
   updatedAt: Datetime!
@@ -1646,7 +1633,7 @@ type TrustCenterAccess implements Node {
 
 input RequestAllAccessesInput {
   trustCenterId: ID!
-  email: String
+  email: EmailAddr
   name: String
 }
 
@@ -1669,21 +1656,21 @@ input AcceptNonDisclosureAgreementInput {
 input RequestDocumentAccessInput {
   trustCenterId: ID!
   documentId: ID!
-  email: String
+  email: EmailAddr
   name: String
 }
 
 input RequestReportAccessInput {
   trustCenterId: ID!
   reportId: ID!
-  email: String
+  email: EmailAddr
   name: String
 }
 
 input RequestTrustCenterFileAccessInput {
   trustCenterId: ID!
   trustCenterFileId: ID!
-  email: String
+  email: EmailAddr
   name: String
 }
 
@@ -4584,7 +4571,7 @@ func (ec *executionContext) _TrustCenterAccess_email(ctx context.Context, field 
 			return obj.Email, nil
 		},
 		nil,
-		ec.marshalNString2string,
+		ec.marshalNEmailAddr2goᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr,
 		true,
 		true,
 	)
@@ -4597,7 +4584,7 @@ func (ec *executionContext) fieldContext_TrustCenterAccess_email(_ context.Conte
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type EmailAddr does not have child fields")
 		},
 	}
 	return fc, nil
@@ -7165,7 +7152,7 @@ func (ec *executionContext) unmarshalInputRequestAllAccessesInput(ctx context.Co
 			it.TrustCenterID = data
 		case "email":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOEmailAddr2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -7213,7 +7200,7 @@ func (ec *executionContext) unmarshalInputRequestDocumentAccessInput(ctx context
 			it.DocumentID = data
 		case "email":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOEmailAddr2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -7261,7 +7248,7 @@ func (ec *executionContext) unmarshalInputRequestReportAccessInput(ctx context.C
 			it.ReportID = data
 		case "email":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOEmailAddr2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -7309,7 +7296,7 @@ func (ec *executionContext) unmarshalInputRequestTrustCenterFileAccessInput(ctx 
 			it.TrustCenterFileID = data
 		case "email":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOEmailAddr2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -10647,6 +10634,22 @@ var (
 	}
 )
 
+func (ec *executionContext) unmarshalNEmailAddr2goᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr(ctx context.Context, v any) (mail.Addr, error) {
+	res, err := mail1.UnmarshalAddrScalar(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNEmailAddr2goᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr(ctx context.Context, sel ast.SelectionSet, v mail.Addr) graphql.Marshaler {
+	_ = sel
+	res := mail1.MarshalAddrScalar(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
 func (ec *executionContext) unmarshalNExportDocumentPDFInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐExportDocumentPDFInput(ctx context.Context, v any) (types.ExportDocumentPDFInput, error) {
 	res, err := ec.unmarshalInputExportDocumentPDFInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -11428,6 +11431,24 @@ func (ec *executionContext) marshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkg�
 	_ = sel
 	_ = ctx
 	res := cursor.MarshalCursorKeyScalar(*v)
+	return res
+}
+
+func (ec *executionContext) unmarshalOEmailAddr2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr(ctx context.Context, v any) (*mail.Addr, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := mail1.UnmarshalAddrScalar(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOEmailAddr2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr(ctx context.Context, sel ast.SelectionSet, v *mail.Addr) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := mail1.MarshalAddrScalar(*v)
 	return res
 }
 

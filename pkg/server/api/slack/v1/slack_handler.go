@@ -146,7 +146,7 @@ func SlackHandler(slackSvc *slack.Service, slackSigningSecret string, logger *lo
 			return
 		}
 
-		if initialSlackMessage.RequesterEmail == nil || *initialSlackMessage.RequesterEmail == "" {
+		if initialSlackMessage.RequesterEmail == nil {
 			logger.ErrorCtx(ctx, "missing requester email", log.String("slack_message_id", initialSlackMessage.ID.String()))
 			httpserver.RenderJSON(w, http.StatusInternalServerError, SlackInteractiveResponse{Success: false, Message: "internal server error"})
 			return

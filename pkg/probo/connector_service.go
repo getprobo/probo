@@ -148,7 +148,7 @@ func (s *ConnectorService) Create(
 						return fmt.Errorf("cannot parse template JSON: %w", err)
 					}
 
-					slackMessage := coredata.NewSlackMessage(s.svc.scope, req.OrganizationID, coredata.SlackMessageTypeWelcome, body, nil)
+					slackMessage := coredata.NewSlackMessage(s.svc.scope, req.OrganizationID, coredata.SlackMessageTypeWelcome, body)
 					if err := slackMessage.Insert(ctx, conn, s.svc.scope); err != nil {
 						return fmt.Errorf("cannot insert slack message: %w", err)
 					}

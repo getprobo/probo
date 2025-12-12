@@ -26,24 +26,25 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
 )
 
 type (
 	TrustCenterAccess struct {
-		ID                                        gid.GID         `db:"id"`
-		OrganizationID                            gid.GID         `db:"organization_id"`
-		TenantID                                  gid.TenantID    `db:"tenant_id"`
-		TrustCenterID                             gid.GID         `db:"trust_center_id"`
-		Email                                     string          `db:"email"`
-		Name                                      string          `db:"name"`
-		Active                                    bool            `db:"active"`
-		HasAcceptedNonDisclosureAgreement         bool            `db:"has_accepted_non_disclosure_agreement"`
-		HasAcceptedNonDisclosureAgreementMetadata json.RawMessage `db:"has_accepted_non_disclosure_agreement_metadata"`
-		NDAFileID                                 *gid.GID        `db:"nda_file_id"`
-		CreatedAt                                 time.Time       `db:"created_at"`
-		UpdatedAt                                 time.Time       `db:"updated_at"`
-		LastTokenExpiresAt                        *time.Time      `db:"last_token_expires_at"`
+		ID                                        gid.GID                   `db:"id"`
+		OrganizationID                            gid.GID                   `db:"organization_id"`
+		TenantID                                  gid.TenantID              `db:"tenant_id"`
+		TrustCenterID                             gid.GID                   `db:"trust_center_id"`
+		Email                                     mail.Addr `db:"email"`
+		Name                                      string                    `db:"name"`
+		Active                                    bool                      `db:"active"`
+		HasAcceptedNonDisclosureAgreement         bool                      `db:"has_accepted_non_disclosure_agreement"`
+		HasAcceptedNonDisclosureAgreementMetadata json.RawMessage           `db:"has_accepted_non_disclosure_agreement_metadata"`
+		NDAFileID                                 *gid.GID                  `db:"nda_file_id"`
+		CreatedAt                                 time.Time                 `db:"created_at"`
+		UpdatedAt                                 time.Time                 `db:"updated_at"`
+		LastTokenExpiresAt                        *time.Time                `db:"last_token_expires_at"`
 	}
 
 	TrustCenterAccesses []*TrustCenterAccess
@@ -132,7 +133,7 @@ func (tca *TrustCenterAccess) LoadByTrustCenterIDAndEmail(
 	conn pg.Conn,
 	scope Scoper,
 	trustCenterID gid.GID,
-	email string,
+	email mail.Addr,
 ) error {
 	q := `
 SELECT

@@ -21,11 +21,12 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/watermarkpdf"
-	"go.gearno.de/kit/pg"
 )
 
 type TrustCenterFileService struct {
@@ -86,7 +87,7 @@ func (s *TrustCenterFileService) ListForOrganizationId(
 func (s *TrustCenterFileService) ExportFile(
 	ctx context.Context,
 	trustCenterFileID gid.GID,
-	email string,
+	email mail.Addr,
 ) ([]byte, error) {
 	pdfData, err := s.exportFileData(ctx, trustCenterFileID)
 	if err != nil {

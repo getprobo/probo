@@ -22,10 +22,11 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/watermarkpdf"
-	"go.gearno.de/kit/pg"
 )
 
 type ReportService struct {
@@ -88,7 +89,7 @@ func (s ReportService) GenerateDownloadURL(
 func (s ReportService) ExportPDF(
 	ctx context.Context,
 	reportID gid.GID,
-	email string,
+	email mail.Addr,
 ) ([]byte, error) {
 	pdfData, err := s.exportPDFData(ctx, reportID)
 	if err != nil {
