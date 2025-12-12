@@ -4,6 +4,11 @@ import * as updateOp from './update.operation';
 import * as deleteOp from './delete.operation';
 import * as getOp from './get.operation';
 import * as getAllOp from './getAll.operation';
+import * as createServiceOp from './createService.operation';
+import * as updateServiceOp from './updateService.operation';
+import * as deleteServiceOp from './deleteService.operation';
+import * as getServiceOp from './getService.operation';
+import * as getAllServicesOp from './getAllServices.operation';
 
 export const description: INodeProperties[] = [
 	{
@@ -24,10 +29,22 @@ export const description: INodeProperties[] = [
 				action: 'Create a vendor',
 			},
 			{
+				name: 'Create Service',
+				value: 'createService',
+				description: 'Create a new vendor service',
+				action: 'Create a vendor service',
+			},
+			{
 				name: 'Delete',
 				value: 'delete',
 				description: 'Delete a vendor',
 				action: 'Delete a vendor',
+			},
+			{
+				name: 'Delete Service',
+				value: 'deleteService',
+				description: 'Delete a vendor service',
+				action: 'Delete a vendor service',
 			},
 			{
 				name: 'Get',
@@ -42,10 +59,28 @@ export const description: INodeProperties[] = [
 				action: 'Get many vendors',
 			},
 			{
+				name: 'Get Many Services',
+				value: 'getAllServices',
+				description: 'Get many vendor services',
+				action: 'Get many vendor services',
+			},
+			{
+				name: 'Get Service',
+				value: 'getService',
+				description: 'Get a vendor service',
+				action: 'Get a vendor service',
+			},
+			{
 				name: 'Update',
 				value: 'update',
 				description: 'Update an existing vendor',
 				action: 'Update a vendor',
+			},
+			{
+				name: 'Update Service',
+				value: 'updateService',
+				description: 'Update an existing vendor service',
+				action: 'Update a vendor service',
 			},
 		],
 		default: 'create',
@@ -55,7 +90,22 @@ export const description: INodeProperties[] = [
 	...deleteOp.description,
 	...getOp.description,
 	...getAllOp.description,
+	...createServiceOp.description,
+	...updateServiceOp.description,
+	...deleteServiceOp.description,
+	...getServiceOp.description,
+	...getAllServicesOp.description,
 ];
 
-export { createOp as create, updateOp as update, deleteOp as delete, getOp as get, getAllOp as getAll };
-
+export {
+	createOp as create,
+	updateOp as update,
+	deleteOp as delete,
+	getOp as get,
+	getAllOp as getAll,
+	createServiceOp as createService,
+	updateServiceOp as updateService,
+	deleteServiceOp as deleteService,
+	getServiceOp as getService,
+	getAllServicesOp as getAllServices,
+};
