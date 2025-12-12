@@ -97,7 +97,7 @@
         {
           "name": "role",
           "protocol": "saml",
-          "protocolMapper": "saml-role-list-mapper",
+          "protocolMapper": "saml-user-property-mapper",
           "consentRequired": false,
           "config": {
             "single": "true",
@@ -140,7 +140,7 @@
           "temporary": false
         }
       ],
-      "realmRoles": ["owner"]
+      "realmRoles": ["admin"]
     },
     {
       "username": "admin@example.com",
@@ -156,23 +156,6 @@
           "temporary": false
         }
       ],
-      "realmRoles": ["admin"]
-    },
-    {
-      "username": "member@example.com",
-      "email": "member@example.com",
-      "emailVerified": true,
-      "enabled": true,
-      "firstName": "Member",
-      "lastName": "User",
-      "credentials": [
-        {
-          "type": "password",
-          "value": "member123",
-          "temporary": false
-        }
-      ],
-      "realmRoles": ["member"]
     },
     {
       "username": "viewer@example.com",
@@ -187,8 +170,7 @@
           "value": "viewer@example.com",
           "temporary": false
         }
-      ],
-      "realmRoles": ["viewer"]
+      ]
     }
   ]
 }
