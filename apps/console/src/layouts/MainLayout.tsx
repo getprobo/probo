@@ -23,6 +23,7 @@ import {
   IconKey,
   IconListStack,
   IconLock,
+  IconMagnifyingGlass,
   IconMedal,
   IconPageTextLine,
   IconPeopleAdd,
@@ -32,6 +33,7 @@ import {
   IconShield,
   IconStore,
   IconTodo,
+  Input,
   Layout,
   SidebarItem,
   Skeleton,
@@ -39,7 +41,7 @@ import {
   UserDropdown as UserDropdownRoot,
   useToast,
 } from "@probo/ui";
-import { Suspense, use, useEffect, useState } from "react";
+import { Suspense, use, useEffect, useMemo, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { useLazyLoadQuery } from "react-relay";
 import { Link, Navigate, Outlet, useParams } from "react-router";
@@ -364,7 +366,17 @@ function OrganizationSelector({
   const [pendingInvitationsCount, setPendingInvitationsCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
   const { __ } = useTranslate();
+
+  const filteredOrganizations = useMemo(() => {
+    if (!search.trim()) {
+      return organizations;
+    }
+    return organizations.filter((org) =>
+      org.name.toLowerCase().includes(search.toLowerCase())
+    );
+  }, [organizations, search]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -429,18 +441,30 @@ function OrganizationSelector({
             {isLoading ? __("Loading...") : currentOrganization?.name || ""}
           </Button>
         }
-      >
+      >  
+        <div className="px-3 py-2">
+          <Input
+            icon={IconMagnifyingGlass}
+            placeholder={__("Search organizations...")}
+            value={search}
+            onValueChange={setSearch}
+            onKeyDown={(e) => {
+                e.stopPropagation(); 
+            }}
+            autoFocus
+          />
+        </div>
         <div className="max-h-150 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent hover:scrollbar-thumb-gray-400">
           {isLoading ? (
             <div className="px-3 py-2 text-gray-500">
               {__("Loading organizations...")}
             </div>
-          ) : organizations.length === 0 ? (
+          ) : filteredOrganizations.length === 0 ? (
             <div className="px-3 py-2 text-gray-500">
               {__("No organizations found")}
             </div>
           ) : (
-            organizations.map((organization) => {
+            filteredOrganizations.map((organization) => {
               const isAuthenticated =
                 organization.authStatus === "authenticated";
               const isExpired = organization.authStatus === "expired";

@@ -16,18 +16,20 @@ import {
   IconPlusLarge,
   IconCheckmark1,
   IconClock,
+  IconMagnifyingGlass,
   useToast,
   Logo,
   Toasts,
   ConfirmDialog,
   Avatar,
   Badge,
+  Input,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { graphql } from "relay-runtime";
 import { useLazyLoadQuery } from "react-relay";
 import type { EmployeeLayoutQuery as EmployeeLayoutQueryType } from "./__generated__/EmployeeLayoutQuery.graphql";
-import { Suspense, useState, useEffect, use } from "react";
+import { Suspense, useState, useEffect, useMemo, use } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { PageError } from "/components/PageError";
 import { buildEndpoint } from "/providers/RelayProviders";
@@ -152,7 +154,17 @@ function OrganizationSelector({
   const [pendingInvitationsCount, setPendingInvitationsCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
   const { __ } = useTranslate();
+
+  const filteredOrganizations = useMemo(() => {
+    if (!search.trim()) {
+      return organizations;
+    }
+    return organizations.filter((org) =>
+      org.name.toLowerCase().includes(search.toLowerCase())
+    );
+  }, [organizations, search]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -218,17 +230,31 @@ function OrganizationSelector({
           </Button>
         }
       >
+        {!isLoading && organizations.length > 0 && (
+          <div className="px-3 py-2 border-b border-border-low">
+            <Input
+              icon={IconMagnifyingGlass}
+              placeholder={__("Search organizations...")}
+              value={search}
+              onValueChange={setSearch}
+              onKeyDown={(e) => { 
+                  e.stopPropagation();
+              }}
+              autoFocus
+            />
+          </div>
+        )}
         <div className="max-h-150 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent hover:scrollbar-thumb-gray-400">
           {isLoading ? (
             <div className="px-3 py-2 text-gray-500">
               {__("Loading organizations...")}
             </div>
-          ) : organizations.length === 0 ? (
+          ) : filteredOrganizations.length === 0 ? (
             <div className="px-3 py-2 text-gray-500">
               {__("No organizations found")}
             </div>
           ) : (
-            organizations.map((organization) => {
+            filteredOrganizations.map((organization) => {
               const isAuthenticated =
                 organization.authStatus === "authenticated";
               const isExpired = organization.authStatus === "expired";
