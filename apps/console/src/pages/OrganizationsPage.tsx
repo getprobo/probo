@@ -1,5 +1,5 @@
 import { useTranslate } from "@probo/i18n";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import {
   Avatar,
@@ -9,7 +9,9 @@ import {
   IconCheckmark1,
   IconLock,
   IconClock,
+  IconMagnifyingGlass,
   Badge,
+  Input,
 } from "@probo/ui";
 import { usePageTitle } from "@probo/hooks";
 import { formatDate } from "@probo/helpers";
@@ -46,6 +48,16 @@ export default function OrganizationsPage() {
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [isLoadingInvitations, setIsLoadingInvitations] = useState(true);
   const [isAccepting, setIsAccepting] = useState(false);
+  const [search, setSearch] = useState("");
+
+  const filteredOrganizations = useMemo(() => {
+    if (!search.trim()) {
+      return organizations;
+    }
+    return organizations.filter((org) =>
+      org.name.toLowerCase().includes(search.toLowerCase())
+    );
+  }, [organizations, search]);
 
   // Fetch organizations from REST endpoint
   useEffect(() => {
@@ -163,12 +175,28 @@ export default function OrganizationsPage() {
                   {__("Your organizations")}
                 </h2>
               )}
-              {organizations.map((organization) => (
-                <OrganizationCard
-                  key={organization.id}
-                  organization={organization}
-                />
-              ))}
+              {organizations.length > 3 && (
+                <div className="w-full">
+                  <Input
+                    icon={IconMagnifyingGlass}
+                    placeholder={__("Search organizations...")}
+                    value={search}
+                    onValueChange={setSearch}
+                  />
+                </div>
+              )}
+              {filteredOrganizations.length === 0 ? (
+                <div className="text-center text-txt-secondary py-4">
+                  {__("No organizations found")}
+                </div>
+              ) : (
+                filteredOrganizations.map((organization) => (
+                  <OrganizationCard
+                    key={organization.id}
+                    organization={organization}
+                  />
+                ))
+              )}
             </div>
           )}
           <Card padded>
