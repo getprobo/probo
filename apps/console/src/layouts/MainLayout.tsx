@@ -460,7 +460,7 @@ function OrganizationSelector({
               {__("Loading organizations...")}
             </div>
           ) : filteredOrganizations.length === 0 ? (
-            <div className="px-3 py-2 text-gray-500">
+            <div className="px-3 py-2 text-txt-secondary">
               {__("No organizations found")}
             </div>
           ) : (
