@@ -23,7 +23,8 @@
     "schema": "./pkg/server/api/console/v1/schema.graphql"
   },
   "overrides": {
-    "form-data": "^4.0.4"
+    "form-data": "^4.0.4",
+    "next": "15.5.7"
   },
   "license": "MIT",
   "packageManager": "npm@11.1.0",
