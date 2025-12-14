@@ -66,6 +66,8 @@ github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/dgryski/trifles v0.0.0-20230903005119-f50d829f2e54 h1:SG7nF6SRlWhcT7cNTs5R6Hk4V2lcmLz2NsG2VnInyNo=
 github.com/dgryski/trifles v0.0.0-20230903005119-f50d829f2e54/go.mod h1:if7Fbed8SFyPtHLHbg49SI7NAdJiC5WIA09pe59rfAA=
+github.com/fatih/color v1.18.0 h1:S8gINlzdQ840/4pfAwic/ZE0djQEH3wM94VfqLTZcOM=
+github.com/fatih/color v1.18.0/go.mod h1:4FelSpRwEGDpQ12mAdzqdOukCy4u8WUtOY6lkT/6HfU=
 github.com/go-chi/chi/v5 v5.2.3 h1:WQIt9uxdsAbgIYgid+BpYc+liqQZGMHRaUwp0JUcvdE=
 github.com/go-chi/chi/v5 v5.2.3/go.mod h1:L2yAIGWB3H+phAw1NxKwWM+7eUH/lU8pOMm5hHcoops=
 github.com/go-chi/cors v1.2.2 h1:Jmey33TE+b+rB7fT8MUy1u0I4L+NARQlK6LhzKPSyQE=
@@ -139,6 +141,10 @@ github.com/ledongthuc/pdf v0.0.0-20220302134840-0c2507a12d80 h1:6Yzfa6GP0rIo/kUL
 github.com/ledongthuc/pdf v0.0.0-20220302134840-0c2507a12d80/go.mod h1:imJHygn/1yfhB7XSJJKlFZKl/J+dCPAknuiaGOshXAs=
 github.com/mattermost/xml-roundtrip-validator v0.1.0 h1:RXbVD2UAl7A7nOTR4u7E3ILa4IbtvKBHw64LDsmu9hU=
 github.com/mattermost/xml-roundtrip-validator v0.1.0/go.mod h1:qccnGMcpgwcNaBnxqpJpWWUiPNr5H3O8eDgGV9gT5To=
+github.com/mattn/go-colorable v0.1.14 h1:9A9LHSqF/7dyVVX6g0U9cwm9pG3kP9gSzcuIPHPsaIE=
+github.com/mattn/go-colorable v0.1.14/go.mod h1:6LmQG8QLFO4G5z1gPvYEzlUgJ2wF+stgPZH1UqBm1s8=
+github.com/mattn/go-isatty v0.0.20 h1:xfD0iDuEKnDkl03q4limB+vH+GxLEtL/jb4xVJSWWEY=
+github.com/mattn/go-isatty v0.0.20/go.mod h1:W+V8PltTTMOvKvAeJH7IuucS94S2C6jfK/D7dTCTo3Y=
 github.com/mattn/go-runewidth v0.0.9/go.mod h1:H031xJmbD/WCDINGzjvQ9THkh0rPKHF+m2gUSrubnMI=
 github.com/mattn/go-runewidth v0.0.19 h1:v++JhqYnZuu5jSKrk9RbgF5v4CGUjqRfBm05byFGLdw=
 github.com/mattn/go-runewidth v0.0.19/go.mod h1:XBkDxAl56ILZc9knddidhrOlY5R/pDhgLpndooCuJAs=
@@ -221,10 +227,10 @@ github.com/yosida95/uritemplate/v3 v3.0.2 h1:Ed3Oyj9yrmi9087+NczuL5BwkIc4wvTb5zI
 github.com/yosida95/uritemplate/v3 v3.0.2/go.mod h1:ILOh0sOhIJR3+L/8afwt/kE++YT040gmv5BQTMR2HP4=
 github.com/yuin/goldmark v1.7.13 h1:GPddIs617DnBLFFVJFgpo1aBfe/4xcvMc3SB5t/D0pA=
 github.com/yuin/goldmark v1.7.13/go.mod h1:ip/1k0VRfGynBgxOz0yCqHrbZXhcjxyuS66Brc7iBKg=
-go.gearno.de/crypto/uuid v0.1.0 h1:94BYg7GYItJ6yYZ1GJayb3VYhI9/FjxuR1nFaduR4hE=
-go.gearno.de/crypto/uuid v0.1.0/go.mod h1:fnIIvKO9QnsyLO3ZJLJT3r8KZv/p0FOeT5eZKilYWXg=
-go.gearno.de/kit v0.0.0-20251207095431-33c583469655 h1:97O5brNXmZUIADK1zleKyrXcIWk+KCkElPytBI7GfHQ=
-go.gearno.de/kit v0.0.0-20251207095431-33c583469655/go.mod h1:KQkgI/jDcRzz8RbAVkdfNtsWxDY2haZJI4qHEL2U0Ig=
+go.gearno.de/crypto/uuid v0.1.1-0.20251208105319-3f587312a712 h1:J5ccbcxFuwxe6Oa9fVi9FqQOo+n17ni4wbl9t4NuEzc=
+go.gearno.de/crypto/uuid v0.1.1-0.20251208105319-3f587312a712/go.mod h1:fnIIvKO9QnsyLO3ZJLJT3r8KZv/p0FOeT5eZKilYWXg=
+go.gearno.de/kit v0.0.0-20251214175059-0dcb4779fe74 h1:snN+dxtdUomJN+Q7xnytbQhtZ4TVZ3m8wXoVCS07jUA=
+go.gearno.de/kit v0.0.0-20251214175059-0dcb4779fe74/go.mod h1:MtV5vW1s4ZqmOQ9Yr13a/wcWJ6oBNcLpjqeW/CVIX+c=
 go.gearno.de/x/panicf v0.1.1 h1:E3Cr9NB8Ry2EsvEG/1eHr7kplP3tEjTf5d56dTX64VQ=
 go.gearno.de/x/panicf v0.1.1/go.mod h1:VnB8oF0UefMZcYeD4v+Wk4U5Z1uza7PHLlhT2CbNEbU=
 go.gearno.de/x/ref v0.0.0-20240502200927-d74926fcb14c h1:b8Wwr2owaB6g38tptSk5tekXFSE7RpXsUpaoCO8tQDM=
