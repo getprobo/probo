@@ -53,17 +53,23 @@ func (a *Addr) Scan(value any) error {
 		return nil
 	}
 
+	var str string
 	switch v := value.(type) {
 	case string:
-		parsed, err := ParseAddr(v)
-		if err != nil {
-			return err
-		}
-
-		*a = parsed
+		str = v
+	case []byte:
+		str = string(v)
 	default:
-		return fmt.Errorf("invalid type for mail.Addr: expected string, got %T", value)
+		return fmt.Errorf("invalid type %T for mail.Addr", value)
 	}
+
+	parsed, err := ParseAddr(str)
+	if err != nil {
+		return err
+	}
+
+	*a = parsed
+
 	return nil
 }
 

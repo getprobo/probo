@@ -94,22 +94,28 @@ func (gid GID) Timestamp() time.Time {
 
 // Scan implements the database/sql/driver.Scanner interface
 func (gid *GID) Scan(value interface{}) error {
+	var str string
 	switch v := value.(type) {
 	case string:
-		enc := base64.RawURLEncoding
-		id, err := enc.DecodeString(v)
-		if err != nil {
-			return err
-		}
-
-		if len(id) != GIDSize {
-			return fmt.Errorf("invalid length for GID: got %d, want %d", len(id), GIDSize)
-		}
-
-		copy((*gid)[:], id)
+		str = v
+	case []byte:
+		str = string(v)
 	default:
-		return fmt.Errorf("invalid type for GID: expected string, got %T", value)
+		return fmt.Errorf("invalid type %T for GID", value)
 	}
+
+	enc := base64.RawURLEncoding
+	id, err := enc.DecodeString(str)
+	if err != nil {
+		return err
+	}
+
+	if len(id) != GIDSize {
+		return fmt.Errorf("invalid length for GID: got %d, want %d", len(id), GIDSize)
+	}
+
+	copy((*gid)[:], id)
+
 	return nil
 }
 
