@@ -258,7 +258,7 @@ func NotOneOfSlice[T any](disallowed []T) ValidatorFunc {
 		// First try exact match with DeepEqual
 		for _, disallowedVal := range disallowed {
 			if reflect.DeepEqual(actualValue, disallowedVal) {
-				newValidationError(
+				return newValidationError(
 					ErrorCodeInvalidEnum,
 					fmt.Sprintf("must not be one of: %s", strings.Join(disallowedStrings, ", ")),
 				)
@@ -268,7 +268,7 @@ func NotOneOfSlice[T any](disallowed []T) ValidatorFunc {
 		// Then try string comparison (for custom string types)
 		valueStr := fmt.Sprint(actualValue)
 		if disallowedMap[valueStr] {
-			newValidationError(
+			return newValidationError(
 				ErrorCodeInvalidEnum,
 				fmt.Sprintf("must not be one of: %s", strings.Join(disallowedStrings, ", ")),
 			)

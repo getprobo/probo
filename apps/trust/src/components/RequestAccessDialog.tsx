@@ -67,6 +67,7 @@ export function RequestAccessDialog({
           if (error.field === "email") {
             setError(error.field, {message: error.message})
           }
+          return;
         }
         toast({
           title: __("Error"),

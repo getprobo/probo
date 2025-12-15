@@ -361,7 +361,7 @@ func (r *mutationResolver) RequestDocumentAccess(ctx context.Context, input type
 	email := input.Email
 	tokenData := TokenAccessFromContext(ctx)
 	if tokenData != nil {
-		*email = tokenData.Email
+		email = &tokenData.Email
 	}
 	if email == nil {
 		return nil, fmt.Errorf("email is required for unauthenticated users")
