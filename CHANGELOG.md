@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.108.0] - 2025-12-15
+
+### Added
+
+- Blacklist emails from trust requests
+
+### Fixed
+
+- ACME cert renewing
+
 ## [0.107.1] - 2025-12-15
 
 ### Fixed
