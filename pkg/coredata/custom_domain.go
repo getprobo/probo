@@ -203,7 +203,7 @@ LIMIT 1
 	return nil
 }
 
-func (cd *CustomDomain) LoadByIDForUpdate(
+func (cd *CustomDomain) LoadByIDForUpdateSkipLocked(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
@@ -234,7 +234,7 @@ WHERE
 	%s
 	AND id = @id
 LIMIT 1
-FOR UPDATE
+FOR UPDATE SKIP LOCKED
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
@@ -565,7 +565,6 @@ FROM
 WHERE
 	%s
 	AND ssl_status = @status
-	AND ssl_expires_at IS NOT NULL
 	AND ssl_expires_at <= CURRENT_TIMESTAMP + INTERVAL '30 days'
 ORDER BY
 	ssl_expires_at ASC

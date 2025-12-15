@@ -20,10 +20,12 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
+	"go.probo.inc/probo/pkg/gid"
 )
 
 type (
@@ -73,11 +75,11 @@ func (r *Renewer) Run(ctx context.Context) error {
 }
 
 func (r *Renewer) checkAndRenew(ctx context.Context) error {
-	return r.pg.WithConn(
+	return r.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(tx pg.Conn) error {
 			var caches coredata.CachedCertificates
-			cacheCount, err := caches.CountAll(ctx, conn)
+			cacheCount, err := caches.CountAll(ctx, tx)
 			if err != nil {
 				r.logger.ErrorCtx(ctx, "cannot count certificate cache", log.Error(err))
 			} else if cacheCount == 0 {
@@ -91,13 +93,13 @@ func (r *Renewer) checkAndRenew(ctx context.Context) error {
 				}
 			}
 
-			if err := caches.CleanExpired(ctx, conn); err != nil {
+			if err := caches.CleanExpired(ctx, tx); err != nil {
 				r.logger.ErrorCtx(ctx, "cannot clean certificate cache", log.Error(err))
 			}
 
 			domains := coredata.CustomDomains{}
 			scope := coredata.NewNoScope()
-			if err := domains.ListDomainsForRenewal(ctx, conn, scope); err != nil {
+			if err := domains.ListDomainsForRenewal(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot list domains for renewal: %w", err)
 			}
 
@@ -115,7 +117,7 @@ func (r *Renewer) checkAndRenew(ctx context.Context) error {
 				}
 
 				r.logger.InfoCtx(ctx, "renewing certificate for domain", log.String("domain", domain.Domain))
-				if err := r.renewDomain(ctx, conn, domain); err != nil {
+				if err := r.renewDomain(ctx, tx, domain.ID); err != nil {
 					r.logger.ErrorCtx(ctx, "cannot renew certificate", log.String("domain", domain.Domain), log.Error(err))
 				} else {
 					r.logger.InfoCtx(ctx, "successfully renewed certificate", log.String("domain", domain.Domain))
@@ -127,13 +129,17 @@ func (r *Renewer) checkAndRenew(ctx context.Context) error {
 	)
 }
 
-func (r *Renewer) renewDomain(ctx context.Context, conn pg.Conn, domain *coredata.CustomDomain) error {
-	lockedDomain := &coredata.CustomDomain{}
-	if err := lockedDomain.LoadByIDForUpdate(ctx, conn, coredata.NewNoScope(), r.encryptionKey, domain.ID); err != nil {
+func (r *Renewer) renewDomain(ctx context.Context, tx pg.Conn, domainID gid.GID) error {
+	domain := &coredata.CustomDomain{}
+	if err := domain.LoadByIDForUpdateSkipLocked(ctx, tx, coredata.NewNoScope(), r.encryptionKey, domainID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil
+		}
+
 		return fmt.Errorf("cannot lock domain for renewal: %w", err)
 	}
 
-	if lockedDomain.SSLStatus != coredata.CustomDomainSSLStatusActive {
+	if domain.SSLStatus != coredata.CustomDomainSSLStatusActive {
 		r.logger.InfoCtx(
 			ctx,
 			"domain status changed, skipping renewal",
@@ -143,141 +149,9 @@ func (r *Renewer) renewDomain(ctx context.Context, conn pg.Conn, domain *coredat
 		return nil
 	}
 
-	cert, err := r.acmeService.RenewCertificate(ctx, lockedDomain.Domain)
-	if err != nil {
-		if errors.Is(err, ErrHTTPChallengeRequired) {
-			challenge, err := r.acmeService.GetHTTPChallenge(ctx, lockedDomain.Domain)
-			if err != nil {
-				return fmt.Errorf("cannot get HTTP challenge for renewal: %w", err)
-			}
-
-			r.logger.WarnCtx(
-				ctx,
-				"HTTP challenge required for renewal",
-				log.String("domain", lockedDomain.Domain),
-				log.String("token", challenge.Token),
-			)
-
-			lockedDomain.HTTPChallengeToken = &challenge.Token
-			lockedDomain.HTTPChallengeKeyAuth = &challenge.KeyAuth
-			lockedDomain.HTTPChallengeURL = &challenge.URL
-			lockedDomain.HTTPOrderURL = &challenge.OrderURL
-			lockedDomain.SSLStatus = coredata.CustomDomainSSLStatusRenewing
-
-			if err := lockedDomain.Update(ctx, conn, coredata.NewNoScope(), r.encryptionKey); err != nil {
-				return fmt.Errorf("cannot update domain with renewal challenge: %w", err)
-			}
-
-			return nil
-		}
-
-		r.logger.WarnCtx(
-			ctx,
-			"cannot renew certificate",
-			log.String("domain", lockedDomain.Domain),
-			log.Int("retry_count", lockedDomain.SSLRetryCount),
-			log.Error(err),
-		)
-
-		lockedDomain.SSLRetryCount++
-		now := time.Now()
-		lockedDomain.SSLLastAttemptAt = &now
-
-		const maxRetries = 3
-		if lockedDomain.SSLRetryCount >= maxRetries {
-			r.logger.ErrorCtx(
-				ctx,
-				"domain has exceeded max renewal retry attempts, marking as failed",
-				log.String("domain", lockedDomain.Domain),
-				log.Int("retry_count", lockedDomain.SSLRetryCount),
-			)
-
-			lockedDomain.SSLStatus = coredata.CustomDomainSSLStatusFailed
-			lockedDomain.HTTPChallengeToken = nil
-			lockedDomain.HTTPChallengeKeyAuth = nil
-			lockedDomain.HTTPChallengeURL = nil
-			lockedDomain.HTTPOrderURL = nil
-
-			if updateErr := lockedDomain.Update(ctx, conn, coredata.NewNoScope(), r.encryptionKey); updateErr != nil {
-				r.logger.ErrorCtx(
-					ctx,
-					"cannot mark domain as failed",
-					log.String("domain", lockedDomain.Domain),
-					log.Error(updateErr),
-				)
-				return updateErr
-			}
-
-			return fmt.Errorf("domain marked as failed after %d retry attempts: %w", maxRetries, err)
-		}
-
-		// Update retry tracking but keep domain ACTIVE for next renewal cycle
-		if updateErr := lockedDomain.Update(ctx, conn, coredata.NewNoScope(), r.encryptionKey); updateErr != nil {
-			r.logger.ErrorCtx(
-				ctx,
-				"cannot update domain retry tracking",
-				log.String("domain", lockedDomain.Domain),
-				log.Error(updateErr),
-			)
-			return updateErr
-		}
-
-		r.logger.InfoCtx(
-			ctx,
-			"domain will retry renewal on next cycle",
-			log.String("domain", lockedDomain.Domain),
-			log.Int("retry_count", lockedDomain.SSLRetryCount),
-		)
-
-		// Return the original error so caller knows renewal failed
-		return fmt.Errorf("renewal failed, will retry: %w", err)
-	}
-
-	r.logger.InfoCtx(
-		ctx,
-		"certificate renewed successfully",
-		log.String("domain", lockedDomain.Domain),
-		log.Time("expires_at", cert.ExpiresAt),
-	)
-
-	lockedDomain.SSLCertificatePEM = cert.CertPEM
-	if err := lockedDomain.EncryptPrivateKey(cert.KeyPEM, r.encryptionKey); err != nil {
-		return fmt.Errorf("cannot encrypt private key: %w", err)
-	}
-	chainStr := string(cert.ChainPEM)
-	lockedDomain.SSLCertificateChain = &chainStr
-	lockedDomain.SSLExpiresAt = &cert.ExpiresAt
-	lockedDomain.SSLStatus = coredata.CustomDomainSSLStatusActive
-
-	lockedDomain.SSLRetryCount = 0
-	lockedDomain.SSLLastAttemptAt = nil
-
-	lockedDomain.HTTPChallengeToken = nil
-	lockedDomain.HTTPChallengeKeyAuth = nil
-	lockedDomain.HTTPChallengeURL = nil
-	lockedDomain.HTTPOrderURL = nil
-
-	if err := lockedDomain.Update(ctx, conn, coredata.NewNoScope(), r.encryptionKey); err != nil {
-		return fmt.Errorf("cannot update domain with renewed certificate: %w", err)
-	}
-
-	cache := &coredata.CachedCertificate{
-		Domain:           lockedDomain.Domain,
-		CertificatePEM:   string(cert.CertPEM),
-		PrivateKeyPEM:    string(cert.KeyPEM),
-		CertificateChain: &chainStr,
-		ExpiresAt:        cert.ExpiresAt,
-		CachedAt:         time.Now(),
-		CustomDomainID:   lockedDomain.ID,
-	}
-
-	if err := cache.Upsert(ctx, conn); err != nil {
-		r.logger.ErrorCtx(
-			ctx,
-			"cannot update certificate cache",
-			log.String("domain", domain.Domain),
-			log.Error(err),
-		)
+	domain.SSLStatus = coredata.CustomDomainSSLStatusRenewing
+	if err := domain.Update(ctx, tx, coredata.NewNoScope(), r.encryptionKey); err != nil {
+		return fmt.Errorf("cannot update domain status: %w", err)
 	}
 
 	return nil

@@ -21,7 +21,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
-	"errors"
 	"fmt"
 	"time"
 
@@ -56,10 +55,6 @@ type (
 		OrderURL string
 	}
 )
-
-// ErrHTTPChallengeRequired indicates that an HTTP-01 challenge needs to be
-// completed before the certificate can be issued or renewed.
-var ErrHTTPChallengeRequired = errors.New("HTTP challenge required")
 
 func NewACMEService(
 	email string,
@@ -196,90 +191,6 @@ func (s *ACMEService) CompleteHTTPChallenge(
 	}
 
 	csr, err := createCSR(challenge0.Domain, certKey)
-	if err != nil {
-		return nil, fmt.Errorf("cannot create CSR: %w", err)
-	}
-
-	der, _, err := s.client.CreateOrderCert(ctx, order.FinalizeURL, csr, true)
-	if err != nil {
-		return nil, fmt.Errorf("cannot create certificate: %w", err)
-	}
-
-	cert, err := x509.ParseCertificate(der[0])
-	if err != nil {
-		return nil, fmt.Errorf("cannot parse certificate: %w", err)
-	}
-
-	certPEM := pem.EncodeCertificate(der[0])
-	keyPEM, err := pem.EncodePrivateKey(certKey)
-	if err != nil {
-		return nil, fmt.Errorf("cannot encode key: %w", err)
-	}
-
-	var chainDER [][]byte
-	if len(der) > 1 {
-		chainDER = der[1:]
-	}
-	chainPEM := pem.EncodeCertificateChain(chainDER)
-
-	return &Certificate{
-		CertPEM:   certPEM,
-		KeyPEM:    keyPEM,
-		ChainPEM:  chainPEM,
-		ExpiresAt: cert.NotAfter,
-	}, nil
-}
-
-func (s *ACMEService) ObtainCertificate(
-	ctx context.Context,
-	domain string,
-) (*Certificate, error) {
-	challenge, err := s.GetHTTPChallenge(ctx, domain)
-	if err != nil {
-		return nil, fmt.Errorf("cannot get HTTP challenge: %w", err)
-	}
-
-	// The challenge token and key auth will be stored and served via HTTP
-	// The caller is responsible for ensuring the HTTP endpoint is ready
-	// before calling CompleteHTTPChallenge
-	return nil, fmt.Errorf("%w: token=%s", ErrHTTPChallengeRequired, challenge.Token)
-}
-
-func (s *ACMEService) RenewCertificate(
-	ctx context.Context,
-	domain string,
-) (*Certificate, error) {
-	cert, err := s.renewWithExistingAuth(ctx, domain)
-	if err == nil {
-		return cert, nil
-	}
-
-	s.logger.WarnCtx(ctx, "renewal with existing authorization failed, need new HTTP challenge",
-		log.String("domain", domain),
-		log.Error(err))
-
-	return s.ObtainCertificate(ctx, domain)
-}
-
-func (s *ACMEService) renewWithExistingAuth(ctx context.Context, domain string) (*Certificate, error) {
-	order, err := s.client.AuthorizeOrder(ctx, acme.DomainIDs(domain))
-	if err != nil {
-		return nil, fmt.Errorf("cannot create renewal order: %w", err)
-	}
-
-	if order.Status != acme.StatusReady {
-		order, err = s.client.WaitOrder(ctx, order.URI)
-		if err != nil {
-			return nil, fmt.Errorf("authorization not valid or expired: %w", err)
-		}
-	}
-
-	certKey, err := keys.Generate(s.keyType)
-	if err != nil {
-		return nil, fmt.Errorf("cannot generate certificate key: %w", err)
-	}
-
-	csr, err := createCSR(domain, certKey)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create CSR: %w", err)
 	}
