@@ -159,6 +159,7 @@ func New() *Implm {
 			CustomDomains: customDomainsConfig{
 				RenewalInterval:   3600,
 				ProvisionInterval: 30,
+				ResolverAddr:      "8.8.8.8:53",
 				ACME: acmeConfig{
 					Directory: "https://acme-v02.api.letsencrypt.org/directory",
 					Email:     "admin@getprobo.com",
@@ -681,7 +682,7 @@ func (impl *Implm) runTrustCenterServer(
 	if certProvisioningInterval == 0 {
 		certProvisioningInterval = 30 * time.Second
 	}
-	certProvisioner := certmanager.NewProvisioner(pgClient, acmeService, impl.cfg.EncryptionKey, impl.cfg.CustomDomains.CnameTarget, certProvisioningInterval, l)
+	certProvisioner := certmanager.NewProvisioner(pgClient, acmeService, impl.cfg.EncryptionKey, impl.cfg.CustomDomains.CnameTarget, certProvisioningInterval, impl.cfg.CustomDomains.ResolverAddr, l)
 
 	g, ctx := errgroup.WithContext(ctx)
 

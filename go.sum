@@ -1,3 +1,5 @@
+codeberg.org/miekg/dns v0.6.2 h1:gkuKad3tKCs4On/3ZlydASeXPc1uQaZNuDSxEXR7Mt0=
+codeberg.org/miekg/dns v0.6.2/go.mod h1:IKSpRNHVdUyxHC457VnDQ9Dv05UhXXsALZAywCM7D54=
 github.com/99designs/gqlgen v0.17.83 h1:LZOd4Of2snK5V22/ZWfBAPa3WoAZkBO70dKXM0ODHQk=
 github.com/99designs/gqlgen v0.17.83/go.mod h1:q6Lb64wknFqNFSbSUGzKRKupklvY/xgNr62g0GGWPB8=
 github.com/PuerkitoBio/goquery v1.10.3 h1:pFYcNSqHxBD06Fpj/KsbStFRsgRATgnf3LeXiUkhzPo=

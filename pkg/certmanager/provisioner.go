@@ -18,7 +18,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net"
 	"strings"
 	"time"
 
@@ -29,6 +28,8 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/gid"
+
+	"codeberg.org/miekg/dns"
 )
 
 type (
@@ -38,6 +39,7 @@ type (
 		encryptionKey cipher.EncryptionKey
 		cnameTarget   string
 		interval      time.Duration
+		resolverAddr  string
 		logger        *log.Logger
 	}
 )
@@ -52,6 +54,7 @@ func NewProvisioner(
 	encryptionKey cipher.EncryptionKey,
 	cnameTarget string,
 	interval time.Duration,
+	resolverAddr string,
 	logger *log.Logger,
 ) *Provisioner {
 	return &Provisioner{
@@ -60,6 +63,7 @@ func NewProvisioner(
 		encryptionKey: encryptionKey,
 		cnameTarget:   cnameTarget,
 		interval:      interval,
+		resolverAddr:  resolverAddr,
 		logger:        logger.Named("certmanager.provisioner"),
 	}
 }
@@ -88,19 +92,45 @@ func (p *Provisioner) Run(ctx context.Context) error {
 }
 
 func (p *Provisioner) checkDNSConfiguration(domain string) error {
-	cnameRecords, err := net.LookupCNAME(domain)
-	if err != nil {
-		return fmt.Errorf("cannot lookup cname for domain %q: %w", domain, err)
+	customerFQDN := domain
+	if !strings.HasSuffix(customerFQDN, ".") {
+		customerFQDN = customerFQDN + "."
 	}
-	expectedTarget := strings.TrimSuffix(p.cnameTarget, ".")
-	actualTarget := strings.TrimSuffix(cnameRecords, ".")
 
-	if !strings.EqualFold(actualTarget, expectedTarget) {
+	expectedFQDN := p.cnameTarget
+	if !strings.HasSuffix(expectedFQDN, ".") {
+		expectedFQDN = expectedFQDN + "."
+	}
+
+	msg := &dns.Msg{MsgHeader: dns.MsgHeader{ID: dns.ID(), RecursionDesired: true}}
+	msg.Question = []dns.RR{&dns.CNAME{Hdr: dns.Header{Name: customerFQDN, Class: dns.ClassINET}}}
+
+	client := dns.NewClient()
+
+	resp, _, err := client.Exchange(context.Background(), msg, "udp", p.resolverAddr)
+	if err != nil {
+		return fmt.Errorf("cannot exchange dns message: %w", err)
+	}
+
+	if len(resp.Answer) == 0 {
+		return fmt.Errorf("no cname records found for domain %q", domain)
+	}
+
+	if len(resp.Answer) > 1 {
+		return fmt.Errorf("multiple cname records found for domain %q", domain)
+	}
+
+	resolvedRecord, ok := resp.Answer[0].(*dns.CNAME)
+	if !ok {
+		return fmt.Errorf("first answer is not a cname record for domain %q", domain)
+	}
+
+	if !strings.EqualFold(expectedFQDN, resolvedRecord.Target) {
 		return fmt.Errorf(
 			"cname target mismatch: domain %q resolves to %q, expected %q",
 			domain,
-			actualTarget,
-			p.cnameTarget,
+			resolvedRecord.Target,
+			expectedFQDN,
 		)
 	}
 

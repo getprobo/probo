@@ -3,6 +3,7 @@ module go.probo.inc/probo
 go 1.25.5
 
 require (
+	codeberg.org/miekg/dns v0.6.2
 	github.com/99designs/gqlgen v0.17.83
 	github.com/aws/aws-sdk-go-v2 v1.40.0
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.0

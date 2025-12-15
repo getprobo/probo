@@ -17,6 +17,7 @@ package probod
 type customDomainsConfig struct {
 	RenewalInterval   int        `json:"renewal-interval"`
 	ProvisionInterval int        `json:"provision-interval"`
+	ResolverAddr      string     `json:"resolver-addr"`
 	CnameTarget       string     `json:"cname-target"`
 	ACME              acmeConfig `json:"acme"`
 }
