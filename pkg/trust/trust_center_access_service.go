@@ -58,7 +58,7 @@ const (
 func (tcar *TrustCenterAccessRequest) Validate() error {
 	v := validator.New()
 
-	v.Check(tcar.Email, "email", validator.NotBlacklisted())
+	v.Check(tcar.Email.Domain(), "email", validator.NotBlacklisted())
 
 	return v.Error()
 }

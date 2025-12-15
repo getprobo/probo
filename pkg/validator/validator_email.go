@@ -35,7 +35,7 @@ func NotBlacklisted() ValidatorFunc {
 	return func(value any) *ValidationError {
 		err := notOneOfSlice(value)
 
-		if err == nil {
+		if err != nil {
 			return newValidationError(
 				ErrorCodeInvalidEmail,
 				"must not be blacklisted",
