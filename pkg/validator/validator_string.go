@@ -231,7 +231,7 @@ func NotOneOfSlice[T any](disallowed []T) ValidatorFunc {
 	oneOfSlice := OneOfSlice(disallowed)
 
 	return func(value any) *ValidationError {
-		err := oneOfSlice(disallowed)
+		err := oneOfSlice(value)
 
 		if err == nil {
 			return newValidationError(
