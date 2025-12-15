@@ -1,3 +1,3 @@
 [submodule "pkg/validator/data/disposable-email-domains"]
 	path = pkg/validator/data/disposable-email-domains
-	url = git@github.com:disposable-email-domains/disposable-email-domains.git
+	url = https://github.com/disposable-email-domains/disposable-email-domains.git
