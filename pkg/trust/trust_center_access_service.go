@@ -58,9 +58,9 @@ const (
 func (tcar *TrustCenterAccessRequest) Validate() error {
 	v := validator.New()
 
-	v.Check(tcar.Email, "email", validator.NotOneOfSlice([]string{}))
+	v.Check(tcar.Email, "email", validator.NotBlacklisted())
 
-	return nil
+	return v.Error()
 }
 
 func (s TrustCenterAccessService) ValidateToken(
@@ -88,7 +88,7 @@ func (s TrustCenterAccessService) Request(
 	req *TrustCenterAccessRequest,
 ) (*coredata.TrustCenterAccess, error) {
 	if err := req.Validate(); err != nil {
-		return nil, fmt.Errorf("invalid request arguments")
+		return nil, fmt.Errorf("invalid request arguments: %w", err)
 	}
 
 	now := time.Now()

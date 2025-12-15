@@ -17,6 +17,7 @@ import { useMutationWithToasts } from "/hooks/useMutationWithToast";
 import { useTrustCenter } from "/hooks/useTrustCenter";
 import { type FormEventHandler, type PropsWithChildren } from "react";
 import { useIsAuthenticated } from "/hooks/useIsAuthenticated.ts";
+import { InvalidError } from "/providers/RelayProviders";
 
 type Props = PropsWithChildren<{
   documentId?: string;
@@ -40,7 +41,7 @@ export function RequestAccessDialog({
   const trustCenter = useTrustCenter();
   const { toast } = useToast();
   const { __ } = useTranslate();
-  const { handleSubmit, register } = useFormWithSchema(schema, {
+  const { handleSubmit, register, setError, formState } = useFormWithSchema(schema, {
     defaultValues: {
       name: "",
       email: "",
@@ -62,7 +63,11 @@ export function RequestAccessDialog({
         dialogRef.current?.close();
       })
       .catch((error) => {
-        console.error(error);
+        if (error instanceof InvalidError) {
+          if (error.field === "email") {
+            setError(error.field, {message: error.message})
+          }
+        }
         toast({
           title: __("Error"),
           description: __("Cannot request access"),
@@ -109,6 +114,7 @@ export function RequestAccessDialog({
                 placeholder="john.doe@acme.com"
                 {...register("email")}
                 type="email"
+                error={formState.errors.email?.message}
               />
             </div>
           )}

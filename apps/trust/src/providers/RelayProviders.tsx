@@ -16,6 +16,18 @@ export class UnAuthenticatedError extends Error {
   }
 }
 
+export class InvalidError extends Error {
+  field?: string;
+  cause?: string;
+
+  constructor(message?: string, field?: string, cause?: string) {
+    super(message || "INVALID");
+    this.name = "InvalidError";
+    this.field = field;
+    this.cause = cause;
+  }
+}
+
 export class InternalServerError extends Error {
   constructor() {
     super("INTERNAL_SERVER_ERROR");
@@ -46,6 +58,9 @@ export function buildEndpoint(path: string): string {
 
 const hasUnauthenticatedError = (error: GraphQLError) =>
   error.extensions?.code == "UNAUTHENTICATED";
+
+const hasInvalidError = (error: GraphQLError) =>
+  error.extensions?.code == "INVALID_REQUEST";
 
 const fetchRelay: FetchFunction = async (
   request,
@@ -123,6 +138,15 @@ const fetchRelay: FetchFunction = async (
 
     if (errors.find(hasUnauthenticatedError)) {
       throw new UnAuthenticatedError();
+    }
+
+    const invalidError = errors.find(hasInvalidError);
+    if (invalidError) {
+      throw new InvalidError(
+        invalidError.message,
+        invalidError.extensions.field as string ?? "",
+        invalidError.extensions.cause as string ?? "",
+      );
     }
 
     throw new Error(`Error fetching GraphQL query '${request.name}'`);

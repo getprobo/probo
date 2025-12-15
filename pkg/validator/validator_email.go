@@ -37,7 +37,7 @@ func NotBlacklisted() ValidatorFunc {
 
 		if err == nil {
 			return newValidationError(
-				ErrorCodeInvalidEnum,
+				ErrorCodeInvalidEmail,
 				"must not be blacklisted",
 			)
 		}

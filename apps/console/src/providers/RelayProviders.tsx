@@ -58,6 +58,18 @@ export class ForbiddenError extends Error {
   }
 }
 
+export class InvalidError extends Error {
+  field?: string;
+  cause?: string;
+
+  constructor(message?: string, field?: string, cause?: string) {
+    super(message || "INVALID");
+    this.name = "InvalidError";
+    this.field = field;
+    this.cause = cause;
+  }
+}
+
 export function buildEndpoint(path: string): string {
   const host = import.meta.env.VITE_API_URL;
 
@@ -90,6 +102,9 @@ const hasUnauthorizedError = (error: GraphQLError) =>
 
 const hasForbiddenError = (error: GraphQLError) =>
   error.extensions?.code == "FORBIDDEN";
+
+const hasInvalidError = (error: GraphQLError) =>
+  error.extensions?.code == "INVALID_REQUEST";
 
 const fetchRelay: FetchFunction = async (
   request,
@@ -182,6 +197,15 @@ const fetchRelay: FetchFunction = async (
     const forbiddenError = errors.find(hasForbiddenError);
     if (forbiddenError) {
       throw new ForbiddenError(forbiddenError.message);
+    }
+
+    const invalidError = errors.find(hasInvalidError);
+    if (invalidError) {
+      throw new InvalidError(
+        invalidError.message,
+        invalidError.extensions.field as string ?? "",
+        invalidError.extensions.cause as string ?? "",
+      );
     }
   }
 
