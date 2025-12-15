@@ -20,7 +20,7 @@ export function OrganizationSidebar({
   }
 
   return (
-    <Card className="p-6 relative overflow-hidden border-b-1 border-border-low isolate">
+    <Card className="p-6 relative overflow-hidden border-b border-border-low isolate">
       <div className="h-21 bg-[#044E4114] absolute top-0 left-0 right-0 -z-1"></div>
       {trustCenter.organization.logoUrl ? (
         <img
@@ -36,7 +36,7 @@ export function OrganizationSidebar({
         {trustCenter.organization.description}
       </p>
 
-      <hr className="my-6 -mx-6 h-[1px] bg-border-low border-none" />
+      <hr className="my-6 -mx-6 h-px bg-border-low border-none" />
 
       {/* Business information */}
       <div className="space-y-4">
@@ -68,7 +68,7 @@ export function OrganizationSidebar({
           </BusinessInfo>
         )}
 
-        <hr className="my-6 -mx-6 h-[1px] bg-border-low border-none" />
+        <hr className="my-6 -mx-6 h-px bg-border-low border-none" />
 
         {/* Certifications */}
         {trustCenter.audits.edges.length > 0 && (

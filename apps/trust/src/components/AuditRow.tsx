@@ -65,10 +65,10 @@ export function AuditRow(props: { audit: AuditRowFragment$key }) {
   };
 
   const [hasRequested, setHasRequested] = useState(
-    audit.report?.hasUserRequestedAccess,
+    audit.report?.hasUserRequestedAccess
   );
   return (
-    <div className="text-sm border-1 border-border-solid -mt-[1px] flex gap-3 flex-col md:flex-row md:justify-between px-6 py-3">
+    <div className="text-sm border border-border-solid -mt-px flex gap-3 flex-col md:flex-row md:justify-between px-6 py-3">
       <div className="flex items-center gap-2">
         <IconMedal size={16} className="flex-none text-txt-tertiary" />
         {audit.framework.name}
@@ -131,7 +131,9 @@ export function AuditRowAvatar(props: { audit: AuditRowFragment$key }) {
           ) : (
             <div
               className="bg-[#F0F7E2] aspect-square w-full rounded-full text-xs text-[#000] font-bold flex items-center justify-center pb-6 px-2"
-              style={{ background: `url(${getLogoUrl("blank.svg")}) no-repeat` }}
+              style={{
+                background: `url(${getLogoUrl("blank.svg")}) no-repeat`,
+              }}
             >
               <span className="line-clamp-2 overflow-hidden">
                 {" "}
@@ -146,7 +148,7 @@ export function AuditRowAvatar(props: { audit: AuditRowFragment$key }) {
 }
 
 function AuditDialog(
-  props: PropsWithChildren<{ audit: AuditRowFragment$key; logo?: string }>,
+  props: PropsWithChildren<{ audit: AuditRowFragment$key; logo?: string }>
 ) {
   const audit = useFragment(auditRowFragment, props.audit);
   const location = useLocation();
