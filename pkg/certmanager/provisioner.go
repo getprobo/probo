@@ -16,15 +16,19 @@ package certmanager
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"strings"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
+	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
+	"go.probo.inc/probo/pkg/gid"
 )
 
 type (
@@ -36,6 +40,10 @@ type (
 		interval      time.Duration
 		logger        *log.Logger
 	}
+)
+
+const (
+	maxRetries = 3
 )
 
 func NewProvisioner(
@@ -100,15 +108,25 @@ func (p *Provisioner) checkDNSConfiguration(domain string) error {
 }
 
 func (p *Provisioner) checkPendingDomains(ctx context.Context) error {
-	return p.pg.WithConn(
+	err := p.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
-			if err := p.handleStaleProvisioningAttempts(ctx, conn); err != nil {
-				p.logger.ErrorCtx(ctx, "cannot handle stale provisioning attempts", log.Error(err))
+		func(tx pg.Conn) error {
+			if err := p.handleStaleProvisioningAttempts(ctx, tx); err != nil {
+				return fmt.Errorf("cannot handle stale provisioning attempts: %w", err)
 			}
 
+			return nil
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("cannot handle stale provisioning attempts: %w", err)
+	}
+
+	err = p.pg.WithTx(
+		ctx,
+		func(tx pg.Conn) error {
 			var domains coredata.CustomDomains
-			if err := domains.ListDomainsWithPendingHTTPChallenges(ctx, conn, coredata.NewNoScope()); err != nil {
+			if err := domains.ListDomainsWithPendingHTTPChallenges(ctx, tx, coredata.NewNoScope()); err != nil {
 				return fmt.Errorf("cannot load domains with pending challenges: %w", err)
 			}
 
@@ -125,39 +143,25 @@ func (p *Provisioner) checkPendingDomains(ctx context.Context) error {
 				default:
 				}
 
-				if err := p.provisionDomainCertificate(ctx, conn, domain); err != nil {
-					p.logger.ErrorCtx(
-						ctx,
-						"cannot provision certificate for domain",
-						log.String("domain", domain.Domain),
-						log.Error(err),
-					)
+				if err := p.provisionDomainCertificate(ctx, tx, domain.ID); err != nil {
+					return fmt.Errorf("cannot provision certificate for domain %q: %w", domain.Domain, err)
 				}
 			}
 
 			return nil
 		},
 	)
-}
 
-func isFatalChallengeError(err error) bool {
-	if err == nil {
-		return false
+	if err != nil {
+		return fmt.Errorf("cannot provision domains: %w", err)
 	}
 
-	errStr := strings.ToLower(err.Error())
-
-	return (strings.Contains(errStr, "invalid") &&
-		(strings.Contains(errStr, "challenge") ||
-			strings.Contains(errStr, "authorization") ||
-			strings.Contains(errStr, "order"))) ||
-		strings.Contains(errStr, "authorization must be pending") ||
-		strings.Contains(errStr, "expired")
+	return nil
 }
 
-func (p *Provisioner) handleStaleProvisioningAttempts(ctx context.Context, conn pg.Conn) error {
+func (p *Provisioner) handleStaleProvisioningAttempts(ctx context.Context, tx pg.Conn) error {
 	var domains coredata.CustomDomains
-	if err := domains.ListStaleProvisioningDomains(ctx, conn, coredata.NewNoScope()); err != nil {
+	if err := domains.ListStaleProvisioningDomains(ctx, tx, coredata.NewNoScope()); err != nil {
 		return fmt.Errorf("cannot load stale provisioning domains: %w", err)
 	}
 
@@ -168,7 +172,7 @@ func (p *Provisioner) handleStaleProvisioningAttempts(ctx context.Context, conn 
 	p.logger.InfoCtx(ctx, "found stale provisioning attempts to reset", log.Int("count", len(domains)))
 
 	for _, domain := range domains {
-		if err := p.resetStaleDomain(ctx, conn, domain); err != nil {
+		if err := p.resetStaleDomain(ctx, tx, domain); err != nil {
 			p.logger.ErrorCtx(
 				ctx,
 				"cannot reset stale domain",
@@ -183,11 +187,15 @@ func (p *Provisioner) handleStaleProvisioningAttempts(ctx context.Context, conn 
 
 func (p *Provisioner) resetStaleDomain(
 	ctx context.Context,
-	conn pg.Conn,
+	tx pg.Conn,
 	domain *coredata.CustomDomain,
 ) error {
 	fullDomain := &coredata.CustomDomain{}
-	if err := fullDomain.LoadByIDForUpdate(ctx, conn, coredata.NewNoScope(), p.encryptionKey, domain.ID); err != nil {
+	if err := fullDomain.LoadByIDForUpdateSkipLocked(ctx, tx, coredata.NewNoScope(), p.encryptionKey, domain.ID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil
+		}
+
 		return fmt.Errorf("cannot load stale domain for update: %w", err)
 	}
 
@@ -219,7 +227,7 @@ func (p *Provisioner) resetStaleDomain(
 		fullDomain.SSLLastAttemptAt = nil
 	}
 
-	if err := fullDomain.Update(ctx, conn, coredata.NewNoScope(), p.encryptionKey); err != nil {
+	if err := fullDomain.Update(ctx, tx, coredata.NewNoScope(), p.encryptionKey); err != nil {
 		return fmt.Errorf("cannot update stale domain: %w", err)
 	}
 
@@ -228,10 +236,19 @@ func (p *Provisioner) resetStaleDomain(
 
 func (p *Provisioner) provisionDomainCertificate(
 	ctx context.Context,
-	conn pg.Conn,
-	domain *coredata.CustomDomain,
+	tx pg.Conn,
+	domainID gid.GID,
 ) error {
-	if domain.SSLStatus == coredata.CustomDomainSSLStatusPending {
+	domain := &coredata.CustomDomain{}
+	if err := domain.LoadByIDForUpdateSkipLocked(ctx, tx, coredata.NewNoScope(), p.encryptionKey, domainID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil
+		}
+
+		return fmt.Errorf("cannot load by id for update %q custom domain: %w", domainID, err)
+	}
+
+	if domain.SSLStatus == coredata.CustomDomainSSLStatusPending || domain.SSLStatus == coredata.CustomDomainSSLStatusRenewing {
 		if err := p.checkDNSConfiguration(domain.Domain); err != nil {
 			p.logger.WarnCtx(
 				ctx,
@@ -256,18 +273,13 @@ func (p *Provisioner) provisionDomainCertificate(
 			return err
 		}
 
-		fullDomain := &coredata.CustomDomain{}
-		if err := fullDomain.LoadByIDForUpdate(ctx, conn, coredata.NewNoScope(), p.encryptionKey, domain.ID); err != nil {
-			return fmt.Errorf("cannot load domain for update: %w", err)
-		}
+		domain.HTTPChallengeToken = &challenge.Token
+		domain.HTTPChallengeKeyAuth = &challenge.KeyAuth
+		domain.HTTPChallengeURL = &challenge.URL
+		domain.HTTPOrderURL = &challenge.OrderURL
+		domain.SSLStatus = coredata.CustomDomainSSLStatusProvisioning
 
-		fullDomain.HTTPChallengeToken = &challenge.Token
-		fullDomain.HTTPChallengeKeyAuth = &challenge.KeyAuth
-		fullDomain.HTTPChallengeURL = &challenge.URL
-		fullDomain.HTTPOrderURL = &challenge.OrderURL
-		fullDomain.SSLStatus = coredata.CustomDomainSSLStatusProvisioning
-
-		if err := fullDomain.Update(ctx, conn, coredata.NewNoScope(), p.encryptionKey); err != nil {
+		if err := domain.Update(ctx, tx, coredata.NewNoScope(), p.encryptionKey); err != nil {
 			return fmt.Errorf("cannot update domain with challenge: %w", err)
 		}
 
@@ -299,91 +311,26 @@ func (p *Provisioner) provisionDomainCertificate(
 			log.Error(err),
 		)
 
-		fullDomain := &coredata.CustomDomain{}
-		if loadErr := fullDomain.LoadByIDForUpdate(ctx, conn, coredata.NewNoScope(), p.encryptionKey, domain.ID); loadErr != nil {
-			p.logger.ErrorCtx(
-				ctx,
-				"cannot load domain for retry tracking",
-				log.String("domain", domain.Domain),
-				log.Error(loadErr),
-			)
-			return loadErr
-		}
+		domain.SSLRetryCount = domain.SSLRetryCount + 1
+		domain.SSLLastAttemptAt = ref.Ref(time.Now())
 
-		fullDomain.SSLRetryCount++
-		now := time.Now()
-		fullDomain.SSLLastAttemptAt = &now
-
-		const maxRetries = 3
-		if fullDomain.SSLRetryCount >= maxRetries {
+		if domain.SSLRetryCount >= maxRetries {
 			p.logger.ErrorCtx(
 				ctx,
 				"domain has exceeded max retry attempts, marking as failed",
 				log.String("domain", domain.Domain),
-				log.Int("retry_count", fullDomain.SSLRetryCount),
+				log.Int("retry_count", domain.SSLRetryCount),
 			)
 
-			fullDomain.SSLStatus = coredata.CustomDomainSSLStatusFailed
-			fullDomain.HTTPChallengeToken = nil
-			fullDomain.HTTPChallengeKeyAuth = nil
-			fullDomain.HTTPChallengeURL = nil
-			fullDomain.HTTPOrderURL = nil
-
-			if updateErr := fullDomain.Update(ctx, conn, coredata.NewNoScope(), p.encryptionKey); updateErr != nil {
-				p.logger.ErrorCtx(
-					ctx,
-					"cannot mark domain as failed",
-					log.String("domain", domain.Domain),
-					log.Error(updateErr),
-				)
-				return updateErr
-			}
-
-			return nil
+			domain.SSLStatus = coredata.CustomDomainSSLStatusFailed
+			domain.HTTPChallengeToken = nil
+			domain.HTTPChallengeKeyAuth = nil
+			domain.HTTPChallengeURL = nil
+			domain.HTTPOrderURL = nil
 		}
 
-		if isFatalChallengeError(err) {
-			p.logger.InfoCtx(
-				ctx,
-				"fatal challenge error, resetting domain to retry with fresh challenge",
-				log.String("domain", domain.Domain),
-				log.Int("retry_count", fullDomain.SSLRetryCount),
-			)
-
-			fullDomain.HTTPChallengeToken = nil
-			fullDomain.HTTPChallengeKeyAuth = nil
-			fullDomain.HTTPChallengeURL = nil
-			fullDomain.HTTPOrderURL = nil
-			fullDomain.SSLStatus = coredata.CustomDomainSSLStatusPending
-
-			if updateErr := fullDomain.Update(ctx, conn, coredata.NewNoScope(), p.encryptionKey); updateErr != nil {
-				p.logger.ErrorCtx(
-					ctx,
-					"cannot reset domain for retry",
-					log.String("domain", domain.Domain),
-					log.Error(updateErr),
-				)
-				return updateErr
-			}
-
-			return nil
-		}
-
-		p.logger.InfoCtx(
-			ctx,
-			"transient error, keeping existing challenge for retry",
-			log.String("domain", domain.Domain),
-			log.Int("retry_count", fullDomain.SSLRetryCount),
-		)
-
-		if updateErr := fullDomain.Update(ctx, conn, coredata.NewNoScope(), p.encryptionKey); updateErr != nil {
-			p.logger.ErrorCtx(
-				ctx,
-				"cannot update domain retry tracking",
-				log.String("domain", domain.Domain),
-				log.Error(updateErr),
-			)
-			return updateErr
+		if err := domain.Update(ctx, tx, coredata.NewNoScope(), p.encryptionKey); err != nil {
+			return fmt.Errorf("cannot update domain: %w", err)
 		}
 
 		return nil
@@ -396,47 +343,42 @@ func (p *Provisioner) provisionDomainCertificate(
 		log.Time("expires_at", cert.ExpiresAt),
 	)
 
-	fullDomain := &coredata.CustomDomain{}
-	if err := fullDomain.LoadByID(ctx, conn, coredata.NewNoScope(), p.encryptionKey, domain.ID); err != nil {
-		return fmt.Errorf("cannot load domain: %w", err)
-	}
-
-	fullDomain.SSLCertificatePEM = cert.CertPEM
-	if err := fullDomain.EncryptPrivateKey(cert.KeyPEM, p.encryptionKey); err != nil {
+	domain.SSLCertificatePEM = cert.CertPEM
+	if err := domain.EncryptPrivateKey(cert.KeyPEM, p.encryptionKey); err != nil {
 		return fmt.Errorf("cannot encrypt private key: %w", err)
 	}
 	chainStr := string(cert.ChainPEM)
-	fullDomain.SSLCertificateChain = &chainStr
-	fullDomain.SSLExpiresAt = &cert.ExpiresAt
-	fullDomain.SSLStatus = coredata.CustomDomainSSLStatusActive
+	domain.SSLCertificateChain = &chainStr
+	domain.SSLExpiresAt = &cert.ExpiresAt
+	domain.SSLStatus = coredata.CustomDomainSSLStatusActive
 
-	fullDomain.SSLRetryCount = 0
-	fullDomain.SSLLastAttemptAt = nil
+	domain.SSLRetryCount = 0
+	domain.SSLLastAttemptAt = nil
 
-	fullDomain.HTTPChallengeToken = nil
-	fullDomain.HTTPChallengeKeyAuth = nil
-	fullDomain.HTTPChallengeURL = nil
-	fullDomain.HTTPOrderURL = nil
+	domain.HTTPChallengeToken = nil
+	domain.HTTPChallengeKeyAuth = nil
+	domain.HTTPChallengeURL = nil
+	domain.HTTPOrderURL = nil
 
-	if err := fullDomain.Update(ctx, conn, coredata.NewNoScope(), p.encryptionKey); err != nil {
+	if err := domain.Update(ctx, tx, coredata.NewNoScope(), p.encryptionKey); err != nil {
 		return fmt.Errorf("cannot update domain: %w", err)
 	}
 
 	cache := &coredata.CachedCertificate{
-		Domain:           fullDomain.Domain,
+		Domain:           domain.Domain,
 		CertificatePEM:   string(cert.CertPEM),
 		PrivateKeyPEM:    string(cert.KeyPEM),
 		CertificateChain: &chainStr,
 		ExpiresAt:        cert.ExpiresAt,
 		CachedAt:         time.Now(),
-		CustomDomainID:   fullDomain.ID,
+		CustomDomainID:   domain.ID,
 	}
 
-	if err := cache.Upsert(ctx, conn); err != nil {
+	if err := cache.Upsert(ctx, tx); err != nil {
 		p.logger.ErrorCtx(
 			ctx,
 			"cannot update certificate cache",
-			log.String("domain", fullDomain.Domain),
+			log.String("domain", domain.Domain),
 			log.Error(err),
 		)
 	}
