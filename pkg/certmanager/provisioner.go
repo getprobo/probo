@@ -174,7 +174,12 @@ func (p *Provisioner) checkPendingDomains(ctx context.Context) error {
 				}
 
 				if err := p.provisionDomainCertificate(ctx, tx, domain.ID); err != nil {
-					return fmt.Errorf("cannot provision certificate for domain %q: %w", domain.Domain, err)
+					p.logger.ErrorCtx(
+						ctx,
+						"cannot provision certificate",
+						log.String("domain", domain.Domain),
+						log.Error(err),
+					)
 				}
 			}
 
