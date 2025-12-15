@@ -17,7 +17,16 @@ func (a Addr) String() string {
 }
 
 func (a *Addr) Domain() string {
-	return strings.Split(a.String(), "@")[1]
+	if a == nil || *a == Nil {
+		return ""
+	}
+
+	parts := strings.Split(a.String(), "@")
+	if len(parts) != 2 {
+		return ""
+	}
+
+	return parts[1]
 }
 
 func ParseAddr(s string) (Addr, error) {
@@ -39,6 +48,11 @@ func (a Addr) Value() (driver.Value, error) {
 }
 
 func (a *Addr) Scan(value any) error {
+	if value == nil {
+		*a = Nil
+		return nil
+	}
+
 	switch v := value.(type) {
 	case string:
 		parsed, err := ParseAddr(v)

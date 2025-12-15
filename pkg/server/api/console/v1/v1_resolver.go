@@ -2022,7 +2022,9 @@ func (r *mutationResolver) UpdatePeople(ctx context.Context, input types.UpdateP
 
 	var emailAddresses []mail.Addr
 	for _, emailAddress := range input.AdditionalEmailAddresses {
-		emailAddresses = append(emailAddresses, *emailAddress)
+		if emailAddress != nil {
+			emailAddresses = append(emailAddresses, *emailAddress)
+		}
 	}
 	people, err := prb.Peoples.Update(ctx, probo.UpdatePeopleRequest{
 		ID:                       input.ID,

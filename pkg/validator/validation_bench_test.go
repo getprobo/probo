@@ -199,7 +199,7 @@ func BenchmarkPattern(b *testing.B) {
 }
 
 func BenchmarkValidate_WithErrors(b *testing.B) {
-	email := "invalid-email"
+	email := ""
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {

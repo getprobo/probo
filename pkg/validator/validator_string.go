@@ -228,15 +228,49 @@ func OneOfSlice[T any](allowed []T) ValidatorFunc {
 // NotOneOfSlice validates that a value is not one of the values in the slice.
 // Accepts a slice of any type. Compares by value first, then by string representation.
 func NotOneOfSlice[T any](disallowed []T) ValidatorFunc {
-	oneOfSlice := OneOfSlice(disallowed)
+	// Build disallowed map with string keys for flexible comparison
+	disallowedMap := make(map[string]bool)
+	disallowedStrings := make([]string, 0, len(disallowed))
+
+	for _, v := range disallowed {
+		str := fmt.Sprint(v)
+		disallowedMap[str] = true
+		disallowedStrings = append(disallowedStrings, str)
+	}
 
 	return func(value any) *ValidationError {
-		err := oneOfSlice(value)
+		// Handle nil values first
+		if value == nil {
+			return nil
+		}
 
-		if err == nil {
-			return newValidationError(
+		// Dereference all pointer levels
+		actualValue := value
+		val := reflect.ValueOf(value)
+		for val.Kind() == reflect.Ptr {
+			if val.IsNil() {
+				return nil
+			}
+			val = val.Elem()
+			actualValue = val.Interface()
+		}
+
+		// First try exact match with DeepEqual
+		for _, disallowedVal := range disallowed {
+			if reflect.DeepEqual(actualValue, disallowedVal) {
+				newValidationError(
+					ErrorCodeInvalidEnum,
+					fmt.Sprintf("must not be one of: %s", strings.Join(disallowedStrings, ", ")),
+				)
+			}
+		}
+
+		// Then try string comparison (for custom string types)
+		valueStr := fmt.Sprint(actualValue)
+		if disallowedMap[valueStr] {
+			newValidationError(
 				ErrorCodeInvalidEnum,
-				"must not be one of the disallowed values",
+				fmt.Sprintf("must not be one of: %s", strings.Join(disallowedStrings, ", ")),
 			)
 		}
 

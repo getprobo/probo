@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/crewjam/saml"
@@ -517,7 +518,7 @@ func (s *SAMLService) HandleSAMLAssertion(
 		return nil, ErrCannotExtractUserAttributes{Err: err}
 	}
 
-	if email.Domain() != config.EmailDomain {
+	if !strings.EqualFold(email.Domain(), config.EmailDomain) {
 		return nil, fmt.Errorf("email domain mismatch: assertion contains email with domain %s but SAML config is for domain %s", email.Domain(), config.EmailDomain)
 	}
 

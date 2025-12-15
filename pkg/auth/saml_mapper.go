@@ -66,18 +66,6 @@ func ExtractEmailFromAssertion(assertion *saml.Assertion) (string, error) {
 	return "", fmt.Errorf("could not extract email from assertion")
 }
 
-func ExtractEmailDomain(email string) (string, error) {
-	parts := strings.Split(email, "@")
-	if len(parts) != 2 {
-		return "", fmt.Errorf("invalid email address: %s", email)
-	}
-	domain := strings.ToLower(strings.TrimSpace(parts[1]))
-	if domain == "" {
-		return "", fmt.Errorf("empty domain in email address: %s", email)
-	}
-	return domain, nil
-}
-
 func MapSAMLRoleToSystemRole(samlRole string) *coredata.MembershipRole {
 	if samlRole != "" && isValidRole(samlRole) {
 		role := coredata.MembershipRole(samlRole)
@@ -104,7 +92,7 @@ func ExtractUserAttributes(
 		if assertion.Subject != nil && assertion.Subject.NameID != nil {
 			email, err = mail.ParseAddr(assertion.Subject.NameID.Value)
 			if err != nil {
-				return mail.Nil, "", "", fmt.Errorf("invalid nameID as email address")
+				return mail.Nil, "", "", fmt.Errorf("invalid nameID as email address: %w", err)
 			}
 			fullname = email.String()
 			role = ""
@@ -123,7 +111,7 @@ func ExtractUserAttributes(
 	}
 	email, err = mail.ParseAddr(emailString)
 	if err != nil {
-		return mail.Nil, "", "", fmt.Errorf("invalid attribute email")
+		return mail.Nil, "", "", fmt.Errorf("invalid attribute email: %w", err)
 	}
 
 	firstname, err := ExtractAttributeValue(assertion, attributeFirstname)

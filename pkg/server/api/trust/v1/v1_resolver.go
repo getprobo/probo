@@ -135,7 +135,7 @@ func (r *mutationResolver) RequestAllAccesses(ctx context.Context, input types.R
 			return nil, fmt.Errorf("email and name are not allowed for authenticated users")
 		}
 
-		*email = tokenData.Email
+		email = &tokenData.Email
 	}
 	if email == nil {
 		return nil, fmt.Errorf("email is required for unauthenticated users")

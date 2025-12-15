@@ -66,6 +66,7 @@ func (ctcar *CreateTrustCenterAccessRequest) Validate() error {
 
 	v.Check(ctcar.TrustCenterID, "trust_center_id", validator.Required(), validator.GID(coredata.TrustCenterEntityType))
 	v.Check(ctcar.Email, "email", validator.Required(), validator.NotEmpty())
+	v.Check(ctcar.Email.Domain(), "email", validator.NotBlacklisted())
 	v.Check(ctcar.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
 
 	return v.Error()

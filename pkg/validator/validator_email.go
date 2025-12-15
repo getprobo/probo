@@ -27,13 +27,12 @@ var (
 		strings.Split(strings.TrimSpace(string(disposableEmailsRaw)), "\n"),
 		testEmails...,
 	)
+	notOneOfBlacklisted = NotOneOfSlice(blacklistedEmails)
 )
 
 func NotBlacklisted() ValidatorFunc {
-	notOneOfSlice := NotOneOfSlice(blacklistedEmails)
-
 	return func(value any) *ValidationError {
-		err := notOneOfSlice(value)
+		err := notOneOfBlacklisted(value)
 
 		if err != nil {
 			return newValidationError(
