@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.107.0] - 2025-12-15
+
+### Added
+
+- Add service to vendor on n8n
+
 ## [0.106.0] - 2025-12-12
 
 ### Added
