@@ -93,8 +93,10 @@ type ExportTrustCenterFilePayload struct {
 }
 
 type Framework struct {
-	ID   gid.GID `json:"id"`
-	Name string  `json:"name"`
+	ID           gid.GID `json:"id"`
+	Name         string  `json:"name"`
+	LightLogoURL *string `json:"lightLogoURL,omitempty"`
+	DarkLogoURL  *string `json:"darkLogoURL,omitempty"`
 }
 
 func (Framework) IsNode()             {}

@@ -30,13 +30,15 @@ import (
 
 type (
 	Framework struct {
-		ID             gid.GID   `db:"id"`
-		OrganizationID gid.GID   `db:"organization_id"`
-		ReferenceID    string    `db:"reference_id"`
-		Name           string    `db:"name"`
-		Description    *string   `db:"description"`
-		CreatedAt      time.Time `db:"created_at"`
-		UpdatedAt      time.Time `db:"updated_at"`
+		ID              gid.GID   `db:"id"`
+		OrganizationID  gid.GID   `db:"organization_id"`
+		ReferenceID     string    `db:"reference_id"`
+		Name            string    `db:"name"`
+		Description     *string   `db:"description"`
+		LightLogoFileID *gid.GID  `db:"light_logo_file_id"`
+		DarkLogoFileID  *gid.GID  `db:"dark_logo_file_id"`
+		CreatedAt       time.Time `db:"created_at"`
+		UpdatedAt       time.Time `db:"updated_at"`
 	}
 
 	Frameworks []*Framework
@@ -121,6 +123,8 @@ SELECT
     reference_id,
     name,
     description,
+    light_logo_file_id,
+    dark_logo_file_id,
     created_at,
     updated_at
 FROM
@@ -128,7 +132,7 @@ FROM
 WHERE
     %s
     AND organization_id = @organization_id
-	AND %s
+    AND %s
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
@@ -164,6 +168,8 @@ SELECT
     reference_id,
     name,
     description,
+    light_logo_file_id,
+    dark_logo_file_id,
     created_at,
     updated_at
 FROM
@@ -210,6 +216,8 @@ SELECT
     reference_id,
     name,
     description,
+    light_logo_file_id,
+    dark_logo_file_id,
     created_at,
     updated_at
 FROM
@@ -257,6 +265,8 @@ INSERT INTO
         reference_id,
         name,
         description,
+        light_logo_file_id,
+        dark_logo_file_id,
         created_at,
         updated_at
     )
@@ -267,20 +277,24 @@ VALUES (
     @reference_id,
     @name,
     @description,
+    @light_logo_file_id,
+    @dark_logo_file_id,
     @created_at,
     @updated_at
 );
 `
 
 	args := pgx.StrictNamedArgs{
-		"tenant_id":       scope.GetTenantID(),
-		"framework_id":    f.ID,
-		"organization_id": f.OrganizationID,
-		"reference_id":    f.ReferenceID,
-		"name":            f.Name,
-		"description":     f.Description,
-		"created_at":      f.CreatedAt,
-		"updated_at":      f.UpdatedAt,
+		"tenant_id":          scope.GetTenantID(),
+		"framework_id":       f.ID,
+		"organization_id":    f.OrganizationID,
+		"reference_id":       f.ReferenceID,
+		"name":               f.Name,
+		"description":        f.Description,
+		"light_logo_file_id": f.LightLogoFileID,
+		"dark_logo_file_id":  f.DarkLogoFileID,
+		"created_at":         f.CreatedAt,
+		"updated_at":         f.UpdatedAt,
 	}
 	_, err := conn.Exec(ctx, q, args)
 

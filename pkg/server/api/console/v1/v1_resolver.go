@@ -1100,6 +1100,24 @@ func (r *frameworkResolver) Controls(ctx context.Context, obj *types.Framework, 
 	return types.NewControlConnection(page, r, obj.ID, controlFilter), nil
 }
 
+// LightLogoURL is the resolver for the lightLogoURL field.
+func (r *frameworkResolver) LightLogoURL(ctx context.Context, obj *types.Framework) (*string, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetLogoUrl)
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	return prb.Frameworks.GenerateLightLogoURL(ctx, obj.ID, 1*time.Hour)
+}
+
+// DarkLogoURL is the resolver for the darkLogoURL field.
+func (r *frameworkResolver) DarkLogoURL(ctx context.Context, obj *types.Framework) (*string, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetLogoUrl)
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	return prb.Frameworks.GenerateDarkLogoURL(ctx, obj.ID, 1*time.Hour)
+}
+
 // TotalCount is the resolver for the totalCount field.
 func (r *frameworkConnectionResolver) TotalCount(ctx context.Context, obj *types.FrameworkConnection) (int, error) {
 	r.MustBeAuthorized(ctx, obj.ParentID, authz.ActionTotalCount)

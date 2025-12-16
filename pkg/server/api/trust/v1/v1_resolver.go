@@ -120,6 +120,20 @@ func (r *documentResolver) HasUserRequestedAccess(ctx context.Context, obj *type
 	return false, nil
 }
 
+// LightLogoURL is the resolver for the lightLogoURL field.
+func (r *frameworkResolver) LightLogoURL(ctx context.Context, obj *types.Framework) (*string, error) {
+	publicTrustService := r.PublicTrustService(ctx, obj.ID.TenantID())
+
+	return publicTrustService.Frameworks.GenerateLightLogoURL(ctx, obj.ID, 1*time.Hour)
+}
+
+// DarkLogoURL is the resolver for the darkLogoURL field.
+func (r *frameworkResolver) DarkLogoURL(ctx context.Context, obj *types.Framework) (*string, error) {
+	privateTrustService := r.PublicTrustService(ctx, obj.ID.TenantID())
+
+	return privateTrustService.Frameworks.GenerateDarkLogoURL(ctx, obj.ID, 1*time.Hour)
+}
+
 // RequestAllAccesses is the resolver for the requestAllAccesses field.
 func (r *mutationResolver) RequestAllAccesses(ctx context.Context, input types.RequestAllAccessesInput) (*types.RequestAccessesPayload, error) {
 	publicTrustService := r.PublicTrustService(ctx, input.TrustCenterID.TenantID())
@@ -990,6 +1004,9 @@ func (r *Resolver) Audit() schema.AuditResolver { return &auditResolver{r} }
 // Document returns schema.DocumentResolver implementation.
 func (r *Resolver) Document() schema.DocumentResolver { return &documentResolver{r} }
 
+// Framework returns schema.FrameworkResolver implementation.
+func (r *Resolver) Framework() schema.FrameworkResolver { return &frameworkResolver{r} }
+
 // Mutation returns schema.MutationResolver implementation.
 func (r *Resolver) Mutation() schema.MutationResolver { return &mutationResolver{r} }
 
@@ -1017,6 +1034,7 @@ func (r *Resolver) TrustCenterReference() schema.TrustCenterReferenceResolver {
 
 type auditResolver struct{ *Resolver }
 type documentResolver struct{ *Resolver }
+type frameworkResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type organizationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }

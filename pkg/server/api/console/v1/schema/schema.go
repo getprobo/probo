@@ -754,8 +754,10 @@ type ComplexityRoot struct {
 	Framework struct {
 		Controls     func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) int
 		CreatedAt    func(childComplexity int) int
+		DarkLogoURL  func(childComplexity int) int
 		Description  func(childComplexity int) int
 		ID           func(childComplexity int) int
+		LightLogoURL func(childComplexity int) int
 		Name         func(childComplexity int) int
 		Organization func(childComplexity int) int
 		UpdatedAt    func(childComplexity int) int
@@ -1933,6 +1935,8 @@ type FileResolver interface {
 type FrameworkResolver interface {
 	Organization(ctx context.Context, obj *types.Framework) (*types.Organization, error)
 	Controls(ctx context.Context, obj *types.Framework, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) (*types.ControlConnection, error)
+	LightLogoURL(ctx context.Context, obj *types.Framework) (*string, error)
+	DarkLogoURL(ctx context.Context, obj *types.Framework) (*string, error)
 }
 type FrameworkConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.FrameworkConnection) (int, error)
@@ -4143,6 +4147,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Framework.CreatedAt(childComplexity), true
+	case "Framework.darkLogoURL":
+		if e.complexity.Framework.DarkLogoURL == nil {
+			break
+		}
+
+		return e.complexity.Framework.DarkLogoURL(childComplexity), true
 	case "Framework.description":
 		if e.complexity.Framework.Description == nil {
 			break
@@ -4155,6 +4165,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Framework.ID(childComplexity), true
+	case "Framework.lightLogoURL":
+		if e.complexity.Framework.LightLogoURL == nil {
+			break
+		}
+
+		return e.complexity.Framework.LightLogoURL(childComplexity), true
 	case "Framework.name":
 		if e.complexity.Framework.Name == nil {
 			break
@@ -11442,6 +11458,8 @@ type Framework implements Node {
     orderBy: ControlOrder
     filter: ControlFilter
   ): ControlConnection! @goField(forceResolver: true)
+  lightLogoURL: String @goField(forceResolver: true)
+  darkLogoURL: String @goField(forceResolver: true)
 
   createdAt: Datetime!
   updatedAt: Datetime!
@@ -18952,6 +18970,10 @@ func (ec *executionContext) fieldContext_Audit_framework(_ context.Context, fiel
 				return ec.fieldContext_Framework_organization(ctx, field)
 			case "controls":
 				return ec.fieldContext_Framework_controls(ctx, field)
+			case "lightLogoURL":
+				return ec.fieldContext_Framework_lightLogoURL(ctx, field)
+			case "darkLogoURL":
+				return ec.fieldContext_Framework_darkLogoURL(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Framework_createdAt(ctx, field)
 			case "updatedAt":
@@ -20542,6 +20564,10 @@ func (ec *executionContext) fieldContext_Control_framework(_ context.Context, fi
 				return ec.fieldContext_Framework_organization(ctx, field)
 			case "controls":
 				return ec.fieldContext_Framework_controls(ctx, field)
+			case "lightLogoURL":
+				return ec.fieldContext_Framework_lightLogoURL(ctx, field)
+			case "darkLogoURL":
+				return ec.fieldContext_Framework_darkLogoURL(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Framework_createdAt(ctx, field)
 			case "updatedAt":
@@ -28103,6 +28129,64 @@ func (ec *executionContext) fieldContext_Framework_controls(ctx context.Context,
 	return fc, nil
 }
 
+func (ec *executionContext) _Framework_lightLogoURL(ctx context.Context, field graphql.CollectedField, obj *types.Framework) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Framework_lightLogoURL,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.Framework().LightLogoURL(ctx, obj)
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Framework_lightLogoURL(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Framework",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Framework_darkLogoURL(ctx context.Context, field graphql.CollectedField, obj *types.Framework) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Framework_darkLogoURL,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.Framework().DarkLogoURL(ctx, obj)
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Framework_darkLogoURL(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Framework",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Framework_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.Framework) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -28327,6 +28411,10 @@ func (ec *executionContext) fieldContext_FrameworkEdge_node(_ context.Context, f
 				return ec.fieldContext_Framework_organization(ctx, field)
 			case "controls":
 				return ec.fieldContext_Framework_controls(ctx, field)
+			case "lightLogoURL":
+				return ec.fieldContext_Framework_lightLogoURL(ctx, field)
+			case "darkLogoURL":
+				return ec.fieldContext_Framework_darkLogoURL(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Framework_createdAt(ctx, field)
 			case "updatedAt":
@@ -48961,6 +49049,10 @@ func (ec *executionContext) fieldContext_UpdateFrameworkPayload_framework(_ cont
 				return ec.fieldContext_Framework_organization(ctx, field)
 			case "controls":
 				return ec.fieldContext_Framework_controls(ctx, field)
+			case "lightLogoURL":
+				return ec.fieldContext_Framework_lightLogoURL(ctx, field)
+			case "darkLogoURL":
+				return ec.fieldContext_Framework_darkLogoURL(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Framework_createdAt(ctx, field)
 			case "updatedAt":
@@ -71350,6 +71442,72 @@ func (ec *executionContext) _Framework(ctx context.Context, sel ast.SelectionSet
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "lightLogoURL":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Framework_lightLogoURL(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "darkLogoURL":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Framework_darkLogoURL(ctx, field, obj)
 				return res
 			}
 

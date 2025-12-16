@@ -1886,6 +1886,8 @@ type Framework implements Node {
     orderBy: ControlOrder
     filter: ControlFilter
   ): ControlConnection! @goField(forceResolver: true)
+  lightLogoURL: String @goField(forceResolver: true)
+  darkLogoURL: String @goField(forceResolver: true)
 
   createdAt: Datetime!
   updatedAt: Datetime!

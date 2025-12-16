@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -64,8 +65,12 @@ type (
 
 	ImportFrameworkRequest struct {
 		Framework struct {
-			ID       string `json:"id"`
-			Name     string `json:"name"`
+			ID   string `json:"id"`
+			Name string `json:"name"`
+			Logo *struct {
+				Light string `json:"light"`
+				Dark  string `json:"dark"`
+			} `json:"logo,omitempty"`
 			Controls []struct {
 				ID          string `json:"id"`
 				Name        string `json:"name"`
@@ -510,6 +515,54 @@ func (s FrameworkService) Import(
 			UpdatedAt:      now,
 		}
 
+		if req.Framework.Logo != nil {
+			for name, logo := range map[string]string{
+				"light": req.Framework.Logo.Light,
+				"dark":  req.Framework.Logo.Dark,
+			} {
+				fileID := gid.New(s.svc.scope.GetTenantID(), coredata.FileEntityType)
+				objectKey, err := uuid.NewV7()
+				if err != nil {
+					return fmt.Errorf("cannot generate object key: %w", err)
+				}
+
+				filename := "logo_" + name
+				contentType := "image/svg+xml"
+
+				fileRecord := &coredata.File{
+					ID:         fileID,
+					BucketName: s.svc.bucket,
+					MimeType:   contentType,
+					FileName:   filename,
+					FileKey:    objectKey.String(),
+					CreatedAt:  now,
+					UpdatedAt:  now,
+				}
+
+				fileSize, err := s.svc.fileManager.PutFile(ctx, fileRecord, strings.NewReader(logo), map[string]string{
+					"type":            "framework-logo",
+					"theme":           name,
+					"framework-id":    framework.ID.String(),
+					"organization-id": organization.ID.String(),
+				})
+				if err != nil {
+					return fmt.Errorf("cannot upload logo file: %w", err)
+				}
+
+				fileRecord.FileSize = fileSize
+
+				if err := fileRecord.Insert(ctx, tx, s.svc.scope); err != nil {
+					return fmt.Errorf("cannot insert file: %w", err)
+				}
+
+				if name == "light" {
+					framework.LightLogoFileID = &fileID
+				} else {
+					framework.DarkLogoFileID = &fileID
+				}
+			}
+		}
+
 		if err := framework.Insert(ctx, tx, s.svc.scope); err != nil {
 			return fmt.Errorf("cannot insert framework: %w", err)
 		}
@@ -889,4 +942,88 @@ func (s *FrameworkService) BuildAndUploadExport(ctx context.Context, exportJobID
 	}
 
 	return exportJob, nil
+}
+
+func (s FrameworkService) GenerateLightLogoURL(
+	ctx context.Context,
+	frameworkID gid.GID,
+	expiresIn time.Duration,
+) (*string, error) {
+	file := &coredata.File{}
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			framework := &coredata.Framework{}
+			if err := framework.LoadByID(ctx, conn, s.svc.scope, frameworkID); err != nil {
+				return fmt.Errorf("cannot load framework: %w", err)
+			}
+
+			if framework.LightLogoFileID == nil {
+				return nil
+			}
+
+			if err := file.LoadByID(ctx, conn, s.svc.scope, *framework.LightLogoFileID); err != nil {
+				return fmt.Errorf("cannot load file: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if file.FileKey == "" {
+		return nil, nil
+	}
+
+	presignedURL, err := s.svc.fileManager.GenerateFileUrl(ctx, file, expiresIn)
+	if err != nil {
+		return nil, fmt.Errorf("cannot generate file URL: %w", err)
+	}
+
+	return &presignedURL, nil
+}
+
+func (s FrameworkService) GenerateDarkLogoURL(
+	ctx context.Context,
+	frameworkID gid.GID,
+	expiresIn time.Duration,
+) (*string, error) {
+	file := &coredata.File{}
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			framework := &coredata.Framework{}
+			if err := framework.LoadByID(ctx, conn, s.svc.scope, frameworkID); err != nil {
+				return fmt.Errorf("cannot load framework: %w", err)
+			}
+
+			if framework.DarkLogoFileID == nil {
+				return nil
+			}
+
+			if err := file.LoadByID(ctx, conn, s.svc.scope, *framework.DarkLogoFileID); err != nil {
+				return fmt.Errorf("cannot load file: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if file.FileKey == "" {
+		return nil, nil
+	}
+
+	presignedURL, err := s.svc.fileManager.GenerateFileUrl(ctx, file, expiresIn)
+	if err != nil {
+		return nil, fmt.Errorf("cannot generate file URL: %w", err)
+	}
+
+	return &presignedURL, nil
 }

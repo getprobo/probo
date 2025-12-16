@@ -75,6 +75,8 @@ type DocumentEdge {
 type Framework implements Node {
   id: ID!
   name: String!
+  lightLogoURL: String @goField(forceResolver: true)
+  darkLogoURL: String @goField(forceResolver: true)
 }
 
 type Report implements Node {

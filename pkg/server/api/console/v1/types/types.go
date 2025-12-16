@@ -1178,6 +1178,8 @@ type Framework struct {
 	Description  *string            `json:"description,omitempty"`
 	Organization *Organization      `json:"organization"`
 	Controls     *ControlConnection `json:"controls"`
+	LightLogoURL *string            `json:"lightLogoURL,omitempty"`
+	DarkLogoURL  *string            `json:"darkLogoURL,omitempty"`
 	CreatedAt    time.Time          `json:"createdAt"`
 	UpdatedAt    time.Time          `json:"updatedAt"`
 }

@@ -467,6 +467,7 @@ var Permissions = map[uint16]map[Action][]Role{
 		ActionGet:             NonEmployeeRoles,
 		ActionGetOrganization: NonEmployeeRoles,
 		ActionListControls:    NonEmployeeRoles,
+		ActionGetLogoUrl:      NonEmployeeRoles,
 
 		ActionCreateControl:                         EditRoles,
 		ActionUpdateFramework:                       EditRoles,
