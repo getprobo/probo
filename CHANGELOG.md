@@ -4,9 +4,18 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.109.0] - 2025-12-16
+
 ### Added
 
 - Add organization filtering
+- Use in-house logos when importing framework
+
+### Fixed
+
+- Unblock ACME provision queue on error
+- GQLGen version handling with go tool
+- Fix GraphQL types
 
 ## [0.108.0] - 2025-12-15
 
