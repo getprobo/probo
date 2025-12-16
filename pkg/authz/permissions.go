@@ -461,7 +461,8 @@ var Permissions = map[uint16]map[Action][]Role{
 		ActionDeleteVendorDataPrivacyAgreement: EditRoles,
 	},
 	coredata.VendorRiskAssessmentEntityType: {
-		ActionGet: NonEmployeeRoles,
+		ActionGet:       NonEmployeeRoles,
+		ActionGetVendor: NonEmployeeRoles,
 	},
 	coredata.FrameworkEntityType: {
 		ActionGet:             NonEmployeeRoles,

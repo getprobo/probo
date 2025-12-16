@@ -7105,7 +7105,7 @@ func (r *vendorRiskAssessmentResolver) Vendor(ctx context.Context, obj *types.Ve
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
-	vendor, err := prb.Vendors.Get(ctx, obj.ID)
+	vendor, err := prb.Vendors.GetByRiskAssessmentID(ctx, obj.ID)
 	if err != nil {
 		var errNotFound *coredata.ErrVendorNotFound
 		if errors.As(err, &errNotFound) {

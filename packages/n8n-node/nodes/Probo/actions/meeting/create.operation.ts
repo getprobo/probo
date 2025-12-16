@@ -156,7 +156,7 @@ export async function execute(
 	const input: Record<string, unknown> = {
 		organizationId,
 		name,
-		date,
+		date: new Date(date).toISOString(),
 	};
 	if (attendeeIds && attendeeIds.length > 0) {
 		input.attendeeIds = attendeeIds;

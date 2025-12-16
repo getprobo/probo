@@ -9,6 +9,9 @@ import * as updateServiceOp from './updateService.operation';
 import * as deleteServiceOp from './deleteService.operation';
 import * as getServiceOp from './getService.operation';
 import * as getAllServicesOp from './getAllServices.operation';
+import * as createRiskAssessmentOp from './createRiskAssessment.operation';
+import * as getRiskAssessmentOp from './getRiskAssessment.operation';
+import * as getAllRiskAssessmentsOp from './getAllRiskAssessments.operation';
 
 export const description: INodeProperties[] = [
 	{
@@ -27,6 +30,12 @@ export const description: INodeProperties[] = [
 				value: 'create',
 				description: 'Create a new vendor',
 				action: 'Create a vendor',
+			},
+			{
+				name: 'Create Risk Assessment',
+				value: 'createRiskAssessment',
+				description: 'Create a new vendor risk assessment',
+				action: 'Create a vendor risk assessment',
 			},
 			{
 				name: 'Create Service',
@@ -59,10 +68,22 @@ export const description: INodeProperties[] = [
 				action: 'Get many vendors',
 			},
 			{
+				name: 'Get Many Risk Assessments',
+				value: 'getAllRiskAssessments',
+				description: 'Get many vendor risk assessments',
+				action: 'Get many vendor risk assessments',
+			},
+			{
 				name: 'Get Many Services',
 				value: 'getAllServices',
 				description: 'Get many vendor services',
 				action: 'Get many vendor services',
+			},
+			{
+				name: 'Get Risk Assessment',
+				value: 'getRiskAssessment',
+				description: 'Get a vendor risk assessment',
+				action: 'Get a vendor risk assessment',
 			},
 			{
 				name: 'Get Service',
@@ -95,6 +116,9 @@ export const description: INodeProperties[] = [
 	...deleteServiceOp.description,
 	...getServiceOp.description,
 	...getAllServicesOp.description,
+	...createRiskAssessmentOp.description,
+	...getRiskAssessmentOp.description,
+	...getAllRiskAssessmentsOp.description,
 ];
 
 export {
@@ -108,4 +132,7 @@ export {
 	deleteServiceOp as deleteService,
 	getServiceOp as getService,
 	getAllServicesOp as getAllServices,
+	createRiskAssessmentOp as createRiskAssessment,
+	getRiskAssessmentOp as getRiskAssessment,
+	getAllRiskAssessmentsOp as getAllRiskAssessments,
 };

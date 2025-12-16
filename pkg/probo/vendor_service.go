@@ -683,6 +683,35 @@ func (s VendorService) GetRiskAssessment(
 	return vendorRiskAssessment, nil
 }
 
+func (s VendorService) GetByRiskAssessmentID(
+	ctx context.Context,
+	vendorRiskAssessmentID gid.GID,
+) (*coredata.Vendor, error) {
+	vendor := &coredata.Vendor{}
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			vendorRiskAssessment := &coredata.VendorRiskAssessment{}
+			if err := vendorRiskAssessment.LoadByID(ctx, conn, s.svc.scope, vendorRiskAssessmentID); err != nil {
+				return fmt.Errorf("cannot load vendor risk assessment: %w", err)
+			}
+
+			if err := vendor.LoadByID(ctx, conn, s.svc.scope, vendorRiskAssessment.VendorID); err != nil {
+				return fmt.Errorf("cannot load vendor: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return vendor, nil
+}
+
 func (s VendorService) Assess(
 	ctx context.Context,
 	req AssessVendorRequest,

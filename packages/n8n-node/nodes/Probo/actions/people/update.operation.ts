@@ -158,8 +158,8 @@ export async function execute(
 		}
 	}
 	if (additionalFields.position !== undefined) input.position = additionalFields.position === '' ? null : additionalFields.position;
-	if (additionalFields.contractStartDate !== undefined) input.contractStartDate = additionalFields.contractStartDate === '' ? null : additionalFields.contractStartDate;
-	if (additionalFields.contractEndDate !== undefined) input.contractEndDate = additionalFields.contractEndDate === '' ? null : additionalFields.contractEndDate;
+	if (additionalFields.contractStartDate !== undefined) input.contractStartDate = additionalFields.contractStartDate === '' ? null : new Date(additionalFields.contractStartDate).toISOString();
+	if (additionalFields.contractEndDate !== undefined) input.contractEndDate = additionalFields.contractEndDate === '' ? null : new Date(additionalFields.contractEndDate).toISOString();
 
 	const responseData = await proboApiRequest.call(this, query, { input });
 

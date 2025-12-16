@@ -161,8 +161,8 @@ export async function execute(
 		input.additionalEmailAddresses = additionalFields.additionalEmailAddresses.split(',').map((e) => e.trim()).filter(Boolean);
 	}
 	if (additionalFields.position) input.position = additionalFields.position;
-	if (additionalFields.contractStartDate) input.contractStartDate = additionalFields.contractStartDate;
-	if (additionalFields.contractEndDate) input.contractEndDate = additionalFields.contractEndDate;
+	if (additionalFields.contractStartDate) input.contractStartDate = new Date(additionalFields.contractStartDate).toISOString();
+	if (additionalFields.contractEndDate) input.contractEndDate = new Date(additionalFields.contractEndDate).toISOString();
 
 	const responseData = await proboApiRequest.call(this, query, { input });
 
