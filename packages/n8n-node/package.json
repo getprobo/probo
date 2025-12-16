@@ -53,9 +53,6 @@
   "peerDependencies": {
     "n8n-workflow": "*"
   },
-  "dependencies": {
-    "graphql": "^16.12.0"
-  },
   "devDependencies": {
     "@n8n/node-cli": "^0.17.0",
     "eslint": "9.32.0"
