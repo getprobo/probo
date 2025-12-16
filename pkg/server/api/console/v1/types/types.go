@@ -421,7 +421,7 @@ type CreatePeopleInput struct {
 	OrganizationID           gid.GID             `json:"organizationId"`
 	FullName                 string              `json:"fullName"`
 	PrimaryEmailAddress      mail.Addr           `json:"primaryEmailAddress"`
-	AdditionalEmailAddresses []*mail.Addr        `json:"additionalEmailAddresses,omitempty"`
+	AdditionalEmailAddresses []mail.Addr         `json:"additionalEmailAddresses,omitempty"`
 	Kind                     coredata.PeopleKind `json:"kind"`
 	Position                 *string             `json:"position,omitempty"`
 	ContractStartDate        *time.Time          `json:"contractStartDate,omitempty"`
@@ -1495,7 +1495,7 @@ type People struct {
 	ID                       gid.GID             `json:"id"`
 	FullName                 string              `json:"fullName"`
 	PrimaryEmailAddress      mail.Addr           `json:"primaryEmailAddress"`
-	AdditionalEmailAddresses []*mail.Addr        `json:"additionalEmailAddresses"`
+	AdditionalEmailAddresses []mail.Addr         `json:"additionalEmailAddresses"`
 	Kind                     coredata.PeopleKind `json:"kind"`
 	Position                 *string             `json:"position,omitempty"`
 	ContractStartDate        *time.Time          `json:"contractStartDate,omitempty"`
@@ -2058,7 +2058,7 @@ type UpdatePeopleInput struct {
 	ID                       gid.GID                       `json:"id"`
 	FullName                 *string                       `json:"fullName,omitempty"`
 	PrimaryEmailAddress      *mail.Addr                    `json:"primaryEmailAddress,omitempty"`
-	AdditionalEmailAddresses []*mail.Addr                  `json:"additionalEmailAddresses,omitempty"`
+	AdditionalEmailAddresses []mail.Addr                   `json:"additionalEmailAddresses,omitempty"`
 	Kind                     *coredata.PeopleKind          `json:"kind,omitempty"`
 	Position                 graphql.Omittable[*string]    `json:"position,omitempty"`
 	ContractStartDate        graphql.Omittable[*time.Time] `json:"contractStartDate,omitempty"`

@@ -17,7 +17,6 @@ package types
 import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
 )
 
@@ -65,16 +64,12 @@ func NewPeopleEdge(p *coredata.People, orderBy coredata.PeopleOrderField) *Peopl
 }
 
 func NewPeople(p *coredata.People) *People {
-	var emailAddresses []*mail.Addr
-	for _, emailAddress := range p.AdditionalEmailAddresses {
-		emailAddresses = append(emailAddresses, &emailAddress)
-	}
 
 	return &People{
 		ID:                       p.ID,
 		FullName:                 p.FullName,
 		PrimaryEmailAddress:      p.PrimaryEmailAddress,
-		AdditionalEmailAddresses: emailAddresses,
+		AdditionalEmailAddresses: p.AdditionalEmailAddresses,
 		Kind:                     p.Kind,
 		Position:                 p.Position,
 		ContractStartDate:        p.ContractStartDate,

@@ -1,4 +1,4 @@
-//go:generate go run github.com/99designs/gqlgen generate
+//go:generate go tool github.com/99designs/gqlgen generate
 
 // Copyright (c) 2025 Probo Inc <hello@getprobo.com>.
 //
