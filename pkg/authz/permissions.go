@@ -45,6 +45,9 @@ const (
 	ActionGetBusinessOwner              Action = "getBusinessOwner"
 	ActionGetCustomDomain               Action = "getCustomDomain"
 	ActionGetDataPrivacyAgreement       Action = "getDataPrivacyAgreement"
+	ActionGetDataProtectionOfficer      Action = "getDataProtectionOfficer"
+	ActionGetDPIA                       Action = "getDPIA"
+	ActionGetTIA                        Action = "getTIA"
 	ActionGetDocument                   Action = "getDocument"
 	ActionGetReport                     Action = "getReport"
 	ActionGetFile                       Action = "getFile"
@@ -135,6 +138,8 @@ const (
 	ActionCreateObligation             Action = "createObligation"
 	ActionCreatePeople                 Action = "createPeople"
 	ActionCreateProcessingActivity     Action = "createProcessingActivity"
+	ActionCreateProcessingActivityDPIA Action = "createProcessingActivityDPIA"
+	ActionCreateProcessingActivityTIA  Action = "createProcessingActivityTIA"
 	ActionCreateRisk                   Action = "createRisk"
 	ActionCreateRiskDocumentMapping    Action = "createRiskDocumentMapping"
 	ActionCreateRiskMeasureMapping     Action = "createRiskMeasureMapping"
@@ -167,6 +172,8 @@ const (
 	ActionUpdateOrganization                     Action = "updateOrganization"
 	ActionUpdatePeople                           Action = "updatePeople"
 	ActionUpdateProcessingActivity               Action = "updateProcessingActivity"
+	ActionUpdateProcessingActivityDPIA           Action = "updateProcessingActivityDPIA"
+	ActionUpdateProcessingActivityTIA            Action = "updateProcessingActivityTIA"
 	ActionUpdateRisk                             Action = "updateRisk"
 	ActionUpdateSAMLConfiguration                Action = "updateSAMLConfiguration"
 	ActionUpdateTask                             Action = "updateTask"
@@ -204,6 +211,8 @@ const (
 	ActionDeleteOrganizationHorizontalLogo       Action = "deleteOrganizationHorizontalLogo"
 	ActionDeletePeople                           Action = "deletePeople"
 	ActionDeleteProcessingActivity               Action = "deleteProcessingActivity"
+	ActionDeleteProcessingActivityDPIA           Action = "deleteProcessingActivityDPIA"
+	ActionDeleteProcessingActivityTIA            Action = "deleteProcessingActivityTIA"
 	ActionDeleteRisk                             Action = "deleteRisk"
 	ActionDeleteRiskDocumentMapping              Action = "deleteRiskDocumentMapping"
 	ActionDeleteRiskMeasureMapping               Action = "deleteRiskMeasureMapping"
@@ -665,12 +674,33 @@ var Permissions = map[uint16]map[Action][]Role{
 		ActionDeleteContinualImprovement: EditRoles,
 	},
 	coredata.ProcessingActivityEntityType: {
+		ActionGet:                      NonEmployeeRoles,
+		ActionGetOrganization:          NonEmployeeRoles,
+		ActionListVendors:              NonEmployeeRoles,
+		ActionGetDataProtectionOfficer: NonEmployeeRoles,
+		ActionGetDPIA:                  NonEmployeeRoles,
+		ActionGetTIA:                   NonEmployeeRoles,
+
+		ActionUpdateProcessingActivity:     EditRoles,
+		ActionDeleteProcessingActivity:     EditRoles,
+		ActionCreateProcessingActivityDPIA: EditRoles,
+		ActionCreateProcessingActivityTIA:  EditRoles,
+	},
+	coredata.ProcessingActivityDPIAEntityType: {
 		ActionGet:             NonEmployeeRoles,
 		ActionGetOrganization: NonEmployeeRoles,
-		ActionListVendors:     NonEmployeeRoles,
 
-		ActionUpdateProcessingActivity: EditRoles,
-		ActionDeleteProcessingActivity: EditRoles,
+		ActionCreateProcessingActivityDPIA: EditRoles,
+		ActionUpdateProcessingActivityDPIA: EditRoles,
+		ActionDeleteProcessingActivityDPIA: EditRoles,
+	},
+	coredata.ProcessingActivityTIAEntityType: {
+		ActionGet:             NonEmployeeRoles,
+		ActionGetOrganization: NonEmployeeRoles,
+
+		ActionCreateProcessingActivityTIA: EditRoles,
+		ActionUpdateProcessingActivityTIA: EditRoles,
+		ActionDeleteProcessingActivityTIA: EditRoles,
 	},
 	coredata.SnapshotEntityType: {
 		ActionGet:             NonEmployeeRoles,

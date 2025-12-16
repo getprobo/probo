@@ -3,6 +3,11 @@ export function formatDatetime(dateString?: string | null): string | undefined {
   return `${dateString}T00:00:00Z`;
 }
 
+export function toDateInput(dateString?: string | null): string {
+  if (!dateString) return '';
+  return dateString.split('T')[0];
+}
+
 export function formatDate(dateInput?: string | null): string {
   if (!dateInput) return '';
 

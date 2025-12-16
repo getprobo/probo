@@ -12,6 +12,7 @@ import {
   Label,
   Checkbox,
   Select,
+  Input,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { z } from "zod";
@@ -19,13 +20,15 @@ import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { useCreateProcessingActivity } from "../../../../hooks/graph/ProcessingActivityGraph";
 import { Controller } from "react-hook-form";
 import { VendorsMultiSelectField } from "/components/form/VendorsMultiSelectField";
-import { formatError, type GraphQLError } from "@probo/helpers";
+import { PeopleSelectField } from "/components/form/PeopleSelectField";
+import { formatError, formatDatetime, type GraphQLError } from "@probo/helpers";
 import {
   SpecialOrCriminalDataOptions,
   LawfulBasisOptions,
   TransferSafeguardsOptions,
   DataProtectionImpactAssessmentOptions,
   TransferImpactAssessmentOptions,
+  RoleOptions,
 } from "../../../../components/form/ProcessingActivityEnumOptions";
 
 const schema = z.object({
@@ -44,6 +47,10 @@ const schema = z.object({
   securityMeasures: z.string().optional(),
   dataProtectionImpactAssessment: z.enum(["NEEDED", "NOT_NEEDED"] as const),
   transferImpactAssessment: z.enum(["NEEDED", "NOT_NEEDED"] as const),
+  lastReviewDate: z.string().optional(),
+  nextReviewDate: z.string().optional(),
+  role: z.enum(["CONTROLLER", "PROCESSOR"] as const),
+  dataProtectionOfficerId: z.string().optional(),
   vendorIds: z.array(z.string()).optional(),
 });
 
@@ -83,6 +90,10 @@ export function CreateProcessingActivityDialog({
       securityMeasures: "",
       dataProtectionImpactAssessment: "NOT_NEEDED" as const,
       transferImpactAssessment: "NOT_NEEDED" as const,
+      lastReviewDate: "",
+      nextReviewDate: "",
+      role: "PROCESSOR" as const,
+      dataProtectionOfficerId: "",
       vendorIds: [],
     },
   });
@@ -106,6 +117,10 @@ export function CreateProcessingActivityDialog({
         securityMeasures: formData.securityMeasures || undefined,
         dataProtectionImpactAssessment: formData.dataProtectionImpactAssessment || undefined,
         transferImpactAssessment: formData.transferImpactAssessment || undefined,
+        lastReviewDate: formatDatetime(formData.lastReviewDate),
+        nextReviewDate: formatDatetime(formData.nextReviewDate),
+        role: formData.role,
+        dataProtectionOfficerId: formData.dataProtectionOfficerId || undefined,
         vendorIds: formData.vendorIds,
       });
 
@@ -144,6 +159,28 @@ export function CreateProcessingActivityDialog({
                 error={formState.errors.name?.message}
                 required
               />
+
+              <div>
+                <Label htmlFor="role">{__("Role")}</Label>
+                <Controller
+                  control={control}
+                  name="role"
+                  render={({ field }) => (
+                    <Select
+                      id="role"
+                      placeholder={__("Select role")}
+                      onValueChange={field.onChange}
+                      value={field.value}
+                      className="w-full"
+                    >
+                      <RoleOptions />
+                    </Select>
+                  )}
+                />
+                {formState.errors.role && (
+                  <p className="text-sm text-txt-danger mt-1">{formState.errors.role.message}</p>
+                )}
+              </div>
 
               <div>
                 <Label>{__("Purpose")}</Label>
@@ -218,6 +255,31 @@ export function CreateProcessingActivityDialog({
                   <p className="text-sm text-txt-danger mt-1">{formState.errors.lawfulBasis.message}</p>
                 )}
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="lastReviewDate">{__("Last Review Date")}</Label>
+                <Input
+                  id="lastReviewDate"
+                  type="date"
+                  {...register("lastReviewDate")}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="nextReviewDate">{__("Next Review Date")}</Label>
+                <Input
+                  id="nextReviewDate"
+                  type="date"
+                  {...register("nextReviewDate")}
+                />
+              </div>
+
+              <PeopleSelectField
+                organizationId={organizationId}
+                control={control}
+                name="dataProtectionOfficerId"
+                label={__("Data Protection Officer")}
+              />
             </div>
 
             <div className="space-y-4">

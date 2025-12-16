@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<736925258373b1116c286fc16d19ad7d>>
+ * @generated SignedSource<<65e5159bb6afd503a3dc92a2a87845ea>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,8 +9,10 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
+export type ProcessingActivityDPIAResidualRisk = "HIGH" | "LOW" | "MEDIUM";
 export type ProcessingActivityDataProtectionImpactAssessment = "NEEDED" | "NOT_NEEDED";
 export type ProcessingActivityLawfulBasis = "CONSENT" | "CONTRACTUAL_NECESSITY" | "LEGAL_OBLIGATION" | "LEGITIMATE_INTEREST" | "PUBLIC_TASK" | "VITAL_INTERESTS";
+export type ProcessingActivityRole = "CONTROLLER" | "PROCESSOR";
 export type ProcessingActivitySpecialOrCriminalDatum = "NO" | "POSSIBLE" | "YES";
 export type ProcessingActivityTransferImpactAssessment = "NEEDED" | "NOT_NEEDED";
 export type ProcessingActivityTransferSafeguard = "ADEQUACY_DECISION" | "BINDING_CORPORATE_RULES" | "CERTIFICATION_MECHANISMS" | "CODES_OF_CONDUCT" | "DEROGATIONS" | "STANDARD_CONTRACTUAL_CLAUSES";
@@ -23,12 +25,28 @@ export type ProcessingActivityGraphNodeQuery$data = {
     readonly consentEvidenceLink?: string | null | undefined;
     readonly createdAt?: any;
     readonly dataProtectionImpactAssessment?: ProcessingActivityDataProtectionImpactAssessment;
+    readonly dataProtectionOfficer?: {
+      readonly fullName: string;
+      readonly id: string;
+    } | null | undefined;
     readonly dataSubjectCategory?: string | null | undefined;
+    readonly dpia?: {
+      readonly createdAt: any;
+      readonly description: string | null | undefined;
+      readonly id: string;
+      readonly mitigations: string | null | undefined;
+      readonly necessityAndProportionality: string | null | undefined;
+      readonly potentialRisk: string | null | undefined;
+      readonly residualRisk: ProcessingActivityDPIAResidualRisk | null | undefined;
+      readonly updatedAt: any;
+    } | null | undefined;
     readonly id?: string;
     readonly internationalTransfers?: boolean;
+    readonly lastReviewDate?: any | null | undefined;
     readonly lawfulBasis?: ProcessingActivityLawfulBasis;
     readonly location?: string | null | undefined;
     readonly name?: string;
+    readonly nextReviewDate?: any | null | undefined;
     readonly organization?: {
       readonly id: string;
       readonly name: string;
@@ -37,9 +55,20 @@ export type ProcessingActivityGraphNodeQuery$data = {
     readonly purpose?: string | null | undefined;
     readonly recipients?: string | null | undefined;
     readonly retentionPeriod?: string | null | undefined;
+    readonly role?: ProcessingActivityRole;
     readonly securityMeasures?: string | null | undefined;
     readonly snapshotId?: string | null | undefined;
     readonly specialOrCriminalData?: ProcessingActivitySpecialOrCriminalDatum;
+    readonly tia?: {
+      readonly createdAt: any;
+      readonly dataSubjects: string | null | undefined;
+      readonly id: string;
+      readonly legalMechanism: string | null | undefined;
+      readonly localLawRisk: string | null | undefined;
+      readonly supplementaryMeasures: string | null | undefined;
+      readonly transfer: string | null | undefined;
+      readonly updatedAt: any;
+    } | null | undefined;
     readonly transferImpactAssessment?: ProcessingActivityTransferImpactAssessment;
     readonly transferSafeguards?: ProcessingActivityTransferSafeguard | null | undefined;
     readonly updatedAt?: any;
@@ -196,6 +225,46 @@ v18 = {
 },
 v19 = {
   "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "lastReviewDate",
+  "storageKey": null
+},
+v20 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "nextReviewDate",
+  "storageKey": null
+},
+v21 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "role",
+  "storageKey": null
+},
+v22 = {
+  "alias": null,
+  "args": null,
+  "concreteType": "People",
+  "kind": "LinkedField",
+  "name": "dataProtectionOfficer",
+  "plural": false,
+  "selections": [
+    (v2/*: any*/),
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "fullName",
+      "storageKey": null
+    }
+  ],
+  "storageKey": null
+},
+v23 = {
+  "alias": null,
   "args": [
     {
       "kind": "Literal",
@@ -249,7 +318,119 @@ v19 = {
   ],
   "storageKey": "vendors(first:50)"
 },
-v20 = {
+v24 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "createdAt",
+  "storageKey": null
+},
+v25 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "updatedAt",
+  "storageKey": null
+},
+v26 = {
+  "alias": null,
+  "args": null,
+  "concreteType": "ProcessingActivityDPIA",
+  "kind": "LinkedField",
+  "name": "dpia",
+  "plural": false,
+  "selections": [
+    (v2/*: any*/),
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "description",
+      "storageKey": null
+    },
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "necessityAndProportionality",
+      "storageKey": null
+    },
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "potentialRisk",
+      "storageKey": null
+    },
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "mitigations",
+      "storageKey": null
+    },
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "residualRisk",
+      "storageKey": null
+    },
+    (v24/*: any*/),
+    (v25/*: any*/)
+  ],
+  "storageKey": null
+},
+v27 = {
+  "alias": null,
+  "args": null,
+  "concreteType": "ProcessingActivityTIA",
+  "kind": "LinkedField",
+  "name": "tia",
+  "plural": false,
+  "selections": [
+    (v2/*: any*/),
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "dataSubjects",
+      "storageKey": null
+    },
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "legalMechanism",
+      "storageKey": null
+    },
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "transfer",
+      "storageKey": null
+    },
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "localLawRisk",
+      "storageKey": null
+    },
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "supplementaryMeasures",
+      "storageKey": null
+    },
+    (v24/*: any*/),
+    (v25/*: any*/)
+  ],
+  "storageKey": null
+},
+v28 = {
   "alias": null,
   "args": null,
   "concreteType": "Organization",
@@ -260,20 +441,6 @@ v20 = {
     (v2/*: any*/),
     (v4/*: any*/)
   ],
-  "storageKey": null
-},
-v21 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "createdAt",
-  "storageKey": null
-},
-v22 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "updatedAt",
   "storageKey": null
 };
 return {
@@ -314,7 +481,13 @@ return {
               (v19/*: any*/),
               (v20/*: any*/),
               (v21/*: any*/),
-              (v22/*: any*/)
+              (v22/*: any*/),
+              (v23/*: any*/),
+              (v26/*: any*/),
+              (v27/*: any*/),
+              (v28/*: any*/),
+              (v24/*: any*/),
+              (v25/*: any*/)
             ],
             "type": "ProcessingActivity",
             "abstractKey": null
@@ -370,7 +543,13 @@ return {
               (v19/*: any*/),
               (v20/*: any*/),
               (v21/*: any*/),
-              (v22/*: any*/)
+              (v22/*: any*/),
+              (v23/*: any*/),
+              (v26/*: any*/),
+              (v27/*: any*/),
+              (v28/*: any*/),
+              (v24/*: any*/),
+              (v25/*: any*/)
             ],
             "type": "ProcessingActivity",
             "abstractKey": null
@@ -381,16 +560,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "9e9d13d95bf99c04488b8bdd313e8f33",
+    "cacheID": "8584062347b5ee761ed590f6019926be",
     "id": null,
     "metadata": {},
     "name": "ProcessingActivityGraphNodeQuery",
     "operationKind": "query",
-    "text": "query ProcessingActivityGraphNodeQuery(\n  $processingActivityId: ID!\n) {\n  node(id: $processingActivityId) {\n    __typename\n    ... on ProcessingActivity {\n      id\n      snapshotId\n      name\n      purpose\n      dataSubjectCategory\n      personalDataCategory\n      specialOrCriminalData\n      consentEvidenceLink\n      lawfulBasis\n      recipients\n      location\n      internationalTransfers\n      transferSafeguards\n      retentionPeriod\n      securityMeasures\n      dataProtectionImpactAssessment\n      transferImpactAssessment\n      vendors(first: 50) {\n        edges {\n          node {\n            id\n            name\n            websiteUrl\n            category\n          }\n        }\n      }\n      organization {\n        id\n        name\n      }\n      createdAt\n      updatedAt\n    }\n    id\n  }\n}\n"
+    "text": "query ProcessingActivityGraphNodeQuery(\n  $processingActivityId: ID!\n) {\n  node(id: $processingActivityId) {\n    __typename\n    ... on ProcessingActivity {\n      id\n      snapshotId\n      name\n      purpose\n      dataSubjectCategory\n      personalDataCategory\n      specialOrCriminalData\n      consentEvidenceLink\n      lawfulBasis\n      recipients\n      location\n      internationalTransfers\n      transferSafeguards\n      retentionPeriod\n      securityMeasures\n      dataProtectionImpactAssessment\n      transferImpactAssessment\n      lastReviewDate\n      nextReviewDate\n      role\n      dataProtectionOfficer {\n        id\n        fullName\n      }\n      vendors(first: 50) {\n        edges {\n          node {\n            id\n            name\n            websiteUrl\n            category\n          }\n        }\n      }\n      dpia {\n        id\n        description\n        necessityAndProportionality\n        potentialRisk\n        mitigations\n        residualRisk\n        createdAt\n        updatedAt\n      }\n      tia {\n        id\n        dataSubjects\n        legalMechanism\n        transfer\n        localLawRisk\n        supplementaryMeasures\n        createdAt\n        updatedAt\n      }\n      organization {\n        id\n        name\n      }\n      createdAt\n      updatedAt\n    }\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "0112adb4f323533e0ce7a0922c5866d2";
+(node as any).hash = "317a9dae11ec982599b6efd6ef6e3187";
 
 export default node;

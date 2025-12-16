@@ -432,6 +432,19 @@ type CreatePeoplePayload struct {
 	PeopleEdge *PeopleEdge `json:"peopleEdge"`
 }
 
+type CreateProcessingActivityDPIAInput struct {
+	ProcessingActivityID        gid.GID                                      `json:"processingActivityId"`
+	Description                 *string                                      `json:"description,omitempty"`
+	NecessityAndProportionality *string                                      `json:"necessityAndProportionality,omitempty"`
+	PotentialRisk               *string                                      `json:"potentialRisk,omitempty"`
+	Mitigations                 *string                                      `json:"mitigations,omitempty"`
+	ResidualRisk                *coredata.ProcessingActivityDPIAResidualRisk `json:"residualRisk,omitempty"`
+}
+
+type CreateProcessingActivityDPIAPayload struct {
+	ProcessingActivityDpia *ProcessingActivityDpia `json:"processingActivityDpia"`
+}
+
 type CreateProcessingActivityInput struct {
 	OrganizationID                 gid.GID                                                   `json:"organizationId"`
 	Name                           string                                                    `json:"name"`
@@ -449,11 +462,28 @@ type CreateProcessingActivityInput struct {
 	SecurityMeasures               *string                                                   `json:"securityMeasures,omitempty"`
 	DataProtectionImpactAssessment coredata.ProcessingActivityDataProtectionImpactAssessment `json:"dataProtectionImpactAssessment"`
 	TransferImpactAssessment       coredata.ProcessingActivityTransferImpactAssessment       `json:"transferImpactAssessment"`
+	LastReviewDate                 *time.Time                                                `json:"lastReviewDate,omitempty"`
+	NextReviewDate                 *time.Time                                                `json:"nextReviewDate,omitempty"`
+	Role                           coredata.ProcessingActivityRole                           `json:"role"`
+	DataProtectionOfficerID        *gid.GID                                                  `json:"dataProtectionOfficerId,omitempty"`
 	VendorIds                      []gid.GID                                                 `json:"vendorIds,omitempty"`
 }
 
 type CreateProcessingActivityPayload struct {
 	ProcessingActivityEdge *ProcessingActivityEdge `json:"processingActivityEdge"`
+}
+
+type CreateProcessingActivityTIAInput struct {
+	ProcessingActivityID  gid.GID `json:"processingActivityId"`
+	DataSubjects          *string `json:"dataSubjects,omitempty"`
+	LegalMechanism        *string `json:"legalMechanism,omitempty"`
+	Transfer              *string `json:"transfer,omitempty"`
+	LocalLawRisk          *string `json:"localLawRisk,omitempty"`
+	SupplementaryMeasures *string `json:"supplementaryMeasures,omitempty"`
+}
+
+type CreateProcessingActivityTIAPayload struct {
+	ProcessingActivityTia *ProcessingActivityTia `json:"processingActivityTia"`
 }
 
 type CreateRiskDocumentMappingInput struct {
@@ -872,12 +902,28 @@ type DeletePeoplePayload struct {
 	DeletedPeopleID gid.GID `json:"deletedPeopleId"`
 }
 
+type DeleteProcessingActivityDPIAInput struct {
+	ProcessingActivityDpiaID gid.GID `json:"processingActivityDpiaId"`
+}
+
+type DeleteProcessingActivityDPIAPayload struct {
+	DeletedProcessingActivityDpiaID gid.GID `json:"deletedProcessingActivityDpiaId"`
+}
+
 type DeleteProcessingActivityInput struct {
 	ProcessingActivityID gid.GID `json:"processingActivityId"`
 }
 
 type DeleteProcessingActivityPayload struct {
 	DeletedProcessingActivityID gid.GID `json:"deletedProcessingActivityId"`
+}
+
+type DeleteProcessingActivityTIAInput struct {
+	ProcessingActivityTiaID gid.GID `json:"processingActivityTiaId"`
+}
+
+type DeleteProcessingActivityTIAPayload struct {
+	DeletedProcessingActivityTiaID gid.GID `json:"deletedProcessingActivityTiaId"`
 }
 
 type DeleteRiskDocumentMappingInput struct {
@@ -1426,41 +1472,43 @@ type ObligationFilter struct {
 }
 
 type Organization struct {
-	ID                    gid.GID                         `json:"id"`
-	Name                  string                          `json:"name"`
-	LogoURL               *string                         `json:"logoUrl,omitempty"`
-	HorizontalLogoURL     *string                         `json:"horizontalLogoUrl,omitempty"`
-	Description           *string                         `json:"description,omitempty"`
-	WebsiteURL            *string                         `json:"websiteUrl,omitempty"`
-	Email                 *string                         `json:"email,omitempty"`
-	HeadquarterAddress    *string                         `json:"headquarterAddress,omitempty"`
-	Context               *OrganizationContext            `json:"context,omitempty"`
-	Memberships           *MembershipConnection           `json:"memberships"`
-	Invitations           *InvitationConnection           `json:"invitations"`
-	SlackConnections      *SlackConnectionConnection      `json:"slackConnections"`
-	Frameworks            *FrameworkConnection            `json:"frameworks"`
-	Controls              *ControlConnection              `json:"controls"`
-	Vendors               *VendorConnection               `json:"vendors"`
-	Peoples               *PeopleConnection               `json:"peoples"`
-	Documents             *DocumentConnection             `json:"documents"`
-	Meetings              *MeetingConnection              `json:"meetings"`
-	Measures              *MeasureConnection              `json:"measures"`
-	Risks                 *RiskConnection                 `json:"risks"`
-	Tasks                 *TaskConnection                 `json:"tasks"`
-	Assets                *AssetConnection                `json:"assets"`
-	Data                  *DatumConnection                `json:"data"`
-	Audits                *AuditConnection                `json:"audits"`
-	Nonconformities       *NonconformityConnection        `json:"nonconformities"`
-	Obligations           *ObligationConnection           `json:"obligations"`
-	ContinualImprovements *ContinualImprovementConnection `json:"continualImprovements"`
-	ProcessingActivities  *ProcessingActivityConnection   `json:"processingActivities"`
-	Snapshots             *SnapshotConnection             `json:"snapshots"`
-	TrustCenterFiles      *TrustCenterFileConnection      `json:"trustCenterFiles"`
-	TrustCenter           *TrustCenter                    `json:"trustCenter,omitempty"`
-	CustomDomain          *CustomDomain                   `json:"customDomain,omitempty"`
-	SamlConfigurations    []*SAMLConfiguration            `json:"samlConfigurations"`
-	CreatedAt             time.Time                       `json:"createdAt"`
-	UpdatedAt             time.Time                       `json:"updatedAt"`
+	ID                              gid.GID                           `json:"id"`
+	Name                            string                            `json:"name"`
+	LogoURL                         *string                           `json:"logoUrl,omitempty"`
+	HorizontalLogoURL               *string                           `json:"horizontalLogoUrl,omitempty"`
+	Description                     *string                           `json:"description,omitempty"`
+	WebsiteURL                      *string                           `json:"websiteUrl,omitempty"`
+	Email                           *string                           `json:"email,omitempty"`
+	HeadquarterAddress              *string                           `json:"headquarterAddress,omitempty"`
+	Context                         *OrganizationContext              `json:"context,omitempty"`
+	Memberships                     *MembershipConnection             `json:"memberships"`
+	Invitations                     *InvitationConnection             `json:"invitations"`
+	SlackConnections                *SlackConnectionConnection        `json:"slackConnections"`
+	Frameworks                      *FrameworkConnection              `json:"frameworks"`
+	Controls                        *ControlConnection                `json:"controls"`
+	Vendors                         *VendorConnection                 `json:"vendors"`
+	Peoples                         *PeopleConnection                 `json:"peoples"`
+	Documents                       *DocumentConnection               `json:"documents"`
+	Meetings                        *MeetingConnection                `json:"meetings"`
+	Measures                        *MeasureConnection                `json:"measures"`
+	Risks                           *RiskConnection                   `json:"risks"`
+	Tasks                           *TaskConnection                   `json:"tasks"`
+	Assets                          *AssetConnection                  `json:"assets"`
+	Data                            *DatumConnection                  `json:"data"`
+	Audits                          *AuditConnection                  `json:"audits"`
+	Nonconformities                 *NonconformityConnection          `json:"nonconformities"`
+	Obligations                     *ObligationConnection             `json:"obligations"`
+	ContinualImprovements           *ContinualImprovementConnection   `json:"continualImprovements"`
+	ProcessingActivities            *ProcessingActivityConnection     `json:"processingActivities"`
+	DataProtectionImpactAssessments *ProcessingActivityDPIAConnection `json:"dataProtectionImpactAssessments"`
+	TransferImpactAssessments       *ProcessingActivityTIAConnection  `json:"transferImpactAssessments"`
+	Snapshots                       *SnapshotConnection               `json:"snapshots"`
+	TrustCenterFiles                *TrustCenterFileConnection        `json:"trustCenterFiles"`
+	TrustCenter                     *TrustCenter                      `json:"trustCenter,omitempty"`
+	CustomDomain                    *CustomDomain                     `json:"customDomain,omitempty"`
+	SamlConfigurations              []*SAMLConfiguration              `json:"samlConfigurations"`
+	CreatedAt                       time.Time                         `json:"createdAt"`
+	UpdatedAt                       time.Time                         `json:"updatedAt"`
 }
 
 func (Organization) IsNode()             {}
@@ -1538,13 +1586,40 @@ type ProcessingActivity struct {
 	SecurityMeasures               *string                                                   `json:"securityMeasures,omitempty"`
 	DataProtectionImpactAssessment coredata.ProcessingActivityDataProtectionImpactAssessment `json:"dataProtectionImpactAssessment"`
 	TransferImpactAssessment       coredata.ProcessingActivityTransferImpactAssessment       `json:"transferImpactAssessment"`
+	LastReviewDate                 *time.Time                                                `json:"lastReviewDate,omitempty"`
+	NextReviewDate                 *time.Time                                                `json:"nextReviewDate,omitempty"`
+	Role                           coredata.ProcessingActivityRole                           `json:"role"`
+	DataProtectionOfficer          *People                                                   `json:"dataProtectionOfficer,omitempty"`
 	Vendors                        *VendorConnection                                         `json:"vendors"`
+	Dpia                           *ProcessingActivityDpia                                   `json:"dpia,omitempty"`
+	Tia                            *ProcessingActivityTia                                    `json:"tia,omitempty"`
 	CreatedAt                      time.Time                                                 `json:"createdAt"`
 	UpdatedAt                      time.Time                                                 `json:"updatedAt"`
 }
 
 func (ProcessingActivity) IsNode()             {}
 func (this ProcessingActivity) GetID() gid.GID { return this.ID }
+
+type ProcessingActivityDpia struct {
+	ID                          gid.GID                                      `json:"id"`
+	ProcessingActivity          *ProcessingActivity                          `json:"processingActivity"`
+	Organization                *Organization                                `json:"organization"`
+	Description                 *string                                      `json:"description,omitempty"`
+	NecessityAndProportionality *string                                      `json:"necessityAndProportionality,omitempty"`
+	PotentialRisk               *string                                      `json:"potentialRisk,omitempty"`
+	Mitigations                 *string                                      `json:"mitigations,omitempty"`
+	ResidualRisk                *coredata.ProcessingActivityDPIAResidualRisk `json:"residualRisk,omitempty"`
+	CreatedAt                   time.Time                                    `json:"createdAt"`
+	UpdatedAt                   time.Time                                    `json:"updatedAt"`
+}
+
+func (ProcessingActivityDpia) IsNode()             {}
+func (this ProcessingActivityDpia) GetID() gid.GID { return this.ID }
+
+type ProcessingActivityDPIAEdge struct {
+	Cursor page.CursorKey          `json:"cursor"`
+	Node   *ProcessingActivityDpia `json:"node"`
+}
 
 type ProcessingActivityEdge struct {
 	Cursor page.CursorKey      `json:"cursor"`
@@ -1553,6 +1628,27 @@ type ProcessingActivityEdge struct {
 
 type ProcessingActivityFilter struct {
 	SnapshotID *gid.GID `json:"snapshotId,omitempty"`
+}
+
+type ProcessingActivityTia struct {
+	ID                    gid.GID             `json:"id"`
+	ProcessingActivity    *ProcessingActivity `json:"processingActivity"`
+	Organization          *Organization       `json:"organization"`
+	DataSubjects          *string             `json:"dataSubjects,omitempty"`
+	LegalMechanism        *string             `json:"legalMechanism,omitempty"`
+	Transfer              *string             `json:"transfer,omitempty"`
+	LocalLawRisk          *string             `json:"localLawRisk,omitempty"`
+	SupplementaryMeasures *string             `json:"supplementaryMeasures,omitempty"`
+	CreatedAt             time.Time           `json:"createdAt"`
+	UpdatedAt             time.Time           `json:"updatedAt"`
+}
+
+func (ProcessingActivityTia) IsNode()             {}
+func (this ProcessingActivityTia) GetID() gid.GID { return this.ID }
+
+type ProcessingActivityTIAEdge struct {
+	Cursor page.CursorKey         `json:"cursor"`
+	Node   *ProcessingActivityTia `json:"node"`
 }
 
 type PublishDocumentVersionInput struct {
@@ -2071,6 +2167,19 @@ type UpdatePeoplePayload struct {
 	People *People `json:"people"`
 }
 
+type UpdateProcessingActivityDPIAInput struct {
+	ID                          gid.GID                                      `json:"id"`
+	Description                 graphql.Omittable[*string]                   `json:"description,omitempty"`
+	NecessityAndProportionality graphql.Omittable[*string]                   `json:"necessityAndProportionality,omitempty"`
+	PotentialRisk               graphql.Omittable[*string]                   `json:"potentialRisk,omitempty"`
+	Mitigations                 graphql.Omittable[*string]                   `json:"mitigations,omitempty"`
+	ResidualRisk                *coredata.ProcessingActivityDPIAResidualRisk `json:"residualRisk,omitempty"`
+}
+
+type UpdateProcessingActivityDPIAPayload struct {
+	ProcessingActivityDpia *ProcessingActivityDpia `json:"processingActivityDpia"`
+}
+
 type UpdateProcessingActivityInput struct {
 	ID                             gid.GID                                                          `json:"id"`
 	Name                           *string                                                          `json:"name,omitempty"`
@@ -2088,11 +2197,28 @@ type UpdateProcessingActivityInput struct {
 	SecurityMeasures               graphql.Omittable[*string]                                       `json:"securityMeasures,omitempty"`
 	DataProtectionImpactAssessment *coredata.ProcessingActivityDataProtectionImpactAssessment       `json:"dataProtectionImpactAssessment,omitempty"`
 	TransferImpactAssessment       *coredata.ProcessingActivityTransferImpactAssessment             `json:"transferImpactAssessment,omitempty"`
+	LastReviewDate                 graphql.Omittable[*time.Time]                                    `json:"lastReviewDate,omitempty"`
+	NextReviewDate                 graphql.Omittable[*time.Time]                                    `json:"nextReviewDate,omitempty"`
+	Role                           *coredata.ProcessingActivityRole                                 `json:"role,omitempty"`
+	DataProtectionOfficerID        graphql.Omittable[*gid.GID]                                      `json:"dataProtectionOfficerId,omitempty"`
 	VendorIds                      []gid.GID                                                        `json:"vendorIds,omitempty"`
 }
 
 type UpdateProcessingActivityPayload struct {
 	ProcessingActivity *ProcessingActivity `json:"processingActivity"`
+}
+
+type UpdateProcessingActivityTIAInput struct {
+	ID                    gid.GID                    `json:"id"`
+	DataSubjects          graphql.Omittable[*string] `json:"dataSubjects,omitempty"`
+	LegalMechanism        graphql.Omittable[*string] `json:"legalMechanism,omitempty"`
+	Transfer              graphql.Omittable[*string] `json:"transfer,omitempty"`
+	LocalLawRisk          graphql.Omittable[*string] `json:"localLawRisk,omitempty"`
+	SupplementaryMeasures graphql.Omittable[*string] `json:"supplementaryMeasures,omitempty"`
+}
+
+type UpdateProcessingActivityTIAPayload struct {
+	ProcessingActivityTia *ProcessingActivityTia `json:"processingActivityTia"`
 }
 
 type UpdateRiskInput struct {

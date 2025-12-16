@@ -48,6 +48,10 @@ type (
 		SecurityMeasures               *string
 		DataProtectionImpactAssessment coredata.ProcessingActivityDataProtectionImpactAssessment
 		TransferImpactAssessment       coredata.ProcessingActivityTransferImpactAssessment
+		LastReviewDate                 *time.Time
+		NextReviewDate                 *time.Time
+		Role                           coredata.ProcessingActivityRole
+		DataProtectionOfficerID        *gid.GID
 		VendorIDs                      []gid.GID
 	}
 
@@ -68,6 +72,10 @@ type (
 		SecurityMeasures               **string
 		DataProtectionImpactAssessment *coredata.ProcessingActivityDataProtectionImpactAssessment
 		TransferImpactAssessment       *coredata.ProcessingActivityTransferImpactAssessment
+		LastReviewDate                 **time.Time
+		NextReviewDate                 **time.Time
+		Role                           *coredata.ProcessingActivityRole
+		DataProtectionOfficerID        **gid.GID
 		VendorIDs                      *[]gid.GID
 	}
 )
@@ -91,6 +99,8 @@ func (cpar *CreateProcessingActivityRequest) Validate() error {
 	v.Check(cpar.SecurityMeasures, "security_measures", validator.SafeText(TitleMaxLength))
 	v.Check(cpar.DataProtectionImpactAssessment, "data_protection_impact_assessment", validator.Required(), validator.OneOfSlice(coredata.ProcessingActivityDataProtectionImpactAssessments()))
 	v.Check(cpar.TransferImpactAssessment, "transfer_impact_assessment", validator.Required(), validator.OneOfSlice(coredata.ProcessingActivityTransferImpactAssessments()))
+	v.Check(cpar.Role, "role", validator.Required(), validator.OneOfSlice(coredata.ProcessingActivityRoles()))
+	v.Check(cpar.DataProtectionOfficerID, "data_protection_officer_id", validator.GID(coredata.PeopleEntityType))
 	v.CheckEach(cpar.VendorIDs, "vendor_ids", func(index int, item any) {
 		v.Check(item, fmt.Sprintf("vendor_ids[%d]", index), validator.Required(), validator.GID(coredata.VendorEntityType))
 	})
@@ -116,6 +126,8 @@ func (upar *UpdateProcessingActivityRequest) Validate() error {
 	v.Check(upar.SecurityMeasures, "security_measures", validator.SafeText(TitleMaxLength))
 	v.Check(upar.DataProtectionImpactAssessment, "data_protection_impact_assessment", validator.OneOfSlice(coredata.ProcessingActivityDataProtectionImpactAssessments()))
 	v.Check(upar.TransferImpactAssessment, "transfer_impact_assessment", validator.OneOfSlice(coredata.ProcessingActivityTransferImpactAssessments()))
+	v.Check(upar.Role, "role", validator.OneOfSlice(coredata.ProcessingActivityRoles()))
+	v.Check(upar.DataProtectionOfficerID, "data_protection_officer_id", validator.GID(coredata.PeopleEntityType))
 	v.CheckEach(upar.VendorIDs, "vendor_ids", func(index int, item any) {
 		v.Check(item, fmt.Sprintf("vendor_ids[%d]", index), validator.GID(coredata.VendorEntityType))
 	})
@@ -168,6 +180,10 @@ func (s *ProcessingActivityService) Create(
 		SecurityMeasures:               req.SecurityMeasures,
 		DataProtectionImpactAssessment: req.DataProtectionImpactAssessment,
 		TransferImpactAssessment:       req.TransferImpactAssessment,
+		LastReviewDate:                 req.LastReviewDate,
+		NextReviewDate:                 req.NextReviewDate,
+		Role:                           req.Role,
+		DataProtectionOfficerID:        req.DataProtectionOfficerID,
 		CreatedAt:                      now,
 		UpdatedAt:                      now,
 	}
@@ -259,6 +275,18 @@ func (s *ProcessingActivityService) Update(
 			}
 			if req.TransferImpactAssessment != nil {
 				processingActivity.TransferImpactAssessment = *req.TransferImpactAssessment
+			}
+			if req.LastReviewDate != nil {
+				processingActivity.LastReviewDate = *req.LastReviewDate
+			}
+			if req.NextReviewDate != nil {
+				processingActivity.NextReviewDate = *req.NextReviewDate
+			}
+			if req.Role != nil {
+				processingActivity.Role = *req.Role
+			}
+			if req.DataProtectionOfficerID != nil {
+				processingActivity.DataProtectionOfficerID = *req.DataProtectionOfficerID
 			}
 
 			processingActivity.UpdatedAt = time.Now()

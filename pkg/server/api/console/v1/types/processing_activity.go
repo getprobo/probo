@@ -75,6 +75,9 @@ func NewProcessingActivity(par *coredata.ProcessingActivity) *ProcessingActivity
 		SecurityMeasures:               par.SecurityMeasures,
 		DataProtectionImpactAssessment: par.DataProtectionImpactAssessment,
 		TransferImpactAssessment:       par.TransferImpactAssessment,
+		LastReviewDate:                 par.LastReviewDate,
+		NextReviewDate:                 par.NextReviewDate,
+		Role:                           par.Role,
 		CreatedAt:                      par.CreatedAt,
 		UpdatedAt:                      par.UpdatedAt,
 	}

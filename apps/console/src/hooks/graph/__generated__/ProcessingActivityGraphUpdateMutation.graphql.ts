@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<7004a9f42c1d7e16eadf8adbdb613b2a>>
+ * @generated SignedSource<<b9ced8fbcfaaca6c125c105d90201bd5>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,22 +11,27 @@
 import { ConcreteRequest } from 'relay-runtime';
 export type ProcessingActivityDataProtectionImpactAssessment = "NEEDED" | "NOT_NEEDED";
 export type ProcessingActivityLawfulBasis = "CONSENT" | "CONTRACTUAL_NECESSITY" | "LEGAL_OBLIGATION" | "LEGITIMATE_INTEREST" | "PUBLIC_TASK" | "VITAL_INTERESTS";
+export type ProcessingActivityRole = "CONTROLLER" | "PROCESSOR";
 export type ProcessingActivitySpecialOrCriminalDatum = "NO" | "POSSIBLE" | "YES";
 export type ProcessingActivityTransferImpactAssessment = "NEEDED" | "NOT_NEEDED";
 export type ProcessingActivityTransferSafeguard = "ADEQUACY_DECISION" | "BINDING_CORPORATE_RULES" | "CERTIFICATION_MECHANISMS" | "CODES_OF_CONDUCT" | "DEROGATIONS" | "STANDARD_CONTRACTUAL_CLAUSES";
 export type UpdateProcessingActivityInput = {
   consentEvidenceLink?: string | null | undefined;
   dataProtectionImpactAssessment?: ProcessingActivityDataProtectionImpactAssessment | null | undefined;
+  dataProtectionOfficerId?: string | null | undefined;
   dataSubjectCategory?: string | null | undefined;
   id: string;
   internationalTransfers?: boolean | null | undefined;
+  lastReviewDate?: any | null | undefined;
   lawfulBasis?: ProcessingActivityLawfulBasis | null | undefined;
   location?: string | null | undefined;
   name?: string | null | undefined;
+  nextReviewDate?: any | null | undefined;
   personalDataCategory?: string | null | undefined;
   purpose?: string | null | undefined;
   recipients?: string | null | undefined;
   retentionPeriod?: string | null | undefined;
+  role?: ProcessingActivityRole | null | undefined;
   securityMeasures?: string | null | undefined;
   specialOrCriminalData?: ProcessingActivitySpecialOrCriminalDatum | null | undefined;
   transferImpactAssessment?: ProcessingActivityTransferImpactAssessment | null | undefined;
@@ -41,16 +46,23 @@ export type ProcessingActivityGraphUpdateMutation$data = {
     readonly processingActivity: {
       readonly consentEvidenceLink: string | null | undefined;
       readonly dataProtectionImpactAssessment: ProcessingActivityDataProtectionImpactAssessment;
+      readonly dataProtectionOfficer: {
+        readonly fullName: string;
+        readonly id: string;
+      } | null | undefined;
       readonly dataSubjectCategory: string | null | undefined;
       readonly id: string;
       readonly internationalTransfers: boolean;
+      readonly lastReviewDate: any | null | undefined;
       readonly lawfulBasis: ProcessingActivityLawfulBasis;
       readonly location: string | null | undefined;
       readonly name: string;
+      readonly nextReviewDate: any | null | undefined;
       readonly personalDataCategory: string | null | undefined;
       readonly purpose: string | null | undefined;
       readonly recipients: string | null | undefined;
       readonly retentionPeriod: string | null | undefined;
+      readonly role: ProcessingActivityRole;
       readonly securityMeasures: string | null | undefined;
       readonly specialOrCriminalData: ProcessingActivitySpecialOrCriminalDatum;
       readonly transferImpactAssessment: ProcessingActivityTransferImpactAssessment;
@@ -220,6 +232,46 @@ v3 = [
           },
           {
             "alias": null,
+            "args": null,
+            "kind": "ScalarField",
+            "name": "lastReviewDate",
+            "storageKey": null
+          },
+          {
+            "alias": null,
+            "args": null,
+            "kind": "ScalarField",
+            "name": "nextReviewDate",
+            "storageKey": null
+          },
+          {
+            "alias": null,
+            "args": null,
+            "kind": "ScalarField",
+            "name": "role",
+            "storageKey": null
+          },
+          {
+            "alias": null,
+            "args": null,
+            "concreteType": "People",
+            "kind": "LinkedField",
+            "name": "dataProtectionOfficer",
+            "plural": false,
+            "selections": [
+              (v1/*: any*/),
+              {
+                "alias": null,
+                "args": null,
+                "kind": "ScalarField",
+                "name": "fullName",
+                "storageKey": null
+              }
+            ],
+            "storageKey": null
+          },
+          {
+            "alias": null,
             "args": [
               {
                 "kind": "Literal",
@@ -298,16 +350,16 @@ return {
     "selections": (v3/*: any*/)
   },
   "params": {
-    "cacheID": "8050213c76270c28b5543a629a956d47",
+    "cacheID": "c67a2cee083821566c9379f74360c489",
     "id": null,
     "metadata": {},
     "name": "ProcessingActivityGraphUpdateMutation",
     "operationKind": "mutation",
-    "text": "mutation ProcessingActivityGraphUpdateMutation(\n  $input: UpdateProcessingActivityInput!\n) {\n  updateProcessingActivity(input: $input) {\n    processingActivity {\n      id\n      name\n      purpose\n      dataSubjectCategory\n      personalDataCategory\n      specialOrCriminalData\n      consentEvidenceLink\n      lawfulBasis\n      recipients\n      location\n      internationalTransfers\n      transferSafeguards\n      retentionPeriod\n      securityMeasures\n      dataProtectionImpactAssessment\n      transferImpactAssessment\n      vendors(first: 50) {\n        edges {\n          node {\n            id\n            name\n            websiteUrl\n          }\n        }\n      }\n      updatedAt\n    }\n  }\n}\n"
+    "text": "mutation ProcessingActivityGraphUpdateMutation(\n  $input: UpdateProcessingActivityInput!\n) {\n  updateProcessingActivity(input: $input) {\n    processingActivity {\n      id\n      name\n      purpose\n      dataSubjectCategory\n      personalDataCategory\n      specialOrCriminalData\n      consentEvidenceLink\n      lawfulBasis\n      recipients\n      location\n      internationalTransfers\n      transferSafeguards\n      retentionPeriod\n      securityMeasures\n      dataProtectionImpactAssessment\n      transferImpactAssessment\n      lastReviewDate\n      nextReviewDate\n      role\n      dataProtectionOfficer {\n        id\n        fullName\n      }\n      vendors(first: 50) {\n        edges {\n          node {\n            id\n            name\n            websiteUrl\n          }\n        }\n      }\n      updatedAt\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "cb14a2c41f4690c0079a185c8caad3f4";
+(node as any).hash = "31dcb6c411d7ffd7a63eb9941f4f2609";
 
 export default node;

@@ -47,6 +47,10 @@ type (
 		SecurityMeasures               *string                                          `db:"security_measures"`
 		DataProtectionImpactAssessment ProcessingActivityDataProtectionImpactAssessment `db:"data_protection_impact_assessment"`
 		TransferImpactAssessment       ProcessingActivityTransferImpactAssessment       `db:"transfer_impact_assessment"`
+		LastReviewDate                 *time.Time                                       `db:"last_review_date"`
+		NextReviewDate                 *time.Time                                       `db:"next_review_date"`
+		Role                           ProcessingActivityRole                           `db:"role"`
+		DataProtectionOfficerID        *gid.GID                                         `db:"data_protection_officer_id"`
 		CreatedAt                      time.Time                                        `db:"created_at"`
 		UpdatedAt                      time.Time                                        `db:"updated_at"`
 	}
@@ -92,6 +96,10 @@ SELECT
 	security_measures,
 	data_protection_impact_assessment,
 	transfer_impact_assessment,
+	last_review_date,
+	next_review_date,
+	role,
+	data_protection_officer_id,
 	created_at,
 	updated_at
 FROM
@@ -186,6 +194,10 @@ SELECT
 	security_measures,
 	data_protection_impact_assessment,
 	transfer_impact_assessment,
+	last_review_date,
+	next_review_date,
+	role,
+	data_protection_officer_id,
 	created_at,
 	updated_at
 FROM
@@ -246,6 +258,10 @@ INSERT INTO processing_activities (
 	security_measures,
 	data_protection_impact_assessment,
 	transfer_impact_assessment,
+	last_review_date,
+	next_review_date,
+	role,
+	data_protection_officer_id,
 	created_at,
 	updated_at
 ) VALUES (
@@ -269,6 +285,10 @@ INSERT INTO processing_activities (
 	@security_measures,
 	@data_protection_impact_assessment,
 	@transfer_impact_assessment,
+	@last_review_date,
+	@next_review_date,
+	@role,
+	@data_protection_officer_id,
 	@created_at,
 	@updated_at
 )
@@ -295,6 +315,10 @@ INSERT INTO processing_activities (
 		"security_measures":                 p.SecurityMeasures,
 		"data_protection_impact_assessment": p.DataProtectionImpactAssessment,
 		"transfer_impact_assessment":        p.TransferImpactAssessment,
+		"last_review_date":                  p.LastReviewDate,
+		"next_review_date":                  p.NextReviewDate,
+		"role":                              p.Role,
+		"data_protection_officer_id":        p.DataProtectionOfficerID,
 		"created_at":                        p.CreatedAt,
 		"updated_at":                        p.UpdatedAt,
 	}
@@ -330,6 +354,10 @@ SET
 	security_measures = @security_measures,
 	data_protection_impact_assessment = @data_protection_impact_assessment,
 	transfer_impact_assessment = @transfer_impact_assessment,
+	last_review_date = @last_review_date,
+	next_review_date = @next_review_date,
+	role = @role,
+	data_protection_officer_id = @data_protection_officer_id,
 	updated_at = @updated_at
 WHERE
 	%s
@@ -356,6 +384,10 @@ WHERE
 		"security_measures":                 p.SecurityMeasures,
 		"data_protection_impact_assessment": p.DataProtectionImpactAssessment,
 		"transfer_impact_assessment":        p.TransferImpactAssessment,
+		"last_review_date":                  p.LastReviewDate,
+		"next_review_date":                  p.NextReviewDate,
+		"role":                              p.Role,
+		"data_protection_officer_id":        p.DataProtectionOfficerID,
 		"updated_at":                        p.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
@@ -435,6 +467,10 @@ INSERT INTO processing_activities (
 	security_measures,
 	data_protection_impact_assessment,
 	transfer_impact_assessment,
+	last_review_date,
+	next_review_date,
+	role,
+	data_protection_officer_id,
 	created_at,
 	updated_at
 )
@@ -459,6 +495,10 @@ SELECT
 	par.security_measures,
 	par.data_protection_impact_assessment,
 	par.transfer_impact_assessment,
+	par.last_review_date,
+	par.next_review_date,
+	par.role,
+	par.data_protection_officer_id,
 	par.created_at,
 	par.updated_at
 FROM processing_activities par

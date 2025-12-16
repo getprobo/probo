@@ -7,7 +7,14 @@ import {
   processingActivityNodeQuery,
   useDeleteProcessingActivity,
   useUpdateProcessingActivity,
+  useCreateProcessingActivityDPIA,
+  useUpdateProcessingActivityDPIA,
+  useDeleteProcessingActivityDPIA,
+  useCreateProcessingActivityTIA,
+  useUpdateProcessingActivityTIA,
+  useDeleteProcessingActivityTIA,
   ProcessingActivitiesConnectionKey,
+  type ProcessingActivityDPIAResidualRisk,
 } from "../../../hooks/graph/ProcessingActivityGraph";
 import {
   ActionDropdown,
@@ -21,27 +28,33 @@ import {
   Label,
   Checkbox,
   Select,
+  Input,
+  Option,
+  Tabs,
+  TabItem,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { useParams } from "react-router";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
-import { Controller } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { formatError, type GraphQLError } from "@probo/helpers";
 import z from "zod";
-import { validateSnapshotConsistency } from "@probo/helpers";
+import { validateSnapshotConsistency, formatDatetime, toDateInput } from "@probo/helpers";
 import { SnapshotBanner } from "/components/SnapshotBanner";
 import { VendorsMultiSelectField } from "/components/form/VendorsMultiSelectField";
+import { PeopleSelectField } from "/components/form/PeopleSelectField";
 import {
   SpecialOrCriminalDataOptions,
   LawfulBasisOptions,
   TransferSafeguardsOptions,
   DataProtectionImpactAssessmentOptions,
   TransferImpactAssessmentOptions,
+  RoleOptions,
 } from "../../../components/form/ProcessingActivityEnumOptions";
 
 import type { ProcessingActivityGraphNodeQuery } from "/hooks/graph/__generated__/ProcessingActivityGraphNodeQuery.graphql";
-import { use } from "react";
+import { use, useState, useEffect } from "react";
 import { PermissionsContext } from "/providers/PermissionsContext";
 
 const updateProcessingActivitySchema = z.object({
@@ -60,6 +73,10 @@ const updateProcessingActivitySchema = z.object({
   securityMeasures: z.string().optional(),
   dataProtectionImpactAssessment: z.enum(["NEEDED", "NOT_NEEDED"] as const),
   transferImpactAssessment: z.enum(["NEEDED", "NOT_NEEDED"] as const),
+  lastReviewDate: z.string().optional(),
+  nextReviewDate: z.string().optional(),
+  role: z.enum(["CONTROLLER", "PROCESSOR"] as const),
+  dataProtectionOfficerId: z.string().optional(),
   vendorIds: z.array(z.string()).optional(),
 });
 
@@ -77,9 +94,65 @@ export default function ProcessingActivityDetailsPage(props: Props) {
   const isSnapshotMode = Boolean(snapshotId);
   const { isAuthorized } = use(PermissionsContext);
 
+  // Get initial tab from URL hash
+  const getInitialTab = (): "overview" | "dpia" | "tia" => {
+    const hash = window.location.hash.slice(1);
+    if (hash === "dpia" || hash === "tia") return hash;
+    return "overview";
+  };
+
+  const [activeTab, setActiveTab] = useState<"overview" | "dpia" | "tia">(getInitialTab);
+  const [dpiaSubmitting, setDpiaSubmitting] = useState(false);
+  const [tiaSubmitting, setTiaSubmitting] = useState(false);
+  const [showDpiaForm, setShowDpiaForm] = useState(Boolean(activity?.dpia?.id));
+  const [showTiaForm, setShowTiaForm] = useState(Boolean(activity?.tia?.id));
+  const [dpiaDeleted, setDpiaDeleted] = useState(false);
+  const [tiaDeleted, setTiaDeleted] = useState(false);
+
+  // Update URL hash when tab changes
+  useEffect(() => {
+    window.location.hash = activeTab === "overview" ? "" : activeTab;
+  }, [activeTab]);
+
   validateSnapshotConsistency(activity, snapshotId);
 
   const updateActivity = useUpdateProcessingActivity();
+  const createDPIA = useCreateProcessingActivityDPIA();
+  const updateDPIA = useUpdateProcessingActivityDPIA();
+  const deleteDPIA = useDeleteProcessingActivityDPIA(
+    { id: activity?.dpia?.id || "" },
+    {
+      onSuccess: () => {
+        setDpiaDeleted(true);
+        setShowDpiaForm(false);
+        dpiaForm.reset({
+          description: "",
+          necessityAndProportionality: "",
+          potentialRisk: "",
+          mitigations: "",
+          residualRisk: "",
+        });
+      },
+    }
+  );
+  const createTIA = useCreateProcessingActivityTIA();
+  const updateTIA = useUpdateProcessingActivityTIA();
+  const deleteTIA = useDeleteProcessingActivityTIA(
+    { id: activity?.tia?.id || "" },
+    {
+      onSuccess: () => {
+        setTiaDeleted(true);
+        setShowTiaForm(false);
+        tiaForm.reset({
+          dataSubjects: "",
+          legalMechanism: "",
+          transfer: "",
+          localLawRisk: "",
+          supplementaryMeasures: "",
+        });
+      },
+    }
+  );
 
   const connectionId = ConnectionHandler.getConnectionID(
     organizationId,
@@ -111,10 +184,34 @@ export default function ProcessingActivityDetailsPage(props: Props) {
         securityMeasures: activity.securityMeasures || "",
         dataProtectionImpactAssessment: activity.dataProtectionImpactAssessment || "NOT_NEEDED" as const,
         transferImpactAssessment: activity.transferImpactAssessment || "NOT_NEEDED" as const,
+        lastReviewDate: toDateInput(activity.lastReviewDate),
+        nextReviewDate: toDateInput(activity.nextReviewDate),
+        role: activity.role || "CONTROLLER" as const,
+        dataProtectionOfficerId: activity.dataProtectionOfficer?.id || "",
         vendorIds: vendorIds,
       },
     }
   );
+
+  const dpiaForm = useForm({
+    defaultValues: {
+      description: activity?.dpia?.description || "",
+      necessityAndProportionality: activity?.dpia?.necessityAndProportionality || "",
+      potentialRisk: activity?.dpia?.potentialRisk || "",
+      mitigations: activity?.dpia?.mitigations || "",
+      residualRisk: (activity?.dpia?.residualRisk || "") as ProcessingActivityDPIAResidualRisk | "",
+    },
+  });
+
+  const tiaForm = useForm({
+    defaultValues: {
+      dataSubjects: activity?.tia?.dataSubjects || "",
+      legalMechanism: activity?.tia?.legalMechanism || "",
+      transfer: activity?.tia?.transfer || "",
+      localLawRisk: activity?.tia?.localLawRisk || "",
+      supplementaryMeasures: activity?.tia?.supplementaryMeasures || "",
+    },
+  });
 
   const onSubmit = handleSubmit(async (formData) => {
     try {
@@ -135,6 +232,10 @@ export default function ProcessingActivityDetailsPage(props: Props) {
         securityMeasures: formData.securityMeasures || undefined,
         dataProtectionImpactAssessment: formData.dataProtectionImpactAssessment || undefined,
         transferImpactAssessment: formData.transferImpactAssessment || undefined,
+        lastReviewDate: formatDatetime(formData.lastReviewDate) ?? null,
+        nextReviewDate: formatDatetime(formData.nextReviewDate) ?? null,
+        role: formData.role,
+        dataProtectionOfficerId: formData.dataProtectionOfficerId || null,
         vendorIds: formData.vendorIds,
       });
 
@@ -149,6 +250,100 @@ export default function ProcessingActivityDetailsPage(props: Props) {
         description: formatError(__("Failed to update processing activity"), error as GraphQLError),
         variant: "error",
       });
+    }
+  });
+
+  const onDPIASubmit = dpiaForm.handleSubmit(async (formData) => {
+    setDpiaSubmitting(true);
+    try {
+      const isCreating = !activity?.dpia?.id || dpiaDeleted;
+      if (!isCreating) {
+        // Update existing DPIA
+        await updateDPIA({
+          id: activity.dpia!.id,
+          description: formData.description || undefined,
+          necessityAndProportionality: formData.necessityAndProportionality || undefined,
+          potentialRisk: formData.potentialRisk || undefined,
+          mitigations: formData.mitigations || undefined,
+          residualRisk: formData.residualRisk as ProcessingActivityDPIAResidualRisk || undefined,
+        });
+        toast({
+          title: __("Success"),
+          description: __("DPIA updated successfully"),
+          variant: "success",
+        });
+      } else {
+        // Create new DPIA
+        await createDPIA({
+          processingActivityId: activity.id!,
+          description: formData.description || undefined,
+          necessityAndProportionality: formData.necessityAndProportionality || undefined,
+          potentialRisk: formData.potentialRisk || undefined,
+          mitigations: formData.mitigations || undefined,
+          residualRisk: formData.residualRisk as ProcessingActivityDPIAResidualRisk || undefined,
+        });
+        setDpiaDeleted(false);
+        toast({
+          title: __("Success"),
+          description: __("DPIA created successfully"),
+          variant: "success",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: __("Error"),
+        description: formatError(__("Failed to save DPIA"), error as GraphQLError),
+        variant: "error",
+      });
+    } finally {
+      setDpiaSubmitting(false);
+    }
+  });
+
+  const onTIASubmit = tiaForm.handleSubmit(async (formData) => {
+    setTiaSubmitting(true);
+    try {
+      const isCreating = !activity?.tia?.id || tiaDeleted;
+      if (!isCreating) {
+        // Update existing TIA
+        await updateTIA({
+          id: activity.tia!.id,
+          dataSubjects: formData.dataSubjects || undefined,
+          legalMechanism: formData.legalMechanism || undefined,
+          transfer: formData.transfer || undefined,
+          localLawRisk: formData.localLawRisk || undefined,
+          supplementaryMeasures: formData.supplementaryMeasures || undefined,
+        });
+        toast({
+          title: __("Success"),
+          description: __("TIA updated successfully"),
+          variant: "success",
+        });
+      } else {
+        // Create new TIA
+        await createTIA({
+          processingActivityId: activity.id!,
+          dataSubjects: formData.dataSubjects || undefined,
+          legalMechanism: formData.legalMechanism || undefined,
+          transfer: formData.transfer || undefined,
+          localLawRisk: formData.localLawRisk || undefined,
+          supplementaryMeasures: formData.supplementaryMeasures || undefined,
+        });
+        setTiaDeleted(false);
+        toast({
+          title: __("Success"),
+          description: __("TIA created successfully"),
+          variant: "success",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: __("Error"),
+        description: formatError(__("Failed to save TIA"), error as GraphQLError),
+        variant: "error",
+      });
+    } finally {
+      setTiaSubmitting(false);
     }
   });
 
@@ -179,249 +374,563 @@ export default function ProcessingActivityDetailsPage(props: Props) {
         )}
       </div>
 
-      <Card>
-        <div className="p-6">
-          <div className="mb-6">
-            <div className="flex items-center gap-4">
-              <h1 className="text-2xl font-bold">{activity.name}</h1>
-            </div>
-          </div>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold">{activity.name}</h1>
+      </div>
 
-          <form onSubmit={onSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <Field
-                  label={__("Name")}
-                  {...register("name")}
-                  error={formState.errors.name?.message}
-                  required
-                  disabled={isSnapshotMode}
-                />
+      <Tabs>
+        <TabItem active={activeTab === "overview"} onClick={() => setActiveTab("overview")}>
+          {__("Overview")}
+        </TabItem>
+        <TabItem active={activeTab === "dpia"} onClick={() => setActiveTab("dpia")}>
+          {__("Data Protection Impact Assessment")}
+        </TabItem>
+        <TabItem active={activeTab === "tia"} onClick={() => setActiveTab("tia")}>
+          {__("Transfer Impact Assessment")}
+        </TabItem>
+      </Tabs>
 
-                <div>
-                  <Label>{__("Purpose")}</Label>
-                  <Textarea
-                    {...register("purpose")}
-                    placeholder={__("Describe the purpose of processing")}
-                    rows={3}
+      {activeTab === "overview" && (
+        <Card>
+          <div className="p-6">
+            <form onSubmit={onSubmit} className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <Field
+                    label={__("Name")}
+                    {...register("name")}
+                    error={formState.errors.name?.message}
+                    required
                     disabled={isSnapshotMode}
                   />
-                </div>
 
-                <Field
-                  label={__("Data Subject Category")}
-                  {...register("dataSubjectCategory")}
-                  placeholder={__("e.g., employees, customers, prospects")}
-                  disabled={isSnapshotMode}
-                />
-
-                <Field
-                  label={__("Personal Data Category")}
-                  {...register("personalDataCategory")}
-                  placeholder={__("e.g., contact details, financial data")}
-                  disabled={isSnapshotMode}
-                />
-
-                <div>
-                  <Label htmlFor="specialOrCriminalData">{__("Special or Criminal Data")} *</Label>
-                  <Controller
-                    control={control}
-                    name="specialOrCriminalData"
-                    render={({ field }) => (
-                      <Select
-                        id="specialOrCriminalData"
-                        placeholder={__("Select special or criminal data status")}
-                        onValueChange={field.onChange}
-                        value={field.value}
-                        className="w-full"
-                        disabled={isSnapshotMode}
-                      >
-                        <SpecialOrCriminalDataOptions />
-                      </Select>
-                    )}
-                  />
-                  {formState.errors.specialOrCriminalData && (
-                    <p className="text-sm text-txt-danger mt-1">{formState.errors.specialOrCriminalData.message}</p>
-                  )}
-                </div>
-
-                <Field
-                  label={__("Consent Evidence Link")}
-                  {...register("consentEvidenceLink")}
-                  placeholder={__("Link to consent evidence if applicable")}
-                  disabled={isSnapshotMode}
-                />
-
-                <div>
-                  <Label htmlFor="lawfulBasis">{__("Lawful Basis")} *</Label>
-                  <Controller
-                    control={control}
-                    name="lawfulBasis"
-                    render={({ field }) => (
-                      <Select
-                        id="lawfulBasis"
-                        placeholder={__("Select lawful basis for processing")}
-                        onValueChange={field.onChange}
-                        value={field.value}
-                        className="w-full"
-                        disabled={isSnapshotMode}
-                      >
-                        <LawfulBasisOptions />
-                      </Select>
-                    )}
-                  />
-                  {formState.errors.lawfulBasis && (
-                    <p className="text-sm text-txt-danger mt-1">{formState.errors.lawfulBasis.message}</p>
-                  )}
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <Field
-                  label={__("Recipients")}
-                  {...register("recipients")}
-                  placeholder={__("Who receives the data")}
-                  disabled={isSnapshotMode}
-                />
-
-                <Field
-                  label={__("Location")}
-                  {...register("location")}
-                  placeholder={__("Where is the data processed")}
-                  disabled={isSnapshotMode}
-                />
-
-                <Controller
-                  control={control}
-                  name="internationalTransfers"
-                  render={({ field }) => (
-                    <div>
-                      <Label>{__("International Transfers")}</Label>
-                      <div className="mt-2 flex items-center gap-2">
-                        <Checkbox
-                          checked={field.value ?? false}
-                          onChange={field.onChange}
+                  <div>
+                    <Label htmlFor="role">{__("Role")} *</Label>
+                    <Controller
+                      control={control}
+                      name="role"
+                      render={({ field }) => (
+                        <Select
+                          id="role"
+                          placeholder={__("Select role")}
+                          onValueChange={field.onChange}
+                          value={field.value}
+                          className="w-full"
                           disabled={isSnapshotMode}
-                        />
-                        <span>{__("Data is transferred internationally")}</span>
-                      </div>
-                    </div>
-                  )}
-                />
-
-                <div>
-                  <Label htmlFor="transferSafeguards">{__("Transfer Safeguards")}</Label>
-                  <Controller
-                    control={control}
-                    name="transferSafeguards"
-                    render={({ field }) => (
-                      <Select
-                        id="transferSafeguards"
-                        placeholder={__("Select transfer safeguards")}
-                        onValueChange={field.onChange}
-                        value={field.value}
-                        className="w-full"
-                        disabled={isSnapshotMode}
-                      >
-                        <TransferSafeguardsOptions />
-                      </Select>
+                        >
+                          <RoleOptions />
+                        </Select>
+                      )}
+                    />
+                    {formState.errors.role && (
+                      <p className="text-sm text-txt-danger mt-1">{formState.errors.role.message}</p>
                     )}
+                  </div>
+
+                  <div>
+                    <Label>{__("Purpose")}</Label>
+                    <Textarea
+                      {...register("purpose")}
+                      placeholder={__("Describe the purpose of processing")}
+                      rows={3}
+                      disabled={isSnapshotMode}
+                    />
+                  </div>
+
+                  <Field
+                    label={__("Data Subject Category")}
+                    {...register("dataSubjectCategory")}
+                    placeholder={__("e.g., employees, customers, prospects")}
+                    disabled={isSnapshotMode}
                   />
-                  {formState.errors.transferSafeguards && (
-                    <p className="text-sm text-txt-danger mt-1">{formState.errors.transferSafeguards.message}</p>
-                  )}
-                </div>
 
-                <Field
-                  label={__("Retention Period")}
-                  {...register("retentionPeriod")}
-                  placeholder={__("How long is data retained")}
-                  disabled={isSnapshotMode}
-                />
+                  <Field
+                    label={__("Personal Data Category")}
+                    {...register("personalDataCategory")}
+                    placeholder={__("e.g., contact details, financial data")}
+                    disabled={isSnapshotMode}
+                  />
 
-                <div>
-                  <Label>{__("Security Measures")}</Label>
-                  <Textarea
-                    {...register("securityMeasures")}
-                    placeholder={__("Technical and organizational measures")}
-                    rows={3}
+                  <div>
+                    <Label htmlFor="specialOrCriminalData">{__("Special or Criminal Data")} *</Label>
+                    <Controller
+                      control={control}
+                      name="specialOrCriminalData"
+                      render={({ field }) => (
+                        <Select
+                          id="specialOrCriminalData"
+                          placeholder={__("Select special or criminal data status")}
+                          onValueChange={field.onChange}
+                          value={field.value}
+                          className="w-full"
+                          disabled={isSnapshotMode}
+                        >
+                          <SpecialOrCriminalDataOptions />
+                        </Select>
+                      )}
+                    />
+                    {formState.errors.specialOrCriminalData && (
+                      <p className="text-sm text-txt-danger mt-1">{formState.errors.specialOrCriminalData.message}</p>
+                    )}
+                  </div>
+
+                  <Field
+                    label={__("Consent Evidence Link")}
+                    {...register("consentEvidenceLink")}
+                    placeholder={__("Link to consent evidence if applicable")}
+                    disabled={isSnapshotMode}
+                  />
+
+                  <div>
+                    <Label htmlFor="lawfulBasis">{__("Lawful Basis")} *</Label>
+                    <Controller
+                      control={control}
+                      name="lawfulBasis"
+                      render={({ field }) => (
+                        <Select
+                          id="lawfulBasis"
+                          placeholder={__("Select lawful basis for processing")}
+                          onValueChange={field.onChange}
+                          value={field.value}
+                          className="w-full"
+                          disabled={isSnapshotMode}
+                        >
+                          <LawfulBasisOptions />
+                        </Select>
+                      )}
+                    />
+                    {formState.errors.lawfulBasis && (
+                      <p className="text-sm text-txt-danger mt-1">{formState.errors.lawfulBasis.message}</p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="lastReviewDate">{__("Last Review Date")}</Label>
+                    <Input
+                      id="lastReviewDate"
+                      type="date"
+                      {...register("lastReviewDate")}
+                      disabled={isSnapshotMode}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="nextReviewDate">{__("Next Review Date")}</Label>
+                    <Input
+                      id="nextReviewDate"
+                      type="date"
+                      {...register("nextReviewDate")}
+                      disabled={isSnapshotMode}
+                    />
+                  </div>
+
+                  <PeopleSelectField
+                    organizationId={organizationId}
+                    control={control}
+                    name="dataProtectionOfficerId"
+                    label={__("Data Protection Officer")}
                     disabled={isSnapshotMode}
                   />
                 </div>
 
-                <div>
-                  <Label htmlFor="dataProtectionImpactAssessment">{__("Data Protection Impact Assessment")} *</Label>
-                  <Controller
-                    control={control}
-                    name="dataProtectionImpactAssessment"
-                    render={({ field }) => (
-                      <Select
-                        id="dataProtectionImpactAssessment"
-                        placeholder={__("Is DPIA needed?")}
-                        onValueChange={field.onChange}
-                        value={field.value}
-                        className="w-full"
-                        disabled={isSnapshotMode}
-                      >
-                        <DataProtectionImpactAssessmentOptions />
-                      </Select>
-                    )}
+                <div className="space-y-4">
+                  <Field
+                    label={__("Recipients")}
+                    {...register("recipients")}
+                    placeholder={__("Who receives the data")}
+                    disabled={isSnapshotMode}
                   />
-                  {formState.errors.dataProtectionImpactAssessment && (
-                    <p className="text-sm text-txt-danger mt-1">{formState.errors.dataProtectionImpactAssessment.message}</p>
-                  )}
-                </div>
 
-                <div>
-                  <Label htmlFor="transferImpactAssessment">{__("Transfer Impact Assessment")} *</Label>
+                  <Field
+                    label={__("Location")}
+                    {...register("location")}
+                    placeholder={__("Where is the data processed")}
+                    disabled={isSnapshotMode}
+                  />
+
                   <Controller
                     control={control}
-                    name="transferImpactAssessment"
+                    name="internationalTransfers"
                     render={({ field }) => (
-                      <Select
-                        id="transferImpactAssessment"
-                        placeholder={__("Is TIA needed?")}
-                        onValueChange={field.onChange}
-                        value={field.value}
-                        className="w-full"
-                        disabled={isSnapshotMode}
-                      >
-                        <TransferImpactAssessmentOptions />
-                      </Select>
+                      <div>
+                        <Label>{__("International Transfers")}</Label>
+                        <div className="mt-2 flex items-center gap-2">
+                          <Checkbox
+                            checked={field.value ?? false}
+                            onChange={field.onChange}
+                            disabled={isSnapshotMode}
+                          />
+                          <span>{__("Data is transferred internationally")}</span>
+                        </div>
+                      </div>
                     )}
                   />
-                  {formState.errors.transferImpactAssessment && (
-                    <p className="text-sm text-txt-danger mt-1">{formState.errors.transferImpactAssessment.message}</p>
-                  )}
+
+                  <div>
+                    <Label htmlFor="transferSafeguards">{__("Transfer Safeguards")}</Label>
+                    <Controller
+                      control={control}
+                      name="transferSafeguards"
+                      render={({ field }) => (
+                        <Select
+                          id="transferSafeguards"
+                          placeholder={__("Select transfer safeguards")}
+                          onValueChange={field.onChange}
+                          value={field.value}
+                          className="w-full"
+                          disabled={isSnapshotMode}
+                        >
+                          <TransferSafeguardsOptions />
+                        </Select>
+                      )}
+                    />
+                    {formState.errors.transferSafeguards && (
+                      <p className="text-sm text-txt-danger mt-1">{formState.errors.transferSafeguards.message}</p>
+                    )}
+                  </div>
+
+                  <Field
+                    label={__("Retention Period")}
+                    {...register("retentionPeriod")}
+                    placeholder={__("How long is data retained")}
+                    disabled={isSnapshotMode}
+                  />
+
+                  <div>
+                    <Label>{__("Security Measures")}</Label>
+                    <Textarea
+                      {...register("securityMeasures")}
+                      placeholder={__("Technical and organizational measures")}
+                      rows={3}
+                      disabled={isSnapshotMode}
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="dataProtectionImpactAssessment">{__("Data Protection Impact Assessment")} *</Label>
+                    <Controller
+                      control={control}
+                      name="dataProtectionImpactAssessment"
+                      render={({ field }) => (
+                        <Select
+                          id="dataProtectionImpactAssessment"
+                          placeholder={__("Is DPIA needed?")}
+                          onValueChange={field.onChange}
+                          value={field.value}
+                          className="w-full"
+                          disabled={isSnapshotMode}
+                        >
+                          <DataProtectionImpactAssessmentOptions />
+                        </Select>
+                      )}
+                    />
+                    {formState.errors.dataProtectionImpactAssessment && (
+                      <p className="text-sm text-txt-danger mt-1">{formState.errors.dataProtectionImpactAssessment.message}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <Label htmlFor="transferImpactAssessment">{__("Transfer Impact Assessment")} *</Label>
+                    <Controller
+                      control={control}
+                      name="transferImpactAssessment"
+                      render={({ field }) => (
+                        <Select
+                          id="transferImpactAssessment"
+                          placeholder={__("Is TIA needed?")}
+                          onValueChange={field.onChange}
+                          value={field.value}
+                          className="w-full"
+                          disabled={isSnapshotMode}
+                        >
+                          <TransferImpactAssessmentOptions />
+                        </Select>
+                      )}
+                    />
+                    {formState.errors.transferImpactAssessment && (
+                      <p className="text-sm text-txt-danger mt-1">{formState.errors.transferImpactAssessment.message}</p>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <VendorsMultiSelectField
-              organizationId={organizationId}
-              control={control}
-              name="vendorIds"
-              selectedVendors={vendors}
-              label={__("Vendors")}
-              disabled={isSnapshotMode}
-            />
+              <VendorsMultiSelectField
+                organizationId={organizationId}
+                control={control}
+                name="vendorIds"
+                selectedVendors={vendors}
+                label={__("Vendors")}
+                disabled={isSnapshotMode}
+              />
 
-            {!isSnapshotMode && (
-              <div className="flex justify-end pt-4">
-                {isAuthorized("ProcessingActivity", "updateProcessingActivity") && (
+              {!isSnapshotMode && (
+                <div className="flex justify-end pt-4">
+                  {isAuthorized("ProcessingActivity", "updateProcessingActivity") && (
+                    <Button
+                      type="submit"
+                      variant="primary"
+                      disabled={formState.isSubmitting}
+                    >
+                      {formState.isSubmitting ? __("Saving...") : __("Save Changes")}
+                    </Button>
+                  )}
+                </div>
+              )}
+            </form>
+          </div>
+        </Card>
+      )}
+
+      {activeTab === "dpia" && (
+        <Card>
+          <div className="p-6">
+            {!showDpiaForm && (!activity?.dpia?.id || dpiaDeleted) ? (
+              <div className="flex flex-col items-center justify-center py-16 w-full">
+                <h2 className="text-xl font-semibold mb-6 text-center">{__("Data Protection Impact Assessment")}</h2>
+                {!isSnapshotMode && isAuthorized("ProcessingActivity", "createProcessingActivityDPIA") && (
                   <Button
-                    type="submit"
                     variant="primary"
-                    disabled={formState.isSubmitting}
+                    onClick={() => setShowDpiaForm(true)}
                   >
-                    {formState.isSubmitting ? __("Saving...") : __("Save Changes")}
+                    {__("Create DPIA")}
                   </Button>
                 )}
               </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-semibold">{__("Data Protection Impact Assessment")}</h2>
+                  {!isSnapshotMode && activity?.dpia?.id && !dpiaDeleted && isAuthorized("ProcessingActivity", "deleteProcessingActivityDPIA") && (
+                    <Button
+                      variant="danger"
+                      onClick={deleteDPIA}
+                    >
+                      {__("Delete DPIA")}
+                    </Button>
+                  )}
+                </div>
+
+                <form onSubmit={onDPIASubmit} className="space-y-6">
+                  <div>
+                    <Label htmlFor="dpia-description">{__("Description")}</Label>
+                    <Textarea
+                      id="dpia-description"
+                      {...dpiaForm.register("description")}
+                      placeholder={__("Describe the processing activity and its purpose")}
+                      rows={4}
+                      disabled={isSnapshotMode}
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="dpia-necessity">{__("Necessity and Proportionality")}</Label>
+                    <Textarea
+                      id="dpia-necessity"
+                      {...dpiaForm.register("necessityAndProportionality")}
+                      placeholder={__("Explain why the processing is necessary and proportionate")}
+                      rows={4}
+                      disabled={isSnapshotMode}
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="dpia-potential-risk">{__("Potential Risk")}</Label>
+                    <Textarea
+                      id="dpia-potential-risk"
+                      {...dpiaForm.register("potentialRisk")}
+                      placeholder={__("Describe the potential risks to data subjects")}
+                      rows={4}
+                      disabled={isSnapshotMode}
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="dpia-mitigations">{__("Mitigations")}</Label>
+                    <Textarea
+                      id="dpia-mitigations"
+                      {...dpiaForm.register("mitigations")}
+                      placeholder={__("Describe measures to mitigate the identified risks")}
+                      rows={4}
+                      disabled={isSnapshotMode}
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="dpia-residual-risk">{__("Residual Risk")}</Label>
+                    <Controller
+                      control={dpiaForm.control}
+                      name="residualRisk"
+                      render={({ field }) => (
+                        <Select
+                          id="dpia-residual-risk"
+                          placeholder={__("Select residual risk level")}
+                          onValueChange={field.onChange}
+                          value={field.value}
+                          className="w-full"
+                          disabled={isSnapshotMode}
+                        >
+                          <Option value="LOW">{__("Low")}</Option>
+                          <Option value="MEDIUM">{__("Medium")}</Option>
+                          <Option value="HIGH">{__("High")}</Option>
+                        </Select>
+                      )}
+                    />
+                  </div>
+
+                  {!isSnapshotMode && (
+                    <div className="flex justify-end gap-3 pt-4">
+                      {(!activity?.dpia?.id || dpiaDeleted) && (
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          onClick={() => setShowDpiaForm(false)}
+                        >
+                          {__("Cancel")}
+                        </Button>
+                      )}
+                      {(activity?.dpia?.id && !dpiaDeleted
+                        ? isAuthorized("ProcessingActivity", "updateProcessingActivityDPIA")
+                        : isAuthorized("ProcessingActivity", "createProcessingActivityDPIA")) && (
+                        <Button
+                          type="submit"
+                          variant="primary"
+                          disabled={dpiaSubmitting}
+                        >
+                          {dpiaSubmitting
+                            ? __("Saving...")
+                            : activity?.dpia?.id && !dpiaDeleted
+                            ? __("Update DPIA")
+                            : __("Create DPIA")}
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </form>
+              </>
             )}
-          </form>
-        </div>
-      </Card>
+          </div>
+        </Card>
+      )}
+
+      {activeTab === "tia" && (
+        <Card>
+          <div className="p-6">
+            {!showTiaForm && (!activity?.tia?.id || tiaDeleted) ? (
+              <div className="flex flex-col items-center justify-center py-16 w-full">
+                <h2 className="text-xl font-semibold mb-6 text-center">{__("Transfer Impact Assessment")}</h2>
+                {!isSnapshotMode && isAuthorized("ProcessingActivity", "createProcessingActivityTIA") && (
+                  <Button
+                    variant="primary"
+                    onClick={() => setShowTiaForm(true)}
+                  >
+                    {__("Create TIA")}
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-semibold">{__("Transfer Impact Assessment")}</h2>
+                  {!isSnapshotMode && activity?.tia?.id && !tiaDeleted && isAuthorized("ProcessingActivity", "deleteProcessingActivityTIA") && (
+                    <Button
+                      variant="danger"
+                      onClick={deleteTIA}
+                    >
+                      {__("Delete TIA")}
+                    </Button>
+                  )}
+                </div>
+
+                <form onSubmit={onTIASubmit} className="space-y-6">
+                  <div>
+                    <Label htmlFor="tia-data-subjects">{__("Data Subjects")}</Label>
+                    <Textarea
+                      id="tia-data-subjects"
+                      {...tiaForm.register("dataSubjects")}
+                      placeholder={__("Describe the data subjects involved in the transfer")}
+                      rows={4}
+                      disabled={isSnapshotMode}
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="tia-legal-mechanism">{__("Legal Mechanism")}</Label>
+                    <Textarea
+                      id="tia-legal-mechanism"
+                      {...tiaForm.register("legalMechanism")}
+                      placeholder={__("Describe the legal mechanism for the transfer (e.g., SCCs, BCRs, adequacy decision)")}
+                      rows={4}
+                      disabled={isSnapshotMode}
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="tia-transfer">{__("Transfer")}</Label>
+                    <Textarea
+                      id="tia-transfer"
+                      {...tiaForm.register("transfer")}
+                      placeholder={__("Describe the nature and details of the data transfer")}
+                      rows={4}
+                      disabled={isSnapshotMode}
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="tia-local-law-risk">{__("Local Law Risk")}</Label>
+                    <Textarea
+                      id="tia-local-law-risk"
+                      {...tiaForm.register("localLawRisk")}
+                      placeholder={__("Assess the risks related to the local laws of the destination country")}
+                      rows={4}
+                      disabled={isSnapshotMode}
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="tia-supplementary-measures">{__("Supplementary Measures")}</Label>
+                    <Textarea
+                      id="tia-supplementary-measures"
+                      {...tiaForm.register("supplementaryMeasures")}
+                      placeholder={__("Describe any supplementary measures taken to ensure adequate protection")}
+                      rows={4}
+                      disabled={isSnapshotMode}
+                    />
+                  </div>
+
+                  {!isSnapshotMode && (
+                    <div className="flex justify-end gap-3 pt-4">
+                      {(!activity?.tia?.id || tiaDeleted) && (
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          onClick={() => setShowTiaForm(false)}
+                        >
+                          {__("Cancel")}
+                        </Button>
+                      )}
+                      {(activity?.tia?.id && !tiaDeleted
+                        ? isAuthorized("ProcessingActivity", "updateProcessingActivityTIA")
+                        : isAuthorized("ProcessingActivity", "createProcessingActivityTIA")) && (
+                        <Button
+                          type="submit"
+                          variant="primary"
+                          disabled={tiaSubmitting}
+                        >
+                          {tiaSubmitting
+                            ? __("Saving...")
+                            : activity?.tia?.id && !tiaDeleted
+                            ? __("Update TIA")
+                            : __("Create TIA")}
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </form>
+              </>
+            )}
+          </div>
+        </Card>
+      )}
     </div>
   );
 }

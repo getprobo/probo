@@ -919,6 +919,7 @@ func CreateProcessingActivity(c *testutil.Client, attrs ...Attrs) string {
 		"internationalTransfers":         a.getBool("internationalTransfers", false),
 		"dataProtectionImpactAssessment": a.getString("dataProtectionImpactAssessment", "NOT_NEEDED"),
 		"transferImpactAssessment":       a.getString("transferImpactAssessment", "NOT_NEEDED"),
+		"role":                           a.getString("role", "CONTROLLER"),
 	}
 	if purpose := a.getStringPtr("purpose"); purpose != nil {
 		input["purpose"] = *purpose

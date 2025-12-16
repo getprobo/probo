@@ -45,6 +45,7 @@ func TestProcessingActivity_Create(t *testing.T) {
 				"specialOrCriminalData":          "NO",
 				"dataProtectionImpactAssessment": "NOT_NEEDED",
 				"transferImpactAssessment":       "NOT_NEEDED",
+				"role":                           "CONTROLLER",
 			},
 			assertField: "name",
 			assertValue: "Customer Data Processing",
@@ -58,6 +59,7 @@ func TestProcessingActivity_Create(t *testing.T) {
 				"internationalTransfers":         false,
 				"dataProtectionImpactAssessment": "NOT_NEEDED",
 				"transferImpactAssessment":       "NOT_NEEDED",
+				"role":                           "CONTROLLER",
 			},
 			assertField: "lawfulBasis",
 			assertValue: "CONSENT",
@@ -71,6 +73,7 @@ func TestProcessingActivity_Create(t *testing.T) {
 				"internationalTransfers":         false,
 				"dataProtectionImpactAssessment": "NOT_NEEDED",
 				"transferImpactAssessment":       "NOT_NEEDED",
+				"role":                           "CONTROLLER",
 			},
 			assertField: "lawfulBasis",
 			assertValue: "LEGITIMATE_INTEREST",
@@ -84,6 +87,7 @@ func TestProcessingActivity_Create(t *testing.T) {
 				"specialOrCriminalData":          "NO",
 				"dataProtectionImpactAssessment": "NOT_NEEDED",
 				"transferImpactAssessment":       "NOT_NEEDED",
+				"role":                           "CONTROLLER",
 			},
 			assertField: "internationalTransfers",
 			assertValue: true,
@@ -164,6 +168,7 @@ func TestProcessingActivity_Create_Validation(t *testing.T) {
 				"internationalTransfers":         false,
 				"dataProtectionImpactAssessment": "NOT_NEEDED",
 				"transferImpactAssessment":       "NOT_NEEDED",
+				"role":                           "CONTROLLER",
 			},
 			skipOrganization:  true,
 			wantErrorContains: "organizationId",
@@ -518,6 +523,7 @@ func TestProcessingActivity_Timestamps(t *testing.T) {
 				"internationalTransfers":         false,
 				"dataProtectionImpactAssessment": "NOT_NEEDED",
 				"transferImpactAssessment":       "NOT_NEEDED",
+				"role":                           "CONTROLLER",
 			},
 		}, &result)
 		require.NoError(t, err)
@@ -647,6 +653,7 @@ func TestProcessingActivity_RBAC(t *testing.T) {
 					"internationalTransfers":         false,
 					"dataProtectionImpactAssessment": "NOT_NEEDED",
 					"transferImpactAssessment":       "NOT_NEEDED",
+					"role":                           "CONTROLLER",
 				},
 			})
 			require.NoError(t, err, "owner should be able to create processing activity")
@@ -671,6 +678,7 @@ func TestProcessingActivity_RBAC(t *testing.T) {
 					"internationalTransfers":         false,
 					"dataProtectionImpactAssessment": "NOT_NEEDED",
 					"transferImpactAssessment":       "NOT_NEEDED",
+					"role":                           "CONTROLLER",
 				},
 			})
 			require.NoError(t, err, "admin should be able to create processing activity")
@@ -695,6 +703,7 @@ func TestProcessingActivity_RBAC(t *testing.T) {
 					"internationalTransfers":         false,
 					"dataProtectionImpactAssessment": "NOT_NEEDED",
 					"transferImpactAssessment":       "NOT_NEEDED",
+					"role":                           "CONTROLLER",
 				},
 			})
 			testutil.RequireForbiddenError(t, err, "viewer should not be able to create processing activity")
@@ -884,7 +893,6 @@ func TestProcessingActivity_RBAC(t *testing.T) {
 		})
 	})
 }
-
 
 func TestProcessingActivity_Pagination(t *testing.T) {
 	t.Parallel()
@@ -1231,4 +1239,1072 @@ func TestProcessingActivity_LawfulBasis(t *testing.T) {
 			assert.Equal(t, basis, result.Node.LawfulBasis)
 		})
 	}
+}
+
+func TestProcessingActivity_Role(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	roles := []string{"CONTROLLER", "PROCESSOR"}
+
+	for _, role := range roles {
+		t.Run(role, func(t *testing.T) {
+			query := `
+				mutation CreateProcessingActivity($input: CreateProcessingActivityInput!) {
+					createProcessingActivity(input: $input) {
+						processingActivityEdge {
+							node {
+								id
+								role
+							}
+						}
+					}
+				}
+			`
+
+			var result struct {
+				CreateProcessingActivity struct {
+					ProcessingActivityEdge struct {
+						Node struct {
+							ID   string `json:"id"`
+							Role string `json:"role"`
+						} `json:"node"`
+					} `json:"processingActivityEdge"`
+				} `json:"createProcessingActivity"`
+			}
+
+			err := owner.Execute(query, map[string]any{
+				"input": map[string]any{
+					"organizationId":                 owner.GetOrganizationID().String(),
+					"name":                           fmt.Sprintf("PA Role %s", role),
+					"lawfulBasis":                    "CONSENT",
+					"specialOrCriminalData":          "NO",
+					"internationalTransfers":         false,
+					"dataProtectionImpactAssessment": "NOT_NEEDED",
+					"transferImpactAssessment":       "NOT_NEEDED",
+					"role":                           role,
+				},
+			}, &result)
+			require.NoError(t, err)
+			assert.Equal(t, role, result.CreateProcessingActivity.ProcessingActivityEdge.Node.Role)
+		})
+	}
+
+	t.Run("update role", func(t *testing.T) {
+		paID := factory.NewProcessingActivity(owner).
+			WithName("Role Update Test").
+			Create()
+
+		query := `
+			mutation UpdateProcessingActivity($input: UpdateProcessingActivityInput!) {
+				updateProcessingActivity(input: $input) {
+					processingActivity {
+						id
+						role
+					}
+				}
+			}
+		`
+
+		var result struct {
+			UpdateProcessingActivity struct {
+				ProcessingActivity struct {
+					ID   string `json:"id"`
+					Role string `json:"role"`
+				} `json:"processingActivity"`
+			} `json:"updateProcessingActivity"`
+		}
+
+		err := owner.Execute(query, map[string]any{
+			"input": map[string]any{
+				"id":   paID,
+				"role": "PROCESSOR",
+			},
+		}, &result)
+		require.NoError(t, err)
+		assert.Equal(t, "PROCESSOR", result.UpdateProcessingActivity.ProcessingActivity.Role)
+	})
+}
+
+func TestProcessingActivity_ReviewDates(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	t.Run("create with review dates", func(t *testing.T) {
+		query := `
+			mutation CreateProcessingActivity($input: CreateProcessingActivityInput!) {
+				createProcessingActivity(input: $input) {
+					processingActivityEdge {
+						node {
+							id
+							lastReviewDate
+							nextReviewDate
+						}
+					}
+				}
+			}
+		`
+
+		var result struct {
+			CreateProcessingActivity struct {
+				ProcessingActivityEdge struct {
+					Node struct {
+						ID             string  `json:"id"`
+						LastReviewDate *string `json:"lastReviewDate"`
+						NextReviewDate *string `json:"nextReviewDate"`
+					} `json:"node"`
+				} `json:"processingActivityEdge"`
+			} `json:"createProcessingActivity"`
+		}
+
+		err := owner.Execute(query, map[string]any{
+			"input": map[string]any{
+				"organizationId":                 owner.GetOrganizationID().String(),
+				"name":                           "PA Review Dates Test",
+				"lawfulBasis":                    "CONSENT",
+				"specialOrCriminalData":          "NO",
+				"internationalTransfers":         false,
+				"dataProtectionImpactAssessment": "NOT_NEEDED",
+				"transferImpactAssessment":       "NOT_NEEDED",
+				"role":                           "CONTROLLER",
+				"lastReviewDate":                 "2024-01-15T00:00:00Z",
+				"nextReviewDate":                 "2025-01-15T00:00:00Z",
+			},
+		}, &result)
+		require.NoError(t, err)
+		require.NotNil(t, result.CreateProcessingActivity.ProcessingActivityEdge.Node.LastReviewDate)
+		require.NotNil(t, result.CreateProcessingActivity.ProcessingActivityEdge.Node.NextReviewDate)
+	})
+
+	t.Run("update review dates", func(t *testing.T) {
+		paID := factory.NewProcessingActivity(owner).
+			WithName("Review Date Update Test").
+			Create()
+
+		query := `
+			mutation UpdateProcessingActivity($input: UpdateProcessingActivityInput!) {
+				updateProcessingActivity(input: $input) {
+					processingActivity {
+						id
+						lastReviewDate
+						nextReviewDate
+					}
+				}
+			}
+		`
+
+		var result struct {
+			UpdateProcessingActivity struct {
+				ProcessingActivity struct {
+					ID             string  `json:"id"`
+					LastReviewDate *string `json:"lastReviewDate"`
+					NextReviewDate *string `json:"nextReviewDate"`
+				} `json:"processingActivity"`
+			} `json:"updateProcessingActivity"`
+		}
+
+		err := owner.Execute(query, map[string]any{
+			"input": map[string]any{
+				"id":             paID,
+				"lastReviewDate": "2024-06-01T00:00:00Z",
+				"nextReviewDate": "2025-06-01T00:00:00Z",
+			},
+		}, &result)
+		require.NoError(t, err)
+		require.NotNil(t, result.UpdateProcessingActivity.ProcessingActivity.LastReviewDate)
+		require.NotNil(t, result.UpdateProcessingActivity.ProcessingActivity.NextReviewDate)
+	})
+}
+
+func TestProcessingActivity_DPIA(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	t.Run("create DPIA", func(t *testing.T) {
+		paID := factory.NewProcessingActivity(owner).
+			WithName("DPIA Create Test").
+			Create()
+
+		query := `
+			mutation CreateProcessingActivityDPIA($input: CreateProcessingActivityDPIAInput!) {
+				createProcessingActivityDPIA(input: $input) {
+					processingActivityDpia {
+						id
+						description
+						necessityAndProportionality
+						potentialRisk
+						mitigations
+						residualRisk
+					}
+				}
+			}
+		`
+
+		var result struct {
+			CreateProcessingActivityDPIA struct {
+				ProcessingActivityDpia struct {
+					ID                          string  `json:"id"`
+					Description                 *string `json:"description"`
+					NecessityAndProportionality *string `json:"necessityAndProportionality"`
+					PotentialRisk               *string `json:"potentialRisk"`
+					Mitigations                 *string `json:"mitigations"`
+					ResidualRisk                *string `json:"residualRisk"`
+				} `json:"processingActivityDpia"`
+			} `json:"createProcessingActivityDPIA"`
+		}
+
+		err := owner.Execute(query, map[string]any{
+			"input": map[string]any{
+				"processingActivityId":        paID,
+				"description":                 "Test DPIA description",
+				"necessityAndProportionality": "Test necessity",
+				"potentialRisk":               "Test risk",
+				"mitigations":                 "Test mitigations",
+				"residualRisk":                "LOW",
+			},
+		}, &result)
+		require.NoError(t, err)
+		assert.NotEmpty(t, result.CreateProcessingActivityDPIA.ProcessingActivityDpia.ID)
+		assert.Equal(t, "Test DPIA description", *result.CreateProcessingActivityDPIA.ProcessingActivityDpia.Description)
+		assert.Equal(t, "LOW", *result.CreateProcessingActivityDPIA.ProcessingActivityDpia.ResidualRisk)
+	})
+
+	t.Run("read DPIA via processing activity", func(t *testing.T) {
+		paID := factory.NewProcessingActivity(owner).
+			WithName("DPIA Read Test").
+			Create()
+
+		createQuery := `
+			mutation CreateProcessingActivityDPIA($input: CreateProcessingActivityDPIAInput!) {
+				createProcessingActivityDPIA(input: $input) {
+					processingActivityDpia { id }
+				}
+			}
+		`
+		_, err := owner.Do(createQuery, map[string]any{
+			"input": map[string]any{
+				"processingActivityId": paID,
+				"description":          "Read test DPIA",
+				"residualRisk":         "MEDIUM",
+			},
+		})
+		require.NoError(t, err)
+
+		readQuery := `
+			query($id: ID!) {
+				node(id: $id) {
+					... on ProcessingActivity {
+						id
+						dpia {
+							id
+							description
+							residualRisk
+						}
+					}
+				}
+			}
+		`
+
+		var result struct {
+			Node struct {
+				ID   string `json:"id"`
+				Dpia *struct {
+					ID           string  `json:"id"`
+					Description  *string `json:"description"`
+					ResidualRisk *string `json:"residualRisk"`
+				} `json:"dpia"`
+			} `json:"node"`
+		}
+
+		err = owner.Execute(readQuery, map[string]any{"id": paID}, &result)
+		require.NoError(t, err)
+		require.NotNil(t, result.Node.Dpia)
+		assert.Equal(t, "Read test DPIA", *result.Node.Dpia.Description)
+		assert.Equal(t, "MEDIUM", *result.Node.Dpia.ResidualRisk)
+	})
+
+	t.Run("update DPIA", func(t *testing.T) {
+		paID := factory.NewProcessingActivity(owner).
+			WithName("DPIA Update Test").
+			Create()
+
+		createQuery := `
+			mutation CreateProcessingActivityDPIA($input: CreateProcessingActivityDPIAInput!) {
+				createProcessingActivityDPIA(input: $input) {
+					processingActivityDpia { id }
+				}
+			}
+		`
+		var createResult struct {
+			CreateProcessingActivityDPIA struct {
+				ProcessingActivityDpia struct {
+					ID string `json:"id"`
+				} `json:"processingActivityDpia"`
+			} `json:"createProcessingActivityDPIA"`
+		}
+		err := owner.Execute(createQuery, map[string]any{
+			"input": map[string]any{
+				"processingActivityId": paID,
+				"description":          "Original description",
+				"residualRisk":         "LOW",
+			},
+		}, &createResult)
+		require.NoError(t, err)
+		dpiaID := createResult.CreateProcessingActivityDPIA.ProcessingActivityDpia.ID
+
+		updateQuery := `
+			mutation UpdateProcessingActivityDPIA($input: UpdateProcessingActivityDPIAInput!) {
+				updateProcessingActivityDPIA(input: $input) {
+					processingActivityDpia {
+						id
+						description
+						residualRisk
+					}
+				}
+			}
+		`
+
+		var updateResult struct {
+			UpdateProcessingActivityDPIA struct {
+				ProcessingActivityDpia struct {
+					ID           string  `json:"id"`
+					Description  *string `json:"description"`
+					ResidualRisk *string `json:"residualRisk"`
+				} `json:"processingActivityDpia"`
+			} `json:"updateProcessingActivityDPIA"`
+		}
+
+		err = owner.Execute(updateQuery, map[string]any{
+			"input": map[string]any{
+				"id":           dpiaID,
+				"description":  "Updated description",
+				"residualRisk": "HIGH",
+			},
+		}, &updateResult)
+		require.NoError(t, err)
+		assert.Equal(t, "Updated description", *updateResult.UpdateProcessingActivityDPIA.ProcessingActivityDpia.Description)
+		assert.Equal(t, "HIGH", *updateResult.UpdateProcessingActivityDPIA.ProcessingActivityDpia.ResidualRisk)
+	})
+
+	t.Run("delete DPIA", func(t *testing.T) {
+		paID := factory.NewProcessingActivity(owner).
+			WithName("DPIA Delete Test").
+			Create()
+
+		createQuery := `
+			mutation CreateProcessingActivityDPIA($input: CreateProcessingActivityDPIAInput!) {
+				createProcessingActivityDPIA(input: $input) {
+					processingActivityDpia { id }
+				}
+			}
+		`
+		var createResult struct {
+			CreateProcessingActivityDPIA struct {
+				ProcessingActivityDpia struct {
+					ID string `json:"id"`
+				} `json:"processingActivityDpia"`
+			} `json:"createProcessingActivityDPIA"`
+		}
+		err := owner.Execute(createQuery, map[string]any{
+			"input": map[string]any{
+				"processingActivityId": paID,
+				"description":          "To be deleted",
+			},
+		}, &createResult)
+		require.NoError(t, err)
+		dpiaID := createResult.CreateProcessingActivityDPIA.ProcessingActivityDpia.ID
+
+		deleteQuery := `
+			mutation DeleteProcessingActivityDPIA($input: DeleteProcessingActivityDPIAInput!) {
+				deleteProcessingActivityDPIA(input: $input) {
+					deletedProcessingActivityDpiaId
+				}
+			}
+		`
+
+		var deleteResult struct {
+			DeleteProcessingActivityDPIA struct {
+				DeletedProcessingActivityDpiaID string `json:"deletedProcessingActivityDpiaId"`
+			} `json:"deleteProcessingActivityDPIA"`
+		}
+
+		err = owner.Execute(deleteQuery, map[string]any{
+			"input": map[string]any{
+				"processingActivityDpiaId": dpiaID,
+			},
+		}, &deleteResult)
+		require.NoError(t, err)
+		assert.Equal(t, dpiaID, deleteResult.DeleteProcessingActivityDPIA.DeletedProcessingActivityDpiaID)
+
+		readQuery := `
+			query($id: ID!) {
+				node(id: $id) {
+					... on ProcessingActivity {
+						dpia { id }
+					}
+				}
+			}
+		`
+		var readResult struct {
+			Node struct {
+				Dpia *struct {
+					ID string `json:"id"`
+				} `json:"dpia"`
+			} `json:"node"`
+		}
+		err = owner.Execute(readQuery, map[string]any{"id": paID}, &readResult)
+		require.NoError(t, err)
+		assert.Nil(t, readResult.Node.Dpia)
+	})
+
+	t.Run("DPIA residual risk values", func(t *testing.T) {
+		residualRisks := []string{"LOW", "MEDIUM", "HIGH"}
+
+		for _, risk := range residualRisks {
+			t.Run(risk, func(t *testing.T) {
+				paID := factory.NewProcessingActivity(owner).
+					WithName(fmt.Sprintf("DPIA Risk %s", risk)).
+					Create()
+
+				query := `
+					mutation CreateProcessingActivityDPIA($input: CreateProcessingActivityDPIAInput!) {
+						createProcessingActivityDPIA(input: $input) {
+							processingActivityDpia {
+								id
+								residualRisk
+							}
+						}
+					}
+				`
+
+				var result struct {
+					CreateProcessingActivityDPIA struct {
+						ProcessingActivityDpia struct {
+							ID           string  `json:"id"`
+							ResidualRisk *string `json:"residualRisk"`
+						} `json:"processingActivityDpia"`
+					} `json:"createProcessingActivityDPIA"`
+				}
+
+				err := owner.Execute(query, map[string]any{
+					"input": map[string]any{
+						"processingActivityId": paID,
+						"residualRisk":         risk,
+					},
+				}, &result)
+				require.NoError(t, err)
+				assert.Equal(t, risk, *result.CreateProcessingActivityDPIA.ProcessingActivityDpia.ResidualRisk)
+			})
+		}
+	})
+}
+
+func TestProcessingActivity_TIA(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	t.Run("create TIA", func(t *testing.T) {
+		paID := factory.NewProcessingActivity(owner).
+			WithName("TIA Create Test").
+			Create()
+
+		query := `
+			mutation CreateProcessingActivityTIA($input: CreateProcessingActivityTIAInput!) {
+				createProcessingActivityTIA(input: $input) {
+					processingActivityTia {
+						id
+						dataSubjects
+						legalMechanism
+						transfer
+						localLawRisk
+						supplementaryMeasures
+					}
+				}
+			}
+		`
+
+		var result struct {
+			CreateProcessingActivityTIA struct {
+				ProcessingActivityTia struct {
+					ID                    string  `json:"id"`
+					DataSubjects          *string `json:"dataSubjects"`
+					LegalMechanism        *string `json:"legalMechanism"`
+					Transfer              *string `json:"transfer"`
+					LocalLawRisk          *string `json:"localLawRisk"`
+					SupplementaryMeasures *string `json:"supplementaryMeasures"`
+				} `json:"processingActivityTia"`
+			} `json:"createProcessingActivityTIA"`
+		}
+
+		err := owner.Execute(query, map[string]any{
+			"input": map[string]any{
+				"processingActivityId":  paID,
+				"dataSubjects":          "EU customers",
+				"legalMechanism":        "Standard Contractual Clauses",
+				"transfer":              "EU to US",
+				"localLawRisk":          "Moderate risk due to surveillance laws",
+				"supplementaryMeasures": "Encryption at rest and in transit",
+			},
+		}, &result)
+		require.NoError(t, err)
+		assert.NotEmpty(t, result.CreateProcessingActivityTIA.ProcessingActivityTia.ID)
+		assert.Equal(t, "EU customers", *result.CreateProcessingActivityTIA.ProcessingActivityTia.DataSubjects)
+		assert.Equal(t, "Standard Contractual Clauses", *result.CreateProcessingActivityTIA.ProcessingActivityTia.LegalMechanism)
+	})
+
+	t.Run("read TIA via processing activity", func(t *testing.T) {
+		paID := factory.NewProcessingActivity(owner).
+			WithName("TIA Read Test").
+			Create()
+
+		createQuery := `
+			mutation CreateProcessingActivityTIA($input: CreateProcessingActivityTIAInput!) {
+				createProcessingActivityTIA(input: $input) {
+					processingActivityTia { id }
+				}
+			}
+		`
+		_, err := owner.Do(createQuery, map[string]any{
+			"input": map[string]any{
+				"processingActivityId": paID,
+				"dataSubjects":         "Read test subjects",
+				"transfer":             "Read test transfer",
+			},
+		})
+		require.NoError(t, err)
+
+		readQuery := `
+			query($id: ID!) {
+				node(id: $id) {
+					... on ProcessingActivity {
+						id
+						tia {
+							id
+							dataSubjects
+							transfer
+						}
+					}
+				}
+			}
+		`
+
+		var result struct {
+			Node struct {
+				ID  string `json:"id"`
+				Tia *struct {
+					ID           string  `json:"id"`
+					DataSubjects *string `json:"dataSubjects"`
+					Transfer     *string `json:"transfer"`
+				} `json:"tia"`
+			} `json:"node"`
+		}
+
+		err = owner.Execute(readQuery, map[string]any{"id": paID}, &result)
+		require.NoError(t, err)
+		require.NotNil(t, result.Node.Tia)
+		assert.Equal(t, "Read test subjects", *result.Node.Tia.DataSubjects)
+		assert.Equal(t, "Read test transfer", *result.Node.Tia.Transfer)
+	})
+
+	t.Run("update TIA", func(t *testing.T) {
+		paID := factory.NewProcessingActivity(owner).
+			WithName("TIA Update Test").
+			Create()
+
+		createQuery := `
+			mutation CreateProcessingActivityTIA($input: CreateProcessingActivityTIAInput!) {
+				createProcessingActivityTIA(input: $input) {
+					processingActivityTia { id }
+				}
+			}
+		`
+		var createResult struct {
+			CreateProcessingActivityTIA struct {
+				ProcessingActivityTia struct {
+					ID string `json:"id"`
+				} `json:"processingActivityTia"`
+			} `json:"createProcessingActivityTIA"`
+		}
+		err := owner.Execute(createQuery, map[string]any{
+			"input": map[string]any{
+				"processingActivityId": paID,
+				"dataSubjects":         "Original subjects",
+				"transfer":             "Original transfer",
+			},
+		}, &createResult)
+		require.NoError(t, err)
+		tiaID := createResult.CreateProcessingActivityTIA.ProcessingActivityTia.ID
+
+		updateQuery := `
+			mutation UpdateProcessingActivityTIA($input: UpdateProcessingActivityTIAInput!) {
+				updateProcessingActivityTIA(input: $input) {
+					processingActivityTia {
+						id
+						dataSubjects
+						transfer
+						legalMechanism
+					}
+				}
+			}
+		`
+
+		var updateResult struct {
+			UpdateProcessingActivityTIA struct {
+				ProcessingActivityTia struct {
+					ID             string  `json:"id"`
+					DataSubjects   *string `json:"dataSubjects"`
+					Transfer       *string `json:"transfer"`
+					LegalMechanism *string `json:"legalMechanism"`
+				} `json:"processingActivityTia"`
+			} `json:"updateProcessingActivityTIA"`
+		}
+
+		err = owner.Execute(updateQuery, map[string]any{
+			"input": map[string]any{
+				"id":             tiaID,
+				"dataSubjects":   "Updated subjects",
+				"transfer":       "Updated transfer",
+				"legalMechanism": "Binding Corporate Rules",
+			},
+		}, &updateResult)
+		require.NoError(t, err)
+		assert.Equal(t, "Updated subjects", *updateResult.UpdateProcessingActivityTIA.ProcessingActivityTia.DataSubjects)
+		assert.Equal(t, "Updated transfer", *updateResult.UpdateProcessingActivityTIA.ProcessingActivityTia.Transfer)
+		assert.Equal(t, "Binding Corporate Rules", *updateResult.UpdateProcessingActivityTIA.ProcessingActivityTia.LegalMechanism)
+	})
+
+	t.Run("delete TIA", func(t *testing.T) {
+		paID := factory.NewProcessingActivity(owner).
+			WithName("TIA Delete Test").
+			Create()
+
+		createQuery := `
+			mutation CreateProcessingActivityTIA($input: CreateProcessingActivityTIAInput!) {
+				createProcessingActivityTIA(input: $input) {
+					processingActivityTia { id }
+				}
+			}
+		`
+		var createResult struct {
+			CreateProcessingActivityTIA struct {
+				ProcessingActivityTia struct {
+					ID string `json:"id"`
+				} `json:"processingActivityTia"`
+			} `json:"createProcessingActivityTIA"`
+		}
+		err := owner.Execute(createQuery, map[string]any{
+			"input": map[string]any{
+				"processingActivityId": paID,
+				"dataSubjects":         "To be deleted",
+			},
+		}, &createResult)
+		require.NoError(t, err)
+		tiaID := createResult.CreateProcessingActivityTIA.ProcessingActivityTia.ID
+
+		deleteQuery := `
+			mutation DeleteProcessingActivityTIA($input: DeleteProcessingActivityTIAInput!) {
+				deleteProcessingActivityTIA(input: $input) {
+					deletedProcessingActivityTiaId
+				}
+			}
+		`
+
+		var deleteResult struct {
+			DeleteProcessingActivityTIA struct {
+				DeletedProcessingActivityTiaID string `json:"deletedProcessingActivityTiaId"`
+			} `json:"deleteProcessingActivityTIA"`
+		}
+
+		err = owner.Execute(deleteQuery, map[string]any{
+			"input": map[string]any{
+				"processingActivityTiaId": tiaID,
+			},
+		}, &deleteResult)
+		require.NoError(t, err)
+		assert.Equal(t, tiaID, deleteResult.DeleteProcessingActivityTIA.DeletedProcessingActivityTiaID)
+
+		readQuery := `
+			query($id: ID!) {
+				node(id: $id) {
+					... on ProcessingActivity {
+						tia { id }
+					}
+				}
+			}
+		`
+		var readResult struct {
+			Node struct {
+				Tia *struct {
+					ID string `json:"id"`
+				} `json:"tia"`
+			} `json:"node"`
+		}
+		err = owner.Execute(readQuery, map[string]any{"id": paID}, &readResult)
+		require.NoError(t, err)
+		assert.Nil(t, readResult.Node.Tia)
+	})
+}
+
+func TestProcessingActivity_DPIA_RBAC(t *testing.T) {
+	t.Parallel()
+
+	t.Run("owner can manage DPIA", func(t *testing.T) {
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+		paID := factory.NewProcessingActivity(owner).WithName("DPIA RBAC Owner Test").Create()
+
+		var createResult struct {
+			CreateProcessingActivityDPIA struct {
+				ProcessingActivityDpia struct {
+					ID string `json:"id"`
+				} `json:"processingActivityDpia"`
+			} `json:"createProcessingActivityDPIA"`
+		}
+		err := owner.Execute(`
+			mutation($input: CreateProcessingActivityDPIAInput!) {
+				createProcessingActivityDPIA(input: $input) {
+					processingActivityDpia { id }
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"processingActivityId": paID,
+				"description":          "Owner DPIA",
+			},
+		}, &createResult)
+		require.NoError(t, err, "owner should be able to create DPIA")
+		dpiaID := createResult.CreateProcessingActivityDPIA.ProcessingActivityDpia.ID
+
+		_, err = owner.Do(`
+			mutation($input: UpdateProcessingActivityDPIAInput!) {
+				updateProcessingActivityDPIA(input: $input) {
+					processingActivityDpia { id }
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"id":          dpiaID,
+				"description": "Updated by owner",
+			},
+		})
+		require.NoError(t, err, "owner should be able to update DPIA")
+
+		_, err = owner.Do(`
+			mutation($input: DeleteProcessingActivityDPIAInput!) {
+				deleteProcessingActivityDPIA(input: $input) {
+					deletedProcessingActivityDpiaId
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"processingActivityDpiaId": dpiaID,
+			},
+		})
+		require.NoError(t, err, "owner should be able to delete DPIA")
+	})
+
+	t.Run("admin can manage DPIA", func(t *testing.T) {
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+		admin := testutil.NewClientInOrg(t, testutil.RoleAdmin, owner)
+		paID := factory.NewProcessingActivity(owner).WithName("DPIA RBAC Admin Test").Create()
+
+		var createResult struct {
+			CreateProcessingActivityDPIA struct {
+				ProcessingActivityDpia struct {
+					ID string `json:"id"`
+				} `json:"processingActivityDpia"`
+			} `json:"createProcessingActivityDPIA"`
+		}
+		err := admin.Execute(`
+			mutation($input: CreateProcessingActivityDPIAInput!) {
+				createProcessingActivityDPIA(input: $input) {
+					processingActivityDpia { id }
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"processingActivityId": paID,
+				"description":          "Admin DPIA",
+			},
+		}, &createResult)
+		require.NoError(t, err, "admin should be able to create DPIA")
+		dpiaID := createResult.CreateProcessingActivityDPIA.ProcessingActivityDpia.ID
+
+		_, err = admin.Do(`
+			mutation($input: UpdateProcessingActivityDPIAInput!) {
+				updateProcessingActivityDPIA(input: $input) {
+					processingActivityDpia { id }
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"id":          dpiaID,
+				"description": "Updated by admin",
+			},
+		})
+		require.NoError(t, err, "admin should be able to update DPIA")
+
+		_, err = admin.Do(`
+			mutation($input: DeleteProcessingActivityDPIAInput!) {
+				deleteProcessingActivityDPIA(input: $input) {
+					deletedProcessingActivityDpiaId
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"processingActivityDpiaId": dpiaID,
+			},
+		})
+		require.NoError(t, err, "admin should be able to delete DPIA")
+	})
+
+	t.Run("viewer cannot manage DPIA", func(t *testing.T) {
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+		viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+		paID := factory.NewProcessingActivity(owner).WithName("DPIA RBAC Viewer Test").Create()
+
+		_, err := viewer.Do(`
+			mutation($input: CreateProcessingActivityDPIAInput!) {
+				createProcessingActivityDPIA(input: $input) {
+					processingActivityDpia { id }
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"processingActivityId": paID,
+				"description":          "Viewer DPIA",
+			},
+		})
+		testutil.RequireForbiddenError(t, err, "viewer should not be able to create DPIA")
+
+		var createResult struct {
+			CreateProcessingActivityDPIA struct {
+				ProcessingActivityDpia struct {
+					ID string `json:"id"`
+				} `json:"processingActivityDpia"`
+			} `json:"createProcessingActivityDPIA"`
+		}
+		err = owner.Execute(`
+			mutation($input: CreateProcessingActivityDPIAInput!) {
+				createProcessingActivityDPIA(input: $input) {
+					processingActivityDpia { id }
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"processingActivityId": paID,
+				"description":          "Owner created DPIA",
+			},
+		}, &createResult)
+		require.NoError(t, err)
+		dpiaID := createResult.CreateProcessingActivityDPIA.ProcessingActivityDpia.ID
+
+		_, err = viewer.Do(`
+			mutation($input: UpdateProcessingActivityDPIAInput!) {
+				updateProcessingActivityDPIA(input: $input) {
+					processingActivityDpia { id }
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"id":          dpiaID,
+				"description": "Updated by viewer",
+			},
+		})
+		testutil.RequireForbiddenError(t, err, "viewer should not be able to update DPIA")
+
+		_, err = viewer.Do(`
+			mutation($input: DeleteProcessingActivityDPIAInput!) {
+				deleteProcessingActivityDPIA(input: $input) {
+					deletedProcessingActivityDpiaId
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"processingActivityDpiaId": dpiaID,
+			},
+		})
+		testutil.RequireForbiddenError(t, err, "viewer should not be able to delete DPIA")
+	})
+}
+
+func TestProcessingActivity_TIA_RBAC(t *testing.T) {
+	t.Parallel()
+
+	t.Run("owner can manage TIA", func(t *testing.T) {
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+		paID := factory.NewProcessingActivity(owner).WithName("TIA RBAC Owner Test").Create()
+
+		var createResult struct {
+			CreateProcessingActivityTIA struct {
+				ProcessingActivityTia struct {
+					ID string `json:"id"`
+				} `json:"processingActivityTia"`
+			} `json:"createProcessingActivityTIA"`
+		}
+		err := owner.Execute(`
+			mutation($input: CreateProcessingActivityTIAInput!) {
+				createProcessingActivityTIA(input: $input) {
+					processingActivityTia { id }
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"processingActivityId": paID,
+				"dataSubjects":         "Owner TIA subjects",
+			},
+		}, &createResult)
+		require.NoError(t, err, "owner should be able to create TIA")
+		tiaID := createResult.CreateProcessingActivityTIA.ProcessingActivityTia.ID
+
+		_, err = owner.Do(`
+			mutation($input: UpdateProcessingActivityTIAInput!) {
+				updateProcessingActivityTIA(input: $input) {
+					processingActivityTia { id }
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"id":           tiaID,
+				"dataSubjects": "Updated by owner",
+			},
+		})
+		require.NoError(t, err, "owner should be able to update TIA")
+
+		_, err = owner.Do(`
+			mutation($input: DeleteProcessingActivityTIAInput!) {
+				deleteProcessingActivityTIA(input: $input) {
+					deletedProcessingActivityTiaId
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"processingActivityTiaId": tiaID,
+			},
+		})
+		require.NoError(t, err, "owner should be able to delete TIA")
+	})
+
+	t.Run("admin can manage TIA", func(t *testing.T) {
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+		admin := testutil.NewClientInOrg(t, testutil.RoleAdmin, owner)
+		paID := factory.NewProcessingActivity(owner).WithName("TIA RBAC Admin Test").Create()
+
+		var createResult struct {
+			CreateProcessingActivityTIA struct {
+				ProcessingActivityTia struct {
+					ID string `json:"id"`
+				} `json:"processingActivityTia"`
+			} `json:"createProcessingActivityTIA"`
+		}
+		err := admin.Execute(`
+			mutation($input: CreateProcessingActivityTIAInput!) {
+				createProcessingActivityTIA(input: $input) {
+					processingActivityTia { id }
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"processingActivityId": paID,
+				"dataSubjects":         "Admin TIA subjects",
+			},
+		}, &createResult)
+		require.NoError(t, err, "admin should be able to create TIA")
+		tiaID := createResult.CreateProcessingActivityTIA.ProcessingActivityTia.ID
+
+		_, err = admin.Do(`
+			mutation($input: UpdateProcessingActivityTIAInput!) {
+				updateProcessingActivityTIA(input: $input) {
+					processingActivityTia { id }
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"id":           tiaID,
+				"dataSubjects": "Updated by admin",
+			},
+		})
+		require.NoError(t, err, "admin should be able to update TIA")
+
+		_, err = admin.Do(`
+			mutation($input: DeleteProcessingActivityTIAInput!) {
+				deleteProcessingActivityTIA(input: $input) {
+					deletedProcessingActivityTiaId
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"processingActivityTiaId": tiaID,
+			},
+		})
+		require.NoError(t, err, "admin should be able to delete TIA")
+	})
+
+	t.Run("viewer cannot manage TIA", func(t *testing.T) {
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+		viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+		paID := factory.NewProcessingActivity(owner).WithName("TIA RBAC Viewer Test").Create()
+
+		_, err := viewer.Do(`
+			mutation($input: CreateProcessingActivityTIAInput!) {
+				createProcessingActivityTIA(input: $input) {
+					processingActivityTia { id }
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"processingActivityId": paID,
+				"dataSubjects":         "Viewer TIA subjects",
+			},
+		})
+		testutil.RequireForbiddenError(t, err, "viewer should not be able to create TIA")
+
+		var createResult struct {
+			CreateProcessingActivityTIA struct {
+				ProcessingActivityTia struct {
+					ID string `json:"id"`
+				} `json:"processingActivityTia"`
+			} `json:"createProcessingActivityTIA"`
+		}
+		err = owner.Execute(`
+			mutation($input: CreateProcessingActivityTIAInput!) {
+				createProcessingActivityTIA(input: $input) {
+					processingActivityTia { id }
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"processingActivityId": paID,
+				"dataSubjects":         "Owner created TIA",
+			},
+		}, &createResult)
+		require.NoError(t, err)
+		tiaID := createResult.CreateProcessingActivityTIA.ProcessingActivityTia.ID
+
+		_, err = viewer.Do(`
+			mutation($input: UpdateProcessingActivityTIAInput!) {
+				updateProcessingActivityTIA(input: $input) {
+					processingActivityTia { id }
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"id":           tiaID,
+				"dataSubjects": "Updated by viewer",
+			},
+		})
+		testutil.RequireForbiddenError(t, err, "viewer should not be able to update TIA")
+
+		_, err = viewer.Do(`
+			mutation($input: DeleteProcessingActivityTIAInput!) {
+				deleteProcessingActivityTIA(input: $input) {
+					deletedProcessingActivityTiaId
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"processingActivityTiaId": tiaID,
+			},
+		})
+		testutil.RequireForbiddenError(t, err, "viewer should not be able to delete TIA")
+	})
 }

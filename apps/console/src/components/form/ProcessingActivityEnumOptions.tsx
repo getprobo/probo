@@ -74,6 +74,21 @@ export function getLawfulBasisLabel(
   return labels[value] || value;
 }
 
+export function getResidualRiskLabel(
+  value: "LOW" | "MEDIUM" | "HIGH" | null | undefined,
+  __: (key: string) => string
+): string {
+  if (!value) return "-";
+
+  const labels = {
+    LOW: __("Low"),
+    MEDIUM: __("Medium"),
+    HIGH: __("High"),
+  };
+
+  return labels[value] || value;
+}
+
 export function TransferSafeguardsOptions() {
   const { __ } = useTranslate();
 
@@ -138,6 +153,28 @@ export function TransferImpactAssessmentOptions() {
   }> = [
     { value: "NEEDED", label: __("Needed") },
     { value: "NOT_NEEDED", label: __("Not Needed") },
+  ];
+
+  return (
+    <>
+      {options.map((option) => (
+        <Option key={option.value} value={option.value}>
+          {option.label}
+        </Option>
+      ))}
+    </>
+  );
+}
+
+export function RoleOptions() {
+  const { __ } = useTranslate();
+
+  const options: Array<{
+    value: "CONTROLLER" | "PROCESSOR";
+    label: string;
+  }> = [
+    { value: "CONTROLLER", label: __("Controller") },
+    { value: "PROCESSOR", label: __("Processor") },
   ];
 
   return (

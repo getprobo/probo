@@ -366,6 +366,38 @@ enum ProcessingActivityTransferImpactAssessment
     )
 }
 
+enum ProcessingActivityDPIAResidualRisk
+  @goModel(
+    model: "go.probo.inc/probo/pkg/coredata.ProcessingActivityDPIAResidualRisk"
+  ) {
+  LOW
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityDPIAResidualRiskLow"
+    )
+  MEDIUM
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityDPIAResidualRiskMedium"
+    )
+  HIGH
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityDPIAResidualRiskHigh"
+    )
+}
+
+enum ProcessingActivityRole
+  @goModel(
+    model: "go.probo.inc/probo/pkg/coredata.ProcessingActivityRole"
+  ) {
+  CONTROLLER
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityRoleController"
+    )
+  PROCESSOR
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityRoleProcessor"
+    )
+}
+
 # Order Field Enums
 enum UserOrderField
   @goModel(model: "go.probo.inc/probo/pkg/coredata.UserOrderField") {
@@ -1047,6 +1079,26 @@ enum ProcessingActivityOrderField
     )
 }
 
+enum ProcessingActivityDPIAOrderField
+  @goModel(
+    model: "go.probo.inc/probo/pkg/coredata.ProcessingActivityDPIAOrderField"
+  ) {
+  CREATED_AT
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityDPIAOrderFieldCreatedAt"
+    )
+}
+
+enum ProcessingActivityTIAOrderField
+  @goModel(
+    model: "go.probo.inc/probo/pkg/coredata.ProcessingActivityTIAOrderField"
+  ) {
+  CREATED_AT
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityTIAOrderFieldCreatedAt"
+    )
+}
+
 enum TrustCenterAccessOrderField
   @goModel(
     model: "go.probo.inc/probo/pkg/coredata.TrustCenterAccessOrderField"
@@ -1298,6 +1350,22 @@ input ProcessingActivityOrder
   ) {
   direction: OrderDirection!
   field: ProcessingActivityOrderField!
+}
+
+input ProcessingActivityDPIAOrder
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ProcessingActivityDPIAOrderBy"
+  ) {
+  direction: OrderDirection!
+  field: ProcessingActivityDPIAOrderField!
+}
+
+input ProcessingActivityTIAOrder
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ProcessingActivityTIAOrderBy"
+  ) {
+  direction: OrderDirection!
+  field: ProcessingActivityTIAOrderField!
 }
 
 input TrustCenterAccessOrder
@@ -1659,6 +1727,22 @@ type Organization implements Node {
     orderBy: ProcessingActivityOrder
     filter: ProcessingActivityFilter = { snapshotId: null }
   ): ProcessingActivityConnection! @goField(forceResolver: true)
+
+  dataProtectionImpactAssessments(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: ProcessingActivityDPIAOrder
+  ): ProcessingActivityDPIAConnection! @goField(forceResolver: true)
+
+  transferImpactAssessments(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: ProcessingActivityTIAOrder
+  ): ProcessingActivityTIAConnection! @goField(forceResolver: true)
 
   snapshots(
     first: Int
@@ -2252,6 +2336,10 @@ type ProcessingActivity implements Node {
   securityMeasures: String
   dataProtectionImpactAssessment: ProcessingActivityDataProtectionImpactAssessment!
   transferImpactAssessment: ProcessingActivityTransferImpactAssessment!
+  lastReviewDate: Datetime
+  nextReviewDate: Datetime
+  role: ProcessingActivityRole!
+  dataProtectionOfficer: People @goField(forceResolver: true)
   vendors(
     first: Int
     after: CursorKey
@@ -2259,6 +2347,34 @@ type ProcessingActivity implements Node {
     before: CursorKey
     orderBy: VendorOrder
   ): VendorConnection! @goField(forceResolver: true)
+  dpia: ProcessingActivityDPIA @goField(forceResolver: true)
+  tia: ProcessingActivityTIA @goField(forceResolver: true)
+  createdAt: Datetime!
+  updatedAt: Datetime!
+}
+
+type ProcessingActivityDPIA implements Node {
+  id: ID!
+  processingActivity: ProcessingActivity! @goField(forceResolver: true)
+  organization: Organization! @goField(forceResolver: true)
+  description: String
+  necessityAndProportionality: String
+  potentialRisk: String
+  mitigations: String
+  residualRisk: ProcessingActivityDPIAResidualRisk
+  createdAt: Datetime!
+  updatedAt: Datetime!
+}
+
+type ProcessingActivityTIA implements Node {
+  id: ID!
+  processingActivity: ProcessingActivity! @goField(forceResolver: true)
+  organization: Organization! @goField(forceResolver: true)
+  dataSubjects: String
+  legalMechanism: String
+  transfer: String
+  localLawRisk: String
+  supplementaryMeasures: String
   createdAt: Datetime!
   updatedAt: Datetime!
 }
@@ -2767,6 +2883,34 @@ type ProcessingActivityEdge {
   node: ProcessingActivity!
 }
 
+type ProcessingActivityDPIAConnection
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ProcessingActivityDPIAConnection"
+  ) {
+  totalCount: Int! @goField(forceResolver: true)
+  edges: [ProcessingActivityDPIAEdge!]!
+  pageInfo: PageInfo!
+}
+
+type ProcessingActivityDPIAEdge {
+  cursor: CursorKey!
+  node: ProcessingActivityDPIA!
+}
+
+type ProcessingActivityTIAConnection
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ProcessingActivityTIAConnection"
+  ) {
+  totalCount: Int! @goField(forceResolver: true)
+  edges: [ProcessingActivityTIAEdge!]!
+  pageInfo: PageInfo!
+}
+
+type ProcessingActivityTIAEdge {
+  cursor: CursorKey!
+  node: ProcessingActivityTIA!
+}
+
 type SnapshotConnection
   @goModel(
     model: "go.probo.inc/probo/pkg/server/api/console/v1/types.SnapshotConnection"
@@ -3104,6 +3248,26 @@ type Mutation {
   deleteProcessingActivity(
     input: DeleteProcessingActivityInput!
   ): DeleteProcessingActivityPayload!
+  # Processing Activity DPIA mutations
+  createProcessingActivityDPIA(
+    input: CreateProcessingActivityDPIAInput!
+  ): CreateProcessingActivityDPIAPayload!
+  updateProcessingActivityDPIA(
+    input: UpdateProcessingActivityDPIAInput!
+  ): UpdateProcessingActivityDPIAPayload!
+  deleteProcessingActivityDPIA(
+    input: DeleteProcessingActivityDPIAInput!
+  ): DeleteProcessingActivityDPIAPayload!
+  # Processing Activity TIA mutations
+  createProcessingActivityTIA(
+    input: CreateProcessingActivityTIAInput!
+  ): CreateProcessingActivityTIAPayload!
+  updateProcessingActivityTIA(
+    input: UpdateProcessingActivityTIAInput!
+  ): UpdateProcessingActivityTIAPayload!
+  deleteProcessingActivityTIA(
+    input: DeleteProcessingActivityTIAInput!
+  ): DeleteProcessingActivityTIAPayload!
   # Snapshot mutations
   createSnapshot(input: CreateSnapshotInput!): CreateSnapshotPayload!
   deleteSnapshot(input: DeleteSnapshotInput!): DeleteSnapshotPayload!
@@ -3874,6 +4038,10 @@ input CreateProcessingActivityInput {
   securityMeasures: String
   dataProtectionImpactAssessment: ProcessingActivityDataProtectionImpactAssessment!
   transferImpactAssessment: ProcessingActivityTransferImpactAssessment!
+  lastReviewDate: Datetime
+  nextReviewDate: Datetime
+  role: ProcessingActivityRole!
+  dataProtectionOfficerId: ID
   vendorIds: [ID!]
 }
 
@@ -3895,11 +4063,59 @@ input UpdateProcessingActivityInput {
   securityMeasures: String @goField(omittable: true)
   dataProtectionImpactAssessment: ProcessingActivityDataProtectionImpactAssessment
   transferImpactAssessment: ProcessingActivityTransferImpactAssessment
+  lastReviewDate: Datetime @goField(omittable: true)
+  nextReviewDate: Datetime @goField(omittable: true)
+  role: ProcessingActivityRole
+  dataProtectionOfficerId: ID @goField(omittable: true)
   vendorIds: [ID!]
 }
 
 input DeleteProcessingActivityInput {
   processingActivityId: ID!
+}
+
+input CreateProcessingActivityDPIAInput {
+  processingActivityId: ID!
+  description: String
+  necessityAndProportionality: String
+  potentialRisk: String
+  mitigations: String
+  residualRisk: ProcessingActivityDPIAResidualRisk
+}
+
+input UpdateProcessingActivityDPIAInput {
+  id: ID!
+  description: String @goField(omittable: true)
+  necessityAndProportionality: String @goField(omittable: true)
+  potentialRisk: String @goField(omittable: true)
+  mitigations: String @goField(omittable: true)
+  residualRisk: ProcessingActivityDPIAResidualRisk
+}
+
+input DeleteProcessingActivityDPIAInput {
+  processingActivityDpiaId: ID!
+}
+
+input CreateProcessingActivityTIAInput {
+  processingActivityId: ID!
+  dataSubjects: String
+  legalMechanism: String
+  transfer: String
+  localLawRisk: String
+  supplementaryMeasures: String
+}
+
+input UpdateProcessingActivityTIAInput {
+  id: ID!
+  dataSubjects: String @goField(omittable: true)
+  legalMechanism: String @goField(omittable: true)
+  transfer: String @goField(omittable: true)
+  localLawRisk: String @goField(omittable: true)
+  supplementaryMeasures: String @goField(omittable: true)
+}
+
+input DeleteProcessingActivityTIAInput {
+  processingActivityTiaId: ID!
 }
 
 input CreateSnapshotInput {
@@ -4764,6 +4980,30 @@ type UpdateProcessingActivityPayload {
 
 type DeleteProcessingActivityPayload {
   deletedProcessingActivityId: ID!
+}
+
+type CreateProcessingActivityDPIAPayload {
+  processingActivityDpia: ProcessingActivityDPIA!
+}
+
+type UpdateProcessingActivityDPIAPayload {
+  processingActivityDpia: ProcessingActivityDPIA!
+}
+
+type DeleteProcessingActivityDPIAPayload {
+  deletedProcessingActivityDpiaId: ID!
+}
+
+type CreateProcessingActivityTIAPayload {
+  processingActivityTia: ProcessingActivityTIA!
+}
+
+type UpdateProcessingActivityTIAPayload {
+  processingActivityTia: ProcessingActivityTIA!
+}
+
+type DeleteProcessingActivityTIAPayload {
+  deletedProcessingActivityTiaId: ID!
 }
 
 type CreateSnapshotPayload {

@@ -83,6 +83,10 @@ type ResolverRoot interface {
 	PeopleConnection() PeopleConnectionResolver
 	ProcessingActivity() ProcessingActivityResolver
 	ProcessingActivityConnection() ProcessingActivityConnectionResolver
+	ProcessingActivityDPIA() ProcessingActivityDPIAResolver
+	ProcessingActivityDPIAConnection() ProcessingActivityDPIAConnectionResolver
+	ProcessingActivityTIA() ProcessingActivityTIAResolver
+	ProcessingActivityTIAConnection() ProcessingActivityTIAConnectionResolver
 	Query() QueryResolver
 	Report() ReportResolver
 	Risk() RiskResolver
@@ -345,8 +349,16 @@ type ComplexityRoot struct {
 		PeopleEdge func(childComplexity int) int
 	}
 
+	CreateProcessingActivityDPIAPayload struct {
+		ProcessingActivityDpia func(childComplexity int) int
+	}
+
 	CreateProcessingActivityPayload struct {
 		ProcessingActivityEdge func(childComplexity int) int
+	}
+
+	CreateProcessingActivityTIAPayload struct {
+		ProcessingActivityTia func(childComplexity int) int
 	}
 
 	CreateRiskDocumentMappingPayload struct {
@@ -546,8 +558,16 @@ type ComplexityRoot struct {
 		DeletedPeopleID func(childComplexity int) int
 	}
 
+	DeleteProcessingActivityDPIAPayload struct {
+		DeletedProcessingActivityDpiaID func(childComplexity int) int
+	}
+
 	DeleteProcessingActivityPayload struct {
 		DeletedProcessingActivityID func(childComplexity int) int
+	}
+
+	DeleteProcessingActivityTIAPayload struct {
+		DeletedProcessingActivityTiaID func(childComplexity int) int
 	}
 
 	DeleteRiskDocumentMappingPayload struct {
@@ -930,6 +950,8 @@ type ComplexityRoot struct {
 		CreateOrganization                     func(childComplexity int, input types.CreateOrganizationInput) int
 		CreatePeople                           func(childComplexity int, input types.CreatePeopleInput) int
 		CreateProcessingActivity               func(childComplexity int, input types.CreateProcessingActivityInput) int
+		CreateProcessingActivityDpia           func(childComplexity int, input types.CreateProcessingActivityDPIAInput) int
+		CreateProcessingActivityTia            func(childComplexity int, input types.CreateProcessingActivityTIAInput) int
 		CreateRisk                             func(childComplexity int, input types.CreateRiskInput) int
 		CreateRiskDocumentMapping              func(childComplexity int, input types.CreateRiskDocumentMappingInput) int
 		CreateRiskMeasureMapping               func(childComplexity int, input types.CreateRiskMeasureMappingInput) int
@@ -968,6 +990,8 @@ type ComplexityRoot struct {
 		DeleteOrganizationHorizontalLogo       func(childComplexity int, input types.DeleteOrganizationHorizontalLogoInput) int
 		DeletePeople                           func(childComplexity int, input types.DeletePeopleInput) int
 		DeleteProcessingActivity               func(childComplexity int, input types.DeleteProcessingActivityInput) int
+		DeleteProcessingActivityDpia           func(childComplexity int, input types.DeleteProcessingActivityDPIAInput) int
+		DeleteProcessingActivityTia            func(childComplexity int, input types.DeleteProcessingActivityTIAInput) int
 		DeleteRisk                             func(childComplexity int, input types.DeleteRiskInput) int
 		DeleteRiskDocumentMapping              func(childComplexity int, input types.DeleteRiskDocumentMappingInput) int
 		DeleteRiskMeasureMapping               func(childComplexity int, input types.DeleteRiskMeasureMappingInput) int
@@ -1020,6 +1044,8 @@ type ComplexityRoot struct {
 		UpdateOrganizationContext              func(childComplexity int, input types.UpdateOrganizationContextInput) int
 		UpdatePeople                           func(childComplexity int, input types.UpdatePeopleInput) int
 		UpdateProcessingActivity               func(childComplexity int, input types.UpdateProcessingActivityInput) int
+		UpdateProcessingActivityDpia           func(childComplexity int, input types.UpdateProcessingActivityDPIAInput) int
+		UpdateProcessingActivityTia            func(childComplexity int, input types.UpdateProcessingActivityTIAInput) int
 		UpdateRisk                             func(childComplexity int, input types.UpdateRiskInput) int
 		UpdateSAMLConfiguration                func(childComplexity int, input types.UpdateSAMLConfigurationInput) int
 		UpdateTask                             func(childComplexity int, input types.UpdateTaskInput) int
@@ -1100,41 +1126,43 @@ type ComplexityRoot struct {
 	}
 
 	Organization struct {
-		Assets                func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AssetOrderBy, filter *types.AssetFilter) int
-		Audits                func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AuditOrderBy) int
-		Context               func(childComplexity int) int
-		ContinualImprovements func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ContinualImprovementOrderBy, filter *types.ContinualImprovementFilter) int
-		Controls              func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) int
-		CreatedAt             func(childComplexity int) int
-		CustomDomain          func(childComplexity int) int
-		Data                  func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DatumOrderBy, filter *types.DatumFilter) int
-		Description           func(childComplexity int) int
-		Documents             func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy, filter *types.DocumentFilter) int
-		Email                 func(childComplexity int) int
-		Frameworks            func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.FrameworkOrderBy) int
-		HeadquarterAddress    func(childComplexity int) int
-		HorizontalLogoURL     func(childComplexity int) int
-		ID                    func(childComplexity int) int
-		Invitations           func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.InvitationOrder, filter *types.InvitationFilter) int
-		LogoURL               func(childComplexity int) int
-		Measures              func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy, filter *types.MeasureFilter) int
-		Meetings              func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeetingOrderBy) int
-		Memberships           func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MembershipOrderBy) int
-		Name                  func(childComplexity int) int
-		Nonconformities       func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.NonconformityOrderBy, filter *types.NonconformityFilter) int
-		Obligations           func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ObligationOrderBy, filter *types.ObligationFilter) int
-		Peoples               func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.PeopleOrderBy, filter *types.PeopleFilter) int
-		ProcessingActivities  func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityOrderBy, filter *types.ProcessingActivityFilter) int
-		Risks                 func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskOrderBy, filter *types.RiskFilter) int
-		SamlConfigurations    func(childComplexity int) int
-		SlackConnections      func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
-		Snapshots             func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.SnapshotOrderBy) int
-		Tasks                 func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TaskOrderBy) int
-		TrustCenter           func(childComplexity int) int
-		TrustCenterFiles      func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterFileOrderField]) int
-		UpdatedAt             func(childComplexity int) int
-		Vendors               func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorOrderBy, filter *types.VendorFilter) int
-		WebsiteURL            func(childComplexity int) int
+		Assets                          func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AssetOrderBy, filter *types.AssetFilter) int
+		Audits                          func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AuditOrderBy) int
+		Context                         func(childComplexity int) int
+		ContinualImprovements           func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ContinualImprovementOrderBy, filter *types.ContinualImprovementFilter) int
+		Controls                        func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) int
+		CreatedAt                       func(childComplexity int) int
+		CustomDomain                    func(childComplexity int) int
+		Data                            func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DatumOrderBy, filter *types.DatumFilter) int
+		DataProtectionImpactAssessments func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityDPIAOrderBy) int
+		Description                     func(childComplexity int) int
+		Documents                       func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy, filter *types.DocumentFilter) int
+		Email                           func(childComplexity int) int
+		Frameworks                      func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.FrameworkOrderBy) int
+		HeadquarterAddress              func(childComplexity int) int
+		HorizontalLogoURL               func(childComplexity int) int
+		ID                              func(childComplexity int) int
+		Invitations                     func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.InvitationOrder, filter *types.InvitationFilter) int
+		LogoURL                         func(childComplexity int) int
+		Measures                        func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy, filter *types.MeasureFilter) int
+		Meetings                        func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeetingOrderBy) int
+		Memberships                     func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MembershipOrderBy) int
+		Name                            func(childComplexity int) int
+		Nonconformities                 func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.NonconformityOrderBy, filter *types.NonconformityFilter) int
+		Obligations                     func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ObligationOrderBy, filter *types.ObligationFilter) int
+		Peoples                         func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.PeopleOrderBy, filter *types.PeopleFilter) int
+		ProcessingActivities            func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityOrderBy, filter *types.ProcessingActivityFilter) int
+		Risks                           func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskOrderBy, filter *types.RiskFilter) int
+		SamlConfigurations              func(childComplexity int) int
+		SlackConnections                func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
+		Snapshots                       func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.SnapshotOrderBy) int
+		Tasks                           func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TaskOrderBy) int
+		TransferImpactAssessments       func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityTIAOrderBy) int
+		TrustCenter                     func(childComplexity int) int
+		TrustCenterFiles                func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterFileOrderField]) int
+		UpdatedAt                       func(childComplexity int) int
+		Vendors                         func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorOrderBy, filter *types.VendorFilter) int
+		WebsiteURL                      func(childComplexity int) int
 	}
 
 	OrganizationConnection struct {
@@ -1187,21 +1215,27 @@ type ComplexityRoot struct {
 		ConsentEvidenceLink            func(childComplexity int) int
 		CreatedAt                      func(childComplexity int) int
 		DataProtectionImpactAssessment func(childComplexity int) int
+		DataProtectionOfficer          func(childComplexity int) int
 		DataSubjectCategory            func(childComplexity int) int
+		Dpia                           func(childComplexity int) int
 		ID                             func(childComplexity int) int
 		InternationalTransfers         func(childComplexity int) int
+		LastReviewDate                 func(childComplexity int) int
 		LawfulBasis                    func(childComplexity int) int
 		Location                       func(childComplexity int) int
 		Name                           func(childComplexity int) int
+		NextReviewDate                 func(childComplexity int) int
 		Organization                   func(childComplexity int) int
 		PersonalDataCategory           func(childComplexity int) int
 		Purpose                        func(childComplexity int) int
 		Recipients                     func(childComplexity int) int
 		RetentionPeriod                func(childComplexity int) int
+		Role                           func(childComplexity int) int
 		SecurityMeasures               func(childComplexity int) int
 		SnapshotID                     func(childComplexity int) int
 		SourceID                       func(childComplexity int) int
 		SpecialOrCriminalData          func(childComplexity int) int
+		Tia                            func(childComplexity int) int
 		TransferImpactAssessment       func(childComplexity int) int
 		TransferSafeguards             func(childComplexity int) int
 		UpdatedAt                      func(childComplexity int) int
@@ -1214,7 +1248,55 @@ type ComplexityRoot struct {
 		TotalCount func(childComplexity int) int
 	}
 
+	ProcessingActivityDPIA struct {
+		CreatedAt                   func(childComplexity int) int
+		Description                 func(childComplexity int) int
+		ID                          func(childComplexity int) int
+		Mitigations                 func(childComplexity int) int
+		NecessityAndProportionality func(childComplexity int) int
+		Organization                func(childComplexity int) int
+		PotentialRisk               func(childComplexity int) int
+		ProcessingActivity          func(childComplexity int) int
+		ResidualRisk                func(childComplexity int) int
+		UpdatedAt                   func(childComplexity int) int
+	}
+
+	ProcessingActivityDPIAConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	ProcessingActivityDPIAEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
 	ProcessingActivityEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	ProcessingActivityTIA struct {
+		CreatedAt             func(childComplexity int) int
+		DataSubjects          func(childComplexity int) int
+		ID                    func(childComplexity int) int
+		LegalMechanism        func(childComplexity int) int
+		LocalLawRisk          func(childComplexity int) int
+		Organization          func(childComplexity int) int
+		ProcessingActivity    func(childComplexity int) int
+		SupplementaryMeasures func(childComplexity int) int
+		Transfer              func(childComplexity int) int
+		UpdatedAt             func(childComplexity int) int
+	}
+
+	ProcessingActivityTIAConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	ProcessingActivityTIAEdge struct {
 		Cursor func(childComplexity int) int
 		Node   func(childComplexity int) int
 	}
@@ -1591,8 +1673,16 @@ type ComplexityRoot struct {
 		People func(childComplexity int) int
 	}
 
+	UpdateProcessingActivityDPIAPayload struct {
+		ProcessingActivityDpia func(childComplexity int) int
+	}
+
 	UpdateProcessingActivityPayload struct {
 		ProcessingActivity func(childComplexity int) int
+	}
+
+	UpdateProcessingActivityTIAPayload struct {
+		ProcessingActivityTia func(childComplexity int) int
 	}
 
 	UpdateRiskPayload struct {
@@ -2097,6 +2187,12 @@ type MutationResolver interface {
 	CreateProcessingActivity(ctx context.Context, input types.CreateProcessingActivityInput) (*types.CreateProcessingActivityPayload, error)
 	UpdateProcessingActivity(ctx context.Context, input types.UpdateProcessingActivityInput) (*types.UpdateProcessingActivityPayload, error)
 	DeleteProcessingActivity(ctx context.Context, input types.DeleteProcessingActivityInput) (*types.DeleteProcessingActivityPayload, error)
+	CreateProcessingActivityDpia(ctx context.Context, input types.CreateProcessingActivityDPIAInput) (*types.CreateProcessingActivityDPIAPayload, error)
+	UpdateProcessingActivityDpia(ctx context.Context, input types.UpdateProcessingActivityDPIAInput) (*types.UpdateProcessingActivityDPIAPayload, error)
+	DeleteProcessingActivityDpia(ctx context.Context, input types.DeleteProcessingActivityDPIAInput) (*types.DeleteProcessingActivityDPIAPayload, error)
+	CreateProcessingActivityTia(ctx context.Context, input types.CreateProcessingActivityTIAInput) (*types.CreateProcessingActivityTIAPayload, error)
+	UpdateProcessingActivityTia(ctx context.Context, input types.UpdateProcessingActivityTIAInput) (*types.UpdateProcessingActivityTIAPayload, error)
+	DeleteProcessingActivityTia(ctx context.Context, input types.DeleteProcessingActivityTIAInput) (*types.DeleteProcessingActivityTIAPayload, error)
 	CreateSnapshot(ctx context.Context, input types.CreateSnapshotInput) (*types.CreateSnapshotPayload, error)
 	DeleteSnapshot(ctx context.Context, input types.DeleteSnapshotInput) (*types.DeleteSnapshotPayload, error)
 	CreateCustomDomain(ctx context.Context, input types.CreateCustomDomainInput) (*types.CreateCustomDomainPayload, error)
@@ -2151,6 +2247,8 @@ type OrganizationResolver interface {
 	Obligations(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ObligationOrderBy, filter *types.ObligationFilter) (*types.ObligationConnection, error)
 	ContinualImprovements(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ContinualImprovementOrderBy, filter *types.ContinualImprovementFilter) (*types.ContinualImprovementConnection, error)
 	ProcessingActivities(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityOrderBy, filter *types.ProcessingActivityFilter) (*types.ProcessingActivityConnection, error)
+	DataProtectionImpactAssessments(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityDPIAOrderBy) (*types.ProcessingActivityDPIAConnection, error)
+	TransferImpactAssessments(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityTIAOrderBy) (*types.ProcessingActivityTIAConnection, error)
 	Snapshots(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.SnapshotOrderBy) (*types.SnapshotConnection, error)
 	TrustCenterFiles(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterFileOrderField]) (*types.TrustCenterFileConnection, error)
 	TrustCenter(ctx context.Context, obj *types.Organization) (*types.TrustCenter, error)
@@ -2163,10 +2261,27 @@ type PeopleConnectionResolver interface {
 type ProcessingActivityResolver interface {
 	Organization(ctx context.Context, obj *types.ProcessingActivity) (*types.Organization, error)
 
+	DataProtectionOfficer(ctx context.Context, obj *types.ProcessingActivity) (*types.People, error)
 	Vendors(ctx context.Context, obj *types.ProcessingActivity, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorOrderBy) (*types.VendorConnection, error)
+	Dpia(ctx context.Context, obj *types.ProcessingActivity) (*types.ProcessingActivityDpia, error)
+	Tia(ctx context.Context, obj *types.ProcessingActivity) (*types.ProcessingActivityTia, error)
 }
 type ProcessingActivityConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.ProcessingActivityConnection) (int, error)
+}
+type ProcessingActivityDPIAResolver interface {
+	ProcessingActivity(ctx context.Context, obj *types.ProcessingActivityDpia) (*types.ProcessingActivity, error)
+	Organization(ctx context.Context, obj *types.ProcessingActivityDpia) (*types.Organization, error)
+}
+type ProcessingActivityDPIAConnectionResolver interface {
+	TotalCount(ctx context.Context, obj *types.ProcessingActivityDPIAConnection) (int, error)
+}
+type ProcessingActivityTIAResolver interface {
+	ProcessingActivity(ctx context.Context, obj *types.ProcessingActivityTia) (*types.ProcessingActivity, error)
+	Organization(ctx context.Context, obj *types.ProcessingActivityTia) (*types.Organization, error)
+}
+type ProcessingActivityTIAConnectionResolver interface {
+	TotalCount(ctx context.Context, obj *types.ProcessingActivityTIAConnection) (int, error)
 }
 type QueryResolver interface {
 	Node(ctx context.Context, id gid.GID) (types.Node, error)
@@ -3017,12 +3132,26 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.CreatePeoplePayload.PeopleEdge(childComplexity), true
 
+	case "CreateProcessingActivityDPIAPayload.processingActivityDpia":
+		if e.complexity.CreateProcessingActivityDPIAPayload.ProcessingActivityDpia == nil {
+			break
+		}
+
+		return e.complexity.CreateProcessingActivityDPIAPayload.ProcessingActivityDpia(childComplexity), true
+
 	case "CreateProcessingActivityPayload.processingActivityEdge":
 		if e.complexity.CreateProcessingActivityPayload.ProcessingActivityEdge == nil {
 			break
 		}
 
 		return e.complexity.CreateProcessingActivityPayload.ProcessingActivityEdge(childComplexity), true
+
+	case "CreateProcessingActivityTIAPayload.processingActivityTia":
+		if e.complexity.CreateProcessingActivityTIAPayload.ProcessingActivityTia == nil {
+			break
+		}
+
+		return e.complexity.CreateProcessingActivityTIAPayload.ProcessingActivityTia(childComplexity), true
 
 	case "CreateRiskDocumentMappingPayload.documentEdge":
 		if e.complexity.CreateRiskDocumentMappingPayload.DocumentEdge == nil {
@@ -3497,12 +3626,26 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.DeletePeoplePayload.DeletedPeopleID(childComplexity), true
 
+	case "DeleteProcessingActivityDPIAPayload.deletedProcessingActivityDpiaId":
+		if e.complexity.DeleteProcessingActivityDPIAPayload.DeletedProcessingActivityDpiaID == nil {
+			break
+		}
+
+		return e.complexity.DeleteProcessingActivityDPIAPayload.DeletedProcessingActivityDpiaID(childComplexity), true
+
 	case "DeleteProcessingActivityPayload.deletedProcessingActivityId":
 		if e.complexity.DeleteProcessingActivityPayload.DeletedProcessingActivityID == nil {
 			break
 		}
 
 		return e.complexity.DeleteProcessingActivityPayload.DeletedProcessingActivityID(childComplexity), true
+
+	case "DeleteProcessingActivityTIAPayload.deletedProcessingActivityTiaId":
+		if e.complexity.DeleteProcessingActivityTIAPayload.DeletedProcessingActivityTiaID == nil {
+			break
+		}
+
+		return e.complexity.DeleteProcessingActivityTIAPayload.DeletedProcessingActivityTiaID(childComplexity), true
 
 	case "DeleteRiskDocumentMappingPayload.deletedDocumentId":
 		if e.complexity.DeleteRiskDocumentMappingPayload.DeletedDocumentID == nil {
@@ -4977,6 +5120,28 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.CreateProcessingActivity(childComplexity, args["input"].(types.CreateProcessingActivityInput)), true
+	case "Mutation.createProcessingActivityDPIA":
+		if e.complexity.Mutation.CreateProcessingActivityDpia == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createProcessingActivityDPIA_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateProcessingActivityDpia(childComplexity, args["input"].(types.CreateProcessingActivityDPIAInput)), true
+	case "Mutation.createProcessingActivityTIA":
+		if e.complexity.Mutation.CreateProcessingActivityTia == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createProcessingActivityTIA_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateProcessingActivityTia(childComplexity, args["input"].(types.CreateProcessingActivityTIAInput)), true
 	case "Mutation.createRisk":
 		if e.complexity.Mutation.CreateRisk == nil {
 			break
@@ -5395,6 +5560,28 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.DeleteProcessingActivity(childComplexity, args["input"].(types.DeleteProcessingActivityInput)), true
+	case "Mutation.deleteProcessingActivityDPIA":
+		if e.complexity.Mutation.DeleteProcessingActivityDpia == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteProcessingActivityDPIA_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteProcessingActivityDpia(childComplexity, args["input"].(types.DeleteProcessingActivityDPIAInput)), true
+	case "Mutation.deleteProcessingActivityTIA":
+		if e.complexity.Mutation.DeleteProcessingActivityTia == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteProcessingActivityTIA_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteProcessingActivityTia(childComplexity, args["input"].(types.DeleteProcessingActivityTIAInput)), true
 	case "Mutation.deleteRisk":
 		if e.complexity.Mutation.DeleteRisk == nil {
 			break
@@ -5967,6 +6154,28 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.UpdateProcessingActivity(childComplexity, args["input"].(types.UpdateProcessingActivityInput)), true
+	case "Mutation.updateProcessingActivityDPIA":
+		if e.complexity.Mutation.UpdateProcessingActivityDpia == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateProcessingActivityDPIA_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateProcessingActivityDpia(childComplexity, args["input"].(types.UpdateProcessingActivityDPIAInput)), true
+	case "Mutation.updateProcessingActivityTIA":
+		if e.complexity.Mutation.UpdateProcessingActivityTia == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateProcessingActivityTIA_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateProcessingActivityTia(childComplexity, args["input"].(types.UpdateProcessingActivityTIAInput)), true
 	case "Mutation.updateRisk":
 		if e.complexity.Mutation.UpdateRisk == nil {
 			break
@@ -6496,6 +6705,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Organization.Data(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.DatumOrderBy), args["filter"].(*types.DatumFilter)), true
+	case "Organization.dataProtectionImpactAssessments":
+		if e.complexity.Organization.DataProtectionImpactAssessments == nil {
+			break
+		}
+
+		args, err := ec.field_Organization_dataProtectionImpactAssessments_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Organization.DataProtectionImpactAssessments(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.ProcessingActivityDPIAOrderBy)), true
 	case "Organization.description":
 		if e.complexity.Organization.Description == nil {
 			break
@@ -6698,6 +6918,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Organization.Tasks(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.TaskOrderBy)), true
+	case "Organization.transferImpactAssessments":
+		if e.complexity.Organization.TransferImpactAssessments == nil {
+			break
+		}
+
+		args, err := ec.field_Organization_transferImpactAssessments_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Organization.TransferImpactAssessments(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.ProcessingActivityTIAOrderBy)), true
 	case "Organization.trustCenter":
 		if e.complexity.Organization.TrustCenter == nil {
 			break
@@ -6914,12 +7145,24 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.ProcessingActivity.DataProtectionImpactAssessment(childComplexity), true
+	case "ProcessingActivity.dataProtectionOfficer":
+		if e.complexity.ProcessingActivity.DataProtectionOfficer == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivity.DataProtectionOfficer(childComplexity), true
 	case "ProcessingActivity.dataSubjectCategory":
 		if e.complexity.ProcessingActivity.DataSubjectCategory == nil {
 			break
 		}
 
 		return e.complexity.ProcessingActivity.DataSubjectCategory(childComplexity), true
+	case "ProcessingActivity.dpia":
+		if e.complexity.ProcessingActivity.Dpia == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivity.Dpia(childComplexity), true
 	case "ProcessingActivity.id":
 		if e.complexity.ProcessingActivity.ID == nil {
 			break
@@ -6932,6 +7175,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.ProcessingActivity.InternationalTransfers(childComplexity), true
+	case "ProcessingActivity.lastReviewDate":
+		if e.complexity.ProcessingActivity.LastReviewDate == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivity.LastReviewDate(childComplexity), true
 	case "ProcessingActivity.lawfulBasis":
 		if e.complexity.ProcessingActivity.LawfulBasis == nil {
 			break
@@ -6950,6 +7199,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.ProcessingActivity.Name(childComplexity), true
+	case "ProcessingActivity.nextReviewDate":
+		if e.complexity.ProcessingActivity.NextReviewDate == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivity.NextReviewDate(childComplexity), true
 	case "ProcessingActivity.organization":
 		if e.complexity.ProcessingActivity.Organization == nil {
 			break
@@ -6980,6 +7235,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.ProcessingActivity.RetentionPeriod(childComplexity), true
+	case "ProcessingActivity.role":
+		if e.complexity.ProcessingActivity.Role == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivity.Role(childComplexity), true
 	case "ProcessingActivity.securityMeasures":
 		if e.complexity.ProcessingActivity.SecurityMeasures == nil {
 			break
@@ -7004,6 +7265,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.ProcessingActivity.SpecialOrCriminalData(childComplexity), true
+	case "ProcessingActivity.tia":
+		if e.complexity.ProcessingActivity.Tia == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivity.Tia(childComplexity), true
 	case "ProcessingActivity.transferImpactAssessment":
 		if e.complexity.ProcessingActivity.TransferImpactAssessment == nil {
 			break
@@ -7053,6 +7320,99 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.ProcessingActivityConnection.TotalCount(childComplexity), true
 
+	case "ProcessingActivityDPIA.createdAt":
+		if e.complexity.ProcessingActivityDPIA.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivityDPIA.CreatedAt(childComplexity), true
+	case "ProcessingActivityDPIA.description":
+		if e.complexity.ProcessingActivityDPIA.Description == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivityDPIA.Description(childComplexity), true
+	case "ProcessingActivityDPIA.id":
+		if e.complexity.ProcessingActivityDPIA.ID == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivityDPIA.ID(childComplexity), true
+	case "ProcessingActivityDPIA.mitigations":
+		if e.complexity.ProcessingActivityDPIA.Mitigations == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivityDPIA.Mitigations(childComplexity), true
+	case "ProcessingActivityDPIA.necessityAndProportionality":
+		if e.complexity.ProcessingActivityDPIA.NecessityAndProportionality == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivityDPIA.NecessityAndProportionality(childComplexity), true
+	case "ProcessingActivityDPIA.organization":
+		if e.complexity.ProcessingActivityDPIA.Organization == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivityDPIA.Organization(childComplexity), true
+	case "ProcessingActivityDPIA.potentialRisk":
+		if e.complexity.ProcessingActivityDPIA.PotentialRisk == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivityDPIA.PotentialRisk(childComplexity), true
+	case "ProcessingActivityDPIA.processingActivity":
+		if e.complexity.ProcessingActivityDPIA.ProcessingActivity == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivityDPIA.ProcessingActivity(childComplexity), true
+	case "ProcessingActivityDPIA.residualRisk":
+		if e.complexity.ProcessingActivityDPIA.ResidualRisk == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivityDPIA.ResidualRisk(childComplexity), true
+	case "ProcessingActivityDPIA.updatedAt":
+		if e.complexity.ProcessingActivityDPIA.UpdatedAt == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivityDPIA.UpdatedAt(childComplexity), true
+
+	case "ProcessingActivityDPIAConnection.edges":
+		if e.complexity.ProcessingActivityDPIAConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivityDPIAConnection.Edges(childComplexity), true
+	case "ProcessingActivityDPIAConnection.pageInfo":
+		if e.complexity.ProcessingActivityDPIAConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivityDPIAConnection.PageInfo(childComplexity), true
+	case "ProcessingActivityDPIAConnection.totalCount":
+		if e.complexity.ProcessingActivityDPIAConnection.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivityDPIAConnection.TotalCount(childComplexity), true
+
+	case "ProcessingActivityDPIAEdge.cursor":
+		if e.complexity.ProcessingActivityDPIAEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivityDPIAEdge.Cursor(childComplexity), true
+	case "ProcessingActivityDPIAEdge.node":
+		if e.complexity.ProcessingActivityDPIAEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivityDPIAEdge.Node(childComplexity), true
+
 	case "ProcessingActivityEdge.cursor":
 		if e.complexity.ProcessingActivityEdge.Cursor == nil {
 			break
@@ -7065,6 +7425,99 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.ProcessingActivityEdge.Node(childComplexity), true
+
+	case "ProcessingActivityTIA.createdAt":
+		if e.complexity.ProcessingActivityTIA.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivityTIA.CreatedAt(childComplexity), true
+	case "ProcessingActivityTIA.dataSubjects":
+		if e.complexity.ProcessingActivityTIA.DataSubjects == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivityTIA.DataSubjects(childComplexity), true
+	case "ProcessingActivityTIA.id":
+		if e.complexity.ProcessingActivityTIA.ID == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivityTIA.ID(childComplexity), true
+	case "ProcessingActivityTIA.legalMechanism":
+		if e.complexity.ProcessingActivityTIA.LegalMechanism == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivityTIA.LegalMechanism(childComplexity), true
+	case "ProcessingActivityTIA.localLawRisk":
+		if e.complexity.ProcessingActivityTIA.LocalLawRisk == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivityTIA.LocalLawRisk(childComplexity), true
+	case "ProcessingActivityTIA.organization":
+		if e.complexity.ProcessingActivityTIA.Organization == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivityTIA.Organization(childComplexity), true
+	case "ProcessingActivityTIA.processingActivity":
+		if e.complexity.ProcessingActivityTIA.ProcessingActivity == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivityTIA.ProcessingActivity(childComplexity), true
+	case "ProcessingActivityTIA.supplementaryMeasures":
+		if e.complexity.ProcessingActivityTIA.SupplementaryMeasures == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivityTIA.SupplementaryMeasures(childComplexity), true
+	case "ProcessingActivityTIA.transfer":
+		if e.complexity.ProcessingActivityTIA.Transfer == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivityTIA.Transfer(childComplexity), true
+	case "ProcessingActivityTIA.updatedAt":
+		if e.complexity.ProcessingActivityTIA.UpdatedAt == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivityTIA.UpdatedAt(childComplexity), true
+
+	case "ProcessingActivityTIAConnection.edges":
+		if e.complexity.ProcessingActivityTIAConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivityTIAConnection.Edges(childComplexity), true
+	case "ProcessingActivityTIAConnection.pageInfo":
+		if e.complexity.ProcessingActivityTIAConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivityTIAConnection.PageInfo(childComplexity), true
+	case "ProcessingActivityTIAConnection.totalCount":
+		if e.complexity.ProcessingActivityTIAConnection.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivityTIAConnection.TotalCount(childComplexity), true
+
+	case "ProcessingActivityTIAEdge.cursor":
+		if e.complexity.ProcessingActivityTIAEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivityTIAEdge.Cursor(childComplexity), true
+	case "ProcessingActivityTIAEdge.node":
+		if e.complexity.ProcessingActivityTIAEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivityTIAEdge.Node(childComplexity), true
 
 	case "PublishDocumentVersionPayload.document":
 		if e.complexity.PublishDocumentVersionPayload.Document == nil {
@@ -8384,12 +8837,26 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.UpdatePeoplePayload.People(childComplexity), true
 
+	case "UpdateProcessingActivityDPIAPayload.processingActivityDpia":
+		if e.complexity.UpdateProcessingActivityDPIAPayload.ProcessingActivityDpia == nil {
+			break
+		}
+
+		return e.complexity.UpdateProcessingActivityDPIAPayload.ProcessingActivityDpia(childComplexity), true
+
 	case "UpdateProcessingActivityPayload.processingActivity":
 		if e.complexity.UpdateProcessingActivityPayload.ProcessingActivity == nil {
 			break
 		}
 
 		return e.complexity.UpdateProcessingActivityPayload.ProcessingActivity(childComplexity), true
+
+	case "UpdateProcessingActivityTIAPayload.processingActivityTia":
+		if e.complexity.UpdateProcessingActivityTIAPayload.ProcessingActivityTia == nil {
+			break
+		}
+
+		return e.complexity.UpdateProcessingActivityTIAPayload.ProcessingActivityTia(childComplexity), true
 
 	case "UpdateRiskPayload.risk":
 		if e.complexity.UpdateRiskPayload.Risk == nil {
@@ -9320,7 +9787,9 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputCreateObligationInput,
 		ec.unmarshalInputCreateOrganizationInput,
 		ec.unmarshalInputCreatePeopleInput,
+		ec.unmarshalInputCreateProcessingActivityDPIAInput,
 		ec.unmarshalInputCreateProcessingActivityInput,
+		ec.unmarshalInputCreateProcessingActivityTIAInput,
 		ec.unmarshalInputCreateRiskDocumentMappingInput,
 		ec.unmarshalInputCreateRiskInput,
 		ec.unmarshalInputCreateRiskMeasureMappingInput,
@@ -9360,7 +9829,9 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputDeleteOrganizationHorizontalLogoInput,
 		ec.unmarshalInputDeleteOrganizationInput,
 		ec.unmarshalInputDeletePeopleInput,
+		ec.unmarshalInputDeleteProcessingActivityDPIAInput,
 		ec.unmarshalInputDeleteProcessingActivityInput,
+		ec.unmarshalInputDeleteProcessingActivityTIAInput,
 		ec.unmarshalInputDeleteRiskDocumentMappingInput,
 		ec.unmarshalInputDeleteRiskInput,
 		ec.unmarshalInputDeleteRiskMeasureMappingInput,
@@ -9412,8 +9883,10 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputOrganizationOrder,
 		ec.unmarshalInputPeopleFilter,
 		ec.unmarshalInputPeopleOrder,
+		ec.unmarshalInputProcessingActivityDPIAOrder,
 		ec.unmarshalInputProcessingActivityFilter,
 		ec.unmarshalInputProcessingActivityOrder,
+		ec.unmarshalInputProcessingActivityTIAOrder,
 		ec.unmarshalInputPublishDocumentVersionInput,
 		ec.unmarshalInputRemoveMemberInput,
 		ec.unmarshalInputRequestEvidenceInput,
@@ -9446,7 +9919,9 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputUpdateOrganizationContextInput,
 		ec.unmarshalInputUpdateOrganizationInput,
 		ec.unmarshalInputUpdatePeopleInput,
+		ec.unmarshalInputUpdateProcessingActivityDPIAInput,
 		ec.unmarshalInputUpdateProcessingActivityInput,
+		ec.unmarshalInputUpdateProcessingActivityTIAInput,
 		ec.unmarshalInputUpdateRiskInput,
 		ec.unmarshalInputUpdateSAMLConfigurationInput,
 		ec.unmarshalInputUpdateTaskInput,
@@ -9935,6 +10410,38 @@ enum ProcessingActivityTransferImpactAssessment
   NOT_NEEDED
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityTransferImpactAssessmentNotNeeded"
+    )
+}
+
+enum ProcessingActivityDPIAResidualRisk
+  @goModel(
+    model: "go.probo.inc/probo/pkg/coredata.ProcessingActivityDPIAResidualRisk"
+  ) {
+  LOW
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityDPIAResidualRiskLow"
+    )
+  MEDIUM
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityDPIAResidualRiskMedium"
+    )
+  HIGH
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityDPIAResidualRiskHigh"
+    )
+}
+
+enum ProcessingActivityRole
+  @goModel(
+    model: "go.probo.inc/probo/pkg/coredata.ProcessingActivityRole"
+  ) {
+  CONTROLLER
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityRoleController"
+    )
+  PROCESSOR
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityRoleProcessor"
     )
 }
 
@@ -10619,6 +11126,26 @@ enum ProcessingActivityOrderField
     )
 }
 
+enum ProcessingActivityDPIAOrderField
+  @goModel(
+    model: "go.probo.inc/probo/pkg/coredata.ProcessingActivityDPIAOrderField"
+  ) {
+  CREATED_AT
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityDPIAOrderFieldCreatedAt"
+    )
+}
+
+enum ProcessingActivityTIAOrderField
+  @goModel(
+    model: "go.probo.inc/probo/pkg/coredata.ProcessingActivityTIAOrderField"
+  ) {
+  CREATED_AT
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityTIAOrderFieldCreatedAt"
+    )
+}
+
 enum TrustCenterAccessOrderField
   @goModel(
     model: "go.probo.inc/probo/pkg/coredata.TrustCenterAccessOrderField"
@@ -10870,6 +11397,22 @@ input ProcessingActivityOrder
   ) {
   direction: OrderDirection!
   field: ProcessingActivityOrderField!
+}
+
+input ProcessingActivityDPIAOrder
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ProcessingActivityDPIAOrderBy"
+  ) {
+  direction: OrderDirection!
+  field: ProcessingActivityDPIAOrderField!
+}
+
+input ProcessingActivityTIAOrder
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ProcessingActivityTIAOrderBy"
+  ) {
+  direction: OrderDirection!
+  field: ProcessingActivityTIAOrderField!
 }
 
 input TrustCenterAccessOrder
@@ -11231,6 +11774,22 @@ type Organization implements Node {
     orderBy: ProcessingActivityOrder
     filter: ProcessingActivityFilter = { snapshotId: null }
   ): ProcessingActivityConnection! @goField(forceResolver: true)
+
+  dataProtectionImpactAssessments(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: ProcessingActivityDPIAOrder
+  ): ProcessingActivityDPIAConnection! @goField(forceResolver: true)
+
+  transferImpactAssessments(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: ProcessingActivityTIAOrder
+  ): ProcessingActivityTIAConnection! @goField(forceResolver: true)
 
   snapshots(
     first: Int
@@ -11824,6 +12383,10 @@ type ProcessingActivity implements Node {
   securityMeasures: String
   dataProtectionImpactAssessment: ProcessingActivityDataProtectionImpactAssessment!
   transferImpactAssessment: ProcessingActivityTransferImpactAssessment!
+  lastReviewDate: Datetime
+  nextReviewDate: Datetime
+  role: ProcessingActivityRole!
+  dataProtectionOfficer: People @goField(forceResolver: true)
   vendors(
     first: Int
     after: CursorKey
@@ -11831,6 +12394,34 @@ type ProcessingActivity implements Node {
     before: CursorKey
     orderBy: VendorOrder
   ): VendorConnection! @goField(forceResolver: true)
+  dpia: ProcessingActivityDPIA @goField(forceResolver: true)
+  tia: ProcessingActivityTIA @goField(forceResolver: true)
+  createdAt: Datetime!
+  updatedAt: Datetime!
+}
+
+type ProcessingActivityDPIA implements Node {
+  id: ID!
+  processingActivity: ProcessingActivity! @goField(forceResolver: true)
+  organization: Organization! @goField(forceResolver: true)
+  description: String
+  necessityAndProportionality: String
+  potentialRisk: String
+  mitigations: String
+  residualRisk: ProcessingActivityDPIAResidualRisk
+  createdAt: Datetime!
+  updatedAt: Datetime!
+}
+
+type ProcessingActivityTIA implements Node {
+  id: ID!
+  processingActivity: ProcessingActivity! @goField(forceResolver: true)
+  organization: Organization! @goField(forceResolver: true)
+  dataSubjects: String
+  legalMechanism: String
+  transfer: String
+  localLawRisk: String
+  supplementaryMeasures: String
   createdAt: Datetime!
   updatedAt: Datetime!
 }
@@ -12339,6 +12930,34 @@ type ProcessingActivityEdge {
   node: ProcessingActivity!
 }
 
+type ProcessingActivityDPIAConnection
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ProcessingActivityDPIAConnection"
+  ) {
+  totalCount: Int! @goField(forceResolver: true)
+  edges: [ProcessingActivityDPIAEdge!]!
+  pageInfo: PageInfo!
+}
+
+type ProcessingActivityDPIAEdge {
+  cursor: CursorKey!
+  node: ProcessingActivityDPIA!
+}
+
+type ProcessingActivityTIAConnection
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ProcessingActivityTIAConnection"
+  ) {
+  totalCount: Int! @goField(forceResolver: true)
+  edges: [ProcessingActivityTIAEdge!]!
+  pageInfo: PageInfo!
+}
+
+type ProcessingActivityTIAEdge {
+  cursor: CursorKey!
+  node: ProcessingActivityTIA!
+}
+
 type SnapshotConnection
   @goModel(
     model: "go.probo.inc/probo/pkg/server/api/console/v1/types.SnapshotConnection"
@@ -12676,6 +13295,26 @@ type Mutation {
   deleteProcessingActivity(
     input: DeleteProcessingActivityInput!
   ): DeleteProcessingActivityPayload!
+  # Processing Activity DPIA mutations
+  createProcessingActivityDPIA(
+    input: CreateProcessingActivityDPIAInput!
+  ): CreateProcessingActivityDPIAPayload!
+  updateProcessingActivityDPIA(
+    input: UpdateProcessingActivityDPIAInput!
+  ): UpdateProcessingActivityDPIAPayload!
+  deleteProcessingActivityDPIA(
+    input: DeleteProcessingActivityDPIAInput!
+  ): DeleteProcessingActivityDPIAPayload!
+  # Processing Activity TIA mutations
+  createProcessingActivityTIA(
+    input: CreateProcessingActivityTIAInput!
+  ): CreateProcessingActivityTIAPayload!
+  updateProcessingActivityTIA(
+    input: UpdateProcessingActivityTIAInput!
+  ): UpdateProcessingActivityTIAPayload!
+  deleteProcessingActivityTIA(
+    input: DeleteProcessingActivityTIAInput!
+  ): DeleteProcessingActivityTIAPayload!
   # Snapshot mutations
   createSnapshot(input: CreateSnapshotInput!): CreateSnapshotPayload!
   deleteSnapshot(input: DeleteSnapshotInput!): DeleteSnapshotPayload!
@@ -13446,6 +14085,10 @@ input CreateProcessingActivityInput {
   securityMeasures: String
   dataProtectionImpactAssessment: ProcessingActivityDataProtectionImpactAssessment!
   transferImpactAssessment: ProcessingActivityTransferImpactAssessment!
+  lastReviewDate: Datetime
+  nextReviewDate: Datetime
+  role: ProcessingActivityRole!
+  dataProtectionOfficerId: ID
   vendorIds: [ID!]
 }
 
@@ -13467,11 +14110,59 @@ input UpdateProcessingActivityInput {
   securityMeasures: String @goField(omittable: true)
   dataProtectionImpactAssessment: ProcessingActivityDataProtectionImpactAssessment
   transferImpactAssessment: ProcessingActivityTransferImpactAssessment
+  lastReviewDate: Datetime @goField(omittable: true)
+  nextReviewDate: Datetime @goField(omittable: true)
+  role: ProcessingActivityRole
+  dataProtectionOfficerId: ID @goField(omittable: true)
   vendorIds: [ID!]
 }
 
 input DeleteProcessingActivityInput {
   processingActivityId: ID!
+}
+
+input CreateProcessingActivityDPIAInput {
+  processingActivityId: ID!
+  description: String
+  necessityAndProportionality: String
+  potentialRisk: String
+  mitigations: String
+  residualRisk: ProcessingActivityDPIAResidualRisk
+}
+
+input UpdateProcessingActivityDPIAInput {
+  id: ID!
+  description: String @goField(omittable: true)
+  necessityAndProportionality: String @goField(omittable: true)
+  potentialRisk: String @goField(omittable: true)
+  mitigations: String @goField(omittable: true)
+  residualRisk: ProcessingActivityDPIAResidualRisk
+}
+
+input DeleteProcessingActivityDPIAInput {
+  processingActivityDpiaId: ID!
+}
+
+input CreateProcessingActivityTIAInput {
+  processingActivityId: ID!
+  dataSubjects: String
+  legalMechanism: String
+  transfer: String
+  localLawRisk: String
+  supplementaryMeasures: String
+}
+
+input UpdateProcessingActivityTIAInput {
+  id: ID!
+  dataSubjects: String @goField(omittable: true)
+  legalMechanism: String @goField(omittable: true)
+  transfer: String @goField(omittable: true)
+  localLawRisk: String @goField(omittable: true)
+  supplementaryMeasures: String @goField(omittable: true)
+}
+
+input DeleteProcessingActivityTIAInput {
+  processingActivityTiaId: ID!
 }
 
 input CreateSnapshotInput {
@@ -14336,6 +15027,30 @@ type UpdateProcessingActivityPayload {
 
 type DeleteProcessingActivityPayload {
   deletedProcessingActivityId: ID!
+}
+
+type CreateProcessingActivityDPIAPayload {
+  processingActivityDpia: ProcessingActivityDPIA!
+}
+
+type UpdateProcessingActivityDPIAPayload {
+  processingActivityDpia: ProcessingActivityDPIA!
+}
+
+type DeleteProcessingActivityDPIAPayload {
+  deletedProcessingActivityDpiaId: ID!
+}
+
+type CreateProcessingActivityTIAPayload {
+  processingActivityTia: ProcessingActivityTIA!
+}
+
+type UpdateProcessingActivityTIAPayload {
+  processingActivityTia: ProcessingActivityTIA!
+}
+
+type DeleteProcessingActivityTIAPayload {
+  deletedProcessingActivityTiaId: ID!
 }
 
 type CreateSnapshotPayload {
@@ -15394,6 +16109,28 @@ func (ec *executionContext) field_Mutation_createPeople_args(ctx context.Context
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_createProcessingActivityDPIA_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateProcessingActivityDPIAInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateProcessingActivityDPIAInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_createProcessingActivityTIA_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateProcessingActivityTIAInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateProcessingActivityTIAInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_createProcessingActivity_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -15805,6 +16542,28 @@ func (ec *executionContext) field_Mutation_deletePeople_args(ctx context.Context
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNDeletePeopleInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeletePeopleInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_deleteProcessingActivityDPIA_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNDeleteProcessingActivityDPIAInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteProcessingActivityDPIAInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_deleteProcessingActivityTIA_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNDeleteProcessingActivityTIAInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteProcessingActivityTIAInput)
 	if err != nil {
 		return nil, err
 	}
@@ -16384,6 +17143,28 @@ func (ec *executionContext) field_Mutation_updatePeople_args(ctx context.Context
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_updateProcessingActivityDPIA_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateProcessingActivityDPIAInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateProcessingActivityDPIAInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateProcessingActivityTIA_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateProcessingActivityTIAInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateProcessingActivityTIAInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_updateProcessingActivity_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -16740,6 +17521,37 @@ func (ec *executionContext) field_Organization_controls_args(ctx context.Context
 		return nil, err
 	}
 	args["filter"] = arg5
+	return args, nil
+}
+
+func (ec *executionContext) field_Organization_dataProtectionImpactAssessments_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "first", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "after", ec.unmarshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey)
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "last", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["last"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "before", ec.unmarshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey)
+	if err != nil {
+		return nil, err
+	}
+	args["before"] = arg3
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "orderBy", ec.unmarshalOProcessingActivityDPIAOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityDPIAOrderBy)
+	if err != nil {
+		return nil, err
+	}
+	args["orderBy"] = arg4
 	return args, nil
 }
 
@@ -17241,6 +18053,37 @@ func (ec *executionContext) field_Organization_tasks_args(ctx context.Context, r
 	}
 	args["before"] = arg3
 	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "orderBy", ec.unmarshalOTaskOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐTaskOrderBy)
+	if err != nil {
+		return nil, err
+	}
+	args["orderBy"] = arg4
+	return args, nil
+}
+
+func (ec *executionContext) field_Organization_transferImpactAssessments_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "first", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "after", ec.unmarshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey)
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "last", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["last"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "before", ec.unmarshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey)
+	if err != nil {
+		return nil, err
+	}
+	args["before"] = arg3
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "orderBy", ec.unmarshalOProcessingActivityTIAOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityTIAOrderBy)
 	if err != nil {
 		return nil, err
 	}
@@ -18458,6 +19301,10 @@ func (ec *executionContext) fieldContext_Asset_organization(_ context.Context, f
 				return ec.fieldContext_Organization_continualImprovements(ctx, field)
 			case "processingActivities":
 				return ec.fieldContext_Organization_processingActivities(ctx, field)
+			case "dataProtectionImpactAssessments":
+				return ec.fieldContext_Organization_dataProtectionImpactAssessments(ctx, field)
+			case "transferImpactAssessments":
+				return ec.fieldContext_Organization_transferImpactAssessments(ctx, field)
 			case "snapshots":
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenterFiles":
@@ -18915,6 +19762,10 @@ func (ec *executionContext) fieldContext_Audit_organization(_ context.Context, f
 				return ec.fieldContext_Organization_continualImprovements(ctx, field)
 			case "processingActivities":
 				return ec.fieldContext_Organization_processingActivities(ctx, field)
+			case "dataProtectionImpactAssessments":
+				return ec.fieldContext_Organization_dataProtectionImpactAssessments(ctx, field)
+			case "transferImpactAssessments":
+				return ec.fieldContext_Organization_transferImpactAssessments(ctx, field)
 			case "snapshots":
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenterFiles":
@@ -19863,6 +20714,10 @@ func (ec *executionContext) fieldContext_ContinualImprovement_organization(_ con
 				return ec.fieldContext_Organization_continualImprovements(ctx, field)
 			case "processingActivities":
 				return ec.fieldContext_Organization_processingActivities(ctx, field)
+			case "dataProtectionImpactAssessments":
+				return ec.fieldContext_Organization_dataProtectionImpactAssessments(ctx, field)
+			case "transferImpactAssessments":
+				return ec.fieldContext_Organization_transferImpactAssessments(ctx, field)
 			case "snapshots":
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenterFiles":
@@ -21909,6 +22764,57 @@ func (ec *executionContext) fieldContext_CreatePeoplePayload_peopleEdge(_ contex
 	return fc, nil
 }
 
+func (ec *executionContext) _CreateProcessingActivityDPIAPayload_processingActivityDpia(ctx context.Context, field graphql.CollectedField, obj *types.CreateProcessingActivityDPIAPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_CreateProcessingActivityDPIAPayload_processingActivityDpia,
+		func(ctx context.Context) (any, error) {
+			return obj.ProcessingActivityDpia, nil
+		},
+		nil,
+		ec.marshalNProcessingActivityDPIA2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityDpia,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_CreateProcessingActivityDPIAPayload_processingActivityDpia(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CreateProcessingActivityDPIAPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_ProcessingActivityDPIA_id(ctx, field)
+			case "processingActivity":
+				return ec.fieldContext_ProcessingActivityDPIA_processingActivity(ctx, field)
+			case "organization":
+				return ec.fieldContext_ProcessingActivityDPIA_organization(ctx, field)
+			case "description":
+				return ec.fieldContext_ProcessingActivityDPIA_description(ctx, field)
+			case "necessityAndProportionality":
+				return ec.fieldContext_ProcessingActivityDPIA_necessityAndProportionality(ctx, field)
+			case "potentialRisk":
+				return ec.fieldContext_ProcessingActivityDPIA_potentialRisk(ctx, field)
+			case "mitigations":
+				return ec.fieldContext_ProcessingActivityDPIA_mitigations(ctx, field)
+			case "residualRisk":
+				return ec.fieldContext_ProcessingActivityDPIA_residualRisk(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_ProcessingActivityDPIA_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_ProcessingActivityDPIA_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ProcessingActivityDPIA", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _CreateProcessingActivityPayload_processingActivityEdge(ctx context.Context, field graphql.CollectedField, obj *types.CreateProcessingActivityPayload) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -21939,6 +22845,57 @@ func (ec *executionContext) fieldContext_CreateProcessingActivityPayload_process
 				return ec.fieldContext_ProcessingActivityEdge_node(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type ProcessingActivityEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CreateProcessingActivityTIAPayload_processingActivityTia(ctx context.Context, field graphql.CollectedField, obj *types.CreateProcessingActivityTIAPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_CreateProcessingActivityTIAPayload_processingActivityTia,
+		func(ctx context.Context) (any, error) {
+			return obj.ProcessingActivityTia, nil
+		},
+		nil,
+		ec.marshalNProcessingActivityTIA2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityTia,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_CreateProcessingActivityTIAPayload_processingActivityTia(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CreateProcessingActivityTIAPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_ProcessingActivityTIA_id(ctx, field)
+			case "processingActivity":
+				return ec.fieldContext_ProcessingActivityTIA_processingActivity(ctx, field)
+			case "organization":
+				return ec.fieldContext_ProcessingActivityTIA_organization(ctx, field)
+			case "dataSubjects":
+				return ec.fieldContext_ProcessingActivityTIA_dataSubjects(ctx, field)
+			case "legalMechanism":
+				return ec.fieldContext_ProcessingActivityTIA_legalMechanism(ctx, field)
+			case "transfer":
+				return ec.fieldContext_ProcessingActivityTIA_transfer(ctx, field)
+			case "localLawRisk":
+				return ec.fieldContext_ProcessingActivityTIA_localLawRisk(ctx, field)
+			case "supplementaryMeasures":
+				return ec.fieldContext_ProcessingActivityTIA_supplementaryMeasures(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_ProcessingActivityTIA_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_ProcessingActivityTIA_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ProcessingActivityTIA", field.Name)
 		},
 	}
 	return fc, nil
@@ -22690,6 +23647,10 @@ func (ec *executionContext) fieldContext_CustomDomain_organization(_ context.Con
 				return ec.fieldContext_Organization_continualImprovements(ctx, field)
 			case "processingActivities":
 				return ec.fieldContext_Organization_processingActivities(ctx, field)
+			case "dataProtectionImpactAssessments":
+				return ec.fieldContext_Organization_dataProtectionImpactAssessments(ctx, field)
+			case "transferImpactAssessments":
+				return ec.fieldContext_Organization_transferImpactAssessments(ctx, field)
 			case "snapshots":
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenterFiles":
@@ -23338,6 +24299,10 @@ func (ec *executionContext) fieldContext_Datum_organization(_ context.Context, f
 				return ec.fieldContext_Organization_continualImprovements(ctx, field)
 			case "processingActivities":
 				return ec.fieldContext_Organization_processingActivities(ctx, field)
+			case "dataProtectionImpactAssessments":
+				return ec.fieldContext_Organization_dataProtectionImpactAssessments(ctx, field)
+			case "transferImpactAssessments":
+				return ec.fieldContext_Organization_transferImpactAssessments(ctx, field)
 			case "snapshots":
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenterFiles":
@@ -24402,6 +25367,10 @@ func (ec *executionContext) fieldContext_DeleteOrganizationHorizontalLogoPayload
 				return ec.fieldContext_Organization_continualImprovements(ctx, field)
 			case "processingActivities":
 				return ec.fieldContext_Organization_processingActivities(ctx, field)
+			case "dataProtectionImpactAssessments":
+				return ec.fieldContext_Organization_dataProtectionImpactAssessments(ctx, field)
+			case "transferImpactAssessments":
+				return ec.fieldContext_Organization_transferImpactAssessments(ctx, field)
 			case "snapshots":
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenterFiles":
@@ -24481,6 +25450,35 @@ func (ec *executionContext) fieldContext_DeletePeoplePayload_deletedPeopleId(_ c
 	return fc, nil
 }
 
+func (ec *executionContext) _DeleteProcessingActivityDPIAPayload_deletedProcessingActivityDpiaId(ctx context.Context, field graphql.CollectedField, obj *types.DeleteProcessingActivityDPIAPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_DeleteProcessingActivityDPIAPayload_deletedProcessingActivityDpiaId,
+		func(ctx context.Context) (any, error) {
+			return obj.DeletedProcessingActivityDpiaID, nil
+		},
+		nil,
+		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_DeleteProcessingActivityDPIAPayload_deletedProcessingActivityDpiaId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DeleteProcessingActivityDPIAPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _DeleteProcessingActivityPayload_deletedProcessingActivityId(ctx context.Context, field graphql.CollectedField, obj *types.DeleteProcessingActivityPayload) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -24500,6 +25498,35 @@ func (ec *executionContext) _DeleteProcessingActivityPayload_deletedProcessingAc
 func (ec *executionContext) fieldContext_DeleteProcessingActivityPayload_deletedProcessingActivityId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "DeleteProcessingActivityPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DeleteProcessingActivityTIAPayload_deletedProcessingActivityTiaId(ctx context.Context, field graphql.CollectedField, obj *types.DeleteProcessingActivityTIAPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_DeleteProcessingActivityTIAPayload_deletedProcessingActivityTiaId,
+		func(ctx context.Context) (any, error) {
+			return obj.DeletedProcessingActivityTiaID, nil
+		},
+		nil,
+		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_DeleteProcessingActivityTIAPayload_deletedProcessingActivityTiaId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DeleteProcessingActivityTIAPayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -25521,6 +26548,10 @@ func (ec *executionContext) fieldContext_Document_organization(_ context.Context
 				return ec.fieldContext_Organization_continualImprovements(ctx, field)
 			case "processingActivities":
 				return ec.fieldContext_Organization_processingActivities(ctx, field)
+			case "dataProtectionImpactAssessments":
+				return ec.fieldContext_Organization_dataProtectionImpactAssessments(ctx, field)
+			case "transferImpactAssessments":
+				return ec.fieldContext_Organization_transferImpactAssessments(ctx, field)
 			case "snapshots":
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenterFiles":
@@ -28059,6 +29090,10 @@ func (ec *executionContext) fieldContext_Framework_organization(_ context.Contex
 				return ec.fieldContext_Organization_continualImprovements(ctx, field)
 			case "processingActivities":
 				return ec.fieldContext_Organization_processingActivities(ctx, field)
+			case "dataProtectionImpactAssessments":
+				return ec.fieldContext_Organization_dataProtectionImpactAssessments(ctx, field)
+			case "transferImpactAssessments":
+				return ec.fieldContext_Organization_transferImpactAssessments(ctx, field)
 			case "snapshots":
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenterFiles":
@@ -29054,6 +30089,10 @@ func (ec *executionContext) fieldContext_Invitation_organization(_ context.Conte
 				return ec.fieldContext_Organization_continualImprovements(ctx, field)
 			case "processingActivities":
 				return ec.fieldContext_Organization_processingActivities(ctx, field)
+			case "dataProtectionImpactAssessments":
+				return ec.fieldContext_Organization_dataProtectionImpactAssessments(ctx, field)
+			case "transferImpactAssessments":
+				return ec.fieldContext_Organization_transferImpactAssessments(ctx, field)
 			case "snapshots":
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenterFiles":
@@ -30122,6 +31161,10 @@ func (ec *executionContext) fieldContext_Meeting_organization(_ context.Context,
 				return ec.fieldContext_Organization_continualImprovements(ctx, field)
 			case "processingActivities":
 				return ec.fieldContext_Organization_processingActivities(ctx, field)
+			case "dataProtectionImpactAssessments":
+				return ec.fieldContext_Organization_dataProtectionImpactAssessments(ctx, field)
+			case "transferImpactAssessments":
+				return ec.fieldContext_Organization_transferImpactAssessments(ctx, field)
 			case "snapshots":
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenterFiles":
@@ -36571,6 +37614,276 @@ func (ec *executionContext) fieldContext_Mutation_deleteProcessingActivity(ctx c
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_createProcessingActivityDPIA(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_createProcessingActivityDPIA,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().CreateProcessingActivityDpia(ctx, fc.Args["input"].(types.CreateProcessingActivityDPIAInput))
+		},
+		nil,
+		ec.marshalNCreateProcessingActivityDPIAPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateProcessingActivityDPIAPayload,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_createProcessingActivityDPIA(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "processingActivityDpia":
+				return ec.fieldContext_CreateProcessingActivityDPIAPayload_processingActivityDpia(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CreateProcessingActivityDPIAPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createProcessingActivityDPIA_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateProcessingActivityDPIA(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_updateProcessingActivityDPIA,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().UpdateProcessingActivityDpia(ctx, fc.Args["input"].(types.UpdateProcessingActivityDPIAInput))
+		},
+		nil,
+		ec.marshalNUpdateProcessingActivityDPIAPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateProcessingActivityDPIAPayload,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updateProcessingActivityDPIA(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "processingActivityDpia":
+				return ec.fieldContext_UpdateProcessingActivityDPIAPayload_processingActivityDpia(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type UpdateProcessingActivityDPIAPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateProcessingActivityDPIA_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteProcessingActivityDPIA(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_deleteProcessingActivityDPIA,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().DeleteProcessingActivityDpia(ctx, fc.Args["input"].(types.DeleteProcessingActivityDPIAInput))
+		},
+		nil,
+		ec.marshalNDeleteProcessingActivityDPIAPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteProcessingActivityDPIAPayload,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteProcessingActivityDPIA(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "deletedProcessingActivityDpiaId":
+				return ec.fieldContext_DeleteProcessingActivityDPIAPayload_deletedProcessingActivityDpiaId(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DeleteProcessingActivityDPIAPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteProcessingActivityDPIA_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_createProcessingActivityTIA(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_createProcessingActivityTIA,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().CreateProcessingActivityTia(ctx, fc.Args["input"].(types.CreateProcessingActivityTIAInput))
+		},
+		nil,
+		ec.marshalNCreateProcessingActivityTIAPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateProcessingActivityTIAPayload,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_createProcessingActivityTIA(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "processingActivityTia":
+				return ec.fieldContext_CreateProcessingActivityTIAPayload_processingActivityTia(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CreateProcessingActivityTIAPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createProcessingActivityTIA_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateProcessingActivityTIA(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_updateProcessingActivityTIA,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().UpdateProcessingActivityTia(ctx, fc.Args["input"].(types.UpdateProcessingActivityTIAInput))
+		},
+		nil,
+		ec.marshalNUpdateProcessingActivityTIAPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateProcessingActivityTIAPayload,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updateProcessingActivityTIA(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "processingActivityTia":
+				return ec.fieldContext_UpdateProcessingActivityTIAPayload_processingActivityTia(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type UpdateProcessingActivityTIAPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateProcessingActivityTIA_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteProcessingActivityTIA(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_deleteProcessingActivityTIA,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().DeleteProcessingActivityTia(ctx, fc.Args["input"].(types.DeleteProcessingActivityTIAInput))
+		},
+		nil,
+		ec.marshalNDeleteProcessingActivityTIAPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteProcessingActivityTIAPayload,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteProcessingActivityTIA(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "deletedProcessingActivityTiaId":
+				return ec.fieldContext_DeleteProcessingActivityTIAPayload_deletedProcessingActivityTiaId(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DeleteProcessingActivityTIAPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteProcessingActivityTIA_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_createSnapshot(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -37208,6 +38521,10 @@ func (ec *executionContext) fieldContext_Nonconformity_organization(_ context.Co
 				return ec.fieldContext_Organization_continualImprovements(ctx, field)
 			case "processingActivities":
 				return ec.fieldContext_Organization_processingActivities(ctx, field)
+			case "dataProtectionImpactAssessments":
+				return ec.fieldContext_Organization_dataProtectionImpactAssessments(ctx, field)
+			case "transferImpactAssessments":
+				return ec.fieldContext_Organization_transferImpactAssessments(ctx, field)
 			case "snapshots":
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenterFiles":
@@ -37987,6 +39304,10 @@ func (ec *executionContext) fieldContext_Obligation_organization(_ context.Conte
 				return ec.fieldContext_Organization_continualImprovements(ctx, field)
 			case "processingActivities":
 				return ec.fieldContext_Organization_processingActivities(ctx, field)
+			case "dataProtectionImpactAssessments":
+				return ec.fieldContext_Organization_dataProtectionImpactAssessments(ctx, field)
+			case "transferImpactAssessments":
+				return ec.fieldContext_Organization_transferImpactAssessments(ctx, field)
 			case "snapshots":
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenterFiles":
@@ -39738,6 +41059,104 @@ func (ec *executionContext) fieldContext_Organization_processingActivities(ctx c
 	return fc, nil
 }
 
+func (ec *executionContext) _Organization_dataProtectionImpactAssessments(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Organization_dataProtectionImpactAssessments,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Organization().DataProtectionImpactAssessments(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.ProcessingActivityDPIAOrderBy))
+		},
+		nil,
+		ec.marshalNProcessingActivityDPIAConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityDPIAConnection,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Organization_dataProtectionImpactAssessments(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Organization",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "totalCount":
+				return ec.fieldContext_ProcessingActivityDPIAConnection_totalCount(ctx, field)
+			case "edges":
+				return ec.fieldContext_ProcessingActivityDPIAConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_ProcessingActivityDPIAConnection_pageInfo(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ProcessingActivityDPIAConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Organization_dataProtectionImpactAssessments_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Organization_transferImpactAssessments(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Organization_transferImpactAssessments,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Organization().TransferImpactAssessments(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.ProcessingActivityTIAOrderBy))
+		},
+		nil,
+		ec.marshalNProcessingActivityTIAConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityTIAConnection,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Organization_transferImpactAssessments(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Organization",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "totalCount":
+				return ec.fieldContext_ProcessingActivityTIAConnection_totalCount(ctx, field)
+			case "edges":
+				return ec.fieldContext_ProcessingActivityTIAConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_ProcessingActivityTIAConnection_pageInfo(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ProcessingActivityTIAConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Organization_transferImpactAssessments_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Organization_snapshots(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -40308,6 +41727,10 @@ func (ec *executionContext) fieldContext_OrganizationEdge_node(_ context.Context
 				return ec.fieldContext_Organization_continualImprovements(ctx, field)
 			case "processingActivities":
 				return ec.fieldContext_Organization_processingActivities(ctx, field)
+			case "dataProtectionImpactAssessments":
+				return ec.fieldContext_Organization_dataProtectionImpactAssessments(ctx, field)
+			case "transferImpactAssessments":
+				return ec.fieldContext_Organization_transferImpactAssessments(ctx, field)
 			case "snapshots":
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenterFiles":
@@ -41085,6 +42508,10 @@ func (ec *executionContext) fieldContext_ProcessingActivity_organization(_ conte
 				return ec.fieldContext_Organization_continualImprovements(ctx, field)
 			case "processingActivities":
 				return ec.fieldContext_Organization_processingActivities(ctx, field)
+			case "dataProtectionImpactAssessments":
+				return ec.fieldContext_Organization_dataProtectionImpactAssessments(ctx, field)
+			case "transferImpactAssessments":
+				return ec.fieldContext_Organization_transferImpactAssessments(ctx, field)
 			case "snapshots":
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenterFiles":
@@ -41541,6 +42968,144 @@ func (ec *executionContext) fieldContext_ProcessingActivity_transferImpactAssess
 	return fc, nil
 }
 
+func (ec *executionContext) _ProcessingActivity_lastReviewDate(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivity) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ProcessingActivity_lastReviewDate,
+		func(ctx context.Context) (any, error) {
+			return obj.LastReviewDate, nil
+		},
+		nil,
+		ec.marshalODatetime2ᚖtimeᚐTime,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivity_lastReviewDate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivity",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProcessingActivity_nextReviewDate(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivity) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ProcessingActivity_nextReviewDate,
+		func(ctx context.Context) (any, error) {
+			return obj.NextReviewDate, nil
+		},
+		nil,
+		ec.marshalODatetime2ᚖtimeᚐTime,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivity_nextReviewDate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivity",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProcessingActivity_role(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivity) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ProcessingActivity_role,
+		func(ctx context.Context) (any, error) {
+			return obj.Role, nil
+		},
+		nil,
+		ec.marshalNProcessingActivityRole2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityRole,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivity_role(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivity",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ProcessingActivityRole does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProcessingActivity_dataProtectionOfficer(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivity) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ProcessingActivity_dataProtectionOfficer,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.ProcessingActivity().DataProtectionOfficer(ctx, obj)
+		},
+		nil,
+		ec.marshalOPeople2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPeople,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivity_dataProtectionOfficer(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivity",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_People_id(ctx, field)
+			case "fullName":
+				return ec.fieldContext_People_fullName(ctx, field)
+			case "primaryEmailAddress":
+				return ec.fieldContext_People_primaryEmailAddress(ctx, field)
+			case "additionalEmailAddresses":
+				return ec.fieldContext_People_additionalEmailAddresses(ctx, field)
+			case "kind":
+				return ec.fieldContext_People_kind(ctx, field)
+			case "position":
+				return ec.fieldContext_People_position(ctx, field)
+			case "contractStartDate":
+				return ec.fieldContext_People_contractStartDate(ctx, field)
+			case "contractEndDate":
+				return ec.fieldContext_People_contractEndDate(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_People_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_People_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type People", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _ProcessingActivity_vendors(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivity) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -41586,6 +43151,108 @@ func (ec *executionContext) fieldContext_ProcessingActivity_vendors(ctx context.
 	if fc.Args, err = ec.field_ProcessingActivity_vendors_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProcessingActivity_dpia(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivity) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ProcessingActivity_dpia,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.ProcessingActivity().Dpia(ctx, obj)
+		},
+		nil,
+		ec.marshalOProcessingActivityDPIA2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityDpia,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivity_dpia(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivity",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_ProcessingActivityDPIA_id(ctx, field)
+			case "processingActivity":
+				return ec.fieldContext_ProcessingActivityDPIA_processingActivity(ctx, field)
+			case "organization":
+				return ec.fieldContext_ProcessingActivityDPIA_organization(ctx, field)
+			case "description":
+				return ec.fieldContext_ProcessingActivityDPIA_description(ctx, field)
+			case "necessityAndProportionality":
+				return ec.fieldContext_ProcessingActivityDPIA_necessityAndProportionality(ctx, field)
+			case "potentialRisk":
+				return ec.fieldContext_ProcessingActivityDPIA_potentialRisk(ctx, field)
+			case "mitigations":
+				return ec.fieldContext_ProcessingActivityDPIA_mitigations(ctx, field)
+			case "residualRisk":
+				return ec.fieldContext_ProcessingActivityDPIA_residualRisk(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_ProcessingActivityDPIA_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_ProcessingActivityDPIA_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ProcessingActivityDPIA", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProcessingActivity_tia(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivity) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ProcessingActivity_tia,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.ProcessingActivity().Tia(ctx, obj)
+		},
+		nil,
+		ec.marshalOProcessingActivityTIA2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityTia,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivity_tia(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivity",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_ProcessingActivityTIA_id(ctx, field)
+			case "processingActivity":
+				return ec.fieldContext_ProcessingActivityTIA_processingActivity(ctx, field)
+			case "organization":
+				return ec.fieldContext_ProcessingActivityTIA_organization(ctx, field)
+			case "dataSubjects":
+				return ec.fieldContext_ProcessingActivityTIA_dataSubjects(ctx, field)
+			case "legalMechanism":
+				return ec.fieldContext_ProcessingActivityTIA_legalMechanism(ctx, field)
+			case "transfer":
+				return ec.fieldContext_ProcessingActivityTIA_transfer(ctx, field)
+			case "localLawRisk":
+				return ec.fieldContext_ProcessingActivityTIA_localLawRisk(ctx, field)
+			case "supplementaryMeasures":
+				return ec.fieldContext_ProcessingActivityTIA_supplementaryMeasures(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_ProcessingActivityTIA_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_ProcessingActivityTIA_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ProcessingActivityTIA", field.Name)
+		},
 	}
 	return fc, nil
 }
@@ -41751,6 +43418,613 @@ func (ec *executionContext) fieldContext_ProcessingActivityConnection_pageInfo(_
 	return fc, nil
 }
 
+func (ec *executionContext) _ProcessingActivityDPIA_id(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityDpia) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ProcessingActivityDPIA_id,
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivityDPIA_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivityDPIA",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProcessingActivityDPIA_processingActivity(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityDpia) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ProcessingActivityDPIA_processingActivity,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.ProcessingActivityDPIA().ProcessingActivity(ctx, obj)
+		},
+		nil,
+		ec.marshalNProcessingActivity2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivity,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivityDPIA_processingActivity(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivityDPIA",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_ProcessingActivity_id(ctx, field)
+			case "snapshotId":
+				return ec.fieldContext_ProcessingActivity_snapshotId(ctx, field)
+			case "sourceId":
+				return ec.fieldContext_ProcessingActivity_sourceId(ctx, field)
+			case "organization":
+				return ec.fieldContext_ProcessingActivity_organization(ctx, field)
+			case "name":
+				return ec.fieldContext_ProcessingActivity_name(ctx, field)
+			case "purpose":
+				return ec.fieldContext_ProcessingActivity_purpose(ctx, field)
+			case "dataSubjectCategory":
+				return ec.fieldContext_ProcessingActivity_dataSubjectCategory(ctx, field)
+			case "personalDataCategory":
+				return ec.fieldContext_ProcessingActivity_personalDataCategory(ctx, field)
+			case "specialOrCriminalData":
+				return ec.fieldContext_ProcessingActivity_specialOrCriminalData(ctx, field)
+			case "consentEvidenceLink":
+				return ec.fieldContext_ProcessingActivity_consentEvidenceLink(ctx, field)
+			case "lawfulBasis":
+				return ec.fieldContext_ProcessingActivity_lawfulBasis(ctx, field)
+			case "recipients":
+				return ec.fieldContext_ProcessingActivity_recipients(ctx, field)
+			case "location":
+				return ec.fieldContext_ProcessingActivity_location(ctx, field)
+			case "internationalTransfers":
+				return ec.fieldContext_ProcessingActivity_internationalTransfers(ctx, field)
+			case "transferSafeguards":
+				return ec.fieldContext_ProcessingActivity_transferSafeguards(ctx, field)
+			case "retentionPeriod":
+				return ec.fieldContext_ProcessingActivity_retentionPeriod(ctx, field)
+			case "securityMeasures":
+				return ec.fieldContext_ProcessingActivity_securityMeasures(ctx, field)
+			case "dataProtectionImpactAssessment":
+				return ec.fieldContext_ProcessingActivity_dataProtectionImpactAssessment(ctx, field)
+			case "transferImpactAssessment":
+				return ec.fieldContext_ProcessingActivity_transferImpactAssessment(ctx, field)
+			case "lastReviewDate":
+				return ec.fieldContext_ProcessingActivity_lastReviewDate(ctx, field)
+			case "nextReviewDate":
+				return ec.fieldContext_ProcessingActivity_nextReviewDate(ctx, field)
+			case "role":
+				return ec.fieldContext_ProcessingActivity_role(ctx, field)
+			case "dataProtectionOfficer":
+				return ec.fieldContext_ProcessingActivity_dataProtectionOfficer(ctx, field)
+			case "vendors":
+				return ec.fieldContext_ProcessingActivity_vendors(ctx, field)
+			case "dpia":
+				return ec.fieldContext_ProcessingActivity_dpia(ctx, field)
+			case "tia":
+				return ec.fieldContext_ProcessingActivity_tia(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_ProcessingActivity_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_ProcessingActivity_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ProcessingActivity", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProcessingActivityDPIA_organization(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityDpia) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ProcessingActivityDPIA_organization,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.ProcessingActivityDPIA().Organization(ctx, obj)
+		},
+		nil,
+		ec.marshalNOrganization2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐOrganization,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivityDPIA_organization(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivityDPIA",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Organization_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Organization_name(ctx, field)
+			case "logoUrl":
+				return ec.fieldContext_Organization_logoUrl(ctx, field)
+			case "horizontalLogoUrl":
+				return ec.fieldContext_Organization_horizontalLogoUrl(ctx, field)
+			case "description":
+				return ec.fieldContext_Organization_description(ctx, field)
+			case "websiteUrl":
+				return ec.fieldContext_Organization_websiteUrl(ctx, field)
+			case "email":
+				return ec.fieldContext_Organization_email(ctx, field)
+			case "headquarterAddress":
+				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
+			case "context":
+				return ec.fieldContext_Organization_context(ctx, field)
+			case "memberships":
+				return ec.fieldContext_Organization_memberships(ctx, field)
+			case "invitations":
+				return ec.fieldContext_Organization_invitations(ctx, field)
+			case "slackConnections":
+				return ec.fieldContext_Organization_slackConnections(ctx, field)
+			case "frameworks":
+				return ec.fieldContext_Organization_frameworks(ctx, field)
+			case "controls":
+				return ec.fieldContext_Organization_controls(ctx, field)
+			case "vendors":
+				return ec.fieldContext_Organization_vendors(ctx, field)
+			case "peoples":
+				return ec.fieldContext_Organization_peoples(ctx, field)
+			case "documents":
+				return ec.fieldContext_Organization_documents(ctx, field)
+			case "meetings":
+				return ec.fieldContext_Organization_meetings(ctx, field)
+			case "measures":
+				return ec.fieldContext_Organization_measures(ctx, field)
+			case "risks":
+				return ec.fieldContext_Organization_risks(ctx, field)
+			case "tasks":
+				return ec.fieldContext_Organization_tasks(ctx, field)
+			case "assets":
+				return ec.fieldContext_Organization_assets(ctx, field)
+			case "data":
+				return ec.fieldContext_Organization_data(ctx, field)
+			case "audits":
+				return ec.fieldContext_Organization_audits(ctx, field)
+			case "nonconformities":
+				return ec.fieldContext_Organization_nonconformities(ctx, field)
+			case "obligations":
+				return ec.fieldContext_Organization_obligations(ctx, field)
+			case "continualImprovements":
+				return ec.fieldContext_Organization_continualImprovements(ctx, field)
+			case "processingActivities":
+				return ec.fieldContext_Organization_processingActivities(ctx, field)
+			case "dataProtectionImpactAssessments":
+				return ec.fieldContext_Organization_dataProtectionImpactAssessments(ctx, field)
+			case "transferImpactAssessments":
+				return ec.fieldContext_Organization_transferImpactAssessments(ctx, field)
+			case "snapshots":
+				return ec.fieldContext_Organization_snapshots(ctx, field)
+			case "trustCenterFiles":
+				return ec.fieldContext_Organization_trustCenterFiles(ctx, field)
+			case "trustCenter":
+				return ec.fieldContext_Organization_trustCenter(ctx, field)
+			case "customDomain":
+				return ec.fieldContext_Organization_customDomain(ctx, field)
+			case "samlConfigurations":
+				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Organization_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Organization_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProcessingActivityDPIA_description(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityDpia) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ProcessingActivityDPIA_description,
+		func(ctx context.Context) (any, error) {
+			return obj.Description, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivityDPIA_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivityDPIA",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProcessingActivityDPIA_necessityAndProportionality(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityDpia) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ProcessingActivityDPIA_necessityAndProportionality,
+		func(ctx context.Context) (any, error) {
+			return obj.NecessityAndProportionality, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivityDPIA_necessityAndProportionality(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivityDPIA",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProcessingActivityDPIA_potentialRisk(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityDpia) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ProcessingActivityDPIA_potentialRisk,
+		func(ctx context.Context) (any, error) {
+			return obj.PotentialRisk, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivityDPIA_potentialRisk(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivityDPIA",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProcessingActivityDPIA_mitigations(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityDpia) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ProcessingActivityDPIA_mitigations,
+		func(ctx context.Context) (any, error) {
+			return obj.Mitigations, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivityDPIA_mitigations(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivityDPIA",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProcessingActivityDPIA_residualRisk(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityDpia) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ProcessingActivityDPIA_residualRisk,
+		func(ctx context.Context) (any, error) {
+			return obj.ResidualRisk, nil
+		},
+		nil,
+		ec.marshalOProcessingActivityDPIAResidualRisk2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityDPIAResidualRisk,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivityDPIA_residualRisk(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivityDPIA",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ProcessingActivityDPIAResidualRisk does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProcessingActivityDPIA_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityDpia) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ProcessingActivityDPIA_createdAt,
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		ec.marshalNDatetime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivityDPIA_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivityDPIA",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProcessingActivityDPIA_updatedAt(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityDpia) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ProcessingActivityDPIA_updatedAt,
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		ec.marshalNDatetime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivityDPIA_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivityDPIA",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProcessingActivityDPIAConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityDPIAConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ProcessingActivityDPIAConnection_totalCount,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.ProcessingActivityDPIAConnection().TotalCount(ctx, obj)
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivityDPIAConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivityDPIAConnection",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProcessingActivityDPIAConnection_edges(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityDPIAConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ProcessingActivityDPIAConnection_edges,
+		func(ctx context.Context) (any, error) {
+			return obj.Edges, nil
+		},
+		nil,
+		ec.marshalNProcessingActivityDPIAEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityDPIAEdgeᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivityDPIAConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivityDPIAConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cursor":
+				return ec.fieldContext_ProcessingActivityDPIAEdge_cursor(ctx, field)
+			case "node":
+				return ec.fieldContext_ProcessingActivityDPIAEdge_node(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ProcessingActivityDPIAEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProcessingActivityDPIAConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityDPIAConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ProcessingActivityDPIAConnection_pageInfo,
+		func(ctx context.Context) (any, error) {
+			return obj.PageInfo, nil
+		},
+		nil,
+		ec.marshalNPageInfo2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPageInfo,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivityDPIAConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivityDPIAConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProcessingActivityDPIAEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityDPIAEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ProcessingActivityDPIAEdge_cursor,
+		func(ctx context.Context) (any, error) {
+			return obj.Cursor, nil
+		},
+		nil,
+		ec.marshalNCursorKey2goᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivityDPIAEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivityDPIAEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type CursorKey does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProcessingActivityDPIAEdge_node(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityDPIAEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ProcessingActivityDPIAEdge_node,
+		func(ctx context.Context) (any, error) {
+			return obj.Node, nil
+		},
+		nil,
+		ec.marshalNProcessingActivityDPIA2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityDpia,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivityDPIAEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivityDPIAEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_ProcessingActivityDPIA_id(ctx, field)
+			case "processingActivity":
+				return ec.fieldContext_ProcessingActivityDPIA_processingActivity(ctx, field)
+			case "organization":
+				return ec.fieldContext_ProcessingActivityDPIA_organization(ctx, field)
+			case "description":
+				return ec.fieldContext_ProcessingActivityDPIA_description(ctx, field)
+			case "necessityAndProportionality":
+				return ec.fieldContext_ProcessingActivityDPIA_necessityAndProportionality(ctx, field)
+			case "potentialRisk":
+				return ec.fieldContext_ProcessingActivityDPIA_potentialRisk(ctx, field)
+			case "mitigations":
+				return ec.fieldContext_ProcessingActivityDPIA_mitigations(ctx, field)
+			case "residualRisk":
+				return ec.fieldContext_ProcessingActivityDPIA_residualRisk(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_ProcessingActivityDPIA_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_ProcessingActivityDPIA_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ProcessingActivityDPIA", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _ProcessingActivityEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityEdge) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -41842,14 +44116,633 @@ func (ec *executionContext) fieldContext_ProcessingActivityEdge_node(_ context.C
 				return ec.fieldContext_ProcessingActivity_dataProtectionImpactAssessment(ctx, field)
 			case "transferImpactAssessment":
 				return ec.fieldContext_ProcessingActivity_transferImpactAssessment(ctx, field)
+			case "lastReviewDate":
+				return ec.fieldContext_ProcessingActivity_lastReviewDate(ctx, field)
+			case "nextReviewDate":
+				return ec.fieldContext_ProcessingActivity_nextReviewDate(ctx, field)
+			case "role":
+				return ec.fieldContext_ProcessingActivity_role(ctx, field)
+			case "dataProtectionOfficer":
+				return ec.fieldContext_ProcessingActivity_dataProtectionOfficer(ctx, field)
 			case "vendors":
 				return ec.fieldContext_ProcessingActivity_vendors(ctx, field)
+			case "dpia":
+				return ec.fieldContext_ProcessingActivity_dpia(ctx, field)
+			case "tia":
+				return ec.fieldContext_ProcessingActivity_tia(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_ProcessingActivity_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_ProcessingActivity_updatedAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type ProcessingActivity", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProcessingActivityTIA_id(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityTia) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ProcessingActivityTIA_id,
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivityTIA_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivityTIA",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProcessingActivityTIA_processingActivity(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityTia) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ProcessingActivityTIA_processingActivity,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.ProcessingActivityTIA().ProcessingActivity(ctx, obj)
+		},
+		nil,
+		ec.marshalNProcessingActivity2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivity,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivityTIA_processingActivity(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivityTIA",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_ProcessingActivity_id(ctx, field)
+			case "snapshotId":
+				return ec.fieldContext_ProcessingActivity_snapshotId(ctx, field)
+			case "sourceId":
+				return ec.fieldContext_ProcessingActivity_sourceId(ctx, field)
+			case "organization":
+				return ec.fieldContext_ProcessingActivity_organization(ctx, field)
+			case "name":
+				return ec.fieldContext_ProcessingActivity_name(ctx, field)
+			case "purpose":
+				return ec.fieldContext_ProcessingActivity_purpose(ctx, field)
+			case "dataSubjectCategory":
+				return ec.fieldContext_ProcessingActivity_dataSubjectCategory(ctx, field)
+			case "personalDataCategory":
+				return ec.fieldContext_ProcessingActivity_personalDataCategory(ctx, field)
+			case "specialOrCriminalData":
+				return ec.fieldContext_ProcessingActivity_specialOrCriminalData(ctx, field)
+			case "consentEvidenceLink":
+				return ec.fieldContext_ProcessingActivity_consentEvidenceLink(ctx, field)
+			case "lawfulBasis":
+				return ec.fieldContext_ProcessingActivity_lawfulBasis(ctx, field)
+			case "recipients":
+				return ec.fieldContext_ProcessingActivity_recipients(ctx, field)
+			case "location":
+				return ec.fieldContext_ProcessingActivity_location(ctx, field)
+			case "internationalTransfers":
+				return ec.fieldContext_ProcessingActivity_internationalTransfers(ctx, field)
+			case "transferSafeguards":
+				return ec.fieldContext_ProcessingActivity_transferSafeguards(ctx, field)
+			case "retentionPeriod":
+				return ec.fieldContext_ProcessingActivity_retentionPeriod(ctx, field)
+			case "securityMeasures":
+				return ec.fieldContext_ProcessingActivity_securityMeasures(ctx, field)
+			case "dataProtectionImpactAssessment":
+				return ec.fieldContext_ProcessingActivity_dataProtectionImpactAssessment(ctx, field)
+			case "transferImpactAssessment":
+				return ec.fieldContext_ProcessingActivity_transferImpactAssessment(ctx, field)
+			case "lastReviewDate":
+				return ec.fieldContext_ProcessingActivity_lastReviewDate(ctx, field)
+			case "nextReviewDate":
+				return ec.fieldContext_ProcessingActivity_nextReviewDate(ctx, field)
+			case "role":
+				return ec.fieldContext_ProcessingActivity_role(ctx, field)
+			case "dataProtectionOfficer":
+				return ec.fieldContext_ProcessingActivity_dataProtectionOfficer(ctx, field)
+			case "vendors":
+				return ec.fieldContext_ProcessingActivity_vendors(ctx, field)
+			case "dpia":
+				return ec.fieldContext_ProcessingActivity_dpia(ctx, field)
+			case "tia":
+				return ec.fieldContext_ProcessingActivity_tia(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_ProcessingActivity_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_ProcessingActivity_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ProcessingActivity", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProcessingActivityTIA_organization(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityTia) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ProcessingActivityTIA_organization,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.ProcessingActivityTIA().Organization(ctx, obj)
+		},
+		nil,
+		ec.marshalNOrganization2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐOrganization,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivityTIA_organization(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivityTIA",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Organization_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Organization_name(ctx, field)
+			case "logoUrl":
+				return ec.fieldContext_Organization_logoUrl(ctx, field)
+			case "horizontalLogoUrl":
+				return ec.fieldContext_Organization_horizontalLogoUrl(ctx, field)
+			case "description":
+				return ec.fieldContext_Organization_description(ctx, field)
+			case "websiteUrl":
+				return ec.fieldContext_Organization_websiteUrl(ctx, field)
+			case "email":
+				return ec.fieldContext_Organization_email(ctx, field)
+			case "headquarterAddress":
+				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
+			case "context":
+				return ec.fieldContext_Organization_context(ctx, field)
+			case "memberships":
+				return ec.fieldContext_Organization_memberships(ctx, field)
+			case "invitations":
+				return ec.fieldContext_Organization_invitations(ctx, field)
+			case "slackConnections":
+				return ec.fieldContext_Organization_slackConnections(ctx, field)
+			case "frameworks":
+				return ec.fieldContext_Organization_frameworks(ctx, field)
+			case "controls":
+				return ec.fieldContext_Organization_controls(ctx, field)
+			case "vendors":
+				return ec.fieldContext_Organization_vendors(ctx, field)
+			case "peoples":
+				return ec.fieldContext_Organization_peoples(ctx, field)
+			case "documents":
+				return ec.fieldContext_Organization_documents(ctx, field)
+			case "meetings":
+				return ec.fieldContext_Organization_meetings(ctx, field)
+			case "measures":
+				return ec.fieldContext_Organization_measures(ctx, field)
+			case "risks":
+				return ec.fieldContext_Organization_risks(ctx, field)
+			case "tasks":
+				return ec.fieldContext_Organization_tasks(ctx, field)
+			case "assets":
+				return ec.fieldContext_Organization_assets(ctx, field)
+			case "data":
+				return ec.fieldContext_Organization_data(ctx, field)
+			case "audits":
+				return ec.fieldContext_Organization_audits(ctx, field)
+			case "nonconformities":
+				return ec.fieldContext_Organization_nonconformities(ctx, field)
+			case "obligations":
+				return ec.fieldContext_Organization_obligations(ctx, field)
+			case "continualImprovements":
+				return ec.fieldContext_Organization_continualImprovements(ctx, field)
+			case "processingActivities":
+				return ec.fieldContext_Organization_processingActivities(ctx, field)
+			case "dataProtectionImpactAssessments":
+				return ec.fieldContext_Organization_dataProtectionImpactAssessments(ctx, field)
+			case "transferImpactAssessments":
+				return ec.fieldContext_Organization_transferImpactAssessments(ctx, field)
+			case "snapshots":
+				return ec.fieldContext_Organization_snapshots(ctx, field)
+			case "trustCenterFiles":
+				return ec.fieldContext_Organization_trustCenterFiles(ctx, field)
+			case "trustCenter":
+				return ec.fieldContext_Organization_trustCenter(ctx, field)
+			case "customDomain":
+				return ec.fieldContext_Organization_customDomain(ctx, field)
+			case "samlConfigurations":
+				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Organization_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Organization_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProcessingActivityTIA_dataSubjects(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityTia) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ProcessingActivityTIA_dataSubjects,
+		func(ctx context.Context) (any, error) {
+			return obj.DataSubjects, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivityTIA_dataSubjects(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivityTIA",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProcessingActivityTIA_legalMechanism(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityTia) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ProcessingActivityTIA_legalMechanism,
+		func(ctx context.Context) (any, error) {
+			return obj.LegalMechanism, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivityTIA_legalMechanism(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivityTIA",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProcessingActivityTIA_transfer(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityTia) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ProcessingActivityTIA_transfer,
+		func(ctx context.Context) (any, error) {
+			return obj.Transfer, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivityTIA_transfer(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivityTIA",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProcessingActivityTIA_localLawRisk(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityTia) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ProcessingActivityTIA_localLawRisk,
+		func(ctx context.Context) (any, error) {
+			return obj.LocalLawRisk, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivityTIA_localLawRisk(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivityTIA",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProcessingActivityTIA_supplementaryMeasures(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityTia) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ProcessingActivityTIA_supplementaryMeasures,
+		func(ctx context.Context) (any, error) {
+			return obj.SupplementaryMeasures, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivityTIA_supplementaryMeasures(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivityTIA",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProcessingActivityTIA_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityTia) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ProcessingActivityTIA_createdAt,
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		ec.marshalNDatetime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivityTIA_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivityTIA",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProcessingActivityTIA_updatedAt(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityTia) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ProcessingActivityTIA_updatedAt,
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		ec.marshalNDatetime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivityTIA_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivityTIA",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProcessingActivityTIAConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityTIAConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ProcessingActivityTIAConnection_totalCount,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.ProcessingActivityTIAConnection().TotalCount(ctx, obj)
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivityTIAConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivityTIAConnection",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProcessingActivityTIAConnection_edges(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityTIAConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ProcessingActivityTIAConnection_edges,
+		func(ctx context.Context) (any, error) {
+			return obj.Edges, nil
+		},
+		nil,
+		ec.marshalNProcessingActivityTIAEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityTIAEdgeᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivityTIAConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivityTIAConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cursor":
+				return ec.fieldContext_ProcessingActivityTIAEdge_cursor(ctx, field)
+			case "node":
+				return ec.fieldContext_ProcessingActivityTIAEdge_node(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ProcessingActivityTIAEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProcessingActivityTIAConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityTIAConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ProcessingActivityTIAConnection_pageInfo,
+		func(ctx context.Context) (any, error) {
+			return obj.PageInfo, nil
+		},
+		nil,
+		ec.marshalNPageInfo2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPageInfo,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivityTIAConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivityTIAConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProcessingActivityTIAEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityTIAEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ProcessingActivityTIAEdge_cursor,
+		func(ctx context.Context) (any, error) {
+			return obj.Cursor, nil
+		},
+		nil,
+		ec.marshalNCursorKey2goᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivityTIAEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivityTIAEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type CursorKey does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProcessingActivityTIAEdge_node(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityTIAEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ProcessingActivityTIAEdge_node,
+		func(ctx context.Context) (any, error) {
+			return obj.Node, nil
+		},
+		nil,
+		ec.marshalNProcessingActivityTIA2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityTia,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivityTIAEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivityTIAEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_ProcessingActivityTIA_id(ctx, field)
+			case "processingActivity":
+				return ec.fieldContext_ProcessingActivityTIA_processingActivity(ctx, field)
+			case "organization":
+				return ec.fieldContext_ProcessingActivityTIA_organization(ctx, field)
+			case "dataSubjects":
+				return ec.fieldContext_ProcessingActivityTIA_dataSubjects(ctx, field)
+			case "legalMechanism":
+				return ec.fieldContext_ProcessingActivityTIA_legalMechanism(ctx, field)
+			case "transfer":
+				return ec.fieldContext_ProcessingActivityTIA_transfer(ctx, field)
+			case "localLawRisk":
+				return ec.fieldContext_ProcessingActivityTIA_localLawRisk(ctx, field)
+			case "supplementaryMeasures":
+				return ec.fieldContext_ProcessingActivityTIA_supplementaryMeasures(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_ProcessingActivityTIA_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_ProcessingActivityTIA_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ProcessingActivityTIA", field.Name)
 		},
 	}
 	return fc, nil
@@ -43057,6 +45950,10 @@ func (ec *executionContext) fieldContext_Risk_organization(_ context.Context, fi
 				return ec.fieldContext_Organization_continualImprovements(ctx, field)
 			case "processingActivities":
 				return ec.fieldContext_Organization_processingActivities(ctx, field)
+			case "dataProtectionImpactAssessments":
+				return ec.fieldContext_Organization_dataProtectionImpactAssessments(ctx, field)
+			case "transferImpactAssessments":
+				return ec.fieldContext_Organization_transferImpactAssessments(ctx, field)
 			case "snapshots":
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenterFiles":
@@ -43646,6 +46543,10 @@ func (ec *executionContext) fieldContext_SAMLConfiguration_organization(_ contex
 				return ec.fieldContext_Organization_continualImprovements(ctx, field)
 			case "processingActivities":
 				return ec.fieldContext_Organization_processingActivities(ctx, field)
+			case "dataProtectionImpactAssessments":
+				return ec.fieldContext_Organization_dataProtectionImpactAssessments(ctx, field)
+			case "transferImpactAssessments":
+				return ec.fieldContext_Organization_transferImpactAssessments(ctx, field)
 			case "snapshots":
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenterFiles":
@@ -45239,6 +48140,10 @@ func (ec *executionContext) fieldContext_Snapshot_organization(_ context.Context
 				return ec.fieldContext_Organization_continualImprovements(ctx, field)
 			case "processingActivities":
 				return ec.fieldContext_Organization_processingActivities(ctx, field)
+			case "dataProtectionImpactAssessments":
+				return ec.fieldContext_Organization_dataProtectionImpactAssessments(ctx, field)
+			case "transferImpactAssessments":
+				return ec.fieldContext_Organization_transferImpactAssessments(ctx, field)
 			case "snapshots":
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenterFiles":
@@ -45907,6 +48812,10 @@ func (ec *executionContext) fieldContext_Task_organization(_ context.Context, fi
 				return ec.fieldContext_Organization_continualImprovements(ctx, field)
 			case "processingActivities":
 				return ec.fieldContext_Organization_processingActivities(ctx, field)
+			case "dataProtectionImpactAssessments":
+				return ec.fieldContext_Organization_dataProtectionImpactAssessments(ctx, field)
+			case "transferImpactAssessments":
+				return ec.fieldContext_Organization_transferImpactAssessments(ctx, field)
 			case "snapshots":
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenterFiles":
@@ -46529,6 +49438,10 @@ func (ec *executionContext) fieldContext_TrustCenter_organization(_ context.Cont
 				return ec.fieldContext_Organization_continualImprovements(ctx, field)
 			case "processingActivities":
 				return ec.fieldContext_Organization_processingActivities(ctx, field)
+			case "dataProtectionImpactAssessments":
+				return ec.fieldContext_Organization_dataProtectionImpactAssessments(ctx, field)
+			case "transferImpactAssessments":
+				return ec.fieldContext_Organization_transferImpactAssessments(ctx, field)
 			case "snapshots":
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenterFiles":
@@ -47960,6 +50873,10 @@ func (ec *executionContext) fieldContext_TrustCenterFile_organization(_ context.
 				return ec.fieldContext_Organization_continualImprovements(ctx, field)
 			case "processingActivities":
 				return ec.fieldContext_Organization_processingActivities(ctx, field)
+			case "dataProtectionImpactAssessments":
+				return ec.fieldContext_Organization_dataProtectionImpactAssessments(ctx, field)
+			case "transferImpactAssessments":
+				return ec.fieldContext_Organization_transferImpactAssessments(ctx, field)
 			case "snapshots":
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenterFiles":
@@ -49450,6 +52367,10 @@ func (ec *executionContext) fieldContext_UpdateOrganizationPayload_organization(
 				return ec.fieldContext_Organization_continualImprovements(ctx, field)
 			case "processingActivities":
 				return ec.fieldContext_Organization_processingActivities(ctx, field)
+			case "dataProtectionImpactAssessments":
+				return ec.fieldContext_Organization_dataProtectionImpactAssessments(ctx, field)
+			case "transferImpactAssessments":
+				return ec.fieldContext_Organization_transferImpactAssessments(ctx, field)
 			case "snapshots":
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenterFiles":
@@ -49522,6 +52443,57 @@ func (ec *executionContext) fieldContext_UpdatePeoplePayload_people(_ context.Co
 	return fc, nil
 }
 
+func (ec *executionContext) _UpdateProcessingActivityDPIAPayload_processingActivityDpia(ctx context.Context, field graphql.CollectedField, obj *types.UpdateProcessingActivityDPIAPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_UpdateProcessingActivityDPIAPayload_processingActivityDpia,
+		func(ctx context.Context) (any, error) {
+			return obj.ProcessingActivityDpia, nil
+		},
+		nil,
+		ec.marshalNProcessingActivityDPIA2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityDpia,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_UpdateProcessingActivityDPIAPayload_processingActivityDpia(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UpdateProcessingActivityDPIAPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_ProcessingActivityDPIA_id(ctx, field)
+			case "processingActivity":
+				return ec.fieldContext_ProcessingActivityDPIA_processingActivity(ctx, field)
+			case "organization":
+				return ec.fieldContext_ProcessingActivityDPIA_organization(ctx, field)
+			case "description":
+				return ec.fieldContext_ProcessingActivityDPIA_description(ctx, field)
+			case "necessityAndProportionality":
+				return ec.fieldContext_ProcessingActivityDPIA_necessityAndProportionality(ctx, field)
+			case "potentialRisk":
+				return ec.fieldContext_ProcessingActivityDPIA_potentialRisk(ctx, field)
+			case "mitigations":
+				return ec.fieldContext_ProcessingActivityDPIA_mitigations(ctx, field)
+			case "residualRisk":
+				return ec.fieldContext_ProcessingActivityDPIA_residualRisk(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_ProcessingActivityDPIA_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_ProcessingActivityDPIA_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ProcessingActivityDPIA", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _UpdateProcessingActivityPayload_processingActivity(ctx context.Context, field graphql.CollectedField, obj *types.UpdateProcessingActivityPayload) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -49584,14 +52556,77 @@ func (ec *executionContext) fieldContext_UpdateProcessingActivityPayload_process
 				return ec.fieldContext_ProcessingActivity_dataProtectionImpactAssessment(ctx, field)
 			case "transferImpactAssessment":
 				return ec.fieldContext_ProcessingActivity_transferImpactAssessment(ctx, field)
+			case "lastReviewDate":
+				return ec.fieldContext_ProcessingActivity_lastReviewDate(ctx, field)
+			case "nextReviewDate":
+				return ec.fieldContext_ProcessingActivity_nextReviewDate(ctx, field)
+			case "role":
+				return ec.fieldContext_ProcessingActivity_role(ctx, field)
+			case "dataProtectionOfficer":
+				return ec.fieldContext_ProcessingActivity_dataProtectionOfficer(ctx, field)
 			case "vendors":
 				return ec.fieldContext_ProcessingActivity_vendors(ctx, field)
+			case "dpia":
+				return ec.fieldContext_ProcessingActivity_dpia(ctx, field)
+			case "tia":
+				return ec.fieldContext_ProcessingActivity_tia(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_ProcessingActivity_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_ProcessingActivity_updatedAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type ProcessingActivity", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UpdateProcessingActivityTIAPayload_processingActivityTia(ctx context.Context, field graphql.CollectedField, obj *types.UpdateProcessingActivityTIAPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_UpdateProcessingActivityTIAPayload_processingActivityTia,
+		func(ctx context.Context) (any, error) {
+			return obj.ProcessingActivityTia, nil
+		},
+		nil,
+		ec.marshalNProcessingActivityTIA2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityTia,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_UpdateProcessingActivityTIAPayload_processingActivityTia(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UpdateProcessingActivityTIAPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_ProcessingActivityTIA_id(ctx, field)
+			case "processingActivity":
+				return ec.fieldContext_ProcessingActivityTIA_processingActivity(ctx, field)
+			case "organization":
+				return ec.fieldContext_ProcessingActivityTIA_organization(ctx, field)
+			case "dataSubjects":
+				return ec.fieldContext_ProcessingActivityTIA_dataSubjects(ctx, field)
+			case "legalMechanism":
+				return ec.fieldContext_ProcessingActivityTIA_legalMechanism(ctx, field)
+			case "transfer":
+				return ec.fieldContext_ProcessingActivityTIA_transfer(ctx, field)
+			case "localLawRisk":
+				return ec.fieldContext_ProcessingActivityTIA_localLawRisk(ctx, field)
+			case "supplementaryMeasures":
+				return ec.fieldContext_ProcessingActivityTIA_supplementaryMeasures(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_ProcessingActivityTIA_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_ProcessingActivityTIA_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ProcessingActivityTIA", field.Name)
 		},
 	}
 	return fc, nil
@@ -51096,6 +54131,10 @@ func (ec *executionContext) fieldContext_Vendor_organization(_ context.Context, 
 				return ec.fieldContext_Organization_continualImprovements(ctx, field)
 			case "processingActivities":
 				return ec.fieldContext_Organization_processingActivities(ctx, field)
+			case "dataProtectionImpactAssessments":
+				return ec.fieldContext_Organization_dataProtectionImpactAssessments(ctx, field)
+			case "transferImpactAssessments":
+				return ec.fieldContext_Organization_transferImpactAssessments(ctx, field)
 			case "snapshots":
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenterFiles":
@@ -57990,6 +61029,68 @@ func (ec *executionContext) unmarshalInputCreatePeopleInput(ctx context.Context,
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputCreateProcessingActivityDPIAInput(ctx context.Context, obj any) (types.CreateProcessingActivityDPIAInput, error) {
+	var it types.CreateProcessingActivityDPIAInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"processingActivityId", "description", "necessityAndProportionality", "potentialRisk", "mitigations", "residualRisk"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "processingActivityId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("processingActivityId"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ProcessingActivityID = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		case "necessityAndProportionality":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("necessityAndProportionality"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NecessityAndProportionality = data
+		case "potentialRisk":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("potentialRisk"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PotentialRisk = data
+		case "mitigations":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mitigations"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Mitigations = data
+		case "residualRisk":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("residualRisk"))
+			data, err := ec.unmarshalOProcessingActivityDPIAResidualRisk2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityDPIAResidualRisk(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ResidualRisk = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputCreateProcessingActivityInput(ctx context.Context, obj any) (types.CreateProcessingActivityInput, error) {
 	var it types.CreateProcessingActivityInput
 	asMap := map[string]any{}
@@ -57997,7 +61098,7 @@ func (ec *executionContext) unmarshalInputCreateProcessingActivityInput(ctx cont
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"organizationId", "name", "purpose", "dataSubjectCategory", "personalDataCategory", "specialOrCriminalData", "consentEvidenceLink", "lawfulBasis", "recipients", "location", "internationalTransfers", "transferSafeguards", "retentionPeriod", "securityMeasures", "dataProtectionImpactAssessment", "transferImpactAssessment", "vendorIds"}
+	fieldsInOrder := [...]string{"organizationId", "name", "purpose", "dataSubjectCategory", "personalDataCategory", "specialOrCriminalData", "consentEvidenceLink", "lawfulBasis", "recipients", "location", "internationalTransfers", "transferSafeguards", "retentionPeriod", "securityMeasures", "dataProtectionImpactAssessment", "transferImpactAssessment", "lastReviewDate", "nextReviewDate", "role", "dataProtectionOfficerId", "vendorIds"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -58116,6 +61217,34 @@ func (ec *executionContext) unmarshalInputCreateProcessingActivityInput(ctx cont
 				return it, err
 			}
 			it.TransferImpactAssessment = data
+		case "lastReviewDate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lastReviewDate"))
+			data, err := ec.unmarshalODatetime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LastReviewDate = data
+		case "nextReviewDate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nextReviewDate"))
+			data, err := ec.unmarshalODatetime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NextReviewDate = data
+		case "role":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("role"))
+			data, err := ec.unmarshalNProcessingActivityRole2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityRole(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Role = data
+		case "dataProtectionOfficerId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataProtectionOfficerId"))
+			data, err := ec.unmarshalOID2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataProtectionOfficerID = data
 		case "vendorIds":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("vendorIds"))
 			data, err := ec.unmarshalOID2ᚕgoᚗproboᚗincᚋproboᚋpkgᚋgidᚐGIDᚄ(ctx, v)
@@ -58123,6 +61252,68 @@ func (ec *executionContext) unmarshalInputCreateProcessingActivityInput(ctx cont
 				return it, err
 			}
 			it.VendorIds = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputCreateProcessingActivityTIAInput(ctx context.Context, obj any) (types.CreateProcessingActivityTIAInput, error) {
+	var it types.CreateProcessingActivityTIAInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"processingActivityId", "dataSubjects", "legalMechanism", "transfer", "localLawRisk", "supplementaryMeasures"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "processingActivityId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("processingActivityId"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ProcessingActivityID = data
+		case "dataSubjects":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataSubjects"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataSubjects = data
+		case "legalMechanism":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("legalMechanism"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LegalMechanism = data
+		case "transfer":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("transfer"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Transfer = data
+		case "localLawRisk":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("localLawRisk"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LocalLawRisk = data
+		case "supplementaryMeasures":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("supplementaryMeasures"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SupplementaryMeasures = data
 		}
 	}
 
@@ -59763,6 +62954,33 @@ func (ec *executionContext) unmarshalInputDeletePeopleInput(ctx context.Context,
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputDeleteProcessingActivityDPIAInput(ctx context.Context, obj any) (types.DeleteProcessingActivityDPIAInput, error) {
+	var it types.DeleteProcessingActivityDPIAInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"processingActivityDpiaId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "processingActivityDpiaId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("processingActivityDpiaId"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ProcessingActivityDpiaID = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputDeleteProcessingActivityInput(ctx context.Context, obj any) (types.DeleteProcessingActivityInput, error) {
 	var it types.DeleteProcessingActivityInput
 	asMap := map[string]any{}
@@ -59784,6 +63002,33 @@ func (ec *executionContext) unmarshalInputDeleteProcessingActivityInput(ctx cont
 				return it, err
 			}
 			it.ProcessingActivityID = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputDeleteProcessingActivityTIAInput(ctx context.Context, obj any) (types.DeleteProcessingActivityTIAInput, error) {
+	var it types.DeleteProcessingActivityTIAInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"processingActivityTiaId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "processingActivityTiaId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("processingActivityTiaId"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ProcessingActivityTiaID = data
 		}
 	}
 
@@ -61377,6 +64622,40 @@ func (ec *executionContext) unmarshalInputPeopleOrder(ctx context.Context, obj a
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputProcessingActivityDPIAOrder(ctx context.Context, obj any) (types.ProcessingActivityDPIAOrderBy, error) {
+	var it types.ProcessingActivityDPIAOrderBy
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"direction", "field"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "direction":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("direction"))
+			data, err := ec.unmarshalNOrderDirection2goᚗproboᚗincᚋproboᚋpkgᚋpageᚐOrderDirection(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Direction = data
+		case "field":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
+			data, err := ec.unmarshalNProcessingActivityDPIAOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityDPIAOrderField(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Field = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputProcessingActivityFilter(ctx context.Context, obj any) (types.ProcessingActivityFilter, error) {
 	var it types.ProcessingActivityFilter
 	asMap := map[string]any{}
@@ -61428,6 +64707,40 @@ func (ec *executionContext) unmarshalInputProcessingActivityOrder(ctx context.Co
 		case "field":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
 			data, err := ec.unmarshalNProcessingActivityOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityOrderField(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Field = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputProcessingActivityTIAOrder(ctx context.Context, obj any) (types.ProcessingActivityTIAOrderBy, error) {
+	var it types.ProcessingActivityTIAOrderBy
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"direction", "field"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "direction":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("direction"))
+			data, err := ec.unmarshalNOrderDirection2goᚗproboᚗincᚋproboᚋpkgᚋpageᚐOrderDirection(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Direction = data
+		case "field":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
+			data, err := ec.unmarshalNProcessingActivityTIAOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityTIAOrderField(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -62967,6 +66280,68 @@ func (ec *executionContext) unmarshalInputUpdatePeopleInput(ctx context.Context,
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputUpdateProcessingActivityDPIAInput(ctx context.Context, obj any) (types.UpdateProcessingActivityDPIAInput, error) {
+	var it types.UpdateProcessingActivityDPIAInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"id", "description", "necessityAndProportionality", "potentialRisk", "mitigations", "residualRisk"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ID = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = graphql.OmittableOf(data)
+		case "necessityAndProportionality":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("necessityAndProportionality"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NecessityAndProportionality = graphql.OmittableOf(data)
+		case "potentialRisk":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("potentialRisk"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PotentialRisk = graphql.OmittableOf(data)
+		case "mitigations":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mitigations"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Mitigations = graphql.OmittableOf(data)
+		case "residualRisk":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("residualRisk"))
+			data, err := ec.unmarshalOProcessingActivityDPIAResidualRisk2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityDPIAResidualRisk(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ResidualRisk = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputUpdateProcessingActivityInput(ctx context.Context, obj any) (types.UpdateProcessingActivityInput, error) {
 	var it types.UpdateProcessingActivityInput
 	asMap := map[string]any{}
@@ -62974,7 +66349,7 @@ func (ec *executionContext) unmarshalInputUpdateProcessingActivityInput(ctx cont
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"id", "name", "purpose", "dataSubjectCategory", "personalDataCategory", "specialOrCriminalData", "consentEvidenceLink", "lawfulBasis", "recipients", "location", "internationalTransfers", "transferSafeguards", "retentionPeriod", "securityMeasures", "dataProtectionImpactAssessment", "transferImpactAssessment", "vendorIds"}
+	fieldsInOrder := [...]string{"id", "name", "purpose", "dataSubjectCategory", "personalDataCategory", "specialOrCriminalData", "consentEvidenceLink", "lawfulBasis", "recipients", "location", "internationalTransfers", "transferSafeguards", "retentionPeriod", "securityMeasures", "dataProtectionImpactAssessment", "transferImpactAssessment", "lastReviewDate", "nextReviewDate", "role", "dataProtectionOfficerId", "vendorIds"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -63093,6 +66468,34 @@ func (ec *executionContext) unmarshalInputUpdateProcessingActivityInput(ctx cont
 				return it, err
 			}
 			it.TransferImpactAssessment = data
+		case "lastReviewDate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lastReviewDate"))
+			data, err := ec.unmarshalODatetime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LastReviewDate = graphql.OmittableOf(data)
+		case "nextReviewDate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nextReviewDate"))
+			data, err := ec.unmarshalODatetime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NextReviewDate = graphql.OmittableOf(data)
+		case "role":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("role"))
+			data, err := ec.unmarshalOProcessingActivityRole2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityRole(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Role = data
+		case "dataProtectionOfficerId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataProtectionOfficerId"))
+			data, err := ec.unmarshalOID2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataProtectionOfficerID = graphql.OmittableOf(data)
 		case "vendorIds":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("vendorIds"))
 			data, err := ec.unmarshalOID2ᚕgoᚗproboᚗincᚋproboᚋpkgᚋgidᚐGIDᚄ(ctx, v)
@@ -63100,6 +66503,68 @@ func (ec *executionContext) unmarshalInputUpdateProcessingActivityInput(ctx cont
 				return it, err
 			}
 			it.VendorIds = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputUpdateProcessingActivityTIAInput(ctx context.Context, obj any) (types.UpdateProcessingActivityTIAInput, error) {
+	var it types.UpdateProcessingActivityTIAInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"id", "dataSubjects", "legalMechanism", "transfer", "localLawRisk", "supplementaryMeasures"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ID = data
+		case "dataSubjects":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataSubjects"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataSubjects = graphql.OmittableOf(data)
+		case "legalMechanism":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("legalMechanism"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LegalMechanism = graphql.OmittableOf(data)
+		case "transfer":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("transfer"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Transfer = graphql.OmittableOf(data)
+		case "localLawRisk":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("localLawRisk"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LocalLawRisk = graphql.OmittableOf(data)
+		case "supplementaryMeasures":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("supplementaryMeasures"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SupplementaryMeasures = graphql.OmittableOf(data)
 		}
 	}
 
@@ -64600,6 +68065,20 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._Report(ctx, sel, obj)
+	case types.ProcessingActivityTia:
+		return ec._ProcessingActivityTIA(ctx, sel, &obj)
+	case *types.ProcessingActivityTia:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ProcessingActivityTIA(ctx, sel, obj)
+	case types.ProcessingActivityDpia:
+		return ec._ProcessingActivityDPIA(ctx, sel, &obj)
+	case *types.ProcessingActivityDpia:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ProcessingActivityDPIA(ctx, sel, obj)
 	case types.ProcessingActivity:
 		return ec._ProcessingActivity(ctx, sel, &obj)
 	case *types.ProcessingActivity:
@@ -67249,6 +70728,45 @@ func (ec *executionContext) _CreatePeoplePayload(ctx context.Context, sel ast.Se
 	return out
 }
 
+var createProcessingActivityDPIAPayloadImplementors = []string{"CreateProcessingActivityDPIAPayload"}
+
+func (ec *executionContext) _CreateProcessingActivityDPIAPayload(ctx context.Context, sel ast.SelectionSet, obj *types.CreateProcessingActivityDPIAPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, createProcessingActivityDPIAPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CreateProcessingActivityDPIAPayload")
+		case "processingActivityDpia":
+			out.Values[i] = ec._CreateProcessingActivityDPIAPayload_processingActivityDpia(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var createProcessingActivityPayloadImplementors = []string{"CreateProcessingActivityPayload"}
 
 func (ec *executionContext) _CreateProcessingActivityPayload(ctx context.Context, sel ast.SelectionSet, obj *types.CreateProcessingActivityPayload) graphql.Marshaler {
@@ -67262,6 +70780,45 @@ func (ec *executionContext) _CreateProcessingActivityPayload(ctx context.Context
 			out.Values[i] = graphql.MarshalString("CreateProcessingActivityPayload")
 		case "processingActivityEdge":
 			out.Values[i] = ec._CreateProcessingActivityPayload_processingActivityEdge(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var createProcessingActivityTIAPayloadImplementors = []string{"CreateProcessingActivityTIAPayload"}
+
+func (ec *executionContext) _CreateProcessingActivityTIAPayload(ctx context.Context, sel ast.SelectionSet, obj *types.CreateProcessingActivityTIAPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, createProcessingActivityTIAPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CreateProcessingActivityTIAPayload")
+		case "processingActivityTia":
+			out.Values[i] = ec._CreateProcessingActivityTIAPayload_processingActivityTia(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -69189,6 +72746,45 @@ func (ec *executionContext) _DeletePeoplePayload(ctx context.Context, sel ast.Se
 	return out
 }
 
+var deleteProcessingActivityDPIAPayloadImplementors = []string{"DeleteProcessingActivityDPIAPayload"}
+
+func (ec *executionContext) _DeleteProcessingActivityDPIAPayload(ctx context.Context, sel ast.SelectionSet, obj *types.DeleteProcessingActivityDPIAPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, deleteProcessingActivityDPIAPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DeleteProcessingActivityDPIAPayload")
+		case "deletedProcessingActivityDpiaId":
+			out.Values[i] = ec._DeleteProcessingActivityDPIAPayload_deletedProcessingActivityDpiaId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var deleteProcessingActivityPayloadImplementors = []string{"DeleteProcessingActivityPayload"}
 
 func (ec *executionContext) _DeleteProcessingActivityPayload(ctx context.Context, sel ast.SelectionSet, obj *types.DeleteProcessingActivityPayload) graphql.Marshaler {
@@ -69202,6 +72798,45 @@ func (ec *executionContext) _DeleteProcessingActivityPayload(ctx context.Context
 			out.Values[i] = graphql.MarshalString("DeleteProcessingActivityPayload")
 		case "deletedProcessingActivityId":
 			out.Values[i] = ec._DeleteProcessingActivityPayload_deletedProcessingActivityId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var deleteProcessingActivityTIAPayloadImplementors = []string{"DeleteProcessingActivityTIAPayload"}
+
+func (ec *executionContext) _DeleteProcessingActivityTIAPayload(ctx context.Context, sel ast.SelectionSet, obj *types.DeleteProcessingActivityTIAPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, deleteProcessingActivityTIAPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DeleteProcessingActivityTIAPayload")
+		case "deletedProcessingActivityTiaId":
+			out.Values[i] = ec._DeleteProcessingActivityTIAPayload_deletedProcessingActivityTiaId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -73969,6 +77604,48 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "createProcessingActivityDPIA":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createProcessingActivityDPIA(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updateProcessingActivityDPIA":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateProcessingActivityDPIA(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deleteProcessingActivityDPIA":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteProcessingActivityDPIA(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createProcessingActivityTIA":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createProcessingActivityTIA(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updateProcessingActivityTIA":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateProcessingActivityTIA(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deleteProcessingActivityTIA":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteProcessingActivityTIA(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "createSnapshot":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_createSnapshot(ctx, field)
@@ -75454,6 +79131,78 @@ func (ec *executionContext) _Organization(ctx context.Context, sel ast.Selection
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "dataProtectionImpactAssessments":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Organization_dataProtectionImpactAssessments(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "transferImpactAssessments":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Organization_transferImpactAssessments(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "snapshots":
 			field := field
 
@@ -76141,6 +79890,48 @@ func (ec *executionContext) _ProcessingActivity(ctx context.Context, sel ast.Sel
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "lastReviewDate":
+			out.Values[i] = ec._ProcessingActivity_lastReviewDate(ctx, field, obj)
+		case "nextReviewDate":
+			out.Values[i] = ec._ProcessingActivity_nextReviewDate(ctx, field, obj)
+		case "role":
+			out.Values[i] = ec._ProcessingActivity_role(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "dataProtectionOfficer":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._ProcessingActivity_dataProtectionOfficer(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "vendors":
 			field := field
 
@@ -76154,6 +79945,72 @@ func (ec *executionContext) _ProcessingActivity(ctx context.Context, sel ast.Sel
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "dpia":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._ProcessingActivity_dpia(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "tia":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._ProcessingActivity_tia(ctx, field, obj)
 				return res
 			}
 
@@ -76290,6 +80147,261 @@ func (ec *executionContext) _ProcessingActivityConnection(ctx context.Context, s
 	return out
 }
 
+var processingActivityDPIAImplementors = []string{"ProcessingActivityDPIA", "Node"}
+
+func (ec *executionContext) _ProcessingActivityDPIA(ctx context.Context, sel ast.SelectionSet, obj *types.ProcessingActivityDpia) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, processingActivityDPIAImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ProcessingActivityDPIA")
+		case "id":
+			out.Values[i] = ec._ProcessingActivityDPIA_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "processingActivity":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._ProcessingActivityDPIA_processingActivity(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "organization":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._ProcessingActivityDPIA_organization(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "description":
+			out.Values[i] = ec._ProcessingActivityDPIA_description(ctx, field, obj)
+		case "necessityAndProportionality":
+			out.Values[i] = ec._ProcessingActivityDPIA_necessityAndProportionality(ctx, field, obj)
+		case "potentialRisk":
+			out.Values[i] = ec._ProcessingActivityDPIA_potentialRisk(ctx, field, obj)
+		case "mitigations":
+			out.Values[i] = ec._ProcessingActivityDPIA_mitigations(ctx, field, obj)
+		case "residualRisk":
+			out.Values[i] = ec._ProcessingActivityDPIA_residualRisk(ctx, field, obj)
+		case "createdAt":
+			out.Values[i] = ec._ProcessingActivityDPIA_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "updatedAt":
+			out.Values[i] = ec._ProcessingActivityDPIA_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var processingActivityDPIAConnectionImplementors = []string{"ProcessingActivityDPIAConnection"}
+
+func (ec *executionContext) _ProcessingActivityDPIAConnection(ctx context.Context, sel ast.SelectionSet, obj *types.ProcessingActivityDPIAConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, processingActivityDPIAConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ProcessingActivityDPIAConnection")
+		case "totalCount":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._ProcessingActivityDPIAConnection_totalCount(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "edges":
+			out.Values[i] = ec._ProcessingActivityDPIAConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "pageInfo":
+			out.Values[i] = ec._ProcessingActivityDPIAConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var processingActivityDPIAEdgeImplementors = []string{"ProcessingActivityDPIAEdge"}
+
+func (ec *executionContext) _ProcessingActivityDPIAEdge(ctx context.Context, sel ast.SelectionSet, obj *types.ProcessingActivityDPIAEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, processingActivityDPIAEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ProcessingActivityDPIAEdge")
+		case "cursor":
+			out.Values[i] = ec._ProcessingActivityDPIAEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "node":
+			out.Values[i] = ec._ProcessingActivityDPIAEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var processingActivityEdgeImplementors = []string{"ProcessingActivityEdge"}
 
 func (ec *executionContext) _ProcessingActivityEdge(ctx context.Context, sel ast.SelectionSet, obj *types.ProcessingActivityEdge) graphql.Marshaler {
@@ -76308,6 +80420,261 @@ func (ec *executionContext) _ProcessingActivityEdge(ctx context.Context, sel ast
 			}
 		case "node":
 			out.Values[i] = ec._ProcessingActivityEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var processingActivityTIAImplementors = []string{"ProcessingActivityTIA", "Node"}
+
+func (ec *executionContext) _ProcessingActivityTIA(ctx context.Context, sel ast.SelectionSet, obj *types.ProcessingActivityTia) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, processingActivityTIAImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ProcessingActivityTIA")
+		case "id":
+			out.Values[i] = ec._ProcessingActivityTIA_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "processingActivity":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._ProcessingActivityTIA_processingActivity(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "organization":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._ProcessingActivityTIA_organization(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "dataSubjects":
+			out.Values[i] = ec._ProcessingActivityTIA_dataSubjects(ctx, field, obj)
+		case "legalMechanism":
+			out.Values[i] = ec._ProcessingActivityTIA_legalMechanism(ctx, field, obj)
+		case "transfer":
+			out.Values[i] = ec._ProcessingActivityTIA_transfer(ctx, field, obj)
+		case "localLawRisk":
+			out.Values[i] = ec._ProcessingActivityTIA_localLawRisk(ctx, field, obj)
+		case "supplementaryMeasures":
+			out.Values[i] = ec._ProcessingActivityTIA_supplementaryMeasures(ctx, field, obj)
+		case "createdAt":
+			out.Values[i] = ec._ProcessingActivityTIA_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "updatedAt":
+			out.Values[i] = ec._ProcessingActivityTIA_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var processingActivityTIAConnectionImplementors = []string{"ProcessingActivityTIAConnection"}
+
+func (ec *executionContext) _ProcessingActivityTIAConnection(ctx context.Context, sel ast.SelectionSet, obj *types.ProcessingActivityTIAConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, processingActivityTIAConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ProcessingActivityTIAConnection")
+		case "totalCount":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._ProcessingActivityTIAConnection_totalCount(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "edges":
+			out.Values[i] = ec._ProcessingActivityTIAConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "pageInfo":
+			out.Values[i] = ec._ProcessingActivityTIAConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var processingActivityTIAEdgeImplementors = []string{"ProcessingActivityTIAEdge"}
+
+func (ec *executionContext) _ProcessingActivityTIAEdge(ctx context.Context, sel ast.SelectionSet, obj *types.ProcessingActivityTIAEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, processingActivityTIAEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ProcessingActivityTIAEdge")
+		case "cursor":
+			out.Values[i] = ec._ProcessingActivityTIAEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "node":
+			out.Values[i] = ec._ProcessingActivityTIAEdge_node(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -80433,6 +84800,45 @@ func (ec *executionContext) _UpdatePeoplePayload(ctx context.Context, sel ast.Se
 	return out
 }
 
+var updateProcessingActivityDPIAPayloadImplementors = []string{"UpdateProcessingActivityDPIAPayload"}
+
+func (ec *executionContext) _UpdateProcessingActivityDPIAPayload(ctx context.Context, sel ast.SelectionSet, obj *types.UpdateProcessingActivityDPIAPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, updateProcessingActivityDPIAPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UpdateProcessingActivityDPIAPayload")
+		case "processingActivityDpia":
+			out.Values[i] = ec._UpdateProcessingActivityDPIAPayload_processingActivityDpia(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var updateProcessingActivityPayloadImplementors = []string{"UpdateProcessingActivityPayload"}
 
 func (ec *executionContext) _UpdateProcessingActivityPayload(ctx context.Context, sel ast.SelectionSet, obj *types.UpdateProcessingActivityPayload) graphql.Marshaler {
@@ -80446,6 +84852,45 @@ func (ec *executionContext) _UpdateProcessingActivityPayload(ctx context.Context
 			out.Values[i] = graphql.MarshalString("UpdateProcessingActivityPayload")
 		case "processingActivity":
 			out.Values[i] = ec._UpdateProcessingActivityPayload_processingActivity(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var updateProcessingActivityTIAPayloadImplementors = []string{"UpdateProcessingActivityTIAPayload"}
+
+func (ec *executionContext) _UpdateProcessingActivityTIAPayload(ctx context.Context, sel ast.SelectionSet, obj *types.UpdateProcessingActivityTIAPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, updateProcessingActivityTIAPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UpdateProcessingActivityTIAPayload")
+		case "processingActivityTia":
+			out.Values[i] = ec._UpdateProcessingActivityTIAPayload_processingActivityTia(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -85223,6 +89668,25 @@ func (ec *executionContext) marshalNCreatePeoplePayload2ᚖgoᚗproboᚗincᚋpr
 	return ec._CreatePeoplePayload(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNCreateProcessingActivityDPIAInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateProcessingActivityDPIAInput(ctx context.Context, v any) (types.CreateProcessingActivityDPIAInput, error) {
+	res, err := ec.unmarshalInputCreateProcessingActivityDPIAInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNCreateProcessingActivityDPIAPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateProcessingActivityDPIAPayload(ctx context.Context, sel ast.SelectionSet, v types.CreateProcessingActivityDPIAPayload) graphql.Marshaler {
+	return ec._CreateProcessingActivityDPIAPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNCreateProcessingActivityDPIAPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateProcessingActivityDPIAPayload(ctx context.Context, sel ast.SelectionSet, v *types.CreateProcessingActivityDPIAPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._CreateProcessingActivityDPIAPayload(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNCreateProcessingActivityInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateProcessingActivityInput(ctx context.Context, v any) (types.CreateProcessingActivityInput, error) {
 	res, err := ec.unmarshalInputCreateProcessingActivityInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -85240,6 +89704,25 @@ func (ec *executionContext) marshalNCreateProcessingActivityPayload2ᚖgoᚗprob
 		return graphql.Null
 	}
 	return ec._CreateProcessingActivityPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNCreateProcessingActivityTIAInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateProcessingActivityTIAInput(ctx context.Context, v any) (types.CreateProcessingActivityTIAInput, error) {
+	res, err := ec.unmarshalInputCreateProcessingActivityTIAInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNCreateProcessingActivityTIAPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateProcessingActivityTIAPayload(ctx context.Context, sel ast.SelectionSet, v types.CreateProcessingActivityTIAPayload) graphql.Marshaler {
+	return ec._CreateProcessingActivityTIAPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNCreateProcessingActivityTIAPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateProcessingActivityTIAPayload(ctx context.Context, sel ast.SelectionSet, v *types.CreateProcessingActivityTIAPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._CreateProcessingActivityTIAPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNCreateRiskDocumentMappingInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateRiskDocumentMappingInput(ctx context.Context, v any) (types.CreateRiskDocumentMappingInput, error) {
@@ -86215,6 +90698,25 @@ func (ec *executionContext) marshalNDeletePeoplePayload2ᚖgoᚗproboᚗincᚋpr
 	return ec._DeletePeoplePayload(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNDeleteProcessingActivityDPIAInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteProcessingActivityDPIAInput(ctx context.Context, v any) (types.DeleteProcessingActivityDPIAInput, error) {
+	res, err := ec.unmarshalInputDeleteProcessingActivityDPIAInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDeleteProcessingActivityDPIAPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteProcessingActivityDPIAPayload(ctx context.Context, sel ast.SelectionSet, v types.DeleteProcessingActivityDPIAPayload) graphql.Marshaler {
+	return ec._DeleteProcessingActivityDPIAPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDeleteProcessingActivityDPIAPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteProcessingActivityDPIAPayload(ctx context.Context, sel ast.SelectionSet, v *types.DeleteProcessingActivityDPIAPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DeleteProcessingActivityDPIAPayload(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNDeleteProcessingActivityInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteProcessingActivityInput(ctx context.Context, v any) (types.DeleteProcessingActivityInput, error) {
 	res, err := ec.unmarshalInputDeleteProcessingActivityInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -86232,6 +90734,25 @@ func (ec *executionContext) marshalNDeleteProcessingActivityPayload2ᚖgoᚗprob
 		return graphql.Null
 	}
 	return ec._DeleteProcessingActivityPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNDeleteProcessingActivityTIAInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteProcessingActivityTIAInput(ctx context.Context, v any) (types.DeleteProcessingActivityTIAInput, error) {
+	res, err := ec.unmarshalInputDeleteProcessingActivityTIAInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDeleteProcessingActivityTIAPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteProcessingActivityTIAPayload(ctx context.Context, sel ast.SelectionSet, v types.DeleteProcessingActivityTIAPayload) graphql.Marshaler {
+	return ec._DeleteProcessingActivityTIAPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDeleteProcessingActivityTIAPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteProcessingActivityTIAPayload(ctx context.Context, sel ast.SelectionSet, v *types.DeleteProcessingActivityTIAPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DeleteProcessingActivityTIAPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNDeleteRiskDocumentMappingInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteRiskDocumentMappingInput(ctx context.Context, v any) (types.DeleteRiskDocumentMappingInput, error) {
@@ -88778,6 +93299,10 @@ var (
 	}
 )
 
+func (ec *executionContext) marshalNProcessingActivity2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivity(ctx context.Context, sel ast.SelectionSet, v types.ProcessingActivity) graphql.Marshaler {
+	return ec._ProcessingActivity(ctx, sel, &v)
+}
+
 func (ec *executionContext) marshalNProcessingActivity2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivity(ctx context.Context, sel ast.SelectionSet, v *types.ProcessingActivity) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -88801,6 +93326,110 @@ func (ec *executionContext) marshalNProcessingActivityConnection2ᚖgoᚗprobo�
 	}
 	return ec._ProcessingActivityConnection(ctx, sel, v)
 }
+
+func (ec *executionContext) marshalNProcessingActivityDPIA2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityDpia(ctx context.Context, sel ast.SelectionSet, v *types.ProcessingActivityDpia) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ProcessingActivityDPIA(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNProcessingActivityDPIAConnection2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityDPIAConnection(ctx context.Context, sel ast.SelectionSet, v types.ProcessingActivityDPIAConnection) graphql.Marshaler {
+	return ec._ProcessingActivityDPIAConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNProcessingActivityDPIAConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityDPIAConnection(ctx context.Context, sel ast.SelectionSet, v *types.ProcessingActivityDPIAConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ProcessingActivityDPIAConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNProcessingActivityDPIAEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityDPIAEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.ProcessingActivityDPIAEdge) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNProcessingActivityDPIAEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityDPIAEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNProcessingActivityDPIAEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityDPIAEdge(ctx context.Context, sel ast.SelectionSet, v *types.ProcessingActivityDPIAEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ProcessingActivityDPIAEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNProcessingActivityDPIAOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityDPIAOrderField(ctx context.Context, v any) (coredata.ProcessingActivityDPIAOrderField, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNProcessingActivityDPIAOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityDPIAOrderField[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNProcessingActivityDPIAOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityDPIAOrderField(ctx context.Context, sel ast.SelectionSet, v coredata.ProcessingActivityDPIAOrderField) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNProcessingActivityDPIAOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityDPIAOrderField[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNProcessingActivityDPIAOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityDPIAOrderField = map[string]coredata.ProcessingActivityDPIAOrderField{
+		"CREATED_AT": coredata.ProcessingActivityDPIAOrderFieldCreatedAt,
+	}
+	marshalNProcessingActivityDPIAOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityDPIAOrderField = map[coredata.ProcessingActivityDPIAOrderField]string{
+		coredata.ProcessingActivityDPIAOrderFieldCreatedAt: "CREATED_AT",
+	}
+)
 
 func (ec *executionContext) unmarshalNProcessingActivityDataProtectionImpactAssessment2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityDataProtectionImpactAssessment(ctx context.Context, v any) (coredata.ProcessingActivityDataProtectionImpactAssessment, error) {
 	tmp, err := graphql.UnmarshalString(v)
@@ -88948,6 +93577,34 @@ var (
 	}
 )
 
+func (ec *executionContext) unmarshalNProcessingActivityRole2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityRole(ctx context.Context, v any) (coredata.ProcessingActivityRole, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNProcessingActivityRole2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityRole[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNProcessingActivityRole2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityRole(ctx context.Context, sel ast.SelectionSet, v coredata.ProcessingActivityRole) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNProcessingActivityRole2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityRole[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNProcessingActivityRole2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityRole = map[string]coredata.ProcessingActivityRole{
+		"CONTROLLER": coredata.ProcessingActivityRoleController,
+		"PROCESSOR":  coredata.ProcessingActivityRoleProcessor,
+	}
+	marshalNProcessingActivityRole2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityRole = map[coredata.ProcessingActivityRole]string{
+		coredata.ProcessingActivityRoleController: "CONTROLLER",
+		coredata.ProcessingActivityRoleProcessor:  "PROCESSOR",
+	}
+)
+
 func (ec *executionContext) unmarshalNProcessingActivitySpecialOrCriminalDatum2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivitySpecialOrCriminalDatum(ctx context.Context, v any) (coredata.ProcessingActivitySpecialOrCriminalDatum, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := unmarshalNProcessingActivitySpecialOrCriminalDatum2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivitySpecialOrCriminalDatum[tmp]
@@ -88975,6 +93632,110 @@ var (
 		coredata.ProcessingActivitySpecialOrCriminalDatumYes:      "YES",
 		coredata.ProcessingActivitySpecialOrCriminalDatumNo:       "NO",
 		coredata.ProcessingActivitySpecialOrCriminalDatumPossible: "POSSIBLE",
+	}
+)
+
+func (ec *executionContext) marshalNProcessingActivityTIA2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityTia(ctx context.Context, sel ast.SelectionSet, v *types.ProcessingActivityTia) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ProcessingActivityTIA(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNProcessingActivityTIAConnection2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityTIAConnection(ctx context.Context, sel ast.SelectionSet, v types.ProcessingActivityTIAConnection) graphql.Marshaler {
+	return ec._ProcessingActivityTIAConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNProcessingActivityTIAConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityTIAConnection(ctx context.Context, sel ast.SelectionSet, v *types.ProcessingActivityTIAConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ProcessingActivityTIAConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNProcessingActivityTIAEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityTIAEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.ProcessingActivityTIAEdge) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNProcessingActivityTIAEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityTIAEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNProcessingActivityTIAEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityTIAEdge(ctx context.Context, sel ast.SelectionSet, v *types.ProcessingActivityTIAEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ProcessingActivityTIAEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNProcessingActivityTIAOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityTIAOrderField(ctx context.Context, v any) (coredata.ProcessingActivityTIAOrderField, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNProcessingActivityTIAOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityTIAOrderField[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNProcessingActivityTIAOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityTIAOrderField(ctx context.Context, sel ast.SelectionSet, v coredata.ProcessingActivityTIAOrderField) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNProcessingActivityTIAOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityTIAOrderField[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNProcessingActivityTIAOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityTIAOrderField = map[string]coredata.ProcessingActivityTIAOrderField{
+		"CREATED_AT": coredata.ProcessingActivityTIAOrderFieldCreatedAt,
+	}
+	marshalNProcessingActivityTIAOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityTIAOrderField = map[coredata.ProcessingActivityTIAOrderField]string{
+		coredata.ProcessingActivityTIAOrderFieldCreatedAt: "CREATED_AT",
 	}
 )
 
@@ -90724,6 +95485,25 @@ func (ec *executionContext) marshalNUpdatePeoplePayload2ᚖgoᚗproboᚗincᚋpr
 	return ec._UpdatePeoplePayload(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNUpdateProcessingActivityDPIAInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateProcessingActivityDPIAInput(ctx context.Context, v any) (types.UpdateProcessingActivityDPIAInput, error) {
+	res, err := ec.unmarshalInputUpdateProcessingActivityDPIAInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNUpdateProcessingActivityDPIAPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateProcessingActivityDPIAPayload(ctx context.Context, sel ast.SelectionSet, v types.UpdateProcessingActivityDPIAPayload) graphql.Marshaler {
+	return ec._UpdateProcessingActivityDPIAPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNUpdateProcessingActivityDPIAPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateProcessingActivityDPIAPayload(ctx context.Context, sel ast.SelectionSet, v *types.UpdateProcessingActivityDPIAPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._UpdateProcessingActivityDPIAPayload(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNUpdateProcessingActivityInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateProcessingActivityInput(ctx context.Context, v any) (types.UpdateProcessingActivityInput, error) {
 	res, err := ec.unmarshalInputUpdateProcessingActivityInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -90741,6 +95521,25 @@ func (ec *executionContext) marshalNUpdateProcessingActivityPayload2ᚖgoᚗprob
 		return graphql.Null
 	}
 	return ec._UpdateProcessingActivityPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNUpdateProcessingActivityTIAInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateProcessingActivityTIAInput(ctx context.Context, v any) (types.UpdateProcessingActivityTIAInput, error) {
+	res, err := ec.unmarshalInputUpdateProcessingActivityTIAInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNUpdateProcessingActivityTIAPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateProcessingActivityTIAPayload(ctx context.Context, sel ast.SelectionSet, v types.UpdateProcessingActivityTIAPayload) graphql.Marshaler {
+	return ec._UpdateProcessingActivityTIAPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNUpdateProcessingActivityTIAPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateProcessingActivityTIAPayload(ctx context.Context, sel ast.SelectionSet, v *types.UpdateProcessingActivityTIAPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._UpdateProcessingActivityTIAPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNUpdateRiskInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateRiskInput(ctx context.Context, v any) (types.UpdateRiskInput, error) {
@@ -93247,6 +98046,53 @@ func (ec *executionContext) unmarshalOPeopleOrder2ᚖgoᚗproboᚗincᚋproboᚋ
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) marshalOProcessingActivityDPIA2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityDpia(ctx context.Context, sel ast.SelectionSet, v *types.ProcessingActivityDpia) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._ProcessingActivityDPIA(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOProcessingActivityDPIAOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityDPIAOrderBy(ctx context.Context, v any) (*types.ProcessingActivityDPIAOrderBy, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputProcessingActivityDPIAOrder(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOProcessingActivityDPIAResidualRisk2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityDPIAResidualRisk(ctx context.Context, v any) (*coredata.ProcessingActivityDPIAResidualRisk, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalOProcessingActivityDPIAResidualRisk2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityDPIAResidualRisk[tmp]
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOProcessingActivityDPIAResidualRisk2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityDPIAResidualRisk(ctx context.Context, sel ast.SelectionSet, v *coredata.ProcessingActivityDPIAResidualRisk) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(marshalOProcessingActivityDPIAResidualRisk2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityDPIAResidualRisk[*v])
+	return res
+}
+
+var (
+	unmarshalOProcessingActivityDPIAResidualRisk2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityDPIAResidualRisk = map[string]coredata.ProcessingActivityDPIAResidualRisk{
+		"LOW":    coredata.ProcessingActivityDPIAResidualRiskLow,
+		"MEDIUM": coredata.ProcessingActivityDPIAResidualRiskMedium,
+		"HIGH":   coredata.ProcessingActivityDPIAResidualRiskHigh,
+	}
+	marshalOProcessingActivityDPIAResidualRisk2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityDPIAResidualRisk = map[coredata.ProcessingActivityDPIAResidualRisk]string{
+		coredata.ProcessingActivityDPIAResidualRiskLow:    "LOW",
+		coredata.ProcessingActivityDPIAResidualRiskMedium: "MEDIUM",
+		coredata.ProcessingActivityDPIAResidualRiskHigh:   "HIGH",
+	}
+)
+
 func (ec *executionContext) unmarshalOProcessingActivityDataProtectionImpactAssessment2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityDataProtectionImpactAssessment(ctx context.Context, v any) (*coredata.ProcessingActivityDataProtectionImpactAssessment, error) {
 	if v == nil {
 		return nil, nil
@@ -93331,6 +98177,36 @@ func (ec *executionContext) unmarshalOProcessingActivityOrder2ᚖgoᚗproboᚗin
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalOProcessingActivityRole2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityRole(ctx context.Context, v any) (*coredata.ProcessingActivityRole, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalOProcessingActivityRole2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityRole[tmp]
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOProcessingActivityRole2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityRole(ctx context.Context, sel ast.SelectionSet, v *coredata.ProcessingActivityRole) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(marshalOProcessingActivityRole2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityRole[*v])
+	return res
+}
+
+var (
+	unmarshalOProcessingActivityRole2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityRole = map[string]coredata.ProcessingActivityRole{
+		"CONTROLLER": coredata.ProcessingActivityRoleController,
+		"PROCESSOR":  coredata.ProcessingActivityRoleProcessor,
+	}
+	marshalOProcessingActivityRole2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityRole = map[coredata.ProcessingActivityRole]string{
+		coredata.ProcessingActivityRoleController: "CONTROLLER",
+		coredata.ProcessingActivityRoleProcessor:  "PROCESSOR",
+	}
+)
+
 func (ec *executionContext) unmarshalOProcessingActivitySpecialOrCriminalDatum2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivitySpecialOrCriminalDatum(ctx context.Context, v any) (*coredata.ProcessingActivitySpecialOrCriminalDatum, error) {
 	if v == nil {
 		return nil, nil
@@ -93362,6 +98238,21 @@ var (
 		coredata.ProcessingActivitySpecialOrCriminalDatumPossible: "POSSIBLE",
 	}
 )
+
+func (ec *executionContext) marshalOProcessingActivityTIA2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityTia(ctx context.Context, sel ast.SelectionSet, v *types.ProcessingActivityTia) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._ProcessingActivityTIA(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOProcessingActivityTIAOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityTIAOrderBy(ctx context.Context, v any) (*types.ProcessingActivityTIAOrderBy, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputProcessingActivityTIAOrder(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
 
 func (ec *executionContext) unmarshalOProcessingActivityTransferImpactAssessment2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityTransferImpactAssessment(ctx context.Context, v any) (*coredata.ProcessingActivityTransferImpactAssessment, error) {
 	if v == nil {

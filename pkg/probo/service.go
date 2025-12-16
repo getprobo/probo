@@ -31,9 +31,9 @@ import (
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/filevalidation"
-	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/html2pdf"
+	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/slack"
 )
 
@@ -114,6 +114,8 @@ type (
 		Snapshots                         *SnapshotService
 		ContinualImprovements             *ContinualImprovementService
 		ProcessingActivities              *ProcessingActivityService
+		ProcessingActivityDPIAs           *ProcessingActivityDPIAService
+		ProcessingActivityTIAs            *ProcessingActivityTIAService
 		Files                             *FileService
 		CustomDomains                     *CustomDomainService
 		SlackMessages                     *slack.SlackMessageService
@@ -249,6 +251,8 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 	tenantService.Snapshots = &SnapshotService{svc: tenantService}
 	tenantService.ContinualImprovements = &ContinualImprovementService{svc: tenantService}
 	tenantService.ProcessingActivities = &ProcessingActivityService{svc: tenantService}
+	tenantService.ProcessingActivityDPIAs = &ProcessingActivityDPIAService{svc: tenantService}
+	tenantService.ProcessingActivityTIAs = &ProcessingActivityTIAService{svc: tenantService}
 	tenantService.Files = &FileService{svc: tenantService}
 	tenantService.CustomDomains = &CustomDomainService{
 		svc:           tenantService,

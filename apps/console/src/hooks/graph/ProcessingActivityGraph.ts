@@ -6,12 +6,15 @@ import { promisifyMutation, sprintf } from "@probo/helpers";
 import { useMutationWithToasts } from "../useMutationWithToasts";
 
 export const ProcessingActivitiesConnectionKey = "ProcessingActivitiesPage_processingActivities";
+export type ProcessingActivityDPIAResidualRisk = "LOW" | "MEDIUM" | "HIGH";
 
 export const processingActivitiesQuery = graphql`
   query ProcessingActivityGraphListQuery($organizationId: ID!, $snapshotId: ID) {
     node(id: $organizationId) {
       ... on Organization {
         ...ProcessingActivitiesPageFragment @arguments(snapshotId: $snapshotId)
+        ...ProcessingActivitiesPageDPIAFragment
+        ...ProcessingActivitiesPageTIAFragment
       }
     }
   }
@@ -38,6 +41,13 @@ export const processingActivityNodeQuery = graphql`
         securityMeasures
         dataProtectionImpactAssessment
         transferImpactAssessment
+        lastReviewDate
+        nextReviewDate
+        role
+        dataProtectionOfficer {
+          id
+          fullName
+        }
         vendors(first: 50) {
           edges {
             node {
@@ -47,6 +57,26 @@ export const processingActivityNodeQuery = graphql`
               category
             }
           }
+        }
+        dpia {
+          id
+          description
+          necessityAndProportionality
+          potentialRisk
+          mitigations
+          residualRisk
+          createdAt
+          updatedAt
+        }
+        tia {
+          id
+          dataSubjects
+          legalMechanism
+          transfer
+          localLawRisk
+          supplementaryMeasures
+          createdAt
+          updatedAt
         }
         organization {
           id
@@ -83,6 +113,13 @@ export const createProcessingActivityMutation = graphql`
           securityMeasures
           dataProtectionImpactAssessment
           transferImpactAssessment
+          lastReviewDate
+          nextReviewDate
+          role
+          dataProtectionOfficer {
+            id
+            fullName
+          }
           vendors(first: 50) {
             edges {
               node {
@@ -119,6 +156,13 @@ export const updateProcessingActivityMutation = graphql`
         securityMeasures
         dataProtectionImpactAssessment
         transferImpactAssessment
+        lastReviewDate
+        nextReviewDate
+        role
+        dataProtectionOfficer {
+          id
+          fullName
+        }
         vendors(first: 50) {
           edges {
             node {
@@ -200,6 +244,10 @@ export const useCreateProcessingActivity = (connectionId?: string) => {
     securityMeasures?: string;
     dataProtectionImpactAssessment?: string;
     transferImpactAssessment?: string;
+    lastReviewDate?: string;
+    nextReviewDate?: string;
+    role: string;
+    dataProtectionOfficerId?: string;
     vendorIds?: string[];
   }) => {
     if (!input.organizationId) {
@@ -228,6 +276,10 @@ export const useCreateProcessingActivity = (connectionId?: string) => {
           securityMeasures: input.securityMeasures,
           dataProtectionImpactAssessment: input.dataProtectionImpactAssessment,
           transferImpactAssessment: input.transferImpactAssessment,
+          lastReviewDate: input.lastReviewDate,
+          nextReviewDate: input.nextReviewDate,
+          role: input.role,
+          dataProtectionOfficerId: input.dataProtectionOfficerId,
           vendorIds: input.vendorIds,
         },
         connections: connectionId ? [connectionId] : [],
@@ -257,6 +309,10 @@ export const useUpdateProcessingActivity = () => {
     securityMeasures?: string;
     dataProtectionImpactAssessment?: string;
     transferImpactAssessment?: string;
+    lastReviewDate?: string | null;
+    nextReviewDate?: string | null;
+    role?: string;
+    dataProtectionOfficerId?: string | null;
     vendorIds?: string[];
   }) => {
     if (!input.id) {
@@ -268,5 +324,259 @@ export const useUpdateProcessingActivity = () => {
         input,
       },
     });
+  };
+};
+
+export const createProcessingActivityDPIAMutation = graphql`
+  mutation ProcessingActivityGraphCreateDPIAMutation(
+    $input: CreateProcessingActivityDPIAInput!
+  ) {
+    createProcessingActivityDPIA(input: $input) {
+      processingActivityDpia {
+        id
+        description
+        necessityAndProportionality
+        potentialRisk
+        mitigations
+        residualRisk
+        createdAt
+        updatedAt
+      }
+    }
+  }
+`;
+
+export const updateProcessingActivityDPIAMutation = graphql`
+  mutation ProcessingActivityGraphUpdateDPIAMutation(
+    $input: UpdateProcessingActivityDPIAInput!
+  ) {
+    updateProcessingActivityDPIA(input: $input) {
+      processingActivityDpia {
+        id
+        description
+        necessityAndProportionality
+        potentialRisk
+        mitigations
+        residualRisk
+        createdAt
+        updatedAt
+      }
+    }
+  }
+`;
+
+export const deleteProcessingActivityDPIAMutation = graphql`
+  mutation ProcessingActivityGraphDeleteDPIAMutation(
+    $input: DeleteProcessingActivityDPIAInput!
+  ) {
+    deleteProcessingActivityDPIA(input: $input) {
+      deletedProcessingActivityDpiaId
+    }
+  }
+`;
+
+export const useCreateProcessingActivityDPIA = () => {
+  const [mutate] = useMutation(createProcessingActivityDPIAMutation);
+  const { __ } = useTranslate();
+
+  return (input: {
+    processingActivityId: string;
+    description?: string;
+    necessityAndProportionality?: string;
+    potentialRisk?: string;
+    mitigations?: string;
+    residualRisk?: ProcessingActivityDPIAResidualRisk;
+  }) => {
+    if (!input.processingActivityId) {
+      return alert(__("Failed to create DPIA: Processing Activity ID is required"));
+    }
+
+    return promisifyMutation(mutate)({
+      variables: {
+        input,
+      },
+    });
+  };
+};
+
+export const useUpdateProcessingActivityDPIA = () => {
+  const [mutate] = useMutation(updateProcessingActivityDPIAMutation);
+  const { __ } = useTranslate();
+
+  return (input: {
+    id: string;
+    description?: string;
+    necessityAndProportionality?: string;
+    potentialRisk?: string;
+    mitigations?: string;
+    residualRisk?: ProcessingActivityDPIAResidualRisk;
+  }) => {
+    if (!input.id) {
+      return alert(__("Failed to update DPIA: ID is required"));
+    }
+
+    return promisifyMutation(mutate)({
+      variables: {
+        input,
+      },
+    });
+  };
+};
+
+export const useDeleteProcessingActivityDPIA = (
+  dpia: { id: string },
+  options?: { onSuccess?: () => void }
+) => {
+  const { __ } = useTranslate();
+  const [mutate] = useMutationWithToasts(deleteProcessingActivityDPIAMutation, {
+    successMessage: __("DPIA deleted successfully"),
+    errorMessage: __("Failed to delete DPIA"),
+  });
+  const confirm = useConfirm();
+
+  return () => {
+    confirm(
+      () =>
+        mutate({
+          variables: {
+            input: {
+              processingActivityDpiaId: dpia.id,
+            },
+          },
+          onSuccess: options?.onSuccess,
+        }),
+      {
+        message: __(
+          "This will permanently delete this Data Protection Impact Assessment. This action cannot be undone."
+        ),
+      }
+    );
+  };
+};
+
+export const createProcessingActivityTIAMutation = graphql`
+  mutation ProcessingActivityGraphCreateTIAMutation(
+    $input: CreateProcessingActivityTIAInput!
+  ) {
+    createProcessingActivityTIA(input: $input) {
+      processingActivityTia {
+        id
+        dataSubjects
+        legalMechanism
+        transfer
+        localLawRisk
+        supplementaryMeasures
+        createdAt
+        updatedAt
+      }
+    }
+  }
+`;
+
+export const updateProcessingActivityTIAMutation = graphql`
+  mutation ProcessingActivityGraphUpdateTIAMutation(
+    $input: UpdateProcessingActivityTIAInput!
+  ) {
+    updateProcessingActivityTIA(input: $input) {
+      processingActivityTia {
+        id
+        dataSubjects
+        legalMechanism
+        transfer
+        localLawRisk
+        supplementaryMeasures
+        createdAt
+        updatedAt
+      }
+    }
+  }
+`;
+
+export const deleteProcessingActivityTIAMutation = graphql`
+  mutation ProcessingActivityGraphDeleteTIAMutation(
+    $input: DeleteProcessingActivityTIAInput!
+  ) {
+    deleteProcessingActivityTIA(input: $input) {
+      deletedProcessingActivityTiaId
+    }
+  }
+`;
+
+export const useCreateProcessingActivityTIA = () => {
+  const [mutate] = useMutation(createProcessingActivityTIAMutation);
+  const { __ } = useTranslate();
+
+  return (input: {
+    processingActivityId: string;
+    dataSubjects?: string;
+    legalMechanism?: string;
+    transfer?: string;
+    localLawRisk?: string;
+    supplementaryMeasures?: string;
+  }) => {
+    if (!input.processingActivityId) {
+      return alert(__("Failed to create TIA: Processing Activity ID is required"));
+    }
+
+    return promisifyMutation(mutate)({
+      variables: {
+        input,
+      },
+    });
+  };
+};
+
+export const useUpdateProcessingActivityTIA = () => {
+  const [mutate] = useMutation(updateProcessingActivityTIAMutation);
+  const { __ } = useTranslate();
+
+  return (input: {
+    id: string;
+    dataSubjects?: string;
+    legalMechanism?: string;
+    transfer?: string;
+    localLawRisk?: string;
+    supplementaryMeasures?: string;
+  }) => {
+    if (!input.id) {
+      return alert(__("Failed to update TIA: ID is required"));
+    }
+
+    return promisifyMutation(mutate)({
+      variables: {
+        input,
+      },
+    });
+  };
+};
+
+export const useDeleteProcessingActivityTIA = (
+  tia: { id: string },
+  options?: { onSuccess?: () => void }
+) => {
+  const { __ } = useTranslate();
+  const [mutate] = useMutationWithToasts(deleteProcessingActivityTIAMutation, {
+    successMessage: __("TIA deleted successfully"),
+    errorMessage: __("Failed to delete TIA"),
+  });
+  const confirm = useConfirm();
+
+  return () => {
+    confirm(
+      () =>
+        mutate({
+          variables: {
+            input: {
+              processingActivityTiaId: tia.id,
+            },
+          },
+          onSuccess: options?.onSuccess,
+        }),
+      {
+        message: __(
+          "This will permanently delete this Transfer Impact Assessment. This action cannot be undone."
+        ),
+      }
+    );
   };
 };
