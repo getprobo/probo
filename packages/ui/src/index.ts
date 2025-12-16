@@ -10,6 +10,7 @@ export {
 // Atoms
 export * from "./Atoms/Icons";
 export { Logo } from "./Atoms/Logo/Logo";
+export { FrameworkLogo } from "./Atoms/FrameworkLogo/FrameworkLogo";
 export { SidebarItem } from "./Atoms/Sidebar/SidebarItem";
 export { Button } from "./Atoms/Button/Button";
 export { Card } from "./Atoms/Card/Card";
@@ -77,7 +78,6 @@ export { DocumentClassificationBadge } from "./Molecules/Badge/DocumentClassific
 export { SentitivityOptions } from "./Molecules/Select/SentitivityOptions";
 export { ImpactOptions } from "./Molecules/Select/ImpactOptions";
 export { DurationPicker } from "./Molecules/DurationPicker/DurationPicker";
-export { FrameworkLogo } from "./Molecules/Badge/FrameworkLogo";
 export { EditableCell } from "./Molecules/Table/EditableCell";
 export { TextCell } from "./Molecules/Table/TextCell";
 export {

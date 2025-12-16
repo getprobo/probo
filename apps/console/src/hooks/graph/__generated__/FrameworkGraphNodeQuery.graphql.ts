@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<8901b5c750861080551542d26c2681d6>>
+ * @generated SignedSource<<6fcc115e1ab6df38ede8756968ae7a6a>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -126,6 +126,20 @@ return {
               {
                 "alias": null,
                 "args": null,
+                "kind": "ScalarField",
+                "name": "lightLogoURL",
+                "storageKey": null
+              },
+              {
+                "alias": null,
+                "args": null,
+                "kind": "ScalarField",
+                "name": "darkLogoURL",
+                "storageKey": null
+              },
+              {
+                "alias": null,
+                "args": null,
                 "concreteType": "Organization",
                 "kind": "LinkedField",
                 "name": "organization",
@@ -228,12 +242,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "29d6f638feb1bb633169abcfe083f5d2",
+    "cacheID": "68c09567aff1176075300c645f5d117d",
     "id": null,
     "metadata": {},
     "name": "FrameworkGraphNodeQuery",
     "operationKind": "query",
-    "text": "query FrameworkGraphNodeQuery(\n  $frameworkId: ID!\n) {\n  node(id: $frameworkId) {\n    __typename\n    ... on Framework {\n      id\n      name\n      ...FrameworkDetailPageFragment\n    }\n    id\n  }\n}\n\nfragment FrameworkDetailPageFragment on Framework {\n  id\n  name\n  description\n  organization {\n    name\n    id\n  }\n  controls(first: 250, orderBy: {field: SECTION_TITLE, direction: ASC}) {\n    edges {\n      node {\n        id\n        sectionTitle\n        name\n        status\n        exclusionJustification\n      }\n    }\n  }\n}\n"
+    "text": "query FrameworkGraphNodeQuery(\n  $frameworkId: ID!\n) {\n  node(id: $frameworkId) {\n    __typename\n    ... on Framework {\n      id\n      name\n      ...FrameworkDetailPageFragment\n    }\n    id\n  }\n}\n\nfragment FrameworkDetailPageFragment on Framework {\n  id\n  name\n  description\n  lightLogoURL\n  darkLogoURL\n  organization {\n    name\n    id\n  }\n  controls(first: 250, orderBy: {field: SECTION_TITLE, direction: ASC}) {\n    edges {\n      node {\n        id\n        sectionTitle\n        name\n        status\n        exclusionJustification\n      }\n    }\n  }\n}\n"
   }
 };
 })();

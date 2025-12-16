@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<9436ef052ea63a9785d82ec810e810f1>>
+ * @generated SignedSource<<2256362d89b6b5c2f5c707acb44d283e>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -158,6 +158,20 @@ return {
                     "kind": "ScalarField",
                     "name": "description",
                     "storageKey": null
+                  },
+                  {
+                    "alias": null,
+                    "args": null,
+                    "kind": "ScalarField",
+                    "name": "lightLogoURL",
+                    "storageKey": null
+                  },
+                  {
+                    "alias": null,
+                    "args": null,
+                    "kind": "ScalarField",
+                    "name": "darkLogoURL",
+                    "storageKey": null
                   }
                 ],
                 "storageKey": null
@@ -187,12 +201,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "87a38788cb2e060657b552af69acb707",
+    "cacheID": "5584472f1e68fac3d766662c6d5dab90",
     "id": null,
     "metadata": {},
     "name": "FrameworksPageImportMutation",
     "operationKind": "mutation",
-    "text": "mutation FrameworksPageImportMutation(\n  $input: ImportFrameworkInput!\n) {\n  importFramework(input: $input) {\n    frameworkEdge {\n      node {\n        id\n        ...FrameworksPageCardFragment\n      }\n    }\n  }\n}\n\nfragment FrameworksPageCardFragment on Framework {\n  id\n  name\n  description\n}\n"
+    "text": "mutation FrameworksPageImportMutation(\n  $input: ImportFrameworkInput!\n) {\n  importFramework(input: $input) {\n    frameworkEdge {\n      node {\n        id\n        ...FrameworksPageCardFragment\n      }\n    }\n  }\n}\n\nfragment FrameworksPageCardFragment on Framework {\n  id\n  name\n  description\n  lightLogoURL\n  darkLogoURL\n}\n"
   }
 };
 })();

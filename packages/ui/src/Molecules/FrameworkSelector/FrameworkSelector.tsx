@@ -1,8 +1,31 @@
 import { Dropdown, DropdownItem } from "../../Atoms/Dropdown/Dropdown";
 import { IconChevronDown, IconPlusLarge } from "../../Atoms/Icons";
 import { Button } from "../../Atoms/Button/Button";
-import { availableFrameworks } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
+import { ISO27001 } from "../../Atoms/Frameworks/ISO27001";
+import { SOC2 } from "../../Atoms/Frameworks/SOC2";
+import { HIPAA } from "../../Atoms/Frameworks/HIPAA";
+
+const availableFrameworks = [
+    {
+        id: "ISO27001-2022",
+        name: "ISO 27001 (2022)",
+        logo: <ISO27001 className="size-8" />,
+        description: "Information security management systems",
+    },
+    {
+        id: "SOC2",
+        name: "SOC 2",
+        logo: <SOC2 className="size-8" />,
+        description: "System and Organization Controls 2",
+    },
+    {
+        id: "HIPAA",
+        name: "HIPAA",
+        logo: <HIPAA className="size-8" />,
+        description: "Health Insurance Portability and Accountability Act",
+    },
+];
 
 type Framework = (typeof availableFrameworks)[number];
 
@@ -58,11 +81,7 @@ function FrameworkItem(props: { framework?: Framework; onClick: () => void }) {
     }
     return (
         <DropdownItem onClick={props.onClick} className="">
-            <img
-                src={props.framework.logo}
-                alt={props.framework.name}
-                className="size-8"
-            />
+            {props.framework.logo}
             <div className="space-y-[2px]">
                 <div className="text-sm font-medium">
                     {props.framework.name}

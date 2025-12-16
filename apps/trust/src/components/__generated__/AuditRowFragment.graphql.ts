@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<2f595b4efd5e7b13207d433830a64c98>>
+ * @generated SignedSource<<3265a0991323eee4011c668b68d1b365>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,7 +12,9 @@ import { ReaderFragment } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type AuditRowFragment$data = {
   readonly framework: {
+    readonly darkLogoURL: string | null | undefined;
     readonly id: string;
+    readonly lightLogoURL: string | null | undefined;
     readonly name: string;
   };
   readonly report: {
@@ -90,6 +92,20 @@ return {
           "kind": "ScalarField",
           "name": "name",
           "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "lightLogoURL",
+          "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "darkLogoURL",
+          "storageKey": null
         }
       ],
       "storageKey": null
@@ -100,6 +116,6 @@ return {
 };
 })();
 
-(node as any).hash = "3aabed006b65dc913c81a63f0f6f4523";
+(node as any).hash = "417e65b500df4b4cff874dab2bea90ee";
 
 export default node;

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<fc4103e0e8b03c1b6b8ea07c4adcf095>>
+ * @generated SignedSource<<c802dc4c6e5b63e48b0050dfcf13b4b4>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -17,7 +17,9 @@ export type AuditGraphNodeQuery$data = {
   readonly node: {
     readonly createdAt?: any;
     readonly framework?: {
+      readonly darkLogoURL: string | null | undefined;
       readonly id: string;
+      readonly lightLogoURL: string | null | undefined;
       readonly name: string;
     };
     readonly id?: string;
@@ -151,31 +153,47 @@ v9 = {
   "name": "state",
   "storageKey": null
 },
-v10 = [
-  (v2/*: any*/),
-  (v3/*: any*/)
-],
-v11 = {
+v10 = {
   "alias": null,
   "args": null,
   "concreteType": "Framework",
   "kind": "LinkedField",
   "name": "framework",
   "plural": false,
-  "selections": (v10/*: any*/),
+  "selections": [
+    (v2/*: any*/),
+    (v3/*: any*/),
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "lightLogoURL",
+      "storageKey": null
+    },
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "darkLogoURL",
+      "storageKey": null
+    }
+  ],
   "storageKey": null
 },
-v12 = {
+v11 = {
   "alias": null,
   "args": null,
   "concreteType": "Organization",
   "kind": "LinkedField",
   "name": "organization",
   "plural": false,
-  "selections": (v10/*: any*/),
+  "selections": [
+    (v2/*: any*/),
+    (v3/*: any*/)
+  ],
   "storageKey": null
 },
-v13 = {
+v12 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
@@ -207,10 +225,10 @@ return {
               (v7/*: any*/),
               (v8/*: any*/),
               (v9/*: any*/),
+              (v10/*: any*/),
               (v11/*: any*/),
-              (v12/*: any*/),
               (v6/*: any*/),
-              (v13/*: any*/)
+              (v12/*: any*/)
             ],
             "type": "Audit",
             "abstractKey": null
@@ -253,10 +271,10 @@ return {
               (v7/*: any*/),
               (v8/*: any*/),
               (v9/*: any*/),
+              (v10/*: any*/),
               (v11/*: any*/),
-              (v12/*: any*/),
               (v6/*: any*/),
-              (v13/*: any*/)
+              (v12/*: any*/)
             ],
             "type": "Audit",
             "abstractKey": null
@@ -267,16 +285,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "eede00ab53ccd396e92b7fe6c1f1c2a2",
+    "cacheID": "af5fde4e1522c98b908630fdf1451ae9",
     "id": null,
     "metadata": {},
     "name": "AuditGraphNodeQuery",
     "operationKind": "query",
-    "text": "query AuditGraphNodeQuery(\n  $auditId: ID!\n) {\n  node(id: $auditId) {\n    __typename\n    ... on Audit {\n      id\n      name\n      validFrom\n      validUntil\n      report {\n        id\n        filename\n        mimeType\n        size\n        downloadUrl\n        createdAt\n      }\n      reportUrl\n      state\n      framework {\n        id\n        name\n      }\n      organization {\n        id\n        name\n      }\n      createdAt\n      updatedAt\n    }\n    id\n  }\n}\n"
+    "text": "query AuditGraphNodeQuery(\n  $auditId: ID!\n) {\n  node(id: $auditId) {\n    __typename\n    ... on Audit {\n      id\n      name\n      validFrom\n      validUntil\n      report {\n        id\n        filename\n        mimeType\n        size\n        downloadUrl\n        createdAt\n      }\n      reportUrl\n      state\n      framework {\n        id\n        name\n        lightLogoURL\n        darkLogoURL\n      }\n      organization {\n        id\n        name\n      }\n      createdAt\n      updatedAt\n    }\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "c07896ae39a7d16b42c7ee4216dc28fa";
+(node as any).hash = "db92119c6d6f000963a0ff3d0fb74dfd";
 
 export default node;

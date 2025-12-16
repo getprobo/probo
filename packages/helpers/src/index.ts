@@ -24,7 +24,6 @@ export {
     countries,
     type CountryCode,
 } from "./countries";
-export { availableFrameworks } from "./frameworks";
 export {
     getDocumentTypeLabel,
     documentTypes,
@@ -63,7 +62,7 @@ export {
 export { promisifyMutation } from "./relay";
 export { fileType, fileSize } from "./file";
 export { formatDatetime, formatDate } from "./date";
-export { getLogoUrl, getTrustCenterUrl } from "./trustCenter";
+export { getTrustCenterUrl } from "./trustCenter";
 export { formatError, type GraphQLError } from "./error";
 export { Role, getAssignableRoles } from "./roles";
 export {

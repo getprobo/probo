@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<a67eb2a88e39d7eaf96910e0318dd1bc>>
+ * @generated SignedSource<<7aaf0b32e40fe8c723a28ab9590b62b5>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -243,6 +243,20 @@ return {
                             "name": "description",
                             "storageKey": null
                           },
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "lightLogoURL",
+                            "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "darkLogoURL",
+                            "storageKey": null
+                          },
                           (v3/*: any*/)
                         ],
                         "storageKey": null
@@ -275,7 +289,7 @@ return {
     ]
   },
   "params": {
-    "cacheID": "b31afd68395ae800a18885bca3abfa1c",
+    "cacheID": "90e970007a500be89809ac0f2a77bccd",
     "id": null,
     "metadata": {
       "connection": [
@@ -292,7 +306,7 @@ return {
     },
     "name": "FrameworkGraphListQuery",
     "operationKind": "query",
-    "text": "query FrameworkGraphListQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      frameworks(first: 100) {\n        edges {\n          node {\n            id\n            ...FrameworksPageCardFragment\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n    }\n    id\n  }\n}\n\nfragment FrameworksPageCardFragment on Framework {\n  id\n  name\n  description\n}\n"
+    "text": "query FrameworkGraphListQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      frameworks(first: 100) {\n        edges {\n          node {\n            id\n            ...FrameworksPageCardFragment\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n    }\n    id\n  }\n}\n\nfragment FrameworksPageCardFragment on Framework {\n  id\n  name\n  description\n  lightLogoURL\n  darkLogoURL\n}\n"
   }
 };
 })();

@@ -6,6 +6,7 @@ import {
   Button,
   Dialog,
   DialogContent,
+  FrameworkLogo,
   IconArrowInbox,
   IconLock,
   IconMedal,
@@ -15,7 +16,7 @@ import {
 import { useTranslate } from "@probo/i18n";
 import type { AuditRowDownloadMutation } from "./__generated__/AuditRowDownloadMutation.graphql";
 import { useMutationWithToasts } from "/hooks/useMutationWithToast";
-import { downloadFile, getLogoUrl } from "@probo/helpers";
+import { downloadFile } from "@probo/helpers";
 import { type PropsWithChildren, useState } from "react";
 import { useLocation } from "react-router";
 import { RequestAccessDialog } from "/components/RequestAccessDialog.tsx";
@@ -39,6 +40,8 @@ const auditRowFragment = graphql`
     framework {
       id
       name
+      lightLogoURL
+      darkLogoURL
     }
   }
 `;
@@ -106,41 +109,19 @@ export function AuditRow(props: { audit: AuditRowFragment$key }) {
 export function AuditRowAvatar(props: { audit: AuditRowFragment$key }) {
   const audit = useFragment(auditRowFragment, props.audit);
 
-  const logos = {
-    "ISO 27001 (2022)": getLogoUrl("iso27001.svg"),
-    "SOC 2": getLogoUrl("soc2.svg"),
-    HIPAA: getLogoUrl("hipaa.svg"),
-    GDPR: getLogoUrl("gdpr.svg"),
-  };
-
   return (
     <>
-      <AuditDialog
-        audit={props.audit}
-        logo={logos[audit.framework.name as keyof typeof logos]}
-      >
+      <AuditDialog audit={props.audit}>
         <button
           className="block cursor-pointer aspect-square"
           title={`Logo ${audit.framework.name}`}
         >
-          {audit.framework.name in logos ? (
-            <img
-              src={logos[audit.framework.name as keyof typeof logos]}
-              alt={`${audit.framework.name} Logo`}
-            />
-          ) : (
-            <div
-              className="bg-[#F0F7E2] aspect-square w-full rounded-full text-xs text-[#000] font-bold flex items-center justify-center pb-6 px-2"
-              style={{
-                background: `url(${getLogoUrl("blank.svg")}) no-repeat`,
-              }}
-            >
-              <span className="line-clamp-2 overflow-hidden">
-                {" "}
-                {audit.framework.name}
-              </span>
-            </div>
-          )}
+          <FrameworkLogo
+            className="size-19"
+            lightLogoURL={audit.framework.lightLogoURL}
+            darkLogoURL={audit.framework.darkLogoURL}
+            name={audit.framework.name}
+          />
         </button>
       </AuditDialog>
     </>
@@ -170,13 +151,12 @@ function AuditDialog(
       title={<Breadcrumb items={items} />}
     >
       <DialogContent className="p-4 lg:p-8 space-y-6">
-        {props.logo && (
-          <img
-            alt={audit.framework.name}
-            src={props.logo}
-            className="size-24 block mx-auto"
-          />
-        )}
+        <FrameworkLogo
+          className="size-24 mx-auto"
+          lightLogoURL={audit.framework.lightLogoURL}
+          darkLogoURL={audit.framework.darkLogoURL}
+          name={audit.framework.name}
+        />
         <h2 className="text-xl font-semibold mb-1">{audit.framework.name}</h2>
         <Table>
           <AuditRow audit={props.audit} />

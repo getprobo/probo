@@ -90,7 +90,7 @@ export function OrganizationSidebar({
               </div>
             </div>
 
-            <hr className="my-6 -mx-6 h-[1px] bg-border-low border-none" />
+            <hr className="my-6 -mx-6 h-px bg-border-low border-none" />
           </>
         )}
 

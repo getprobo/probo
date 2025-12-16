@@ -25,14 +25,24 @@ import {
   IconArrowInbox,
   useConfirm,
   useToast,
+  FrameworkLogo,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { useOrganizationId } from "/hooks/useOrganizationId";
-import { FrameworkLogo } from "/components/FrameworkLogo";
 import { ControlledField } from "/components/form/ControlledField";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import z from "zod";
-import { getAuditStateLabel, getAuditStateVariant, auditStates, fileSize, sprintf, formatDatetime, formatError, formatDate, type GraphQLError } from "@probo/helpers";
+import {
+  getAuditStateLabel,
+  getAuditStateVariant,
+  auditStates,
+  fileSize,
+  sprintf,
+  formatDatetime,
+  formatError,
+  formatDate,
+  type GraphQLError,
+} from "@probo/helpers";
 import type { AuditGraphNodeQuery } from "/hooks/graph/__generated__/AuditGraphNodeQuery.graphql";
 import { use } from "react";
 import { PermissionsContext } from "/providers/PermissionsContext";
@@ -42,7 +52,13 @@ const updateAuditSchema = z.object({
   name: z.string().nullable().optional(),
   validFrom: z.string().optional(),
   validUntil: z.string().optional(),
-  state: z.enum(["NOT_STARTED", "IN_PROGRESS", "COMPLETED", "REJECTED", "OUTDATED"]),
+  state: z.enum([
+    "NOT_STARTED",
+    "IN_PROGRESS",
+    "COMPLETED",
+    "REJECTED",
+    "OUTDATED",
+  ]),
 });
 
 type Props = {
@@ -50,7 +66,10 @@ type Props = {
 };
 
 export default function AuditDetailsPage(props: Props) {
-  const audit = usePreloadedQuery<AuditGraphNodeQuery>(auditNodeQuery, props.queryRef);
+  const audit = usePreloadedQuery<AuditGraphNodeQuery>(
+    auditNodeQuery,
+    props.queryRef
+  );
   const auditEntry = audit.node;
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
@@ -58,19 +77,20 @@ export default function AuditDetailsPage(props: Props) {
   const navigate = useNavigate();
 
   const deleteAudit = useDeleteAudit(
-    { id: auditEntry.id!, framework: { name: auditEntry.framework!.name} },
+    { id: auditEntry.id!, framework: { name: auditEntry.framework!.name } },
     ConnectionHandler.getConnectionID(organizationId, "AuditsPage_audits"),
     () => navigate(`/organizations/${organizationId}/audits`)
   );
 
-  const { control, formState, handleSubmit, register, reset } = useFormWithSchema(updateAuditSchema, {
-    defaultValues: {
-      name: auditEntry.name || null,
-      validFrom: auditEntry.validFrom?.split('T')[0] || "",
-      validUntil: auditEntry.validUntil?.split('T')[0] || "",
-      state: auditEntry.state || "NOT_STARTED",
-    },
-  });
+  const { control, formState, handleSubmit, register, reset } =
+    useFormWithSchema(updateAuditSchema, {
+      defaultValues: {
+        name: auditEntry.name || null,
+        validFrom: auditEntry.validFrom?.split("T")[0] || "",
+        validUntil: auditEntry.validUntil?.split("T")[0] || "",
+        state: auditEntry.state || "NOT_STARTED",
+      },
+    });
 
   const updateAudit = useUpdateAudit();
   const [uploadAuditReport, isUploading] = useUploadAuditReport();
@@ -98,7 +118,10 @@ export default function AuditDetailsPage(props: Props) {
     } catch (error) {
       toast({
         title: __("Error"),
-        description: formatError(__("Failed to update audit"), error as GraphQLError),
+        description: formatError(
+          __("Failed to update audit"),
+          error as GraphQLError
+        ),
         variant: "error",
       });
     }
@@ -131,7 +154,9 @@ export default function AuditDetailsPage(props: Props) {
             to: `/organizations/${organizationId}/audits`,
           },
           {
-            label: (auditEntry.name || auditEntry.framework?.name) ?? __("Unknown Audit"),
+            label:
+              (auditEntry.name || auditEntry.framework?.name) ??
+              __("Unknown Audit"),
           },
         ]}
       />
@@ -139,10 +164,16 @@ export default function AuditDetailsPage(props: Props) {
       <div className="flex justify-between items-start">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-3">
-            <FrameworkLogo name={auditEntry.framework?.name || ""} />
+            <FrameworkLogo
+              name={auditEntry.framework?.name || ""}
+              lightLogoURL={auditEntry.framework?.lightLogoURL}
+              darkLogoURL={auditEntry.framework?.darkLogoURL}
+            />
             <div className="text-2xl">{auditEntry.framework?.name}</div>
           </div>
-          <Badge variant={getAuditStateVariant(auditEntry.state || "NOT_STARTED")}>
+          <Badge
+            variant={getAuditStateVariant(auditEntry.state || "NOT_STARTED")}
+          >
             {getAuditStateLabel(__, auditEntry.state || "NOT_STARTED")}
           </Badge>
         </div>
@@ -187,12 +218,10 @@ export default function AuditDetailsPage(props: Props) {
           </Field>
 
           <div className="flex justify-end">
-            {formState.isDirty && (
-              isAuthorized("Audit", "updateAudit") && (
-                <Button type="submit" disabled={formState.isSubmitting}>
-                  {formState.isSubmitting ? __("Updating...") : __("Update")}
-                </Button>
-              )
+            {formState.isDirty && isAuthorized("Audit", "updateAudit") && (
+              <Button type="submit" disabled={formState.isSubmitting}>
+                {formState.isSubmitting ? __("Updating...") : __("Update")}
+              </Button>
             )}
           </div>
         </form>
@@ -201,7 +230,7 @@ export default function AuditDetailsPage(props: Props) {
           <div className="space-y-4">
             <h3 className="text-lg font-medium">{__("Audit Report")}</h3>
 
-                        {auditEntry.report ? (
+            {auditEntry.report ? (
               <div className="space-y-4">
                 <div className="flex items-center justify-between p-4 bg-success-50 border border-success-200 rounded-lg">
                   <div className="flex items-center gap-3">
@@ -211,11 +240,10 @@ export default function AuditDetailsPage(props: Props) {
                         {auditEntry.report.filename}
                       </p>
                       <div className="flex items-center gap-4 text-sm text-success-700">
+                        <span>{fileSize(__, auditEntry.report.size)}</span>
                         <span>
-                          {fileSize(__, auditEntry.report.size)}
-                        </span>
-                        <span>
-                          {__("Uploaded")} {formatDate(auditEntry.report.createdAt)}
+                          {__("Uploaded")}{" "}
+                          {formatDate(auditEntry.report.createdAt)}
                         </span>
                       </div>
                     </div>
@@ -224,7 +252,7 @@ export default function AuditDetailsPage(props: Props) {
                     <DropdownItem
                       onClick={() => {
                         if (auditEntry.report?.downloadUrl) {
-                          window.open(auditEntry.report.downloadUrl, '_blank');
+                          window.open(auditEntry.report.downloadUrl, "_blank");
                         }
                       }}
                       icon={IconArrowInbox}
@@ -244,10 +272,14 @@ export default function AuditDetailsPage(props: Props) {
             ) : (
               <div className="space-y-4">
                 <p className="text-neutral-600">
-                  {__("Upload the final audit report document (PDF recommended)")}
+                  {__(
+                    "Upload the final audit report document (PDF recommended)"
+                  )}
                 </p>
                 <Dropzone
-                  description={__("Only PDF, DOCX files up to 25MB are allowed")}
+                  description={__(
+                    "Only PDF, DOCX files up to 25MB are allowed"
+                  )}
                   isUploading={isUploading}
                   onDrop={async (files) => {
                     if (files.length > 0 && auditEntry.id) {

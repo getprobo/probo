@@ -5,6 +5,7 @@ import {
   Card,
   DropdownItem,
   FileButton,
+  FrameworkLogo,
   FrameworkSelector,
   IconFolderUpload,
   IconPencil,
@@ -27,7 +28,6 @@ import { Link } from "react-router";
 import type { FrameworksPageCardFragment$key } from "./__generated__/FrameworksPageCardFragment.graphql";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { useState, type ChangeEventHandler, use } from "react";
-import { FrameworkLogo } from "/components/FrameworkLogo";
 import { FrameworkFormDialog } from "./dialogs/FrameworkFormDialog";
 import { PermissionsContext } from "/providers/PermissionsContext";
 
@@ -120,7 +120,8 @@ export default function FrameworksPage(props: Props) {
 
   const isLoading = isUploading || isImporting;
 
-  const hasAnyAction = isAuthorized("Framework", "updateFramework") ||
+  const hasAnyAction =
+    isAuthorized("Framework", "updateFramework") ||
     isAuthorized("Framework", "deleteFramework");
 
   return (
@@ -172,6 +173,8 @@ const frameworkCardFragment = graphql`
     id
     name
     description
+    lightLogoURL
+    darkLogoURL
   }
 `;
 
@@ -200,7 +203,11 @@ function FrameworkCard(props: FrameworkCardProps) {
         framework={framework}
       />
       <div className="flex justify-between mb-3">
-        <FrameworkLogo {...framework} />
+        <FrameworkLogo
+          name={framework.name}
+          lightLogoURL={framework.lightLogoURL}
+          darkLogoURL={framework.darkLogoURL}
+        />
         {props.hasAnyAction && (
           <ActionDropdown className="z-10 relative">
             {isAuthorized("Framework", "updateFramework") && (

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<b8d5c939f1b3a4337be9a4ecc2e8fd98>>
+ * @generated SignedSource<<af136d6db1a014d6241ad2c9c6dd5f55>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -159,6 +159,20 @@ return {
                     "kind": "ScalarField",
                     "name": "description",
                     "storageKey": null
+                  },
+                  {
+                    "alias": null,
+                    "args": null,
+                    "kind": "ScalarField",
+                    "name": "lightLogoURL",
+                    "storageKey": null
+                  },
+                  {
+                    "alias": null,
+                    "args": null,
+                    "kind": "ScalarField",
+                    "name": "darkLogoURL",
+                    "storageKey": null
                   }
                 ],
                 "storageKey": null
@@ -188,12 +202,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "931895b4bbb7caacd8ee0ee69de76cd6",
+    "cacheID": "c66177d87b59d87fdf7cbc9268af431a",
     "id": null,
     "metadata": {},
     "name": "FrameworkFormDialogMutation",
     "operationKind": "mutation",
-    "text": "mutation FrameworkFormDialogMutation(\n  $input: CreateFrameworkInput!\n) {\n  createFramework(input: $input) {\n    frameworkEdge {\n      node {\n        id\n        ...FrameworksPageCardFragment\n      }\n    }\n  }\n}\n\nfragment FrameworksPageCardFragment on Framework {\n  id\n  name\n  description\n}\n"
+    "text": "mutation FrameworkFormDialogMutation(\n  $input: CreateFrameworkInput!\n) {\n  createFramework(input: $input) {\n    frameworkEdge {\n      node {\n        id\n        ...FrameworksPageCardFragment\n      }\n    }\n  }\n}\n\nfragment FrameworksPageCardFragment on Framework {\n  id\n  name\n  description\n  lightLogoURL\n  darkLogoURL\n}\n"
   }
 };
 })();

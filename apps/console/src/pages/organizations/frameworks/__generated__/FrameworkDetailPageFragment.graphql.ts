@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<daf4012a65afffdedc10e4f5c7e2bc3c>>
+ * @generated SignedSource<<1da75e11f49e841800329ded9f67a1d4>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -24,8 +24,10 @@ export type FrameworkDetailPageFragment$data = {
       };
     }>;
   };
+  readonly darkLogoURL: string | null | undefined;
   readonly description: string | null | undefined;
   readonly id: string;
+  readonly lightLogoURL: string | null | undefined;
   readonly name: string;
   readonly organization: {
     readonly name: string;
@@ -65,6 +67,20 @@ return {
       "args": null,
       "kind": "ScalarField",
       "name": "description",
+      "storageKey": null
+    },
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "lightLogoURL",
+      "storageKey": null
+    },
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "darkLogoURL",
       "storageKey": null
     },
     {
@@ -167,6 +183,6 @@ return {
 };
 })();
 
-(node as any).hash = "c31fd5c0f675d2524f736d69c4ebebe3";
+(node as any).hash = "34a82531b8812ee16e75eb035bc739e8";
 
 export default node;

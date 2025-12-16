@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<9fdc712e118402371c9951169aac320a>>
+ * @generated SignedSource<<412cc494e90709fca575c68f6deef112>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,8 +11,10 @@
 import { ReaderFragment } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type FrameworksPageCardFragment$data = {
+  readonly darkLogoURL: string | null | undefined;
   readonly description: string | null | undefined;
   readonly id: string;
+  readonly lightLogoURL: string | null | undefined;
   readonly name: string;
   readonly " $fragmentType": "FrameworksPageCardFragment";
 };
@@ -47,12 +49,26 @@ const node: ReaderFragment = {
       "kind": "ScalarField",
       "name": "description",
       "storageKey": null
+    },
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "lightLogoURL",
+      "storageKey": null
+    },
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "darkLogoURL",
+      "storageKey": null
     }
   ],
   "type": "Framework",
   "abstractKey": null
 };
 
-(node as any).hash = "4481f380673963e72f88071031e37d14";
+(node as any).hash = "fe86a14971741a77f587ae015ebf0a22";
 
 export default node;

@@ -10,12 +10,12 @@ import {
   Button,
   ControlItem,
   DropdownItem,
+  FrameworkLogo,
   IconPencil,
   IconPlusLarge,
   IconTrashCan,
   PageHeader,
 } from "@probo/ui";
-import { FrameworkLogo } from "/components/FrameworkLogo";
 import {
   connectionListKey,
   frameworkNodeQuery,
@@ -39,6 +39,8 @@ const frameworkDetailFragment = graphql`
     id
     name
     description
+    lightLogoURL
+    darkLogoURL
     organization {
       name
     }
@@ -70,12 +72,8 @@ const generateFrameworkStateOfApplicabilityMutation = graphql`
 `;
 
 const exportFrameworkMutation = graphql`
-  mutation FrameworkDetailPageExportFrameworkMutation(
-    $frameworkId: ID!
-  ) {
-    exportFramework(
-      input: { frameworkId: $frameworkId }
-    ) {
+  mutation FrameworkDetailPageExportFrameworkMutation($frameworkId: ID!) {
+    exportFramework(input: { frameworkId: $frameworkId }) {
       exportJobId
     }
   }
@@ -120,7 +118,8 @@ export default function FrameworkDetailPage(props: Props) {
       exportFrameworkMutation,
       {
         errorMessage: "Failed to export framework",
-        successMessage: "Framework export started successfully. You will receive an email when the export is ready.",
+        successMessage:
+          "Framework export started successfully. You will receive an email when the export is ready.",
       }
     );
 
@@ -193,7 +192,11 @@ export default function FrameworkDetailPage(props: Props) {
             {__("Export Framework")}
           </DropdownItem>
           {isAuthorized("Framework", "deleteFramework") && (
-            <DropdownItem icon={IconTrashCan} variant="danger" onClick={onDelete}>
+            <DropdownItem
+              icon={IconTrashCan}
+              variant="danger"
+              onClick={onDelete}
+            >
               {__("Delete")}
             </DropdownItem>
           )}
