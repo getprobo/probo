@@ -1,0 +1,265 @@
+{
+    "id": "DORA",
+    "name": "DORA",
+    "controls":[
+        {
+          "id": "Art. 5(1)",
+          "name": "Internal governance and control framework"
+        },
+        {
+          "id": "Art. 5(2)",
+          "name": "Management body responsibility for ICT risk management"
+        },
+        {
+          "id": "Art. 5(3)",
+          "name": "Senior management role for ICT third-party risk"
+        },
+        {
+          "id": "Art. 5(4)",
+          "name": "ICT training for management body"
+        },
+        {
+          "id": "Art. 6(1)",
+          "name": "ICT risk management framework"
+        },
+        {
+          "id": "Art. 6(4)",
+          "name": "Independence of control functions"
+        },
+        {
+          "id": "Art. 6(5)",
+          "name": "Review of ICT risk management framework"
+        },
+        {
+          "id": "Art. 6(6)",
+          "name": "ICT internal audits"
+        },
+        {
+          "id": "Art. 6(8)",
+          "name": "Digital operational resilience strategy"
+        },
+        {
+          "id": "Art. 7",
+          "name": "ICT systems protocols and tools"
+        },
+        {
+          "id": "Art. 8(1)",
+          "name": "Identification and classification of ICT assets"
+        },
+        {
+          "id": "Art. 8(2)",
+          "name": "Identification of ICT risks and cyber threats"
+        },
+        {
+          "id": "Art. 8(4)",
+          "name": "Mapping of critical assets and dependencies"
+        },
+        {
+          "id": "Art. 8(5)",
+          "name": "Identification of third-party dependencies"
+        },
+        {
+          "id": "Art. 8(7)",
+          "name": "Risk assessment on legacy ICT systems"
+        },
+        {
+          "id": "Art. 9(1)",
+          "name": "Monitoring and control of ICT security"
+        },
+        {
+          "id": "Art. 9(2)",
+          "name": "ICT security policies and procedures"
+        },
+        {
+          "id": "Art. 9(4)(a)",
+          "name": "Information security policy"
+        },
+        {
+          "id": "Art. 9(4)(b)",
+          "name": "Network and infrastructure management"
+        },
+        {
+          "id": "Art. 9(4)(c)",
+          "name": "Access control policies"
+        },
+        {
+          "id": "Art. 9(4)(d)",
+          "name": "Authentication and encryption protocols"
+        },
+        {
+          "id": "Art. 9(4)(e)",
+          "name": "ICT change management policies"
+        },
+        {
+          "id": "Art. 9(4)(f)",
+          "name": "Patch management and updates"
+        },
+        {
+          "id": "Art. 10(1)",
+          "name": "Detection of anomalous activities"
+        },
+        {
+          "id": "Art. 10(2)",
+          "name": "Alert thresholds and control layers"
+        },
+        {
+          "id": "Art. 11(1)",
+          "name": "ICT business continuity policy"
+        },
+        {
+          "id": "Art. 11(3)",
+          "name": "ICT response and recovery plans"
+        },
+        {
+          "id": "Art. 11(5)",
+          "name": "Business impact analysis (BIA)"
+        },
+        {
+          "id": "Art. 11(6)",
+          "name": "Testing of business continuity plans"
+        },
+        {
+          "id": "Art. 11(7)",
+          "name": "Crisis management function"
+        },
+        {
+          "id": "Art. 12(1)",
+          "name": "Backup policies and procedures"
+        },
+        {
+          "id": "Art. 12(4)",
+          "name": "Redundant ICT capacities"
+        },
+        {
+          "id": "Art. 13(1)",
+          "name": "Capabilities to gather threat information"
+        },
+        {
+          "id": "Art. 13(2)",
+          "name": "Post-incident reviews"
+        },
+        {
+          "id": "Art. 13(6)",
+          "name": "ICT security awareness and training"
+        },
+        {
+          "id": "Art. 14(1)",
+          "name": "Crisis communication plans"
+        },
+        {
+          "id": "Art. 14(2)",
+          "name": "Internal and external communication policies"
+        },
+        {
+          "id": "Art. 16(1)",
+          "name": "Simplified ICT risk management framework"
+        },
+        {
+          "id": "Art. 17(1)",
+          "name": "ICT-related incident management process"
+        },
+        {
+          "id": "Art. 17(2)",
+          "name": "Recording of incidents and cyber threats"
+        },
+        {
+          "id": "Art. 17(3)",
+          "name": "Classification and reporting procedures"
+        },
+        {
+          "id": "Art. 18(1)",
+          "name": "Classification of ICT-related incidents"
+        },
+        {
+          "id": "Art. 19(1)",
+          "name": "Reporting of major ICT-related incidents"
+        },
+        {
+          "id": "Art. 19(3)",
+          "name": "Client notification of major incidents"
+        },
+        {
+          "id": "Art. 23",
+          "name": "Operational or security payment-related incidents"
+        },
+        {
+          "id": "Art. 24(1)",
+          "name": "Digital operational resilience testing programme"
+        },
+        {
+          "id": "Art. 25(1)",
+          "name": "Execution of appropriate tests (vulnerability scans)"
+        },
+        {
+          "id": "Art. 26(1)",
+          "name": "Advanced threat-led penetration testing (TLPT)"
+        },
+        {
+          "id": "Art. 28(1)",
+          "name": "Management of ICT third-party risk"
+        },
+        {
+          "id": "Art. 28(2)",
+          "name": "Strategy on ICT third-party risk"
+        },
+        {
+          "id": "Art. 28(3)",
+          "name": "Register of information on contractual arrangements"
+        },
+        {
+          "id": "Art. 28(4)",
+          "name": "Assessment before entering contractual arrangements"
+        },
+        {
+          "id": "Art. 28(8)",
+          "name": "Exit strategies for critical services"
+        },
+        {
+          "id": "Art. 29",
+          "name": "Assessment of ICT concentration risk"
+        },
+        {
+          "id": "Art. 30(1)",
+          "name": "Documentation of contractual arrangements"
+        },
+        {
+          "id": "Art. 30(2)",
+          "name": "Key contractual provisions (general)"
+        },
+        {
+          "id": "Art. 30(3)",
+          "name": "Key contractual provisions (critical functions)"
+        },
+        {
+          "id": "Art. 31(12)",
+          "name": "Establishment of subsidiary in the Union"
+        },
+        {
+          "id": "Art. 35(5)",
+          "name": "Cooperation with Lead Overseer"
+        },
+        {
+          "id": "Art. 37",
+          "name": "Response to requests for information"
+        },
+        {
+          "id": "Art. 38",
+          "name": "Submission to general investigations"
+        },
+        {
+          "id": "Art. 39",
+          "name": "Submission to on-site inspections"
+        },
+        {
+          "id": "Art. 42(1)",
+          "name": "Notification of intent to follow recommendations"
+        },
+        {
+          "id": "Art. 43",
+          "name": "Payment of oversight fees"
+        },
+        {
+          "id": "Art. 45",
+          "name": "Information-sharing arrangements"
+        }
+      ]}

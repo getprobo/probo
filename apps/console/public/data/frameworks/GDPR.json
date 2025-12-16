@@ -1,0 +1,253 @@
+{
+    "id": "GDPR",
+    "name": "GDPR",
+    "controls": [
+    {
+      "id": "Art. 5(1)(a)",
+      "name": "Lawfulness, fairness and transparency"
+    },
+    {
+      "id": "Art. 5(1)(c)",
+      "name": "Data minimisation"
+    },
+    {
+      "id": "Art. 5(1)(e)",
+      "name": "Storage limitation"
+    },
+    {
+      "id": "Art. 5(1)(f)",
+      "name": "Integrity and confidentiality"
+    },
+    {
+      "id": "Art. 6",
+      "name": "Lawfulness of processing"
+    },
+    {
+      "id": "Art. 7",
+      "name": "Conditions for consent"
+    },
+    {
+      "id": "Art. 8",
+      "name": "Child's consent for information society services"
+    },
+    {
+      "id": "Art. 9(2)",
+      "name": "Exceptions for processing special categories of data"
+    },
+    {
+      "id": "Art. 9(2)(a)",
+      "name": "Explicit consent for special categories"
+    },
+    {
+      "id": "Art. 10",
+      "name": "Processing of criminal conviction data"
+    },
+    {
+      "id": "Art. 11",
+      "name": "Processing not requiring identification"
+    },
+    {
+      "id": "Art. 12(3)",
+      "name": "Response timelines for data subject requests"
+    },
+    {
+      "id": "Art. 13",
+      "name": "Information for data collected from subject"
+    },
+    {
+      "id": "Art. 14",
+      "name": "Information for data not obtained from subject"
+    },
+    {
+      "id": "Art. 15",
+      "name": "Right of access"
+    },
+    {
+      "id": "Art. 16",
+      "name": "Right to rectification"
+    },
+    {
+      "id": "Art. 17",
+      "name": "Right to erasure"
+    },
+    {
+      "id": "Art. 18",
+      "name": "Right to restriction of processing"
+    },
+    {
+      "id": "Art. 19",
+      "name": "Notification of rectification, erasure or restriction"
+    },
+    {
+      "id": "Art. 20",
+      "name": "Right to data portability"
+    },
+    {
+      "id": "Art. 21",
+      "name": "Right to object"
+    },
+    {
+      "id": "Art. 22",
+      "name": "Automated individual decision-making"
+    },
+    {
+      "id": "Art. 24",
+      "name": "Responsibility of the controller"
+    },
+    {
+      "id": "Art. 25(1)",
+      "name": "Data protection by design"
+    },
+    {
+      "id": "Art. 25(2)",
+      "name": "Data protection by default"
+    },
+    {
+      "id": "Art. 26",
+      "name": "Joint controllers arrangement"
+    },
+    {
+      "id": "Art. 27",
+      "name": "Designation of representative (non-EU entities)"
+    },
+    {
+      "id": "Art. 28",
+      "name": "General processor obligations"
+    },
+    {
+      "id": "Art. 28(1)",
+      "name": "Selection of processors with sufficient guarantees"
+    },
+    {
+      "id": "Art. 28(3)",
+      "name": "Data processing contract requirements"
+    },
+    {
+      "id": "Art. 29",
+      "name": "Processing under authority"
+    },
+    {
+      "id": "Art. 30",
+      "name": "Records of processing activities (general)"
+    },
+    {
+      "id": "Art. 30(1)",
+      "name": "Controller record of processing activities"
+    },
+    {
+      "id": "Art. 30(1)(g)",
+      "name": "Description of security measures in records"
+    },
+    {
+      "id": "Art. 31",
+      "name": "Cooperation with supervisory authority"
+    },
+    {
+      "id": "Art. 32",
+      "name": "Security of processing (general)"
+    },
+    {
+      "id": "Art. 32(1)",
+      "name": "Technical and organisational security measures"
+    },
+    {
+      "id": "Art. 32(1)(a)",
+      "name": "Pseudonymisation and encryption"
+    },
+    {
+      "id": "Art. 32(1)(b)",
+      "name": "Confidentiality, integrity, availability and resilience"
+    },
+    {
+      "id": "Art. 32(1)(c)",
+      "name": "Restoration of availability and access"
+    },
+    {
+      "id": "Art. 32(1)(d)",
+      "name": "Regular testing and evaluation of security"
+    },
+    {
+      "id": "Art. 32(2)",
+      "name": "Assessment of security risks"
+    },
+    {
+      "id": "Art. 32(4)",
+      "name": "Processing under instructions"
+    },
+    {
+      "id": "Art. 33",
+      "name": "Notification of breach to supervisory authority"
+    },
+    {
+      "id": "Art. 33(1)",
+      "name": "Breach notification timeline"
+    },
+    {
+      "id": "Art. 33(3)",
+      "name": "Content of breach notification"
+    },
+    {
+      "id": "Art. 33(5)",
+      "name": "Documentation of breaches"
+    },
+    {
+      "id": "Art. 34",
+      "name": "Communication of breach to data subject"
+    },
+    {
+      "id": "Art. 34(1)",
+      "name": "High-risk breach communication"
+    },
+    {
+      "id": "Art. 35(1)",
+      "name": "Requirement for data protection impact assessment"
+    },
+    {
+      "id": "Art. 35(7)",
+      "name": "Minimum content of impact assessment"
+    },
+    {
+      "id": "Art. 36",
+      "name": "Prior consultation"
+    },
+    {
+      "id": "Art. 37",
+      "name": "Designation of data protection officer"
+    },
+    {
+      "id": "Art. 38",
+      "name": "Position and support of the DPO"
+    },
+    {
+      "id": "Art. 39",
+      "name": "Tasks of the data protection officer"
+    },
+    {
+      "id": "Art. 44",
+      "name": "General principle for transfers"
+    },
+    {
+      "id": "Art. 45",
+      "name": "Transfers based on adequacy decision"
+    },
+    {
+      "id": "Art. 46",
+      "name": "Transfers subject to appropriate safeguards"
+    },
+    {
+      "id": "Art. 47",
+      "name": "Binding corporate rules"
+    },
+    {
+      "id": "Art. 48",
+      "name": "Transfers not authorised by Union law"
+    },
+    {
+      "id": "Art. 49",
+      "name": "Derogations for specific situations"
+    },
+    {
+      "id": "Art. 50",
+      "name": "International cooperation"
+    }
+  ]}

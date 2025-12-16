@@ -1,0 +1,97 @@
+{
+    "id": "CCPA",
+    "name": "CCPA",
+    "controls": [
+    {
+      "id": "1798.100(a)",
+      "name": "Notice at collection"
+    },
+    {
+      "id": "1798.100(a)(3)",
+      "name": "Data retention limits"
+    },
+    {
+      "id": "1798.100(c)",
+      "name": "Data minimization"
+    },
+    {
+      "id": "1798.100(d)",
+      "name": "Contracts with third parties and service providers"
+    },
+    {
+      "id": "1798.100(e)",
+      "name": "Security procedures and practices"
+    },
+    {
+      "id": "1798.105",
+      "name": "Right to delete personal information"
+    },
+    {
+      "id": "1798.106",
+      "name": "Right to correct inaccurate personal information"
+    },
+    {
+      "id": "1798.110",
+      "name": "Right to know collected information"
+    },
+    {
+      "id": "1798.115",
+      "name": "Right to know sold or shared information"
+    },
+    {
+      "id": "1798.120(a)",
+      "name": "Right to opt-out of sale or sharing"
+    },
+    {
+      "id": "1798.120(c)",
+      "name": "Consent for minors (opt-in)"
+    },
+    {
+      "id": "1798.121",
+      "name": "Right to limit use of sensitive personal information"
+    },
+    {
+      "id": "1798.125(a)",
+      "name": "Non-discrimination"
+    },
+    {
+      "id": "1798.125(b)",
+      "name": "Financial incentive notices and consent"
+    },
+    {
+      "id": "1798.130(a)(1)",
+      "name": "Methods for submitting consumer requests"
+    },
+    {
+      "id": "1798.130(a)(2)",
+      "name": "Timelines for responding to requests"
+    },
+    {
+      "id": "1798.130(a)(3)",
+      "name": "Specific pieces of information disclosure"
+    },
+    {
+      "id": "1798.130(a)(5)",
+      "name": "Privacy policy content and updates"
+    },
+    {
+      "id": "1798.130(a)(6)",
+      "name": "Privacy training for personnel"
+    },
+    {
+      "id": "1798.130(a)(7)",
+      "name": "Verification of consumer requests"
+    },
+    {
+      "id": "1798.135(a)",
+      "name": "Website opt-out links"
+    },
+    {
+      "id": "1798.135(b)",
+      "name": "Recognition of opt-out preference signals"
+    },
+    {
+      "id": "1798.135(c)(4)",
+      "name": "Waiting period after opt-out"
+    }
+  ]}

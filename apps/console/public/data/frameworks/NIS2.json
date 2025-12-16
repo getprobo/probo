@@ -1,0 +1,73 @@
+{
+    "id": "NIS2",
+    "name": "NIS 2",
+    "controls":[
+        {
+          "id": "Art. 3(4)",
+          "name": "Submission of entity registration data"
+        },
+        {
+          "id": "Art. 20(1)",
+          "name": "Management body oversight and approval"
+        },
+        {
+          "id": "Art. 20(2)",
+          "name": "Cybersecurity training for management bodies"
+        },
+        {
+          "id": "Art. 21(2)(a)",
+          "name": "Policies on risk analysis and information system security"
+        },
+        {
+          "id": "Art. 21(2)(b)",
+          "name": "Incident handling"
+        },
+        {
+          "id": "Art. 21(2)(c)",
+          "name": "Business continuity and crisis management"
+        },
+        {
+          "id": "Art. 21(2)(d)",
+          "name": "Supply chain security"
+        },
+        {
+          "id": "Art. 21(2)(e)",
+          "name": "Security in system acquisition, development and maintenance"
+        },
+        {
+          "id": "Art. 21(2)(f)",
+          "name": "Assessment of security measure effectiveness"
+        },
+        {
+          "id": "Art. 21(2)(g)",
+          "name": "Cyber hygiene practices and training"
+        },
+        {
+          "id": "Art. 21(2)(h)",
+          "name": "Cryptography and encryption policies"
+        },
+        {
+          "id": "Art. 21(2)(i)",
+          "name": "Human resources security and asset management"
+        },
+        {
+          "id": "Art. 21(2)(j)",
+          "name": "Multi-factor authentication and secure communications"
+        },
+        {
+          "id": "Art. 23(1)",
+          "name": "Reporting significant incidents to authorities"
+        },
+        {
+          "id": "Art. 23(2)",
+          "name": "Notifying service recipients of significant cyber threats"
+        },
+        {
+          "id": "Art. 26(3)",
+          "name": "Designation of Union representative (non-EU entities)"
+        },
+        {
+          "id": "Art. 28(1)",
+          "name": "Maintenance of domain name registration data (TLDs/registrars)"
+        }
+      ]}
