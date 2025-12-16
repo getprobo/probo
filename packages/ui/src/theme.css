@@ -5,6 +5,8 @@
     --font-sans: "Geist", "sans-serif";
     --color-*: initial;
 
+    --color-black: #000000;
+
     --color-level-0: #fffffb;
     --color-level-1: #ffffff;
     --color-level-2: #ffffff;
@@ -173,6 +175,8 @@
         --color-level-1: #1a1d19;
         --color-level-2: #20241f;
         --color-level-3: #3b3f3a;
+
+        --color-black: #ffffff;
 
         /* Text colors */
         --color-txt-primary: #eceeec;
