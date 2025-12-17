@@ -317,6 +317,10 @@ s3:
   endpoint: ""
   accessKeyId: ""  # REQUIRED when minio.enabled=false: S3 access key
   secretAccessKey: ""  # REQUIRED when minio.enabled=false: S3 secret key
+  # Use path-style URLs (required for Azure Blob Storage and some S3-compatible services)
+  # When true: https://endpoint/bucket/key
+  # When false (default): https://bucket.endpoint/key
+  usePathStyle: false
 
 # MinIO configuration
 # Enable included MinIO for testing/development (NOT for production)

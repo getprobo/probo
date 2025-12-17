@@ -179,6 +179,10 @@ spec:
             - name: AWS_ENDPOINT
               value: {{ $s3Endpoint | quote }}
             {{- end }}
+            {{- if .Values.s3.usePathStyle }}
+            - name: AWS_USE_PATH_STYLE
+              value: "true"
+            {{- end }}
             # Email (SMTP)
             - name: MAILER_SENDER_NAME
               value: {{ .Values.probo.mailer.senderName | quote }}

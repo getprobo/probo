@@ -239,7 +239,9 @@ func (impl *Implm) Run(
 		html2pdf.WithTracerProvider(tp),
 	)
 
-	s3Client := s3.NewFromConfig(awsConfig)
+	s3Client := s3.NewFromConfig(awsConfig, func(o *s3.Options) {
+		o.UsePathStyle = impl.cfg.AWS.UsePathStyle
+	})
 
 	err = migrator.NewMigrator(pgClient, coredata.Migrations, l.Named("migrations")).Run(ctx, "migrations")
 	if err != nil {

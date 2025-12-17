@@ -29,7 +29,7 @@ export PASSWORD_PEPPER=$(openssl rand -base64 32)
 export TRUST_TOKEN_SECRET=$(openssl rand -base64 32)
 ```
 
-#### Download remote dependencies 
+#### Download remote dependencies
 
 ```bash
 helm dependency update ./charts/probo
@@ -225,7 +225,7 @@ helm install my-probo ././charts/probo \
 - Storage: Azure Blob Storage (with S3 compatibility)
 - Kubernetes: Azure Kubernetes Service (AKS)
 
-#### Exemple 
+#### Example
 
 
 ```bash
@@ -242,8 +242,11 @@ helm install my-probo ././charts/probo \
   --set s3.endpoint="https://<your-storage-account>.blob.core.windows.net" \
   --set s3.bucket="my-probo-bucket" \
   --set s3.accessKeyId="<azure-access-key>" \
-  --set s3.secretAccessKey="<azure-secret-key>"
+  --set s3.secretAccessKey="<azure-secret-key>" \
+  --set s3.usePathStyle=true
 ```
+
+> **Note:** Azure Blob Storage requires `s3.usePathStyle=true` to construct URLs correctly (path-style: `https://account.blob.core.windows.net/container/...` instead of virtual-hosted style: `https://bucket.account.blob.core.windows.net/...`).
 
 ### DigitalOcean
 - PostgreSQL: Managed PostgreSQL Database

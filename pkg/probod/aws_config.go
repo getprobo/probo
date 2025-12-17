@@ -21,5 +21,6 @@ type (
 		AccessKeyID     string `json:"access-key-id"`
 		SecretAccessKey string `json:"secret-access-key"`
 		Endpoint        string `json:"endpoint"`
+		UsePathStyle    bool   `json:"use-path-style"`
 	}
 )

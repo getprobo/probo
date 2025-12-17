@@ -244,6 +244,14 @@ s3:
   # accessKeyId: "..." # Spaces access key
   # secretAccessKey: "..." # Spaces secret
 
+  # Azure Blob Storage example (uncomment and adjust):
+  # region: "eastus"
+  # bucket: "probo-container"
+  # endpoint: "https://mystorageaccount.blob.core.windows.net"
+  # accessKeyId: "mystorageaccount" # Storage account name
+  # secretAccessKey: "..." # Storage account access key
+  # usePathStyle: true  # Required for Azure Blob Storage
+
 # Chrome for PDF generation
 chrome:
   enabled: true

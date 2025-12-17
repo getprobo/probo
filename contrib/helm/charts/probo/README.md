@@ -160,6 +160,7 @@ The following parameters **must** be configured:
 | `s3.bucket`            | S3 bucket name                  | `probod` |
 | `s3.region`            | AWS region                      | `us-east-1` |
 | `s3.endpoint`          | S3 endpoint (for S3-compatible) | `""` |
+| `s3.usePathStyle`      | Use path-style URLs (required for Azure Blob Storage) | `false` |
 | `chrome.enabled`       | Deploy Chrome                   | `true` |
 | `chrome.external.addr` | External Chrome (if disabled)   | `""` |
 | `ingress.enabled`      | Enable ingress                  | `false` |
