@@ -48,6 +48,7 @@ import {
   UnAuthenticatedError,
   UnauthorizedError,
 } from "@probo/relay";
+import { OrganizationListLoading } from "./pages/iam/organization/list/loading.tsx";
 
 /**
  * Top level error boundary
@@ -116,13 +117,11 @@ const routes = [
     ErrorBoundary: ErrorBoundary,
     children: [
       {
-        path: "",
-        Component: lazy(() => import("./pages/OrganizationsPage")),
-      },
-      {
-        path: "organizations/new",
-        Component: lazy(
-          () => import("./pages/organizations/NewOrganizationPage")
+        index: true,
+        Component: () => (
+          <RelayEnvironmentProvider environment={connectEnvironment}>
+            <OrganizationListLoading />
+          </RelayEnvironmentProvider>
         ),
       },
       // {
