@@ -22,11 +22,11 @@ const organizationFragment = graphql`
   fragment SettingsPageFragment on Organization {
     id
     name
-    ...GeneralSettingsTabFragment
-    ...MembersSettingsTabMembershipsFragment
-    ...MembersSettingsTabInvitationsFragment
+    # ...GeneralSettingsTabFragment
+    # ...MembersSettingsTabMembershipsFragment
+    # ...MembersSettingsTabInvitationsFragment
     ...DomainSettingsTabFragment
-    ...SAMLSettingsTabFragment
+    # ...SAMLSettingsTabFragment
   }
 `;
 

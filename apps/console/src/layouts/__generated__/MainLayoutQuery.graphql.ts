@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<5e4ec3cfaeb52bc478d496e37349880c>>
+ * @generated SignedSource<<f441167b6ed9402b92fcdf6dbaa77170>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -20,10 +20,6 @@ export type MainLayoutQuery$data = {
   };
   readonly viewer: {
     readonly id: string;
-    readonly user: {
-      readonly email: any;
-      readonly fullName: string;
-    };
   };
 };
 export type MainLayoutQuery = {
@@ -49,32 +45,30 @@ v1 = {
 v2 = {
   "alias": null,
   "args": null,
-  "kind": "ScalarField",
-  "name": "fullName",
+  "concreteType": "Viewer",
+  "kind": "LinkedField",
+  "name": "viewer",
+  "plural": false,
+  "selections": [
+    (v1/*: any*/)
+  ],
   "storageKey": null
 },
-v3 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "email",
-  "storageKey": null
-},
-v4 = [
+v3 = [
   {
     "kind": "Variable",
     "name": "id",
     "variableName": "organizationId"
   }
 ],
-v5 = {
+v4 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "name",
   "storageKey": null
 },
-v6 = {
+v5 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
@@ -88,34 +82,10 @@ return {
     "metadata": null,
     "name": "MainLayoutQuery",
     "selections": [
-      {
-        "alias": null,
-        "args": null,
-        "concreteType": "Viewer",
-        "kind": "LinkedField",
-        "name": "viewer",
-        "plural": false,
-        "selections": [
-          (v1/*: any*/),
-          {
-            "alias": null,
-            "args": null,
-            "concreteType": "User",
-            "kind": "LinkedField",
-            "name": "user",
-            "plural": false,
-            "selections": [
-              (v2/*: any*/),
-              (v3/*: any*/)
-            ],
-            "storageKey": null
-          }
-        ],
-        "storageKey": null
-      },
+      (v2/*: any*/),
       {
         "alias": "organization",
-        "args": (v4/*: any*/),
+        "args": (v3/*: any*/),
         "concreteType": null,
         "kind": "LinkedField",
         "name": "node",
@@ -125,8 +95,8 @@ return {
             "kind": "InlineFragment",
             "selections": [
               (v1/*: any*/),
-              (v5/*: any*/),
-              (v6/*: any*/)
+              (v4/*: any*/),
+              (v5/*: any*/)
             ],
             "type": "Organization",
             "abstractKey": null
@@ -144,35 +114,10 @@ return {
     "kind": "Operation",
     "name": "MainLayoutQuery",
     "selections": [
-      {
-        "alias": null,
-        "args": null,
-        "concreteType": "Viewer",
-        "kind": "LinkedField",
-        "name": "viewer",
-        "plural": false,
-        "selections": [
-          (v1/*: any*/),
-          {
-            "alias": null,
-            "args": null,
-            "concreteType": "User",
-            "kind": "LinkedField",
-            "name": "user",
-            "plural": false,
-            "selections": [
-              (v2/*: any*/),
-              (v3/*: any*/),
-              (v1/*: any*/)
-            ],
-            "storageKey": null
-          }
-        ],
-        "storageKey": null
-      },
+      (v2/*: any*/),
       {
         "alias": "organization",
-        "args": (v4/*: any*/),
+        "args": (v3/*: any*/),
         "concreteType": null,
         "kind": "LinkedField",
         "name": "node",
@@ -189,8 +134,8 @@ return {
           {
             "kind": "InlineFragment",
             "selections": [
-              (v5/*: any*/),
-              (v6/*: any*/)
+              (v4/*: any*/),
+              (v5/*: any*/)
             ],
             "type": "Organization",
             "abstractKey": null
@@ -201,16 +146,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "ee5a60e709dee856df7d2fef13974c9f",
+    "cacheID": "2ec49ff40720bacec29e7b6b1bf1408b",
     "id": null,
     "metadata": {},
     "name": "MainLayoutQuery",
     "operationKind": "query",
-    "text": "query MainLayoutQuery(\n  $organizationId: ID!\n) {\n  viewer {\n    id\n    user {\n      fullName\n      email\n      id\n    }\n  }\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      name\n      logoUrl\n    }\n    id\n  }\n}\n"
+    "text": "query MainLayoutQuery(\n  $organizationId: ID!\n) {\n  viewer {\n    id\n  }\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      name\n      logoUrl\n    }\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "9ea3e5a91a2d2be0993e7deebafa11b0";
+(node as any).hash = "d958a2acbd9d13698b9c2b350b05d5a0";
 
 export default node;

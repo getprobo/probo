@@ -26,7 +26,6 @@ import {
   useFragment,
   usePaginationFragment,
   usePreloadedQuery,
-  useLazyLoadQuery,
   type PreloadedQuery,
 } from "react-relay";
 import { use, useRef } from "react";
@@ -56,7 +55,6 @@ import {
   BulkExportDialog,
   type BulkExportDialogRef,
 } from "/components/documents/BulkExportDialog";
-import type { DocumentsPageUserEmailQuery } from "./__generated__/DocumentsPageUserEmailQuery.graphql";
 import { PermissionsContext } from "/providers/PermissionsContext";
 
 const documentsFragment = graphql`
@@ -94,15 +92,15 @@ type Props = {
   queryRef: PreloadedQuery<DocumentGraphListQuery>;
 };
 
-const UserEmailQuery = graphql`
-  query DocumentsPageUserEmailQuery {
-    viewer {
-      user {
-        email
-      }
-    }
-  }
-`;
+// const UserEmailQuery = graphql`
+//   query DocumentsPageUserEmailQuery {
+//     viewer {
+//       user {
+//         email
+//       }
+//     }
+//   }
+// `;
 
 export default function DocumentsPage(props: Props) {
   const { __ } = useTranslate();
@@ -113,11 +111,11 @@ export default function DocumentsPage(props: Props) {
     props.queryRef
   ).organization;
 
-  const userEmailData = useLazyLoadQuery<DocumentsPageUserEmailQuery>(
-    UserEmailQuery,
-    {}
-  );
-  const defaultEmail = userEmailData.viewer.user.email;
+  // const userEmailData = useLazyLoadQuery<DocumentsPageUserEmailQuery>(
+  //   UserEmailQuery,
+  //   {}
+  // );
+  // const defaultEmail = userEmailData.viewer.user.email;
   const pagination = usePaginationFragment(
     documentsFragment,
     organization as DocumentsPageListFragment$key
@@ -137,7 +135,8 @@ export default function DocumentsPage(props: Props) {
 
   usePageTitle(__("Documents"));
 
-  const hasAnyAction = isAuthorized("Document", "updateDocument") ||
+  const hasAnyAction =
+    isAuthorized("Document", "updateDocument") ||
     isAuthorized("Document", "deleteDocument");
 
   const handleSendSigningNotifications = () => {
@@ -210,7 +209,9 @@ export default function DocumentsPage(props: Props) {
           {isAuthorized("Organization", "createDocument") && (
             <CreateDocumentDialog
               connection={connectionId}
-              trigger={<Button icon={IconPlusLarge}>{__("New document")}</Button>}
+              trigger={
+                <Button icon={IconPlusLarge}>{__("New document")}</Button>
+              }
             />
           )}
         </div>
@@ -289,7 +290,7 @@ export default function DocumentsPage(props: Props) {
                         ref={bulkExportDialogRef}
                         onExport={handleBulkExport}
                         isLoading={isBulkExporting}
-                        defaultEmail={defaultEmail}
+                        // defaultEmail={defaultEmail}
                         selectedCount={selection.length}
                       >
                         <Button
