@@ -4,8 +4,5 @@
   "language": "typescript",
   "eagerEsModules": true,
   "noFutureProofEnums": true,
-  "excludes": [
-    "**/PublicTrustCenterGraph.ts",
-    "**/trust/**"
-  ]
+  "excludes": ["**/pages/iam/**/*", "**/node_modules/**"]
 }

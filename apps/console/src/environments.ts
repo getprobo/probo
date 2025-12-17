@@ -8,11 +8,11 @@ const store = new Store(source, {
 });
 
 export const consoleEnvironment = new Environment({
-  network: Network.create(makeFetchQuery("/api/console/v1/query")),
+  network: Network.create(makeFetchQuery("/api/console/v1/graphql")),
   store,
 });
 
 export const connectEnvironment = new Environment({
-  network: Network.create(makeFetchQuery("/api/connect/v1/query")),
+  network: Network.create(makeFetchQuery("/api/connect/v1/graphql")),
   store,
 });
