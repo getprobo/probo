@@ -116,12 +116,17 @@ export function AuditRowAvatar(props: { audit: AuditRowFragment$key }) {
           className="block cursor-pointer aspect-square"
           title={`Logo ${audit.framework.name}`}
         >
-          <FrameworkLogo
-            className="size-19"
-            lightLogoURL={audit.framework.lightLogoURL}
-            darkLogoURL={audit.framework.darkLogoURL}
-            name={audit.framework.name}
-          />
+          <div className="flex flex-col gap-2 items-center w-19">
+            <FrameworkLogo
+              className="size-19"
+              lightLogoURL={audit.framework.lightLogoURL}
+              darkLogoURL={audit.framework.darkLogoURL}
+              name={audit.framework.name}
+            />
+            <div className="txt-primary text-xs font-semibold max-w-19 overflow-hidden min-w-0 whitespace-nowrap text-ellipsis">
+              {audit.framework.name}
+            </div>
+          </div>
         </button>
       </AuditDialog>
     </>
