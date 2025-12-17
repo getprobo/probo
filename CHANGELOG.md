@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Added
+
+- Add risk vendor risk assesments to n8n
+
 ## [0.109.0] - 2025-12-16
 
 ### Added
