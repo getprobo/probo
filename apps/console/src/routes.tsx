@@ -88,10 +88,10 @@ const routes = [
         path: "register",
         Component: lazy(() => import("./pages/auth/RegisterPage")),
       },
-      {
-        path: "confirm-email",
-        Component: lazy(() => import("./pages/auth/ConfirmEmailPage")),
-      },
+      // {
+      //   path: "confirm-email",
+      //   Component: lazy(() => import("./pages/auth/ConfirmEmailPage")),
+      // },
       {
         path: "signup-from-invitation",
         Component: lazy(() => import("./pages/auth/SignupFromInvitationPage")),
@@ -126,6 +126,12 @@ const routes = [
           () => import("./pages/organizations/NewOrganizationPage")
         ),
       },
+      // {
+      //   path: "organizations/new",
+      //   Component: lazy(
+      //     () => import("./pages/organizations/NewOrganizationPage")
+      //   ),
+      // },
       {
         path: "documents/signing-requests",
         Component: lazy(
@@ -216,30 +222,30 @@ const routes = [
               throw redirect("general");
             },
           },
-          {
-            path: "general",
-            Component: lazy(
-              () => import("./pages/organizations/settings/GeneralSettingsTab")
-            ),
-          },
-          {
-            path: "members",
-            Component: lazy(
-              () => import("./pages/organizations/settings/MembersSettingsTab")
-            ),
-          },
+          // {
+          //   path: "general",
+          //   Component: lazy(
+          //     () => import("./pages/organizations/settings/GeneralSettingsTab")
+          //   ),
+          // },
+          // {
+          //   path: "members",
+          //   Component: lazy(
+          //     () => import("./pages/organizations/settings/MembersSettingsTab")
+          //   ),
+          // },
           {
             path: "domain",
             Component: lazy(
               () => import("./pages/organizations/settings/DomainSettingsTab")
             ),
           },
-          {
-            path: "saml-sso",
-            Component: lazy(
-              () => import("./pages/organizations/settings/SAMLSettingsTab")
-            ),
-          },
+          // {
+          //   path: "saml-sso",
+          //   Component: lazy(
+          //     () => import("./pages/organizations/settings/SAMLSettingsTab")
+          //   ),
+          // },
         ],
       },
       ...riskRoutes,

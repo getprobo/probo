@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<552529ec3c732ce161f2dcb4a16179b9>>
+ * @generated SignedSource<<1b79ba90084eae4139b4fd4a31e5061b>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -13,7 +13,7 @@ import { FragmentRefs } from "relay-runtime";
 export type SettingsPageFragment$data = {
   readonly id: string;
   readonly name: string;
-  readonly " $fragmentSpreads": FragmentRefs<"DomainSettingsTabFragment" | "GeneralSettingsTabFragment" | "MembersSettingsTabInvitationsFragment" | "MembersSettingsTabMembershipsFragment" | "SAMLSettingsTabFragment">;
+  readonly " $fragmentSpreads": FragmentRefs<"DomainSettingsTabFragment">;
   readonly " $fragmentType": "SettingsPageFragment";
 };
 export type SettingsPageFragment$key = {
@@ -44,33 +44,13 @@ const node: ReaderFragment = {
     {
       "args": null,
       "kind": "FragmentSpread",
-      "name": "GeneralSettingsTabFragment"
-    },
-    {
-      "args": null,
-      "kind": "FragmentSpread",
-      "name": "MembersSettingsTabMembershipsFragment"
-    },
-    {
-      "args": null,
-      "kind": "FragmentSpread",
-      "name": "MembersSettingsTabInvitationsFragment"
-    },
-    {
-      "args": null,
-      "kind": "FragmentSpread",
       "name": "DomainSettingsTabFragment"
-    },
-    {
-      "args": null,
-      "kind": "FragmentSpread",
-      "name": "SAMLSettingsTabFragment"
     }
   ],
   "type": "Organization",
   "abstractKey": null
 };
 
-(node as any).hash = "4f0ec089ac8ee79935eb56c22de31eca";
+(node as any).hash = "c00c2edf8bd9f8255c6bd6943bd4d445";
 
 export default node;
