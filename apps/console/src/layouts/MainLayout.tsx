@@ -55,10 +55,6 @@ const MainLayoutQuery = graphql`
   query MainLayoutQuery($organizationId: ID!) {
     viewer {
       id
-      user {
-        fullName
-        email
-      }
     }
     organization: node(id: $organizationId) {
       ... on Organization {
@@ -258,9 +254,13 @@ function UserDropdown({ organizationId }: { organizationId: string }) {
   const { __ } = useTranslate();
   const { toast } = useToast();
   const { isAuthorized } = use(PermissionsContext);
-  const user = useLazyLoadQuery<MainLayoutQueryType>(MainLayoutQuery, {
-    organizationId,
-  }).viewer.user;
+  // const user = useLazyLoadQuery<MainLayoutQueryType>(MainLayoutQuery, {
+  //   organizationId,
+  // }).viewer.user;
+  const user = {
+    fullName: "",
+    email: "",
+  };
 
   const handleLogout: React.MouseEventHandler<HTMLAnchorElement> = async (
     e
@@ -447,7 +447,7 @@ function OrganizationSelector({
             value={search}
             onValueChange={setSearch}
             onKeyDown={(e) => {
-                e.stopPropagation();
+              e.stopPropagation();
             }}
             autoFocus
           />
