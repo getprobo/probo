@@ -30,7 +30,7 @@ func (r *Resolver) MustBeAuthorized(ctx context.Context, entityID gid.GID, actio
 		credentialID = &apiKey.ID
 	}
 
-	err := r.iamSvc.AccessManagementService.Authorize(ctx, user.ID, credentialID, entityID, action)
+	err := r.iamSvc.LegacyAccessManagementService.Authorize(ctx, user.ID, credentialID, entityID, action)
 	if err != nil {
 		panic(err)
 	}
