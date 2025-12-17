@@ -1718,8 +1718,14 @@ connect_v1 "go.probo.inc/probo/pkg/server/api/connect/v1"
 	}
 
 // CreatePeople is the resolver for the createPeople field.
-	func (r *mutationResolver) CreatePeople(ctx context.Context, input types.CreatePeopleInput) (*types.CreatePeoplePayload, error){
-		r.MustBeAuthorized(ctx, input.OrganizationID, iam.ActionCreatePeople)
+func (r *mutationResolver) CreatePeople(ctx context.Context, input types.CreatePeopleInput) (*types.CreatePeoplePayload, error) {
+	user := connect_v1.UserFromContext(ctx)
+
+	r.iam.Authorizer.Authorize(ctx, iam.AuthorizeParams{
+		Principal: user.ID,
+		Resource:  input.OrganizationID,
+		Action:    iam.ActionCreatePeople,
+	})
 
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 

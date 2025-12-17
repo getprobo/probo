@@ -12,6 +12,9 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+// LEGACY: This is the legacy access management service that is used to authorize actions on entities.
+// It is deprecated and will be removed in the future.
+// Use the Authorizer instead.
 package iam
 
 import (

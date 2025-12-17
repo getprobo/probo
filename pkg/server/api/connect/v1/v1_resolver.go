@@ -819,14 +819,15 @@ func (r *personalAPIKeyConnectionResolver) TotalCount(ctx context.Context, obj *
 
 // Node is the resolver for the node field.
 func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error) {
-	var loadNode func(ctx context.Context, id gid.GID) (types.Node, error)
-
-	user := UserFromContext(ctx)
-
-	r.iam.AccessManagementService.Authorize(ctx, user.ID, nil, id, iam.ActionGet)
+	var (
+		loadNode func(ctx context.Context, id gid.GID) (types.Node, error)
+		user     = UserFromContext(ctx)
+		action   string
+	)
 
 	switch id.EntityType() {
 	case coredata.OrganizationEntityType:
+		action = iam.ActionIAMOrganizationGet
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
 			organization, err := r.iam.OrganizationService.GetOrganization(ctx, id)
 			if err != nil {
@@ -835,6 +836,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			return types.NewOrganization(organization), nil
 		}
 	case coredata.UserEntityType:
+		action = iam.ActionIAMIdentityGet
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
 			identity, err := r.iam.AccountService.GetIdentity(ctx, id)
 			if err != nil {
@@ -844,6 +846,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			return types.NewIdentity(identity), nil
 		}
 	case coredata.SessionEntityType:
+		action = iam.ActionIAMSessionGet
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
 			session, err := r.iam.GetSession(ctx, id)
 			if err != nil {
@@ -853,6 +856,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			return types.NewSession(session), nil
 		}
 	case coredata.MembershipEntityType:
+		action = iam.ActionIAMMembershipGet
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
 			membership, err := r.iam.GetMembership(ctx, id)
 			if err != nil {
@@ -862,6 +866,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			return types.NewMembership(membership), nil
 		}
 	case coredata.InvitationEntityType:
+		action = iam.ActionIAMInvitationGet
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
 			invitation, err := r.iam.GetInvitation(ctx, id)
 			if err != nil {
@@ -874,6 +879,24 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 		return nil, fmt.Errorf("unsupported entity type: %d", id.EntityType())
 	}
 
+	err := r.iam.Authorizer.Authorize(
+		ctx,
+		iam.AuthorizeParams{
+			Principal:          user.ID,
+			Resource:           id,
+			Action:             action,
+			ResourceAttributes: map[string]string{},
+		},
+	)
+	if err != nil {
+		var errInsufficientPermissions *iam.ErrInsufficientPermissions
+		if errors.As(err, &errInsufficientPermissions) {
+			return nil, gqlutils.Forbidden(err)
+		}
+
+		panic(fmt.Errorf("cannot authorize: %w", err))
+	}
+
 	node, err := loadNode(ctx, id)
 	if err != nil {
 		var (
@@ -882,13 +905,15 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			errSessionNotFound      *iam.ErrSessionNotFound
 			errMembershipNotFound   *iam.ErrMembershipNotFound
 			errInvitationNotFound   *iam.ErrInvitationNotFound
+
+			isNotFoundErr = errors.As(err, &errOrganizationNotFound) ||
+				errors.As(err, &errIdentityNotFound) ||
+				errors.As(err, &errSessionNotFound) ||
+				errors.As(err, &errMembershipNotFound) ||
+				errors.As(err, &errInvitationNotFound)
 		)
 
-		if errors.As(err, &errOrganizationNotFound) ||
-			errors.As(err, &errIdentityNotFound) ||
-			errors.As(err, &errSessionNotFound) ||
-			errors.As(err, &errMembershipNotFound) ||
-			errors.As(err, &errInvitationNotFound) {
+		if isNotFoundErr {
 			return nil, gqlutils.NotFound(err)
 		}
 
