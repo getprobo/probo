@@ -241,7 +241,7 @@ func NewMux(
 		}
 
 		// Ensure the actor (and optional API key) can access this organization.
-		if err := iamSvc.AccessManagementService.Authorize(r.Context(), identity.ID, credentialID, organizationID, iam.ActionGet); err != nil {
+		if err := iamSvc.LegacyAccessManagementService.Authorize(r.Context(), identity.ID, credentialID, organizationID, iam.ActionGet); err != nil {
 			httpserver.RenderError(w, http.StatusForbidden, err)
 			return
 		}
@@ -336,7 +336,7 @@ func (r *Resolver) MustBeAuthorized(ctx context.Context, entityID gid.GID, actio
 		credentialID = &apiKey.ID
 	}
 
-	err := r.iam.AccessManagementService.Authorize(ctx, user.ID, credentialID, entityID, action)
+	err := r.iam.LegacyAccessManagementService.Authorize(ctx, user.ID, credentialID, entityID, action)
 	if err != nil {
 		panic(err)
 	}

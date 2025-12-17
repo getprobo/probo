@@ -430,7 +430,7 @@ func (r *mutationResolver) RequestReportAccess(ctx context.Context, input types.
 	// email := input.Email
 	// tokenData := TokenAccessFromContext(ctx)
 	// if tokenData != nil {
-	// 	*email = tokenData.Email
+	// 	email = &tokenData.Email
 	// }
 	// if email == nil {
 	// 	return nil, fmt.Errorf("email is required for unauthenticated users")

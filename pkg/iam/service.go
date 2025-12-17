@@ -34,13 +34,14 @@ type (
 		privateKey                 *rsa.PrivateKey
 		logger                     *log.Logger
 
-		AccountService          *AccountService
-		OrganizationService     *OrganizationService
-		SessionService          *SessionService
-		AuthService             *AuthService
-		SAMLService             *saml.Service
-		APIKeyService           *APIKeyService
-		AccessManagementService *AccessManagementService
+		AccountService                *AccountService
+		OrganizationService           *OrganizationService
+		SessionService                *SessionService
+		AuthService                   *AuthService
+		SAMLService                   *saml.Service
+		APIKeyService                 *APIKeyService
+		LegacyAccessManagementService *AccessManagementService
+		Authorizer                    *Authorizer
 	}
 
 	Config struct {
@@ -55,6 +56,10 @@ type (
 		Certificate                *x509.Certificate
 		PrivateKey                 *rsa.PrivateKey
 		Logger                     *log.Logger
+
+		// PolicySet contains all policies for authorization.
+		// If nil, only IAM policies are used.
+		PolicySet *PolicySet
 	}
 )
 
@@ -102,7 +107,18 @@ func NewService(
 	svc.SessionService = NewSessionService(svc)
 	svc.AuthService = NewAuthService(svc)
 	svc.APIKeyService = NewAPIKeyService(svc)
-	svc.AccessManagementService = NewAccessManagementService(svc)
+	svc.LegacyAccessManagementService = NewAccessManagementService(svc)
+
+	// Use provided PolicySet or default to IAM-only policies
+	policySet := NewPolicySet()
+	if cfg.PolicySet != nil {
+		policySet = cfg.PolicySet
+	}
+
+	policySet.Merge(IAMPolicySet())
+
+	svc.Authorizer = NewAuthorizer(pgClient, policySet)
+
 	samlService, err := saml.NewService(svc.pg, svc.encryptionKey, svc.baseURL, svc.certificate, svc.privateKey, cfg.Logger)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create SAML service: %w", err)
