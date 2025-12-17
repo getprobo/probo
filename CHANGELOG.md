@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.110.2] - 2025-12-17
+
+### Fixed
+
+- Fix azure blob storage
+
 ## [0.110.1] - 2025-12-17
 
 ### Fixed
@@ -11,7 +17,7 @@ All notable changes to this project will be documented in this file.
 - Frameworks logo SVG colors
 - Framework name displayed in trust center org sidebar
 
-## [0.110.0] - 2025-12-16
+## [0.110.0] - 2025-12-17
 
 ### Added
 
