@@ -167,7 +167,6 @@ func (r *mutationResolver) SignIn(ctx context.Context, input types.SignInInput) 
 			}
 		}
 
-		// TODO handle error properly here
 		panic(fmt.Errorf("cannot sign in: %w", err))
 	}
 
@@ -200,7 +199,11 @@ func (r *mutationResolver) SignUp(ctx context.Context, input types.SignUpInput) 
 		},
 	)
 	if err != nil {
-		// TODO handle error properly here
+		var errUserAlreadyExists *iam.ErrUserAlreadyExists
+		if errors.As(err, &errUserAlreadyExists) {
+			return nil, gqlutils.Invalid(err, nil)
+		}
+
 		panic(fmt.Errorf("cannot create identity with password: %w", err))
 	}
 
@@ -243,7 +246,27 @@ func (r *mutationResolver) SignUpFromInvitation(ctx context.Context, input types
 		},
 	)
 	if err != nil {
-		// TODO handle error properly here
+		var (
+			errInvalidToken              *iam.ErrInvalidToken
+			errInvitationNotFound        *iam.ErrInvitationNotFound
+			errInvitationAlreadyAccepted *iam.ErrInvitationAlreadyAccepted
+			errInvitationExpired         *iam.ErrInvitationExpired
+			errUserAlreadyExists         *iam.ErrUserAlreadyExists
+
+			isInvalidErr = errors.As(err, &errInvalidToken) ||
+				errors.As(err, &errInvitationNotFound) ||
+				errors.As(err, &errInvitationAlreadyAccepted) ||
+				errors.As(err, &errInvitationExpired)
+		)
+
+		if isInvalidErr {
+			return nil, gqlutils.Invalid(err, nil)
+		}
+
+		if errors.As(err, &errUserAlreadyExists) {
+			return nil, gqlutils.Conflict(err)
+		}
+
 		panic(fmt.Errorf("cannot create identity from invitation: %w", err))
 	}
 
@@ -272,7 +295,6 @@ func (r *mutationResolver) ForgotPassword(ctx context.Context, input types.Forgo
 		input.Email,
 	)
 	if err != nil {
-		// TODO handle error properly here
 		panic(fmt.Errorf("cannot send password reset instruction by email: %w", err))
 	}
 
@@ -308,7 +330,28 @@ func (r *mutationResolver) ResetPassword(ctx context.Context, input types.ResetP
 func (r *mutationResolver) VerifyEmail(ctx context.Context, input types.VerifyEmailInput) (*types.VerifyEmailPayload, error) {
 	err := r.iam.AccountService.VerifyEmail(ctx, input.Token)
 	if err != nil {
-		// TODO handle error properly here
+		var (
+			errInvalidToken              *iam.ErrInvalidToken
+			errUserNotFound              *iam.ErrUserNotFound
+			errEmailAlreadyVerified      *iam.ErrEmailAlreadyVerified
+			errEmailVerificationMismatch *iam.ErrEmailVerificationMismatch
+
+			isInvalidErr = errors.As(err, &errInvalidToken) ||
+				errors.As(err, &errEmailVerificationMismatch)
+		)
+
+		if isInvalidErr {
+			return nil, gqlutils.Invalid(err, nil)
+		}
+
+		if errors.As(err, &errEmailAlreadyVerified) {
+			return nil, gqlutils.Conflict(err)
+		}
+
+		if errors.As(err, &errUserNotFound) {
+			return nil, gqlutils.NotFound(err)
+		}
+
 		panic(fmt.Errorf("cannot verify email: %w", err))
 	}
 
@@ -330,7 +373,19 @@ func (r *mutationResolver) ChangePassword(ctx context.Context, input types.Chang
 		},
 	)
 	if err != nil {
-		// TODO handle error properly here
+		var (
+			errInvalidPassword *iam.ErrInvalidPassword
+			errUserNotFound    *iam.ErrUserNotFound
+		)
+
+		if errors.As(err, &errInvalidPassword) {
+			return nil, gqlutils.Invalid(err, nil)
+		}
+
+		if errors.As(err, &errUserNotFound) {
+			return nil, gqlutils.NotFound(err)
+		}
+
 		panic(fmt.Errorf("cannot change password: %w", err))
 	}
 
@@ -352,7 +407,19 @@ func (r *mutationResolver) ChangeEmail(ctx context.Context, input types.ChangeEm
 		},
 	)
 	if err != nil {
-		// TODO handle error properly here
+		var (
+			errInvalidPassword *iam.ErrInvalidPassword
+			errUserNotFound    *iam.ErrUserNotFound
+		)
+
+		if errors.As(err, &errInvalidPassword) {
+			return nil, gqlutils.Invalid(err, nil)
+		}
+
+		if errors.As(err, &errUserNotFound) {
+			return nil, gqlutils.NotFound(err)
+		}
+
 		panic(fmt.Errorf("cannot change email: %w", err))
 	}
 
