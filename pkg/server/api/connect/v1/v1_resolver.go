@@ -24,7 +24,7 @@ import (
 )
 
 // Memberships is the resolver for the memberships field.
-func (r *identityResolver) Memberships(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.MembershipConnection, error) {
+func (r *identityResolver) Memberships(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MembershipOrderBy) (*types.MembershipConnection, error) {
 	pageOrderBy := page.OrderBy[coredata.MembershipOrderField]{
 		Field:     coredata.MembershipOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,

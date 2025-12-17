@@ -137,6 +137,7 @@ type Identity implements Node {
     after: CursorKey
     last: Int
     before: CursorKey
+    orderBy: MembershipOrder
   ): MembershipConnection! @goField(forceResolver: true) @isViewer
 
   pendingInvitations(
@@ -404,6 +405,32 @@ enum ProvisioningSource {
   MANUAL
   INVITATION
   SAML
+}
+
+enum MembershipOrderField
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.MembershipOrderField") {
+  FULL_NAME
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.MembershipOrderFieldFullName"
+    )
+  EMAIL_ADDRESS
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.MembershipOrderFieldEmailAddress"
+    )
+  ROLE
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipOrderFieldRole")
+  CREATED_AT
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.MembershipOrderFieldCreatedAt"
+    )
+}
+
+input MembershipOrder
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/connect/v1/types.MembershipOrderBy"
+  ) {
+  direction: OrderDirection!
+  field: MembershipOrderField!
 }
 
 type MembershipConnection

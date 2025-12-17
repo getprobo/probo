@@ -131,7 +131,7 @@ type ComplexityRoot struct {
 		Email              func(childComplexity int) int
 		EmailVerified      func(childComplexity int) int
 		ID                 func(childComplexity int) int
-		Memberships        func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
+		Memberships        func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MembershipOrderBy) int
 		PendingInvitations func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
 		PersonalAPIKeys    func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
 		ProfileFor         func(childComplexity int, organizationID gid.GID) int
@@ -434,7 +434,7 @@ type ComplexityRoot struct {
 }
 
 type IdentityResolver interface {
-	Memberships(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.MembershipConnection, error)
+	Memberships(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MembershipOrderBy) (*types.MembershipConnection, error)
 	PendingInvitations(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.InvitationConnection, error)
 	Sessions(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.SessionOrder) (*types.SessionConnection, error)
 	PersonalAPIKeys(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.PersonalAPIKeyConnection, error)
@@ -686,7 +686,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Identity.Memberships(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey)), true
+		return e.complexity.Identity.Memberships(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.MembershipOrderBy)), true
 	case "Identity.pendingInvitations":
 		if e.complexity.Identity.PendingInvitations == nil {
 			break
@@ -1962,6 +1962,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputForgotPasswordInput,
 		ec.unmarshalInputInvitationProfileInput,
 		ec.unmarshalInputInviteMemberInput,
+		ec.unmarshalInputMembershipOrder,
 		ec.unmarshalInputRemoveIPAllowlistEntryInput,
 		ec.unmarshalInputRemoveMemberInput,
 		ec.unmarshalInputResetPasswordInput,
@@ -2214,6 +2215,7 @@ type Identity implements Node {
     after: CursorKey
     last: Int
     before: CursorKey
+    orderBy: MembershipOrder
   ): MembershipConnection! @goField(forceResolver: true) @isViewer
 
   pendingInvitations(
@@ -2481,6 +2483,32 @@ enum ProvisioningSource {
   MANUAL
   INVITATION
   SAML
+}
+
+enum MembershipOrderField
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.MembershipOrderField") {
+  FULL_NAME
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.MembershipOrderFieldFullName"
+    )
+  EMAIL_ADDRESS
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.MembershipOrderFieldEmailAddress"
+    )
+  ROLE
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipOrderFieldRole")
+  CREATED_AT
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.MembershipOrderFieldCreatedAt"
+    )
+}
+
+input MembershipOrder
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/connect/v1/types.MembershipOrderBy"
+  ) {
+  direction: OrderDirection!
+  field: MembershipOrderField!
 }
 
 type MembershipConnection
@@ -2886,6 +2914,11 @@ func (ec *executionContext) field_Identity_memberships_args(ctx context.Context,
 		return nil, err
 	}
 	args["before"] = arg3
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "orderBy", ec.unmarshalOMembershipOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐMembershipOrderBy)
+	if err != nil {
+		return nil, err
+	}
+	args["orderBy"] = arg4
 	return args, nil
 }
 
@@ -4183,7 +4216,7 @@ func (ec *executionContext) _Identity_memberships(ctx context.Context, field gra
 		ec.fieldContext_Identity_memberships,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Identity().Memberships(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey))
+			return ec.resolvers.Identity().Memberships(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.MembershipOrderBy))
 		},
 		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
 			directive0 := next
@@ -13202,6 +13235,40 @@ func (ec *executionContext) unmarshalInputInviteMemberInput(ctx context.Context,
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputMembershipOrder(ctx context.Context, obj any) (types.MembershipOrderBy, error) {
+	var it types.MembershipOrderBy
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"direction", "field"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "direction":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("direction"))
+			data, err := ec.unmarshalNOrderDirection2goᚗproboᚗincᚋproboᚋpkgᚋpageᚐOrderDirection(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Direction = data
+		case "field":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
+			data, err := ec.unmarshalNMembershipOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipOrderField(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Field = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputRemoveIPAllowlistEntryInput(ctx context.Context, obj any) (types.RemoveIPAllowlistEntryInput, error) {
 	var it types.RemoveIPAllowlistEntryInput
 	asMap := map[string]any{}
@@ -18426,6 +18493,38 @@ func (ec *executionContext) marshalNMembershipEdge2ᚖgoᚗproboᚗincᚋprobo�
 	return ec._MembershipEdge(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNMembershipOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipOrderField(ctx context.Context, v any) (coredata.MembershipOrderField, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNMembershipOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipOrderField[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNMembershipOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipOrderField(ctx context.Context, sel ast.SelectionSet, v coredata.MembershipOrderField) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNMembershipOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipOrderField[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNMembershipOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipOrderField = map[string]coredata.MembershipOrderField{
+		"FULL_NAME":     coredata.MembershipOrderFieldFullName,
+		"EMAIL_ADDRESS": coredata.MembershipOrderFieldEmailAddress,
+		"ROLE":          coredata.MembershipOrderFieldRole,
+		"CREATED_AT":    coredata.MembershipOrderFieldCreatedAt,
+	}
+	marshalNMembershipOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipOrderField = map[coredata.MembershipOrderField]string{
+		coredata.MembershipOrderFieldFullName:     "FULL_NAME",
+		coredata.MembershipOrderFieldEmailAddress: "EMAIL_ADDRESS",
+		coredata.MembershipOrderFieldRole:         "ROLE",
+		coredata.MembershipOrderFieldCreatedAt:    "CREATED_AT",
+	}
+)
+
 func (ec *executionContext) unmarshalNOrderDirection2goᚗproboᚗincᚋproboᚋpkgᚋpageᚐOrderDirection(ctx context.Context, v any) (page.OrderDirection, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := unmarshalNOrderDirection2goᚗproboᚗincᚋproboᚋpkgᚋpageᚐOrderDirection[tmp]
@@ -19713,6 +19812,14 @@ var (
 		coredata.InvitationStatusExpired:  "EXPIRED",
 	}
 )
+
+func (ec *executionContext) unmarshalOMembershipOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐMembershipOrderBy(ctx context.Context, v any) (*types.MembershipOrderBy, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputMembershipOrder(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
 
 func (ec *executionContext) marshalONode2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐNode(ctx context.Context, sel ast.SelectionSet, v types.Node) graphql.Marshaler {
 	if v == nil {
