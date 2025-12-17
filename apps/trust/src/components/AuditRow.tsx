@@ -123,7 +123,7 @@ export function AuditRowAvatar(props: { audit: AuditRowFragment$key }) {
               darkLogoURL={audit.framework.darkLogoURL}
               name={audit.framework.name}
             />
-            <div className="txt-primary text-xs font-semibold max-w-19 overflow-hidden min-w-0 whitespace-nowrap text-ellipsis">
+            <div className="txt-primary text-sm max-w-19 overflow-hidden min-w-0 whitespace-nowrap text-ellipsis">
               {audit.framework.name}
             </div>
           </div>
