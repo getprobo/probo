@@ -16,7 +16,6 @@ package connect_v1
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	"github.com/99designs/gqlgen/graphql"
@@ -72,13 +71,17 @@ func SessionDirective(ctx context.Context, obj any, next graphql.Resolver, requi
 
 func IsViewerDirective(ctx context.Context, obj any, next graphql.Resolver) (any, error) {
 	identity := UserFromContext(ctx)
-	resolvedIdentity, ok := obj.(*types.Identity)
-	if !ok {
-		panic(fmt.Errorf("@isViewer called on non-identity object: %T", obj))
-	}
 
-	if identity.ID != resolvedIdentity.ID {
-		return nil, ErrForbidden
+	switch node := obj.(type) {
+	case *types.Identity:
+		if identity.ID != node.ID {
+			return nil, ErrForbidden
+		}
+	case *types.Membership:
+		if identity.ID != node.IdentityID {
+			return nil, ErrForbidden
+		}
+	default:
 	}
 
 	return next(ctx)

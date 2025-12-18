@@ -226,6 +226,7 @@ type Organization implements Node {
 
 type Membership implements Node {
   id: ID!
+  identityId: ID!
   createdAt: Datetime!
   profile: IdentityProfile!
   identity: Identity! @goField(forceResolver: true)
@@ -234,6 +235,8 @@ type Membership implements Node {
   provisionedBy: ProvisioningSource!
   active: Boolean!
   lastSyncedAt: Datetime
+
+  activeSession: Session @goField(forceResolver: true) @isViewer
 }
 
 type Invitation implements Node {
@@ -243,14 +246,6 @@ type Invitation implements Node {
   acceptedAt: Datetime
   createdAt: Datetime!
   status: InvitationStatus!
-}
-
-type InvitationProfile {
-  displayName: String!
-  firstName: String
-  lastName: String
-  jobTitle: String
-  department: String
 }
 
 type Session implements Node {
@@ -633,14 +628,6 @@ input InviteMemberInput {
 input RemoveMemberInput {
   organizationId: ID!
   membershipId: ID!
-}
-
-input InvitationProfileInput {
-  displayName: String!
-  firstName: String
-  lastName: String
-  jobTitle: String
-  department: String
 }
 
 input AcceptInvitationInput {

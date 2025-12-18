@@ -209,22 +209,6 @@ type InvitationEdge struct {
 	Cursor page.CursorKey `json:"cursor"`
 }
 
-type InvitationProfile struct {
-	DisplayName string  `json:"displayName"`
-	FirstName   *string `json:"firstName,omitempty"`
-	LastName    *string `json:"lastName,omitempty"`
-	JobTitle    *string `json:"jobTitle,omitempty"`
-	Department  *string `json:"department,omitempty"`
-}
-
-type InvitationProfileInput struct {
-	DisplayName string  `json:"displayName"`
-	FirstName   *string `json:"firstName,omitempty"`
-	LastName    *string `json:"lastName,omitempty"`
-	JobTitle    *string `json:"jobTitle,omitempty"`
-	Department  *string `json:"department,omitempty"`
-}
-
 type InviteMemberInput struct {
 	OrganizationID gid.GID   `json:"organizationId"`
 	Email          mail.Addr `json:"email"`
@@ -237,6 +221,7 @@ type InviteMemberPayload struct {
 
 type Membership struct {
 	ID            gid.GID            `json:"id"`
+	IdentityID    gid.GID            `json:"identityId"`
 	CreatedAt     time.Time          `json:"createdAt"`
 	Profile       *IdentityProfile   `json:"profile"`
 	Identity      *Identity          `json:"identity"`
@@ -245,6 +230,7 @@ type Membership struct {
 	ProvisionedBy ProvisioningSource `json:"provisionedBy"`
 	Active        bool               `json:"active"`
 	LastSyncedAt  *time.Time         `json:"lastSyncedAt,omitempty"`
+	ActiveSession *Session           `json:"activeSession,omitempty"`
 }
 
 func (Membership) IsNode()             {}

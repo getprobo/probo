@@ -300,3 +300,50 @@ WHERE
 
 	return result.RowsAffected(), nil
 }
+
+func (s *Session) LoadByRootSessionIDAndMembershipID(ctx context.Context, conn pg.Conn, rootSessionID gid.GID, membershipID gid.GID) error {
+	q := `
+SELECT
+	id,
+	user_id,
+	tenant_id,
+	data,
+	parent_session_id,
+	expire_reason,
+	user_agent,
+	ip_address,
+	expired_at,
+	created_at,
+	updated_at
+FROM
+	sessions
+INNER JOIN
+	authz_memberships m ON m.organization_id = s.organization_id
+WHERE
+	sessions.parent_session_id = @root_session_id
+	AND m.id = @membership_id
+`
+
+	args := pgx.StrictNamedArgs{
+		"root_session_id": rootSessionID,
+		"membership_id":   membershipID,
+	}
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot query session: %w", err)
+	}
+
+	session, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Session])
+	if err != nil {
+		return fmt.Errorf("cannot collect session: %w", err)
+	}
+
+	*s = session
+
+	return nil
+}

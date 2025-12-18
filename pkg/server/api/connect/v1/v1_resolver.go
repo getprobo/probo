@@ -138,6 +138,24 @@ func (r *membershipResolver) Organization(ctx context.Context, obj *types.Member
 	return types.NewOrganization(organization), nil
 }
 
+// ActiveSession is the resolver for the activeSession field.
+func (r *membershipResolver) ActiveSession(ctx context.Context, obj *types.Membership) (*types.Session, error) {
+	rootSession := SessionFromContext(ctx)
+
+	session, err := r.iam.SessionService.GetActiveSessionForMembership(ctx, rootSession.UserID, obj.ID)
+	if err != nil {
+		var errSessionNotFound *iam.ErrSessionNotFound
+
+		if errors.As(err, &errSessionNotFound) {
+			return nil, nil
+		}
+
+		panic(fmt.Errorf("cannot get active session: %w", err))
+	}
+
+	return types.NewSession(session), nil
+}
+
 // TotalCount is the resolver for the totalCount field.
 func (r *membershipConnectionResolver) TotalCount(ctx context.Context, obj *types.MembershipConnection) (int, error) {
 	switch obj.Resolver.(type) {

@@ -264,3 +264,49 @@ func (s SessionService) UpdateSessionData(ctx context.Context, sessionID gid.GID
 		},
 	)
 }
+
+func (s SessionService) GetActiveSessionForMembership(ctx context.Context, rootSessionID gid.GID, membershipID gid.GID) (*coredata.Session, error) {
+	childSession := &coredata.Session{}
+
+	err := s.pg.WithTx(
+		ctx,
+		func(tx pg.Conn) error {
+			rootSession := &coredata.Session{}
+			err := rootSession.LoadByID(ctx, tx, rootSessionID)
+			if err != nil {
+				if err == coredata.ErrResourceNotFound {
+					return NewSessionNotFoundError(rootSessionID)
+				}
+
+				return fmt.Errorf("cannot load root session: %w", err)
+			}
+
+			if !rootSession.IsRootSession() {
+				return fmt.Errorf("session %q is not a root session", rootSessionID)
+			}
+
+			membership := &coredata.Membership{}
+			err = membership.LoadByID(ctx, tx, coredata.NewScopeFromObjectID(membershipID), membershipID)
+			if err != nil {
+				return fmt.Errorf("cannot load membership: %w", err)
+			}
+
+			err = childSession.LoadByRootSessionIDAndMembershipID(ctx, tx, rootSessionID, membership.ID)
+			if err != nil {
+				if err == coredata.ErrResourceNotFound {
+					return NewSessionNotFoundError(rootSessionID)
+				}
+
+				return fmt.Errorf("cannot load child session: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return childSession, nil
+}
