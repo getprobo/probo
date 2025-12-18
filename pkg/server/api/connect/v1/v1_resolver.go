@@ -29,6 +29,12 @@ func (r *identityResolver) Memberships(ctx context.Context, obj *types.Identity,
 		Field:     coredata.MembershipOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.MembershipOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
 
 	cursor := cursor.NewCursor(first, after, last, before, pageOrderBy)
 
@@ -41,7 +47,7 @@ func (r *identityResolver) Memberships(ctx context.Context, obj *types.Identity,
 }
 
 // PendingInvitations is the resolver for the pendingInvitations field.
-func (r *identityResolver) PendingInvitations(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.InvitationConnection, error) {
+func (r *identityResolver) PendingInvitations(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.InvitationOrderBy) (*types.InvitationConnection, error) {
 	pageOrderBy := page.OrderBy[coredata.InvitationOrderField]{
 		Field:     coredata.InvitationOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
@@ -95,6 +101,16 @@ func (r *identityResolver) PersonalAPIKeys(ctx context.Context, obj *types.Ident
 	}
 
 	return types.NewPersonalAPIKeyConnection(page, r, obj.ID), nil
+}
+
+// Organization is the resolver for the organization field.
+func (r *invitationResolver) Organization(ctx context.Context, obj *types.Invitation) (*types.Organization, error) {
+	organization, err := r.iam.OrganizationService.GetOrganizationForInvitation(ctx, obj.ID)
+	if err != nil {
+		panic(fmt.Errorf("cannot get organization for invitation: %w", err))
+	}
+
+	return types.NewOrganization(organization), nil
 }
 
 // TotalCount is the resolver for the totalCount field.
@@ -994,6 +1010,9 @@ func (r *sessionConnectionResolver) TotalCount(ctx context.Context, obj *types.S
 // Identity returns schema.IdentityResolver implementation.
 func (r *Resolver) Identity() schema.IdentityResolver { return &identityResolver{r} }
 
+// Invitation returns schema.InvitationResolver implementation.
+func (r *Resolver) Invitation() schema.InvitationResolver { return &invitationResolver{r} }
+
 // InvitationConnection returns schema.InvitationConnectionResolver implementation.
 func (r *Resolver) InvitationConnection() schema.InvitationConnectionResolver {
 	return &invitationConnectionResolver{r}
@@ -1032,6 +1051,7 @@ func (r *Resolver) SessionConnection() schema.SessionConnectionResolver {
 }
 
 type identityResolver struct{ *Resolver }
+type invitationResolver struct{ *Resolver }
 type invitationConnectionResolver struct{ *Resolver }
 type membershipResolver struct{ *Resolver }
 type membershipConnectionResolver struct{ *Resolver }
