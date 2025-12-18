@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.111.0] - 2025-12-18
+
+### Added
+
+- Add ISO 27701 (2025) framework.
+- Add ISO 42001 (2023) framework.
+- Add GDPR framework.
+- Add CCPA framework.
+- Add NIS2 framework.
+- Add DORA framework.
+
 ## [0.110.2] - 2025-12-17
 
 ### Fixed
