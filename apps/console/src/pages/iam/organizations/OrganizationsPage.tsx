@@ -1,0 +1,116 @@
+import { usePreloadedQuery, type PreloadedQuery } from "react-relay";
+import { useTranslate } from "@probo/i18n";
+import {
+  Button,
+  Card,
+  IconMagnifyingGlass,
+  IconPlusLarge,
+  Input,
+} from "@probo/ui";
+import { useMemo, useState } from "react";
+import { OrganizationCard } from "./_components/OrganizationCard";
+import { InvitationCard } from "./_components/InvitationCard";
+import type {
+  OrganizationsQuery,
+  OrganizationsQuery$data,
+} from "./__generated__/OrganizationsQuery.graphql";
+import { organizationsQuery } from "./OrganizationsQuery";
+
+interface PageProps {
+  queryRef: PreloadedQuery<OrganizationsQuery>;
+}
+
+export default function Page(props: PageProps) {
+  const { __ } = useTranslate();
+  const [search, setSearch] = useState("");
+
+  const { queryRef } = props;
+  const {
+    viewer: {
+      memberships: { edges: initialMemberships },
+      pendingInvitations: { edges: invitations },
+    },
+  } = usePreloadedQuery<OrganizationsQuery>(organizationsQuery, queryRef);
+
+  const memberships = useMemo<
+    OrganizationsQuery$data["viewer"]["memberships"]["edges"]
+  >(() => {
+    if (!search.trim()) {
+      return initialMemberships;
+    }
+    return initialMemberships.filter(({ node }) =>
+      node.organization.name.toLowerCase().includes(search.toLowerCase()),
+    );
+  }, [initialMemberships, search]);
+
+  return (
+    <>
+      <div className="space-y-6 w-full py-6">
+        <h1 className="text-3xl font-bold text-center">
+          {__("Select an organization")}
+        </h1>
+        <div className="space-y-4 w-full">
+          {invitations.length > 0 && (
+            <div className="space-y-3">
+              <h2 className="text-xl font-semibold">
+                {__("Pending invitations")}
+              </h2>
+              {invitations.map(({ node }) => (
+                <InvitationCard
+                  key={node.id}
+                  fKey={node}
+                  // onAccept={handleAcceptInvitation}
+                  // isAccepting={isAccepting}
+                />
+              ))}
+            </div>
+          )}
+          {memberships.length > 0 && (
+            <div className="space-y-3">
+              {invitations.length > 0 && (
+                <h2 className="text-xl font-semibold">
+                  {__("Your organizations")}
+                </h2>
+              )}
+              {memberships.length > 3 && (
+                <div className="w-full">
+                  <Input
+                    icon={IconMagnifyingGlass}
+                    placeholder={__("Search organizations...")}
+                    value={search}
+                    onValueChange={setSearch}
+                  />
+                </div>
+              )}
+              {memberships.length === 0 ? (
+                <div className="text-center text-txt-secondary py-4">
+                  {__("No organizations found")}
+                </div>
+              ) : (
+                memberships.map(({ node: { id, organization } }) => (
+                  <OrganizationCard key={id} fKey={organization} />
+                ))
+              )}
+            </div>
+          )}
+          <Card padded>
+            <h2 className="text-xl font-semibold mb-1">
+              {__("Create an organization")}
+            </h2>
+            <p className="text-txt-tertiary mb-4">
+              {__("Add a new organization to your account")}
+            </p>
+            <Button
+              to="/organizations/new"
+              variant="quaternary"
+              icon={IconPlusLarge}
+              className="w-full"
+            >
+              {__("Create organization")}
+            </Button>
+          </Card>
+        </div>
+      </div>
+    </>
+  );
+}

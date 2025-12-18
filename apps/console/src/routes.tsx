@@ -48,7 +48,7 @@ import {
   UnAuthenticatedError,
   UnauthorizedError,
 } from "@probo/relay";
-import { OrganizationListLoading } from "./pages/iam/organization/list/loading.tsx";
+import { OrganizationsQuery } from "./pages/iam/organizations/OrganizationsQuery.tsx";
 
 /**
  * Top level error boundary
@@ -120,7 +120,7 @@ const routes = [
         index: true,
         Component: () => (
           <RelayEnvironmentProvider environment={connectEnvironment}>
-            <OrganizationListLoading />
+            <OrganizationsQuery />
           </RelayEnvironmentProvider>
         ),
       },
@@ -133,7 +133,7 @@ const routes = [
       {
         path: "documents/signing-requests",
         Component: lazy(
-          () => import("./pages/DocumentSigningRequestsPage.tsx")
+          () => import("./pages/DocumentSigningRequestsPage.tsx"),
         ),
       },
       {
@@ -153,12 +153,13 @@ const routes = [
         loader: loaderFromQueryLoader(({ organizationId }) =>
           loadQuery(consoleEnvironment, employeeDocumentsQuery, {
             organizationId: organizationId!,
-          })
+          }),
         ),
         Component: withQueryRef(
           lazy(
-            () => import("./pages/organizations/employee/EmployeeDocumentsPage")
-          )
+            () =>
+              import("./pages/organizations/employee/EmployeeDocumentsPage"),
+          ),
         ),
       },
       {
@@ -168,13 +169,13 @@ const routes = [
         loader: loaderFromQueryLoader(({ documentId }) =>
           loadQuery(consoleEnvironment, employeeDocumentSignatureQuery, {
             documentId: documentId!,
-          })
+          }),
         ),
         Component: withQueryRef(
           lazy(
             () =>
-              import("./pages/organizations/employee/EmployeeDocumentSignaturePage")
-          )
+              import("./pages/organizations/employee/EmployeeDocumentSignaturePage"),
+          ),
         ),
       },
     ],
@@ -208,10 +209,10 @@ const routes = [
         loader: loaderFromQueryLoader(({ organizationId }) =>
           loadQuery(consoleEnvironment, organizationViewQuery, {
             organizationId: organizationId!,
-          })
+          }),
         ),
         Component: withQueryRef(
-          lazy(() => import("./pages/organizations/SettingsPage"))
+          lazy(() => import("./pages/organizations/SettingsPage")),
         ),
         children: [
           {
@@ -235,7 +236,7 @@ const routes = [
           {
             path: "domain",
             Component: lazy(
-              () => import("./pages/organizations/settings/DomainSettingsTab")
+              () => import("./pages/organizations/settings/DomainSettingsTab"),
             ),
           },
           // {

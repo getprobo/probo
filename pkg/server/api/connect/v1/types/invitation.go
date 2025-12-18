@@ -66,6 +66,7 @@ func NewInvitation(invitation *coredata.Invitation) *Invitation {
 	return &Invitation{
 		ID:         invitation.ID,
 		Email:      invitation.Email,
+		Role:       invitation.Role,
 		ExpiresAt:  invitation.ExpiresAt,
 		AcceptedAt: invitation.AcceptedAt,
 		CreatedAt:  invitation.CreatedAt,

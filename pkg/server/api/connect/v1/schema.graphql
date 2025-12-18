@@ -145,6 +145,7 @@ type Identity implements Node {
     after: CursorKey
     last: Int
     before: CursorKey
+    orderBy: InvitationOrder
   ): InvitationConnection! @goField(forceResolver: true) @isViewer
 
   sessions(
@@ -224,6 +225,17 @@ type Organization implements Node {
   availableApplications: [Application!]!
 }
 
+enum MembershipRole
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.MembershipRole") {
+  OWNER @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleOwner")
+  ADMIN @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleAdmin")
+  EMPLOYEE
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleEmployee")
+  VIEWER @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleViewer")
+  AUDITOR
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleAuditor")
+}
+
 type Membership implements Node {
   id: ID!
   identityId: ID!
@@ -231,6 +243,7 @@ type Membership implements Node {
   profile: IdentityProfile!
   identity: Identity! @goField(forceResolver: true)
   organization: Organization! @goField(forceResolver: true)
+  role: MembershipRole!
   permissions: [Permission!]!
   provisionedBy: ProvisioningSource!
   active: Boolean!
@@ -242,10 +255,12 @@ type Membership implements Node {
 type Invitation implements Node {
   id: ID!
   email: EmailAddr!
+  role: MembershipRole!
   expiresAt: Datetime!
   acceptedAt: Datetime
   createdAt: Datetime!
   status: InvitationStatus!
+  organization: Organization! @goField(forceResolver: true)
 }
 
 type Session implements Node {
@@ -404,14 +419,6 @@ enum ProvisioningSource {
 
 enum MembershipOrderField
   @goModel(model: "go.probo.inc/probo/pkg/coredata.MembershipOrderField") {
-  FULL_NAME
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.MembershipOrderFieldFullName"
-    )
-  EMAIL_ADDRESS
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.MembershipOrderFieldEmailAddress"
-    )
   ROLE
     @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipOrderFieldRole")
   CREATED_AT
@@ -440,6 +447,34 @@ type MembershipConnection
 type MembershipEdge {
   node: Membership!
   cursor: CursorKey!
+}
+
+enum InvitationOrderField
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.InvitationOrderField") {
+  EMAIL
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.InvitationOrderFieldEmail")
+  ROLE
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.InvitationOrderFieldRole")
+  CREATED_AT
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.InvitationOrderFieldCreatedAt"
+    )
+  EXPIRES_AT
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.InvitationOrderFieldExpiresAt"
+    )
+  ACCEPTED_AT
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.InvitationOrderFieldAcceptedAt"
+    )
+}
+
+input InvitationOrder
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/connect/v1/types.InvitationOrderBy"
+  ) {
+  direction: OrderDirection!
+  field: InvitationOrderField!
 }
 
 type InvitationConnection
