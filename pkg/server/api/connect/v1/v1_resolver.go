@@ -144,9 +144,12 @@ func (r *membershipResolver) ActiveSession(ctx context.Context, obj *types.Membe
 
 	session, err := r.iam.SessionService.GetActiveSessionForMembership(ctx, rootSession.UserID, obj.ID)
 	if err != nil {
-		var errSessionNotFound *iam.ErrSessionNotFound
+		var (
+			errSessionNotFound *iam.ErrSessionNotFound
+			errSessionExpired  *iam.ErrSessionExpired
+		)
 
-		if errors.As(err, &errSessionNotFound) {
+		if errors.As(err, &errSessionNotFound) || errors.As(err, &errSessionExpired) {
 			return nil, nil
 		}
 
