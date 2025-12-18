@@ -9,6 +9,8 @@ import { CCPA } from "../../Atoms/Frameworks/CCPA";
 import { GDPR } from "../../Atoms/Frameworks/GDPR";
 import { NIS2 } from "../../Atoms/Frameworks/NIS2";
 import { DORA } from "../../Atoms/Frameworks/DORA";
+import { ISO27701 } from "../../Atoms/Frameworks/ISO27701";
+import { ISO42001 } from "../../Atoms/Frameworks/ISO42001";
 
 const availableFrameworks = [
     {
@@ -52,6 +54,20 @@ const availableFrameworks = [
         name: "DORA",
         logo: <DORA className="size-8" />,
         description: "Digital Operational Readiness Assessment",
+    },
+    {
+        id: "ISO/IEC 27701:2025",
+        name: "ISO 27701 (2025)",
+        logo: <ISO27701 className="size-8" />,
+        description:
+            "Information security, cybersecurity and privacy protection",
+    },
+    {
+        id: "ISO/IEC 42001:2023",
+        name: "ISO 42001 (2023)",
+        logo: <ISO42001 className="size-8" />,
+        description:
+            "Information technology, artificial intelligence, management system",
     },
 ];
 

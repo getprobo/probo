@@ -1,4 +1,6 @@
-export function ISO42001() {
+export function ISO42001(props: { className?: string }) {
+    const { className } = props;
+
     return (
         <svg
             version="1.1"
@@ -10,6 +12,7 @@ export function ISO42001() {
             viewBox="0 0 60 60"
             enable-background="new 0 0 60 60"
             xmlSpace="preserve"
+            className={className}
         >
             <path
                 className="fill-txt-primary"
