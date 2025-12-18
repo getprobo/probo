@@ -5,6 +5,10 @@ import { useTranslate } from "@probo/i18n";
 import { ISO27001 } from "../../Atoms/Frameworks/ISO27001";
 import { SOC2 } from "../../Atoms/Frameworks/SOC2";
 import { HIPAA } from "../../Atoms/Frameworks/HIPAA";
+import { CCPA } from "../../Atoms/Frameworks/CCPA";
+import { GDPR } from "../../Atoms/Frameworks/GDPR";
+import { NIS2 } from "../../Atoms/Frameworks/NIS2";
+import { DORA } from "../../Atoms/Frameworks/DORA";
 
 const availableFrameworks = [
     {
@@ -24,6 +28,30 @@ const availableFrameworks = [
         name: "HIPAA",
         logo: <HIPAA className="size-8" />,
         description: "Health Insurance Portability and Accountability Act",
+    },
+    {
+        id: "CCPA",
+        name: "CCPA",
+        logo: <CCPA className="size-8" />,
+        description: "California Consumer Privacy Act",
+    },
+    {
+        id: "NIS2",
+        name: "NIS 2",
+        logo: <NIS2 className="size-8" />,
+        description: "Network and Information Systems Directive 2",
+    },
+    {
+        id: "GDPR",
+        name: "GDPR",
+        logo: <GDPR className="size-8" />,
+        description: "General Data Protection Regulation",
+    },
+    {
+        id: "DORA",
+        name: "DORA",
+        logo: <DORA className="size-8" />,
+        description: "Digital Operational Readiness Assessment",
     },
 ];
 
