@@ -193,12 +193,14 @@ func (IdentityProfile) IsNode()             {}
 func (this IdentityProfile) GetID() gid.GID { return this.ID }
 
 type Invitation struct {
-	ID         gid.GID                   `json:"id"`
-	Email      mail.Addr                 `json:"email"`
-	ExpiresAt  time.Time                 `json:"expiresAt"`
-	AcceptedAt *time.Time                `json:"acceptedAt,omitempty"`
-	CreatedAt  time.Time                 `json:"createdAt"`
-	Status     coredata.InvitationStatus `json:"status"`
+	ID           gid.GID                   `json:"id"`
+	Email        mail.Addr                 `json:"email"`
+	Role         coredata.MembershipRole   `json:"role"`
+	ExpiresAt    time.Time                 `json:"expiresAt"`
+	AcceptedAt   *time.Time                `json:"acceptedAt,omitempty"`
+	CreatedAt    time.Time                 `json:"createdAt"`
+	Status       coredata.InvitationStatus `json:"status"`
+	Organization *Organization             `json:"organization"`
 }
 
 func (Invitation) IsNode()             {}
@@ -220,17 +222,18 @@ type InviteMemberPayload struct {
 }
 
 type Membership struct {
-	ID            gid.GID            `json:"id"`
-	IdentityID    gid.GID            `json:"identityId"`
-	CreatedAt     time.Time          `json:"createdAt"`
-	Profile       *IdentityProfile   `json:"profile"`
-	Identity      *Identity          `json:"identity"`
-	Organization  *Organization      `json:"organization"`
-	Permissions   []*Permission      `json:"permissions"`
-	ProvisionedBy ProvisioningSource `json:"provisionedBy"`
-	Active        bool               `json:"active"`
-	LastSyncedAt  *time.Time         `json:"lastSyncedAt,omitempty"`
-	ActiveSession *Session           `json:"activeSession,omitempty"`
+	ID            gid.GID                 `json:"id"`
+	IdentityID    gid.GID                 `json:"identityId"`
+	CreatedAt     time.Time               `json:"createdAt"`
+	Profile       *IdentityProfile        `json:"profile"`
+	Identity      *Identity               `json:"identity"`
+	Organization  *Organization           `json:"organization"`
+	Role          coredata.MembershipRole `json:"role"`
+	Permissions   []*Permission           `json:"permissions"`
+	ProvisionedBy ProvisioningSource      `json:"provisionedBy"`
+	Active        bool                    `json:"active"`
+	LastSyncedAt  *time.Time              `json:"lastSyncedAt,omitempty"`
+	ActiveSession *Session                `json:"activeSession,omitempty"`
 }
 
 func (Membership) IsNode()             {}

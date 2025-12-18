@@ -47,6 +47,7 @@ type Config struct {
 
 type ResolverRoot interface {
 	Identity() IdentityResolver
+	Invitation() InvitationResolver
 	InvitationConnection() InvitationConnectionResolver
 	Membership() MembershipResolver
 	MembershipConnection() MembershipConnectionResolver
@@ -132,7 +133,7 @@ type ComplexityRoot struct {
 		EmailVerified      func(childComplexity int) int
 		ID                 func(childComplexity int) int
 		Memberships        func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MembershipOrderBy) int
-		PendingInvitations func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
+		PendingInvitations func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.InvitationOrderBy) int
 		PersonalAPIKeys    func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
 		ProfileFor         func(childComplexity int, organizationID gid.GID) int
 		Sessions           func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.SessionOrder) int
@@ -161,12 +162,14 @@ type ComplexityRoot struct {
 	}
 
 	Invitation struct {
-		AcceptedAt func(childComplexity int) int
-		CreatedAt  func(childComplexity int) int
-		Email      func(childComplexity int) int
-		ExpiresAt  func(childComplexity int) int
-		ID         func(childComplexity int) int
-		Status     func(childComplexity int) int
+		AcceptedAt   func(childComplexity int) int
+		CreatedAt    func(childComplexity int) int
+		Email        func(childComplexity int) int
+		ExpiresAt    func(childComplexity int) int
+		ID           func(childComplexity int) int
+		Organization func(childComplexity int) int
+		Role         func(childComplexity int) int
+		Status       func(childComplexity int) int
 	}
 
 	InvitationConnection struct {
@@ -196,6 +199,7 @@ type ComplexityRoot struct {
 		Permissions   func(childComplexity int) int
 		Profile       func(childComplexity int) int
 		ProvisionedBy func(childComplexity int) int
+		Role          func(childComplexity int) int
 	}
 
 	MembershipConnection struct {
@@ -429,9 +433,12 @@ type ComplexityRoot struct {
 
 type IdentityResolver interface {
 	Memberships(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MembershipOrderBy) (*types.MembershipConnection, error)
-	PendingInvitations(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.InvitationConnection, error)
+	PendingInvitations(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.InvitationOrderBy) (*types.InvitationConnection, error)
 	Sessions(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.SessionOrder) (*types.SessionConnection, error)
 	PersonalAPIKeys(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.PersonalAPIKeyConnection, error)
+}
+type InvitationResolver interface {
+	Organization(ctx context.Context, obj *types.Invitation) (*types.Organization, error)
 }
 type InvitationConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.InvitationConnection) (int, error)
@@ -693,7 +700,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Identity.PendingInvitations(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey)), true
+		return e.complexity.Identity.PendingInvitations(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.InvitationOrderBy)), true
 	case "Identity.personalAPIKeys":
 		if e.complexity.Identity.PersonalAPIKeys == nil {
 			break
@@ -873,6 +880,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Invitation.ID(childComplexity), true
+	case "Invitation.organization":
+		if e.complexity.Invitation.Organization == nil {
+			break
+		}
+
+		return e.complexity.Invitation.Organization(childComplexity), true
+	case "Invitation.role":
+		if e.complexity.Invitation.Role == nil {
+			break
+		}
+
+		return e.complexity.Invitation.Role(childComplexity), true
 	case "Invitation.status":
 		if e.complexity.Invitation.Status == nil {
 			break
@@ -985,6 +1004,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Membership.ProvisionedBy(childComplexity), true
+	case "Membership.role":
+		if e.complexity.Membership.Role == nil {
+			break
+		}
+
+		return e.complexity.Membership.Role(childComplexity), true
 
 	case "MembershipConnection.edges":
 		if e.complexity.MembershipConnection.Edges == nil {
@@ -1937,6 +1962,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputDeleteOrganizationInput,
 		ec.unmarshalInputDeleteSAMLConfigurationInput,
 		ec.unmarshalInputForgotPasswordInput,
+		ec.unmarshalInputInvitationOrder,
 		ec.unmarshalInputInviteMemberInput,
 		ec.unmarshalInputMembershipOrder,
 		ec.unmarshalInputRemoveIPAllowlistEntryInput,
@@ -2199,6 +2225,7 @@ type Identity implements Node {
     after: CursorKey
     last: Int
     before: CursorKey
+    orderBy: InvitationOrder
   ): InvitationConnection! @goField(forceResolver: true) @isViewer
 
   sessions(
@@ -2278,6 +2305,17 @@ type Organization implements Node {
   availableApplications: [Application!]!
 }
 
+enum MembershipRole
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.MembershipRole") {
+  OWNER @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleOwner")
+  ADMIN @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleAdmin")
+  EMPLOYEE
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleEmployee")
+  VIEWER @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleViewer")
+  AUDITOR
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleAuditor")
+}
+
 type Membership implements Node {
   id: ID!
   identityId: ID!
@@ -2285,6 +2323,7 @@ type Membership implements Node {
   profile: IdentityProfile!
   identity: Identity! @goField(forceResolver: true)
   organization: Organization! @goField(forceResolver: true)
+  role: MembershipRole!
   permissions: [Permission!]!
   provisionedBy: ProvisioningSource!
   active: Boolean!
@@ -2296,10 +2335,12 @@ type Membership implements Node {
 type Invitation implements Node {
   id: ID!
   email: EmailAddr!
+  role: MembershipRole!
   expiresAt: Datetime!
   acceptedAt: Datetime
   createdAt: Datetime!
   status: InvitationStatus!
+  organization: Organization! @goField(forceResolver: true)
 }
 
 type Session implements Node {
@@ -2458,14 +2499,6 @@ enum ProvisioningSource {
 
 enum MembershipOrderField
   @goModel(model: "go.probo.inc/probo/pkg/coredata.MembershipOrderField") {
-  FULL_NAME
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.MembershipOrderFieldFullName"
-    )
-  EMAIL_ADDRESS
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.MembershipOrderFieldEmailAddress"
-    )
   ROLE
     @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipOrderFieldRole")
   CREATED_AT
@@ -2494,6 +2527,34 @@ type MembershipConnection
 type MembershipEdge {
   node: Membership!
   cursor: CursorKey!
+}
+
+enum InvitationOrderField
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.InvitationOrderField") {
+  EMAIL
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.InvitationOrderFieldEmail")
+  ROLE
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.InvitationOrderFieldRole")
+  CREATED_AT
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.InvitationOrderFieldCreatedAt"
+    )
+  EXPIRES_AT
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.InvitationOrderFieldExpiresAt"
+    )
+  ACCEPTED_AT
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.InvitationOrderFieldAcceptedAt"
+    )
+}
+
+input InvitationOrder
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/connect/v1/types.InvitationOrderBy"
+  ) {
+  direction: OrderDirection!
+  field: InvitationOrderField!
 }
 
 type InvitationConnection
@@ -2908,6 +2969,11 @@ func (ec *executionContext) field_Identity_pendingInvitations_args(ctx context.C
 		return nil, err
 	}
 	args["before"] = arg3
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "orderBy", ec.unmarshalOInvitationOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐInvitationOrderBy)
+	if err != nil {
+		return nil, err
+	}
+	args["orderBy"] = arg4
 	return args, nil
 }
 
@@ -4241,7 +4307,7 @@ func (ec *executionContext) _Identity_pendingInvitations(ctx context.Context, fi
 		ec.fieldContext_Identity_pendingInvitations,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Identity().PendingInvitations(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey))
+			return ec.resolvers.Identity().PendingInvitations(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.InvitationOrderBy))
 		},
 		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
 			directive0 := next
@@ -5178,6 +5244,35 @@ func (ec *executionContext) fieldContext_Invitation_email(_ context.Context, fie
 	return fc, nil
 }
 
+func (ec *executionContext) _Invitation_role(ctx context.Context, field graphql.CollectedField, obj *types.Invitation) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Invitation_role,
+		func(ctx context.Context) (any, error) {
+			return obj.Role, nil
+		},
+		nil,
+		ec.marshalNMembershipRole2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipRole,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Invitation_role(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Invitation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type MembershipRole does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Invitation_expiresAt(ctx context.Context, field graphql.CollectedField, obj *types.Invitation) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -5289,6 +5384,57 @@ func (ec *executionContext) fieldContext_Invitation_status(_ context.Context, fi
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type InvitationStatus does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Invitation_organization(ctx context.Context, field graphql.CollectedField, obj *types.Invitation) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Invitation_organization,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.Invitation().Organization(ctx, obj)
+		},
+		nil,
+		ec.marshalNOrganization2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐOrganization,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Invitation_organization(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Invitation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Organization_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Organization_name(ctx, field)
+			case "logoUrl":
+				return ec.fieldContext_Organization_logoUrl(ctx, field)
+			case "horizontalLogoUrl":
+				return ec.fieldContext_Organization_horizontalLogoUrl(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Organization_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Organization_updatedAt(ctx, field)
+			case "members":
+				return ec.fieldContext_Organization_members(ctx, field)
+			case "invitations":
+				return ec.fieldContext_Organization_invitations(ctx, field)
+			case "samlConfigurations":
+				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
+			case "availableApplications":
+				return ec.fieldContext_Organization_availableApplications(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
 		},
 	}
 	return fc, nil
@@ -5425,6 +5571,8 @@ func (ec *executionContext) fieldContext_InvitationEdge_node(_ context.Context, 
 				return ec.fieldContext_Invitation_id(ctx, field)
 			case "email":
 				return ec.fieldContext_Invitation_email(ctx, field)
+			case "role":
+				return ec.fieldContext_Invitation_role(ctx, field)
 			case "expiresAt":
 				return ec.fieldContext_Invitation_expiresAt(ctx, field)
 			case "acceptedAt":
@@ -5433,6 +5581,8 @@ func (ec *executionContext) fieldContext_InvitationEdge_node(_ context.Context, 
 				return ec.fieldContext_Invitation_createdAt(ctx, field)
 			case "status":
 				return ec.fieldContext_Invitation_status(ctx, field)
+			case "organization":
+				return ec.fieldContext_Invitation_organization(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Invitation", field.Name)
 		},
@@ -5755,6 +5905,35 @@ func (ec *executionContext) fieldContext_Membership_organization(_ context.Conte
 				return ec.fieldContext_Organization_availableApplications(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Membership_role(ctx context.Context, field graphql.CollectedField, obj *types.Membership) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Membership_role,
+		func(ctx context.Context) (any, error) {
+			return obj.Role, nil
+		},
+		nil,
+		ec.marshalNMembershipRole2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipRole,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Membership_role(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Membership",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type MembershipRole does not have child fields")
 		},
 	}
 	return fc, nil
@@ -6087,6 +6266,8 @@ func (ec *executionContext) fieldContext_MembershipEdge_node(_ context.Context, 
 				return ec.fieldContext_Membership_identity(ctx, field)
 			case "organization":
 				return ec.fieldContext_Membership_organization(ctx, field)
+			case "role":
+				return ec.fieldContext_Membership_role(ctx, field)
 			case "permissions":
 				return ec.fieldContext_Membership_permissions(ctx, field)
 			case "provisionedBy":
@@ -13046,6 +13227,40 @@ func (ec *executionContext) unmarshalInputForgotPasswordInput(ctx context.Contex
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputInvitationOrder(ctx context.Context, obj any) (types.InvitationOrderBy, error) {
+	var it types.InvitationOrderBy
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"direction", "field"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "direction":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("direction"))
+			data, err := ec.unmarshalNOrderDirection2goᚗproboᚗincᚋproboᚋpkgᚋpageᚐOrderDirection(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Direction = data
+		case "field":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
+			data, err := ec.unmarshalNInvitationOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐInvitationOrderField(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Field = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputInviteMemberInput(ctx context.Context, obj any) (types.InviteMemberInput, error) {
 	var it types.InviteMemberInput
 	asMap := map[string]any{}
@@ -14750,30 +14965,71 @@ func (ec *executionContext) _Invitation(ctx context.Context, sel ast.SelectionSe
 		case "id":
 			out.Values[i] = ec._Invitation_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "email":
 			out.Values[i] = ec._Invitation_email(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "role":
+			out.Values[i] = ec._Invitation_role(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "expiresAt":
 			out.Values[i] = ec._Invitation_expiresAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "acceptedAt":
 			out.Values[i] = ec._Invitation_acceptedAt(ctx, field, obj)
 		case "createdAt":
 			out.Values[i] = ec._Invitation_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "status":
 			out.Values[i] = ec._Invitation_status(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "organization":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Invitation_organization(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -15063,6 +15319,11 @@ func (ec *executionContext) _Membership(ctx context.Context, sel ast.SelectionSe
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "role":
+			out.Values[i] = ec._Membership_role(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "permissions":
 			out.Values[i] = ec._Membership_permissions(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -18209,6 +18470,40 @@ func (ec *executionContext) marshalNInvitationEdge2ᚖgoᚗproboᚗincᚋprobo�
 	return ec._InvitationEdge(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNInvitationOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐInvitationOrderField(ctx context.Context, v any) (coredata.InvitationOrderField, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNInvitationOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐInvitationOrderField[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNInvitationOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐInvitationOrderField(ctx context.Context, sel ast.SelectionSet, v coredata.InvitationOrderField) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNInvitationOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐInvitationOrderField[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNInvitationOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐInvitationOrderField = map[string]coredata.InvitationOrderField{
+		"EMAIL":       coredata.InvitationOrderFieldEmail,
+		"ROLE":        coredata.InvitationOrderFieldRole,
+		"CREATED_AT":  coredata.InvitationOrderFieldCreatedAt,
+		"EXPIRES_AT":  coredata.InvitationOrderFieldExpiresAt,
+		"ACCEPTED_AT": coredata.InvitationOrderFieldAcceptedAt,
+	}
+	marshalNInvitationOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐInvitationOrderField = map[coredata.InvitationOrderField]string{
+		coredata.InvitationOrderFieldEmail:      "EMAIL",
+		coredata.InvitationOrderFieldRole:       "ROLE",
+		coredata.InvitationOrderFieldCreatedAt:  "CREATED_AT",
+		coredata.InvitationOrderFieldExpiresAt:  "EXPIRES_AT",
+		coredata.InvitationOrderFieldAcceptedAt: "ACCEPTED_AT",
+	}
+)
+
 func (ec *executionContext) unmarshalNInvitationStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐInvitationStatus(ctx context.Context, v any) (coredata.InvitationStatus, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := unmarshalNInvitationStatus2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐInvitationStatus[tmp]
@@ -18355,16 +18650,46 @@ func (ec *executionContext) marshalNMembershipOrderField2goᚗproboᚗincᚋprob
 
 var (
 	unmarshalNMembershipOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipOrderField = map[string]coredata.MembershipOrderField{
-		"FULL_NAME":     coredata.MembershipOrderFieldFullName,
-		"EMAIL_ADDRESS": coredata.MembershipOrderFieldEmailAddress,
-		"ROLE":          coredata.MembershipOrderFieldRole,
-		"CREATED_AT":    coredata.MembershipOrderFieldCreatedAt,
+		"ROLE":       coredata.MembershipOrderFieldRole,
+		"CREATED_AT": coredata.MembershipOrderFieldCreatedAt,
 	}
 	marshalNMembershipOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipOrderField = map[coredata.MembershipOrderField]string{
-		coredata.MembershipOrderFieldFullName:     "FULL_NAME",
-		coredata.MembershipOrderFieldEmailAddress: "EMAIL_ADDRESS",
-		coredata.MembershipOrderFieldRole:         "ROLE",
-		coredata.MembershipOrderFieldCreatedAt:    "CREATED_AT",
+		coredata.MembershipOrderFieldRole:      "ROLE",
+		coredata.MembershipOrderFieldCreatedAt: "CREATED_AT",
+	}
+)
+
+func (ec *executionContext) unmarshalNMembershipRole2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipRole(ctx context.Context, v any) (coredata.MembershipRole, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNMembershipRole2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipRole[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNMembershipRole2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipRole(ctx context.Context, sel ast.SelectionSet, v coredata.MembershipRole) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNMembershipRole2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipRole[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNMembershipRole2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipRole = map[string]coredata.MembershipRole{
+		"OWNER":    coredata.MembershipRoleOwner,
+		"ADMIN":    coredata.MembershipRoleAdmin,
+		"EMPLOYEE": coredata.MembershipRoleEmployee,
+		"VIEWER":   coredata.MembershipRoleViewer,
+		"AUDITOR":  coredata.MembershipRoleAuditor,
+	}
+	marshalNMembershipRole2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipRole = map[coredata.MembershipRole]string{
+		coredata.MembershipRoleOwner:    "OWNER",
+		coredata.MembershipRoleAdmin:    "ADMIN",
+		coredata.MembershipRoleEmployee: "EMPLOYEE",
+		coredata.MembershipRoleViewer:   "VIEWER",
+		coredata.MembershipRoleAuditor:  "AUDITOR",
 	}
 )
 
@@ -19622,6 +19947,14 @@ func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.Sele
 	_ = ctx
 	res := graphql.MarshalInt(*v)
 	return res
+}
+
+func (ec *executionContext) unmarshalOInvitationOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐInvitationOrderBy(ctx context.Context, v any) (*types.InvitationOrderBy, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputInvitationOrder(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalOInvitationStatus2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐInvitationStatus(ctx context.Context, v any) (*coredata.InvitationStatus, error) {
