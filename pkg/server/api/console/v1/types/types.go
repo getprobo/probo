@@ -1621,6 +1621,10 @@ type ProcessingActivityDPIAEdge struct {
 	Node   *ProcessingActivityDpia `json:"node"`
 }
 
+type ProcessingActivityDPIAFilter struct {
+	SnapshotID *gid.GID `json:"snapshotId,omitempty"`
+}
+
 type ProcessingActivityEdge struct {
 	Cursor page.CursorKey      `json:"cursor"`
 	Node   *ProcessingActivity `json:"node"`
@@ -1649,6 +1653,10 @@ func (this ProcessingActivityTia) GetID() gid.GID { return this.ID }
 type ProcessingActivityTIAEdge struct {
 	Cursor page.CursorKey         `json:"cursor"`
 	Node   *ProcessingActivityTia `json:"node"`
+}
+
+type ProcessingActivityTIAFilter struct {
+	SnapshotID *gid.GID `json:"snapshotId,omitempty"`
 }
 
 type PublishDocumentVersionInput struct {

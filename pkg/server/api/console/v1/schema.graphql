@@ -1517,6 +1517,14 @@ input ProcessingActivityFilter {
   snapshotId: ID
 }
 
+input ProcessingActivityDPIAFilter {
+  snapshotId: ID
+}
+
+input ProcessingActivityTIAFilter {
+  snapshotId: ID
+}
+
 input AssetFilter {
   snapshotId: ID
 }
@@ -1734,6 +1742,7 @@ type Organization implements Node {
     last: Int
     before: CursorKey
     orderBy: ProcessingActivityDPIAOrder
+    filter: ProcessingActivityDPIAFilter = { snapshotId: null }
   ): ProcessingActivityDPIAConnection! @goField(forceResolver: true)
 
   transferImpactAssessments(
@@ -1742,6 +1751,7 @@ type Organization implements Node {
     last: Int
     before: CursorKey
     orderBy: ProcessingActivityTIAOrder
+    filter: ProcessingActivityTIAFilter = { snapshotId: null }
   ): ProcessingActivityTIAConnection! @goField(forceResolver: true)
 
   snapshots(

@@ -38,6 +38,8 @@ func (e ErrProcessingActivityTIANotFound) Error() string {
 type (
 	ProcessingActivityTIA struct {
 		ID                    gid.GID   `db:"id"`
+		SnapshotID            *gid.GID  `db:"snapshot_id"`
+		SourceID              *gid.GID  `db:"source_id"`
 		OrganizationID        gid.GID   `db:"organization_id"`
 		ProcessingActivityID  gid.GID   `db:"processing_activity_id"`
 		DataSubjects          *string   `db:"data_subjects"`
@@ -66,6 +68,7 @@ func (tias *ProcessingActivityTIAs) CountByOrganizationID(
 	conn pg.Conn,
 	scope Scoper,
 	organizationID gid.GID,
+	filter *ProcessingActivityTIAFilter,
 ) (int, error) {
 	q := `
 SELECT
@@ -75,12 +78,14 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
+	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
 
@@ -99,10 +104,13 @@ func (tias *ProcessingActivityTIAs) LoadByOrganizationID(
 	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[ProcessingActivityTIAOrderField],
+	filter *ProcessingActivityTIAFilter,
 ) error {
 	q := `
 SELECT
 	id,
+	snapshot_id,
+	source_id,
 	organization_id,
 	processing_activity_id,
 	data_subjects,
@@ -118,12 +126,14 @@ WHERE
 	%s
 	AND organization_id = @organization_id
 	AND %s
+	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -150,6 +160,8 @@ func (tia *ProcessingActivityTIA) LoadByID(
 	q := `
 SELECT
 	id,
+	snapshot_id,
+	source_id,
 	organization_id,
 	processing_activity_id,
 	data_subjects,
@@ -199,6 +211,8 @@ func (tia *ProcessingActivityTIA) LoadByProcessingActivityID(
 	q := `
 SELECT
 	id,
+	snapshot_id,
+	source_id,
 	organization_id,
 	processing_activity_id,
 	data_subjects,
@@ -353,6 +367,64 @@ WHERE
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot delete processing activity tia: %w", err)
+	}
+
+	return nil
+}
+
+func (tias ProcessingActivityTIAs) InsertProcessingActivitySnapshots(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	organizationID gid.GID,
+	snapshotID gid.GID,
+) error {
+	query := `
+INSERT INTO processing_activity_transfer_impact_assessments (
+	id,
+	tenant_id,
+	snapshot_id,
+	source_id,
+	organization_id,
+	processing_activity_id,
+	data_subjects,
+	legal_mechanism,
+	transfer,
+	local_law_risk,
+	supplementary_measures,
+	created_at,
+	updated_at
+)
+SELECT
+	generate_gid(decode_base64_unpadded(@tenant_id), @tia_entity_type),
+	@tenant_id,
+	@snapshot_id,
+	tia.id,
+	tia.organization_id,
+	pa_snapshot.id,
+	tia.data_subjects,
+	tia.legal_mechanism,
+	tia.transfer,
+	tia.local_law_risk,
+	tia.supplementary_measures,
+	tia.created_at,
+	tia.updated_at
+FROM processing_activity_transfer_impact_assessments tia
+INNER JOIN processing_activities pa_source ON tia.processing_activity_id = pa_source.id AND pa_source.snapshot_id IS NULL
+INNER JOIN processing_activities pa_snapshot ON pa_source.id = pa_snapshot.source_id AND pa_snapshot.snapshot_id = @snapshot_id
+WHERE tia.tenant_id = @tenant_id AND tia.organization_id = @organization_id AND tia.snapshot_id IS NULL
+	`
+
+	args := pgx.StrictNamedArgs{
+		"tenant_id":       scope.GetTenantID(),
+		"snapshot_id":     snapshotID,
+		"organization_id": organizationID,
+		"tia_entity_type": ProcessingActivityTIAEntityType,
+	}
+
+	_, err := conn.Exec(ctx, query, args)
+	if err != nil {
+		return fmt.Errorf("cannot insert processing activity tia snapshots: %w", err)
 	}
 
 	return nil

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<eaa19415d42ca227134bd17febaa0a89>>
+ * @generated SignedSource<<50ed487333de3127b16c6bd5f1c051b1>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -66,6 +66,11 @@ return {
       "defaultValue": 10,
       "kind": "LocalArgument",
       "name": "first"
+    },
+    {
+      "defaultValue": null,
+      "kind": "LocalArgument",
+      "name": "snapshotId"
     }
   ],
   "kind": "Fragment",
@@ -102,7 +107,19 @@ return {
     (v1/*: any*/),
     {
       "alias": "dataProtectionImpactAssessments",
-      "args": null,
+      "args": [
+        {
+          "fields": [
+            {
+              "kind": "Variable",
+              "name": "snapshotId",
+              "variableName": "snapshotId"
+            }
+          ],
+          "kind": "ObjectValue",
+          "name": "filter"
+        }
+      ],
       "concreteType": "ProcessingActivityDPIAConnection",
       "kind": "LinkedField",
       "name": "__ProcessingActivitiesPage_dataProtectionImpactAssessments_connection",
@@ -252,6 +269,6 @@ return {
 };
 })();
 
-(node as any).hash = "e49266b9c7b8a8b00dc43813ce499f67";
+(node as any).hash = "67339e0fd7610409cba00791361c51a2";
 
 export default node;

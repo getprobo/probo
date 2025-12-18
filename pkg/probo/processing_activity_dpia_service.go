@@ -128,13 +128,14 @@ func (s ProcessingActivityDPIAService) ListForOrganizationID(
 	ctx context.Context,
 	organizationID gid.GID,
 	cursor *page.Cursor[coredata.ProcessingActivityDPIAOrderField],
+	filter *coredata.ProcessingActivityDPIAFilter,
 ) (*page.Page[*coredata.ProcessingActivityDPIA, coredata.ProcessingActivityDPIAOrderField], error) {
 	var dpias coredata.ProcessingActivityDPIAs
 
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			err := dpias.LoadByOrganizationID(ctx, conn, s.svc.scope, organizationID, cursor)
+			err := dpias.LoadByOrganizationID(ctx, conn, s.svc.scope, organizationID, cursor, filter)
 			if err != nil {
 				return fmt.Errorf("cannot load processing activity dpias: %w", err)
 			}
@@ -153,6 +154,7 @@ func (s ProcessingActivityDPIAService) ListForOrganizationID(
 func (s ProcessingActivityDPIAService) CountForOrganizationID(
 	ctx context.Context,
 	organizationID gid.GID,
+	filter *coredata.ProcessingActivityDPIAFilter,
 ) (int, error) {
 	var count int
 
@@ -160,7 +162,7 @@ func (s ProcessingActivityDPIAService) CountForOrganizationID(
 		ctx,
 		func(conn pg.Conn) (err error) {
 			dpias := coredata.ProcessingActivityDPIAs{}
-			count, err = dpias.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID)
+			count, err = dpias.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID, filter)
 			return err
 		},
 	)

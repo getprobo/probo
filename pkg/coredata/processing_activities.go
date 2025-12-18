@@ -427,7 +427,7 @@ WHERE
 }
 
 func (pas ProcessingActivities) Snapshot(ctx context.Context, conn pg.Conn, scope Scoper, organizationID, snapshotID gid.GID) error {
-	snapshotters := []ProcessingActivitySnapshotter{ProcessingActivities{}, Vendors{}, ProcessingActivityVendors{}}
+	snapshotters := []ProcessingActivitySnapshotter{ProcessingActivities{}, Vendors{}, ProcessingActivityVendors{}, ProcessingActivityDPIAs{}, ProcessingActivityTIAs{}}
 
 	for _, snapshotter := range snapshotters {
 		if err := snapshotter.InsertProcessingActivitySnapshots(ctx, conn, scope, organizationID, snapshotID); err != nil {

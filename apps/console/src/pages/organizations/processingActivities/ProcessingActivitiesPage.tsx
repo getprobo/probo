@@ -102,13 +102,15 @@ const dpiaListPageFragment = graphql`
   @argumentDefinitions(
     first: { type: "Int", defaultValue: 10 }
     after: { type: "CursorKey" }
+    snapshotId: { type: "ID", defaultValue: null }
   ) {
     id
     dataProtectionImpactAssessments(
       first: $first
       after: $after
+      filter: { snapshotId: $snapshotId }
     )
-      @connection(key: "ProcessingActivitiesPage_dataProtectionImpactAssessments") {
+      @connection(key: "ProcessingActivitiesPage_dataProtectionImpactAssessments", filters: ["filter"]) {
       __id
       totalCount
       edges {
@@ -139,13 +141,15 @@ const tiaListPageFragment = graphql`
   @argumentDefinitions(
     first: { type: "Int", defaultValue: 10 }
     after: { type: "CursorKey" }
+    snapshotId: { type: "ID", defaultValue: null }
   ) {
     id
     transferImpactAssessments(
       first: $first
       after: $after
+      filter: { snapshotId: $snapshotId }
     )
-      @connection(key: "ProcessingActivitiesPage_transferImpactAssessments") {
+      @connection(key: "ProcessingActivitiesPage_transferImpactAssessments", filters: ["filter"]) {
       __id
       totalCount
       edges {

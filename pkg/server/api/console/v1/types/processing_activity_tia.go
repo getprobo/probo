@@ -30,6 +30,7 @@ type (
 
 		Resolver any
 		ParentID gid.GID
+		Filter   *coredata.ProcessingActivityTIAFilter
 	}
 )
 
@@ -37,6 +38,7 @@ func NewProcessingActivityTIAConnection(
 	p *page.Page[*coredata.ProcessingActivityTIA, coredata.ProcessingActivityTIAOrderField],
 	parentType any,
 	parentID gid.GID,
+	filter *coredata.ProcessingActivityTIAFilter,
 ) *ProcessingActivityTIAConnection {
 	edges := make([]*ProcessingActivityTIAEdge, len(p.Data))
 	for i, tia := range p.Data {
@@ -49,6 +51,7 @@ func NewProcessingActivityTIAConnection(
 
 		Resolver: parentType,
 		ParentID: parentID,
+		Filter:   filter,
 	}
 }
 

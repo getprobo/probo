@@ -128,13 +128,14 @@ func (s ProcessingActivityTIAService) ListForOrganizationID(
 	ctx context.Context,
 	organizationID gid.GID,
 	cursor *page.Cursor[coredata.ProcessingActivityTIAOrderField],
+	filter *coredata.ProcessingActivityTIAFilter,
 ) (*page.Page[*coredata.ProcessingActivityTIA, coredata.ProcessingActivityTIAOrderField], error) {
 	var tias coredata.ProcessingActivityTIAs
 
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			err := tias.LoadByOrganizationID(ctx, conn, s.svc.scope, organizationID, cursor)
+			err := tias.LoadByOrganizationID(ctx, conn, s.svc.scope, organizationID, cursor, filter)
 			if err != nil {
 				return fmt.Errorf("cannot load processing activity tias: %w", err)
 			}
@@ -153,6 +154,7 @@ func (s ProcessingActivityTIAService) ListForOrganizationID(
 func (s ProcessingActivityTIAService) CountForOrganizationID(
 	ctx context.Context,
 	organizationID gid.GID,
+	filter *coredata.ProcessingActivityTIAFilter,
 ) (int, error) {
 	var count int
 
@@ -160,7 +162,7 @@ func (s ProcessingActivityTIAService) CountForOrganizationID(
 		ctx,
 		func(conn pg.Conn) (err error) {
 			tias := coredata.ProcessingActivityTIAs{}
-			count, err = tias.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID)
+			count, err = tias.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID, filter)
 			return err
 		},
 	)

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<7f0d0a852bdb0ca1fdd8a49252654563>>
+ * @generated SignedSource<<4674be4782e5b88c71dab59ab04105df>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -65,6 +65,11 @@ return {
       "defaultValue": 10,
       "kind": "LocalArgument",
       "name": "first"
+    },
+    {
+      "defaultValue": null,
+      "kind": "LocalArgument",
+      "name": "snapshotId"
     }
   ],
   "kind": "Fragment",
@@ -101,7 +106,19 @@ return {
     (v1/*: any*/),
     {
       "alias": "transferImpactAssessments",
-      "args": null,
+      "args": [
+        {
+          "fields": [
+            {
+              "kind": "Variable",
+              "name": "snapshotId",
+              "variableName": "snapshotId"
+            }
+          ],
+          "kind": "ObjectValue",
+          "name": "filter"
+        }
+      ],
       "concreteType": "ProcessingActivityTIAConnection",
       "kind": "LinkedField",
       "name": "__ProcessingActivitiesPage_transferImpactAssessments_connection",
@@ -251,6 +268,6 @@ return {
 };
 })();
 
-(node as any).hash = "0262ad5df883e750870f63e6d18d2c93";
+(node as any).hash = "2c6575fe24698cc6b14d9d7a88cf434b";
 
 export default node;

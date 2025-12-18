@@ -1134,7 +1134,7 @@ type ComplexityRoot struct {
 		CreatedAt                       func(childComplexity int) int
 		CustomDomain                    func(childComplexity int) int
 		Data                            func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DatumOrderBy, filter *types.DatumFilter) int
-		DataProtectionImpactAssessments func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityDPIAOrderBy) int
+		DataProtectionImpactAssessments func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityDPIAOrderBy, filter *types.ProcessingActivityDPIAFilter) int
 		Description                     func(childComplexity int) int
 		Documents                       func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy, filter *types.DocumentFilter) int
 		Email                           func(childComplexity int) int
@@ -1157,7 +1157,7 @@ type ComplexityRoot struct {
 		SlackConnections                func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
 		Snapshots                       func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.SnapshotOrderBy) int
 		Tasks                           func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TaskOrderBy) int
-		TransferImpactAssessments       func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityTIAOrderBy) int
+		TransferImpactAssessments       func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityTIAOrderBy, filter *types.ProcessingActivityTIAFilter) int
 		TrustCenter                     func(childComplexity int) int
 		TrustCenterFiles                func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterFileOrderField]) int
 		UpdatedAt                       func(childComplexity int) int
@@ -2247,8 +2247,8 @@ type OrganizationResolver interface {
 	Obligations(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ObligationOrderBy, filter *types.ObligationFilter) (*types.ObligationConnection, error)
 	ContinualImprovements(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ContinualImprovementOrderBy, filter *types.ContinualImprovementFilter) (*types.ContinualImprovementConnection, error)
 	ProcessingActivities(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityOrderBy, filter *types.ProcessingActivityFilter) (*types.ProcessingActivityConnection, error)
-	DataProtectionImpactAssessments(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityDPIAOrderBy) (*types.ProcessingActivityDPIAConnection, error)
-	TransferImpactAssessments(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityTIAOrderBy) (*types.ProcessingActivityTIAConnection, error)
+	DataProtectionImpactAssessments(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityDPIAOrderBy, filter *types.ProcessingActivityDPIAFilter) (*types.ProcessingActivityDPIAConnection, error)
+	TransferImpactAssessments(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityTIAOrderBy, filter *types.ProcessingActivityTIAFilter) (*types.ProcessingActivityTIAConnection, error)
 	Snapshots(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.SnapshotOrderBy) (*types.SnapshotConnection, error)
 	TrustCenterFiles(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterFileOrderField]) (*types.TrustCenterFileConnection, error)
 	TrustCenter(ctx context.Context, obj *types.Organization) (*types.TrustCenter, error)
@@ -6715,7 +6715,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Organization.DataProtectionImpactAssessments(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.ProcessingActivityDPIAOrderBy)), true
+		return e.complexity.Organization.DataProtectionImpactAssessments(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.ProcessingActivityDPIAOrderBy), args["filter"].(*types.ProcessingActivityDPIAFilter)), true
 	case "Organization.description":
 		if e.complexity.Organization.Description == nil {
 			break
@@ -6928,7 +6928,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Organization.TransferImpactAssessments(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.ProcessingActivityTIAOrderBy)), true
+		return e.complexity.Organization.TransferImpactAssessments(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.ProcessingActivityTIAOrderBy), args["filter"].(*types.ProcessingActivityTIAFilter)), true
 	case "Organization.trustCenter":
 		if e.complexity.Organization.TrustCenter == nil {
 			break
@@ -9883,9 +9883,11 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputOrganizationOrder,
 		ec.unmarshalInputPeopleFilter,
 		ec.unmarshalInputPeopleOrder,
+		ec.unmarshalInputProcessingActivityDPIAFilter,
 		ec.unmarshalInputProcessingActivityDPIAOrder,
 		ec.unmarshalInputProcessingActivityFilter,
 		ec.unmarshalInputProcessingActivityOrder,
+		ec.unmarshalInputProcessingActivityTIAFilter,
 		ec.unmarshalInputProcessingActivityTIAOrder,
 		ec.unmarshalInputPublishDocumentVersionInput,
 		ec.unmarshalInputRemoveMemberInput,
@@ -11564,6 +11566,14 @@ input ProcessingActivityFilter {
   snapshotId: ID
 }
 
+input ProcessingActivityDPIAFilter {
+  snapshotId: ID
+}
+
+input ProcessingActivityTIAFilter {
+  snapshotId: ID
+}
+
 input AssetFilter {
   snapshotId: ID
 }
@@ -11781,6 +11791,7 @@ type Organization implements Node {
     last: Int
     before: CursorKey
     orderBy: ProcessingActivityDPIAOrder
+    filter: ProcessingActivityDPIAFilter = { snapshotId: null }
   ): ProcessingActivityDPIAConnection! @goField(forceResolver: true)
 
   transferImpactAssessments(
@@ -11789,6 +11800,7 @@ type Organization implements Node {
     last: Int
     before: CursorKey
     orderBy: ProcessingActivityTIAOrder
+    filter: ProcessingActivityTIAFilter = { snapshotId: null }
   ): ProcessingActivityTIAConnection! @goField(forceResolver: true)
 
   snapshots(
@@ -17552,6 +17564,11 @@ func (ec *executionContext) field_Organization_dataProtectionImpactAssessments_a
 		return nil, err
 	}
 	args["orderBy"] = arg4
+	arg5, err := graphql.ProcessArgField(ctx, rawArgs, "filter", ec.unmarshalOProcessingActivityDPIAFilter2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityDPIAFilter)
+	if err != nil {
+		return nil, err
+	}
+	args["filter"] = arg5
 	return args, nil
 }
 
@@ -18088,6 +18105,11 @@ func (ec *executionContext) field_Organization_transferImpactAssessments_args(ct
 		return nil, err
 	}
 	args["orderBy"] = arg4
+	arg5, err := graphql.ProcessArgField(ctx, rawArgs, "filter", ec.unmarshalOProcessingActivityTIAFilter2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityTIAFilter)
+	if err != nil {
+		return nil, err
+	}
+	args["filter"] = arg5
 	return args, nil
 }
 
@@ -41067,7 +41089,7 @@ func (ec *executionContext) _Organization_dataProtectionImpactAssessments(ctx co
 		ec.fieldContext_Organization_dataProtectionImpactAssessments,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Organization().DataProtectionImpactAssessments(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.ProcessingActivityDPIAOrderBy))
+			return ec.resolvers.Organization().DataProtectionImpactAssessments(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.ProcessingActivityDPIAOrderBy), fc.Args["filter"].(*types.ProcessingActivityDPIAFilter))
 		},
 		nil,
 		ec.marshalNProcessingActivityDPIAConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityDPIAConnection,
@@ -41116,7 +41138,7 @@ func (ec *executionContext) _Organization_transferImpactAssessments(ctx context.
 		ec.fieldContext_Organization_transferImpactAssessments,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Organization().TransferImpactAssessments(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.ProcessingActivityTIAOrderBy))
+			return ec.resolvers.Organization().TransferImpactAssessments(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.ProcessingActivityTIAOrderBy), fc.Args["filter"].(*types.ProcessingActivityTIAFilter))
 		},
 		nil,
 		ec.marshalNProcessingActivityTIAConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityTIAConnection,
@@ -64622,6 +64644,33 @@ func (ec *executionContext) unmarshalInputPeopleOrder(ctx context.Context, obj a
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputProcessingActivityDPIAFilter(ctx context.Context, obj any) (types.ProcessingActivityDPIAFilter, error) {
+	var it types.ProcessingActivityDPIAFilter
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"snapshotId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "snapshotId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("snapshotId"))
+			data, err := ec.unmarshalOID2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SnapshotID = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputProcessingActivityDPIAOrder(ctx context.Context, obj any) (types.ProcessingActivityDPIAOrderBy, error) {
 	var it types.ProcessingActivityDPIAOrderBy
 	asMap := map[string]any{}
@@ -64711,6 +64760,33 @@ func (ec *executionContext) unmarshalInputProcessingActivityOrder(ctx context.Co
 				return it, err
 			}
 			it.Field = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputProcessingActivityTIAFilter(ctx context.Context, obj any) (types.ProcessingActivityTIAFilter, error) {
+	var it types.ProcessingActivityTIAFilter
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"snapshotId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "snapshotId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("snapshotId"))
+			data, err := ec.unmarshalOID2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SnapshotID = data
 		}
 	}
 
@@ -98053,6 +98129,14 @@ func (ec *executionContext) marshalOProcessingActivityDPIA2ᚖgoᚗproboᚗinc�
 	return ec._ProcessingActivityDPIA(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalOProcessingActivityDPIAFilter2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityDPIAFilter(ctx context.Context, v any) (*types.ProcessingActivityDPIAFilter, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputProcessingActivityDPIAFilter(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalOProcessingActivityDPIAOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityDPIAOrderBy(ctx context.Context, v any) (*types.ProcessingActivityDPIAOrderBy, error) {
 	if v == nil {
 		return nil, nil
@@ -98244,6 +98328,14 @@ func (ec *executionContext) marshalOProcessingActivityTIA2ᚖgoᚗproboᚗincᚋ
 		return graphql.Null
 	}
 	return ec._ProcessingActivityTIA(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOProcessingActivityTIAFilter2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityTIAFilter(ctx context.Context, v any) (*types.ProcessingActivityTIAFilter, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputProcessingActivityTIAFilter(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalOProcessingActivityTIAOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityTIAOrderBy(ctx context.Context, v any) (*types.ProcessingActivityTIAOrderBy, error) {

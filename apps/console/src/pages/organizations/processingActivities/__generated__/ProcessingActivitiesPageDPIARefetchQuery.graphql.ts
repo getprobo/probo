@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<026a23e95a9115022526fa5d6f0cb999>>
+ * @generated SignedSource<<0ecca0ba0b410bf09fe2b0c62d003d0c>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -14,6 +14,7 @@ export type ProcessingActivitiesPageDPIARefetchQuery$variables = {
   after?: any | null | undefined;
   first?: number | null | undefined;
   id: string;
+  snapshotId?: string | null | undefined;
 };
 export type ProcessingActivitiesPageDPIARefetchQuery$data = {
   readonly node: {
@@ -26,73 +27,99 @@ export type ProcessingActivitiesPageDPIARefetchQuery = {
 };
 
 const node: ConcreteRequest = (function(){
-var v0 = [
-  {
-    "defaultValue": null,
-    "kind": "LocalArgument",
-    "name": "after"
-  },
-  {
-    "defaultValue": 10,
-    "kind": "LocalArgument",
-    "name": "first"
-  },
-  {
-    "defaultValue": null,
-    "kind": "LocalArgument",
-    "name": "id"
-  }
-],
-v1 = [
+var v0 = {
+  "defaultValue": null,
+  "kind": "LocalArgument",
+  "name": "after"
+},
+v1 = {
+  "defaultValue": 10,
+  "kind": "LocalArgument",
+  "name": "first"
+},
+v2 = {
+  "defaultValue": null,
+  "kind": "LocalArgument",
+  "name": "id"
+},
+v3 = {
+  "defaultValue": null,
+  "kind": "LocalArgument",
+  "name": "snapshotId"
+},
+v4 = [
   {
     "kind": "Variable",
     "name": "id",
     "variableName": "id"
   }
 ],
-v2 = [
-  {
-    "kind": "Variable",
-    "name": "after",
-    "variableName": "after"
-  },
-  {
-    "kind": "Variable",
-    "name": "first",
-    "variableName": "first"
-  }
-],
-v3 = {
+v5 = {
+  "kind": "Variable",
+  "name": "after",
+  "variableName": "after"
+},
+v6 = {
+  "kind": "Variable",
+  "name": "first",
+  "variableName": "first"
+},
+v7 = {
+  "kind": "Variable",
+  "name": "snapshotId",
+  "variableName": "snapshotId"
+},
+v8 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "__typename",
   "storageKey": null
 },
-v4 = {
+v9 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "id",
   "storageKey": null
-};
+},
+v10 = [
+  (v5/*: any*/),
+  {
+    "fields": [
+      (v7/*: any*/)
+    ],
+    "kind": "ObjectValue",
+    "name": "filter"
+  },
+  (v6/*: any*/)
+];
 return {
   "fragment": {
-    "argumentDefinitions": (v0/*: any*/),
+    "argumentDefinitions": [
+      (v0/*: any*/),
+      (v1/*: any*/),
+      (v2/*: any*/),
+      (v3/*: any*/)
+    ],
     "kind": "Fragment",
     "metadata": null,
     "name": "ProcessingActivitiesPageDPIARefetchQuery",
     "selections": [
       {
         "alias": null,
-        "args": (v1/*: any*/),
+        "args": (v4/*: any*/),
         "concreteType": null,
         "kind": "LinkedField",
         "name": "node",
         "plural": false,
         "selections": [
           {
-            "args": (v2/*: any*/),
+            "args": [
+              (v5/*: any*/),
+              (v6/*: any*/),
+              (v7/*: any*/)
+            ],
             "kind": "FragmentSpread",
             "name": "ProcessingActivitiesPageDPIAFragment"
           }
@@ -105,26 +132,31 @@ return {
   },
   "kind": "Request",
   "operation": {
-    "argumentDefinitions": (v0/*: any*/),
+    "argumentDefinitions": [
+      (v0/*: any*/),
+      (v1/*: any*/),
+      (v3/*: any*/),
+      (v2/*: any*/)
+    ],
     "kind": "Operation",
     "name": "ProcessingActivitiesPageDPIARefetchQuery",
     "selections": [
       {
         "alias": null,
-        "args": (v1/*: any*/),
+        "args": (v4/*: any*/),
         "concreteType": null,
         "kind": "LinkedField",
         "name": "node",
         "plural": false,
         "selections": [
-          (v3/*: any*/),
-          (v4/*: any*/),
+          (v8/*: any*/),
+          (v9/*: any*/),
           {
             "kind": "InlineFragment",
             "selections": [
               {
                 "alias": null,
-                "args": (v2/*: any*/),
+                "args": (v10/*: any*/),
                 "concreteType": "ProcessingActivityDPIAConnection",
                 "kind": "LinkedField",
                 "name": "dataProtectionImpactAssessments",
@@ -153,7 +185,7 @@ return {
                         "name": "node",
                         "plural": false,
                         "selections": [
-                          (v4/*: any*/),
+                          (v9/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -183,7 +215,7 @@ return {
                             "name": "processingActivity",
                             "plural": false,
                             "selections": [
-                              (v4/*: any*/),
+                              (v9/*: any*/),
                               {
                                 "alias": null,
                                 "args": null,
@@ -208,7 +240,7 @@ return {
                             "name": "updatedAt",
                             "storageKey": null
                           },
-                          (v3/*: any*/)
+                          (v8/*: any*/)
                         ],
                         "storageKey": null
                       },
@@ -264,8 +296,10 @@ return {
               },
               {
                 "alias": null,
-                "args": (v2/*: any*/),
-                "filters": null,
+                "args": (v10/*: any*/),
+                "filters": [
+                  "filter"
+                ],
                 "handle": "connection",
                 "key": "ProcessingActivitiesPage_dataProtectionImpactAssessments",
                 "kind": "LinkedHandle",
@@ -281,16 +315,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "8e3896e68907df53052a3418bf646240",
+    "cacheID": "c1f38ecede914f3c444f313e593baac9",
     "id": null,
     "metadata": {},
     "name": "ProcessingActivitiesPageDPIARefetchQuery",
     "operationKind": "query",
-    "text": "query ProcessingActivitiesPageDPIARefetchQuery(\n  $after: CursorKey\n  $first: Int = 10\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...ProcessingActivitiesPageDPIAFragment_2HEEH6\n    id\n  }\n}\n\nfragment ProcessingActivitiesPageDPIAFragment_2HEEH6 on Organization {\n  id\n  dataProtectionImpactAssessments(first: $first, after: $after) {\n    totalCount\n    edges {\n      node {\n        id\n        description\n        potentialRisk\n        residualRisk\n        processingActivity {\n          id\n          name\n        }\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
+    "text": "query ProcessingActivitiesPageDPIARefetchQuery(\n  $after: CursorKey\n  $first: Int = 10\n  $snapshotId: ID = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...ProcessingActivitiesPageDPIAFragment_35e0S5\n    id\n  }\n}\n\nfragment ProcessingActivitiesPageDPIAFragment_35e0S5 on Organization {\n  id\n  dataProtectionImpactAssessments(first: $first, after: $after, filter: {snapshotId: $snapshotId}) {\n    totalCount\n    edges {\n      node {\n        id\n        description\n        potentialRisk\n        residualRisk\n        processingActivity {\n          id\n          name\n        }\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "e49266b9c7b8a8b00dc43813ce499f67";
+(node as any).hash = "67339e0fd7610409cba00791361c51a2";
 
 export default node;

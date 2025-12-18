@@ -38,6 +38,8 @@ func (e ErrProcessingActivityDPIANotFound) Error() string {
 type (
 	ProcessingActivityDPIA struct {
 		ID                          gid.GID                             `db:"id"`
+		SnapshotID                  *gid.GID                            `db:"snapshot_id"`
+		SourceID                    *gid.GID                            `db:"source_id"`
 		OrganizationID              gid.GID                             `db:"organization_id"`
 		ProcessingActivityID        gid.GID                             `db:"processing_activity_id"`
 		Description                 *string                             `db:"description"`
@@ -66,6 +68,7 @@ func (dpias *ProcessingActivityDPIAs) CountByOrganizationID(
 	conn pg.Conn,
 	scope Scoper,
 	organizationID gid.GID,
+	filter *ProcessingActivityDPIAFilter,
 ) (int, error) {
 	q := `
 SELECT
@@ -75,12 +78,14 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
+	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
 
@@ -99,10 +104,13 @@ func (dpias *ProcessingActivityDPIAs) LoadByOrganizationID(
 	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[ProcessingActivityDPIAOrderField],
+	filter *ProcessingActivityDPIAFilter,
 ) error {
 	q := `
 SELECT
 	id,
+	snapshot_id,
+	source_id,
 	organization_id,
 	processing_activity_id,
 	description,
@@ -118,12 +126,14 @@ WHERE
 	%s
 	AND organization_id = @organization_id
 	AND %s
+	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -150,6 +160,8 @@ func (dpia *ProcessingActivityDPIA) LoadByID(
 	q := `
 SELECT
 	id,
+	snapshot_id,
+	source_id,
 	organization_id,
 	processing_activity_id,
 	description,
@@ -199,6 +211,8 @@ func (dpia *ProcessingActivityDPIA) LoadByProcessingActivityID(
 	q := `
 SELECT
 	id,
+	snapshot_id,
+	source_id,
 	organization_id,
 	processing_activity_id,
 	description,
@@ -353,6 +367,64 @@ WHERE
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot delete processing activity dpia: %w", err)
+	}
+
+	return nil
+}
+
+func (dpias ProcessingActivityDPIAs) InsertProcessingActivitySnapshots(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	organizationID gid.GID,
+	snapshotID gid.GID,
+) error {
+	query := `
+INSERT INTO processing_activity_data_protection_impact_assessments (
+	id,
+	tenant_id,
+	snapshot_id,
+	source_id,
+	organization_id,
+	processing_activity_id,
+	description,
+	necessity_and_proportionality,
+	potential_risk,
+	mitigations,
+	residual_risk,
+	created_at,
+	updated_at
+)
+SELECT
+	generate_gid(decode_base64_unpadded(@tenant_id), @dpia_entity_type),
+	@tenant_id,
+	@snapshot_id,
+	dpia.id,
+	dpia.organization_id,
+	pa_snapshot.id,
+	dpia.description,
+	dpia.necessity_and_proportionality,
+	dpia.potential_risk,
+	dpia.mitigations,
+	dpia.residual_risk,
+	dpia.created_at,
+	dpia.updated_at
+FROM processing_activity_data_protection_impact_assessments dpia
+INNER JOIN processing_activities pa_source ON dpia.processing_activity_id = pa_source.id AND pa_source.snapshot_id IS NULL
+INNER JOIN processing_activities pa_snapshot ON pa_source.id = pa_snapshot.source_id AND pa_snapshot.snapshot_id = @snapshot_id
+WHERE dpia.tenant_id = @tenant_id AND dpia.organization_id = @organization_id AND dpia.snapshot_id IS NULL
+	`
+
+	args := pgx.StrictNamedArgs{
+		"tenant_id":        scope.GetTenantID(),
+		"snapshot_id":      snapshotID,
+		"organization_id":  organizationID,
+		"dpia_entity_type": ProcessingActivityDPIAEntityType,
+	}
+
+	_, err := conn.Exec(ctx, query, args)
+	if err != nil {
+		return fmt.Errorf("cannot insert processing activity dpia snapshots: %w", err)
 	}
 
 	return nil

@@ -12,6 +12,8 @@ CREATE TYPE processing_activity_dpia_residual_risk AS ENUM ('LOW', 'MEDIUM', 'HI
 CREATE TABLE processing_activity_data_protection_impact_assessments (
     id TEXT PRIMARY KEY,
     tenant_id TEXT NOT NULL,
+    snapshot_id TEXT REFERENCES snapshots(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    source_id TEXT,
     organization_id TEXT NOT NULL,
     processing_activity_id TEXT NOT NULL,
     description TEXT,
@@ -32,12 +34,17 @@ CREATE TABLE processing_activity_data_protection_impact_assessments (
         FOREIGN KEY (processing_activity_id)
         REFERENCES processing_activities(id)
         ON UPDATE CASCADE
-        ON DELETE CASCADE
+        ON DELETE CASCADE,
+
+    CONSTRAINT processing_activity_dpias_source_id_snapshot_id_key
+        UNIQUE (source_id, snapshot_id)
 );
 
 CREATE TABLE processing_activity_transfer_impact_assessments (
     id TEXT PRIMARY KEY,
     tenant_id TEXT NOT NULL,
+    snapshot_id TEXT REFERENCES snapshots(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    source_id TEXT,
     organization_id TEXT NOT NULL,
     processing_activity_id TEXT NOT NULL,
     data_subjects TEXT,
@@ -58,5 +65,8 @@ CREATE TABLE processing_activity_transfer_impact_assessments (
         FOREIGN KEY (processing_activity_id)
         REFERENCES processing_activities(id)
         ON UPDATE CASCADE
-        ON DELETE CASCADE
+        ON DELETE CASCADE,
+
+    CONSTRAINT processing_activity_tias_source_id_snapshot_id_key
+        UNIQUE (source_id, snapshot_id)
 );

@@ -5531,7 +5531,7 @@ func (r *organizationResolver) ProcessingActivities(ctx context.Context, obj *ty
 }
 
 // DataProtectionImpactAssessments is the resolver for the dataProtectionImpactAssessments field.
-func (r *organizationResolver) DataProtectionImpactAssessments(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityDPIAOrderBy) (*types.ProcessingActivityDPIAConnection, error) {
+func (r *organizationResolver) DataProtectionImpactAssessments(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityDPIAOrderBy, filter *types.ProcessingActivityDPIAFilter) (*types.ProcessingActivityDPIAConnection, error) {
 	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListProcessingActivities)
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
@@ -5550,16 +5550,21 @@ func (r *organizationResolver) DataProtectionImpactAssessments(ctx context.Conte
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := prb.ProcessingActivityDPIAs.ListForOrganizationID(ctx, obj.ID, cursor)
+	dpiaFilter := coredata.NewProcessingActivityDPIAFilter(nil)
+	if filter != nil {
+		dpiaFilter = coredata.NewProcessingActivityDPIAFilter(&filter.SnapshotID)
+	}
+
+	page, err := prb.ProcessingActivityDPIAs.ListForOrganizationID(ctx, obj.ID, cursor, dpiaFilter)
 	if err != nil {
 		panic(fmt.Errorf("cannot list organization data protection impact assessments: %w", err))
 	}
 
-	return types.NewProcessingActivityDPIAConnection(page, r, obj.ID), nil
+	return types.NewProcessingActivityDPIAConnection(page, r, obj.ID, dpiaFilter), nil
 }
 
 // TransferImpactAssessments is the resolver for the transferImpactAssessments field.
-func (r *organizationResolver) TransferImpactAssessments(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityTIAOrderBy) (*types.ProcessingActivityTIAConnection, error) {
+func (r *organizationResolver) TransferImpactAssessments(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityTIAOrderBy, filter *types.ProcessingActivityTIAFilter) (*types.ProcessingActivityTIAConnection, error) {
 	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListProcessingActivities)
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
@@ -5578,12 +5583,17 @@ func (r *organizationResolver) TransferImpactAssessments(ctx context.Context, ob
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := prb.ProcessingActivityTIAs.ListForOrganizationID(ctx, obj.ID, cursor)
+	tiaFilter := coredata.NewProcessingActivityTIAFilter(nil)
+	if filter != nil {
+		tiaFilter = coredata.NewProcessingActivityTIAFilter(&filter.SnapshotID)
+	}
+
+	page, err := prb.ProcessingActivityTIAs.ListForOrganizationID(ctx, obj.ID, cursor, tiaFilter)
 	if err != nil {
 		panic(fmt.Errorf("cannot list organization transfer impact assessments: %w", err))
 	}
 
-	return types.NewProcessingActivityTIAConnection(page, r, obj.ID), nil
+	return types.NewProcessingActivityTIAConnection(page, r, obj.ID, tiaFilter), nil
 }
 
 // Snapshots is the resolver for the snapshots field.
@@ -5896,7 +5906,7 @@ func (r *processingActivityDPIAConnectionResolver) TotalCount(ctx context.Contex
 
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
-		count, err := prb.ProcessingActivityDPIAs.CountForOrganizationID(ctx, obj.ParentID)
+		count, err := prb.ProcessingActivityDPIAs.CountForOrganizationID(ctx, obj.ParentID, obj.Filter)
 		if err != nil {
 			panic(fmt.Errorf("cannot count organization data protection impact assessments: %w", err))
 		}
@@ -5956,7 +5966,7 @@ func (r *processingActivityTIAConnectionResolver) TotalCount(ctx context.Context
 
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
-		count, err := prb.ProcessingActivityTIAs.CountForOrganizationID(ctx, obj.ParentID)
+		count, err := prb.ProcessingActivityTIAs.CountForOrganizationID(ctx, obj.ParentID, obj.Filter)
 		if err != nil {
 			panic(fmt.Errorf("cannot count organization transfer impact assessments: %w", err))
 		}

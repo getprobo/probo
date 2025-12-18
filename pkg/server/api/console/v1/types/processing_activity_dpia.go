@@ -30,6 +30,7 @@ type (
 
 		Resolver any
 		ParentID gid.GID
+		Filter   *coredata.ProcessingActivityDPIAFilter
 	}
 )
 
@@ -37,6 +38,7 @@ func NewProcessingActivityDPIAConnection(
 	p *page.Page[*coredata.ProcessingActivityDPIA, coredata.ProcessingActivityDPIAOrderField],
 	parentType any,
 	parentID gid.GID,
+	filter *coredata.ProcessingActivityDPIAFilter,
 ) *ProcessingActivityDPIAConnection {
 	edges := make([]*ProcessingActivityDPIAEdge, len(p.Data))
 	for i, dpia := range p.Data {
@@ -49,6 +51,7 @@ func NewProcessingActivityDPIAConnection(
 
 		Resolver: parentType,
 		ParentID: parentID,
+		Filter:   filter,
 	}
 }
 

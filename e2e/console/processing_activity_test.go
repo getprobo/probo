@@ -2308,3 +2308,291 @@ func TestProcessingActivity_TIA_RBAC(t *testing.T) {
 		testutil.RequireForbiddenError(t, err, "viewer should not be able to delete TIA")
 	})
 }
+
+func TestProcessingActivity_Snapshot_DPIA_TIA(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	t.Run("snapshot includes DPIA and TIA", func(t *testing.T) {
+		paID := factory.NewProcessingActivity(owner).
+			WithName("Snapshot DPIA TIA Test").
+			Create()
+
+		var dpiaResult struct {
+			CreateProcessingActivityDPIA struct {
+				ProcessingActivityDpia struct {
+					ID string `json:"id"`
+				} `json:"processingActivityDpia"`
+			} `json:"createProcessingActivityDPIA"`
+		}
+		err := owner.Execute(`
+			mutation($input: CreateProcessingActivityDPIAInput!) {
+				createProcessingActivityDPIA(input: $input) {
+					processingActivityDpia { id }
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"processingActivityId": paID,
+				"description":          "DPIA for snapshot",
+				"residualRisk":         "MEDIUM",
+			},
+		}, &dpiaResult)
+		require.NoError(t, err)
+
+		var tiaResult struct {
+			CreateProcessingActivityTIA struct {
+				ProcessingActivityTia struct {
+					ID string `json:"id"`
+				} `json:"processingActivityTia"`
+			} `json:"createProcessingActivityTIA"`
+		}
+		err = owner.Execute(`
+			mutation($input: CreateProcessingActivityTIAInput!) {
+				createProcessingActivityTIA(input: $input) {
+					processingActivityTia { id }
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"processingActivityId": paID,
+				"dataSubjects":         "TIA subjects for snapshot",
+				"transfer":             "EU to US",
+			},
+		}, &tiaResult)
+		require.NoError(t, err)
+
+		var snapshotResult struct {
+			CreateSnapshot struct {
+				SnapshotEdge struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"snapshotEdge"`
+			} `json:"createSnapshot"`
+		}
+		err = owner.Execute(`
+			mutation($input: CreateSnapshotInput!) {
+				createSnapshot(input: $input) {
+					snapshotEdge {
+						node { id }
+					}
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"organizationId": owner.GetOrganizationID().String(),
+				"name":           fmt.Sprintf("PA Snapshot Test %d", time.Now().UnixNano()),
+				"type":           "PROCESSING_ACTIVITIES",
+			},
+		}, &snapshotResult)
+		require.NoError(t, err)
+		snapshotID := snapshotResult.CreateSnapshot.SnapshotEdge.Node.ID
+
+		var queryResult struct {
+			Node struct {
+				ProcessingActivities struct {
+					Edges []struct {
+						Node struct {
+							ID   string `json:"id"`
+							Name string `json:"name"`
+							Dpia *struct {
+								ID           string  `json:"id"`
+								Description  *string `json:"description"`
+								ResidualRisk *string `json:"residualRisk"`
+							} `json:"dpia"`
+							Tia *struct {
+								ID           string  `json:"id"`
+								DataSubjects *string `json:"dataSubjects"`
+								Transfer     *string `json:"transfer"`
+							} `json:"tia"`
+						} `json:"node"`
+					} `json:"edges"`
+				} `json:"processingActivities"`
+			} `json:"node"`
+		}
+		err = owner.Execute(`
+			query($orgId: ID!, $snapshotId: ID!) {
+				node(id: $orgId) {
+					... on Organization {
+						processingActivities(first: 100, filter: { snapshotId: $snapshotId }) {
+							edges {
+								node {
+									id
+									name
+									dpia {
+										id
+										description
+										residualRisk
+									}
+									tia {
+										id
+										dataSubjects
+										transfer
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		`, map[string]any{
+			"orgId":      owner.GetOrganizationID().String(),
+			"snapshotId": snapshotID,
+		}, &queryResult)
+		require.NoError(t, err)
+
+		var foundPA bool
+		for _, edge := range queryResult.Node.ProcessingActivities.Edges {
+			if edge.Node.Name == "Snapshot DPIA TIA Test" {
+				foundPA = true
+				require.NotNil(t, edge.Node.Dpia, "DPIA should be included in snapshot")
+				assert.Equal(t, "DPIA for snapshot", *edge.Node.Dpia.Description)
+				assert.Equal(t, "MEDIUM", *edge.Node.Dpia.ResidualRisk)
+
+				require.NotNil(t, edge.Node.Tia, "TIA should be included in snapshot")
+				assert.Equal(t, "TIA subjects for snapshot", *edge.Node.Tia.DataSubjects)
+				assert.Equal(t, "EU to US", *edge.Node.Tia.Transfer)
+				break
+			}
+		}
+		assert.True(t, foundPA, "Processing activity should be found in snapshot")
+	})
+
+	t.Run("snapshot DPIA and TIA are independent of source", func(t *testing.T) {
+		paID := factory.NewProcessingActivity(owner).
+			WithName("Snapshot Independence Test").
+			Create()
+
+		err := owner.Execute(`
+			mutation($input: CreateProcessingActivityDPIAInput!) {
+				createProcessingActivityDPIA(input: $input) {
+					processingActivityDpia { id }
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"processingActivityId": paID,
+				"description":          "Original DPIA",
+				"residualRisk":         "LOW",
+			},
+		}, nil)
+		require.NoError(t, err)
+
+		var snapshotResult struct {
+			CreateSnapshot struct {
+				SnapshotEdge struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"snapshotEdge"`
+			} `json:"createSnapshot"`
+		}
+		err = owner.Execute(`
+			mutation($input: CreateSnapshotInput!) {
+				createSnapshot(input: $input) {
+					snapshotEdge {
+						node { id }
+					}
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"organizationId": owner.GetOrganizationID().String(),
+				"name":           fmt.Sprintf("PA Independence Test %d", time.Now().UnixNano()),
+				"type":           "PROCESSING_ACTIVITIES",
+			},
+		}, &snapshotResult)
+		require.NoError(t, err)
+		snapshotID := snapshotResult.CreateSnapshot.SnapshotEdge.Node.ID
+
+		var sourceResult struct {
+			Node struct {
+				Dpia *struct {
+					ID           string  `json:"id"`
+					Description  *string `json:"description"`
+					ResidualRisk *string `json:"residualRisk"`
+				} `json:"dpia"`
+			} `json:"node"`
+		}
+		err = owner.Execute(`
+			query($id: ID!) {
+				node(id: $id) {
+					... on ProcessingActivity {
+						dpia {
+							id
+							description
+							residualRisk
+						}
+					}
+				}
+			}
+		`, map[string]any{"id": paID}, &sourceResult)
+		require.NoError(t, err)
+		require.NotNil(t, sourceResult.Node.Dpia)
+		sourceDpiaID := sourceResult.Node.Dpia.ID
+
+		_, err = owner.Do(`
+			mutation($input: UpdateProcessingActivityDPIAInput!) {
+				updateProcessingActivityDPIA(input: $input) {
+					processingActivityDpia { id }
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"id":           sourceDpiaID,
+				"description":  "Updated after snapshot",
+				"residualRisk": "HIGH",
+			},
+		})
+		require.NoError(t, err)
+
+		var snapshotQueryResult struct {
+			Node struct {
+				ProcessingActivities struct {
+					Edges []struct {
+						Node struct {
+							Name string `json:"name"`
+							Dpia *struct {
+								Description  *string `json:"description"`
+								ResidualRisk *string `json:"residualRisk"`
+							} `json:"dpia"`
+						} `json:"node"`
+					} `json:"edges"`
+				} `json:"processingActivities"`
+			} `json:"node"`
+		}
+		err = owner.Execute(`
+			query($orgId: ID!, $snapshotId: ID!) {
+				node(id: $orgId) {
+					... on Organization {
+						processingActivities(first: 100, filter: { snapshotId: $snapshotId }) {
+							edges {
+								node {
+									name
+									dpia {
+										description
+										residualRisk
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		`, map[string]any{
+			"orgId":      owner.GetOrganizationID().String(),
+			"snapshotId": snapshotID,
+		}, &snapshotQueryResult)
+		require.NoError(t, err)
+
+		for _, edge := range snapshotQueryResult.Node.ProcessingActivities.Edges {
+			if edge.Node.Name == "Snapshot Independence Test" {
+				require.NotNil(t, edge.Node.Dpia)
+				assert.Equal(t, "Original DPIA", *edge.Node.Dpia.Description, "Snapshot DPIA should retain original value")
+				assert.Equal(t, "LOW", *edge.Node.Dpia.ResidualRisk, "Snapshot DPIA should retain original value")
+				break
+			}
+		}
+	})
+}

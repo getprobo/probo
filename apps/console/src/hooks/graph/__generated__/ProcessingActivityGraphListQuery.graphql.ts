@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<e0b1ec4a6faf9e19b0d001a9ef481ac7>>
+ * @generated SignedSource<<7fccb352f5aa5b305542aad0fd9fe406>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -65,55 +65,54 @@ v4 = {
   "name": "id",
   "storageKey": null
 },
-v5 = {
-  "kind": "Literal",
-  "name": "first",
-  "value": 10
-},
-v6 = [
+v5 = [
   {
     "fields": (v2/*: any*/),
     "kind": "ObjectValue",
     "name": "filter"
   },
-  (v5/*: any*/)
+  {
+    "kind": "Literal",
+    "name": "first",
+    "value": 10
+  }
 ],
-v7 = {
+v6 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "totalCount",
   "storageKey": null
 },
-v8 = {
+v7 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "name",
   "storageKey": null
 },
-v9 = {
+v8 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "createdAt",
   "storageKey": null
 },
-v10 = {
+v9 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "updatedAt",
   "storageKey": null
 },
-v11 = {
+v10 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "cursor",
   "storageKey": null
 },
-v12 = {
+v11 = {
   "alias": null,
   "args": null,
   "concreteType": "PageInfo",
@@ -138,7 +137,7 @@ v12 = {
   ],
   "storageKey": null
 },
-v13 = {
+v12 = {
   "kind": "ClientExtension",
   "selections": [
     {
@@ -150,10 +149,10 @@ v13 = {
     }
   ]
 },
-v14 = [
-  (v5/*: any*/)
+v13 = [
+  "filter"
 ],
-v15 = {
+v14 = {
   "alias": null,
   "args": null,
   "concreteType": "ProcessingActivity",
@@ -162,7 +161,7 @@ v15 = {
   "plural": false,
   "selections": [
     (v4/*: any*/),
-    (v8/*: any*/)
+    (v7/*: any*/)
   ],
   "storageKey": null
 };
@@ -190,12 +189,12 @@ return {
                 "name": "ProcessingActivitiesPageFragment"
               },
               {
-                "args": null,
+                "args": (v2/*: any*/),
                 "kind": "FragmentSpread",
                 "name": "ProcessingActivitiesPageDPIAFragment"
               },
               {
-                "args": null,
+                "args": (v2/*: any*/),
                 "kind": "FragmentSpread",
                 "name": "ProcessingActivitiesPageTIAFragment"
               }
@@ -231,13 +230,13 @@ return {
             "selections": [
               {
                 "alias": null,
-                "args": (v6/*: any*/),
+                "args": (v5/*: any*/),
                 "concreteType": "ProcessingActivityConnection",
                 "kind": "LinkedField",
                 "name": "processingActivities",
                 "plural": false,
                 "selections": [
-                  (v7/*: any*/),
+                  (v6/*: any*/),
                   {
                     "alias": null,
                     "args": null,
@@ -269,7 +268,7 @@ return {
                             "name": "sourceId",
                             "storageKey": null
                           },
-                          (v8/*: any*/),
+                          (v7/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -312,27 +311,25 @@ return {
                             "name": "internationalTransfers",
                             "storageKey": null
                           },
+                          (v8/*: any*/),
                           (v9/*: any*/),
-                          (v10/*: any*/),
                           (v3/*: any*/)
                         ],
                         "storageKey": null
                       },
-                      (v11/*: any*/)
+                      (v10/*: any*/)
                     ],
                     "storageKey": null
                   },
-                  (v12/*: any*/),
-                  (v13/*: any*/)
+                  (v11/*: any*/),
+                  (v12/*: any*/)
                 ],
                 "storageKey": null
               },
               {
                 "alias": null,
-                "args": (v6/*: any*/),
-                "filters": [
-                  "filter"
-                ],
+                "args": (v5/*: any*/),
+                "filters": (v13/*: any*/),
                 "handle": "connection",
                 "key": "ProcessingActivitiesPage_processingActivities",
                 "kind": "LinkedHandle",
@@ -340,13 +337,13 @@ return {
               },
               {
                 "alias": null,
-                "args": (v14/*: any*/),
+                "args": (v5/*: any*/),
                 "concreteType": "ProcessingActivityDPIAConnection",
                 "kind": "LinkedField",
                 "name": "dataProtectionImpactAssessments",
                 "plural": false,
                 "selections": [
-                  (v7/*: any*/),
+                  (v6/*: any*/),
                   {
                     "alias": null,
                     "args": null,
@@ -385,26 +382,26 @@ return {
                             "name": "residualRisk",
                             "storageKey": null
                           },
-                          (v15/*: any*/),
+                          (v14/*: any*/),
+                          (v8/*: any*/),
                           (v9/*: any*/),
-                          (v10/*: any*/),
                           (v3/*: any*/)
                         ],
                         "storageKey": null
                       },
-                      (v11/*: any*/)
+                      (v10/*: any*/)
                     ],
                     "storageKey": null
                   },
-                  (v12/*: any*/),
-                  (v13/*: any*/)
+                  (v11/*: any*/),
+                  (v12/*: any*/)
                 ],
-                "storageKey": "dataProtectionImpactAssessments(first:10)"
+                "storageKey": null
               },
               {
                 "alias": null,
-                "args": (v14/*: any*/),
-                "filters": null,
+                "args": (v5/*: any*/),
+                "filters": (v13/*: any*/),
                 "handle": "connection",
                 "key": "ProcessingActivitiesPage_dataProtectionImpactAssessments",
                 "kind": "LinkedHandle",
@@ -412,13 +409,13 @@ return {
               },
               {
                 "alias": null,
-                "args": (v14/*: any*/),
+                "args": (v5/*: any*/),
                 "concreteType": "ProcessingActivityTIAConnection",
                 "kind": "LinkedField",
                 "name": "transferImpactAssessments",
                 "plural": false,
                 "selections": [
-                  (v7/*: any*/),
+                  (v6/*: any*/),
                   {
                     "alias": null,
                     "args": null,
@@ -457,26 +454,26 @@ return {
                             "name": "localLawRisk",
                             "storageKey": null
                           },
-                          (v15/*: any*/),
+                          (v14/*: any*/),
+                          (v8/*: any*/),
                           (v9/*: any*/),
-                          (v10/*: any*/),
                           (v3/*: any*/)
                         ],
                         "storageKey": null
                       },
-                      (v11/*: any*/)
+                      (v10/*: any*/)
                     ],
                     "storageKey": null
                   },
-                  (v12/*: any*/),
-                  (v13/*: any*/)
+                  (v11/*: any*/),
+                  (v12/*: any*/)
                 ],
-                "storageKey": "transferImpactAssessments(first:10)"
+                "storageKey": null
               },
               {
                 "alias": null,
-                "args": (v14/*: any*/),
-                "filters": null,
+                "args": (v5/*: any*/),
+                "filters": (v13/*: any*/),
                 "handle": "connection",
                 "key": "ProcessingActivitiesPage_transferImpactAssessments",
                 "kind": "LinkedHandle",
@@ -492,16 +489,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "e518b4737308d2e7528a2f68e26d0e32",
+    "cacheID": "5901fa4af27b039bd50a1c97cdcb54d4",
     "id": null,
     "metadata": {},
     "name": "ProcessingActivityGraphListQuery",
     "operationKind": "query",
-    "text": "query ProcessingActivityGraphListQuery(\n  $organizationId: ID!\n  $snapshotId: ID\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      ...ProcessingActivitiesPageFragment_3iomuz\n      ...ProcessingActivitiesPageDPIAFragment\n      ...ProcessingActivitiesPageTIAFragment\n    }\n    id\n  }\n}\n\nfragment ProcessingActivitiesPageDPIAFragment on Organization {\n  id\n  dataProtectionImpactAssessments(first: 10) {\n    totalCount\n    edges {\n      node {\n        id\n        description\n        potentialRisk\n        residualRisk\n        processingActivity {\n          id\n          name\n        }\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n\nfragment ProcessingActivitiesPageFragment_3iomuz on Organization {\n  id\n  processingActivities(first: 10, filter: {snapshotId: $snapshotId}) {\n    totalCount\n    edges {\n      node {\n        id\n        snapshotId\n        sourceId\n        name\n        purpose\n        dataSubjectCategory\n        personalDataCategory\n        lawfulBasis\n        location\n        internationalTransfers\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n\nfragment ProcessingActivitiesPageTIAFragment on Organization {\n  id\n  transferImpactAssessments(first: 10) {\n    totalCount\n    edges {\n      node {\n        id\n        dataSubjects\n        transfer\n        localLawRisk\n        processingActivity {\n          id\n          name\n        }\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
+    "text": "query ProcessingActivityGraphListQuery(\n  $organizationId: ID!\n  $snapshotId: ID\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      ...ProcessingActivitiesPageFragment_3iomuz\n      ...ProcessingActivitiesPageDPIAFragment_3iomuz\n      ...ProcessingActivitiesPageTIAFragment_3iomuz\n    }\n    id\n  }\n}\n\nfragment ProcessingActivitiesPageDPIAFragment_3iomuz on Organization {\n  id\n  dataProtectionImpactAssessments(first: 10, filter: {snapshotId: $snapshotId}) {\n    totalCount\n    edges {\n      node {\n        id\n        description\n        potentialRisk\n        residualRisk\n        processingActivity {\n          id\n          name\n        }\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n\nfragment ProcessingActivitiesPageFragment_3iomuz on Organization {\n  id\n  processingActivities(first: 10, filter: {snapshotId: $snapshotId}) {\n    totalCount\n    edges {\n      node {\n        id\n        snapshotId\n        sourceId\n        name\n        purpose\n        dataSubjectCategory\n        personalDataCategory\n        lawfulBasis\n        location\n        internationalTransfers\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n\nfragment ProcessingActivitiesPageTIAFragment_3iomuz on Organization {\n  id\n  transferImpactAssessments(first: 10, filter: {snapshotId: $snapshotId}) {\n    totalCount\n    edges {\n      node {\n        id\n        dataSubjects\n        transfer\n        localLawRisk\n        processingActivity {\n          id\n          name\n        }\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "bbd2c1907bd9e4607a0beb1bb12d0f11";
+(node as any).hash = "b92a7dc2b38a5ae25c9a47a975fb718b";
 
 export default node;

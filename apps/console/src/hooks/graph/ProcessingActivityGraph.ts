@@ -13,8 +13,8 @@ export const processingActivitiesQuery = graphql`
     node(id: $organizationId) {
       ... on Organization {
         ...ProcessingActivitiesPageFragment @arguments(snapshotId: $snapshotId)
-        ...ProcessingActivitiesPageDPIAFragment
-        ...ProcessingActivitiesPageTIAFragment
+        ...ProcessingActivitiesPageDPIAFragment @arguments(snapshotId: $snapshotId)
+        ...ProcessingActivitiesPageTIAFragment @arguments(snapshotId: $snapshotId)
       }
     }
   }
