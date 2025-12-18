@@ -145,7 +145,10 @@ docker-build:
 	$(DOCKER_BUILD) --tag $(DOCKER_IMAGE_NAME):$(DOCKER_TAG_NAME) --file Dockerfile .
 
 .PHONY: bin/probod
-bin/probod: pkg/server/api/console/v1/schema/schema.go \
+bin/probod: pkg/server/api/connect/v1/schema/schema.go \
+	pkg/server/api/connect/v1/types/types.go \
+	pkg/server/api/connect/v1/v1_resolver.go \
+	pkg/server/api/console/v1/schema/schema.go \
 	pkg/server/api/console/v1/types/types.go \
 	pkg/server/api/console/v1/v1_resolver.go \
 	pkg/server/api/trust/v1/schema/schema.go \
