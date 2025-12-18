@@ -56,14 +56,14 @@ const availableFrameworks = [
         description: "Digital Operational Readiness Assessment",
     },
     {
-        id: "ISO/IEC 27701:2025",
+        id: "ISO27701-2025",
         name: "ISO 27701 (2025)",
         logo: <ISO27701 className="size-8" />,
         description:
             "Information security, cybersecurity and privacy protection",
     },
     {
-        id: "ISO/IEC 42001:2023",
+        id: "ISO42001-2023",
         name: "ISO 42001 (2023)",
         logo: <ISO42001 className="size-8" />,
         description:
