@@ -1,0 +1,438 @@
+{
+    "id": "ISO/IEC 27701:2025",
+    "name": "ISO 27701 (2025)",
+    "controls": [
+        {
+          "id": "4.1",
+          "name": "Context of the organization - Understanding the organization and its context"
+        },
+        {
+          "id": "4.2",
+          "name": "Context of the organization - Understanding the needs and expectations of interested parties"
+        },
+        {
+          "id": "4.3",
+          "name": "Context of the organization - Determining the scope of the privacy information management system"
+        },
+        {
+          "id": "4.4",
+          "name": "Context of the organization - Privacy information management system"
+        },
+        {
+          "id": "5.1",
+          "name": "Leadership - Leadership and commitment"
+        },
+        {
+          "id": "5.2",
+          "name": "Leadership - Privacy Policy"
+        },
+        {
+          "id": "5.3",
+          "name": "Leadership - Roles, responsibilities and authorities"
+        },
+        {
+          "id": "6.1.1",
+          "name": "Planning - General actions to address risks and opportunities"
+        },
+        {
+          "id": "6.1.2",
+          "name": "Planning - Privacy risk assessment"
+        },
+        {
+          "id": "6.1.3",
+          "name": "Planning - Privacy risk treatment"
+        },
+        {
+          "id": "6.2",
+          "name": "Planning - Privacy objectives and planning to achieve them"
+        },
+        {
+          "id": "6.3",
+          "name": "Planning - Planning of changes"
+        },
+        {
+          "id": "7.1",
+          "name": "Support - Resources"
+        },
+        {
+          "id": "7.2",
+          "name": "Support - Competence"
+        },
+        {
+          "id": "7.3",
+          "name": "Support - Awareness"
+        },
+        {
+          "id": "7.4",
+          "name": "Support - Communication"
+        },
+        {
+          "id": "7.5.1",
+          "name": "Support - Documented information - General"
+        },
+        {
+          "id": "7.5.2",
+          "name": "Support - Documented information - Creating and updating documented information"
+        },
+        {
+          "id": "7.5.3",
+          "name": "Support - Documented information - Control of documented information"
+        },
+        {
+          "id": "8.1",
+          "name": "Operation - Operational planning and control"
+        },
+        {
+          "id": "8.2",
+          "name": "Operation - Privacy risk assessment"
+        },
+        {
+          "id": "8.3",
+          "name": "Operation - Privacy risk treatment"
+        },
+        {
+          "id": "9.1",
+          "name": "Performance evaluation - Monitoring, measurement, analysis and evaluation"
+        },
+        {
+          "id": "9.2.1",
+          "name": "Performance evaluation - Internal audit - General"
+        },
+        {
+          "id": "9.2.2",
+          "name": "Performance evaluation - Internal audit - Internal audit programme"
+        },
+        {
+          "id": "9.3.1",
+          "name": "Performance evaluation - Management review - General"
+        },
+        {
+          "id": "9.3.2",
+          "name": "Performance evaluation - Management review - Management review inputs"
+        },
+        {
+          "id": "9.3.3",
+          "name": "Performance evaluation - Management review - Management review results"
+        },
+        {
+          "id": "10.1",
+          "name": "Improvement - Continual improvement"
+        },
+        {
+          "id": "10.2",
+          "name": "Improvement - Nonconformity and corrective action"
+        },
+        {
+          "id": "A.1.2.2",
+          "name": "Conditions for collection and processing - Identify and document purpose"
+        },
+        {
+          "id": "A.1.2.3",
+          "name": "Conditions for collection and processing - Identify lawful basis"
+        },
+        {
+          "id": "A.1.2.4",
+          "name": "Conditions for collection and processing - Determine when and how consent is to be obtained"
+        },
+        {
+          "id": "A.1.2.5",
+          "name": "Conditions for collection and processing - Obtain and record consent"
+        },
+        {
+          "id": "A.1.2.6",
+          "name": "Conditions for collection and processing - Privacy impact assessment"
+        },
+        {
+          "id": "A.1.2.7",
+          "name": "Conditions for collection and processing - Contracts with PII processors"
+        },
+        {
+          "id": "A.1.2.8",
+          "name": "Conditions for collection and processing - Joint PII controller"
+        },
+        {
+          "id": "A.1.2.9",
+          "name": "Conditions for collection and processing - Records related to processing PII"
+        },
+        {
+          "id": "A.1.3.2",
+          "name": "Obligations to PII principals - Determining and fulfilling obligations to PII principals"
+        },
+        {
+          "id": "A.1.3.3",
+          "name": "Obligations to PII principals - Determining information for PII principals"
+        },
+        {
+          "id": "A.1.3.4",
+          "name": "Obligations to PII principals - Providing information to PII principals"
+        },
+        {
+          "id": "A.1.3.5",
+          "name": "Obligations to PII principals - Providing mechanism to modify or withdraw consent"
+        },
+        {
+          "id": "A.1.3.6",
+          "name": "Obligations to PII principals - Providing mechanism to object to PII processing"
+        },
+        {
+          "id": "A.1.3.7",
+          "name": "Obligations to PII principals - Access, correction or erasure"
+        },
+        {
+          "id": "A.1.3.8",
+          "name": "Obligations to PII principals - PII controllers' obligations to inform third parties"
+        },
+        {
+          "id": "A.1.3.9",
+          "name": "Obligations to PII principals - Providing copy of PII processed"
+        },
+        {
+          "id": "A.1.3.10",
+          "name": "Obligations to PII principals - Handling requests"
+        },
+        {
+          "id": "A.1.3.11",
+          "name": "Obligations to PII principals - Automated decision making"
+        },
+        {
+          "id": "A.1.4.2",
+          "name": "Privacy by design and privacy by default - Limit collection"
+        },
+        {
+          "id": "A.1.4.3",
+          "name": "Privacy by design and privacy by default - Limit processing"
+        },
+        {
+          "id": "A.1.4.4",
+          "name": "Privacy by design and privacy by default - Accuracy and quality"
+        },
+        {
+          "id": "A.1.4.5",
+          "name": "Privacy by design and privacy by default - PII minimization objectives"
+        },
+        {
+          "id": "A.1.4.6",
+          "name": "Privacy by design and privacy by default - PII de-identification and deletion at the end of processing"
+        },
+        {
+          "id": "A.1.4.7",
+          "name": "Privacy by design and privacy by default - Temporary files"
+        },
+        {
+          "id": "A.1.4.8",
+          "name": "Privacy by design and privacy by default - Retention"
+        },
+        {
+          "id": "A.1.4.9",
+          "name": "Privacy by design and privacy by default - Disposal"
+        },
+        {
+          "id": "A.1.4.10",
+          "name": "Privacy by design and privacy by default - PII transmission controls"
+        },
+        {
+          "id": "A.1.5.2",
+          "name": "PII sharing, transfer and disclosure - Identify basis for PII transfer between jurisdictions"
+        },
+        {
+          "id": "A.1.5.3",
+          "name": "PII sharing, transfer and disclosure - Countries and international organizations to which PII can be transferred"
+        },
+        {
+          "id": "A.1.5.4",
+          "name": "PII sharing, transfer and disclosure - Records of transfer of PII"
+        },
+        {
+          "id": "A.1.5.5",
+          "name": "PII sharing, transfer and disclosure - Records of PII disclosures to third parties"
+        },
+        {
+          "id": "A.2.2.2",
+          "name": "Conditions for collection and processing - Customer agreement"
+        },
+        {
+          "id": "A.2.2.3",
+          "name": "Conditions for collection and processing - Organization's purposes"
+        },
+        {
+          "id": "A.2.2.4",
+          "name": "Conditions for collection and processing - Marketing and advertising use"
+        },
+        {
+          "id": "A.2.2.5",
+          "name": "Conditions for collection and processing - Infringing instruction"
+        },
+        {
+          "id": "A.2.2.6",
+          "name": "Conditions for collection and processing - Customer obligations"
+        },
+        {
+          "id": "A.2.2.7",
+          "name": "Conditions for collection and processing - Records related to processing PII"
+        },
+        {
+          "id": "A.2.3.2",
+          "name": "Obligations to PII principals - Comply with obligations to PII principals"
+        },
+        {
+          "id": "A.2.4.2",
+          "name": "Privacy by design and privacy by default - Temporary files"
+        },
+        {
+          "id": "A.2.4.3",
+          "name": "Privacy by design and privacy by default - Return, transfer or disposal of PII"
+        },
+        {
+          "id": "A.2.4.4",
+          "name": "Privacy by design and privacy by default - PII transmission controls"
+        },
+        {
+          "id": "A.2.5.2",
+          "name": "PII sharing, transfer and disclosure - Basis for PII transfer between jurisdictions"
+        },
+        {
+          "id": "A.2.5.3",
+          "name": "PII sharing, transfer and disclosure - Countries and international organizations to which PII can be transferred"
+        },
+        {
+          "id": "A.2.5.4",
+          "name": "PII sharing, transfer and disclosure - Records of PII disclosures to third parties"
+        },
+        {
+          "id": "A.2.5.5",
+          "name": "PII sharing, transfer and disclosure - Notification of PII disclosure requests"
+        },
+        {
+          "id": "A.2.5.6",
+          "name": "PII sharing, transfer and disclosure - Legally binding PII disclosures"
+        },
+        {
+          "id": "A.2.5.7",
+          "name": "PII sharing, transfer and disclosure - Disclosure of subcontractors used to process PII"
+        },
+        {
+          "id": "A.2.5.8",
+          "name": "PII sharing, transfer and disclosure - Engagement of a subcontractor to process PII"
+        },
+        {
+          "id": "A.2.5.9",
+          "name": "PII sharing, transfer and disclosure - Change of subcontractor to process PII"
+        },
+        {
+          "id": "A.3.3",
+          "name": "Information security - Policies for information security"
+        },
+        {
+          "id": "A.3.4",
+          "name": "Information security - Information security roles and responsibilities"
+        },
+        {
+          "id": "A.3.5",
+          "name": "Information security - Classification of information"
+        },
+        {
+          "id": "A.3.6",
+          "name": "Information security - Labelling of information"
+        },
+        {
+          "id": "A.3.7",
+          "name": "Information security - Information transfer"
+        },
+        {
+          "id": "A.3.8",
+          "name": "Information security - Identity management"
+        },
+        {
+          "id": "A.3.9",
+          "name": "Information security - Access rights"
+        },
+        {
+          "id": "A.3.10",
+          "name": "Information security - Addressing information security within supplier agreements"
+        },
+        {
+          "id": "A.3.11",
+          "name": "Information security - Information security incident management planning and preparation"
+        },
+        {
+          "id": "A.3.12",
+          "name": "Information security - Response to information security incidents"
+        },
+        {
+          "id": "A.3.13",
+          "name": "Information security - Legal, statutory, regulatory and contractual requirements"
+        },
+        {
+          "id": "A.3.14",
+          "name": "Information security - Protection of records"
+        },
+        {
+          "id": "A.3.15",
+          "name": "Information security - Independent review of information security"
+        },
+        {
+          "id": "A.3.16",
+          "name": "Information security - Compliance with policies, rules and standards for information security"
+        },
+        {
+          "id": "A.3.17",
+          "name": "Information security - Information security awareness, education and training"
+        },
+        {
+          "id": "A.3.18",
+          "name": "Information security - Confidentiality or non-disclosure agreements"
+        },
+        {
+          "id": "A.3.19",
+          "name": "Information security - Clear desk and clear screen"
+        },
+        {
+          "id": "A.3.20",
+          "name": "Information security - Storage media"
+        },
+        {
+          "id": "A.3.21",
+          "name": "Information security - Secure disposal or re-use of equipment"
+        },
+        {
+          "id": "A.3.22",
+          "name": "Information security - User endpoint devices"
+        },
+        {
+          "id": "A.3.23",
+          "name": "Information security - Secure authentication"
+        },
+        {
+          "id": "A.3.24",
+          "name": "Information security - Information backup"
+        },
+        {
+          "id": "A.3.25",
+          "name": "Information security - Logging"
+        },
+        {
+          "id": "A.3.26",
+          "name": "Information security - Use of cryptography"
+        },
+        {
+          "id": "A.3.27",
+          "name": "Information security - Secure development life cycle"
+        },
+        {
+          "id": "A.3.28",
+          "name": "Information security - Application security requirements"
+        },
+        {
+          "id": "A.3.29",
+          "name": "Information security - Secure system architecture and engineering principles"
+        },
+        {
+          "id": "A.3.30",
+          "name": "Information security - Outsourced development"
+        },
+        {
+          "id": "A.3.31",
+          "name": "Information security - Test information"
+        }
+      ]}
+    
