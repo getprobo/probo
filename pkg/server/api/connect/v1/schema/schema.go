@@ -193,11 +193,11 @@ type ComplexityRoot struct {
 
 	Membership struct {
 		Active        func(childComplexity int) int
-		ActiveSession func(childComplexity int) int
 		CreatedAt     func(childComplexity int) int
 		ID            func(childComplexity int) int
 		Identity      func(childComplexity int) int
 		IdentityID    func(childComplexity int) int
+		LastSession   func(childComplexity int) int
 		LastSyncedAt  func(childComplexity int) int
 		Organization  func(childComplexity int) int
 		Permissions   func(childComplexity int) int
@@ -467,7 +467,7 @@ type MembershipResolver interface {
 	Identity(ctx context.Context, obj *types.Membership) (*types.Identity, error)
 	Organization(ctx context.Context, obj *types.Membership) (*types.Organization, error)
 
-	ActiveSession(ctx context.Context, obj *types.Membership) (*types.Session, error)
+	LastSession(ctx context.Context, obj *types.Membership) (*types.Session, error)
 }
 type MembershipConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.MembershipConnection) (int, error)
@@ -972,12 +972,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Membership.Active(childComplexity), true
-	case "Membership.activeSession":
-		if e.complexity.Membership.ActiveSession == nil {
-			break
-		}
-
-		return e.complexity.Membership.ActiveSession(childComplexity), true
 	case "Membership.createdAt":
 		if e.complexity.Membership.CreatedAt == nil {
 			break
@@ -1002,6 +996,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Membership.IdentityID(childComplexity), true
+	case "Membership.lastSession":
+		if e.complexity.Membership.LastSession == nil {
+			break
+		}
+
+		return e.complexity.Membership.LastSession(childComplexity), true
 	case "Membership.lastSyncedAt":
 		if e.complexity.Membership.LastSyncedAt == nil {
 			break
@@ -2411,7 +2411,7 @@ type Membership implements Node {
   active: Boolean!
   lastSyncedAt: Datetime
 
-  activeSession: Session @goField(forceResolver: true) @isViewer
+  lastSession: Session @goField(forceResolver: true) @isViewer
 }
 
 type Invitation implements Node {
@@ -6227,14 +6227,14 @@ func (ec *executionContext) fieldContext_Membership_lastSyncedAt(_ context.Conte
 	return fc, nil
 }
 
-func (ec *executionContext) _Membership_activeSession(ctx context.Context, field graphql.CollectedField, obj *types.Membership) (ret graphql.Marshaler) {
+func (ec *executionContext) _Membership_lastSession(ctx context.Context, field graphql.CollectedField, obj *types.Membership) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_Membership_activeSession,
+		ec.fieldContext_Membership_lastSession,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.Membership().ActiveSession(ctx, obj)
+			return ec.resolvers.Membership().LastSession(ctx, obj)
 		},
 		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
 			directive0 := next
@@ -6256,7 +6256,7 @@ func (ec *executionContext) _Membership_activeSession(ctx context.Context, field
 	)
 }
 
-func (ec *executionContext) fieldContext_Membership_activeSession(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Membership_lastSession(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Membership",
 		Field:      field,
@@ -6432,8 +6432,8 @@ func (ec *executionContext) fieldContext_MembershipEdge_node(_ context.Context, 
 				return ec.fieldContext_Membership_active(ctx, field)
 			case "lastSyncedAt":
 				return ec.fieldContext_Membership_lastSyncedAt(ctx, field)
-			case "activeSession":
-				return ec.fieldContext_Membership_activeSession(ctx, field)
+			case "lastSession":
+				return ec.fieldContext_Membership_lastSession(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Membership", field.Name)
 		},
@@ -8529,6 +8529,8 @@ func (ec *executionContext) fieldContext_OrganizationSessionCreated_membership(_
 				return ec.fieldContext_Membership_identity(ctx, field)
 			case "organization":
 				return ec.fieldContext_Membership_organization(ctx, field)
+			case "role":
+				return ec.fieldContext_Membership_role(ctx, field)
 			case "permissions":
 				return ec.fieldContext_Membership_permissions(ctx, field)
 			case "provisionedBy":
@@ -8537,8 +8539,8 @@ func (ec *executionContext) fieldContext_OrganizationSessionCreated_membership(_
 				return ec.fieldContext_Membership_active(ctx, field)
 			case "lastSyncedAt":
 				return ec.fieldContext_Membership_lastSyncedAt(ctx, field)
-			case "activeSession":
-				return ec.fieldContext_Membership_activeSession(ctx, field)
+			case "lastSession":
+				return ec.fieldContext_Membership_lastSession(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Membership", field.Name)
 		},
@@ -15884,7 +15886,7 @@ func (ec *executionContext) _Membership(ctx context.Context, sel ast.SelectionSe
 			}
 		case "lastSyncedAt":
 			out.Values[i] = ec._Membership_lastSyncedAt(ctx, field, obj)
-		case "activeSession":
+		case "lastSession":
 			field := field
 
 			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
@@ -15893,7 +15895,7 @@ func (ec *executionContext) _Membership(ctx context.Context, sel ast.SelectionSe
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Membership_activeSession(ctx, field, obj)
+				res = ec._Membership_lastSession(ctx, field, obj)
 				return res
 			}
 
