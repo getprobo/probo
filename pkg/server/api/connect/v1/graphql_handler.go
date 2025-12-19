@@ -94,6 +94,7 @@ func IsViewerDirective(ctx context.Context, obj any, next graphql.Resolver) (any
 func NewGraphQLHandler(svc *iam.Service, logger *log.Logger, cookieConfig securecookie.Config) http.Handler {
 	config := schema.Config{
 		Resolvers: &Resolver{
+			logger:       logger,
 			iam:          svc,
 			cookieConfig: cookieConfig,
 		},

@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/vektah/gqlparser/v2/gqlerror"
+	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
@@ -148,7 +149,8 @@ func (r *membershipResolver) Identity(ctx context.Context, obj *types.Membership
 func (r *membershipResolver) Organization(ctx context.Context, obj *types.Membership) (*types.Organization, error) {
 	organization, err := r.iam.OrganizationService.GetOrganizationForMembership(ctx, obj.ID)
 	if err != nil {
-		panic(fmt.Errorf("cannot get organization for membership: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot get organization for membership", log.Error(err))
+		return nil, gqlutils.InternalServerError(ctx)
 	}
 
 	return types.NewOrganization(organization), nil
@@ -165,7 +167,8 @@ func (r *membershipResolver) LastSession(ctx context.Context, obj *types.Members
 			return nil, nil
 		}
 
-		panic(fmt.Errorf("cannot get active session for membership: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot get active session for membership", log.Error(err))
+		return nil, gqlutils.InternalServerError(ctx)
 	}
 
 	return types.NewSession(childSession), nil
@@ -177,13 +180,15 @@ func (r *membershipConnectionResolver) TotalCount(ctx context.Context, obj *type
 	case *identityResolver:
 		count, err := r.iam.AccountService.CountMemberships(ctx, obj.ParentID)
 		if err != nil {
-			panic(fmt.Errorf("cannot count memberships: %w", err))
+			r.logger.ErrorCtx(ctx, "cannot count memberships", log.Error(err))
+			return nil, gqlutils.InternalServerError(ctx)
 		}
 
 		return &count, nil
 	}
 
-	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
+	r.logger.ErrorCtx(ctx, "unsupported resolver", log.Any("resolver", obj.Resolver))
+	return nil, gqlutils.InternalServerError(ctx)
 }
 
 // SignIn is the resolver for the signIn field.
@@ -200,7 +205,8 @@ func (r *mutationResolver) SignIn(ctx context.Context, input types.SignInInput) 
 			}
 		}
 
-		panic(fmt.Errorf("cannot sign in: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot sign in", log.Error(err))
+		return nil, gqlutils.InternalServerError(ctx)
 	}
 
 	w := HTTPResponseWriterFromContext(ctx)
@@ -232,7 +238,8 @@ func (r *mutationResolver) SignUp(ctx context.Context, input types.SignUpInput) 
 			return nil, gqlutils.Invalid(err, nil)
 		}
 
-		panic(fmt.Errorf("cannot create identity with password: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot create identity with password", log.Error(err))
+		return nil, gqlutils.InternalServerError(ctx)
 	}
 
 	w := HTTPResponseWriterFromContext(ctx)
@@ -258,7 +265,8 @@ func (r *mutationResolver) SignOut(ctx context.Context) (*types.SignOutPayload, 
 			return &types.SignOutPayload{}, nil
 		}
 
-		panic(fmt.Errorf("cannot close session: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot close session", log.Error(err))
+		return nil, gqlutils.InternalServerError(ctx)
 	}
 
 	return &types.SignOutPayload{Success: true}, nil
@@ -295,7 +303,8 @@ func (r *mutationResolver) SignUpFromInvitation(ctx context.Context, input types
 			return nil, gqlutils.Conflict(err)
 		}
 
-		panic(fmt.Errorf("cannot create identity from invitation: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot create identity from invitation", log.Error(err))
+		return nil, gqlutils.InternalServerError(ctx)
 	}
 
 	w := HTTPResponseWriterFromContext(ctx)
@@ -323,7 +332,8 @@ func (r *mutationResolver) ForgotPassword(ctx context.Context, input types.Forgo
 		input.Email,
 	)
 	if err != nil {
-		panic(fmt.Errorf("cannot send password reset instruction by email: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot send password reset instruction by email", log.Error(err))
+		return nil, gqlutils.InternalServerError(ctx)
 	}
 
 	return &types.ForgotPasswordPayload{
@@ -346,7 +356,8 @@ func (r *mutationResolver) ResetPassword(ctx context.Context, input types.ResetP
 			return nil, gqlutils.Invalid(err, nil)
 		}
 
-		panic(fmt.Errorf("cannot reset password: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot reset password", log.Error(err))
+		return nil, gqlutils.InternalServerError(ctx)
 	}
 
 	return &types.ResetPasswordPayload{
@@ -380,7 +391,8 @@ func (r *mutationResolver) VerifyEmail(ctx context.Context, input types.VerifyEm
 			return nil, gqlutils.NotFound(err)
 		}
 
-		panic(fmt.Errorf("cannot verify email: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot verify email", log.Error(err))
+		return nil, gqlutils.InternalServerError(ctx)
 	}
 
 	return &types.VerifyEmailPayload{
@@ -414,7 +426,8 @@ func (r *mutationResolver) ChangePassword(ctx context.Context, input types.Chang
 			return nil, gqlutils.NotFound(err)
 		}
 
-		panic(fmt.Errorf("cannot change password: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot change password", log.Error(err))
+		return nil, gqlutils.InternalServerError(ctx)
 	}
 
 	return &types.ChangePasswordPayload{
@@ -448,7 +461,8 @@ func (r *mutationResolver) ChangeEmail(ctx context.Context, input types.ChangeEm
 			return nil, gqlutils.NotFound(err)
 		}
 
-		panic(fmt.Errorf("cannot change email: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot change email", log.Error(err))
+		return nil, gqlutils.InternalServerError(ctx)
 	}
 
 	return &types.ChangeEmailPayload{
@@ -488,7 +502,8 @@ func (r *mutationResolver) AssumeOrganizationSession(ctx context.Context, input 
 			}, nil
 
 		default:
-			panic(fmt.Errorf("cannot assume organization session: %w", err))
+			r.logger.ErrorCtx(ctx, "cannot assume organization session", log.Error(err))
+			return nil, gqlutils.InternalServerError(ctx)
 		}
 	}
 
@@ -516,7 +531,8 @@ func (r *mutationResolver) RevokeSession(ctx context.Context, input types.Revoke
 			return &types.RevokeSessionPayload{Success: true}, nil
 		}
 
-		panic(fmt.Errorf("cannot revoke session: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot revoke session", log.Error(err))
+		return nil, gqlutils.InternalServerError(ctx)
 	}
 
 	return &types.RevokeSessionPayload{Success: true}, nil
@@ -528,7 +544,8 @@ func (r *mutationResolver) RevokeAllSessions(ctx context.Context) (*types.Revoke
 
 	revokedCount, err := r.iam.SessionService.RevokeAllSessions(ctx, session.ID)
 	if err != nil {
-		panic(fmt.Errorf("cannot revoke all sessions: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot revoke all sessions", log.Error(err))
+		return nil, gqlutils.InternalServerError(ctx)
 	}
 
 	return &types.RevokeAllSessionsPayload{RevokedCount: int(revokedCount)}, nil
@@ -545,7 +562,8 @@ func (r *mutationResolver) CreatePersonalAPIKey(ctx context.Context, input types
 		input.ExpiresAt,
 	)
 	if err != nil {
-		panic(fmt.Errorf("cannot create personal api key: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot create personal api key", log.Error(err))
+		return nil, gqlutils.InternalServerError(ctx)
 	}
 
 	return &types.CreatePersonalAPIKeyPayload{
@@ -565,7 +583,8 @@ func (r *mutationResolver) RevokePersonalAPIKey(ctx context.Context, input types
 
 	err := r.iam.AccountService.DeletePersonalAPIKey(ctx, identity.ID, input.TokenID)
 	if err != nil {
-		panic(fmt.Errorf("cannot delete personal api key: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot delete personal api key", log.Error(err))
+		return nil, gqlutils.InternalServerError(ctx)
 	}
 
 	return &types.RevokePersonalAPIKeyPayload{Success: true}, nil
@@ -607,7 +626,8 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input types.C
 		},
 	)
 	if err != nil {
-		panic(fmt.Errorf("cannot create organization: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot create organization", log.Error(err))
+		return nil, gqlutils.InternalServerError(ctx)
 	}
 
 	return &types.CreateOrganizationPayload{
@@ -625,7 +645,8 @@ func (r *mutationResolver) UpdateOrganization(ctx context.Context, input types.U
 		},
 	)
 	if err != nil {
-		panic(fmt.Errorf("cannot update organization: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot update organization", log.Error(err))
+		return nil, gqlutils.InternalServerError(ctx)
 	}
 
 	return &types.UpdateOrganizationPayload{
@@ -642,7 +663,8 @@ func (r *mutationResolver) UpdateOrganization(ctx context.Context, input types.U
 func (r *mutationResolver) DeleteOrganization(ctx context.Context, input types.DeleteOrganizationInput) (*types.DeleteOrganizationPayload, error) {
 	err := r.iam.OrganizationService.DeleteOrganization(ctx, input.OrganizationID)
 	if err != nil {
-		panic(fmt.Errorf("cannot delete organization: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot delete organization", log.Error(err))
+		return nil, gqlutils.InternalServerError(ctx)
 	}
 
 	return &types.DeleteOrganizationPayload{DeletedOrganizationID: input.OrganizationID}, nil
@@ -669,7 +691,8 @@ func (r *mutationResolver) InviteMember(ctx context.Context, input types.InviteM
 			return nil, gqlutils.Conflict(err)
 		}
 
-		panic(fmt.Errorf("cannot add member to organization: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot add member to organization", log.Error(err))
+		return nil, gqlutils.InternalServerError(ctx)
 	}
 
 	return &types.InviteMemberPayload{
@@ -692,7 +715,8 @@ func (r *mutationResolver) DeleteInvitation(ctx context.Context, input types.Del
 			return nil, gqlutils.Invalid(err, nil)
 		}
 
-		panic(fmt.Errorf("cannot delete invitation: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot delete invitation", log.Error(err))
+		return nil, gqlutils.InternalServerError(ctx)
 	}
 
 	return &types.DeleteInvitationPayload{DeletedInvitationID: input.InvitationID}, nil
@@ -702,7 +726,8 @@ func (r *mutationResolver) DeleteInvitation(ctx context.Context, input types.Del
 func (r *mutationResolver) RemoveMember(ctx context.Context, input types.RemoveMemberInput) (*types.RemoveMemberPayload, error) {
 	err := r.iam.OrganizationService.RemoveMember(ctx, input.OrganizationID, input.MembershipID)
 	if err != nil {
-		panic(fmt.Errorf("cannot remove member from organization: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot remove member from organization", log.Error(err))
+		return nil, gqlutils.InternalServerError(ctx)
 	}
 
 	return &types.RemoveMemberPayload{DeletedMembershipID: input.MembershipID}, nil
@@ -714,7 +739,8 @@ func (r *mutationResolver) AcceptInvitation(ctx context.Context, input types.Acc
 
 	membership, err := r.iam.AccountService.AcceptInvitation(ctx, identity.ID, input.InvitationID)
 	if err != nil {
-		panic(fmt.Errorf("cannot accept invitation: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot accept invitation", log.Error(err))
+		return nil, gqlutils.InternalServerError(ctx)
 	}
 
 	return &types.AcceptInvitationPayload{
@@ -780,7 +806,8 @@ func (r *mutationResolver) UpdateSAMLConfiguration(ctx context.Context, input ty
 		req,
 	)
 	if err != nil {
-		panic(fmt.Errorf("cannot update saml configuration: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot update saml configuration", log.Error(err))
+		return nil, gqlutils.InternalServerError(ctx)
 	}
 
 	return &types.UpdateSAMLConfigurationPayload{
@@ -792,7 +819,8 @@ func (r *mutationResolver) UpdateSAMLConfiguration(ctx context.Context, input ty
 func (r *mutationResolver) DeleteSAMLConfiguration(ctx context.Context, input types.DeleteSAMLConfigurationInput) (*types.DeleteSAMLConfigurationPayload, error) {
 	err := r.iam.OrganizationService.DeleteSAMLConfiguration(ctx, input.OrganizationID, input.SamlConfigurationID)
 	if err != nil {
-		panic(fmt.Errorf("cannot delete saml configuration: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot delete saml configuration", log.Error(err))
+		return nil, gqlutils.InternalServerError(ctx)
 	}
 
 	return &types.DeleteSAMLConfigurationPayload{DeletedSamlConfigurationID: input.SamlConfigurationID}, nil
@@ -802,7 +830,8 @@ func (r *mutationResolver) DeleteSAMLConfiguration(ctx context.Context, input ty
 func (r *organizationResolver) LogoURL(ctx context.Context, obj *types.Organization) (*string, error) {
 	presignedURL, err := r.iam.OrganizationService.GenerateLogoURL(ctx, obj.ID, 1*time.Hour)
 	if err != nil {
-		panic(fmt.Errorf("cannot generate logo URL: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot generate logo URL", log.Error(err))
+		return nil, gqlutils.InternalServerError(ctx)
 	}
 
 	return presignedURL, nil
@@ -812,7 +841,8 @@ func (r *organizationResolver) LogoURL(ctx context.Context, obj *types.Organizat
 func (r *organizationResolver) HorizontalLogoURL(ctx context.Context, obj *types.Organization) (*string, error) {
 	presignedURL, err := r.iam.OrganizationService.GenerateHorizontalLogoURL(ctx, obj.ID, 1*time.Hour)
 	if err != nil {
-		panic(fmt.Errorf("cannot generate horizontal logo URL: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot generate horizontal logo URL", log.Error(err))
+		return nil, gqlutils.InternalServerError(ctx)
 	}
 
 	return presignedURL, nil
@@ -829,7 +859,8 @@ func (r *organizationResolver) Members(ctx context.Context, obj *types.Organizat
 
 	page, err := r.iam.OrganizationService.ListMembers(ctx, obj.ID, cursor)
 	if err != nil {
-		panic(fmt.Errorf("cannot list memberships: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot list memberships", log.Error(err))
+		return nil, gqlutils.InternalServerError(ctx)
 	}
 
 	return types.NewMembershipConnection(page, r, obj.ID), nil
@@ -851,7 +882,8 @@ func (r *organizationResolver) Invitations(ctx context.Context, obj *types.Organ
 
 	page, err := r.iam.OrganizationService.ListInvitations(ctx, obj.ID, cursor, filters)
 	if err != nil {
-		panic(fmt.Errorf("cannot list invitations: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot list invitations", log.Error(err))
+		return nil, gqlutils.InternalServerError(ctx)
 	}
 
 	return types.NewInvitationConnection(page, r, obj.ID, filters), nil
@@ -868,7 +900,8 @@ func (r *organizationResolver) SamlConfigurations(ctx context.Context, obj *type
 
 	page, err := r.iam.OrganizationService.ListSAMLConfigurations(ctx, obj.ID, cursor)
 	if err != nil {
-		panic(fmt.Errorf("cannot list saml configurations: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot list saml configurations", log.Error(err))
+		return nil, gqlutils.InternalServerError(ctx)
 	}
 
 	return types.NewSAMLConfigurationConnection(page, r, obj.ID), nil
@@ -880,13 +913,15 @@ func (r *personalAPIKeyConnectionResolver) TotalCount(ctx context.Context, obj *
 	case *identityResolver:
 		count, err := r.iam.AccountService.CountPersonalAPIKeys(ctx, obj.ParentID)
 		if err != nil {
-			panic(fmt.Errorf("cannot count personal api keys: %w", err))
+			r.logger.ErrorCtx(ctx, "cannot count personal api keys", log.Error(err))
+			return nil, gqlutils.InternalServerError(ctx)
 		}
 
 		return &count, nil
 	}
 
-	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
+	r.logger.ErrorCtx(ctx, "unsupported resolver", log.Any("resolver", obj.Resolver))
+	return nil, gqlutils.InternalServerError(ctx)
 }
 
 // Node is the resolver for the node field.
@@ -966,7 +1001,8 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			return nil, gqlutils.Forbidden(err)
 		}
 
-		panic(fmt.Errorf("cannot authorize: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot authorize", log.Error(err))
+		return nil, gqlutils.InternalServerError(ctx)
 	}
 
 	node, err := loadNode(ctx, id)
@@ -989,7 +1025,8 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			return nil, gqlutils.NotFound(err)
 		}
 
-		return nil, err
+		r.logger.ErrorCtx(ctx, "cannot load node", log.Error(err))
+		return nil, gqlutils.InternalServerError(ctx)
 	}
 
 	return node, nil
@@ -1019,12 +1056,14 @@ func (r *sAMLConfigurationConnectionResolver) TotalCount(ctx context.Context, ob
 	case *organizationResolver:
 		count, err := r.iam.OrganizationService.CountSAMLConfigurations(ctx, obj.ParentID)
 		if err != nil {
-			panic(fmt.Errorf("cannot count saml configurations: %w", err))
+			r.logger.ErrorCtx(ctx, "cannot count saml configurations", log.Error(err))
+			return nil, gqlutils.InternalServerError(ctx)
 		}
 		return &count, nil
 	}
 
-	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
+	r.logger.ErrorCtx(ctx, "unsupported resolver", log.Any("resolver", obj.Resolver))
+	return nil, gqlutils.InternalServerError(ctx)
 }
 
 // TotalCount is the resolver for the totalCount field.
@@ -1033,13 +1072,15 @@ func (r *sessionConnectionResolver) TotalCount(ctx context.Context, obj *types.S
 	case *identityResolver:
 		count, err := r.iam.AccountService.CountSessions(ctx, obj.ParentID)
 		if err != nil {
-			panic(fmt.Errorf("cannot count sessions: %w", err))
+			r.logger.ErrorCtx(ctx, "cannot count sessions", log.Error(err))
+			return nil, gqlutils.InternalServerError(ctx)
 		}
 
 		return &count, nil
 	}
 
-	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
+	r.logger.ErrorCtx(ctx, "unsupported resolver", log.Any("resolver", obj.Resolver))
+	return nil, gqlutils.InternalServerError(ctx)
 }
 
 // Identity returns schema.IdentityResolver implementation.

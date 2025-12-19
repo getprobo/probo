@@ -15,8 +15,10 @@
 package gqlutils
 
 import (
+	"context"
 	"maps"
 
+	"github.com/99designs/gqlgen/graphql"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 )
 
@@ -75,5 +77,15 @@ func Invalid(err error, details map[string]any) *gqlerror.Error {
 	return &gqlerror.Error{
 		Message:    err.Error(),
 		Extensions: extensions,
+	}
+}
+
+func InternalServerError(ctx context.Context) *gqlerror.Error {
+	return &gqlerror.Error{
+		Message: "An internal server error occurred. Please try again later.",
+		Path:    graphql.GetPath(ctx),
+		Extensions: map[string]any{
+			"code": "INTERNAL_SERVER_ERROR",
+		},
 	}
 }

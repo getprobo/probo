@@ -28,6 +28,7 @@ import (
 
 type (
 	Resolver struct {
+		logger       *log.Logger
 		iam          *iam.Service
 		cookieConfig securecookie.Config
 	}
