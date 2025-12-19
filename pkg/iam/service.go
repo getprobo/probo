@@ -125,6 +125,30 @@ func NewService(
 	return svc, nil
 }
 
+func (s *Service) Run(ctx context.Context) error {
+	runCtx, stopAll := context.WithCancel(ctx)
+	defer stopAll()
+
+	errCh := make(chan error, 1)
+	go func() {
+		errCh <- s.SAMLService.Run(runCtx)
+	}()
+
+	select {
+	case <-ctx.Done():
+		stopAll()
+		<-errCh
+		return ctx.Err()
+	case err := <-errCh:
+		if err != nil {
+			s.logger.ErrorCtx(ctx, "iam service failed", log.Error(err))
+			return err
+		}
+
+		return nil
+	}
+}
+
 func (s *Service) GetMembership(ctx context.Context, membershipID gid.GID) (*coredata.Membership, error) {
 	var (
 		scope      = coredata.NewScopeFromObjectID(membershipID)
