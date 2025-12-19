@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.111.1] - 2025-12-19
+
+### Fixed
+
+- Console: framework logo import
+
 ## [0.111.0] - 2025-12-18
 
 ### Added
