@@ -4,5 +4,5 @@
   "language": "typescript",
   "eagerEsModules": true,
   "noFutureProofEnums": true,
-  "excludes": ["**/node_modules/**"]
+  "excludes": ["**/node_modules/**", "**/__generated__/**"]
 }
