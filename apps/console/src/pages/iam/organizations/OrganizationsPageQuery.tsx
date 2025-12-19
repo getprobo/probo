@@ -1,24 +1,22 @@
 import { lazy } from "@probo/react-lazy";
 import { useQueryLoader } from "react-relay";
 import { graphql } from "relay-runtime";
-import type { OrganizationsQuery } from "./__generated__/OrganizationsQuery.graphql";
 import { Suspense, useEffect } from "react";
 import { CenteredLayoutSkeleton } from "@probo/ui";
+import type { OrganizationsPageQuery } from "./__generated__/OrganizationsPageQuery.graphql";
 
 const Page = lazy(() => import("./OrganizationsPage"));
 
-export const organizationsQuery = graphql`
-  query OrganizationsQuery {
+export const organizationsPageQuery = graphql`
+  query OrganizationsPageQuery {
     viewer @required(action: THROW) {
-      memberships(
-        first: 1000
-        orderBy: { direction: DESC, field: CREATED_AT }
-      ) {
-        edges {
-          node {
+      memberships(first: 1000, orderBy: { direction: DESC, field: CREATED_AT })
+        @required(action: THROW) {
+        edges @required(action: THROW) {
+          node @required(action: THROW) {
             id
             ...MembershipCardFragment
-            organization {
+            organization @required(action: THROW) {
               name
             }
           }
@@ -27,9 +25,9 @@ export const organizationsQuery = graphql`
       pendingInvitations(
         first: 1000
         orderBy: { direction: DESC, field: CREATED_AT }
-      ) {
-        edges {
-          node {
+      ) @required(action: THROW) {
+        edges @required(action: THROW) {
+          node @required(action: THROW) {
             id
             ...InvitationCardFragment
           }
@@ -39,9 +37,10 @@ export const organizationsQuery = graphql`
   }
 `;
 
-export function OrganizationsQuery() {
-  const [queryRef, loadQuery] =
-    useQueryLoader<OrganizationsQuery>(organizationsQuery);
+export function OrganizationsPageQuery() {
+  const [queryRef, loadQuery] = useQueryLoader<OrganizationsPageQuery>(
+    organizationsPageQuery,
+  );
 
   useEffect(() => {
     loadQuery({});
