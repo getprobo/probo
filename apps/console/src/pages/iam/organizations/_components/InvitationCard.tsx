@@ -10,7 +10,7 @@ const fragment = graphql`
     id
     role
     createdAt
-    organization {
+    organization @required(action: THROW) {
       id
       name
     }
