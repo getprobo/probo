@@ -1,5 +1,5 @@
 import { loadQuery } from "react-relay";
-import { relayEnvironment } from "/providers/RelayProviders";
+import { consoleEnvironment } from "/environments";
 import { PageSkeleton } from "/components/skeletons/PageSkeleton";
 import { lazy } from "@probo/react-lazy";
 import { rightsRequestsQuery, rightsRequestNodeQuery } from "/hooks/graph/RightsRequestGraph";
@@ -12,7 +12,7 @@ export const rightsRequestRoutes = [
     path: "rights-requests",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ organizationId }) =>
-      loadQuery<RightsRequestGraphListQuery>(relayEnvironment, rightsRequestsQuery, {
+      loadQuery<RightsRequestGraphListQuery>(consoleEnvironment, rightsRequestsQuery, {
         organizationId,
       }),
     ),
@@ -24,7 +24,7 @@ export const rightsRequestRoutes = [
     path: "rights-requests/:requestId",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ requestId }) =>
-      loadQuery<RightsRequestGraphNodeQuery>(relayEnvironment, rightsRequestNodeQuery, {
+      loadQuery<RightsRequestGraphNodeQuery>(consoleEnvironment, rightsRequestNodeQuery, {
         rightsRequestId: requestId!,
       }),
     ),

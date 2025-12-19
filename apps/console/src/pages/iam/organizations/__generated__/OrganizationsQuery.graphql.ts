@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<c7e497311fbff76ab3b574012b9b9660>>
+ * @generated SignedSource<<97119b2ea90f368155a13a32941b99d3>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -16,12 +16,11 @@ export type OrganizationsQuery$data = {
     readonly memberships: {
       readonly edges: ReadonlyArray<{
         readonly node: {
-          readonly createdAt: any;
           readonly id: string;
           readonly organization: {
             readonly name: string;
-            readonly " $fragmentSpreads": FragmentRefs<"OrganizationCardFragment">;
           };
+          readonly " $fragmentSpreads": FragmentRefs<"MembershipCardFragment">;
         };
       }>;
     };
@@ -64,13 +63,6 @@ v1 = {
   "storageKey": null
 },
 v2 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "createdAt",
-  "storageKey": null
-},
-v3 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
@@ -119,7 +111,11 @@ return {
                       "plural": false,
                       "selections": [
                         (v1/*: any*/),
-                        (v2/*: any*/),
+                        {
+                          "args": null,
+                          "kind": "FragmentSpread",
+                          "name": "MembershipCardFragment"
+                        },
                         {
                           "alias": null,
                           "args": null,
@@ -128,12 +124,7 @@ return {
                           "name": "organization",
                           "plural": false,
                           "selections": [
-                            (v3/*: any*/),
-                            {
-                              "args": null,
-                              "kind": "FragmentSpread",
-                              "name": "OrganizationCardFragment"
-                            }
+                            (v2/*: any*/)
                           ],
                           "storageKey": null
                         }
@@ -233,7 +224,25 @@ return {
                     "plural": false,
                     "selections": [
                       (v1/*: any*/),
-                      (v2/*: any*/),
+                      {
+                        "alias": null,
+                        "args": null,
+                        "concreteType": "Session",
+                        "kind": "LinkedField",
+                        "name": "activeSession",
+                        "plural": false,
+                        "selections": [
+                          (v1/*: any*/),
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "expiresAt",
+                            "storageKey": null
+                          }
+                        ],
+                        "storageKey": null
+                      },
                       {
                         "alias": null,
                         "args": null,
@@ -242,8 +251,8 @@ return {
                         "name": "organization",
                         "plural": false,
                         "selections": [
-                          (v3/*: any*/),
                           (v1/*: any*/),
+                          (v2/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -295,7 +304,13 @@ return {
                         "name": "role",
                         "storageKey": null
                       },
-                      (v2/*: any*/),
+                      {
+                        "alias": null,
+                        "args": null,
+                        "kind": "ScalarField",
+                        "name": "createdAt",
+                        "storageKey": null
+                      },
                       {
                         "alias": null,
                         "args": null,
@@ -305,7 +320,7 @@ return {
                         "plural": false,
                         "selections": [
                           (v1/*: any*/),
-                          (v3/*: any*/)
+                          (v2/*: any*/)
                         ],
                         "storageKey": null
                       }
@@ -325,16 +340,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "145dddcd59c5c55a1c61913d9f43b38b",
+    "cacheID": "5dad37a0c652055f81de5bd2c09995c2",
     "id": null,
     "metadata": {},
     "name": "OrganizationsQuery",
     "operationKind": "query",
-    "text": "query OrganizationsQuery {\n  viewer {\n    memberships(first: 1000, orderBy: {direction: DESC, field: CREATED_AT}) {\n      edges {\n        node {\n          id\n          createdAt\n          organization {\n            name\n            ...OrganizationCardFragment\n            id\n          }\n        }\n      }\n    }\n    pendingInvitations(first: 1000, orderBy: {direction: DESC, field: CREATED_AT}) {\n      edges {\n        node {\n          id\n          ...InvitationCardFragment\n        }\n      }\n    }\n    id\n  }\n}\n\nfragment InvitationCardFragment on Invitation {\n  id\n  role\n  createdAt\n  organization {\n    id\n    name\n  }\n}\n\nfragment OrganizationCardFragment on Organization {\n  id\n  name\n  logoUrl\n}\n"
+    "text": "query OrganizationsQuery {\n  viewer {\n    memberships(first: 1000, orderBy: {direction: DESC, field: CREATED_AT}) {\n      edges {\n        node {\n          id\n          ...MembershipCardFragment\n          organization {\n            name\n            id\n          }\n        }\n      }\n    }\n    pendingInvitations(first: 1000, orderBy: {direction: DESC, field: CREATED_AT}) {\n      edges {\n        node {\n          id\n          ...InvitationCardFragment\n        }\n      }\n    }\n    id\n  }\n}\n\nfragment InvitationCardFragment on Invitation {\n  id\n  role\n  createdAt\n  organization {\n    id\n    name\n  }\n}\n\nfragment MembershipCardFragment on Membership {\n  activeSession {\n    id\n    expiresAt\n  }\n  organization {\n    id\n    name\n    logoUrl\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "f85219c0fcd69be1b5cfb0a5b9c9b8db";
+(node as any).hash = "dc4b2e28600292c73ea31b5cb450dba7";
 
 export default node;

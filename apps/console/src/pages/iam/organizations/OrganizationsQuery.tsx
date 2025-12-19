@@ -17,10 +17,9 @@ export const organizationsQuery = graphql`
         edges {
           node {
             id
-            createdAt
+            ...MembershipCardFragment
             organization {
               name
-              ...OrganizationCardFragment
             }
           }
         }
