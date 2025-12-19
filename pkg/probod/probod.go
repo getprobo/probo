@@ -491,14 +491,14 @@ func (impl *Implm) Run(
 		},
 	)
 
-	samlServiceCtx, stopSAMLService := context.WithCancel(context.Background())
+	iamServiceCtx, stopIAMService := context.WithCancel(context.Background())
 	wg.Go(
 		func() {
-			if iamService.SAMLService != nil {
-				if err := iamService.SAMLService.Run(samlServiceCtx); err != nil {
-					cancel(fmt.Errorf("saml service crashed: %w", err))
-				}
+
+			if err := iamService.Run(iamServiceCtx); err != nil {
+				cancel(fmt.Errorf("iam service crashed: %w", err))
 			}
+
 		},
 	)
 
@@ -517,7 +517,7 @@ func (impl *Implm) Run(
 	stopMailer()
 	stopSlackSender()
 	stopExportJobExporter()
-	stopSAMLService()
+	stopIAMService()
 	stopApiServer()
 	stopTrustCenterServer()
 
