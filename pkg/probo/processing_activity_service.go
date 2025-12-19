@@ -32,51 +32,51 @@ type ProcessingActivityService struct {
 
 type (
 	CreateProcessingActivityRequest struct {
-		OrganizationID                 gid.GID
-		Name                           string
-		Purpose                        *string
-		DataSubjectCategory            *string
-		PersonalDataCategory           *string
-		SpecialOrCriminalData          coredata.ProcessingActivitySpecialOrCriminalDatum
-		ConsentEvidenceLink            *string
-		LawfulBasis                    coredata.ProcessingActivityLawfulBasis
-		Recipients                     *string
-		Location                       *string
-		InternationalTransfers         bool
-		TransferSafeguard              *coredata.ProcessingActivityTransferSafeguard
-		RetentionPeriod                *string
-		SecurityMeasures               *string
-		DataProtectionImpactAssessment coredata.ProcessingActivityDataProtectionImpactAssessment
-		TransferImpactAssessment       coredata.ProcessingActivityTransferImpactAssessment
-		LastReviewDate                 *time.Time
-		NextReviewDate                 *time.Time
-		Role                           coredata.ProcessingActivityRole
-		DataProtectionOfficerID        *gid.GID
-		VendorIDs                      []gid.GID
+		OrganizationID                       gid.GID
+		Name                                 string
+		Purpose                              *string
+		DataSubjectCategory                  *string
+		PersonalDataCategory                 *string
+		SpecialOrCriminalData                coredata.ProcessingActivitySpecialOrCriminalDatum
+		ConsentEvidenceLink                  *string
+		LawfulBasis                          coredata.ProcessingActivityLawfulBasis
+		Recipients                           *string
+		Location                             *string
+		InternationalTransfers               bool
+		TransferSafeguard                    *coredata.ProcessingActivityTransferSafeguard
+		RetentionPeriod                      *string
+		SecurityMeasures                     *string
+		DataProtectionImpactAssessmentNeeded coredata.ProcessingActivityDataProtectionImpactAssessment
+		TransferImpactAssessmentNeeded       coredata.ProcessingActivityTransferImpactAssessment
+		LastReviewDate                       *time.Time
+		NextReviewDate                       *time.Time
+		Role                                 coredata.ProcessingActivityRole
+		DataProtectionOfficerID              *gid.GID
+		VendorIDs                            []gid.GID
 	}
 
 	UpdateProcessingActivityRequest struct {
-		ID                             gid.GID
-		Name                           *string
-		Purpose                        **string
-		DataSubjectCategory            **string
-		PersonalDataCategory           **string
-		SpecialOrCriminalData          *coredata.ProcessingActivitySpecialOrCriminalDatum
-		ConsentEvidenceLink            **string
-		LawfulBasis                    *coredata.ProcessingActivityLawfulBasis
-		Recipients                     **string
-		Location                       **string
-		InternationalTransfers         *bool
-		TransferSafeguard              **coredata.ProcessingActivityTransferSafeguard
-		RetentionPeriod                **string
-		SecurityMeasures               **string
-		DataProtectionImpactAssessment *coredata.ProcessingActivityDataProtectionImpactAssessment
-		TransferImpactAssessment       *coredata.ProcessingActivityTransferImpactAssessment
-		LastReviewDate                 **time.Time
-		NextReviewDate                 **time.Time
-		Role                           *coredata.ProcessingActivityRole
-		DataProtectionOfficerID        **gid.GID
-		VendorIDs                      *[]gid.GID
+		ID                                   gid.GID
+		Name                                 *string
+		Purpose                              **string
+		DataSubjectCategory                  **string
+		PersonalDataCategory                 **string
+		SpecialOrCriminalData                *coredata.ProcessingActivitySpecialOrCriminalDatum
+		ConsentEvidenceLink                  **string
+		LawfulBasis                          *coredata.ProcessingActivityLawfulBasis
+		Recipients                           **string
+		Location                             **string
+		InternationalTransfers               *bool
+		TransferSafeguard                    **coredata.ProcessingActivityTransferSafeguard
+		RetentionPeriod                      **string
+		SecurityMeasures                     **string
+		DataProtectionImpactAssessmentNeeded *coredata.ProcessingActivityDataProtectionImpactAssessment
+		TransferImpactAssessmentNeeded       *coredata.ProcessingActivityTransferImpactAssessment
+		LastReviewDate                       **time.Time
+		NextReviewDate                       **time.Time
+		Role                                 *coredata.ProcessingActivityRole
+		DataProtectionOfficerID              **gid.GID
+		VendorIDs                            *[]gid.GID
 	}
 )
 
@@ -97,8 +97,8 @@ func (cpar *CreateProcessingActivityRequest) Validate() error {
 	v.Check(cpar.TransferSafeguard, "transfer_safeguard", validator.OneOfSlice(coredata.ProcessingActivityTransferSafeguards()))
 	v.Check(cpar.RetentionPeriod, "retention_period", validator.SafeText(TitleMaxLength))
 	v.Check(cpar.SecurityMeasures, "security_measures", validator.SafeText(TitleMaxLength))
-	v.Check(cpar.DataProtectionImpactAssessment, "data_protection_impact_assessment", validator.Required(), validator.OneOfSlice(coredata.ProcessingActivityDataProtectionImpactAssessments()))
-	v.Check(cpar.TransferImpactAssessment, "transfer_impact_assessment", validator.Required(), validator.OneOfSlice(coredata.ProcessingActivityTransferImpactAssessments()))
+	v.Check(cpar.DataProtectionImpactAssessmentNeeded, "data_protection_impact_assessment_needed", validator.Required(), validator.OneOfSlice(coredata.ProcessingActivityDataProtectionImpactAssessments()))
+	v.Check(cpar.TransferImpactAssessmentNeeded, "transfer_impact_assessment_needed", validator.Required(), validator.OneOfSlice(coredata.ProcessingActivityTransferImpactAssessments()))
 	v.Check(cpar.Role, "role", validator.Required(), validator.OneOfSlice(coredata.ProcessingActivityRoles()))
 	v.Check(cpar.DataProtectionOfficerID, "data_protection_officer_id", validator.GID(coredata.PeopleEntityType))
 	v.CheckEach(cpar.VendorIDs, "vendor_ids", func(index int, item any) {
@@ -124,8 +124,8 @@ func (upar *UpdateProcessingActivityRequest) Validate() error {
 	v.Check(upar.TransferSafeguard, "transfer_safeguards", validator.OneOfSlice(coredata.ProcessingActivityTransferSafeguards()))
 	v.Check(upar.RetentionPeriod, "retention_period", validator.SafeText(TitleMaxLength))
 	v.Check(upar.SecurityMeasures, "security_measures", validator.SafeText(TitleMaxLength))
-	v.Check(upar.DataProtectionImpactAssessment, "data_protection_impact_assessment", validator.OneOfSlice(coredata.ProcessingActivityDataProtectionImpactAssessments()))
-	v.Check(upar.TransferImpactAssessment, "transfer_impact_assessment", validator.OneOfSlice(coredata.ProcessingActivityTransferImpactAssessments()))
+	v.Check(upar.DataProtectionImpactAssessmentNeeded, "data_protection_impact_assessment_needed", validator.OneOfSlice(coredata.ProcessingActivityDataProtectionImpactAssessments()))
+	v.Check(upar.TransferImpactAssessmentNeeded, "transfer_impact_assessment_needed", validator.OneOfSlice(coredata.ProcessingActivityTransferImpactAssessments()))
 	v.Check(upar.Role, "role", validator.OneOfSlice(coredata.ProcessingActivityRoles()))
 	v.Check(upar.DataProtectionOfficerID, "data_protection_officer_id", validator.GID(coredata.PeopleEntityType))
 	v.CheckEach(upar.VendorIDs, "vendor_ids", func(index int, item any) {
@@ -163,29 +163,29 @@ func (s *ProcessingActivityService) Create(
 	processingActivityVendors := &coredata.ProcessingActivityVendors{}
 
 	processingActivity := &coredata.ProcessingActivity{
-		ID:                             gid.New(s.svc.scope.GetTenantID(), coredata.ProcessingActivityEntityType),
-		OrganizationID:                 req.OrganizationID,
-		Name:                           req.Name,
-		Purpose:                        req.Purpose,
-		DataSubjectCategory:            req.DataSubjectCategory,
-		PersonalDataCategory:           req.PersonalDataCategory,
-		SpecialOrCriminalData:          req.SpecialOrCriminalData,
-		ConsentEvidenceLink:            req.ConsentEvidenceLink,
-		LawfulBasis:                    req.LawfulBasis,
-		Recipients:                     req.Recipients,
-		Location:                       req.Location,
-		InternationalTransfers:         req.InternationalTransfers,
-		TransferSafeguard:              req.TransferSafeguard,
-		RetentionPeriod:                req.RetentionPeriod,
-		SecurityMeasures:               req.SecurityMeasures,
-		DataProtectionImpactAssessment: req.DataProtectionImpactAssessment,
-		TransferImpactAssessment:       req.TransferImpactAssessment,
-		LastReviewDate:                 req.LastReviewDate,
-		NextReviewDate:                 req.NextReviewDate,
-		Role:                           req.Role,
-		DataProtectionOfficerID:        req.DataProtectionOfficerID,
-		CreatedAt:                      now,
-		UpdatedAt:                      now,
+		ID:                                   gid.New(s.svc.scope.GetTenantID(), coredata.ProcessingActivityEntityType),
+		OrganizationID:                       req.OrganizationID,
+		Name:                                 req.Name,
+		Purpose:                              req.Purpose,
+		DataSubjectCategory:                  req.DataSubjectCategory,
+		PersonalDataCategory:                 req.PersonalDataCategory,
+		SpecialOrCriminalData:                req.SpecialOrCriminalData,
+		ConsentEvidenceLink:                  req.ConsentEvidenceLink,
+		LawfulBasis:                          req.LawfulBasis,
+		Recipients:                           req.Recipients,
+		Location:                             req.Location,
+		InternationalTransfers:               req.InternationalTransfers,
+		TransferSafeguard:                    req.TransferSafeguard,
+		RetentionPeriod:                      req.RetentionPeriod,
+		SecurityMeasures:                     req.SecurityMeasures,
+		DataProtectionImpactAssessmentNeeded: req.DataProtectionImpactAssessmentNeeded,
+		TransferImpactAssessmentNeeded:       req.TransferImpactAssessmentNeeded,
+		LastReviewDate:                       req.LastReviewDate,
+		NextReviewDate:                       req.NextReviewDate,
+		Role:                                 req.Role,
+		DataProtectionOfficerID:              req.DataProtectionOfficerID,
+		CreatedAt:                            now,
+		UpdatedAt:                            now,
 	}
 
 	err := s.svc.pg.WithTx(
@@ -270,11 +270,11 @@ func (s *ProcessingActivityService) Update(
 			if req.SecurityMeasures != nil {
 				processingActivity.SecurityMeasures = *req.SecurityMeasures
 			}
-			if req.DataProtectionImpactAssessment != nil {
-				processingActivity.DataProtectionImpactAssessment = *req.DataProtectionImpactAssessment
+			if req.DataProtectionImpactAssessmentNeeded != nil {
+				processingActivity.DataProtectionImpactAssessmentNeeded = *req.DataProtectionImpactAssessmentNeeded
 			}
-			if req.TransferImpactAssessment != nil {
-				processingActivity.TransferImpactAssessment = *req.TransferImpactAssessment
+			if req.TransferImpactAssessmentNeeded != nil {
+				processingActivity.TransferImpactAssessmentNeeded = *req.TransferImpactAssessmentNeeded
 			}
 			if req.LastReviewDate != nil {
 				processingActivity.LastReviewDate = *req.LastReviewDate

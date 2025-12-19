@@ -912,14 +912,14 @@ func CreateProcessingActivity(c *testutil.Client, attrs ...Attrs) string {
 	`
 
 	input := map[string]any{
-		"organizationId":                 c.GetOrganizationID().String(),
-		"name":                           a.getString("name", SafeName("ProcessingActivity")),
-		"specialOrCriminalData":          a.getString("specialOrCriminalData", "NO"),
-		"lawfulBasis":                    a.getString("lawfulBasis", "CONSENT"),
-		"internationalTransfers":         a.getBool("internationalTransfers", false),
-		"dataProtectionImpactAssessment": a.getString("dataProtectionImpactAssessment", "NOT_NEEDED"),
-		"transferImpactAssessment":       a.getString("transferImpactAssessment", "NOT_NEEDED"),
-		"role":                           a.getString("role", "CONTROLLER"),
+		"organizationId":                       c.GetOrganizationID().String(),
+		"name":                                 a.getString("name", SafeName("ProcessingActivity")),
+		"specialOrCriminalData":                a.getString("specialOrCriminalData", "NO"),
+		"lawfulBasis":                          a.getString("lawfulBasis", "CONSENT"),
+		"internationalTransfers":               a.getBool("internationalTransfers", false),
+		"dataProtectionImpactAssessmentNeeded": a.getString("dataProtectionImpactAssessmentNeeded", "NOT_NEEDED"),
+		"transferImpactAssessmentNeeded":       a.getString("transferImpactAssessmentNeeded", "NOT_NEEDED"),
+		"role":                                 a.getString("role", "CONTROLLER"),
 	}
 	if purpose := a.getStringPtr("purpose"); purpose != nil {
 		input["purpose"] = *purpose

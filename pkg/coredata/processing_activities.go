@@ -28,31 +28,31 @@ import (
 
 type (
 	ProcessingActivity struct {
-		ID                             gid.GID                                          `db:"id"`
-		SnapshotID                     *gid.GID                                         `db:"snapshot_id"`
-		SourceID                       *gid.GID                                         `db:"source_id"`
-		OrganizationID                 gid.GID                                          `db:"organization_id"`
-		Name                           string                                           `db:"name"`
-		Purpose                        *string                                          `db:"purpose"`
-		DataSubjectCategory            *string                                          `db:"data_subject_category"`
-		PersonalDataCategory           *string                                          `db:"personal_data_category"`
-		SpecialOrCriminalData          ProcessingActivitySpecialOrCriminalDatum         `db:"special_or_criminal_data"`
-		ConsentEvidenceLink            *string                                          `db:"consent_evidence_link"`
-		LawfulBasis                    ProcessingActivityLawfulBasis                    `db:"lawful_basis"`
-		Recipients                     *string                                          `db:"recipients"`
-		Location                       *string                                          `db:"location"`
-		InternationalTransfers         bool                                             `db:"international_transfers"`
-		TransferSafeguard              *ProcessingActivityTransferSafeguard             `db:"transfer_safeguards"`
-		RetentionPeriod                *string                                          `db:"retention_period"`
-		SecurityMeasures               *string                                          `db:"security_measures"`
-		DataProtectionImpactAssessment ProcessingActivityDataProtectionImpactAssessment `db:"data_protection_impact_assessment"`
-		TransferImpactAssessment       ProcessingActivityTransferImpactAssessment       `db:"transfer_impact_assessment"`
-		LastReviewDate                 *time.Time                                       `db:"last_review_date"`
-		NextReviewDate                 *time.Time                                       `db:"next_review_date"`
-		Role                           ProcessingActivityRole                           `db:"role"`
-		DataProtectionOfficerID        *gid.GID                                         `db:"data_protection_officer_id"`
-		CreatedAt                      time.Time                                        `db:"created_at"`
-		UpdatedAt                      time.Time                                        `db:"updated_at"`
+		ID                                   gid.GID                                          `db:"id"`
+		SnapshotID                           *gid.GID                                         `db:"snapshot_id"`
+		SourceID                             *gid.GID                                         `db:"source_id"`
+		OrganizationID                       gid.GID                                          `db:"organization_id"`
+		Name                                 string                                           `db:"name"`
+		Purpose                              *string                                          `db:"purpose"`
+		DataSubjectCategory                  *string                                          `db:"data_subject_category"`
+		PersonalDataCategory                 *string                                          `db:"personal_data_category"`
+		SpecialOrCriminalData                ProcessingActivitySpecialOrCriminalDatum         `db:"special_or_criminal_data"`
+		ConsentEvidenceLink                  *string                                          `db:"consent_evidence_link"`
+		LawfulBasis                          ProcessingActivityLawfulBasis                    `db:"lawful_basis"`
+		Recipients                           *string                                          `db:"recipients"`
+		Location                             *string                                          `db:"location"`
+		InternationalTransfers               bool                                             `db:"international_transfers"`
+		TransferSafeguard                    *ProcessingActivityTransferSafeguard             `db:"transfer_safeguards"`
+		RetentionPeriod                      *string                                          `db:"retention_period"`
+		SecurityMeasures                     *string                                          `db:"security_measures"`
+		DataProtectionImpactAssessmentNeeded ProcessingActivityDataProtectionImpactAssessment `db:"data_protection_impact_assessment_needed"`
+		TransferImpactAssessmentNeeded       ProcessingActivityTransferImpactAssessment       `db:"transfer_impact_assessment_needed"`
+		LastReviewDate                       *time.Time                                       `db:"last_review_date"`
+		NextReviewDate                       *time.Time                                       `db:"next_review_date"`
+		Role                                 ProcessingActivityRole                           `db:"role"`
+		DataProtectionOfficerID              *gid.GID                                         `db:"data_protection_officer_id"`
+		CreatedAt                            time.Time                                        `db:"created_at"`
+		UpdatedAt                            time.Time                                        `db:"updated_at"`
 	}
 
 	ProcessingActivities []*ProcessingActivity
@@ -94,8 +94,8 @@ SELECT
 	transfer_safeguards,
 	retention_period,
 	security_measures,
-	data_protection_impact_assessment,
-	transfer_impact_assessment,
+	data_protection_impact_assessment_needed,
+	transfer_impact_assessment_needed,
 	last_review_date,
 	next_review_date,
 	role,
@@ -192,8 +192,8 @@ SELECT
 	transfer_safeguards,
 	retention_period,
 	security_measures,
-	data_protection_impact_assessment,
-	transfer_impact_assessment,
+	data_protection_impact_assessment_needed,
+	transfer_impact_assessment_needed,
 	last_review_date,
 	next_review_date,
 	role,
@@ -256,8 +256,8 @@ INSERT INTO processing_activities (
 	transfer_safeguards,
 	retention_period,
 	security_measures,
-	data_protection_impact_assessment,
-	transfer_impact_assessment,
+	data_protection_impact_assessment_needed,
+	transfer_impact_assessment_needed,
 	last_review_date,
 	next_review_date,
 	role,
@@ -283,8 +283,8 @@ INSERT INTO processing_activities (
 	@transfer_safeguards,
 	@retention_period,
 	@security_measures,
-	@data_protection_impact_assessment,
-	@transfer_impact_assessment,
+	@data_protection_impact_assessment_needed,
+	@transfer_impact_assessment_needed,
 	@last_review_date,
 	@next_review_date,
 	@role,
@@ -295,32 +295,32 @@ INSERT INTO processing_activities (
 `
 
 	args := pgx.StrictNamedArgs{
-		"id":                                p.ID,
-		"tenant_id":                         scope.GetTenantID(),
-		"snapshot_id":                       p.SnapshotID,
-		"source_id":                         p.SourceID,
-		"organization_id":                   p.OrganizationID,
-		"name":                              p.Name,
-		"purpose":                           p.Purpose,
-		"data_subject_category":             p.DataSubjectCategory,
-		"personal_data_category":            p.PersonalDataCategory,
-		"special_or_criminal_data":          p.SpecialOrCriminalData,
-		"consent_evidence_link":             p.ConsentEvidenceLink,
-		"lawful_basis":                      p.LawfulBasis,
-		"recipients":                        p.Recipients,
-		"location":                          p.Location,
-		"international_transfers":           p.InternationalTransfers,
-		"transfer_safeguards":               p.TransferSafeguard,
-		"retention_period":                  p.RetentionPeriod,
-		"security_measures":                 p.SecurityMeasures,
-		"data_protection_impact_assessment": p.DataProtectionImpactAssessment,
-		"transfer_impact_assessment":        p.TransferImpactAssessment,
-		"last_review_date":                  p.LastReviewDate,
-		"next_review_date":                  p.NextReviewDate,
-		"role":                              p.Role,
-		"data_protection_officer_id":        p.DataProtectionOfficerID,
-		"created_at":                        p.CreatedAt,
-		"updated_at":                        p.UpdatedAt,
+		"id":                       p.ID,
+		"tenant_id":                scope.GetTenantID(),
+		"snapshot_id":              p.SnapshotID,
+		"source_id":                p.SourceID,
+		"organization_id":          p.OrganizationID,
+		"name":                     p.Name,
+		"purpose":                  p.Purpose,
+		"data_subject_category":    p.DataSubjectCategory,
+		"personal_data_category":   p.PersonalDataCategory,
+		"special_or_criminal_data": p.SpecialOrCriminalData,
+		"consent_evidence_link":    p.ConsentEvidenceLink,
+		"lawful_basis":             p.LawfulBasis,
+		"recipients":               p.Recipients,
+		"location":                 p.Location,
+		"international_transfers":  p.InternationalTransfers,
+		"transfer_safeguards":      p.TransferSafeguard,
+		"retention_period":         p.RetentionPeriod,
+		"security_measures":        p.SecurityMeasures,
+		"data_protection_impact_assessment_needed": p.DataProtectionImpactAssessmentNeeded,
+		"transfer_impact_assessment_needed":        p.TransferImpactAssessmentNeeded,
+		"last_review_date":                         p.LastReviewDate,
+		"next_review_date":                         p.NextReviewDate,
+		"role":                                     p.Role,
+		"data_protection_officer_id":               p.DataProtectionOfficerID,
+		"created_at":                               p.CreatedAt,
+		"updated_at":                               p.UpdatedAt,
 	}
 
 	_, err := conn.Exec(ctx, q, args)
@@ -352,8 +352,8 @@ SET
 	transfer_safeguards = @transfer_safeguards,
 	retention_period = @retention_period,
 	security_measures = @security_measures,
-	data_protection_impact_assessment = @data_protection_impact_assessment,
-	transfer_impact_assessment = @transfer_impact_assessment,
+	data_protection_impact_assessment_needed = @data_protection_impact_assessment_needed,
+	transfer_impact_assessment_needed = @transfer_impact_assessment_needed,
 	last_review_date = @last_review_date,
 	next_review_date = @next_review_date,
 	role = @role,
@@ -368,27 +368,27 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"id":                                p.ID,
-		"name":                              p.Name,
-		"purpose":                           p.Purpose,
-		"data_subject_category":             p.DataSubjectCategory,
-		"personal_data_category":            p.PersonalDataCategory,
-		"special_or_criminal_data":          p.SpecialOrCriminalData,
-		"consent_evidence_link":             p.ConsentEvidenceLink,
-		"lawful_basis":                      p.LawfulBasis,
-		"recipients":                        p.Recipients,
-		"location":                          p.Location,
-		"international_transfers":           p.InternationalTransfers,
-		"transfer_safeguards":               p.TransferSafeguard,
-		"retention_period":                  p.RetentionPeriod,
-		"security_measures":                 p.SecurityMeasures,
-		"data_protection_impact_assessment": p.DataProtectionImpactAssessment,
-		"transfer_impact_assessment":        p.TransferImpactAssessment,
-		"last_review_date":                  p.LastReviewDate,
-		"next_review_date":                  p.NextReviewDate,
-		"role":                              p.Role,
-		"data_protection_officer_id":        p.DataProtectionOfficerID,
-		"updated_at":                        p.UpdatedAt,
+		"id":                       p.ID,
+		"name":                     p.Name,
+		"purpose":                  p.Purpose,
+		"data_subject_category":    p.DataSubjectCategory,
+		"personal_data_category":   p.PersonalDataCategory,
+		"special_or_criminal_data": p.SpecialOrCriminalData,
+		"consent_evidence_link":    p.ConsentEvidenceLink,
+		"lawful_basis":             p.LawfulBasis,
+		"recipients":               p.Recipients,
+		"location":                 p.Location,
+		"international_transfers":  p.InternationalTransfers,
+		"transfer_safeguards":      p.TransferSafeguard,
+		"retention_period":         p.RetentionPeriod,
+		"security_measures":        p.SecurityMeasures,
+		"data_protection_impact_assessment_needed": p.DataProtectionImpactAssessmentNeeded,
+		"transfer_impact_assessment_needed":        p.TransferImpactAssessmentNeeded,
+		"last_review_date":                         p.LastReviewDate,
+		"next_review_date":                         p.NextReviewDate,
+		"role":                                     p.Role,
+		"data_protection_officer_id":               p.DataProtectionOfficerID,
+		"updated_at":                               p.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -427,7 +427,7 @@ WHERE
 }
 
 func (pas ProcessingActivities) Snapshot(ctx context.Context, conn pg.Conn, scope Scoper, organizationID, snapshotID gid.GID) error {
-	snapshotters := []ProcessingActivitySnapshotter{ProcessingActivities{}, Vendors{}, ProcessingActivityVendors{}, ProcessingActivityDPIAs{}, ProcessingActivityTIAs{}}
+	snapshotters := []ProcessingActivitySnapshotter{ProcessingActivities{}, Vendors{}, ProcessingActivityVendors{}, DataProtectionImpactAssessments{}, TransferImpactAssessments{}}
 
 	for _, snapshotter := range snapshotters {
 		if err := snapshotter.InsertProcessingActivitySnapshots(ctx, conn, scope, organizationID, snapshotID); err != nil {
@@ -465,8 +465,8 @@ INSERT INTO processing_activities (
 	transfer_safeguards,
 	retention_period,
 	security_measures,
-	data_protection_impact_assessment,
-	transfer_impact_assessment,
+	data_protection_impact_assessment_needed,
+	transfer_impact_assessment_needed,
 	last_review_date,
 	next_review_date,
 	role,
@@ -493,8 +493,8 @@ SELECT
 	par.transfer_safeguards,
 	par.retention_period,
 	par.security_measures,
-	par.data_protection_impact_assessment,
-	par.transfer_impact_assessment,
+	par.data_protection_impact_assessment_needed,
+	par.transfer_impact_assessment_needed,
 	par.last_review_date,
 	par.next_review_date,
 	par.role,

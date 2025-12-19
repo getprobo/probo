@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<0ecca0ba0b410bf09fe2b0c62d003d0c>>
+ * @generated SignedSource<<9bde8f385a0f31b1738122ca97cb02e9>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -157,7 +157,7 @@ return {
               {
                 "alias": null,
                 "args": (v10/*: any*/),
-                "concreteType": "ProcessingActivityDPIAConnection",
+                "concreteType": "DataProtectionImpactAssessmentConnection",
                 "kind": "LinkedField",
                 "name": "dataProtectionImpactAssessments",
                 "plural": false,
@@ -172,7 +172,7 @@ return {
                   {
                     "alias": null,
                     "args": null,
-                    "concreteType": "ProcessingActivityDPIAEdge",
+                    "concreteType": "DataProtectionImpactAssessmentEdge",
                     "kind": "LinkedField",
                     "name": "edges",
                     "plural": true,
@@ -180,7 +180,7 @@ return {
                       {
                         "alias": null,
                         "args": null,
-                        "concreteType": "ProcessingActivityDPIA",
+                        "concreteType": "DataProtectionImpactAssessment",
                         "kind": "LinkedField",
                         "name": "node",
                         "plural": false,

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<4674be4782e5b88c71dab59ab04105df>>
+ * @generated SignedSource<<cf12e9f66e77db986c29774df1519063>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -119,7 +119,7 @@ return {
           "name": "filter"
         }
       ],
-      "concreteType": "ProcessingActivityTIAConnection",
+      "concreteType": "TransferImpactAssessmentConnection",
       "kind": "LinkedField",
       "name": "__ProcessingActivitiesPage_transferImpactAssessments_connection",
       "plural": false,
@@ -134,7 +134,7 @@ return {
         {
           "alias": null,
           "args": null,
-          "concreteType": "ProcessingActivityTIAEdge",
+          "concreteType": "TransferImpactAssessmentEdge",
           "kind": "LinkedField",
           "name": "edges",
           "plural": true,
@@ -142,7 +142,7 @@ return {
             {
               "alias": null,
               "args": null,
-              "concreteType": "ProcessingActivityTIA",
+              "concreteType": "TransferImpactAssessment",
               "kind": "LinkedField",
               "name": "node",
               "plural": false,

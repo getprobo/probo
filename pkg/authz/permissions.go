@@ -38,36 +38,36 @@ const (
 const (
 	ActionGet Action = "get"
 
-	ActionGetAssetType                  Action = "getAssetType"
-	ActionGetAssignedTo                 Action = "getAssignedTo"
-	ActionGetAuthMethod                 Action = "getAuthMethod"
-	ActionGetBusinessAssociateAgreement Action = "getBusinessAssociateAgreement"
-	ActionGetBusinessOwner              Action = "getBusinessOwner"
-	ActionGetCustomDomain               Action = "getCustomDomain"
-	ActionGetDataPrivacyAgreement       Action = "getDataPrivacyAgreement"
-	ActionGetDataProtectionOfficer      Action = "getDataProtectionOfficer"
-	ActionGetDPIA                       Action = "getDPIA"
-	ActionGetTIA                        Action = "getTIA"
-	ActionGetDocument                   Action = "getDocument"
-	ActionGetReport                     Action = "getReport"
-	ActionGetFile                       Action = "getFile"
-	ActionGetAudit                      Action = "getAudit"
-	ActionGetFileUrl                    Action = "getFileUrl"
-	ActionGetFramework                  Action = "getFramework"
-	ActionGetHorizontalLogoUrl          Action = "getHorizontalLogoUrl"
-	ActionGetLogoUrl                    Action = "getLogoUrl"
-	ActionGetMeasure                    Action = "getMeasure"
-	ActionGetNdaFileUrl                 Action = "getNdaFileUrl"
-	ActionGetOrganization               Action = "getOrganization"
-	ActionGetOwner                      Action = "getOwner"
-	ActionGetSecurityOwner              Action = "getSecurityOwner"
-	ActionGetSigned                     Action = "getSigned"
-	ActionGetSignableDocument           Action = "getSignableDocument"
-	ActionGetSnapshot                   Action = "getSnapshot"
-	ActionGetTask                       Action = "getTask"
-	ActionGetTrustCenter                Action = "getTrustCenter"
-	ActionGetTrustCenterFile            Action = "getTrustCenterFile"
-	ActionGetVendor                     Action = "getVendor"
+	ActionGetAssetType                      Action = "getAssetType"
+	ActionGetAssignedTo                     Action = "getAssignedTo"
+	ActionGetAuthMethod                     Action = "getAuthMethod"
+	ActionGetBusinessAssociateAgreement     Action = "getBusinessAssociateAgreement"
+	ActionGetBusinessOwner                  Action = "getBusinessOwner"
+	ActionGetCustomDomain                   Action = "getCustomDomain"
+	ActionGetDataPrivacyAgreement           Action = "getDataPrivacyAgreement"
+	ActionGetDataProtectionOfficer          Action = "getDataProtectionOfficer"
+	ActionGetDataProtectionImpactAssessment Action = "getDataProtectionImpactAssessment"
+	ActionGetTransferImpactAssessment       Action = "getTransferImpactAssessment"
+	ActionGetDocument                       Action = "getDocument"
+	ActionGetReport                         Action = "getReport"
+	ActionGetFile                           Action = "getFile"
+	ActionGetAudit                          Action = "getAudit"
+	ActionGetFileUrl                        Action = "getFileUrl"
+	ActionGetFramework                      Action = "getFramework"
+	ActionGetHorizontalLogoUrl              Action = "getHorizontalLogoUrl"
+	ActionGetLogoUrl                        Action = "getLogoUrl"
+	ActionGetMeasure                        Action = "getMeasure"
+	ActionGetNdaFileUrl                     Action = "getNdaFileUrl"
+	ActionGetOrganization                   Action = "getOrganization"
+	ActionGetOwner                          Action = "getOwner"
+	ActionGetSecurityOwner                  Action = "getSecurityOwner"
+	ActionGetSigned                         Action = "getSigned"
+	ActionGetSignableDocument               Action = "getSignableDocument"
+	ActionGetSnapshot                       Action = "getSnapshot"
+	ActionGetTask                           Action = "getTask"
+	ActionGetTrustCenter                    Action = "getTrustCenter"
+	ActionGetTrustCenterFile                Action = "getTrustCenterFile"
+	ActionGetVendor                         Action = "getVendor"
 
 	ActionActiveCount               Action = "activeCount"
 	ActionAudit                     Action = "audit"
@@ -119,42 +119,42 @@ const (
 	ActionListSignableDocuments       Action = "listSignableDocuments"
 	ActionListSignableDocumentVersion Action = "listSignableDocumentVersion"
 
-	ActionCreateAsset                  Action = "createAsset"
-	ActionCreateAudit                  Action = "createAudit"
-	ActionCreateContinualImprovement   Action = "createContinualImprovement"
-	ActionCreateControl                Action = "createControl"
-	ActionCreateControlAuditMapping    Action = "createControlAuditMapping"
-	ActionCreateControlDocumentMapping Action = "createControlDocumentMapping"
-	ActionCreateControlMeasureMapping  Action = "createControlMeasureMapping"
-	ActionCreateControlSnapshotMapping Action = "createControlSnapshotMapping"
-	ActionCreateCustomDomain           Action = "createCustomDomain"
-	ActionCreateDatum                  Action = "createDatum"
-	ActionCreateDocument               Action = "createDocument"
-	ActionCreateDraftDocumentVersion   Action = "createDraftDocumentVersion"
-	ActionCreateFramework              Action = "createFramework"
-	ActionCreateMeasure                Action = "createMeasure"
-	ActionCreateMeeting                Action = "createMeeting"
-	ActionCreateNonconformity          Action = "createNonconformity"
-	ActionCreateObligation             Action = "createObligation"
-	ActionCreatePeople                 Action = "createPeople"
-	ActionCreateProcessingActivity     Action = "createProcessingActivity"
-	ActionCreateProcessingActivityDPIA Action = "createProcessingActivityDPIA"
-	ActionCreateProcessingActivityTIA  Action = "createProcessingActivityTIA"
-	ActionCreateRisk                   Action = "createRisk"
-	ActionCreateRiskDocumentMapping    Action = "createRiskDocumentMapping"
-	ActionCreateRiskMeasureMapping     Action = "createRiskMeasureMapping"
-	ActionCreateRiskObligationMapping  Action = "createRiskObligationMapping"
-	ActionCreateSAMLConfiguration      Action = "createSAMLConfiguration"
-	ActionCreateSnapshot               Action = "createSnapshot"
-	ActionCreateTask                   Action = "createTask"
-	ActionCreateTrustCenter            Action = "createTrustCenter"
-	ActionCreateTrustCenterAccess      Action = "createTrustCenterAccess"
-	ActionCreateTrustCenterFile        Action = "createTrustCenterFile"
-	ActionCreateTrustCenterReference   Action = "createTrustCenterReference"
-	ActionCreateVendor                 Action = "createVendor"
-	ActionCreateVendorContact          Action = "createVendorContact"
-	ActionCreateVendorRiskAssessment   Action = "createVendorRiskAssessment"
-	ActionCreateVendorService          Action = "createVendorService"
+	ActionCreateAsset                          Action = "createAsset"
+	ActionCreateAudit                          Action = "createAudit"
+	ActionCreateContinualImprovement           Action = "createContinualImprovement"
+	ActionCreateControl                        Action = "createControl"
+	ActionCreateControlAuditMapping            Action = "createControlAuditMapping"
+	ActionCreateControlDocumentMapping         Action = "createControlDocumentMapping"
+	ActionCreateControlMeasureMapping          Action = "createControlMeasureMapping"
+	ActionCreateControlSnapshotMapping         Action = "createControlSnapshotMapping"
+	ActionCreateCustomDomain                   Action = "createCustomDomain"
+	ActionCreateDatum                          Action = "createDatum"
+	ActionCreateDocument                       Action = "createDocument"
+	ActionCreateDraftDocumentVersion           Action = "createDraftDocumentVersion"
+	ActionCreateFramework                      Action = "createFramework"
+	ActionCreateMeasure                        Action = "createMeasure"
+	ActionCreateMeeting                        Action = "createMeeting"
+	ActionCreateNonconformity                  Action = "createNonconformity"
+	ActionCreateObligation                     Action = "createObligation"
+	ActionCreatePeople                         Action = "createPeople"
+	ActionCreateProcessingActivity             Action = "createProcessingActivity"
+	ActionCreateDataProtectionImpactAssessment Action = "createDataProtectionImpactAssessment"
+	ActionCreateTransferImpactAssessment       Action = "createTransferImpactAssessment"
+	ActionCreateRisk                           Action = "createRisk"
+	ActionCreateRiskDocumentMapping            Action = "createRiskDocumentMapping"
+	ActionCreateRiskMeasureMapping             Action = "createRiskMeasureMapping"
+	ActionCreateRiskObligationMapping          Action = "createRiskObligationMapping"
+	ActionCreateSAMLConfiguration              Action = "createSAMLConfiguration"
+	ActionCreateSnapshot                       Action = "createSnapshot"
+	ActionCreateTask                           Action = "createTask"
+	ActionCreateTrustCenter                    Action = "createTrustCenter"
+	ActionCreateTrustCenterAccess              Action = "createTrustCenterAccess"
+	ActionCreateTrustCenterFile                Action = "createTrustCenterFile"
+	ActionCreateTrustCenterReference           Action = "createTrustCenterReference"
+	ActionCreateVendor                         Action = "createVendor"
+	ActionCreateVendorContact                  Action = "createVendorContact"
+	ActionCreateVendorRiskAssessment           Action = "createVendorRiskAssessment"
+	ActionCreateVendorService                  Action = "createVendorService"
 
 	ActionUpdateAsset                            Action = "updateAsset"
 	ActionUpdateAudit                            Action = "updateAudit"
@@ -172,8 +172,8 @@ const (
 	ActionUpdateOrganization                     Action = "updateOrganization"
 	ActionUpdatePeople                           Action = "updatePeople"
 	ActionUpdateProcessingActivity               Action = "updateProcessingActivity"
-	ActionUpdateProcessingActivityDPIA           Action = "updateProcessingActivityDPIA"
-	ActionUpdateProcessingActivityTIA            Action = "updateProcessingActivityTIA"
+	ActionUpdateDataProtectionImpactAssessment   Action = "updateDataProtectionImpactAssessment"
+	ActionUpdateTransferImpactAssessment         Action = "updateTransferImpactAssessment"
 	ActionUpdateRisk                             Action = "updateRisk"
 	ActionUpdateSAMLConfiguration                Action = "updateSAMLConfiguration"
 	ActionUpdateTask                             Action = "updateTask"
@@ -211,8 +211,8 @@ const (
 	ActionDeleteOrganizationHorizontalLogo       Action = "deleteOrganizationHorizontalLogo"
 	ActionDeletePeople                           Action = "deletePeople"
 	ActionDeleteProcessingActivity               Action = "deleteProcessingActivity"
-	ActionDeleteProcessingActivityDPIA           Action = "deleteProcessingActivityDPIA"
-	ActionDeleteProcessingActivityTIA            Action = "deleteProcessingActivityTIA"
+	ActionDeleteDataProtectionImpactAssessment   Action = "deleteDataProtectionImpactAssessment"
+	ActionDeleteTransferImpactAssessment         Action = "deleteTransferImpactAssessment"
 	ActionDeleteRisk                             Action = "deleteRisk"
 	ActionDeleteRiskDocumentMapping              Action = "deleteRiskDocumentMapping"
 	ActionDeleteRiskMeasureMapping               Action = "deleteRiskMeasureMapping"
@@ -674,33 +674,33 @@ var Permissions = map[uint16]map[Action][]Role{
 		ActionDeleteContinualImprovement: EditRoles,
 	},
 	coredata.ProcessingActivityEntityType: {
-		ActionGet:                      NonEmployeeRoles,
-		ActionGetOrganization:          NonEmployeeRoles,
-		ActionListVendors:              NonEmployeeRoles,
-		ActionGetDataProtectionOfficer: NonEmployeeRoles,
-		ActionGetDPIA:                  NonEmployeeRoles,
-		ActionGetTIA:                   NonEmployeeRoles,
+		ActionGet:                               NonEmployeeRoles,
+		ActionGetOrganization:                   NonEmployeeRoles,
+		ActionListVendors:                       NonEmployeeRoles,
+		ActionGetDataProtectionOfficer:          NonEmployeeRoles,
+		ActionGetDataProtectionImpactAssessment: NonEmployeeRoles,
+		ActionGetTransferImpactAssessment:       NonEmployeeRoles,
 
-		ActionUpdateProcessingActivity:     EditRoles,
-		ActionDeleteProcessingActivity:     EditRoles,
-		ActionCreateProcessingActivityDPIA: EditRoles,
-		ActionCreateProcessingActivityTIA:  EditRoles,
+		ActionUpdateProcessingActivity:             EditRoles,
+		ActionDeleteProcessingActivity:             EditRoles,
+		ActionCreateDataProtectionImpactAssessment: EditRoles,
+		ActionCreateTransferImpactAssessment:       EditRoles,
 	},
-	coredata.ProcessingActivityDPIAEntityType: {
+	coredata.DataProtectionImpactAssessmentEntityType: {
 		ActionGet:             NonEmployeeRoles,
 		ActionGetOrganization: NonEmployeeRoles,
 
-		ActionCreateProcessingActivityDPIA: EditRoles,
-		ActionUpdateProcessingActivityDPIA: EditRoles,
-		ActionDeleteProcessingActivityDPIA: EditRoles,
+		ActionCreateDataProtectionImpactAssessment: EditRoles,
+		ActionUpdateDataProtectionImpactAssessment: EditRoles,
+		ActionDeleteDataProtectionImpactAssessment: EditRoles,
 	},
-	coredata.ProcessingActivityTIAEntityType: {
+	coredata.TransferImpactAssessmentEntityType: {
 		ActionGet:             NonEmployeeRoles,
 		ActionGetOrganization: NonEmployeeRoles,
 
-		ActionCreateProcessingActivityTIA: EditRoles,
-		ActionUpdateProcessingActivityTIA: EditRoles,
-		ActionDeleteProcessingActivityTIA: EditRoles,
+		ActionCreateTransferImpactAssessment: EditRoles,
+		ActionUpdateTransferImpactAssessment: EditRoles,
+		ActionDeleteTransferImpactAssessment: EditRoles,
 	},
 	coredata.SnapshotEntityType: {
 		ActionGet:             NonEmployeeRoles,

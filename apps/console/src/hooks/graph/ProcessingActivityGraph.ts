@@ -39,8 +39,8 @@ export const processingActivityNodeQuery = graphql`
         transferSafeguards
         retentionPeriod
         securityMeasures
-        dataProtectionImpactAssessment
-        transferImpactAssessment
+        dataProtectionImpactAssessmentNeeded
+        transferImpactAssessmentNeeded
         lastReviewDate
         nextReviewDate
         role
@@ -58,7 +58,7 @@ export const processingActivityNodeQuery = graphql`
             }
           }
         }
-        dpia {
+        dataProtectionImpactAssessment {
           id
           description
           necessityAndProportionality
@@ -68,7 +68,7 @@ export const processingActivityNodeQuery = graphql`
           createdAt
           updatedAt
         }
-        tia {
+        transferImpactAssessment {
           id
           dataSubjects
           legalMechanism
@@ -111,8 +111,8 @@ export const createProcessingActivityMutation = graphql`
           transferSafeguards
           retentionPeriod
           securityMeasures
-          dataProtectionImpactAssessment
-          transferImpactAssessment
+          dataProtectionImpactAssessmentNeeded
+          transferImpactAssessmentNeeded
           lastReviewDate
           nextReviewDate
           role
@@ -154,8 +154,8 @@ export const updateProcessingActivityMutation = graphql`
         transferSafeguards
         retentionPeriod
         securityMeasures
-        dataProtectionImpactAssessment
-        transferImpactAssessment
+        dataProtectionImpactAssessmentNeeded
+        transferImpactAssessmentNeeded
         lastReviewDate
         nextReviewDate
         role
@@ -242,8 +242,8 @@ export const useCreateProcessingActivity = (connectionId?: string) => {
     transferSafeguards?: string;
     retentionPeriod?: string;
     securityMeasures?: string;
-    dataProtectionImpactAssessment?: string;
-    transferImpactAssessment?: string;
+    dataProtectionImpactAssessmentNeeded?: string;
+    transferImpactAssessmentNeeded?: string;
     lastReviewDate?: string;
     nextReviewDate?: string;
     role: string;
@@ -274,8 +274,8 @@ export const useCreateProcessingActivity = (connectionId?: string) => {
           transferSafeguards: input.transferSafeguards,
           retentionPeriod: input.retentionPeriod,
           securityMeasures: input.securityMeasures,
-          dataProtectionImpactAssessment: input.dataProtectionImpactAssessment,
-          transferImpactAssessment: input.transferImpactAssessment,
+          dataProtectionImpactAssessmentNeeded: input.dataProtectionImpactAssessmentNeeded,
+          transferImpactAssessmentNeeded: input.transferImpactAssessmentNeeded,
           lastReviewDate: input.lastReviewDate,
           nextReviewDate: input.nextReviewDate,
           role: input.role,
@@ -307,8 +307,8 @@ export const useUpdateProcessingActivity = () => {
     transferSafeguards?: string;
     retentionPeriod?: string;
     securityMeasures?: string;
-    dataProtectionImpactAssessment?: string;
-    transferImpactAssessment?: string;
+    dataProtectionImpactAssessmentNeeded?: string;
+    transferImpactAssessmentNeeded?: string;
     lastReviewDate?: string | null;
     nextReviewDate?: string | null;
     role?: string;
@@ -327,12 +327,12 @@ export const useUpdateProcessingActivity = () => {
   };
 };
 
-export const createProcessingActivityDPIAMutation = graphql`
+export const createDataProtectionImpactAssessmentMutation = graphql`
   mutation ProcessingActivityGraphCreateDPIAMutation(
-    $input: CreateProcessingActivityDPIAInput!
+    $input: CreateDataProtectionImpactAssessmentInput!
   ) {
-    createProcessingActivityDPIA(input: $input) {
-      processingActivityDpia {
+    createDataProtectionImpactAssessment(input: $input) {
+      dataProtectionImpactAssessment {
         id
         description
         necessityAndProportionality
@@ -346,12 +346,12 @@ export const createProcessingActivityDPIAMutation = graphql`
   }
 `;
 
-export const updateProcessingActivityDPIAMutation = graphql`
+export const updateDataProtectionImpactAssessmentMutation = graphql`
   mutation ProcessingActivityGraphUpdateDPIAMutation(
-    $input: UpdateProcessingActivityDPIAInput!
+    $input: UpdateDataProtectionImpactAssessmentInput!
   ) {
-    updateProcessingActivityDPIA(input: $input) {
-      processingActivityDpia {
+    updateDataProtectionImpactAssessment(input: $input) {
+      dataProtectionImpactAssessment {
         id
         description
         necessityAndProportionality
@@ -365,18 +365,18 @@ export const updateProcessingActivityDPIAMutation = graphql`
   }
 `;
 
-export const deleteProcessingActivityDPIAMutation = graphql`
+export const deleteDataProtectionImpactAssessmentMutation = graphql`
   mutation ProcessingActivityGraphDeleteDPIAMutation(
-    $input: DeleteProcessingActivityDPIAInput!
+    $input: DeleteDataProtectionImpactAssessmentInput!
   ) {
-    deleteProcessingActivityDPIA(input: $input) {
-      deletedProcessingActivityDpiaId
+    deleteDataProtectionImpactAssessment(input: $input) {
+      deletedDataProtectionImpactAssessmentId
     }
   }
 `;
 
-export const useCreateProcessingActivityDPIA = () => {
-  const [mutate] = useMutation(createProcessingActivityDPIAMutation);
+export const useCreateDataProtectionImpactAssessment = () => {
+  const [mutate] = useMutation(createDataProtectionImpactAssessmentMutation);
   const { __ } = useTranslate();
 
   return (input: {
@@ -399,8 +399,8 @@ export const useCreateProcessingActivityDPIA = () => {
   };
 };
 
-export const useUpdateProcessingActivityDPIA = () => {
-  const [mutate] = useMutation(updateProcessingActivityDPIAMutation);
+export const useUpdateDataProtectionImpactAssessment = () => {
+  const [mutate] = useMutation(updateDataProtectionImpactAssessmentMutation);
   const { __ } = useTranslate();
 
   return (input: {
@@ -423,12 +423,12 @@ export const useUpdateProcessingActivityDPIA = () => {
   };
 };
 
-export const useDeleteProcessingActivityDPIA = (
+export const useDeleteDataProtectionImpactAssessment = (
   dpia: { id: string },
   options?: { onSuccess?: () => void }
 ) => {
   const { __ } = useTranslate();
-  const [mutate] = useMutationWithToasts(deleteProcessingActivityDPIAMutation, {
+  const [mutate] = useMutationWithToasts(deleteDataProtectionImpactAssessmentMutation, {
     successMessage: __("DPIA deleted successfully"),
     errorMessage: __("Failed to delete DPIA"),
   });
@@ -440,7 +440,7 @@ export const useDeleteProcessingActivityDPIA = (
         mutate({
           variables: {
             input: {
-              processingActivityDpiaId: dpia.id,
+              dataProtectionImpactAssessmentId: dpia.id,
             },
           },
           onSuccess: options?.onSuccess,
@@ -454,12 +454,12 @@ export const useDeleteProcessingActivityDPIA = (
   };
 };
 
-export const createProcessingActivityTIAMutation = graphql`
+export const createTransferImpactAssessmentMutation = graphql`
   mutation ProcessingActivityGraphCreateTIAMutation(
-    $input: CreateProcessingActivityTIAInput!
+    $input: CreateTransferImpactAssessmentInput!
   ) {
-    createProcessingActivityTIA(input: $input) {
-      processingActivityTia {
+    createTransferImpactAssessment(input: $input) {
+      transferImpactAssessment {
         id
         dataSubjects
         legalMechanism
@@ -473,12 +473,12 @@ export const createProcessingActivityTIAMutation = graphql`
   }
 `;
 
-export const updateProcessingActivityTIAMutation = graphql`
+export const updateTransferImpactAssessmentMutation = graphql`
   mutation ProcessingActivityGraphUpdateTIAMutation(
-    $input: UpdateProcessingActivityTIAInput!
+    $input: UpdateTransferImpactAssessmentInput!
   ) {
-    updateProcessingActivityTIA(input: $input) {
-      processingActivityTia {
+    updateTransferImpactAssessment(input: $input) {
+      transferImpactAssessment {
         id
         dataSubjects
         legalMechanism
@@ -492,18 +492,18 @@ export const updateProcessingActivityTIAMutation = graphql`
   }
 `;
 
-export const deleteProcessingActivityTIAMutation = graphql`
+export const deleteTransferImpactAssessmentMutation = graphql`
   mutation ProcessingActivityGraphDeleteTIAMutation(
-    $input: DeleteProcessingActivityTIAInput!
+    $input: DeleteTransferImpactAssessmentInput!
   ) {
-    deleteProcessingActivityTIA(input: $input) {
-      deletedProcessingActivityTiaId
+    deleteTransferImpactAssessment(input: $input) {
+      deletedTransferImpactAssessmentId
     }
   }
 `;
 
-export const useCreateProcessingActivityTIA = () => {
-  const [mutate] = useMutation(createProcessingActivityTIAMutation);
+export const useCreateTransferImpactAssessment = () => {
+  const [mutate] = useMutation(createTransferImpactAssessmentMutation);
   const { __ } = useTranslate();
 
   return (input: {
@@ -526,8 +526,8 @@ export const useCreateProcessingActivityTIA = () => {
   };
 };
 
-export const useUpdateProcessingActivityTIA = () => {
-  const [mutate] = useMutation(updateProcessingActivityTIAMutation);
+export const useUpdateTransferImpactAssessment = () => {
+  const [mutate] = useMutation(updateTransferImpactAssessmentMutation);
   const { __ } = useTranslate();
 
   return (input: {
@@ -550,12 +550,12 @@ export const useUpdateProcessingActivityTIA = () => {
   };
 };
 
-export const useDeleteProcessingActivityTIA = (
+export const useDeleteTransferImpactAssessment = (
   tia: { id: string },
   options?: { onSuccess?: () => void }
 ) => {
   const { __ } = useTranslate();
-  const [mutate] = useMutationWithToasts(deleteProcessingActivityTIAMutation, {
+  const [mutate] = useMutationWithToasts(deleteTransferImpactAssessmentMutation, {
     successMessage: __("TIA deleted successfully"),
     errorMessage: __("Failed to delete TIA"),
   });
@@ -567,7 +567,7 @@ export const useDeleteProcessingActivityTIA = (
         mutate({
           variables: {
             input: {
-              processingActivityTiaId: tia.id,
+              transferImpactAssessmentId: tia.id,
             },
           },
           onSuccess: options?.onSuccess,

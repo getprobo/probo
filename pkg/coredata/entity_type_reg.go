@@ -67,8 +67,8 @@ const (
 	UserAPIKeyEntityType                       uint16 = 43
 	UserAPIKeyMembershipEntityType             uint16 = 44
 	MeetingEntityType                          uint16 = 45
-	ProcessingActivityDPIAEntityType           uint16 = 46
-	ProcessingActivityTIAEntityType            uint16 = 47
+	DataProtectionImpactAssessmentEntityType   uint16 = 46
+	TransferImpactAssessmentEntityType         uint16 = 47
 )
 
 type EntityInfo struct {
@@ -261,12 +261,12 @@ var entityRegistry = map[uint16]EntityInfo{
 		Model: "Meeting",
 		Table: "meetings",
 	},
-	ProcessingActivityDPIAEntityType: {
-		Model: "ProcessingActivityDPIA",
+	DataProtectionImpactAssessmentEntityType: {
+		Model: "DataProtectionImpactAssessment",
 		Table: "processing_activity_data_protection_impact_assessments",
 	},
-	ProcessingActivityTIAEntityType: {
-		Model: "ProcessingActivityTIA",
+	TransferImpactAssessmentEntityType: {
+		Model: "TransferImpactAssessment",
 		Table: "processing_activity_transfer_impact_assessments",
 	},
 }

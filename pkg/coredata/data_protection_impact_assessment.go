@@ -27,48 +27,48 @@ import (
 	"go.probo.inc/probo/pkg/page"
 )
 
-type ErrProcessingActivityDPIANotFound struct {
+type ErrDataProtectionImpactAssessmentNotFound struct {
 	Identifier string
 }
 
-func (e ErrProcessingActivityDPIANotFound) Error() string {
-	return fmt.Sprintf("processing activity dpia not found: %q", e.Identifier)
+func (e ErrDataProtectionImpactAssessmentNotFound) Error() string {
+	return fmt.Sprintf("data protection impact assessment not found: %q", e.Identifier)
 }
 
 type (
-	ProcessingActivityDPIA struct {
-		ID                          gid.GID                             `db:"id"`
-		SnapshotID                  *gid.GID                            `db:"snapshot_id"`
-		SourceID                    *gid.GID                            `db:"source_id"`
-		OrganizationID              gid.GID                             `db:"organization_id"`
-		ProcessingActivityID        gid.GID                             `db:"processing_activity_id"`
-		Description                 *string                             `db:"description"`
-		NecessityAndProportionality *string                             `db:"necessity_and_proportionality"`
-		PotentialRisk               *string                             `db:"potential_risk"`
-		Mitigations                 *string                             `db:"mitigations"`
-		ResidualRisk                *ProcessingActivityDPIAResidualRisk `db:"residual_risk"`
-		CreatedAt                   time.Time                           `db:"created_at"`
-		UpdatedAt                   time.Time                           `db:"updated_at"`
+	DataProtectionImpactAssessment struct {
+		ID                          gid.GID                                     `db:"id"`
+		SnapshotID                  *gid.GID                                    `db:"snapshot_id"`
+		SourceID                    *gid.GID                                    `db:"source_id"`
+		OrganizationID              gid.GID                                     `db:"organization_id"`
+		ProcessingActivityID        gid.GID                                     `db:"processing_activity_id"`
+		Description                 *string                                     `db:"description"`
+		NecessityAndProportionality *string                                     `db:"necessity_and_proportionality"`
+		PotentialRisk               *string                                     `db:"potential_risk"`
+		Mitigations                 *string                                     `db:"mitigations"`
+		ResidualRisk                *DataProtectionImpactAssessmentResidualRisk `db:"residual_risk"`
+		CreatedAt                   time.Time                                   `db:"created_at"`
+		UpdatedAt                   time.Time                                   `db:"updated_at"`
 	}
 
-	ProcessingActivityDPIAs []*ProcessingActivityDPIA
+	DataProtectionImpactAssessments []*DataProtectionImpactAssessment
 )
 
-func (dpia *ProcessingActivityDPIA) CursorKey(field ProcessingActivityDPIAOrderField) page.CursorKey {
+func (dpia *DataProtectionImpactAssessment) CursorKey(field DataProtectionImpactAssessmentOrderField) page.CursorKey {
 	switch field {
-	case ProcessingActivityDPIAOrderFieldCreatedAt:
+	case DataProtectionImpactAssessmentOrderFieldCreatedAt:
 		return page.NewCursorKey(dpia.ID, dpia.CreatedAt)
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", field))
 }
 
-func (dpias *ProcessingActivityDPIAs) CountByOrganizationID(
+func (dpias *DataProtectionImpactAssessments) CountByOrganizationID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
 	organizationID gid.GID,
-	filter *ProcessingActivityDPIAFilter,
+	filter *DataProtectionImpactAssessmentFilter,
 ) (int, error) {
 	q := `
 SELECT
@@ -92,19 +92,19 @@ WHERE
 	var count int
 	err := row.Scan(&count)
 	if err != nil {
-		return 0, fmt.Errorf("cannot count processing activity dpias: %w", err)
+		return 0, fmt.Errorf("cannot count data protection impact assessments: %w", err)
 	}
 
 	return count, nil
 }
 
-func (dpias *ProcessingActivityDPIAs) LoadByOrganizationID(
+func (dpias *DataProtectionImpactAssessments) LoadByOrganizationID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
 	organizationID gid.GID,
-	cursor *page.Cursor[ProcessingActivityDPIAOrderField],
-	filter *ProcessingActivityDPIAFilter,
+	cursor *page.Cursor[DataProtectionImpactAssessmentOrderField],
+	filter *DataProtectionImpactAssessmentFilter,
 ) error {
 	q := `
 SELECT
@@ -138,12 +138,12 @@ WHERE
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query processing activity dpias: %w", err)
+		return fmt.Errorf("cannot query data protection impact assessments: %w", err)
 	}
 
-	results, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[ProcessingActivityDPIA])
+	results, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[DataProtectionImpactAssessment])
 	if err != nil {
-		return fmt.Errorf("cannot collect processing activity dpias: %w", err)
+		return fmt.Errorf("cannot collect data protection impact assessments: %w", err)
 	}
 
 	*dpias = results
@@ -151,7 +151,7 @@ WHERE
 	return nil
 }
 
-func (dpia *ProcessingActivityDPIA) LoadByID(
+func (dpia *DataProtectionImpactAssessment) LoadByID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
@@ -186,15 +186,15 @@ LIMIT 1;
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query processing activity dpia: %w", err)
+		return fmt.Errorf("cannot query data protection impact assessment: %w", err)
 	}
 
-	result, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[ProcessingActivityDPIA])
+	result, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[DataProtectionImpactAssessment])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrProcessingActivityDPIANotFound{Identifier: dpiaID.String()}
+			return &ErrDataProtectionImpactAssessmentNotFound{Identifier: dpiaID.String()}
 		}
-		return fmt.Errorf("cannot collect processing activity dpia: %w", err)
+		return fmt.Errorf("cannot collect data protection impact assessment: %w", err)
 	}
 
 	*dpia = result
@@ -202,7 +202,7 @@ LIMIT 1;
 	return nil
 }
 
-func (dpia *ProcessingActivityDPIA) LoadByProcessingActivityID(
+func (dpia *DataProtectionImpactAssessment) LoadByProcessingActivityID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
@@ -237,15 +237,15 @@ LIMIT 1;
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query processing activity dpia: %w", err)
+		return fmt.Errorf("cannot query data protection impact assessment: %w", err)
 	}
 
-	result, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[ProcessingActivityDPIA])
+	result, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[DataProtectionImpactAssessment])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrProcessingActivityDPIANotFound{Identifier: processingActivityID.String()}
+			return &ErrDataProtectionImpactAssessmentNotFound{Identifier: processingActivityID.String()}
 		}
-		return fmt.Errorf("cannot collect processing activity dpia: %w", err)
+		return fmt.Errorf("cannot collect data protection impact assessment: %w", err)
 	}
 
 	*dpia = result
@@ -253,7 +253,7 @@ LIMIT 1;
 	return nil
 }
 
-func (dpia *ProcessingActivityDPIA) Insert(
+func (dpia *DataProtectionImpactAssessment) Insert(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
@@ -302,13 +302,13 @@ INSERT INTO processing_activity_data_protection_impact_assessments (
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot insert processing activity dpia: %w", err)
+		return fmt.Errorf("cannot insert data protection impact assessment: %w", err)
 	}
 
 	return nil
 }
 
-func (dpia *ProcessingActivityDPIA) Update(
+func (dpia *DataProtectionImpactAssessment) Update(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
@@ -341,13 +341,13 @@ WHERE
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot update processing activity dpia: %w", err)
+		return fmt.Errorf("cannot update data protection impact assessment: %w", err)
 	}
 
 	return nil
 }
 
-func (dpia *ProcessingActivityDPIA) Delete(
+func (dpia *DataProtectionImpactAssessment) Delete(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
@@ -366,13 +366,13 @@ WHERE
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot delete processing activity dpia: %w", err)
+		return fmt.Errorf("cannot delete data protection impact assessment: %w", err)
 	}
 
 	return nil
 }
 
-func (dpias ProcessingActivityDPIAs) InsertProcessingActivitySnapshots(
+func (dpias DataProtectionImpactAssessments) InsertProcessingActivitySnapshots(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
@@ -419,13 +419,14 @@ WHERE dpia.tenant_id = @tenant_id AND dpia.organization_id = @organization_id AN
 		"tenant_id":        scope.GetTenantID(),
 		"snapshot_id":      snapshotID,
 		"organization_id":  organizationID,
-		"dpia_entity_type": ProcessingActivityDPIAEntityType,
+		"dpia_entity_type": DataProtectionImpactAssessmentEntityType,
 	}
 
 	_, err := conn.Exec(ctx, query, args)
 	if err != nil {
-		return fmt.Errorf("cannot insert processing activity dpia snapshots: %w", err)
+		return fmt.Errorf("cannot insert data protection impact assessment snapshots: %w", err)
 	}
 
 	return nil
 }
+

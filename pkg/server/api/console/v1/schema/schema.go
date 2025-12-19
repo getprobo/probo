@@ -55,6 +55,8 @@ type ResolverRoot interface {
 	ContinualImprovementConnection() ContinualImprovementConnectionResolver
 	Control() ControlResolver
 	ControlConnection() ControlConnectionResolver
+	DataProtectionImpactAssessment() DataProtectionImpactAssessmentResolver
+	DataProtectionImpactAssessmentConnection() DataProtectionImpactAssessmentConnectionResolver
 	Datum() DatumResolver
 	DatumConnection() DatumConnectionResolver
 	Document() DocumentResolver
@@ -83,10 +85,6 @@ type ResolverRoot interface {
 	PeopleConnection() PeopleConnectionResolver
 	ProcessingActivity() ProcessingActivityResolver
 	ProcessingActivityConnection() ProcessingActivityConnectionResolver
-	ProcessingActivityDPIA() ProcessingActivityDPIAResolver
-	ProcessingActivityDPIAConnection() ProcessingActivityDPIAConnectionResolver
-	ProcessingActivityTIA() ProcessingActivityTIAResolver
-	ProcessingActivityTIAConnection() ProcessingActivityTIAConnectionResolver
 	Query() QueryResolver
 	Report() ReportResolver
 	Risk() RiskResolver
@@ -97,6 +95,8 @@ type ResolverRoot interface {
 	SnapshotConnection() SnapshotConnectionResolver
 	Task() TaskResolver
 	TaskConnection() TaskConnectionResolver
+	TransferImpactAssessment() TransferImpactAssessmentResolver
+	TransferImpactAssessmentConnection() TransferImpactAssessmentConnectionResolver
 	TrustCenter() TrustCenterResolver
 	TrustCenterAccess() TrustCenterAccessResolver
 	TrustCenterDocumentAccess() TrustCenterDocumentAccessResolver
@@ -304,6 +304,10 @@ type ComplexityRoot struct {
 		CustomDomain func(childComplexity int) int
 	}
 
+	CreateDataProtectionImpactAssessmentPayload struct {
+		DataProtectionImpactAssessment func(childComplexity int) int
+	}
+
 	CreateDatumPayload struct {
 		DatumEdge func(childComplexity int) int
 	}
@@ -349,16 +353,8 @@ type ComplexityRoot struct {
 		PeopleEdge func(childComplexity int) int
 	}
 
-	CreateProcessingActivityDPIAPayload struct {
-		ProcessingActivityDpia func(childComplexity int) int
-	}
-
 	CreateProcessingActivityPayload struct {
 		ProcessingActivityEdge func(childComplexity int) int
-	}
-
-	CreateProcessingActivityTIAPayload struct {
-		ProcessingActivityTia func(childComplexity int) int
 	}
 
 	CreateRiskDocumentMappingPayload struct {
@@ -390,6 +386,10 @@ type ComplexityRoot struct {
 
 	CreateTaskPayload struct {
 		TaskEdge func(childComplexity int) int
+	}
+
+	CreateTransferImpactAssessmentPayload struct {
+		TransferImpactAssessment func(childComplexity int) int
 	}
 
 	CreateTrustCenterAccessPayload struct {
@@ -437,6 +437,30 @@ type ComplexityRoot struct {
 		TTL     func(childComplexity int) int
 		Type    func(childComplexity int) int
 		Value   func(childComplexity int) int
+	}
+
+	DataProtectionImpactAssessment struct {
+		CreatedAt                   func(childComplexity int) int
+		Description                 func(childComplexity int) int
+		ID                          func(childComplexity int) int
+		Mitigations                 func(childComplexity int) int
+		NecessityAndProportionality func(childComplexity int) int
+		Organization                func(childComplexity int) int
+		PotentialRisk               func(childComplexity int) int
+		ProcessingActivity          func(childComplexity int) int
+		ResidualRisk                func(childComplexity int) int
+		UpdatedAt                   func(childComplexity int) int
+	}
+
+	DataProtectionImpactAssessmentConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	DataProtectionImpactAssessmentEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
 	}
 
 	Datum struct {
@@ -506,6 +530,10 @@ type ComplexityRoot struct {
 		DeletedCustomDomainID func(childComplexity int) int
 	}
 
+	DeleteDataProtectionImpactAssessmentPayload struct {
+		DeletedDataProtectionImpactAssessmentID func(childComplexity int) int
+	}
+
 	DeleteDatumPayload struct {
 		DeletedDatumID func(childComplexity int) int
 	}
@@ -558,16 +586,8 @@ type ComplexityRoot struct {
 		DeletedPeopleID func(childComplexity int) int
 	}
 
-	DeleteProcessingActivityDPIAPayload struct {
-		DeletedProcessingActivityDpiaID func(childComplexity int) int
-	}
-
 	DeleteProcessingActivityPayload struct {
 		DeletedProcessingActivityID func(childComplexity int) int
-	}
-
-	DeleteProcessingActivityTIAPayload struct {
-		DeletedProcessingActivityTiaID func(childComplexity int) int
 	}
 
 	DeleteRiskDocumentMappingPayload struct {
@@ -599,6 +619,10 @@ type ComplexityRoot struct {
 
 	DeleteTaskPayload struct {
 		DeletedTaskID func(childComplexity int) int
+	}
+
+	DeleteTransferImpactAssessmentPayload struct {
+		DeletedTransferImpactAssessmentID func(childComplexity int) int
 	}
 
 	DeleteTrustCenterAccessPayload struct {
@@ -939,6 +963,7 @@ type ComplexityRoot struct {
 		CreateControlMeasureMapping            func(childComplexity int, input types.CreateControlMeasureMappingInput) int
 		CreateControlSnapshotMapping           func(childComplexity int, input types.CreateControlSnapshotMappingInput) int
 		CreateCustomDomain                     func(childComplexity int, input types.CreateCustomDomainInput) int
+		CreateDataProtectionImpactAssessment   func(childComplexity int, input types.CreateDataProtectionImpactAssessmentInput) int
 		CreateDatum                            func(childComplexity int, input types.CreateDatumInput) int
 		CreateDocument                         func(childComplexity int, input types.CreateDocumentInput) int
 		CreateDraftDocumentVersion             func(childComplexity int, input types.CreateDraftDocumentVersionInput) int
@@ -950,8 +975,6 @@ type ComplexityRoot struct {
 		CreateOrganization                     func(childComplexity int, input types.CreateOrganizationInput) int
 		CreatePeople                           func(childComplexity int, input types.CreatePeopleInput) int
 		CreateProcessingActivity               func(childComplexity int, input types.CreateProcessingActivityInput) int
-		CreateProcessingActivityDpia           func(childComplexity int, input types.CreateProcessingActivityDPIAInput) int
-		CreateProcessingActivityTia            func(childComplexity int, input types.CreateProcessingActivityTIAInput) int
 		CreateRisk                             func(childComplexity int, input types.CreateRiskInput) int
 		CreateRiskDocumentMapping              func(childComplexity int, input types.CreateRiskDocumentMappingInput) int
 		CreateRiskMeasureMapping               func(childComplexity int, input types.CreateRiskMeasureMappingInput) int
@@ -959,6 +982,7 @@ type ComplexityRoot struct {
 		CreateSAMLConfiguration                func(childComplexity int, input types.CreateSAMLConfigurationInput) int
 		CreateSnapshot                         func(childComplexity int, input types.CreateSnapshotInput) int
 		CreateTask                             func(childComplexity int, input types.CreateTaskInput) int
+		CreateTransferImpactAssessment         func(childComplexity int, input types.CreateTransferImpactAssessmentInput) int
 		CreateTrustCenterAccess                func(childComplexity int, input types.CreateTrustCenterAccessInput) int
 		CreateTrustCenterFile                  func(childComplexity int, input types.CreateTrustCenterFileInput) int
 		CreateTrustCenterReference             func(childComplexity int, input types.CreateTrustCenterReferenceInput) int
@@ -976,6 +1000,7 @@ type ComplexityRoot struct {
 		DeleteControlMeasureMapping            func(childComplexity int, input types.DeleteControlMeasureMappingInput) int
 		DeleteControlSnapshotMapping           func(childComplexity int, input types.DeleteControlSnapshotMappingInput) int
 		DeleteCustomDomain                     func(childComplexity int, input types.DeleteCustomDomainInput) int
+		DeleteDataProtectionImpactAssessment   func(childComplexity int, input types.DeleteDataProtectionImpactAssessmentInput) int
 		DeleteDatum                            func(childComplexity int, input types.DeleteDatumInput) int
 		DeleteDocument                         func(childComplexity int, input types.DeleteDocumentInput) int
 		DeleteDraftDocumentVersion             func(childComplexity int, input types.DeleteDraftDocumentVersionInput) int
@@ -990,8 +1015,6 @@ type ComplexityRoot struct {
 		DeleteOrganizationHorizontalLogo       func(childComplexity int, input types.DeleteOrganizationHorizontalLogoInput) int
 		DeletePeople                           func(childComplexity int, input types.DeletePeopleInput) int
 		DeleteProcessingActivity               func(childComplexity int, input types.DeleteProcessingActivityInput) int
-		DeleteProcessingActivityDpia           func(childComplexity int, input types.DeleteProcessingActivityDPIAInput) int
-		DeleteProcessingActivityTia            func(childComplexity int, input types.DeleteProcessingActivityTIAInput) int
 		DeleteRisk                             func(childComplexity int, input types.DeleteRiskInput) int
 		DeleteRiskDocumentMapping              func(childComplexity int, input types.DeleteRiskDocumentMappingInput) int
 		DeleteRiskMeasureMapping               func(childComplexity int, input types.DeleteRiskMeasureMappingInput) int
@@ -999,6 +1022,7 @@ type ComplexityRoot struct {
 		DeleteSAMLConfiguration                func(childComplexity int, input types.DeleteSAMLConfigurationInput) int
 		DeleteSnapshot                         func(childComplexity int, input types.DeleteSnapshotInput) int
 		DeleteTask                             func(childComplexity int, input types.DeleteTaskInput) int
+		DeleteTransferImpactAssessment         func(childComplexity int, input types.DeleteTransferImpactAssessmentInput) int
 		DeleteTrustCenterAccess                func(childComplexity int, input types.DeleteTrustCenterAccessInput) int
 		DeleteTrustCenterFile                  func(childComplexity int, input types.DeleteTrustCenterFileInput) int
 		DeleteTrustCenterNda                   func(childComplexity int, input types.DeleteTrustCenterNDAInput) int
@@ -1031,6 +1055,7 @@ type ComplexityRoot struct {
 		UpdateAudit                            func(childComplexity int, input types.UpdateAuditInput) int
 		UpdateContinualImprovement             func(childComplexity int, input types.UpdateContinualImprovementInput) int
 		UpdateControl                          func(childComplexity int, input types.UpdateControlInput) int
+		UpdateDataProtectionImpactAssessment   func(childComplexity int, input types.UpdateDataProtectionImpactAssessmentInput) int
 		UpdateDatum                            func(childComplexity int, input types.UpdateDatumInput) int
 		UpdateDocument                         func(childComplexity int, input types.UpdateDocumentInput) int
 		UpdateDocumentVersion                  func(childComplexity int, input types.UpdateDocumentVersionInput) int
@@ -1044,11 +1069,10 @@ type ComplexityRoot struct {
 		UpdateOrganizationContext              func(childComplexity int, input types.UpdateOrganizationContextInput) int
 		UpdatePeople                           func(childComplexity int, input types.UpdatePeopleInput) int
 		UpdateProcessingActivity               func(childComplexity int, input types.UpdateProcessingActivityInput) int
-		UpdateProcessingActivityDpia           func(childComplexity int, input types.UpdateProcessingActivityDPIAInput) int
-		UpdateProcessingActivityTia            func(childComplexity int, input types.UpdateProcessingActivityTIAInput) int
 		UpdateRisk                             func(childComplexity int, input types.UpdateRiskInput) int
 		UpdateSAMLConfiguration                func(childComplexity int, input types.UpdateSAMLConfigurationInput) int
 		UpdateTask                             func(childComplexity int, input types.UpdateTaskInput) int
+		UpdateTransferImpactAssessment         func(childComplexity int, input types.UpdateTransferImpactAssessmentInput) int
 		UpdateTrustCenter                      func(childComplexity int, input types.UpdateTrustCenterInput) int
 		UpdateTrustCenterAccess                func(childComplexity int, input types.UpdateTrustCenterAccessInput) int
 		UpdateTrustCenterFile                  func(childComplexity int, input types.UpdateTrustCenterFileInput) int
@@ -1134,7 +1158,7 @@ type ComplexityRoot struct {
 		CreatedAt                       func(childComplexity int) int
 		CustomDomain                    func(childComplexity int) int
 		Data                            func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DatumOrderBy, filter *types.DatumFilter) int
-		DataProtectionImpactAssessments func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityDPIAOrderBy, filter *types.ProcessingActivityDPIAFilter) int
+		DataProtectionImpactAssessments func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DataProtectionImpactAssessmentOrderBy, filter *types.DataProtectionImpactAssessmentFilter) int
 		Description                     func(childComplexity int) int
 		Documents                       func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy, filter *types.DocumentFilter) int
 		Email                           func(childComplexity int) int
@@ -1157,7 +1181,7 @@ type ComplexityRoot struct {
 		SlackConnections                func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
 		Snapshots                       func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.SnapshotOrderBy) int
 		Tasks                           func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TaskOrderBy) int
-		TransferImpactAssessments       func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityTIAOrderBy, filter *types.ProcessingActivityTIAFilter) int
+		TransferImpactAssessments       func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TransferImpactAssessmentOrderBy, filter *types.TransferImpactAssessmentFilter) int
 		TrustCenter                     func(childComplexity int) int
 		TrustCenterFiles                func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterFileOrderField]) int
 		UpdatedAt                       func(childComplexity int) int
@@ -1212,34 +1236,34 @@ type ComplexityRoot struct {
 	}
 
 	ProcessingActivity struct {
-		ConsentEvidenceLink            func(childComplexity int) int
-		CreatedAt                      func(childComplexity int) int
-		DataProtectionImpactAssessment func(childComplexity int) int
-		DataProtectionOfficer          func(childComplexity int) int
-		DataSubjectCategory            func(childComplexity int) int
-		Dpia                           func(childComplexity int) int
-		ID                             func(childComplexity int) int
-		InternationalTransfers         func(childComplexity int) int
-		LastReviewDate                 func(childComplexity int) int
-		LawfulBasis                    func(childComplexity int) int
-		Location                       func(childComplexity int) int
-		Name                           func(childComplexity int) int
-		NextReviewDate                 func(childComplexity int) int
-		Organization                   func(childComplexity int) int
-		PersonalDataCategory           func(childComplexity int) int
-		Purpose                        func(childComplexity int) int
-		Recipients                     func(childComplexity int) int
-		RetentionPeriod                func(childComplexity int) int
-		Role                           func(childComplexity int) int
-		SecurityMeasures               func(childComplexity int) int
-		SnapshotID                     func(childComplexity int) int
-		SourceID                       func(childComplexity int) int
-		SpecialOrCriminalData          func(childComplexity int) int
-		Tia                            func(childComplexity int) int
-		TransferImpactAssessment       func(childComplexity int) int
-		TransferSafeguards             func(childComplexity int) int
-		UpdatedAt                      func(childComplexity int) int
-		Vendors                        func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorOrderBy) int
+		ConsentEvidenceLink                  func(childComplexity int) int
+		CreatedAt                            func(childComplexity int) int
+		DataProtectionImpactAssessment       func(childComplexity int) int
+		DataProtectionImpactAssessmentNeeded func(childComplexity int) int
+		DataProtectionOfficer                func(childComplexity int) int
+		DataSubjectCategory                  func(childComplexity int) int
+		ID                                   func(childComplexity int) int
+		InternationalTransfers               func(childComplexity int) int
+		LastReviewDate                       func(childComplexity int) int
+		LawfulBasis                          func(childComplexity int) int
+		Location                             func(childComplexity int) int
+		Name                                 func(childComplexity int) int
+		NextReviewDate                       func(childComplexity int) int
+		Organization                         func(childComplexity int) int
+		PersonalDataCategory                 func(childComplexity int) int
+		Purpose                              func(childComplexity int) int
+		Recipients                           func(childComplexity int) int
+		RetentionPeriod                      func(childComplexity int) int
+		Role                                 func(childComplexity int) int
+		SecurityMeasures                     func(childComplexity int) int
+		SnapshotID                           func(childComplexity int) int
+		SourceID                             func(childComplexity int) int
+		SpecialOrCriminalData                func(childComplexity int) int
+		TransferImpactAssessment             func(childComplexity int) int
+		TransferImpactAssessmentNeeded       func(childComplexity int) int
+		TransferSafeguards                   func(childComplexity int) int
+		UpdatedAt                            func(childComplexity int) int
+		Vendors                              func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorOrderBy) int
 	}
 
 	ProcessingActivityConnection struct {
@@ -1248,55 +1272,7 @@ type ComplexityRoot struct {
 		TotalCount func(childComplexity int) int
 	}
 
-	ProcessingActivityDPIA struct {
-		CreatedAt                   func(childComplexity int) int
-		Description                 func(childComplexity int) int
-		ID                          func(childComplexity int) int
-		Mitigations                 func(childComplexity int) int
-		NecessityAndProportionality func(childComplexity int) int
-		Organization                func(childComplexity int) int
-		PotentialRisk               func(childComplexity int) int
-		ProcessingActivity          func(childComplexity int) int
-		ResidualRisk                func(childComplexity int) int
-		UpdatedAt                   func(childComplexity int) int
-	}
-
-	ProcessingActivityDPIAConnection struct {
-		Edges      func(childComplexity int) int
-		PageInfo   func(childComplexity int) int
-		TotalCount func(childComplexity int) int
-	}
-
-	ProcessingActivityDPIAEdge struct {
-		Cursor func(childComplexity int) int
-		Node   func(childComplexity int) int
-	}
-
 	ProcessingActivityEdge struct {
-		Cursor func(childComplexity int) int
-		Node   func(childComplexity int) int
-	}
-
-	ProcessingActivityTIA struct {
-		CreatedAt             func(childComplexity int) int
-		DataSubjects          func(childComplexity int) int
-		ID                    func(childComplexity int) int
-		LegalMechanism        func(childComplexity int) int
-		LocalLawRisk          func(childComplexity int) int
-		Organization          func(childComplexity int) int
-		ProcessingActivity    func(childComplexity int) int
-		SupplementaryMeasures func(childComplexity int) int
-		Transfer              func(childComplexity int) int
-		UpdatedAt             func(childComplexity int) int
-	}
-
-	ProcessingActivityTIAConnection struct {
-		Edges      func(childComplexity int) int
-		PageInfo   func(childComplexity int) int
-		TotalCount func(childComplexity int) int
-	}
-
-	ProcessingActivityTIAEdge struct {
 		Cursor func(childComplexity int) int
 		Node   func(childComplexity int) int
 	}
@@ -1496,6 +1472,30 @@ type ComplexityRoot struct {
 		Node   func(childComplexity int) int
 	}
 
+	TransferImpactAssessment struct {
+		CreatedAt             func(childComplexity int) int
+		DataSubjects          func(childComplexity int) int
+		ID                    func(childComplexity int) int
+		LegalMechanism        func(childComplexity int) int
+		LocalLawRisk          func(childComplexity int) int
+		Organization          func(childComplexity int) int
+		ProcessingActivity    func(childComplexity int) int
+		SupplementaryMeasures func(childComplexity int) int
+		Transfer              func(childComplexity int) int
+		UpdatedAt             func(childComplexity int) int
+	}
+
+	TransferImpactAssessmentConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	TransferImpactAssessmentEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
 	TrustCenter struct {
 		Accesses     func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterAccessOrderField]) int
 		Active       func(childComplexity int) int
@@ -1625,6 +1625,10 @@ type ComplexityRoot struct {
 		Control func(childComplexity int) int
 	}
 
+	UpdateDataProtectionImpactAssessmentPayload struct {
+		DataProtectionImpactAssessment func(childComplexity int) int
+	}
+
 	UpdateDatumPayload struct {
 		Datum func(childComplexity int) int
 	}
@@ -1673,16 +1677,8 @@ type ComplexityRoot struct {
 		People func(childComplexity int) int
 	}
 
-	UpdateProcessingActivityDPIAPayload struct {
-		ProcessingActivityDpia func(childComplexity int) int
-	}
-
 	UpdateProcessingActivityPayload struct {
 		ProcessingActivity func(childComplexity int) int
-	}
-
-	UpdateProcessingActivityTIAPayload struct {
-		ProcessingActivityTia func(childComplexity int) int
 	}
 
 	UpdateRiskPayload struct {
@@ -1695,6 +1691,10 @@ type ComplexityRoot struct {
 
 	UpdateTaskPayload struct {
 		Task func(childComplexity int) int
+	}
+
+	UpdateTransferImpactAssessmentPayload struct {
+		TransferImpactAssessment func(childComplexity int) int
 	}
 
 	UpdateTrustCenterAccessPayload struct {
@@ -1981,6 +1981,13 @@ type ControlResolver interface {
 type ControlConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.ControlConnection) (int, error)
 }
+type DataProtectionImpactAssessmentResolver interface {
+	ProcessingActivity(ctx context.Context, obj *types.DataProtectionImpactAssessment) (*types.ProcessingActivity, error)
+	Organization(ctx context.Context, obj *types.DataProtectionImpactAssessment) (*types.Organization, error)
+}
+type DataProtectionImpactAssessmentConnectionResolver interface {
+	TotalCount(ctx context.Context, obj *types.DataProtectionImpactAssessmentConnection) (int, error)
+}
 type DatumResolver interface {
 	Owner(ctx context.Context, obj *types.Datum) (*types.People, error)
 	Vendors(ctx context.Context, obj *types.Datum, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorOrderBy) (*types.VendorConnection, error)
@@ -2187,12 +2194,12 @@ type MutationResolver interface {
 	CreateProcessingActivity(ctx context.Context, input types.CreateProcessingActivityInput) (*types.CreateProcessingActivityPayload, error)
 	UpdateProcessingActivity(ctx context.Context, input types.UpdateProcessingActivityInput) (*types.UpdateProcessingActivityPayload, error)
 	DeleteProcessingActivity(ctx context.Context, input types.DeleteProcessingActivityInput) (*types.DeleteProcessingActivityPayload, error)
-	CreateProcessingActivityDpia(ctx context.Context, input types.CreateProcessingActivityDPIAInput) (*types.CreateProcessingActivityDPIAPayload, error)
-	UpdateProcessingActivityDpia(ctx context.Context, input types.UpdateProcessingActivityDPIAInput) (*types.UpdateProcessingActivityDPIAPayload, error)
-	DeleteProcessingActivityDpia(ctx context.Context, input types.DeleteProcessingActivityDPIAInput) (*types.DeleteProcessingActivityDPIAPayload, error)
-	CreateProcessingActivityTia(ctx context.Context, input types.CreateProcessingActivityTIAInput) (*types.CreateProcessingActivityTIAPayload, error)
-	UpdateProcessingActivityTia(ctx context.Context, input types.UpdateProcessingActivityTIAInput) (*types.UpdateProcessingActivityTIAPayload, error)
-	DeleteProcessingActivityTia(ctx context.Context, input types.DeleteProcessingActivityTIAInput) (*types.DeleteProcessingActivityTIAPayload, error)
+	CreateDataProtectionImpactAssessment(ctx context.Context, input types.CreateDataProtectionImpactAssessmentInput) (*types.CreateDataProtectionImpactAssessmentPayload, error)
+	UpdateDataProtectionImpactAssessment(ctx context.Context, input types.UpdateDataProtectionImpactAssessmentInput) (*types.UpdateDataProtectionImpactAssessmentPayload, error)
+	DeleteDataProtectionImpactAssessment(ctx context.Context, input types.DeleteDataProtectionImpactAssessmentInput) (*types.DeleteDataProtectionImpactAssessmentPayload, error)
+	CreateTransferImpactAssessment(ctx context.Context, input types.CreateTransferImpactAssessmentInput) (*types.CreateTransferImpactAssessmentPayload, error)
+	UpdateTransferImpactAssessment(ctx context.Context, input types.UpdateTransferImpactAssessmentInput) (*types.UpdateTransferImpactAssessmentPayload, error)
+	DeleteTransferImpactAssessment(ctx context.Context, input types.DeleteTransferImpactAssessmentInput) (*types.DeleteTransferImpactAssessmentPayload, error)
 	CreateSnapshot(ctx context.Context, input types.CreateSnapshotInput) (*types.CreateSnapshotPayload, error)
 	DeleteSnapshot(ctx context.Context, input types.DeleteSnapshotInput) (*types.DeleteSnapshotPayload, error)
 	CreateCustomDomain(ctx context.Context, input types.CreateCustomDomainInput) (*types.CreateCustomDomainPayload, error)
@@ -2247,8 +2254,8 @@ type OrganizationResolver interface {
 	Obligations(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ObligationOrderBy, filter *types.ObligationFilter) (*types.ObligationConnection, error)
 	ContinualImprovements(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ContinualImprovementOrderBy, filter *types.ContinualImprovementFilter) (*types.ContinualImprovementConnection, error)
 	ProcessingActivities(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityOrderBy, filter *types.ProcessingActivityFilter) (*types.ProcessingActivityConnection, error)
-	DataProtectionImpactAssessments(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityDPIAOrderBy, filter *types.ProcessingActivityDPIAFilter) (*types.ProcessingActivityDPIAConnection, error)
-	TransferImpactAssessments(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityTIAOrderBy, filter *types.ProcessingActivityTIAFilter) (*types.ProcessingActivityTIAConnection, error)
+	DataProtectionImpactAssessments(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DataProtectionImpactAssessmentOrderBy, filter *types.DataProtectionImpactAssessmentFilter) (*types.DataProtectionImpactAssessmentConnection, error)
+	TransferImpactAssessments(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TransferImpactAssessmentOrderBy, filter *types.TransferImpactAssessmentFilter) (*types.TransferImpactAssessmentConnection, error)
 	Snapshots(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.SnapshotOrderBy) (*types.SnapshotConnection, error)
 	TrustCenterFiles(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterFileOrderField]) (*types.TrustCenterFileConnection, error)
 	TrustCenter(ctx context.Context, obj *types.Organization) (*types.TrustCenter, error)
@@ -2263,25 +2270,11 @@ type ProcessingActivityResolver interface {
 
 	DataProtectionOfficer(ctx context.Context, obj *types.ProcessingActivity) (*types.People, error)
 	Vendors(ctx context.Context, obj *types.ProcessingActivity, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorOrderBy) (*types.VendorConnection, error)
-	Dpia(ctx context.Context, obj *types.ProcessingActivity) (*types.ProcessingActivityDpia, error)
-	Tia(ctx context.Context, obj *types.ProcessingActivity) (*types.ProcessingActivityTia, error)
+	DataProtectionImpactAssessment(ctx context.Context, obj *types.ProcessingActivity) (*types.DataProtectionImpactAssessment, error)
+	TransferImpactAssessment(ctx context.Context, obj *types.ProcessingActivity) (*types.TransferImpactAssessment, error)
 }
 type ProcessingActivityConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.ProcessingActivityConnection) (int, error)
-}
-type ProcessingActivityDPIAResolver interface {
-	ProcessingActivity(ctx context.Context, obj *types.ProcessingActivityDpia) (*types.ProcessingActivity, error)
-	Organization(ctx context.Context, obj *types.ProcessingActivityDpia) (*types.Organization, error)
-}
-type ProcessingActivityDPIAConnectionResolver interface {
-	TotalCount(ctx context.Context, obj *types.ProcessingActivityDPIAConnection) (int, error)
-}
-type ProcessingActivityTIAResolver interface {
-	ProcessingActivity(ctx context.Context, obj *types.ProcessingActivityTia) (*types.ProcessingActivity, error)
-	Organization(ctx context.Context, obj *types.ProcessingActivityTia) (*types.Organization, error)
-}
-type ProcessingActivityTIAConnectionResolver interface {
-	TotalCount(ctx context.Context, obj *types.ProcessingActivityTIAConnection) (int, error)
 }
 type QueryResolver interface {
 	Node(ctx context.Context, id gid.GID) (types.Node, error)
@@ -2330,6 +2323,13 @@ type TaskResolver interface {
 }
 type TaskConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.TaskConnection) (int, error)
+}
+type TransferImpactAssessmentResolver interface {
+	ProcessingActivity(ctx context.Context, obj *types.TransferImpactAssessment) (*types.ProcessingActivity, error)
+	Organization(ctx context.Context, obj *types.TransferImpactAssessment) (*types.Organization, error)
+}
+type TransferImpactAssessmentConnectionResolver interface {
+	TotalCount(ctx context.Context, obj *types.TransferImpactAssessmentConnection) (int, error)
 }
 type TrustCenterResolver interface {
 	NdaFileURL(ctx context.Context, obj *types.TrustCenter) (*string, error)
@@ -3049,6 +3049,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.CreateCustomDomainPayload.CustomDomain(childComplexity), true
 
+	case "CreateDataProtectionImpactAssessmentPayload.dataProtectionImpactAssessment":
+		if e.complexity.CreateDataProtectionImpactAssessmentPayload.DataProtectionImpactAssessment == nil {
+			break
+		}
+
+		return e.complexity.CreateDataProtectionImpactAssessmentPayload.DataProtectionImpactAssessment(childComplexity), true
+
 	case "CreateDatumPayload.datumEdge":
 		if e.complexity.CreateDatumPayload.DatumEdge == nil {
 			break
@@ -3132,26 +3139,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.CreatePeoplePayload.PeopleEdge(childComplexity), true
 
-	case "CreateProcessingActivityDPIAPayload.processingActivityDpia":
-		if e.complexity.CreateProcessingActivityDPIAPayload.ProcessingActivityDpia == nil {
-			break
-		}
-
-		return e.complexity.CreateProcessingActivityDPIAPayload.ProcessingActivityDpia(childComplexity), true
-
 	case "CreateProcessingActivityPayload.processingActivityEdge":
 		if e.complexity.CreateProcessingActivityPayload.ProcessingActivityEdge == nil {
 			break
 		}
 
 		return e.complexity.CreateProcessingActivityPayload.ProcessingActivityEdge(childComplexity), true
-
-	case "CreateProcessingActivityTIAPayload.processingActivityTia":
-		if e.complexity.CreateProcessingActivityTIAPayload.ProcessingActivityTia == nil {
-			break
-		}
-
-		return e.complexity.CreateProcessingActivityTIAPayload.ProcessingActivityTia(childComplexity), true
 
 	case "CreateRiskDocumentMappingPayload.documentEdge":
 		if e.complexity.CreateRiskDocumentMappingPayload.DocumentEdge == nil {
@@ -3219,6 +3212,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.CreateTaskPayload.TaskEdge(childComplexity), true
+
+	case "CreateTransferImpactAssessmentPayload.transferImpactAssessment":
+		if e.complexity.CreateTransferImpactAssessmentPayload.TransferImpactAssessment == nil {
+			break
+		}
+
+		return e.complexity.CreateTransferImpactAssessmentPayload.TransferImpactAssessment(childComplexity), true
 
 	case "CreateTrustCenterAccessPayload.trustCenterAccessEdge":
 		if e.complexity.CreateTrustCenterAccessPayload.TrustCenterAccessEdge == nil {
@@ -3348,6 +3348,99 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.DNSRecordInstruction.Value(childComplexity), true
+
+	case "DataProtectionImpactAssessment.createdAt":
+		if e.complexity.DataProtectionImpactAssessment.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.DataProtectionImpactAssessment.CreatedAt(childComplexity), true
+	case "DataProtectionImpactAssessment.description":
+		if e.complexity.DataProtectionImpactAssessment.Description == nil {
+			break
+		}
+
+		return e.complexity.DataProtectionImpactAssessment.Description(childComplexity), true
+	case "DataProtectionImpactAssessment.id":
+		if e.complexity.DataProtectionImpactAssessment.ID == nil {
+			break
+		}
+
+		return e.complexity.DataProtectionImpactAssessment.ID(childComplexity), true
+	case "DataProtectionImpactAssessment.mitigations":
+		if e.complexity.DataProtectionImpactAssessment.Mitigations == nil {
+			break
+		}
+
+		return e.complexity.DataProtectionImpactAssessment.Mitigations(childComplexity), true
+	case "DataProtectionImpactAssessment.necessityAndProportionality":
+		if e.complexity.DataProtectionImpactAssessment.NecessityAndProportionality == nil {
+			break
+		}
+
+		return e.complexity.DataProtectionImpactAssessment.NecessityAndProportionality(childComplexity), true
+	case "DataProtectionImpactAssessment.organization":
+		if e.complexity.DataProtectionImpactAssessment.Organization == nil {
+			break
+		}
+
+		return e.complexity.DataProtectionImpactAssessment.Organization(childComplexity), true
+	case "DataProtectionImpactAssessment.potentialRisk":
+		if e.complexity.DataProtectionImpactAssessment.PotentialRisk == nil {
+			break
+		}
+
+		return e.complexity.DataProtectionImpactAssessment.PotentialRisk(childComplexity), true
+	case "DataProtectionImpactAssessment.processingActivity":
+		if e.complexity.DataProtectionImpactAssessment.ProcessingActivity == nil {
+			break
+		}
+
+		return e.complexity.DataProtectionImpactAssessment.ProcessingActivity(childComplexity), true
+	case "DataProtectionImpactAssessment.residualRisk":
+		if e.complexity.DataProtectionImpactAssessment.ResidualRisk == nil {
+			break
+		}
+
+		return e.complexity.DataProtectionImpactAssessment.ResidualRisk(childComplexity), true
+	case "DataProtectionImpactAssessment.updatedAt":
+		if e.complexity.DataProtectionImpactAssessment.UpdatedAt == nil {
+			break
+		}
+
+		return e.complexity.DataProtectionImpactAssessment.UpdatedAt(childComplexity), true
+
+	case "DataProtectionImpactAssessmentConnection.edges":
+		if e.complexity.DataProtectionImpactAssessmentConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.DataProtectionImpactAssessmentConnection.Edges(childComplexity), true
+	case "DataProtectionImpactAssessmentConnection.pageInfo":
+		if e.complexity.DataProtectionImpactAssessmentConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.DataProtectionImpactAssessmentConnection.PageInfo(childComplexity), true
+	case "DataProtectionImpactAssessmentConnection.totalCount":
+		if e.complexity.DataProtectionImpactAssessmentConnection.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.DataProtectionImpactAssessmentConnection.TotalCount(childComplexity), true
+
+	case "DataProtectionImpactAssessmentEdge.cursor":
+		if e.complexity.DataProtectionImpactAssessmentEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.DataProtectionImpactAssessmentEdge.Cursor(childComplexity), true
+	case "DataProtectionImpactAssessmentEdge.node":
+		if e.complexity.DataProtectionImpactAssessmentEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.DataProtectionImpactAssessmentEdge.Node(childComplexity), true
 
 	case "Datum.createdAt":
 		if e.complexity.Datum.CreatedAt == nil {
@@ -3535,6 +3628,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.DeleteCustomDomainPayload.DeletedCustomDomainID(childComplexity), true
 
+	case "DeleteDataProtectionImpactAssessmentPayload.deletedDataProtectionImpactAssessmentId":
+		if e.complexity.DeleteDataProtectionImpactAssessmentPayload.DeletedDataProtectionImpactAssessmentID == nil {
+			break
+		}
+
+		return e.complexity.DeleteDataProtectionImpactAssessmentPayload.DeletedDataProtectionImpactAssessmentID(childComplexity), true
+
 	case "DeleteDatumPayload.deletedDatumId":
 		if e.complexity.DeleteDatumPayload.DeletedDatumID == nil {
 			break
@@ -3626,26 +3726,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.DeletePeoplePayload.DeletedPeopleID(childComplexity), true
 
-	case "DeleteProcessingActivityDPIAPayload.deletedProcessingActivityDpiaId":
-		if e.complexity.DeleteProcessingActivityDPIAPayload.DeletedProcessingActivityDpiaID == nil {
-			break
-		}
-
-		return e.complexity.DeleteProcessingActivityDPIAPayload.DeletedProcessingActivityDpiaID(childComplexity), true
-
 	case "DeleteProcessingActivityPayload.deletedProcessingActivityId":
 		if e.complexity.DeleteProcessingActivityPayload.DeletedProcessingActivityID == nil {
 			break
 		}
 
 		return e.complexity.DeleteProcessingActivityPayload.DeletedProcessingActivityID(childComplexity), true
-
-	case "DeleteProcessingActivityTIAPayload.deletedProcessingActivityTiaId":
-		if e.complexity.DeleteProcessingActivityTIAPayload.DeletedProcessingActivityTiaID == nil {
-			break
-		}
-
-		return e.complexity.DeleteProcessingActivityTIAPayload.DeletedProcessingActivityTiaID(childComplexity), true
 
 	case "DeleteRiskDocumentMappingPayload.deletedDocumentId":
 		if e.complexity.DeleteRiskDocumentMappingPayload.DeletedDocumentID == nil {
@@ -3713,6 +3799,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.DeleteTaskPayload.DeletedTaskID(childComplexity), true
+
+	case "DeleteTransferImpactAssessmentPayload.deletedTransferImpactAssessmentId":
+		if e.complexity.DeleteTransferImpactAssessmentPayload.DeletedTransferImpactAssessmentID == nil {
+			break
+		}
+
+		return e.complexity.DeleteTransferImpactAssessmentPayload.DeletedTransferImpactAssessmentID(childComplexity), true
 
 	case "DeleteTrustCenterAccessPayload.deletedTrustCenterAccessId":
 		if e.complexity.DeleteTrustCenterAccessPayload.DeletedTrustCenterAccessID == nil {
@@ -4999,6 +5092,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.CreateCustomDomain(childComplexity, args["input"].(types.CreateCustomDomainInput)), true
+	case "Mutation.createDataProtectionImpactAssessment":
+		if e.complexity.Mutation.CreateDataProtectionImpactAssessment == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createDataProtectionImpactAssessment_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateDataProtectionImpactAssessment(childComplexity, args["input"].(types.CreateDataProtectionImpactAssessmentInput)), true
 	case "Mutation.createDatum":
 		if e.complexity.Mutation.CreateDatum == nil {
 			break
@@ -5120,28 +5224,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.CreateProcessingActivity(childComplexity, args["input"].(types.CreateProcessingActivityInput)), true
-	case "Mutation.createProcessingActivityDPIA":
-		if e.complexity.Mutation.CreateProcessingActivityDpia == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_createProcessingActivityDPIA_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.CreateProcessingActivityDpia(childComplexity, args["input"].(types.CreateProcessingActivityDPIAInput)), true
-	case "Mutation.createProcessingActivityTIA":
-		if e.complexity.Mutation.CreateProcessingActivityTia == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_createProcessingActivityTIA_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.CreateProcessingActivityTia(childComplexity, args["input"].(types.CreateProcessingActivityTIAInput)), true
 	case "Mutation.createRisk":
 		if e.complexity.Mutation.CreateRisk == nil {
 			break
@@ -5219,6 +5301,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.CreateTask(childComplexity, args["input"].(types.CreateTaskInput)), true
+	case "Mutation.createTransferImpactAssessment":
+		if e.complexity.Mutation.CreateTransferImpactAssessment == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createTransferImpactAssessment_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateTransferImpactAssessment(childComplexity, args["input"].(types.CreateTransferImpactAssessmentInput)), true
 	case "Mutation.createTrustCenterAccess":
 		if e.complexity.Mutation.CreateTrustCenterAccess == nil {
 			break
@@ -5406,6 +5499,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.DeleteCustomDomain(childComplexity, args["input"].(types.DeleteCustomDomainInput)), true
+	case "Mutation.deleteDataProtectionImpactAssessment":
+		if e.complexity.Mutation.DeleteDataProtectionImpactAssessment == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteDataProtectionImpactAssessment_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteDataProtectionImpactAssessment(childComplexity, args["input"].(types.DeleteDataProtectionImpactAssessmentInput)), true
 	case "Mutation.deleteDatum":
 		if e.complexity.Mutation.DeleteDatum == nil {
 			break
@@ -5560,28 +5664,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.DeleteProcessingActivity(childComplexity, args["input"].(types.DeleteProcessingActivityInput)), true
-	case "Mutation.deleteProcessingActivityDPIA":
-		if e.complexity.Mutation.DeleteProcessingActivityDpia == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_deleteProcessingActivityDPIA_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.DeleteProcessingActivityDpia(childComplexity, args["input"].(types.DeleteProcessingActivityDPIAInput)), true
-	case "Mutation.deleteProcessingActivityTIA":
-		if e.complexity.Mutation.DeleteProcessingActivityTia == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_deleteProcessingActivityTIA_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.DeleteProcessingActivityTia(childComplexity, args["input"].(types.DeleteProcessingActivityTIAInput)), true
 	case "Mutation.deleteRisk":
 		if e.complexity.Mutation.DeleteRisk == nil {
 			break
@@ -5659,6 +5741,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.DeleteTask(childComplexity, args["input"].(types.DeleteTaskInput)), true
+	case "Mutation.deleteTransferImpactAssessment":
+		if e.complexity.Mutation.DeleteTransferImpactAssessment == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteTransferImpactAssessment_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteTransferImpactAssessment(childComplexity, args["input"].(types.DeleteTransferImpactAssessmentInput)), true
 	case "Mutation.deleteTrustCenterAccess":
 		if e.complexity.Mutation.DeleteTrustCenterAccess == nil {
 			break
@@ -6011,6 +6104,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.UpdateControl(childComplexity, args["input"].(types.UpdateControlInput)), true
+	case "Mutation.updateDataProtectionImpactAssessment":
+		if e.complexity.Mutation.UpdateDataProtectionImpactAssessment == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateDataProtectionImpactAssessment_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateDataProtectionImpactAssessment(childComplexity, args["input"].(types.UpdateDataProtectionImpactAssessmentInput)), true
 	case "Mutation.updateDatum":
 		if e.complexity.Mutation.UpdateDatum == nil {
 			break
@@ -6154,28 +6258,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.UpdateProcessingActivity(childComplexity, args["input"].(types.UpdateProcessingActivityInput)), true
-	case "Mutation.updateProcessingActivityDPIA":
-		if e.complexity.Mutation.UpdateProcessingActivityDpia == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_updateProcessingActivityDPIA_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.UpdateProcessingActivityDpia(childComplexity, args["input"].(types.UpdateProcessingActivityDPIAInput)), true
-	case "Mutation.updateProcessingActivityTIA":
-		if e.complexity.Mutation.UpdateProcessingActivityTia == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_updateProcessingActivityTIA_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.UpdateProcessingActivityTia(childComplexity, args["input"].(types.UpdateProcessingActivityTIAInput)), true
 	case "Mutation.updateRisk":
 		if e.complexity.Mutation.UpdateRisk == nil {
 			break
@@ -6209,6 +6291,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.UpdateTask(childComplexity, args["input"].(types.UpdateTaskInput)), true
+	case "Mutation.updateTransferImpactAssessment":
+		if e.complexity.Mutation.UpdateTransferImpactAssessment == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateTransferImpactAssessment_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateTransferImpactAssessment(childComplexity, args["input"].(types.UpdateTransferImpactAssessmentInput)), true
 	case "Mutation.updateTrustCenter":
 		if e.complexity.Mutation.UpdateTrustCenter == nil {
 			break
@@ -6715,7 +6808,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Organization.DataProtectionImpactAssessments(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.ProcessingActivityDPIAOrderBy), args["filter"].(*types.ProcessingActivityDPIAFilter)), true
+		return e.complexity.Organization.DataProtectionImpactAssessments(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.DataProtectionImpactAssessmentOrderBy), args["filter"].(*types.DataProtectionImpactAssessmentFilter)), true
 	case "Organization.description":
 		if e.complexity.Organization.Description == nil {
 			break
@@ -6928,7 +7021,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Organization.TransferImpactAssessments(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.ProcessingActivityTIAOrderBy), args["filter"].(*types.ProcessingActivityTIAFilter)), true
+		return e.complexity.Organization.TransferImpactAssessments(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.TransferImpactAssessmentOrderBy), args["filter"].(*types.TransferImpactAssessmentFilter)), true
 	case "Organization.trustCenter":
 		if e.complexity.Organization.TrustCenter == nil {
 			break
@@ -7145,6 +7238,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.ProcessingActivity.DataProtectionImpactAssessment(childComplexity), true
+	case "ProcessingActivity.dataProtectionImpactAssessmentNeeded":
+		if e.complexity.ProcessingActivity.DataProtectionImpactAssessmentNeeded == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivity.DataProtectionImpactAssessmentNeeded(childComplexity), true
 	case "ProcessingActivity.dataProtectionOfficer":
 		if e.complexity.ProcessingActivity.DataProtectionOfficer == nil {
 			break
@@ -7157,12 +7256,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.ProcessingActivity.DataSubjectCategory(childComplexity), true
-	case "ProcessingActivity.dpia":
-		if e.complexity.ProcessingActivity.Dpia == nil {
-			break
-		}
-
-		return e.complexity.ProcessingActivity.Dpia(childComplexity), true
 	case "ProcessingActivity.id":
 		if e.complexity.ProcessingActivity.ID == nil {
 			break
@@ -7265,18 +7358,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.ProcessingActivity.SpecialOrCriminalData(childComplexity), true
-	case "ProcessingActivity.tia":
-		if e.complexity.ProcessingActivity.Tia == nil {
-			break
-		}
-
-		return e.complexity.ProcessingActivity.Tia(childComplexity), true
 	case "ProcessingActivity.transferImpactAssessment":
 		if e.complexity.ProcessingActivity.TransferImpactAssessment == nil {
 			break
 		}
 
 		return e.complexity.ProcessingActivity.TransferImpactAssessment(childComplexity), true
+	case "ProcessingActivity.transferImpactAssessmentNeeded":
+		if e.complexity.ProcessingActivity.TransferImpactAssessmentNeeded == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivity.TransferImpactAssessmentNeeded(childComplexity), true
 	case "ProcessingActivity.transferSafeguards":
 		if e.complexity.ProcessingActivity.TransferSafeguards == nil {
 			break
@@ -7320,99 +7413,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.ProcessingActivityConnection.TotalCount(childComplexity), true
 
-	case "ProcessingActivityDPIA.createdAt":
-		if e.complexity.ProcessingActivityDPIA.CreatedAt == nil {
-			break
-		}
-
-		return e.complexity.ProcessingActivityDPIA.CreatedAt(childComplexity), true
-	case "ProcessingActivityDPIA.description":
-		if e.complexity.ProcessingActivityDPIA.Description == nil {
-			break
-		}
-
-		return e.complexity.ProcessingActivityDPIA.Description(childComplexity), true
-	case "ProcessingActivityDPIA.id":
-		if e.complexity.ProcessingActivityDPIA.ID == nil {
-			break
-		}
-
-		return e.complexity.ProcessingActivityDPIA.ID(childComplexity), true
-	case "ProcessingActivityDPIA.mitigations":
-		if e.complexity.ProcessingActivityDPIA.Mitigations == nil {
-			break
-		}
-
-		return e.complexity.ProcessingActivityDPIA.Mitigations(childComplexity), true
-	case "ProcessingActivityDPIA.necessityAndProportionality":
-		if e.complexity.ProcessingActivityDPIA.NecessityAndProportionality == nil {
-			break
-		}
-
-		return e.complexity.ProcessingActivityDPIA.NecessityAndProportionality(childComplexity), true
-	case "ProcessingActivityDPIA.organization":
-		if e.complexity.ProcessingActivityDPIA.Organization == nil {
-			break
-		}
-
-		return e.complexity.ProcessingActivityDPIA.Organization(childComplexity), true
-	case "ProcessingActivityDPIA.potentialRisk":
-		if e.complexity.ProcessingActivityDPIA.PotentialRisk == nil {
-			break
-		}
-
-		return e.complexity.ProcessingActivityDPIA.PotentialRisk(childComplexity), true
-	case "ProcessingActivityDPIA.processingActivity":
-		if e.complexity.ProcessingActivityDPIA.ProcessingActivity == nil {
-			break
-		}
-
-		return e.complexity.ProcessingActivityDPIA.ProcessingActivity(childComplexity), true
-	case "ProcessingActivityDPIA.residualRisk":
-		if e.complexity.ProcessingActivityDPIA.ResidualRisk == nil {
-			break
-		}
-
-		return e.complexity.ProcessingActivityDPIA.ResidualRisk(childComplexity), true
-	case "ProcessingActivityDPIA.updatedAt":
-		if e.complexity.ProcessingActivityDPIA.UpdatedAt == nil {
-			break
-		}
-
-		return e.complexity.ProcessingActivityDPIA.UpdatedAt(childComplexity), true
-
-	case "ProcessingActivityDPIAConnection.edges":
-		if e.complexity.ProcessingActivityDPIAConnection.Edges == nil {
-			break
-		}
-
-		return e.complexity.ProcessingActivityDPIAConnection.Edges(childComplexity), true
-	case "ProcessingActivityDPIAConnection.pageInfo":
-		if e.complexity.ProcessingActivityDPIAConnection.PageInfo == nil {
-			break
-		}
-
-		return e.complexity.ProcessingActivityDPIAConnection.PageInfo(childComplexity), true
-	case "ProcessingActivityDPIAConnection.totalCount":
-		if e.complexity.ProcessingActivityDPIAConnection.TotalCount == nil {
-			break
-		}
-
-		return e.complexity.ProcessingActivityDPIAConnection.TotalCount(childComplexity), true
-
-	case "ProcessingActivityDPIAEdge.cursor":
-		if e.complexity.ProcessingActivityDPIAEdge.Cursor == nil {
-			break
-		}
-
-		return e.complexity.ProcessingActivityDPIAEdge.Cursor(childComplexity), true
-	case "ProcessingActivityDPIAEdge.node":
-		if e.complexity.ProcessingActivityDPIAEdge.Node == nil {
-			break
-		}
-
-		return e.complexity.ProcessingActivityDPIAEdge.Node(childComplexity), true
-
 	case "ProcessingActivityEdge.cursor":
 		if e.complexity.ProcessingActivityEdge.Cursor == nil {
 			break
@@ -7425,99 +7425,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.ProcessingActivityEdge.Node(childComplexity), true
-
-	case "ProcessingActivityTIA.createdAt":
-		if e.complexity.ProcessingActivityTIA.CreatedAt == nil {
-			break
-		}
-
-		return e.complexity.ProcessingActivityTIA.CreatedAt(childComplexity), true
-	case "ProcessingActivityTIA.dataSubjects":
-		if e.complexity.ProcessingActivityTIA.DataSubjects == nil {
-			break
-		}
-
-		return e.complexity.ProcessingActivityTIA.DataSubjects(childComplexity), true
-	case "ProcessingActivityTIA.id":
-		if e.complexity.ProcessingActivityTIA.ID == nil {
-			break
-		}
-
-		return e.complexity.ProcessingActivityTIA.ID(childComplexity), true
-	case "ProcessingActivityTIA.legalMechanism":
-		if e.complexity.ProcessingActivityTIA.LegalMechanism == nil {
-			break
-		}
-
-		return e.complexity.ProcessingActivityTIA.LegalMechanism(childComplexity), true
-	case "ProcessingActivityTIA.localLawRisk":
-		if e.complexity.ProcessingActivityTIA.LocalLawRisk == nil {
-			break
-		}
-
-		return e.complexity.ProcessingActivityTIA.LocalLawRisk(childComplexity), true
-	case "ProcessingActivityTIA.organization":
-		if e.complexity.ProcessingActivityTIA.Organization == nil {
-			break
-		}
-
-		return e.complexity.ProcessingActivityTIA.Organization(childComplexity), true
-	case "ProcessingActivityTIA.processingActivity":
-		if e.complexity.ProcessingActivityTIA.ProcessingActivity == nil {
-			break
-		}
-
-		return e.complexity.ProcessingActivityTIA.ProcessingActivity(childComplexity), true
-	case "ProcessingActivityTIA.supplementaryMeasures":
-		if e.complexity.ProcessingActivityTIA.SupplementaryMeasures == nil {
-			break
-		}
-
-		return e.complexity.ProcessingActivityTIA.SupplementaryMeasures(childComplexity), true
-	case "ProcessingActivityTIA.transfer":
-		if e.complexity.ProcessingActivityTIA.Transfer == nil {
-			break
-		}
-
-		return e.complexity.ProcessingActivityTIA.Transfer(childComplexity), true
-	case "ProcessingActivityTIA.updatedAt":
-		if e.complexity.ProcessingActivityTIA.UpdatedAt == nil {
-			break
-		}
-
-		return e.complexity.ProcessingActivityTIA.UpdatedAt(childComplexity), true
-
-	case "ProcessingActivityTIAConnection.edges":
-		if e.complexity.ProcessingActivityTIAConnection.Edges == nil {
-			break
-		}
-
-		return e.complexity.ProcessingActivityTIAConnection.Edges(childComplexity), true
-	case "ProcessingActivityTIAConnection.pageInfo":
-		if e.complexity.ProcessingActivityTIAConnection.PageInfo == nil {
-			break
-		}
-
-		return e.complexity.ProcessingActivityTIAConnection.PageInfo(childComplexity), true
-	case "ProcessingActivityTIAConnection.totalCount":
-		if e.complexity.ProcessingActivityTIAConnection.TotalCount == nil {
-			break
-		}
-
-		return e.complexity.ProcessingActivityTIAConnection.TotalCount(childComplexity), true
-
-	case "ProcessingActivityTIAEdge.cursor":
-		if e.complexity.ProcessingActivityTIAEdge.Cursor == nil {
-			break
-		}
-
-		return e.complexity.ProcessingActivityTIAEdge.Cursor(childComplexity), true
-	case "ProcessingActivityTIAEdge.node":
-		if e.complexity.ProcessingActivityTIAEdge.Node == nil {
-			break
-		}
-
-		return e.complexity.ProcessingActivityTIAEdge.Node(childComplexity), true
 
 	case "PublishDocumentVersionPayload.document":
 		if e.complexity.PublishDocumentVersionPayload.Document == nil {
@@ -8304,6 +8211,99 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.TaskEdge.Node(childComplexity), true
 
+	case "TransferImpactAssessment.createdAt":
+		if e.complexity.TransferImpactAssessment.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.TransferImpactAssessment.CreatedAt(childComplexity), true
+	case "TransferImpactAssessment.dataSubjects":
+		if e.complexity.TransferImpactAssessment.DataSubjects == nil {
+			break
+		}
+
+		return e.complexity.TransferImpactAssessment.DataSubjects(childComplexity), true
+	case "TransferImpactAssessment.id":
+		if e.complexity.TransferImpactAssessment.ID == nil {
+			break
+		}
+
+		return e.complexity.TransferImpactAssessment.ID(childComplexity), true
+	case "TransferImpactAssessment.legalMechanism":
+		if e.complexity.TransferImpactAssessment.LegalMechanism == nil {
+			break
+		}
+
+		return e.complexity.TransferImpactAssessment.LegalMechanism(childComplexity), true
+	case "TransferImpactAssessment.localLawRisk":
+		if e.complexity.TransferImpactAssessment.LocalLawRisk == nil {
+			break
+		}
+
+		return e.complexity.TransferImpactAssessment.LocalLawRisk(childComplexity), true
+	case "TransferImpactAssessment.organization":
+		if e.complexity.TransferImpactAssessment.Organization == nil {
+			break
+		}
+
+		return e.complexity.TransferImpactAssessment.Organization(childComplexity), true
+	case "TransferImpactAssessment.processingActivity":
+		if e.complexity.TransferImpactAssessment.ProcessingActivity == nil {
+			break
+		}
+
+		return e.complexity.TransferImpactAssessment.ProcessingActivity(childComplexity), true
+	case "TransferImpactAssessment.supplementaryMeasures":
+		if e.complexity.TransferImpactAssessment.SupplementaryMeasures == nil {
+			break
+		}
+
+		return e.complexity.TransferImpactAssessment.SupplementaryMeasures(childComplexity), true
+	case "TransferImpactAssessment.transfer":
+		if e.complexity.TransferImpactAssessment.Transfer == nil {
+			break
+		}
+
+		return e.complexity.TransferImpactAssessment.Transfer(childComplexity), true
+	case "TransferImpactAssessment.updatedAt":
+		if e.complexity.TransferImpactAssessment.UpdatedAt == nil {
+			break
+		}
+
+		return e.complexity.TransferImpactAssessment.UpdatedAt(childComplexity), true
+
+	case "TransferImpactAssessmentConnection.edges":
+		if e.complexity.TransferImpactAssessmentConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.TransferImpactAssessmentConnection.Edges(childComplexity), true
+	case "TransferImpactAssessmentConnection.pageInfo":
+		if e.complexity.TransferImpactAssessmentConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.TransferImpactAssessmentConnection.PageInfo(childComplexity), true
+	case "TransferImpactAssessmentConnection.totalCount":
+		if e.complexity.TransferImpactAssessmentConnection.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.TransferImpactAssessmentConnection.TotalCount(childComplexity), true
+
+	case "TransferImpactAssessmentEdge.cursor":
+		if e.complexity.TransferImpactAssessmentEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.TransferImpactAssessmentEdge.Cursor(childComplexity), true
+	case "TransferImpactAssessmentEdge.node":
+		if e.complexity.TransferImpactAssessmentEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.TransferImpactAssessmentEdge.Node(childComplexity), true
+
 	case "TrustCenter.accesses":
 		if e.complexity.TrustCenter.Accesses == nil {
 			break
@@ -8753,6 +8753,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.UpdateControlPayload.Control(childComplexity), true
 
+	case "UpdateDataProtectionImpactAssessmentPayload.dataProtectionImpactAssessment":
+		if e.complexity.UpdateDataProtectionImpactAssessmentPayload.DataProtectionImpactAssessment == nil {
+			break
+		}
+
+		return e.complexity.UpdateDataProtectionImpactAssessmentPayload.DataProtectionImpactAssessment(childComplexity), true
+
 	case "UpdateDatumPayload.datum":
 		if e.complexity.UpdateDatumPayload.Datum == nil {
 			break
@@ -8837,26 +8844,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.UpdatePeoplePayload.People(childComplexity), true
 
-	case "UpdateProcessingActivityDPIAPayload.processingActivityDpia":
-		if e.complexity.UpdateProcessingActivityDPIAPayload.ProcessingActivityDpia == nil {
-			break
-		}
-
-		return e.complexity.UpdateProcessingActivityDPIAPayload.ProcessingActivityDpia(childComplexity), true
-
 	case "UpdateProcessingActivityPayload.processingActivity":
 		if e.complexity.UpdateProcessingActivityPayload.ProcessingActivity == nil {
 			break
 		}
 
 		return e.complexity.UpdateProcessingActivityPayload.ProcessingActivity(childComplexity), true
-
-	case "UpdateProcessingActivityTIAPayload.processingActivityTia":
-		if e.complexity.UpdateProcessingActivityTIAPayload.ProcessingActivityTia == nil {
-			break
-		}
-
-		return e.complexity.UpdateProcessingActivityTIAPayload.ProcessingActivityTia(childComplexity), true
 
 	case "UpdateRiskPayload.risk":
 		if e.complexity.UpdateRiskPayload.Risk == nil {
@@ -8878,6 +8871,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.UpdateTaskPayload.Task(childComplexity), true
+
+	case "UpdateTransferImpactAssessmentPayload.transferImpactAssessment":
+		if e.complexity.UpdateTransferImpactAssessmentPayload.TransferImpactAssessment == nil {
+			break
+		}
+
+		return e.complexity.UpdateTransferImpactAssessmentPayload.TransferImpactAssessment(childComplexity), true
 
 	case "UpdateTrustCenterAccessPayload.trustCenterAccess":
 		if e.complexity.UpdateTrustCenterAccessPayload.TrustCenterAccess == nil {
@@ -9776,6 +9776,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputCreateControlMeasureMappingInput,
 		ec.unmarshalInputCreateControlSnapshotMappingInput,
 		ec.unmarshalInputCreateCustomDomainInput,
+		ec.unmarshalInputCreateDataProtectionImpactAssessmentInput,
 		ec.unmarshalInputCreateDatumInput,
 		ec.unmarshalInputCreateDocumentInput,
 		ec.unmarshalInputCreateDraftDocumentVersionInput,
@@ -9787,9 +9788,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputCreateObligationInput,
 		ec.unmarshalInputCreateOrganizationInput,
 		ec.unmarshalInputCreatePeopleInput,
-		ec.unmarshalInputCreateProcessingActivityDPIAInput,
 		ec.unmarshalInputCreateProcessingActivityInput,
-		ec.unmarshalInputCreateProcessingActivityTIAInput,
 		ec.unmarshalInputCreateRiskDocumentMappingInput,
 		ec.unmarshalInputCreateRiskInput,
 		ec.unmarshalInputCreateRiskMeasureMappingInput,
@@ -9797,6 +9796,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputCreateSAMLConfigurationInput,
 		ec.unmarshalInputCreateSnapshotInput,
 		ec.unmarshalInputCreateTaskInput,
+		ec.unmarshalInputCreateTransferImpactAssessmentInput,
 		ec.unmarshalInputCreateTrustCenterAccessInput,
 		ec.unmarshalInputCreateTrustCenterFileInput,
 		ec.unmarshalInputCreateTrustCenterReferenceInput,
@@ -9804,6 +9804,8 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputCreateVendorInput,
 		ec.unmarshalInputCreateVendorRiskAssessmentInput,
 		ec.unmarshalInputCreateVendorServiceInput,
+		ec.unmarshalInputDataProtectionImpactAssessmentFilter,
+		ec.unmarshalInputDataProtectionImpactAssessmentOrder,
 		ec.unmarshalInputDatumFilter,
 		ec.unmarshalInputDatumOrder,
 		ec.unmarshalInputDeleteAssetInput,
@@ -9816,6 +9818,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputDeleteControlMeasureMappingInput,
 		ec.unmarshalInputDeleteControlSnapshotMappingInput,
 		ec.unmarshalInputDeleteCustomDomainInput,
+		ec.unmarshalInputDeleteDataProtectionImpactAssessmentInput,
 		ec.unmarshalInputDeleteDatumInput,
 		ec.unmarshalInputDeleteDocumentInput,
 		ec.unmarshalInputDeleteDraftDocumentVersionInput,
@@ -9829,9 +9832,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputDeleteOrganizationHorizontalLogoInput,
 		ec.unmarshalInputDeleteOrganizationInput,
 		ec.unmarshalInputDeletePeopleInput,
-		ec.unmarshalInputDeleteProcessingActivityDPIAInput,
 		ec.unmarshalInputDeleteProcessingActivityInput,
-		ec.unmarshalInputDeleteProcessingActivityTIAInput,
 		ec.unmarshalInputDeleteRiskDocumentMappingInput,
 		ec.unmarshalInputDeleteRiskInput,
 		ec.unmarshalInputDeleteRiskMeasureMappingInput,
@@ -9839,6 +9840,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputDeleteSAMLConfigurationInput,
 		ec.unmarshalInputDeleteSnapshotInput,
 		ec.unmarshalInputDeleteTaskInput,
+		ec.unmarshalInputDeleteTransferImpactAssessmentInput,
 		ec.unmarshalInputDeleteTrustCenterAccessInput,
 		ec.unmarshalInputDeleteTrustCenterFileInput,
 		ec.unmarshalInputDeleteTrustCenterNDAInput,
@@ -9883,12 +9885,8 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputOrganizationOrder,
 		ec.unmarshalInputPeopleFilter,
 		ec.unmarshalInputPeopleOrder,
-		ec.unmarshalInputProcessingActivityDPIAFilter,
-		ec.unmarshalInputProcessingActivityDPIAOrder,
 		ec.unmarshalInputProcessingActivityFilter,
 		ec.unmarshalInputProcessingActivityOrder,
-		ec.unmarshalInputProcessingActivityTIAFilter,
-		ec.unmarshalInputProcessingActivityTIAOrder,
 		ec.unmarshalInputPublishDocumentVersionInput,
 		ec.unmarshalInputRemoveMemberInput,
 		ec.unmarshalInputRequestEvidenceInput,
@@ -9899,6 +9897,8 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputSignDocumentInput,
 		ec.unmarshalInputSnapshotOrder,
 		ec.unmarshalInputTaskOrder,
+		ec.unmarshalInputTransferImpactAssessmentFilter,
+		ec.unmarshalInputTransferImpactAssessmentOrder,
 		ec.unmarshalInputTrustCenterAccessOrder,
 		ec.unmarshalInputTrustCenterDocumentAccessInput,
 		ec.unmarshalInputTrustCenterDocumentAccessOrder,
@@ -9909,6 +9909,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputUpdateAuditInput,
 		ec.unmarshalInputUpdateContinualImprovementInput,
 		ec.unmarshalInputUpdateControlInput,
+		ec.unmarshalInputUpdateDataProtectionImpactAssessmentInput,
 		ec.unmarshalInputUpdateDatumInput,
 		ec.unmarshalInputUpdateDocumentInput,
 		ec.unmarshalInputUpdateDocumentVersionInput,
@@ -9921,12 +9922,11 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputUpdateOrganizationContextInput,
 		ec.unmarshalInputUpdateOrganizationInput,
 		ec.unmarshalInputUpdatePeopleInput,
-		ec.unmarshalInputUpdateProcessingActivityDPIAInput,
 		ec.unmarshalInputUpdateProcessingActivityInput,
-		ec.unmarshalInputUpdateProcessingActivityTIAInput,
 		ec.unmarshalInputUpdateRiskInput,
 		ec.unmarshalInputUpdateSAMLConfigurationInput,
 		ec.unmarshalInputUpdateTaskInput,
+		ec.unmarshalInputUpdateTransferImpactAssessmentInput,
 		ec.unmarshalInputUpdateTrustCenterAccessInput,
 		ec.unmarshalInputUpdateTrustCenterFileInput,
 		ec.unmarshalInputUpdateTrustCenterInput,
@@ -10415,21 +10415,21 @@ enum ProcessingActivityTransferImpactAssessment
     )
 }
 
-enum ProcessingActivityDPIAResidualRisk
+enum DataProtectionImpactAssessmentResidualRisk
   @goModel(
-    model: "go.probo.inc/probo/pkg/coredata.ProcessingActivityDPIAResidualRisk"
+    model: "go.probo.inc/probo/pkg/coredata.DataProtectionImpactAssessmentResidualRisk"
   ) {
   LOW
     @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityDPIAResidualRiskLow"
+      value: "go.probo.inc/probo/pkg/coredata.DataProtectionImpactAssessmentResidualRiskLow"
     )
   MEDIUM
     @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityDPIAResidualRiskMedium"
+      value: "go.probo.inc/probo/pkg/coredata.DataProtectionImpactAssessmentResidualRiskMedium"
     )
   HIGH
     @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityDPIAResidualRiskHigh"
+      value: "go.probo.inc/probo/pkg/coredata.DataProtectionImpactAssessmentResidualRiskHigh"
     )
 }
 
@@ -11128,23 +11128,23 @@ enum ProcessingActivityOrderField
     )
 }
 
-enum ProcessingActivityDPIAOrderField
+enum DataProtectionImpactAssessmentOrderField
   @goModel(
-    model: "go.probo.inc/probo/pkg/coredata.ProcessingActivityDPIAOrderField"
+    model: "go.probo.inc/probo/pkg/coredata.DataProtectionImpactAssessmentOrderField"
   ) {
   CREATED_AT
     @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityDPIAOrderFieldCreatedAt"
+      value: "go.probo.inc/probo/pkg/coredata.DataProtectionImpactAssessmentOrderFieldCreatedAt"
     )
 }
 
-enum ProcessingActivityTIAOrderField
+enum TransferImpactAssessmentOrderField
   @goModel(
-    model: "go.probo.inc/probo/pkg/coredata.ProcessingActivityTIAOrderField"
+    model: "go.probo.inc/probo/pkg/coredata.TransferImpactAssessmentOrderField"
   ) {
   CREATED_AT
     @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityTIAOrderFieldCreatedAt"
+      value: "go.probo.inc/probo/pkg/coredata.TransferImpactAssessmentOrderFieldCreatedAt"
     )
 }
 
@@ -11401,20 +11401,20 @@ input ProcessingActivityOrder
   field: ProcessingActivityOrderField!
 }
 
-input ProcessingActivityDPIAOrder
+input DataProtectionImpactAssessmentOrder
   @goModel(
-    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ProcessingActivityDPIAOrderBy"
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DataProtectionImpactAssessmentOrderBy"
   ) {
   direction: OrderDirection!
-  field: ProcessingActivityDPIAOrderField!
+  field: DataProtectionImpactAssessmentOrderField!
 }
 
-input ProcessingActivityTIAOrder
+input TransferImpactAssessmentOrder
   @goModel(
-    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ProcessingActivityTIAOrderBy"
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TransferImpactAssessmentOrderBy"
   ) {
   direction: OrderDirection!
-  field: ProcessingActivityTIAOrderField!
+  field: TransferImpactAssessmentOrderField!
 }
 
 input TrustCenterAccessOrder
@@ -11566,11 +11566,11 @@ input ProcessingActivityFilter {
   snapshotId: ID
 }
 
-input ProcessingActivityDPIAFilter {
+input DataProtectionImpactAssessmentFilter {
   snapshotId: ID
 }
 
-input ProcessingActivityTIAFilter {
+input TransferImpactAssessmentFilter {
   snapshotId: ID
 }
 
@@ -11790,18 +11790,18 @@ type Organization implements Node {
     after: CursorKey
     last: Int
     before: CursorKey
-    orderBy: ProcessingActivityDPIAOrder
-    filter: ProcessingActivityDPIAFilter = { snapshotId: null }
-  ): ProcessingActivityDPIAConnection! @goField(forceResolver: true)
+    orderBy: DataProtectionImpactAssessmentOrder
+    filter: DataProtectionImpactAssessmentFilter = { snapshotId: null }
+  ): DataProtectionImpactAssessmentConnection! @goField(forceResolver: true)
 
   transferImpactAssessments(
     first: Int
     after: CursorKey
     last: Int
     before: CursorKey
-    orderBy: ProcessingActivityTIAOrder
-    filter: ProcessingActivityTIAFilter = { snapshotId: null }
-  ): ProcessingActivityTIAConnection! @goField(forceResolver: true)
+    orderBy: TransferImpactAssessmentOrder
+    filter: TransferImpactAssessmentFilter = { snapshotId: null }
+  ): TransferImpactAssessmentConnection! @goField(forceResolver: true)
 
   snapshots(
     first: Int
@@ -12393,8 +12393,8 @@ type ProcessingActivity implements Node {
   transferSafeguards: ProcessingActivityTransferSafeguard
   retentionPeriod: String
   securityMeasures: String
-  dataProtectionImpactAssessment: ProcessingActivityDataProtectionImpactAssessment!
-  transferImpactAssessment: ProcessingActivityTransferImpactAssessment!
+  dataProtectionImpactAssessmentNeeded: ProcessingActivityDataProtectionImpactAssessment!
+  transferImpactAssessmentNeeded: ProcessingActivityTransferImpactAssessment!
   lastReviewDate: Datetime
   nextReviewDate: Datetime
   role: ProcessingActivityRole!
@@ -12406,13 +12406,13 @@ type ProcessingActivity implements Node {
     before: CursorKey
     orderBy: VendorOrder
   ): VendorConnection! @goField(forceResolver: true)
-  dpia: ProcessingActivityDPIA @goField(forceResolver: true)
-  tia: ProcessingActivityTIA @goField(forceResolver: true)
+  dataProtectionImpactAssessment: DataProtectionImpactAssessment @goField(forceResolver: true)
+  transferImpactAssessment: TransferImpactAssessment @goField(forceResolver: true)
   createdAt: Datetime!
   updatedAt: Datetime!
 }
 
-type ProcessingActivityDPIA implements Node {
+type DataProtectionImpactAssessment implements Node {
   id: ID!
   processingActivity: ProcessingActivity! @goField(forceResolver: true)
   organization: Organization! @goField(forceResolver: true)
@@ -12420,12 +12420,12 @@ type ProcessingActivityDPIA implements Node {
   necessityAndProportionality: String
   potentialRisk: String
   mitigations: String
-  residualRisk: ProcessingActivityDPIAResidualRisk
+  residualRisk: DataProtectionImpactAssessmentResidualRisk
   createdAt: Datetime!
   updatedAt: Datetime!
 }
 
-type ProcessingActivityTIA implements Node {
+type TransferImpactAssessment implements Node {
   id: ID!
   processingActivity: ProcessingActivity! @goField(forceResolver: true)
   organization: Organization! @goField(forceResolver: true)
@@ -12942,32 +12942,32 @@ type ProcessingActivityEdge {
   node: ProcessingActivity!
 }
 
-type ProcessingActivityDPIAConnection
+type DataProtectionImpactAssessmentConnection
   @goModel(
-    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ProcessingActivityDPIAConnection"
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DataProtectionImpactAssessmentConnection"
   ) {
   totalCount: Int! @goField(forceResolver: true)
-  edges: [ProcessingActivityDPIAEdge!]!
+  edges: [DataProtectionImpactAssessmentEdge!]!
   pageInfo: PageInfo!
 }
 
-type ProcessingActivityDPIAEdge {
+type DataProtectionImpactAssessmentEdge {
   cursor: CursorKey!
-  node: ProcessingActivityDPIA!
+  node: DataProtectionImpactAssessment!
 }
 
-type ProcessingActivityTIAConnection
+type TransferImpactAssessmentConnection
   @goModel(
-    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ProcessingActivityTIAConnection"
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TransferImpactAssessmentConnection"
   ) {
   totalCount: Int! @goField(forceResolver: true)
-  edges: [ProcessingActivityTIAEdge!]!
+  edges: [TransferImpactAssessmentEdge!]!
   pageInfo: PageInfo!
 }
 
-type ProcessingActivityTIAEdge {
+type TransferImpactAssessmentEdge {
   cursor: CursorKey!
-  node: ProcessingActivityTIA!
+  node: TransferImpactAssessment!
 }
 
 type SnapshotConnection
@@ -13307,26 +13307,26 @@ type Mutation {
   deleteProcessingActivity(
     input: DeleteProcessingActivityInput!
   ): DeleteProcessingActivityPayload!
-  # Processing Activity DPIA mutations
-  createProcessingActivityDPIA(
-    input: CreateProcessingActivityDPIAInput!
-  ): CreateProcessingActivityDPIAPayload!
-  updateProcessingActivityDPIA(
-    input: UpdateProcessingActivityDPIAInput!
-  ): UpdateProcessingActivityDPIAPayload!
-  deleteProcessingActivityDPIA(
-    input: DeleteProcessingActivityDPIAInput!
-  ): DeleteProcessingActivityDPIAPayload!
-  # Processing Activity TIA mutations
-  createProcessingActivityTIA(
-    input: CreateProcessingActivityTIAInput!
-  ): CreateProcessingActivityTIAPayload!
-  updateProcessingActivityTIA(
-    input: UpdateProcessingActivityTIAInput!
-  ): UpdateProcessingActivityTIAPayload!
-  deleteProcessingActivityTIA(
-    input: DeleteProcessingActivityTIAInput!
-  ): DeleteProcessingActivityTIAPayload!
+  # Data Protection Impact Assessment mutations
+  createDataProtectionImpactAssessment(
+    input: CreateDataProtectionImpactAssessmentInput!
+  ): CreateDataProtectionImpactAssessmentPayload!
+  updateDataProtectionImpactAssessment(
+    input: UpdateDataProtectionImpactAssessmentInput!
+  ): UpdateDataProtectionImpactAssessmentPayload!
+  deleteDataProtectionImpactAssessment(
+    input: DeleteDataProtectionImpactAssessmentInput!
+  ): DeleteDataProtectionImpactAssessmentPayload!
+  # Transfer Impact Assessment mutations
+  createTransferImpactAssessment(
+    input: CreateTransferImpactAssessmentInput!
+  ): CreateTransferImpactAssessmentPayload!
+  updateTransferImpactAssessment(
+    input: UpdateTransferImpactAssessmentInput!
+  ): UpdateTransferImpactAssessmentPayload!
+  deleteTransferImpactAssessment(
+    input: DeleteTransferImpactAssessmentInput!
+  ): DeleteTransferImpactAssessmentPayload!
   # Snapshot mutations
   createSnapshot(input: CreateSnapshotInput!): CreateSnapshotPayload!
   deleteSnapshot(input: DeleteSnapshotInput!): DeleteSnapshotPayload!
@@ -14095,8 +14095,8 @@ input CreateProcessingActivityInput {
   transferSafeguards: ProcessingActivityTransferSafeguard
   retentionPeriod: String
   securityMeasures: String
-  dataProtectionImpactAssessment: ProcessingActivityDataProtectionImpactAssessment!
-  transferImpactAssessment: ProcessingActivityTransferImpactAssessment!
+  dataProtectionImpactAssessmentNeeded: ProcessingActivityDataProtectionImpactAssessment!
+  transferImpactAssessmentNeeded: ProcessingActivityTransferImpactAssessment!
   lastReviewDate: Datetime
   nextReviewDate: Datetime
   role: ProcessingActivityRole!
@@ -14120,8 +14120,8 @@ input UpdateProcessingActivityInput {
     @goField(omittable: true)
   retentionPeriod: String @goField(omittable: true)
   securityMeasures: String @goField(omittable: true)
-  dataProtectionImpactAssessment: ProcessingActivityDataProtectionImpactAssessment
-  transferImpactAssessment: ProcessingActivityTransferImpactAssessment
+  dataProtectionImpactAssessmentNeeded: ProcessingActivityDataProtectionImpactAssessment
+  transferImpactAssessmentNeeded: ProcessingActivityTransferImpactAssessment
   lastReviewDate: Datetime @goField(omittable: true)
   nextReviewDate: Datetime @goField(omittable: true)
   role: ProcessingActivityRole
@@ -14133,29 +14133,29 @@ input DeleteProcessingActivityInput {
   processingActivityId: ID!
 }
 
-input CreateProcessingActivityDPIAInput {
+input CreateDataProtectionImpactAssessmentInput {
   processingActivityId: ID!
   description: String
   necessityAndProportionality: String
   potentialRisk: String
   mitigations: String
-  residualRisk: ProcessingActivityDPIAResidualRisk
+  residualRisk: DataProtectionImpactAssessmentResidualRisk
 }
 
-input UpdateProcessingActivityDPIAInput {
+input UpdateDataProtectionImpactAssessmentInput {
   id: ID!
   description: String @goField(omittable: true)
   necessityAndProportionality: String @goField(omittable: true)
   potentialRisk: String @goField(omittable: true)
   mitigations: String @goField(omittable: true)
-  residualRisk: ProcessingActivityDPIAResidualRisk
+  residualRisk: DataProtectionImpactAssessmentResidualRisk
 }
 
-input DeleteProcessingActivityDPIAInput {
-  processingActivityDpiaId: ID!
+input DeleteDataProtectionImpactAssessmentInput {
+  dataProtectionImpactAssessmentId: ID!
 }
 
-input CreateProcessingActivityTIAInput {
+input CreateTransferImpactAssessmentInput {
   processingActivityId: ID!
   dataSubjects: String
   legalMechanism: String
@@ -14164,7 +14164,7 @@ input CreateProcessingActivityTIAInput {
   supplementaryMeasures: String
 }
 
-input UpdateProcessingActivityTIAInput {
+input UpdateTransferImpactAssessmentInput {
   id: ID!
   dataSubjects: String @goField(omittable: true)
   legalMechanism: String @goField(omittable: true)
@@ -14173,8 +14173,8 @@ input UpdateProcessingActivityTIAInput {
   supplementaryMeasures: String @goField(omittable: true)
 }
 
-input DeleteProcessingActivityTIAInput {
-  processingActivityTiaId: ID!
+input DeleteTransferImpactAssessmentInput {
+  transferImpactAssessmentId: ID!
 }
 
 input CreateSnapshotInput {
@@ -15041,28 +15041,28 @@ type DeleteProcessingActivityPayload {
   deletedProcessingActivityId: ID!
 }
 
-type CreateProcessingActivityDPIAPayload {
-  processingActivityDpia: ProcessingActivityDPIA!
+type CreateDataProtectionImpactAssessmentPayload {
+  dataProtectionImpactAssessment: DataProtectionImpactAssessment!
 }
 
-type UpdateProcessingActivityDPIAPayload {
-  processingActivityDpia: ProcessingActivityDPIA!
+type UpdateDataProtectionImpactAssessmentPayload {
+  dataProtectionImpactAssessment: DataProtectionImpactAssessment!
 }
 
-type DeleteProcessingActivityDPIAPayload {
-  deletedProcessingActivityDpiaId: ID!
+type DeleteDataProtectionImpactAssessmentPayload {
+  deletedDataProtectionImpactAssessmentId: ID!
 }
 
-type CreateProcessingActivityTIAPayload {
-  processingActivityTia: ProcessingActivityTIA!
+type CreateTransferImpactAssessmentPayload {
+  transferImpactAssessment: TransferImpactAssessment!
 }
 
-type UpdateProcessingActivityTIAPayload {
-  processingActivityTia: ProcessingActivityTIA!
+type UpdateTransferImpactAssessmentPayload {
+  transferImpactAssessment: TransferImpactAssessment!
 }
 
-type DeleteProcessingActivityTIAPayload {
-  deletedProcessingActivityTiaId: ID!
+type DeleteTransferImpactAssessmentPayload {
+  deletedTransferImpactAssessmentId: ID!
 }
 
 type CreateSnapshotPayload {
@@ -16011,6 +16011,17 @@ func (ec *executionContext) field_Mutation_createCustomDomain_args(ctx context.C
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_createDataProtectionImpactAssessment_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateDataProtectionImpactAssessmentInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateDataProtectionImpactAssessmentInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_createDatum_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -16121,28 +16132,6 @@ func (ec *executionContext) field_Mutation_createPeople_args(ctx context.Context
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_createProcessingActivityDPIA_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateProcessingActivityDPIAInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateProcessingActivityDPIAInput)
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_createProcessingActivityTIA_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateProcessingActivityTIAInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateProcessingActivityTIAInput)
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
 func (ec *executionContext) field_Mutation_createProcessingActivity_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -16224,6 +16213,17 @@ func (ec *executionContext) field_Mutation_createTask_args(ctx context.Context, 
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateTaskInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateTaskInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_createTransferImpactAssessment_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateTransferImpactAssessmentInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateTransferImpactAssessmentInput)
 	if err != nil {
 		return nil, err
 	}
@@ -16418,6 +16418,17 @@ func (ec *executionContext) field_Mutation_deleteCustomDomain_args(ctx context.C
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_deleteDataProtectionImpactAssessment_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNDeleteDataProtectionImpactAssessmentInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteDataProtectionImpactAssessmentInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_deleteDatum_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -16561,28 +16572,6 @@ func (ec *executionContext) field_Mutation_deletePeople_args(ctx context.Context
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_deleteProcessingActivityDPIA_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNDeleteProcessingActivityDPIAInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteProcessingActivityDPIAInput)
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_deleteProcessingActivityTIA_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNDeleteProcessingActivityTIAInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteProcessingActivityTIAInput)
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
 func (ec *executionContext) field_Mutation_deleteProcessingActivity_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -16664,6 +16653,17 @@ func (ec *executionContext) field_Mutation_deleteTask_args(ctx context.Context, 
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNDeleteTaskInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteTaskInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_deleteTransferImpactAssessment_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNDeleteTransferImpactAssessmentInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteTransferImpactAssessmentInput)
 	if err != nil {
 		return nil, err
 	}
@@ -17023,6 +17023,17 @@ func (ec *executionContext) field_Mutation_updateControl_args(ctx context.Contex
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_updateDataProtectionImpactAssessment_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateDataProtectionImpactAssessmentInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateDataProtectionImpactAssessmentInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_updateDatum_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -17155,28 +17166,6 @@ func (ec *executionContext) field_Mutation_updatePeople_args(ctx context.Context
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_updateProcessingActivityDPIA_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateProcessingActivityDPIAInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateProcessingActivityDPIAInput)
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_updateProcessingActivityTIA_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateProcessingActivityTIAInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateProcessingActivityTIAInput)
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
 func (ec *executionContext) field_Mutation_updateProcessingActivity_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -17214,6 +17203,17 @@ func (ec *executionContext) field_Mutation_updateTask_args(ctx context.Context, 
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateTaskInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateTaskInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateTransferImpactAssessment_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateTransferImpactAssessmentInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateTransferImpactAssessmentInput)
 	if err != nil {
 		return nil, err
 	}
@@ -17559,12 +17559,12 @@ func (ec *executionContext) field_Organization_dataProtectionImpactAssessments_a
 		return nil, err
 	}
 	args["before"] = arg3
-	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "orderBy", ec.unmarshalOProcessingActivityDPIAOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityDPIAOrderBy)
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "orderBy", ec.unmarshalODataProtectionImpactAssessmentOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDataProtectionImpactAssessmentOrderBy)
 	if err != nil {
 		return nil, err
 	}
 	args["orderBy"] = arg4
-	arg5, err := graphql.ProcessArgField(ctx, rawArgs, "filter", ec.unmarshalOProcessingActivityDPIAFilter2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityDPIAFilter)
+	arg5, err := graphql.ProcessArgField(ctx, rawArgs, "filter", ec.unmarshalODataProtectionImpactAssessmentFilter2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDataProtectionImpactAssessmentFilter)
 	if err != nil {
 		return nil, err
 	}
@@ -18100,12 +18100,12 @@ func (ec *executionContext) field_Organization_transferImpactAssessments_args(ct
 		return nil, err
 	}
 	args["before"] = arg3
-	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "orderBy", ec.unmarshalOProcessingActivityTIAOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityTIAOrderBy)
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "orderBy", ec.unmarshalOTransferImpactAssessmentOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐTransferImpactAssessmentOrderBy)
 	if err != nil {
 		return nil, err
 	}
 	args["orderBy"] = arg4
-	arg5, err := graphql.ProcessArgField(ctx, rawArgs, "filter", ec.unmarshalOProcessingActivityTIAFilter2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityTIAFilter)
+	arg5, err := graphql.ProcessArgField(ctx, rawArgs, "filter", ec.unmarshalOTransferImpactAssessmentFilter2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐTransferImpactAssessmentFilter)
 	if err != nil {
 		return nil, err
 	}
@@ -22366,6 +22366,57 @@ func (ec *executionContext) fieldContext_CreateCustomDomainPayload_customDomain(
 	return fc, nil
 }
 
+func (ec *executionContext) _CreateDataProtectionImpactAssessmentPayload_dataProtectionImpactAssessment(ctx context.Context, field graphql.CollectedField, obj *types.CreateDataProtectionImpactAssessmentPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_CreateDataProtectionImpactAssessmentPayload_dataProtectionImpactAssessment,
+		func(ctx context.Context) (any, error) {
+			return obj.DataProtectionImpactAssessment, nil
+		},
+		nil,
+		ec.marshalNDataProtectionImpactAssessment2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDataProtectionImpactAssessment,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_CreateDataProtectionImpactAssessmentPayload_dataProtectionImpactAssessment(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CreateDataProtectionImpactAssessmentPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_DataProtectionImpactAssessment_id(ctx, field)
+			case "processingActivity":
+				return ec.fieldContext_DataProtectionImpactAssessment_processingActivity(ctx, field)
+			case "organization":
+				return ec.fieldContext_DataProtectionImpactAssessment_organization(ctx, field)
+			case "description":
+				return ec.fieldContext_DataProtectionImpactAssessment_description(ctx, field)
+			case "necessityAndProportionality":
+				return ec.fieldContext_DataProtectionImpactAssessment_necessityAndProportionality(ctx, field)
+			case "potentialRisk":
+				return ec.fieldContext_DataProtectionImpactAssessment_potentialRisk(ctx, field)
+			case "mitigations":
+				return ec.fieldContext_DataProtectionImpactAssessment_mitigations(ctx, field)
+			case "residualRisk":
+				return ec.fieldContext_DataProtectionImpactAssessment_residualRisk(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_DataProtectionImpactAssessment_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_DataProtectionImpactAssessment_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DataProtectionImpactAssessment", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _CreateDatumPayload_datumEdge(ctx context.Context, field graphql.CollectedField, obj *types.CreateDatumPayload) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -22786,57 +22837,6 @@ func (ec *executionContext) fieldContext_CreatePeoplePayload_peopleEdge(_ contex
 	return fc, nil
 }
 
-func (ec *executionContext) _CreateProcessingActivityDPIAPayload_processingActivityDpia(ctx context.Context, field graphql.CollectedField, obj *types.CreateProcessingActivityDPIAPayload) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_CreateProcessingActivityDPIAPayload_processingActivityDpia,
-		func(ctx context.Context) (any, error) {
-			return obj.ProcessingActivityDpia, nil
-		},
-		nil,
-		ec.marshalNProcessingActivityDPIA2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityDpia,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_CreateProcessingActivityDPIAPayload_processingActivityDpia(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "CreateProcessingActivityDPIAPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_ProcessingActivityDPIA_id(ctx, field)
-			case "processingActivity":
-				return ec.fieldContext_ProcessingActivityDPIA_processingActivity(ctx, field)
-			case "organization":
-				return ec.fieldContext_ProcessingActivityDPIA_organization(ctx, field)
-			case "description":
-				return ec.fieldContext_ProcessingActivityDPIA_description(ctx, field)
-			case "necessityAndProportionality":
-				return ec.fieldContext_ProcessingActivityDPIA_necessityAndProportionality(ctx, field)
-			case "potentialRisk":
-				return ec.fieldContext_ProcessingActivityDPIA_potentialRisk(ctx, field)
-			case "mitigations":
-				return ec.fieldContext_ProcessingActivityDPIA_mitigations(ctx, field)
-			case "residualRisk":
-				return ec.fieldContext_ProcessingActivityDPIA_residualRisk(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_ProcessingActivityDPIA_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_ProcessingActivityDPIA_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type ProcessingActivityDPIA", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _CreateProcessingActivityPayload_processingActivityEdge(ctx context.Context, field graphql.CollectedField, obj *types.CreateProcessingActivityPayload) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -22867,57 +22867,6 @@ func (ec *executionContext) fieldContext_CreateProcessingActivityPayload_process
 				return ec.fieldContext_ProcessingActivityEdge_node(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type ProcessingActivityEdge", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _CreateProcessingActivityTIAPayload_processingActivityTia(ctx context.Context, field graphql.CollectedField, obj *types.CreateProcessingActivityTIAPayload) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_CreateProcessingActivityTIAPayload_processingActivityTia,
-		func(ctx context.Context) (any, error) {
-			return obj.ProcessingActivityTia, nil
-		},
-		nil,
-		ec.marshalNProcessingActivityTIA2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityTia,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_CreateProcessingActivityTIAPayload_processingActivityTia(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "CreateProcessingActivityTIAPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_ProcessingActivityTIA_id(ctx, field)
-			case "processingActivity":
-				return ec.fieldContext_ProcessingActivityTIA_processingActivity(ctx, field)
-			case "organization":
-				return ec.fieldContext_ProcessingActivityTIA_organization(ctx, field)
-			case "dataSubjects":
-				return ec.fieldContext_ProcessingActivityTIA_dataSubjects(ctx, field)
-			case "legalMechanism":
-				return ec.fieldContext_ProcessingActivityTIA_legalMechanism(ctx, field)
-			case "transfer":
-				return ec.fieldContext_ProcessingActivityTIA_transfer(ctx, field)
-			case "localLawRisk":
-				return ec.fieldContext_ProcessingActivityTIA_localLawRisk(ctx, field)
-			case "supplementaryMeasures":
-				return ec.fieldContext_ProcessingActivityTIA_supplementaryMeasures(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_ProcessingActivityTIA_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_ProcessingActivityTIA_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type ProcessingActivityTIA", field.Name)
 		},
 	}
 	return fc, nil
@@ -23310,6 +23259,57 @@ func (ec *executionContext) fieldContext_CreateTaskPayload_taskEdge(_ context.Co
 				return ec.fieldContext_TaskEdge_node(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type TaskEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CreateTransferImpactAssessmentPayload_transferImpactAssessment(ctx context.Context, field graphql.CollectedField, obj *types.CreateTransferImpactAssessmentPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_CreateTransferImpactAssessmentPayload_transferImpactAssessment,
+		func(ctx context.Context) (any, error) {
+			return obj.TransferImpactAssessment, nil
+		},
+		nil,
+		ec.marshalNTransferImpactAssessment2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐTransferImpactAssessment,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_CreateTransferImpactAssessmentPayload_transferImpactAssessment(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CreateTransferImpactAssessmentPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_TransferImpactAssessment_id(ctx, field)
+			case "processingActivity":
+				return ec.fieldContext_TransferImpactAssessment_processingActivity(ctx, field)
+			case "organization":
+				return ec.fieldContext_TransferImpactAssessment_organization(ctx, field)
+			case "dataSubjects":
+				return ec.fieldContext_TransferImpactAssessment_dataSubjects(ctx, field)
+			case "legalMechanism":
+				return ec.fieldContext_TransferImpactAssessment_legalMechanism(ctx, field)
+			case "transfer":
+				return ec.fieldContext_TransferImpactAssessment_transfer(ctx, field)
+			case "localLawRisk":
+				return ec.fieldContext_TransferImpactAssessment_localLawRisk(ctx, field)
+			case "supplementaryMeasures":
+				return ec.fieldContext_TransferImpactAssessment_supplementaryMeasures(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_TransferImpactAssessment_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_TransferImpactAssessment_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type TransferImpactAssessment", field.Name)
 		},
 	}
 	return fc, nil
@@ -24020,6 +24020,613 @@ func (ec *executionContext) fieldContext_DNSRecordInstruction_purpose(_ context.
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DataProtectionImpactAssessment_id(ctx context.Context, field graphql.CollectedField, obj *types.DataProtectionImpactAssessment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_DataProtectionImpactAssessment_id,
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_DataProtectionImpactAssessment_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DataProtectionImpactAssessment",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DataProtectionImpactAssessment_processingActivity(ctx context.Context, field graphql.CollectedField, obj *types.DataProtectionImpactAssessment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_DataProtectionImpactAssessment_processingActivity,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.DataProtectionImpactAssessment().ProcessingActivity(ctx, obj)
+		},
+		nil,
+		ec.marshalNProcessingActivity2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivity,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_DataProtectionImpactAssessment_processingActivity(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DataProtectionImpactAssessment",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_ProcessingActivity_id(ctx, field)
+			case "snapshotId":
+				return ec.fieldContext_ProcessingActivity_snapshotId(ctx, field)
+			case "sourceId":
+				return ec.fieldContext_ProcessingActivity_sourceId(ctx, field)
+			case "organization":
+				return ec.fieldContext_ProcessingActivity_organization(ctx, field)
+			case "name":
+				return ec.fieldContext_ProcessingActivity_name(ctx, field)
+			case "purpose":
+				return ec.fieldContext_ProcessingActivity_purpose(ctx, field)
+			case "dataSubjectCategory":
+				return ec.fieldContext_ProcessingActivity_dataSubjectCategory(ctx, field)
+			case "personalDataCategory":
+				return ec.fieldContext_ProcessingActivity_personalDataCategory(ctx, field)
+			case "specialOrCriminalData":
+				return ec.fieldContext_ProcessingActivity_specialOrCriminalData(ctx, field)
+			case "consentEvidenceLink":
+				return ec.fieldContext_ProcessingActivity_consentEvidenceLink(ctx, field)
+			case "lawfulBasis":
+				return ec.fieldContext_ProcessingActivity_lawfulBasis(ctx, field)
+			case "recipients":
+				return ec.fieldContext_ProcessingActivity_recipients(ctx, field)
+			case "location":
+				return ec.fieldContext_ProcessingActivity_location(ctx, field)
+			case "internationalTransfers":
+				return ec.fieldContext_ProcessingActivity_internationalTransfers(ctx, field)
+			case "transferSafeguards":
+				return ec.fieldContext_ProcessingActivity_transferSafeguards(ctx, field)
+			case "retentionPeriod":
+				return ec.fieldContext_ProcessingActivity_retentionPeriod(ctx, field)
+			case "securityMeasures":
+				return ec.fieldContext_ProcessingActivity_securityMeasures(ctx, field)
+			case "dataProtectionImpactAssessmentNeeded":
+				return ec.fieldContext_ProcessingActivity_dataProtectionImpactAssessmentNeeded(ctx, field)
+			case "transferImpactAssessmentNeeded":
+				return ec.fieldContext_ProcessingActivity_transferImpactAssessmentNeeded(ctx, field)
+			case "lastReviewDate":
+				return ec.fieldContext_ProcessingActivity_lastReviewDate(ctx, field)
+			case "nextReviewDate":
+				return ec.fieldContext_ProcessingActivity_nextReviewDate(ctx, field)
+			case "role":
+				return ec.fieldContext_ProcessingActivity_role(ctx, field)
+			case "dataProtectionOfficer":
+				return ec.fieldContext_ProcessingActivity_dataProtectionOfficer(ctx, field)
+			case "vendors":
+				return ec.fieldContext_ProcessingActivity_vendors(ctx, field)
+			case "dataProtectionImpactAssessment":
+				return ec.fieldContext_ProcessingActivity_dataProtectionImpactAssessment(ctx, field)
+			case "transferImpactAssessment":
+				return ec.fieldContext_ProcessingActivity_transferImpactAssessment(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_ProcessingActivity_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_ProcessingActivity_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ProcessingActivity", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DataProtectionImpactAssessment_organization(ctx context.Context, field graphql.CollectedField, obj *types.DataProtectionImpactAssessment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_DataProtectionImpactAssessment_organization,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.DataProtectionImpactAssessment().Organization(ctx, obj)
+		},
+		nil,
+		ec.marshalNOrganization2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐOrganization,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_DataProtectionImpactAssessment_organization(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DataProtectionImpactAssessment",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Organization_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Organization_name(ctx, field)
+			case "logoUrl":
+				return ec.fieldContext_Organization_logoUrl(ctx, field)
+			case "horizontalLogoUrl":
+				return ec.fieldContext_Organization_horizontalLogoUrl(ctx, field)
+			case "description":
+				return ec.fieldContext_Organization_description(ctx, field)
+			case "websiteUrl":
+				return ec.fieldContext_Organization_websiteUrl(ctx, field)
+			case "email":
+				return ec.fieldContext_Organization_email(ctx, field)
+			case "headquarterAddress":
+				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
+			case "context":
+				return ec.fieldContext_Organization_context(ctx, field)
+			case "memberships":
+				return ec.fieldContext_Organization_memberships(ctx, field)
+			case "invitations":
+				return ec.fieldContext_Organization_invitations(ctx, field)
+			case "slackConnections":
+				return ec.fieldContext_Organization_slackConnections(ctx, field)
+			case "frameworks":
+				return ec.fieldContext_Organization_frameworks(ctx, field)
+			case "controls":
+				return ec.fieldContext_Organization_controls(ctx, field)
+			case "vendors":
+				return ec.fieldContext_Organization_vendors(ctx, field)
+			case "peoples":
+				return ec.fieldContext_Organization_peoples(ctx, field)
+			case "documents":
+				return ec.fieldContext_Organization_documents(ctx, field)
+			case "meetings":
+				return ec.fieldContext_Organization_meetings(ctx, field)
+			case "measures":
+				return ec.fieldContext_Organization_measures(ctx, field)
+			case "risks":
+				return ec.fieldContext_Organization_risks(ctx, field)
+			case "tasks":
+				return ec.fieldContext_Organization_tasks(ctx, field)
+			case "assets":
+				return ec.fieldContext_Organization_assets(ctx, field)
+			case "data":
+				return ec.fieldContext_Organization_data(ctx, field)
+			case "audits":
+				return ec.fieldContext_Organization_audits(ctx, field)
+			case "nonconformities":
+				return ec.fieldContext_Organization_nonconformities(ctx, field)
+			case "obligations":
+				return ec.fieldContext_Organization_obligations(ctx, field)
+			case "continualImprovements":
+				return ec.fieldContext_Organization_continualImprovements(ctx, field)
+			case "processingActivities":
+				return ec.fieldContext_Organization_processingActivities(ctx, field)
+			case "dataProtectionImpactAssessments":
+				return ec.fieldContext_Organization_dataProtectionImpactAssessments(ctx, field)
+			case "transferImpactAssessments":
+				return ec.fieldContext_Organization_transferImpactAssessments(ctx, field)
+			case "snapshots":
+				return ec.fieldContext_Organization_snapshots(ctx, field)
+			case "trustCenterFiles":
+				return ec.fieldContext_Organization_trustCenterFiles(ctx, field)
+			case "trustCenter":
+				return ec.fieldContext_Organization_trustCenter(ctx, field)
+			case "customDomain":
+				return ec.fieldContext_Organization_customDomain(ctx, field)
+			case "samlConfigurations":
+				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Organization_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Organization_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DataProtectionImpactAssessment_description(ctx context.Context, field graphql.CollectedField, obj *types.DataProtectionImpactAssessment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_DataProtectionImpactAssessment_description,
+		func(ctx context.Context) (any, error) {
+			return obj.Description, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_DataProtectionImpactAssessment_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DataProtectionImpactAssessment",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DataProtectionImpactAssessment_necessityAndProportionality(ctx context.Context, field graphql.CollectedField, obj *types.DataProtectionImpactAssessment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_DataProtectionImpactAssessment_necessityAndProportionality,
+		func(ctx context.Context) (any, error) {
+			return obj.NecessityAndProportionality, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_DataProtectionImpactAssessment_necessityAndProportionality(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DataProtectionImpactAssessment",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DataProtectionImpactAssessment_potentialRisk(ctx context.Context, field graphql.CollectedField, obj *types.DataProtectionImpactAssessment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_DataProtectionImpactAssessment_potentialRisk,
+		func(ctx context.Context) (any, error) {
+			return obj.PotentialRisk, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_DataProtectionImpactAssessment_potentialRisk(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DataProtectionImpactAssessment",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DataProtectionImpactAssessment_mitigations(ctx context.Context, field graphql.CollectedField, obj *types.DataProtectionImpactAssessment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_DataProtectionImpactAssessment_mitigations,
+		func(ctx context.Context) (any, error) {
+			return obj.Mitigations, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_DataProtectionImpactAssessment_mitigations(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DataProtectionImpactAssessment",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DataProtectionImpactAssessment_residualRisk(ctx context.Context, field graphql.CollectedField, obj *types.DataProtectionImpactAssessment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_DataProtectionImpactAssessment_residualRisk,
+		func(ctx context.Context) (any, error) {
+			return obj.ResidualRisk, nil
+		},
+		nil,
+		ec.marshalODataProtectionImpactAssessmentResidualRisk2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐDataProtectionImpactAssessmentResidualRisk,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_DataProtectionImpactAssessment_residualRisk(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DataProtectionImpactAssessment",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type DataProtectionImpactAssessmentResidualRisk does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DataProtectionImpactAssessment_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.DataProtectionImpactAssessment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_DataProtectionImpactAssessment_createdAt,
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		ec.marshalNDatetime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_DataProtectionImpactAssessment_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DataProtectionImpactAssessment",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DataProtectionImpactAssessment_updatedAt(ctx context.Context, field graphql.CollectedField, obj *types.DataProtectionImpactAssessment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_DataProtectionImpactAssessment_updatedAt,
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		ec.marshalNDatetime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_DataProtectionImpactAssessment_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DataProtectionImpactAssessment",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DataProtectionImpactAssessmentConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *types.DataProtectionImpactAssessmentConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_DataProtectionImpactAssessmentConnection_totalCount,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.DataProtectionImpactAssessmentConnection().TotalCount(ctx, obj)
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_DataProtectionImpactAssessmentConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DataProtectionImpactAssessmentConnection",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DataProtectionImpactAssessmentConnection_edges(ctx context.Context, field graphql.CollectedField, obj *types.DataProtectionImpactAssessmentConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_DataProtectionImpactAssessmentConnection_edges,
+		func(ctx context.Context) (any, error) {
+			return obj.Edges, nil
+		},
+		nil,
+		ec.marshalNDataProtectionImpactAssessmentEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDataProtectionImpactAssessmentEdgeᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_DataProtectionImpactAssessmentConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DataProtectionImpactAssessmentConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cursor":
+				return ec.fieldContext_DataProtectionImpactAssessmentEdge_cursor(ctx, field)
+			case "node":
+				return ec.fieldContext_DataProtectionImpactAssessmentEdge_node(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DataProtectionImpactAssessmentEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DataProtectionImpactAssessmentConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *types.DataProtectionImpactAssessmentConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_DataProtectionImpactAssessmentConnection_pageInfo,
+		func(ctx context.Context) (any, error) {
+			return obj.PageInfo, nil
+		},
+		nil,
+		ec.marshalNPageInfo2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPageInfo,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_DataProtectionImpactAssessmentConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DataProtectionImpactAssessmentConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DataProtectionImpactAssessmentEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *types.DataProtectionImpactAssessmentEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_DataProtectionImpactAssessmentEdge_cursor,
+		func(ctx context.Context) (any, error) {
+			return obj.Cursor, nil
+		},
+		nil,
+		ec.marshalNCursorKey2goᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_DataProtectionImpactAssessmentEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DataProtectionImpactAssessmentEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type CursorKey does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DataProtectionImpactAssessmentEdge_node(ctx context.Context, field graphql.CollectedField, obj *types.DataProtectionImpactAssessmentEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_DataProtectionImpactAssessmentEdge_node,
+		func(ctx context.Context) (any, error) {
+			return obj.Node, nil
+		},
+		nil,
+		ec.marshalNDataProtectionImpactAssessment2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDataProtectionImpactAssessment,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_DataProtectionImpactAssessmentEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DataProtectionImpactAssessmentEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_DataProtectionImpactAssessment_id(ctx, field)
+			case "processingActivity":
+				return ec.fieldContext_DataProtectionImpactAssessment_processingActivity(ctx, field)
+			case "organization":
+				return ec.fieldContext_DataProtectionImpactAssessment_organization(ctx, field)
+			case "description":
+				return ec.fieldContext_DataProtectionImpactAssessment_description(ctx, field)
+			case "necessityAndProportionality":
+				return ec.fieldContext_DataProtectionImpactAssessment_necessityAndProportionality(ctx, field)
+			case "potentialRisk":
+				return ec.fieldContext_DataProtectionImpactAssessment_potentialRisk(ctx, field)
+			case "mitigations":
+				return ec.fieldContext_DataProtectionImpactAssessment_mitigations(ctx, field)
+			case "residualRisk":
+				return ec.fieldContext_DataProtectionImpactAssessment_residualRisk(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_DataProtectionImpactAssessment_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_DataProtectionImpactAssessment_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DataProtectionImpactAssessment", field.Name)
 		},
 	}
 	return fc, nil
@@ -25019,6 +25626,35 @@ func (ec *executionContext) fieldContext_DeleteCustomDomainPayload_deletedCustom
 	return fc, nil
 }
 
+func (ec *executionContext) _DeleteDataProtectionImpactAssessmentPayload_deletedDataProtectionImpactAssessmentId(ctx context.Context, field graphql.CollectedField, obj *types.DeleteDataProtectionImpactAssessmentPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_DeleteDataProtectionImpactAssessmentPayload_deletedDataProtectionImpactAssessmentId,
+		func(ctx context.Context) (any, error) {
+			return obj.DeletedDataProtectionImpactAssessmentID, nil
+		},
+		nil,
+		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_DeleteDataProtectionImpactAssessmentPayload_deletedDataProtectionImpactAssessmentId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DeleteDataProtectionImpactAssessmentPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _DeleteDatumPayload_deletedDatumId(ctx context.Context, field graphql.CollectedField, obj *types.DeleteDatumPayload) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -25472,35 +26108,6 @@ func (ec *executionContext) fieldContext_DeletePeoplePayload_deletedPeopleId(_ c
 	return fc, nil
 }
 
-func (ec *executionContext) _DeleteProcessingActivityDPIAPayload_deletedProcessingActivityDpiaId(ctx context.Context, field graphql.CollectedField, obj *types.DeleteProcessingActivityDPIAPayload) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_DeleteProcessingActivityDPIAPayload_deletedProcessingActivityDpiaId,
-		func(ctx context.Context) (any, error) {
-			return obj.DeletedProcessingActivityDpiaID, nil
-		},
-		nil,
-		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_DeleteProcessingActivityDPIAPayload_deletedProcessingActivityDpiaId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "DeleteProcessingActivityDPIAPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _DeleteProcessingActivityPayload_deletedProcessingActivityId(ctx context.Context, field graphql.CollectedField, obj *types.DeleteProcessingActivityPayload) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -25520,35 +26127,6 @@ func (ec *executionContext) _DeleteProcessingActivityPayload_deletedProcessingAc
 func (ec *executionContext) fieldContext_DeleteProcessingActivityPayload_deletedProcessingActivityId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "DeleteProcessingActivityPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _DeleteProcessingActivityTIAPayload_deletedProcessingActivityTiaId(ctx context.Context, field graphql.CollectedField, obj *types.DeleteProcessingActivityTIAPayload) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_DeleteProcessingActivityTIAPayload_deletedProcessingActivityTiaId,
-		func(ctx context.Context) (any, error) {
-			return obj.DeletedProcessingActivityTiaID, nil
-		},
-		nil,
-		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_DeleteProcessingActivityTIAPayload_deletedProcessingActivityTiaId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "DeleteProcessingActivityTIAPayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -25839,6 +26417,35 @@ func (ec *executionContext) _DeleteTaskPayload_deletedTaskId(ctx context.Context
 func (ec *executionContext) fieldContext_DeleteTaskPayload_deletedTaskId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "DeleteTaskPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DeleteTransferImpactAssessmentPayload_deletedTransferImpactAssessmentId(ctx context.Context, field graphql.CollectedField, obj *types.DeleteTransferImpactAssessmentPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_DeleteTransferImpactAssessmentPayload_deletedTransferImpactAssessmentId,
+		func(ctx context.Context) (any, error) {
+			return obj.DeletedTransferImpactAssessmentID, nil
+		},
+		nil,
+		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_DeleteTransferImpactAssessmentPayload_deletedTransferImpactAssessmentId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DeleteTransferImpactAssessmentPayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -37636,24 +38243,24 @@ func (ec *executionContext) fieldContext_Mutation_deleteProcessingActivity(ctx c
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_createProcessingActivityDPIA(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_createDataProtectionImpactAssessment(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_Mutation_createProcessingActivityDPIA,
+		ec.fieldContext_Mutation_createDataProtectionImpactAssessment,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().CreateProcessingActivityDpia(ctx, fc.Args["input"].(types.CreateProcessingActivityDPIAInput))
+			return ec.resolvers.Mutation().CreateDataProtectionImpactAssessment(ctx, fc.Args["input"].(types.CreateDataProtectionImpactAssessmentInput))
 		},
 		nil,
-		ec.marshalNCreateProcessingActivityDPIAPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateProcessingActivityDPIAPayload,
+		ec.marshalNCreateDataProtectionImpactAssessmentPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateDataProtectionImpactAssessmentPayload,
 		true,
 		true,
 	)
 }
 
-func (ec *executionContext) fieldContext_Mutation_createProcessingActivityDPIA(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_createDataProtectionImpactAssessment(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -37661,10 +38268,10 @@ func (ec *executionContext) fieldContext_Mutation_createProcessingActivityDPIA(c
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "processingActivityDpia":
-				return ec.fieldContext_CreateProcessingActivityDPIAPayload_processingActivityDpia(ctx, field)
+			case "dataProtectionImpactAssessment":
+				return ec.fieldContext_CreateDataProtectionImpactAssessmentPayload_dataProtectionImpactAssessment(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type CreateProcessingActivityDPIAPayload", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type CreateDataProtectionImpactAssessmentPayload", field.Name)
 		},
 	}
 	defer func() {
@@ -37674,31 +38281,31 @@ func (ec *executionContext) fieldContext_Mutation_createProcessingActivityDPIA(c
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_createProcessingActivityDPIA_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_createDataProtectionImpactAssessment_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_updateProcessingActivityDPIA(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_updateDataProtectionImpactAssessment(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_Mutation_updateProcessingActivityDPIA,
+		ec.fieldContext_Mutation_updateDataProtectionImpactAssessment,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().UpdateProcessingActivityDpia(ctx, fc.Args["input"].(types.UpdateProcessingActivityDPIAInput))
+			return ec.resolvers.Mutation().UpdateDataProtectionImpactAssessment(ctx, fc.Args["input"].(types.UpdateDataProtectionImpactAssessmentInput))
 		},
 		nil,
-		ec.marshalNUpdateProcessingActivityDPIAPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateProcessingActivityDPIAPayload,
+		ec.marshalNUpdateDataProtectionImpactAssessmentPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateDataProtectionImpactAssessmentPayload,
 		true,
 		true,
 	)
 }
 
-func (ec *executionContext) fieldContext_Mutation_updateProcessingActivityDPIA(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_updateDataProtectionImpactAssessment(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -37706,10 +38313,10 @@ func (ec *executionContext) fieldContext_Mutation_updateProcessingActivityDPIA(c
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "processingActivityDpia":
-				return ec.fieldContext_UpdateProcessingActivityDPIAPayload_processingActivityDpia(ctx, field)
+			case "dataProtectionImpactAssessment":
+				return ec.fieldContext_UpdateDataProtectionImpactAssessmentPayload_dataProtectionImpactAssessment(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type UpdateProcessingActivityDPIAPayload", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type UpdateDataProtectionImpactAssessmentPayload", field.Name)
 		},
 	}
 	defer func() {
@@ -37719,31 +38326,31 @@ func (ec *executionContext) fieldContext_Mutation_updateProcessingActivityDPIA(c
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_updateProcessingActivityDPIA_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_updateDataProtectionImpactAssessment_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_deleteProcessingActivityDPIA(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_deleteDataProtectionImpactAssessment(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_Mutation_deleteProcessingActivityDPIA,
+		ec.fieldContext_Mutation_deleteDataProtectionImpactAssessment,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().DeleteProcessingActivityDpia(ctx, fc.Args["input"].(types.DeleteProcessingActivityDPIAInput))
+			return ec.resolvers.Mutation().DeleteDataProtectionImpactAssessment(ctx, fc.Args["input"].(types.DeleteDataProtectionImpactAssessmentInput))
 		},
 		nil,
-		ec.marshalNDeleteProcessingActivityDPIAPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteProcessingActivityDPIAPayload,
+		ec.marshalNDeleteDataProtectionImpactAssessmentPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteDataProtectionImpactAssessmentPayload,
 		true,
 		true,
 	)
 }
 
-func (ec *executionContext) fieldContext_Mutation_deleteProcessingActivityDPIA(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_deleteDataProtectionImpactAssessment(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -37751,10 +38358,10 @@ func (ec *executionContext) fieldContext_Mutation_deleteProcessingActivityDPIA(c
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "deletedProcessingActivityDpiaId":
-				return ec.fieldContext_DeleteProcessingActivityDPIAPayload_deletedProcessingActivityDpiaId(ctx, field)
+			case "deletedDataProtectionImpactAssessmentId":
+				return ec.fieldContext_DeleteDataProtectionImpactAssessmentPayload_deletedDataProtectionImpactAssessmentId(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type DeleteProcessingActivityDPIAPayload", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type DeleteDataProtectionImpactAssessmentPayload", field.Name)
 		},
 	}
 	defer func() {
@@ -37764,31 +38371,31 @@ func (ec *executionContext) fieldContext_Mutation_deleteProcessingActivityDPIA(c
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_deleteProcessingActivityDPIA_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_deleteDataProtectionImpactAssessment_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_createProcessingActivityTIA(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_createTransferImpactAssessment(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_Mutation_createProcessingActivityTIA,
+		ec.fieldContext_Mutation_createTransferImpactAssessment,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().CreateProcessingActivityTia(ctx, fc.Args["input"].(types.CreateProcessingActivityTIAInput))
+			return ec.resolvers.Mutation().CreateTransferImpactAssessment(ctx, fc.Args["input"].(types.CreateTransferImpactAssessmentInput))
 		},
 		nil,
-		ec.marshalNCreateProcessingActivityTIAPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateProcessingActivityTIAPayload,
+		ec.marshalNCreateTransferImpactAssessmentPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateTransferImpactAssessmentPayload,
 		true,
 		true,
 	)
 }
 
-func (ec *executionContext) fieldContext_Mutation_createProcessingActivityTIA(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_createTransferImpactAssessment(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -37796,10 +38403,10 @@ func (ec *executionContext) fieldContext_Mutation_createProcessingActivityTIA(ct
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "processingActivityTia":
-				return ec.fieldContext_CreateProcessingActivityTIAPayload_processingActivityTia(ctx, field)
+			case "transferImpactAssessment":
+				return ec.fieldContext_CreateTransferImpactAssessmentPayload_transferImpactAssessment(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type CreateProcessingActivityTIAPayload", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type CreateTransferImpactAssessmentPayload", field.Name)
 		},
 	}
 	defer func() {
@@ -37809,31 +38416,31 @@ func (ec *executionContext) fieldContext_Mutation_createProcessingActivityTIA(ct
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_createProcessingActivityTIA_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_createTransferImpactAssessment_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_updateProcessingActivityTIA(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_updateTransferImpactAssessment(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_Mutation_updateProcessingActivityTIA,
+		ec.fieldContext_Mutation_updateTransferImpactAssessment,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().UpdateProcessingActivityTia(ctx, fc.Args["input"].(types.UpdateProcessingActivityTIAInput))
+			return ec.resolvers.Mutation().UpdateTransferImpactAssessment(ctx, fc.Args["input"].(types.UpdateTransferImpactAssessmentInput))
 		},
 		nil,
-		ec.marshalNUpdateProcessingActivityTIAPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateProcessingActivityTIAPayload,
+		ec.marshalNUpdateTransferImpactAssessmentPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateTransferImpactAssessmentPayload,
 		true,
 		true,
 	)
 }
 
-func (ec *executionContext) fieldContext_Mutation_updateProcessingActivityTIA(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_updateTransferImpactAssessment(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -37841,10 +38448,10 @@ func (ec *executionContext) fieldContext_Mutation_updateProcessingActivityTIA(ct
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "processingActivityTia":
-				return ec.fieldContext_UpdateProcessingActivityTIAPayload_processingActivityTia(ctx, field)
+			case "transferImpactAssessment":
+				return ec.fieldContext_UpdateTransferImpactAssessmentPayload_transferImpactAssessment(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type UpdateProcessingActivityTIAPayload", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type UpdateTransferImpactAssessmentPayload", field.Name)
 		},
 	}
 	defer func() {
@@ -37854,31 +38461,31 @@ func (ec *executionContext) fieldContext_Mutation_updateProcessingActivityTIA(ct
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_updateProcessingActivityTIA_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_updateTransferImpactAssessment_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_deleteProcessingActivityTIA(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_deleteTransferImpactAssessment(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_Mutation_deleteProcessingActivityTIA,
+		ec.fieldContext_Mutation_deleteTransferImpactAssessment,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().DeleteProcessingActivityTia(ctx, fc.Args["input"].(types.DeleteProcessingActivityTIAInput))
+			return ec.resolvers.Mutation().DeleteTransferImpactAssessment(ctx, fc.Args["input"].(types.DeleteTransferImpactAssessmentInput))
 		},
 		nil,
-		ec.marshalNDeleteProcessingActivityTIAPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteProcessingActivityTIAPayload,
+		ec.marshalNDeleteTransferImpactAssessmentPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteTransferImpactAssessmentPayload,
 		true,
 		true,
 	)
 }
 
-func (ec *executionContext) fieldContext_Mutation_deleteProcessingActivityTIA(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_deleteTransferImpactAssessment(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -37886,10 +38493,10 @@ func (ec *executionContext) fieldContext_Mutation_deleteProcessingActivityTIA(ct
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "deletedProcessingActivityTiaId":
-				return ec.fieldContext_DeleteProcessingActivityTIAPayload_deletedProcessingActivityTiaId(ctx, field)
+			case "deletedTransferImpactAssessmentId":
+				return ec.fieldContext_DeleteTransferImpactAssessmentPayload_deletedTransferImpactAssessmentId(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type DeleteProcessingActivityTIAPayload", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type DeleteTransferImpactAssessmentPayload", field.Name)
 		},
 	}
 	defer func() {
@@ -37899,7 +38506,7 @@ func (ec *executionContext) fieldContext_Mutation_deleteProcessingActivityTIA(ct
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_deleteProcessingActivityTIA_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_deleteTransferImpactAssessment_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -41089,10 +41696,10 @@ func (ec *executionContext) _Organization_dataProtectionImpactAssessments(ctx co
 		ec.fieldContext_Organization_dataProtectionImpactAssessments,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Organization().DataProtectionImpactAssessments(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.ProcessingActivityDPIAOrderBy), fc.Args["filter"].(*types.ProcessingActivityDPIAFilter))
+			return ec.resolvers.Organization().DataProtectionImpactAssessments(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.DataProtectionImpactAssessmentOrderBy), fc.Args["filter"].(*types.DataProtectionImpactAssessmentFilter))
 		},
 		nil,
-		ec.marshalNProcessingActivityDPIAConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityDPIAConnection,
+		ec.marshalNDataProtectionImpactAssessmentConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDataProtectionImpactAssessmentConnection,
 		true,
 		true,
 	)
@@ -41107,13 +41714,13 @@ func (ec *executionContext) fieldContext_Organization_dataProtectionImpactAssess
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "totalCount":
-				return ec.fieldContext_ProcessingActivityDPIAConnection_totalCount(ctx, field)
+				return ec.fieldContext_DataProtectionImpactAssessmentConnection_totalCount(ctx, field)
 			case "edges":
-				return ec.fieldContext_ProcessingActivityDPIAConnection_edges(ctx, field)
+				return ec.fieldContext_DataProtectionImpactAssessmentConnection_edges(ctx, field)
 			case "pageInfo":
-				return ec.fieldContext_ProcessingActivityDPIAConnection_pageInfo(ctx, field)
+				return ec.fieldContext_DataProtectionImpactAssessmentConnection_pageInfo(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type ProcessingActivityDPIAConnection", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type DataProtectionImpactAssessmentConnection", field.Name)
 		},
 	}
 	defer func() {
@@ -41138,10 +41745,10 @@ func (ec *executionContext) _Organization_transferImpactAssessments(ctx context.
 		ec.fieldContext_Organization_transferImpactAssessments,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Organization().TransferImpactAssessments(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.ProcessingActivityTIAOrderBy), fc.Args["filter"].(*types.ProcessingActivityTIAFilter))
+			return ec.resolvers.Organization().TransferImpactAssessments(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.TransferImpactAssessmentOrderBy), fc.Args["filter"].(*types.TransferImpactAssessmentFilter))
 		},
 		nil,
-		ec.marshalNProcessingActivityTIAConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityTIAConnection,
+		ec.marshalNTransferImpactAssessmentConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐTransferImpactAssessmentConnection,
 		true,
 		true,
 	)
@@ -41156,13 +41763,13 @@ func (ec *executionContext) fieldContext_Organization_transferImpactAssessments(
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "totalCount":
-				return ec.fieldContext_ProcessingActivityTIAConnection_totalCount(ctx, field)
+				return ec.fieldContext_TransferImpactAssessmentConnection_totalCount(ctx, field)
 			case "edges":
-				return ec.fieldContext_ProcessingActivityTIAConnection_edges(ctx, field)
+				return ec.fieldContext_TransferImpactAssessmentConnection_edges(ctx, field)
 			case "pageInfo":
-				return ec.fieldContext_ProcessingActivityTIAConnection_pageInfo(ctx, field)
+				return ec.fieldContext_TransferImpactAssessmentConnection_pageInfo(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type ProcessingActivityTIAConnection", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type TransferImpactAssessmentConnection", field.Name)
 		},
 	}
 	defer func() {
@@ -42932,14 +43539,14 @@ func (ec *executionContext) fieldContext_ProcessingActivity_securityMeasures(_ c
 	return fc, nil
 }
 
-func (ec *executionContext) _ProcessingActivity_dataProtectionImpactAssessment(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivity) (ret graphql.Marshaler) {
+func (ec *executionContext) _ProcessingActivity_dataProtectionImpactAssessmentNeeded(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivity) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_ProcessingActivity_dataProtectionImpactAssessment,
+		ec.fieldContext_ProcessingActivity_dataProtectionImpactAssessmentNeeded,
 		func(ctx context.Context) (any, error) {
-			return obj.DataProtectionImpactAssessment, nil
+			return obj.DataProtectionImpactAssessmentNeeded, nil
 		},
 		nil,
 		ec.marshalNProcessingActivityDataProtectionImpactAssessment2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityDataProtectionImpactAssessment,
@@ -42948,7 +43555,7 @@ func (ec *executionContext) _ProcessingActivity_dataProtectionImpactAssessment(c
 	)
 }
 
-func (ec *executionContext) fieldContext_ProcessingActivity_dataProtectionImpactAssessment(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ProcessingActivity_dataProtectionImpactAssessmentNeeded(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ProcessingActivity",
 		Field:      field,
@@ -42961,14 +43568,14 @@ func (ec *executionContext) fieldContext_ProcessingActivity_dataProtectionImpact
 	return fc, nil
 }
 
-func (ec *executionContext) _ProcessingActivity_transferImpactAssessment(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivity) (ret graphql.Marshaler) {
+func (ec *executionContext) _ProcessingActivity_transferImpactAssessmentNeeded(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivity) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_ProcessingActivity_transferImpactAssessment,
+		ec.fieldContext_ProcessingActivity_transferImpactAssessmentNeeded,
 		func(ctx context.Context) (any, error) {
-			return obj.TransferImpactAssessment, nil
+			return obj.TransferImpactAssessmentNeeded, nil
 		},
 		nil,
 		ec.marshalNProcessingActivityTransferImpactAssessment2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityTransferImpactAssessment,
@@ -42977,7 +43584,7 @@ func (ec *executionContext) _ProcessingActivity_transferImpactAssessment(ctx con
 	)
 }
 
-func (ec *executionContext) fieldContext_ProcessingActivity_transferImpactAssessment(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ProcessingActivity_transferImpactAssessmentNeeded(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ProcessingActivity",
 		Field:      field,
@@ -43177,23 +43784,23 @@ func (ec *executionContext) fieldContext_ProcessingActivity_vendors(ctx context.
 	return fc, nil
 }
 
-func (ec *executionContext) _ProcessingActivity_dpia(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivity) (ret graphql.Marshaler) {
+func (ec *executionContext) _ProcessingActivity_dataProtectionImpactAssessment(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivity) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_ProcessingActivity_dpia,
+		ec.fieldContext_ProcessingActivity_dataProtectionImpactAssessment,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.ProcessingActivity().Dpia(ctx, obj)
+			return ec.resolvers.ProcessingActivity().DataProtectionImpactAssessment(ctx, obj)
 		},
 		nil,
-		ec.marshalOProcessingActivityDPIA2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityDpia,
+		ec.marshalODataProtectionImpactAssessment2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDataProtectionImpactAssessment,
 		true,
 		false,
 	)
 }
 
-func (ec *executionContext) fieldContext_ProcessingActivity_dpia(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ProcessingActivity_dataProtectionImpactAssessment(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ProcessingActivity",
 		Field:      field,
@@ -43202,49 +43809,49 @@ func (ec *executionContext) fieldContext_ProcessingActivity_dpia(_ context.Conte
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_ProcessingActivityDPIA_id(ctx, field)
+				return ec.fieldContext_DataProtectionImpactAssessment_id(ctx, field)
 			case "processingActivity":
-				return ec.fieldContext_ProcessingActivityDPIA_processingActivity(ctx, field)
+				return ec.fieldContext_DataProtectionImpactAssessment_processingActivity(ctx, field)
 			case "organization":
-				return ec.fieldContext_ProcessingActivityDPIA_organization(ctx, field)
+				return ec.fieldContext_DataProtectionImpactAssessment_organization(ctx, field)
 			case "description":
-				return ec.fieldContext_ProcessingActivityDPIA_description(ctx, field)
+				return ec.fieldContext_DataProtectionImpactAssessment_description(ctx, field)
 			case "necessityAndProportionality":
-				return ec.fieldContext_ProcessingActivityDPIA_necessityAndProportionality(ctx, field)
+				return ec.fieldContext_DataProtectionImpactAssessment_necessityAndProportionality(ctx, field)
 			case "potentialRisk":
-				return ec.fieldContext_ProcessingActivityDPIA_potentialRisk(ctx, field)
+				return ec.fieldContext_DataProtectionImpactAssessment_potentialRisk(ctx, field)
 			case "mitigations":
-				return ec.fieldContext_ProcessingActivityDPIA_mitigations(ctx, field)
+				return ec.fieldContext_DataProtectionImpactAssessment_mitigations(ctx, field)
 			case "residualRisk":
-				return ec.fieldContext_ProcessingActivityDPIA_residualRisk(ctx, field)
+				return ec.fieldContext_DataProtectionImpactAssessment_residualRisk(ctx, field)
 			case "createdAt":
-				return ec.fieldContext_ProcessingActivityDPIA_createdAt(ctx, field)
+				return ec.fieldContext_DataProtectionImpactAssessment_createdAt(ctx, field)
 			case "updatedAt":
-				return ec.fieldContext_ProcessingActivityDPIA_updatedAt(ctx, field)
+				return ec.fieldContext_DataProtectionImpactAssessment_updatedAt(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type ProcessingActivityDPIA", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type DataProtectionImpactAssessment", field.Name)
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _ProcessingActivity_tia(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivity) (ret graphql.Marshaler) {
+func (ec *executionContext) _ProcessingActivity_transferImpactAssessment(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivity) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_ProcessingActivity_tia,
+		ec.fieldContext_ProcessingActivity_transferImpactAssessment,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.ProcessingActivity().Tia(ctx, obj)
+			return ec.resolvers.ProcessingActivity().TransferImpactAssessment(ctx, obj)
 		},
 		nil,
-		ec.marshalOProcessingActivityTIA2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityTia,
+		ec.marshalOTransferImpactAssessment2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐTransferImpactAssessment,
 		true,
 		false,
 	)
 }
 
-func (ec *executionContext) fieldContext_ProcessingActivity_tia(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ProcessingActivity_transferImpactAssessment(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ProcessingActivity",
 		Field:      field,
@@ -43253,27 +43860,27 @@ func (ec *executionContext) fieldContext_ProcessingActivity_tia(_ context.Contex
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_ProcessingActivityTIA_id(ctx, field)
+				return ec.fieldContext_TransferImpactAssessment_id(ctx, field)
 			case "processingActivity":
-				return ec.fieldContext_ProcessingActivityTIA_processingActivity(ctx, field)
+				return ec.fieldContext_TransferImpactAssessment_processingActivity(ctx, field)
 			case "organization":
-				return ec.fieldContext_ProcessingActivityTIA_organization(ctx, field)
+				return ec.fieldContext_TransferImpactAssessment_organization(ctx, field)
 			case "dataSubjects":
-				return ec.fieldContext_ProcessingActivityTIA_dataSubjects(ctx, field)
+				return ec.fieldContext_TransferImpactAssessment_dataSubjects(ctx, field)
 			case "legalMechanism":
-				return ec.fieldContext_ProcessingActivityTIA_legalMechanism(ctx, field)
+				return ec.fieldContext_TransferImpactAssessment_legalMechanism(ctx, field)
 			case "transfer":
-				return ec.fieldContext_ProcessingActivityTIA_transfer(ctx, field)
+				return ec.fieldContext_TransferImpactAssessment_transfer(ctx, field)
 			case "localLawRisk":
-				return ec.fieldContext_ProcessingActivityTIA_localLawRisk(ctx, field)
+				return ec.fieldContext_TransferImpactAssessment_localLawRisk(ctx, field)
 			case "supplementaryMeasures":
-				return ec.fieldContext_ProcessingActivityTIA_supplementaryMeasures(ctx, field)
+				return ec.fieldContext_TransferImpactAssessment_supplementaryMeasures(ctx, field)
 			case "createdAt":
-				return ec.fieldContext_ProcessingActivityTIA_createdAt(ctx, field)
+				return ec.fieldContext_TransferImpactAssessment_createdAt(ctx, field)
 			case "updatedAt":
-				return ec.fieldContext_ProcessingActivityTIA_updatedAt(ctx, field)
+				return ec.fieldContext_TransferImpactAssessment_updatedAt(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type ProcessingActivityTIA", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type TransferImpactAssessment", field.Name)
 		},
 	}
 	return fc, nil
@@ -43440,613 +44047,6 @@ func (ec *executionContext) fieldContext_ProcessingActivityConnection_pageInfo(_
 	return fc, nil
 }
 
-func (ec *executionContext) _ProcessingActivityDPIA_id(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityDpia) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_ProcessingActivityDPIA_id,
-		func(ctx context.Context) (any, error) {
-			return obj.ID, nil
-		},
-		nil,
-		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_ProcessingActivityDPIA_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ProcessingActivityDPIA",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ProcessingActivityDPIA_processingActivity(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityDpia) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_ProcessingActivityDPIA_processingActivity,
-		func(ctx context.Context) (any, error) {
-			return ec.resolvers.ProcessingActivityDPIA().ProcessingActivity(ctx, obj)
-		},
-		nil,
-		ec.marshalNProcessingActivity2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivity,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_ProcessingActivityDPIA_processingActivity(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ProcessingActivityDPIA",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_ProcessingActivity_id(ctx, field)
-			case "snapshotId":
-				return ec.fieldContext_ProcessingActivity_snapshotId(ctx, field)
-			case "sourceId":
-				return ec.fieldContext_ProcessingActivity_sourceId(ctx, field)
-			case "organization":
-				return ec.fieldContext_ProcessingActivity_organization(ctx, field)
-			case "name":
-				return ec.fieldContext_ProcessingActivity_name(ctx, field)
-			case "purpose":
-				return ec.fieldContext_ProcessingActivity_purpose(ctx, field)
-			case "dataSubjectCategory":
-				return ec.fieldContext_ProcessingActivity_dataSubjectCategory(ctx, field)
-			case "personalDataCategory":
-				return ec.fieldContext_ProcessingActivity_personalDataCategory(ctx, field)
-			case "specialOrCriminalData":
-				return ec.fieldContext_ProcessingActivity_specialOrCriminalData(ctx, field)
-			case "consentEvidenceLink":
-				return ec.fieldContext_ProcessingActivity_consentEvidenceLink(ctx, field)
-			case "lawfulBasis":
-				return ec.fieldContext_ProcessingActivity_lawfulBasis(ctx, field)
-			case "recipients":
-				return ec.fieldContext_ProcessingActivity_recipients(ctx, field)
-			case "location":
-				return ec.fieldContext_ProcessingActivity_location(ctx, field)
-			case "internationalTransfers":
-				return ec.fieldContext_ProcessingActivity_internationalTransfers(ctx, field)
-			case "transferSafeguards":
-				return ec.fieldContext_ProcessingActivity_transferSafeguards(ctx, field)
-			case "retentionPeriod":
-				return ec.fieldContext_ProcessingActivity_retentionPeriod(ctx, field)
-			case "securityMeasures":
-				return ec.fieldContext_ProcessingActivity_securityMeasures(ctx, field)
-			case "dataProtectionImpactAssessment":
-				return ec.fieldContext_ProcessingActivity_dataProtectionImpactAssessment(ctx, field)
-			case "transferImpactAssessment":
-				return ec.fieldContext_ProcessingActivity_transferImpactAssessment(ctx, field)
-			case "lastReviewDate":
-				return ec.fieldContext_ProcessingActivity_lastReviewDate(ctx, field)
-			case "nextReviewDate":
-				return ec.fieldContext_ProcessingActivity_nextReviewDate(ctx, field)
-			case "role":
-				return ec.fieldContext_ProcessingActivity_role(ctx, field)
-			case "dataProtectionOfficer":
-				return ec.fieldContext_ProcessingActivity_dataProtectionOfficer(ctx, field)
-			case "vendors":
-				return ec.fieldContext_ProcessingActivity_vendors(ctx, field)
-			case "dpia":
-				return ec.fieldContext_ProcessingActivity_dpia(ctx, field)
-			case "tia":
-				return ec.fieldContext_ProcessingActivity_tia(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_ProcessingActivity_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_ProcessingActivity_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type ProcessingActivity", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ProcessingActivityDPIA_organization(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityDpia) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_ProcessingActivityDPIA_organization,
-		func(ctx context.Context) (any, error) {
-			return ec.resolvers.ProcessingActivityDPIA().Organization(ctx, obj)
-		},
-		nil,
-		ec.marshalNOrganization2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐOrganization,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_ProcessingActivityDPIA_organization(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ProcessingActivityDPIA",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Organization_id(ctx, field)
-			case "name":
-				return ec.fieldContext_Organization_name(ctx, field)
-			case "logoUrl":
-				return ec.fieldContext_Organization_logoUrl(ctx, field)
-			case "horizontalLogoUrl":
-				return ec.fieldContext_Organization_horizontalLogoUrl(ctx, field)
-			case "description":
-				return ec.fieldContext_Organization_description(ctx, field)
-			case "websiteUrl":
-				return ec.fieldContext_Organization_websiteUrl(ctx, field)
-			case "email":
-				return ec.fieldContext_Organization_email(ctx, field)
-			case "headquarterAddress":
-				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
-			case "context":
-				return ec.fieldContext_Organization_context(ctx, field)
-			case "memberships":
-				return ec.fieldContext_Organization_memberships(ctx, field)
-			case "invitations":
-				return ec.fieldContext_Organization_invitations(ctx, field)
-			case "slackConnections":
-				return ec.fieldContext_Organization_slackConnections(ctx, field)
-			case "frameworks":
-				return ec.fieldContext_Organization_frameworks(ctx, field)
-			case "controls":
-				return ec.fieldContext_Organization_controls(ctx, field)
-			case "vendors":
-				return ec.fieldContext_Organization_vendors(ctx, field)
-			case "peoples":
-				return ec.fieldContext_Organization_peoples(ctx, field)
-			case "documents":
-				return ec.fieldContext_Organization_documents(ctx, field)
-			case "meetings":
-				return ec.fieldContext_Organization_meetings(ctx, field)
-			case "measures":
-				return ec.fieldContext_Organization_measures(ctx, field)
-			case "risks":
-				return ec.fieldContext_Organization_risks(ctx, field)
-			case "tasks":
-				return ec.fieldContext_Organization_tasks(ctx, field)
-			case "assets":
-				return ec.fieldContext_Organization_assets(ctx, field)
-			case "data":
-				return ec.fieldContext_Organization_data(ctx, field)
-			case "audits":
-				return ec.fieldContext_Organization_audits(ctx, field)
-			case "nonconformities":
-				return ec.fieldContext_Organization_nonconformities(ctx, field)
-			case "obligations":
-				return ec.fieldContext_Organization_obligations(ctx, field)
-			case "continualImprovements":
-				return ec.fieldContext_Organization_continualImprovements(ctx, field)
-			case "processingActivities":
-				return ec.fieldContext_Organization_processingActivities(ctx, field)
-			case "dataProtectionImpactAssessments":
-				return ec.fieldContext_Organization_dataProtectionImpactAssessments(ctx, field)
-			case "transferImpactAssessments":
-				return ec.fieldContext_Organization_transferImpactAssessments(ctx, field)
-			case "snapshots":
-				return ec.fieldContext_Organization_snapshots(ctx, field)
-			case "trustCenterFiles":
-				return ec.fieldContext_Organization_trustCenterFiles(ctx, field)
-			case "trustCenter":
-				return ec.fieldContext_Organization_trustCenter(ctx, field)
-			case "customDomain":
-				return ec.fieldContext_Organization_customDomain(ctx, field)
-			case "samlConfigurations":
-				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Organization_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_Organization_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ProcessingActivityDPIA_description(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityDpia) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_ProcessingActivityDPIA_description,
-		func(ctx context.Context) (any, error) {
-			return obj.Description, nil
-		},
-		nil,
-		ec.marshalOString2ᚖstring,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_ProcessingActivityDPIA_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ProcessingActivityDPIA",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ProcessingActivityDPIA_necessityAndProportionality(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityDpia) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_ProcessingActivityDPIA_necessityAndProportionality,
-		func(ctx context.Context) (any, error) {
-			return obj.NecessityAndProportionality, nil
-		},
-		nil,
-		ec.marshalOString2ᚖstring,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_ProcessingActivityDPIA_necessityAndProportionality(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ProcessingActivityDPIA",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ProcessingActivityDPIA_potentialRisk(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityDpia) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_ProcessingActivityDPIA_potentialRisk,
-		func(ctx context.Context) (any, error) {
-			return obj.PotentialRisk, nil
-		},
-		nil,
-		ec.marshalOString2ᚖstring,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_ProcessingActivityDPIA_potentialRisk(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ProcessingActivityDPIA",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ProcessingActivityDPIA_mitigations(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityDpia) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_ProcessingActivityDPIA_mitigations,
-		func(ctx context.Context) (any, error) {
-			return obj.Mitigations, nil
-		},
-		nil,
-		ec.marshalOString2ᚖstring,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_ProcessingActivityDPIA_mitigations(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ProcessingActivityDPIA",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ProcessingActivityDPIA_residualRisk(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityDpia) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_ProcessingActivityDPIA_residualRisk,
-		func(ctx context.Context) (any, error) {
-			return obj.ResidualRisk, nil
-		},
-		nil,
-		ec.marshalOProcessingActivityDPIAResidualRisk2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityDPIAResidualRisk,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_ProcessingActivityDPIA_residualRisk(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ProcessingActivityDPIA",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ProcessingActivityDPIAResidualRisk does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ProcessingActivityDPIA_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityDpia) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_ProcessingActivityDPIA_createdAt,
-		func(ctx context.Context) (any, error) {
-			return obj.CreatedAt, nil
-		},
-		nil,
-		ec.marshalNDatetime2timeᚐTime,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_ProcessingActivityDPIA_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ProcessingActivityDPIA",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Datetime does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ProcessingActivityDPIA_updatedAt(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityDpia) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_ProcessingActivityDPIA_updatedAt,
-		func(ctx context.Context) (any, error) {
-			return obj.UpdatedAt, nil
-		},
-		nil,
-		ec.marshalNDatetime2timeᚐTime,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_ProcessingActivityDPIA_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ProcessingActivityDPIA",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Datetime does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ProcessingActivityDPIAConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityDPIAConnection) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_ProcessingActivityDPIAConnection_totalCount,
-		func(ctx context.Context) (any, error) {
-			return ec.resolvers.ProcessingActivityDPIAConnection().TotalCount(ctx, obj)
-		},
-		nil,
-		ec.marshalNInt2int,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_ProcessingActivityDPIAConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ProcessingActivityDPIAConnection",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ProcessingActivityDPIAConnection_edges(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityDPIAConnection) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_ProcessingActivityDPIAConnection_edges,
-		func(ctx context.Context) (any, error) {
-			return obj.Edges, nil
-		},
-		nil,
-		ec.marshalNProcessingActivityDPIAEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityDPIAEdgeᚄ,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_ProcessingActivityDPIAConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ProcessingActivityDPIAConnection",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "cursor":
-				return ec.fieldContext_ProcessingActivityDPIAEdge_cursor(ctx, field)
-			case "node":
-				return ec.fieldContext_ProcessingActivityDPIAEdge_node(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type ProcessingActivityDPIAEdge", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ProcessingActivityDPIAConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityDPIAConnection) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_ProcessingActivityDPIAConnection_pageInfo,
-		func(ctx context.Context) (any, error) {
-			return obj.PageInfo, nil
-		},
-		nil,
-		ec.marshalNPageInfo2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPageInfo,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_ProcessingActivityDPIAConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ProcessingActivityDPIAConnection",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "hasNextPage":
-				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
-			case "hasPreviousPage":
-				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
-			case "startCursor":
-				return ec.fieldContext_PageInfo_startCursor(ctx, field)
-			case "endCursor":
-				return ec.fieldContext_PageInfo_endCursor(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ProcessingActivityDPIAEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityDPIAEdge) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_ProcessingActivityDPIAEdge_cursor,
-		func(ctx context.Context) (any, error) {
-			return obj.Cursor, nil
-		},
-		nil,
-		ec.marshalNCursorKey2goᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_ProcessingActivityDPIAEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ProcessingActivityDPIAEdge",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type CursorKey does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ProcessingActivityDPIAEdge_node(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityDPIAEdge) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_ProcessingActivityDPIAEdge_node,
-		func(ctx context.Context) (any, error) {
-			return obj.Node, nil
-		},
-		nil,
-		ec.marshalNProcessingActivityDPIA2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityDpia,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_ProcessingActivityDPIAEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ProcessingActivityDPIAEdge",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_ProcessingActivityDPIA_id(ctx, field)
-			case "processingActivity":
-				return ec.fieldContext_ProcessingActivityDPIA_processingActivity(ctx, field)
-			case "organization":
-				return ec.fieldContext_ProcessingActivityDPIA_organization(ctx, field)
-			case "description":
-				return ec.fieldContext_ProcessingActivityDPIA_description(ctx, field)
-			case "necessityAndProportionality":
-				return ec.fieldContext_ProcessingActivityDPIA_necessityAndProportionality(ctx, field)
-			case "potentialRisk":
-				return ec.fieldContext_ProcessingActivityDPIA_potentialRisk(ctx, field)
-			case "mitigations":
-				return ec.fieldContext_ProcessingActivityDPIA_mitigations(ctx, field)
-			case "residualRisk":
-				return ec.fieldContext_ProcessingActivityDPIA_residualRisk(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_ProcessingActivityDPIA_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_ProcessingActivityDPIA_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type ProcessingActivityDPIA", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _ProcessingActivityEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityEdge) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -44134,10 +44134,10 @@ func (ec *executionContext) fieldContext_ProcessingActivityEdge_node(_ context.C
 				return ec.fieldContext_ProcessingActivity_retentionPeriod(ctx, field)
 			case "securityMeasures":
 				return ec.fieldContext_ProcessingActivity_securityMeasures(ctx, field)
-			case "dataProtectionImpactAssessment":
-				return ec.fieldContext_ProcessingActivity_dataProtectionImpactAssessment(ctx, field)
-			case "transferImpactAssessment":
-				return ec.fieldContext_ProcessingActivity_transferImpactAssessment(ctx, field)
+			case "dataProtectionImpactAssessmentNeeded":
+				return ec.fieldContext_ProcessingActivity_dataProtectionImpactAssessmentNeeded(ctx, field)
+			case "transferImpactAssessmentNeeded":
+				return ec.fieldContext_ProcessingActivity_transferImpactAssessmentNeeded(ctx, field)
 			case "lastReviewDate":
 				return ec.fieldContext_ProcessingActivity_lastReviewDate(ctx, field)
 			case "nextReviewDate":
@@ -44148,623 +44148,16 @@ func (ec *executionContext) fieldContext_ProcessingActivityEdge_node(_ context.C
 				return ec.fieldContext_ProcessingActivity_dataProtectionOfficer(ctx, field)
 			case "vendors":
 				return ec.fieldContext_ProcessingActivity_vendors(ctx, field)
-			case "dpia":
-				return ec.fieldContext_ProcessingActivity_dpia(ctx, field)
-			case "tia":
-				return ec.fieldContext_ProcessingActivity_tia(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_ProcessingActivity_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_ProcessingActivity_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type ProcessingActivity", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ProcessingActivityTIA_id(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityTia) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_ProcessingActivityTIA_id,
-		func(ctx context.Context) (any, error) {
-			return obj.ID, nil
-		},
-		nil,
-		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_ProcessingActivityTIA_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ProcessingActivityTIA",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ProcessingActivityTIA_processingActivity(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityTia) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_ProcessingActivityTIA_processingActivity,
-		func(ctx context.Context) (any, error) {
-			return ec.resolvers.ProcessingActivityTIA().ProcessingActivity(ctx, obj)
-		},
-		nil,
-		ec.marshalNProcessingActivity2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivity,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_ProcessingActivityTIA_processingActivity(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ProcessingActivityTIA",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_ProcessingActivity_id(ctx, field)
-			case "snapshotId":
-				return ec.fieldContext_ProcessingActivity_snapshotId(ctx, field)
-			case "sourceId":
-				return ec.fieldContext_ProcessingActivity_sourceId(ctx, field)
-			case "organization":
-				return ec.fieldContext_ProcessingActivity_organization(ctx, field)
-			case "name":
-				return ec.fieldContext_ProcessingActivity_name(ctx, field)
-			case "purpose":
-				return ec.fieldContext_ProcessingActivity_purpose(ctx, field)
-			case "dataSubjectCategory":
-				return ec.fieldContext_ProcessingActivity_dataSubjectCategory(ctx, field)
-			case "personalDataCategory":
-				return ec.fieldContext_ProcessingActivity_personalDataCategory(ctx, field)
-			case "specialOrCriminalData":
-				return ec.fieldContext_ProcessingActivity_specialOrCriminalData(ctx, field)
-			case "consentEvidenceLink":
-				return ec.fieldContext_ProcessingActivity_consentEvidenceLink(ctx, field)
-			case "lawfulBasis":
-				return ec.fieldContext_ProcessingActivity_lawfulBasis(ctx, field)
-			case "recipients":
-				return ec.fieldContext_ProcessingActivity_recipients(ctx, field)
-			case "location":
-				return ec.fieldContext_ProcessingActivity_location(ctx, field)
-			case "internationalTransfers":
-				return ec.fieldContext_ProcessingActivity_internationalTransfers(ctx, field)
-			case "transferSafeguards":
-				return ec.fieldContext_ProcessingActivity_transferSafeguards(ctx, field)
-			case "retentionPeriod":
-				return ec.fieldContext_ProcessingActivity_retentionPeriod(ctx, field)
-			case "securityMeasures":
-				return ec.fieldContext_ProcessingActivity_securityMeasures(ctx, field)
 			case "dataProtectionImpactAssessment":
 				return ec.fieldContext_ProcessingActivity_dataProtectionImpactAssessment(ctx, field)
 			case "transferImpactAssessment":
 				return ec.fieldContext_ProcessingActivity_transferImpactAssessment(ctx, field)
-			case "lastReviewDate":
-				return ec.fieldContext_ProcessingActivity_lastReviewDate(ctx, field)
-			case "nextReviewDate":
-				return ec.fieldContext_ProcessingActivity_nextReviewDate(ctx, field)
-			case "role":
-				return ec.fieldContext_ProcessingActivity_role(ctx, field)
-			case "dataProtectionOfficer":
-				return ec.fieldContext_ProcessingActivity_dataProtectionOfficer(ctx, field)
-			case "vendors":
-				return ec.fieldContext_ProcessingActivity_vendors(ctx, field)
-			case "dpia":
-				return ec.fieldContext_ProcessingActivity_dpia(ctx, field)
-			case "tia":
-				return ec.fieldContext_ProcessingActivity_tia(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_ProcessingActivity_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_ProcessingActivity_updatedAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type ProcessingActivity", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ProcessingActivityTIA_organization(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityTia) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_ProcessingActivityTIA_organization,
-		func(ctx context.Context) (any, error) {
-			return ec.resolvers.ProcessingActivityTIA().Organization(ctx, obj)
-		},
-		nil,
-		ec.marshalNOrganization2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐOrganization,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_ProcessingActivityTIA_organization(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ProcessingActivityTIA",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Organization_id(ctx, field)
-			case "name":
-				return ec.fieldContext_Organization_name(ctx, field)
-			case "logoUrl":
-				return ec.fieldContext_Organization_logoUrl(ctx, field)
-			case "horizontalLogoUrl":
-				return ec.fieldContext_Organization_horizontalLogoUrl(ctx, field)
-			case "description":
-				return ec.fieldContext_Organization_description(ctx, field)
-			case "websiteUrl":
-				return ec.fieldContext_Organization_websiteUrl(ctx, field)
-			case "email":
-				return ec.fieldContext_Organization_email(ctx, field)
-			case "headquarterAddress":
-				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
-			case "context":
-				return ec.fieldContext_Organization_context(ctx, field)
-			case "memberships":
-				return ec.fieldContext_Organization_memberships(ctx, field)
-			case "invitations":
-				return ec.fieldContext_Organization_invitations(ctx, field)
-			case "slackConnections":
-				return ec.fieldContext_Organization_slackConnections(ctx, field)
-			case "frameworks":
-				return ec.fieldContext_Organization_frameworks(ctx, field)
-			case "controls":
-				return ec.fieldContext_Organization_controls(ctx, field)
-			case "vendors":
-				return ec.fieldContext_Organization_vendors(ctx, field)
-			case "peoples":
-				return ec.fieldContext_Organization_peoples(ctx, field)
-			case "documents":
-				return ec.fieldContext_Organization_documents(ctx, field)
-			case "meetings":
-				return ec.fieldContext_Organization_meetings(ctx, field)
-			case "measures":
-				return ec.fieldContext_Organization_measures(ctx, field)
-			case "risks":
-				return ec.fieldContext_Organization_risks(ctx, field)
-			case "tasks":
-				return ec.fieldContext_Organization_tasks(ctx, field)
-			case "assets":
-				return ec.fieldContext_Organization_assets(ctx, field)
-			case "data":
-				return ec.fieldContext_Organization_data(ctx, field)
-			case "audits":
-				return ec.fieldContext_Organization_audits(ctx, field)
-			case "nonconformities":
-				return ec.fieldContext_Organization_nonconformities(ctx, field)
-			case "obligations":
-				return ec.fieldContext_Organization_obligations(ctx, field)
-			case "continualImprovements":
-				return ec.fieldContext_Organization_continualImprovements(ctx, field)
-			case "processingActivities":
-				return ec.fieldContext_Organization_processingActivities(ctx, field)
-			case "dataProtectionImpactAssessments":
-				return ec.fieldContext_Organization_dataProtectionImpactAssessments(ctx, field)
-			case "transferImpactAssessments":
-				return ec.fieldContext_Organization_transferImpactAssessments(ctx, field)
-			case "snapshots":
-				return ec.fieldContext_Organization_snapshots(ctx, field)
-			case "trustCenterFiles":
-				return ec.fieldContext_Organization_trustCenterFiles(ctx, field)
-			case "trustCenter":
-				return ec.fieldContext_Organization_trustCenter(ctx, field)
-			case "customDomain":
-				return ec.fieldContext_Organization_customDomain(ctx, field)
-			case "samlConfigurations":
-				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Organization_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_Organization_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ProcessingActivityTIA_dataSubjects(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityTia) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_ProcessingActivityTIA_dataSubjects,
-		func(ctx context.Context) (any, error) {
-			return obj.DataSubjects, nil
-		},
-		nil,
-		ec.marshalOString2ᚖstring,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_ProcessingActivityTIA_dataSubjects(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ProcessingActivityTIA",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ProcessingActivityTIA_legalMechanism(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityTia) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_ProcessingActivityTIA_legalMechanism,
-		func(ctx context.Context) (any, error) {
-			return obj.LegalMechanism, nil
-		},
-		nil,
-		ec.marshalOString2ᚖstring,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_ProcessingActivityTIA_legalMechanism(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ProcessingActivityTIA",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ProcessingActivityTIA_transfer(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityTia) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_ProcessingActivityTIA_transfer,
-		func(ctx context.Context) (any, error) {
-			return obj.Transfer, nil
-		},
-		nil,
-		ec.marshalOString2ᚖstring,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_ProcessingActivityTIA_transfer(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ProcessingActivityTIA",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ProcessingActivityTIA_localLawRisk(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityTia) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_ProcessingActivityTIA_localLawRisk,
-		func(ctx context.Context) (any, error) {
-			return obj.LocalLawRisk, nil
-		},
-		nil,
-		ec.marshalOString2ᚖstring,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_ProcessingActivityTIA_localLawRisk(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ProcessingActivityTIA",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ProcessingActivityTIA_supplementaryMeasures(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityTia) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_ProcessingActivityTIA_supplementaryMeasures,
-		func(ctx context.Context) (any, error) {
-			return obj.SupplementaryMeasures, nil
-		},
-		nil,
-		ec.marshalOString2ᚖstring,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_ProcessingActivityTIA_supplementaryMeasures(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ProcessingActivityTIA",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ProcessingActivityTIA_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityTia) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_ProcessingActivityTIA_createdAt,
-		func(ctx context.Context) (any, error) {
-			return obj.CreatedAt, nil
-		},
-		nil,
-		ec.marshalNDatetime2timeᚐTime,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_ProcessingActivityTIA_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ProcessingActivityTIA",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Datetime does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ProcessingActivityTIA_updatedAt(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityTia) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_ProcessingActivityTIA_updatedAt,
-		func(ctx context.Context) (any, error) {
-			return obj.UpdatedAt, nil
-		},
-		nil,
-		ec.marshalNDatetime2timeᚐTime,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_ProcessingActivityTIA_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ProcessingActivityTIA",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Datetime does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ProcessingActivityTIAConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityTIAConnection) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_ProcessingActivityTIAConnection_totalCount,
-		func(ctx context.Context) (any, error) {
-			return ec.resolvers.ProcessingActivityTIAConnection().TotalCount(ctx, obj)
-		},
-		nil,
-		ec.marshalNInt2int,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_ProcessingActivityTIAConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ProcessingActivityTIAConnection",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ProcessingActivityTIAConnection_edges(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityTIAConnection) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_ProcessingActivityTIAConnection_edges,
-		func(ctx context.Context) (any, error) {
-			return obj.Edges, nil
-		},
-		nil,
-		ec.marshalNProcessingActivityTIAEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityTIAEdgeᚄ,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_ProcessingActivityTIAConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ProcessingActivityTIAConnection",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "cursor":
-				return ec.fieldContext_ProcessingActivityTIAEdge_cursor(ctx, field)
-			case "node":
-				return ec.fieldContext_ProcessingActivityTIAEdge_node(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type ProcessingActivityTIAEdge", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ProcessingActivityTIAConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityTIAConnection) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_ProcessingActivityTIAConnection_pageInfo,
-		func(ctx context.Context) (any, error) {
-			return obj.PageInfo, nil
-		},
-		nil,
-		ec.marshalNPageInfo2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPageInfo,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_ProcessingActivityTIAConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ProcessingActivityTIAConnection",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "hasNextPage":
-				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
-			case "hasPreviousPage":
-				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
-			case "startCursor":
-				return ec.fieldContext_PageInfo_startCursor(ctx, field)
-			case "endCursor":
-				return ec.fieldContext_PageInfo_endCursor(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ProcessingActivityTIAEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityTIAEdge) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_ProcessingActivityTIAEdge_cursor,
-		func(ctx context.Context) (any, error) {
-			return obj.Cursor, nil
-		},
-		nil,
-		ec.marshalNCursorKey2goᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_ProcessingActivityTIAEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ProcessingActivityTIAEdge",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type CursorKey does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ProcessingActivityTIAEdge_node(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityTIAEdge) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_ProcessingActivityTIAEdge_node,
-		func(ctx context.Context) (any, error) {
-			return obj.Node, nil
-		},
-		nil,
-		ec.marshalNProcessingActivityTIA2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityTia,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_ProcessingActivityTIAEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ProcessingActivityTIAEdge",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_ProcessingActivityTIA_id(ctx, field)
-			case "processingActivity":
-				return ec.fieldContext_ProcessingActivityTIA_processingActivity(ctx, field)
-			case "organization":
-				return ec.fieldContext_ProcessingActivityTIA_organization(ctx, field)
-			case "dataSubjects":
-				return ec.fieldContext_ProcessingActivityTIA_dataSubjects(ctx, field)
-			case "legalMechanism":
-				return ec.fieldContext_ProcessingActivityTIA_legalMechanism(ctx, field)
-			case "transfer":
-				return ec.fieldContext_ProcessingActivityTIA_transfer(ctx, field)
-			case "localLawRisk":
-				return ec.fieldContext_ProcessingActivityTIA_localLawRisk(ctx, field)
-			case "supplementaryMeasures":
-				return ec.fieldContext_ProcessingActivityTIA_supplementaryMeasures(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_ProcessingActivityTIA_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_ProcessingActivityTIA_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type ProcessingActivityTIA", field.Name)
 		},
 	}
 	return fc, nil
@@ -49206,6 +48599,613 @@ func (ec *executionContext) fieldContext_TaskEdge_node(_ context.Context, field 
 	return fc, nil
 }
 
+func (ec *executionContext) _TransferImpactAssessment_id(ctx context.Context, field graphql.CollectedField, obj *types.TransferImpactAssessment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_TransferImpactAssessment_id,
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_TransferImpactAssessment_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TransferImpactAssessment",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TransferImpactAssessment_processingActivity(ctx context.Context, field graphql.CollectedField, obj *types.TransferImpactAssessment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_TransferImpactAssessment_processingActivity,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.TransferImpactAssessment().ProcessingActivity(ctx, obj)
+		},
+		nil,
+		ec.marshalNProcessingActivity2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivity,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_TransferImpactAssessment_processingActivity(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TransferImpactAssessment",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_ProcessingActivity_id(ctx, field)
+			case "snapshotId":
+				return ec.fieldContext_ProcessingActivity_snapshotId(ctx, field)
+			case "sourceId":
+				return ec.fieldContext_ProcessingActivity_sourceId(ctx, field)
+			case "organization":
+				return ec.fieldContext_ProcessingActivity_organization(ctx, field)
+			case "name":
+				return ec.fieldContext_ProcessingActivity_name(ctx, field)
+			case "purpose":
+				return ec.fieldContext_ProcessingActivity_purpose(ctx, field)
+			case "dataSubjectCategory":
+				return ec.fieldContext_ProcessingActivity_dataSubjectCategory(ctx, field)
+			case "personalDataCategory":
+				return ec.fieldContext_ProcessingActivity_personalDataCategory(ctx, field)
+			case "specialOrCriminalData":
+				return ec.fieldContext_ProcessingActivity_specialOrCriminalData(ctx, field)
+			case "consentEvidenceLink":
+				return ec.fieldContext_ProcessingActivity_consentEvidenceLink(ctx, field)
+			case "lawfulBasis":
+				return ec.fieldContext_ProcessingActivity_lawfulBasis(ctx, field)
+			case "recipients":
+				return ec.fieldContext_ProcessingActivity_recipients(ctx, field)
+			case "location":
+				return ec.fieldContext_ProcessingActivity_location(ctx, field)
+			case "internationalTransfers":
+				return ec.fieldContext_ProcessingActivity_internationalTransfers(ctx, field)
+			case "transferSafeguards":
+				return ec.fieldContext_ProcessingActivity_transferSafeguards(ctx, field)
+			case "retentionPeriod":
+				return ec.fieldContext_ProcessingActivity_retentionPeriod(ctx, field)
+			case "securityMeasures":
+				return ec.fieldContext_ProcessingActivity_securityMeasures(ctx, field)
+			case "dataProtectionImpactAssessmentNeeded":
+				return ec.fieldContext_ProcessingActivity_dataProtectionImpactAssessmentNeeded(ctx, field)
+			case "transferImpactAssessmentNeeded":
+				return ec.fieldContext_ProcessingActivity_transferImpactAssessmentNeeded(ctx, field)
+			case "lastReviewDate":
+				return ec.fieldContext_ProcessingActivity_lastReviewDate(ctx, field)
+			case "nextReviewDate":
+				return ec.fieldContext_ProcessingActivity_nextReviewDate(ctx, field)
+			case "role":
+				return ec.fieldContext_ProcessingActivity_role(ctx, field)
+			case "dataProtectionOfficer":
+				return ec.fieldContext_ProcessingActivity_dataProtectionOfficer(ctx, field)
+			case "vendors":
+				return ec.fieldContext_ProcessingActivity_vendors(ctx, field)
+			case "dataProtectionImpactAssessment":
+				return ec.fieldContext_ProcessingActivity_dataProtectionImpactAssessment(ctx, field)
+			case "transferImpactAssessment":
+				return ec.fieldContext_ProcessingActivity_transferImpactAssessment(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_ProcessingActivity_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_ProcessingActivity_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ProcessingActivity", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TransferImpactAssessment_organization(ctx context.Context, field graphql.CollectedField, obj *types.TransferImpactAssessment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_TransferImpactAssessment_organization,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.TransferImpactAssessment().Organization(ctx, obj)
+		},
+		nil,
+		ec.marshalNOrganization2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐOrganization,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_TransferImpactAssessment_organization(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TransferImpactAssessment",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Organization_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Organization_name(ctx, field)
+			case "logoUrl":
+				return ec.fieldContext_Organization_logoUrl(ctx, field)
+			case "horizontalLogoUrl":
+				return ec.fieldContext_Organization_horizontalLogoUrl(ctx, field)
+			case "description":
+				return ec.fieldContext_Organization_description(ctx, field)
+			case "websiteUrl":
+				return ec.fieldContext_Organization_websiteUrl(ctx, field)
+			case "email":
+				return ec.fieldContext_Organization_email(ctx, field)
+			case "headquarterAddress":
+				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
+			case "context":
+				return ec.fieldContext_Organization_context(ctx, field)
+			case "memberships":
+				return ec.fieldContext_Organization_memberships(ctx, field)
+			case "invitations":
+				return ec.fieldContext_Organization_invitations(ctx, field)
+			case "slackConnections":
+				return ec.fieldContext_Organization_slackConnections(ctx, field)
+			case "frameworks":
+				return ec.fieldContext_Organization_frameworks(ctx, field)
+			case "controls":
+				return ec.fieldContext_Organization_controls(ctx, field)
+			case "vendors":
+				return ec.fieldContext_Organization_vendors(ctx, field)
+			case "peoples":
+				return ec.fieldContext_Organization_peoples(ctx, field)
+			case "documents":
+				return ec.fieldContext_Organization_documents(ctx, field)
+			case "meetings":
+				return ec.fieldContext_Organization_meetings(ctx, field)
+			case "measures":
+				return ec.fieldContext_Organization_measures(ctx, field)
+			case "risks":
+				return ec.fieldContext_Organization_risks(ctx, field)
+			case "tasks":
+				return ec.fieldContext_Organization_tasks(ctx, field)
+			case "assets":
+				return ec.fieldContext_Organization_assets(ctx, field)
+			case "data":
+				return ec.fieldContext_Organization_data(ctx, field)
+			case "audits":
+				return ec.fieldContext_Organization_audits(ctx, field)
+			case "nonconformities":
+				return ec.fieldContext_Organization_nonconformities(ctx, field)
+			case "obligations":
+				return ec.fieldContext_Organization_obligations(ctx, field)
+			case "continualImprovements":
+				return ec.fieldContext_Organization_continualImprovements(ctx, field)
+			case "processingActivities":
+				return ec.fieldContext_Organization_processingActivities(ctx, field)
+			case "dataProtectionImpactAssessments":
+				return ec.fieldContext_Organization_dataProtectionImpactAssessments(ctx, field)
+			case "transferImpactAssessments":
+				return ec.fieldContext_Organization_transferImpactAssessments(ctx, field)
+			case "snapshots":
+				return ec.fieldContext_Organization_snapshots(ctx, field)
+			case "trustCenterFiles":
+				return ec.fieldContext_Organization_trustCenterFiles(ctx, field)
+			case "trustCenter":
+				return ec.fieldContext_Organization_trustCenter(ctx, field)
+			case "customDomain":
+				return ec.fieldContext_Organization_customDomain(ctx, field)
+			case "samlConfigurations":
+				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Organization_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Organization_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TransferImpactAssessment_dataSubjects(ctx context.Context, field graphql.CollectedField, obj *types.TransferImpactAssessment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_TransferImpactAssessment_dataSubjects,
+		func(ctx context.Context) (any, error) {
+			return obj.DataSubjects, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_TransferImpactAssessment_dataSubjects(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TransferImpactAssessment",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TransferImpactAssessment_legalMechanism(ctx context.Context, field graphql.CollectedField, obj *types.TransferImpactAssessment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_TransferImpactAssessment_legalMechanism,
+		func(ctx context.Context) (any, error) {
+			return obj.LegalMechanism, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_TransferImpactAssessment_legalMechanism(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TransferImpactAssessment",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TransferImpactAssessment_transfer(ctx context.Context, field graphql.CollectedField, obj *types.TransferImpactAssessment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_TransferImpactAssessment_transfer,
+		func(ctx context.Context) (any, error) {
+			return obj.Transfer, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_TransferImpactAssessment_transfer(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TransferImpactAssessment",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TransferImpactAssessment_localLawRisk(ctx context.Context, field graphql.CollectedField, obj *types.TransferImpactAssessment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_TransferImpactAssessment_localLawRisk,
+		func(ctx context.Context) (any, error) {
+			return obj.LocalLawRisk, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_TransferImpactAssessment_localLawRisk(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TransferImpactAssessment",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TransferImpactAssessment_supplementaryMeasures(ctx context.Context, field graphql.CollectedField, obj *types.TransferImpactAssessment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_TransferImpactAssessment_supplementaryMeasures,
+		func(ctx context.Context) (any, error) {
+			return obj.SupplementaryMeasures, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_TransferImpactAssessment_supplementaryMeasures(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TransferImpactAssessment",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TransferImpactAssessment_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.TransferImpactAssessment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_TransferImpactAssessment_createdAt,
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		ec.marshalNDatetime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_TransferImpactAssessment_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TransferImpactAssessment",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TransferImpactAssessment_updatedAt(ctx context.Context, field graphql.CollectedField, obj *types.TransferImpactAssessment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_TransferImpactAssessment_updatedAt,
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		ec.marshalNDatetime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_TransferImpactAssessment_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TransferImpactAssessment",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TransferImpactAssessmentConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *types.TransferImpactAssessmentConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_TransferImpactAssessmentConnection_totalCount,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.TransferImpactAssessmentConnection().TotalCount(ctx, obj)
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_TransferImpactAssessmentConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TransferImpactAssessmentConnection",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TransferImpactAssessmentConnection_edges(ctx context.Context, field graphql.CollectedField, obj *types.TransferImpactAssessmentConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_TransferImpactAssessmentConnection_edges,
+		func(ctx context.Context) (any, error) {
+			return obj.Edges, nil
+		},
+		nil,
+		ec.marshalNTransferImpactAssessmentEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐTransferImpactAssessmentEdgeᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_TransferImpactAssessmentConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TransferImpactAssessmentConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cursor":
+				return ec.fieldContext_TransferImpactAssessmentEdge_cursor(ctx, field)
+			case "node":
+				return ec.fieldContext_TransferImpactAssessmentEdge_node(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type TransferImpactAssessmentEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TransferImpactAssessmentConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *types.TransferImpactAssessmentConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_TransferImpactAssessmentConnection_pageInfo,
+		func(ctx context.Context) (any, error) {
+			return obj.PageInfo, nil
+		},
+		nil,
+		ec.marshalNPageInfo2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPageInfo,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_TransferImpactAssessmentConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TransferImpactAssessmentConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TransferImpactAssessmentEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *types.TransferImpactAssessmentEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_TransferImpactAssessmentEdge_cursor,
+		func(ctx context.Context) (any, error) {
+			return obj.Cursor, nil
+		},
+		nil,
+		ec.marshalNCursorKey2goᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_TransferImpactAssessmentEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TransferImpactAssessmentEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type CursorKey does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TransferImpactAssessmentEdge_node(ctx context.Context, field graphql.CollectedField, obj *types.TransferImpactAssessmentEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_TransferImpactAssessmentEdge_node,
+		func(ctx context.Context) (any, error) {
+			return obj.Node, nil
+		},
+		nil,
+		ec.marshalNTransferImpactAssessment2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐTransferImpactAssessment,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_TransferImpactAssessmentEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TransferImpactAssessmentEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_TransferImpactAssessment_id(ctx, field)
+			case "processingActivity":
+				return ec.fieldContext_TransferImpactAssessment_processingActivity(ctx, field)
+			case "organization":
+				return ec.fieldContext_TransferImpactAssessment_organization(ctx, field)
+			case "dataSubjects":
+				return ec.fieldContext_TransferImpactAssessment_dataSubjects(ctx, field)
+			case "legalMechanism":
+				return ec.fieldContext_TransferImpactAssessment_legalMechanism(ctx, field)
+			case "transfer":
+				return ec.fieldContext_TransferImpactAssessment_transfer(ctx, field)
+			case "localLawRisk":
+				return ec.fieldContext_TransferImpactAssessment_localLawRisk(ctx, field)
+			case "supplementaryMeasures":
+				return ec.fieldContext_TransferImpactAssessment_supplementaryMeasures(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_TransferImpactAssessment_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_TransferImpactAssessment_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type TransferImpactAssessment", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _TrustCenter_id(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenter) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -51789,6 +51789,57 @@ func (ec *executionContext) fieldContext_UpdateControlPayload_control(_ context.
 	return fc, nil
 }
 
+func (ec *executionContext) _UpdateDataProtectionImpactAssessmentPayload_dataProtectionImpactAssessment(ctx context.Context, field graphql.CollectedField, obj *types.UpdateDataProtectionImpactAssessmentPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_UpdateDataProtectionImpactAssessmentPayload_dataProtectionImpactAssessment,
+		func(ctx context.Context) (any, error) {
+			return obj.DataProtectionImpactAssessment, nil
+		},
+		nil,
+		ec.marshalNDataProtectionImpactAssessment2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDataProtectionImpactAssessment,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_UpdateDataProtectionImpactAssessmentPayload_dataProtectionImpactAssessment(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UpdateDataProtectionImpactAssessmentPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_DataProtectionImpactAssessment_id(ctx, field)
+			case "processingActivity":
+				return ec.fieldContext_DataProtectionImpactAssessment_processingActivity(ctx, field)
+			case "organization":
+				return ec.fieldContext_DataProtectionImpactAssessment_organization(ctx, field)
+			case "description":
+				return ec.fieldContext_DataProtectionImpactAssessment_description(ctx, field)
+			case "necessityAndProportionality":
+				return ec.fieldContext_DataProtectionImpactAssessment_necessityAndProportionality(ctx, field)
+			case "potentialRisk":
+				return ec.fieldContext_DataProtectionImpactAssessment_potentialRisk(ctx, field)
+			case "mitigations":
+				return ec.fieldContext_DataProtectionImpactAssessment_mitigations(ctx, field)
+			case "residualRisk":
+				return ec.fieldContext_DataProtectionImpactAssessment_residualRisk(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_DataProtectionImpactAssessment_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_DataProtectionImpactAssessment_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DataProtectionImpactAssessment", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _UpdateDatumPayload_datum(ctx context.Context, field graphql.CollectedField, obj *types.UpdateDatumPayload) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -52465,57 +52516,6 @@ func (ec *executionContext) fieldContext_UpdatePeoplePayload_people(_ context.Co
 	return fc, nil
 }
 
-func (ec *executionContext) _UpdateProcessingActivityDPIAPayload_processingActivityDpia(ctx context.Context, field graphql.CollectedField, obj *types.UpdateProcessingActivityDPIAPayload) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_UpdateProcessingActivityDPIAPayload_processingActivityDpia,
-		func(ctx context.Context) (any, error) {
-			return obj.ProcessingActivityDpia, nil
-		},
-		nil,
-		ec.marshalNProcessingActivityDPIA2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityDpia,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_UpdateProcessingActivityDPIAPayload_processingActivityDpia(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "UpdateProcessingActivityDPIAPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_ProcessingActivityDPIA_id(ctx, field)
-			case "processingActivity":
-				return ec.fieldContext_ProcessingActivityDPIA_processingActivity(ctx, field)
-			case "organization":
-				return ec.fieldContext_ProcessingActivityDPIA_organization(ctx, field)
-			case "description":
-				return ec.fieldContext_ProcessingActivityDPIA_description(ctx, field)
-			case "necessityAndProportionality":
-				return ec.fieldContext_ProcessingActivityDPIA_necessityAndProportionality(ctx, field)
-			case "potentialRisk":
-				return ec.fieldContext_ProcessingActivityDPIA_potentialRisk(ctx, field)
-			case "mitigations":
-				return ec.fieldContext_ProcessingActivityDPIA_mitigations(ctx, field)
-			case "residualRisk":
-				return ec.fieldContext_ProcessingActivityDPIA_residualRisk(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_ProcessingActivityDPIA_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_ProcessingActivityDPIA_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type ProcessingActivityDPIA", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _UpdateProcessingActivityPayload_processingActivity(ctx context.Context, field graphql.CollectedField, obj *types.UpdateProcessingActivityPayload) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -52574,10 +52574,10 @@ func (ec *executionContext) fieldContext_UpdateProcessingActivityPayload_process
 				return ec.fieldContext_ProcessingActivity_retentionPeriod(ctx, field)
 			case "securityMeasures":
 				return ec.fieldContext_ProcessingActivity_securityMeasures(ctx, field)
-			case "dataProtectionImpactAssessment":
-				return ec.fieldContext_ProcessingActivity_dataProtectionImpactAssessment(ctx, field)
-			case "transferImpactAssessment":
-				return ec.fieldContext_ProcessingActivity_transferImpactAssessment(ctx, field)
+			case "dataProtectionImpactAssessmentNeeded":
+				return ec.fieldContext_ProcessingActivity_dataProtectionImpactAssessmentNeeded(ctx, field)
+			case "transferImpactAssessmentNeeded":
+				return ec.fieldContext_ProcessingActivity_transferImpactAssessmentNeeded(ctx, field)
 			case "lastReviewDate":
 				return ec.fieldContext_ProcessingActivity_lastReviewDate(ctx, field)
 			case "nextReviewDate":
@@ -52588,67 +52588,16 @@ func (ec *executionContext) fieldContext_UpdateProcessingActivityPayload_process
 				return ec.fieldContext_ProcessingActivity_dataProtectionOfficer(ctx, field)
 			case "vendors":
 				return ec.fieldContext_ProcessingActivity_vendors(ctx, field)
-			case "dpia":
-				return ec.fieldContext_ProcessingActivity_dpia(ctx, field)
-			case "tia":
-				return ec.fieldContext_ProcessingActivity_tia(ctx, field)
+			case "dataProtectionImpactAssessment":
+				return ec.fieldContext_ProcessingActivity_dataProtectionImpactAssessment(ctx, field)
+			case "transferImpactAssessment":
+				return ec.fieldContext_ProcessingActivity_transferImpactAssessment(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_ProcessingActivity_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_ProcessingActivity_updatedAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type ProcessingActivity", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _UpdateProcessingActivityTIAPayload_processingActivityTia(ctx context.Context, field graphql.CollectedField, obj *types.UpdateProcessingActivityTIAPayload) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_UpdateProcessingActivityTIAPayload_processingActivityTia,
-		func(ctx context.Context) (any, error) {
-			return obj.ProcessingActivityTia, nil
-		},
-		nil,
-		ec.marshalNProcessingActivityTIA2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityTia,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_UpdateProcessingActivityTIAPayload_processingActivityTia(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "UpdateProcessingActivityTIAPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_ProcessingActivityTIA_id(ctx, field)
-			case "processingActivity":
-				return ec.fieldContext_ProcessingActivityTIA_processingActivity(ctx, field)
-			case "organization":
-				return ec.fieldContext_ProcessingActivityTIA_organization(ctx, field)
-			case "dataSubjects":
-				return ec.fieldContext_ProcessingActivityTIA_dataSubjects(ctx, field)
-			case "legalMechanism":
-				return ec.fieldContext_ProcessingActivityTIA_legalMechanism(ctx, field)
-			case "transfer":
-				return ec.fieldContext_ProcessingActivityTIA_transfer(ctx, field)
-			case "localLawRisk":
-				return ec.fieldContext_ProcessingActivityTIA_localLawRisk(ctx, field)
-			case "supplementaryMeasures":
-				return ec.fieldContext_ProcessingActivityTIA_supplementaryMeasures(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_ProcessingActivityTIA_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_ProcessingActivityTIA_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type ProcessingActivityTIA", field.Name)
 		},
 	}
 	return fc, nil
@@ -52854,6 +52803,57 @@ func (ec *executionContext) fieldContext_UpdateTaskPayload_task(_ context.Contex
 				return ec.fieldContext_Task_updatedAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Task", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UpdateTransferImpactAssessmentPayload_transferImpactAssessment(ctx context.Context, field graphql.CollectedField, obj *types.UpdateTransferImpactAssessmentPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_UpdateTransferImpactAssessmentPayload_transferImpactAssessment,
+		func(ctx context.Context) (any, error) {
+			return obj.TransferImpactAssessment, nil
+		},
+		nil,
+		ec.marshalNTransferImpactAssessment2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐTransferImpactAssessment,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_UpdateTransferImpactAssessmentPayload_transferImpactAssessment(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UpdateTransferImpactAssessmentPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_TransferImpactAssessment_id(ctx, field)
+			case "processingActivity":
+				return ec.fieldContext_TransferImpactAssessment_processingActivity(ctx, field)
+			case "organization":
+				return ec.fieldContext_TransferImpactAssessment_organization(ctx, field)
+			case "dataSubjects":
+				return ec.fieldContext_TransferImpactAssessment_dataSubjects(ctx, field)
+			case "legalMechanism":
+				return ec.fieldContext_TransferImpactAssessment_legalMechanism(ctx, field)
+			case "transfer":
+				return ec.fieldContext_TransferImpactAssessment_transfer(ctx, field)
+			case "localLawRisk":
+				return ec.fieldContext_TransferImpactAssessment_localLawRisk(ctx, field)
+			case "supplementaryMeasures":
+				return ec.fieldContext_TransferImpactAssessment_supplementaryMeasures(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_TransferImpactAssessment_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_TransferImpactAssessment_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type TransferImpactAssessment", field.Name)
 		},
 	}
 	return fc, nil
@@ -60404,6 +60404,68 @@ func (ec *executionContext) unmarshalInputCreateCustomDomainInput(ctx context.Co
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputCreateDataProtectionImpactAssessmentInput(ctx context.Context, obj any) (types.CreateDataProtectionImpactAssessmentInput, error) {
+	var it types.CreateDataProtectionImpactAssessmentInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"processingActivityId", "description", "necessityAndProportionality", "potentialRisk", "mitigations", "residualRisk"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "processingActivityId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("processingActivityId"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ProcessingActivityID = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		case "necessityAndProportionality":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("necessityAndProportionality"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NecessityAndProportionality = data
+		case "potentialRisk":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("potentialRisk"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PotentialRisk = data
+		case "mitigations":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mitigations"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Mitigations = data
+		case "residualRisk":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("residualRisk"))
+			data, err := ec.unmarshalODataProtectionImpactAssessmentResidualRisk2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐDataProtectionImpactAssessmentResidualRisk(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ResidualRisk = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputCreateDatumInput(ctx context.Context, obj any) (types.CreateDatumInput, error) {
 	var it types.CreateDatumInput
 	asMap := map[string]any{}
@@ -61051,68 +61113,6 @@ func (ec *executionContext) unmarshalInputCreatePeopleInput(ctx context.Context,
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputCreateProcessingActivityDPIAInput(ctx context.Context, obj any) (types.CreateProcessingActivityDPIAInput, error) {
-	var it types.CreateProcessingActivityDPIAInput
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"processingActivityId", "description", "necessityAndProportionality", "potentialRisk", "mitigations", "residualRisk"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "processingActivityId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("processingActivityId"))
-			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ProcessingActivityID = data
-		case "description":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Description = data
-		case "necessityAndProportionality":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("necessityAndProportionality"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.NecessityAndProportionality = data
-		case "potentialRisk":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("potentialRisk"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.PotentialRisk = data
-		case "mitigations":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mitigations"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Mitigations = data
-		case "residualRisk":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("residualRisk"))
-			data, err := ec.unmarshalOProcessingActivityDPIAResidualRisk2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityDPIAResidualRisk(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ResidualRisk = data
-		}
-	}
-
-	return it, nil
-}
-
 func (ec *executionContext) unmarshalInputCreateProcessingActivityInput(ctx context.Context, obj any) (types.CreateProcessingActivityInput, error) {
 	var it types.CreateProcessingActivityInput
 	asMap := map[string]any{}
@@ -61120,7 +61120,7 @@ func (ec *executionContext) unmarshalInputCreateProcessingActivityInput(ctx cont
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"organizationId", "name", "purpose", "dataSubjectCategory", "personalDataCategory", "specialOrCriminalData", "consentEvidenceLink", "lawfulBasis", "recipients", "location", "internationalTransfers", "transferSafeguards", "retentionPeriod", "securityMeasures", "dataProtectionImpactAssessment", "transferImpactAssessment", "lastReviewDate", "nextReviewDate", "role", "dataProtectionOfficerId", "vendorIds"}
+	fieldsInOrder := [...]string{"organizationId", "name", "purpose", "dataSubjectCategory", "personalDataCategory", "specialOrCriminalData", "consentEvidenceLink", "lawfulBasis", "recipients", "location", "internationalTransfers", "transferSafeguards", "retentionPeriod", "securityMeasures", "dataProtectionImpactAssessmentNeeded", "transferImpactAssessmentNeeded", "lastReviewDate", "nextReviewDate", "role", "dataProtectionOfficerId", "vendorIds"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -61225,20 +61225,20 @@ func (ec *executionContext) unmarshalInputCreateProcessingActivityInput(ctx cont
 				return it, err
 			}
 			it.SecurityMeasures = data
-		case "dataProtectionImpactAssessment":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataProtectionImpactAssessment"))
+		case "dataProtectionImpactAssessmentNeeded":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataProtectionImpactAssessmentNeeded"))
 			data, err := ec.unmarshalNProcessingActivityDataProtectionImpactAssessment2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityDataProtectionImpactAssessment(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.DataProtectionImpactAssessment = data
-		case "transferImpactAssessment":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("transferImpactAssessment"))
+			it.DataProtectionImpactAssessmentNeeded = data
+		case "transferImpactAssessmentNeeded":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("transferImpactAssessmentNeeded"))
 			data, err := ec.unmarshalNProcessingActivityTransferImpactAssessment2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityTransferImpactAssessment(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.TransferImpactAssessment = data
+			it.TransferImpactAssessmentNeeded = data
 		case "lastReviewDate":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lastReviewDate"))
 			data, err := ec.unmarshalODatetime2ᚖtimeᚐTime(ctx, v)
@@ -61274,68 +61274,6 @@ func (ec *executionContext) unmarshalInputCreateProcessingActivityInput(ctx cont
 				return it, err
 			}
 			it.VendorIds = data
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputCreateProcessingActivityTIAInput(ctx context.Context, obj any) (types.CreateProcessingActivityTIAInput, error) {
-	var it types.CreateProcessingActivityTIAInput
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"processingActivityId", "dataSubjects", "legalMechanism", "transfer", "localLawRisk", "supplementaryMeasures"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "processingActivityId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("processingActivityId"))
-			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ProcessingActivityID = data
-		case "dataSubjects":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataSubjects"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DataSubjects = data
-		case "legalMechanism":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("legalMechanism"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.LegalMechanism = data
-		case "transfer":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("transfer"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Transfer = data
-		case "localLawRisk":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("localLawRisk"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.LocalLawRisk = data
-		case "supplementaryMeasures":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("supplementaryMeasures"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.SupplementaryMeasures = data
 		}
 	}
 
@@ -61777,6 +61715,68 @@ func (ec *executionContext) unmarshalInputCreateTaskInput(ctx context.Context, o
 				return it, err
 			}
 			it.Deadline = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputCreateTransferImpactAssessmentInput(ctx context.Context, obj any) (types.CreateTransferImpactAssessmentInput, error) {
+	var it types.CreateTransferImpactAssessmentInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"processingActivityId", "dataSubjects", "legalMechanism", "transfer", "localLawRisk", "supplementaryMeasures"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "processingActivityId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("processingActivityId"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ProcessingActivityID = data
+		case "dataSubjects":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataSubjects"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataSubjects = data
+		case "legalMechanism":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("legalMechanism"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LegalMechanism = data
+		case "transfer":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("transfer"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Transfer = data
+		case "localLawRisk":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("localLawRisk"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LocalLawRisk = data
+		case "supplementaryMeasures":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("supplementaryMeasures"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SupplementaryMeasures = data
 		}
 	}
 
@@ -62266,6 +62266,67 @@ func (ec *executionContext) unmarshalInputCreateVendorServiceInput(ctx context.C
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputDataProtectionImpactAssessmentFilter(ctx context.Context, obj any) (types.DataProtectionImpactAssessmentFilter, error) {
+	var it types.DataProtectionImpactAssessmentFilter
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"snapshotId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "snapshotId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("snapshotId"))
+			data, err := ec.unmarshalOID2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SnapshotID = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputDataProtectionImpactAssessmentOrder(ctx context.Context, obj any) (types.DataProtectionImpactAssessmentOrderBy, error) {
+	var it types.DataProtectionImpactAssessmentOrderBy
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"direction", "field"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "direction":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("direction"))
+			data, err := ec.unmarshalNOrderDirection2goᚗproboᚗincᚋproboᚋpkgᚋpageᚐOrderDirection(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Direction = data
+		case "field":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
+			data, err := ec.unmarshalNDataProtectionImpactAssessmentOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐDataProtectionImpactAssessmentOrderField(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Field = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputDatumFilter(ctx context.Context, obj any) (types.DatumFilter, error) {
 	var it types.DatumFilter
 	asMap := map[string]any{}
@@ -62625,6 +62686,33 @@ func (ec *executionContext) unmarshalInputDeleteCustomDomainInput(ctx context.Co
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputDeleteDataProtectionImpactAssessmentInput(ctx context.Context, obj any) (types.DeleteDataProtectionImpactAssessmentInput, error) {
+	var it types.DeleteDataProtectionImpactAssessmentInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"dataProtectionImpactAssessmentId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "dataProtectionImpactAssessmentId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataProtectionImpactAssessmentId"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataProtectionImpactAssessmentID = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputDeleteDatumInput(ctx context.Context, obj any) (types.DeleteDatumInput, error) {
 	var it types.DeleteDatumInput
 	asMap := map[string]any{}
@@ -62976,33 +63064,6 @@ func (ec *executionContext) unmarshalInputDeletePeopleInput(ctx context.Context,
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputDeleteProcessingActivityDPIAInput(ctx context.Context, obj any) (types.DeleteProcessingActivityDPIAInput, error) {
-	var it types.DeleteProcessingActivityDPIAInput
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"processingActivityDpiaId"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "processingActivityDpiaId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("processingActivityDpiaId"))
-			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ProcessingActivityDpiaID = data
-		}
-	}
-
-	return it, nil
-}
-
 func (ec *executionContext) unmarshalInputDeleteProcessingActivityInput(ctx context.Context, obj any) (types.DeleteProcessingActivityInput, error) {
 	var it types.DeleteProcessingActivityInput
 	asMap := map[string]any{}
@@ -63024,33 +63085,6 @@ func (ec *executionContext) unmarshalInputDeleteProcessingActivityInput(ctx cont
 				return it, err
 			}
 			it.ProcessingActivityID = data
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputDeleteProcessingActivityTIAInput(ctx context.Context, obj any) (types.DeleteProcessingActivityTIAInput, error) {
-	var it types.DeleteProcessingActivityTIAInput
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"processingActivityTiaId"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "processingActivityTiaId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("processingActivityTiaId"))
-			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ProcessingActivityTiaID = data
 		}
 	}
 
@@ -63261,6 +63295,33 @@ func (ec *executionContext) unmarshalInputDeleteTaskInput(ctx context.Context, o
 				return it, err
 			}
 			it.TaskID = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputDeleteTransferImpactAssessmentInput(ctx context.Context, obj any) (types.DeleteTransferImpactAssessmentInput, error) {
+	var it types.DeleteTransferImpactAssessmentInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"transferImpactAssessmentId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "transferImpactAssessmentId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("transferImpactAssessmentId"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TransferImpactAssessmentID = data
 		}
 	}
 
@@ -64644,67 +64705,6 @@ func (ec *executionContext) unmarshalInputPeopleOrder(ctx context.Context, obj a
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputProcessingActivityDPIAFilter(ctx context.Context, obj any) (types.ProcessingActivityDPIAFilter, error) {
-	var it types.ProcessingActivityDPIAFilter
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"snapshotId"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "snapshotId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("snapshotId"))
-			data, err := ec.unmarshalOID2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.SnapshotID = data
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputProcessingActivityDPIAOrder(ctx context.Context, obj any) (types.ProcessingActivityDPIAOrderBy, error) {
-	var it types.ProcessingActivityDPIAOrderBy
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"direction", "field"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "direction":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("direction"))
-			data, err := ec.unmarshalNOrderDirection2goᚗproboᚗincᚋproboᚋpkgᚋpageᚐOrderDirection(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Direction = data
-		case "field":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
-			data, err := ec.unmarshalNProcessingActivityDPIAOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityDPIAOrderField(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Field = data
-		}
-	}
-
-	return it, nil
-}
-
 func (ec *executionContext) unmarshalInputProcessingActivityFilter(ctx context.Context, obj any) (types.ProcessingActivityFilter, error) {
 	var it types.ProcessingActivityFilter
 	asMap := map[string]any{}
@@ -64756,67 +64756,6 @@ func (ec *executionContext) unmarshalInputProcessingActivityOrder(ctx context.Co
 		case "field":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
 			data, err := ec.unmarshalNProcessingActivityOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityOrderField(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Field = data
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputProcessingActivityTIAFilter(ctx context.Context, obj any) (types.ProcessingActivityTIAFilter, error) {
-	var it types.ProcessingActivityTIAFilter
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"snapshotId"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "snapshotId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("snapshotId"))
-			data, err := ec.unmarshalOID2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.SnapshotID = data
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputProcessingActivityTIAOrder(ctx context.Context, obj any) (types.ProcessingActivityTIAOrderBy, error) {
-	var it types.ProcessingActivityTIAOrderBy
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"direction", "field"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "direction":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("direction"))
-			data, err := ec.unmarshalNOrderDirection2goᚗproboᚗincᚋproboᚋpkgᚋpageᚐOrderDirection(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Direction = data
-		case "field":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
-			data, err := ec.unmarshalNProcessingActivityTIAOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityTIAOrderField(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -65157,6 +65096,67 @@ func (ec *executionContext) unmarshalInputTaskOrder(ctx context.Context, obj any
 		case "field":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
 			data, err := ec.unmarshalNTaskOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐTaskOrderField(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Field = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputTransferImpactAssessmentFilter(ctx context.Context, obj any) (types.TransferImpactAssessmentFilter, error) {
+	var it types.TransferImpactAssessmentFilter
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"snapshotId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "snapshotId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("snapshotId"))
+			data, err := ec.unmarshalOID2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SnapshotID = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputTransferImpactAssessmentOrder(ctx context.Context, obj any) (types.TransferImpactAssessmentOrderBy, error) {
+	var it types.TransferImpactAssessmentOrderBy
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"direction", "field"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "direction":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("direction"))
+			data, err := ec.unmarshalNOrderDirection2goᚗproboᚗincᚋproboᚋpkgᚋpageᚐOrderDirection(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Direction = data
+		case "field":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
+			data, err := ec.unmarshalNTransferImpactAssessmentOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐTransferImpactAssessmentOrderField(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -65627,6 +65627,68 @@ func (ec *executionContext) unmarshalInputUpdateControlInput(ctx context.Context
 				return it, err
 			}
 			it.ExclusionJustification = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputUpdateDataProtectionImpactAssessmentInput(ctx context.Context, obj any) (types.UpdateDataProtectionImpactAssessmentInput, error) {
+	var it types.UpdateDataProtectionImpactAssessmentInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"id", "description", "necessityAndProportionality", "potentialRisk", "mitigations", "residualRisk"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ID = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = graphql.OmittableOf(data)
+		case "necessityAndProportionality":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("necessityAndProportionality"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NecessityAndProportionality = graphql.OmittableOf(data)
+		case "potentialRisk":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("potentialRisk"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PotentialRisk = graphql.OmittableOf(data)
+		case "mitigations":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mitigations"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Mitigations = graphql.OmittableOf(data)
+		case "residualRisk":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("residualRisk"))
+			data, err := ec.unmarshalODataProtectionImpactAssessmentResidualRisk2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐDataProtectionImpactAssessmentResidualRisk(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ResidualRisk = data
 		}
 	}
 
@@ -66356,68 +66418,6 @@ func (ec *executionContext) unmarshalInputUpdatePeopleInput(ctx context.Context,
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputUpdateProcessingActivityDPIAInput(ctx context.Context, obj any) (types.UpdateProcessingActivityDPIAInput, error) {
-	var it types.UpdateProcessingActivityDPIAInput
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"id", "description", "necessityAndProportionality", "potentialRisk", "mitigations", "residualRisk"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "id":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ID = data
-		case "description":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Description = graphql.OmittableOf(data)
-		case "necessityAndProportionality":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("necessityAndProportionality"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.NecessityAndProportionality = graphql.OmittableOf(data)
-		case "potentialRisk":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("potentialRisk"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.PotentialRisk = graphql.OmittableOf(data)
-		case "mitigations":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mitigations"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Mitigations = graphql.OmittableOf(data)
-		case "residualRisk":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("residualRisk"))
-			data, err := ec.unmarshalOProcessingActivityDPIAResidualRisk2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityDPIAResidualRisk(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ResidualRisk = data
-		}
-	}
-
-	return it, nil
-}
-
 func (ec *executionContext) unmarshalInputUpdateProcessingActivityInput(ctx context.Context, obj any) (types.UpdateProcessingActivityInput, error) {
 	var it types.UpdateProcessingActivityInput
 	asMap := map[string]any{}
@@ -66425,7 +66425,7 @@ func (ec *executionContext) unmarshalInputUpdateProcessingActivityInput(ctx cont
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"id", "name", "purpose", "dataSubjectCategory", "personalDataCategory", "specialOrCriminalData", "consentEvidenceLink", "lawfulBasis", "recipients", "location", "internationalTransfers", "transferSafeguards", "retentionPeriod", "securityMeasures", "dataProtectionImpactAssessment", "transferImpactAssessment", "lastReviewDate", "nextReviewDate", "role", "dataProtectionOfficerId", "vendorIds"}
+	fieldsInOrder := [...]string{"id", "name", "purpose", "dataSubjectCategory", "personalDataCategory", "specialOrCriminalData", "consentEvidenceLink", "lawfulBasis", "recipients", "location", "internationalTransfers", "transferSafeguards", "retentionPeriod", "securityMeasures", "dataProtectionImpactAssessmentNeeded", "transferImpactAssessmentNeeded", "lastReviewDate", "nextReviewDate", "role", "dataProtectionOfficerId", "vendorIds"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -66530,20 +66530,20 @@ func (ec *executionContext) unmarshalInputUpdateProcessingActivityInput(ctx cont
 				return it, err
 			}
 			it.SecurityMeasures = graphql.OmittableOf(data)
-		case "dataProtectionImpactAssessment":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataProtectionImpactAssessment"))
+		case "dataProtectionImpactAssessmentNeeded":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataProtectionImpactAssessmentNeeded"))
 			data, err := ec.unmarshalOProcessingActivityDataProtectionImpactAssessment2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityDataProtectionImpactAssessment(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.DataProtectionImpactAssessment = data
-		case "transferImpactAssessment":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("transferImpactAssessment"))
+			it.DataProtectionImpactAssessmentNeeded = data
+		case "transferImpactAssessmentNeeded":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("transferImpactAssessmentNeeded"))
 			data, err := ec.unmarshalOProcessingActivityTransferImpactAssessment2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityTransferImpactAssessment(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.TransferImpactAssessment = data
+			it.TransferImpactAssessmentNeeded = data
 		case "lastReviewDate":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lastReviewDate"))
 			data, err := ec.unmarshalODatetime2ᚖtimeᚐTime(ctx, v)
@@ -66579,68 +66579,6 @@ func (ec *executionContext) unmarshalInputUpdateProcessingActivityInput(ctx cont
 				return it, err
 			}
 			it.VendorIds = data
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputUpdateProcessingActivityTIAInput(ctx context.Context, obj any) (types.UpdateProcessingActivityTIAInput, error) {
-	var it types.UpdateProcessingActivityTIAInput
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"id", "dataSubjects", "legalMechanism", "transfer", "localLawRisk", "supplementaryMeasures"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "id":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ID = data
-		case "dataSubjects":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataSubjects"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DataSubjects = graphql.OmittableOf(data)
-		case "legalMechanism":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("legalMechanism"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.LegalMechanism = graphql.OmittableOf(data)
-		case "transfer":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("transfer"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Transfer = graphql.OmittableOf(data)
-		case "localLawRisk":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("localLawRisk"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.LocalLawRisk = graphql.OmittableOf(data)
-		case "supplementaryMeasures":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("supplementaryMeasures"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.SupplementaryMeasures = graphql.OmittableOf(data)
 		}
 	}
 
@@ -66918,6 +66856,68 @@ func (ec *executionContext) unmarshalInputUpdateTaskInput(ctx context.Context, o
 				return it, err
 			}
 			it.Deadline = graphql.OmittableOf(data)
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputUpdateTransferImpactAssessmentInput(ctx context.Context, obj any) (types.UpdateTransferImpactAssessmentInput, error) {
+	var it types.UpdateTransferImpactAssessmentInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"id", "dataSubjects", "legalMechanism", "transfer", "localLawRisk", "supplementaryMeasures"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ID = data
+		case "dataSubjects":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataSubjects"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataSubjects = graphql.OmittableOf(data)
+		case "legalMechanism":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("legalMechanism"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LegalMechanism = graphql.OmittableOf(data)
+		case "transfer":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("transfer"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Transfer = graphql.OmittableOf(data)
+		case "localLawRisk":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("localLawRisk"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LocalLawRisk = graphql.OmittableOf(data)
+		case "supplementaryMeasures":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("supplementaryMeasures"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SupplementaryMeasures = graphql.OmittableOf(data)
 		}
 	}
 
@@ -68106,6 +68106,13 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._TrustCenter(ctx, sel, obj)
+	case types.TransferImpactAssessment:
+		return ec._TransferImpactAssessment(ctx, sel, &obj)
+	case *types.TransferImpactAssessment:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._TransferImpactAssessment(ctx, sel, obj)
 	case types.Task:
 		return ec._Task(ctx, sel, &obj)
 	case *types.Task:
@@ -68141,20 +68148,6 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._Report(ctx, sel, obj)
-	case types.ProcessingActivityTia:
-		return ec._ProcessingActivityTIA(ctx, sel, &obj)
-	case *types.ProcessingActivityTia:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ProcessingActivityTIA(ctx, sel, obj)
-	case types.ProcessingActivityDpia:
-		return ec._ProcessingActivityDPIA(ctx, sel, &obj)
-	case *types.ProcessingActivityDpia:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._ProcessingActivityDPIA(ctx, sel, obj)
 	case types.ProcessingActivity:
 		return ec._ProcessingActivity(ctx, sel, &obj)
 	case *types.ProcessingActivity:
@@ -68260,6 +68253,13 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._Datum(ctx, sel, obj)
+	case types.DataProtectionImpactAssessment:
+		return ec._DataProtectionImpactAssessment(ctx, sel, &obj)
+	case *types.DataProtectionImpactAssessment:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._DataProtectionImpactAssessment(ctx, sel, obj)
 	case types.CustomDomain:
 		return ec._CustomDomain(ctx, sel, &obj)
 	case *types.CustomDomain:
@@ -70370,6 +70370,45 @@ func (ec *executionContext) _CreateCustomDomainPayload(ctx context.Context, sel 
 	return out
 }
 
+var createDataProtectionImpactAssessmentPayloadImplementors = []string{"CreateDataProtectionImpactAssessmentPayload"}
+
+func (ec *executionContext) _CreateDataProtectionImpactAssessmentPayload(ctx context.Context, sel ast.SelectionSet, obj *types.CreateDataProtectionImpactAssessmentPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, createDataProtectionImpactAssessmentPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CreateDataProtectionImpactAssessmentPayload")
+		case "dataProtectionImpactAssessment":
+			out.Values[i] = ec._CreateDataProtectionImpactAssessmentPayload_dataProtectionImpactAssessment(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var createDatumPayloadImplementors = []string{"CreateDatumPayload"}
 
 func (ec *executionContext) _CreateDatumPayload(ctx context.Context, sel ast.SelectionSet, obj *types.CreateDatumPayload) graphql.Marshaler {
@@ -70804,45 +70843,6 @@ func (ec *executionContext) _CreatePeoplePayload(ctx context.Context, sel ast.Se
 	return out
 }
 
-var createProcessingActivityDPIAPayloadImplementors = []string{"CreateProcessingActivityDPIAPayload"}
-
-func (ec *executionContext) _CreateProcessingActivityDPIAPayload(ctx context.Context, sel ast.SelectionSet, obj *types.CreateProcessingActivityDPIAPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, createProcessingActivityDPIAPayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("CreateProcessingActivityDPIAPayload")
-		case "processingActivityDpia":
-			out.Values[i] = ec._CreateProcessingActivityDPIAPayload_processingActivityDpia(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
 var createProcessingActivityPayloadImplementors = []string{"CreateProcessingActivityPayload"}
 
 func (ec *executionContext) _CreateProcessingActivityPayload(ctx context.Context, sel ast.SelectionSet, obj *types.CreateProcessingActivityPayload) graphql.Marshaler {
@@ -70856,45 +70856,6 @@ func (ec *executionContext) _CreateProcessingActivityPayload(ctx context.Context
 			out.Values[i] = graphql.MarshalString("CreateProcessingActivityPayload")
 		case "processingActivityEdge":
 			out.Values[i] = ec._CreateProcessingActivityPayload_processingActivityEdge(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var createProcessingActivityTIAPayloadImplementors = []string{"CreateProcessingActivityTIAPayload"}
-
-func (ec *executionContext) _CreateProcessingActivityTIAPayload(ctx context.Context, sel ast.SelectionSet, obj *types.CreateProcessingActivityTIAPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, createProcessingActivityTIAPayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("CreateProcessingActivityTIAPayload")
-		case "processingActivityTia":
-			out.Values[i] = ec._CreateProcessingActivityTIAPayload_processingActivityTia(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -71183,6 +71144,45 @@ func (ec *executionContext) _CreateTaskPayload(ctx context.Context, sel ast.Sele
 			out.Values[i] = graphql.MarshalString("CreateTaskPayload")
 		case "taskEdge":
 			out.Values[i] = ec._CreateTaskPayload_taskEdge(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var createTransferImpactAssessmentPayloadImplementors = []string{"CreateTransferImpactAssessmentPayload"}
+
+func (ec *executionContext) _CreateTransferImpactAssessmentPayload(ctx context.Context, sel ast.SelectionSet, obj *types.CreateTransferImpactAssessmentPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, createTransferImpactAssessmentPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CreateTransferImpactAssessmentPayload")
+		case "transferImpactAssessment":
+			out.Values[i] = ec._CreateTransferImpactAssessmentPayload_transferImpactAssessment(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -71586,6 +71586,261 @@ func (ec *executionContext) _DNSRecordInstruction(ctx context.Context, sel ast.S
 			}
 		case "purpose":
 			out.Values[i] = ec._DNSRecordInstruction_purpose(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var dataProtectionImpactAssessmentImplementors = []string{"DataProtectionImpactAssessment", "Node"}
+
+func (ec *executionContext) _DataProtectionImpactAssessment(ctx context.Context, sel ast.SelectionSet, obj *types.DataProtectionImpactAssessment) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, dataProtectionImpactAssessmentImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DataProtectionImpactAssessment")
+		case "id":
+			out.Values[i] = ec._DataProtectionImpactAssessment_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "processingActivity":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._DataProtectionImpactAssessment_processingActivity(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "organization":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._DataProtectionImpactAssessment_organization(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "description":
+			out.Values[i] = ec._DataProtectionImpactAssessment_description(ctx, field, obj)
+		case "necessityAndProportionality":
+			out.Values[i] = ec._DataProtectionImpactAssessment_necessityAndProportionality(ctx, field, obj)
+		case "potentialRisk":
+			out.Values[i] = ec._DataProtectionImpactAssessment_potentialRisk(ctx, field, obj)
+		case "mitigations":
+			out.Values[i] = ec._DataProtectionImpactAssessment_mitigations(ctx, field, obj)
+		case "residualRisk":
+			out.Values[i] = ec._DataProtectionImpactAssessment_residualRisk(ctx, field, obj)
+		case "createdAt":
+			out.Values[i] = ec._DataProtectionImpactAssessment_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "updatedAt":
+			out.Values[i] = ec._DataProtectionImpactAssessment_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var dataProtectionImpactAssessmentConnectionImplementors = []string{"DataProtectionImpactAssessmentConnection"}
+
+func (ec *executionContext) _DataProtectionImpactAssessmentConnection(ctx context.Context, sel ast.SelectionSet, obj *types.DataProtectionImpactAssessmentConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, dataProtectionImpactAssessmentConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DataProtectionImpactAssessmentConnection")
+		case "totalCount":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._DataProtectionImpactAssessmentConnection_totalCount(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "edges":
+			out.Values[i] = ec._DataProtectionImpactAssessmentConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "pageInfo":
+			out.Values[i] = ec._DataProtectionImpactAssessmentConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var dataProtectionImpactAssessmentEdgeImplementors = []string{"DataProtectionImpactAssessmentEdge"}
+
+func (ec *executionContext) _DataProtectionImpactAssessmentEdge(ctx context.Context, sel ast.SelectionSet, obj *types.DataProtectionImpactAssessmentEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, dataProtectionImpactAssessmentEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DataProtectionImpactAssessmentEdge")
+		case "cursor":
+			out.Values[i] = ec._DataProtectionImpactAssessmentEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "node":
+			out.Values[i] = ec._DataProtectionImpactAssessmentEdge_node(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -72315,6 +72570,45 @@ func (ec *executionContext) _DeleteCustomDomainPayload(ctx context.Context, sel 
 	return out
 }
 
+var deleteDataProtectionImpactAssessmentPayloadImplementors = []string{"DeleteDataProtectionImpactAssessmentPayload"}
+
+func (ec *executionContext) _DeleteDataProtectionImpactAssessmentPayload(ctx context.Context, sel ast.SelectionSet, obj *types.DeleteDataProtectionImpactAssessmentPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, deleteDataProtectionImpactAssessmentPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DeleteDataProtectionImpactAssessmentPayload")
+		case "deletedDataProtectionImpactAssessmentId":
+			out.Values[i] = ec._DeleteDataProtectionImpactAssessmentPayload_deletedDataProtectionImpactAssessmentId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var deleteDatumPayloadImplementors = []string{"DeleteDatumPayload"}
 
 func (ec *executionContext) _DeleteDatumPayload(ctx context.Context, sel ast.SelectionSet, obj *types.DeleteDatumPayload) graphql.Marshaler {
@@ -72822,45 +73116,6 @@ func (ec *executionContext) _DeletePeoplePayload(ctx context.Context, sel ast.Se
 	return out
 }
 
-var deleteProcessingActivityDPIAPayloadImplementors = []string{"DeleteProcessingActivityDPIAPayload"}
-
-func (ec *executionContext) _DeleteProcessingActivityDPIAPayload(ctx context.Context, sel ast.SelectionSet, obj *types.DeleteProcessingActivityDPIAPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, deleteProcessingActivityDPIAPayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("DeleteProcessingActivityDPIAPayload")
-		case "deletedProcessingActivityDpiaId":
-			out.Values[i] = ec._DeleteProcessingActivityDPIAPayload_deletedProcessingActivityDpiaId(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
 var deleteProcessingActivityPayloadImplementors = []string{"DeleteProcessingActivityPayload"}
 
 func (ec *executionContext) _DeleteProcessingActivityPayload(ctx context.Context, sel ast.SelectionSet, obj *types.DeleteProcessingActivityPayload) graphql.Marshaler {
@@ -72874,45 +73129,6 @@ func (ec *executionContext) _DeleteProcessingActivityPayload(ctx context.Context
 			out.Values[i] = graphql.MarshalString("DeleteProcessingActivityPayload")
 		case "deletedProcessingActivityId":
 			out.Values[i] = ec._DeleteProcessingActivityPayload_deletedProcessingActivityId(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var deleteProcessingActivityTIAPayloadImplementors = []string{"DeleteProcessingActivityTIAPayload"}
-
-func (ec *executionContext) _DeleteProcessingActivityTIAPayload(ctx context.Context, sel ast.SelectionSet, obj *types.DeleteProcessingActivityTIAPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, deleteProcessingActivityTIAPayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("DeleteProcessingActivityTIAPayload")
-		case "deletedProcessingActivityTiaId":
-			out.Values[i] = ec._DeleteProcessingActivityTIAPayload_deletedProcessingActivityTiaId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -73201,6 +73417,45 @@ func (ec *executionContext) _DeleteTaskPayload(ctx context.Context, sel ast.Sele
 			out.Values[i] = graphql.MarshalString("DeleteTaskPayload")
 		case "deletedTaskId":
 			out.Values[i] = ec._DeleteTaskPayload_deletedTaskId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var deleteTransferImpactAssessmentPayloadImplementors = []string{"DeleteTransferImpactAssessmentPayload"}
+
+func (ec *executionContext) _DeleteTransferImpactAssessmentPayload(ctx context.Context, sel ast.SelectionSet, obj *types.DeleteTransferImpactAssessmentPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, deleteTransferImpactAssessmentPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DeleteTransferImpactAssessmentPayload")
+		case "deletedTransferImpactAssessmentId":
+			out.Values[i] = ec._DeleteTransferImpactAssessmentPayload_deletedTransferImpactAssessmentId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -77680,44 +77935,44 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "createProcessingActivityDPIA":
+		case "createDataProtectionImpactAssessment":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_createProcessingActivityDPIA(ctx, field)
+				return ec._Mutation_createDataProtectionImpactAssessment(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "updateProcessingActivityDPIA":
+		case "updateDataProtectionImpactAssessment":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_updateProcessingActivityDPIA(ctx, field)
+				return ec._Mutation_updateDataProtectionImpactAssessment(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "deleteProcessingActivityDPIA":
+		case "deleteDataProtectionImpactAssessment":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_deleteProcessingActivityDPIA(ctx, field)
+				return ec._Mutation_deleteDataProtectionImpactAssessment(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "createProcessingActivityTIA":
+		case "createTransferImpactAssessment":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_createProcessingActivityTIA(ctx, field)
+				return ec._Mutation_createTransferImpactAssessment(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "updateProcessingActivityTIA":
+		case "updateTransferImpactAssessment":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_updateProcessingActivityTIA(ctx, field)
+				return ec._Mutation_updateTransferImpactAssessment(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "deleteProcessingActivityTIA":
+		case "deleteTransferImpactAssessment":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_deleteProcessingActivityTIA(ctx, field)
+				return ec._Mutation_deleteTransferImpactAssessment(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -79956,13 +80211,13 @@ func (ec *executionContext) _ProcessingActivity(ctx context.Context, sel ast.Sel
 			out.Values[i] = ec._ProcessingActivity_retentionPeriod(ctx, field, obj)
 		case "securityMeasures":
 			out.Values[i] = ec._ProcessingActivity_securityMeasures(ctx, field, obj)
-		case "dataProtectionImpactAssessment":
-			out.Values[i] = ec._ProcessingActivity_dataProtectionImpactAssessment(ctx, field, obj)
+		case "dataProtectionImpactAssessmentNeeded":
+			out.Values[i] = ec._ProcessingActivity_dataProtectionImpactAssessmentNeeded(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
-		case "transferImpactAssessment":
-			out.Values[i] = ec._ProcessingActivity_transferImpactAssessment(ctx, field, obj)
+		case "transferImpactAssessmentNeeded":
+			out.Values[i] = ec._ProcessingActivity_transferImpactAssessmentNeeded(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -80044,7 +80299,7 @@ func (ec *executionContext) _ProcessingActivity(ctx context.Context, sel ast.Sel
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "dpia":
+		case "dataProtectionImpactAssessment":
 			field := field
 
 			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
@@ -80053,7 +80308,7 @@ func (ec *executionContext) _ProcessingActivity(ctx context.Context, sel ast.Sel
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._ProcessingActivity_dpia(ctx, field, obj)
+				res = ec._ProcessingActivity_dataProtectionImpactAssessment(ctx, field, obj)
 				return res
 			}
 
@@ -80077,7 +80332,7 @@ func (ec *executionContext) _ProcessingActivity(ctx context.Context, sel ast.Sel
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "tia":
+		case "transferImpactAssessment":
 			field := field
 
 			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
@@ -80086,7 +80341,7 @@ func (ec *executionContext) _ProcessingActivity(ctx context.Context, sel ast.Sel
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._ProcessingActivity_tia(ctx, field, obj)
+				res = ec._ProcessingActivity_transferImpactAssessment(ctx, field, obj)
 				return res
 			}
 
@@ -80223,261 +80478,6 @@ func (ec *executionContext) _ProcessingActivityConnection(ctx context.Context, s
 	return out
 }
 
-var processingActivityDPIAImplementors = []string{"ProcessingActivityDPIA", "Node"}
-
-func (ec *executionContext) _ProcessingActivityDPIA(ctx context.Context, sel ast.SelectionSet, obj *types.ProcessingActivityDpia) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, processingActivityDPIAImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("ProcessingActivityDPIA")
-		case "id":
-			out.Values[i] = ec._ProcessingActivityDPIA_id(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "processingActivity":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._ProcessingActivityDPIA_processingActivity(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "organization":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._ProcessingActivityDPIA_organization(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "description":
-			out.Values[i] = ec._ProcessingActivityDPIA_description(ctx, field, obj)
-		case "necessityAndProportionality":
-			out.Values[i] = ec._ProcessingActivityDPIA_necessityAndProportionality(ctx, field, obj)
-		case "potentialRisk":
-			out.Values[i] = ec._ProcessingActivityDPIA_potentialRisk(ctx, field, obj)
-		case "mitigations":
-			out.Values[i] = ec._ProcessingActivityDPIA_mitigations(ctx, field, obj)
-		case "residualRisk":
-			out.Values[i] = ec._ProcessingActivityDPIA_residualRisk(ctx, field, obj)
-		case "createdAt":
-			out.Values[i] = ec._ProcessingActivityDPIA_createdAt(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "updatedAt":
-			out.Values[i] = ec._ProcessingActivityDPIA_updatedAt(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var processingActivityDPIAConnectionImplementors = []string{"ProcessingActivityDPIAConnection"}
-
-func (ec *executionContext) _ProcessingActivityDPIAConnection(ctx context.Context, sel ast.SelectionSet, obj *types.ProcessingActivityDPIAConnection) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, processingActivityDPIAConnectionImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("ProcessingActivityDPIAConnection")
-		case "totalCount":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._ProcessingActivityDPIAConnection_totalCount(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "edges":
-			out.Values[i] = ec._ProcessingActivityDPIAConnection_edges(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "pageInfo":
-			out.Values[i] = ec._ProcessingActivityDPIAConnection_pageInfo(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var processingActivityDPIAEdgeImplementors = []string{"ProcessingActivityDPIAEdge"}
-
-func (ec *executionContext) _ProcessingActivityDPIAEdge(ctx context.Context, sel ast.SelectionSet, obj *types.ProcessingActivityDPIAEdge) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, processingActivityDPIAEdgeImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("ProcessingActivityDPIAEdge")
-		case "cursor":
-			out.Values[i] = ec._ProcessingActivityDPIAEdge_cursor(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "node":
-			out.Values[i] = ec._ProcessingActivityDPIAEdge_node(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
 var processingActivityEdgeImplementors = []string{"ProcessingActivityEdge"}
 
 func (ec *executionContext) _ProcessingActivityEdge(ctx context.Context, sel ast.SelectionSet, obj *types.ProcessingActivityEdge) graphql.Marshaler {
@@ -80496,261 +80496,6 @@ func (ec *executionContext) _ProcessingActivityEdge(ctx context.Context, sel ast
 			}
 		case "node":
 			out.Values[i] = ec._ProcessingActivityEdge_node(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var processingActivityTIAImplementors = []string{"ProcessingActivityTIA", "Node"}
-
-func (ec *executionContext) _ProcessingActivityTIA(ctx context.Context, sel ast.SelectionSet, obj *types.ProcessingActivityTia) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, processingActivityTIAImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("ProcessingActivityTIA")
-		case "id":
-			out.Values[i] = ec._ProcessingActivityTIA_id(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "processingActivity":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._ProcessingActivityTIA_processingActivity(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "organization":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._ProcessingActivityTIA_organization(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "dataSubjects":
-			out.Values[i] = ec._ProcessingActivityTIA_dataSubjects(ctx, field, obj)
-		case "legalMechanism":
-			out.Values[i] = ec._ProcessingActivityTIA_legalMechanism(ctx, field, obj)
-		case "transfer":
-			out.Values[i] = ec._ProcessingActivityTIA_transfer(ctx, field, obj)
-		case "localLawRisk":
-			out.Values[i] = ec._ProcessingActivityTIA_localLawRisk(ctx, field, obj)
-		case "supplementaryMeasures":
-			out.Values[i] = ec._ProcessingActivityTIA_supplementaryMeasures(ctx, field, obj)
-		case "createdAt":
-			out.Values[i] = ec._ProcessingActivityTIA_createdAt(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "updatedAt":
-			out.Values[i] = ec._ProcessingActivityTIA_updatedAt(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var processingActivityTIAConnectionImplementors = []string{"ProcessingActivityTIAConnection"}
-
-func (ec *executionContext) _ProcessingActivityTIAConnection(ctx context.Context, sel ast.SelectionSet, obj *types.ProcessingActivityTIAConnection) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, processingActivityTIAConnectionImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("ProcessingActivityTIAConnection")
-		case "totalCount":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._ProcessingActivityTIAConnection_totalCount(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "edges":
-			out.Values[i] = ec._ProcessingActivityTIAConnection_edges(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "pageInfo":
-			out.Values[i] = ec._ProcessingActivityTIAConnection_pageInfo(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var processingActivityTIAEdgeImplementors = []string{"ProcessingActivityTIAEdge"}
-
-func (ec *executionContext) _ProcessingActivityTIAEdge(ctx context.Context, sel ast.SelectionSet, obj *types.ProcessingActivityTIAEdge) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, processingActivityTIAEdgeImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("ProcessingActivityTIAEdge")
-		case "cursor":
-			out.Values[i] = ec._ProcessingActivityTIAEdge_cursor(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "node":
-			out.Values[i] = ec._ProcessingActivityTIAEdge_node(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -82908,6 +82653,261 @@ func (ec *executionContext) _TaskEdge(ctx context.Context, sel ast.SelectionSet,
 	return out
 }
 
+var transferImpactAssessmentImplementors = []string{"TransferImpactAssessment", "Node"}
+
+func (ec *executionContext) _TransferImpactAssessment(ctx context.Context, sel ast.SelectionSet, obj *types.TransferImpactAssessment) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, transferImpactAssessmentImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("TransferImpactAssessment")
+		case "id":
+			out.Values[i] = ec._TransferImpactAssessment_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "processingActivity":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._TransferImpactAssessment_processingActivity(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "organization":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._TransferImpactAssessment_organization(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "dataSubjects":
+			out.Values[i] = ec._TransferImpactAssessment_dataSubjects(ctx, field, obj)
+		case "legalMechanism":
+			out.Values[i] = ec._TransferImpactAssessment_legalMechanism(ctx, field, obj)
+		case "transfer":
+			out.Values[i] = ec._TransferImpactAssessment_transfer(ctx, field, obj)
+		case "localLawRisk":
+			out.Values[i] = ec._TransferImpactAssessment_localLawRisk(ctx, field, obj)
+		case "supplementaryMeasures":
+			out.Values[i] = ec._TransferImpactAssessment_supplementaryMeasures(ctx, field, obj)
+		case "createdAt":
+			out.Values[i] = ec._TransferImpactAssessment_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "updatedAt":
+			out.Values[i] = ec._TransferImpactAssessment_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var transferImpactAssessmentConnectionImplementors = []string{"TransferImpactAssessmentConnection"}
+
+func (ec *executionContext) _TransferImpactAssessmentConnection(ctx context.Context, sel ast.SelectionSet, obj *types.TransferImpactAssessmentConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, transferImpactAssessmentConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("TransferImpactAssessmentConnection")
+		case "totalCount":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._TransferImpactAssessmentConnection_totalCount(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "edges":
+			out.Values[i] = ec._TransferImpactAssessmentConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "pageInfo":
+			out.Values[i] = ec._TransferImpactAssessmentConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var transferImpactAssessmentEdgeImplementors = []string{"TransferImpactAssessmentEdge"}
+
+func (ec *executionContext) _TransferImpactAssessmentEdge(ctx context.Context, sel ast.SelectionSet, obj *types.TransferImpactAssessmentEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, transferImpactAssessmentEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("TransferImpactAssessmentEdge")
+		case "cursor":
+			out.Values[i] = ec._TransferImpactAssessmentEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "node":
+			out.Values[i] = ec._TransferImpactAssessmentEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var trustCenterImplementors = []string{"TrustCenter", "Node"}
 
 func (ec *executionContext) _TrustCenter(ctx context.Context, sel ast.SelectionSet, obj *types.TrustCenter) graphql.Marshaler {
@@ -84408,6 +84408,45 @@ func (ec *executionContext) _UpdateControlPayload(ctx context.Context, sel ast.S
 	return out
 }
 
+var updateDataProtectionImpactAssessmentPayloadImplementors = []string{"UpdateDataProtectionImpactAssessmentPayload"}
+
+func (ec *executionContext) _UpdateDataProtectionImpactAssessmentPayload(ctx context.Context, sel ast.SelectionSet, obj *types.UpdateDataProtectionImpactAssessmentPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, updateDataProtectionImpactAssessmentPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UpdateDataProtectionImpactAssessmentPayload")
+		case "dataProtectionImpactAssessment":
+			out.Values[i] = ec._UpdateDataProtectionImpactAssessmentPayload_dataProtectionImpactAssessment(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var updateDatumPayloadImplementors = []string{"UpdateDatumPayload"}
 
 func (ec *executionContext) _UpdateDatumPayload(ctx context.Context, sel ast.SelectionSet, obj *types.UpdateDatumPayload) graphql.Marshaler {
@@ -84876,45 +84915,6 @@ func (ec *executionContext) _UpdatePeoplePayload(ctx context.Context, sel ast.Se
 	return out
 }
 
-var updateProcessingActivityDPIAPayloadImplementors = []string{"UpdateProcessingActivityDPIAPayload"}
-
-func (ec *executionContext) _UpdateProcessingActivityDPIAPayload(ctx context.Context, sel ast.SelectionSet, obj *types.UpdateProcessingActivityDPIAPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, updateProcessingActivityDPIAPayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("UpdateProcessingActivityDPIAPayload")
-		case "processingActivityDpia":
-			out.Values[i] = ec._UpdateProcessingActivityDPIAPayload_processingActivityDpia(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
 var updateProcessingActivityPayloadImplementors = []string{"UpdateProcessingActivityPayload"}
 
 func (ec *executionContext) _UpdateProcessingActivityPayload(ctx context.Context, sel ast.SelectionSet, obj *types.UpdateProcessingActivityPayload) graphql.Marshaler {
@@ -84928,45 +84928,6 @@ func (ec *executionContext) _UpdateProcessingActivityPayload(ctx context.Context
 			out.Values[i] = graphql.MarshalString("UpdateProcessingActivityPayload")
 		case "processingActivity":
 			out.Values[i] = ec._UpdateProcessingActivityPayload_processingActivity(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var updateProcessingActivityTIAPayloadImplementors = []string{"UpdateProcessingActivityTIAPayload"}
-
-func (ec *executionContext) _UpdateProcessingActivityTIAPayload(ctx context.Context, sel ast.SelectionSet, obj *types.UpdateProcessingActivityTIAPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, updateProcessingActivityTIAPayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("UpdateProcessingActivityTIAPayload")
-		case "processingActivityTia":
-			out.Values[i] = ec._UpdateProcessingActivityTIAPayload_processingActivityTia(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -85084,6 +85045,45 @@ func (ec *executionContext) _UpdateTaskPayload(ctx context.Context, sel ast.Sele
 			out.Values[i] = graphql.MarshalString("UpdateTaskPayload")
 		case "task":
 			out.Values[i] = ec._UpdateTaskPayload_task(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var updateTransferImpactAssessmentPayloadImplementors = []string{"UpdateTransferImpactAssessmentPayload"}
+
+func (ec *executionContext) _UpdateTransferImpactAssessmentPayload(ctx context.Context, sel ast.SelectionSet, obj *types.UpdateTransferImpactAssessmentPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, updateTransferImpactAssessmentPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UpdateTransferImpactAssessmentPayload")
+		case "transferImpactAssessment":
+			out.Values[i] = ec._UpdateTransferImpactAssessmentPayload_transferImpactAssessment(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -89554,6 +89554,25 @@ func (ec *executionContext) marshalNCreateCustomDomainPayload2ᚖgoᚗproboᚗin
 	return ec._CreateCustomDomainPayload(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNCreateDataProtectionImpactAssessmentInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateDataProtectionImpactAssessmentInput(ctx context.Context, v any) (types.CreateDataProtectionImpactAssessmentInput, error) {
+	res, err := ec.unmarshalInputCreateDataProtectionImpactAssessmentInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNCreateDataProtectionImpactAssessmentPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateDataProtectionImpactAssessmentPayload(ctx context.Context, sel ast.SelectionSet, v types.CreateDataProtectionImpactAssessmentPayload) graphql.Marshaler {
+	return ec._CreateDataProtectionImpactAssessmentPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNCreateDataProtectionImpactAssessmentPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateDataProtectionImpactAssessmentPayload(ctx context.Context, sel ast.SelectionSet, v *types.CreateDataProtectionImpactAssessmentPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._CreateDataProtectionImpactAssessmentPayload(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNCreateDatumInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateDatumInput(ctx context.Context, v any) (types.CreateDatumInput, error) {
 	res, err := ec.unmarshalInputCreateDatumInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -89744,25 +89763,6 @@ func (ec *executionContext) marshalNCreatePeoplePayload2ᚖgoᚗproboᚗincᚋpr
 	return ec._CreatePeoplePayload(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNCreateProcessingActivityDPIAInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateProcessingActivityDPIAInput(ctx context.Context, v any) (types.CreateProcessingActivityDPIAInput, error) {
-	res, err := ec.unmarshalInputCreateProcessingActivityDPIAInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNCreateProcessingActivityDPIAPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateProcessingActivityDPIAPayload(ctx context.Context, sel ast.SelectionSet, v types.CreateProcessingActivityDPIAPayload) graphql.Marshaler {
-	return ec._CreateProcessingActivityDPIAPayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNCreateProcessingActivityDPIAPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateProcessingActivityDPIAPayload(ctx context.Context, sel ast.SelectionSet, v *types.CreateProcessingActivityDPIAPayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._CreateProcessingActivityDPIAPayload(ctx, sel, v)
-}
-
 func (ec *executionContext) unmarshalNCreateProcessingActivityInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateProcessingActivityInput(ctx context.Context, v any) (types.CreateProcessingActivityInput, error) {
 	res, err := ec.unmarshalInputCreateProcessingActivityInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -89780,25 +89780,6 @@ func (ec *executionContext) marshalNCreateProcessingActivityPayload2ᚖgoᚗprob
 		return graphql.Null
 	}
 	return ec._CreateProcessingActivityPayload(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalNCreateProcessingActivityTIAInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateProcessingActivityTIAInput(ctx context.Context, v any) (types.CreateProcessingActivityTIAInput, error) {
-	res, err := ec.unmarshalInputCreateProcessingActivityTIAInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNCreateProcessingActivityTIAPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateProcessingActivityTIAPayload(ctx context.Context, sel ast.SelectionSet, v types.CreateProcessingActivityTIAPayload) graphql.Marshaler {
-	return ec._CreateProcessingActivityTIAPayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNCreateProcessingActivityTIAPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateProcessingActivityTIAPayload(ctx context.Context, sel ast.SelectionSet, v *types.CreateProcessingActivityTIAPayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._CreateProcessingActivityTIAPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNCreateRiskDocumentMappingInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateRiskDocumentMappingInput(ctx context.Context, v any) (types.CreateRiskDocumentMappingInput, error) {
@@ -89932,6 +89913,25 @@ func (ec *executionContext) marshalNCreateTaskPayload2ᚖgoᚗproboᚗincᚋprob
 		return graphql.Null
 	}
 	return ec._CreateTaskPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNCreateTransferImpactAssessmentInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateTransferImpactAssessmentInput(ctx context.Context, v any) (types.CreateTransferImpactAssessmentInput, error) {
+	res, err := ec.unmarshalInputCreateTransferImpactAssessmentInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNCreateTransferImpactAssessmentPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateTransferImpactAssessmentPayload(ctx context.Context, sel ast.SelectionSet, v types.CreateTransferImpactAssessmentPayload) graphql.Marshaler {
+	return ec._CreateTransferImpactAssessmentPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNCreateTransferImpactAssessmentPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateTransferImpactAssessmentPayload(ctx context.Context, sel ast.SelectionSet, v *types.CreateTransferImpactAssessmentPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._CreateTransferImpactAssessmentPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNCreateTrustCenterAccessInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateTrustCenterAccessInput(ctx context.Context, v any) (types.CreateTrustCenterAccessInput, error) {
@@ -90176,6 +90176,110 @@ var (
 		coredata.DataClassificationInternal:     "INTERNAL",
 		coredata.DataClassificationConfidential: "CONFIDENTIAL",
 		coredata.DataClassificationSecret:       "SECRET",
+	}
+)
+
+func (ec *executionContext) marshalNDataProtectionImpactAssessment2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDataProtectionImpactAssessment(ctx context.Context, sel ast.SelectionSet, v *types.DataProtectionImpactAssessment) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DataProtectionImpactAssessment(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNDataProtectionImpactAssessmentConnection2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDataProtectionImpactAssessmentConnection(ctx context.Context, sel ast.SelectionSet, v types.DataProtectionImpactAssessmentConnection) graphql.Marshaler {
+	return ec._DataProtectionImpactAssessmentConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDataProtectionImpactAssessmentConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDataProtectionImpactAssessmentConnection(ctx context.Context, sel ast.SelectionSet, v *types.DataProtectionImpactAssessmentConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DataProtectionImpactAssessmentConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNDataProtectionImpactAssessmentEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDataProtectionImpactAssessmentEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.DataProtectionImpactAssessmentEdge) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNDataProtectionImpactAssessmentEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDataProtectionImpactAssessmentEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNDataProtectionImpactAssessmentEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDataProtectionImpactAssessmentEdge(ctx context.Context, sel ast.SelectionSet, v *types.DataProtectionImpactAssessmentEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DataProtectionImpactAssessmentEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNDataProtectionImpactAssessmentOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐDataProtectionImpactAssessmentOrderField(ctx context.Context, v any) (coredata.DataProtectionImpactAssessmentOrderField, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNDataProtectionImpactAssessmentOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐDataProtectionImpactAssessmentOrderField[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDataProtectionImpactAssessmentOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐDataProtectionImpactAssessmentOrderField(ctx context.Context, sel ast.SelectionSet, v coredata.DataProtectionImpactAssessmentOrderField) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNDataProtectionImpactAssessmentOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐDataProtectionImpactAssessmentOrderField[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNDataProtectionImpactAssessmentOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐDataProtectionImpactAssessmentOrderField = map[string]coredata.DataProtectionImpactAssessmentOrderField{
+		"CREATED_AT": coredata.DataProtectionImpactAssessmentOrderFieldCreatedAt,
+	}
+	marshalNDataProtectionImpactAssessmentOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐDataProtectionImpactAssessmentOrderField = map[coredata.DataProtectionImpactAssessmentOrderField]string{
+		coredata.DataProtectionImpactAssessmentOrderFieldCreatedAt: "CREATED_AT",
 	}
 )
 
@@ -90527,6 +90631,25 @@ func (ec *executionContext) marshalNDeleteCustomDomainPayload2ᚖgoᚗproboᚗin
 	return ec._DeleteCustomDomainPayload(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNDeleteDataProtectionImpactAssessmentInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteDataProtectionImpactAssessmentInput(ctx context.Context, v any) (types.DeleteDataProtectionImpactAssessmentInput, error) {
+	res, err := ec.unmarshalInputDeleteDataProtectionImpactAssessmentInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDeleteDataProtectionImpactAssessmentPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteDataProtectionImpactAssessmentPayload(ctx context.Context, sel ast.SelectionSet, v types.DeleteDataProtectionImpactAssessmentPayload) graphql.Marshaler {
+	return ec._DeleteDataProtectionImpactAssessmentPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDeleteDataProtectionImpactAssessmentPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteDataProtectionImpactAssessmentPayload(ctx context.Context, sel ast.SelectionSet, v *types.DeleteDataProtectionImpactAssessmentPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DeleteDataProtectionImpactAssessmentPayload(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNDeleteDatumInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteDatumInput(ctx context.Context, v any) (types.DeleteDatumInput, error) {
 	res, err := ec.unmarshalInputDeleteDatumInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -90774,25 +90897,6 @@ func (ec *executionContext) marshalNDeletePeoplePayload2ᚖgoᚗproboᚗincᚋpr
 	return ec._DeletePeoplePayload(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNDeleteProcessingActivityDPIAInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteProcessingActivityDPIAInput(ctx context.Context, v any) (types.DeleteProcessingActivityDPIAInput, error) {
-	res, err := ec.unmarshalInputDeleteProcessingActivityDPIAInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNDeleteProcessingActivityDPIAPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteProcessingActivityDPIAPayload(ctx context.Context, sel ast.SelectionSet, v types.DeleteProcessingActivityDPIAPayload) graphql.Marshaler {
-	return ec._DeleteProcessingActivityDPIAPayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNDeleteProcessingActivityDPIAPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteProcessingActivityDPIAPayload(ctx context.Context, sel ast.SelectionSet, v *types.DeleteProcessingActivityDPIAPayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._DeleteProcessingActivityDPIAPayload(ctx, sel, v)
-}
-
 func (ec *executionContext) unmarshalNDeleteProcessingActivityInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteProcessingActivityInput(ctx context.Context, v any) (types.DeleteProcessingActivityInput, error) {
 	res, err := ec.unmarshalInputDeleteProcessingActivityInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -90810,25 +90914,6 @@ func (ec *executionContext) marshalNDeleteProcessingActivityPayload2ᚖgoᚗprob
 		return graphql.Null
 	}
 	return ec._DeleteProcessingActivityPayload(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalNDeleteProcessingActivityTIAInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteProcessingActivityTIAInput(ctx context.Context, v any) (types.DeleteProcessingActivityTIAInput, error) {
-	res, err := ec.unmarshalInputDeleteProcessingActivityTIAInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNDeleteProcessingActivityTIAPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteProcessingActivityTIAPayload(ctx context.Context, sel ast.SelectionSet, v types.DeleteProcessingActivityTIAPayload) graphql.Marshaler {
-	return ec._DeleteProcessingActivityTIAPayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNDeleteProcessingActivityTIAPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteProcessingActivityTIAPayload(ctx context.Context, sel ast.SelectionSet, v *types.DeleteProcessingActivityTIAPayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._DeleteProcessingActivityTIAPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNDeleteRiskDocumentMappingInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteRiskDocumentMappingInput(ctx context.Context, v any) (types.DeleteRiskDocumentMappingInput, error) {
@@ -90962,6 +91047,25 @@ func (ec *executionContext) marshalNDeleteTaskPayload2ᚖgoᚗproboᚗincᚋprob
 		return graphql.Null
 	}
 	return ec._DeleteTaskPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNDeleteTransferImpactAssessmentInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteTransferImpactAssessmentInput(ctx context.Context, v any) (types.DeleteTransferImpactAssessmentInput, error) {
+	res, err := ec.unmarshalInputDeleteTransferImpactAssessmentInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDeleteTransferImpactAssessmentPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteTransferImpactAssessmentPayload(ctx context.Context, sel ast.SelectionSet, v types.DeleteTransferImpactAssessmentPayload) graphql.Marshaler {
+	return ec._DeleteTransferImpactAssessmentPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDeleteTransferImpactAssessmentPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteTransferImpactAssessmentPayload(ctx context.Context, sel ast.SelectionSet, v *types.DeleteTransferImpactAssessmentPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DeleteTransferImpactAssessmentPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNDeleteTrustCenterAccessInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteTrustCenterAccessInput(ctx context.Context, v any) (types.DeleteTrustCenterAccessInput, error) {
@@ -93403,110 +93507,6 @@ func (ec *executionContext) marshalNProcessingActivityConnection2ᚖgoᚗprobo�
 	return ec._ProcessingActivityConnection(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNProcessingActivityDPIA2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityDpia(ctx context.Context, sel ast.SelectionSet, v *types.ProcessingActivityDpia) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._ProcessingActivityDPIA(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNProcessingActivityDPIAConnection2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityDPIAConnection(ctx context.Context, sel ast.SelectionSet, v types.ProcessingActivityDPIAConnection) graphql.Marshaler {
-	return ec._ProcessingActivityDPIAConnection(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNProcessingActivityDPIAConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityDPIAConnection(ctx context.Context, sel ast.SelectionSet, v *types.ProcessingActivityDPIAConnection) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._ProcessingActivityDPIAConnection(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNProcessingActivityDPIAEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityDPIAEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.ProcessingActivityDPIAEdge) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNProcessingActivityDPIAEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityDPIAEdge(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
-func (ec *executionContext) marshalNProcessingActivityDPIAEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityDPIAEdge(ctx context.Context, sel ast.SelectionSet, v *types.ProcessingActivityDPIAEdge) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._ProcessingActivityDPIAEdge(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalNProcessingActivityDPIAOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityDPIAOrderField(ctx context.Context, v any) (coredata.ProcessingActivityDPIAOrderField, error) {
-	tmp, err := graphql.UnmarshalString(v)
-	res := unmarshalNProcessingActivityDPIAOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityDPIAOrderField[tmp]
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNProcessingActivityDPIAOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityDPIAOrderField(ctx context.Context, sel ast.SelectionSet, v coredata.ProcessingActivityDPIAOrderField) graphql.Marshaler {
-	_ = sel
-	res := graphql.MarshalString(marshalNProcessingActivityDPIAOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityDPIAOrderField[v])
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-	}
-	return res
-}
-
-var (
-	unmarshalNProcessingActivityDPIAOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityDPIAOrderField = map[string]coredata.ProcessingActivityDPIAOrderField{
-		"CREATED_AT": coredata.ProcessingActivityDPIAOrderFieldCreatedAt,
-	}
-	marshalNProcessingActivityDPIAOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityDPIAOrderField = map[coredata.ProcessingActivityDPIAOrderField]string{
-		coredata.ProcessingActivityDPIAOrderFieldCreatedAt: "CREATED_AT",
-	}
-)
-
 func (ec *executionContext) unmarshalNProcessingActivityDataProtectionImpactAssessment2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityDataProtectionImpactAssessment(ctx context.Context, v any) (coredata.ProcessingActivityDataProtectionImpactAssessment, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := unmarshalNProcessingActivityDataProtectionImpactAssessment2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityDataProtectionImpactAssessment[tmp]
@@ -93708,110 +93708,6 @@ var (
 		coredata.ProcessingActivitySpecialOrCriminalDatumYes:      "YES",
 		coredata.ProcessingActivitySpecialOrCriminalDatumNo:       "NO",
 		coredata.ProcessingActivitySpecialOrCriminalDatumPossible: "POSSIBLE",
-	}
-)
-
-func (ec *executionContext) marshalNProcessingActivityTIA2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityTia(ctx context.Context, sel ast.SelectionSet, v *types.ProcessingActivityTia) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._ProcessingActivityTIA(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNProcessingActivityTIAConnection2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityTIAConnection(ctx context.Context, sel ast.SelectionSet, v types.ProcessingActivityTIAConnection) graphql.Marshaler {
-	return ec._ProcessingActivityTIAConnection(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNProcessingActivityTIAConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityTIAConnection(ctx context.Context, sel ast.SelectionSet, v *types.ProcessingActivityTIAConnection) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._ProcessingActivityTIAConnection(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNProcessingActivityTIAEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityTIAEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.ProcessingActivityTIAEdge) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNProcessingActivityTIAEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityTIAEdge(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
-func (ec *executionContext) marshalNProcessingActivityTIAEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityTIAEdge(ctx context.Context, sel ast.SelectionSet, v *types.ProcessingActivityTIAEdge) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._ProcessingActivityTIAEdge(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalNProcessingActivityTIAOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityTIAOrderField(ctx context.Context, v any) (coredata.ProcessingActivityTIAOrderField, error) {
-	tmp, err := graphql.UnmarshalString(v)
-	res := unmarshalNProcessingActivityTIAOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityTIAOrderField[tmp]
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNProcessingActivityTIAOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityTIAOrderField(ctx context.Context, sel ast.SelectionSet, v coredata.ProcessingActivityTIAOrderField) graphql.Marshaler {
-	_ = sel
-	res := graphql.MarshalString(marshalNProcessingActivityTIAOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityTIAOrderField[v])
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-	}
-	return res
-}
-
-var (
-	unmarshalNProcessingActivityTIAOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityTIAOrderField = map[string]coredata.ProcessingActivityTIAOrderField{
-		"CREATED_AT": coredata.ProcessingActivityTIAOrderFieldCreatedAt,
-	}
-	marshalNProcessingActivityTIAOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityTIAOrderField = map[coredata.ProcessingActivityTIAOrderField]string{
-		coredata.ProcessingActivityTIAOrderFieldCreatedAt: "CREATED_AT",
 	}
 )
 
@@ -94681,6 +94577,110 @@ var (
 	}
 )
 
+func (ec *executionContext) marshalNTransferImpactAssessment2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐTransferImpactAssessment(ctx context.Context, sel ast.SelectionSet, v *types.TransferImpactAssessment) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._TransferImpactAssessment(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNTransferImpactAssessmentConnection2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐTransferImpactAssessmentConnection(ctx context.Context, sel ast.SelectionSet, v types.TransferImpactAssessmentConnection) graphql.Marshaler {
+	return ec._TransferImpactAssessmentConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNTransferImpactAssessmentConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐTransferImpactAssessmentConnection(ctx context.Context, sel ast.SelectionSet, v *types.TransferImpactAssessmentConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._TransferImpactAssessmentConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNTransferImpactAssessmentEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐTransferImpactAssessmentEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.TransferImpactAssessmentEdge) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNTransferImpactAssessmentEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐTransferImpactAssessmentEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNTransferImpactAssessmentEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐTransferImpactAssessmentEdge(ctx context.Context, sel ast.SelectionSet, v *types.TransferImpactAssessmentEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._TransferImpactAssessmentEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNTransferImpactAssessmentOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐTransferImpactAssessmentOrderField(ctx context.Context, v any) (coredata.TransferImpactAssessmentOrderField, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNTransferImpactAssessmentOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐTransferImpactAssessmentOrderField[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNTransferImpactAssessmentOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐTransferImpactAssessmentOrderField(ctx context.Context, sel ast.SelectionSet, v coredata.TransferImpactAssessmentOrderField) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNTransferImpactAssessmentOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐTransferImpactAssessmentOrderField[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNTransferImpactAssessmentOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐTransferImpactAssessmentOrderField = map[string]coredata.TransferImpactAssessmentOrderField{
+		"CREATED_AT": coredata.TransferImpactAssessmentOrderFieldCreatedAt,
+	}
+	marshalNTransferImpactAssessmentOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐTransferImpactAssessmentOrderField = map[coredata.TransferImpactAssessmentOrderField]string{
+		coredata.TransferImpactAssessmentOrderFieldCreatedAt: "CREATED_AT",
+	}
+)
+
 func (ec *executionContext) marshalNTrustCenter2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐTrustCenter(ctx context.Context, sel ast.SelectionSet, v *types.TrustCenter) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -95333,6 +95333,25 @@ func (ec *executionContext) marshalNUpdateControlPayload2ᚖgoᚗproboᚗincᚋp
 	return ec._UpdateControlPayload(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNUpdateDataProtectionImpactAssessmentInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateDataProtectionImpactAssessmentInput(ctx context.Context, v any) (types.UpdateDataProtectionImpactAssessmentInput, error) {
+	res, err := ec.unmarshalInputUpdateDataProtectionImpactAssessmentInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNUpdateDataProtectionImpactAssessmentPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateDataProtectionImpactAssessmentPayload(ctx context.Context, sel ast.SelectionSet, v types.UpdateDataProtectionImpactAssessmentPayload) graphql.Marshaler {
+	return ec._UpdateDataProtectionImpactAssessmentPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNUpdateDataProtectionImpactAssessmentPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateDataProtectionImpactAssessmentPayload(ctx context.Context, sel ast.SelectionSet, v *types.UpdateDataProtectionImpactAssessmentPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._UpdateDataProtectionImpactAssessmentPayload(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNUpdateDatumInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateDatumInput(ctx context.Context, v any) (types.UpdateDatumInput, error) {
 	res, err := ec.unmarshalInputUpdateDatumInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -95561,25 +95580,6 @@ func (ec *executionContext) marshalNUpdatePeoplePayload2ᚖgoᚗproboᚗincᚋpr
 	return ec._UpdatePeoplePayload(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNUpdateProcessingActivityDPIAInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateProcessingActivityDPIAInput(ctx context.Context, v any) (types.UpdateProcessingActivityDPIAInput, error) {
-	res, err := ec.unmarshalInputUpdateProcessingActivityDPIAInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNUpdateProcessingActivityDPIAPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateProcessingActivityDPIAPayload(ctx context.Context, sel ast.SelectionSet, v types.UpdateProcessingActivityDPIAPayload) graphql.Marshaler {
-	return ec._UpdateProcessingActivityDPIAPayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNUpdateProcessingActivityDPIAPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateProcessingActivityDPIAPayload(ctx context.Context, sel ast.SelectionSet, v *types.UpdateProcessingActivityDPIAPayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._UpdateProcessingActivityDPIAPayload(ctx, sel, v)
-}
-
 func (ec *executionContext) unmarshalNUpdateProcessingActivityInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateProcessingActivityInput(ctx context.Context, v any) (types.UpdateProcessingActivityInput, error) {
 	res, err := ec.unmarshalInputUpdateProcessingActivityInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -95597,25 +95597,6 @@ func (ec *executionContext) marshalNUpdateProcessingActivityPayload2ᚖgoᚗprob
 		return graphql.Null
 	}
 	return ec._UpdateProcessingActivityPayload(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalNUpdateProcessingActivityTIAInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateProcessingActivityTIAInput(ctx context.Context, v any) (types.UpdateProcessingActivityTIAInput, error) {
-	res, err := ec.unmarshalInputUpdateProcessingActivityTIAInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNUpdateProcessingActivityTIAPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateProcessingActivityTIAPayload(ctx context.Context, sel ast.SelectionSet, v types.UpdateProcessingActivityTIAPayload) graphql.Marshaler {
-	return ec._UpdateProcessingActivityTIAPayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNUpdateProcessingActivityTIAPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateProcessingActivityTIAPayload(ctx context.Context, sel ast.SelectionSet, v *types.UpdateProcessingActivityTIAPayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._UpdateProcessingActivityTIAPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNUpdateRiskInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateRiskInput(ctx context.Context, v any) (types.UpdateRiskInput, error) {
@@ -95673,6 +95654,25 @@ func (ec *executionContext) marshalNUpdateTaskPayload2ᚖgoᚗproboᚗincᚋprob
 		return graphql.Null
 	}
 	return ec._UpdateTaskPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNUpdateTransferImpactAssessmentInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateTransferImpactAssessmentInput(ctx context.Context, v any) (types.UpdateTransferImpactAssessmentInput, error) {
+	res, err := ec.unmarshalInputUpdateTransferImpactAssessmentInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNUpdateTransferImpactAssessmentPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateTransferImpactAssessmentPayload(ctx context.Context, sel ast.SelectionSet, v types.UpdateTransferImpactAssessmentPayload) graphql.Marshaler {
+	return ec._UpdateTransferImpactAssessmentPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNUpdateTransferImpactAssessmentPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateTransferImpactAssessmentPayload(ctx context.Context, sel ast.SelectionSet, v *types.UpdateTransferImpactAssessmentPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._UpdateTransferImpactAssessmentPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNUpdateTrustCenterAccessInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateTrustCenterAccessInput(ctx context.Context, v any) (types.UpdateTrustCenterAccessInput, error) {
@@ -97383,6 +97383,61 @@ var (
 	}
 )
 
+func (ec *executionContext) marshalODataProtectionImpactAssessment2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDataProtectionImpactAssessment(ctx context.Context, sel ast.SelectionSet, v *types.DataProtectionImpactAssessment) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._DataProtectionImpactAssessment(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalODataProtectionImpactAssessmentFilter2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDataProtectionImpactAssessmentFilter(ctx context.Context, v any) (*types.DataProtectionImpactAssessmentFilter, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputDataProtectionImpactAssessmentFilter(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalODataProtectionImpactAssessmentOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDataProtectionImpactAssessmentOrderBy(ctx context.Context, v any) (*types.DataProtectionImpactAssessmentOrderBy, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputDataProtectionImpactAssessmentOrder(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalODataProtectionImpactAssessmentResidualRisk2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐDataProtectionImpactAssessmentResidualRisk(ctx context.Context, v any) (*coredata.DataProtectionImpactAssessmentResidualRisk, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalODataProtectionImpactAssessmentResidualRisk2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐDataProtectionImpactAssessmentResidualRisk[tmp]
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalODataProtectionImpactAssessmentResidualRisk2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐDataProtectionImpactAssessmentResidualRisk(ctx context.Context, sel ast.SelectionSet, v *coredata.DataProtectionImpactAssessmentResidualRisk) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(marshalODataProtectionImpactAssessmentResidualRisk2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐDataProtectionImpactAssessmentResidualRisk[*v])
+	return res
+}
+
+var (
+	unmarshalODataProtectionImpactAssessmentResidualRisk2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐDataProtectionImpactAssessmentResidualRisk = map[string]coredata.DataProtectionImpactAssessmentResidualRisk{
+		"LOW":    coredata.DataProtectionImpactAssessmentResidualRiskLow,
+		"MEDIUM": coredata.DataProtectionImpactAssessmentResidualRiskMedium,
+		"HIGH":   coredata.DataProtectionImpactAssessmentResidualRiskHigh,
+	}
+	marshalODataProtectionImpactAssessmentResidualRisk2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐDataProtectionImpactAssessmentResidualRisk = map[coredata.DataProtectionImpactAssessmentResidualRisk]string{
+		coredata.DataProtectionImpactAssessmentResidualRiskLow:    "LOW",
+		coredata.DataProtectionImpactAssessmentResidualRiskMedium: "MEDIUM",
+		coredata.DataProtectionImpactAssessmentResidualRiskHigh:   "HIGH",
+	}
+)
+
 func (ec *executionContext) unmarshalODatetime2ᚖtimeᚐTime(ctx context.Context, v any) (*time.Time, error) {
 	if v == nil {
 		return nil, nil
@@ -98122,61 +98177,6 @@ func (ec *executionContext) unmarshalOPeopleOrder2ᚖgoᚗproboᚗincᚋproboᚋ
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOProcessingActivityDPIA2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityDpia(ctx context.Context, sel ast.SelectionSet, v *types.ProcessingActivityDpia) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._ProcessingActivityDPIA(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalOProcessingActivityDPIAFilter2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityDPIAFilter(ctx context.Context, v any) (*types.ProcessingActivityDPIAFilter, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := ec.unmarshalInputProcessingActivityDPIAFilter(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) unmarshalOProcessingActivityDPIAOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityDPIAOrderBy(ctx context.Context, v any) (*types.ProcessingActivityDPIAOrderBy, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := ec.unmarshalInputProcessingActivityDPIAOrder(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) unmarshalOProcessingActivityDPIAResidualRisk2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityDPIAResidualRisk(ctx context.Context, v any) (*coredata.ProcessingActivityDPIAResidualRisk, error) {
-	if v == nil {
-		return nil, nil
-	}
-	tmp, err := graphql.UnmarshalString(v)
-	res := unmarshalOProcessingActivityDPIAResidualRisk2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityDPIAResidualRisk[tmp]
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalOProcessingActivityDPIAResidualRisk2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityDPIAResidualRisk(ctx context.Context, sel ast.SelectionSet, v *coredata.ProcessingActivityDPIAResidualRisk) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	_ = sel
-	_ = ctx
-	res := graphql.MarshalString(marshalOProcessingActivityDPIAResidualRisk2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityDPIAResidualRisk[*v])
-	return res
-}
-
-var (
-	unmarshalOProcessingActivityDPIAResidualRisk2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityDPIAResidualRisk = map[string]coredata.ProcessingActivityDPIAResidualRisk{
-		"LOW":    coredata.ProcessingActivityDPIAResidualRiskLow,
-		"MEDIUM": coredata.ProcessingActivityDPIAResidualRiskMedium,
-		"HIGH":   coredata.ProcessingActivityDPIAResidualRiskHigh,
-	}
-	marshalOProcessingActivityDPIAResidualRisk2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityDPIAResidualRisk = map[coredata.ProcessingActivityDPIAResidualRisk]string{
-		coredata.ProcessingActivityDPIAResidualRiskLow:    "LOW",
-		coredata.ProcessingActivityDPIAResidualRiskMedium: "MEDIUM",
-		coredata.ProcessingActivityDPIAResidualRiskHigh:   "HIGH",
-	}
-)
-
 func (ec *executionContext) unmarshalOProcessingActivityDataProtectionImpactAssessment2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityDataProtectionImpactAssessment(ctx context.Context, v any) (*coredata.ProcessingActivityDataProtectionImpactAssessment, error) {
 	if v == nil {
 		return nil, nil
@@ -98322,29 +98322,6 @@ var (
 		coredata.ProcessingActivitySpecialOrCriminalDatumPossible: "POSSIBLE",
 	}
 )
-
-func (ec *executionContext) marshalOProcessingActivityTIA2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityTia(ctx context.Context, sel ast.SelectionSet, v *types.ProcessingActivityTia) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._ProcessingActivityTIA(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalOProcessingActivityTIAFilter2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityTIAFilter(ctx context.Context, v any) (*types.ProcessingActivityTIAFilter, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := ec.unmarshalInputProcessingActivityTIAFilter(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) unmarshalOProcessingActivityTIAOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityTIAOrderBy(ctx context.Context, v any) (*types.ProcessingActivityTIAOrderBy, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := ec.unmarshalInputProcessingActivityTIAOrder(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
 
 func (ec *executionContext) unmarshalOProcessingActivityTransferImpactAssessment2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityTransferImpactAssessment(ctx context.Context, v any) (*coredata.ProcessingActivityTransferImpactAssessment, error) {
 	if v == nil {
@@ -98616,6 +98593,29 @@ var (
 		coredata.TaskStateDone: "DONE",
 	}
 )
+
+func (ec *executionContext) marshalOTransferImpactAssessment2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐTransferImpactAssessment(ctx context.Context, sel ast.SelectionSet, v *types.TransferImpactAssessment) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._TransferImpactAssessment(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOTransferImpactAssessmentFilter2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐTransferImpactAssessmentFilter(ctx context.Context, v any) (*types.TransferImpactAssessmentFilter, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputTransferImpactAssessmentFilter(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOTransferImpactAssessmentOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐTransferImpactAssessmentOrderBy(ctx context.Context, v any) (*types.TransferImpactAssessmentOrderBy, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputTransferImpactAssessmentOrder(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
 
 func (ec *executionContext) marshalOTrustCenter2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐTrustCenter(ctx context.Context, sel ast.SelectionSet, v *types.TrustCenter) graphql.Marshaler {
 	if v == nil {

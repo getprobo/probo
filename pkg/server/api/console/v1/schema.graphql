@@ -366,21 +366,21 @@ enum ProcessingActivityTransferImpactAssessment
     )
 }
 
-enum ProcessingActivityDPIAResidualRisk
+enum DataProtectionImpactAssessmentResidualRisk
   @goModel(
-    model: "go.probo.inc/probo/pkg/coredata.ProcessingActivityDPIAResidualRisk"
+    model: "go.probo.inc/probo/pkg/coredata.DataProtectionImpactAssessmentResidualRisk"
   ) {
   LOW
     @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityDPIAResidualRiskLow"
+      value: "go.probo.inc/probo/pkg/coredata.DataProtectionImpactAssessmentResidualRiskLow"
     )
   MEDIUM
     @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityDPIAResidualRiskMedium"
+      value: "go.probo.inc/probo/pkg/coredata.DataProtectionImpactAssessmentResidualRiskMedium"
     )
   HIGH
     @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityDPIAResidualRiskHigh"
+      value: "go.probo.inc/probo/pkg/coredata.DataProtectionImpactAssessmentResidualRiskHigh"
     )
 }
 
@@ -1079,23 +1079,23 @@ enum ProcessingActivityOrderField
     )
 }
 
-enum ProcessingActivityDPIAOrderField
+enum DataProtectionImpactAssessmentOrderField
   @goModel(
-    model: "go.probo.inc/probo/pkg/coredata.ProcessingActivityDPIAOrderField"
+    model: "go.probo.inc/probo/pkg/coredata.DataProtectionImpactAssessmentOrderField"
   ) {
   CREATED_AT
     @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityDPIAOrderFieldCreatedAt"
+      value: "go.probo.inc/probo/pkg/coredata.DataProtectionImpactAssessmentOrderFieldCreatedAt"
     )
 }
 
-enum ProcessingActivityTIAOrderField
+enum TransferImpactAssessmentOrderField
   @goModel(
-    model: "go.probo.inc/probo/pkg/coredata.ProcessingActivityTIAOrderField"
+    model: "go.probo.inc/probo/pkg/coredata.TransferImpactAssessmentOrderField"
   ) {
   CREATED_AT
     @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityTIAOrderFieldCreatedAt"
+      value: "go.probo.inc/probo/pkg/coredata.TransferImpactAssessmentOrderFieldCreatedAt"
     )
 }
 
@@ -1352,20 +1352,20 @@ input ProcessingActivityOrder
   field: ProcessingActivityOrderField!
 }
 
-input ProcessingActivityDPIAOrder
+input DataProtectionImpactAssessmentOrder
   @goModel(
-    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ProcessingActivityDPIAOrderBy"
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DataProtectionImpactAssessmentOrderBy"
   ) {
   direction: OrderDirection!
-  field: ProcessingActivityDPIAOrderField!
+  field: DataProtectionImpactAssessmentOrderField!
 }
 
-input ProcessingActivityTIAOrder
+input TransferImpactAssessmentOrder
   @goModel(
-    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ProcessingActivityTIAOrderBy"
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TransferImpactAssessmentOrderBy"
   ) {
   direction: OrderDirection!
-  field: ProcessingActivityTIAOrderField!
+  field: TransferImpactAssessmentOrderField!
 }
 
 input TrustCenterAccessOrder
@@ -1517,11 +1517,11 @@ input ProcessingActivityFilter {
   snapshotId: ID
 }
 
-input ProcessingActivityDPIAFilter {
+input DataProtectionImpactAssessmentFilter {
   snapshotId: ID
 }
 
-input ProcessingActivityTIAFilter {
+input TransferImpactAssessmentFilter {
   snapshotId: ID
 }
 
@@ -1741,18 +1741,18 @@ type Organization implements Node {
     after: CursorKey
     last: Int
     before: CursorKey
-    orderBy: ProcessingActivityDPIAOrder
-    filter: ProcessingActivityDPIAFilter = { snapshotId: null }
-  ): ProcessingActivityDPIAConnection! @goField(forceResolver: true)
+    orderBy: DataProtectionImpactAssessmentOrder
+    filter: DataProtectionImpactAssessmentFilter = { snapshotId: null }
+  ): DataProtectionImpactAssessmentConnection! @goField(forceResolver: true)
 
   transferImpactAssessments(
     first: Int
     after: CursorKey
     last: Int
     before: CursorKey
-    orderBy: ProcessingActivityTIAOrder
-    filter: ProcessingActivityTIAFilter = { snapshotId: null }
-  ): ProcessingActivityTIAConnection! @goField(forceResolver: true)
+    orderBy: TransferImpactAssessmentOrder
+    filter: TransferImpactAssessmentFilter = { snapshotId: null }
+  ): TransferImpactAssessmentConnection! @goField(forceResolver: true)
 
   snapshots(
     first: Int
@@ -2344,8 +2344,8 @@ type ProcessingActivity implements Node {
   transferSafeguards: ProcessingActivityTransferSafeguard
   retentionPeriod: String
   securityMeasures: String
-  dataProtectionImpactAssessment: ProcessingActivityDataProtectionImpactAssessment!
-  transferImpactAssessment: ProcessingActivityTransferImpactAssessment!
+  dataProtectionImpactAssessmentNeeded: ProcessingActivityDataProtectionImpactAssessment!
+  transferImpactAssessmentNeeded: ProcessingActivityTransferImpactAssessment!
   lastReviewDate: Datetime
   nextReviewDate: Datetime
   role: ProcessingActivityRole!
@@ -2357,13 +2357,13 @@ type ProcessingActivity implements Node {
     before: CursorKey
     orderBy: VendorOrder
   ): VendorConnection! @goField(forceResolver: true)
-  dpia: ProcessingActivityDPIA @goField(forceResolver: true)
-  tia: ProcessingActivityTIA @goField(forceResolver: true)
+  dataProtectionImpactAssessment: DataProtectionImpactAssessment @goField(forceResolver: true)
+  transferImpactAssessment: TransferImpactAssessment @goField(forceResolver: true)
   createdAt: Datetime!
   updatedAt: Datetime!
 }
 
-type ProcessingActivityDPIA implements Node {
+type DataProtectionImpactAssessment implements Node {
   id: ID!
   processingActivity: ProcessingActivity! @goField(forceResolver: true)
   organization: Organization! @goField(forceResolver: true)
@@ -2371,12 +2371,12 @@ type ProcessingActivityDPIA implements Node {
   necessityAndProportionality: String
   potentialRisk: String
   mitigations: String
-  residualRisk: ProcessingActivityDPIAResidualRisk
+  residualRisk: DataProtectionImpactAssessmentResidualRisk
   createdAt: Datetime!
   updatedAt: Datetime!
 }
 
-type ProcessingActivityTIA implements Node {
+type TransferImpactAssessment implements Node {
   id: ID!
   processingActivity: ProcessingActivity! @goField(forceResolver: true)
   organization: Organization! @goField(forceResolver: true)
@@ -2893,32 +2893,32 @@ type ProcessingActivityEdge {
   node: ProcessingActivity!
 }
 
-type ProcessingActivityDPIAConnection
+type DataProtectionImpactAssessmentConnection
   @goModel(
-    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ProcessingActivityDPIAConnection"
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DataProtectionImpactAssessmentConnection"
   ) {
   totalCount: Int! @goField(forceResolver: true)
-  edges: [ProcessingActivityDPIAEdge!]!
+  edges: [DataProtectionImpactAssessmentEdge!]!
   pageInfo: PageInfo!
 }
 
-type ProcessingActivityDPIAEdge {
+type DataProtectionImpactAssessmentEdge {
   cursor: CursorKey!
-  node: ProcessingActivityDPIA!
+  node: DataProtectionImpactAssessment!
 }
 
-type ProcessingActivityTIAConnection
+type TransferImpactAssessmentConnection
   @goModel(
-    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ProcessingActivityTIAConnection"
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TransferImpactAssessmentConnection"
   ) {
   totalCount: Int! @goField(forceResolver: true)
-  edges: [ProcessingActivityTIAEdge!]!
+  edges: [TransferImpactAssessmentEdge!]!
   pageInfo: PageInfo!
 }
 
-type ProcessingActivityTIAEdge {
+type TransferImpactAssessmentEdge {
   cursor: CursorKey!
-  node: ProcessingActivityTIA!
+  node: TransferImpactAssessment!
 }
 
 type SnapshotConnection
@@ -3258,26 +3258,26 @@ type Mutation {
   deleteProcessingActivity(
     input: DeleteProcessingActivityInput!
   ): DeleteProcessingActivityPayload!
-  # Processing Activity DPIA mutations
-  createProcessingActivityDPIA(
-    input: CreateProcessingActivityDPIAInput!
-  ): CreateProcessingActivityDPIAPayload!
-  updateProcessingActivityDPIA(
-    input: UpdateProcessingActivityDPIAInput!
-  ): UpdateProcessingActivityDPIAPayload!
-  deleteProcessingActivityDPIA(
-    input: DeleteProcessingActivityDPIAInput!
-  ): DeleteProcessingActivityDPIAPayload!
-  # Processing Activity TIA mutations
-  createProcessingActivityTIA(
-    input: CreateProcessingActivityTIAInput!
-  ): CreateProcessingActivityTIAPayload!
-  updateProcessingActivityTIA(
-    input: UpdateProcessingActivityTIAInput!
-  ): UpdateProcessingActivityTIAPayload!
-  deleteProcessingActivityTIA(
-    input: DeleteProcessingActivityTIAInput!
-  ): DeleteProcessingActivityTIAPayload!
+  # Data Protection Impact Assessment mutations
+  createDataProtectionImpactAssessment(
+    input: CreateDataProtectionImpactAssessmentInput!
+  ): CreateDataProtectionImpactAssessmentPayload!
+  updateDataProtectionImpactAssessment(
+    input: UpdateDataProtectionImpactAssessmentInput!
+  ): UpdateDataProtectionImpactAssessmentPayload!
+  deleteDataProtectionImpactAssessment(
+    input: DeleteDataProtectionImpactAssessmentInput!
+  ): DeleteDataProtectionImpactAssessmentPayload!
+  # Transfer Impact Assessment mutations
+  createTransferImpactAssessment(
+    input: CreateTransferImpactAssessmentInput!
+  ): CreateTransferImpactAssessmentPayload!
+  updateTransferImpactAssessment(
+    input: UpdateTransferImpactAssessmentInput!
+  ): UpdateTransferImpactAssessmentPayload!
+  deleteTransferImpactAssessment(
+    input: DeleteTransferImpactAssessmentInput!
+  ): DeleteTransferImpactAssessmentPayload!
   # Snapshot mutations
   createSnapshot(input: CreateSnapshotInput!): CreateSnapshotPayload!
   deleteSnapshot(input: DeleteSnapshotInput!): DeleteSnapshotPayload!
@@ -4046,8 +4046,8 @@ input CreateProcessingActivityInput {
   transferSafeguards: ProcessingActivityTransferSafeguard
   retentionPeriod: String
   securityMeasures: String
-  dataProtectionImpactAssessment: ProcessingActivityDataProtectionImpactAssessment!
-  transferImpactAssessment: ProcessingActivityTransferImpactAssessment!
+  dataProtectionImpactAssessmentNeeded: ProcessingActivityDataProtectionImpactAssessment!
+  transferImpactAssessmentNeeded: ProcessingActivityTransferImpactAssessment!
   lastReviewDate: Datetime
   nextReviewDate: Datetime
   role: ProcessingActivityRole!
@@ -4071,8 +4071,8 @@ input UpdateProcessingActivityInput {
     @goField(omittable: true)
   retentionPeriod: String @goField(omittable: true)
   securityMeasures: String @goField(omittable: true)
-  dataProtectionImpactAssessment: ProcessingActivityDataProtectionImpactAssessment
-  transferImpactAssessment: ProcessingActivityTransferImpactAssessment
+  dataProtectionImpactAssessmentNeeded: ProcessingActivityDataProtectionImpactAssessment
+  transferImpactAssessmentNeeded: ProcessingActivityTransferImpactAssessment
   lastReviewDate: Datetime @goField(omittable: true)
   nextReviewDate: Datetime @goField(omittable: true)
   role: ProcessingActivityRole
@@ -4084,29 +4084,29 @@ input DeleteProcessingActivityInput {
   processingActivityId: ID!
 }
 
-input CreateProcessingActivityDPIAInput {
+input CreateDataProtectionImpactAssessmentInput {
   processingActivityId: ID!
   description: String
   necessityAndProportionality: String
   potentialRisk: String
   mitigations: String
-  residualRisk: ProcessingActivityDPIAResidualRisk
+  residualRisk: DataProtectionImpactAssessmentResidualRisk
 }
 
-input UpdateProcessingActivityDPIAInput {
+input UpdateDataProtectionImpactAssessmentInput {
   id: ID!
   description: String @goField(omittable: true)
   necessityAndProportionality: String @goField(omittable: true)
   potentialRisk: String @goField(omittable: true)
   mitigations: String @goField(omittable: true)
-  residualRisk: ProcessingActivityDPIAResidualRisk
+  residualRisk: DataProtectionImpactAssessmentResidualRisk
 }
 
-input DeleteProcessingActivityDPIAInput {
-  processingActivityDpiaId: ID!
+input DeleteDataProtectionImpactAssessmentInput {
+  dataProtectionImpactAssessmentId: ID!
 }
 
-input CreateProcessingActivityTIAInput {
+input CreateTransferImpactAssessmentInput {
   processingActivityId: ID!
   dataSubjects: String
   legalMechanism: String
@@ -4115,7 +4115,7 @@ input CreateProcessingActivityTIAInput {
   supplementaryMeasures: String
 }
 
-input UpdateProcessingActivityTIAInput {
+input UpdateTransferImpactAssessmentInput {
   id: ID!
   dataSubjects: String @goField(omittable: true)
   legalMechanism: String @goField(omittable: true)
@@ -4124,8 +4124,8 @@ input UpdateProcessingActivityTIAInput {
   supplementaryMeasures: String @goField(omittable: true)
 }
 
-input DeleteProcessingActivityTIAInput {
-  processingActivityTiaId: ID!
+input DeleteTransferImpactAssessmentInput {
+  transferImpactAssessmentId: ID!
 }
 
 input CreateSnapshotInput {
@@ -4992,28 +4992,28 @@ type DeleteProcessingActivityPayload {
   deletedProcessingActivityId: ID!
 }
 
-type CreateProcessingActivityDPIAPayload {
-  processingActivityDpia: ProcessingActivityDPIA!
+type CreateDataProtectionImpactAssessmentPayload {
+  dataProtectionImpactAssessment: DataProtectionImpactAssessment!
 }
 
-type UpdateProcessingActivityDPIAPayload {
-  processingActivityDpia: ProcessingActivityDPIA!
+type UpdateDataProtectionImpactAssessmentPayload {
+  dataProtectionImpactAssessment: DataProtectionImpactAssessment!
 }
 
-type DeleteProcessingActivityDPIAPayload {
-  deletedProcessingActivityDpiaId: ID!
+type DeleteDataProtectionImpactAssessmentPayload {
+  deletedDataProtectionImpactAssessmentId: ID!
 }
 
-type CreateProcessingActivityTIAPayload {
-  processingActivityTia: ProcessingActivityTIA!
+type CreateTransferImpactAssessmentPayload {
+  transferImpactAssessment: TransferImpactAssessment!
 }
 
-type UpdateProcessingActivityTIAPayload {
-  processingActivityTia: ProcessingActivityTIA!
+type UpdateTransferImpactAssessmentPayload {
+  transferImpactAssessment: TransferImpactAssessment!
 }
 
-type DeleteProcessingActivityTIAPayload {
-  deletedProcessingActivityTiaId: ID!
+type DeleteTransferImpactAssessmentPayload {
+  deletedTransferImpactAssessmentId: ID!
 }
 
 type CreateSnapshotPayload {

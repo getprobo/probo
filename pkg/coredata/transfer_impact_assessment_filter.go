@@ -20,18 +20,18 @@ import (
 )
 
 type (
-	ProcessingActivityTIAFilter struct {
+	TransferImpactAssessmentFilter struct {
 		snapshotID **gid.GID
 	}
 )
 
-func NewProcessingActivityTIAFilter(snapshotID **gid.GID) *ProcessingActivityTIAFilter {
-	return &ProcessingActivityTIAFilter{
+func NewTransferImpactAssessmentFilter(snapshotID **gid.GID) *TransferImpactAssessmentFilter {
+	return &TransferImpactAssessmentFilter{
 		snapshotID: snapshotID,
 	}
 }
 
-func (f *ProcessingActivityTIAFilter) SQLArguments() pgx.NamedArgs {
+func (f *TransferImpactAssessmentFilter) SQLArguments() pgx.NamedArgs {
 	args := pgx.NamedArgs{}
 
 	if f.snapshotID != nil && *f.snapshotID != nil {
@@ -41,7 +41,7 @@ func (f *ProcessingActivityTIAFilter) SQLArguments() pgx.NamedArgs {
 	return args
 }
 
-func (f *ProcessingActivityTIAFilter) SQLFragment() string {
+func (f *TransferImpactAssessmentFilter) SQLFragment() string {
 	if f.snapshotID == nil {
 		return "TRUE"
 	}
@@ -52,3 +52,4 @@ func (f *ProcessingActivityTIAFilter) SQLFragment() string {
 		return "snapshot_id = @filter_snapshot_id"
 	}
 }
+

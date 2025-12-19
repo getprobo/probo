@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<be806f3431452b1a7a4d4945c8eda79b>>
+ * @generated SignedSource<<2893f55249b2548256bf21cf2eb434c3>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,15 +9,15 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
-export type DeleteProcessingActivityDPIAInput = {
-  processingActivityDpiaId: string;
+export type DeleteDataProtectionImpactAssessmentInput = {
+  dataProtectionImpactAssessmentId: string;
 };
 export type ProcessingActivityGraphDeleteDPIAMutation$variables = {
-  input: DeleteProcessingActivityDPIAInput;
+  input: DeleteDataProtectionImpactAssessmentInput;
 };
 export type ProcessingActivityGraphDeleteDPIAMutation$data = {
-  readonly deleteProcessingActivityDPIA: {
-    readonly deletedProcessingActivityDpiaId: string;
+  readonly deleteDataProtectionImpactAssessment: {
+    readonly deletedDataProtectionImpactAssessmentId: string;
   };
 };
 export type ProcessingActivityGraphDeleteDPIAMutation = {
@@ -43,16 +43,16 @@ v1 = [
         "variableName": "input"
       }
     ],
-    "concreteType": "DeleteProcessingActivityDPIAPayload",
+    "concreteType": "DeleteDataProtectionImpactAssessmentPayload",
     "kind": "LinkedField",
-    "name": "deleteProcessingActivityDPIA",
+    "name": "deleteDataProtectionImpactAssessment",
     "plural": false,
     "selections": [
       {
         "alias": null,
         "args": null,
         "kind": "ScalarField",
-        "name": "deletedProcessingActivityDpiaId",
+        "name": "deletedDataProtectionImpactAssessmentId",
         "storageKey": null
       }
     ],
@@ -77,16 +77,16 @@ return {
     "selections": (v1/*: any*/)
   },
   "params": {
-    "cacheID": "0c27b0098614053d1a252f87e75f8a24",
+    "cacheID": "6124ea356c08b9d7290082252a58c924",
     "id": null,
     "metadata": {},
     "name": "ProcessingActivityGraphDeleteDPIAMutation",
     "operationKind": "mutation",
-    "text": "mutation ProcessingActivityGraphDeleteDPIAMutation(\n  $input: DeleteProcessingActivityDPIAInput!\n) {\n  deleteProcessingActivityDPIA(input: $input) {\n    deletedProcessingActivityDpiaId\n  }\n}\n"
+    "text": "mutation ProcessingActivityGraphDeleteDPIAMutation(\n  $input: DeleteDataProtectionImpactAssessmentInput!\n) {\n  deleteDataProtectionImpactAssessment(input: $input) {\n    deletedDataProtectionImpactAssessmentId\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "9fc639df8d4ca6c8856acd9326c92997";
+(node as any).hash = "d68710e18cf1c83f60e57e5c25808cf6";
 
 export default node;

@@ -45,8 +45,8 @@ const schema = z.object({
   transferSafeguards: z.string(),
   retentionPeriod: z.string().optional(),
   securityMeasures: z.string().optional(),
-  dataProtectionImpactAssessment: z.enum(["NEEDED", "NOT_NEEDED"] as const),
-  transferImpactAssessment: z.enum(["NEEDED", "NOT_NEEDED"] as const),
+  dataProtectionImpactAssessmentNeeded: z.enum(["NEEDED", "NOT_NEEDED"] as const),
+  transferImpactAssessmentNeeded: z.enum(["NEEDED", "NOT_NEEDED"] as const),
   lastReviewDate: z.string().optional(),
   nextReviewDate: z.string().optional(),
   role: z.enum(["CONTROLLER", "PROCESSOR"] as const),
@@ -88,8 +88,8 @@ export function CreateProcessingActivityDialog({
       transferSafeguards: "__NONE__",
       retentionPeriod: "",
       securityMeasures: "",
-      dataProtectionImpactAssessment: "NOT_NEEDED" as const,
-      transferImpactAssessment: "NOT_NEEDED" as const,
+      dataProtectionImpactAssessmentNeeded: "NOT_NEEDED" as const,
+      transferImpactAssessmentNeeded: "NOT_NEEDED" as const,
       lastReviewDate: "",
       nextReviewDate: "",
       role: "PROCESSOR" as const,
@@ -115,8 +115,8 @@ export function CreateProcessingActivityDialog({
         transferSafeguards: formData.transferSafeguards === "__NONE__" ? undefined : formData.transferSafeguards || undefined,
         retentionPeriod: formData.retentionPeriod || undefined,
         securityMeasures: formData.securityMeasures || undefined,
-        dataProtectionImpactAssessment: formData.dataProtectionImpactAssessment || undefined,
-        transferImpactAssessment: formData.transferImpactAssessment || undefined,
+        dataProtectionImpactAssessmentNeeded: formData.dataProtectionImpactAssessmentNeeded || undefined,
+        transferImpactAssessmentNeeded: formData.transferImpactAssessmentNeeded || undefined,
         lastReviewDate: formatDatetime(formData.lastReviewDate),
         nextReviewDate: formatDatetime(formData.nextReviewDate),
         role: formData.role,
@@ -353,13 +353,13 @@ export function CreateProcessingActivityDialog({
               </div>
 
               <div>
-                <Label htmlFor="dataProtectionImpactAssessment">{__("Data Protection Impact Assessment")} *</Label>
+                <Label htmlFor="dataProtectionImpactAssessmentNeeded">{__("Data Protection Impact Assessment")} *</Label>
                 <Controller
                   control={control}
-                  name="dataProtectionImpactAssessment"
+                  name="dataProtectionImpactAssessmentNeeded"
                   render={({ field }) => (
                     <Select
-                      id="dataProtectionImpactAssessment"
+                      id="dataProtectionImpactAssessmentNeeded"
                       placeholder={__("Is DPIA needed?")}
                       onValueChange={field.onChange}
                       value={field.value}
@@ -369,19 +369,19 @@ export function CreateProcessingActivityDialog({
                     </Select>
                   )}
                 />
-                {formState.errors.dataProtectionImpactAssessment && (
-                  <p className="text-sm text-txt-danger mt-1">{formState.errors.dataProtectionImpactAssessment.message}</p>
+                {formState.errors.dataProtectionImpactAssessmentNeeded && (
+                  <p className="text-sm text-txt-danger mt-1">{formState.errors.dataProtectionImpactAssessmentNeeded.message}</p>
                 )}
               </div>
 
               <div>
-                <Label htmlFor="transferImpactAssessment">{__("Transfer Impact Assessment")} *</Label>
+                <Label htmlFor="transferImpactAssessmentNeeded">{__("Transfer Impact Assessment")} *</Label>
                 <Controller
                   control={control}
-                  name="transferImpactAssessment"
+                  name="transferImpactAssessmentNeeded"
                   render={({ field }) => (
                     <Select
-                      id="transferImpactAssessment"
+                      id="transferImpactAssessmentNeeded"
                       placeholder={__("Is TIA needed?")}
                       onValueChange={field.onChange}
                       value={field.value}
@@ -391,8 +391,8 @@ export function CreateProcessingActivityDialog({
                     </Select>
                   )}
                 />
-                {formState.errors.transferImpactAssessment && (
-                  <p className="text-sm text-txt-danger mt-1">{formState.errors.transferImpactAssessment.message}</p>
+                {formState.errors.transferImpactAssessmentNeeded && (
+                  <p className="text-sm text-txt-danger mt-1">{formState.errors.transferImpactAssessmentNeeded.message}</p>
                 )}
               </div>
             </div>

@@ -16,30 +16,31 @@ package coredata
 
 import "fmt"
 
-type ProcessingActivityDPIAOrderField string
+type TransferImpactAssessmentOrderField string
 
 const (
-	ProcessingActivityDPIAOrderFieldCreatedAt ProcessingActivityDPIAOrderField = "CREATED_AT"
+	TransferImpactAssessmentOrderFieldCreatedAt TransferImpactAssessmentOrderField = "CREATED_AT"
 )
 
-func (p ProcessingActivityDPIAOrderField) Column() string {
+func (p TransferImpactAssessmentOrderField) Column() string {
 	return string(p)
 }
 
-func (p ProcessingActivityDPIAOrderField) String() string {
+func (p TransferImpactAssessmentOrderField) String() string {
 	return string(p)
 }
 
-func (p ProcessingActivityDPIAOrderField) MarshalText() ([]byte, error) {
+func (p TransferImpactAssessmentOrderField) MarshalText() ([]byte, error) {
 	return []byte(p.String()), nil
 }
 
-func (p *ProcessingActivityDPIAOrderField) UnmarshalText(text []byte) error {
+func (p *TransferImpactAssessmentOrderField) UnmarshalText(text []byte) error {
 	val := string(text)
 	switch val {
-	case string(ProcessingActivityDPIAOrderFieldCreatedAt):
-		*p = ProcessingActivityDPIAOrderFieldCreatedAt
+	case string(TransferImpactAssessmentOrderFieldCreatedAt):
+		*p = TransferImpactAssessmentOrderFieldCreatedAt
 		return nil
 	}
-	return fmt.Errorf("invalid ProcessingActivityDPIAOrderField value: %q", val)
+	return fmt.Errorf("invalid TransferImpactAssessmentOrderField value: %q", val)
 }
+

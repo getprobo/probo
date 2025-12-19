@@ -27,16 +27,16 @@ import (
 	"go.probo.inc/probo/pkg/page"
 )
 
-type ErrProcessingActivityTIANotFound struct {
+type ErrTransferImpactAssessmentNotFound struct {
 	Identifier string
 }
 
-func (e ErrProcessingActivityTIANotFound) Error() string {
-	return fmt.Sprintf("processing activity tia not found: %q", e.Identifier)
+func (e ErrTransferImpactAssessmentNotFound) Error() string {
+	return fmt.Sprintf("transfer impact assessment not found: %q", e.Identifier)
 }
 
 type (
-	ProcessingActivityTIA struct {
+	TransferImpactAssessment struct {
 		ID                    gid.GID   `db:"id"`
 		SnapshotID            *gid.GID  `db:"snapshot_id"`
 		SourceID              *gid.GID  `db:"source_id"`
@@ -51,24 +51,24 @@ type (
 		UpdatedAt             time.Time `db:"updated_at"`
 	}
 
-	ProcessingActivityTIAs []*ProcessingActivityTIA
+	TransferImpactAssessments []*TransferImpactAssessment
 )
 
-func (tia *ProcessingActivityTIA) CursorKey(field ProcessingActivityTIAOrderField) page.CursorKey {
+func (tia *TransferImpactAssessment) CursorKey(field TransferImpactAssessmentOrderField) page.CursorKey {
 	switch field {
-	case ProcessingActivityTIAOrderFieldCreatedAt:
+	case TransferImpactAssessmentOrderFieldCreatedAt:
 		return page.NewCursorKey(tia.ID, tia.CreatedAt)
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", field))
 }
 
-func (tias *ProcessingActivityTIAs) CountByOrganizationID(
+func (tias *TransferImpactAssessments) CountByOrganizationID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
 	organizationID gid.GID,
-	filter *ProcessingActivityTIAFilter,
+	filter *TransferImpactAssessmentFilter,
 ) (int, error) {
 	q := `
 SELECT
@@ -92,19 +92,19 @@ WHERE
 	var count int
 	err := row.Scan(&count)
 	if err != nil {
-		return 0, fmt.Errorf("cannot count processing activity tias: %w", err)
+		return 0, fmt.Errorf("cannot count transfer impact assessments: %w", err)
 	}
 
 	return count, nil
 }
 
-func (tias *ProcessingActivityTIAs) LoadByOrganizationID(
+func (tias *TransferImpactAssessments) LoadByOrganizationID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
 	organizationID gid.GID,
-	cursor *page.Cursor[ProcessingActivityTIAOrderField],
-	filter *ProcessingActivityTIAFilter,
+	cursor *page.Cursor[TransferImpactAssessmentOrderField],
+	filter *TransferImpactAssessmentFilter,
 ) error {
 	q := `
 SELECT
@@ -138,12 +138,12 @@ WHERE
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query processing activity tias: %w", err)
+		return fmt.Errorf("cannot query transfer impact assessments: %w", err)
 	}
 
-	results, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[ProcessingActivityTIA])
+	results, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[TransferImpactAssessment])
 	if err != nil {
-		return fmt.Errorf("cannot collect processing activity tias: %w", err)
+		return fmt.Errorf("cannot collect transfer impact assessments: %w", err)
 	}
 
 	*tias = results
@@ -151,7 +151,7 @@ WHERE
 	return nil
 }
 
-func (tia *ProcessingActivityTIA) LoadByID(
+func (tia *TransferImpactAssessment) LoadByID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
@@ -186,15 +186,15 @@ LIMIT 1;
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query processing activity tia: %w", err)
+		return fmt.Errorf("cannot query transfer impact assessment: %w", err)
 	}
 
-	result, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[ProcessingActivityTIA])
+	result, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[TransferImpactAssessment])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrProcessingActivityTIANotFound{Identifier: tiaID.String()}
+			return &ErrTransferImpactAssessmentNotFound{Identifier: tiaID.String()}
 		}
-		return fmt.Errorf("cannot collect processing activity tia: %w", err)
+		return fmt.Errorf("cannot collect transfer impact assessment: %w", err)
 	}
 
 	*tia = result
@@ -202,7 +202,7 @@ LIMIT 1;
 	return nil
 }
 
-func (tia *ProcessingActivityTIA) LoadByProcessingActivityID(
+func (tia *TransferImpactAssessment) LoadByProcessingActivityID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
@@ -237,15 +237,15 @@ LIMIT 1;
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query processing activity tia: %w", err)
+		return fmt.Errorf("cannot query transfer impact assessment: %w", err)
 	}
 
-	result, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[ProcessingActivityTIA])
+	result, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[TransferImpactAssessment])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrProcessingActivityTIANotFound{Identifier: processingActivityID.String()}
+			return &ErrTransferImpactAssessmentNotFound{Identifier: processingActivityID.String()}
 		}
-		return fmt.Errorf("cannot collect processing activity tia: %w", err)
+		return fmt.Errorf("cannot collect transfer impact assessment: %w", err)
 	}
 
 	*tia = result
@@ -253,7 +253,7 @@ LIMIT 1;
 	return nil
 }
 
-func (tia *ProcessingActivityTIA) Insert(
+func (tia *TransferImpactAssessment) Insert(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
@@ -302,13 +302,13 @@ INSERT INTO processing_activity_transfer_impact_assessments (
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot insert processing activity tia: %w", err)
+		return fmt.Errorf("cannot insert transfer impact assessment: %w", err)
 	}
 
 	return nil
 }
 
-func (tia *ProcessingActivityTIA) Update(
+func (tia *TransferImpactAssessment) Update(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
@@ -341,13 +341,13 @@ WHERE
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot update processing activity tia: %w", err)
+		return fmt.Errorf("cannot update transfer impact assessment: %w", err)
 	}
 
 	return nil
 }
 
-func (tia *ProcessingActivityTIA) Delete(
+func (tia *TransferImpactAssessment) Delete(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
@@ -366,13 +366,13 @@ WHERE
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot delete processing activity tia: %w", err)
+		return fmt.Errorf("cannot delete transfer impact assessment: %w", err)
 	}
 
 	return nil
 }
 
-func (tias ProcessingActivityTIAs) InsertProcessingActivitySnapshots(
+func (tias TransferImpactAssessments) InsertProcessingActivitySnapshots(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
@@ -419,13 +419,14 @@ WHERE tia.tenant_id = @tenant_id AND tia.organization_id = @organization_id AND 
 		"tenant_id":       scope.GetTenantID(),
 		"snapshot_id":     snapshotID,
 		"organization_id": organizationID,
-		"tia_entity_type": ProcessingActivityTIAEntityType,
+		"tia_entity_type": TransferImpactAssessmentEntityType,
 	}
 
 	_, err := conn.Exec(ctx, query, args)
 	if err != nil {
-		return fmt.Errorf("cannot insert processing activity tia snapshots: %w", err)
+		return fmt.Errorf("cannot insert transfer impact assessment snapshots: %w", err)
 	}
 
 	return nil
 }
+

@@ -21,31 +21,31 @@ import (
 )
 
 type (
-	ProcessingActivityDPIAOrderBy OrderBy[coredata.ProcessingActivityDPIAOrderField]
+	DataProtectionImpactAssessmentOrderBy OrderBy[coredata.DataProtectionImpactAssessmentOrderField]
 
-	ProcessingActivityDPIAConnection struct {
+	DataProtectionImpactAssessmentConnection struct {
 		TotalCount int
-		Edges      []*ProcessingActivityDPIAEdge
+		Edges      []*DataProtectionImpactAssessmentEdge
 		PageInfo   PageInfo
 
 		Resolver any
 		ParentID gid.GID
-		Filter   *coredata.ProcessingActivityDPIAFilter
+		Filter   *coredata.DataProtectionImpactAssessmentFilter
 	}
 )
 
-func NewProcessingActivityDPIAConnection(
-	p *page.Page[*coredata.ProcessingActivityDPIA, coredata.ProcessingActivityDPIAOrderField],
+func NewDataProtectionImpactAssessmentConnection(
+	p *page.Page[*coredata.DataProtectionImpactAssessment, coredata.DataProtectionImpactAssessmentOrderField],
 	parentType any,
 	parentID gid.GID,
-	filter *coredata.ProcessingActivityDPIAFilter,
-) *ProcessingActivityDPIAConnection {
-	edges := make([]*ProcessingActivityDPIAEdge, len(p.Data))
+	filter *coredata.DataProtectionImpactAssessmentFilter,
+) *DataProtectionImpactAssessmentConnection {
+	edges := make([]*DataProtectionImpactAssessmentEdge, len(p.Data))
 	for i, dpia := range p.Data {
-		edges[i] = NewProcessingActivityDPIAEdge(dpia, p.Cursor.OrderBy.Field)
+		edges[i] = NewDataProtectionImpactAssessmentEdge(dpia, p.Cursor.OrderBy.Field)
 	}
 
-	return &ProcessingActivityDPIAConnection{
+	return &DataProtectionImpactAssessmentConnection{
 		Edges:    edges,
 		PageInfo: *NewPageInfo(p),
 
@@ -55,15 +55,15 @@ func NewProcessingActivityDPIAConnection(
 	}
 }
 
-func NewProcessingActivityDPIAEdge(dpia *coredata.ProcessingActivityDPIA, orderField coredata.ProcessingActivityDPIAOrderField) *ProcessingActivityDPIAEdge {
-	return &ProcessingActivityDPIAEdge{
-		Node:   NewProcessingActivityDpia(dpia),
+func NewDataProtectionImpactAssessmentEdge(dpia *coredata.DataProtectionImpactAssessment, orderField coredata.DataProtectionImpactAssessmentOrderField) *DataProtectionImpactAssessmentEdge {
+	return &DataProtectionImpactAssessmentEdge{
+		Node:   NewDataProtectionImpactAssessment(dpia),
 		Cursor: dpia.CursorKey(orderField),
 	}
 }
 
-func NewProcessingActivityDpia(dpia *coredata.ProcessingActivityDPIA) *ProcessingActivityDpia {
-	return &ProcessingActivityDpia{
+func NewDataProtectionImpactAssessment(dpia *coredata.DataProtectionImpactAssessment) *DataProtectionImpactAssessment {
+	return &DataProtectionImpactAssessment{
 		ID:                          dpia.ID,
 		Description:                 dpia.Description,
 		NecessityAndProportionality: dpia.NecessityAndProportionality,
@@ -74,3 +74,4 @@ func NewProcessingActivityDpia(dpia *coredata.ProcessingActivityDPIA) *Processin
 		UpdatedAt:                   dpia.UpdatedAt,
 	}
 }
+

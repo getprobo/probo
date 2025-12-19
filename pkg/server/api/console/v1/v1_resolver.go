@@ -551,6 +551,66 @@ func (r *controlConnectionResolver) TotalCount(ctx context.Context, obj *types.C
 	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
 }
 
+// ProcessingActivity is the resolver for the processingActivity field.
+func (r *dataProtectionImpactAssessmentResolver) ProcessingActivity(ctx context.Context, obj *types.DataProtectionImpactAssessment) (*types.ProcessingActivity, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGet)
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	dpia, err := prb.DataProtectionImpactAssessments.Get(ctx, obj.ID)
+	if err != nil {
+		panic(fmt.Errorf("cannot get processing activity dpia: %w", err))
+	}
+
+	processingActivity, err := prb.ProcessingActivities.Get(ctx, dpia.ProcessingActivityID)
+	if err != nil {
+		panic(fmt.Errorf("cannot get processing activity: %w", err))
+	}
+
+	return types.NewProcessingActivity(processingActivity), nil
+}
+
+// Organization is the resolver for the organization field.
+func (r *dataProtectionImpactAssessmentResolver) Organization(ctx context.Context, obj *types.DataProtectionImpactAssessment) (*types.Organization, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetOrganization)
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	dpia, err := prb.DataProtectionImpactAssessments.Get(ctx, obj.ID)
+	if err != nil {
+		panic(fmt.Errorf("cannot get processing activity dpia: %w", err))
+	}
+
+	organization, err := prb.Organizations.Get(ctx, dpia.OrganizationID)
+	if err != nil {
+		var errNotFound *coredata.ErrOrganizationNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, gqlutils.NotFound(errNotFound)
+		}
+		panic(fmt.Errorf("cannot get organization: %w", err))
+	}
+
+	return types.NewOrganization(organization), nil
+}
+
+// TotalCount is the resolver for the totalCount field.
+func (r *dataProtectionImpactAssessmentConnectionResolver) TotalCount(ctx context.Context, obj *types.DataProtectionImpactAssessmentConnection) (int, error) {
+	r.MustBeAuthorized(ctx, obj.ParentID, authz.ActionTotalCount)
+
+	prb := r.ProboService(ctx, obj.ParentID.TenantID())
+
+	switch obj.Resolver.(type) {
+	case *organizationResolver:
+		count, err := prb.DataProtectionImpactAssessments.CountForOrganizationID(ctx, obj.ParentID, obj.Filter)
+		if err != nil {
+			panic(fmt.Errorf("cannot count organization data protection impact assessments: %w", err))
+		}
+		return count, nil
+	}
+
+	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
+}
+
 // Owner is the resolver for the owner field.
 func (r *datumResolver) Owner(ctx context.Context, obj *types.Datum) (*types.People, error) {
 	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetOwner)
@@ -4212,26 +4272,26 @@ func (r *mutationResolver) CreateProcessingActivity(ctx context.Context, input t
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
 	req := probo.CreateProcessingActivityRequest{
-		OrganizationID:                 input.OrganizationID,
-		Name:                           input.Name,
-		Purpose:                        input.Purpose,
-		DataSubjectCategory:            input.DataSubjectCategory,
-		PersonalDataCategory:           input.PersonalDataCategory,
-		SpecialOrCriminalData:          input.SpecialOrCriminalData,
-		LawfulBasis:                    input.LawfulBasis,
-		Recipients:                     input.Recipients,
-		Location:                       input.Location,
-		InternationalTransfers:         input.InternationalTransfers,
-		TransferSafeguard:              input.TransferSafeguards,
-		RetentionPeriod:                input.RetentionPeriod,
-		SecurityMeasures:               input.SecurityMeasures,
-		DataProtectionImpactAssessment: input.DataProtectionImpactAssessment,
-		TransferImpactAssessment:       input.TransferImpactAssessment,
-		LastReviewDate:                 input.LastReviewDate,
-		NextReviewDate:                 input.NextReviewDate,
-		Role:                           input.Role,
-		DataProtectionOfficerID:        input.DataProtectionOfficerID,
-		VendorIDs:                      input.VendorIds,
+		OrganizationID:                       input.OrganizationID,
+		Name:                                 input.Name,
+		Purpose:                              input.Purpose,
+		DataSubjectCategory:                  input.DataSubjectCategory,
+		PersonalDataCategory:                 input.PersonalDataCategory,
+		SpecialOrCriminalData:                input.SpecialOrCriminalData,
+		LawfulBasis:                          input.LawfulBasis,
+		Recipients:                           input.Recipients,
+		Location:                             input.Location,
+		InternationalTransfers:               input.InternationalTransfers,
+		TransferSafeguard:                    input.TransferSafeguards,
+		RetentionPeriod:                      input.RetentionPeriod,
+		SecurityMeasures:                     input.SecurityMeasures,
+		DataProtectionImpactAssessmentNeeded: input.DataProtectionImpactAssessmentNeeded,
+		TransferImpactAssessmentNeeded:       input.TransferImpactAssessmentNeeded,
+		LastReviewDate:                       input.LastReviewDate,
+		NextReviewDate:                       input.NextReviewDate,
+		Role:                                 input.Role,
+		DataProtectionOfficerID:              input.DataProtectionOfficerID,
+		VendorIDs:                            input.VendorIds,
 	}
 
 	activity, err := prb.ProcessingActivities.Create(ctx, &req)
@@ -4251,26 +4311,26 @@ func (r *mutationResolver) UpdateProcessingActivity(ctx context.Context, input t
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
 	req := probo.UpdateProcessingActivityRequest{
-		ID:                             input.ID,
-		Name:                           input.Name,
-		Purpose:                        UnwrapOmittable(input.Purpose),
-		DataSubjectCategory:            UnwrapOmittable(input.DataSubjectCategory),
-		PersonalDataCategory:           UnwrapOmittable(input.PersonalDataCategory),
-		SpecialOrCriminalData:          input.SpecialOrCriminalData,
-		LawfulBasis:                    input.LawfulBasis,
-		Recipients:                     UnwrapOmittable(input.Recipients),
-		Location:                       UnwrapOmittable(input.Location),
-		InternationalTransfers:         input.InternationalTransfers,
-		TransferSafeguard:              UnwrapOmittable(input.TransferSafeguards),
-		RetentionPeriod:                UnwrapOmittable(input.RetentionPeriod),
-		SecurityMeasures:               UnwrapOmittable(input.SecurityMeasures),
-		DataProtectionImpactAssessment: input.DataProtectionImpactAssessment,
-		TransferImpactAssessment:       input.TransferImpactAssessment,
-		LastReviewDate:                 UnwrapOmittable(input.LastReviewDate),
-		NextReviewDate:                 UnwrapOmittable(input.NextReviewDate),
-		Role:                           input.Role,
-		DataProtectionOfficerID:        UnwrapOmittable(input.DataProtectionOfficerID),
-		VendorIDs:                      &input.VendorIds,
+		ID:                                   input.ID,
+		Name:                                 input.Name,
+		Purpose:                              UnwrapOmittable(input.Purpose),
+		DataSubjectCategory:                  UnwrapOmittable(input.DataSubjectCategory),
+		PersonalDataCategory:                 UnwrapOmittable(input.PersonalDataCategory),
+		SpecialOrCriminalData:                input.SpecialOrCriminalData,
+		LawfulBasis:                          input.LawfulBasis,
+		Recipients:                           UnwrapOmittable(input.Recipients),
+		Location:                             UnwrapOmittable(input.Location),
+		InternationalTransfers:               input.InternationalTransfers,
+		TransferSafeguard:                    UnwrapOmittable(input.TransferSafeguards),
+		RetentionPeriod:                      UnwrapOmittable(input.RetentionPeriod),
+		SecurityMeasures:                     UnwrapOmittable(input.SecurityMeasures),
+		DataProtectionImpactAssessmentNeeded: input.DataProtectionImpactAssessmentNeeded,
+		TransferImpactAssessmentNeeded:       input.TransferImpactAssessmentNeeded,
+		LastReviewDate:                       UnwrapOmittable(input.LastReviewDate),
+		NextReviewDate:                       UnwrapOmittable(input.NextReviewDate),
+		Role:                                 input.Role,
+		DataProtectionOfficerID:              UnwrapOmittable(input.DataProtectionOfficerID),
+		VendorIDs:                            &input.VendorIds,
 	}
 
 	activity, err := prb.ProcessingActivities.Update(ctx, &req)
@@ -4299,13 +4359,13 @@ func (r *mutationResolver) DeleteProcessingActivity(ctx context.Context, input t
 	}, nil
 }
 
-// CreateProcessingActivityDpia is the resolver for the createProcessingActivityDPIA field.
-func (r *mutationResolver) CreateProcessingActivityDpia(ctx context.Context, input types.CreateProcessingActivityDPIAInput) (*types.CreateProcessingActivityDPIAPayload, error) {
-	r.MustBeAuthorized(ctx, input.ProcessingActivityID, authz.ActionCreateProcessingActivityDPIA)
+// CreateDataProtectionImpactAssessment is the resolver for the createDataProtectionImpactAssessment field.
+func (r *mutationResolver) CreateDataProtectionImpactAssessment(ctx context.Context, input types.CreateDataProtectionImpactAssessmentInput) (*types.CreateDataProtectionImpactAssessmentPayload, error) {
+	r.MustBeAuthorized(ctx, input.ProcessingActivityID, authz.ActionCreateDataProtectionImpactAssessment)
 
 	prb := r.ProboService(ctx, input.ProcessingActivityID.TenantID())
 
-	req := probo.CreateProcessingActivityDPIARequest{
+	req := probo.CreateDataProtectionImpactAssessmentRequest{
 		ProcessingActivityID:        input.ProcessingActivityID,
 		Description:                 input.Description,
 		NecessityAndProportionality: input.NecessityAndProportionality,
@@ -4314,23 +4374,23 @@ func (r *mutationResolver) CreateProcessingActivityDpia(ctx context.Context, inp
 		ResidualRisk:                input.ResidualRisk,
 	}
 
-	dpia, err := prb.ProcessingActivityDPIAs.Create(ctx, &req)
+	dpia, err := prb.DataProtectionImpactAssessments.Create(ctx, &req)
 	if err != nil {
-		panic(fmt.Errorf("cannot create processing activity dpia: %w", err))
+		panic(fmt.Errorf("cannot create data protection impact assessment: %w", err))
 	}
 
-	return &types.CreateProcessingActivityDPIAPayload{
-		ProcessingActivityDpia: types.NewProcessingActivityDpia(dpia),
+	return &types.CreateDataProtectionImpactAssessmentPayload{
+		DataProtectionImpactAssessment: types.NewDataProtectionImpactAssessment(dpia),
 	}, nil
 }
 
-// UpdateProcessingActivityDpia is the resolver for the updateProcessingActivityDPIA field.
-func (r *mutationResolver) UpdateProcessingActivityDpia(ctx context.Context, input types.UpdateProcessingActivityDPIAInput) (*types.UpdateProcessingActivityDPIAPayload, error) {
-	r.MustBeAuthorized(ctx, input.ID, authz.ActionUpdateProcessingActivityDPIA)
+// UpdateDataProtectionImpactAssessment is the resolver for the updateDataProtectionImpactAssessment field.
+func (r *mutationResolver) UpdateDataProtectionImpactAssessment(ctx context.Context, input types.UpdateDataProtectionImpactAssessmentInput) (*types.UpdateDataProtectionImpactAssessmentPayload, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionUpdateDataProtectionImpactAssessment)
 
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
-	req := probo.UpdateProcessingActivityDPIARequest{
+	req := probo.UpdateDataProtectionImpactAssessmentRequest{
 		ID:                          input.ID,
 		Description:                 UnwrapOmittable(input.Description),
 		NecessityAndProportionality: UnwrapOmittable(input.NecessityAndProportionality),
@@ -4339,39 +4399,39 @@ func (r *mutationResolver) UpdateProcessingActivityDpia(ctx context.Context, inp
 		ResidualRisk:                input.ResidualRisk,
 	}
 
-	dpia, err := prb.ProcessingActivityDPIAs.Update(ctx, &req)
+	dpia, err := prb.DataProtectionImpactAssessments.Update(ctx, &req)
 	if err != nil {
-		panic(fmt.Errorf("cannot update processing activity dpia: %w", err))
+		panic(fmt.Errorf("cannot update data protection impact assessment: %w", err))
 	}
 
-	return &types.UpdateProcessingActivityDPIAPayload{
-		ProcessingActivityDpia: types.NewProcessingActivityDpia(dpia),
+	return &types.UpdateDataProtectionImpactAssessmentPayload{
+		DataProtectionImpactAssessment: types.NewDataProtectionImpactAssessment(dpia),
 	}, nil
 }
 
-// DeleteProcessingActivityDpia is the resolver for the deleteProcessingActivityDPIA field.
-func (r *mutationResolver) DeleteProcessingActivityDpia(ctx context.Context, input types.DeleteProcessingActivityDPIAInput) (*types.DeleteProcessingActivityDPIAPayload, error) {
-	r.MustBeAuthorized(ctx, input.ProcessingActivityDpiaID, authz.ActionDeleteProcessingActivityDPIA)
+// DeleteDataProtectionImpactAssessment is the resolver for the deleteDataProtectionImpactAssessment field.
+func (r *mutationResolver) DeleteDataProtectionImpactAssessment(ctx context.Context, input types.DeleteDataProtectionImpactAssessmentInput) (*types.DeleteDataProtectionImpactAssessmentPayload, error) {
+	r.MustBeAuthorized(ctx, input.DataProtectionImpactAssessmentID, authz.ActionDeleteDataProtectionImpactAssessment)
 
-	prb := r.ProboService(ctx, input.ProcessingActivityDpiaID.TenantID())
+	prb := r.ProboService(ctx, input.DataProtectionImpactAssessmentID.TenantID())
 
-	err := prb.ProcessingActivityDPIAs.Delete(ctx, input.ProcessingActivityDpiaID)
+	err := prb.DataProtectionImpactAssessments.Delete(ctx, input.DataProtectionImpactAssessmentID)
 	if err != nil {
-		panic(fmt.Errorf("cannot delete processing activity dpia: %w", err))
+		panic(fmt.Errorf("cannot delete data protection impact assessment: %w", err))
 	}
 
-	return &types.DeleteProcessingActivityDPIAPayload{
-		DeletedProcessingActivityDpiaID: input.ProcessingActivityDpiaID,
+	return &types.DeleteDataProtectionImpactAssessmentPayload{
+		DeletedDataProtectionImpactAssessmentID: input.DataProtectionImpactAssessmentID,
 	}, nil
 }
 
-// CreateProcessingActivityTia is the resolver for the createProcessingActivityTIA field.
-func (r *mutationResolver) CreateProcessingActivityTia(ctx context.Context, input types.CreateProcessingActivityTIAInput) (*types.CreateProcessingActivityTIAPayload, error) {
-	r.MustBeAuthorized(ctx, input.ProcessingActivityID, authz.ActionCreateProcessingActivityTIA)
+// CreateTransferImpactAssessment is the resolver for the createTransferImpactAssessment field.
+func (r *mutationResolver) CreateTransferImpactAssessment(ctx context.Context, input types.CreateTransferImpactAssessmentInput) (*types.CreateTransferImpactAssessmentPayload, error) {
+	r.MustBeAuthorized(ctx, input.ProcessingActivityID, authz.ActionCreateTransferImpactAssessment)
 
 	prb := r.ProboService(ctx, input.ProcessingActivityID.TenantID())
 
-	req := probo.CreateProcessingActivityTIARequest{
+	req := probo.CreateTransferImpactAssessmentRequest{
 		ProcessingActivityID:  input.ProcessingActivityID,
 		DataSubjects:          input.DataSubjects,
 		LegalMechanism:        input.LegalMechanism,
@@ -4380,23 +4440,23 @@ func (r *mutationResolver) CreateProcessingActivityTia(ctx context.Context, inpu
 		SupplementaryMeasures: input.SupplementaryMeasures,
 	}
 
-	tia, err := prb.ProcessingActivityTIAs.Create(ctx, &req)
+	tia, err := prb.TransferImpactAssessments.Create(ctx, &req)
 	if err != nil {
-		panic(fmt.Errorf("cannot create processing activity tia: %w", err))
+		panic(fmt.Errorf("cannot create transfer impact assessment: %w", err))
 	}
 
-	return &types.CreateProcessingActivityTIAPayload{
-		ProcessingActivityTia: types.NewProcessingActivityTia(tia),
+	return &types.CreateTransferImpactAssessmentPayload{
+		TransferImpactAssessment: types.NewTransferImpactAssessment(tia),
 	}, nil
 }
 
-// UpdateProcessingActivityTia is the resolver for the updateProcessingActivityTIA field.
-func (r *mutationResolver) UpdateProcessingActivityTia(ctx context.Context, input types.UpdateProcessingActivityTIAInput) (*types.UpdateProcessingActivityTIAPayload, error) {
-	r.MustBeAuthorized(ctx, input.ID, authz.ActionUpdateProcessingActivityTIA)
+// UpdateTransferImpactAssessment is the resolver for the updateTransferImpactAssessment field.
+func (r *mutationResolver) UpdateTransferImpactAssessment(ctx context.Context, input types.UpdateTransferImpactAssessmentInput) (*types.UpdateTransferImpactAssessmentPayload, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionUpdateTransferImpactAssessment)
 
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
-	req := probo.UpdateProcessingActivityTIARequest{
+	req := probo.UpdateTransferImpactAssessmentRequest{
 		ID:                    input.ID,
 		DataSubjects:          UnwrapOmittable(input.DataSubjects),
 		LegalMechanism:        UnwrapOmittable(input.LegalMechanism),
@@ -4405,29 +4465,29 @@ func (r *mutationResolver) UpdateProcessingActivityTia(ctx context.Context, inpu
 		SupplementaryMeasures: UnwrapOmittable(input.SupplementaryMeasures),
 	}
 
-	tia, err := prb.ProcessingActivityTIAs.Update(ctx, &req)
+	tia, err := prb.TransferImpactAssessments.Update(ctx, &req)
 	if err != nil {
-		panic(fmt.Errorf("cannot update processing activity tia: %w", err))
+		panic(fmt.Errorf("cannot update transfer impact assessment: %w", err))
 	}
 
-	return &types.UpdateProcessingActivityTIAPayload{
-		ProcessingActivityTia: types.NewProcessingActivityTia(tia),
+	return &types.UpdateTransferImpactAssessmentPayload{
+		TransferImpactAssessment: types.NewTransferImpactAssessment(tia),
 	}, nil
 }
 
-// DeleteProcessingActivityTia is the resolver for the deleteProcessingActivityTIA field.
-func (r *mutationResolver) DeleteProcessingActivityTia(ctx context.Context, input types.DeleteProcessingActivityTIAInput) (*types.DeleteProcessingActivityTIAPayload, error) {
-	r.MustBeAuthorized(ctx, input.ProcessingActivityTiaID, authz.ActionDeleteProcessingActivityTIA)
+// DeleteTransferImpactAssessment is the resolver for the deleteTransferImpactAssessment field.
+func (r *mutationResolver) DeleteTransferImpactAssessment(ctx context.Context, input types.DeleteTransferImpactAssessmentInput) (*types.DeleteTransferImpactAssessmentPayload, error) {
+	r.MustBeAuthorized(ctx, input.TransferImpactAssessmentID, authz.ActionDeleteTransferImpactAssessment)
 
-	prb := r.ProboService(ctx, input.ProcessingActivityTiaID.TenantID())
+	prb := r.ProboService(ctx, input.TransferImpactAssessmentID.TenantID())
 
-	err := prb.ProcessingActivityTIAs.Delete(ctx, input.ProcessingActivityTiaID)
+	err := prb.TransferImpactAssessments.Delete(ctx, input.TransferImpactAssessmentID)
 	if err != nil {
-		panic(fmt.Errorf("cannot delete processing activity tia: %w", err))
+		panic(fmt.Errorf("cannot delete transfer impact assessment: %w", err))
 	}
 
-	return &types.DeleteProcessingActivityTIAPayload{
-		DeletedProcessingActivityTiaID: input.ProcessingActivityTiaID,
+	return &types.DeleteTransferImpactAssessmentPayload{
+		DeletedTransferImpactAssessmentID: input.TransferImpactAssessmentID,
 	}, nil
 }
 
@@ -5531,18 +5591,18 @@ func (r *organizationResolver) ProcessingActivities(ctx context.Context, obj *ty
 }
 
 // DataProtectionImpactAssessments is the resolver for the dataProtectionImpactAssessments field.
-func (r *organizationResolver) DataProtectionImpactAssessments(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityDPIAOrderBy, filter *types.ProcessingActivityDPIAFilter) (*types.ProcessingActivityDPIAConnection, error) {
+func (r *organizationResolver) DataProtectionImpactAssessments(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DataProtectionImpactAssessmentOrderBy, filter *types.DataProtectionImpactAssessmentFilter) (*types.DataProtectionImpactAssessmentConnection, error) {
 	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListProcessingActivities)
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
-	pageOrderBy := page.OrderBy[coredata.ProcessingActivityDPIAOrderField]{
-		Field:     coredata.ProcessingActivityDPIAOrderFieldCreatedAt,
+	pageOrderBy := page.OrderBy[coredata.DataProtectionImpactAssessmentOrderField]{
+		Field:     coredata.DataProtectionImpactAssessmentOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 
 	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.ProcessingActivityDPIAOrderField]{
+		pageOrderBy = page.OrderBy[coredata.DataProtectionImpactAssessmentOrderField]{
 			Field:     orderBy.Field,
 			Direction: orderBy.Direction,
 		}
@@ -5550,32 +5610,32 @@ func (r *organizationResolver) DataProtectionImpactAssessments(ctx context.Conte
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	dpiaFilter := coredata.NewProcessingActivityDPIAFilter(nil)
+	dpiaFilter := coredata.NewDataProtectionImpactAssessmentFilter(nil)
 	if filter != nil {
-		dpiaFilter = coredata.NewProcessingActivityDPIAFilter(&filter.SnapshotID)
+		dpiaFilter = coredata.NewDataProtectionImpactAssessmentFilter(&filter.SnapshotID)
 	}
 
-	page, err := prb.ProcessingActivityDPIAs.ListForOrganizationID(ctx, obj.ID, cursor, dpiaFilter)
+	page, err := prb.DataProtectionImpactAssessments.ListForOrganizationID(ctx, obj.ID, cursor, dpiaFilter)
 	if err != nil {
 		panic(fmt.Errorf("cannot list organization data protection impact assessments: %w", err))
 	}
 
-	return types.NewProcessingActivityDPIAConnection(page, r, obj.ID, dpiaFilter), nil
+	return types.NewDataProtectionImpactAssessmentConnection(page, r, obj.ID, dpiaFilter), nil
 }
 
 // TransferImpactAssessments is the resolver for the transferImpactAssessments field.
-func (r *organizationResolver) TransferImpactAssessments(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityTIAOrderBy, filter *types.ProcessingActivityTIAFilter) (*types.ProcessingActivityTIAConnection, error) {
+func (r *organizationResolver) TransferImpactAssessments(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TransferImpactAssessmentOrderBy, filter *types.TransferImpactAssessmentFilter) (*types.TransferImpactAssessmentConnection, error) {
 	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListProcessingActivities)
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
-	pageOrderBy := page.OrderBy[coredata.ProcessingActivityTIAOrderField]{
-		Field:     coredata.ProcessingActivityTIAOrderFieldCreatedAt,
+	pageOrderBy := page.OrderBy[coredata.TransferImpactAssessmentOrderField]{
+		Field:     coredata.TransferImpactAssessmentOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 
 	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.ProcessingActivityTIAOrderField]{
+		pageOrderBy = page.OrderBy[coredata.TransferImpactAssessmentOrderField]{
 			Field:     orderBy.Field,
 			Direction: orderBy.Direction,
 		}
@@ -5583,17 +5643,17 @@ func (r *organizationResolver) TransferImpactAssessments(ctx context.Context, ob
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	tiaFilter := coredata.NewProcessingActivityTIAFilter(nil)
+	tiaFilter := coredata.NewTransferImpactAssessmentFilter(nil)
 	if filter != nil {
-		tiaFilter = coredata.NewProcessingActivityTIAFilter(&filter.SnapshotID)
+		tiaFilter = coredata.NewTransferImpactAssessmentFilter(&filter.SnapshotID)
 	}
 
-	page, err := prb.ProcessingActivityTIAs.ListForOrganizationID(ctx, obj.ID, cursor, tiaFilter)
+	page, err := prb.TransferImpactAssessments.ListForOrganizationID(ctx, obj.ID, cursor, tiaFilter)
 	if err != nil {
 		panic(fmt.Errorf("cannot list organization transfer impact assessments: %w", err))
 	}
 
-	return types.NewProcessingActivityTIAConnection(page, r, obj.ID, tiaFilter), nil
+	return types.NewTransferImpactAssessmentConnection(page, r, obj.ID, tiaFilter), nil
 }
 
 // Snapshots is the resolver for the snapshots field.
@@ -5797,40 +5857,40 @@ func (r *processingActivityResolver) Vendors(ctx context.Context, obj *types.Pro
 	return types.NewVendorConnection(page, r, obj.ID), nil
 }
 
-// Dpia is the resolver for the dpia field.
-func (r *processingActivityResolver) Dpia(ctx context.Context, obj *types.ProcessingActivity) (*types.ProcessingActivityDpia, error) {
-	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetDPIA)
+// DataProtectionImpactAssessment is the resolver for the dataProtectionImpactAssessment field.
+func (r *processingActivityResolver) DataProtectionImpactAssessment(ctx context.Context, obj *types.ProcessingActivity) (*types.DataProtectionImpactAssessment, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetDataProtectionImpactAssessment)
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
-	dpia, err := prb.ProcessingActivityDPIAs.GetByProcessingActivityID(ctx, obj.ID)
+	dpia, err := prb.DataProtectionImpactAssessments.GetByProcessingActivityID(ctx, obj.ID)
 	if err != nil {
-		var errNotFound *coredata.ErrProcessingActivityDPIANotFound
+		var errNotFound *coredata.ErrDataProtectionImpactAssessmentNotFound
 		if errors.As(err, &errNotFound) {
 			return nil, nil
 		}
 		panic(fmt.Errorf("cannot get processing activity dpia: %w", err))
 	}
 
-	return types.NewProcessingActivityDpia(dpia), nil
+	return types.NewDataProtectionImpactAssessment(dpia), nil
 }
 
-// Tia is the resolver for the tia field.
-func (r *processingActivityResolver) Tia(ctx context.Context, obj *types.ProcessingActivity) (*types.ProcessingActivityTia, error) {
-	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetTIA)
+// TransferImpactAssessment is the resolver for the transferImpactAssessment field.
+func (r *processingActivityResolver) TransferImpactAssessment(ctx context.Context, obj *types.ProcessingActivity) (*types.TransferImpactAssessment, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetTransferImpactAssessment)
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
-	tia, err := prb.ProcessingActivityTIAs.GetByProcessingActivityID(ctx, obj.ID)
+	tia, err := prb.TransferImpactAssessments.GetByProcessingActivityID(ctx, obj.ID)
 	if err != nil {
-		var errNotFound *coredata.ErrProcessingActivityTIANotFound
+		var errNotFound *coredata.ErrTransferImpactAssessmentNotFound
 		if errors.As(err, &errNotFound) {
 			return nil, nil
 		}
 		panic(fmt.Errorf("cannot get processing activity tia: %w", err))
 	}
 
-	return types.NewProcessingActivityTia(tia), nil
+	return types.NewTransferImpactAssessment(tia), nil
 }
 
 // TotalCount is the resolver for the totalCount field.
@@ -5849,126 +5909,6 @@ func (r *processingActivityConnectionResolver) TotalCount(ctx context.Context, o
 		count, err := prb.ProcessingActivities.CountForOrganizationID(ctx, obj.ParentID, processingActivityFilter)
 		if err != nil {
 			panic(fmt.Errorf("cannot count organization processing activities: %w", err))
-		}
-		return count, nil
-	}
-
-	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
-}
-
-// ProcessingActivity is the resolver for the processingActivity field.
-func (r *processingActivityDPIAResolver) ProcessingActivity(ctx context.Context, obj *types.ProcessingActivityDpia) (*types.ProcessingActivity, error) {
-	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGet)
-
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	dpia, err := prb.ProcessingActivityDPIAs.Get(ctx, obj.ID)
-	if err != nil {
-		panic(fmt.Errorf("cannot get processing activity dpia: %w", err))
-	}
-
-	processingActivity, err := prb.ProcessingActivities.Get(ctx, dpia.ProcessingActivityID)
-	if err != nil {
-		panic(fmt.Errorf("cannot get processing activity: %w", err))
-	}
-
-	return types.NewProcessingActivity(processingActivity), nil
-}
-
-// Organization is the resolver for the organization field.
-func (r *processingActivityDPIAResolver) Organization(ctx context.Context, obj *types.ProcessingActivityDpia) (*types.Organization, error) {
-	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetOrganization)
-
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	dpia, err := prb.ProcessingActivityDPIAs.Get(ctx, obj.ID)
-	if err != nil {
-		panic(fmt.Errorf("cannot get processing activity dpia: %w", err))
-	}
-
-	organization, err := prb.Organizations.Get(ctx, dpia.OrganizationID)
-	if err != nil {
-		var errNotFound *coredata.ErrOrganizationNotFound
-		if errors.As(err, &errNotFound) {
-			return nil, gqlutils.NotFound(errNotFound)
-		}
-		panic(fmt.Errorf("cannot get organization: %w", err))
-	}
-
-	return types.NewOrganization(organization), nil
-}
-
-// TotalCount is the resolver for the totalCount field.
-func (r *processingActivityDPIAConnectionResolver) TotalCount(ctx context.Context, obj *types.ProcessingActivityDPIAConnection) (int, error) {
-	r.MustBeAuthorized(ctx, obj.ParentID, authz.ActionTotalCount)
-
-	prb := r.ProboService(ctx, obj.ParentID.TenantID())
-
-	switch obj.Resolver.(type) {
-	case *organizationResolver:
-		count, err := prb.ProcessingActivityDPIAs.CountForOrganizationID(ctx, obj.ParentID, obj.Filter)
-		if err != nil {
-			panic(fmt.Errorf("cannot count organization data protection impact assessments: %w", err))
-		}
-		return count, nil
-	}
-
-	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
-}
-
-// ProcessingActivity is the resolver for the processingActivity field.
-func (r *processingActivityTIAResolver) ProcessingActivity(ctx context.Context, obj *types.ProcessingActivityTia) (*types.ProcessingActivity, error) {
-	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGet)
-
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	tia, err := prb.ProcessingActivityTIAs.Get(ctx, obj.ID)
-	if err != nil {
-		panic(fmt.Errorf("cannot get processing activity tia: %w", err))
-	}
-
-	processingActivity, err := prb.ProcessingActivities.Get(ctx, tia.ProcessingActivityID)
-	if err != nil {
-		panic(fmt.Errorf("cannot get processing activity: %w", err))
-	}
-
-	return types.NewProcessingActivity(processingActivity), nil
-}
-
-// Organization is the resolver for the organization field.
-func (r *processingActivityTIAResolver) Organization(ctx context.Context, obj *types.ProcessingActivityTia) (*types.Organization, error) {
-	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetOrganization)
-
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	tia, err := prb.ProcessingActivityTIAs.Get(ctx, obj.ID)
-	if err != nil {
-		panic(fmt.Errorf("cannot get processing activity tia: %w", err))
-	}
-
-	organization, err := prb.Organizations.Get(ctx, tia.OrganizationID)
-	if err != nil {
-		var errNotFound *coredata.ErrOrganizationNotFound
-		if errors.As(err, &errNotFound) {
-			return nil, gqlutils.NotFound(errNotFound)
-		}
-		panic(fmt.Errorf("cannot get organization: %w", err))
-	}
-
-	return types.NewOrganization(organization), nil
-}
-
-// TotalCount is the resolver for the totalCount field.
-func (r *processingActivityTIAConnectionResolver) TotalCount(ctx context.Context, obj *types.ProcessingActivityTIAConnection) (int, error) {
-	r.MustBeAuthorized(ctx, obj.ParentID, authz.ActionTotalCount)
-
-	prb := r.ProboService(ctx, obj.ParentID.TenantID())
-
-	switch obj.Resolver.(type) {
-	case *organizationResolver:
-		count, err := prb.ProcessingActivityTIAs.CountForOrganizationID(ctx, obj.ParentID, obj.Filter)
-		if err != nil {
-			panic(fmt.Errorf("cannot count organization transfer impact assessments: %w", err))
 		}
 		return count, nil
 	}
@@ -6182,20 +6122,20 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 		}
 
 		return types.NewProcessingActivity(processingActivity), nil
-	case coredata.ProcessingActivityDPIAEntityType:
-		dpia, err := prb.ProcessingActivityDPIAs.Get(ctx, id)
+	case coredata.DataProtectionImpactAssessmentEntityType:
+		dpia, err := prb.DataProtectionImpactAssessments.Get(ctx, id)
 		if err != nil {
 			panic(fmt.Errorf("cannot get processing activity dpia: %w", err))
 		}
 
-		return types.NewProcessingActivityDpia(dpia), nil
-	case coredata.ProcessingActivityTIAEntityType:
-		tia, err := prb.ProcessingActivityTIAs.Get(ctx, id)
+		return types.NewDataProtectionImpactAssessment(dpia), nil
+	case coredata.TransferImpactAssessmentEntityType:
+		tia, err := prb.TransferImpactAssessments.Get(ctx, id)
 		if err != nil {
 			panic(fmt.Errorf("cannot get processing activity tia: %w", err))
 		}
 
-		return types.NewProcessingActivityTia(tia), nil
+		return types.NewTransferImpactAssessment(tia), nil
 	case coredata.SnapshotEntityType:
 		snapshot, err := prb.Snapshots.Get(ctx, id)
 		if err != nil {
@@ -6784,6 +6724,66 @@ func (r *taskConnectionResolver) TotalCount(ctx context.Context, obj *types.Task
 		count, err := prb.Tasks.CountForOrganizationID(ctx, obj.ParentID)
 		if err != nil {
 			panic(fmt.Errorf("cannot count tasks: %w", err))
+		}
+		return count, nil
+	}
+
+	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
+}
+
+// ProcessingActivity is the resolver for the processingActivity field.
+func (r *transferImpactAssessmentResolver) ProcessingActivity(ctx context.Context, obj *types.TransferImpactAssessment) (*types.ProcessingActivity, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGet)
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	tia, err := prb.TransferImpactAssessments.Get(ctx, obj.ID)
+	if err != nil {
+		panic(fmt.Errorf("cannot get transfer impact assessment: %w", err))
+	}
+
+	processingActivity, err := prb.ProcessingActivities.Get(ctx, tia.ProcessingActivityID)
+	if err != nil {
+		panic(fmt.Errorf("cannot get processing activity: %w", err))
+	}
+
+	return types.NewProcessingActivity(processingActivity), nil
+}
+
+// Organization is the resolver for the organization field.
+func (r *transferImpactAssessmentResolver) Organization(ctx context.Context, obj *types.TransferImpactAssessment) (*types.Organization, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetOrganization)
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	tia, err := prb.TransferImpactAssessments.Get(ctx, obj.ID)
+	if err != nil {
+		panic(fmt.Errorf("cannot get transfer impact assessment: %w", err))
+	}
+
+	organization, err := prb.Organizations.Get(ctx, tia.OrganizationID)
+	if err != nil {
+		var errNotFound *coredata.ErrOrganizationNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, gqlutils.NotFound(errNotFound)
+		}
+		panic(fmt.Errorf("cannot get organization: %w", err))
+	}
+
+	return types.NewOrganization(organization), nil
+}
+
+// TotalCount is the resolver for the totalCount field.
+func (r *transferImpactAssessmentConnectionResolver) TotalCount(ctx context.Context, obj *types.TransferImpactAssessmentConnection) (int, error) {
+	r.MustBeAuthorized(ctx, obj.ParentID, authz.ActionTotalCount)
+
+	prb := r.ProboService(ctx, obj.ParentID.TenantID())
+
+	switch obj.Resolver.(type) {
+	case *organizationResolver:
+		count, err := prb.TransferImpactAssessments.CountForOrganizationID(ctx, obj.ParentID, obj.Filter)
+		if err != nil {
+			panic(fmt.Errorf("cannot count organization transfer impact assessments: %w", err))
 		}
 		return count, nil
 	}
@@ -7681,6 +7681,16 @@ func (r *Resolver) ControlConnection() schema.ControlConnectionResolver {
 	return &controlConnectionResolver{r}
 }
 
+// DataProtectionImpactAssessment returns schema.DataProtectionImpactAssessmentResolver implementation.
+func (r *Resolver) DataProtectionImpactAssessment() schema.DataProtectionImpactAssessmentResolver {
+	return &dataProtectionImpactAssessmentResolver{r}
+}
+
+// DataProtectionImpactAssessmentConnection returns schema.DataProtectionImpactAssessmentConnectionResolver implementation.
+func (r *Resolver) DataProtectionImpactAssessmentConnection() schema.DataProtectionImpactAssessmentConnectionResolver {
+	return &dataProtectionImpactAssessmentConnectionResolver{r}
+}
+
 // Datum returns schema.DatumResolver implementation.
 func (r *Resolver) Datum() schema.DatumResolver { return &datumResolver{r} }
 
@@ -7795,26 +7805,6 @@ func (r *Resolver) ProcessingActivityConnection() schema.ProcessingActivityConne
 	return &processingActivityConnectionResolver{r}
 }
 
-// ProcessingActivityDPIA returns schema.ProcessingActivityDPIAResolver implementation.
-func (r *Resolver) ProcessingActivityDPIA() schema.ProcessingActivityDPIAResolver {
-	return &processingActivityDPIAResolver{r}
-}
-
-// ProcessingActivityDPIAConnection returns schema.ProcessingActivityDPIAConnectionResolver implementation.
-func (r *Resolver) ProcessingActivityDPIAConnection() schema.ProcessingActivityDPIAConnectionResolver {
-	return &processingActivityDPIAConnectionResolver{r}
-}
-
-// ProcessingActivityTIA returns schema.ProcessingActivityTIAResolver implementation.
-func (r *Resolver) ProcessingActivityTIA() schema.ProcessingActivityTIAResolver {
-	return &processingActivityTIAResolver{r}
-}
-
-// ProcessingActivityTIAConnection returns schema.ProcessingActivityTIAConnectionResolver implementation.
-func (r *Resolver) ProcessingActivityTIAConnection() schema.ProcessingActivityTIAConnectionResolver {
-	return &processingActivityTIAConnectionResolver{r}
-}
-
 // Query returns schema.QueryResolver implementation.
 func (r *Resolver) Query() schema.QueryResolver { return &queryResolver{r} }
 
@@ -7850,6 +7840,16 @@ func (r *Resolver) Task() schema.TaskResolver { return &taskResolver{r} }
 
 // TaskConnection returns schema.TaskConnectionResolver implementation.
 func (r *Resolver) TaskConnection() schema.TaskConnectionResolver { return &taskConnectionResolver{r} }
+
+// TransferImpactAssessment returns schema.TransferImpactAssessmentResolver implementation.
+func (r *Resolver) TransferImpactAssessment() schema.TransferImpactAssessmentResolver {
+	return &transferImpactAssessmentResolver{r}
+}
+
+// TransferImpactAssessmentConnection returns schema.TransferImpactAssessmentConnectionResolver implementation.
+func (r *Resolver) TransferImpactAssessmentConnection() schema.TransferImpactAssessmentConnectionResolver {
+	return &transferImpactAssessmentConnectionResolver{r}
+}
 
 // TrustCenter returns schema.TrustCenterResolver implementation.
 func (r *Resolver) TrustCenter() schema.TrustCenterResolver { return &trustCenterResolver{r} }
@@ -7937,6 +7937,8 @@ type continualImprovementResolver struct{ *Resolver }
 type continualImprovementConnectionResolver struct{ *Resolver }
 type controlResolver struct{ *Resolver }
 type controlConnectionResolver struct{ *Resolver }
+type dataProtectionImpactAssessmentResolver struct{ *Resolver }
+type dataProtectionImpactAssessmentConnectionResolver struct{ *Resolver }
 type datumResolver struct{ *Resolver }
 type datumConnectionResolver struct{ *Resolver }
 type documentResolver struct{ *Resolver }
@@ -7965,10 +7967,6 @@ type organizationResolver struct{ *Resolver }
 type peopleConnectionResolver struct{ *Resolver }
 type processingActivityResolver struct{ *Resolver }
 type processingActivityConnectionResolver struct{ *Resolver }
-type processingActivityDPIAResolver struct{ *Resolver }
-type processingActivityDPIAConnectionResolver struct{ *Resolver }
-type processingActivityTIAResolver struct{ *Resolver }
-type processingActivityTIAConnectionResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type reportResolver struct{ *Resolver }
 type riskResolver struct{ *Resolver }
@@ -7979,6 +7977,8 @@ type snapshotResolver struct{ *Resolver }
 type snapshotConnectionResolver struct{ *Resolver }
 type taskResolver struct{ *Resolver }
 type taskConnectionResolver struct{ *Resolver }
+type transferImpactAssessmentResolver struct{ *Resolver }
+type transferImpactAssessmentConnectionResolver struct{ *Resolver }
 type trustCenterResolver struct{ *Resolver }
 type trustCenterAccessResolver struct{ *Resolver }
 type trustCenterDocumentAccessResolver struct{ *Resolver }

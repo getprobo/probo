@@ -21,31 +21,31 @@ import (
 )
 
 type (
-	ProcessingActivityTIAOrderBy OrderBy[coredata.ProcessingActivityTIAOrderField]
+	TransferImpactAssessmentOrderBy OrderBy[coredata.TransferImpactAssessmentOrderField]
 
-	ProcessingActivityTIAConnection struct {
+	TransferImpactAssessmentConnection struct {
 		TotalCount int
-		Edges      []*ProcessingActivityTIAEdge
+		Edges      []*TransferImpactAssessmentEdge
 		PageInfo   PageInfo
 
 		Resolver any
 		ParentID gid.GID
-		Filter   *coredata.ProcessingActivityTIAFilter
+		Filter   *coredata.TransferImpactAssessmentFilter
 	}
 )
 
-func NewProcessingActivityTIAConnection(
-	p *page.Page[*coredata.ProcessingActivityTIA, coredata.ProcessingActivityTIAOrderField],
+func NewTransferImpactAssessmentConnection(
+	p *page.Page[*coredata.TransferImpactAssessment, coredata.TransferImpactAssessmentOrderField],
 	parentType any,
 	parentID gid.GID,
-	filter *coredata.ProcessingActivityTIAFilter,
-) *ProcessingActivityTIAConnection {
-	edges := make([]*ProcessingActivityTIAEdge, len(p.Data))
+	filter *coredata.TransferImpactAssessmentFilter,
+) *TransferImpactAssessmentConnection {
+	edges := make([]*TransferImpactAssessmentEdge, len(p.Data))
 	for i, tia := range p.Data {
-		edges[i] = NewProcessingActivityTIAEdge(tia, p.Cursor.OrderBy.Field)
+		edges[i] = NewTransferImpactAssessmentEdge(tia, p.Cursor.OrderBy.Field)
 	}
 
-	return &ProcessingActivityTIAConnection{
+	return &TransferImpactAssessmentConnection{
 		Edges:    edges,
 		PageInfo: *NewPageInfo(p),
 
@@ -55,15 +55,15 @@ func NewProcessingActivityTIAConnection(
 	}
 }
 
-func NewProcessingActivityTIAEdge(tia *coredata.ProcessingActivityTIA, orderField coredata.ProcessingActivityTIAOrderField) *ProcessingActivityTIAEdge {
-	return &ProcessingActivityTIAEdge{
-		Node:   NewProcessingActivityTia(tia),
+func NewTransferImpactAssessmentEdge(tia *coredata.TransferImpactAssessment, orderField coredata.TransferImpactAssessmentOrderField) *TransferImpactAssessmentEdge {
+	return &TransferImpactAssessmentEdge{
+		Node:   NewTransferImpactAssessment(tia),
 		Cursor: tia.CursorKey(orderField),
 	}
 }
 
-func NewProcessingActivityTia(tia *coredata.ProcessingActivityTIA) *ProcessingActivityTia {
-	return &ProcessingActivityTia{
+func NewTransferImpactAssessment(tia *coredata.TransferImpactAssessment) *TransferImpactAssessment {
+	return &TransferImpactAssessment{
 		ID:                    tia.ID,
 		DataSubjects:          tia.DataSubjects,
 		LegalMechanism:        tia.LegalMechanism,
@@ -74,3 +74,4 @@ func NewProcessingActivityTia(tia *coredata.ProcessingActivityTIA) *ProcessingAc
 		UpdatedAt:             tia.UpdatedAt,
 	}
 }
+

@@ -38,14 +38,14 @@ func TestProcessingActivity_Create(t *testing.T) {
 		{
 			name: "with full details",
 			input: map[string]any{
-				"name":                           "Customer Data Processing",
-				"purpose":                        "Provide services",
-				"lawfulBasis":                    "CONTRACTUAL_NECESSITY",
-				"internationalTransfers":         false,
-				"specialOrCriminalData":          "NO",
-				"dataProtectionImpactAssessment": "NOT_NEEDED",
-				"transferImpactAssessment":       "NOT_NEEDED",
-				"role":                           "CONTROLLER",
+				"name":                                 "Customer Data Processing",
+				"purpose":                              "Provide services",
+				"lawfulBasis":                          "CONTRACTUAL_NECESSITY",
+				"internationalTransfers":               false,
+				"specialOrCriminalData":                "NO",
+				"dataProtectionImpactAssessmentNeeded": "NOT_NEEDED",
+				"transferImpactAssessmentNeeded":       "NOT_NEEDED",
+				"role":                                 "CONTROLLER",
 			},
 			assertField: "name",
 			assertValue: "Customer Data Processing",
@@ -53,13 +53,13 @@ func TestProcessingActivity_Create(t *testing.T) {
 		{
 			name: "with CONSENT lawful basis",
 			input: map[string]any{
-				"name":                           "Consent Processing",
-				"lawfulBasis":                    "CONSENT",
-				"specialOrCriminalData":          "NO",
-				"internationalTransfers":         false,
-				"dataProtectionImpactAssessment": "NOT_NEEDED",
-				"transferImpactAssessment":       "NOT_NEEDED",
-				"role":                           "CONTROLLER",
+				"name":                                 "Consent Processing",
+				"lawfulBasis":                          "CONSENT",
+				"specialOrCriminalData":                "NO",
+				"internationalTransfers":               false,
+				"dataProtectionImpactAssessmentNeeded": "NOT_NEEDED",
+				"transferImpactAssessmentNeeded":       "NOT_NEEDED",
+				"role":                                 "CONTROLLER",
 			},
 			assertField: "lawfulBasis",
 			assertValue: "CONSENT",
@@ -67,13 +67,13 @@ func TestProcessingActivity_Create(t *testing.T) {
 		{
 			name: "with LEGITIMATE_INTEREST lawful basis",
 			input: map[string]any{
-				"name":                           "Legitimate Interest Processing",
-				"lawfulBasis":                    "LEGITIMATE_INTEREST",
-				"specialOrCriminalData":          "NO",
-				"internationalTransfers":         false,
-				"dataProtectionImpactAssessment": "NOT_NEEDED",
-				"transferImpactAssessment":       "NOT_NEEDED",
-				"role":                           "CONTROLLER",
+				"name":                                 "Legitimate Interest Processing",
+				"lawfulBasis":                          "LEGITIMATE_INTEREST",
+				"specialOrCriminalData":                "NO",
+				"internationalTransfers":               false,
+				"dataProtectionImpactAssessmentNeeded": "NOT_NEEDED",
+				"transferImpactAssessmentNeeded":       "NOT_NEEDED",
+				"role":                                 "CONTROLLER",
 			},
 			assertField: "lawfulBasis",
 			assertValue: "LEGITIMATE_INTEREST",
@@ -81,13 +81,13 @@ func TestProcessingActivity_Create(t *testing.T) {
 		{
 			name: "with international transfers enabled",
 			input: map[string]any{
-				"name":                           "International Processing",
-				"lawfulBasis":                    "CONSENT",
-				"internationalTransfers":         true,
-				"specialOrCriminalData":          "NO",
-				"dataProtectionImpactAssessment": "NOT_NEEDED",
-				"transferImpactAssessment":       "NOT_NEEDED",
-				"role":                           "CONTROLLER",
+				"name":                                 "International Processing",
+				"lawfulBasis":                          "CONSENT",
+				"internationalTransfers":               true,
+				"specialOrCriminalData":                "NO",
+				"dataProtectionImpactAssessmentNeeded": "NOT_NEEDED",
+				"transferImpactAssessmentNeeded":       "NOT_NEEDED",
+				"role":                                 "CONTROLLER",
 			},
 			assertField: "internationalTransfers",
 			assertValue: true,
@@ -162,13 +162,13 @@ func TestProcessingActivity_Create_Validation(t *testing.T) {
 		{
 			name: "missing organizationId",
 			input: map[string]any{
-				"name":                           "Test Processing",
-				"lawfulBasis":                    "CONSENT",
-				"specialOrCriminalData":          "NO",
-				"internationalTransfers":         false,
-				"dataProtectionImpactAssessment": "NOT_NEEDED",
-				"transferImpactAssessment":       "NOT_NEEDED",
-				"role":                           "CONTROLLER",
+				"name":                                 "Test Processing",
+				"lawfulBasis":                          "CONSENT",
+				"specialOrCriminalData":                "NO",
+				"internationalTransfers":               false,
+				"dataProtectionImpactAssessmentNeeded": "NOT_NEEDED",
+				"transferImpactAssessmentNeeded":       "NOT_NEEDED",
+				"role":                                 "CONTROLLER",
 			},
 			skipOrganization:  true,
 			wantErrorContains: "organizationId",
@@ -516,14 +516,14 @@ func TestProcessingActivity_Timestamps(t *testing.T) {
 
 		err := owner.Execute(query, map[string]any{
 			"input": map[string]any{
-				"organizationId":                 owner.GetOrganizationID().String(),
-				"name":                           "Timestamp Test PA",
-				"lawfulBasis":                    "CONSENT",
-				"specialOrCriminalData":          "NO",
-				"internationalTransfers":         false,
-				"dataProtectionImpactAssessment": "NOT_NEEDED",
-				"transferImpactAssessment":       "NOT_NEEDED",
-				"role":                           "CONTROLLER",
+				"organizationId":                       owner.GetOrganizationID().String(),
+				"name":                                 "Timestamp Test PA",
+				"lawfulBasis":                          "CONSENT",
+				"specialOrCriminalData":                "NO",
+				"internationalTransfers":               false,
+				"dataProtectionImpactAssessmentNeeded": "NOT_NEEDED",
+				"transferImpactAssessmentNeeded":       "NOT_NEEDED",
+				"role":                                 "CONTROLLER",
 			},
 		}, &result)
 		require.NoError(t, err)
@@ -646,14 +646,14 @@ func TestProcessingActivity_RBAC(t *testing.T) {
 				}
 			`, map[string]any{
 				"input": map[string]any{
-					"organizationId":                 owner.GetOrganizationID().String(),
-					"name":                           "RBAC Test PA",
-					"lawfulBasis":                    "CONSENT",
-					"specialOrCriminalData":          "NO",
-					"internationalTransfers":         false,
-					"dataProtectionImpactAssessment": "NOT_NEEDED",
-					"transferImpactAssessment":       "NOT_NEEDED",
-					"role":                           "CONTROLLER",
+					"organizationId":                       owner.GetOrganizationID().String(),
+					"name":                                 "RBAC Test PA",
+					"lawfulBasis":                          "CONSENT",
+					"specialOrCriminalData":                "NO",
+					"internationalTransfers":               false,
+					"dataProtectionImpactAssessmentNeeded": "NOT_NEEDED",
+					"transferImpactAssessmentNeeded":       "NOT_NEEDED",
+					"role":                                 "CONTROLLER",
 				},
 			})
 			require.NoError(t, err, "owner should be able to create processing activity")
@@ -671,14 +671,14 @@ func TestProcessingActivity_RBAC(t *testing.T) {
 				}
 			`, map[string]any{
 				"input": map[string]any{
-					"organizationId":                 admin.GetOrganizationID().String(),
-					"name":                           "RBAC Test PA",
-					"lawfulBasis":                    "CONSENT",
-					"specialOrCriminalData":          "NO",
-					"internationalTransfers":         false,
-					"dataProtectionImpactAssessment": "NOT_NEEDED",
-					"transferImpactAssessment":       "NOT_NEEDED",
-					"role":                           "CONTROLLER",
+					"organizationId":                       admin.GetOrganizationID().String(),
+					"name":                                 "RBAC Test PA",
+					"lawfulBasis":                          "CONSENT",
+					"specialOrCriminalData":                "NO",
+					"internationalTransfers":               false,
+					"dataProtectionImpactAssessmentNeeded": "NOT_NEEDED",
+					"transferImpactAssessmentNeeded":       "NOT_NEEDED",
+					"role":                                 "CONTROLLER",
 				},
 			})
 			require.NoError(t, err, "admin should be able to create processing activity")
@@ -696,14 +696,14 @@ func TestProcessingActivity_RBAC(t *testing.T) {
 				}
 			`, map[string]any{
 				"input": map[string]any{
-					"organizationId":                 viewer.GetOrganizationID().String(),
-					"name":                           "RBAC Test PA",
-					"lawfulBasis":                    "CONSENT",
-					"specialOrCriminalData":          "NO",
-					"internationalTransfers":         false,
-					"dataProtectionImpactAssessment": "NOT_NEEDED",
-					"transferImpactAssessment":       "NOT_NEEDED",
-					"role":                           "CONTROLLER",
+					"organizationId":                       viewer.GetOrganizationID().String(),
+					"name":                                 "RBAC Test PA",
+					"lawfulBasis":                          "CONSENT",
+					"specialOrCriminalData":                "NO",
+					"internationalTransfers":               false,
+					"dataProtectionImpactAssessmentNeeded": "NOT_NEEDED",
+					"transferImpactAssessmentNeeded":       "NOT_NEEDED",
+					"role":                                 "CONTROLLER",
 				},
 			})
 			testutil.RequireForbiddenError(t, err, "viewer should not be able to create processing activity")
@@ -1275,14 +1275,14 @@ func TestProcessingActivity_Role(t *testing.T) {
 
 			err := owner.Execute(query, map[string]any{
 				"input": map[string]any{
-					"organizationId":                 owner.GetOrganizationID().String(),
-					"name":                           fmt.Sprintf("PA Role %s", role),
-					"lawfulBasis":                    "CONSENT",
-					"specialOrCriminalData":          "NO",
-					"internationalTransfers":         false,
-					"dataProtectionImpactAssessment": "NOT_NEEDED",
-					"transferImpactAssessment":       "NOT_NEEDED",
-					"role":                           role,
+					"organizationId":                       owner.GetOrganizationID().String(),
+					"name":                                 fmt.Sprintf("PA Role %s", role),
+					"lawfulBasis":                          "CONSENT",
+					"specialOrCriminalData":                "NO",
+					"internationalTransfers":               false,
+					"dataProtectionImpactAssessmentNeeded": "NOT_NEEDED",
+					"transferImpactAssessmentNeeded":       "NOT_NEEDED",
+					"role":                                 role,
 				},
 			}, &result)
 			require.NoError(t, err)
@@ -1359,16 +1359,16 @@ func TestProcessingActivity_ReviewDates(t *testing.T) {
 
 		err := owner.Execute(query, map[string]any{
 			"input": map[string]any{
-				"organizationId":                 owner.GetOrganizationID().String(),
-				"name":                           "PA Review Dates Test",
-				"lawfulBasis":                    "CONSENT",
-				"specialOrCriminalData":          "NO",
-				"internationalTransfers":         false,
-				"dataProtectionImpactAssessment": "NOT_NEEDED",
-				"transferImpactAssessment":       "NOT_NEEDED",
-				"role":                           "CONTROLLER",
-				"lastReviewDate":                 "2024-01-15T00:00:00Z",
-				"nextReviewDate":                 "2025-01-15T00:00:00Z",
+				"organizationId":                       owner.GetOrganizationID().String(),
+				"name":                                 "PA Review Dates Test",
+				"lawfulBasis":                          "CONSENT",
+				"specialOrCriminalData":                "NO",
+				"internationalTransfers":               false,
+				"dataProtectionImpactAssessmentNeeded": "NOT_NEEDED",
+				"transferImpactAssessmentNeeded":       "NOT_NEEDED",
+				"role":                                 "CONTROLLER",
+				"lastReviewDate":                       "2024-01-15T00:00:00Z",
+				"nextReviewDate":                       "2025-01-15T00:00:00Z",
 			},
 		}, &result)
 		require.NoError(t, err)
@@ -1426,9 +1426,9 @@ func TestProcessingActivity_DPIA(t *testing.T) {
 			Create()
 
 		query := `
-			mutation CreateProcessingActivityDPIA($input: CreateProcessingActivityDPIAInput!) {
-				createProcessingActivityDPIA(input: $input) {
-					processingActivityDpia {
+			mutation CreateDataProtectionImpactAssessment($input: CreateDataProtectionImpactAssessmentInput!) {
+				createDataProtectionImpactAssessment(input: $input) {
+					dataProtectionImpactAssessment {
 						id
 						description
 						necessityAndProportionality
@@ -1441,16 +1441,16 @@ func TestProcessingActivity_DPIA(t *testing.T) {
 		`
 
 		var result struct {
-			CreateProcessingActivityDPIA struct {
-				ProcessingActivityDpia struct {
+			CreateDataProtectionImpactAssessment struct {
+				DataProtectionImpactAssessment struct {
 					ID                          string  `json:"id"`
 					Description                 *string `json:"description"`
 					NecessityAndProportionality *string `json:"necessityAndProportionality"`
 					PotentialRisk               *string `json:"potentialRisk"`
 					Mitigations                 *string `json:"mitigations"`
 					ResidualRisk                *string `json:"residualRisk"`
-				} `json:"processingActivityDpia"`
-			} `json:"createProcessingActivityDPIA"`
+				} `json:"dataProtectionImpactAssessment"`
+			} `json:"createDataProtectionImpactAssessment"`
 		}
 
 		err := owner.Execute(query, map[string]any{
@@ -1464,9 +1464,9 @@ func TestProcessingActivity_DPIA(t *testing.T) {
 			},
 		}, &result)
 		require.NoError(t, err)
-		assert.NotEmpty(t, result.CreateProcessingActivityDPIA.ProcessingActivityDpia.ID)
-		assert.Equal(t, "Test DPIA description", *result.CreateProcessingActivityDPIA.ProcessingActivityDpia.Description)
-		assert.Equal(t, "LOW", *result.CreateProcessingActivityDPIA.ProcessingActivityDpia.ResidualRisk)
+		assert.NotEmpty(t, result.CreateDataProtectionImpactAssessment.DataProtectionImpactAssessment.ID)
+		assert.Equal(t, "Test DPIA description", *result.CreateDataProtectionImpactAssessment.DataProtectionImpactAssessment.Description)
+		assert.Equal(t, "LOW", *result.CreateDataProtectionImpactAssessment.DataProtectionImpactAssessment.ResidualRisk)
 	})
 
 	t.Run("read DPIA via processing activity", func(t *testing.T) {
@@ -1475,9 +1475,9 @@ func TestProcessingActivity_DPIA(t *testing.T) {
 			Create()
 
 		createQuery := `
-			mutation CreateProcessingActivityDPIA($input: CreateProcessingActivityDPIAInput!) {
-				createProcessingActivityDPIA(input: $input) {
-					processingActivityDpia { id }
+			mutation CreateDataProtectionImpactAssessment($input: CreateDataProtectionImpactAssessmentInput!) {
+				createDataProtectionImpactAssessment(input: $input) {
+					dataProtectionImpactAssessment { id }
 				}
 			}
 		`
@@ -1495,7 +1495,7 @@ func TestProcessingActivity_DPIA(t *testing.T) {
 				node(id: $id) {
 					... on ProcessingActivity {
 						id
-						dpia {
+						dataProtectionImpactAssessment {
 							id
 							description
 							residualRisk
@@ -1507,20 +1507,20 @@ func TestProcessingActivity_DPIA(t *testing.T) {
 
 		var result struct {
 			Node struct {
-				ID   string `json:"id"`
-				Dpia *struct {
+				ID                             string `json:"id"`
+				DataProtectionImpactAssessment *struct {
 					ID           string  `json:"id"`
 					Description  *string `json:"description"`
 					ResidualRisk *string `json:"residualRisk"`
-				} `json:"dpia"`
+				} `json:"dataProtectionImpactAssessment"`
 			} `json:"node"`
 		}
 
 		err = owner.Execute(readQuery, map[string]any{"id": paID}, &result)
 		require.NoError(t, err)
-		require.NotNil(t, result.Node.Dpia)
-		assert.Equal(t, "Read test DPIA", *result.Node.Dpia.Description)
-		assert.Equal(t, "MEDIUM", *result.Node.Dpia.ResidualRisk)
+		require.NotNil(t, result.Node.DataProtectionImpactAssessment)
+		assert.Equal(t, "Read test DPIA", *result.Node.DataProtectionImpactAssessment.Description)
+		assert.Equal(t, "MEDIUM", *result.Node.DataProtectionImpactAssessment.ResidualRisk)
 	})
 
 	t.Run("update DPIA", func(t *testing.T) {
@@ -1529,18 +1529,18 @@ func TestProcessingActivity_DPIA(t *testing.T) {
 			Create()
 
 		createQuery := `
-			mutation CreateProcessingActivityDPIA($input: CreateProcessingActivityDPIAInput!) {
-				createProcessingActivityDPIA(input: $input) {
-					processingActivityDpia { id }
+			mutation CreateDataProtectionImpactAssessment($input: CreateDataProtectionImpactAssessmentInput!) {
+				createDataProtectionImpactAssessment(input: $input) {
+					dataProtectionImpactAssessment { id }
 				}
 			}
 		`
 		var createResult struct {
-			CreateProcessingActivityDPIA struct {
-				ProcessingActivityDpia struct {
+			CreateDataProtectionImpactAssessment struct {
+				DataProtectionImpactAssessment struct {
 					ID string `json:"id"`
-				} `json:"processingActivityDpia"`
-			} `json:"createProcessingActivityDPIA"`
+				} `json:"dataProtectionImpactAssessment"`
+			} `json:"createDataProtectionImpactAssessment"`
 		}
 		err := owner.Execute(createQuery, map[string]any{
 			"input": map[string]any{
@@ -1550,12 +1550,12 @@ func TestProcessingActivity_DPIA(t *testing.T) {
 			},
 		}, &createResult)
 		require.NoError(t, err)
-		dpiaID := createResult.CreateProcessingActivityDPIA.ProcessingActivityDpia.ID
+		dpiaID := createResult.CreateDataProtectionImpactAssessment.DataProtectionImpactAssessment.ID
 
 		updateQuery := `
-			mutation UpdateProcessingActivityDPIA($input: UpdateProcessingActivityDPIAInput!) {
-				updateProcessingActivityDPIA(input: $input) {
-					processingActivityDpia {
+			mutation UpdateDataProtectionImpactAssessment($input: UpdateDataProtectionImpactAssessmentInput!) {
+				updateDataProtectionImpactAssessment(input: $input) {
+					dataProtectionImpactAssessment {
 						id
 						description
 						residualRisk
@@ -1565,13 +1565,13 @@ func TestProcessingActivity_DPIA(t *testing.T) {
 		`
 
 		var updateResult struct {
-			UpdateProcessingActivityDPIA struct {
-				ProcessingActivityDpia struct {
+			UpdateDataProtectionImpactAssessment struct {
+				DataProtectionImpactAssessment struct {
 					ID           string  `json:"id"`
 					Description  *string `json:"description"`
 					ResidualRisk *string `json:"residualRisk"`
-				} `json:"processingActivityDpia"`
-			} `json:"updateProcessingActivityDPIA"`
+				} `json:"dataProtectionImpactAssessment"`
+			} `json:"updateDataProtectionImpactAssessment"`
 		}
 
 		err = owner.Execute(updateQuery, map[string]any{
@@ -1582,8 +1582,8 @@ func TestProcessingActivity_DPIA(t *testing.T) {
 			},
 		}, &updateResult)
 		require.NoError(t, err)
-		assert.Equal(t, "Updated description", *updateResult.UpdateProcessingActivityDPIA.ProcessingActivityDpia.Description)
-		assert.Equal(t, "HIGH", *updateResult.UpdateProcessingActivityDPIA.ProcessingActivityDpia.ResidualRisk)
+		assert.Equal(t, "Updated description", *updateResult.UpdateDataProtectionImpactAssessment.DataProtectionImpactAssessment.Description)
+		assert.Equal(t, "HIGH", *updateResult.UpdateDataProtectionImpactAssessment.DataProtectionImpactAssessment.ResidualRisk)
 	})
 
 	t.Run("delete DPIA", func(t *testing.T) {
@@ -1592,18 +1592,18 @@ func TestProcessingActivity_DPIA(t *testing.T) {
 			Create()
 
 		createQuery := `
-			mutation CreateProcessingActivityDPIA($input: CreateProcessingActivityDPIAInput!) {
-				createProcessingActivityDPIA(input: $input) {
-					processingActivityDpia { id }
+			mutation CreateDataProtectionImpactAssessment($input: CreateDataProtectionImpactAssessmentInput!) {
+				createDataProtectionImpactAssessment(input: $input) {
+					dataProtectionImpactAssessment { id }
 				}
 			}
 		`
 		var createResult struct {
-			CreateProcessingActivityDPIA struct {
-				ProcessingActivityDpia struct {
+			CreateDataProtectionImpactAssessment struct {
+				DataProtectionImpactAssessment struct {
 					ID string `json:"id"`
-				} `json:"processingActivityDpia"`
-			} `json:"createProcessingActivityDPIA"`
+				} `json:"dataProtectionImpactAssessment"`
+			} `json:"createDataProtectionImpactAssessment"`
 		}
 		err := owner.Execute(createQuery, map[string]any{
 			"input": map[string]any{
@@ -1612,49 +1612,49 @@ func TestProcessingActivity_DPIA(t *testing.T) {
 			},
 		}, &createResult)
 		require.NoError(t, err)
-		dpiaID := createResult.CreateProcessingActivityDPIA.ProcessingActivityDpia.ID
+		dpiaID := createResult.CreateDataProtectionImpactAssessment.DataProtectionImpactAssessment.ID
 
 		deleteQuery := `
-			mutation DeleteProcessingActivityDPIA($input: DeleteProcessingActivityDPIAInput!) {
-				deleteProcessingActivityDPIA(input: $input) {
-					deletedProcessingActivityDpiaId
+			mutation DeleteDataProtectionImpactAssessment($input: DeleteDataProtectionImpactAssessmentInput!) {
+				deleteDataProtectionImpactAssessment(input: $input) {
+					deletedDataProtectionImpactAssessmentId
 				}
 			}
 		`
 
 		var deleteResult struct {
-			DeleteProcessingActivityDPIA struct {
-				DeletedProcessingActivityDpiaID string `json:"deletedProcessingActivityDpiaId"`
-			} `json:"deleteProcessingActivityDPIA"`
+			DeleteDataProtectionImpactAssessment struct {
+				DeletedDataProtectionImpactAssessmentID string `json:"deletedDataProtectionImpactAssessmentId"`
+			} `json:"deleteDataProtectionImpactAssessment"`
 		}
 
 		err = owner.Execute(deleteQuery, map[string]any{
 			"input": map[string]any{
-				"processingActivityDpiaId": dpiaID,
+				"dataProtectionImpactAssessmentId": dpiaID,
 			},
 		}, &deleteResult)
 		require.NoError(t, err)
-		assert.Equal(t, dpiaID, deleteResult.DeleteProcessingActivityDPIA.DeletedProcessingActivityDpiaID)
+		assert.Equal(t, dpiaID, deleteResult.DeleteDataProtectionImpactAssessment.DeletedDataProtectionImpactAssessmentID)
 
 		readQuery := `
 			query($id: ID!) {
 				node(id: $id) {
 					... on ProcessingActivity {
-						dpia { id }
+						dataProtectionImpactAssessment { id }
 					}
 				}
 			}
 		`
 		var readResult struct {
 			Node struct {
-				Dpia *struct {
+				DataProtectionImpactAssessment *struct {
 					ID string `json:"id"`
-				} `json:"dpia"`
+				} `json:"dataProtectionImpactAssessment"`
 			} `json:"node"`
 		}
 		err = owner.Execute(readQuery, map[string]any{"id": paID}, &readResult)
 		require.NoError(t, err)
-		assert.Nil(t, readResult.Node.Dpia)
+		assert.Nil(t, readResult.Node.DataProtectionImpactAssessment)
 	})
 
 	t.Run("DPIA residual risk values", func(t *testing.T) {
@@ -1667,9 +1667,9 @@ func TestProcessingActivity_DPIA(t *testing.T) {
 					Create()
 
 				query := `
-					mutation CreateProcessingActivityDPIA($input: CreateProcessingActivityDPIAInput!) {
-						createProcessingActivityDPIA(input: $input) {
-							processingActivityDpia {
+					mutation CreateDataProtectionImpactAssessment($input: CreateDataProtectionImpactAssessmentInput!) {
+						createDataProtectionImpactAssessment(input: $input) {
+							dataProtectionImpactAssessment {
 								id
 								residualRisk
 							}
@@ -1678,12 +1678,12 @@ func TestProcessingActivity_DPIA(t *testing.T) {
 				`
 
 				var result struct {
-					CreateProcessingActivityDPIA struct {
-						ProcessingActivityDpia struct {
+					CreateDataProtectionImpactAssessment struct {
+						DataProtectionImpactAssessment struct {
 							ID           string  `json:"id"`
 							ResidualRisk *string `json:"residualRisk"`
-						} `json:"processingActivityDpia"`
-					} `json:"createProcessingActivityDPIA"`
+						} `json:"dataProtectionImpactAssessment"`
+					} `json:"createDataProtectionImpactAssessment"`
 				}
 
 				err := owner.Execute(query, map[string]any{
@@ -1693,7 +1693,7 @@ func TestProcessingActivity_DPIA(t *testing.T) {
 					},
 				}, &result)
 				require.NoError(t, err)
-				assert.Equal(t, risk, *result.CreateProcessingActivityDPIA.ProcessingActivityDpia.ResidualRisk)
+				assert.Equal(t, risk, *result.CreateDataProtectionImpactAssessment.DataProtectionImpactAssessment.ResidualRisk)
 			})
 		}
 	})
@@ -1709,9 +1709,9 @@ func TestProcessingActivity_TIA(t *testing.T) {
 			Create()
 
 		query := `
-			mutation CreateProcessingActivityTIA($input: CreateProcessingActivityTIAInput!) {
-				createProcessingActivityTIA(input: $input) {
-					processingActivityTia {
+			mutation CreateTransferImpactAssessment($input: CreateTransferImpactAssessmentInput!) {
+				createTransferImpactAssessment(input: $input) {
+					transferImpactAssessment {
 						id
 						dataSubjects
 						legalMechanism
@@ -1724,16 +1724,16 @@ func TestProcessingActivity_TIA(t *testing.T) {
 		`
 
 		var result struct {
-			CreateProcessingActivityTIA struct {
-				ProcessingActivityTia struct {
+			CreateTransferImpactAssessment struct {
+				TransferImpactAssessment struct {
 					ID                    string  `json:"id"`
 					DataSubjects          *string `json:"dataSubjects"`
 					LegalMechanism        *string `json:"legalMechanism"`
 					Transfer              *string `json:"transfer"`
 					LocalLawRisk          *string `json:"localLawRisk"`
 					SupplementaryMeasures *string `json:"supplementaryMeasures"`
-				} `json:"processingActivityTia"`
-			} `json:"createProcessingActivityTIA"`
+				} `json:"transferImpactAssessment"`
+			} `json:"createTransferImpactAssessment"`
 		}
 
 		err := owner.Execute(query, map[string]any{
@@ -1747,9 +1747,9 @@ func TestProcessingActivity_TIA(t *testing.T) {
 			},
 		}, &result)
 		require.NoError(t, err)
-		assert.NotEmpty(t, result.CreateProcessingActivityTIA.ProcessingActivityTia.ID)
-		assert.Equal(t, "EU customers", *result.CreateProcessingActivityTIA.ProcessingActivityTia.DataSubjects)
-		assert.Equal(t, "Standard Contractual Clauses", *result.CreateProcessingActivityTIA.ProcessingActivityTia.LegalMechanism)
+		assert.NotEmpty(t, result.CreateTransferImpactAssessment.TransferImpactAssessment.ID)
+		assert.Equal(t, "EU customers", *result.CreateTransferImpactAssessment.TransferImpactAssessment.DataSubjects)
+		assert.Equal(t, "Standard Contractual Clauses", *result.CreateTransferImpactAssessment.TransferImpactAssessment.LegalMechanism)
 	})
 
 	t.Run("read TIA via processing activity", func(t *testing.T) {
@@ -1758,9 +1758,9 @@ func TestProcessingActivity_TIA(t *testing.T) {
 			Create()
 
 		createQuery := `
-			mutation CreateProcessingActivityTIA($input: CreateProcessingActivityTIAInput!) {
-				createProcessingActivityTIA(input: $input) {
-					processingActivityTia { id }
+			mutation CreateTransferImpactAssessment($input: CreateTransferImpactAssessmentInput!) {
+				createTransferImpactAssessment(input: $input) {
+					transferImpactAssessment { id }
 				}
 			}
 		`
@@ -1778,7 +1778,7 @@ func TestProcessingActivity_TIA(t *testing.T) {
 				node(id: $id) {
 					... on ProcessingActivity {
 						id
-						tia {
+						transferImpactAssessment {
 							id
 							dataSubjects
 							transfer
@@ -1790,20 +1790,20 @@ func TestProcessingActivity_TIA(t *testing.T) {
 
 		var result struct {
 			Node struct {
-				ID  string `json:"id"`
-				Tia *struct {
+				ID                       string `json:"id"`
+				TransferImpactAssessment *struct {
 					ID           string  `json:"id"`
 					DataSubjects *string `json:"dataSubjects"`
 					Transfer     *string `json:"transfer"`
-				} `json:"tia"`
+				} `json:"transferImpactAssessment"`
 			} `json:"node"`
 		}
 
 		err = owner.Execute(readQuery, map[string]any{"id": paID}, &result)
 		require.NoError(t, err)
-		require.NotNil(t, result.Node.Tia)
-		assert.Equal(t, "Read test subjects", *result.Node.Tia.DataSubjects)
-		assert.Equal(t, "Read test transfer", *result.Node.Tia.Transfer)
+		require.NotNil(t, result.Node.TransferImpactAssessment)
+		assert.Equal(t, "Read test subjects", *result.Node.TransferImpactAssessment.DataSubjects)
+		assert.Equal(t, "Read test transfer", *result.Node.TransferImpactAssessment.Transfer)
 	})
 
 	t.Run("update TIA", func(t *testing.T) {
@@ -1812,18 +1812,18 @@ func TestProcessingActivity_TIA(t *testing.T) {
 			Create()
 
 		createQuery := `
-			mutation CreateProcessingActivityTIA($input: CreateProcessingActivityTIAInput!) {
-				createProcessingActivityTIA(input: $input) {
-					processingActivityTia { id }
+			mutation CreateTransferImpactAssessment($input: CreateTransferImpactAssessmentInput!) {
+				createTransferImpactAssessment(input: $input) {
+					transferImpactAssessment { id }
 				}
 			}
 		`
 		var createResult struct {
-			CreateProcessingActivityTIA struct {
-				ProcessingActivityTia struct {
+			CreateTransferImpactAssessment struct {
+				TransferImpactAssessment struct {
 					ID string `json:"id"`
-				} `json:"processingActivityTia"`
-			} `json:"createProcessingActivityTIA"`
+				} `json:"transferImpactAssessment"`
+			} `json:"createTransferImpactAssessment"`
 		}
 		err := owner.Execute(createQuery, map[string]any{
 			"input": map[string]any{
@@ -1833,12 +1833,12 @@ func TestProcessingActivity_TIA(t *testing.T) {
 			},
 		}, &createResult)
 		require.NoError(t, err)
-		tiaID := createResult.CreateProcessingActivityTIA.ProcessingActivityTia.ID
+		tiaID := createResult.CreateTransferImpactAssessment.TransferImpactAssessment.ID
 
 		updateQuery := `
-			mutation UpdateProcessingActivityTIA($input: UpdateProcessingActivityTIAInput!) {
-				updateProcessingActivityTIA(input: $input) {
-					processingActivityTia {
+			mutation UpdateTransferImpactAssessment($input: UpdateTransferImpactAssessmentInput!) {
+				updateTransferImpactAssessment(input: $input) {
+					transferImpactAssessment {
 						id
 						dataSubjects
 						transfer
@@ -1849,14 +1849,14 @@ func TestProcessingActivity_TIA(t *testing.T) {
 		`
 
 		var updateResult struct {
-			UpdateProcessingActivityTIA struct {
-				ProcessingActivityTia struct {
+			UpdateTransferImpactAssessment struct {
+				TransferImpactAssessment struct {
 					ID             string  `json:"id"`
 					DataSubjects   *string `json:"dataSubjects"`
 					Transfer       *string `json:"transfer"`
 					LegalMechanism *string `json:"legalMechanism"`
-				} `json:"processingActivityTia"`
-			} `json:"updateProcessingActivityTIA"`
+				} `json:"transferImpactAssessment"`
+			} `json:"updateTransferImpactAssessment"`
 		}
 
 		err = owner.Execute(updateQuery, map[string]any{
@@ -1868,9 +1868,9 @@ func TestProcessingActivity_TIA(t *testing.T) {
 			},
 		}, &updateResult)
 		require.NoError(t, err)
-		assert.Equal(t, "Updated subjects", *updateResult.UpdateProcessingActivityTIA.ProcessingActivityTia.DataSubjects)
-		assert.Equal(t, "Updated transfer", *updateResult.UpdateProcessingActivityTIA.ProcessingActivityTia.Transfer)
-		assert.Equal(t, "Binding Corporate Rules", *updateResult.UpdateProcessingActivityTIA.ProcessingActivityTia.LegalMechanism)
+		assert.Equal(t, "Updated subjects", *updateResult.UpdateTransferImpactAssessment.TransferImpactAssessment.DataSubjects)
+		assert.Equal(t, "Updated transfer", *updateResult.UpdateTransferImpactAssessment.TransferImpactAssessment.Transfer)
+		assert.Equal(t, "Binding Corporate Rules", *updateResult.UpdateTransferImpactAssessment.TransferImpactAssessment.LegalMechanism)
 	})
 
 	t.Run("delete TIA", func(t *testing.T) {
@@ -1879,18 +1879,18 @@ func TestProcessingActivity_TIA(t *testing.T) {
 			Create()
 
 		createQuery := `
-			mutation CreateProcessingActivityTIA($input: CreateProcessingActivityTIAInput!) {
-				createProcessingActivityTIA(input: $input) {
-					processingActivityTia { id }
+			mutation CreateTransferImpactAssessment($input: CreateTransferImpactAssessmentInput!) {
+				createTransferImpactAssessment(input: $input) {
+					transferImpactAssessment { id }
 				}
 			}
 		`
 		var createResult struct {
-			CreateProcessingActivityTIA struct {
-				ProcessingActivityTia struct {
+			CreateTransferImpactAssessment struct {
+				TransferImpactAssessment struct {
 					ID string `json:"id"`
-				} `json:"processingActivityTia"`
-			} `json:"createProcessingActivityTIA"`
+				} `json:"transferImpactAssessment"`
+			} `json:"createTransferImpactAssessment"`
 		}
 		err := owner.Execute(createQuery, map[string]any{
 			"input": map[string]any{
@@ -1899,49 +1899,49 @@ func TestProcessingActivity_TIA(t *testing.T) {
 			},
 		}, &createResult)
 		require.NoError(t, err)
-		tiaID := createResult.CreateProcessingActivityTIA.ProcessingActivityTia.ID
+		tiaID := createResult.CreateTransferImpactAssessment.TransferImpactAssessment.ID
 
 		deleteQuery := `
-			mutation DeleteProcessingActivityTIA($input: DeleteProcessingActivityTIAInput!) {
-				deleteProcessingActivityTIA(input: $input) {
-					deletedProcessingActivityTiaId
+			mutation DeleteTransferImpactAssessment($input: DeleteTransferImpactAssessmentInput!) {
+				deleteTransferImpactAssessment(input: $input) {
+					deletedTransferImpactAssessmentId
 				}
 			}
 		`
 
 		var deleteResult struct {
-			DeleteProcessingActivityTIA struct {
-				DeletedProcessingActivityTiaID string `json:"deletedProcessingActivityTiaId"`
-			} `json:"deleteProcessingActivityTIA"`
+			DeleteTransferImpactAssessment struct {
+				DeletedTransferImpactAssessmentID string `json:"deletedTransferImpactAssessmentId"`
+			} `json:"deleteTransferImpactAssessment"`
 		}
 
 		err = owner.Execute(deleteQuery, map[string]any{
 			"input": map[string]any{
-				"processingActivityTiaId": tiaID,
+				"transferImpactAssessmentId": tiaID,
 			},
 		}, &deleteResult)
 		require.NoError(t, err)
-		assert.Equal(t, tiaID, deleteResult.DeleteProcessingActivityTIA.DeletedProcessingActivityTiaID)
+		assert.Equal(t, tiaID, deleteResult.DeleteTransferImpactAssessment.DeletedTransferImpactAssessmentID)
 
 		readQuery := `
 			query($id: ID!) {
 				node(id: $id) {
 					... on ProcessingActivity {
-						tia { id }
+						transferImpactAssessment { id }
 					}
 				}
 			}
 		`
 		var readResult struct {
 			Node struct {
-				Tia *struct {
+				TransferImpactAssessment *struct {
 					ID string `json:"id"`
-				} `json:"tia"`
+				} `json:"transferImpactAssessment"`
 			} `json:"node"`
 		}
 		err = owner.Execute(readQuery, map[string]any{"id": paID}, &readResult)
 		require.NoError(t, err)
-		assert.Nil(t, readResult.Node.Tia)
+		assert.Nil(t, readResult.Node.TransferImpactAssessment)
 	})
 }
 
@@ -1953,16 +1953,16 @@ func TestProcessingActivity_DPIA_RBAC(t *testing.T) {
 		paID := factory.NewProcessingActivity(owner).WithName("DPIA RBAC Owner Test").Create()
 
 		var createResult struct {
-			CreateProcessingActivityDPIA struct {
-				ProcessingActivityDpia struct {
+			CreateDataProtectionImpactAssessment struct {
+				DataProtectionImpactAssessment struct {
 					ID string `json:"id"`
-				} `json:"processingActivityDpia"`
-			} `json:"createProcessingActivityDPIA"`
+				} `json:"dataProtectionImpactAssessment"`
+			} `json:"createDataProtectionImpactAssessment"`
 		}
 		err := owner.Execute(`
-			mutation($input: CreateProcessingActivityDPIAInput!) {
-				createProcessingActivityDPIA(input: $input) {
-					processingActivityDpia { id }
+			mutation($input: CreateDataProtectionImpactAssessmentInput!) {
+				createDataProtectionImpactAssessment(input: $input) {
+					dataProtectionImpactAssessment { id }
 				}
 			}
 		`, map[string]any{
@@ -1972,12 +1972,12 @@ func TestProcessingActivity_DPIA_RBAC(t *testing.T) {
 			},
 		}, &createResult)
 		require.NoError(t, err, "owner should be able to create DPIA")
-		dpiaID := createResult.CreateProcessingActivityDPIA.ProcessingActivityDpia.ID
+		dpiaID := createResult.CreateDataProtectionImpactAssessment.DataProtectionImpactAssessment.ID
 
 		_, err = owner.Do(`
-			mutation($input: UpdateProcessingActivityDPIAInput!) {
-				updateProcessingActivityDPIA(input: $input) {
-					processingActivityDpia { id }
+			mutation($input: UpdateDataProtectionImpactAssessmentInput!) {
+				updateDataProtectionImpactAssessment(input: $input) {
+					dataProtectionImpactAssessment { id }
 				}
 			}
 		`, map[string]any{
@@ -1989,14 +1989,14 @@ func TestProcessingActivity_DPIA_RBAC(t *testing.T) {
 		require.NoError(t, err, "owner should be able to update DPIA")
 
 		_, err = owner.Do(`
-			mutation($input: DeleteProcessingActivityDPIAInput!) {
-				deleteProcessingActivityDPIA(input: $input) {
-					deletedProcessingActivityDpiaId
+			mutation($input: DeleteDataProtectionImpactAssessmentInput!) {
+				deleteDataProtectionImpactAssessment(input: $input) {
+					deletedDataProtectionImpactAssessmentId
 				}
 			}
 		`, map[string]any{
 			"input": map[string]any{
-				"processingActivityDpiaId": dpiaID,
+				"dataProtectionImpactAssessmentId": dpiaID,
 			},
 		})
 		require.NoError(t, err, "owner should be able to delete DPIA")
@@ -2008,16 +2008,16 @@ func TestProcessingActivity_DPIA_RBAC(t *testing.T) {
 		paID := factory.NewProcessingActivity(owner).WithName("DPIA RBAC Admin Test").Create()
 
 		var createResult struct {
-			CreateProcessingActivityDPIA struct {
-				ProcessingActivityDpia struct {
+			CreateDataProtectionImpactAssessment struct {
+				DataProtectionImpactAssessment struct {
 					ID string `json:"id"`
-				} `json:"processingActivityDpia"`
-			} `json:"createProcessingActivityDPIA"`
+				} `json:"dataProtectionImpactAssessment"`
+			} `json:"createDataProtectionImpactAssessment"`
 		}
 		err := admin.Execute(`
-			mutation($input: CreateProcessingActivityDPIAInput!) {
-				createProcessingActivityDPIA(input: $input) {
-					processingActivityDpia { id }
+			mutation($input: CreateDataProtectionImpactAssessmentInput!) {
+				createDataProtectionImpactAssessment(input: $input) {
+					dataProtectionImpactAssessment { id }
 				}
 			}
 		`, map[string]any{
@@ -2027,12 +2027,12 @@ func TestProcessingActivity_DPIA_RBAC(t *testing.T) {
 			},
 		}, &createResult)
 		require.NoError(t, err, "admin should be able to create DPIA")
-		dpiaID := createResult.CreateProcessingActivityDPIA.ProcessingActivityDpia.ID
+		dpiaID := createResult.CreateDataProtectionImpactAssessment.DataProtectionImpactAssessment.ID
 
 		_, err = admin.Do(`
-			mutation($input: UpdateProcessingActivityDPIAInput!) {
-				updateProcessingActivityDPIA(input: $input) {
-					processingActivityDpia { id }
+			mutation($input: UpdateDataProtectionImpactAssessmentInput!) {
+				updateDataProtectionImpactAssessment(input: $input) {
+					dataProtectionImpactAssessment { id }
 				}
 			}
 		`, map[string]any{
@@ -2044,14 +2044,14 @@ func TestProcessingActivity_DPIA_RBAC(t *testing.T) {
 		require.NoError(t, err, "admin should be able to update DPIA")
 
 		_, err = admin.Do(`
-			mutation($input: DeleteProcessingActivityDPIAInput!) {
-				deleteProcessingActivityDPIA(input: $input) {
-					deletedProcessingActivityDpiaId
+			mutation($input: DeleteDataProtectionImpactAssessmentInput!) {
+				deleteDataProtectionImpactAssessment(input: $input) {
+					deletedDataProtectionImpactAssessmentId
 				}
 			}
 		`, map[string]any{
 			"input": map[string]any{
-				"processingActivityDpiaId": dpiaID,
+				"dataProtectionImpactAssessmentId": dpiaID,
 			},
 		})
 		require.NoError(t, err, "admin should be able to delete DPIA")
@@ -2063,9 +2063,9 @@ func TestProcessingActivity_DPIA_RBAC(t *testing.T) {
 		paID := factory.NewProcessingActivity(owner).WithName("DPIA RBAC Viewer Test").Create()
 
 		_, err := viewer.Do(`
-			mutation($input: CreateProcessingActivityDPIAInput!) {
-				createProcessingActivityDPIA(input: $input) {
-					processingActivityDpia { id }
+			mutation($input: CreateDataProtectionImpactAssessmentInput!) {
+				createDataProtectionImpactAssessment(input: $input) {
+					dataProtectionImpactAssessment { id }
 				}
 			}
 		`, map[string]any{
@@ -2077,16 +2077,16 @@ func TestProcessingActivity_DPIA_RBAC(t *testing.T) {
 		testutil.RequireForbiddenError(t, err, "viewer should not be able to create DPIA")
 
 		var createResult struct {
-			CreateProcessingActivityDPIA struct {
-				ProcessingActivityDpia struct {
+			CreateDataProtectionImpactAssessment struct {
+				DataProtectionImpactAssessment struct {
 					ID string `json:"id"`
-				} `json:"processingActivityDpia"`
-			} `json:"createProcessingActivityDPIA"`
+				} `json:"dataProtectionImpactAssessment"`
+			} `json:"createDataProtectionImpactAssessment"`
 		}
 		err = owner.Execute(`
-			mutation($input: CreateProcessingActivityDPIAInput!) {
-				createProcessingActivityDPIA(input: $input) {
-					processingActivityDpia { id }
+			mutation($input: CreateDataProtectionImpactAssessmentInput!) {
+				createDataProtectionImpactAssessment(input: $input) {
+					dataProtectionImpactAssessment { id }
 				}
 			}
 		`, map[string]any{
@@ -2096,12 +2096,12 @@ func TestProcessingActivity_DPIA_RBAC(t *testing.T) {
 			},
 		}, &createResult)
 		require.NoError(t, err)
-		dpiaID := createResult.CreateProcessingActivityDPIA.ProcessingActivityDpia.ID
+		dpiaID := createResult.CreateDataProtectionImpactAssessment.DataProtectionImpactAssessment.ID
 
 		_, err = viewer.Do(`
-			mutation($input: UpdateProcessingActivityDPIAInput!) {
-				updateProcessingActivityDPIA(input: $input) {
-					processingActivityDpia { id }
+			mutation($input: UpdateDataProtectionImpactAssessmentInput!) {
+				updateDataProtectionImpactAssessment(input: $input) {
+					dataProtectionImpactAssessment { id }
 				}
 			}
 		`, map[string]any{
@@ -2113,14 +2113,14 @@ func TestProcessingActivity_DPIA_RBAC(t *testing.T) {
 		testutil.RequireForbiddenError(t, err, "viewer should not be able to update DPIA")
 
 		_, err = viewer.Do(`
-			mutation($input: DeleteProcessingActivityDPIAInput!) {
-				deleteProcessingActivityDPIA(input: $input) {
-					deletedProcessingActivityDpiaId
+			mutation($input: DeleteDataProtectionImpactAssessmentInput!) {
+				deleteDataProtectionImpactAssessment(input: $input) {
+					deletedDataProtectionImpactAssessmentId
 				}
 			}
 		`, map[string]any{
 			"input": map[string]any{
-				"processingActivityDpiaId": dpiaID,
+				"dataProtectionImpactAssessmentId": dpiaID,
 			},
 		})
 		testutil.RequireForbiddenError(t, err, "viewer should not be able to delete DPIA")
@@ -2135,16 +2135,16 @@ func TestProcessingActivity_TIA_RBAC(t *testing.T) {
 		paID := factory.NewProcessingActivity(owner).WithName("TIA RBAC Owner Test").Create()
 
 		var createResult struct {
-			CreateProcessingActivityTIA struct {
-				ProcessingActivityTia struct {
+			CreateTransferImpactAssessment struct {
+				TransferImpactAssessment struct {
 					ID string `json:"id"`
-				} `json:"processingActivityTia"`
-			} `json:"createProcessingActivityTIA"`
+				} `json:"transferImpactAssessment"`
+			} `json:"createTransferImpactAssessment"`
 		}
 		err := owner.Execute(`
-			mutation($input: CreateProcessingActivityTIAInput!) {
-				createProcessingActivityTIA(input: $input) {
-					processingActivityTia { id }
+			mutation($input: CreateTransferImpactAssessmentInput!) {
+				createTransferImpactAssessment(input: $input) {
+					transferImpactAssessment { id }
 				}
 			}
 		`, map[string]any{
@@ -2154,12 +2154,12 @@ func TestProcessingActivity_TIA_RBAC(t *testing.T) {
 			},
 		}, &createResult)
 		require.NoError(t, err, "owner should be able to create TIA")
-		tiaID := createResult.CreateProcessingActivityTIA.ProcessingActivityTia.ID
+		tiaID := createResult.CreateTransferImpactAssessment.TransferImpactAssessment.ID
 
 		_, err = owner.Do(`
-			mutation($input: UpdateProcessingActivityTIAInput!) {
-				updateProcessingActivityTIA(input: $input) {
-					processingActivityTia { id }
+			mutation($input: UpdateTransferImpactAssessmentInput!) {
+				updateTransferImpactAssessment(input: $input) {
+					transferImpactAssessment { id }
 				}
 			}
 		`, map[string]any{
@@ -2171,14 +2171,14 @@ func TestProcessingActivity_TIA_RBAC(t *testing.T) {
 		require.NoError(t, err, "owner should be able to update TIA")
 
 		_, err = owner.Do(`
-			mutation($input: DeleteProcessingActivityTIAInput!) {
-				deleteProcessingActivityTIA(input: $input) {
-					deletedProcessingActivityTiaId
+			mutation($input: DeleteTransferImpactAssessmentInput!) {
+				deleteTransferImpactAssessment(input: $input) {
+					deletedTransferImpactAssessmentId
 				}
 			}
 		`, map[string]any{
 			"input": map[string]any{
-				"processingActivityTiaId": tiaID,
+				"transferImpactAssessmentId": tiaID,
 			},
 		})
 		require.NoError(t, err, "owner should be able to delete TIA")
@@ -2190,16 +2190,16 @@ func TestProcessingActivity_TIA_RBAC(t *testing.T) {
 		paID := factory.NewProcessingActivity(owner).WithName("TIA RBAC Admin Test").Create()
 
 		var createResult struct {
-			CreateProcessingActivityTIA struct {
-				ProcessingActivityTia struct {
+			CreateTransferImpactAssessment struct {
+				TransferImpactAssessment struct {
 					ID string `json:"id"`
-				} `json:"processingActivityTia"`
-			} `json:"createProcessingActivityTIA"`
+				} `json:"transferImpactAssessment"`
+			} `json:"createTransferImpactAssessment"`
 		}
 		err := admin.Execute(`
-			mutation($input: CreateProcessingActivityTIAInput!) {
-				createProcessingActivityTIA(input: $input) {
-					processingActivityTia { id }
+			mutation($input: CreateTransferImpactAssessmentInput!) {
+				createTransferImpactAssessment(input: $input) {
+					transferImpactAssessment { id }
 				}
 			}
 		`, map[string]any{
@@ -2209,12 +2209,12 @@ func TestProcessingActivity_TIA_RBAC(t *testing.T) {
 			},
 		}, &createResult)
 		require.NoError(t, err, "admin should be able to create TIA")
-		tiaID := createResult.CreateProcessingActivityTIA.ProcessingActivityTia.ID
+		tiaID := createResult.CreateTransferImpactAssessment.TransferImpactAssessment.ID
 
 		_, err = admin.Do(`
-			mutation($input: UpdateProcessingActivityTIAInput!) {
-				updateProcessingActivityTIA(input: $input) {
-					processingActivityTia { id }
+			mutation($input: UpdateTransferImpactAssessmentInput!) {
+				updateTransferImpactAssessment(input: $input) {
+					transferImpactAssessment { id }
 				}
 			}
 		`, map[string]any{
@@ -2226,14 +2226,14 @@ func TestProcessingActivity_TIA_RBAC(t *testing.T) {
 		require.NoError(t, err, "admin should be able to update TIA")
 
 		_, err = admin.Do(`
-			mutation($input: DeleteProcessingActivityTIAInput!) {
-				deleteProcessingActivityTIA(input: $input) {
-					deletedProcessingActivityTiaId
+			mutation($input: DeleteTransferImpactAssessmentInput!) {
+				deleteTransferImpactAssessment(input: $input) {
+					deletedTransferImpactAssessmentId
 				}
 			}
 		`, map[string]any{
 			"input": map[string]any{
-				"processingActivityTiaId": tiaID,
+				"transferImpactAssessmentId": tiaID,
 			},
 		})
 		require.NoError(t, err, "admin should be able to delete TIA")
@@ -2245,9 +2245,9 @@ func TestProcessingActivity_TIA_RBAC(t *testing.T) {
 		paID := factory.NewProcessingActivity(owner).WithName("TIA RBAC Viewer Test").Create()
 
 		_, err := viewer.Do(`
-			mutation($input: CreateProcessingActivityTIAInput!) {
-				createProcessingActivityTIA(input: $input) {
-					processingActivityTia { id }
+			mutation($input: CreateTransferImpactAssessmentInput!) {
+				createTransferImpactAssessment(input: $input) {
+					transferImpactAssessment { id }
 				}
 			}
 		`, map[string]any{
@@ -2259,16 +2259,16 @@ func TestProcessingActivity_TIA_RBAC(t *testing.T) {
 		testutil.RequireForbiddenError(t, err, "viewer should not be able to create TIA")
 
 		var createResult struct {
-			CreateProcessingActivityTIA struct {
-				ProcessingActivityTia struct {
+			CreateTransferImpactAssessment struct {
+				TransferImpactAssessment struct {
 					ID string `json:"id"`
-				} `json:"processingActivityTia"`
-			} `json:"createProcessingActivityTIA"`
+				} `json:"transferImpactAssessment"`
+			} `json:"createTransferImpactAssessment"`
 		}
 		err = owner.Execute(`
-			mutation($input: CreateProcessingActivityTIAInput!) {
-				createProcessingActivityTIA(input: $input) {
-					processingActivityTia { id }
+			mutation($input: CreateTransferImpactAssessmentInput!) {
+				createTransferImpactAssessment(input: $input) {
+					transferImpactAssessment { id }
 				}
 			}
 		`, map[string]any{
@@ -2278,12 +2278,12 @@ func TestProcessingActivity_TIA_RBAC(t *testing.T) {
 			},
 		}, &createResult)
 		require.NoError(t, err)
-		tiaID := createResult.CreateProcessingActivityTIA.ProcessingActivityTia.ID
+		tiaID := createResult.CreateTransferImpactAssessment.TransferImpactAssessment.ID
 
 		_, err = viewer.Do(`
-			mutation($input: UpdateProcessingActivityTIAInput!) {
-				updateProcessingActivityTIA(input: $input) {
-					processingActivityTia { id }
+			mutation($input: UpdateTransferImpactAssessmentInput!) {
+				updateTransferImpactAssessment(input: $input) {
+					transferImpactAssessment { id }
 				}
 			}
 		`, map[string]any{
@@ -2295,14 +2295,14 @@ func TestProcessingActivity_TIA_RBAC(t *testing.T) {
 		testutil.RequireForbiddenError(t, err, "viewer should not be able to update TIA")
 
 		_, err = viewer.Do(`
-			mutation($input: DeleteProcessingActivityTIAInput!) {
-				deleteProcessingActivityTIA(input: $input) {
-					deletedProcessingActivityTiaId
+			mutation($input: DeleteTransferImpactAssessmentInput!) {
+				deleteTransferImpactAssessment(input: $input) {
+					deletedTransferImpactAssessmentId
 				}
 			}
 		`, map[string]any{
 			"input": map[string]any{
-				"processingActivityTiaId": tiaID,
+				"transferImpactAssessmentId": tiaID,
 			},
 		})
 		testutil.RequireForbiddenError(t, err, "viewer should not be able to delete TIA")
@@ -2319,16 +2319,16 @@ func TestProcessingActivity_Snapshot_DPIA_TIA(t *testing.T) {
 			Create()
 
 		var dpiaResult struct {
-			CreateProcessingActivityDPIA struct {
-				ProcessingActivityDpia struct {
+			CreateDataProtectionImpactAssessment struct {
+				DataProtectionImpactAssessment struct {
 					ID string `json:"id"`
-				} `json:"processingActivityDpia"`
-			} `json:"createProcessingActivityDPIA"`
+				} `json:"dataProtectionImpactAssessment"`
+			} `json:"createDataProtectionImpactAssessment"`
 		}
 		err := owner.Execute(`
-			mutation($input: CreateProcessingActivityDPIAInput!) {
-				createProcessingActivityDPIA(input: $input) {
-					processingActivityDpia { id }
+			mutation($input: CreateDataProtectionImpactAssessmentInput!) {
+				createDataProtectionImpactAssessment(input: $input) {
+					dataProtectionImpactAssessment { id }
 				}
 			}
 		`, map[string]any{
@@ -2341,16 +2341,16 @@ func TestProcessingActivity_Snapshot_DPIA_TIA(t *testing.T) {
 		require.NoError(t, err)
 
 		var tiaResult struct {
-			CreateProcessingActivityTIA struct {
-				ProcessingActivityTia struct {
+			CreateTransferImpactAssessment struct {
+				TransferImpactAssessment struct {
 					ID string `json:"id"`
-				} `json:"processingActivityTia"`
-			} `json:"createProcessingActivityTIA"`
+				} `json:"transferImpactAssessment"`
+			} `json:"createTransferImpactAssessment"`
 		}
 		err = owner.Execute(`
-			mutation($input: CreateProcessingActivityTIAInput!) {
-				createProcessingActivityTIA(input: $input) {
-					processingActivityTia { id }
+			mutation($input: CreateTransferImpactAssessmentInput!) {
+				createTransferImpactAssessment(input: $input) {
+					transferImpactAssessment { id }
 				}
 			}
 		`, map[string]any{
@@ -2394,18 +2394,18 @@ func TestProcessingActivity_Snapshot_DPIA_TIA(t *testing.T) {
 				ProcessingActivities struct {
 					Edges []struct {
 						Node struct {
-							ID   string `json:"id"`
-							Name string `json:"name"`
-							Dpia *struct {
+							ID                             string `json:"id"`
+							Name                           string `json:"name"`
+							DataProtectionImpactAssessment *struct {
 								ID           string  `json:"id"`
 								Description  *string `json:"description"`
 								ResidualRisk *string `json:"residualRisk"`
-							} `json:"dpia"`
-							Tia *struct {
+							} `json:"dataProtectionImpactAssessment"`
+							TransferImpactAssessment *struct {
 								ID           string  `json:"id"`
 								DataSubjects *string `json:"dataSubjects"`
 								Transfer     *string `json:"transfer"`
-							} `json:"tia"`
+							} `json:"transferImpactAssessment"`
 						} `json:"node"`
 					} `json:"edges"`
 				} `json:"processingActivities"`
@@ -2420,12 +2420,12 @@ func TestProcessingActivity_Snapshot_DPIA_TIA(t *testing.T) {
 								node {
 									id
 									name
-									dpia {
+									dataProtectionImpactAssessment {
 										id
 										description
 										residualRisk
 									}
-									tia {
+									transferImpactAssessment {
 										id
 										dataSubjects
 										transfer
@@ -2446,13 +2446,13 @@ func TestProcessingActivity_Snapshot_DPIA_TIA(t *testing.T) {
 		for _, edge := range queryResult.Node.ProcessingActivities.Edges {
 			if edge.Node.Name == "Snapshot DPIA TIA Test" {
 				foundPA = true
-				require.NotNil(t, edge.Node.Dpia, "DPIA should be included in snapshot")
-				assert.Equal(t, "DPIA for snapshot", *edge.Node.Dpia.Description)
-				assert.Equal(t, "MEDIUM", *edge.Node.Dpia.ResidualRisk)
+				require.NotNil(t, edge.Node.DataProtectionImpactAssessment, "DPIA should be included in snapshot")
+				assert.Equal(t, "DPIA for snapshot", *edge.Node.DataProtectionImpactAssessment.Description)
+				assert.Equal(t, "MEDIUM", *edge.Node.DataProtectionImpactAssessment.ResidualRisk)
 
-				require.NotNil(t, edge.Node.Tia, "TIA should be included in snapshot")
-				assert.Equal(t, "TIA subjects for snapshot", *edge.Node.Tia.DataSubjects)
-				assert.Equal(t, "EU to US", *edge.Node.Tia.Transfer)
+				require.NotNil(t, edge.Node.TransferImpactAssessment, "TIA should be included in snapshot")
+				assert.Equal(t, "TIA subjects for snapshot", *edge.Node.TransferImpactAssessment.DataSubjects)
+				assert.Equal(t, "EU to US", *edge.Node.TransferImpactAssessment.Transfer)
 				break
 			}
 		}
@@ -2465,9 +2465,9 @@ func TestProcessingActivity_Snapshot_DPIA_TIA(t *testing.T) {
 			Create()
 
 		err := owner.Execute(`
-			mutation($input: CreateProcessingActivityDPIAInput!) {
-				createProcessingActivityDPIA(input: $input) {
-					processingActivityDpia { id }
+			mutation($input: CreateDataProtectionImpactAssessmentInput!) {
+				createDataProtectionImpactAssessment(input: $input) {
+					dataProtectionImpactAssessment { id }
 				}
 			}
 		`, map[string]any{
@@ -2508,18 +2508,18 @@ func TestProcessingActivity_Snapshot_DPIA_TIA(t *testing.T) {
 
 		var sourceResult struct {
 			Node struct {
-				Dpia *struct {
+				DataProtectionImpactAssessment *struct {
 					ID           string  `json:"id"`
 					Description  *string `json:"description"`
 					ResidualRisk *string `json:"residualRisk"`
-				} `json:"dpia"`
+				} `json:"dataProtectionImpactAssessment"`
 			} `json:"node"`
 		}
 		err = owner.Execute(`
 			query($id: ID!) {
 				node(id: $id) {
 					... on ProcessingActivity {
-						dpia {
+						dataProtectionImpactAssessment {
 							id
 							description
 							residualRisk
@@ -2529,13 +2529,13 @@ func TestProcessingActivity_Snapshot_DPIA_TIA(t *testing.T) {
 			}
 		`, map[string]any{"id": paID}, &sourceResult)
 		require.NoError(t, err)
-		require.NotNil(t, sourceResult.Node.Dpia)
-		sourceDpiaID := sourceResult.Node.Dpia.ID
+		require.NotNil(t, sourceResult.Node.DataProtectionImpactAssessment)
+		sourceDpiaID := sourceResult.Node.DataProtectionImpactAssessment.ID
 
 		_, err = owner.Do(`
-			mutation($input: UpdateProcessingActivityDPIAInput!) {
-				updateProcessingActivityDPIA(input: $input) {
-					processingActivityDpia { id }
+			mutation($input: UpdateDataProtectionImpactAssessmentInput!) {
+				updateDataProtectionImpactAssessment(input: $input) {
+					dataProtectionImpactAssessment { id }
 				}
 			}
 		`, map[string]any{
@@ -2552,11 +2552,11 @@ func TestProcessingActivity_Snapshot_DPIA_TIA(t *testing.T) {
 				ProcessingActivities struct {
 					Edges []struct {
 						Node struct {
-							Name string `json:"name"`
-							Dpia *struct {
+							Name                           string `json:"name"`
+							DataProtectionImpactAssessment *struct {
 								Description  *string `json:"description"`
 								ResidualRisk *string `json:"residualRisk"`
-							} `json:"dpia"`
+							} `json:"dataProtectionImpactAssessment"`
 						} `json:"node"`
 					} `json:"edges"`
 				} `json:"processingActivities"`
@@ -2570,7 +2570,7 @@ func TestProcessingActivity_Snapshot_DPIA_TIA(t *testing.T) {
 							edges {
 								node {
 									name
-									dpia {
+									dataProtectionImpactAssessment {
 										description
 										residualRisk
 									}
@@ -2588,9 +2588,9 @@ func TestProcessingActivity_Snapshot_DPIA_TIA(t *testing.T) {
 
 		for _, edge := range snapshotQueryResult.Node.ProcessingActivities.Edges {
 			if edge.Node.Name == "Snapshot Independence Test" {
-				require.NotNil(t, edge.Node.Dpia)
-				assert.Equal(t, "Original DPIA", *edge.Node.Dpia.Description, "Snapshot DPIA should retain original value")
-				assert.Equal(t, "LOW", *edge.Node.Dpia.ResidualRisk, "Snapshot DPIA should retain original value")
+				require.NotNil(t, edge.Node.DataProtectionImpactAssessment)
+				assert.Equal(t, "Original DPIA", *edge.Node.DataProtectionImpactAssessment.Description, "Snapshot DPIA should retain original value")
+				assert.Equal(t, "LOW", *edge.Node.DataProtectionImpactAssessment.ResidualRisk, "Snapshot DPIA should retain original value")
 				break
 			}
 		}

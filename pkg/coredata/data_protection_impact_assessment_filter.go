@@ -20,18 +20,18 @@ import (
 )
 
 type (
-	ProcessingActivityDPIAFilter struct {
+	DataProtectionImpactAssessmentFilter struct {
 		snapshotID **gid.GID
 	}
 )
 
-func NewProcessingActivityDPIAFilter(snapshotID **gid.GID) *ProcessingActivityDPIAFilter {
-	return &ProcessingActivityDPIAFilter{
+func NewDataProtectionImpactAssessmentFilter(snapshotID **gid.GID) *DataProtectionImpactAssessmentFilter {
+	return &DataProtectionImpactAssessmentFilter{
 		snapshotID: snapshotID,
 	}
 }
 
-func (f *ProcessingActivityDPIAFilter) SQLArguments() pgx.NamedArgs {
+func (f *DataProtectionImpactAssessmentFilter) SQLArguments() pgx.NamedArgs {
 	args := pgx.NamedArgs{}
 
 	if f.snapshotID != nil && *f.snapshotID != nil {
@@ -41,7 +41,7 @@ func (f *ProcessingActivityDPIAFilter) SQLArguments() pgx.NamedArgs {
 	return args
 }
 
-func (f *ProcessingActivityDPIAFilter) SQLFragment() string {
+func (f *DataProtectionImpactAssessmentFilter) SQLFragment() string {
 	if f.snapshotID == nil {
 		return "TRUE"
 	}
@@ -52,3 +52,4 @@ func (f *ProcessingActivityDPIAFilter) SQLFragment() string {
 		return "snapshot_id = @filter_snapshot_id"
 	}
 }
+

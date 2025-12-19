@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<50ed487333de3127b16c6bd5f1c051b1>>
+ * @generated SignedSource<<5f8b1950dc00b28dac0ae08df590924e>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,7 +9,7 @@
 // @ts-nocheck
 
 import { ReaderFragment } from 'relay-runtime';
-export type ProcessingActivityDPIAResidualRisk = "HIGH" | "LOW" | "MEDIUM";
+export type DataProtectionImpactAssessmentResidualRisk = "HIGH" | "LOW" | "MEDIUM";
 import { FragmentRefs } from "relay-runtime";
 export type ProcessingActivitiesPageDPIAFragment$data = {
   readonly dataProtectionImpactAssessments: {
@@ -24,7 +24,7 @@ export type ProcessingActivitiesPageDPIAFragment$data = {
           readonly id: string;
           readonly name: string;
         };
-        readonly residualRisk: ProcessingActivityDPIAResidualRisk | null | undefined;
+        readonly residualRisk: DataProtectionImpactAssessmentResidualRisk | null | undefined;
         readonly updatedAt: any;
       };
     }>;
@@ -120,7 +120,7 @@ return {
           "name": "filter"
         }
       ],
-      "concreteType": "ProcessingActivityDPIAConnection",
+      "concreteType": "DataProtectionImpactAssessmentConnection",
       "kind": "LinkedField",
       "name": "__ProcessingActivitiesPage_dataProtectionImpactAssessments_connection",
       "plural": false,
@@ -135,7 +135,7 @@ return {
         {
           "alias": null,
           "args": null,
-          "concreteType": "ProcessingActivityDPIAEdge",
+          "concreteType": "DataProtectionImpactAssessmentEdge",
           "kind": "LinkedField",
           "name": "edges",
           "plural": true,
@@ -143,7 +143,7 @@ return {
             {
               "alias": null,
               "args": null,
-              "concreteType": "ProcessingActivityDPIA",
+              "concreteType": "DataProtectionImpactAssessment",
               "kind": "LinkedField",
               "name": "node",
               "plural": false,

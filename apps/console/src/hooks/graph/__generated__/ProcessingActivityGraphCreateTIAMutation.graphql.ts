@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<3da7aca4f891de8057947eda276a017f>>
+ * @generated SignedSource<<d3c71290624f4f1394422723aba9d130>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,7 +9,7 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
-export type CreateProcessingActivityTIAInput = {
+export type CreateTransferImpactAssessmentInput = {
   dataSubjects?: string | null | undefined;
   legalMechanism?: string | null | undefined;
   localLawRisk?: string | null | undefined;
@@ -18,11 +18,11 @@ export type CreateProcessingActivityTIAInput = {
   transfer?: string | null | undefined;
 };
 export type ProcessingActivityGraphCreateTIAMutation$variables = {
-  input: CreateProcessingActivityTIAInput;
+  input: CreateTransferImpactAssessmentInput;
 };
 export type ProcessingActivityGraphCreateTIAMutation$data = {
-  readonly createProcessingActivityTIA: {
-    readonly processingActivityTia: {
+  readonly createTransferImpactAssessment: {
+    readonly transferImpactAssessment: {
       readonly createdAt: any;
       readonly dataSubjects: string | null | undefined;
       readonly id: string;
@@ -57,17 +57,17 @@ v1 = [
         "variableName": "input"
       }
     ],
-    "concreteType": "CreateProcessingActivityTIAPayload",
+    "concreteType": "CreateTransferImpactAssessmentPayload",
     "kind": "LinkedField",
-    "name": "createProcessingActivityTIA",
+    "name": "createTransferImpactAssessment",
     "plural": false,
     "selections": [
       {
         "alias": null,
         "args": null,
-        "concreteType": "ProcessingActivityTIA",
+        "concreteType": "TransferImpactAssessment",
         "kind": "LinkedField",
-        "name": "processingActivityTia",
+        "name": "transferImpactAssessment",
         "plural": false,
         "selections": [
           {
@@ -151,16 +151,16 @@ return {
     "selections": (v1/*: any*/)
   },
   "params": {
-    "cacheID": "f04e4606a7ac8b57f6155cf5e2fa3eaa",
+    "cacheID": "70e30255cf15b77fd95a57d6ddd50c97",
     "id": null,
     "metadata": {},
     "name": "ProcessingActivityGraphCreateTIAMutation",
     "operationKind": "mutation",
-    "text": "mutation ProcessingActivityGraphCreateTIAMutation(\n  $input: CreateProcessingActivityTIAInput!\n) {\n  createProcessingActivityTIA(input: $input) {\n    processingActivityTia {\n      id\n      dataSubjects\n      legalMechanism\n      transfer\n      localLawRisk\n      supplementaryMeasures\n      createdAt\n      updatedAt\n    }\n  }\n}\n"
+    "text": "mutation ProcessingActivityGraphCreateTIAMutation(\n  $input: CreateTransferImpactAssessmentInput!\n) {\n  createTransferImpactAssessment(input: $input) {\n    transferImpactAssessment {\n      id\n      dataSubjects\n      legalMechanism\n      transfer\n      localLawRisk\n      supplementaryMeasures\n      createdAt\n      updatedAt\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "e6315a3ae7db66c15850cfdae5927c03";
+(node as any).hash = "43e9f83c7abb5d6f4d2a394c05940fbd";
 
 export default node;

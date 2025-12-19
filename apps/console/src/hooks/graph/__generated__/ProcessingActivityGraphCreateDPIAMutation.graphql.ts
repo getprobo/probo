@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<e12a9622852c453daa5e8d763054fe9b>>
+ * @generated SignedSource<<93963be550c1cf4d590c0e7186b5d10f>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,28 +9,28 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
-export type ProcessingActivityDPIAResidualRisk = "HIGH" | "LOW" | "MEDIUM";
-export type CreateProcessingActivityDPIAInput = {
+export type DataProtectionImpactAssessmentResidualRisk = "HIGH" | "LOW" | "MEDIUM";
+export type CreateDataProtectionImpactAssessmentInput = {
   description?: string | null | undefined;
   mitigations?: string | null | undefined;
   necessityAndProportionality?: string | null | undefined;
   potentialRisk?: string | null | undefined;
   processingActivityId: string;
-  residualRisk?: ProcessingActivityDPIAResidualRisk | null | undefined;
+  residualRisk?: DataProtectionImpactAssessmentResidualRisk | null | undefined;
 };
 export type ProcessingActivityGraphCreateDPIAMutation$variables = {
-  input: CreateProcessingActivityDPIAInput;
+  input: CreateDataProtectionImpactAssessmentInput;
 };
 export type ProcessingActivityGraphCreateDPIAMutation$data = {
-  readonly createProcessingActivityDPIA: {
-    readonly processingActivityDpia: {
+  readonly createDataProtectionImpactAssessment: {
+    readonly dataProtectionImpactAssessment: {
       readonly createdAt: any;
       readonly description: string | null | undefined;
       readonly id: string;
       readonly mitigations: string | null | undefined;
       readonly necessityAndProportionality: string | null | undefined;
       readonly potentialRisk: string | null | undefined;
-      readonly residualRisk: ProcessingActivityDPIAResidualRisk | null | undefined;
+      readonly residualRisk: DataProtectionImpactAssessmentResidualRisk | null | undefined;
       readonly updatedAt: any;
     };
   };
@@ -58,17 +58,17 @@ v1 = [
         "variableName": "input"
       }
     ],
-    "concreteType": "CreateProcessingActivityDPIAPayload",
+    "concreteType": "CreateDataProtectionImpactAssessmentPayload",
     "kind": "LinkedField",
-    "name": "createProcessingActivityDPIA",
+    "name": "createDataProtectionImpactAssessment",
     "plural": false,
     "selections": [
       {
         "alias": null,
         "args": null,
-        "concreteType": "ProcessingActivityDPIA",
+        "concreteType": "DataProtectionImpactAssessment",
         "kind": "LinkedField",
-        "name": "processingActivityDpia",
+        "name": "dataProtectionImpactAssessment",
         "plural": false,
         "selections": [
           {
@@ -152,16 +152,16 @@ return {
     "selections": (v1/*: any*/)
   },
   "params": {
-    "cacheID": "5bdea885aa22aedfe71b19bf6781be61",
+    "cacheID": "71220501284ee2a9761f87d8909fcd00",
     "id": null,
     "metadata": {},
     "name": "ProcessingActivityGraphCreateDPIAMutation",
     "operationKind": "mutation",
-    "text": "mutation ProcessingActivityGraphCreateDPIAMutation(\n  $input: CreateProcessingActivityDPIAInput!\n) {\n  createProcessingActivityDPIA(input: $input) {\n    processingActivityDpia {\n      id\n      description\n      necessityAndProportionality\n      potentialRisk\n      mitigations\n      residualRisk\n      createdAt\n      updatedAt\n    }\n  }\n}\n"
+    "text": "mutation ProcessingActivityGraphCreateDPIAMutation(\n  $input: CreateDataProtectionImpactAssessmentInput!\n) {\n  createDataProtectionImpactAssessment(input: $input) {\n    dataProtectionImpactAssessment {\n      id\n      description\n      necessityAndProportionality\n      potentialRisk\n      mitigations\n      residualRisk\n      createdAt\n      updatedAt\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "2b7346936fb433d268f816e687ddc2a6";
+(node as any).hash = "e7c379b7972e44c5c854cb4fd486f557";
 
 export default node;

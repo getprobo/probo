@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<0fa59581ecefda2fad4570e8e8c2f667>>
+ * @generated SignedSource<<a9005a9448ac4c0cd8a5011d0a5a9665>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,15 +9,15 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
-export type DeleteProcessingActivityTIAInput = {
-  processingActivityTiaId: string;
+export type DeleteTransferImpactAssessmentInput = {
+  transferImpactAssessmentId: string;
 };
 export type ProcessingActivityGraphDeleteTIAMutation$variables = {
-  input: DeleteProcessingActivityTIAInput;
+  input: DeleteTransferImpactAssessmentInput;
 };
 export type ProcessingActivityGraphDeleteTIAMutation$data = {
-  readonly deleteProcessingActivityTIA: {
-    readonly deletedProcessingActivityTiaId: string;
+  readonly deleteTransferImpactAssessment: {
+    readonly deletedTransferImpactAssessmentId: string;
   };
 };
 export type ProcessingActivityGraphDeleteTIAMutation = {
@@ -43,16 +43,16 @@ v1 = [
         "variableName": "input"
       }
     ],
-    "concreteType": "DeleteProcessingActivityTIAPayload",
+    "concreteType": "DeleteTransferImpactAssessmentPayload",
     "kind": "LinkedField",
-    "name": "deleteProcessingActivityTIA",
+    "name": "deleteTransferImpactAssessment",
     "plural": false,
     "selections": [
       {
         "alias": null,
         "args": null,
         "kind": "ScalarField",
-        "name": "deletedProcessingActivityTiaId",
+        "name": "deletedTransferImpactAssessmentId",
         "storageKey": null
       }
     ],
@@ -77,16 +77,16 @@ return {
     "selections": (v1/*: any*/)
   },
   "params": {
-    "cacheID": "59c2e5775439e71d1c3546f094810389",
+    "cacheID": "0b0fec997f13e35c70d2be48f3672546",
     "id": null,
     "metadata": {},
     "name": "ProcessingActivityGraphDeleteTIAMutation",
     "operationKind": "mutation",
-    "text": "mutation ProcessingActivityGraphDeleteTIAMutation(\n  $input: DeleteProcessingActivityTIAInput!\n) {\n  deleteProcessingActivityTIA(input: $input) {\n    deletedProcessingActivityTiaId\n  }\n}\n"
+    "text": "mutation ProcessingActivityGraphDeleteTIAMutation(\n  $input: DeleteTransferImpactAssessmentInput!\n) {\n  deleteTransferImpactAssessment(input: $input) {\n    deletedTransferImpactAssessmentId\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "358c23b60d25478b3a217ae16938caed";
+(node as any).hash = "66a5fd8da4d9b70da0b39ee335cb9b6f";
 
 export default node;

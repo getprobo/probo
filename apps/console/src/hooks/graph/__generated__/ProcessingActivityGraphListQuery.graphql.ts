@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<7fccb352f5aa5b305542aad0fd9fe406>>
+ * @generated SignedSource<<4f7512912c29e784f2cd2a52fd5f81b4>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -338,7 +338,7 @@ return {
               {
                 "alias": null,
                 "args": (v5/*: any*/),
-                "concreteType": "ProcessingActivityDPIAConnection",
+                "concreteType": "DataProtectionImpactAssessmentConnection",
                 "kind": "LinkedField",
                 "name": "dataProtectionImpactAssessments",
                 "plural": false,
@@ -347,7 +347,7 @@ return {
                   {
                     "alias": null,
                     "args": null,
-                    "concreteType": "ProcessingActivityDPIAEdge",
+                    "concreteType": "DataProtectionImpactAssessmentEdge",
                     "kind": "LinkedField",
                     "name": "edges",
                     "plural": true,
@@ -355,7 +355,7 @@ return {
                       {
                         "alias": null,
                         "args": null,
-                        "concreteType": "ProcessingActivityDPIA",
+                        "concreteType": "DataProtectionImpactAssessment",
                         "kind": "LinkedField",
                         "name": "node",
                         "plural": false,
@@ -410,7 +410,7 @@ return {
               {
                 "alias": null,
                 "args": (v5/*: any*/),
-                "concreteType": "ProcessingActivityTIAConnection",
+                "concreteType": "TransferImpactAssessmentConnection",
                 "kind": "LinkedField",
                 "name": "transferImpactAssessments",
                 "plural": false,
@@ -419,7 +419,7 @@ return {
                   {
                     "alias": null,
                     "args": null,
-                    "concreteType": "ProcessingActivityTIAEdge",
+                    "concreteType": "TransferImpactAssessmentEdge",
                     "kind": "LinkedField",
                     "name": "edges",
                     "plural": true,
@@ -427,7 +427,7 @@ return {
                       {
                         "alias": null,
                         "args": null,
-                        "concreteType": "ProcessingActivityTIA",
+                        "concreteType": "TransferImpactAssessment",
                         "kind": "LinkedField",
                         "name": "node",
                         "plural": false,

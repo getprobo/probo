@@ -26,12 +26,12 @@ import (
 	"go.probo.inc/probo/pkg/validator"
 )
 
-type ProcessingActivityTIAService struct {
+type TransferImpactAssessmentService struct {
 	svc *TenantService
 }
 
 type (
-	CreateProcessingActivityTIARequest struct {
+	CreateTransferImpactAssessmentRequest struct {
 		ProcessingActivityID  gid.GID
 		DataSubjects          *string
 		LegalMechanism        *string
@@ -40,7 +40,7 @@ type (
 		SupplementaryMeasures *string
 	}
 
-	UpdateProcessingActivityTIARequest struct {
+	UpdateTransferImpactAssessmentRequest struct {
 		ID                    gid.GID
 		DataSubjects          **string
 		LegalMechanism        **string
@@ -50,7 +50,7 @@ type (
 	}
 )
 
-func (req *CreateProcessingActivityTIARequest) Validate() error {
+func (req *CreateTransferImpactAssessmentRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(req.ProcessingActivityID, "processing_activity_id", validator.Required(), validator.GID(coredata.ProcessingActivityEntityType))
@@ -63,10 +63,10 @@ func (req *CreateProcessingActivityTIARequest) Validate() error {
 	return v.Error()
 }
 
-func (req *UpdateProcessingActivityTIARequest) Validate() error {
+func (req *UpdateTransferImpactAssessmentRequest) Validate() error {
 	v := validator.New()
 
-	v.Check(req.ID, "id", validator.Required(), validator.GID(coredata.ProcessingActivityTIAEntityType))
+	v.Check(req.ID, "id", validator.Required(), validator.GID(coredata.TransferImpactAssessmentEntityType))
 	v.Check(req.DataSubjects, "data_subjects", validator.SafeText(ContentMaxLength))
 	v.Check(req.LegalMechanism, "legal_mechanism", validator.SafeText(ContentMaxLength))
 	v.Check(req.Transfer, "transfer", validator.SafeText(ContentMaxLength))
@@ -76,17 +76,17 @@ func (req *UpdateProcessingActivityTIARequest) Validate() error {
 	return v.Error()
 }
 
-func (s ProcessingActivityTIAService) Get(
+func (s TransferImpactAssessmentService) Get(
 	ctx context.Context,
 	tiaID gid.GID,
-) (*coredata.ProcessingActivityTIA, error) {
-	tia := &coredata.ProcessingActivityTIA{}
+) (*coredata.TransferImpactAssessment, error) {
+	tia := &coredata.TransferImpactAssessment{}
 
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
 			if err := tia.LoadByID(ctx, conn, s.svc.scope, tiaID); err != nil {
-				return fmt.Errorf("cannot load processing activity tia: %w", err)
+				return fmt.Errorf("cannot load transfer impact assessment: %w", err)
 			}
 
 			return nil
@@ -100,17 +100,17 @@ func (s ProcessingActivityTIAService) Get(
 	return tia, nil
 }
 
-func (s ProcessingActivityTIAService) GetByProcessingActivityID(
+func (s TransferImpactAssessmentService) GetByProcessingActivityID(
 	ctx context.Context,
 	processingActivityID gid.GID,
-) (*coredata.ProcessingActivityTIA, error) {
-	tia := &coredata.ProcessingActivityTIA{}
+) (*coredata.TransferImpactAssessment, error) {
+	tia := &coredata.TransferImpactAssessment{}
 
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
 			if err := tia.LoadByProcessingActivityID(ctx, conn, s.svc.scope, processingActivityID); err != nil {
-				return fmt.Errorf("cannot load processing activity tia: %w", err)
+				return fmt.Errorf("cannot load transfer impact assessment: %w", err)
 			}
 
 			return nil
@@ -124,20 +124,20 @@ func (s ProcessingActivityTIAService) GetByProcessingActivityID(
 	return tia, nil
 }
 
-func (s ProcessingActivityTIAService) ListForOrganizationID(
+func (s TransferImpactAssessmentService) ListForOrganizationID(
 	ctx context.Context,
 	organizationID gid.GID,
-	cursor *page.Cursor[coredata.ProcessingActivityTIAOrderField],
-	filter *coredata.ProcessingActivityTIAFilter,
-) (*page.Page[*coredata.ProcessingActivityTIA, coredata.ProcessingActivityTIAOrderField], error) {
-	var tias coredata.ProcessingActivityTIAs
+	cursor *page.Cursor[coredata.TransferImpactAssessmentOrderField],
+	filter *coredata.TransferImpactAssessmentFilter,
+) (*page.Page[*coredata.TransferImpactAssessment, coredata.TransferImpactAssessmentOrderField], error) {
+	var tias coredata.TransferImpactAssessments
 
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
 			err := tias.LoadByOrganizationID(ctx, conn, s.svc.scope, organizationID, cursor, filter)
 			if err != nil {
-				return fmt.Errorf("cannot load processing activity tias: %w", err)
+				return fmt.Errorf("cannot load transfer impact assessments: %w", err)
 			}
 
 			return nil
@@ -151,17 +151,17 @@ func (s ProcessingActivityTIAService) ListForOrganizationID(
 	return page.NewPage(tias, cursor), nil
 }
 
-func (s ProcessingActivityTIAService) CountForOrganizationID(
+func (s TransferImpactAssessmentService) CountForOrganizationID(
 	ctx context.Context,
 	organizationID gid.GID,
-	filter *coredata.ProcessingActivityTIAFilter,
+	filter *coredata.TransferImpactAssessmentFilter,
 ) (int, error) {
 	var count int
 
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) (err error) {
-			tias := coredata.ProcessingActivityTIAs{}
+			tias := coredata.TransferImpactAssessments{}
 			count, err = tias.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID, filter)
 			return err
 		},
@@ -174,18 +174,18 @@ func (s ProcessingActivityTIAService) CountForOrganizationID(
 	return count, nil
 }
 
-func (s *ProcessingActivityTIAService) Create(
+func (s *TransferImpactAssessmentService) Create(
 	ctx context.Context,
-	req *CreateProcessingActivityTIARequest,
-) (*coredata.ProcessingActivityTIA, error) {
+	req *CreateTransferImpactAssessmentRequest,
+) (*coredata.TransferImpactAssessment, error) {
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
 
 	now := time.Now()
 
-	tia := &coredata.ProcessingActivityTIA{
-		ID:                    gid.New(s.svc.scope.GetTenantID(), coredata.ProcessingActivityTIAEntityType),
+	tia := &coredata.TransferImpactAssessment{
+		ID:                    gid.New(s.svc.scope.GetTenantID(), coredata.TransferImpactAssessmentEntityType),
 		ProcessingActivityID:  req.ProcessingActivityID,
 		DataSubjects:          req.DataSubjects,
 		LegalMechanism:        req.LegalMechanism,
@@ -207,7 +207,7 @@ func (s *ProcessingActivityTIAService) Create(
 			tia.OrganizationID = processingActivity.OrganizationID
 
 			if err := tia.Insert(ctx, conn, s.svc.scope); err != nil {
-				return fmt.Errorf("cannot insert processing activity tia: %w", err)
+				return fmt.Errorf("cannot insert transfer impact assessment: %w", err)
 			}
 
 			return nil
@@ -221,21 +221,21 @@ func (s *ProcessingActivityTIAService) Create(
 	return tia, nil
 }
 
-func (s *ProcessingActivityTIAService) Update(
+func (s *TransferImpactAssessmentService) Update(
 	ctx context.Context,
-	req *UpdateProcessingActivityTIARequest,
-) (*coredata.ProcessingActivityTIA, error) {
+	req *UpdateTransferImpactAssessmentRequest,
+) (*coredata.TransferImpactAssessment, error) {
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
 
-	tia := &coredata.ProcessingActivityTIA{}
+	tia := &coredata.TransferImpactAssessment{}
 
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(conn pg.Conn) error {
 			if err := tia.LoadByID(ctx, conn, s.svc.scope, req.ID); err != nil {
-				return fmt.Errorf("cannot load processing activity tia: %w", err)
+				return fmt.Errorf("cannot load transfer impact assessment: %w", err)
 			}
 
 			if req.DataSubjects != nil {
@@ -261,7 +261,7 @@ func (s *ProcessingActivityTIAService) Update(
 			tia.UpdatedAt = time.Now()
 
 			if err := tia.Update(ctx, conn, s.svc.scope); err != nil {
-				return fmt.Errorf("cannot update processing activity tia: %w", err)
+				return fmt.Errorf("cannot update transfer impact assessment: %w", err)
 			}
 
 			return nil
@@ -275,20 +275,20 @@ func (s *ProcessingActivityTIAService) Update(
 	return tia, nil
 }
 
-func (s *ProcessingActivityTIAService) Delete(
+func (s *TransferImpactAssessmentService) Delete(
 	ctx context.Context,
 	tiaID gid.GID,
 ) error {
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(conn pg.Conn) error {
-			tia := &coredata.ProcessingActivityTIA{}
+			tia := &coredata.TransferImpactAssessment{}
 			if err := tia.LoadByID(ctx, conn, s.svc.scope, tiaID); err != nil {
-				return fmt.Errorf("cannot load processing activity tia: %w", err)
+				return fmt.Errorf("cannot load transfer impact assessment: %w", err)
 			}
 
 			if err := tia.Delete(ctx, conn, s.svc.scope); err != nil {
-				return fmt.Errorf("cannot delete processing activity tia: %w", err)
+				return fmt.Errorf("cannot delete transfer impact assessment: %w", err)
 			}
 
 			return nil
@@ -297,3 +297,4 @@ func (s *ProcessingActivityTIAService) Delete(
 
 	return err
 }
+

@@ -7,12 +7,12 @@ import {
   processingActivityNodeQuery,
   useDeleteProcessingActivity,
   useUpdateProcessingActivity,
-  useCreateProcessingActivityDPIA,
-  useUpdateProcessingActivityDPIA,
-  useDeleteProcessingActivityDPIA,
-  useCreateProcessingActivityTIA,
-  useUpdateProcessingActivityTIA,
-  useDeleteProcessingActivityTIA,
+  useCreateDataProtectionImpactAssessment,
+  useUpdateDataProtectionImpactAssessment,
+  useDeleteDataProtectionImpactAssessment,
+  useCreateTransferImpactAssessment,
+  useUpdateTransferImpactAssessment,
+  useDeleteTransferImpactAssessment,
   ProcessingActivitiesConnectionKey,
   type ProcessingActivityDPIAResidualRisk,
 } from "../../../hooks/graph/ProcessingActivityGraph";
@@ -71,8 +71,8 @@ const updateProcessingActivitySchema = z.object({
   transferSafeguards: z.string(),
   retentionPeriod: z.string().optional(),
   securityMeasures: z.string().optional(),
-  dataProtectionImpactAssessment: z.enum(["NEEDED", "NOT_NEEDED"] as const),
-  transferImpactAssessment: z.enum(["NEEDED", "NOT_NEEDED"] as const),
+  dataProtectionImpactAssessmentNeeded: z.enum(["NEEDED", "NOT_NEEDED"] as const),
+  transferImpactAssessmentNeeded: z.enum(["NEEDED", "NOT_NEEDED"] as const),
   lastReviewDate: z.string().optional(),
   nextReviewDate: z.string().optional(),
   role: z.enum(["CONTROLLER", "PROCESSOR"] as const),
@@ -104,12 +104,11 @@ export default function ProcessingActivityDetailsPage(props: Props) {
   const [activeTab, setActiveTab] = useState<"overview" | "dpia" | "tia">(getInitialTab);
   const [dpiaSubmitting, setDpiaSubmitting] = useState(false);
   const [tiaSubmitting, setTiaSubmitting] = useState(false);
-  const [showDpiaForm, setShowDpiaForm] = useState(Boolean(activity?.dpia?.id));
-  const [showTiaForm, setShowTiaForm] = useState(Boolean(activity?.tia?.id));
+  const [showDpiaForm, setShowDpiaForm] = useState(Boolean(activity?.dataProtectionImpactAssessment?.id));
+  const [showTiaForm, setShowTiaForm] = useState(Boolean(activity?.transferImpactAssessment?.id));
   const [dpiaDeleted, setDpiaDeleted] = useState(false);
   const [tiaDeleted, setTiaDeleted] = useState(false);
 
-  // Update URL hash when tab changes
   useEffect(() => {
     window.location.hash = activeTab === "overview" ? "" : activeTab;
   }, [activeTab]);
@@ -117,10 +116,10 @@ export default function ProcessingActivityDetailsPage(props: Props) {
   validateSnapshotConsistency(activity, snapshotId);
 
   const updateActivity = useUpdateProcessingActivity();
-  const createDPIA = useCreateProcessingActivityDPIA();
-  const updateDPIA = useUpdateProcessingActivityDPIA();
-  const deleteDPIA = useDeleteProcessingActivityDPIA(
-    { id: activity?.dpia?.id || "" },
+  const createDPIA = useCreateDataProtectionImpactAssessment();
+  const updateDPIA = useUpdateDataProtectionImpactAssessment();
+  const deleteDPIA = useDeleteDataProtectionImpactAssessment(
+    { id: activity?.dataProtectionImpactAssessment?.id || "" },
     {
       onSuccess: () => {
         setDpiaDeleted(true);
@@ -135,10 +134,10 @@ export default function ProcessingActivityDetailsPage(props: Props) {
       },
     }
   );
-  const createTIA = useCreateProcessingActivityTIA();
-  const updateTIA = useUpdateProcessingActivityTIA();
-  const deleteTIA = useDeleteProcessingActivityTIA(
-    { id: activity?.tia?.id || "" },
+  const createTIA = useCreateTransferImpactAssessment();
+  const updateTIA = useUpdateTransferImpactAssessment();
+  const deleteTIA = useDeleteTransferImpactAssessment(
+    { id: activity?.transferImpactAssessment?.id || "" },
     {
       onSuccess: () => {
         setTiaDeleted(true);
@@ -182,8 +181,8 @@ export default function ProcessingActivityDetailsPage(props: Props) {
         transferSafeguards: activity.transferSafeguards || "__NONE__",
         retentionPeriod: activity.retentionPeriod || "",
         securityMeasures: activity.securityMeasures || "",
-        dataProtectionImpactAssessment: activity.dataProtectionImpactAssessment || "NOT_NEEDED" as const,
-        transferImpactAssessment: activity.transferImpactAssessment || "NOT_NEEDED" as const,
+        dataProtectionImpactAssessmentNeeded: activity.dataProtectionImpactAssessmentNeeded || "NOT_NEEDED" as const,
+        transferImpactAssessmentNeeded: activity.transferImpactAssessmentNeeded || "NOT_NEEDED" as const,
         lastReviewDate: toDateInput(activity.lastReviewDate),
         nextReviewDate: toDateInput(activity.nextReviewDate),
         role: activity.role || "CONTROLLER" as const,
@@ -195,21 +194,21 @@ export default function ProcessingActivityDetailsPage(props: Props) {
 
   const dpiaForm = useForm({
     defaultValues: {
-      description: activity?.dpia?.description || "",
-      necessityAndProportionality: activity?.dpia?.necessityAndProportionality || "",
-      potentialRisk: activity?.dpia?.potentialRisk || "",
-      mitigations: activity?.dpia?.mitigations || "",
-      residualRisk: (activity?.dpia?.residualRisk || "") as ProcessingActivityDPIAResidualRisk | "",
+      description: activity?.dataProtectionImpactAssessment?.description || "",
+      necessityAndProportionality: activity?.dataProtectionImpactAssessment?.necessityAndProportionality || "",
+      potentialRisk: activity?.dataProtectionImpactAssessment?.potentialRisk || "",
+      mitigations: activity?.dataProtectionImpactAssessment?.mitigations || "",
+      residualRisk: (activity?.dataProtectionImpactAssessment?.residualRisk || "") as ProcessingActivityDPIAResidualRisk | "",
     },
   });
 
   const tiaForm = useForm({
     defaultValues: {
-      dataSubjects: activity?.tia?.dataSubjects || "",
-      legalMechanism: activity?.tia?.legalMechanism || "",
-      transfer: activity?.tia?.transfer || "",
-      localLawRisk: activity?.tia?.localLawRisk || "",
-      supplementaryMeasures: activity?.tia?.supplementaryMeasures || "",
+      dataSubjects: activity?.transferImpactAssessment?.dataSubjects || "",
+      legalMechanism: activity?.transferImpactAssessment?.legalMechanism || "",
+      transfer: activity?.transferImpactAssessment?.transfer || "",
+      localLawRisk: activity?.transferImpactAssessment?.localLawRisk || "",
+      supplementaryMeasures: activity?.transferImpactAssessment?.supplementaryMeasures || "",
     },
   });
 
@@ -230,8 +229,8 @@ export default function ProcessingActivityDetailsPage(props: Props) {
         transferSafeguards: formData.transferSafeguards === "__NONE__" ? undefined : formData.transferSafeguards || undefined,
         retentionPeriod: formData.retentionPeriod || undefined,
         securityMeasures: formData.securityMeasures || undefined,
-        dataProtectionImpactAssessment: formData.dataProtectionImpactAssessment || undefined,
-        transferImpactAssessment: formData.transferImpactAssessment || undefined,
+        dataProtectionImpactAssessmentNeeded: formData.dataProtectionImpactAssessmentNeeded || undefined,
+        transferImpactAssessmentNeeded: formData.transferImpactAssessmentNeeded || undefined,
         lastReviewDate: formatDatetime(formData.lastReviewDate) ?? null,
         nextReviewDate: formatDatetime(formData.nextReviewDate) ?? null,
         role: formData.role,
@@ -256,11 +255,11 @@ export default function ProcessingActivityDetailsPage(props: Props) {
   const onDPIASubmit = dpiaForm.handleSubmit(async (formData) => {
     setDpiaSubmitting(true);
     try {
-      const isCreating = !activity?.dpia?.id || dpiaDeleted;
+      const isCreating = !activity?.dataProtectionImpactAssessment?.id || dpiaDeleted;
       if (!isCreating) {
         // Update existing DPIA
         await updateDPIA({
-          id: activity.dpia!.id,
+          id: activity.dataProtectionImpactAssessment!.id,
           description: formData.description || undefined,
           necessityAndProportionality: formData.necessityAndProportionality || undefined,
           potentialRisk: formData.potentialRisk || undefined,
@@ -303,11 +302,11 @@ export default function ProcessingActivityDetailsPage(props: Props) {
   const onTIASubmit = tiaForm.handleSubmit(async (formData) => {
     setTiaSubmitting(true);
     try {
-      const isCreating = !activity?.tia?.id || tiaDeleted;
+      const isCreating = !activity?.transferImpactAssessment?.id || tiaDeleted;
       if (!isCreating) {
         // Update existing TIA
         await updateTIA({
-          id: activity.tia!.id,
+          id: activity.transferImpactAssessment!.id,
           dataSubjects: formData.dataSubjects || undefined,
           legalMechanism: formData.legalMechanism || undefined,
           transfer: formData.transfer || undefined,
@@ -607,13 +606,13 @@ export default function ProcessingActivityDetailsPage(props: Props) {
                   </div>
 
                   <div>
-                    <Label htmlFor="dataProtectionImpactAssessment">{__("Data Protection Impact Assessment")} *</Label>
+                    <Label htmlFor="dataProtectionImpactAssessmentNeeded">{__("Data Protection Impact Assessment")} *</Label>
                     <Controller
                       control={control}
-                      name="dataProtectionImpactAssessment"
+                      name="dataProtectionImpactAssessmentNeeded"
                       render={({ field }) => (
                         <Select
-                          id="dataProtectionImpactAssessment"
+                          id="dataProtectionImpactAssessmentNeeded"
                           placeholder={__("Is DPIA needed?")}
                           onValueChange={field.onChange}
                           value={field.value}
@@ -624,19 +623,19 @@ export default function ProcessingActivityDetailsPage(props: Props) {
                         </Select>
                       )}
                     />
-                    {formState.errors.dataProtectionImpactAssessment && (
-                      <p className="text-sm text-txt-danger mt-1">{formState.errors.dataProtectionImpactAssessment.message}</p>
+                    {formState.errors.dataProtectionImpactAssessmentNeeded && (
+                      <p className="text-sm text-txt-danger mt-1">{formState.errors.dataProtectionImpactAssessmentNeeded.message}</p>
                     )}
                   </div>
 
                   <div>
-                    <Label htmlFor="transferImpactAssessment">{__("Transfer Impact Assessment")} *</Label>
+                    <Label htmlFor="transferImpactAssessmentNeeded">{__("Transfer Impact Assessment")} *</Label>
                     <Controller
                       control={control}
-                      name="transferImpactAssessment"
+                      name="transferImpactAssessmentNeeded"
                       render={({ field }) => (
                         <Select
-                          id="transferImpactAssessment"
+                          id="transferImpactAssessmentNeeded"
                           placeholder={__("Is TIA needed?")}
                           onValueChange={field.onChange}
                           value={field.value}
@@ -647,8 +646,8 @@ export default function ProcessingActivityDetailsPage(props: Props) {
                         </Select>
                       )}
                     />
-                    {formState.errors.transferImpactAssessment && (
-                      <p className="text-sm text-txt-danger mt-1">{formState.errors.transferImpactAssessment.message}</p>
+                    {formState.errors.transferImpactAssessmentNeeded && (
+                      <p className="text-sm text-txt-danger mt-1">{formState.errors.transferImpactAssessmentNeeded.message}</p>
                     )}
                   </div>
                 </div>
@@ -684,10 +683,10 @@ export default function ProcessingActivityDetailsPage(props: Props) {
       {activeTab === "dpia" && (
         <Card>
           <div className="p-6">
-            {!showDpiaForm && (!activity?.dpia?.id || dpiaDeleted) ? (
+            {!showDpiaForm && (!activity?.dataProtectionImpactAssessment?.id || dpiaDeleted) ? (
               <div className="flex flex-col items-center justify-center py-16 w-full">
                 <h2 className="text-xl font-semibold mb-6 text-center">{__("Data Protection Impact Assessment")}</h2>
-                {!isSnapshotMode && isAuthorized("ProcessingActivity", "createProcessingActivityDPIA") && (
+                {!isSnapshotMode && isAuthorized("ProcessingActivity", "createDataProtectionImpactAssessment") && (
                   <Button
                     variant="primary"
                     onClick={() => setShowDpiaForm(true)}
@@ -700,7 +699,7 @@ export default function ProcessingActivityDetailsPage(props: Props) {
               <>
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-xl font-semibold">{__("Data Protection Impact Assessment")}</h2>
-                  {!isSnapshotMode && activity?.dpia?.id && !dpiaDeleted && isAuthorized("ProcessingActivity", "deleteProcessingActivityDPIA") && (
+                  {!isSnapshotMode && activity?.dataProtectionImpactAssessment?.id && !dpiaDeleted && isAuthorized("DataProtectionImpactAssessment", "deleteDataProtectionImpactAssessment") && (
                     <Button
                       variant="danger"
                       onClick={deleteDPIA}
@@ -779,7 +778,7 @@ export default function ProcessingActivityDetailsPage(props: Props) {
 
                   {!isSnapshotMode && (
                     <div className="flex justify-end gap-3 pt-4">
-                      {(!activity?.dpia?.id || dpiaDeleted) && (
+                      {(!activity?.dataProtectionImpactAssessment?.id || dpiaDeleted) && (
                         <Button
                           type="button"
                           variant="secondary"
@@ -788,9 +787,9 @@ export default function ProcessingActivityDetailsPage(props: Props) {
                           {__("Cancel")}
                         </Button>
                       )}
-                      {(activity?.dpia?.id && !dpiaDeleted
-                        ? isAuthorized("ProcessingActivity", "updateProcessingActivityDPIA")
-                        : isAuthorized("ProcessingActivity", "createProcessingActivityDPIA")) && (
+                      {(activity?.dataProtectionImpactAssessment?.id && !dpiaDeleted
+                        ? isAuthorized("DataProtectionImpactAssessment", "updateDataProtectionImpactAssessment")
+                        : isAuthorized("ProcessingActivity", "createDataProtectionImpactAssessment")) && (
                         <Button
                           type="submit"
                           variant="primary"
@@ -798,7 +797,7 @@ export default function ProcessingActivityDetailsPage(props: Props) {
                         >
                           {dpiaSubmitting
                             ? __("Saving...")
-                            : activity?.dpia?.id && !dpiaDeleted
+                            : activity?.dataProtectionImpactAssessment?.id && !dpiaDeleted
                             ? __("Update DPIA")
                             : __("Create DPIA")}
                         </Button>
@@ -815,10 +814,10 @@ export default function ProcessingActivityDetailsPage(props: Props) {
       {activeTab === "tia" && (
         <Card>
           <div className="p-6">
-            {!showTiaForm && (!activity?.tia?.id || tiaDeleted) ? (
+            {!showTiaForm && (!activity?.transferImpactAssessment?.id || tiaDeleted) ? (
               <div className="flex flex-col items-center justify-center py-16 w-full">
                 <h2 className="text-xl font-semibold mb-6 text-center">{__("Transfer Impact Assessment")}</h2>
-                {!isSnapshotMode && isAuthorized("ProcessingActivity", "createProcessingActivityTIA") && (
+                {!isSnapshotMode && isAuthorized("ProcessingActivity", "createTransferImpactAssessment") && (
                   <Button
                     variant="primary"
                     onClick={() => setShowTiaForm(true)}
@@ -831,7 +830,7 @@ export default function ProcessingActivityDetailsPage(props: Props) {
               <>
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-xl font-semibold">{__("Transfer Impact Assessment")}</h2>
-                  {!isSnapshotMode && activity?.tia?.id && !tiaDeleted && isAuthorized("ProcessingActivity", "deleteProcessingActivityTIA") && (
+                  {!isSnapshotMode && activity?.transferImpactAssessment?.id && !tiaDeleted && isAuthorized("TransferImpactAssessment", "deleteTransferImpactAssessment") && (
                     <Button
                       variant="danger"
                       onClick={deleteTIA}
@@ -899,7 +898,7 @@ export default function ProcessingActivityDetailsPage(props: Props) {
 
                   {!isSnapshotMode && (
                     <div className="flex justify-end gap-3 pt-4">
-                      {(!activity?.tia?.id || tiaDeleted) && (
+                      {(!activity?.transferImpactAssessment?.id || tiaDeleted) && (
                         <Button
                           type="button"
                           variant="secondary"
@@ -908,9 +907,9 @@ export default function ProcessingActivityDetailsPage(props: Props) {
                           {__("Cancel")}
                         </Button>
                       )}
-                      {(activity?.tia?.id && !tiaDeleted
-                        ? isAuthorized("ProcessingActivity", "updateProcessingActivityTIA")
-                        : isAuthorized("ProcessingActivity", "createProcessingActivityTIA")) && (
+                      {(activity?.transferImpactAssessment?.id && !tiaDeleted
+                        ? isAuthorized("TransferImpactAssessment", "updateTransferImpactAssessment")
+                        : isAuthorized("ProcessingActivity", "createTransferImpactAssessment")) && (
                         <Button
                           type="submit"
                           variant="primary"
@@ -918,7 +917,7 @@ export default function ProcessingActivityDetailsPage(props: Props) {
                         >
                           {tiaSubmitting
                             ? __("Saving...")
-                            : activity?.tia?.id && !tiaDeleted
+                            : activity?.transferImpactAssessment?.id && !tiaDeleted
                             ? __("Update TIA")
                             : __("Create TIA")}
                         </Button>

@@ -114,8 +114,8 @@ type (
 		Snapshots                         *SnapshotService
 		ContinualImprovements             *ContinualImprovementService
 		ProcessingActivities              *ProcessingActivityService
-		ProcessingActivityDPIAs           *ProcessingActivityDPIAService
-		ProcessingActivityTIAs            *ProcessingActivityTIAService
+		DataProtectionImpactAssessments   *DataProtectionImpactAssessmentService
+		TransferImpactAssessments         *TransferImpactAssessmentService
 		Files                             *FileService
 		CustomDomains                     *CustomDomainService
 		SlackMessages                     *slack.SlackMessageService
@@ -251,8 +251,8 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 	tenantService.Snapshots = &SnapshotService{svc: tenantService}
 	tenantService.ContinualImprovements = &ContinualImprovementService{svc: tenantService}
 	tenantService.ProcessingActivities = &ProcessingActivityService{svc: tenantService}
-	tenantService.ProcessingActivityDPIAs = &ProcessingActivityDPIAService{svc: tenantService}
-	tenantService.ProcessingActivityTIAs = &ProcessingActivityTIAService{svc: tenantService}
+	tenantService.DataProtectionImpactAssessments = &DataProtectionImpactAssessmentService{svc: tenantService}
+	tenantService.TransferImpactAssessments = &TransferImpactAssessmentService{svc: tenantService}
 	tenantService.Files = &FileService{svc: tenantService}
 	tenantService.CustomDomains = &CustomDomainService{
 		svc:           tenantService,

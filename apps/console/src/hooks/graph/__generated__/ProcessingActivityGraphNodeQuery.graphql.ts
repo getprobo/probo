@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<65e5159bb6afd503a3dc92a2a87845ea>>
+ * @generated SignedSource<<b7fdcb56199f74956910a6f14dbc6340>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,7 +9,7 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
-export type ProcessingActivityDPIAResidualRisk = "HIGH" | "LOW" | "MEDIUM";
+export type DataProtectionImpactAssessmentResidualRisk = "HIGH" | "LOW" | "MEDIUM";
 export type ProcessingActivityDataProtectionImpactAssessment = "NEEDED" | "NOT_NEEDED";
 export type ProcessingActivityLawfulBasis = "CONSENT" | "CONTRACTUAL_NECESSITY" | "LEGAL_OBLIGATION" | "LEGITIMATE_INTEREST" | "PUBLIC_TASK" | "VITAL_INTERESTS";
 export type ProcessingActivityRole = "CONTROLLER" | "PROCESSOR";
@@ -24,22 +24,22 @@ export type ProcessingActivityGraphNodeQuery$data = {
   readonly node: {
     readonly consentEvidenceLink?: string | null | undefined;
     readonly createdAt?: any;
-    readonly dataProtectionImpactAssessment?: ProcessingActivityDataProtectionImpactAssessment;
-    readonly dataProtectionOfficer?: {
-      readonly fullName: string;
-      readonly id: string;
-    } | null | undefined;
-    readonly dataSubjectCategory?: string | null | undefined;
-    readonly dpia?: {
+    readonly dataProtectionImpactAssessment?: {
       readonly createdAt: any;
       readonly description: string | null | undefined;
       readonly id: string;
       readonly mitigations: string | null | undefined;
       readonly necessityAndProportionality: string | null | undefined;
       readonly potentialRisk: string | null | undefined;
-      readonly residualRisk: ProcessingActivityDPIAResidualRisk | null | undefined;
+      readonly residualRisk: DataProtectionImpactAssessmentResidualRisk | null | undefined;
       readonly updatedAt: any;
     } | null | undefined;
+    readonly dataProtectionImpactAssessmentNeeded?: ProcessingActivityDataProtectionImpactAssessment;
+    readonly dataProtectionOfficer?: {
+      readonly fullName: string;
+      readonly id: string;
+    } | null | undefined;
+    readonly dataSubjectCategory?: string | null | undefined;
     readonly id?: string;
     readonly internationalTransfers?: boolean;
     readonly lastReviewDate?: any | null | undefined;
@@ -59,7 +59,7 @@ export type ProcessingActivityGraphNodeQuery$data = {
     readonly securityMeasures?: string | null | undefined;
     readonly snapshotId?: string | null | undefined;
     readonly specialOrCriminalData?: ProcessingActivitySpecialOrCriminalDatum;
-    readonly tia?: {
+    readonly transferImpactAssessment?: {
       readonly createdAt: any;
       readonly dataSubjects: string | null | undefined;
       readonly id: string;
@@ -69,7 +69,7 @@ export type ProcessingActivityGraphNodeQuery$data = {
       readonly transfer: string | null | undefined;
       readonly updatedAt: any;
     } | null | undefined;
-    readonly transferImpactAssessment?: ProcessingActivityTransferImpactAssessment;
+    readonly transferImpactAssessmentNeeded?: ProcessingActivityTransferImpactAssessment;
     readonly transferSafeguards?: ProcessingActivityTransferSafeguard | null | undefined;
     readonly updatedAt?: any;
     readonly vendors?: {
@@ -213,14 +213,14 @@ v17 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "dataProtectionImpactAssessment",
+  "name": "dataProtectionImpactAssessmentNeeded",
   "storageKey": null
 },
 v18 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "transferImpactAssessment",
+  "name": "transferImpactAssessmentNeeded",
   "storageKey": null
 },
 v19 = {
@@ -335,9 +335,9 @@ v25 = {
 v26 = {
   "alias": null,
   "args": null,
-  "concreteType": "ProcessingActivityDPIA",
+  "concreteType": "DataProtectionImpactAssessment",
   "kind": "LinkedField",
-  "name": "dpia",
+  "name": "dataProtectionImpactAssessment",
   "plural": false,
   "selections": [
     (v2/*: any*/),
@@ -384,9 +384,9 @@ v26 = {
 v27 = {
   "alias": null,
   "args": null,
-  "concreteType": "ProcessingActivityTIA",
+  "concreteType": "TransferImpactAssessment",
   "kind": "LinkedField",
-  "name": "tia",
+  "name": "transferImpactAssessment",
   "plural": false,
   "selections": [
     (v2/*: any*/),
@@ -560,16 +560,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "8584062347b5ee761ed590f6019926be",
+    "cacheID": "8a92ed21a8b24d93c81ceba4b62a0911",
     "id": null,
     "metadata": {},
     "name": "ProcessingActivityGraphNodeQuery",
     "operationKind": "query",
-    "text": "query ProcessingActivityGraphNodeQuery(\n  $processingActivityId: ID!\n) {\n  node(id: $processingActivityId) {\n    __typename\n    ... on ProcessingActivity {\n      id\n      snapshotId\n      name\n      purpose\n      dataSubjectCategory\n      personalDataCategory\n      specialOrCriminalData\n      consentEvidenceLink\n      lawfulBasis\n      recipients\n      location\n      internationalTransfers\n      transferSafeguards\n      retentionPeriod\n      securityMeasures\n      dataProtectionImpactAssessment\n      transferImpactAssessment\n      lastReviewDate\n      nextReviewDate\n      role\n      dataProtectionOfficer {\n        id\n        fullName\n      }\n      vendors(first: 50) {\n        edges {\n          node {\n            id\n            name\n            websiteUrl\n            category\n          }\n        }\n      }\n      dpia {\n        id\n        description\n        necessityAndProportionality\n        potentialRisk\n        mitigations\n        residualRisk\n        createdAt\n        updatedAt\n      }\n      tia {\n        id\n        dataSubjects\n        legalMechanism\n        transfer\n        localLawRisk\n        supplementaryMeasures\n        createdAt\n        updatedAt\n      }\n      organization {\n        id\n        name\n      }\n      createdAt\n      updatedAt\n    }\n    id\n  }\n}\n"
+    "text": "query ProcessingActivityGraphNodeQuery(\n  $processingActivityId: ID!\n) {\n  node(id: $processingActivityId) {\n    __typename\n    ... on ProcessingActivity {\n      id\n      snapshotId\n      name\n      purpose\n      dataSubjectCategory\n      personalDataCategory\n      specialOrCriminalData\n      consentEvidenceLink\n      lawfulBasis\n      recipients\n      location\n      internationalTransfers\n      transferSafeguards\n      retentionPeriod\n      securityMeasures\n      dataProtectionImpactAssessmentNeeded\n      transferImpactAssessmentNeeded\n      lastReviewDate\n      nextReviewDate\n      role\n      dataProtectionOfficer {\n        id\n        fullName\n      }\n      vendors(first: 50) {\n        edges {\n          node {\n            id\n            name\n            websiteUrl\n            category\n          }\n        }\n      }\n      dataProtectionImpactAssessment {\n        id\n        description\n        necessityAndProportionality\n        potentialRisk\n        mitigations\n        residualRisk\n        createdAt\n        updatedAt\n      }\n      transferImpactAssessment {\n        id\n        dataSubjects\n        legalMechanism\n        transfer\n        localLawRisk\n        supplementaryMeasures\n        createdAt\n        updatedAt\n      }\n      organization {\n        id\n        name\n      }\n      createdAt\n      updatedAt\n    }\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "317a9dae11ec982599b6efd6ef6e3187";
+(node as any).hash = "3fe20997f675ea566fe083e672bc82a3";
 
 export default node;

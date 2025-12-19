@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<8ff0215134a49d15ba4b9153461f2fd8>>
+ * @generated SignedSource<<a6c5ecf296ecfda1ac7b2ec2f315af26>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -17,7 +17,7 @@ export type ProcessingActivityTransferImpactAssessment = "NEEDED" | "NOT_NEEDED"
 export type ProcessingActivityTransferSafeguard = "ADEQUACY_DECISION" | "BINDING_CORPORATE_RULES" | "CERTIFICATION_MECHANISMS" | "CODES_OF_CONDUCT" | "DEROGATIONS" | "STANDARD_CONTRACTUAL_CLAUSES";
 export type CreateProcessingActivityInput = {
   consentEvidenceLink?: string | null | undefined;
-  dataProtectionImpactAssessment: ProcessingActivityDataProtectionImpactAssessment;
+  dataProtectionImpactAssessmentNeeded: ProcessingActivityDataProtectionImpactAssessment;
   dataProtectionOfficerId?: string | null | undefined;
   dataSubjectCategory?: string | null | undefined;
   internationalTransfers: boolean;
@@ -34,7 +34,7 @@ export type CreateProcessingActivityInput = {
   role: ProcessingActivityRole;
   securityMeasures?: string | null | undefined;
   specialOrCriminalData: ProcessingActivitySpecialOrCriminalDatum;
-  transferImpactAssessment: ProcessingActivityTransferImpactAssessment;
+  transferImpactAssessmentNeeded: ProcessingActivityTransferImpactAssessment;
   transferSafeguards?: ProcessingActivityTransferSafeguard | null | undefined;
   vendorIds?: ReadonlyArray<string> | null | undefined;
 };
@@ -48,7 +48,7 @@ export type ProcessingActivityGraphCreateMutation$data = {
       readonly node: {
         readonly consentEvidenceLink: string | null | undefined;
         readonly createdAt: any;
-        readonly dataProtectionImpactAssessment: ProcessingActivityDataProtectionImpactAssessment;
+        readonly dataProtectionImpactAssessmentNeeded: ProcessingActivityDataProtectionImpactAssessment;
         readonly dataProtectionOfficer: {
           readonly fullName: string;
           readonly id: string;
@@ -68,7 +68,7 @@ export type ProcessingActivityGraphCreateMutation$data = {
         readonly role: ProcessingActivityRole;
         readonly securityMeasures: string | null | undefined;
         readonly specialOrCriminalData: ProcessingActivitySpecialOrCriminalDatum;
-        readonly transferImpactAssessment: ProcessingActivityTransferImpactAssessment;
+        readonly transferImpactAssessmentNeeded: ProcessingActivityTransferImpactAssessment;
         readonly transferSafeguards: ProcessingActivityTransferSafeguard | null | undefined;
         readonly vendors: {
           readonly edges: ReadonlyArray<{
@@ -226,14 +226,14 @@ v5 = {
           "alias": null,
           "args": null,
           "kind": "ScalarField",
-          "name": "dataProtectionImpactAssessment",
+          "name": "dataProtectionImpactAssessmentNeeded",
           "storageKey": null
         },
         {
           "alias": null,
           "args": null,
           "kind": "ScalarField",
-          "name": "transferImpactAssessment",
+          "name": "transferImpactAssessmentNeeded",
           "storageKey": null
         },
         {
@@ -403,16 +403,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "dbc6953ae60bda370ed5d730e3499eec",
+    "cacheID": "00d5d2374c8b6933fd01544e67518c14",
     "id": null,
     "metadata": {},
     "name": "ProcessingActivityGraphCreateMutation",
     "operationKind": "mutation",
-    "text": "mutation ProcessingActivityGraphCreateMutation(\n  $input: CreateProcessingActivityInput!\n) {\n  createProcessingActivity(input: $input) {\n    processingActivityEdge {\n      node {\n        id\n        name\n        purpose\n        dataSubjectCategory\n        personalDataCategory\n        specialOrCriminalData\n        consentEvidenceLink\n        lawfulBasis\n        recipients\n        location\n        internationalTransfers\n        transferSafeguards\n        retentionPeriod\n        securityMeasures\n        dataProtectionImpactAssessment\n        transferImpactAssessment\n        lastReviewDate\n        nextReviewDate\n        role\n        dataProtectionOfficer {\n          id\n          fullName\n        }\n        vendors(first: 50) {\n          edges {\n            node {\n              id\n              name\n              websiteUrl\n            }\n          }\n        }\n        createdAt\n      }\n    }\n  }\n}\n"
+    "text": "mutation ProcessingActivityGraphCreateMutation(\n  $input: CreateProcessingActivityInput!\n) {\n  createProcessingActivity(input: $input) {\n    processingActivityEdge {\n      node {\n        id\n        name\n        purpose\n        dataSubjectCategory\n        personalDataCategory\n        specialOrCriminalData\n        consentEvidenceLink\n        lawfulBasis\n        recipients\n        location\n        internationalTransfers\n        transferSafeguards\n        retentionPeriod\n        securityMeasures\n        dataProtectionImpactAssessmentNeeded\n        transferImpactAssessmentNeeded\n        lastReviewDate\n        nextReviewDate\n        role\n        dataProtectionOfficer {\n          id\n          fullName\n        }\n        vendors(first: 50) {\n          edges {\n            node {\n              id\n              name\n              websiteUrl\n            }\n          }\n        }\n        createdAt\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "5bfa8b212d24257297f668a19c230d56";
+(node as any).hash = "63271cfac482a18f5754df0af220e45d";
 
 export default node;

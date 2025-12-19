@@ -2,12 +2,15 @@ ALTER TABLE processing_activities ADD COLUMN last_review_date DATE;
 ALTER TABLE processing_activities ADD COLUMN next_review_date DATE;
 
 CREATE TYPE processing_activity_role AS ENUM ('CONTROLLER', 'PROCESSOR');
-ALTER TABLE processing_activities ADD COLUMN IF NOT EXISTS role processing_activity_role NOT NULL DEFAULT 'PROCESSOR';
+ALTER TABLE processing_activities ADD COLUMN role processing_activity_role NOT NULL DEFAULT 'PROCESSOR';
 ALTER TABLE processing_activities ALTER COLUMN role DROP DEFAULT;
 
-ALTER TABLE processing_activities ADD COLUMN IF NOT EXISTS data_protection_officer_id TEXT REFERENCES peoples(id) ON DELETE RESTRICT;
+ALTER TABLE processing_activities ADD COLUMN data_protection_officer_id TEXT REFERENCES peoples(id) ON DELETE RESTRICT;
 
 CREATE TYPE processing_activity_dpia_residual_risk AS ENUM ('LOW', 'MEDIUM', 'HIGH');
+
+ALTER TABLE processing_activities RENAME COLUMN data_protection_impact_assessment TO data_protection_impact_assessment_needed;
+ALTER TABLE processing_activities RENAME COLUMN transfer_impact_assessment TO transfer_impact_assessment_needed;
 
 CREATE TABLE processing_activity_data_protection_impact_assessments (
     id TEXT PRIMARY KEY,
