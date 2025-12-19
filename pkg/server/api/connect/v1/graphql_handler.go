@@ -36,10 +36,10 @@ var (
 		},
 	}
 
-	ErrUnauthorized = &gqlerror.Error{
-		Message: "You are not authorized to access this resource",
+	ErrUnauthenticated = &gqlerror.Error{
+		Message: "You must be authenticated to access this resouce",
 		Extensions: map[string]any{
-			"code": "UNAUTHORIZED",
+			"code": "UNAUTHENTICATED",
 		},
 	}
 
@@ -58,7 +58,7 @@ func SessionDirective(ctx context.Context, obj any, next graphql.Resolver, requi
 	case types.SessionRequirementOptional:
 	case types.SessionRequirementPresent:
 		if session == nil {
-			return nil, ErrUnauthorized
+			return nil, ErrUnauthenticated
 		}
 	case types.SessionRequirementNone:
 		if session != nil {
