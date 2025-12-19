@@ -318,3 +318,101 @@ func (s SessionService) GetActiveSessionForMembership(ctx context.Context, rootS
 
 	return childSession, nil
 }
+
+func (s SessionService) AssumeOrganizationSession(
+	ctx context.Context,
+	sessionID gid.GID,
+	organizationID gid.GID,
+) (*coredata.Session, *coredata.Membership, error) {
+	var (
+		now          = time.Now()
+		rootSession  = &coredata.Session{}
+		user         = &coredata.User{}
+		membership   = &coredata.Membership{}
+		childSession = &coredata.Session{}
+		scope        = coredata.NewScopeFromObjectID(organizationID)
+	)
+
+	err := s.pg.WithTx(
+		ctx,
+		func(tx pg.Conn) error {
+			err := rootSession.LoadByID(ctx, tx, sessionID)
+			if err != nil {
+				if err == coredata.ErrResourceNotFound {
+					return NewSessionNotFoundError(sessionID)
+				}
+				return fmt.Errorf("cannot load session: %w", err)
+			}
+
+			if !rootSession.IsRootSession() {
+				return fmt.Errorf("session %q is not a root session", sessionID)
+			}
+
+			if rootSession.ExpireReason != nil || now.After(rootSession.ExpiredAt) {
+				return NewSessionExpiredError(sessionID)
+			}
+
+			err = user.LoadByID(ctx, tx, rootSession.UserID)
+			if err != nil {
+				return fmt.Errorf("cannot load user: %w", err)
+			}
+
+			err = membership.LoadByUserInOrganization(ctx, tx, rootSession.UserID, organizationID)
+			if err != nil {
+				if err == coredata.ErrResourceNotFound {
+					return NewMembershipNotFoundError(organizationID)
+				}
+				return fmt.Errorf("cannot load membership: %w", err)
+			}
+
+			samlConfig := &coredata.SAMLConfiguration{}
+			err = samlConfig.LoadByOrganizationIDAndEmailDomain(
+				ctx,
+				tx,
+				scope,
+				organizationID,
+				user.EmailAddress.Domain(),
+			)
+			if err != nil && err != coredata.ErrResourceNotFound {
+				return fmt.Errorf("cannot load SAML configuration: %w", err)
+			}
+
+			if err == nil && samlConfig.EnforcementPolicy == coredata.SAMLEnforcementPolicyRequired {
+				redirectURL, err := s.SAMLService.InitiateLogin(ctx, samlConfig.ID)
+				if err != nil {
+					return fmt.Errorf("cannot initiate SAML login: %w", err)
+				}
+
+				return NewSAMLAuthenticationRequiredError("policy_requirement", redirectURL.String())
+			}
+
+			if rootSession.AuthMethod != coredata.AuthMethodPassword {
+				return NewPasswordRequiredError("password_authentication_required")
+			}
+
+			tenantID := scope.GetTenantID()
+			childSession = &coredata.Session{
+				ID:              gid.New(tenantID, coredata.SessionEntityType),
+				UserID:          rootSession.UserID,
+				TenantID:        &tenantID,
+				ParentSessionID: &rootSession.ID,
+				ExpiredAt:       rootSession.ExpiredAt,
+				CreatedAt:       now,
+				UpdatedAt:       now,
+			}
+
+			err = childSession.Insert(ctx, tx)
+			if err != nil {
+				return fmt.Errorf("cannot insert child session: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return childSession, membership, nil
+}
