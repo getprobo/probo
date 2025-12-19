@@ -33,6 +33,7 @@ type (
 		ID              gid.GID       `db:"id"`
 		UserID          gid.GID       `db:"user_id"`
 		TenantID        *gid.TenantID `db:"tenant_id"`
+		MembershipID    *gid.GID      `db:"membership_id"`
 		ParentSessionID *gid.GID      `db:"parent_session_id"`
 		Data            SessionData   `db:"data"`
 		AuthMethod      AuthMethod    `db:"auth_method"`
@@ -101,6 +102,7 @@ SELECT
     id,
     user_id,
     tenant_id,
+    membership_id,
     data,
     parent_session_id,
     auth_method,
@@ -144,11 +146,12 @@ func (s *Session) Insert(
 ) error {
 	q := `
 INSERT INTO
-    sessions (id, user_id, tenant_id, data, parent_session_id, auth_method, authenticated_at, expire_reason, user_agent, ip_address, expired_at, created_at, updated_at)
+    sessions (id, user_id, tenant_id, membership_id, data, parent_session_id, auth_method, authenticated_at, expire_reason, user_agent, ip_address, expired_at, created_at, updated_at)
 VALUES (
     @session_id,
     @user_id,
     @tenant_id,
+    @membership_id,
     @data,
     @parent_session_id,
     @auth_method,
@@ -166,6 +169,7 @@ VALUES (
 		"session_id":        s.ID,
 		"user_id":           s.UserID,
 		"tenant_id":         s.TenantID,
+		"membership_id":     s.MembershipID,
 		"data":              s.Data,
 		"parent_session_id": s.ParentSessionID,
 		"auth_method":       s.AuthMethod,
@@ -227,6 +231,7 @@ SELECT
     id,
     user_id,
     tenant_id,
+    membership_id,
     data,
     parent_session_id,
     auth_method,
@@ -318,6 +323,7 @@ SELECT
 	id,
 	user_id,
 	tenant_id,
+	membership_id,
 	data,
 	parent_session_id,
 	auth_method,
@@ -330,11 +336,9 @@ SELECT
 	updated_at
 FROM
 	sessions
-INNER JOIN
-	authz_memberships m ON m.organization_id = s.organization_id
 WHERE
-	sessions.parent_session_id = @root_session_id
-	AND m.id = @membership_id
+	parent_session_id = @root_session_id
+	AND membership_id = @membership_id
 `
 
 	args := pgx.StrictNamedArgs{
