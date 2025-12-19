@@ -12,12 +12,13 @@ export const organizationLayoutQuery = graphql`
   query OrganizationLayoutQuery($organizationId: ID!) {
     organization: node(id: $organizationId) @required(action: THROW) {
       ... on Organization {
-        ...OrganizationDropdownFragment
+        ...OrganizationDropdown_organizationFragment
       }
     }
     viewer @required(action: THROW) {
-      pendingInvitations {
-        totalCount
+      ...OrganizationDropdown_viewerFragment
+      pendingInvitations @required(action: THROW) {
+        totalCount @required(action: THROW)
       }
       ...SessionDropdownFragment @arguments(organizationId: $organizationId)
     }
