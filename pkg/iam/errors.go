@@ -273,6 +273,31 @@ func (e ErrInvitationNotPending) Error() string {
 	return fmt.Sprintf("invitation %q is not pending", e.InvitationID)
 }
 
+type ErrPasswordRequired struct {
+	Reason string
+}
+
+func NewPasswordRequiredError(reason string) *ErrPasswordRequired {
+	return &ErrPasswordRequired{Reason: reason}
+}
+
+func (e *ErrPasswordRequired) Error() string {
+	return fmt.Sprintf("password authentication required: %s", e.Reason)
+}
+
+type ErrSAMLAuthenticationRequired struct {
+	Reason      string
+	RedirectURL string
+}
+
+func NewSAMLAuthenticationRequiredError(reason string, redirectURL string) *ErrSAMLAuthenticationRequired {
+	return &ErrSAMLAuthenticationRequired{Reason: reason, RedirectURL: redirectURL}
+}
+
+func (e *ErrSAMLAuthenticationRequired) Error() string {
+	return fmt.Sprintf("SAML authentication required: %s", e.Reason)
+}
+
 // TenantAccessError is used by API recovery middleware to translate authorization/tenant failures
 // into a consistent client-facing error response.
 //
