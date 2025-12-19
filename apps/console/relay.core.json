@@ -4,5 +4,5 @@
   "language": "typescript",
   "eagerEsModules": true,
   "noFutureProofEnums": true,
-  "excludes": ["**/pages/iam/**/*", "**/node_modules/**"]
+  "excludes": ["**/iam/**/*", "**/node_modules/**", "**/__generated__/**"]
 }

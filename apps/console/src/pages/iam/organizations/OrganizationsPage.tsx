@@ -8,13 +8,13 @@ import {
   Input,
 } from "@probo/ui";
 import { useMemo, useState } from "react";
-import { OrganizationCard } from "./_components/OrganizationCard";
 import { InvitationCard } from "./_components/InvitationCard";
 import type {
   OrganizationsQuery,
   OrganizationsQuery$data,
 } from "./__generated__/OrganizationsQuery.graphql";
 import { organizationsQuery } from "./OrganizationsQuery";
+import { MembershipCard } from "./_components/MembershipCard";
 
 interface PageProps {
   queryRef: PreloadedQuery<OrganizationsQuery>;
@@ -87,8 +87,8 @@ export default function Page(props: PageProps) {
                   {__("No organizations found")}
                 </div>
               ) : (
-                memberships.map(({ node: { id, organization } }) => (
-                  <OrganizationCard key={id} fKey={organization} />
+                memberships.map(({ node }) => (
+                  <MembershipCard key={node.id} fKey={node} />
                 ))
               )}
             </div>
