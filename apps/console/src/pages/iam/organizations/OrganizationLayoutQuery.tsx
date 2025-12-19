@@ -15,10 +15,11 @@ export const organizationLayoutQuery = graphql`
         ...OrganizationDropdownFragment
       }
     }
-    viewer {
+    viewer @required(action: THROW) {
       pendingInvitations {
         totalCount
       }
+      ...SessionDropdownFragment @arguments(organizationId: $organizationId)
     }
   }
 `;

@@ -32,7 +32,6 @@ export function Sidebar() {
 
   const prefix = `/organizations/${organizationId}`;
 
-  console.log(isAuthorized("Organization", "listMeetings"));
   return (
     <ul className="space-y-[2px]">
       {isAuthorized("Organization", "listMeetings") && (

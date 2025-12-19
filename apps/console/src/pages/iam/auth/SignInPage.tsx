@@ -24,7 +24,7 @@ export default function SignInPage() {
 
   const [signIn, isSigningIn] = useMutation<SignInPageMutation>(signInMutation);
 
-  const handlePasswordLogin: FormEventHandler<HTMLFormElement> = async (e) => {
+  const handlePasswordLogin: FormEventHandler<HTMLFormElement> = (e) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const emailValue = formData.get("email")?.toString();
@@ -32,24 +32,24 @@ export default function SignInPage() {
 
     if (!emailValue || !passwordValue) return;
 
-    try {
-      signIn({
-        variables: {
-          input: {
-            email: emailValue,
-            password: passwordValue,
-          },
+    signIn({
+      variables: {
+        input: {
+          email: emailValue,
+          password: passwordValue,
         },
-      });
-
-      window.location.href = "/";
-    } catch (e: unknown) {
-      toast({
-        title: __("Error"),
-        description: e instanceof Error ? e.message : __("Failed to login"),
-        variant: "error",
-      });
-    }
+      },
+      onCompleted: () => {
+        window.location.href = "/";
+      },
+      onError: (e) => {
+        toast({
+          title: __("Error"),
+          description: e instanceof Error ? e.message : __("Failed to login"),
+          variant: "error",
+        });
+      },
+    });
   };
 
   return (
