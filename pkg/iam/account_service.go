@@ -89,10 +89,10 @@ func (s AccountService) ChangeEmail(ctx context.Context, identityID gid.GID, req
 		return fmt.Errorf("cannot parse base URL: %w", err)
 	}
 
-	confirmationUrl, err := base.
+	confirmationUrl := base.
 		WithPath("/auth/confirm-email").
 		WithQuery("token", confirmationToken).
-		String()
+		MustString()
 
 	return s.pg.WithTx(
 		ctx,
