@@ -42,12 +42,6 @@ func NewAPIKeyMiddleware(svc *iam.Service) func(next http.Handler) http.Handler 
 			func(w http.ResponseWriter, r *http.Request) {
 				ctx := r.Context()
 
-				session := SessionFromContext(ctx)
-				if session != nil {
-					httpserver.RenderError(w, http.StatusBadRequest, errors.New("api key authentication cannot be used with session authentication"))
-					return
-				}
-
 				tokenValue, err := securetoken.Get(r, "")
 				if err != nil {
 					next.ServeHTTP(w, r)
@@ -57,6 +51,12 @@ func NewAPIKeyMiddleware(svc *iam.Service) func(next http.Handler) http.Handler 
 				keyID, err := gid.ParseGID(tokenValue)
 				if err != nil {
 					next.ServeHTTP(w, r)
+					return
+				}
+
+				session := SessionFromContext(ctx)
+				if keyID != gid.Nil && session != nil {
+					httpserver.RenderError(w, http.StatusBadRequest, errors.New("api key authentication cannot be used with session authentication"))
 					return
 				}
 
