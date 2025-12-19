@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.111.2] - 2025-12-19
+
+### Fixed
+
+- Fix trust center nil pointer dereference
+
 ## [0.111.1] - 2025-12-19
 
 ### Fixed
