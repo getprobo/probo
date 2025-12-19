@@ -154,25 +154,17 @@ func (r *membershipResolver) Organization(ctx context.Context, obj *types.Member
 	return types.NewOrganization(organization), nil
 }
 
-// ActiveSession is the resolver for the activeSession field.
-func (r *membershipResolver) ActiveSession(ctx context.Context, obj *types.Membership) (*types.Session, error) {
-	rootSession := SessionFromContext(ctx)
+// LastSession is the resolver for the lastSession field.
+func (r *membershipResolver) LastSession(ctx context.Context, obj *types.Membership) (*types.Session, error) {
+	session := SessionFromContext(ctx)
 
-	session, err := r.iam.SessionService.GetActiveSessionForMembership(ctx, rootSession.UserID, obj.ID)
+	childSession, err := r.iam.SessionService.GetActiveSessionForMembership(ctx, session.ID, obj.ID)
 	if err != nil {
-		var (
-			errSessionNotFound *iam.ErrSessionNotFound
-			errSessionExpired  *iam.ErrSessionExpired
-		)
-
-		if errors.As(err, &errSessionNotFound) || errors.As(err, &errSessionExpired) {
-			return nil, nil
-		}
-
-		panic(fmt.Errorf("cannot get active session: %w", err))
+		panic(fmt.Errorf("cannot get active session for membership: %w", err))
 	}
 
-	return types.NewSession(session), nil
+	return types.NewSession(childSession), nil
+
 }
 
 // TotalCount is the resolver for the totalCount field.
@@ -1100,15 +1092,3 @@ type personalAPIKeyConnectionResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type sAMLConfigurationConnectionResolver struct{ *Resolver }
 type sessionConnectionResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//    it when you're done.
-//  - You have helper methods in this file. Move them out to keep these resolver files clean.
-/*
-	func (r *mutationResolver) SignInWithSession(ctx context.Context, input types.SignInWithSessionInput) (*types.SignInWithSessionPayload, error) {
-	panic(fmt.Errorf("not implemented: SignInWithSession - signInWithSession"))
-}
-*/

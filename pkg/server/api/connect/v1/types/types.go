@@ -245,7 +245,7 @@ type Membership struct {
 	ProvisionedBy ProvisioningSource      `json:"provisionedBy"`
 	Active        bool                    `json:"active"`
 	LastSyncedAt  *time.Time              `json:"lastSyncedAt,omitempty"`
-	ActiveSession *Session                `json:"activeSession,omitempty"`
+	LastSession   *Session                `json:"lastSession,omitempty"`
 }
 
 func (Membership) IsNode()             {}
