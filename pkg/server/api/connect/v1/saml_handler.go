@@ -60,7 +60,7 @@ func (h *SAMLHandler) ConsumeHandler(w http.ResponseWriter, r *http.Request) {
 
 	session := SessionFromContext(ctx)
 	if session == nil {
-		h.iam.AuthService.OpenSessionWithoutPassword(ctx, user.ID, membership.OrganizationID)
+		h.iam.AuthService.OpenSessionWithSAML(ctx, user.ID, membership.OrganizationID)
 	}
 
 	// TODO open or update the organization session
