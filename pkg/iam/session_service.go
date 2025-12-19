@@ -285,6 +285,10 @@ func (s SessionService) GetActiveSessionForMembership(ctx context.Context, rootS
 				return fmt.Errorf("session %q is not a root session", rootSessionID)
 			}
 
+			if rootSession.ExpireReason != nil || time.Now().After(rootSession.ExpiredAt) {
+				return NewSessionExpiredError(rootSessionID)
+			}
+
 			membership := &coredata.Membership{}
 			err = membership.LoadByID(ctx, tx, coredata.NewScopeFromObjectID(membershipID), membershipID)
 			if err != nil {
