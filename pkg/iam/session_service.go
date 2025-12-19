@@ -304,14 +304,6 @@ func (s SessionService) GetActiveSessionForMembership(ctx context.Context, rootS
 				return fmt.Errorf("cannot load child session: %w", err)
 			}
 
-			if childSession.ExpireReason != nil {
-				return NewSessionExpiredError(childSession.ID)
-			}
-
-			if time.Now().After(childSession.ExpiredAt) {
-				return NewSessionExpiredError(childSession.ID)
-			}
-
 			return nil
 		},
 	)

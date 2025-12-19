@@ -160,6 +160,11 @@ func (r *membershipResolver) LastSession(ctx context.Context, obj *types.Members
 
 	childSession, err := r.iam.SessionService.GetActiveSessionForMembership(ctx, session.ID, obj.ID)
 	if err != nil {
+		var errSessionNotFound *iam.ErrSessionNotFound
+		if errors.As(err, &errSessionNotFound) {
+			return nil, nil
+		}
+
 		panic(fmt.Errorf("cannot get active session for membership: %w", err))
 	}
 

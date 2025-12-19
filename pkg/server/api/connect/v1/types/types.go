@@ -432,12 +432,13 @@ type SSOAvailability struct {
 }
 
 type Session struct {
-	ID        gid.GID   `json:"id"`
-	IPAddress string    `json:"ipAddress"`
-	UserAgent string    `json:"userAgent"`
-	UpdatedAt time.Time `json:"updatedAt"`
-	CreatedAt time.Time `json:"createdAt"`
-	ExpiresAt time.Time `json:"expiresAt"`
+	ID         gid.GID   `json:"id"`
+	IdentityID gid.GID   `json:"identityId"`
+	IPAddress  string    `json:"ipAddress"`
+	UserAgent  string    `json:"userAgent"`
+	UpdatedAt  time.Time `json:"updatedAt"`
+	CreatedAt  time.Time `json:"createdAt"`
+	ExpiresAt  time.Time `json:"expiresAt"`
 }
 
 func (Session) IsNode()             {}

@@ -387,12 +387,13 @@ type ComplexityRoot struct {
 	}
 
 	Session struct {
-		CreatedAt func(childComplexity int) int
-		ExpiresAt func(childComplexity int) int
-		ID        func(childComplexity int) int
-		IPAddress func(childComplexity int) int
-		UpdatedAt func(childComplexity int) int
-		UserAgent func(childComplexity int) int
+		CreatedAt  func(childComplexity int) int
+		ExpiresAt  func(childComplexity int) int
+		ID         func(childComplexity int) int
+		IPAddress  func(childComplexity int) int
+		IdentityID func(childComplexity int) int
+		UpdatedAt  func(childComplexity int) int
+		UserAgent  func(childComplexity int) int
 	}
 
 	SessionConnection struct {
@@ -1880,6 +1881,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Session.IPAddress(childComplexity), true
+	case "Session.identityId":
+		if e.complexity.Session.IdentityID == nil {
+			break
+		}
+
+		return e.complexity.Session.IdentityID(childComplexity), true
 	case "Session.updatedAt":
 		if e.complexity.Session.UpdatedAt == nil {
 			break
@@ -2427,6 +2434,7 @@ type Invitation implements Node {
 
 type Session implements Node {
   id: ID!
+  identityId: ID!
   ipAddress: String!
   userAgent: String!
   updatedAt: Datetime!
@@ -6266,6 +6274,8 @@ func (ec *executionContext) fieldContext_Membership_lastSession(_ context.Contex
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Session_id(ctx, field)
+			case "identityId":
+				return ec.fieldContext_Session_identityId(ctx, field)
 			case "ipAddress":
 				return ec.fieldContext_Session_ipAddress(ctx, field)
 			case "userAgent":
@@ -8476,6 +8486,8 @@ func (ec *executionContext) fieldContext_OrganizationSessionCreated_session(_ co
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Session_id(ctx, field)
+			case "identityId":
+				return ec.fieldContext_Session_identityId(ctx, field)
 			case "ipAddress":
 				return ec.fieldContext_Session_ipAddress(ctx, field)
 			case "userAgent":
@@ -10842,6 +10854,35 @@ func (ec *executionContext) fieldContext_Session_id(_ context.Context, field gra
 	return fc, nil
 }
 
+func (ec *executionContext) _Session_identityId(ctx context.Context, field graphql.CollectedField, obj *types.Session) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Session_identityId,
+		func(ctx context.Context) (any, error) {
+			return obj.IdentityID, nil
+		},
+		nil,
+		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Session_identityId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Session",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Session_ipAddress(ctx context.Context, field graphql.CollectedField, obj *types.Session) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -11116,6 +11157,8 @@ func (ec *executionContext) fieldContext_SessionEdge_node(_ context.Context, fie
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Session_id(ctx, field)
+			case "identityId":
+				return ec.fieldContext_Session_identityId(ctx, field)
 			case "ipAddress":
 				return ec.fieldContext_Session_ipAddress(ctx, field)
 			case "userAgent":
@@ -11355,6 +11398,8 @@ func (ec *executionContext) fieldContext_SignInPayload_session(_ context.Context
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Session_id(ctx, field)
+			case "identityId":
+				return ec.fieldContext_Session_identityId(ctx, field)
 			case "ipAddress":
 				return ec.fieldContext_Session_ipAddress(ctx, field)
 			case "userAgent":
@@ -17536,6 +17581,11 @@ func (ec *executionContext) _Session(ctx context.Context, sel ast.SelectionSet, 
 			out.Values[i] = graphql.MarshalString("Session")
 		case "id":
 			out.Values[i] = ec._Session_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "identityId":
+			out.Values[i] = ec._Session_identityId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

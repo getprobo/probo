@@ -348,15 +348,15 @@ WHERE
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		if err == pgx.ErrNoRows {
-			return ErrResourceNotFound
-		}
-
 		return fmt.Errorf("cannot query session: %w", err)
 	}
 
 	session, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Session])
 	if err != nil {
+		if err == pgx.ErrNoRows {
+			return ErrResourceNotFound
+		}
+
 		return fmt.Errorf("cannot collect session: %w", err)
 	}
 
