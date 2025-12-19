@@ -56,10 +56,7 @@ type (
 		Certificate                *x509.Certificate
 		PrivateKey                 *rsa.PrivateKey
 		Logger                     *log.Logger
-
-		// PolicySet contains all policies for authorization.
-		// If nil, only IAM policies are used.
-		PolicySet *PolicySet
+		PolicySet                  *PolicySet
 	}
 )
 
