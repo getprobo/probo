@@ -16,6 +16,10 @@ import (
 	"go.probo.inc/probo/pkg/page"
 )
 
+type AssumeOrganizationSessionResult interface {
+	IsAssumeOrganizationSessionResult()
+}
+
 type Node interface {
 	IsNode()
 	GetID() gid.GID
@@ -40,6 +44,14 @@ type Application struct {
 	Name                  string        `json:"name"`
 	Description           string        `json:"description"`
 	AvailableAccessLevels []AccessLevel `json:"availableAccessLevels"`
+}
+
+type AssumeOrganizationSessionInput struct {
+	OrganizationID gid.GID `json:"organizationId"`
+}
+
+type AssumeOrganizationSessionPayload struct {
+	Result AssumeOrganizationSessionResult `json:"result"`
 }
 
 type ChangeEmailInput struct {
@@ -263,12 +275,25 @@ type Organization struct {
 func (Organization) IsNode()             {}
 func (this Organization) GetID() gid.GID { return this.ID }
 
+type OrganizationSessionCreated struct {
+	Session    *Session    `json:"session"`
+	Membership *Membership `json:"membership"`
+}
+
+func (OrganizationSessionCreated) IsAssumeOrganizationSessionResult() {}
+
 type PageInfo struct {
 	HasNextPage     bool            `json:"hasNextPage"`
 	HasPreviousPage bool            `json:"hasPreviousPage"`
 	StartCursor     *page.CursorKey `json:"startCursor,omitempty"`
 	EndCursor       *page.CursorKey `json:"endCursor,omitempty"`
 }
+
+type PasswordRequired struct {
+	Reason ReauthenticationReason `json:"reason"`
+}
+
+func (PasswordRequired) IsAssumeOrganizationSessionResult() {}
 
 type Permission struct {
 	ID            gid.GID       `json:"id"`
@@ -365,6 +390,13 @@ type SAMLAttributeMappingsInput struct {
 	Role      *string `json:"role,omitempty"`
 }
 
+type SAMLAuthenticationRequired struct {
+	Reason      ReauthenticationReason `json:"reason"`
+	RedirectURL string                 `json:"redirectUrl"`
+}
+
+func (SAMLAuthenticationRequired) IsAssumeOrganizationSessionResult() {}
+
 type SAMLConfiguration struct {
 	ID                      gid.GID                        `json:"id"`
 	EmailDomain             string                         `json:"emailDomain"`
@@ -442,6 +474,7 @@ type SignInInput struct {
 
 type SignInPayload struct {
 	Identity *Identity `json:"identity,omitempty"`
+	Session  *Session  `json:"session,omitempty"`
 }
 
 type SignOutPayload struct {
@@ -815,6 +848,63 @@ func (e *ProvisioningSource) UnmarshalJSON(b []byte) error {
 }
 
 func (e ProvisioningSource) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type ReauthenticationReason string
+
+const (
+	ReauthenticationReasonSessionExpired    ReauthenticationReason = "SESSION_EXPIRED"
+	ReauthenticationReasonSensitiveAction   ReauthenticationReason = "SENSITIVE_ACTION"
+	ReauthenticationReasonPolicyRequirement ReauthenticationReason = "POLICY_REQUIREMENT"
+)
+
+var AllReauthenticationReason = []ReauthenticationReason{
+	ReauthenticationReasonSessionExpired,
+	ReauthenticationReasonSensitiveAction,
+	ReauthenticationReasonPolicyRequirement,
+}
+
+func (e ReauthenticationReason) IsValid() bool {
+	switch e {
+	case ReauthenticationReasonSessionExpired, ReauthenticationReasonSensitiveAction, ReauthenticationReasonPolicyRequirement:
+		return true
+	}
+	return false
+}
+
+func (e ReauthenticationReason) String() string {
+	return string(e)
+}
+
+func (e *ReauthenticationReason) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = ReauthenticationReason(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid ReauthenticationReason", str)
+	}
+	return nil
+}
+
+func (e ReauthenticationReason) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *ReauthenticationReason) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e ReauthenticationReason) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil
