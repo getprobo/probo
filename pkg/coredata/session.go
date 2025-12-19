@@ -35,6 +35,8 @@ type (
 		TenantID        *gid.TenantID `db:"tenant_id"`
 		ParentSessionID *gid.GID      `db:"parent_session_id"`
 		Data            SessionData   `db:"data"`
+		AuthMethod      AuthMethod    `db:"auth_method"`
+		AuthenticatedAt time.Time     `db:"authenticated_at"`
 		UserAgent       string        `db:"user_agent"`
 		IPAddress       net.IP        `db:"ip_address"`
 		ExpireReason    *ExpireReason `db:"expire_reason"`
@@ -45,25 +47,26 @@ type (
 
 	Sessions []*Session
 
-	SessionData struct {
-		PasswordAuthenticated bool                    `json:"password_authenticated"`
-		SAMLAuthenticatedOrgs map[string]SAMLAuthInfo `json:"saml_authenticated_orgs,omitempty"`
-	}
+	SessionData struct{}
 
-	SAMLAuthInfo struct {
-		AuthenticatedAt time.Time `json:"authenticated_at"`
-		SAMLConfigID    gid.GID   `json:"saml_config_id"`
-		SAMLSubject     string    `json:"saml_subject"`
-	}
+	AuthMethod string
 )
 
-func NewRootSession(userID gid.GID, duration time.Duration) *Session {
+const (
+	AuthMethodPassword AuthMethod = "PASSWORD"
+	AuthMethodSAML     AuthMethod = "SAML"
+)
+
+func NewRootSession(userID gid.GID, method AuthMethod, duration time.Duration) *Session {
+	now := time.Now()
 	return &Session{
-		ID:        gid.New(gid.NilTenant, SessionEntityType),
-		UserID:    userID,
-		ExpiredAt: time.Now().Add(duration),
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		ID:              gid.New(gid.NilTenant, SessionEntityType),
+		UserID:          userID,
+		ExpiredAt:       now.Add(duration),
+		AuthMethod:      method,
+		AuthenticatedAt: now,
+		CreatedAt:       now,
+		UpdatedAt:       now,
 	}
 }
 
@@ -100,6 +103,8 @@ SELECT
     tenant_id,
     data,
     parent_session_id,
+    auth_method,
+    authenticated_at,
     expire_reason,
     user_agent,
     ip_address,
@@ -139,13 +144,15 @@ func (s *Session) Insert(
 ) error {
 	q := `
 INSERT INTO
-    sessions (id, user_id, tenant_id, data, parent_session_id, expire_reason, user_agent, ip_address, expired_at, created_at, updated_at)
+    sessions (id, user_id, tenant_id, data, parent_session_id, auth_method, authenticated_at, expire_reason, user_agent, ip_address, expired_at, created_at, updated_at)
 VALUES (
     @session_id,
     @user_id,
     @tenant_id,
     @data,
     @parent_session_id,
+    @auth_method,
+    @authenticated_at,
     @expire_reason,
     @user_agent,
     @ip_address,
@@ -161,6 +168,8 @@ VALUES (
 		"tenant_id":         s.TenantID,
 		"data":              s.Data,
 		"parent_session_id": s.ParentSessionID,
+		"auth_method":       s.AuthMethod,
+		"authenticated_at":  s.AuthenticatedAt,
 		"expire_reason":     s.ExpireReason,
 		"user_agent":        s.UserAgent,
 		"ip_address":        s.IPAddress,
@@ -220,6 +229,8 @@ SELECT
     tenant_id,
     data,
     parent_session_id,
+    auth_method,
+    authenticated_at,
     expire_reason,
     user_agent,
     ip_address,
@@ -309,6 +320,8 @@ SELECT
 	tenant_id,
 	data,
 	parent_session_id,
+	auth_method,
+	authenticated_at,
 	expire_reason,
 	user_agent,
 	ip_address,

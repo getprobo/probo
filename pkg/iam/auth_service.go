@@ -172,7 +172,7 @@ func (s *AuthService) CreateIdentityFromInvitation(
 				return fmt.Errorf("cannot insert user: %w", err)
 			}
 
-			session = coredata.NewRootSession(user.ID, s.sessionDuration)
+			session = coredata.NewRootSession(user.ID, coredata.AuthMethodPassword, s.sessionDuration)
 			err = session.Insert(ctx, tx)
 			if err != nil {
 				return fmt.Errorf("cannot insert session: %w", err)
@@ -330,17 +330,7 @@ func (s AuthService) CreateIdentityWithPassword(
 			UpdatedAt:            now,
 		}
 
-		session = &coredata.Session{
-			ID:     gid.New(gid.NilTenant, coredata.SessionEntityType),
-			UserID: user.ID,
-			Data: coredata.SessionData{
-				PasswordAuthenticated: true,
-				SAMLAuthenticatedOrgs: make(map[string]coredata.SAMLAuthInfo),
-			},
-			ExpiredAt: now.Add(24 * time.Hour * 7), // 7 days, TODO must to be hardcoded here
-			CreatedAt: now,
-			UpdatedAt: now,
-		}
+		session = coredata.NewRootSession(user.ID, coredata.AuthMethodPassword, 24*time.Hour*7)
 	)
 
 	confirmationToken, err := statelesstoken.NewToken(
@@ -416,7 +406,7 @@ func (s AuthService) OpenSessionWithSAML(ctx context.Context, userID gid.GID, or
 	err := s.pg.WithTx(
 		ctx,
 		func(conn pg.Conn) (err error) {
-			session = coredata.NewRootSession(userID, s.sessionDuration)
+			session = coredata.NewRootSession(userID, coredata.AuthMethodSAML, s.sessionDuration)
 			err = session.Insert(ctx, conn)
 			if err != nil {
 				return fmt.Errorf("cannot insert session: %w", err)
@@ -474,7 +464,7 @@ func (s AuthService) OpenSessionWithPassword(ctx context.Context, email mail.Add
 				return NewInvalidCredentialsError("invalid email or password")
 			}
 
-			session = coredata.NewRootSession(user.ID, s.sessionDuration)
+			session = coredata.NewRootSession(user.ID, coredata.AuthMethodPassword, s.sessionDuration)
 			err = session.Insert(ctx, conn)
 			if err != nil {
 				return fmt.Errorf("cannot insert session: %w", err)
