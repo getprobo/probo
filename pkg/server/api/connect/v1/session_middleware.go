@@ -49,12 +49,6 @@ func NewSessionMiddleware(svc *iam.Service, cookieConfig securecookie.Config) fu
 			func(w http.ResponseWriter, r *http.Request) {
 				ctx := r.Context()
 
-				apiKey := APIKeyFromContext(ctx)
-				if apiKey != nil {
-					httpserver.RenderError(w, http.StatusBadRequest, errors.New("session authentication cannot be used with API key authentication"))
-					return
-				}
-
 				cookieValue, err := securecookie.Get(r, cookieConfig)
 				if err != nil {
 					next.ServeHTTP(w, r)
@@ -65,6 +59,12 @@ func NewSessionMiddleware(svc *iam.Service, cookieConfig securecookie.Config) fu
 				if err != nil {
 					securecookie.Clear(w, cookieConfig)
 					next.ServeHTTP(w, r)
+					return
+				}
+
+				apiKey := APIKeyFromContext(ctx)
+				if sessionID != gid.Nil && apiKey != nil {
+					httpserver.RenderError(w, http.StatusBadRequest, errors.New("session authentication cannot be used with API key authentication"))
 					return
 				}
 
