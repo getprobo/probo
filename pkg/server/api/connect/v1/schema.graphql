@@ -59,7 +59,7 @@ type Query {
 }
 
 type Mutation {
-  signIn(input: SignInInput!): SignInPayload! @session(required: NONE)
+  signIn(input: SignInInput!): SignInPayload! @session(required: OPTIONAL)
   signUp(input: SignUpInput!): SignUpPayload! @session(required: NONE)
   signOut: SignOutPayload! @session(required: PRESENT)
   signUpFromInvitation(
@@ -75,6 +75,9 @@ type Mutation {
     @session(required: PRESENT)
   changeEmail(input: ChangeEmailInput!): ChangeEmailPayload!
     @session(required: PRESENT)
+  assumeOrganizationSession(
+    input: AssumeOrganizationSessionInput!
+  ): AssumeOrganizationSessionPayload! @session(required: PRESENT)
 
   updateIdentityProfile(
     input: UpdateIdentityProfileInput!
@@ -417,6 +420,12 @@ enum ProvisioningSource {
   SAML
 }
 
+enum ReauthenticationReason {
+  SESSION_EXPIRED
+  SENSITIVE_ACTION
+  POLICY_REQUIREMENT
+}
+
 enum MembershipOrderField
   @goModel(model: "go.probo.inc/probo/pkg/coredata.MembershipOrderField") {
   ROLE
@@ -579,6 +588,10 @@ input ChangeEmailInput {
   password: String!
 }
 
+input AssumeOrganizationSessionInput {
+  organizationId: ID!
+}
+
 input DeactivateAccountInput {
   password: String!
 }
@@ -709,6 +722,7 @@ input DeleteSAMLConfigurationInput {
 
 type SignInPayload {
   identity: Identity
+  session: Session
 }
 
 type SignUpPayload {
@@ -741,6 +755,29 @@ type ChangePasswordPayload {
 
 type ChangeEmailPayload {
   success: Boolean!
+}
+
+union AssumeOrganizationSessionResult =
+  | OrganizationSessionCreated
+  | PasswordRequired
+  | SAMLAuthenticationRequired
+
+type OrganizationSessionCreated {
+  session: Session!
+  membership: Membership!
+}
+
+type PasswordRequired {
+  reason: ReauthenticationReason!
+}
+
+type SAMLAuthenticationRequired {
+  reason: ReauthenticationReason!
+  redirectUrl: String!
+}
+
+type AssumeOrganizationSessionPayload {
+  result: AssumeOrganizationSessionResult!
 }
 
 type DeactivateAccountPayload {

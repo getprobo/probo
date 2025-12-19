@@ -215,13 +215,8 @@ func (r *mutationResolver) SignIn(ctx context.Context, input types.SignInInput) 
 	)
 
 	return &types.SignInPayload{
-		Identity: &types.Identity{
-			ID:            user.ID,
-			Email:         user.EmailAddress,
-			EmailVerified: user.EmailAddressVerified,
-			CreatedAt:     user.CreatedAt,
-			UpdatedAt:     user.UpdatedAt,
-		},
+		Identity: types.NewIdentity(user),
+		Session:  types.NewSession(session),
 	}, nil
 }
 
@@ -462,6 +457,50 @@ func (r *mutationResolver) ChangeEmail(ctx context.Context, input types.ChangeEm
 
 	return &types.ChangeEmailPayload{
 		Success: true,
+	}, nil
+}
+
+// AssumeOrganizationSession is the resolver for the assumeOrganizationSession field.
+func (r *mutationResolver) AssumeOrganizationSession(ctx context.Context, input types.AssumeOrganizationSessionInput) (*types.AssumeOrganizationSessionPayload, error) {
+	rootSession := SessionFromContext(ctx)
+
+	childSession, membership, err := r.iam.SessionService.AssumeOrganizationSession(ctx, rootSession.ID, input.OrganizationID)
+	if err != nil {
+		var (
+			errMembershipNotFound         *iam.ErrMembershipNotFound
+			errPasswordRequired           *iam.ErrPasswordRequired
+			errSAMLAuthenticationRequired *iam.ErrSAMLAuthenticationRequired
+		)
+
+		switch {
+		case errors.As(err, &errMembershipNotFound):
+			return nil, gqlutils.NotFound(err)
+
+		case errors.As(err, &errPasswordRequired):
+			return &types.AssumeOrganizationSessionPayload{
+				Result: types.PasswordRequired{
+					Reason: types.ReauthenticationReason(errPasswordRequired.Reason),
+				},
+			}, nil
+
+		case errors.As(err, &errSAMLAuthenticationRequired):
+			return &types.AssumeOrganizationSessionPayload{
+				Result: types.SAMLAuthenticationRequired{
+					Reason:      types.ReauthenticationReason(errSAMLAuthenticationRequired.Reason),
+					RedirectURL: errSAMLAuthenticationRequired.RedirectURL,
+				},
+			}, nil
+
+		default:
+			panic(fmt.Errorf("cannot assume organization session: %w", err))
+		}
+	}
+
+	return &types.AssumeOrganizationSessionPayload{
+		Result: types.OrganizationSessionCreated{
+			Session:    types.NewSession(childSession),
+			Membership: types.NewMembership(membership),
+		},
 	}, nil
 }
 
@@ -1061,3 +1100,15 @@ type personalAPIKeyConnectionResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type sAMLConfigurationConnectionResolver struct{ *Resolver }
 type sessionConnectionResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//    it when you're done.
+//  - You have helper methods in this file. Move them out to keep these resolver files clean.
+/*
+	func (r *mutationResolver) SignInWithSession(ctx context.Context, input types.SignInWithSessionInput) (*types.SignInWithSessionPayload, error) {
+	panic(fmt.Errorf("not implemented: SignInWithSession - signInWithSession"))
+}
+*/
