@@ -51,6 +51,10 @@ import {
 import { OrganizationsPageQuery } from "./pages/iam/organizations/OrganizationsPageQuery.tsx";
 import { OrganizationLayoutQuery } from "./pages/iam/organizations/OrganizationLayoutQuery.tsx";
 
+const NewOrganizationPage = lazy(
+  () => import("./pages/iam/organizations/NewOrganizationPage"),
+);
+
 /**
  * Top level error boundary
  */
@@ -109,11 +113,7 @@ const routes = [
   },
   {
     path: "/",
-    Component: () => (
-      <RelayEnvironmentProvider environment={consoleEnvironment}>
-        <CenteredLayout />
-      </RelayEnvironmentProvider>
-    ),
+    Component: CenteredLayout,
     Fallback: CenteredLayoutSkeleton,
     ErrorBoundary: ErrorBoundary,
     children: [
@@ -125,12 +125,14 @@ const routes = [
           </RelayEnvironmentProvider>
         ),
       },
-      // {
-      //   path: "organizations/new",
-      //   Component: lazy(
-      //     () => import("./pages/organizations/NewOrganizationPage")
-      //   ),
-      // },
+      {
+        path: "organizations/new",
+        Component: () => (
+          <RelayEnvironmentProvider environment={connectEnvironment}>
+            <NewOrganizationPage />
+          </RelayEnvironmentProvider>
+        ),
+      },
       {
         path: "documents/signing-requests",
         Component: lazy(

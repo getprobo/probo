@@ -101,14 +101,18 @@ func (req CreateOrganizationRequest) Validate() error {
 	v := validator.New()
 	fv := filevalidation.NewValidator(filevalidation.WithCategories(filevalidation.CategoryImage))
 
-	err := fv.Validate(req.LogoFile.Filename, req.LogoFile.ContentType, req.LogoFile.Size)
-	if err != nil {
-		return fmt.Errorf("invalid logo file: %w", err)
+	if req.LogoFile != nil {
+		err := fv.Validate(req.LogoFile.Filename, req.LogoFile.ContentType, req.LogoFile.Size)
+		if err != nil {
+			return fmt.Errorf("invalid logo file: %w", err)
+		}
 	}
 
-	err = fv.Validate(req.HorizontalLogoFile.Filename, req.HorizontalLogoFile.ContentType, req.HorizontalLogoFile.Size)
-	if err != nil {
-		return fmt.Errorf("invalid horizontal logo file: %w", err)
+	if req.HorizontalLogoFile != nil {
+		err := fv.Validate(req.HorizontalLogoFile.Filename, req.HorizontalLogoFile.ContentType, req.HorizontalLogoFile.Size)
+		if err != nil {
+			return fmt.Errorf("invalid horizontal logo file: %w", err)
+		}
 	}
 
 	v.Check(req.Name, "name", validator.Required(), validator.SafeTextNoNewLine(255))
@@ -378,7 +382,11 @@ func (s *OrganizationService) InviteMember(
 	return invitation, nil
 }
 
-func (s *OrganizationService) CreateOrganization(ctx context.Context, identityID gid.GID, req *CreateOrganizationRequest) (*coredata.Organization, error) {
+func (s *OrganizationService) CreateOrganization(
+	ctx context.Context,
+	identityID gid.GID,
+	req *CreateOrganizationRequest,
+) (*coredata.Organization, error) {
 	if err := req.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)
 	}
