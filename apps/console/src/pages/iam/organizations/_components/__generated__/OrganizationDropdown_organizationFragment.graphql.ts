@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<06f02e43b64c316083067f5b3978a08a>>
+ * @generated SignedSource<<1d2465517ea2dcfa99fb3dd8757fe980>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,20 +10,20 @@
 
 import { ReaderFragment } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
-export type OrganizationDropdownFragment$data = {
+export type OrganizationDropdown_organizationFragment$data = {
   readonly name: string;
-  readonly " $fragmentType": "OrganizationDropdownFragment";
+  readonly " $fragmentType": "OrganizationDropdown_organizationFragment";
 };
-export type OrganizationDropdownFragment$key = {
-  readonly " $data"?: OrganizationDropdownFragment$data;
-  readonly " $fragmentSpreads": FragmentRefs<"OrganizationDropdownFragment">;
+export type OrganizationDropdown_organizationFragment$key = {
+  readonly " $data"?: OrganizationDropdown_organizationFragment$data;
+  readonly " $fragmentSpreads": FragmentRefs<"OrganizationDropdown_organizationFragment">;
 };
 
 const node: ReaderFragment = {
   "argumentDefinitions": [],
   "kind": "Fragment",
   "metadata": null,
-  "name": "OrganizationDropdownFragment",
+  "name": "OrganizationDropdown_organizationFragment",
   "selections": [
     {
       "alias": null,
@@ -37,6 +37,6 @@ const node: ReaderFragment = {
   "abstractKey": null
 };
 
-(node as any).hash = "9f19581f86736e6345912284668a8f25";
+(node as any).hash = "8e6d0c702f821670315b5bde55e2556a";
 
 export default node;

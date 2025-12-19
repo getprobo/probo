@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<1d82d885a77675a330799121edb5cb69>>
+ * @generated SignedSource<<09fbc762db2d00eb944a0ef9afe3756d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -15,13 +15,13 @@ export type OrganizationLayoutQuery$variables = {
 };
 export type OrganizationLayoutQuery$data = {
   readonly organization: {
-    readonly " $fragmentSpreads": FragmentRefs<"OrganizationDropdownFragment">;
+    readonly " $fragmentSpreads": FragmentRefs<"OrganizationDropdown_organizationFragment">;
   };
   readonly viewer: {
     readonly pendingInvitations: {
-      readonly totalCount: number | null | undefined;
-    } | null | undefined;
-    readonly " $fragmentSpreads": FragmentRefs<"SessionDropdownFragment">;
+      readonly totalCount: number;
+    };
+    readonly " $fragmentSpreads": FragmentRefs<"OrganizationDropdown_viewerFragment" | "SessionDropdownFragment">;
   };
 };
 export type OrganizationLayoutQuery = {
@@ -47,19 +47,8 @@ v1 = [
 v2 = {
   "alias": null,
   "args": null,
-  "concreteType": "InvitationConnection",
-  "kind": "LinkedField",
-  "name": "pendingInvitations",
-  "plural": false,
-  "selections": [
-    {
-      "alias": null,
-      "args": null,
-      "kind": "ScalarField",
-      "name": "totalCount",
-      "storageKey": null
-    }
-  ],
+  "kind": "ScalarField",
+  "name": "totalCount",
   "storageKey": null
 },
 v3 = [
@@ -99,7 +88,7 @@ return {
                 {
                   "args": null,
                   "kind": "FragmentSpread",
-                  "name": "OrganizationDropdownFragment"
+                  "name": "OrganizationDropdown_organizationFragment"
                 }
               ],
               "type": "Organization",
@@ -120,7 +109,31 @@ return {
           "name": "viewer",
           "plural": false,
           "selections": [
-            (v2/*: any*/),
+            {
+              "args": null,
+              "kind": "FragmentSpread",
+              "name": "OrganizationDropdown_viewerFragment"
+            },
+            {
+              "kind": "RequiredField",
+              "field": {
+                "alias": null,
+                "args": null,
+                "concreteType": "InvitationConnection",
+                "kind": "LinkedField",
+                "name": "pendingInvitations",
+                "plural": false,
+                "selections": [
+                  {
+                    "kind": "RequiredField",
+                    "field": (v2/*: any*/),
+                    "action": "THROW"
+                  }
+                ],
+                "storageKey": null
+              },
+              "action": "THROW"
+            },
             {
               "args": (v3/*: any*/),
               "kind": "FragmentSpread",
@@ -182,7 +195,18 @@ return {
         "name": "viewer",
         "plural": false,
         "selections": [
-          (v2/*: any*/),
+          {
+            "alias": null,
+            "args": null,
+            "concreteType": "InvitationConnection",
+            "kind": "LinkedField",
+            "name": "pendingInvitations",
+            "plural": false,
+            "selections": [
+              (v2/*: any*/)
+            ],
+            "storageKey": null
+          },
           {
             "alias": null,
             "args": null,
@@ -223,16 +247,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "0ebb386f89d19888f18a05c8dc573895",
+    "cacheID": "ca7f41668eb74024237351d0e076819e",
     "id": null,
     "metadata": {},
     "name": "OrganizationLayoutQuery",
     "operationKind": "query",
-    "text": "query OrganizationLayoutQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      ...OrganizationDropdownFragment\n    }\n    id\n  }\n  viewer {\n    pendingInvitations {\n      totalCount\n    }\n    ...SessionDropdownFragment_4xMPKw\n    id\n  }\n}\n\nfragment OrganizationDropdownFragment on Organization {\n  name\n}\n\nfragment SessionDropdownFragment_4xMPKw on Identity {\n  email\n  profileFor(organizationId: $organizationId) {\n    firstName\n    lastName\n    id\n  }\n}\n"
+    "text": "query OrganizationLayoutQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      ...OrganizationDropdown_organizationFragment\n    }\n    id\n  }\n  viewer {\n    ...OrganizationDropdown_viewerFragment\n    pendingInvitations {\n      totalCount\n    }\n    ...SessionDropdownFragment_4xMPKw\n    id\n  }\n}\n\nfragment OrganizationDropdown_organizationFragment on Organization {\n  name\n}\n\nfragment OrganizationDropdown_viewerFragment on Identity {\n  pendingInvitations {\n    totalCount\n  }\n}\n\nfragment SessionDropdownFragment_4xMPKw on Identity {\n  email\n  profileFor(organizationId: $organizationId) {\n    firstName\n    lastName\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "d3d91888eabb36cc450ca585757b21c7";
+(node as any).hash = "81b8eb0af21d649268e30c80d16226de";
 
 export default node;
