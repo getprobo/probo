@@ -16,11 +16,11 @@ import { parseDate } from "@probo/helpers";
 
 const fragment = graphql`
   fragment MembershipCardFragment on Membership {
-    activeSession {
+    lastSession {
       id
       expiresAt
     }
-    organization {
+    organization @required(action: THROW) {
       id
       name
       logoUrl
@@ -36,11 +36,13 @@ export function MembershipCard(props: MembershipCardProps) {
   const { fKey } = props;
   const { __ } = useTranslate();
 
-  const { activeSession, organization } =
-    useFragment<MembershipCardFragment$key>(fragment, fKey);
-  const isAuthenticated = !!activeSession;
+  const { lastSession, organization } = useFragment<MembershipCardFragment$key>(
+    fragment,
+    fKey,
+  );
+  const isAuthenticated = !!lastSession;
   const isExpired =
-    activeSession && parseDate(activeSession.expiresAt) >= new Date();
+    lastSession && parseDate(lastSession.expiresAt) >= new Date();
 
   // Determine target URL and button text based on auth status
   // const targetUrl = isAuthenticated

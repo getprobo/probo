@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<4660f07fbf06d0125ce01cd54019f389>>
+ * @generated SignedSource<<ef66c9eab961d5c3c28669629b82cfd6>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,21 +10,21 @@
 
 import { ReaderFragment } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
-export type MembershipCardFragment$data = {
+export type OrganizationDropdownMenuItemFragment$data = {
+  readonly id: string;
   readonly lastSession: {
     readonly expiresAt: any;
     readonly id: string;
   } | null | undefined;
   readonly organization: {
-    readonly id: string;
     readonly logoUrl: string | null | undefined;
     readonly name: string;
   };
-  readonly " $fragmentType": "MembershipCardFragment";
+  readonly " $fragmentType": "OrganizationDropdownMenuItemFragment";
 };
-export type MembershipCardFragment$key = {
-  readonly " $data"?: MembershipCardFragment$data;
-  readonly " $fragmentSpreads": FragmentRefs<"MembershipCardFragment">;
+export type OrganizationDropdownMenuItemFragment$key = {
+  readonly " $data"?: OrganizationDropdownMenuItemFragment$data;
+  readonly " $fragmentSpreads": FragmentRefs<"OrganizationDropdownMenuItemFragment">;
 };
 
 const node: ReaderFragment = (function(){
@@ -39,8 +39,9 @@ return {
   "argumentDefinitions": [],
   "kind": "Fragment",
   "metadata": null,
-  "name": "MembershipCardFragment",
+  "name": "OrganizationDropdownMenuItemFragment",
   "selections": [
+    (v0/*: any*/),
     {
       "alias": null,
       "args": null,
@@ -70,19 +71,18 @@ return {
         "name": "organization",
         "plural": false,
         "selections": [
-          (v0/*: any*/),
           {
             "alias": null,
             "args": null,
             "kind": "ScalarField",
-            "name": "name",
+            "name": "logoUrl",
             "storageKey": null
           },
           {
             "alias": null,
             "args": null,
             "kind": "ScalarField",
-            "name": "logoUrl",
+            "name": "name",
             "storageKey": null
           }
         ],
@@ -96,6 +96,6 @@ return {
 };
 })();
 
-(node as any).hash = "5a2532aed755a94df49c2f9ce0929a1f";
+(node as any).hash = "6be7f721fd63d6d758b479e58c68b754";
 
 export default node;

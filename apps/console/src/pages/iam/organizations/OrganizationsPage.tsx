@@ -9,15 +9,12 @@ import {
 } from "@probo/ui";
 import { useMemo, useState } from "react";
 import { InvitationCard } from "./_components/InvitationCard";
-import type {
-  OrganizationsQuery,
-  OrganizationsQuery$data,
-} from "./__generated__/OrganizationsQuery.graphql";
-import { organizationsQuery } from "./OrganizationsQuery";
+import { organizationsPageQuery } from "./OrganizationsPageQuery";
 import { MembershipCard } from "./_components/MembershipCard";
+import type { OrganizationsPageQuery } from "./__generated__/OrganizationsPageQuery.graphql";
 
 interface PageProps {
-  queryRef: PreloadedQuery<OrganizationsQuery>;
+  queryRef: PreloadedQuery<OrganizationsPageQuery>;
 }
 
 export default function Page(props: PageProps) {
@@ -30,11 +27,12 @@ export default function Page(props: PageProps) {
       memberships: { edges: initialMemberships },
       pendingInvitations: { edges: invitations },
     },
-  } = usePreloadedQuery<OrganizationsQuery>(organizationsQuery, queryRef);
+  } = usePreloadedQuery<OrganizationsPageQuery>(
+    organizationsPageQuery,
+    queryRef,
+  );
 
-  const memberships = useMemo<
-    OrganizationsQuery$data["viewer"]["memberships"]["edges"]
-  >(() => {
+  const memberships = useMemo(() => {
     if (!search.trim()) {
       return initialMemberships;
     }

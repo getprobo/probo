@@ -4,7 +4,6 @@ import {
   redirect,
   useRouteError,
 } from "react-router";
-import { MainLayout } from "./layouts/MainLayout";
 import { EmployeeLayout } from "./layouts/EmployeeLayout";
 import { AuthLayout, CenteredLayout, CenteredLayoutSkeleton } from "@probo/ui";
 import { PageSkeleton } from "./components/skeletons/PageSkeleton.tsx";
@@ -49,7 +48,8 @@ import {
   UnAuthenticatedError,
   UnauthorizedError,
 } from "@probo/relay";
-import { OrganizationsQuery } from "./pages/iam/organizations/OrganizationsQuery.tsx";
+import { OrganizationsPageQuery } from "./pages/iam/organizations/OrganizationsPageQuery.tsx";
+import { OrganizationLayoutQuery } from "./pages/iam/organizations/OrganizationLayoutQuery.tsx";
 
 /**
  * Top level error boundary
@@ -121,7 +121,7 @@ const routes = [
         index: true,
         Component: () => (
           <RelayEnvironmentProvider environment={connectEnvironment}>
-            <OrganizationsQuery />
+            <OrganizationsPageQuery />
           </RelayEnvironmentProvider>
         ),
       },
@@ -184,8 +184,8 @@ const routes = [
   {
     path: "/organizations/:organizationId",
     Component: () => (
-      <RelayEnvironmentProvider environment={consoleEnvironment}>
-        <MainLayout />
+      <RelayEnvironmentProvider environment={connectEnvironment}>
+        <OrganizationLayoutQuery />
       </RelayEnvironmentProvider>
     ),
     ErrorBoundary: ErrorBoundary,

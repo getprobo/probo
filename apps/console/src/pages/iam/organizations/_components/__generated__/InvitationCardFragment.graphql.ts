@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<5193da6ee4b5da0bed510c255c3407b1>>
+ * @generated SignedSource<<acb8bfd444063a884a8a3a35eed8971f>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -56,23 +56,27 @@ return {
       "storageKey": null
     },
     {
-      "alias": null,
-      "args": null,
-      "concreteType": "Organization",
-      "kind": "LinkedField",
-      "name": "organization",
-      "plural": false,
-      "selections": [
-        (v0/*: any*/),
-        {
-          "alias": null,
-          "args": null,
-          "kind": "ScalarField",
-          "name": "name",
-          "storageKey": null
-        }
-      ],
-      "storageKey": null
+      "kind": "RequiredField",
+      "field": {
+        "alias": null,
+        "args": null,
+        "concreteType": "Organization",
+        "kind": "LinkedField",
+        "name": "organization",
+        "plural": false,
+        "selections": [
+          (v0/*: any*/),
+          {
+            "alias": null,
+            "args": null,
+            "kind": "ScalarField",
+            "name": "name",
+            "storageKey": null
+          }
+        ],
+        "storageKey": null
+      },
+      "action": "THROW"
     }
   ],
   "type": "Invitation",
@@ -80,6 +84,6 @@ return {
 };
 })();
 
-(node as any).hash = "1f61b5f07abc69ad33c880bc39cd0e96";
+(node as any).hash = "57aedeabc62e474c6e5b995af1d31888";
 
 export default node;

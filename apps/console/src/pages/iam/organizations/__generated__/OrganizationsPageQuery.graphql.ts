@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<97119b2ea90f368155a13a32941b99d3>>
+ * @generated SignedSource<<6ac0b24d615666de1a5ea1c751095e6d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,8 +10,8 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
-export type OrganizationsQuery$variables = Record<PropertyKey, never>;
-export type OrganizationsQuery$data = {
+export type OrganizationsPageQuery$variables = Record<PropertyKey, never>;
+export type OrganizationsPageQuery$data = {
   readonly viewer: {
     readonly memberships: {
       readonly edges: ReadonlyArray<{
@@ -34,9 +34,9 @@ export type OrganizationsQuery$data = {
     };
   };
 };
-export type OrganizationsQuery = {
-  response: OrganizationsQuery$data;
-  variables: OrganizationsQuery$variables;
+export type OrganizationsPageQuery = {
+  response: OrganizationsPageQuery$data;
+  variables: OrganizationsPageQuery$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -74,7 +74,7 @@ return {
     "argumentDefinitions": [],
     "kind": "Fragment",
     "metadata": null,
-    "name": "OrganizationsQuery",
+    "name": "OrganizationsPageQuery",
     "selections": [
       {
         "kind": "RequiredField",
@@ -87,94 +87,122 @@ return {
           "plural": false,
           "selections": [
             {
-              "alias": null,
-              "args": (v0/*: any*/),
-              "concreteType": "MembershipConnection",
-              "kind": "LinkedField",
-              "name": "memberships",
-              "plural": false,
-              "selections": [
-                {
-                  "alias": null,
-                  "args": null,
-                  "concreteType": "MembershipEdge",
-                  "kind": "LinkedField",
-                  "name": "edges",
-                  "plural": true,
-                  "selections": [
-                    {
+              "kind": "RequiredField",
+              "field": {
+                "alias": null,
+                "args": (v0/*: any*/),
+                "concreteType": "MembershipConnection",
+                "kind": "LinkedField",
+                "name": "memberships",
+                "plural": false,
+                "selections": [
+                  {
+                    "kind": "RequiredField",
+                    "field": {
                       "alias": null,
                       "args": null,
-                      "concreteType": "Membership",
+                      "concreteType": "MembershipEdge",
                       "kind": "LinkedField",
-                      "name": "node",
-                      "plural": false,
+                      "name": "edges",
+                      "plural": true,
                       "selections": [
-                        (v1/*: any*/),
                         {
-                          "args": null,
-                          "kind": "FragmentSpread",
-                          "name": "MembershipCardFragment"
-                        },
-                        {
-                          "alias": null,
-                          "args": null,
-                          "concreteType": "Organization",
-                          "kind": "LinkedField",
-                          "name": "organization",
-                          "plural": false,
-                          "selections": [
-                            (v2/*: any*/)
-                          ],
-                          "storageKey": null
+                          "kind": "RequiredField",
+                          "field": {
+                            "alias": null,
+                            "args": null,
+                            "concreteType": "Membership",
+                            "kind": "LinkedField",
+                            "name": "node",
+                            "plural": false,
+                            "selections": [
+                              (v1/*: any*/),
+                              {
+                                "args": null,
+                                "kind": "FragmentSpread",
+                                "name": "MembershipCardFragment"
+                              },
+                              {
+                                "kind": "RequiredField",
+                                "field": {
+                                  "alias": null,
+                                  "args": null,
+                                  "concreteType": "Organization",
+                                  "kind": "LinkedField",
+                                  "name": "organization",
+                                  "plural": false,
+                                  "selections": [
+                                    (v2/*: any*/)
+                                  ],
+                                  "storageKey": null
+                                },
+                                "action": "THROW"
+                              }
+                            ],
+                            "storageKey": null
+                          },
+                          "action": "THROW"
                         }
                       ],
                       "storageKey": null
-                    }
-                  ],
-                  "storageKey": null
-                }
-              ],
-              "storageKey": "memberships(first:1000,orderBy:{\"direction\":\"DESC\",\"field\":\"CREATED_AT\"})"
+                    },
+                    "action": "THROW"
+                  }
+                ],
+                "storageKey": "memberships(first:1000,orderBy:{\"direction\":\"DESC\",\"field\":\"CREATED_AT\"})"
+              },
+              "action": "THROW"
             },
             {
-              "alias": null,
-              "args": (v0/*: any*/),
-              "concreteType": "InvitationConnection",
-              "kind": "LinkedField",
-              "name": "pendingInvitations",
-              "plural": false,
-              "selections": [
-                {
-                  "alias": null,
-                  "args": null,
-                  "concreteType": "InvitationEdge",
-                  "kind": "LinkedField",
-                  "name": "edges",
-                  "plural": true,
-                  "selections": [
-                    {
+              "kind": "RequiredField",
+              "field": {
+                "alias": null,
+                "args": (v0/*: any*/),
+                "concreteType": "InvitationConnection",
+                "kind": "LinkedField",
+                "name": "pendingInvitations",
+                "plural": false,
+                "selections": [
+                  {
+                    "kind": "RequiredField",
+                    "field": {
                       "alias": null,
                       "args": null,
-                      "concreteType": "Invitation",
+                      "concreteType": "InvitationEdge",
                       "kind": "LinkedField",
-                      "name": "node",
-                      "plural": false,
+                      "name": "edges",
+                      "plural": true,
                       "selections": [
-                        (v1/*: any*/),
                         {
-                          "args": null,
-                          "kind": "FragmentSpread",
-                          "name": "InvitationCardFragment"
+                          "kind": "RequiredField",
+                          "field": {
+                            "alias": null,
+                            "args": null,
+                            "concreteType": "Invitation",
+                            "kind": "LinkedField",
+                            "name": "node",
+                            "plural": false,
+                            "selections": [
+                              (v1/*: any*/),
+                              {
+                                "args": null,
+                                "kind": "FragmentSpread",
+                                "name": "InvitationCardFragment"
+                              }
+                            ],
+                            "storageKey": null
+                          },
+                          "action": "THROW"
                         }
                       ],
                       "storageKey": null
-                    }
-                  ],
-                  "storageKey": null
-                }
-              ],
-              "storageKey": "pendingInvitations(first:1000,orderBy:{\"direction\":\"DESC\",\"field\":\"CREATED_AT\"})"
+                    },
+                    "action": "THROW"
+                  }
+                ],
+                "storageKey": "pendingInvitations(first:1000,orderBy:{\"direction\":\"DESC\",\"field\":\"CREATED_AT\"})"
+              },
+              "action": "THROW"
             }
           ],
           "storageKey": null
@@ -189,7 +217,7 @@ return {
   "operation": {
     "argumentDefinitions": [],
     "kind": "Operation",
-    "name": "OrganizationsQuery",
+    "name": "OrganizationsPageQuery",
     "selections": [
       {
         "alias": null,
@@ -229,7 +257,7 @@ return {
                         "args": null,
                         "concreteType": "Session",
                         "kind": "LinkedField",
-                        "name": "activeSession",
+                        "name": "lastSession",
                         "plural": false,
                         "selections": [
                           (v1/*: any*/),
@@ -340,16 +368,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "5dad37a0c652055f81de5bd2c09995c2",
+    "cacheID": "146deb87c5d32960212f323b4f5c792c",
     "id": null,
     "metadata": {},
-    "name": "OrganizationsQuery",
+    "name": "OrganizationsPageQuery",
     "operationKind": "query",
-    "text": "query OrganizationsQuery {\n  viewer {\n    memberships(first: 1000, orderBy: {direction: DESC, field: CREATED_AT}) {\n      edges {\n        node {\n          id\n          ...MembershipCardFragment\n          organization {\n            name\n            id\n          }\n        }\n      }\n    }\n    pendingInvitations(first: 1000, orderBy: {direction: DESC, field: CREATED_AT}) {\n      edges {\n        node {\n          id\n          ...InvitationCardFragment\n        }\n      }\n    }\n    id\n  }\n}\n\nfragment InvitationCardFragment on Invitation {\n  id\n  role\n  createdAt\n  organization {\n    id\n    name\n  }\n}\n\nfragment MembershipCardFragment on Membership {\n  activeSession {\n    id\n    expiresAt\n  }\n  organization {\n    id\n    name\n    logoUrl\n  }\n}\n"
+    "text": "query OrganizationsPageQuery {\n  viewer {\n    memberships(first: 1000, orderBy: {direction: DESC, field: CREATED_AT}) {\n      edges {\n        node {\n          id\n          ...MembershipCardFragment\n          organization {\n            name\n            id\n          }\n        }\n      }\n    }\n    pendingInvitations(first: 1000, orderBy: {direction: DESC, field: CREATED_AT}) {\n      edges {\n        node {\n          id\n          ...InvitationCardFragment\n        }\n      }\n    }\n    id\n  }\n}\n\nfragment InvitationCardFragment on Invitation {\n  id\n  role\n  createdAt\n  organization {\n    id\n    name\n  }\n}\n\nfragment MembershipCardFragment on Membership {\n  lastSession {\n    id\n    expiresAt\n  }\n  organization {\n    id\n    name\n    logoUrl\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "dc4b2e28600292c73ea31b5cb450dba7";
+(node as any).hash = "7c03287e592920408306cac9bfa7fc81";
 
 export default node;

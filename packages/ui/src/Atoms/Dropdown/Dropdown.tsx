@@ -10,15 +10,16 @@ type Props = PropsWithChildren<{
     toggle?: ReactNode;
     className?: string;
     open?: boolean;
+    onOpenChange?: (open: boolean) => void;
 }>;
 
 export const dropdown = tv({
     base: "z-50 p-2 shadow-mid min-w-[8rem] bg-level-1 overflow-y-auto overflow-x-hidden rounded-2xl border-border-low",
 });
 
-export function Dropdown({ children, toggle, className, open }: Props) {
+export function Dropdown({ children, toggle, className, open, onOpenChange }: Props) {
     return (
-        <DropdownMenu.Root open={open}>
+        <DropdownMenu.Root open={open} onOpenChange={onOpenChange}>
             {toggle && (
                 <DropdownMenu.Trigger asChild>{toggle}</DropdownMenu.Trigger>
             )}
