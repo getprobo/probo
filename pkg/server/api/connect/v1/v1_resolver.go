@@ -114,21 +114,21 @@ func (r *invitationResolver) Organization(ctx context.Context, obj *types.Invita
 }
 
 // TotalCount is the resolver for the totalCount field.
-func (r *invitationConnectionResolver) TotalCount(ctx context.Context, obj *types.InvitationConnection) (int, error) {
+func (r *invitationConnectionResolver) TotalCount(ctx context.Context, obj *types.InvitationConnection) (*int, error) {
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
 		count, err := r.iam.OrganizationService.CountInvitations(ctx, obj.ParentID, obj.Filters)
 		if err != nil {
 			panic(fmt.Errorf("cannot count invitations: %w", err))
 		}
-		return count, nil
+		return &count, nil
 	case *identityResolver:
 		count, err := r.iam.AccountService.CountPendingInvitations(ctx, obj.ParentID)
 		if err != nil {
 			panic(fmt.Errorf("cannot count invitations: %w", err))
 		}
 
-		return count, nil
+		return &count, nil
 	}
 
 	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
@@ -164,11 +164,10 @@ func (r *membershipResolver) LastSession(ctx context.Context, obj *types.Members
 	}
 
 	return types.NewSession(childSession), nil
-
 }
 
 // TotalCount is the resolver for the totalCount field.
-func (r *membershipConnectionResolver) TotalCount(ctx context.Context, obj *types.MembershipConnection) (int, error) {
+func (r *membershipConnectionResolver) TotalCount(ctx context.Context, obj *types.MembershipConnection) (*int, error) {
 	switch obj.Resolver.(type) {
 	case *identityResolver:
 		count, err := r.iam.AccountService.CountMemberships(ctx, obj.ParentID)
@@ -176,7 +175,7 @@ func (r *membershipConnectionResolver) TotalCount(ctx context.Context, obj *type
 			panic(fmt.Errorf("cannot count memberships: %w", err))
 		}
 
-		return count, nil
+		return &count, nil
 	}
 
 	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
@@ -871,7 +870,7 @@ func (r *organizationResolver) SamlConfigurations(ctx context.Context, obj *type
 }
 
 // TotalCount is the resolver for the totalCount field.
-func (r *personalAPIKeyConnectionResolver) TotalCount(ctx context.Context, obj *types.PersonalAPIKeyConnection) (int, error) {
+func (r *personalAPIKeyConnectionResolver) TotalCount(ctx context.Context, obj *types.PersonalAPIKeyConnection) (*int, error) {
 	switch obj.Resolver.(type) {
 	case *identityResolver:
 		count, err := r.iam.AccountService.CountPersonalAPIKeys(ctx, obj.ParentID)
@@ -879,7 +878,7 @@ func (r *personalAPIKeyConnectionResolver) TotalCount(ctx context.Context, obj *
 			panic(fmt.Errorf("cannot count personal api keys: %w", err))
 		}
 
-		return count, nil
+		return &count, nil
 	}
 
 	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
@@ -1010,21 +1009,21 @@ func (r *queryResolver) CheckSSOAvailability(ctx context.Context, email string) 
 }
 
 // TotalCount is the resolver for the totalCount field.
-func (r *sAMLConfigurationConnectionResolver) TotalCount(ctx context.Context, obj *types.SAMLConfigurationConnection) (int, error) {
+func (r *sAMLConfigurationConnectionResolver) TotalCount(ctx context.Context, obj *types.SAMLConfigurationConnection) (*int, error) {
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
 		count, err := r.iam.OrganizationService.CountSAMLConfigurations(ctx, obj.ParentID)
 		if err != nil {
 			panic(fmt.Errorf("cannot count saml configurations: %w", err))
 		}
-		return count, nil
+		return &count, nil
 	}
 
 	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
 }
 
 // TotalCount is the resolver for the totalCount field.
-func (r *sessionConnectionResolver) TotalCount(ctx context.Context, obj *types.SessionConnection) (int, error) {
+func (r *sessionConnectionResolver) TotalCount(ctx context.Context, obj *types.SessionConnection) (*int, error) {
 	switch obj.Resolver.(type) {
 	case *identityResolver:
 		count, err := r.iam.AccountService.CountSessions(ctx, obj.ParentID)
@@ -1032,7 +1031,7 @@ func (r *sessionConnectionResolver) TotalCount(ctx context.Context, obj *types.S
 			panic(fmt.Errorf("cannot count sessions: %w", err))
 		}
 
-		return count, nil
+		return &count, nil
 	}
 
 	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))

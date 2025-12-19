@@ -461,7 +461,7 @@ type InvitationResolver interface {
 	Organization(ctx context.Context, obj *types.Invitation) (*types.Organization, error)
 }
 type InvitationConnectionResolver interface {
-	TotalCount(ctx context.Context, obj *types.InvitationConnection) (int, error)
+	TotalCount(ctx context.Context, obj *types.InvitationConnection) (*int, error)
 }
 type MembershipResolver interface {
 	Identity(ctx context.Context, obj *types.Membership) (*types.Identity, error)
@@ -470,7 +470,7 @@ type MembershipResolver interface {
 	LastSession(ctx context.Context, obj *types.Membership) (*types.Session, error)
 }
 type MembershipConnectionResolver interface {
-	TotalCount(ctx context.Context, obj *types.MembershipConnection) (int, error)
+	TotalCount(ctx context.Context, obj *types.MembershipConnection) (*int, error)
 }
 type MutationResolver interface {
 	SignIn(ctx context.Context, input types.SignInInput) (*types.SignInPayload, error)
@@ -509,7 +509,7 @@ type OrganizationResolver interface {
 	SamlConfigurations(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.SAMLConfigurationConnection, error)
 }
 type PersonalAPIKeyConnectionResolver interface {
-	TotalCount(ctx context.Context, obj *types.PersonalAPIKeyConnection) (int, error)
+	TotalCount(ctx context.Context, obj *types.PersonalAPIKeyConnection) (*int, error)
 }
 type QueryResolver interface {
 	Node(ctx context.Context, id gid.GID) (types.Node, error)
@@ -517,10 +517,10 @@ type QueryResolver interface {
 	CheckSSOAvailability(ctx context.Context, email string) (*types.SSOAvailability, error)
 }
 type SAMLConfigurationConnectionResolver interface {
-	TotalCount(ctx context.Context, obj *types.SAMLConfigurationConnection) (int, error)
+	TotalCount(ctx context.Context, obj *types.SAMLConfigurationConnection) (*int, error)
 }
 type SessionConnectionResolver interface {
-	TotalCount(ctx context.Context, obj *types.SessionConnection) (int, error)
+	TotalCount(ctx context.Context, obj *types.SessionConnection) (*int, error)
 }
 
 type executableSchema struct {
@@ -2218,73 +2218,73 @@ type Query {
 }
 
 type Mutation {
-  signIn(input: SignInInput!): SignInPayload! @session(required: OPTIONAL)
-  signUp(input: SignUpInput!): SignUpPayload! @session(required: NONE)
-  signOut: SignOutPayload! @session(required: PRESENT)
+  signIn(input: SignInInput!): SignInPayload @session(required: OPTIONAL)
+  signUp(input: SignUpInput!): SignUpPayload @session(required: NONE)
+  signOut: SignOutPayload @session(required: PRESENT)
   signUpFromInvitation(
     input: SignUpFromInvitationInput!
-  ): SignUpFromInvitationPayload! @session(required: NONE)
-  forgotPassword(input: ForgotPasswordInput!): ForgotPasswordPayload!
+  ): SignUpFromInvitationPayload @session(required: NONE)
+  forgotPassword(input: ForgotPasswordInput!): ForgotPasswordPayload
     @session(required: NONE)
-  resetPassword(input: ResetPasswordInput!): ResetPasswordPayload!
+  resetPassword(input: ResetPasswordInput!): ResetPasswordPayload
     @session(required: NONE)
-  verifyEmail(input: VerifyEmailInput!): VerifyEmailPayload!
+  verifyEmail(input: VerifyEmailInput!): VerifyEmailPayload
     @session(required: OPTIONAL)
-  changePassword(input: ChangePasswordInput!): ChangePasswordPayload!
+  changePassword(input: ChangePasswordInput!): ChangePasswordPayload
     @session(required: PRESENT)
-  changeEmail(input: ChangeEmailInput!): ChangeEmailPayload!
+  changeEmail(input: ChangeEmailInput!): ChangeEmailPayload
     @session(required: PRESENT)
   assumeOrganizationSession(
     input: AssumeOrganizationSessionInput!
-  ): AssumeOrganizationSessionPayload! @session(required: PRESENT)
+  ): AssumeOrganizationSessionPayload @session(required: PRESENT)
 
   updateIdentityProfile(
     input: UpdateIdentityProfileInput!
-  ): UpdateIdentityProfilePayload! @session(required: PRESENT)
+  ): UpdateIdentityProfilePayload @session(required: PRESENT)
 
   revokeSession(input: RevokeSessionInput!): RevokeSessionPayload!
     @session(required: PRESENT)
-  revokeAllSessions: RevokeAllSessionsPayload! @session(required: PRESENT)
+  revokeAllSessions: RevokeAllSessionsPayload @session(required: PRESENT)
 
   createPersonalAPIKey(
     input: CreatePersonalAPIKeyInput!
-  ): CreatePersonalAPIKeyPayload! @session(required: PRESENT)
+  ): CreatePersonalAPIKeyPayload @session(required: PRESENT)
   updatePersonalAPIKey(
     input: UpdatePersonalAPIKeyInput!
-  ): UpdatePersonalAPIKeyPayload! @session(required: PRESENT)
+  ): UpdatePersonalAPIKeyPayload @session(required: PRESENT)
   revokePersonalAPIKey(
     input: RevokePersonalAPIKeyInput!
-  ): RevokePersonalAPIKeyPayload! @session(required: PRESENT)
+  ): RevokePersonalAPIKeyPayload @session(required: PRESENT)
 
   createOrganization(
     input: CreateOrganizationInput!
-  ): CreateOrganizationPayload! @session(required: PRESENT)
+  ): CreateOrganizationPayload @session(required: PRESENT)
   updateOrganization(
     input: UpdateOrganizationInput!
-  ): UpdateOrganizationPayload! @session(required: PRESENT)
+  ): UpdateOrganizationPayload @session(required: PRESENT)
   deleteOrganization(
     input: DeleteOrganizationInput!
-  ): DeleteOrganizationPayload! @session(required: PRESENT)
+  ): DeleteOrganizationPayload @session(required: PRESENT)
 
-  inviteMember(input: InviteMemberInput!): InviteMemberPayload!
+  inviteMember(input: InviteMemberInput!): InviteMemberPayload
     @session(required: PRESENT)
-  deleteInvitation(input: DeleteInvitationInput!): DeleteInvitationPayload!
+  deleteInvitation(input: DeleteInvitationInput!): DeleteInvitationPayload
     @session(required: PRESENT)
-  removeMember(input: RemoveMemberInput!): RemoveMemberPayload!
+  removeMember(input: RemoveMemberInput!): RemoveMemberPayload
     @session(required: PRESENT)
 
-  acceptInvitation(input: AcceptInvitationInput!): AcceptInvitationPayload!
+  acceptInvitation(input: AcceptInvitationInput!): AcceptInvitationPayload
     @session(required: PRESENT)
 
   createSAMLConfiguration(
     input: CreateSAMLConfigurationInput!
-  ): CreateSAMLConfigurationPayload! @session(required: PRESENT)
+  ): CreateSAMLConfigurationPayload @session(required: PRESENT)
   updateSAMLConfiguration(
     input: UpdateSAMLConfigurationInput!
-  ): UpdateSAMLConfigurationPayload! @session(required: PRESENT)
+  ): UpdateSAMLConfigurationPayload @session(required: PRESENT)
   deleteSAMLConfiguration(
     input: DeleteSAMLConfigurationInput!
-  ): DeleteSAMLConfigurationPayload! @session(required: PRESENT)
+  ): DeleteSAMLConfigurationPayload @session(required: PRESENT)
 }
 
 type Identity implements Node {
@@ -2300,7 +2300,7 @@ type Identity implements Node {
     last: Int
     before: CursorKey
     orderBy: MembershipOrder
-  ): MembershipConnection! @goField(forceResolver: true) @isViewer
+  ): MembershipConnection @goField(forceResolver: true) @isViewer
 
   pendingInvitations(
     first: Int
@@ -2308,7 +2308,7 @@ type Identity implements Node {
     last: Int
     before: CursorKey
     orderBy: InvitationOrder
-  ): InvitationConnection! @goField(forceResolver: true) @isViewer
+  ): InvitationConnection @goField(forceResolver: true) @isViewer
 
   sessions(
     first: Int
@@ -2316,14 +2316,14 @@ type Identity implements Node {
     last: Int
     before: CursorKey
     orderBy: SessionOrder
-  ): SessionConnection! @goField(forceResolver: true) @isViewer
+  ): SessionConnection @goField(forceResolver: true) @isViewer
 
   personalAPIKeys(
     first: Int
     after: CursorKey
     last: Int
     before: CursorKey
-  ): PersonalAPIKeyConnection! @goField(forceResolver: true) @isViewer
+  ): PersonalAPIKeyConnection @goField(forceResolver: true) @isViewer
 
   profileFor(organizationId: ID!): IdentityProfile @isViewer
 }
@@ -2367,7 +2367,7 @@ type Organization implements Node {
     after: CursorKey
     last: Int
     before: CursorKey
-  ): MembershipConnection! @goField(forceResolver: true)
+  ): MembershipConnection @goField(forceResolver: true)
 
   invitations(
     first: Int
@@ -2375,14 +2375,14 @@ type Organization implements Node {
     last: Int
     before: CursorKey
     status: InvitationStatus
-  ): InvitationConnection! @goField(forceResolver: true)
+  ): InvitationConnection @goField(forceResolver: true)
 
   samlConfigurations(
     first: Int
     after: CursorKey
     last: Int
     before: CursorKey
-  ): SAMLConfigurationConnection! @goField(forceResolver: true)
+  ): SAMLConfigurationConnection @goField(forceResolver: true)
 
   availableApplications: [Application!]!
 }
@@ -2403,8 +2403,8 @@ type Membership implements Node {
   identityId: ID!
   createdAt: Datetime!
   profile: IdentityProfile!
-  identity: Identity! @goField(forceResolver: true)
-  organization: Organization! @goField(forceResolver: true)
+  identity: Identity @goField(forceResolver: true)
+  organization: Organization @goField(forceResolver: true)
   role: MembershipRole!
   permissions: [Permission!]!
   provisionedBy: ProvisioningSource!
@@ -2422,7 +2422,7 @@ type Invitation implements Node {
   acceptedAt: Datetime
   createdAt: Datetime!
   status: InvitationStatus!
-  organization: Organization! @goField(forceResolver: true)
+  organization: Organization @goField(forceResolver: true)
 }
 
 type Session implements Node {
@@ -2609,7 +2609,7 @@ type MembershipConnection
   ) {
   edges: [MembershipEdge!]!
   pageInfo: PageInfo!
-  totalCount: Int! @goField(forceResolver: true)
+  totalCount: Int @goField(forceResolver: true)
 }
 
 type MembershipEdge {
@@ -2651,7 +2651,7 @@ type InvitationConnection
   ) {
   edges: [InvitationEdge!]!
   pageInfo: PageInfo!
-  totalCount: Int! @goField(forceResolver: true)
+  totalCount: Int @goField(forceResolver: true)
 }
 
 type InvitationEdge {
@@ -2665,7 +2665,7 @@ type SessionConnection
   ) {
   edges: [SessionEdge!]!
   pageInfo: PageInfo!
-  totalCount: Int! @goField(forceResolver: true)
+  totalCount: Int @goField(forceResolver: true)
 }
 
 type SessionEdge {
@@ -2679,7 +2679,7 @@ type PersonalAPIKeyConnection
   ) {
   edges: [PersonalAPIKeyEdge!]!
   pageInfo: PageInfo!
-  totalCount: Int! @goField(forceResolver: true)
+  totalCount: Int @goField(forceResolver: true)
 }
 
 type PersonalAPIKeyEdge {
@@ -2693,7 +2693,7 @@ type SAMLConfigurationConnection
   ) {
   edges: [SAMLConfigurationEdge!]!
   pageInfo: PageInfo!
-  totalCount: Int! @goField(forceResolver: true)
+  totalCount: Int @goField(forceResolver: true)
 }
 
 type SAMLConfigurationEdge {
@@ -4417,9 +4417,9 @@ func (ec *executionContext) _Identity_memberships(ctx context.Context, field gra
 			next = directive1
 			return next
 		},
-		ec.marshalNMembershipConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐMembershipConnection,
+		ec.marshalOMembershipConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐMembershipConnection,
 		true,
-		true,
+		false,
 	)
 }
 
@@ -4479,9 +4479,9 @@ func (ec *executionContext) _Identity_pendingInvitations(ctx context.Context, fi
 			next = directive1
 			return next
 		},
-		ec.marshalNInvitationConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐInvitationConnection,
+		ec.marshalOInvitationConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐInvitationConnection,
 		true,
-		true,
+		false,
 	)
 }
 
@@ -4541,9 +4541,9 @@ func (ec *executionContext) _Identity_sessions(ctx context.Context, field graphq
 			next = directive1
 			return next
 		},
-		ec.marshalNSessionConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSessionConnection,
+		ec.marshalOSessionConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSessionConnection,
 		true,
-		true,
+		false,
 	)
 }
 
@@ -4603,9 +4603,9 @@ func (ec *executionContext) _Identity_personalAPIKeys(ctx context.Context, field
 			next = directive1
 			return next
 		},
-		ec.marshalNPersonalAPIKeyConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐPersonalAPIKeyConnection,
+		ec.marshalOPersonalAPIKeyConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐPersonalAPIKeyConnection,
 		true,
-		true,
+		false,
 	)
 }
 
@@ -5555,9 +5555,9 @@ func (ec *executionContext) _Invitation_organization(ctx context.Context, field 
 			return ec.resolvers.Invitation().Organization(ctx, obj)
 		},
 		nil,
-		ec.marshalNOrganization2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐOrganization,
+		ec.marshalOOrganization2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐOrganization,
 		true,
-		true,
+		false,
 	)
 }
 
@@ -5680,9 +5680,9 @@ func (ec *executionContext) _InvitationConnection_totalCount(ctx context.Context
 			return ec.resolvers.InvitationConnection().TotalCount(ctx, obj)
 		},
 		nil,
-		ec.marshalNInt2int,
+		ec.marshalOInt2ᚖint,
 		true,
-		true,
+		false,
 	)
 }
 
@@ -5974,9 +5974,9 @@ func (ec *executionContext) _Membership_identity(ctx context.Context, field grap
 			return ec.resolvers.Membership().Identity(ctx, obj)
 		},
 		nil,
-		ec.marshalNIdentity2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐIdentity,
+		ec.marshalOIdentity2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐIdentity,
 		true,
-		true,
+		false,
 	)
 }
 
@@ -6025,9 +6025,9 @@ func (ec *executionContext) _Membership_organization(ctx context.Context, field 
 			return ec.resolvers.Membership().Organization(ctx, obj)
 		},
 		nil,
-		ec.marshalNOrganization2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐOrganization,
+		ec.marshalOOrganization2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐOrganization,
 		true,
-		true,
+		false,
 	)
 }
 
@@ -6367,9 +6367,9 @@ func (ec *executionContext) _MembershipConnection_totalCount(ctx context.Context
 			return ec.resolvers.MembershipConnection().TotalCount(ctx, obj)
 		},
 		nil,
-		ec.marshalNInt2int,
+		ec.marshalOInt2ᚖint,
 		true,
-		true,
+		false,
 	)
 }
 
@@ -6499,9 +6499,9 @@ func (ec *executionContext) _Mutation_signIn(ctx context.Context, field graphql.
 			next = directive1
 			return next
 		},
-		ec.marshalNSignInPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSignInPayload,
+		ec.marshalOSignInPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSignInPayload,
 		true,
-		true,
+		false,
 	)
 }
 
@@ -6564,9 +6564,9 @@ func (ec *executionContext) _Mutation_signUp(ctx context.Context, field graphql.
 			next = directive1
 			return next
 		},
-		ec.marshalNSignUpPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSignUpPayload,
+		ec.marshalOSignUpPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSignUpPayload,
 		true,
-		true,
+		false,
 	)
 }
 
@@ -6626,9 +6626,9 @@ func (ec *executionContext) _Mutation_signOut(ctx context.Context, field graphql
 			next = directive1
 			return next
 		},
-		ec.marshalNSignOutPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSignOutPayload,
+		ec.marshalOSignOutPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSignOutPayload,
 		true,
-		true,
+		false,
 	)
 }
 
@@ -6678,9 +6678,9 @@ func (ec *executionContext) _Mutation_signUpFromInvitation(ctx context.Context, 
 			next = directive1
 			return next
 		},
-		ec.marshalNSignUpFromInvitationPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSignUpFromInvitationPayload,
+		ec.marshalOSignUpFromInvitationPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSignUpFromInvitationPayload,
 		true,
-		true,
+		false,
 	)
 }
 
@@ -6741,9 +6741,9 @@ func (ec *executionContext) _Mutation_forgotPassword(ctx context.Context, field 
 			next = directive1
 			return next
 		},
-		ec.marshalNForgotPasswordPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐForgotPasswordPayload,
+		ec.marshalOForgotPasswordPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐForgotPasswordPayload,
 		true,
-		true,
+		false,
 	)
 }
 
@@ -6804,9 +6804,9 @@ func (ec *executionContext) _Mutation_resetPassword(ctx context.Context, field g
 			next = directive1
 			return next
 		},
-		ec.marshalNResetPasswordPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐResetPasswordPayload,
+		ec.marshalOResetPasswordPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐResetPasswordPayload,
 		true,
-		true,
+		false,
 	)
 }
 
@@ -6867,9 +6867,9 @@ func (ec *executionContext) _Mutation_verifyEmail(ctx context.Context, field gra
 			next = directive1
 			return next
 		},
-		ec.marshalNVerifyEmailPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐVerifyEmailPayload,
+		ec.marshalOVerifyEmailPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐVerifyEmailPayload,
 		true,
-		true,
+		false,
 	)
 }
 
@@ -6930,9 +6930,9 @@ func (ec *executionContext) _Mutation_changePassword(ctx context.Context, field 
 			next = directive1
 			return next
 		},
-		ec.marshalNChangePasswordPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐChangePasswordPayload,
+		ec.marshalOChangePasswordPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐChangePasswordPayload,
 		true,
-		true,
+		false,
 	)
 }
 
@@ -6993,9 +6993,9 @@ func (ec *executionContext) _Mutation_changeEmail(ctx context.Context, field gra
 			next = directive1
 			return next
 		},
-		ec.marshalNChangeEmailPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐChangeEmailPayload,
+		ec.marshalOChangeEmailPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐChangeEmailPayload,
 		true,
-		true,
+		false,
 	)
 }
 
@@ -7056,9 +7056,9 @@ func (ec *executionContext) _Mutation_assumeOrganizationSession(ctx context.Cont
 			next = directive1
 			return next
 		},
-		ec.marshalNAssumeOrganizationSessionPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐAssumeOrganizationSessionPayload,
+		ec.marshalOAssumeOrganizationSessionPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐAssumeOrganizationSessionPayload,
 		true,
-		true,
+		false,
 	)
 }
 
@@ -7119,9 +7119,9 @@ func (ec *executionContext) _Mutation_updateIdentityProfile(ctx context.Context,
 			next = directive1
 			return next
 		},
-		ec.marshalNUpdateIdentityProfilePayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐUpdateIdentityProfilePayload,
+		ec.marshalOUpdateIdentityProfilePayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐUpdateIdentityProfilePayload,
 		true,
-		true,
+		false,
 	)
 }
 
@@ -7244,9 +7244,9 @@ func (ec *executionContext) _Mutation_revokeAllSessions(ctx context.Context, fie
 			next = directive1
 			return next
 		},
-		ec.marshalNRevokeAllSessionsPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐRevokeAllSessionsPayload,
+		ec.marshalORevokeAllSessionsPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐRevokeAllSessionsPayload,
 		true,
-		true,
+		false,
 	)
 }
 
@@ -7296,9 +7296,9 @@ func (ec *executionContext) _Mutation_createPersonalAPIKey(ctx context.Context, 
 			next = directive1
 			return next
 		},
-		ec.marshalNCreatePersonalAPIKeyPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐCreatePersonalAPIKeyPayload,
+		ec.marshalOCreatePersonalAPIKeyPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐCreatePersonalAPIKeyPayload,
 		true,
-		true,
+		false,
 	)
 }
 
@@ -7361,9 +7361,9 @@ func (ec *executionContext) _Mutation_updatePersonalAPIKey(ctx context.Context, 
 			next = directive1
 			return next
 		},
-		ec.marshalNUpdatePersonalAPIKeyPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐUpdatePersonalAPIKeyPayload,
+		ec.marshalOUpdatePersonalAPIKeyPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐUpdatePersonalAPIKeyPayload,
 		true,
-		true,
+		false,
 	)
 }
 
@@ -7424,9 +7424,9 @@ func (ec *executionContext) _Mutation_revokePersonalAPIKey(ctx context.Context, 
 			next = directive1
 			return next
 		},
-		ec.marshalNRevokePersonalAPIKeyPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐRevokePersonalAPIKeyPayload,
+		ec.marshalORevokePersonalAPIKeyPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐRevokePersonalAPIKeyPayload,
 		true,
-		true,
+		false,
 	)
 }
 
@@ -7487,9 +7487,9 @@ func (ec *executionContext) _Mutation_createOrganization(ctx context.Context, fi
 			next = directive1
 			return next
 		},
-		ec.marshalNCreateOrganizationPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐCreateOrganizationPayload,
+		ec.marshalOCreateOrganizationPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐCreateOrganizationPayload,
 		true,
-		true,
+		false,
 	)
 }
 
@@ -7552,9 +7552,9 @@ func (ec *executionContext) _Mutation_updateOrganization(ctx context.Context, fi
 			next = directive1
 			return next
 		},
-		ec.marshalNUpdateOrganizationPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐUpdateOrganizationPayload,
+		ec.marshalOUpdateOrganizationPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐUpdateOrganizationPayload,
 		true,
-		true,
+		false,
 	)
 }
 
@@ -7615,9 +7615,9 @@ func (ec *executionContext) _Mutation_deleteOrganization(ctx context.Context, fi
 			next = directive1
 			return next
 		},
-		ec.marshalNDeleteOrganizationPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐDeleteOrganizationPayload,
+		ec.marshalODeleteOrganizationPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐDeleteOrganizationPayload,
 		true,
-		true,
+		false,
 	)
 }
 
@@ -7678,9 +7678,9 @@ func (ec *executionContext) _Mutation_inviteMember(ctx context.Context, field gr
 			next = directive1
 			return next
 		},
-		ec.marshalNInviteMemberPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐInviteMemberPayload,
+		ec.marshalOInviteMemberPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐInviteMemberPayload,
 		true,
-		true,
+		false,
 	)
 }
 
@@ -7741,9 +7741,9 @@ func (ec *executionContext) _Mutation_deleteInvitation(ctx context.Context, fiel
 			next = directive1
 			return next
 		},
-		ec.marshalNDeleteInvitationPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐDeleteInvitationPayload,
+		ec.marshalODeleteInvitationPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐDeleteInvitationPayload,
 		true,
-		true,
+		false,
 	)
 }
 
@@ -7804,9 +7804,9 @@ func (ec *executionContext) _Mutation_removeMember(ctx context.Context, field gr
 			next = directive1
 			return next
 		},
-		ec.marshalNRemoveMemberPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐRemoveMemberPayload,
+		ec.marshalORemoveMemberPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐRemoveMemberPayload,
 		true,
-		true,
+		false,
 	)
 }
 
@@ -7867,9 +7867,9 @@ func (ec *executionContext) _Mutation_acceptInvitation(ctx context.Context, fiel
 			next = directive1
 			return next
 		},
-		ec.marshalNAcceptInvitationPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐAcceptInvitationPayload,
+		ec.marshalOAcceptInvitationPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐAcceptInvitationPayload,
 		true,
-		true,
+		false,
 	)
 }
 
@@ -7930,9 +7930,9 @@ func (ec *executionContext) _Mutation_createSAMLConfiguration(ctx context.Contex
 			next = directive1
 			return next
 		},
-		ec.marshalNCreateSAMLConfigurationPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐCreateSAMLConfigurationPayload,
+		ec.marshalOCreateSAMLConfigurationPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐCreateSAMLConfigurationPayload,
 		true,
-		true,
+		false,
 	)
 }
 
@@ -7993,9 +7993,9 @@ func (ec *executionContext) _Mutation_updateSAMLConfiguration(ctx context.Contex
 			next = directive1
 			return next
 		},
-		ec.marshalNUpdateSAMLConfigurationPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐUpdateSAMLConfigurationPayload,
+		ec.marshalOUpdateSAMLConfigurationPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐUpdateSAMLConfigurationPayload,
 		true,
-		true,
+		false,
 	)
 }
 
@@ -8056,9 +8056,9 @@ func (ec *executionContext) _Mutation_deleteSAMLConfiguration(ctx context.Contex
 			next = directive1
 			return next
 		},
-		ec.marshalNDeleteSAMLConfigurationPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐDeleteSAMLConfigurationPayload,
+		ec.marshalODeleteSAMLConfigurationPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐDeleteSAMLConfigurationPayload,
 		true,
-		true,
+		false,
 	)
 }
 
@@ -8275,9 +8275,9 @@ func (ec *executionContext) _Organization_members(ctx context.Context, field gra
 			return ec.resolvers.Organization().Members(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey))
 		},
 		nil,
-		ec.marshalNMembershipConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐMembershipConnection,
+		ec.marshalOMembershipConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐMembershipConnection,
 		true,
-		true,
+		false,
 	)
 }
 
@@ -8324,9 +8324,9 @@ func (ec *executionContext) _Organization_invitations(ctx context.Context, field
 			return ec.resolvers.Organization().Invitations(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["status"].(*coredata.InvitationStatus))
 		},
 		nil,
-		ec.marshalNInvitationConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐInvitationConnection,
+		ec.marshalOInvitationConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐInvitationConnection,
 		true,
-		true,
+		false,
 	)
 }
 
@@ -8373,9 +8373,9 @@ func (ec *executionContext) _Organization_samlConfigurations(ctx context.Context
 			return ec.resolvers.Organization().SamlConfigurations(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey))
 		},
 		nil,
-		ec.marshalNSAMLConfigurationConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSAMLConfigurationConnection,
+		ec.marshalOSAMLConfigurationConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSAMLConfigurationConnection,
 		true,
-		true,
+		false,
 	)
 }
 
@@ -9305,9 +9305,9 @@ func (ec *executionContext) _PersonalAPIKeyConnection_totalCount(ctx context.Con
 			return ec.resolvers.PersonalAPIKeyConnection().TotalCount(ctx, obj)
 		},
 		nil,
-		ec.marshalNInt2int,
+		ec.marshalOInt2ᚖint,
 		true,
-		true,
+		false,
 	)
 }
 
@@ -10613,9 +10613,9 @@ func (ec *executionContext) _SAMLConfigurationConnection_totalCount(ctx context.
 			return ec.resolvers.SAMLConfigurationConnection().TotalCount(ctx, obj)
 		},
 		nil,
-		ec.marshalNInt2int,
+		ec.marshalOInt2ᚖint,
 		true,
-		true,
+		false,
 	)
 }
 
@@ -11071,9 +11071,9 @@ func (ec *executionContext) _SessionConnection_totalCount(ctx context.Context, f
 			return ec.resolvers.SessionConnection().TotalCount(ctx, obj)
 		},
 		nil,
-		ec.marshalNInt2int,
+		ec.marshalOInt2ᚖint,
 		true,
-		true,
+		false,
 	)
 }
 
@@ -15236,16 +15236,13 @@ func (ec *executionContext) _Identity(ctx context.Context, sel ast.SelectionSet,
 		case "memberships":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._Identity_memberships(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
 				return res
 			}
 
@@ -15272,16 +15269,13 @@ func (ec *executionContext) _Identity(ctx context.Context, sel ast.SelectionSet,
 		case "pendingInvitations":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._Identity_pendingInvitations(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
 				return res
 			}
 
@@ -15308,16 +15302,13 @@ func (ec *executionContext) _Identity(ctx context.Context, sel ast.SelectionSet,
 		case "sessions":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._Identity_sessions(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
 				return res
 			}
 
@@ -15344,16 +15335,13 @@ func (ec *executionContext) _Identity(ctx context.Context, sel ast.SelectionSet,
 		case "personalAPIKeys":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._Identity_personalAPIKeys(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
 				return res
 			}
 
@@ -15542,16 +15530,13 @@ func (ec *executionContext) _Invitation(ctx context.Context, sel ast.SelectionSe
 		case "organization":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._Invitation_organization(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
 				return res
 			}
 
@@ -15622,16 +15607,13 @@ func (ec *executionContext) _InvitationConnection(ctx context.Context, sel ast.S
 		case "totalCount":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._InvitationConnection_totalCount(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
 				return res
 			}
 
@@ -15795,16 +15777,13 @@ func (ec *executionContext) _Membership(ctx context.Context, sel ast.SelectionSe
 		case "identity":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._Membership_identity(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
 				return res
 			}
 
@@ -15831,16 +15810,13 @@ func (ec *executionContext) _Membership(ctx context.Context, sel ast.SelectionSe
 		case "organization":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._Membership_organization(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
 				return res
 			}
 
@@ -15966,16 +15942,13 @@ func (ec *executionContext) _MembershipConnection(ctx context.Context, sel ast.S
 		case "totalCount":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._MembershipConnection_totalCount(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
 				return res
 			}
 
@@ -16089,79 +16062,46 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_signIn(ctx, field)
 			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "signUp":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_signUp(ctx, field)
 			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "signOut":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_signOut(ctx, field)
 			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "signUpFromInvitation":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_signUpFromInvitation(ctx, field)
 			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "forgotPassword":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_forgotPassword(ctx, field)
 			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "resetPassword":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_resetPassword(ctx, field)
 			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "verifyEmail":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_verifyEmail(ctx, field)
 			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "changePassword":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_changePassword(ctx, field)
 			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "changeEmail":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_changeEmail(ctx, field)
 			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "assumeOrganizationSession":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_assumeOrganizationSession(ctx, field)
 			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "updateIdentityProfile":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_updateIdentityProfile(ctx, field)
 			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "revokeSession":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_revokeSession(ctx, field)
@@ -16173,100 +16113,58 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_revokeAllSessions(ctx, field)
 			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "createPersonalAPIKey":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_createPersonalAPIKey(ctx, field)
 			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "updatePersonalAPIKey":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_updatePersonalAPIKey(ctx, field)
 			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "revokePersonalAPIKey":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_revokePersonalAPIKey(ctx, field)
 			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "createOrganization":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_createOrganization(ctx, field)
 			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "updateOrganization":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_updateOrganization(ctx, field)
 			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "deleteOrganization":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_deleteOrganization(ctx, field)
 			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "inviteMember":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_inviteMember(ctx, field)
 			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "deleteInvitation":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_deleteInvitation(ctx, field)
 			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "removeMember":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_removeMember(ctx, field)
 			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "acceptInvitation":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_acceptInvitation(ctx, field)
 			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "createSAMLConfiguration":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_createSAMLConfiguration(ctx, field)
 			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "updateSAMLConfiguration":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_updateSAMLConfiguration(ctx, field)
 			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "deleteSAMLConfiguration":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_deleteSAMLConfiguration(ctx, field)
 			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -16390,16 +16288,13 @@ func (ec *executionContext) _Organization(ctx context.Context, sel ast.Selection
 		case "members":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._Organization_members(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
 				return res
 			}
 
@@ -16426,16 +16321,13 @@ func (ec *executionContext) _Organization(ctx context.Context, sel ast.Selection
 		case "invitations":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._Organization_invitations(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
 				return res
 			}
 
@@ -16462,16 +16354,13 @@ func (ec *executionContext) _Organization(ctx context.Context, sel ast.Selection
 		case "samlConfigurations":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._Organization_samlConfigurations(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
 				return res
 			}
 
@@ -16857,16 +16746,13 @@ func (ec *executionContext) _PersonalAPIKeyConnection(ctx context.Context, sel a
 		case "totalCount":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._PersonalAPIKeyConnection_totalCount(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
 				return res
 			}
 
@@ -17497,16 +17383,13 @@ func (ec *executionContext) _SAMLConfigurationConnection(ctx context.Context, se
 		case "totalCount":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._SAMLConfigurationConnection_totalCount(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
 				return res
 			}
 
@@ -17728,16 +17611,13 @@ func (ec *executionContext) _SessionConnection(ctx context.Context, sel ast.Sele
 		case "totalCount":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._SessionConnection_totalCount(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
 				return res
 			}
 
@@ -18551,20 +18431,6 @@ func (ec *executionContext) unmarshalNAcceptInvitationInput2goᚗproboᚗincᚋp
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNAcceptInvitationPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐAcceptInvitationPayload(ctx context.Context, sel ast.SelectionSet, v types.AcceptInvitationPayload) graphql.Marshaler {
-	return ec._AcceptInvitationPayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNAcceptInvitationPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐAcceptInvitationPayload(ctx context.Context, sel ast.SelectionSet, v *types.AcceptInvitationPayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._AcceptInvitationPayload(ctx, sel, v)
-}
-
 func (ec *executionContext) unmarshalNAccessLevel2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐAccessLevel(ctx context.Context, v any) (types.AccessLevel, error) {
 	var res types.AccessLevel
 	err := res.UnmarshalGQL(v)
@@ -18703,20 +18569,6 @@ func (ec *executionContext) unmarshalNAssumeOrganizationSessionInput2goᚗprobo�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNAssumeOrganizationSessionPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐAssumeOrganizationSessionPayload(ctx context.Context, sel ast.SelectionSet, v types.AssumeOrganizationSessionPayload) graphql.Marshaler {
-	return ec._AssumeOrganizationSessionPayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNAssumeOrganizationSessionPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐAssumeOrganizationSessionPayload(ctx context.Context, sel ast.SelectionSet, v *types.AssumeOrganizationSessionPayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._AssumeOrganizationSessionPayload(ctx, sel, v)
-}
-
 func (ec *executionContext) marshalNAssumeOrganizationSessionResult2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐAssumeOrganizationSessionResult(ctx context.Context, sel ast.SelectionSet, v types.AssumeOrganizationSessionResult) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -18748,37 +18600,9 @@ func (ec *executionContext) unmarshalNChangeEmailInput2goᚗproboᚗincᚋprobo�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNChangeEmailPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐChangeEmailPayload(ctx context.Context, sel ast.SelectionSet, v types.ChangeEmailPayload) graphql.Marshaler {
-	return ec._ChangeEmailPayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNChangeEmailPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐChangeEmailPayload(ctx context.Context, sel ast.SelectionSet, v *types.ChangeEmailPayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._ChangeEmailPayload(ctx, sel, v)
-}
-
 func (ec *executionContext) unmarshalNChangePasswordInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐChangePasswordInput(ctx context.Context, v any) (types.ChangePasswordInput, error) {
 	res, err := ec.unmarshalInputChangePasswordInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNChangePasswordPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐChangePasswordPayload(ctx context.Context, sel ast.SelectionSet, v types.ChangePasswordPayload) graphql.Marshaler {
-	return ec._ChangePasswordPayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNChangePasswordPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐChangePasswordPayload(ctx context.Context, sel ast.SelectionSet, v *types.ChangePasswordPayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._ChangePasswordPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNCreateOrganizationInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐCreateOrganizationInput(ctx context.Context, v any) (types.CreateOrganizationInput, error) {
@@ -18786,56 +18610,14 @@ func (ec *executionContext) unmarshalNCreateOrganizationInput2goᚗproboᚗinc�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNCreateOrganizationPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐCreateOrganizationPayload(ctx context.Context, sel ast.SelectionSet, v types.CreateOrganizationPayload) graphql.Marshaler {
-	return ec._CreateOrganizationPayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNCreateOrganizationPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐCreateOrganizationPayload(ctx context.Context, sel ast.SelectionSet, v *types.CreateOrganizationPayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._CreateOrganizationPayload(ctx, sel, v)
-}
-
 func (ec *executionContext) unmarshalNCreatePersonalAPIKeyInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐCreatePersonalAPIKeyInput(ctx context.Context, v any) (types.CreatePersonalAPIKeyInput, error) {
 	res, err := ec.unmarshalInputCreatePersonalAPIKeyInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNCreatePersonalAPIKeyPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐCreatePersonalAPIKeyPayload(ctx context.Context, sel ast.SelectionSet, v types.CreatePersonalAPIKeyPayload) graphql.Marshaler {
-	return ec._CreatePersonalAPIKeyPayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNCreatePersonalAPIKeyPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐCreatePersonalAPIKeyPayload(ctx context.Context, sel ast.SelectionSet, v *types.CreatePersonalAPIKeyPayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._CreatePersonalAPIKeyPayload(ctx, sel, v)
-}
-
 func (ec *executionContext) unmarshalNCreateSAMLConfigurationInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐCreateSAMLConfigurationInput(ctx context.Context, v any) (types.CreateSAMLConfigurationInput, error) {
 	res, err := ec.unmarshalInputCreateSAMLConfigurationInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNCreateSAMLConfigurationPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐCreateSAMLConfigurationPayload(ctx context.Context, sel ast.SelectionSet, v types.CreateSAMLConfigurationPayload) graphql.Marshaler {
-	return ec._CreateSAMLConfigurationPayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNCreateSAMLConfigurationPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐCreateSAMLConfigurationPayload(ctx context.Context, sel ast.SelectionSet, v *types.CreateSAMLConfigurationPayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._CreateSAMLConfigurationPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNCursorKey2goᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey(ctx context.Context, v any) (page.CursorKey, error) {
@@ -18929,56 +18711,14 @@ func (ec *executionContext) unmarshalNDeleteInvitationInput2goᚗproboᚗincᚋp
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNDeleteInvitationPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐDeleteInvitationPayload(ctx context.Context, sel ast.SelectionSet, v types.DeleteInvitationPayload) graphql.Marshaler {
-	return ec._DeleteInvitationPayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNDeleteInvitationPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐDeleteInvitationPayload(ctx context.Context, sel ast.SelectionSet, v *types.DeleteInvitationPayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._DeleteInvitationPayload(ctx, sel, v)
-}
-
 func (ec *executionContext) unmarshalNDeleteOrganizationInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐDeleteOrganizationInput(ctx context.Context, v any) (types.DeleteOrganizationInput, error) {
 	res, err := ec.unmarshalInputDeleteOrganizationInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNDeleteOrganizationPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐDeleteOrganizationPayload(ctx context.Context, sel ast.SelectionSet, v types.DeleteOrganizationPayload) graphql.Marshaler {
-	return ec._DeleteOrganizationPayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNDeleteOrganizationPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐDeleteOrganizationPayload(ctx context.Context, sel ast.SelectionSet, v *types.DeleteOrganizationPayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._DeleteOrganizationPayload(ctx, sel, v)
-}
-
 func (ec *executionContext) unmarshalNDeleteSAMLConfigurationInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐDeleteSAMLConfigurationInput(ctx context.Context, v any) (types.DeleteSAMLConfigurationInput, error) {
 	res, err := ec.unmarshalInputDeleteSAMLConfigurationInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNDeleteSAMLConfigurationPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐDeleteSAMLConfigurationPayload(ctx context.Context, sel ast.SelectionSet, v types.DeleteSAMLConfigurationPayload) graphql.Marshaler {
-	return ec._DeleteSAMLConfigurationPayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNDeleteSAMLConfigurationPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐDeleteSAMLConfigurationPayload(ctx context.Context, sel ast.SelectionSet, v *types.DeleteSAMLConfigurationPayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._DeleteSAMLConfigurationPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNEmailAddr2goᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr(ctx context.Context, v any) (mail.Addr, error) {
@@ -19000,20 +18740,6 @@ func (ec *executionContext) marshalNEmailAddr2goᚗproboᚗincᚋproboᚋpkgᚋm
 func (ec *executionContext) unmarshalNForgotPasswordInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐForgotPasswordInput(ctx context.Context, v any) (types.ForgotPasswordInput, error) {
 	res, err := ec.unmarshalInputForgotPasswordInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNForgotPasswordPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐForgotPasswordPayload(ctx context.Context, sel ast.SelectionSet, v types.ForgotPasswordPayload) graphql.Marshaler {
-	return ec._ForgotPasswordPayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNForgotPasswordPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐForgotPasswordPayload(ctx context.Context, sel ast.SelectionSet, v *types.ForgotPasswordPayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._ForgotPasswordPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx context.Context, v any) (gid.GID, error) {
@@ -19062,10 +18788,6 @@ func (ec *executionContext) marshalNID2ᚕgoᚗproboᚗincᚋproboᚋpkgᚋgid�
 	return ret
 }
 
-func (ec *executionContext) marshalNIdentity2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐIdentity(ctx context.Context, sel ast.SelectionSet, v types.Identity) graphql.Marshaler {
-	return ec._Identity(ctx, sel, &v)
-}
-
 func (ec *executionContext) marshalNIdentity2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐIdentity(ctx context.Context, sel ast.SelectionSet, v *types.Identity) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -19110,20 +18832,6 @@ func (ec *executionContext) marshalNInvitation2ᚖgoᚗproboᚗincᚋproboᚋpkg
 		return graphql.Null
 	}
 	return ec._Invitation(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNInvitationConnection2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐInvitationConnection(ctx context.Context, sel ast.SelectionSet, v types.InvitationConnection) graphql.Marshaler {
-	return ec._InvitationConnection(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNInvitationConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐInvitationConnection(ctx context.Context, sel ast.SelectionSet, v *types.InvitationConnection) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._InvitationConnection(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNInvitationEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐInvitationEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.InvitationEdge) graphql.Marshaler {
@@ -19249,20 +18957,6 @@ func (ec *executionContext) unmarshalNInviteMemberInput2goᚗproboᚗincᚋprobo
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNInviteMemberPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐInviteMemberPayload(ctx context.Context, sel ast.SelectionSet, v types.InviteMemberPayload) graphql.Marshaler {
-	return ec._InviteMemberPayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNInviteMemberPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐInviteMemberPayload(ctx context.Context, sel ast.SelectionSet, v *types.InviteMemberPayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._InviteMemberPayload(ctx, sel, v)
-}
-
 func (ec *executionContext) marshalNMembership2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐMembership(ctx context.Context, sel ast.SelectionSet, v *types.Membership) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -19271,20 +18965,6 @@ func (ec *executionContext) marshalNMembership2ᚖgoᚗproboᚗincᚋproboᚋpkg
 		return graphql.Null
 	}
 	return ec._Membership(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNMembershipConnection2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐMembershipConnection(ctx context.Context, sel ast.SelectionSet, v types.MembershipConnection) graphql.Marshaler {
-	return ec._MembershipConnection(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNMembershipConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐMembershipConnection(ctx context.Context, sel ast.SelectionSet, v *types.MembershipConnection) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._MembershipConnection(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNMembershipEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐMembershipEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.MembershipEdge) graphql.Marshaler {
@@ -19430,10 +19110,6 @@ var (
 		page.OrderDirectionDesc: "DESC",
 	}
 )
-
-func (ec *executionContext) marshalNOrganization2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐOrganization(ctx context.Context, sel ast.SelectionSet, v types.Organization) graphql.Marshaler {
-	return ec._Organization(ctx, sel, &v)
-}
 
 func (ec *executionContext) marshalNOrganization2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐOrganizationᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.Organization) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
@@ -19611,20 +19287,6 @@ func (ec *executionContext) marshalNPersonalAPIKey2ᚖgoᚗproboᚗincᚋprobo�
 	return ec._PersonalAPIKey(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNPersonalAPIKeyConnection2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐPersonalAPIKeyConnection(ctx context.Context, sel ast.SelectionSet, v types.PersonalAPIKeyConnection) graphql.Marshaler {
-	return ec._PersonalAPIKeyConnection(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNPersonalAPIKeyConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐPersonalAPIKeyConnection(ctx context.Context, sel ast.SelectionSet, v *types.PersonalAPIKeyConnection) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._PersonalAPIKeyConnection(ctx, sel, v)
-}
-
 func (ec *executionContext) marshalNPersonalAPIKeyEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐPersonalAPIKeyEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.PersonalAPIKeyEdge) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -19714,70 +19376,14 @@ func (ec *executionContext) unmarshalNRemoveMemberInput2goᚗproboᚗincᚋprobo
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNRemoveMemberPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐRemoveMemberPayload(ctx context.Context, sel ast.SelectionSet, v types.RemoveMemberPayload) graphql.Marshaler {
-	return ec._RemoveMemberPayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNRemoveMemberPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐRemoveMemberPayload(ctx context.Context, sel ast.SelectionSet, v *types.RemoveMemberPayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._RemoveMemberPayload(ctx, sel, v)
-}
-
 func (ec *executionContext) unmarshalNResetPasswordInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐResetPasswordInput(ctx context.Context, v any) (types.ResetPasswordInput, error) {
 	res, err := ec.unmarshalInputResetPasswordInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNResetPasswordPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐResetPasswordPayload(ctx context.Context, sel ast.SelectionSet, v types.ResetPasswordPayload) graphql.Marshaler {
-	return ec._ResetPasswordPayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNResetPasswordPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐResetPasswordPayload(ctx context.Context, sel ast.SelectionSet, v *types.ResetPasswordPayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._ResetPasswordPayload(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNRevokeAllSessionsPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐRevokeAllSessionsPayload(ctx context.Context, sel ast.SelectionSet, v types.RevokeAllSessionsPayload) graphql.Marshaler {
-	return ec._RevokeAllSessionsPayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNRevokeAllSessionsPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐRevokeAllSessionsPayload(ctx context.Context, sel ast.SelectionSet, v *types.RevokeAllSessionsPayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._RevokeAllSessionsPayload(ctx, sel, v)
-}
-
 func (ec *executionContext) unmarshalNRevokePersonalAPIKeyInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐRevokePersonalAPIKeyInput(ctx context.Context, v any) (types.RevokePersonalAPIKeyInput, error) {
 	res, err := ec.unmarshalInputRevokePersonalAPIKeyInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNRevokePersonalAPIKeyPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐRevokePersonalAPIKeyPayload(ctx context.Context, sel ast.SelectionSet, v types.RevokePersonalAPIKeyPayload) graphql.Marshaler {
-	return ec._RevokePersonalAPIKeyPayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNRevokePersonalAPIKeyPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐRevokePersonalAPIKeyPayload(ctx context.Context, sel ast.SelectionSet, v *types.RevokePersonalAPIKeyPayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._RevokePersonalAPIKeyPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNRevokeSessionInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐRevokeSessionInput(ctx context.Context, v any) (types.RevokeSessionInput, error) {
@@ -19817,20 +19423,6 @@ func (ec *executionContext) marshalNSAMLConfiguration2ᚖgoᚗproboᚗincᚋprob
 		return graphql.Null
 	}
 	return ec._SAMLConfiguration(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNSAMLConfigurationConnection2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSAMLConfigurationConnection(ctx context.Context, sel ast.SelectionSet, v types.SAMLConfigurationConnection) graphql.Marshaler {
-	return ec._SAMLConfigurationConnection(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNSAMLConfigurationConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSAMLConfigurationConnection(ctx context.Context, sel ast.SelectionSet, v *types.SAMLConfigurationConnection) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._SAMLConfigurationConnection(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNSAMLConfigurationEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSAMLConfigurationEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.SAMLConfigurationEdge) graphql.Marshaler {
@@ -19941,20 +19533,6 @@ func (ec *executionContext) marshalNSession2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋ
 	return ec._Session(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNSessionConnection2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSessionConnection(ctx context.Context, sel ast.SelectionSet, v types.SessionConnection) graphql.Marshaler {
-	return ec._SessionConnection(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNSessionConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSessionConnection(ctx context.Context, sel ast.SelectionSet, v *types.SessionConnection) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._SessionConnection(ctx, sel, v)
-}
-
 func (ec *executionContext) marshalNSessionEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSessionEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.SessionEdge) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -20054,70 +19632,14 @@ func (ec *executionContext) unmarshalNSignInInput2goᚗproboᚗincᚋproboᚋpkg
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNSignInPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSignInPayload(ctx context.Context, sel ast.SelectionSet, v types.SignInPayload) graphql.Marshaler {
-	return ec._SignInPayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNSignInPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSignInPayload(ctx context.Context, sel ast.SelectionSet, v *types.SignInPayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._SignInPayload(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNSignOutPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSignOutPayload(ctx context.Context, sel ast.SelectionSet, v types.SignOutPayload) graphql.Marshaler {
-	return ec._SignOutPayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNSignOutPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSignOutPayload(ctx context.Context, sel ast.SelectionSet, v *types.SignOutPayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._SignOutPayload(ctx, sel, v)
-}
-
 func (ec *executionContext) unmarshalNSignUpFromInvitationInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSignUpFromInvitationInput(ctx context.Context, v any) (types.SignUpFromInvitationInput, error) {
 	res, err := ec.unmarshalInputSignUpFromInvitationInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNSignUpFromInvitationPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSignUpFromInvitationPayload(ctx context.Context, sel ast.SelectionSet, v types.SignUpFromInvitationPayload) graphql.Marshaler {
-	return ec._SignUpFromInvitationPayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNSignUpFromInvitationPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSignUpFromInvitationPayload(ctx context.Context, sel ast.SelectionSet, v *types.SignUpFromInvitationPayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._SignUpFromInvitationPayload(ctx, sel, v)
-}
-
 func (ec *executionContext) unmarshalNSignUpInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSignUpInput(ctx context.Context, v any) (types.SignUpInput, error) {
 	res, err := ec.unmarshalInputSignUpInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNSignUpPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSignUpPayload(ctx context.Context, sel ast.SelectionSet, v types.SignUpPayload) graphql.Marshaler {
-	return ec._SignUpPayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNSignUpPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSignUpPayload(ctx context.Context, sel ast.SelectionSet, v *types.SignUpPayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._SignUpPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v any) (string, error) {
@@ -20210,37 +19732,9 @@ func (ec *executionContext) unmarshalNUpdateIdentityProfileInput2goᚗproboᚗin
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNUpdateIdentityProfilePayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐUpdateIdentityProfilePayload(ctx context.Context, sel ast.SelectionSet, v types.UpdateIdentityProfilePayload) graphql.Marshaler {
-	return ec._UpdateIdentityProfilePayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNUpdateIdentityProfilePayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐUpdateIdentityProfilePayload(ctx context.Context, sel ast.SelectionSet, v *types.UpdateIdentityProfilePayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._UpdateIdentityProfilePayload(ctx, sel, v)
-}
-
 func (ec *executionContext) unmarshalNUpdateOrganizationInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐUpdateOrganizationInput(ctx context.Context, v any) (types.UpdateOrganizationInput, error) {
 	res, err := ec.unmarshalInputUpdateOrganizationInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNUpdateOrganizationPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐUpdateOrganizationPayload(ctx context.Context, sel ast.SelectionSet, v types.UpdateOrganizationPayload) graphql.Marshaler {
-	return ec._UpdateOrganizationPayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNUpdateOrganizationPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐUpdateOrganizationPayload(ctx context.Context, sel ast.SelectionSet, v *types.UpdateOrganizationPayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._UpdateOrganizationPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNUpdatePersonalAPIKeyInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐUpdatePersonalAPIKeyInput(ctx context.Context, v any) (types.UpdatePersonalAPIKeyInput, error) {
@@ -20248,56 +19742,14 @@ func (ec *executionContext) unmarshalNUpdatePersonalAPIKeyInput2goᚗproboᚗinc
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNUpdatePersonalAPIKeyPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐUpdatePersonalAPIKeyPayload(ctx context.Context, sel ast.SelectionSet, v types.UpdatePersonalAPIKeyPayload) graphql.Marshaler {
-	return ec._UpdatePersonalAPIKeyPayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNUpdatePersonalAPIKeyPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐUpdatePersonalAPIKeyPayload(ctx context.Context, sel ast.SelectionSet, v *types.UpdatePersonalAPIKeyPayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._UpdatePersonalAPIKeyPayload(ctx, sel, v)
-}
-
 func (ec *executionContext) unmarshalNUpdateSAMLConfigurationInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐUpdateSAMLConfigurationInput(ctx context.Context, v any) (types.UpdateSAMLConfigurationInput, error) {
 	res, err := ec.unmarshalInputUpdateSAMLConfigurationInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNUpdateSAMLConfigurationPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐUpdateSAMLConfigurationPayload(ctx context.Context, sel ast.SelectionSet, v types.UpdateSAMLConfigurationPayload) graphql.Marshaler {
-	return ec._UpdateSAMLConfigurationPayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNUpdateSAMLConfigurationPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐUpdateSAMLConfigurationPayload(ctx context.Context, sel ast.SelectionSet, v *types.UpdateSAMLConfigurationPayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._UpdateSAMLConfigurationPayload(ctx, sel, v)
-}
-
 func (ec *executionContext) unmarshalNVerifyEmailInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐVerifyEmailInput(ctx context.Context, v any) (types.VerifyEmailInput, error) {
 	res, err := ec.unmarshalInputVerifyEmailInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNVerifyEmailPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐVerifyEmailPayload(ctx context.Context, sel ast.SelectionSet, v types.VerifyEmailPayload) graphql.Marshaler {
-	return ec._VerifyEmailPayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNVerifyEmailPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐVerifyEmailPayload(ctx context.Context, sel ast.SelectionSet, v *types.VerifyEmailPayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._VerifyEmailPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx context.Context, sel ast.SelectionSet, v introspection.Directive) graphql.Marshaler {
@@ -20553,6 +20005,20 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 	return res
 }
 
+func (ec *executionContext) marshalOAcceptInvitationPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐAcceptInvitationPayload(ctx context.Context, sel ast.SelectionSet, v *types.AcceptInvitationPayload) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._AcceptInvitationPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOAssumeOrganizationSessionPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐAssumeOrganizationSessionPayload(ctx context.Context, sel ast.SelectionSet, v *types.AssumeOrganizationSessionPayload) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._AssumeOrganizationSessionPayload(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v any) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -20581,6 +20047,41 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	_ = ctx
 	res := graphql.MarshalBoolean(*v)
 	return res
+}
+
+func (ec *executionContext) marshalOChangeEmailPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐChangeEmailPayload(ctx context.Context, sel ast.SelectionSet, v *types.ChangeEmailPayload) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._ChangeEmailPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOChangePasswordPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐChangePasswordPayload(ctx context.Context, sel ast.SelectionSet, v *types.ChangePasswordPayload) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._ChangePasswordPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOCreateOrganizationPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐCreateOrganizationPayload(ctx context.Context, sel ast.SelectionSet, v *types.CreateOrganizationPayload) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._CreateOrganizationPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOCreatePersonalAPIKeyPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐCreatePersonalAPIKeyPayload(ctx context.Context, sel ast.SelectionSet, v *types.CreatePersonalAPIKeyPayload) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._CreatePersonalAPIKeyPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOCreateSAMLConfigurationPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐCreateSAMLConfigurationPayload(ctx context.Context, sel ast.SelectionSet, v *types.CreateSAMLConfigurationPayload) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._CreateSAMLConfigurationPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey(ctx context.Context, v any) (*page.CursorKey, error) {
@@ -20617,6 +20118,34 @@ func (ec *executionContext) marshalODatetime2ᚖtimeᚐTime(ctx context.Context,
 	_ = ctx
 	res := graphql.MarshalTime(*v)
 	return res
+}
+
+func (ec *executionContext) marshalODeleteInvitationPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐDeleteInvitationPayload(ctx context.Context, sel ast.SelectionSet, v *types.DeleteInvitationPayload) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._DeleteInvitationPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalODeleteOrganizationPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐDeleteOrganizationPayload(ctx context.Context, sel ast.SelectionSet, v *types.DeleteOrganizationPayload) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._DeleteOrganizationPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalODeleteSAMLConfigurationPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐDeleteSAMLConfigurationPayload(ctx context.Context, sel ast.SelectionSet, v *types.DeleteSAMLConfigurationPayload) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._DeleteSAMLConfigurationPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOForgotPasswordPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐForgotPasswordPayload(ctx context.Context, sel ast.SelectionSet, v *types.ForgotPasswordPayload) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._ForgotPasswordPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOID2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx context.Context, v any) (*gid.GID, error) {
@@ -20669,6 +20198,13 @@ func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.Sele
 	return res
 }
 
+func (ec *executionContext) marshalOInvitationConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐInvitationConnection(ctx context.Context, sel ast.SelectionSet, v *types.InvitationConnection) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._InvitationConnection(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalOInvitationOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐInvitationOrderBy(ctx context.Context, v any) (*types.InvitationOrderBy, error) {
 	if v == nil {
 		return nil, nil
@@ -20709,6 +20245,20 @@ var (
 	}
 )
 
+func (ec *executionContext) marshalOInviteMemberPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐInviteMemberPayload(ctx context.Context, sel ast.SelectionSet, v *types.InviteMemberPayload) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._InviteMemberPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOMembershipConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐMembershipConnection(ctx context.Context, sel ast.SelectionSet, v *types.MembershipConnection) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._MembershipConnection(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalOMembershipOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐMembershipOrderBy(ctx context.Context, v any) (*types.MembershipOrderBy, error) {
 	if v == nil {
 		return nil, nil
@@ -20738,6 +20288,41 @@ func (ec *executionContext) marshalOPersonalAPIKey2ᚖgoᚗproboᚗincᚋprobo�
 	return ec._PersonalAPIKey(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalOPersonalAPIKeyConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐPersonalAPIKeyConnection(ctx context.Context, sel ast.SelectionSet, v *types.PersonalAPIKeyConnection) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._PersonalAPIKeyConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalORemoveMemberPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐRemoveMemberPayload(ctx context.Context, sel ast.SelectionSet, v *types.RemoveMemberPayload) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._RemoveMemberPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOResetPasswordPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐResetPasswordPayload(ctx context.Context, sel ast.SelectionSet, v *types.ResetPasswordPayload) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._ResetPasswordPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalORevokeAllSessionsPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐRevokeAllSessionsPayload(ctx context.Context, sel ast.SelectionSet, v *types.RevokeAllSessionsPayload) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._RevokeAllSessionsPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalORevokePersonalAPIKeyPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐRevokePersonalAPIKeyPayload(ctx context.Context, sel ast.SelectionSet, v *types.RevokePersonalAPIKeyPayload) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._RevokePersonalAPIKeyPayload(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalOSAMLAttributeMappingsInput2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSAMLAttributeMappingsInput(ctx context.Context, v any) (*types.SAMLAttributeMappingsInput, error) {
 	if v == nil {
 		return nil, nil
@@ -20751,6 +20336,13 @@ func (ec *executionContext) marshalOSAMLConfiguration2ᚖgoᚗproboᚗincᚋprob
 		return graphql.Null
 	}
 	return ec._SAMLConfiguration(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOSAMLConfigurationConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSAMLConfigurationConnection(ctx context.Context, sel ast.SelectionSet, v *types.SAMLConfigurationConnection) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._SAMLConfigurationConnection(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOSAMLEnforcementPolicy2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐSAMLEnforcementPolicy(ctx context.Context, v any) (*coredata.SAMLEnforcementPolicy, error) {
@@ -20792,12 +20384,47 @@ func (ec *executionContext) marshalOSession2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋ
 	return ec._Session(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalOSessionConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSessionConnection(ctx context.Context, sel ast.SelectionSet, v *types.SessionConnection) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._SessionConnection(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalOSessionOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSessionOrder(ctx context.Context, v any) (*types.SessionOrder, error) {
 	if v == nil {
 		return nil, nil
 	}
 	res, err := ec.unmarshalInputSessionOrder(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOSignInPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSignInPayload(ctx context.Context, sel ast.SelectionSet, v *types.SignInPayload) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._SignInPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOSignOutPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSignOutPayload(ctx context.Context, sel ast.SelectionSet, v *types.SignOutPayload) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._SignOutPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOSignUpFromInvitationPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSignUpFromInvitationPayload(ctx context.Context, sel ast.SelectionSet, v *types.SignUpFromInvitationPayload) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._SignUpFromInvitationPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOSignUpPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSignUpPayload(ctx context.Context, sel ast.SelectionSet, v *types.SignUpPayload) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._SignUpPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOString2ᚕstringᚄ(ctx context.Context, v any) ([]string, error) {
@@ -20854,6 +20481,34 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	return res
 }
 
+func (ec *executionContext) marshalOUpdateIdentityProfilePayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐUpdateIdentityProfilePayload(ctx context.Context, sel ast.SelectionSet, v *types.UpdateIdentityProfilePayload) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._UpdateIdentityProfilePayload(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOUpdateOrganizationPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐUpdateOrganizationPayload(ctx context.Context, sel ast.SelectionSet, v *types.UpdateOrganizationPayload) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._UpdateOrganizationPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOUpdatePersonalAPIKeyPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐUpdatePersonalAPIKeyPayload(ctx context.Context, sel ast.SelectionSet, v *types.UpdatePersonalAPIKeyPayload) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._UpdatePersonalAPIKeyPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOUpdateSAMLConfigurationPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐUpdateSAMLConfigurationPayload(ctx context.Context, sel ast.SelectionSet, v *types.UpdateSAMLConfigurationPayload) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._UpdateSAMLConfigurationPayload(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalOUpload2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx context.Context, v any) (*graphql.Upload, error) {
 	if v == nil {
 		return nil, nil
@@ -20870,6 +20525,13 @@ func (ec *executionContext) marshalOUpload2ᚖgithubᚗcomᚋ99designsᚋgqlgen�
 	_ = ctx
 	res := graphql.MarshalUpload(*v)
 	return res
+}
+
+func (ec *executionContext) marshalOVerifyEmailPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐVerifyEmailPayload(ctx context.Context, sel ast.SelectionSet, v *types.VerifyEmailPayload) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._VerifyEmailPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalO__EnumValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐEnumValueᚄ(ctx context.Context, sel ast.SelectionSet, v []introspection.EnumValue) graphql.Marshaler {

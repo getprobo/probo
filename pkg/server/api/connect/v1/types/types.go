@@ -170,10 +170,10 @@ type Identity struct {
 	EmailVerified      bool                      `json:"emailVerified"`
 	CreatedAt          time.Time                 `json:"createdAt"`
 	UpdatedAt          time.Time                 `json:"updatedAt"`
-	Memberships        *MembershipConnection     `json:"memberships"`
-	PendingInvitations *InvitationConnection     `json:"pendingInvitations"`
-	Sessions           *SessionConnection        `json:"sessions"`
-	PersonalAPIKeys    *PersonalAPIKeyConnection `json:"personalAPIKeys"`
+	Memberships        *MembershipConnection     `json:"memberships,omitempty"`
+	PendingInvitations *InvitationConnection     `json:"pendingInvitations,omitempty"`
+	Sessions           *SessionConnection        `json:"sessions,omitempty"`
+	PersonalAPIKeys    *PersonalAPIKeyConnection `json:"personalAPIKeys,omitempty"`
 	ProfileFor         *IdentityProfile          `json:"profileFor,omitempty"`
 }
 
@@ -212,7 +212,7 @@ type Invitation struct {
 	AcceptedAt   *time.Time                `json:"acceptedAt,omitempty"`
 	CreatedAt    time.Time                 `json:"createdAt"`
 	Status       coredata.InvitationStatus `json:"status"`
-	Organization *Organization             `json:"organization"`
+	Organization *Organization             `json:"organization,omitempty"`
 }
 
 func (Invitation) IsNode()             {}
@@ -238,8 +238,8 @@ type Membership struct {
 	IdentityID    gid.GID                 `json:"identityId"`
 	CreatedAt     time.Time               `json:"createdAt"`
 	Profile       *IdentityProfile        `json:"profile"`
-	Identity      *Identity               `json:"identity"`
-	Organization  *Organization           `json:"organization"`
+	Identity      *Identity               `json:"identity,omitempty"`
+	Organization  *Organization           `json:"organization,omitempty"`
 	Role          coredata.MembershipRole `json:"role"`
 	Permissions   []*Permission           `json:"permissions"`
 	ProvisionedBy ProvisioningSource      `json:"provisionedBy"`
@@ -266,9 +266,9 @@ type Organization struct {
 	HorizontalLogoURL     *string                      `json:"horizontalLogoUrl,omitempty"`
 	CreatedAt             time.Time                    `json:"createdAt"`
 	UpdatedAt             time.Time                    `json:"updatedAt"`
-	Members               *MembershipConnection        `json:"members"`
-	Invitations           *InvitationConnection        `json:"invitations"`
-	SamlConfigurations    *SAMLConfigurationConnection `json:"samlConfigurations"`
+	Members               *MembershipConnection        `json:"members,omitempty"`
+	Invitations           *InvitationConnection        `json:"invitations,omitempty"`
+	SamlConfigurations    *SAMLConfigurationConnection `json:"samlConfigurations,omitempty"`
 	AvailableApplications []*Application               `json:"availableApplications"`
 }
 

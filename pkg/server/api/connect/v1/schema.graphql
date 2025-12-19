@@ -59,73 +59,73 @@ type Query {
 }
 
 type Mutation {
-  signIn(input: SignInInput!): SignInPayload! @session(required: OPTIONAL)
-  signUp(input: SignUpInput!): SignUpPayload! @session(required: NONE)
-  signOut: SignOutPayload! @session(required: PRESENT)
+  signIn(input: SignInInput!): SignInPayload @session(required: OPTIONAL)
+  signUp(input: SignUpInput!): SignUpPayload @session(required: NONE)
+  signOut: SignOutPayload @session(required: PRESENT)
   signUpFromInvitation(
     input: SignUpFromInvitationInput!
-  ): SignUpFromInvitationPayload! @session(required: NONE)
-  forgotPassword(input: ForgotPasswordInput!): ForgotPasswordPayload!
+  ): SignUpFromInvitationPayload @session(required: NONE)
+  forgotPassword(input: ForgotPasswordInput!): ForgotPasswordPayload
     @session(required: NONE)
-  resetPassword(input: ResetPasswordInput!): ResetPasswordPayload!
+  resetPassword(input: ResetPasswordInput!): ResetPasswordPayload
     @session(required: NONE)
-  verifyEmail(input: VerifyEmailInput!): VerifyEmailPayload!
+  verifyEmail(input: VerifyEmailInput!): VerifyEmailPayload
     @session(required: OPTIONAL)
-  changePassword(input: ChangePasswordInput!): ChangePasswordPayload!
+  changePassword(input: ChangePasswordInput!): ChangePasswordPayload
     @session(required: PRESENT)
-  changeEmail(input: ChangeEmailInput!): ChangeEmailPayload!
+  changeEmail(input: ChangeEmailInput!): ChangeEmailPayload
     @session(required: PRESENT)
   assumeOrganizationSession(
     input: AssumeOrganizationSessionInput!
-  ): AssumeOrganizationSessionPayload! @session(required: PRESENT)
+  ): AssumeOrganizationSessionPayload @session(required: PRESENT)
 
   updateIdentityProfile(
     input: UpdateIdentityProfileInput!
-  ): UpdateIdentityProfilePayload! @session(required: PRESENT)
+  ): UpdateIdentityProfilePayload @session(required: PRESENT)
 
   revokeSession(input: RevokeSessionInput!): RevokeSessionPayload!
     @session(required: PRESENT)
-  revokeAllSessions: RevokeAllSessionsPayload! @session(required: PRESENT)
+  revokeAllSessions: RevokeAllSessionsPayload @session(required: PRESENT)
 
   createPersonalAPIKey(
     input: CreatePersonalAPIKeyInput!
-  ): CreatePersonalAPIKeyPayload! @session(required: PRESENT)
+  ): CreatePersonalAPIKeyPayload @session(required: PRESENT)
   updatePersonalAPIKey(
     input: UpdatePersonalAPIKeyInput!
-  ): UpdatePersonalAPIKeyPayload! @session(required: PRESENT)
+  ): UpdatePersonalAPIKeyPayload @session(required: PRESENT)
   revokePersonalAPIKey(
     input: RevokePersonalAPIKeyInput!
-  ): RevokePersonalAPIKeyPayload! @session(required: PRESENT)
+  ): RevokePersonalAPIKeyPayload @session(required: PRESENT)
 
   createOrganization(
     input: CreateOrganizationInput!
-  ): CreateOrganizationPayload! @session(required: PRESENT)
+  ): CreateOrganizationPayload @session(required: PRESENT)
   updateOrganization(
     input: UpdateOrganizationInput!
-  ): UpdateOrganizationPayload! @session(required: PRESENT)
+  ): UpdateOrganizationPayload @session(required: PRESENT)
   deleteOrganization(
     input: DeleteOrganizationInput!
-  ): DeleteOrganizationPayload! @session(required: PRESENT)
+  ): DeleteOrganizationPayload @session(required: PRESENT)
 
-  inviteMember(input: InviteMemberInput!): InviteMemberPayload!
+  inviteMember(input: InviteMemberInput!): InviteMemberPayload
     @session(required: PRESENT)
-  deleteInvitation(input: DeleteInvitationInput!): DeleteInvitationPayload!
+  deleteInvitation(input: DeleteInvitationInput!): DeleteInvitationPayload
     @session(required: PRESENT)
-  removeMember(input: RemoveMemberInput!): RemoveMemberPayload!
+  removeMember(input: RemoveMemberInput!): RemoveMemberPayload
     @session(required: PRESENT)
 
-  acceptInvitation(input: AcceptInvitationInput!): AcceptInvitationPayload!
+  acceptInvitation(input: AcceptInvitationInput!): AcceptInvitationPayload
     @session(required: PRESENT)
 
   createSAMLConfiguration(
     input: CreateSAMLConfigurationInput!
-  ): CreateSAMLConfigurationPayload! @session(required: PRESENT)
+  ): CreateSAMLConfigurationPayload @session(required: PRESENT)
   updateSAMLConfiguration(
     input: UpdateSAMLConfigurationInput!
-  ): UpdateSAMLConfigurationPayload! @session(required: PRESENT)
+  ): UpdateSAMLConfigurationPayload @session(required: PRESENT)
   deleteSAMLConfiguration(
     input: DeleteSAMLConfigurationInput!
-  ): DeleteSAMLConfigurationPayload! @session(required: PRESENT)
+  ): DeleteSAMLConfigurationPayload @session(required: PRESENT)
 }
 
 type Identity implements Node {
@@ -141,7 +141,7 @@ type Identity implements Node {
     last: Int
     before: CursorKey
     orderBy: MembershipOrder
-  ): MembershipConnection! @goField(forceResolver: true) @isViewer
+  ): MembershipConnection @goField(forceResolver: true) @isViewer
 
   pendingInvitations(
     first: Int
@@ -149,7 +149,7 @@ type Identity implements Node {
     last: Int
     before: CursorKey
     orderBy: InvitationOrder
-  ): InvitationConnection! @goField(forceResolver: true) @isViewer
+  ): InvitationConnection @goField(forceResolver: true) @isViewer
 
   sessions(
     first: Int
@@ -157,14 +157,14 @@ type Identity implements Node {
     last: Int
     before: CursorKey
     orderBy: SessionOrder
-  ): SessionConnection! @goField(forceResolver: true) @isViewer
+  ): SessionConnection @goField(forceResolver: true) @isViewer
 
   personalAPIKeys(
     first: Int
     after: CursorKey
     last: Int
     before: CursorKey
-  ): PersonalAPIKeyConnection! @goField(forceResolver: true) @isViewer
+  ): PersonalAPIKeyConnection @goField(forceResolver: true) @isViewer
 
   profileFor(organizationId: ID!): IdentityProfile @isViewer
 }
@@ -208,7 +208,7 @@ type Organization implements Node {
     after: CursorKey
     last: Int
     before: CursorKey
-  ): MembershipConnection! @goField(forceResolver: true)
+  ): MembershipConnection @goField(forceResolver: true)
 
   invitations(
     first: Int
@@ -216,14 +216,14 @@ type Organization implements Node {
     last: Int
     before: CursorKey
     status: InvitationStatus
-  ): InvitationConnection! @goField(forceResolver: true)
+  ): InvitationConnection @goField(forceResolver: true)
 
   samlConfigurations(
     first: Int
     after: CursorKey
     last: Int
     before: CursorKey
-  ): SAMLConfigurationConnection! @goField(forceResolver: true)
+  ): SAMLConfigurationConnection @goField(forceResolver: true)
 
   availableApplications: [Application!]!
 }
@@ -244,8 +244,8 @@ type Membership implements Node {
   identityId: ID!
   createdAt: Datetime!
   profile: IdentityProfile!
-  identity: Identity! @goField(forceResolver: true)
-  organization: Organization! @goField(forceResolver: true)
+  identity: Identity @goField(forceResolver: true)
+  organization: Organization @goField(forceResolver: true)
   role: MembershipRole!
   permissions: [Permission!]!
   provisionedBy: ProvisioningSource!
@@ -263,7 +263,7 @@ type Invitation implements Node {
   acceptedAt: Datetime
   createdAt: Datetime!
   status: InvitationStatus!
-  organization: Organization! @goField(forceResolver: true)
+  organization: Organization @goField(forceResolver: true)
 }
 
 type Session implements Node {
@@ -450,7 +450,7 @@ type MembershipConnection
   ) {
   edges: [MembershipEdge!]!
   pageInfo: PageInfo!
-  totalCount: Int! @goField(forceResolver: true)
+  totalCount: Int @goField(forceResolver: true)
 }
 
 type MembershipEdge {
@@ -492,7 +492,7 @@ type InvitationConnection
   ) {
   edges: [InvitationEdge!]!
   pageInfo: PageInfo!
-  totalCount: Int! @goField(forceResolver: true)
+  totalCount: Int @goField(forceResolver: true)
 }
 
 type InvitationEdge {
@@ -506,7 +506,7 @@ type SessionConnection
   ) {
   edges: [SessionEdge!]!
   pageInfo: PageInfo!
-  totalCount: Int! @goField(forceResolver: true)
+  totalCount: Int @goField(forceResolver: true)
 }
 
 type SessionEdge {
@@ -520,7 +520,7 @@ type PersonalAPIKeyConnection
   ) {
   edges: [PersonalAPIKeyEdge!]!
   pageInfo: PageInfo!
-  totalCount: Int! @goField(forceResolver: true)
+  totalCount: Int @goField(forceResolver: true)
 }
 
 type PersonalAPIKeyEdge {
@@ -534,7 +534,7 @@ type SAMLConfigurationConnection
   ) {
   edges: [SAMLConfigurationEdge!]!
   pageInfo: PageInfo!
-  totalCount: Int! @goField(forceResolver: true)
+  totalCount: Int @goField(forceResolver: true)
 }
 
 type SAMLConfigurationEdge {
