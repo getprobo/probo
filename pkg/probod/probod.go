@@ -126,8 +126,10 @@ func New() *Implm {
 				InvitationConfirmationTokenValidity: 3600,
 				PasswordResetTokenValidity:          3600,
 				SAML: samlConfig{
-					SessionDuration:        604800,
-					CleanupIntervalSeconds: 86400,
+					SessionDuration:                   604800,
+					CleanupIntervalSeconds:            86400,
+					DomainVerificationIntervalSeconds: 60,
+					DomainVerificationResolverAddr:    "8.8.8.8:53",
 				},
 			},
 			TrustAuth: trustAuthConfig{
@@ -313,17 +315,20 @@ func (impl *Implm) Run(
 		fileManagerService,
 		hp,
 		iam.Config{
-			DisableSignup:              impl.cfg.Auth.DisableSignup,
-			InvitationTokenValidity:    time.Duration(impl.cfg.Auth.InvitationConfirmationTokenValidity) * time.Second,
-			PasswordResetTokenValidity: time.Duration(impl.cfg.Auth.PasswordResetTokenValidity) * time.Second,
-			SessionDuration:            time.Duration(impl.cfg.Auth.Cookie.Duration) * time.Hour,
-			Bucket:                     impl.cfg.AWS.Bucket,
-			TokenSecret:                impl.cfg.Auth.Cookie.Secret,
-			BaseURL:                    impl.cfg.BaseURL.String(),
-			EncryptionKey:              impl.cfg.EncryptionKey,
-			Certificate:                samlCert,
-			PrivateKey:                 samlKey,
-			Logger:                     l.Named("iam"),
+			DisableSignup:                  impl.cfg.Auth.DisableSignup,
+			InvitationTokenValidity:        time.Duration(impl.cfg.Auth.InvitationConfirmationTokenValidity) * time.Second,
+			PasswordResetTokenValidity:     time.Duration(impl.cfg.Auth.PasswordResetTokenValidity) * time.Second,
+			SessionDuration:                time.Duration(impl.cfg.Auth.Cookie.Duration) * time.Hour,
+			Bucket:                         impl.cfg.AWS.Bucket,
+			TokenSecret:                    impl.cfg.Auth.Cookie.Secret,
+			BaseURL:                        impl.cfg.BaseURL.String(),
+			EncryptionKey:                  impl.cfg.EncryptionKey,
+			Certificate:                    samlCert,
+			PrivateKey:                     samlKey,
+			Logger:                         l.Named("iam"),
+			TracerProvider:                 tp,
+			DomainVerificationInterval:     impl.cfg.Auth.SAML.DomainVerificationInterval(),
+			DomainVerificationResolverAddr: impl.cfg.Auth.SAML.DomainVerificationResolverAddr,
 		},
 	)
 	if err != nil {
@@ -494,11 +499,9 @@ func (impl *Implm) Run(
 	iamServiceCtx, stopIAMService := context.WithCancel(context.Background())
 	wg.Go(
 		func() {
-
 			if err := iamService.Run(iamServiceCtx); err != nil {
 				cancel(fmt.Errorf("iam service crashed: %w", err))
 			}
-
 		},
 	)
 

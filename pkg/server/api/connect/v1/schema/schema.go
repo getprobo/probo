@@ -355,10 +355,8 @@ type ComplexityRoot struct {
 		CreatedAt               func(childComplexity int) int
 		DefaultPermissions      func(childComplexity int) int
 		DomainVerificationToken func(childComplexity int) int
-		DomainVerified          func(childComplexity int) int
 		DomainVerifiedAt        func(childComplexity int) int
 		EmailDomain             func(childComplexity int) int
-		Enabled                 func(childComplexity int) int
 		EnforcementPolicy       func(childComplexity int) int
 		ID                      func(childComplexity int) int
 		IdpCertificate          func(childComplexity int) int
@@ -1733,12 +1731,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.SAMLConfiguration.DomainVerificationToken(childComplexity), true
-	case "SAMLConfiguration.domainVerified":
-		if e.complexity.SAMLConfiguration.DomainVerified == nil {
-			break
-		}
-
-		return e.complexity.SAMLConfiguration.DomainVerified(childComplexity), true
 	case "SAMLConfiguration.domainVerifiedAt":
 		if e.complexity.SAMLConfiguration.DomainVerifiedAt == nil {
 			break
@@ -1751,12 +1743,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.SAMLConfiguration.EmailDomain(childComplexity), true
-	case "SAMLConfiguration.enabled":
-		if e.complexity.SAMLConfiguration.Enabled == nil {
-			break
-		}
-
-		return e.complexity.SAMLConfiguration.Enabled(childComplexity), true
 	case "SAMLConfiguration.enforcementPolicy":
 		if e.complexity.SAMLConfiguration.EnforcementPolicy == nil {
 			break
@@ -2484,9 +2470,7 @@ type SessionPolicy {
 type SAMLConfiguration implements Node {
   id: ID!
   emailDomain: String!
-  enabled: Boolean!
   enforcementPolicy: SAMLEnforcementPolicy!
-  domainVerified: Boolean!
   domainVerifiedAt: Datetime
   domainVerificationToken: String
   idpEntityId: String!
@@ -10090,35 +10074,6 @@ func (ec *executionContext) fieldContext_SAMLConfiguration_emailDomain(_ context
 	return fc, nil
 }
 
-func (ec *executionContext) _SAMLConfiguration_enabled(ctx context.Context, field graphql.CollectedField, obj *types.SAMLConfiguration) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_SAMLConfiguration_enabled,
-		func(ctx context.Context) (any, error) {
-			return obj.Enabled, nil
-		},
-		nil,
-		ec.marshalNBoolean2bool,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_SAMLConfiguration_enabled(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SAMLConfiguration",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _SAMLConfiguration_enforcementPolicy(ctx context.Context, field graphql.CollectedField, obj *types.SAMLConfiguration) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -10143,35 +10098,6 @@ func (ec *executionContext) fieldContext_SAMLConfiguration_enforcementPolicy(_ c
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type SAMLEnforcementPolicy does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SAMLConfiguration_domainVerified(ctx context.Context, field graphql.CollectedField, obj *types.SAMLConfiguration) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_SAMLConfiguration_domainVerified,
-		func(ctx context.Context) (any, error) {
-			return obj.DomainVerified, nil
-		},
-		nil,
-		ec.marshalNBoolean2bool,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_SAMLConfiguration_domainVerified(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SAMLConfiguration",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	return fc, nil
@@ -10672,12 +10598,8 @@ func (ec *executionContext) fieldContext_SAMLConfigurationEdge_node(_ context.Co
 				return ec.fieldContext_SAMLConfiguration_id(ctx, field)
 			case "emailDomain":
 				return ec.fieldContext_SAMLConfiguration_emailDomain(ctx, field)
-			case "enabled":
-				return ec.fieldContext_SAMLConfiguration_enabled(ctx, field)
 			case "enforcementPolicy":
 				return ec.fieldContext_SAMLConfiguration_enforcementPolicy(ctx, field)
-			case "domainVerified":
-				return ec.fieldContext_SAMLConfiguration_domainVerified(ctx, field)
 			case "domainVerifiedAt":
 				return ec.fieldContext_SAMLConfiguration_domainVerifiedAt(ctx, field)
 			case "domainVerificationToken":
@@ -11739,12 +11661,8 @@ func (ec *executionContext) fieldContext_UpdateSAMLConfigurationPayload_samlConf
 				return ec.fieldContext_SAMLConfiguration_id(ctx, field)
 			case "emailDomain":
 				return ec.fieldContext_SAMLConfiguration_emailDomain(ctx, field)
-			case "enabled":
-				return ec.fieldContext_SAMLConfiguration_enabled(ctx, field)
 			case "enforcementPolicy":
 				return ec.fieldContext_SAMLConfiguration_enforcementPolicy(ctx, field)
-			case "domainVerified":
-				return ec.fieldContext_SAMLConfiguration_domainVerified(ctx, field)
 			case "domainVerifiedAt":
 				return ec.fieldContext_SAMLConfiguration_domainVerifiedAt(ctx, field)
 			case "domainVerificationToken":
@@ -17312,18 +17230,8 @@ func (ec *executionContext) _SAMLConfiguration(ctx context.Context, sel ast.Sele
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "enabled":
-			out.Values[i] = ec._SAMLConfiguration_enabled(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "enforcementPolicy":
 			out.Values[i] = ec._SAMLConfiguration_enforcementPolicy(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "domainVerified":
-			out.Values[i] = ec._SAMLConfiguration_domainVerified(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

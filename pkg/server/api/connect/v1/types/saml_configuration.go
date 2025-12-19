@@ -64,12 +64,12 @@ func NewSAMLConfiguration(samlConfiguration *coredata.SAMLConfiguration) *SAMLCo
 		ID:                      samlConfiguration.ID,
 		EmailDomain:             samlConfiguration.EmailDomain,
 		EnforcementPolicy:       samlConfiguration.EnforcementPolicy,
-		DomainVerified:          samlConfiguration.DomainVerified,
 		DomainVerifiedAt:        samlConfiguration.DomainVerifiedAt,
 		DomainVerificationToken: samlConfiguration.DomainVerificationToken,
 		IdpEntityID:             samlConfiguration.IdPEntityID,
 		IdpSsoURL:               samlConfiguration.IdPSsoURL,
 		IdpCertificate:          samlConfiguration.IdPCertificate,
+		AutoSignupEnabled:       samlConfiguration.AutoSignupEnabled,
 		CreatedAt:               samlConfiguration.CreatedAt,
 		UpdatedAt:               samlConfiguration.UpdatedAt,
 		AttributeMappings: &SAMLAttributeMappings{
