@@ -43,7 +43,6 @@ type (
 		AttributeLastname       string                `db:"attribute_lastname"`
 		AttributeRole           string                `db:"attribute_role"`
 		AutoSignupEnabled       bool                  `db:"auto_signup_enabled"`
-		DomainVerified          bool                  `db:"domain_verified"`
 		DomainVerificationToken *string               `db:"domain_verification_token"`
 		DomainVerifiedAt        *time.Time            `db:"domain_verified_at"`
 		CreatedAt               time.Time             `db:"created_at"`
@@ -88,7 +87,6 @@ SELECT
     id,
     organization_id,
     email_domain,
-    enabled,
     enforcement_policy,
     idp_entity_id,
     idp_sso_url,
@@ -99,7 +97,6 @@ SELECT
     attribute_lastname,
     attribute_role,
     auto_signup_enabled,
-    domain_verified,
     domain_verification_token,
     domain_verified_at,
     created_at,
@@ -147,7 +144,6 @@ SELECT
     id,
     organization_id,
     email_domain,
-    enabled,
     enforcement_policy,
     idp_entity_id,
     idp_sso_url,
@@ -158,7 +154,6 @@ SELECT
     attribute_lastname,
     attribute_role,
     auto_signup_enabled,
-    domain_verified,
     domain_verification_token,
     domain_verified_at,
     created_at,
@@ -175,6 +170,58 @@ LIMIT 1;
 
 	args := pgx.StrictNamedArgs{"id": configID}
 	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query auth_saml_configurations: %w", err)
+	}
+
+	config, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[SAMLConfiguration])
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect saml_configuration: %w", err)
+	}
+
+	*s = config
+
+	return nil
+}
+
+func (s *SAMLConfiguration) LoadByIDForUpdateSkipLocked(
+	ctx context.Context,
+	conn pg.Conn,
+	configID gid.GID,
+) error {
+	q := `
+SELECT
+    id,
+    organization_id,
+    email_domain,
+    enforcement_policy,
+    idp_entity_id,
+    idp_sso_url,
+    idp_certificate,
+    idp_metadata_url,
+    attribute_email,
+    attribute_firstname,
+    attribute_lastname,
+    attribute_role,
+    auto_signup_enabled,
+    domain_verification_token,
+    domain_verified_at,
+    created_at,
+    updated_at
+FROM
+    auth_saml_configurations
+WHERE
+    id = @id
+FOR UPDATE SKIP LOCKED;
+`
+
+	args := pgx.StrictNamedArgs{"id": configID}
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -216,7 +263,6 @@ INSERT INTO auth_saml_configurations (
     attribute_lastname,
     attribute_role,
     auto_signup_enabled,
-    domain_verified,
     domain_verification_token,
     domain_verified_at,
     created_at,
@@ -236,7 +282,6 @@ INSERT INTO auth_saml_configurations (
     @attribute_lastname,
     @attribute_role,
     @auto_signup_enabled,
-    @domain_verified,
     @domain_verification_token,
     @domain_verified_at,
     @created_at,
@@ -259,7 +304,6 @@ INSERT INTO auth_saml_configurations (
 		"attribute_lastname":        s.AttributeLastname,
 		"attribute_role":            s.AttributeRole,
 		"auto_signup_enabled":       s.AutoSignupEnabled,
-		"domain_verified":           s.DomainVerified,
 		"domain_verification_token": s.DomainVerificationToken,
 		"domain_verified_at":        s.DomainVerifiedAt,
 		"created_at":                s.CreatedAt,
@@ -292,7 +336,6 @@ SET
     attribute_lastname = @attribute_lastname,
     attribute_role = @attribute_role,
     auto_signup_enabled = @auto_signup_enabled,
-    domain_verified = @domain_verified,
     domain_verification_token = @domain_verification_token,
     domain_verified_at = @domain_verified_at,
     updated_at = @updated_at
@@ -315,7 +358,6 @@ WHERE
 		"attribute_lastname":        s.AttributeLastname,
 		"attribute_role":            s.AttributeRole,
 		"auto_signup_enabled":       s.AutoSignupEnabled,
-		"domain_verified":           s.DomainVerified,
 		"domain_verification_token": s.DomainVerificationToken,
 		"domain_verified_at":        s.DomainVerifiedAt,
 		"updated_at":                s.UpdatedAt,
@@ -377,7 +419,6 @@ SELECT
     attribute_lastname,
     attribute_role,
     auto_signup_enabled,
-    domain_verified,
     domain_verification_token,
     domain_verified_at,
     created_at,
@@ -408,122 +449,6 @@ ORDER BY email_domain ASC;
 	*s = samlConfigurations
 
 	return nil
-}
-
-// LoadAllEnabledSAMLConfigurationsByEmailDomain loads all enabled SAML configurations for a given email domain
-// This is used for SSO login detection when multiple organizations may have SAML configured for the same domain
-func LoadAllEnabledSAMLConfigurationsByEmailDomain(
-	ctx context.Context,
-	conn pg.Conn,
-	emailDomain string,
-) ([]*SAMLConfiguration, error) {
-	q := `
-SELECT
-    id,
-    organization_id,
-    email_domain,
-    enforcement_policy,
-    idp_entity_id,
-    idp_sso_url,
-    idp_certificate,
-    idp_metadata_url,
-    attribute_email,
-    attribute_firstname,
-    attribute_lastname,
-    attribute_role,
-    auto_signup_enabled,
-    domain_verified,
-    domain_verification_token,
-    domain_verified_at,
-    created_at,
-    updated_at
-FROM
-    auth_saml_configurations
-WHERE
-    email_domain = $1
-    AND enabled = true
-    AND domain_verified = true
-ORDER BY created_at ASC;
-`
-
-	rows, err := conn.Query(ctx, q, emailDomain)
-	if err != nil {
-		return nil, fmt.Errorf("cannot query auth_saml_configurations: %w", err)
-	}
-
-	configs, err := pgx.CollectRows(rows, pgx.RowToStructByName[SAMLConfiguration])
-	if err != nil {
-		return nil, fmt.Errorf("cannot collect saml_configurations: %w", err)
-	}
-
-	result := make([]*SAMLConfiguration, len(configs))
-	for i := range configs {
-		result[i] = &configs[i]
-	}
-
-	return result, nil
-}
-
-// LoadSAMLConfigurationsByOrganizationIDsAndEmailDomain loads SAML configurations for multiple organizations
-// and a given email domain in a single query. This is used to avoid N+1 queries.
-func LoadSAMLConfigurationsByOrganizationIDsAndEmailDomain(
-	ctx context.Context,
-	conn pg.Conn,
-	organizationIDs []gid.GID,
-	emailDomain string,
-) (map[gid.GID]*SAMLConfiguration, error) {
-	if len(organizationIDs) == 0 {
-		return make(map[gid.GID]*SAMLConfiguration), nil
-	}
-
-	q := `
-SELECT
-    id,
-    organization_id,
-    email_domain,
-    enforcement_policy,
-    idp_entity_id,
-    idp_sso_url,
-    idp_certificate,
-    idp_metadata_url,
-    attribute_email,
-    attribute_firstname,
-    attribute_lastname,
-    attribute_role,
-    auto_signup_enabled,
-    domain_verified,
-    domain_verification_token,
-    domain_verified_at,
-    created_at,
-    updated_at
-FROM
-    auth_saml_configurations
-WHERE
-    organization_id = ANY(@organization_ids)
-    AND email_domain = @email_domain
-`
-
-	args := pgx.StrictNamedArgs{
-		"organization_ids": organizationIDs,
-		"email_domain":     emailDomain,
-	}
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return nil, fmt.Errorf("cannot query auth_saml_configurations: %w", err)
-	}
-
-	configs, err := pgx.CollectRows(rows, pgx.RowToStructByName[SAMLConfiguration])
-	if err != nil {
-		return nil, fmt.Errorf("cannot collect saml_configurations: %w", err)
-	}
-
-	result := make(map[gid.GID]*SAMLConfiguration, len(configs))
-	for i := range configs {
-		result[configs[i].OrganizationID] = &configs[i]
-	}
-
-	return result, nil
 }
 
 func (s *SAMLConfigurations) CountByOrganizationID(
@@ -559,4 +484,51 @@ WHERE
 	}
 
 	return count, nil
+}
+
+func (s *SAMLConfigurations) LoadUnverified(
+	ctx context.Context,
+	conn pg.Conn,
+) error {
+	q := `
+SELECT
+    id,
+    organization_id,
+    email_domain,
+    enforcement_policy,
+    idp_entity_id,
+    idp_sso_url,
+    idp_certificate,
+    idp_metadata_url,
+    attribute_email,
+    attribute_firstname,
+    attribute_lastname,
+    attribute_role,
+    auto_signup_enabled,
+    domain_verification_token,
+    domain_verified_at,
+    created_at,
+    updated_at
+FROM
+    auth_saml_configurations
+WHERE
+    domain_verified_at IS NULL
+    AND domain_verification_token IS NOT NULL
+ORDER BY created_at ASC
+LIMIT 100;
+`
+
+	rows, err := conn.Query(ctx, q)
+	if err != nil {
+		return fmt.Errorf("cannot query unverified auth_saml_configurations: %w", err)
+	}
+
+	configs, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[SAMLConfiguration])
+	if err != nil {
+		return fmt.Errorf("cannot collect unverified saml_configurations: %w", err)
+	}
+
+	*s = configs
+
+	return nil
 }

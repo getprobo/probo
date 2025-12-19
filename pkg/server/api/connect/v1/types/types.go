@@ -400,9 +400,7 @@ func (SAMLAuthenticationRequired) IsAssumeOrganizationSessionResult() {}
 type SAMLConfiguration struct {
 	ID                      gid.GID                        `json:"id"`
 	EmailDomain             string                         `json:"emailDomain"`
-	Enabled                 bool                           `json:"enabled"`
 	EnforcementPolicy       coredata.SAMLEnforcementPolicy `json:"enforcementPolicy"`
-	DomainVerified          bool                           `json:"domainVerified"`
 	DomainVerifiedAt        *time.Time                     `json:"domainVerifiedAt,omitempty"`
 	DomainVerificationToken *string                        `json:"domainVerificationToken,omitempty"`
 	IdpEntityID             string                         `json:"idpEntityId"`
