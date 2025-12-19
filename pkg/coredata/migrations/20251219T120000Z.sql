@@ -5,6 +5,7 @@ CREATE TYPE session_auth_method AS ENUM (
 
 ALTER TABLE sessions ADD COLUMN auth_method session_auth_method;
 ALTER TABLE sessions ADD COLUMN authenticated_at TIMESTAMP;
+ALTER TABLE sessions ADD COLUMN membership_id TEXT REFERENCES authz_memberships(id) ON DELETE CASCADE;
 
 -- Expire all existing sessions as they are not backward compatible
 UPDATE sessions SET 
