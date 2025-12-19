@@ -970,26 +970,26 @@ func (s OrganizationService) CreateSAMLConfiguration(
 	req *CreateSAMLConfigurationRequest,
 ) (*coredata.SAMLConfiguration, error) {
 	var (
-		now    = time.Now()
-		scope  = coredata.NewScopeFromObjectID(organizationID)
-		config = &coredata.SAMLConfiguration{
-			ID:                 gid.New(scope.GetTenantID(), coredata.SAMLConfigurationEntityType),
-			OrganizationID:     organizationID,
-			EnforcementPolicy:  coredata.SAMLEnforcementPolicyOff,
-			IdPEntityID:        req.IdPEntityID,
-			IdPSsoURL:          req.IdPSsoURL,
-			IdPCertificate:     req.IdPCertificate,
-			EmailDomain:        req.EmailDomain,
-			AutoSignupEnabled:  req.AutoSignupEnabled,
-			AttributeEmail:     DefaultAttributeEmail,
-			AttributeFirstname: DefaultAttributeFirstname,
-			AttributeLastname:  DefaultAttributeLastname,
-			AttributeRole:      DefaultAttributeRole,
-			CreatedAt:          now,
-			UpdatedAt:          now,
+		now                     = time.Now()
+		scope                   = coredata.NewScopeFromObjectID(organizationID)
+		domainVerificationToken = uuid.MustNewV4().String()
+		config                  = &coredata.SAMLConfiguration{
+			ID:                      gid.New(scope.GetTenantID(), coredata.SAMLConfigurationEntityType),
+			OrganizationID:          organizationID,
+			EnforcementPolicy:       coredata.SAMLEnforcementPolicyOff,
+			IdPEntityID:             req.IdPEntityID,
+			IdPSsoURL:               req.IdPSsoURL,
+			IdPCertificate:          req.IdPCertificate,
+			DomainVerificationToken: &domainVerificationToken,
+			EmailDomain:             req.EmailDomain,
+			AutoSignupEnabled:       req.AutoSignupEnabled,
+			AttributeEmail:          DefaultAttributeEmail,
+			AttributeFirstname:      DefaultAttributeFirstname,
+			AttributeLastname:       DefaultAttributeLastname,
+			AttributeRole:           DefaultAttributeRole,
+			CreatedAt:               now,
+			UpdatedAt:               now,
 		}
-
-		// TODO create domain verification object
 	)
 
 	if req.AttributeEmail != nil {
@@ -1059,7 +1059,7 @@ func (s OrganizationService) UpdateSAMLConfiguration(
 			}
 
 			if req.EnforcementPolicy != nil {
-				if !config.DomainVerified {
+				if config.DomainVerifiedAt == nil {
 					return NewSAMLConfigurationDomainNotVerifiedError(configID)
 				}
 

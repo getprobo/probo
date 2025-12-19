@@ -9,12 +9,14 @@ import (
 
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
+	"go.opentelemetry.io/otel/trace"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/crypto/passwdhash"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam/saml"
+	"golang.org/x/sync/errgroup"
 )
 
 type (
@@ -42,21 +44,26 @@ type (
 		APIKeyService                 *APIKeyService
 		LegacyAccessManagementService *AccessManagementService
 		Authorizer                    *Authorizer
+
+		samlDomainVerifier *SAMLDomainVerifier
 	}
 
 	Config struct {
-		DisableSignup              bool
-		InvitationTokenValidity    time.Duration
-		PasswordResetTokenValidity time.Duration
-		SessionDuration            time.Duration
-		Bucket                     string
-		TokenSecret                string
-		BaseURL                    string
-		EncryptionKey              cipher.EncryptionKey
-		Certificate                *x509.Certificate
-		PrivateKey                 *rsa.PrivateKey
-		Logger                     *log.Logger
-		PolicySet                  *PolicySet
+		DisableSignup                  bool
+		InvitationTokenValidity        time.Duration
+		PasswordResetTokenValidity     time.Duration
+		SessionDuration                time.Duration
+		Bucket                         string
+		TokenSecret                    string
+		BaseURL                        string
+		EncryptionKey                  cipher.EncryptionKey
+		Certificate                    *x509.Certificate
+		PrivateKey                     *rsa.PrivateKey
+		Logger                         *log.Logger
+		PolicySet                      *PolicySet
+		TracerProvider                 trace.TracerProvider
+		DomainVerificationInterval     time.Duration
+		DomainVerificationResolverAddr string
 	}
 )
 
@@ -122,31 +129,24 @@ func NewService(
 	}
 	svc.SAMLService = samlService
 
+	svc.samlDomainVerifier = NewSAMLDomainVerifier(
+		pgClient,
+		cfg.Logger,
+		cfg.TracerProvider,
+		cfg.DomainVerificationInterval,
+		cfg.DomainVerificationResolverAddr,
+	)
+
 	return svc, nil
 }
 
 func (s *Service) Run(ctx context.Context) error {
-	runCtx, stopAll := context.WithCancel(ctx)
-	defer stopAll()
+	g, ctx := errgroup.WithContext(ctx)
 
-	errCh := make(chan error, 1)
-	go func() {
-		errCh <- s.SAMLService.Run(runCtx)
-	}()
+	g.Go(func() error { return s.SAMLService.Run(ctx) })
+	g.Go(func() error { return s.samlDomainVerifier.Run(ctx) })
 
-	select {
-	case <-ctx.Done():
-		stopAll()
-		<-errCh
-		return ctx.Err()
-	case err := <-errCh:
-		if err != nil {
-			s.logger.ErrorCtx(ctx, "iam service failed", log.Error(err))
-			return err
-		}
-
-		return nil
-	}
+	return g.Wait()
 }
 
 func (s *Service) GetMembership(ctx context.Context, membershipID gid.GID) (*coredata.Membership, error) {

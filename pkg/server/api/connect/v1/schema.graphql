@@ -318,9 +318,7 @@ type SessionPolicy {
 type SAMLConfiguration implements Node {
   id: ID!
   emailDomain: String!
-  enabled: Boolean!
   enforcementPolicy: SAMLEnforcementPolicy!
-  domainVerified: Boolean!
   domainVerifiedAt: Datetime
   domainVerificationToken: String
   idpEntityId: String!
