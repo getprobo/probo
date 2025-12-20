@@ -70,7 +70,7 @@ SELECT
 		created_at,
 		updated_at
 FROM
-	authz_memberships
+	iam_memberships
 WHERE
 	identity_id = @identity_id
 	AND organization_id = @organization_id
@@ -102,7 +102,7 @@ WHERE
 func (m *Membership) Insert(ctx context.Context, conn pg.Conn, scope Scoper) error {
 	query := `
 INSERT INTO
-    authz_memberships (
+    iam_memberships (
         tenant_id,
         id,
         identity_id,
@@ -165,7 +165,7 @@ WITH mbr AS (
 		created_at,
 		updated_at
 	FROM
-		authz_memberships
+		iam_memberships
 	WHERE
 		id = @membership_id
 		AND %s
@@ -244,7 +244,7 @@ SELECT
 	m.created_at,
 	m.updated_at
 FROM
-	authz_memberships m
+	iam_memberships m
 	INNER JOIN %s e ON e.id = @entity_id
 WHERE
 	%s
@@ -304,7 +304,7 @@ WITH mbr AS (
 		am.created_at,
 		am.updated_at
 	FROM
-		authz_memberships am
+		iam_memberships am
 	WHERE
 		am.identity_id = @identity_id
 		AND am.organization_id = @organization_id
@@ -354,7 +354,7 @@ JOIN
 func (m *Membership) Update(ctx context.Context, conn pg.Conn, scope Scoper) error {
 	query := `
 UPDATE
-    authz_memberships
+    iam_memberships
 SET
     role = @role,
     updated_at = @updated_at
@@ -387,7 +387,7 @@ WHERE
 func (m *Membership) Delete(ctx context.Context, conn pg.Conn, scope Scoper, membershipID gid.GID) error {
 	query := `
 DELETE FROM
-    authz_memberships
+    iam_memberships
 WHERE
 	%s
     AND id = @membership_id
@@ -429,7 +429,7 @@ WITH mbr AS (
 		created_at,
 		updated_at
 	FROM
-		authz_memberships
+		iam_memberships
 	WHERE
 		identity_id = @identity_id
 		AND %s
@@ -491,7 +491,7 @@ WITH mbr AS (
 		created_at,
 		updated_at
 	FROM
-		authz_memberships
+		iam_memberships
 	WHERE
 		organization_id = @organization_id
 		AND %s
@@ -555,7 +555,7 @@ func (m *Memberships) CountByOrganizationID(
 SELECT
     COUNT(*)
 FROM
-    authz_memberships
+    iam_memberships
 WHERE
     organization_id = @organization_id
     AND %s
@@ -582,7 +582,7 @@ func (m *Memberships) CountByIdentityID(
 SELECT
     COUNT(*)
 FROM
-    authz_memberships
+    iam_memberships
 WHERE
     identity_id = @identity_id
 `

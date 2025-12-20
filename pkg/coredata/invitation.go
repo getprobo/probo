@@ -70,7 +70,7 @@ func (i Invitation) CursorKey(orderBy InvitationOrderField) page.CursorKey {
 func (i *Invitation) Insert(ctx context.Context, conn pg.Conn, scope Scoper) error {
 	query := `
 INSERT INTO
-    authz_invitations (
+    iam_invitations (
         tenant_id,
         id,
         organization_id,
@@ -133,7 +133,7 @@ SELECT
     accepted_at,
     created_at
 FROM
-    authz_invitations
+    iam_invitations
 WHERE
     id = @id
     AND %s
@@ -167,7 +167,7 @@ WHERE
 func (i *Invitation) Update(ctx context.Context, conn pg.Conn, scope Scoper) error {
 	query := `
 UPDATE
-    authz_invitations
+    iam_invitations
 SET
     accepted_at = @accepted_at
 WHERE
@@ -198,7 +198,7 @@ WHERE
 func (i *Invitation) Delete(ctx context.Context, conn pg.Conn, scope Scoper, invitationID gid.GID) error {
 	query := `
 DELETE FROM
-    authz_invitations
+    iam_invitations
 WHERE
     %s
 	AND id = @invitation_id
@@ -247,7 +247,7 @@ SELECT
     accepted_at,
     created_at
 FROM
-    authz_invitations
+    iam_invitations
 WHERE
     email = @email
     AND %s
@@ -300,7 +300,7 @@ SELECT
     accepted_at,
     created_at
 FROM
-    authz_invitations
+    iam_invitations
 WHERE
     organization_id = @organization_id
     AND %s
@@ -342,7 +342,7 @@ func (i *Invitations) CountByOrganizationID(
 SELECT
 	COUNT(*)
 FROM
-	authz_invitations
+	iam_invitations
 WHERE
 	organization_id = @organization_id AND %s AND %s
 `
@@ -378,7 +378,7 @@ func (i *Invitations) CountByEmail(
 SELECT
 	COUNT(*)
 FROM
-	authz_invitations
+	iam_invitations
 WHERE
 	email = @email
 	AND %s

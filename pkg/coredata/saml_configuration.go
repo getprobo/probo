@@ -102,7 +102,7 @@ SELECT
     created_at,
     updated_at
 FROM
-    auth_saml_configurations
+    iam_saml_configurations
 WHERE
     %s
     AND organization_id = @organization_id
@@ -120,7 +120,7 @@ LIMIT 1;
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query auth_saml_configurations: %w", err)
+		return fmt.Errorf("cannot query iam_saml_configurations: %w", err)
 	}
 
 	config, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[SAMLConfiguration])
@@ -159,7 +159,7 @@ SELECT
     created_at,
     updated_at
 FROM
-    auth_saml_configurations
+    iam_saml_configurations
 WHERE
     %s
     AND id = @id
@@ -173,7 +173,7 @@ LIMIT 1;
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query auth_saml_configurations: %w", err)
+		return fmt.Errorf("cannot query iam_saml_configurations: %w", err)
 	}
 
 	config, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[SAMLConfiguration])
@@ -215,7 +215,7 @@ SELECT
     created_at,
     updated_at
 FROM
-    auth_saml_configurations
+    iam_saml_configurations
 WHERE
     id = @id
 FOR UPDATE SKIP LOCKED;
@@ -225,7 +225,7 @@ FOR UPDATE SKIP LOCKED;
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query auth_saml_configurations: %w", err)
+		return fmt.Errorf("cannot query iam_saml_configurations: %w", err)
 	}
 
 	config, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[SAMLConfiguration])
@@ -248,7 +248,7 @@ func (s *SAMLConfiguration) Insert(
 	scope Scoper,
 ) error {
 	q := `
-INSERT INTO auth_saml_configurations (
+INSERT INTO iam_saml_configurations (
     id,
     tenant_id,
     organization_id,
@@ -324,7 +324,7 @@ func (s *SAMLConfiguration) Update(
 	scope Scoper,
 ) error {
 	q := `
-UPDATE auth_saml_configurations
+UPDATE iam_saml_configurations
 SET
     enforcement_policy = @enforcement_policy,
     idp_entity_id = @idp_entity_id,
@@ -379,7 +379,7 @@ func (s *SAMLConfiguration) Delete(
 	scope Scoper,
 ) error {
 	q := `
-DELETE FROM auth_saml_configurations
+DELETE FROM iam_saml_configurations
 WHERE
     %s
     AND id = @id
@@ -424,7 +424,7 @@ SELECT
     created_at,
     updated_at
 FROM
-    auth_saml_configurations
+    iam_saml_configurations
 WHERE
     %s
     AND organization_id = @organization_id
@@ -438,7 +438,7 @@ ORDER BY email_domain ASC;
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query auth_saml_configurations: %w", err)
+		return fmt.Errorf("cannot query iam_saml_configurations: %w", err)
 	}
 
 	samlConfigurations, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[SAMLConfiguration])
@@ -461,7 +461,7 @@ func (s *SAMLConfigurations) CountByOrganizationID(
 SELECT
     COUNT(*)
 FROM
-    auth_saml_configurations
+    iam_saml_configurations
 WHERE
     %s
     AND organization_id = @organization_id
@@ -474,7 +474,7 @@ WHERE
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return 0, fmt.Errorf("cannot query auth_saml_configurations: %w", err)
+		return 0, fmt.Errorf("cannot query iam_saml_configurations: %w", err)
 	}
 
 	var count int
@@ -510,7 +510,7 @@ SELECT
     created_at,
     updated_at
 FROM
-    auth_saml_configurations
+    iam_saml_configurations
 WHERE
     domain_verified_at IS NULL
     AND domain_verification_token IS NOT NULL
@@ -520,7 +520,7 @@ LIMIT 100;
 
 	rows, err := conn.Query(ctx, q)
 	if err != nil {
-		return fmt.Errorf("cannot query unverified auth_saml_configurations: %w", err)
+		return fmt.Errorf("cannot query unverified iam_saml_configurations: %w", err)
 	}
 
 	configs, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[SAMLConfiguration])
