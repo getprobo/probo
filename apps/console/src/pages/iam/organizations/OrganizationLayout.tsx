@@ -1,19 +1,15 @@
-import {
-  RelayEnvironmentProvider,
-  usePreloadedQuery,
-  type PreloadedQuery,
-} from "react-relay";
+import { usePreloadedQuery, type PreloadedQuery } from "react-relay";
 import { organizationLayoutQuery } from "./OrganizationLayoutQuery";
 import { Link, Outlet } from "react-router";
 import { Badge, Button, IconPeopleAdd, Layout, Skeleton } from "@probo/ui";
 import { Sidebar } from "./_components/Sidebar";
 import { OrganizationDropdown } from "./_components/OrganizationDropdown";
-import { consoleEnvironment } from "/environments";
 import type { OrganizationLayoutQuery } from "./__generated__/OrganizationLayoutQuery.graphql";
 import { PermissionsProvider } from "/providers/PermissionsProvider";
 import { SessionDropdown } from "./_components/SessionDropdown";
 import { Suspense } from "react";
 import { useTranslate } from "@probo/i18n";
+import { CoreRelayProvider } from "/providers/CoreRelayProvider";
 
 interface OrganizationLayoutProps {
   queryRef: PreloadedQuery<OrganizationLayoutQuery>;
@@ -59,9 +55,9 @@ export default function OrganizationLayout(props: OrganizationLayoutProps) {
         }
         sidebar={<Sidebar />}
       >
-        <RelayEnvironmentProvider environment={consoleEnvironment}>
+        <CoreRelayProvider>
           <Outlet />
-        </RelayEnvironmentProvider>
+        </CoreRelayProvider>
       </Layout>
     </PermissionsProvider>
   );

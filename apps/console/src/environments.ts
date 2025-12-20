@@ -7,12 +7,12 @@ const store = new Store(source, {
   gcReleaseBufferSize: 20,
 });
 
-export const consoleEnvironment = new Environment({
+export const coreEnvironment = new Environment({
   network: Network.create(makeFetchQuery("/api/console/v1/graphql")),
   store,
 });
 
-export const connectEnvironment = new Environment({
+export const iamEnvironment = new Environment({
   network: Network.create(makeFetchQuery("/api/connect/v1/graphql")),
   store,
 });

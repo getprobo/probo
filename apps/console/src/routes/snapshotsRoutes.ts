@@ -1,31 +1,39 @@
 import { loadQuery } from "react-relay";
 import { PageSkeleton } from "/components/skeletons/PageSkeleton";
-import { consoleEnvironment } from "/environments";
+import { coreEnvironment } from "/environments";
 import { snapshotsQuery, snapshotNodeQuery } from "/hooks/graph/SnapshotGraph";
 import { lazy } from "@probo/react-lazy";
 import type { SnapshotGraphListQuery } from "/hooks/graph/__generated__/SnapshotGraphListQuery.graphql";
 import type { SnapshotGraphNodeQuery } from "/hooks/graph/__generated__/SnapshotGraphNodeQuery.graphql";
-import { loaderFromQueryLoader, withQueryRef, type AppRoute } from "@probo/routes";
+import {
+  loaderFromQueryLoader,
+  withQueryRef,
+  type AppRoute,
+} from "@probo/routes";
 
 export const snapshotsRoutes = [
   {
     path: "snapshots",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ organizationId }) =>
-      loadQuery<SnapshotGraphListQuery>(consoleEnvironment, snapshotsQuery, { organizationId }),
+      loadQuery<SnapshotGraphListQuery>(coreEnvironment, snapshotsQuery, {
+        organizationId,
+      }),
     ),
-    Component: withQueryRef(lazy(
-      () => import("/pages/organizations/snapshots/SnapshotsPage")
-    )),
+    Component: withQueryRef(
+      lazy(() => import("/pages/organizations/snapshots/SnapshotsPage")),
+    ),
   },
   {
     path: "snapshots/:snapshotId",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ snapshotId }) =>
-      loadQuery<SnapshotGraphNodeQuery>(consoleEnvironment, snapshotNodeQuery, { snapshotId }),
+      loadQuery<SnapshotGraphNodeQuery>(coreEnvironment, snapshotNodeQuery, {
+        snapshotId,
+      }),
     ),
-    Component: withQueryRef(lazy(
-      () => import("/pages/organizations/snapshots/SnapshotDetailPage")
-    )),
+    Component: withQueryRef(
+      lazy(() => import("/pages/organizations/snapshots/SnapshotDetailPage")),
+    ),
   },
 ] satisfies AppRoute[];

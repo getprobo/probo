@@ -1,6 +1,6 @@
 import { Fragment } from "react";
 import { loadQuery } from "react-relay";
-import { consoleEnvironment } from "/environments";
+import { coreEnvironment } from "/environments";
 import { meetingsQuery } from "/hooks/graph/MeetingGraph";
 import { meetingNodeQuery } from "/hooks/graph/MeetingGraph";
 import { PageSkeleton } from "/components/skeletons/PageSkeleton";
@@ -9,13 +9,19 @@ import { lazy } from "@probo/react-lazy";
 import { LinkCardSkeleton } from "/components/skeletons/LinkCardSkeleton";
 import type { MeetingGraphListQuery } from "/hooks/graph/__generated__/MeetingGraphListQuery.graphql";
 import type { MeetingGraphNodeQuery } from "/hooks/graph/__generated__/MeetingGraphNodeQuery.graphql";
-import { loaderFromQueryLoader, withQueryRef, type AppRoute } from "@probo/routes";
+import {
+  loaderFromQueryLoader,
+  withQueryRef,
+  type AppRoute,
+} from "@probo/routes";
 
 const meetingTabs = (prefix: string) => {
   return [
     {
       path: `${prefix}`,
-      loader: ({ params: { organizationId, meetingId } }: LoaderFunctionArgs) => {
+      loader: ({
+        params: { organizationId, meetingId },
+      }: LoaderFunctionArgs) => {
         const basePath = `/organizations/${organizationId}/meetings/${meetingId}`;
         const redirectPath = `${basePath}/minutes`;
         throw redirect(redirectPath);
@@ -26,10 +32,7 @@ const meetingTabs = (prefix: string) => {
       path: `${prefix}minutes`,
       Fallback: LinkCardSkeleton,
       Component: lazy(
-        () =>
-          import(
-            "../pages/organizations/meetings/tabs/MeetingMinutesTab"
-          ),
+        () => import("../pages/organizations/meetings/tabs/MeetingMinutesTab"),
       ),
     },
   ];
@@ -40,22 +43,25 @@ export const meetingsRoutes = [
     path: "meetings",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ organizationId }) =>
-      loadQuery<MeetingGraphListQuery>(consoleEnvironment, meetingsQuery, { organizationId }),
+      loadQuery<MeetingGraphListQuery>(coreEnvironment, meetingsQuery, {
+        organizationId,
+      }),
     ),
-    Component: withQueryRef(lazy(
-      () => import("/pages/organizations/meetings/MeetingsPage"),
-    )),
+    Component: withQueryRef(
+      lazy(() => import("/pages/organizations/meetings/MeetingsPage")),
+    ),
   },
   {
     path: "meetings/:meetingId",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ meetingId }) =>
-      loadQuery<MeetingGraphNodeQuery>(consoleEnvironment, meetingNodeQuery, { meetingId }),
+      loadQuery<MeetingGraphNodeQuery>(coreEnvironment, meetingNodeQuery, {
+        meetingId,
+      }),
     ),
-    Component: withQueryRef(lazy(
-      () => import("../pages/organizations/meetings/MeetingDetailPage"),
-    )),
+    Component: withQueryRef(
+      lazy(() => import("../pages/organizations/meetings/MeetingDetailPage")),
+    ),
     children: [...meetingTabs("")],
   },
 ] satisfies AppRoute[];
-
