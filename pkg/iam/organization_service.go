@@ -307,22 +307,22 @@ func (s *OrganizationService) InviteMember(
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
-			user := &coredata.User{}
-			err = user.LoadByEmail(ctx, tx, emailAddress)
+			identity := &coredata.Identity{}
+			err = identity.LoadByEmail(ctx, tx, emailAddress)
 			if err != nil && err != coredata.ErrResourceNotFound {
-				return fmt.Errorf("cannot load user: %w", err)
+				return fmt.Errorf("cannot load identity: %w", err)
 			}
 
-			userExists := user.ID != gid.Nil
-			if userExists {
+			identityExists := identity.ID != gid.Nil
+			if identityExists {
 				membership := &coredata.Membership{}
-				err = membership.LoadByUserAndOrg(ctx, tx, scope, user.ID, organizationID)
+				err = membership.LoadByIdentityAndOrg(ctx, tx, scope, identity.ID, organizationID)
 				if err != nil && err != coredata.ErrResourceNotFound {
 					return fmt.Errorf("cannot load membership: %w", err)
 				}
 
 				if membership.ID != gid.Nil {
-					return NewMembershipAlreadyExistsError(user.ID, organizationID)
+					return NewMembershipAlreadyExistsError(identity.ID, organizationID)
 				}
 			}
 
@@ -506,7 +506,7 @@ func (s *OrganizationService) CreateOrganization(
 
 			membership := &coredata.Membership{
 				ID:             gid.New(tenantID, coredata.MembershipEntityType),
-				UserID:         identityID,
+				IdentityID:     identityID,
 				OrganizationID: organizationID,
 				Role:           coredata.MembershipRoleOwner,
 				CreatedAt:      now,

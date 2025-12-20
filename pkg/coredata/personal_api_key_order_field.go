@@ -15,26 +15,26 @@
 package coredata
 
 type (
-	UserAPIKeyOrderField string
+	PersonalAPIKeyOrderField string
 )
 
 const (
-	UserAPIKeyOrderFieldCreatedAt UserAPIKeyOrderField = "CREATED_AT"
+	PersonalAPIKeyOrderFieldCreatedAt PersonalAPIKeyOrderField = "CREATED_AT"
 )
 
-func (p UserAPIKeyOrderField) Column() string {
+func (p PersonalAPIKeyOrderField) Column() string {
 	return string(p)
 }
 
-func (p UserAPIKeyOrderField) String() string {
+func (p PersonalAPIKeyOrderField) String() string {
 	return string(p)
 }
 
-func (p UserAPIKeyOrderField) MarshalText() ([]byte, error) {
+func (p PersonalAPIKeyOrderField) MarshalText() ([]byte, error) {
 	return []byte(p.String()), nil
 }
 
-func (p *UserAPIKeyOrderField) UnmarshalText(text []byte) error {
-	*p = UserAPIKeyOrderField(text)
+func (p *PersonalAPIKeyOrderField) UnmarshalText(text []byte) error {
+	*p = PersonalAPIKeyOrderField(text)
 	return nil
 }

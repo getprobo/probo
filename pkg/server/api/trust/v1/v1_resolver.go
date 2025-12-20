@@ -74,7 +74,7 @@ func (r *documentResolver) IsUserAuthorized(ctx context.Context, obj *types.Docu
 	// 	return false, nil
 	// }
 
-	// userData := connect_v1.UserFromContext(ctx)
+	// userData := connect_v1.IdentityFromContext(ctx)
 	// if userData != nil {
 	// 	return true, nil
 	// }
@@ -99,7 +99,7 @@ func (r *documentResolver) HasUserRequestedAccess(ctx context.Context, obj *type
 	// 	return false, nil
 	// }
 
-	// userData := r.UserFromContext(ctx)
+	// userData := r.IdentityFromContext(ctx)
 	// if userData != nil {
 	// 	return false, nil
 	// }
@@ -137,7 +137,7 @@ func (r *frameworkResolver) DarkLogoURL(ctx context.Context, obj *types.Framewor
 func (r *mutationResolver) RequestAllAccesses(ctx context.Context, input types.RequestAllAccessesInput) (*types.RequestAccessesPayload, error) {
 	// publicTrustService := r.PublicTrustService(ctx, input.TrustCenterID.TenantID())
 
-	// userData := r.UserFromContext(ctx)
+	// userData := r.IdentityFromContext(ctx)
 	// if userData != nil {
 	// 	return nil, fmt.Errorf("session users cannot request trust center access")
 	// }
@@ -239,7 +239,7 @@ func (r *mutationResolver) ExportDocumentPDF(ctx context.Context, input types.Ex
 	// 	}
 	// }
 
-	// userData := UserFromContext(ctx)
+	// userData := IdentityFromContext(ctx)
 	// var userEmail mail.Addr
 	// if userData != nil {
 	// 	userEmail = userData.EmailAddress
@@ -319,7 +319,7 @@ func (r *mutationResolver) ExportReportPDF(ctx context.Context, input types.Expo
 	// 	}
 	// }
 
-	// userData := UserFromContext(ctx)
+	// userData := IdentityFromContext(ctx)
 	// var userEmail mail.Addr
 	// if userData != nil {
 	// 	userEmail = userData.EmailAddress
@@ -371,7 +371,7 @@ func (r *mutationResolver) RequestDocumentAccess(ctx context.Context, input type
 	// 	fullname string
 	// )
 
-	// identity := connect_v1.UserFromContext(ctx)
+	// identity := connect_v1.IdentityFromContext(ctx)
 	// if identity != nil {
 	// 	email = identity.EmailAddress
 	// 	fullname = identity.FullName
@@ -422,7 +422,7 @@ func (r *mutationResolver) RequestReportAccess(ctx context.Context, input types.
 	// 	return nil, fmt.Errorf("report is publicly available and does not require access request")
 	// }
 
-	// userData := r.UserFromContext(ctx)
+	// userData := r.IdentityFromContext(ctx)
 	// if userData != nil {
 	// 	return nil, fmt.Errorf("session users cannot request trust center access")
 	// }
@@ -473,7 +473,7 @@ func (r *mutationResolver) RequestTrustCenterFileAccess(ctx context.Context, inp
 	// 	return nil, fmt.Errorf("trust center file is publicly available and does not require access request")
 	// }
 
-	// userData := r.UserFromContext(ctx)
+	// userData := r.IdentityFromContext(ctx)
 	// if userData != nil {
 	// 	return nil, fmt.Errorf("session users cannot request trust center access")
 	// }
@@ -571,7 +571,7 @@ func (r *mutationResolver) ExportTrustCenterFile(ctx context.Context, input type
 	// 	}
 	// }
 
-	// userData := UserFromContext(ctx)
+	// userData := IdentityFromContext(ctx)
 	// var userEmail mail.Addr
 	// if userData != nil {
 	// 	userEmail = userData.EmailAddress
@@ -753,7 +753,7 @@ func (r *reportResolver) IsUserAuthorized(ctx context.Context, obj *types.Report
 	// 	return false, nil
 	// }
 
-	// userData := r.UserFromContext(ctx)
+	// userData := r.IdentityFromContext(ctx)
 	// if userData != nil {
 	// 	return true, nil
 	// }
@@ -780,7 +780,7 @@ func (r *reportResolver) HasUserRequestedAccess(ctx context.Context, obj *types.
 	// 	return false, nil
 	// }
 
-	// userData := r.UserFromContext(ctx)
+	// userData := r.IdentityFromContext(ctx)
 	// if userData != nil {
 	// 	return false, nil
 	// }
@@ -836,7 +836,7 @@ func (r *trustCenterResolver) HasAcceptedNonDisclosureAgreement(ctx context.Cont
 	// 	return false, nil
 	// }
 
-	// userData := UserFromContext(ctx)
+	// userData := IdentityFromContext(ctx)
 	// if userData != nil {
 	// 	return true, nil
 	// }
@@ -963,7 +963,7 @@ func (r *trustCenterFileResolver) IsUserAuthorized(ctx context.Context, obj *typ
 	// 	return false, nil
 	// }
 
-	// userData := r.UserFromContext(ctx)
+	// userData := r.IdentityFromContext(ctx)
 	// if userData != nil {
 	// 	return true, nil
 	// }
@@ -990,7 +990,7 @@ func (r *trustCenterFileResolver) HasUserRequestedAccess(ctx context.Context, ob
 	// 	return false, nil
 	// }
 
-	// userData := r.UserFromContext(ctx)
+	// userData := r.IdentityFromContext(ctx)
 	// if userData != nil {
 	// 	return false, nil
 	// }

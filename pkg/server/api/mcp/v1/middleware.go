@@ -41,7 +41,7 @@ func RequireAPIKeyHandler(
 		)
 
 		apiKey := connect_v1.APIKeyFromContext(ctx)
-		identity := connect_v1.UserFromContext(ctx)
+		identity := connect_v1.IdentityFromContext(ctx)
 		if identity == nil {
 			httpserver.RenderError(w, http.StatusUnauthorized, errors.New("authentication required"))
 			return

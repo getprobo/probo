@@ -19,7 +19,7 @@ type Resolver struct {
 }
 
 func (r *Resolver) MustBeAuthorized(ctx context.Context, entityID gid.GID, action iam.Action) {
-	user := connect_v1.UserFromContext(ctx)
+	user := connect_v1.IdentityFromContext(ctx)
 	apiKey := connect_v1.APIKeyFromContext(ctx)
 	if user == nil {
 		panic(&iam.TenantAccessError{Message: "authentication required"})

@@ -403,7 +403,7 @@ var Permissions = map[uint16]map[Action][]Role{
 		ActionGetTrustCenterFile:    EditRoles,
 		ActionDeleteTrustCenterFile: EditRoles,
 	},
-	coredata.UserEntityType: {
+	coredata.IdentityEntityType: {
 		ActionGet: NonEmployeeRoles,
 	},
 	coredata.MembershipEntityType: {

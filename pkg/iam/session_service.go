@@ -129,14 +129,14 @@ func (s SessionService) RevokeSession(ctx context.Context, identityID gid.GID, s
 	return s.pg.WithTx(
 		ctx,
 		func(tx pg.Conn) error {
-			user := &coredata.User{}
-			err := user.LoadByID(ctx, tx, identityID)
+			identity := &coredata.Identity{}
+			err := identity.LoadByID(ctx, tx, identityID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
-					return NewUserNotFoundError(identityID)
+					return NewIdentityNotFoundError(identityID)
 				}
 
-				return fmt.Errorf("cannot load user: %w", err)
+				return fmt.Errorf("cannot load identity: %w", err)
 			}
 
 			session := &coredata.Session{}
@@ -150,7 +150,7 @@ func (s SessionService) RevokeSession(ctx context.Context, identityID gid.GID, s
 			}
 
 			// TODO: move to dedicated query instead of LoadByID
-			if session.UserID != identityID {
+			if session.IdentityID != identityID {
 				return NewSessionNotFoundError(sessionID)
 			}
 
@@ -192,7 +192,7 @@ func (s SessionService) RevokeAllSessions(ctx context.Context, currentSessionID 
 			}
 
 			sessions := coredata.Sessions{}
-			count, err = sessions.ExpireAllForUserExceptOneSession(ctx, tx, session.UserID, session.ID)
+			count, err = sessions.ExpireAllForIdentityExceptOneSession(ctx, tx, session.IdentityID, session.ID)
 			if err != nil {
 				return fmt.Errorf("cannot expire all sessions: %w", err)
 			}
@@ -323,7 +323,7 @@ func (s SessionService) AssumeOrganizationSession(
 	var (
 		now          = time.Now()
 		rootSession  = &coredata.Session{}
-		user         = &coredata.User{}
+		identity     = &coredata.Identity{}
 		membership   = &coredata.Membership{}
 		childSession = &coredata.Session{}
 		scope        = coredata.NewScopeFromObjectID(organizationID)
@@ -348,12 +348,12 @@ func (s SessionService) AssumeOrganizationSession(
 				return NewSessionExpiredError(sessionID)
 			}
 
-			err = user.LoadByID(ctx, tx, rootSession.UserID)
+			err = identity.LoadByID(ctx, tx, rootSession.IdentityID)
 			if err != nil {
-				return fmt.Errorf("cannot load user: %w", err)
+				return fmt.Errorf("cannot load identity: %w", err)
 			}
 
-			err = membership.LoadByUserInOrganization(ctx, tx, rootSession.UserID, organizationID)
+			err = membership.LoadByIdentityInOrganization(ctx, tx, rootSession.IdentityID, organizationID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
 					return NewMembershipNotFoundError(organizationID)
@@ -367,7 +367,7 @@ func (s SessionService) AssumeOrganizationSession(
 				tx,
 				scope,
 				organizationID,
-				user.EmailAddress.Domain(),
+				identity.EmailAddress.Domain(),
 			)
 			if err != nil && err != coredata.ErrResourceNotFound {
 				return fmt.Errorf("cannot load SAML configuration: %w", err)
@@ -389,7 +389,7 @@ func (s SessionService) AssumeOrganizationSession(
 			tenantID := scope.GetTenantID()
 			childSession = &coredata.Session{
 				ID:              gid.New(tenantID, coredata.SessionEntityType),
-				UserID:          rootSession.UserID,
+				IdentityID:      rootSession.IdentityID,
 				TenantID:        &tenantID,
 				MembershipID:    &membership.ID,
 				ParentSessionID: &rootSession.ID,
