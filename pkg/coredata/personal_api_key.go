@@ -64,7 +64,7 @@ SELECT
     created_at,
     updated_at
 FROM
-    auth_personal_api_keys
+    iam_personal_api_keys
 WHERE
     id = @api_key_id
 LIMIT 1;
@@ -106,7 +106,7 @@ SELECT
     created_at,
     updated_at
 FROM
-    auth_personal_api_keys
+    iam_personal_api_keys
 WHERE
     identity_id = @identity_id
 ORDER BY created_at DESC;
@@ -134,7 +134,7 @@ func (a *PersonalAPIKeys) CountByIdentityID(ctx context.Context, conn pg.Conn, i
 SELECT
     COUNT(*)
 FROM
-    auth_personal_api_keys
+    iam_personal_api_keys
 WHERE
     identity_id = @identity_id
 ORDER BY created_at DESC;
@@ -156,7 +156,7 @@ func (a *PersonalAPIKey) Insert(
 ) error {
 	q := `
 INSERT INTO
-    auth_personal_api_keys (id, identity_id, name, expires_at, expire_reason, created_at, updated_at)
+    iam_personal_api_keys (id, identity_id, name, expires_at, expire_reason, created_at, updated_at)
 VALUES (
     @api_key_id,
     @identity_id,
@@ -192,7 +192,7 @@ func (a *PersonalAPIKey) Update(
 ) error {
 	q := `
 UPDATE
-    auth_personal_api_keys
+    iam_personal_api_keys
 SET
     name = @name,
     expires_at = @expires_at,
@@ -224,7 +224,7 @@ func (a *PersonalAPIKey) Delete(
 ) error {
 	q := `
 DELETE FROM
-    auth_personal_api_keys
+    iam_personal_api_keys
 WHERE
     id = @api_key_id
 `

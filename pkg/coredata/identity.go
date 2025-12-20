@@ -73,7 +73,7 @@ FROM
 	identities
 WHERE
 	id IN (
-		SELECT identity_id FROM authz_memberships WHERE organization_id = @organization_id
+		SELECT identity_id FROM iam_memberships WHERE organization_id = @organization_id
 	)
 	AND %s
 `
@@ -111,7 +111,7 @@ FROM
 	identities
 WHERE
 	id IN (
-		SELECT identity_id FROM authz_memberships WHERE organization_id = @organization_id AND %s
+		SELECT identity_id FROM iam_memberships WHERE organization_id = @organization_id AND %s
 	)
 `
 
@@ -354,7 +354,7 @@ func (i *Identity) CountMemberships(
 SELECT
     COUNT(*)
 FROM
-    authz_memberships
+    iam_memberships
 WHERE
     identity_id = @identity_id
 `

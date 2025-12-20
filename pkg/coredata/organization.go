@@ -123,7 +123,7 @@ WITH identity_org AS (
 	SELECT
 		organization_id
 	FROM
-		authz_memberships
+		iam_memberships
 	WHERE
 		identity_id = @identity_id
 )
@@ -179,7 +179,7 @@ WITH identity_org AS (
 	SELECT
 		organization_id
 	FROM
-		authz_memberships
+		iam_memberships
 	WHERE
 		identity_id = @identity_id
 )
@@ -232,7 +232,7 @@ WITH identity_org AS (
 	SELECT
 		organization_id
 	FROM
-		authz_memberships
+		iam_memberships
 	WHERE
 		identity_id = @identity_id
 		AND role = @role
@@ -288,11 +288,11 @@ WITH personal_api_key_org AS (
 	SELECT
 		am.organization_id
 	FROM
-		authz_api_keys_memberships akm
+		iam_personal_api_key_memberships akm
 	INNER JOIN
-		authz_memberships am ON akm.membership_id = am.id
+		iam_memberships am ON akm.membership_id = am.id
 	WHERE
-		akm.auth_personal_api_key_id = @auth_personal_api_key_id
+		akm.personal_api_key_id = @personal_api_key_id
 )
 SELECT
 	tenant_id,
@@ -315,7 +315,7 @@ ORDER BY
 	name ASC
 `
 
-	args := pgx.StrictNamedArgs{"auth_personal_api_key_id": personalAPIKeyID}
+	args := pgx.StrictNamedArgs{"personal_api_key_id": personalAPIKeyID}
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {

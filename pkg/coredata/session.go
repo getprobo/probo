@@ -114,7 +114,7 @@ SELECT
     created_at,
     updated_at
 FROM
-    sessions
+    iam_sessions
 WHERE
     id = @session_id
 LIMIT 1;
@@ -146,7 +146,7 @@ func (s *Session) Insert(
 ) error {
 	q := `
 INSERT INTO
-    sessions (id, identity_id, tenant_id, membership_id, data, parent_session_id, auth_method, authenticated_at, expire_reason, user_agent, ip_address, expired_at, created_at, updated_at)
+    iam_sessions (id, identity_id, tenant_id, membership_id, data, parent_session_id, auth_method, authenticated_at, expire_reason, user_agent, ip_address, expired_at, created_at, updated_at)
 VALUES (
     @session_id,
     @identity_id,
@@ -191,7 +191,7 @@ func (s *Session) Update(
 	conn pg.Conn,
 ) error {
 	q := `
-UPDATE sessions
+UPDATE iam_sessions
 SET
     expired_at = @expired_at,
     updated_at = @updated_at,
@@ -243,7 +243,7 @@ SELECT
     created_at,
     updated_at
 FROM
-    sessions
+    iam_sessions
 WHERE
     identity_id = @identity_id
 	AND %s
@@ -274,7 +274,7 @@ func (s *Sessions) CountByIdentityID(ctx context.Context, conn pg.Conn, identity
 SELECT
 	COUNT(*)
 FROM
-	sessions
+	iam_sessions
 WHERE
 	identity_id = @identity_id
 	`
@@ -293,7 +293,7 @@ WHERE
 
 func (s *Sessions) ExpireAllForIdentityExceptOneSession(ctx context.Context, conn pg.Conn, identityID gid.GID, sessionID gid.GID) (int64, error) {
 	q := `
-UPDATE sessions
+UPDATE iam_sessions
 SET
     expired_at = NOW(),
     updated_at = NOW(),
@@ -335,7 +335,7 @@ SELECT
 	created_at,
 	updated_at
 FROM
-	sessions
+	iam_sessions
 WHERE
 	parent_session_id = @root_session_id
 	AND membership_id = @membership_id

@@ -36,7 +36,7 @@ func (s *SAMLRequest) Insert(
 	conn pg.Conn,
 ) error {
 	query := `
-INSERT INTO auth_saml_requests (id, organization_id, created_at, expires_at)
+INSERT INTO iam_saml_requests (id, organization_id, created_at, expires_at)
 VALUES (@id, @organization_id, @created_at, @expires_at)
 `
 
@@ -63,7 +63,7 @@ func (s *SAMLRequest) Load(
 ) error {
 	query := `
 SELECT id, organization_id, created_at, expires_at
-FROM auth_saml_requests
+FROM iam_saml_requests
 WHERE id = @id AND organization_id = @organization_id
 LIMIT 1
 `
@@ -100,7 +100,7 @@ func (s *SAMLRequest) Delete(
 	conn pg.Conn,
 ) error {
 	query := `
-DELETE FROM auth_saml_requests
+DELETE FROM iam_saml_requests
 WHERE id = @id
 `
 
@@ -120,7 +120,7 @@ func LoadValidRequestIDsForOrganization(
 ) ([]string, error) {
 	query := `
 SELECT id
-FROM auth_saml_requests
+FROM iam_saml_requests
 WHERE organization_id = @organization_id AND expires_at > @now
 `
 
@@ -148,7 +148,7 @@ WHERE organization_id = @organization_id AND expires_at > @now
 
 func DeleteExpiredSAMLRequests(ctx context.Context, conn pg.Conn, now time.Time) (int64, error) {
 	query := `
-DELETE FROM auth_saml_requests
+DELETE FROM iam_saml_requests
 WHERE expires_at < @now
 `
 

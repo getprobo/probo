@@ -28,7 +28,7 @@ import (
 type (
 	PersonalAPIKeyMembership struct {
 		ID               gid.GID   `db:"id"`
-		PersonalAPIKeyID gid.GID   `db:"auth_personal_api_key_id"`
+		PersonalAPIKeyID gid.GID   `db:"personal_api_key_id"`
 		MembershipID     gid.GID   `db:"membership_id"`
 		Role             APIRole   `db:"role"`
 		OrganizationID   gid.GID   `db:"organization_id"`
@@ -47,11 +47,11 @@ func (a *PersonalAPIKeyMembership) Insert(
 ) error {
 	q := `
 INSERT INTO
-    authz_api_keys_memberships (id, tenant_id, auth_personal_api_key_id, membership_id, role, organization_id, created_at, updated_at)
+    iam_personal_api_key_memberships (id, tenant_id, personal_api_key_id, membership_id, role, organization_id, created_at, updated_at)
 VALUES (
     @id,
     @tenant_id,
-    @auth_personal_api_key_id,
+    @personal_api_key_id,
     @membership_id,
     @role,
     @organization_id,
@@ -61,14 +61,14 @@ VALUES (
 `
 
 	args := pgx.StrictNamedArgs{
-		"id":                       a.ID,
-		"tenant_id":                scope.GetTenantID(),
-		"auth_personal_api_key_id": a.PersonalAPIKeyID,
-		"membership_id":            a.MembershipID,
-		"role":                     a.Role,
-		"organization_id":          a.OrganizationID,
-		"created_at":               a.CreatedAt,
-		"updated_at":               a.UpdatedAt,
+		"id":                  a.ID,
+		"tenant_id":           scope.GetTenantID(),
+		"personal_api_key_id": a.PersonalAPIKeyID,
+		"membership_id":       a.MembershipID,
+		"role":                a.Role,
+		"organization_id":     a.OrganizationID,
+		"created_at":          a.CreatedAt,
+		"updated_at":          a.UpdatedAt,
 	}
 
 	_, err := conn.Exec(ctx, q, args)
@@ -88,7 +88,7 @@ func (a *PersonalAPIKeyMemberships) LoadByPersonalAPIKeyID(
 	q := `
 SELECT
     akm.id,
-    akm.auth_personal_api_key_id,
+    akm.personal_api_key_id,
     akm.membership_id,
     akm.role,
     akm.created_at,
@@ -96,13 +96,13 @@ SELECT
     m.organization_id,
     o.name as organization_name
 FROM
-    authz_api_keys_memberships akm
+    iam_personal_api_key_memberships akm
 JOIN
-    authz_memberships m ON akm.membership_id = m.id
+    iam_memberships m ON akm.membership_id = m.id
 JOIN
     organizations o ON m.organization_id = o.id
 WHERE
-    akm.auth_personal_api_key_id = @auth_personal_api_key_id
+    akm.personal_api_key_id = @personal_api_key_id
     AND m.%s
 ORDER BY akm.created_at DESC
 `
@@ -110,7 +110,7 @@ ORDER BY akm.created_at DESC
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"auth_personal_api_key_id": personalAPIKeyID,
+		"personal_api_key_id": personalAPIKeyID,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -152,18 +152,18 @@ func (a *PersonalAPIKeyMembership) LoadRoleByAPIKeyAndEntityID(
 	query := fmt.Sprintf(`
 SELECT
 	akm.id,
-	akm.auth_personal_api_key_id,
+	akm.personal_api_key_id,
 	akm.membership_id,
 	akm.role,
 	akm.created_at,
 	akm.updated_at
 FROM
-	authz_api_keys_memberships akm
-	INNER JOIN authz_memberships m ON m.id = akm.membership_id
+	iam_personal_api_key_memberships akm
+	INNER JOIN iam_memberships m ON m.id = akm.membership_id
 	INNER JOIN %s e ON e.id = @entity_id
 WHERE
 	%s
-	AND akm.auth_personal_api_key_id = @api_key_id
+	AND akm.personal_api_key_id = @api_key_id
 	AND m.organization_id = e.organization_id
 LIMIT 1;
 `, tableName, scope.SQLFragment())
@@ -212,7 +212,7 @@ func (a *PersonalAPIKeyMembership) LoadByAPIKeyIDAndOrganizationID(
 	q := `
 SELECT
     akm.id,
-    akm.auth_personal_api_key_id,
+    akm.personal_api_key_id,
     akm.membership_id,
     akm.role,
     akm.created_at,
@@ -220,13 +220,13 @@ SELECT
     m.organization_id,
     o.name as organization_name
 FROM
-    authz_api_keys_memberships akm
+    iam_personal_api_key_memberships akm
 JOIN
-    authz_memberships m ON akm.membership_id = m.id
+    iam_memberships m ON akm.membership_id = m.id
 JOIN
     organizations o ON m.organization_id = o.id
 WHERE
-    akm.auth_personal_api_key_id = @api_key_id
+    akm.personal_api_key_id = @api_key_id
     AND m.organization_id = @organization_id
     AND m.%s
 `
@@ -263,7 +263,7 @@ func (a *PersonalAPIKeyMembership) Delete(
 ) error {
 	q := `
 DELETE FROM
-    authz_api_keys_memberships
+    iam_personal_api_key_memberships
 WHERE
     id = @id
     AND %s
@@ -293,7 +293,7 @@ func (a *PersonalAPIKeyMemberships) LoadByMembershipID(
 	q := `
 SELECT
     akm.id,
-    akm.auth_personal_api_key_id,
+    akm.personal_api_key_id,
     akm.membership_id,
     akm.role,
     akm.created_at,
@@ -301,9 +301,9 @@ SELECT
     m.organization_id,
     o.name as organization_name
 FROM
-    authz_api_keys_memberships akm
+    iam_personal_api_key_memberships akm
 JOIN
-    authz_memberships m ON akm.membership_id = m.id
+    iam_memberships m ON akm.membership_id = m.id
 JOIN
     organizations o ON m.organization_id = o.id
 WHERE
@@ -341,13 +341,13 @@ func DeleteAllPersonalAPIKeyMembershipsByPersonalAPIKeyID(
 ) error {
 	q := `
 DELETE FROM
-    authz_api_keys_memberships
+    iam_personal_api_key_memberships
 WHERE
-    auth_personal_api_key_id = @auth_personal_api_key_id
+    personal_api_key_id = @personal_api_key_id
 `
 
 	args := pgx.StrictNamedArgs{
-		"auth_personal_api_key_id": personalAPIKeyID,
+		"personal_api_key_id": personalAPIKeyID,
 	}
 
 	_, err := conn.Exec(ctx, q, args)
