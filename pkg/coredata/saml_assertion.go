@@ -38,7 +38,7 @@ func (s *SAMLAssertion) Insert(
 	conn pg.Conn,
 ) error {
 	query := `
-INSERT INTO auth_saml_assertions (id, organization_id, used_at, expires_at)
+INSERT INTO iam_saml_assertions (id, organization_id, used_at, expires_at)
 VALUES (@id, @organization_id, @used_at, @expires_at)
 `
 
@@ -52,7 +52,7 @@ VALUES (@id, @organization_id, @used_at, @expires_at)
 	_, err := conn.Exec(ctx, query, args)
 	if err != nil {
 		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) && pgErr.Code == "23505" && pgErr.ConstraintName == "auth_saml_assertions_pkey" {
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" && pgErr.ConstraintName == "iam_saml_assertions_pkey" {
 			return ErrResourceAlreadyExists
 		}
 
@@ -64,7 +64,7 @@ VALUES (@id, @organization_id, @used_at, @expires_at)
 
 func DeleteExpiredSAMLAssertions(ctx context.Context, conn pg.Conn, now time.Time) (int64, error) {
 	query := `
-DELETE FROM auth_saml_assertions
+DELETE FROM iam_saml_assertions
 WHERE expires_at < @now
 `
 

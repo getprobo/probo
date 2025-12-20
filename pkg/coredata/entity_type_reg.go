@@ -127,11 +127,11 @@ var entityRegistry = map[uint16]EntityInfo{
 	},
 	SessionEntityType: {
 		Model: "Session",
-		Table: "auth_sessions",
+		Table: "iam_sessions",
 	},
 	EmailEntityType: {
 		Model: "Email",
-		Table: "auth_emails",
+		Table: "emails",
 	},
 	ControlEntityType: {
 		Model: "Control",
@@ -231,11 +231,11 @@ var entityRegistry = map[uint16]EntityInfo{
 	},
 	InvitationEntityType: {
 		Model: "Invitation",
-		Table: "authz_invitations",
+		Table: "iam_invitations",
 	},
 	MembershipEntityType: {
 		Model: "Membership",
-		Table: "authz_memberships",
+		Table: "iam_memberships",
 	},
 	SlackMessageEntityType: {
 		Model: "SlackMessage",
@@ -247,15 +247,15 @@ var entityRegistry = map[uint16]EntityInfo{
 	},
 	SAMLConfigurationEntityType: {
 		Model: "SAMLConfiguration",
-		Table: "auth_saml_configurations",
+		Table: "iam_saml_configurations",
 	},
 	PersonalAPIKeyEntityType: {
 		Model: "PersonalAPIKey",
-		Table: "auth_personal_api_keys",
+		Table: "iam_personal_api_keys",
 	},
 	PersonalAPIKeyMembershipEntityType: {
 		Model: "PersonalAPIKeyMembership",
-		Table: "authz_api_keys_memberships",
+		Table: "iam_personal_api_key_memberships",
 	},
 	MeetingEntityType: {
 		Model: "Meeting",
