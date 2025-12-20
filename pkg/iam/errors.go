@@ -61,14 +61,14 @@ func (e ErrInvitationExpired) Error() string {
 	return fmt.Sprintf("invitation %q expired", e.InvitationID)
 }
 
-type ErrUserAlreadyExists struct{ EmailAddress mail.Addr }
+type ErrIdentityAlreadyExists struct{ EmailAddress mail.Addr }
 
-func NewUserAlreadyExistsError(emailAddress mail.Addr) error {
-	return &ErrUserAlreadyExists{EmailAddress: emailAddress}
+func NewIdentityAlreadyExistsError(emailAddress mail.Addr) error {
+	return &ErrIdentityAlreadyExists{EmailAddress: emailAddress}
 }
 
-func (e ErrUserAlreadyExists) Error() string {
-	return fmt.Sprintf("user %q already exists", e.EmailAddress.String())
+func (e ErrIdentityAlreadyExists) Error() string {
+	return fmt.Sprintf("identity %q already exists", e.EmailAddress.String())
 }
 
 type ErrEmailAlreadyVerified struct{ message string }
@@ -81,14 +81,14 @@ func (e ErrEmailAlreadyVerified) Error() string {
 	return e.message
 }
 
-type ErrUserNotFound struct{ UserID gid.GID }
+type ErrIdentityNotFound struct{ IdentityID gid.GID }
 
-func NewUserNotFoundError(userID gid.GID) error {
-	return &ErrUserNotFound{userID}
+func NewIdentityNotFoundError(identityID gid.GID) error {
+	return &ErrIdentityNotFound{identityID}
 }
 
-func (e ErrUserNotFound) Error() string {
-	return fmt.Sprintf("user %q not found", e.UserID)
+func (e ErrIdentityNotFound) Error() string {
+	return fmt.Sprintf("identity %q not found", e.IdentityID)
 }
 
 type ErrInvalidPassword struct{ message string }
@@ -168,16 +168,16 @@ func (e ErrSessionExpired) Error() string {
 }
 
 type ErrMembershipAlreadyExists struct {
-	UserID         gid.GID
+	IdentityID     gid.GID
 	OrganizationID gid.GID
 }
 
-func NewMembershipAlreadyExistsError(userID gid.GID, organizationID gid.GID) error {
-	return &ErrMembershipAlreadyExists{UserID: userID, OrganizationID: organizationID}
+func NewMembershipAlreadyExistsError(identityID gid.GID, organizationID gid.GID) error {
+	return &ErrMembershipAlreadyExists{IdentityID: identityID, OrganizationID: organizationID}
 }
 
 func (e ErrMembershipAlreadyExists) Error() string {
-	return fmt.Sprintf("membership already exists for user %q in organization %q", e.UserID, e.OrganizationID)
+	return fmt.Sprintf("membership already exists for identity %q in organization %q", e.IdentityID, e.OrganizationID)
 }
 
 type ErrSAMLConfigurationNotFound struct{ ConfigID gid.GID }
@@ -190,24 +190,24 @@ func (e ErrSAMLConfigurationNotFound) Error() string {
 	return fmt.Sprintf("SAML configuration %q not found", e.ConfigID)
 }
 
-type ErrUserAPIKeyNotFound struct{ UserAPIKeyID gid.GID }
+type ErrPersonalAPIKeyNotFound struct{ PersonalAPIKeyID gid.GID }
 
-func NewUserAPIKeyNotFoundError(userAPIKeyID gid.GID) error {
-	return &ErrUserAPIKeyNotFound{UserAPIKeyID: userAPIKeyID}
+func NewPersonalAPIKeyNotFoundError(personalAPIKeyID gid.GID) error {
+	return &ErrPersonalAPIKeyNotFound{PersonalAPIKeyID: personalAPIKeyID}
 }
 
-func (e ErrUserAPIKeyNotFound) Error() string {
-	return fmt.Sprintf("user API key %q not found", e.UserAPIKeyID)
+func (e ErrPersonalAPIKeyNotFound) Error() string {
+	return fmt.Sprintf("personal API key %q not found", e.PersonalAPIKeyID)
 }
 
-type ErrUserAPIKeyExpired struct{ UserAPIKeyID gid.GID }
+type ErrPersonalAPIKeyExpired struct{ PersonalAPIKeyID gid.GID }
 
-func NewUserAPIKeyExpiredError(userAPIKeyID gid.GID) error {
-	return &ErrUserAPIKeyExpired{UserAPIKeyID: userAPIKeyID}
+func NewPersonalAPIKeyExpiredError(personalAPIKeyID gid.GID) error {
+	return &ErrPersonalAPIKeyExpired{PersonalAPIKeyID: personalAPIKeyID}
 }
 
-func (e ErrUserAPIKeyExpired) Error() string {
-	return fmt.Sprintf("user API key %q expired", e.UserAPIKeyID)
+func (e ErrPersonalAPIKeyExpired) Error() string {
+	return fmt.Sprintf("personal API key %q expired", e.PersonalAPIKeyID)
 }
 
 type ErrSAMLConfigurationDomainNotVerified struct{ ConfigID gid.GID }

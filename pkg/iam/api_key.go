@@ -35,9 +35,9 @@ func NewAPIKeyService(svc *Service) *APIKeyService {
 	return &APIKeyService{Service: svc}
 }
 
-func (s *APIKeyService) GetAPIKey(ctx context.Context, keyID gid.GID) (*coredata.UserAPIKey, error) {
+func (s *APIKeyService) GetAPIKey(ctx context.Context, keyID gid.GID) (*coredata.PersonalAPIKey, error) {
 	var (
-		apiKey = &coredata.UserAPIKey{}
+		apiKey = &coredata.PersonalAPIKey{}
 		now    = time.Now()
 	)
 
@@ -46,12 +46,12 @@ func (s *APIKeyService) GetAPIKey(ctx context.Context, keyID gid.GID) (*coredata
 		func(tx pg.Conn) error {
 			if err := apiKey.LoadByID(ctx, tx, keyID); err != nil {
 				if err == coredata.ErrResourceNotFound {
-					return NewUserAPIKeyNotFoundError(keyID)
+					return NewPersonalAPIKeyNotFoundError(keyID)
 				}
 			}
 
 			if apiKey.ExpireReason != nil {
-				return NewUserAPIKeyExpiredError(keyID)
+				return NewPersonalAPIKeyExpiredError(keyID)
 			}
 
 			if now.After(apiKey.ExpiresAt) {
@@ -60,10 +60,10 @@ func (s *APIKeyService) GetAPIKey(ctx context.Context, keyID gid.GID) (*coredata
 				apiKey.UpdatedAt = now
 
 				if err := apiKey.Update(ctx, tx); err != nil {
-					return fmt.Errorf("cannot update user api key: %w", err)
+					return fmt.Errorf("cannot update personal api key: %w", err)
 				}
 
-				return NewUserAPIKeyExpiredError(keyID)
+				return NewPersonalAPIKeyExpiredError(keyID)
 			}
 
 			return nil

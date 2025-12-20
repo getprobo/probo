@@ -27,9 +27,9 @@ import (
 )
 
 type (
-	UserAPIKey struct {
+	PersonalAPIKey struct {
 		ID           gid.GID       `db:"id"`
-		UserID       gid.GID       `db:"user_id"`
+		IdentityID   gid.GID       `db:"identity_id"`
 		Name         string        `db:"name"`
 		ExpiresAt    time.Time     `db:"expires_at"`
 		ExpireReason *ExpireReason `db:"expire_reason"`
@@ -37,19 +37,19 @@ type (
 		UpdatedAt    time.Time     `db:"updated_at"`
 	}
 
-	UserAPIKeys []*UserAPIKey
+	PersonalAPIKeys []*PersonalAPIKey
 )
 
-func (a *UserAPIKey) CursorKey(orderBy UserAPIKeyOrderField) page.CursorKey {
+func (a *PersonalAPIKey) CursorKey(orderBy PersonalAPIKeyOrderField) page.CursorKey {
 	switch orderBy {
-	case UserAPIKeyOrderFieldCreatedAt:
+	case PersonalAPIKeyOrderFieldCreatedAt:
 		return page.NewCursorKey(a.ID, a.CreatedAt)
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (a *UserAPIKey) LoadByID(
+func (a *PersonalAPIKey) LoadByID(
 	ctx context.Context,
 	conn pg.Conn,
 	apiKeyID gid.GID,
@@ -57,14 +57,14 @@ func (a *UserAPIKey) LoadByID(
 	q := `
 SELECT
     id,
-    user_id,
+    identity_id,
     name,
     expires_at,
     expire_reason,
     created_at,
     updated_at
 FROM
-    auth_user_api_keys
+    auth_personal_api_keys
 WHERE
     id = @api_key_id
 LIMIT 1;
@@ -74,16 +74,16 @@ LIMIT 1;
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query user api key: %w", err)
+		return fmt.Errorf("cannot query personal api key: %w", err)
 	}
 
-	apiKey, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[UserAPIKey])
+	apiKey, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[PersonalAPIKey])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
 
-		return fmt.Errorf("cannot collect user api key: %w", err)
+		return fmt.Errorf("cannot collect personal api key: %w", err)
 	}
 
 	*a = apiKey
@@ -91,37 +91,37 @@ LIMIT 1;
 	return nil
 }
 
-func (a *UserAPIKeys) LoadByUserID(
+func (a *PersonalAPIKeys) LoadByIdentityID(
 	ctx context.Context,
 	conn pg.Conn,
-	userID gid.GID,
+	identityID gid.GID,
 ) error {
 	q := `
 SELECT
     id,
-    user_id,
+    identity_id,
     name,
     expires_at,
     expire_reason,
     created_at,
     updated_at
 FROM
-    auth_user_api_keys
+    auth_personal_api_keys
 WHERE
-    user_id = @user_id
+    identity_id = @identity_id
 ORDER BY created_at DESC;
 `
 
-	args := pgx.StrictNamedArgs{"user_id": userID}
+	args := pgx.StrictNamedArgs{"identity_id": identityID}
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query user api keys: %w", err)
+		return fmt.Errorf("cannot query personal api keys: %w", err)
 	}
 
-	apiKeys, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[UserAPIKey])
+	apiKeys, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[PersonalAPIKey])
 	if err != nil {
-		return fmt.Errorf("cannot collect user api keys: %w", err)
+		return fmt.Errorf("cannot collect personal api keys: %w", err)
 	}
 
 	*a = apiKeys
@@ -129,18 +129,18 @@ ORDER BY created_at DESC;
 	return nil
 }
 
-func (a *UserAPIKeys) CountByUserID(ctx context.Context, conn pg.Conn, userID gid.GID) (int, error) {
+func (a *PersonalAPIKeys) CountByIdentityID(ctx context.Context, conn pg.Conn, identityID gid.GID) (int, error) {
 	q := `
 SELECT
     COUNT(*)
 FROM
-    auth_user_api_keys
+    auth_personal_api_keys
 WHERE
-    user_id = @user_id
+    identity_id = @identity_id
 ORDER BY created_at DESC;
 `
 
-	args := pgx.StrictNamedArgs{"user_id": userID}
+	args := pgx.StrictNamedArgs{"identity_id": identityID}
 	row := conn.QueryRow(ctx, q, args)
 	var count int
 	if err := row.Scan(&count); err != nil {
@@ -150,16 +150,16 @@ ORDER BY created_at DESC;
 	return count, nil
 }
 
-func (a *UserAPIKey) Insert(
+func (a *PersonalAPIKey) Insert(
 	ctx context.Context,
 	conn pg.Conn,
 ) error {
 	q := `
 INSERT INTO
-    auth_user_api_keys (id, user_id, name, expires_at, expire_reason, created_at, updated_at)
+    auth_personal_api_keys (id, identity_id, name, expires_at, expire_reason, created_at, updated_at)
 VALUES (
     @api_key_id,
-    @user_id,
+    @identity_id,
     @name,
     @expires_at,
     @expire_reason,
@@ -170,7 +170,7 @@ VALUES (
 
 	args := pgx.StrictNamedArgs{
 		"api_key_id":    a.ID,
-		"user_id":       a.UserID,
+		"identity_id":   a.IdentityID,
 		"name":          a.Name,
 		"expires_at":    a.ExpiresAt,
 		"expire_reason": a.ExpireReason,
@@ -180,19 +180,19 @@ VALUES (
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot insert user api key: %w", err)
+		return fmt.Errorf("cannot insert personal api key: %w", err)
 	}
 
 	return nil
 }
 
-func (a *UserAPIKey) Update(
+func (a *PersonalAPIKey) Update(
 	ctx context.Context,
 	conn pg.Conn,
 ) error {
 	q := `
 UPDATE
-    auth_user_api_keys
+    auth_personal_api_keys
 SET
     name = @name,
     expires_at = @expires_at,
@@ -212,19 +212,19 @@ WHERE
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot update user api key: %w", err)
+		return fmt.Errorf("cannot update personal api key: %w", err)
 	}
 
 	return nil
 }
 
-func (a *UserAPIKey) Delete(
+func (a *PersonalAPIKey) Delete(
 	ctx context.Context,
 	conn pg.Conn,
 ) error {
 	q := `
 DELETE FROM
-    auth_user_api_keys
+    auth_personal_api_keys
 WHERE
     id = @api_key_id
 `
@@ -233,7 +233,7 @@ WHERE
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot delete user api key: %w", err)
+		return fmt.Errorf("cannot delete personal api key: %w", err)
 	}
 
 	return nil

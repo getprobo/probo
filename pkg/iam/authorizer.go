@@ -70,7 +70,7 @@ type AuthorizeParams struct {
 // It combines self-management policies with role-based policies.
 func (a *Authorizer) Authorize(ctx context.Context, params AuthorizeParams) error {
 	// Validate principal type
-	if params.Principal.EntityType() != coredata.UserEntityType {
+	if params.Principal.EntityType() != coredata.IdentityEntityType {
 		return NewUnsupportedPrincipalTypeError(params.Principal.EntityType())
 	}
 
@@ -135,7 +135,7 @@ func (a *Authorizer) loadRolePolicies(ctx context.Context, principalID gid.GID, 
 		scope := coredata.NewScope(resourceID.TenantID())
 
 		var m coredata.Membership
-		if err := m.LoadRoleByUserAndEntityID(ctx, conn, scope, principalID, resourceID); err != nil {
+		if err := m.LoadRoleByIdentityAndEntityID(ctx, conn, scope, principalID, resourceID); err != nil {
 			if errors.Is(err, coredata.ErrResourceNotFound) {
 				return nil // No membership = no role-based policies
 			}

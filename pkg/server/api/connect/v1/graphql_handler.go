@@ -70,7 +70,7 @@ func SessionDirective(ctx context.Context, obj any, next graphql.Resolver, requi
 }
 
 func IsViewerDirective(ctx context.Context, obj any, next graphql.Resolver) (any, error) {
-	identity := UserFromContext(ctx)
+	identity := IdentityFromContext(ctx)
 
 	switch node := obj.(type) {
 	case *types.Identity:

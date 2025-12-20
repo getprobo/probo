@@ -31,34 +31,34 @@ import (
 )
 
 type (
-	User struct {
+	Identity struct {
 		ID                   gid.GID   `db:"id"`
 		EmailAddress         mail.Addr `db:"email_address"`
-		HashedPassword       []byte                    `db:"hashed_password"`
-		FullName             string                    `db:"fullname"`
-		EmailAddressVerified bool                      `db:"email_address_verified"`
-		SAMLSubject          *string                   `db:"saml_subject"`
-		CreatedAt            time.Time                 `db:"created_at"`
-		UpdatedAt            time.Time                 `db:"updated_at"`
+		HashedPassword       []byte    `db:"hashed_password"`
+		FullName             string    `db:"fullname"`
+		EmailAddressVerified bool      `db:"email_address_verified"`
+		SAMLSubject          *string   `db:"saml_subject"`
+		CreatedAt            time.Time `db:"created_at"`
+		UpdatedAt            time.Time `db:"updated_at"`
 	}
 
-	Users []*User
+	Identities []*Identity
 )
 
-func (u User) CursorKey(orderBy UserOrderField) page.CursorKey {
+func (i Identity) CursorKey(orderBy IdentityOrderField) page.CursorKey {
 	switch orderBy {
-	case UserOrderFieldCreatedAt:
-		return page.NewCursorKey(u.ID, u.CreatedAt)
+	case IdentityOrderFieldCreatedAt:
+		return page.NewCursorKey(i.ID, i.CreatedAt)
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (u *Users) LoadByOrganizationID(
+func (i *Identities) LoadByOrganizationID(
 	ctx context.Context,
 	conn pg.Conn,
 	organizationID gid.GID,
-	cursor *page.Cursor[UserOrderField],
+	cursor *page.Cursor[IdentityOrderField],
 ) error {
 	q := `
 SELECT
@@ -70,10 +70,10 @@ SELECT
 	created_at,
 	updated_at
 FROM
-	users
+	identities
 WHERE
 	id IN (
-		SELECT user_id FROM authz_memberships WHERE organization_id = @organization_id
+		SELECT identity_id FROM authz_memberships WHERE organization_id = @organization_id
 	)
 	AND %s
 `
@@ -85,20 +85,20 @@ WHERE
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query users: %w", err)
+		return fmt.Errorf("cannot query identities: %w", err)
 	}
 
-	users, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[User])
+	identities, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Identity])
 	if err != nil {
-		return fmt.Errorf("cannot collect users: %w", err)
+		return fmt.Errorf("cannot collect identities: %w", err)
 	}
 
-	*u = users
+	*i = identities
 
 	return nil
 }
 
-func (u *Users) CountByOrganizationID(
+func (i *Identities) CountByOrganizationID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
@@ -108,10 +108,10 @@ func (u *Users) CountByOrganizationID(
 SELECT
 	COUNT(*)
 FROM
-	users
+	identities
 WHERE
 	id IN (
-		SELECT user_id FROM authz_memberships WHERE organization_id = @organization_id AND %s
+		SELECT identity_id FROM authz_memberships WHERE organization_id = @organization_id AND %s
 	)
 `
 
@@ -125,14 +125,14 @@ WHERE
 	var count int
 	err := row.Scan(&count)
 	if err != nil {
-		return 0, fmt.Errorf("cannot count users: %w", err)
+		return 0, fmt.Errorf("cannot count identities: %w", err)
 	}
 
 	return count, nil
 }
 
-// Tenant id scope is not applied because we want to access users across all tenants for authentication purposes.
-func (u *User) LoadByEmail(
+// Tenant id scope is not applied because we want to access identities across all tenants for authentication purposes.
+func (i *Identity) LoadByEmail(
 	ctx context.Context,
 	conn pg.Conn,
 	email mail.Addr,
@@ -148,38 +148,38 @@ SELECT
     created_at,
     updated_at
 FROM
-    users
+    identities
 WHERE
-    email_address = @user_email
+    email_address = @identity_email
 LIMIT 1;
 `
 
-	args := pgx.StrictNamedArgs{"user_email": email}
+	args := pgx.StrictNamedArgs{"identity_email": email}
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query user: %w", err)
+		return fmt.Errorf("cannot query identity: %w", err)
 	}
 
-	user, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[User])
+	identity, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Identity])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
 
-		return fmt.Errorf("cannot collect user: %w", err)
+		return fmt.Errorf("cannot collect identity: %w", err)
 	}
 
-	*u = user
+	*i = identity
 
 	return nil
 }
 
-// Tenant id scope is not applied because we want to access users across all tenants for authentication purposes.
-func (u *User) LoadByID(
+// Tenant id scope is not applied because we want to access identities across all tenants for authentication purposes.
+func (i *Identity) LoadByID(
 	ctx context.Context,
 	conn pg.Conn,
-	userID gid.GID,
+	identityID gid.GID,
 ) error {
 	q := `
 SELECT
@@ -192,42 +192,42 @@ SELECT
     created_at,
     updated_at
 FROM
-    users
+    identities
 WHERE
-    id = @user_id
+    id = @identity_id
 LIMIT 1;
 `
 
-	args := pgx.StrictNamedArgs{"user_id": userID}
+	args := pgx.StrictNamedArgs{"identity_id": identityID}
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query user: %w", err)
+		return fmt.Errorf("cannot query identity: %w", err)
 	}
 
-	user, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[User])
+	identity, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Identity])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
 
-		return fmt.Errorf("cannot collect user: %w", err)
+		return fmt.Errorf("cannot collect identity: %w", err)
 	}
 
-	*u = user
+	*i = identity
 
 	return nil
 }
 
-func (u *User) Insert(
+func (i *Identity) Insert(
 	ctx context.Context,
 	conn pg.Conn,
 ) error {
 	q := `
 INSERT INTO
-    users (id, email_address, hashed_password, email_address_verified, fullname, saml_subject, created_at, updated_at)
+    identities (id, email_address, hashed_password, email_address_verified, fullname, saml_subject, created_at, updated_at)
 VALUES (
-    @user_id,
+    @identity_id,
     @email_address,
     @hashed_password,
     @email_address_verified,
@@ -239,14 +239,14 @@ VALUES (
 `
 
 	args := pgx.StrictNamedArgs{
-		"user_id":                u.ID,
-		"email_address":          u.EmailAddress,
-		"hashed_password":        u.HashedPassword,
-		"fullname":               u.FullName,
-		"saml_subject":           u.SAMLSubject,
-		"created_at":             u.CreatedAt,
-		"updated_at":             u.UpdatedAt,
-		"email_address_verified": u.EmailAddressVerified,
+		"identity_id":            i.ID,
+		"email_address":          i.EmailAddress,
+		"hashed_password":        i.HashedPassword,
+		"fullname":               i.FullName,
+		"saml_subject":           i.SAMLSubject,
+		"created_at":             i.CreatedAt,
+		"updated_at":             i.UpdatedAt,
+		"email_address_verified": i.EmailAddressVerified,
 	}
 
 	_, err := conn.Exec(ctx, q, args)
@@ -265,10 +265,10 @@ VALUES (
 	return nil
 }
 
-func (u *User) Update(ctx context.Context, conn pg.Conn) error {
+func (i *Identity) Update(ctx context.Context, conn pg.Conn) error {
 	q := `
 UPDATE
-    users
+    identities
 SET
     email_address = @email_address,
     email_address_verified = @email_address_verified,
@@ -277,22 +277,22 @@ SET
 	hashed_password = @hashed_password,
     updated_at = @updated_at
 WHERE
-    id = @user_id
+    id = @identity_id
 `
 
 	args := pgx.StrictNamedArgs{
-		"user_id":                u.ID,
-		"email_address":          u.EmailAddress,
-		"email_address_verified": u.EmailAddressVerified,
-		"saml_subject":           u.SAMLSubject,
-		"updated_at":             u.UpdatedAt,
-		"fullname":               u.FullName,
-		"hashed_password":        u.HashedPassword,
+		"identity_id":            i.ID,
+		"email_address":          i.EmailAddress,
+		"email_address_verified": i.EmailAddressVerified,
+		"saml_subject":           i.SAMLSubject,
+		"updated_at":             i.UpdatedAt,
+		"fullname":               i.FullName,
+		"hashed_password":        i.HashedPassword,
 	}
 
 	result, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot update user: %w", err)
+		return fmt.Errorf("cannot update identity: %w", err)
 	}
 
 	if result.RowsAffected() == 0 {
@@ -302,8 +302,8 @@ WHERE
 	return nil
 }
 
-// LoadBySAMLSubject loads a user by their SAML subject (NameID)
-func (u *User) LoadBySAMLSubject(
+// LoadBySAMLSubject loads an identity by their SAML subject (NameID)
+func (i *Identity) LoadBySAMLSubject(
 	ctx context.Context,
 	conn pg.Conn,
 	samlSubject string,
@@ -319,7 +319,7 @@ SELECT
     created_at,
     updated_at
 FROM
-    users
+    identities
 WHERE
     saml_subject = @saml_subject
 LIMIT 1;
@@ -329,24 +329,24 @@ LIMIT 1;
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query user by SAML subject: %w", err)
+		return fmt.Errorf("cannot query identity by SAML subject: %w", err)
 	}
 
-	user, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[User])
+	identity, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Identity])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
 		}
 
-		return fmt.Errorf("cannot collect user: %w", err)
+		return fmt.Errorf("cannot collect identity: %w", err)
 	}
 
-	*u = user
+	*i = identity
 
 	return nil
 }
 
-func (u *User) CountMemberships(
+func (i *Identity) CountMemberships(
 	ctx context.Context,
 	conn pg.Conn,
 ) (int, error) {
@@ -356,19 +356,16 @@ SELECT
 FROM
     authz_memberships
 WHERE
-    user_id = @user_id
+    identity_id = @identity_id
 `
 
-	args := pgx.StrictNamedArgs{"user_id": u.ID}
+	args := pgx.StrictNamedArgs{"identity_id": i.ID}
 
 	var count int
 	err := conn.QueryRow(ctx, q, args).Scan(&count)
 	if err != nil {
-		return 0, fmt.Errorf("cannot count user memberships: %w", err)
+		return 0, fmt.Errorf("cannot count identity memberships: %w", err)
 	}
 
 	return count, nil
 }
-
-// ConvertToTenantUser method removed
-// All users are now global (no tenant conversion needed)

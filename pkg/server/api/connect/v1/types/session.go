@@ -63,7 +63,7 @@ func NewSession(session *coredata.Session) *Session {
 	return &Session{
 		ID:         session.ID,
 		IPAddress:  session.IPAddress.String(),
-		IdentityID: session.UserID,
+		IdentityID: session.IdentityID,
 		UserAgent:  session.UserAgent,
 		UpdatedAt:  session.UpdatedAt,
 		CreatedAt:  session.CreatedAt,

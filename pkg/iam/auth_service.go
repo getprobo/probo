@@ -110,7 +110,7 @@ func (req CreateIdentityWithPasswordRequest) Validate() error {
 func (s *AuthService) CreateIdentityFromInvitation(
 	ctx context.Context,
 	req *CreateIdentityFromInvitationRequest,
-) (*coredata.User, *coredata.Session, error) {
+) (*coredata.Identity, *coredata.Session, error) {
 	if err := req.Validate(); err != nil {
 		return nil, nil, fmt.Errorf("invalid request: %w", err)
 	}
@@ -123,7 +123,7 @@ func (s *AuthService) CreateIdentityFromInvitation(
 	var (
 		scope      = coredata.NewScopeFromObjectID(payload.Data.InvitationID)
 		invitation = &coredata.Invitation{}
-		user       = &coredata.User{}
+		identity   = &coredata.Identity{}
 		session    = &coredata.Session{}
 		now        = time.Now()
 	)
@@ -153,8 +153,8 @@ func (s *AuthService) CreateIdentityFromInvitation(
 				return NewInvitationExpiredError(payload.Data.InvitationID)
 			}
 
-			user = &coredata.User{
-				ID:                   gid.New(gid.NilTenant, coredata.UserEntityType),
+			identity = &coredata.Identity{
+				ID:                   gid.New(gid.NilTenant, coredata.IdentityEntityType),
 				EmailAddress:         invitation.Email,
 				HashedPassword:       hashedPassword,
 				EmailAddressVerified: true,
@@ -163,16 +163,16 @@ func (s *AuthService) CreateIdentityFromInvitation(
 				UpdatedAt:            now,
 			}
 
-			err = user.Insert(ctx, tx)
+			err = identity.Insert(ctx, tx)
 			if err != nil {
 				if err == coredata.ErrResourceAlreadyExists {
-					return NewUserAlreadyExistsError(invitation.Email)
+					return NewIdentityAlreadyExistsError(invitation.Email)
 				}
 
-				return fmt.Errorf("cannot insert user: %w", err)
+				return fmt.Errorf("cannot insert identity: %w", err)
 			}
 
-			session = coredata.NewRootSession(user.ID, coredata.AuthMethodPassword, s.sessionDuration)
+			session = coredata.NewRootSession(identity.ID, coredata.AuthMethodPassword, s.sessionDuration)
 			err = session.Insert(ctx, tx)
 			if err != nil {
 				return fmt.Errorf("cannot insert session: %w", err)
@@ -186,7 +186,7 @@ func (s *AuthService) CreateIdentityFromInvitation(
 		return nil, nil, err
 	}
 
-	return user, session, nil
+	return identity, session, nil
 }
 
 func (s AuthService) ResetPassword(
@@ -210,26 +210,26 @@ func (s AuthService) ResetPassword(
 	return s.pg.WithTx(
 		ctx,
 		func(tx pg.Conn) error {
-			user := &coredata.User{}
-			err := user.LoadByEmail(ctx, tx, payload.Data.Email)
+			identity := &coredata.Identity{}
+			err := identity.LoadByEmail(ctx, tx, payload.Data.Email)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
-					return nil // Don't leak information about non-existent users
+					return nil // Don't leak information about non-existent identities
 				}
 
-				return fmt.Errorf("cannot load user: %w", err)
+				return fmt.Errorf("cannot load identity: %w", err)
 			}
 
-			user.HashedPassword = hashedPassword
-			user.UpdatedAt = time.Now()
+			identity.HashedPassword = hashedPassword
+			identity.UpdatedAt = time.Now()
 
-			err = user.Update(ctx, tx)
+			err = identity.Update(ctx, tx)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
-					return nil // Don't leak information about non-existent users
+					return nil // Don't leak information about non-existent identities
 				}
 
-				return fmt.Errorf("cannot update user: %w", err)
+				return fmt.Errorf("cannot update identity: %w", err)
 			}
 
 			return nil
@@ -264,18 +264,18 @@ func (s AuthService) SendPasswordResetInstructionByEmail(
 	return s.pg.WithTx(
 		ctx,
 		func(tx pg.Conn) error {
-			user := &coredata.User{}
-			if err := user.LoadByEmail(ctx, tx, email); err != nil {
+			identity := &coredata.Identity{}
+			if err := identity.LoadByEmail(ctx, tx, email); err != nil {
 				if err == coredata.ErrResourceNotFound {
-					return nil // Don't leak information about non-existent users
+					return nil // Don't leak information about non-existent identities
 				}
 
-				return fmt.Errorf("cannot load user: %w", err)
+				return fmt.Errorf("cannot load identity: %w", err)
 			}
 
 			subject, textBody, htmlBody, err := emails.RenderPasswordReset(
 				s.baseURL,
-				user.FullName,
+				identity.FullName,
 				resetPasswordUrl,
 			)
 			if err != nil {
@@ -283,8 +283,8 @@ func (s AuthService) SendPasswordResetInstructionByEmail(
 			}
 
 			passwordResetEmail := coredata.NewEmail(
-				user.FullName,
-				user.EmailAddress,
+				identity.FullName,
+				identity.EmailAddress,
 				subject,
 				textBody,
 				htmlBody,
@@ -303,7 +303,7 @@ func (s AuthService) SendPasswordResetInstructionByEmail(
 func (s AuthService) CreateIdentityWithPassword(
 	ctx context.Context,
 	req *CreateIdentityWithPasswordRequest,
-) (*coredata.User, *coredata.Session, error) {
+) (*coredata.Identity, *coredata.Session, error) {
 	if s.disableSignup { // TODO Rename this one to disableSignup
 		return nil, nil, NewErrSignupDisabled()
 	}
@@ -320,8 +320,8 @@ func (s AuthService) CreateIdentityWithPassword(
 	var (
 		now = time.Now()
 
-		user = &coredata.User{
-			ID:                   gid.New(gid.NilTenant, coredata.UserEntityType),
+		identity = &coredata.Identity{
+			ID:                   gid.New(gid.NilTenant, coredata.IdentityEntityType),
 			EmailAddress:         req.Email,
 			HashedPassword:       hashedPassword,
 			EmailAddressVerified: false,
@@ -330,14 +330,14 @@ func (s AuthService) CreateIdentityWithPassword(
 			UpdatedAt:            now,
 		}
 
-		session = coredata.NewRootSession(user.ID, coredata.AuthMethodPassword, 24*time.Hour*7)
+		session = coredata.NewRootSession(identity.ID, coredata.AuthMethodPassword, 24*time.Hour*7)
 	)
 
 	confirmationToken, err := statelesstoken.NewToken(
 		s.tokenSecret,
 		TokenTypeEmailConfirmation,
 		24*time.Hour,
-		EmailConfirmationData{UserID: user.ID, Email: user.EmailAddress},
+		EmailConfirmationData{IdentityID: identity.ID, Email: identity.EmailAddress},
 	)
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot generate confirmation token: %w", err)
@@ -358,7 +358,7 @@ func (s AuthService) CreateIdentityWithPassword(
 
 	subject, textBody, htmlBody, err := emails.RenderConfirmEmail(
 		s.baseURL,
-		user.FullName,
+		identity.FullName,
 		confirmationUrl,
 	)
 	if err != nil {
@@ -366,8 +366,8 @@ func (s AuthService) CreateIdentityWithPassword(
 	}
 
 	confirmationEmail := coredata.NewEmail(
-		user.FullName,
-		user.EmailAddress,
+		identity.FullName,
+		identity.EmailAddress,
 		subject,
 		textBody,
 		htmlBody,
@@ -376,13 +376,13 @@ func (s AuthService) CreateIdentityWithPassword(
 	err = s.pg.WithTx(
 		ctx,
 		func(tx pg.Conn) error {
-			err := user.Insert(ctx, tx)
+			err := identity.Insert(ctx, tx)
 			if err != nil {
 				if err == coredata.ErrResourceAlreadyExists {
-					return NewUserAlreadyExistsError(user.EmailAddress)
+					return NewIdentityAlreadyExistsError(identity.EmailAddress)
 				}
 
-				return fmt.Errorf("cannot insert user: %w", err)
+				return fmt.Errorf("cannot insert identity: %w", err)
 			}
 
 			if err := confirmationEmail.Insert(ctx, tx); err != nil {
@@ -397,16 +397,16 @@ func (s AuthService) CreateIdentityWithPassword(
 		},
 	)
 
-	return user, session, err
+	return identity, session, err
 }
 
-func (s AuthService) OpenSessionWithSAML(ctx context.Context, userID gid.GID, organizationID gid.GID) (*coredata.Session, error) {
+func (s AuthService) OpenSessionWithSAML(ctx context.Context, identityID gid.GID, organizationID gid.GID) (*coredata.Session, error) {
 	session := &coredata.Session{}
 
 	err := s.pg.WithTx(
 		ctx,
 		func(conn pg.Conn) (err error) {
-			session = coredata.NewRootSession(userID, coredata.AuthMethodSAML, s.sessionDuration)
+			session = coredata.NewRootSession(identityID, coredata.AuthMethodSAML, s.sessionDuration)
 			err = session.Insert(ctx, conn)
 			if err != nil {
 				return fmt.Errorf("cannot insert session: %w", err)
@@ -423,7 +423,7 @@ func (s AuthService) OpenSessionWithSAML(ctx context.Context, userID gid.GID, or
 	return session, nil
 }
 
-func (s AuthService) OpenSessionWithPassword(ctx context.Context, email mail.Addr, password string) (*coredata.User, *coredata.Session, error) {
+func (s AuthService) OpenSessionWithPassword(ctx context.Context, email mail.Addr, password string) (*coredata.Identity, *coredata.Session, error) {
 	v := validator.New()
 	v.Check(password, "password", PasswordValidator())
 
@@ -433,29 +433,29 @@ func (s AuthService) OpenSessionWithPassword(ctx context.Context, email mail.Add
 	}
 
 	var (
-		user    = &coredata.User{}
-		session = &coredata.Session{}
+		identity = &coredata.Identity{}
+		session  = &coredata.Session{}
 	)
 
 	err = s.pg.WithTx(
 		ctx,
 		func(conn pg.Conn) error {
-			err := user.LoadByEmail(ctx, conn, email)
+			err := identity.LoadByEmail(ctx, conn, email)
 			if err != nil {
-				// Do not leak information about non-existent users
+				// Do not leak information about non-existent identities
 				if err != coredata.ErrResourceNotFound {
-					return fmt.Errorf("cannot load user by email: %w", err)
+					return fmt.Errorf("cannot load identity by email: %w", err)
 				}
 			}
 
-			// Perform a password comparison even when the user does not exist to mitigate timing attacks
+			// Perform a password comparison even when the identity does not exist to mitigate timing attacks
 			// and prevent revealing account existence.
-			if user.ID == gid.Nil {
+			if identity.ID == gid.Nil {
 				s.hp.ComparePasswordAndHash([]byte(password+"qwertyuiop1234567890"), []byte("qwertyuiop1234567890"))
 				return NewInvalidCredentialsError("invalid email or password")
 			}
 
-			isPasswordMatch, err := s.hp.ComparePasswordAndHash([]byte(password), user.HashedPassword)
+			isPasswordMatch, err := s.hp.ComparePasswordAndHash([]byte(password), identity.HashedPassword)
 			if err != nil {
 				return fmt.Errorf("cannot verify password: %w", err)
 			}
@@ -464,7 +464,7 @@ func (s AuthService) OpenSessionWithPassword(ctx context.Context, email mail.Add
 				return NewInvalidCredentialsError("invalid email or password")
 			}
 
-			session = coredata.NewRootSession(user.ID, coredata.AuthMethodPassword, s.sessionDuration)
+			session = coredata.NewRootSession(identity.ID, coredata.AuthMethodPassword, s.sessionDuration)
 			err = session.Insert(ctx, conn)
 			if err != nil {
 				return fmt.Errorf("cannot insert session: %w", err)
@@ -474,5 +474,5 @@ func (s AuthService) OpenSessionWithPassword(ctx context.Context, email mail.Add
 		},
 	)
 
-	return user, session, err
+	return identity, session, err
 }

@@ -928,7 +928,7 @@ connect_v1 "go.probo.inc/probo/pkg/server/api/connect/v1"
 	func (r *documentVersionResolver) Signed(ctx context.Context, obj *types.DocumentVersion) (bool, error){
 		r.MustBeAuthorized(ctx, obj.ID, iam.ActionGetSigned)
 
-	identity := connect_v1.UserFromContext(ctx)
+	identity := connect_v1.IdentityFromContext(ctx)
 	if identity == nil {
 		panic(fmt.Errorf("user not found in context"))
 	}
@@ -1719,7 +1719,7 @@ connect_v1 "go.probo.inc/probo/pkg/server/api/connect/v1"
 
 // CreatePeople is the resolver for the createPeople field.
 func (r *mutationResolver) CreatePeople(ctx context.Context, input types.CreatePeopleInput) (*types.CreatePeoplePayload, error) {
-	user := connect_v1.UserFromContext(ctx)
+	user := connect_v1.IdentityFromContext(ctx)
 
 	r.iam.Authorizer.Authorize(ctx, iam.AuthorizeParams{
 		Principal: user.ID,
@@ -2126,7 +2126,7 @@ func (r *mutationResolver) CreatePeople(ctx context.Context, input types.CreateP
 		r.MustBeAuthorized(ctx, input.FrameworkID, iam.ActionExportFramework)
 
 	prb := r.ProboService(ctx, input.FrameworkID.TenantID())
-	identity := connect_v1.UserFromContext(ctx)
+	identity := connect_v1.IdentityFromContext(ctx)
 
 	err, exportJobID := prb.Frameworks.RequestExport(
 		ctx,
@@ -3081,7 +3081,7 @@ func (r *mutationResolver) CreatePeople(ctx context.Context, input types.CreateP
 
 	prb := r.ProboService(ctx, input.DocumentID.TenantID())
 
-	identity := connect_v1.UserFromContext(ctx)
+	identity := connect_v1.IdentityFromContext(ctx)
 
 	document, documentVersion, err := prb.Documents.PublishVersion(ctx, input.DocumentID, identity.ID, input.Changelog)
 	if err != nil {
@@ -3111,7 +3111,7 @@ func (r *mutationResolver) CreatePeople(ctx context.Context, input types.CreateP
 
 	prb := r.ProboService(ctx, input.DocumentIds[0].TenantID())
 
-	identity := connect_v1.UserFromContext(ctx)
+	identity := connect_v1.IdentityFromContext(ctx)
 
 	documentVersions, documents, err := prb.Documents.BulkPublishVersions(
 		ctx,
@@ -3167,7 +3167,7 @@ func (r *mutationResolver) CreatePeople(ctx context.Context, input types.CreateP
 
 	prb := r.ProboService(ctx, input.DocumentIds[0].TenantID())
 
-	identity := connect_v1.UserFromContext(ctx)
+	identity := connect_v1.IdentityFromContext(ctx)
 
 	options := probo.ExportPDFOptions{
 		WithWatermark:  input.WithWatermark,
@@ -3338,7 +3338,7 @@ func (r *mutationResolver) CreatePeople(ctx context.Context, input types.CreateP
 	func (r *mutationResolver) SignDocument(ctx context.Context, input types.SignDocumentInput) (*types.SignDocumentPayload, error){
 		r.MustBeAuthorized(ctx, input.DocumentVersionID, iam.ActionSignDocument)
 
-	identity := connect_v1.UserFromContext(ctx)
+	identity := connect_v1.IdentityFromContext(ctx)
 	prb := r.ProboService(ctx, input.DocumentVersionID.TenantID())
 
 	documentVersionSignature, err := prb.Documents.SignDocumentVersionByEmail(ctx, input.DocumentVersionID, identity.EmailAddress)
@@ -3388,7 +3388,7 @@ func (r *mutationResolver) CreatePeople(ctx context.Context, input types.CreateP
 		panic(fmt.Errorf("cannot get document version: %w", err))
 	}
 
-	identity := connect_v1.UserFromContext(ctx)
+	identity := connect_v1.IdentityFromContext(ctx)
 	documentFilter := coredata.NewDocumentFilter(nil).WithUserEmail(&identity.EmailAddress)
 
 	_, err = prb.Documents.GetWithFilter(ctx, documentVersion.DocumentID, documentFilter)
@@ -5511,8 +5511,9 @@ func (r *mutationResolver) CreatePeople(ctx context.Context, input types.CreateP
 	}
 
 // Viewer is the resolver for the viewer field.
-	func (r *queryResolver) Viewer(ctx context.Context) (*types.Viewer, error){
-		identity := connect_v1.UserFromContext(ctx)
+func (r *queryResolver) Viewer(ctx context.Context) (*types.Viewer, error) {
+	identity := connect_v1.IdentityFromContext(ctx)
+
 	session := connect_v1.SessionFromContext(ctx)
 	apiKey := connect_v1.APIKeyFromContext(ctx)
 

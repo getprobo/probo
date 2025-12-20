@@ -20,7 +20,7 @@ import (
 // ListOrganizationsTool handles the listOrganizations tool
 // List all organizations the user has access to
 func (r *Resolver) ListOrganizationsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListOrganizationsInput) (*mcp.CallToolResult, types.ListOrganizationsOutput, error) {
-	user := connect_v1.UserFromContext(ctx)
+	user := connect_v1.IdentityFromContext(ctx)
 
 	organizations, err := r.iamSvc.AccountService.ListOrganizations(ctx, user.ID)
 	if err != nil {
@@ -1656,7 +1656,7 @@ func (r *Resolver) PublishDocumentVersionTool(ctx context.Context, req *mcp.Call
 
 	svc := r.ProboService(ctx, input.DocumentID)
 
-	user := connect_v1.UserFromContext(ctx)
+	user := connect_v1.IdentityFromContext(ctx)
 
 	document, documentVersion, err := svc.Documents.PublishVersion(ctx, input.DocumentID, user.ID, input.Changelog)
 	if err != nil {

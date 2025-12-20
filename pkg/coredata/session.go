@@ -31,7 +31,7 @@ import (
 type (
 	Session struct {
 		ID              gid.GID       `db:"id"`
-		UserID          gid.GID       `db:"user_id"`
+		IdentityID      gid.GID       `db:"identity_id"`
 		TenantID        *gid.TenantID `db:"tenant_id"`
 		MembershipID    *gid.GID      `db:"membership_id"`
 		ParentSessionID *gid.GID      `db:"parent_session_id"`
@@ -58,11 +58,11 @@ const (
 	AuthMethodSAML     AuthMethod = "SAML"
 )
 
-func NewRootSession(userID gid.GID, method AuthMethod, duration time.Duration) *Session {
+func NewRootSession(identityID gid.GID, method AuthMethod, duration time.Duration) *Session {
 	now := time.Now()
 	return &Session{
 		ID:              gid.New(gid.NilTenant, SessionEntityType),
-		UserID:          userID,
+		IdentityID:      identityID,
 		ExpiredAt:       now.Add(duration),
 		AuthMethod:      method,
 		AuthenticatedAt: now,
@@ -100,7 +100,7 @@ func (s *Session) LoadByID(
 	q := `
 SELECT
     id,
-    user_id,
+    identity_id,
     tenant_id,
     membership_id,
     data,
@@ -146,10 +146,10 @@ func (s *Session) Insert(
 ) error {
 	q := `
 INSERT INTO
-    sessions (id, user_id, tenant_id, membership_id, data, parent_session_id, auth_method, authenticated_at, expire_reason, user_agent, ip_address, expired_at, created_at, updated_at)
+    sessions (id, identity_id, tenant_id, membership_id, data, parent_session_id, auth_method, authenticated_at, expire_reason, user_agent, ip_address, expired_at, created_at, updated_at)
 VALUES (
     @session_id,
-    @user_id,
+    @identity_id,
     @tenant_id,
     @membership_id,
     @data,
@@ -167,7 +167,7 @@ VALUES (
 
 	args := pgx.StrictNamedArgs{
 		"session_id":        s.ID,
-		"user_id":           s.UserID,
+		"identity_id":       s.IdentityID,
 		"tenant_id":         s.TenantID,
 		"membership_id":     s.MembershipID,
 		"data":              s.Data,
@@ -225,11 +225,11 @@ WHERE
 	return nil
 }
 
-func (s *Sessions) LoadByUserID(ctx context.Context, conn pg.Conn, userID gid.GID, cursor *page.Cursor[SessionOrderField]) error {
+func (s *Sessions) LoadByIdentityID(ctx context.Context, conn pg.Conn, identityID gid.GID, cursor *page.Cursor[SessionOrderField]) error {
 	q := `
 SELECT
     id,
-    user_id,
+    identity_id,
     tenant_id,
     membership_id,
     data,
@@ -245,13 +245,13 @@ SELECT
 FROM
     sessions
 WHERE
-    user_id = @user_id
+    identity_id = @identity_id
 	AND %s
 `
 
 	q = fmt.Sprintf(q, cursor.SQLFragment())
 
-	args := pgx.StrictNamedArgs{"user_id": userID}
+	args := pgx.StrictNamedArgs{"identity_id": identityID}
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -269,17 +269,17 @@ WHERE
 	return nil
 }
 
-func (s *Sessions) CountByUserID(ctx context.Context, conn pg.Conn, userID gid.GID) (int, error) {
+func (s *Sessions) CountByIdentityID(ctx context.Context, conn pg.Conn, identityID gid.GID) (int, error) {
 	q := `
 SELECT
 	COUNT(*)
 FROM
 	sessions
 WHERE
-	user_id = @user_id
+	identity_id = @identity_id
 	`
 
-	args := pgx.StrictNamedArgs{"user_id": userID}
+	args := pgx.StrictNamedArgs{"identity_id": identityID}
 
 	row := conn.QueryRow(ctx, q, args)
 
@@ -291,7 +291,7 @@ WHERE
 	return count, nil
 }
 
-func (s *Sessions) ExpireAllForUserExceptOneSession(ctx context.Context, conn pg.Conn, userID gid.GID, sessionID gid.GID) (int64, error) {
+func (s *Sessions) ExpireAllForIdentityExceptOneSession(ctx context.Context, conn pg.Conn, identityID gid.GID, sessionID gid.GID) (int64, error) {
 	q := `
 UPDATE sessions
 SET
@@ -300,13 +300,13 @@ SET
 	expire_reason = 'revoked'
 WHERE
     id != @session_id
-	AND user_id = @user_id
+	AND identity_id = @identity_id
 	AND expire_reason IS NULL
 `
 
 	args := pgx.StrictNamedArgs{
-		"session_id": sessionID,
-		"user_id":    userID,
+		"session_id":  sessionID,
+		"identity_id": identityID,
 	}
 
 	result, err := conn.Exec(ctx, q, args)
@@ -321,7 +321,7 @@ func (s *Session) LoadByRootSessionIDAndMembershipID(ctx context.Context, conn p
 	q := `
 SELECT
 	id,
-	user_id,
+	identity_id,
 	tenant_id,
 	membership_id,
 	data,
