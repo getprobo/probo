@@ -1,13 +1,17 @@
 import { Fragment } from "react";
 import { loadQuery } from "react-relay";
-import { consoleEnvironment } from "/environments";
+import { coreEnvironment } from "/environments";
 import { documentsQuery } from "/hooks/graph/DocumentGraph";
 import { documentNodeQuery } from "/hooks/graph/DocumentGraph";
 import { PageSkeleton } from "/components/skeletons/PageSkeleton";
 import { redirect, type LoaderFunctionArgs } from "react-router";
 import { lazy } from "@probo/react-lazy";
 import { LinkCardSkeleton } from "/components/skeletons/LinkCardSkeleton";
-import { loaderFromQueryLoader, withQueryRef, type AppRoute } from "@probo/routes";
+import {
+  loaderFromQueryLoader,
+  withQueryRef,
+  type AppRoute,
+} from "@probo/routes";
 import type { DocumentGraphListQuery } from "/hooks/graph/__generated__/DocumentGraphListQuery.graphql";
 import type { DocumentGraphNodeQuery } from "/hooks/graph/__generated__/DocumentGraphNodeQuery.graphql";
 
@@ -15,7 +19,9 @@ const documentTabs = (prefix: string) => {
   return [
     {
       path: `${prefix}`,
-      loader: ({ params: { organizationId, documentId, versionId } }: LoaderFunctionArgs) => {
+      loader: ({
+        params: { organizationId, documentId, versionId },
+      }: LoaderFunctionArgs) => {
         const basePath = `/organizations/${organizationId}/documents/${documentId}`;
         const redirectPath = versionId
           ? `${basePath}/versions/${versionId}/description`
@@ -29,9 +35,7 @@ const documentTabs = (prefix: string) => {
       Fallback: LinkCardSkeleton,
       Component: lazy(
         () =>
-          import(
-            "../pages/organizations/documents/tabs/DocumentDescriptionTab"
-          ),
+          import("../pages/organizations/documents/tabs/DocumentDescriptionTab"),
       ),
     },
     {
@@ -58,21 +62,25 @@ export const documentsRoutes = [
     path: "documents",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ organizationId }) =>
-      loadQuery<DocumentGraphListQuery>(consoleEnvironment, documentsQuery, { organizationId: organizationId! }),
+      loadQuery<DocumentGraphListQuery>(coreEnvironment, documentsQuery, {
+        organizationId: organizationId!,
+      }),
     ),
-    Component: withQueryRef(lazy(
-      () => import("/pages/organizations/documents/DocumentsPage"),
-    )),
+    Component: withQueryRef(
+      lazy(() => import("/pages/organizations/documents/DocumentsPage")),
+    ),
   },
   {
     path: "documents/:documentId",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ documentId }) =>
-      loadQuery<DocumentGraphNodeQuery>(consoleEnvironment, documentNodeQuery, { documentId: documentId! }),
+      loadQuery<DocumentGraphNodeQuery>(coreEnvironment, documentNodeQuery, {
+        documentId: documentId!,
+      }),
     ),
-    Component: withQueryRef(lazy(
-      () => import("../pages/organizations/documents/DocumentDetailPage"),
-    )),
+    Component: withQueryRef(
+      lazy(() => import("../pages/organizations/documents/DocumentDetailPage")),
+    ),
     children: [...documentTabs(""), ...documentTabs("versions/:versionId/")],
   },
 ] satisfies AppRoute[];

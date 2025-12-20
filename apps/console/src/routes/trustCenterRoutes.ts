@@ -1,70 +1,84 @@
 import { loadQuery } from "react-relay";
-import { consoleEnvironment } from "/environments";
+import { coreEnvironment } from "/environments";
 import { PageSkeleton } from "/components/skeletons/PageSkeleton";
 import { LinkCardSkeleton } from "/components/skeletons/LinkCardSkeleton";
 import { lazy } from "@probo/react-lazy";
 import { trustCenterQuery } from "../hooks/graph/TrustCenterGraph";
 import type { TrustCenterGraphQuery } from "/hooks/graph/__generated__/TrustCenterGraphQuery.graphql";
-import { loaderFromQueryLoader, withQueryRef, type AppRoute } from "@probo/routes";
+import {
+  loaderFromQueryLoader,
+  withQueryRef,
+  type AppRoute,
+} from "@probo/routes";
 
 export const trustCenterRoutes = [
   {
     path: "trust-center",
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ organizationId }) =>
-      loadQuery<TrustCenterGraphQuery>(consoleEnvironment, trustCenterQuery, { organizationId }, { fetchPolicy: "network-only" }),
+      loadQuery<TrustCenterGraphQuery>(
+        coreEnvironment,
+        trustCenterQuery,
+        { organizationId },
+        { fetchPolicy: "network-only" },
+      ),
     ),
-    Component: withQueryRef(lazy(
-      () => import("/pages/organizations/trustCenter/TrustCenterPage")
-    )),
+    Component: withQueryRef(
+      lazy(() => import("/pages/organizations/trustCenter/TrustCenterPage")),
+    ),
     children: [
       {
         index: true,
         Fallback: LinkCardSkeleton,
         Component: lazy(
-          () => import("/pages/organizations/trustCenter/TrustCenterOverviewTab")
+          () =>
+            import("/pages/organizations/trustCenter/TrustCenterOverviewTab"),
         ),
       },
       {
         path: "trust-by",
         Fallback: LinkCardSkeleton,
         Component: lazy(
-          () => import("/pages/organizations/trustCenter/TrustCenterReferencesTab")
+          () =>
+            import("/pages/organizations/trustCenter/TrustCenterReferencesTab"),
         ),
       },
       {
         path: "audits",
         Fallback: LinkCardSkeleton,
         Component: lazy(
-          () => import("/pages/organizations/trustCenter/TrustCenterAuditsTab")
+          () => import("/pages/organizations/trustCenter/TrustCenterAuditsTab"),
         ),
       },
       {
         path: "documents",
         Fallback: LinkCardSkeleton,
         Component: lazy(
-          () => import("/pages/organizations/trustCenter/TrustCenterDocumentsTab")
+          () =>
+            import("/pages/organizations/trustCenter/TrustCenterDocumentsTab"),
         ),
       },
       {
         path: "files",
         Fallback: LinkCardSkeleton,
         Component: lazy(
-          () => import("/pages/organizations/trustCenter/TrustCenterFilesTab")
+          () => import("/pages/organizations/trustCenter/TrustCenterFilesTab"),
         ),
       },
       {
         path: "vendors",
         Fallback: LinkCardSkeleton,
         Component: lazy(
-          () => import("/pages/organizations/trustCenter/TrustCenterVendorsTab")
+          () =>
+            import("/pages/organizations/trustCenter/TrustCenterVendorsTab"),
         ),
       },
       {
         path: "access",
         Fallback: LinkCardSkeleton,
         Component: lazy(
-          () => import("/pages/organizations/trustCenter/TrustCenterAccessTab/TrustCenterAccessTab")
+          () =>
+            import("/pages/organizations/trustCenter/TrustCenterAccessTab/TrustCenterAccessTab"),
         ),
       },
     ],

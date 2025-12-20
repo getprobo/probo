@@ -40,8 +40,7 @@ import { employeeDocumentSignatureQuery } from "./pages/organizations/employee/E
 import { Role } from "@probo/helpers";
 import { PermissionsContext } from "./providers/PermissionsContext";
 import { use } from "react";
-import { RelayEnvironmentProvider } from "react-relay";
-import { connectEnvironment, consoleEnvironment } from "./environments.ts";
+import { coreEnvironment } from "./environments.ts";
 import {
   ForbiddenError,
   UnAuthenticatedError,
@@ -49,6 +48,7 @@ import {
 } from "@probo/relay";
 import { OrganizationsPageQuery } from "./pages/iam/organizations/OrganizationsPageQuery.tsx";
 import { OrganizationLayoutQuery } from "./pages/iam/organizations/OrganizationLayoutQuery.tsx";
+import { IAMRelayProvider } from "./providers/IAMRelayProvider.tsx";
 
 const NewOrganizationPage = lazy(
   () => import("./pages/iam/organizations/NewOrganizationPage"),
@@ -79,9 +79,9 @@ const routes = [
   {
     path: "/auth",
     Component: () => (
-      <RelayEnvironmentProvider environment={connectEnvironment}>
+      <IAMRelayProvider>
         <AuthLayout />
-      </RelayEnvironmentProvider>
+      </IAMRelayProvider>
     ),
     children: [
       {
@@ -119,17 +119,17 @@ const routes = [
       {
         index: true,
         Component: () => (
-          <RelayEnvironmentProvider environment={connectEnvironment}>
+          <IAMRelayProvider>
             <OrganizationsPageQuery />
-          </RelayEnvironmentProvider>
+          </IAMRelayProvider>
         ),
       },
       {
         path: "organizations/new",
         Component: () => (
-          <RelayEnvironmentProvider environment={connectEnvironment}>
+          <IAMRelayProvider>
             <NewOrganizationPage />
-          </RelayEnvironmentProvider>
+          </IAMRelayProvider>
         ),
       },
       {
@@ -153,7 +153,7 @@ const routes = [
         path: "",
         Fallback: PageSkeleton,
         loader: loaderFromQueryLoader(({ organizationId }) =>
-          loadQuery(consoleEnvironment, employeeDocumentsQuery, {
+          loadQuery(coreEnvironment, employeeDocumentsQuery, {
             organizationId: organizationId!,
           }),
         ),
@@ -169,7 +169,7 @@ const routes = [
         Fallback: PageSkeleton,
         ErrorBoundary: ErrorBoundary,
         loader: loaderFromQueryLoader(({ documentId }) =>
-          loadQuery(consoleEnvironment, employeeDocumentSignatureQuery, {
+          loadQuery(coreEnvironment, employeeDocumentSignatureQuery, {
             documentId: documentId!,
           }),
         ),
@@ -185,9 +185,9 @@ const routes = [
   {
     path: "/organizations/:organizationId",
     Component: () => (
-      <RelayEnvironmentProvider environment={connectEnvironment}>
+      <IAMRelayProvider>
         <OrganizationLayoutQuery />
-      </RelayEnvironmentProvider>
+      </IAMRelayProvider>
     ),
     ErrorBoundary: ErrorBoundary,
     children: [
@@ -209,7 +209,7 @@ const routes = [
         path: "settings",
         Fallback: PageSkeleton,
         loader: loaderFromQueryLoader(({ organizationId }) =>
-          loadQuery(consoleEnvironment, organizationViewQuery, {
+          loadQuery(coreEnvironment, organizationViewQuery, {
             organizationId: organizationId!,
           }),
         ),
