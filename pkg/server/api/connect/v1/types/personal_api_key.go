@@ -21,7 +21,7 @@ import (
 )
 
 type (
-	PersonalAPIKeyOrderBy OrderBy[coredata.UserAPIKeyOrderField]
+	PersonalAPIKeyOrderBy OrderBy[coredata.PersonalAPIKeyOrderField]
 
 	PersonalAPIKeyConnection struct {
 		TotalCount int
@@ -34,7 +34,7 @@ type (
 )
 
 func NewPersonalAPIKeyConnection(
-	p *page.Page[*coredata.UserAPIKey, coredata.UserAPIKeyOrderField],
+	p *page.Page[*coredata.PersonalAPIKey, coredata.PersonalAPIKeyOrderField],
 	resolver any,
 	parentID gid.GID,
 ) *PersonalAPIKeyConnection {
@@ -52,14 +52,14 @@ func NewPersonalAPIKeyConnection(
 	}
 }
 
-func NewPersonalAPIKeyEdge(personalAPIKey *coredata.UserAPIKey, orderField coredata.UserAPIKeyOrderField) *PersonalAPIKeyEdge {
+func NewPersonalAPIKeyEdge(personalAPIKey *coredata.PersonalAPIKey, orderField coredata.PersonalAPIKeyOrderField) *PersonalAPIKeyEdge {
 	return &PersonalAPIKeyEdge{
 		Node:   NewPersonalAPIKey(personalAPIKey),
 		Cursor: personalAPIKey.CursorKey(orderField),
 	}
 }
 
-func NewPersonalAPIKey(personalAPIKey *coredata.UserAPIKey) *PersonalAPIKey {
+func NewPersonalAPIKey(personalAPIKey *coredata.PersonalAPIKey) *PersonalAPIKey {
 	return &PersonalAPIKey{
 		ID:        personalAPIKey.ID,
 		Name:      personalAPIKey.Name,

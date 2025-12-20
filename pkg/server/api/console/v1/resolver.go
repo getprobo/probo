@@ -52,7 +52,7 @@ type (
 )
 
 func ensureAuthenticated(ctx context.Context, next graphql.OperationHandler) graphql.ResponseHandler {
-	identity := connect_v1.UserFromContext(ctx)
+	identity := connect_v1.IdentityFromContext(ctx)
 
 	if identity == nil {
 		return func(ctx context.Context) *graphql.Response {
@@ -228,7 +228,7 @@ func NewMux(
 			panic(fmt.Errorf("cannot parse organization id: %w", err))
 		}
 
-		identity := connect_v1.UserFromContext(r.Context())
+		identity := connect_v1.IdentityFromContext(r.Context())
 		apiKey := connect_v1.APIKeyFromContext(r.Context())
 		if identity == nil {
 			httpserver.RenderError(w, http.StatusUnauthorized, fmt.Errorf("authentication required"))
@@ -328,7 +328,7 @@ func GetTenantService(ctx context.Context, proboSvc *probo.Service, tenantID gid
 }
 
 func (r *Resolver) MustBeAuthorized(ctx context.Context, entityID gid.GID, action iam.Action) {
-	user := connect_v1.UserFromContext(ctx)
+	user := connect_v1.IdentityFromContext(ctx)
 	apiKey := connect_v1.APIKeyFromContext(ctx)
 
 	var credentialID *gid.GID

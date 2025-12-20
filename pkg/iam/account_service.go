@@ -35,7 +35,7 @@ type (
 		*Service
 	}
 
-	UserAPIKeyTokenData struct {
+	PersonalAPIKeyTokenData struct {
 		Version     int       `json:"v"`
 		KeyID       gid.GID   `json:"kid"`
 		PrincipalID gid.GID   `json:"pid"`
@@ -43,8 +43,8 @@ type (
 	}
 
 	EmailConfirmationData struct {
-		UserID gid.GID   `json:"uid"`
-		Email  mail.Addr `json:"email"`
+		IdentityID gid.GID   `json:"uid"`
+		Email      mail.Addr `json:"email"`
 	}
 )
 
@@ -78,7 +78,7 @@ func (s AccountService) ChangeEmail(ctx context.Context, identityID gid.GID, req
 		s.tokenSecret,
 		TokenTypeEmailConfirmation,
 		24*time.Hour,
-		EmailConfirmationData{UserID: identityID, Email: req.NewEmail},
+		EmailConfirmationData{IdentityID: identityID, Email: req.NewEmail},
 	)
 	if err != nil {
 		return fmt.Errorf("cannot generate confirmation token: %w", err)
@@ -97,17 +97,17 @@ func (s AccountService) ChangeEmail(ctx context.Context, identityID gid.GID, req
 	return s.pg.WithTx(
 		ctx,
 		func(tx pg.Conn) error {
-			user := &coredata.User{}
-			err := user.LoadByID(ctx, tx, identityID)
+			identity := &coredata.Identity{}
+			err := identity.LoadByID(ctx, tx, identityID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
-					return NewUserNotFoundError(identityID)
+					return NewIdentityNotFoundError(identityID)
 				}
 
-				return fmt.Errorf("cannot load user: %w", err)
+				return fmt.Errorf("cannot load identity: %w", err)
 			}
 
-			isPasswordMatch, err := s.hp.ComparePasswordAndHash([]byte(req.Password), user.HashedPassword)
+			isPasswordMatch, err := s.hp.ComparePasswordAndHash([]byte(req.Password), identity.HashedPassword)
 			if err != nil {
 				return fmt.Errorf("cannot compare password: %w", err)
 			}
@@ -116,18 +116,18 @@ func (s AccountService) ChangeEmail(ctx context.Context, identityID gid.GID, req
 				return NewInvalidPasswordError("invalid password")
 			}
 
-			user.EmailAddress = req.NewEmail
-			user.EmailAddressVerified = false
-			user.UpdatedAt = time.Now()
+			identity.EmailAddress = req.NewEmail
+			identity.EmailAddressVerified = false
+			identity.UpdatedAt = time.Now()
 
-			err = user.Update(ctx, tx)
+			err = identity.Update(ctx, tx)
 			if err != nil {
-				return fmt.Errorf("cannot update user: %w", err)
+				return fmt.Errorf("cannot update identity: %w", err)
 			}
 
 			subject, textBody, htmlBody, err := emails.RenderConfirmEmail(
 				s.baseURL,
-				user.FullName,
+				identity.FullName,
 				confirmationUrl,
 			)
 			if err != nil {
@@ -135,8 +135,8 @@ func (s AccountService) ChangeEmail(ctx context.Context, identityID gid.GID, req
 			}
 
 			confirmationEmail := coredata.NewEmail(
-				user.FullName,
-				user.EmailAddress,
+				identity.FullName,
+				identity.EmailAddress,
 				subject,
 				textBody,
 				htmlBody,
@@ -161,30 +161,30 @@ func (s AccountService) VerifyEmail(ctx context.Context, token string) error {
 	return s.pg.WithTx(
 		ctx,
 		func(tx pg.Conn) error {
-			user := &coredata.User{}
-			err := user.LoadByID(ctx, tx, payload.Data.UserID)
+			identity := &coredata.Identity{}
+			err := identity.LoadByID(ctx, tx, payload.Data.IdentityID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
-					return NewUserNotFoundError(payload.Data.UserID)
+					return NewIdentityNotFoundError(payload.Data.IdentityID)
 				}
 
-				return fmt.Errorf("cannot load user: %w", err)
+				return fmt.Errorf("cannot load identity: %w", err)
 			}
 
-			if user.EmailAddress != payload.Data.Email {
+			if identity.EmailAddress != payload.Data.Email {
 				return NewEmailVerificationMismatchError()
 			}
 
-			if user.EmailAddressVerified {
+			if identity.EmailAddressVerified {
 				return NewEmailAlreadyVerifiedError()
 			}
 
-			user.EmailAddressVerified = true
-			user.UpdatedAt = time.Now()
+			identity.EmailAddressVerified = true
+			identity.UpdatedAt = time.Now()
 
-			err = user.Update(ctx, tx)
+			err = identity.Update(ctx, tx)
 			if err != nil {
-				return fmt.Errorf("cannot update user: %w", err)
+				return fmt.Errorf("cannot update identity: %w", err)
 			}
 
 			return nil
@@ -205,16 +205,16 @@ func (s *AccountService) AcceptInvitation(
 	err := s.pg.WithTx(
 		ctx,
 		func(tx pg.Conn) error {
-			user := coredata.User{}
+			identity := coredata.Identity{}
 			invitation := coredata.Invitation{}
 
-			err := user.LoadByID(ctx, tx, identityID)
+			err := identity.LoadByID(ctx, tx, identityID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
-					return NewUserNotFoundError(identityID)
+					return NewIdentityNotFoundError(identityID)
 				}
 
-				return fmt.Errorf("cannot load user: %w", err)
+				return fmt.Errorf("cannot load identity: %w", err)
 			}
 
 			err = invitation.LoadByID(ctx, tx, coredata.NewNoScope(), invitationID)
@@ -226,7 +226,7 @@ func (s *AccountService) AcceptInvitation(
 				return fmt.Errorf("cannot load invitation: %w", err)
 			}
 
-			if invitation.Email != user.EmailAddress {
+			if invitation.Email != identity.EmailAddress {
 				return NewInvitationNotFoundError(invitationID)
 			}
 
@@ -243,7 +243,7 @@ func (s *AccountService) AcceptInvitation(
 
 			membership = &coredata.Membership{
 				ID:             gid.New(tenantID, coredata.MembershipEntityType),
-				UserID:         identityID,
+				IdentityID:     identityID,
 				OrganizationID: invitation.OrganizationID,
 				Role:           invitation.Role,
 				CreatedAt:      now,
@@ -286,11 +286,11 @@ func (s *AccountService) ListPendingInvitations(
 	err := s.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			identity := coredata.User{}
+			identity := coredata.Identity{}
 			err := identity.LoadByID(ctx, conn, identityID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
-					return NewUserNotFoundError(identityID)
+					return NewIdentityNotFoundError(identityID)
 				}
 
 				return fmt.Errorf("cannot load identity: %w", err)
@@ -323,7 +323,7 @@ func (s *AccountService) CountPendingInvitations(
 	err := s.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			identity := coredata.User{}
+			identity := coredata.Identity{}
 			err := identity.LoadByID(ctx, conn, identityID)
 			if err != nil {
 				return fmt.Errorf("cannot load identity: %w", err)
@@ -357,7 +357,7 @@ func (s *AccountService) ListMemberships(
 	err := s.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			err := memberships.LoadByUserID(ctx, conn, coredata.NewNoScope(), identityID, cursor)
+			err := memberships.LoadByIdentityID(ctx, conn, coredata.NewNoScope(), identityID, cursor)
 			if err != nil {
 				return fmt.Errorf("cannot load memberships: %w", err)
 			}
@@ -383,7 +383,7 @@ func (s *AccountService) CountMemberships(
 		ctx,
 		func(conn pg.Conn) (err error) {
 			memberships := coredata.Memberships{}
-			count, err = memberships.CountByUserID(ctx, conn, identityID)
+			count, err = memberships.CountByIdentityID(ctx, conn, identityID)
 			if err != nil {
 				return fmt.Errorf("cannot count memberships: %w", err)
 			}
@@ -407,17 +407,17 @@ func (s AccountService) ChangePassword(ctx context.Context, identityID gid.GID, 
 	return s.pg.WithTx(
 		ctx,
 		func(tx pg.Conn) error {
-			user := &coredata.User{}
-			err := user.LoadByID(ctx, tx, identityID)
+			identity := &coredata.Identity{}
+			err := identity.LoadByID(ctx, tx, identityID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
-					return NewUserNotFoundError(identityID)
+					return NewIdentityNotFoundError(identityID)
 				}
 
-				return fmt.Errorf("cannot load user: %w", err)
+				return fmt.Errorf("cannot load identity: %w", err)
 			}
 
-			isLegacyPasswordMatch, err := s.hp.ComparePasswordAndHash([]byte(req.CurrentPassword), user.HashedPassword)
+			isLegacyPasswordMatch, err := s.hp.ComparePasswordAndHash([]byte(req.CurrentPassword), identity.HashedPassword)
 			if err != nil {
 				return fmt.Errorf("cannot compare legacy password: %w", err)
 			}
@@ -431,15 +431,15 @@ func (s AccountService) ChangePassword(ctx context.Context, identityID gid.GID, 
 				return fmt.Errorf("cannot hash new password: %w", err)
 			}
 
-			user.HashedPassword = newPasswordHash
-			user.UpdatedAt = time.Now()
+			identity.HashedPassword = newPasswordHash
+			identity.UpdatedAt = time.Now()
 
-			err = user.Update(ctx, tx)
+			err = identity.Update(ctx, tx)
 			if err != nil {
-				return fmt.Errorf("cannot update user: %w", err)
+				return fmt.Errorf("cannot update identity: %w", err)
 			}
 
-			// TODO: email to notify user that their password has been changed
+			// TODO: email to notify identity that their password has been changed
 
 			return nil
 		},
@@ -453,7 +453,7 @@ func (s AccountService) CountSessions(ctx context.Context, identityID gid.GID) (
 		ctx,
 		func(conn pg.Conn) (err error) {
 			sessions := coredata.Sessions{}
-			count, err = sessions.CountByUserID(ctx, conn, identityID)
+			count, err = sessions.CountByIdentityID(ctx, conn, identityID)
 			if err != nil {
 				return fmt.Errorf("cannot count sessions: %w", err)
 			}
@@ -475,7 +475,7 @@ func (s AccountService) ListSessions(
 	err := s.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			err := sessions.LoadByUserID(ctx, conn, identityID, cursor)
+			err := sessions.LoadByIdentityID(ctx, conn, identityID, cursor)
 			if err != nil {
 				return fmt.Errorf("cannot load sessions: %w", err)
 			}
@@ -491,19 +491,19 @@ func (s AccountService) ListSessions(
 	return page.NewPage(sessions, cursor), nil
 }
 
-func (s AccountService) GetIdentity(ctx context.Context, identityID gid.GID) (*coredata.User, error) {
-	user := &coredata.User{}
+func (s AccountService) GetIdentity(ctx context.Context, identityID gid.GID) (*coredata.Identity, error) {
+	identity := &coredata.Identity{}
 
 	err := s.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			err := user.LoadByID(ctx, conn, identityID)
+			err := identity.LoadByID(ctx, conn, identityID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
-					return NewUserNotFoundError(identityID)
+					return NewIdentityNotFoundError(identityID)
 				}
 
-				return fmt.Errorf("cannot load user: %w", err)
+				return fmt.Errorf("cannot load identity: %w", err)
 			}
 
 			return nil
@@ -513,20 +513,20 @@ func (s AccountService) GetIdentity(ctx context.Context, identityID gid.GID) (*c
 		return nil, err
 	}
 
-	return user, nil
+	return identity, nil
 }
 
 func (s AccountService) ListPersonalAPIKeys(
 	ctx context.Context,
 	identityID gid.GID,
-	cursor *page.Cursor[coredata.UserAPIKeyOrderField],
-) (*page.Page[*coredata.UserAPIKey, coredata.UserAPIKeyOrderField], error) {
-	var personalAccessTokens coredata.UserAPIKeys
+	cursor *page.Cursor[coredata.PersonalAPIKeyOrderField],
+) (*page.Page[*coredata.PersonalAPIKey, coredata.PersonalAPIKeyOrderField], error) {
+	var personalAccessTokens coredata.PersonalAPIKeys
 
 	err := s.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			err := personalAccessTokens.LoadByUserID(ctx, conn, identityID)
+			err := personalAccessTokens.LoadByIdentityID(ctx, conn, identityID)
 			if err != nil {
 				return fmt.Errorf("cannot load personal access tokens: %w", err)
 			}
@@ -548,8 +548,8 @@ func (s AccountService) CountPersonalAPIKeys(ctx context.Context, identityID gid
 	err := s.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) (err error) {
-			personalAccessTokens := coredata.UserAPIKeys{}
-			count, err = personalAccessTokens.CountByUserID(ctx, conn, identityID)
+			personalAccessTokens := coredata.PersonalAPIKeys{}
+			count, err = personalAccessTokens.CountByIdentityID(ctx, conn, identityID)
 			if err != nil {
 				return fmt.Errorf("cannot count personal access tokens: %w", err)
 			}
@@ -561,10 +561,10 @@ func (s AccountService) CountPersonalAPIKeys(ctx context.Context, identityID gid
 	return count, err
 }
 
-func (s AccountService) GetIdentityForMembership(ctx context.Context, membershipID gid.GID) (*coredata.User, error) {
+func (s AccountService) GetIdentityForMembership(ctx context.Context, membershipID gid.GID) (*coredata.Identity, error) {
 	var (
 		scope    = coredata.NewScopeFromObjectID(membershipID)
-		identity = &coredata.User{}
+		identity = &coredata.Identity{}
 	)
 
 	err := s.pg.WithConn(
@@ -580,10 +580,10 @@ func (s AccountService) GetIdentityForMembership(ctx context.Context, membership
 				return fmt.Errorf("cannot load membership: %w", err)
 			}
 
-			err = identity.LoadByID(ctx, conn, membership.UserID)
+			err = identity.LoadByID(ctx, conn, membership.IdentityID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
-					return NewUserNotFoundError(membership.UserID)
+					return NewIdentityNotFoundError(membership.IdentityID)
 				}
 
 				return fmt.Errorf("cannot load identity: %w", err)
@@ -605,10 +605,10 @@ func (s *AccountService) CreatePersonalAPIKey(
 	identityID gid.GID,
 	name string,
 	expiresAt time.Time,
-) (*coredata.UserAPIKey, string, error) {
+) (*coredata.PersonalAPIKey, string, error) {
 	var (
-		userAPIKey *coredata.UserAPIKey
-		token      string
+		personalAPIKey *coredata.PersonalAPIKey
+		token          string
 	)
 
 	err := s.pg.WithTx(
@@ -616,33 +616,33 @@ func (s *AccountService) CreatePersonalAPIKey(
 		func(tx pg.Conn) (err error) {
 			now := time.Now()
 
-			userAPIKey = &coredata.UserAPIKey{
-				ID:        gid.New(gid.NilTenant, coredata.UserAPIKeyEntityType),
-				UserID:    identityID,
-				Name:      name,
-				ExpiresAt: expiresAt,
-				CreatedAt: now,
-				UpdatedAt: now,
+			personalAPIKey = &coredata.PersonalAPIKey{
+				ID:         gid.New(gid.NilTenant, coredata.PersonalAPIKeyEntityType),
+				IdentityID: identityID,
+				Name:       name,
+				ExpiresAt:  expiresAt,
+				CreatedAt:  now,
+				UpdatedAt:  now,
 			}
 
-			if err := userAPIKey.Insert(ctx, tx); err != nil {
-				return fmt.Errorf("cannot insert user api key: %w", err)
+			if err := personalAPIKey.Insert(ctx, tx); err != nil {
+				return fmt.Errorf("cannot insert personal api key: %w", err)
 			}
 
 			token, err = statelesstoken.NewDeterministicToken(
 				s.tokenSecret,
 				TokenTypeAPIKey,
-				userAPIKey.ExpiresAt,
-				userAPIKey.CreatedAt,
-				UserAPIKeyTokenData{
+				personalAPIKey.ExpiresAt,
+				personalAPIKey.CreatedAt,
+				PersonalAPIKeyTokenData{
 					Version:     2,
-					KeyID:       userAPIKey.ID,
+					KeyID:       personalAPIKey.ID,
 					PrincipalID: identityID,
-					IssuedAt:    userAPIKey.CreatedAt,
+					IssuedAt:    personalAPIKey.CreatedAt,
 				},
 			)
 			if err != nil {
-				return fmt.Errorf("cannot generate user api key token: %w", err)
+				return fmt.Errorf("cannot generate personal api key token: %w", err)
 			}
 
 			return nil
@@ -653,34 +653,34 @@ func (s *AccountService) CreatePersonalAPIKey(
 		return nil, "", err
 	}
 
-	return userAPIKey, token, nil
+	return personalAPIKey, token, nil
 }
 
 func (s *AccountService) DeletePersonalAPIKey(
 	ctx context.Context,
 	identityID gid.GID,
-	userAPIKeyID gid.GID,
+	personalAPIKeyID gid.GID,
 ) error {
 	return s.pg.WithTx(
 		ctx,
 		func(tx pg.Conn) error {
-			userAPIKey := &coredata.UserAPIKey{}
-			err := userAPIKey.LoadByID(ctx, tx, userAPIKeyID)
+			personalAPIKey := &coredata.PersonalAPIKey{}
+			err := personalAPIKey.LoadByID(ctx, tx, personalAPIKeyID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
-					return NewUserAPIKeyNotFoundError(userAPIKeyID)
+					return NewPersonalAPIKeyNotFoundError(personalAPIKeyID)
 				}
 
-				return fmt.Errorf("cannot load user api key: %w", err)
+				return fmt.Errorf("cannot load personal api key: %w", err)
 			}
 
-			if userAPIKey.UserID != identityID {
-				return NewUserAPIKeyNotFoundError(userAPIKeyID)
+			if personalAPIKey.IdentityID != identityID {
+				return NewPersonalAPIKeyNotFoundError(personalAPIKeyID)
 			}
 
-			err = userAPIKey.Delete(ctx, tx)
+			err = personalAPIKey.Delete(ctx, tx)
 			if err != nil {
-				return fmt.Errorf("cannot delete user api key: %w", err)
+				return fmt.Errorf("cannot delete personal api key: %w", err)
 			}
 
 			return nil
@@ -699,7 +699,7 @@ func (s AccountService) ListOrganizations(ctx context.Context, identityID gid.GI
 	err := s.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			err := organizations.LoadByUserID(ctx, conn, coredata.NewNoScope(), identityID, cursor)
+			err := organizations.LoadByIdentityID(ctx, conn, coredata.NewNoScope(), identityID, cursor)
 			if err != nil {
 				return fmt.Errorf("cannot load organizations: %w", err)
 			}
@@ -714,35 +714,3 @@ func (s AccountService) ListOrganizations(ctx context.Context, identityID gid.GI
 
 	return organizations, nil
 }
-
-// func (s AccountService) AllAccessibleTenants(ctx context.Context, identityID gid.GID) ([]gid.TenantID, error) {
-// 	var tenants []gid.TenantID
-
-// 	err := s.pg.WithConn(
-// 		ctx,
-// 		func(conn pg.Conn) error {
-// 			memberships := coredata.Memberships{}
-// 			orderBy := page.OrderBy[coredata.MembershipOrderField]{
-// 				Field:     coredata.MembershipOrderFieldCreatedAt,
-// 				Direction: page.OrderDirectionDesc,
-// 			}
-// 			cursor := page.NewCursor(1000, nil, page.Head, orderBy)
-
-// 			err := memberships.LoadByUserID(ctx, conn, coredata.NewNoScope(), identityID, cursor)
-// 			if err != nil {
-// 				return fmt.Errorf("cannot load memberships: %w", err)
-// 			}
-
-// 			for _, membership := range memberships {
-// 				tenants = append(tenants, membership.ID.TenantID())
-// 			}
-// 			return nil
-// 		},
-// 	)
-
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	return tenants, nil
-// }

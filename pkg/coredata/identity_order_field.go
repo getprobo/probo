@@ -15,26 +15,26 @@
 package coredata
 
 type (
-	UserOrderField string
+	IdentityOrderField string
 )
 
 const (
-	UserOrderFieldCreatedAt UserOrderField = "CREATED_AT"
+	IdentityOrderFieldCreatedAt IdentityOrderField = "CREATED_AT"
 )
 
-func (p UserOrderField) Column() string {
+func (p IdentityOrderField) Column() string {
 	return string(p)
 }
 
-func (p UserOrderField) String() string {
+func (p IdentityOrderField) String() string {
 	return string(p)
 }
 
-func (p UserOrderField) MarshalText() ([]byte, error) {
+func (p IdentityOrderField) MarshalText() ([]byte, error) {
 	return []byte(p.String()), nil
 }
 
-func (p *UserOrderField) UnmarshalText(text []byte) error {
-	*p = UserOrderField(text)
+func (p *IdentityOrderField) UnmarshalText(text []byte) error {
+	*p = IdentityOrderField(text)
 	return nil
 }

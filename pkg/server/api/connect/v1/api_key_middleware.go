@@ -31,8 +31,8 @@ var (
 	apiKeyContextKey = &ctxKey{name: "api_key"}
 )
 
-func APIKeyFromContext(ctx context.Context) *coredata.UserAPIKey {
-	apiKey, _ := ctx.Value(apiKeyContextKey).(*coredata.UserAPIKey)
+func APIKeyFromContext(ctx context.Context) *coredata.PersonalAPIKey {
+	apiKey, _ := ctx.Value(apiKeyContextKey).(*coredata.PersonalAPIKey)
 	return apiKey
 }
 
@@ -62,30 +62,30 @@ func NewAPIKeyMiddleware(svc *iam.Service) func(next http.Handler) http.Handler 
 
 				apiKey, err := svc.APIKeyService.GetAPIKey(ctx, keyID)
 				if err != nil {
-					var errUserAPIKeyNotFound *iam.ErrUserAPIKeyNotFound
-					var errUserAPIKeyExpired *iam.ErrUserAPIKeyExpired
+					var errPersonalAPIKeyNotFound *iam.ErrPersonalAPIKeyNotFound
+					var errPersonalAPIKeyExpired *iam.ErrPersonalAPIKeyExpired
 
-					if errors.As(err, &errUserAPIKeyNotFound) || errors.As(err, &errUserAPIKeyExpired) {
+					if errors.As(err, &errPersonalAPIKeyNotFound) || errors.As(err, &errPersonalAPIKeyExpired) {
 						next.ServeHTTP(w, r)
 						return
 					}
 
-					panic(fmt.Errorf("cannot get user API key: %w", err))
+					panic(fmt.Errorf("cannot get personal API key: %w", err))
 				}
 
-				user, err := svc.AccountService.GetIdentity(ctx, apiKey.UserID)
+				identity, err := svc.AccountService.GetIdentity(ctx, apiKey.IdentityID)
 				if err != nil {
-					var errUserNotFound *iam.ErrUserNotFound
-					if errors.As(err, &errUserNotFound) {
+					var errIdentityNotFound *iam.ErrIdentityNotFound
+					if errors.As(err, &errIdentityNotFound) {
 						next.ServeHTTP(w, r)
 						return
 					}
 
-					panic(fmt.Errorf("cannot get user: %w", err))
+					panic(fmt.Errorf("cannot get identity: %w", err))
 				}
 
 				ctx = context.WithValue(ctx, apiKeyContextKey, apiKey)
-				ctx = context.WithValue(ctx, identityContextKey, user)
+				ctx = context.WithValue(ctx, identityContextKey, identity)
 
 				next.ServeHTTP(w, r.WithContext(ctx))
 			},

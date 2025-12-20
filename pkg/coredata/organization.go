@@ -111,21 +111,21 @@ LIMIT 1;
 	return nil
 }
 
-func (o *Organizations) LoadByUserID(
+func (o *Organizations) LoadByIdentityID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
-	userID gid.GID,
+	identityID gid.GID,
 	cursor *page.Cursor[OrganizationOrderField],
 ) error {
 	q := `
-WITH user_org AS (
+WITH identity_org AS (
 	SELECT
 		organization_id
 	FROM
 		authz_memberships
 	WHERE
-		user_id = @user_id
+		identity_id = @identity_id
 )
 SELECT
 	tenant_id,
@@ -143,7 +143,7 @@ SELECT
 FROM
 	organizations
 INNER JOIN
-	user_org ON organizations.id = user_org.organization_id
+	identity_org ON organizations.id = identity_org.organization_id
 WHERE
 	%s
 	AND %s
@@ -151,7 +151,7 @@ WHERE
 
 	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
 
-	args := pgx.StrictNamedArgs{"user_id": userID}
+	args := pgx.StrictNamedArgs{"identity_id": identityID}
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -169,19 +169,19 @@ WHERE
 	return nil
 }
 
-func (o *Organizations) LoadAllByUserID(
+func (o *Organizations) LoadAllByIdentityID(
 	ctx context.Context,
 	conn pg.Conn,
-	userID gid.GID,
+	identityID gid.GID,
 ) error {
 	q := `
-WITH user_org AS (
+WITH identity_org AS (
 	SELECT
 		organization_id
 	FROM
 		authz_memberships
 	WHERE
-		user_id = @user_id
+		identity_id = @identity_id
 )
 SELECT
 	tenant_id,
@@ -199,12 +199,12 @@ SELECT
 FROM
 	organizations
 INNER JOIN
-	user_org ON organizations.id = user_org.organization_id
+	identity_org ON organizations.id = identity_org.organization_id
 ORDER BY
 	name ASC
 `
 
-	args := pgx.StrictNamedArgs{"user_id": userID}
+	args := pgx.StrictNamedArgs{"identity_id": identityID}
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -221,20 +221,20 @@ ORDER BY
 	return nil
 }
 
-func (o *Organizations) LoadAllByUserIDWithRole(
+func (o *Organizations) LoadAllByIdentityIDWithRole(
 	ctx context.Context,
 	conn pg.Conn,
-	userID gid.GID,
+	identityID gid.GID,
 	role MembershipRole,
 ) error {
 	q := `
-WITH user_org AS (
+WITH identity_org AS (
 	SELECT
 		organization_id
 	FROM
 		authz_memberships
 	WHERE
-		user_id = @user_id
+		identity_id = @identity_id
 		AND role = @role
 )
 SELECT
@@ -253,14 +253,14 @@ SELECT
 FROM
 	organizations
 INNER JOIN
-	user_org ON organizations.id = user_org.organization_id
+	identity_org ON organizations.id = identity_org.organization_id
 ORDER BY
 	name ASC
 `
 
 	args := pgx.StrictNamedArgs{
-		"user_id": userID,
-		"role":    role,
+		"identity_id": identityID,
+		"role":        role,
 	}
 
 	rows, err := conn.Query(ctx, q, args)
@@ -278,13 +278,13 @@ ORDER BY
 	return nil
 }
 
-func (o *Organizations) LoadAllByUserAPIKeyID(
+func (o *Organizations) LoadAllByPersonalAPIKeyID(
 	ctx context.Context,
 	conn pg.Conn,
-	userAPIKeyID gid.GID,
+	personalAPIKeyID gid.GID,
 ) error {
 	q := `
-WITH user_api_key_org AS (
+WITH personal_api_key_org AS (
 	SELECT
 		am.organization_id
 	FROM
@@ -292,7 +292,7 @@ WITH user_api_key_org AS (
 	INNER JOIN
 		authz_memberships am ON akm.membership_id = am.id
 	WHERE
-		akm.auth_user_api_key_id = @auth_user_api_key_id
+		akm.auth_personal_api_key_id = @auth_personal_api_key_id
 )
 SELECT
 	tenant_id,
@@ -310,12 +310,12 @@ SELECT
 FROM
 	organizations
 INNER JOIN
-	user_api_key_org ON organizations.id = user_api_key_org.organization_id
+	personal_api_key_org ON organizations.id = personal_api_key_org.organization_id
 ORDER BY
 	name ASC
 `
 
-	args := pgx.StrictNamedArgs{"auth_user_api_key_id": userAPIKeyID}
+	args := pgx.StrictNamedArgs{"auth_personal_api_key_id": personalAPIKeyID}
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {

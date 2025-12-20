@@ -89,8 +89,8 @@ func (r *identityResolver) Sessions(ctx context.Context, obj *types.Identity, fi
 
 // PersonalAPIKeys is the resolver for the personalAPIKeys field.
 func (r *identityResolver) PersonalAPIKeys(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.PersonalAPIKeyConnection, error) {
-	pageOrderBy := page.OrderBy[coredata.UserAPIKeyOrderField]{
-		Field:     coredata.UserAPIKeyOrderFieldCreatedAt,
+	pageOrderBy := page.OrderBy[coredata.PersonalAPIKeyOrderField]{
+		Field:     coredata.PersonalAPIKeyOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 
@@ -233,8 +233,8 @@ func (r *mutationResolver) SignUp(ctx context.Context, input types.SignUpInput) 
 		},
 	)
 	if err != nil {
-		var errUserAlreadyExists *iam.ErrUserAlreadyExists
-		if errors.As(err, &errUserAlreadyExists) {
+		var errIdentityAlreadyExists *iam.ErrIdentityAlreadyExists
+		if errors.As(err, &errIdentityAlreadyExists) {
 			return nil, gqlutils.Invalid(err, nil)
 		}
 
@@ -287,7 +287,7 @@ func (r *mutationResolver) SignUpFromInvitation(ctx context.Context, input types
 			errInvitationNotFound        *iam.ErrInvitationNotFound
 			errInvitationAlreadyAccepted *iam.ErrInvitationAlreadyAccepted
 			errInvitationExpired         *iam.ErrInvitationExpired
-			errUserAlreadyExists         *iam.ErrUserAlreadyExists
+			errIdentityAlreadyExists     *iam.ErrIdentityAlreadyExists
 
 			isInvalidErr = errors.As(err, &errInvalidToken) ||
 				errors.As(err, &errInvitationNotFound) ||
@@ -299,7 +299,7 @@ func (r *mutationResolver) SignUpFromInvitation(ctx context.Context, input types
 			return nil, gqlutils.Invalid(err, nil)
 		}
 
-		if errors.As(err, &errUserAlreadyExists) {
+		if errors.As(err, &errIdentityAlreadyExists) {
 			return nil, gqlutils.Conflict(err)
 		}
 
@@ -371,7 +371,7 @@ func (r *mutationResolver) VerifyEmail(ctx context.Context, input types.VerifyEm
 	if err != nil {
 		var (
 			errInvalidToken              *iam.ErrInvalidToken
-			errUserNotFound              *iam.ErrUserNotFound
+			errIdentityNotFound          *iam.ErrIdentityNotFound
 			errEmailAlreadyVerified      *iam.ErrEmailAlreadyVerified
 			errEmailVerificationMismatch *iam.ErrEmailVerificationMismatch
 
@@ -387,7 +387,7 @@ func (r *mutationResolver) VerifyEmail(ctx context.Context, input types.VerifyEm
 			return nil, gqlutils.Conflict(err)
 		}
 
-		if errors.As(err, &errUserNotFound) {
+		if errors.As(err, &errIdentityNotFound) {
 			return nil, gqlutils.NotFound(err)
 		}
 
@@ -402,7 +402,7 @@ func (r *mutationResolver) VerifyEmail(ctx context.Context, input types.VerifyEm
 
 // ChangePassword is the resolver for the changePassword field.
 func (r *mutationResolver) ChangePassword(ctx context.Context, input types.ChangePasswordInput) (*types.ChangePasswordPayload, error) {
-	identity := UserFromContext(ctx)
+	identity := IdentityFromContext(ctx)
 
 	err := r.iam.AccountService.ChangePassword(
 		ctx,
@@ -414,15 +414,15 @@ func (r *mutationResolver) ChangePassword(ctx context.Context, input types.Chang
 	)
 	if err != nil {
 		var (
-			errInvalidPassword *iam.ErrInvalidPassword
-			errUserNotFound    *iam.ErrUserNotFound
+			errInvalidPassword  *iam.ErrInvalidPassword
+			errIdentityNotFound *iam.ErrIdentityNotFound
 		)
 
 		if errors.As(err, &errInvalidPassword) {
 			return nil, gqlutils.Invalid(err, nil)
 		}
 
-		if errors.As(err, &errUserNotFound) {
+		if errors.As(err, &errIdentityNotFound) {
 			return nil, gqlutils.NotFound(err)
 		}
 
@@ -437,7 +437,7 @@ func (r *mutationResolver) ChangePassword(ctx context.Context, input types.Chang
 
 // ChangeEmail is the resolver for the changeEmail field.
 func (r *mutationResolver) ChangeEmail(ctx context.Context, input types.ChangeEmailInput) (*types.ChangeEmailPayload, error) {
-	identity := UserFromContext(ctx)
+	identity := IdentityFromContext(ctx)
 
 	err := r.iam.AccountService.ChangeEmail(
 		ctx,
@@ -449,15 +449,15 @@ func (r *mutationResolver) ChangeEmail(ctx context.Context, input types.ChangeEm
 	)
 	if err != nil {
 		var (
-			errInvalidPassword *iam.ErrInvalidPassword
-			errUserNotFound    *iam.ErrUserNotFound
+			errInvalidPassword  *iam.ErrInvalidPassword
+			errIdentityNotFound *iam.ErrIdentityNotFound
 		)
 
 		if errors.As(err, &errInvalidPassword) {
 			return nil, gqlutils.Invalid(err, nil)
 		}
 
-		if errors.As(err, &errUserNotFound) {
+		if errors.As(err, &errIdentityNotFound) {
 			return nil, gqlutils.NotFound(err)
 		}
 
@@ -522,7 +522,7 @@ func (r *mutationResolver) UpdateIdentityProfile(ctx context.Context, input type
 
 // RevokeSession is the resolver for the revokeSession field.
 func (r *mutationResolver) RevokeSession(ctx context.Context, input types.RevokeSessionInput) (*types.RevokeSessionPayload, error) {
-	identity := UserFromContext(ctx)
+	identity := IdentityFromContext(ctx)
 
 	err := r.iam.SessionService.RevokeSession(ctx, identity.ID, input.SessionID)
 	if err != nil {
@@ -553,7 +553,7 @@ func (r *mutationResolver) RevokeAllSessions(ctx context.Context) (*types.Revoke
 
 // CreatePersonalAPIKey is the resolver for the createPersonalAPIKey field.
 func (r *mutationResolver) CreatePersonalAPIKey(ctx context.Context, input types.CreatePersonalAPIKeyInput) (*types.CreatePersonalAPIKeyPayload, error) {
-	identity := UserFromContext(ctx)
+	identity := IdentityFromContext(ctx)
 
 	userAPIKey, token, err := r.iam.AccountService.CreatePersonalAPIKey(
 		ctx,
@@ -567,7 +567,7 @@ func (r *mutationResolver) CreatePersonalAPIKey(ctx context.Context, input types
 	}
 
 	return &types.CreatePersonalAPIKeyPayload{
-		PersonalAPIKeyEdge: types.NewPersonalAPIKeyEdge(userAPIKey, coredata.UserAPIKeyOrderFieldCreatedAt),
+		PersonalAPIKeyEdge: types.NewPersonalAPIKeyEdge(userAPIKey, coredata.PersonalAPIKeyOrderFieldCreatedAt),
 		Token:              token,
 	}, nil
 }
@@ -579,7 +579,7 @@ func (r *mutationResolver) UpdatePersonalAPIKey(ctx context.Context, input types
 
 // RevokePersonalAPIKey is the resolver for the revokePersonalAPIKey field.
 func (r *mutationResolver) RevokePersonalAPIKey(ctx context.Context, input types.RevokePersonalAPIKeyInput) (*types.RevokePersonalAPIKeyPayload, error) {
-	identity := UserFromContext(ctx)
+	identity := IdentityFromContext(ctx)
 
 	err := r.iam.AccountService.DeletePersonalAPIKey(ctx, identity.ID, input.TokenID)
 	if err != nil {
@@ -592,7 +592,7 @@ func (r *mutationResolver) RevokePersonalAPIKey(ctx context.Context, input types
 
 // CreateOrganization is the resolver for the createOrganization field.
 func (r *mutationResolver) CreateOrganization(ctx context.Context, input types.CreateOrganizationInput) (*types.CreateOrganizationPayload, error) {
-	identity := UserFromContext(ctx)
+	identity := IdentityFromContext(ctx)
 
 	var (
 		logoFile           *iam.UploadedFile
@@ -735,7 +735,7 @@ func (r *mutationResolver) RemoveMember(ctx context.Context, input types.RemoveM
 
 // AcceptInvitation is the resolver for the acceptInvitation field.
 func (r *mutationResolver) AcceptInvitation(ctx context.Context, input types.AcceptInvitationInput) (*types.AcceptInvitationPayload, error) {
-	identity := UserFromContext(ctx)
+	identity := IdentityFromContext(ctx)
 
 	membership, err := r.iam.AccountService.AcceptInvitation(ctx, identity.ID, input.InvitationID)
 	if err != nil {
@@ -928,7 +928,7 @@ func (r *personalAPIKeyConnectionResolver) TotalCount(ctx context.Context, obj *
 func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error) {
 	var (
 		loadNode func(ctx context.Context, id gid.GID) (types.Node, error)
-		user     = UserFromContext(ctx)
+		user     = IdentityFromContext(ctx)
 		action   string
 	)
 
@@ -942,7 +942,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			}
 			return types.NewOrganization(organization), nil
 		}
-	case coredata.UserEntityType:
+	case coredata.IdentityEntityType:
 		action = iam.ActionIAMIdentityGet
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
 			identity, err := r.iam.AccountService.GetIdentity(ctx, id)
@@ -1009,7 +1009,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 	if err != nil {
 		var (
 			errOrganizationNotFound *iam.ErrOrganizationNotFound
-			errIdentityNotFound     *iam.ErrUserNotFound
+			errIdentityNotFound     *iam.ErrIdentityNotFound
 			errSessionNotFound      *iam.ErrSessionNotFound
 			errMembershipNotFound   *iam.ErrMembershipNotFound
 			errInvitationNotFound   *iam.ErrInvitationNotFound
@@ -1034,7 +1034,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 // Viewer is the resolver for the viewer field.
 func (r *queryResolver) Viewer(ctx context.Context) (*types.Identity, error) {
-	user := UserFromContext(ctx)
+	user := IdentityFromContext(ctx)
 
 	return &types.Identity{
 		ID:            user.ID,

@@ -16,7 +16,7 @@ package types
 
 import "go.probo.inc/probo/pkg/coredata"
 
-func NewIdentity(identity *coredata.User) *Identity {
+func NewIdentity(identity *coredata.Identity) *Identity {
 	return &Identity{
 		ID:            identity.ID,
 		Email:         identity.EmailAddress,

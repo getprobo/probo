@@ -26,9 +26,9 @@ import (
 )
 
 type (
-	UserAPIKeyMembership struct {
+	PersonalAPIKeyMembership struct {
 		ID               gid.GID   `db:"id"`
-		UserAPIKeyID     gid.GID   `db:"auth_user_api_key_id"`
+		PersonalAPIKeyID gid.GID   `db:"auth_personal_api_key_id"`
 		MembershipID     gid.GID   `db:"membership_id"`
 		Role             APIRole   `db:"role"`
 		OrganizationID   gid.GID   `db:"organization_id"`
@@ -37,21 +37,21 @@ type (
 		UpdatedAt        time.Time `db:"updated_at"`
 	}
 
-	UserAPIKeyMemberships []*UserAPIKeyMembership
+	PersonalAPIKeyMemberships []*PersonalAPIKeyMembership
 )
 
-func (a *UserAPIKeyMembership) Insert(
+func (a *PersonalAPIKeyMembership) Insert(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
 ) error {
 	q := `
 INSERT INTO
-    authz_api_keys_memberships (id, tenant_id, auth_user_api_key_id, membership_id, role, organization_id, created_at, updated_at)
+    authz_api_keys_memberships (id, tenant_id, auth_personal_api_key_id, membership_id, role, organization_id, created_at, updated_at)
 VALUES (
     @id,
     @tenant_id,
-    @auth_user_api_key_id,
+    @auth_personal_api_key_id,
     @membership_id,
     @role,
     @organization_id,
@@ -61,34 +61,34 @@ VALUES (
 `
 
 	args := pgx.StrictNamedArgs{
-		"id":                   a.ID,
-		"tenant_id":            scope.GetTenantID(),
-		"auth_user_api_key_id": a.UserAPIKeyID,
-		"membership_id":        a.MembershipID,
-		"role":                 a.Role,
-		"organization_id":      a.OrganizationID,
-		"created_at":           a.CreatedAt,
-		"updated_at":           a.UpdatedAt,
+		"id":                       a.ID,
+		"tenant_id":                scope.GetTenantID(),
+		"auth_personal_api_key_id": a.PersonalAPIKeyID,
+		"membership_id":            a.MembershipID,
+		"role":                     a.Role,
+		"organization_id":          a.OrganizationID,
+		"created_at":               a.CreatedAt,
+		"updated_at":               a.UpdatedAt,
 	}
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot insert user api key membership: %w", err)
+		return fmt.Errorf("cannot insert personal api key membership: %w", err)
 	}
 
 	return nil
 }
 
-func (a *UserAPIKeyMemberships) LoadByUserAPIKeyID(
+func (a *PersonalAPIKeyMemberships) LoadByPersonalAPIKeyID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
-	userAPIKeyID gid.GID,
+	personalAPIKeyID gid.GID,
 ) error {
 	q := `
 SELECT
     akm.id,
-    akm.auth_user_api_key_id,
+    akm.auth_personal_api_key_id,
     akm.membership_id,
     akm.role,
     akm.created_at,
@@ -102,7 +102,7 @@ JOIN
 JOIN
     organizations o ON m.organization_id = o.id
 WHERE
-    akm.auth_user_api_key_id = @auth_user_api_key_id
+    akm.auth_personal_api_key_id = @auth_personal_api_key_id
     AND m.%s
 ORDER BY akm.created_at DESC
 `
@@ -110,18 +110,18 @@ ORDER BY akm.created_at DESC
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"auth_user_api_key_id": userAPIKeyID,
+		"auth_personal_api_key_id": personalAPIKeyID,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query user api key memberships: %w", err)
+		return fmt.Errorf("cannot query personal api key memberships: %w", err)
 	}
 
-	memberships, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[UserAPIKeyMembership])
+	memberships, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[PersonalAPIKeyMembership])
 	if err != nil {
-		return fmt.Errorf("cannot collect user api key memberships: %w", err)
+		return fmt.Errorf("cannot collect personal api key memberships: %w", err)
 	}
 
 	*a = memberships
@@ -130,7 +130,7 @@ ORDER BY akm.created_at DESC
 }
 
 // LoadRoleByAPIKeyAndEntityID loads an API key's role by querying any entity to extract its organization_id
-func (a *UserAPIKeyMembership) LoadRoleByAPIKeyAndEntityID(
+func (a *PersonalAPIKeyMembership) LoadRoleByAPIKeyAndEntityID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
@@ -152,7 +152,7 @@ func (a *UserAPIKeyMembership) LoadRoleByAPIKeyAndEntityID(
 	query := fmt.Sprintf(`
 SELECT
 	akm.id,
-	akm.auth_user_api_key_id,
+	akm.auth_personal_api_key_id,
 	akm.membership_id,
 	akm.role,
 	akm.created_at,
@@ -163,7 +163,7 @@ FROM
 	INNER JOIN %s e ON e.id = @entity_id
 WHERE
 	%s
-	AND akm.auth_user_api_key_id = @api_key_id
+	AND akm.auth_personal_api_key_id = @api_key_id
 	AND m.organization_id = e.organization_id
 LIMIT 1;
 `, tableName, scope.SQLFragment())
@@ -184,10 +184,10 @@ LIMIT 1;
 		return fmt.Errorf("API key membership not found for key %s and entity %s", apiKeyID, entityID)
 	}
 
-	var membership UserAPIKeyMembership
+	var membership PersonalAPIKeyMembership
 	err = rows.Scan(
 		&membership.ID,
-		&membership.UserAPIKeyID,
+		&membership.PersonalAPIKeyID,
 		&membership.MembershipID,
 		&membership.Role,
 		&membership.CreatedAt,
@@ -202,7 +202,7 @@ LIMIT 1;
 	return nil
 }
 
-func (a *UserAPIKeyMembership) LoadByAPIKeyIDAndOrganizationID(
+func (a *PersonalAPIKeyMembership) LoadByAPIKeyIDAndOrganizationID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
@@ -212,7 +212,7 @@ func (a *UserAPIKeyMembership) LoadByAPIKeyIDAndOrganizationID(
 	q := `
 SELECT
     akm.id,
-    akm.auth_user_api_key_id,
+    akm.auth_personal_api_key_id,
     akm.membership_id,
     akm.role,
     akm.created_at,
@@ -226,7 +226,7 @@ JOIN
 JOIN
     organizations o ON m.organization_id = o.id
 WHERE
-    akm.auth_user_api_key_id = @api_key_id
+    akm.auth_personal_api_key_id = @api_key_id
     AND m.organization_id = @organization_id
     AND m.%s
 `
@@ -241,22 +241,22 @@ WHERE
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query user api key membership: %w", err)
+		return fmt.Errorf("cannot query personal api key membership: %w", err)
 	}
 
-	membership, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[UserAPIKeyMembership])
+	membership, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[PersonalAPIKeyMembership])
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return fmt.Errorf("API key does not have access to organization")
 		}
-		return fmt.Errorf("cannot collect user api key membership: %w", err)
+		return fmt.Errorf("cannot collect personal api key membership: %w", err)
 	}
 
 	*a = membership
 	return nil
 }
 
-func (a *UserAPIKeyMembership) Delete(
+func (a *PersonalAPIKeyMembership) Delete(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
@@ -278,13 +278,13 @@ WHERE
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot delete user api key membership: %w", err)
+		return fmt.Errorf("cannot delete personal api key membership: %w", err)
 	}
 
 	return nil
 }
 
-func (a *UserAPIKeyMemberships) LoadByMembershipID(
+func (a *PersonalAPIKeyMemberships) LoadByMembershipID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
@@ -293,7 +293,7 @@ func (a *UserAPIKeyMemberships) LoadByMembershipID(
 	q := `
 SELECT
     akm.id,
-    akm.auth_user_api_key_id,
+    akm.auth_personal_api_key_id,
     akm.membership_id,
     akm.role,
     akm.created_at,
@@ -321,12 +321,12 @@ ORDER BY akm.created_at DESC
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query user api key memberships by membership id: %w", err)
+		return fmt.Errorf("cannot query personal api key memberships by membership id: %w", err)
 	}
 
-	memberships, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[UserAPIKeyMembership])
+	memberships, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[PersonalAPIKeyMembership])
 	if err != nil {
-		return fmt.Errorf("cannot collect user api key memberships: %w", err)
+		return fmt.Errorf("cannot collect personal api key memberships: %w", err)
 	}
 
 	*a = memberships
@@ -334,25 +334,25 @@ ORDER BY akm.created_at DESC
 	return nil
 }
 
-func DeleteAllUserAPIKeyMembershipsByUserAPIKeyID(
+func DeleteAllPersonalAPIKeyMembershipsByPersonalAPIKeyID(
 	ctx context.Context,
 	conn pg.Conn,
-	userAPIKeyID gid.GID,
+	personalAPIKeyID gid.GID,
 ) error {
 	q := `
 DELETE FROM
     authz_api_keys_memberships
 WHERE
-    auth_user_api_key_id = @auth_user_api_key_id
+    auth_personal_api_key_id = @auth_personal_api_key_id
 `
 
 	args := pgx.StrictNamedArgs{
-		"auth_user_api_key_id": userAPIKeyID,
+		"auth_personal_api_key_id": personalAPIKeyID,
 	}
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot delete user api key memberships: %w", err)
+		return fmt.Errorf("cannot delete personal api key memberships: %w", err)
 	}
 
 	return nil

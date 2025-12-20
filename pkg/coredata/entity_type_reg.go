@@ -32,7 +32,7 @@ const (
 	PeopleEntityType                           uint16 = 8
 	VendorComplianceReportEntityType           uint16 = 9
 	DocumentEntityType                         uint16 = 10
-	UserEntityType                             uint16 = 11
+	IdentityEntityType                         uint16 = 11
 	SessionEntityType                          uint16 = 12
 	EmailEntityType                            uint16 = 13
 	ControlEntityType                          uint16 = 14
@@ -64,8 +64,8 @@ const (
 	SlackMessageEntityType                     uint16 = 40
 	TrustCenterFileEntityType                  uint16 = 41
 	SAMLConfigurationEntityType                uint16 = 42
-	UserAPIKeyEntityType                       uint16 = 43
-	UserAPIKeyMembershipEntityType             uint16 = 44
+	PersonalAPIKeyEntityType                   uint16 = 43
+	PersonalAPIKeyMembershipEntityType         uint16 = 44
 	MeetingEntityType                          uint16 = 45
 	DataProtectionImpactAssessmentEntityType   uint16 = 46
 	TransferImpactAssessmentEntityType         uint16 = 47
@@ -124,9 +124,9 @@ var entityRegistry = map[uint16]EntityInfo{
 		Model: "Document",
 		Table: "documents",
 	},
-	UserEntityType: {
-		Model: "User",
-		Table: "auth_users",
+	IdentityEntityType: {
+		Model: "Identity",
+		Table: "identities",
 	},
 	SessionEntityType: {
 		Model: "Session",
@@ -252,12 +252,12 @@ var entityRegistry = map[uint16]EntityInfo{
 		Model: "SAMLConfiguration",
 		Table: "auth_saml_configurations",
 	},
-	UserAPIKeyEntityType: {
-		Model: "UserAPIKey",
-		Table: "auth_user_api_keys",
+	PersonalAPIKeyEntityType: {
+		Model: "PersonalAPIKey",
+		Table: "auth_personal_api_keys",
 	},
-	UserAPIKeyMembershipEntityType: {
-		Model: "UserAPIKeyMembership",
+	PersonalAPIKeyMembershipEntityType: {
+		Model: "PersonalAPIKeyMembership",
 		Table: "authz_api_keys_memberships",
 	},
 	MeetingEntityType: {

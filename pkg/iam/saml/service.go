@@ -171,10 +171,10 @@ func (s *Service) HandleAssertion(
 	ctx context.Context,
 	samlResponse string,
 	configID gid.GID,
-) (*coredata.User, *coredata.Membership, error) {
+) (*coredata.Identity, *coredata.Membership, error) {
 	var (
 		now        = time.Now()
-		user       = &coredata.User{}
+		identity   = &coredata.Identity{}
 		membership = &coredata.Membership{}
 	)
 
@@ -251,12 +251,12 @@ func (s *Service) HandleAssertion(
 				return NewEmailDomainMismatchError(email, config.EmailDomain)
 			}
 
-			err = user.LoadByEmail(ctx, tx, email)
+			err = identity.LoadByEmail(ctx, tx, email)
 			if err == coredata.ErrResourceNotFound && !config.AutoSignupEnabled {
 				return NewSAMLAutoSignupDisabledError(config.ID)
 			} else if err == coredata.ErrResourceNotFound && config.AutoSignupEnabled {
-				*user = coredata.User{
-					ID:                   gid.New(gid.NilTenant, coredata.UserEntityType),
+				*identity = coredata.Identity{
+					ID:                   gid.New(gid.NilTenant, coredata.IdentityEntityType),
 					EmailAddress:         email,
 					HashedPassword:       nil,
 					EmailAddressVerified: true,
@@ -265,26 +265,26 @@ func (s *Service) HandleAssertion(
 					UpdatedAt:            now,
 				}
 
-				err := user.Insert(ctx, tx)
+				err := identity.Insert(ctx, tx)
 				if err != nil {
-					return fmt.Errorf("cannot insert user: %w", err)
+					return fmt.Errorf("cannot insert identity: %w", err)
 				}
 			} else if err != nil {
-				return fmt.Errorf("cannot load user: %w", err)
+				return fmt.Errorf("cannot load identity: %w", err)
 			} else {
-				user.SAMLSubject = &assertion.Subject.NameID.Value
-				user.FullName = fullname
-				user.EmailAddress = email
-				user.EmailAddressVerified = true
-				user.UpdatedAt = now
+				identity.SAMLSubject = &assertion.Subject.NameID.Value
+				identity.FullName = fullname
+				identity.EmailAddress = email
+				identity.EmailAddressVerified = true
+				identity.UpdatedAt = now
 
-				err = user.Update(ctx, tx)
+				err = identity.Update(ctx, tx)
 				if err != nil {
-					return fmt.Errorf("cannot update user: %w", err)
+					return fmt.Errorf("cannot update identity: %w", err)
 				}
 			}
 
-			err = membership.LoadByUserAndOrg(ctx, tx, coredata.NewNoScope(), user.ID, config.OrganizationID)
+			err = membership.LoadByIdentityAndOrg(ctx, tx, coredata.NewNoScope(), identity.ID, config.OrganizationID)
 			if err != nil && err != coredata.ErrResourceNotFound {
 				return fmt.Errorf("cannot load membership: %w", err)
 			}
@@ -293,7 +293,7 @@ func (s *Service) HandleAssertion(
 			if !isMember {
 				membership = &coredata.Membership{
 					ID:             gid.New(config.ID.TenantID(), coredata.MembershipEntityType),
-					UserID:         user.ID,
+					IdentityID:     identity.ID,
 					OrganizationID: config.OrganizationID,
 					Role:           coredata.MembershipRoleViewer,
 					CreatedAt:      now,
@@ -324,7 +324,7 @@ func (s *Service) HandleAssertion(
 		return nil, nil, err
 	}
 
-	return user, membership, nil
+	return identity, membership, nil
 }
 
 func (s *Service) validateAssertion(assertion *saml.Assertion, config *coredata.SAMLConfiguration, now time.Time) error {

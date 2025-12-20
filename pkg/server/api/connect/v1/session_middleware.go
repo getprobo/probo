@@ -38,9 +38,9 @@ func SessionFromContext(ctx context.Context) *coredata.Session {
 	return session
 }
 
-func UserFromContext(ctx context.Context) *coredata.User {
-	user, _ := ctx.Value(identityContextKey).(*coredata.User)
-	return user
+func IdentityFromContext(ctx context.Context) *coredata.Identity {
+	identity, _ := ctx.Value(identityContextKey).(*coredata.Identity)
+	return identity
 }
 
 func NewSessionMiddleware(svc *iam.Service, cookieConfig securecookie.Config) func(next http.Handler) http.Handler {
@@ -82,16 +82,16 @@ func NewSessionMiddleware(svc *iam.Service, cookieConfig securecookie.Config) fu
 					panic(fmt.Errorf("cannot get session: %w", err))
 				}
 
-				user, err := svc.AccountService.GetIdentity(ctx, session.UserID)
+				identity, err := svc.AccountService.GetIdentity(ctx, session.IdentityID)
 				if err != nil {
-					var errUserNotFound *iam.ErrUserNotFound
-					if errors.As(err, &errUserNotFound) {
+					var errIdentityNotFound *iam.ErrIdentityNotFound
+					if errors.As(err, &errIdentityNotFound) {
 						securecookie.Clear(w, cookieConfig)
 						next.ServeHTTP(w, r)
 						return
 					}
 
-					panic(fmt.Errorf("cannot get user: %w", err))
+					panic(fmt.Errorf("cannot get identity: %w", err))
 				}
 
 				userAgent := r.UserAgent()
@@ -109,7 +109,7 @@ func NewSessionMiddleware(svc *iam.Service, cookieConfig securecookie.Config) fu
 				}
 
 				ctx = context.WithValue(ctx, sessionContextKey, session)
-				ctx = context.WithValue(ctx, identityContextKey, user)
+				ctx = context.WithValue(ctx, identityContextKey, identity)
 
 				next.ServeHTTP(w, r.WithContext(ctx))
 

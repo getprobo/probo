@@ -33,7 +33,7 @@ import (
 type (
 	Membership struct {
 		ID             gid.GID        `db:"id"`
-		UserID         gid.GID        `db:"user_id"`
+		IdentityID     gid.GID        `db:"identity_id"`
 		OrganizationID gid.GID        `db:"organization_id"`
 		Role           MembershipRole `db:"role"`
 		FullName       string         `db:"full_name"`
@@ -60,11 +60,11 @@ func (m Membership) CursorKey(orderBy MembershipOrderField) page.CursorKey {
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (m *Membership) LoadByUserInOrganization(ctx context.Context, conn pg.Conn, userID gid.GID, organizationID gid.GID) error {
+func (m *Membership) LoadByIdentityInOrganization(ctx context.Context, conn pg.Conn, identityID gid.GID, organizationID gid.GID) error {
 	q := `
 SELECT
 		id,
-		user_id,
+		identity_id,
 		organization_id,
 		role,
 		created_at,
@@ -72,12 +72,12 @@ SELECT
 FROM
 	authz_memberships
 WHERE
-	user_id = @user_id
+	identity_id = @identity_id
 	AND organization_id = @organization_id
 `
 
 	args := pgx.StrictNamedArgs{
-		"user_id":         userID,
+		"identity_id":     identityID,
 		"organization_id": organizationID,
 	}
 
@@ -105,7 +105,7 @@ INSERT INTO
     authz_memberships (
         tenant_id,
         id,
-        user_id,
+        identity_id,
         organization_id,
         role,
         created_at,
@@ -114,7 +114,7 @@ INSERT INTO
 VALUES (
     @tenant_id,
     @id,
-    @user_id,
+    @identity_id,
     @organization_id,
     @role,
     @created_at,
@@ -125,7 +125,7 @@ VALUES (
 	args := pgx.StrictNamedArgs{
 		"tenant_id":       scope.GetTenantID(),
 		"id":              m.ID,
-		"user_id":         m.UserID,
+		"identity_id":     m.IdentityID,
 		"organization_id": m.OrganizationID,
 		"role":            m.Role,
 		"created_at":      m.CreatedAt,
@@ -159,7 +159,7 @@ func (m *Membership) LoadByID(
 WITH mbr AS (
 	SELECT
 		id,
-		user_id,
+		identity_id,
 		organization_id,
 		role,
 		created_at,
@@ -172,17 +172,17 @@ WITH mbr AS (
 )
 SELECT
     mbr.id,
-    mbr.user_id,
+    mbr.identity_id,
     mbr.organization_id,
     mbr.role,
-    u.fullname as full_name,
-    u.email_address,
+    i.fullname as full_name,
+    i.email_address,
     mbr.created_at,
     mbr.updated_at
 FROM
     mbr
 JOIN
-    users u ON mbr.user_id = u.id
+    identities i ON mbr.identity_id = i.id
 `
 
 	query = fmt.Sprintf(query, scope.SQLFragment())
@@ -210,19 +210,19 @@ JOIN
 	return nil
 }
 
-// LoadRoleByUserAndEntityID loads a user's role by querying any entity to extract its organization_id
-func (m *Membership) LoadRoleByUserAndEntityID(
+// LoadRoleByIdentityAndEntityID loads an identity's role by querying any entity to extract its organization_id
+func (m *Membership) LoadRoleByIdentityAndEntityID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
-	userID gid.GID,
+	identityID gid.GID,
 	entityID gid.GID,
 ) error {
 	entityType := entityID.EntityType()
 
 	// For organization, the entity ID is the organization ID
 	if entityType == OrganizationEntityType {
-		return m.LoadByUserAndOrg(ctx, conn, scope, userID, entityID)
+		return m.LoadByIdentityAndOrg(ctx, conn, scope, identityID, entityID)
 	}
 
 	tableName, ok := EntityTable(entityType)
@@ -238,7 +238,7 @@ func (m *Membership) LoadRoleByUserAndEntityID(
 	query := fmt.Sprintf(`
 SELECT
 	m.id,
-	m.user_id,
+	m.identity_id,
 	m.organization_id,
 	m.role,
 	m.created_at,
@@ -248,14 +248,14 @@ FROM
 	INNER JOIN %s e ON e.id = @entity_id
 WHERE
 	%s
-	AND m.user_id = @user_id
+	AND m.identity_id = @identity_id
 	AND m.organization_id = e.organization_id
 LIMIT 1;
 `, tableName, scopeFragment)
 
 	args := pgx.NamedArgs{
-		"user_id":   userID,
-		"entity_id": entityID,
+		"identity_id": identityID,
+		"entity_id":   entityID,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -272,7 +272,7 @@ LIMIT 1;
 	var membership Membership
 	err = rows.Scan(
 		&membership.ID,
-		&membership.UserID,
+		&membership.IdentityID,
 		&membership.OrganizationID,
 		&membership.Role,
 		&membership.CreatedAt,
@@ -287,18 +287,18 @@ LIMIT 1;
 	return nil
 }
 
-func (m *Membership) LoadByUserAndOrg(
+func (m *Membership) LoadByIdentityAndOrg(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
-	userID gid.GID,
+	identityID gid.GID,
 	organizationID gid.GID,
 ) error {
 	q := `
 WITH mbr AS (
 	SELECT
 		am.id,
-		am.user_id,
+		am.identity_id,
 		am.organization_id,
 		am.role,
 		am.created_at,
@@ -306,29 +306,29 @@ WITH mbr AS (
 	FROM
 		authz_memberships am
 	WHERE
-		am.user_id = @user_id
+		am.identity_id = @identity_id
 		AND am.organization_id = @organization_id
 		AND %s
 )
 SELECT
     mbr.id,
-    mbr.user_id,
+    mbr.identity_id,
     mbr.organization_id,
     mbr.role,
-    u.fullname as full_name,
-    u.email_address,
+    i.fullname as full_name,
+    i.email_address,
     mbr.created_at,
     mbr.updated_at
 FROM
     mbr
 JOIN
-    users u ON mbr.user_id = u.id
+    identities i ON mbr.identity_id = i.id
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"user_id":         userID,
+		"identity_id":     identityID,
 		"organization_id": organizationID,
 	}
 	maps.Copy(args, scope.SQLArguments())
@@ -412,18 +412,18 @@ WHERE
 	return nil
 }
 
-func (m *Memberships) LoadByUserID(
+func (m *Memberships) LoadByIdentityID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
-	userID gid.GID,
+	identityID gid.GID,
 	cursor *page.Cursor[MembershipOrderField],
 ) error {
 	query := `
 WITH mbr AS (
 	SELECT
 		id,
-		user_id,
+		identity_id,
 		organization_id,
 		role,
 		created_at,
@@ -431,24 +431,24 @@ WITH mbr AS (
 	FROM
 		authz_memberships
 	WHERE
-		user_id = @user_id
+		identity_id = @identity_id
 		AND %s
 	ORDER BY
 		created_at DESC
 )
 SELECT
     mbr.id,
-    mbr.user_id,
+    mbr.identity_id,
     mbr.organization_id,
     mbr.role,
-    u.fullname as full_name,
-    u.email_address,
+    i.fullname as full_name,
+    i.email_address,
     mbr.created_at,
     mbr.updated_at
 FROM
     mbr
 JOIN
-    users u ON mbr.user_id = u.id
+    identities i ON mbr.identity_id = i.id
 ORDER BY
     mbr.created_at DESC
 `
@@ -456,7 +456,7 @@ ORDER BY
 	query = fmt.Sprintf(query, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"user_id": userID,
+		"identity_id": identityID,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -485,7 +485,7 @@ func (m *Memberships) LoadByOrganizationID(
 WITH mbr AS (
 	SELECT
 		id,
-		user_id,
+		identity_id,
 		organization_id,
 		role,
 		created_at,
@@ -498,7 +498,7 @@ WITH mbr AS (
 )
 SELECT
     id,
-    user_id,
+    identity_id,
     organization_id,
     role,
     full_name,
@@ -508,18 +508,18 @@ SELECT
 FROM (
 	SELECT
 		mbr.id,
-		mbr.user_id,
+		mbr.identity_id,
 		mbr.organization_id,
 		mbr.role,
-		u.fullname as full_name,
-		u.email_address,
+		i.fullname as full_name,
+		i.email_address,
 		mbr.created_at,
 		mbr.updated_at
 	FROM
 		mbr
 	JOIN
-		users u ON mbr.user_id = u.id
-) AS membership_with_user
+		identities i ON mbr.identity_id = i.id
+) AS membership_with_identity
 WHERE %s
 `
 
@@ -573,10 +573,10 @@ WHERE
 	return count, nil
 }
 
-func (m *Memberships) CountByUserID(
+func (m *Memberships) CountByIdentityID(
 	ctx context.Context,
 	conn pg.Conn,
-	userID gid.GID,
+	identityID gid.GID,
 ) (int, error) {
 	query := `
 SELECT
@@ -584,10 +584,10 @@ SELECT
 FROM
     authz_memberships
 WHERE
-    user_id = @user_id
+    identity_id = @identity_id
 `
 	args := pgx.StrictNamedArgs{
-		"user_id": userID,
+		"identity_id": identityID,
 	}
 
 	row := conn.QueryRow(ctx, query, args)
