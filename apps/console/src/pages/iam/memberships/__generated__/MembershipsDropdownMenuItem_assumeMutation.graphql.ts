@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<469707d0eca0a0378fa589809db964bc>>
+ * @generated SignedSource<<a3cc5c262b8a01f267eb2b549ab95a27>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -13,10 +13,10 @@ export type ReauthenticationReason = "POLICY_REQUIREMENT" | "SENSITIVE_ACTION" |
 export type AssumeOrganizationSessionInput = {
   organizationId: string;
 };
-export type OrganizationDropdownMenuItem_assumeMutation$variables = {
+export type MembershipsDropdownMenuItem_assumeMutation$variables = {
   input: AssumeOrganizationSessionInput;
 };
-export type OrganizationDropdownMenuItem_assumeMutation$data = {
+export type MembershipsDropdownMenuItem_assumeMutation$data = {
   readonly assumeOrganizationSession: {
     readonly result: {
       readonly __typename: "PasswordRequired";
@@ -32,9 +32,9 @@ export type OrganizationDropdownMenuItem_assumeMutation$data = {
     };
   } | null | undefined;
 };
-export type OrganizationDropdownMenuItem_assumeMutation = {
-  response: OrganizationDropdownMenuItem_assumeMutation$data;
-  variables: OrganizationDropdownMenuItem_assumeMutation$variables;
+export type MembershipsDropdownMenuItem_assumeMutation = {
+  response: MembershipsDropdownMenuItem_assumeMutation$data;
+  variables: MembershipsDropdownMenuItem_assumeMutation$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -117,7 +117,7 @@ return {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Fragment",
     "metadata": null,
-    "name": "OrganizationDropdownMenuItem_assumeMutation",
+    "name": "MembershipsDropdownMenuItem_assumeMutation",
     "selections": (v2/*: any*/),
     "type": "Mutation",
     "abstractKey": null
@@ -126,20 +126,20 @@ return {
   "operation": {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
-    "name": "OrganizationDropdownMenuItem_assumeMutation",
+    "name": "MembershipsDropdownMenuItem_assumeMutation",
     "selections": (v2/*: any*/)
   },
   "params": {
-    "cacheID": "024d06c3bba88bb18eb1aa7e2888edd0",
+    "cacheID": "21ebf9c598bd39f2abcb0ace0d9c0c4b",
     "id": null,
     "metadata": {},
-    "name": "OrganizationDropdownMenuItem_assumeMutation",
+    "name": "MembershipsDropdownMenuItem_assumeMutation",
     "operationKind": "mutation",
-    "text": "mutation OrganizationDropdownMenuItem_assumeMutation(\n  $input: AssumeOrganizationSessionInput!\n) {\n  assumeOrganizationSession(input: $input) {\n    result {\n      __typename\n      ... on PasswordRequired {\n        reason\n      }\n      ... on SAMLAuthenticationRequired {\n        reason\n        redirectUrl\n      }\n    }\n  }\n}\n"
+    "text": "mutation MembershipsDropdownMenuItem_assumeMutation(\n  $input: AssumeOrganizationSessionInput!\n) {\n  assumeOrganizationSession(input: $input) {\n    result {\n      __typename\n      ... on PasswordRequired {\n        reason\n      }\n      ... on SAMLAuthenticationRequired {\n        reason\n        redirectUrl\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "bbc8443e4a756b37f8b46ee98972bdcb";
+(node as any).hash = "416f824d526d3f92797fec0eb9c2e590";
 
 export default node;

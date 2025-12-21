@@ -15,30 +15,30 @@ import {
 import { Suspense, useCallback, useState } from "react";
 import { useTranslate } from "@probo/i18n";
 import {
-  OrganizationDropdownMenu,
-  organizationDropdownMenuQuery,
-} from "./OrganizationDropdownMenu";
-import type { OrganizationDropdownMenuQuery } from "./__generated__/OrganizationDropdownMenuQuery.graphql";
+  MembershipsDropdownMenu,
+  membershipsDropdownMenuQuery,
+} from "./MembershipsDropdownMenu";
+import type { MembershipsDropdownMenuQuery } from "./__generated__/MembershipsDropdownMenuQuery.graphql";
 import { Link } from "react-router";
-import type { OrganizationDropdown_organizationFragment$key } from "./__generated__/OrganizationDropdown_organizationFragment.graphql";
-import type { OrganizationDropdown_viewerFragment$key } from "./__generated__/OrganizationDropdown_viewerFragment.graphql";
+import type { MembershipsDropdown_organizationFragment$key } from "./__generated__/MembershipsDropdown_organizationFragment.graphql";
+import type { MembershipsDropdown_viewerFragment$key } from "./__generated__/MembershipsDropdown_viewerFragment.graphql";
 
 const organizationFragment = graphql`
-  fragment OrganizationDropdown_organizationFragment on Organization {
+  fragment MembershipsDropdown_organizationFragment on Organization {
     name
   }
 `;
 const viewerFragment = graphql`
-  fragment OrganizationDropdown_viewerFragment on Identity {
+  fragment MembershipsDropdown_viewerFragment on Identity {
     pendingInvitations @required(action: THROW) {
       totalCount @required(action: THROW)
     }
   }
 `;
 
-export function OrganizationDropdown(props: {
-  organizationFKey: OrganizationDropdown_organizationFragment$key;
-  viewerFKey: OrganizationDropdown_viewerFragment$key;
+export function MembershipsDropdown(props: {
+  organizationFKey: MembershipsDropdown_organizationFragment$key;
+  viewerFKey: MembershipsDropdown_viewerFragment$key;
 }) {
   const { organizationFKey, viewerFKey } = props;
 
@@ -46,18 +46,18 @@ export function OrganizationDropdown(props: {
   const [search, setSearch] = useState("");
 
   const currentOrganization =
-    useFragment<OrganizationDropdown_organizationFragment$key>(
+    useFragment<MembershipsDropdown_organizationFragment$key>(
       organizationFragment,
       organizationFKey,
     );
   const {
     pendingInvitations: { totalCount: pendingInvitationCount },
-  } = useFragment<OrganizationDropdown_viewerFragment$key>(
+  } = useFragment<MembershipsDropdown_viewerFragment$key>(
     viewerFragment,
     viewerFKey,
   );
-  const [queryRef, loadQuery] = useQueryLoader<OrganizationDropdownMenuQuery>(
-    organizationDropdownMenuQuery,
+  const [queryRef, loadQuery] = useQueryLoader<MembershipsDropdownMenuQuery>(
+    membershipsDropdownMenuQuery,
   );
 
   const handleOpenMenu = useCallback(
@@ -102,7 +102,7 @@ export function OrganizationDropdown(props: {
                 </div>
               }
             >
-              <OrganizationDropdownMenu search={search} queryRef={queryRef} />
+              <MembershipsDropdownMenu search={search} queryRef={queryRef} />
             </Suspense>
           )}
         </div>

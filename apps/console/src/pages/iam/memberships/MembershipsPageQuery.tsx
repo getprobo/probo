@@ -3,12 +3,12 @@ import { useQueryLoader } from "react-relay";
 import { graphql } from "relay-runtime";
 import { Suspense, useEffect } from "react";
 import { CenteredLayoutSkeleton } from "@probo/ui";
-import type { OrganizationsPageQuery } from "./__generated__/OrganizationsPageQuery.graphql";
+import type { MembershipsPageQuery } from "./__generated__/MembershipsPageQuery.graphql";
 
-const Page = lazy(() => import("./OrganizationsPage"));
+const Page = lazy(() => import("./MembershipsPage"));
 
-export const organizationsPageQuery = graphql`
-  query OrganizationsPageQuery {
+export const membershipsPageQuery = graphql`
+  query MembershipsPageQuery {
     viewer @required(action: THROW) {
       memberships(first: 1000, orderBy: { direction: DESC, field: CREATED_AT })
         @required(action: THROW) {
@@ -37,10 +37,9 @@ export const organizationsPageQuery = graphql`
   }
 `;
 
-export function OrganizationsPageQuery() {
-  const [queryRef, loadQuery] = useQueryLoader<OrganizationsPageQuery>(
-    organizationsPageQuery,
-  );
+export function MembershipsPageQuery() {
+  const [queryRef, loadQuery] =
+    useQueryLoader<MembershipsPageQuery>(membershipsPageQuery);
 
   useEffect(() => {
     loadQuery({});
