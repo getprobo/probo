@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<ef66c9eab961d5c3c28669629b82cfd6>>
+ * @generated SignedSource<<e917cb1af13350772d46c02bd6b37da5>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -17,6 +17,7 @@ export type OrganizationDropdownMenuItemFragment$data = {
     readonly id: string;
   } | null | undefined;
   readonly organization: {
+    readonly id: string;
     readonly logoUrl: string | null | undefined;
     readonly name: string;
   };
@@ -71,6 +72,7 @@ return {
         "name": "organization",
         "plural": false,
         "selections": [
+          (v0/*: any*/),
           {
             "alias": null,
             "args": null,
@@ -96,6 +98,6 @@ return {
 };
 })();
 
-(node as any).hash = "6be7f721fd63d6d758b479e58c68b754";
+(node as any).hash = "22fea7c8463774a5fa9ea5f56d1e876c";
 
 export default node;

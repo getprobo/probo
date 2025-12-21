@@ -195,9 +195,9 @@ UPDATE iam_sessions
 SET
     expired_at = @expired_at,
     updated_at = @updated_at,
-	user_agent = @user_agent,
-	ip_address = @ip_address,
-	expire_reason = @expire_reason,
+    user_agent = @user_agent,
+    ip_address = @ip_address,
+    expire_reason = @expire_reason,
     data = @data
 WHERE
     id = @session_id
@@ -246,7 +246,7 @@ FROM
     iam_sessions
 WHERE
     identity_id = @identity_id
-	AND %s
+    AND %s
 `
 
 	q = fmt.Sprintf(q, cursor.SQLFragment())
@@ -272,12 +272,12 @@ WHERE
 func (s *Sessions) CountByIdentityID(ctx context.Context, conn pg.Conn, identityID gid.GID) (int, error) {
 	q := `
 SELECT
-	COUNT(*)
+    COUNT(*)
 FROM
-	iam_sessions
+    iam_sessions
 WHERE
-	identity_id = @identity_id
-	`
+    identity_id = @identity_id
+`
 
 	args := pgx.StrictNamedArgs{"identity_id": identityID}
 
@@ -297,11 +297,11 @@ UPDATE iam_sessions
 SET
     expired_at = NOW(),
     updated_at = NOW(),
-	expire_reason = 'revoked'
+    expire_reason = 'revoked'
 WHERE
     id != @session_id
-	AND identity_id = @identity_id
-	AND expire_reason IS NULL
+    AND identity_id = @identity_id
+    AND expire_reason IS NULL
 `
 
 	args := pgx.StrictNamedArgs{
@@ -320,25 +320,27 @@ WHERE
 func (s *Session) LoadByRootSessionIDAndMembershipID(ctx context.Context, conn pg.Conn, rootSessionID gid.GID, membershipID gid.GID) error {
 	q := `
 SELECT
-	id,
-	identity_id,
-	tenant_id,
-	membership_id,
-	data,
-	parent_session_id,
-	auth_method,
-	authenticated_at,
-	expire_reason,
-	user_agent,
-	ip_address,
-	expired_at,
-	created_at,
-	updated_at
+    id,
+    identity_id,
+    tenant_id,
+    membership_id,
+    data,
+    parent_session_id,
+    auth_method,
+    authenticated_at,
+    expire_reason,
+    user_agent,
+    ip_address,
+    expired_at,
+    created_at,
+    updated_at
 FROM
-	iam_sessions
+    iam_sessions
 WHERE
-	parent_session_id = @root_session_id
-	AND membership_id = @membership_id
+    parent_session_id = @root_session_id
+    AND membership_id = @membership_id
+ORDER BY created_at DESC
+LIMIT 1
 `
 
 	args := pgx.StrictNamedArgs{

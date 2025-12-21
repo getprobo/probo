@@ -8,11 +8,13 @@ import {
   IconClock,
   IconLock,
 } from "@probo/ui";
-import { Link } from "react-router";
+import { useNavigate } from "react-router";
 import { graphql } from "relay-runtime";
-import { useFragment } from "react-relay";
+import { useFragment, useMutation } from "react-relay";
 import type { MembershipCardFragment$key } from "./__generated__/MembershipCardFragment.graphql";
 import { parseDate } from "@probo/helpers";
+import { useCallback } from "react";
+import type { MembershipCard_assumeMutation } from "./__generated__/MembershipCard_assumeMutation.graphql";
 
 const fragment = graphql`
   fragment MembershipCardFragment on Membership {
@@ -28,6 +30,25 @@ const fragment = graphql`
   }
 `;
 
+const assumeOrganizationSessionMutation = graphql`
+  mutation MembershipCard_assumeMutation(
+    $input: AssumeOrganizationSessionInput!
+  ) {
+    assumeOrganizationSession(input: $input) {
+      result {
+        __typename
+        ... on PasswordRequired {
+          reason
+        }
+        ... on SAMLAuthenticationRequired {
+          reason
+          redirectUrl
+        }
+      }
+    }
+  }
+`;
+
 interface MembershipCardProps {
   fKey: MembershipCardFragment$key;
 }
@@ -35,6 +56,7 @@ interface MembershipCardProps {
 export function MembershipCard(props: MembershipCardProps) {
   const { fKey } = props;
   const { __ } = useTranslate();
+  const navigate = useNavigate();
 
   const { lastSession, organization } = useFragment<MembershipCardFragment$key>(
     fragment,
@@ -42,13 +64,40 @@ export function MembershipCard(props: MembershipCardProps) {
   );
   const isAuthenticated = !!lastSession;
   const isExpired =
-    lastSession && parseDate(lastSession.expiresAt) >= new Date();
+    lastSession && parseDate(lastSession.expiresAt) < new Date();
 
-  // Determine target URL and button text based on auth status
-  // const targetUrl = isAuthenticated
-  //   ? `/organizations/${organization.id}`
-  //   : organization.loginUrl;
-  const targetUrl = `/organizations/${organization.id}`;
+  const [assumeOrganizationSession] =
+    useMutation<MembershipCard_assumeMutation>(
+      assumeOrganizationSessionMutation,
+    );
+
+  const handleAssumeOrganizationSession = useCallback(() => {
+    assumeOrganizationSession({
+      variables: {
+        input: {
+          organizationId: organization.id,
+        },
+      },
+      onCompleted: ({ assumeOrganizationSession }) => {
+        if (!assumeOrganizationSession) {
+          throw new Error("complete mutation result is empty");
+        }
+
+        const { result } = assumeOrganizationSession;
+
+        switch (result.__typename) {
+          case "PasswordRequired":
+            navigate("auth/login");
+            break;
+          case "SAMLAuthenticationRequired":
+            window.location.href = result.redirectUrl;
+            break;
+          default:
+            navigate(`/organizations/${organization.id}`);
+        }
+      },
+    });
+  }, [assumeOrganizationSession, navigate, organization.id]);
 
   const getAuthBadge = () => {
     if (isAuthenticated) {
@@ -75,58 +124,23 @@ export function MembershipCard(props: MembershipCardProps) {
     }
   };
 
-  // const getButtonText = () => {
-  //   if (isAuthenticated) return __("Select");
-  //   if (organization.authenticationMethod === "saml")
-  //     return __("Login with SAML");
-  //   return __("Login");
-  // };
-
-  // Check if the URL is a backend SAML endpoint
-  const isSAMLUrl = targetUrl.includes("/connect/saml/");
-
   return (
     <Card padded className="w-full">
       <div className="flex items-center justify-between">
-        {isSAMLUrl ? (
-          <a
-            href={targetUrl}
-            className="flex items-center gap-4 hover:text-primary flex-1"
-          >
-            <Avatar
-              src={organization.logoUrl}
-              name={organization.name}
-              size="l"
-            />
-            <div className="flex flex-col gap-1">
-              <h2 className="font-semibold text-xl">{organization.name}</h2>
-              {getAuthBadge()}
-            </div>
-          </a>
-        ) : (
-          <Link
-            to={targetUrl}
-            className="flex items-center gap-4 hover:text-primary flex-1"
-          >
-            <Avatar
-              src={organization.logoUrl}
-              name={organization.name}
-              size="l"
-            />
-            <div className="flex flex-col gap-1">
-              <h2 className="font-semibold text-xl">{organization.name}</h2>
-              {getAuthBadge()}
-            </div>
-          </Link>
-        )}
+        <div className="flex items-center gap-4 hover:text-primary flex-1">
+          <Avatar
+            src={organization.logoUrl}
+            name={organization.name}
+            size="l"
+          />
+          <div className="flex flex-col gap-1">
+            <h2 className="font-semibold text-xl">{organization.name}</h2>
+            {getAuthBadge()}
+          </div>
+        </div>
         <div className="flex items-center gap-3">
-          <Button asChild>
-            {/* {isSAMLUrl ? (
-              <a href={targetUrl}>{getButtonText()}</a>
-            ) : (
-              <Link to={targetUrl}>{getButtonText()}</Link>
-            )} */}
-            <Link to={targetUrl}>LOGIN</Link>
+          <Button onClick={handleAssumeOrganizationSession}>
+            {__("Login")}
           </Button>
         </div>
       </div>
