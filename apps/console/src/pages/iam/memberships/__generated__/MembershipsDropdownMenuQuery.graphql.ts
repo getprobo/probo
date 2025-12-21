@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<034b9a96de4b1efda9529e8165779342>>
+ * @generated SignedSource<<b51fba8f2d50c85b2eeb51c658d82e17>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,8 +10,8 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
-export type OrganizationDropdownMenuQuery$variables = Record<PropertyKey, never>;
-export type OrganizationDropdownMenuQuery$data = {
+export type MembershipsDropdownMenuQuery$variables = Record<PropertyKey, never>;
+export type MembershipsDropdownMenuQuery$data = {
   readonly viewer: {
     readonly memberships: {
       readonly edges: ReadonlyArray<{
@@ -20,15 +20,15 @@ export type OrganizationDropdownMenuQuery$data = {
           readonly organization: {
             readonly name: string;
           };
-          readonly " $fragmentSpreads": FragmentRefs<"OrganizationDropdownMenuItemFragment">;
+          readonly " $fragmentSpreads": FragmentRefs<"MembershipsDropdownMenuItemFragment">;
         };
       }>;
     };
   };
 };
-export type OrganizationDropdownMenuQuery = {
-  response: OrganizationDropdownMenuQuery$data;
-  variables: OrganizationDropdownMenuQuery$variables;
+export type MembershipsDropdownMenuQuery = {
+  response: MembershipsDropdownMenuQuery$data;
+  variables: MembershipsDropdownMenuQuery$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -66,7 +66,7 @@ return {
     "argumentDefinitions": [],
     "kind": "Fragment",
     "metadata": null,
-    "name": "OrganizationDropdownMenuQuery",
+    "name": "MembershipsDropdownMenuQuery",
     "selections": [
       {
         "kind": "RequiredField",
@@ -128,7 +128,7 @@ return {
                               {
                                 "args": null,
                                 "kind": "FragmentSpread",
-                                "name": "OrganizationDropdownMenuItemFragment"
+                                "name": "MembershipsDropdownMenuItemFragment"
                               }
                             ],
                             "storageKey": null
@@ -158,7 +158,7 @@ return {
   "operation": {
     "argumentDefinitions": [],
     "kind": "Operation",
-    "name": "OrganizationDropdownMenuQuery",
+    "name": "MembershipsDropdownMenuQuery",
     "selections": [
       {
         "alias": null,
@@ -248,16 +248,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "b880e24e59e2bb500bbb2b9026423c20",
+    "cacheID": "edb71632c35f1f8aefa1bb426c81a985",
     "id": null,
     "metadata": {},
-    "name": "OrganizationDropdownMenuQuery",
+    "name": "MembershipsDropdownMenuQuery",
     "operationKind": "query",
-    "text": "query OrganizationDropdownMenuQuery {\n  viewer {\n    memberships(first: 1000, orderBy: {direction: DESC, field: CREATED_AT}) {\n      edges {\n        node {\n          id\n          organization {\n            name\n            id\n          }\n          ...OrganizationDropdownMenuItemFragment\n        }\n      }\n    }\n    id\n  }\n}\n\nfragment OrganizationDropdownMenuItemFragment on Membership {\n  id\n  lastSession {\n    id\n    expiresAt\n  }\n  organization {\n    id\n    logoUrl\n    name\n  }\n}\n"
+    "text": "query MembershipsDropdownMenuQuery {\n  viewer {\n    memberships(first: 1000, orderBy: {direction: DESC, field: CREATED_AT}) {\n      edges {\n        node {\n          id\n          organization {\n            name\n            id\n          }\n          ...MembershipsDropdownMenuItemFragment\n        }\n      }\n    }\n    id\n  }\n}\n\nfragment MembershipsDropdownMenuItemFragment on Membership {\n  id\n  lastSession {\n    id\n    expiresAt\n  }\n  organization {\n    id\n    logoUrl\n    name\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "27c82735b5dcef01422d87312c127519";
+(node as any).hash = "aa787b33a7cb3046d30fd638f4850621";
 
 export default node;

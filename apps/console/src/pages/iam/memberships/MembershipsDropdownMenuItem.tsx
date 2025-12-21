@@ -6,15 +6,15 @@ import {
   IconLock,
 } from "@probo/ui";
 import { graphql } from "relay-runtime";
-import type { OrganizationDropdownMenuItemFragment$key } from "./__generated__/OrganizationDropdownMenuItemFragment.graphql";
+import type { MembershipsDropdownMenuItemFragment$key } from "./__generated__/MembershipsDropdownMenuItemFragment.graphql";
 import { useFragment, useMutation } from "react-relay";
 import { parseDate } from "@probo/helpers";
 import { useCallback } from "react";
 import { useNavigate } from "react-router";
-import type { OrganizationDropdownMenuItem_assumeMutation } from "./__generated__/OrganizationDropdownMenuItem_assumeMutation.graphql";
+import type { MembershipsDropdownMenuItem_assumeMutation } from "./__generated__/MembershipsDropdownMenuItem_assumeMutation.graphql";
 
 const fragment = graphql`
-  fragment OrganizationDropdownMenuItemFragment on Membership {
+  fragment MembershipsDropdownMenuItemFragment on Membership {
     id
     lastSession {
       id
@@ -29,7 +29,7 @@ const fragment = graphql`
 `;
 
 const assumeOrganizationSessionMutation = graphql`
-  mutation OrganizationDropdownMenuItem_assumeMutation(
+  mutation MembershipsDropdownMenuItem_assumeMutation(
     $input: AssumeOrganizationSessionInput!
   ) {
     assumeOrganizationSession(input: $input) {
@@ -47,22 +47,22 @@ const assumeOrganizationSessionMutation = graphql`
   }
 `;
 
-export function OrganizationDropdownMenuItem(props: {
-  fKey: OrganizationDropdownMenuItemFragment$key;
+export function MembershipsDropdownMenuItem(props: {
+  fKey: MembershipsDropdownMenuItemFragment$key;
 }) {
   const { fKey } = props;
 
   const navigate = useNavigate();
 
   const { id, lastSession, organization } =
-    useFragment<OrganizationDropdownMenuItemFragment$key>(fragment, fKey);
+    useFragment<MembershipsDropdownMenuItemFragment$key>(fragment, fKey);
 
   const isAuthenticated = !!lastSession;
   const isExpired =
     lastSession && parseDate(lastSession.expiresAt) < new Date();
 
   const [assumeOrganizationSession] =
-    useMutation<OrganizationDropdownMenuItem_assumeMutation>(
+    useMutation<MembershipsDropdownMenuItem_assumeMutation>(
       assumeOrganizationSessionMutation,
     );
 

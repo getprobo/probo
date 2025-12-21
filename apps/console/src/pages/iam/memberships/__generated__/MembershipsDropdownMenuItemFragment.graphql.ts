@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<e917cb1af13350772d46c02bd6b37da5>>
+ * @generated SignedSource<<353905ded51be0954c17254a66a133d5>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,7 +10,7 @@
 
 import { ReaderFragment } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
-export type OrganizationDropdownMenuItemFragment$data = {
+export type MembershipsDropdownMenuItemFragment$data = {
   readonly id: string;
   readonly lastSession: {
     readonly expiresAt: any;
@@ -21,11 +21,11 @@ export type OrganizationDropdownMenuItemFragment$data = {
     readonly logoUrl: string | null | undefined;
     readonly name: string;
   };
-  readonly " $fragmentType": "OrganizationDropdownMenuItemFragment";
+  readonly " $fragmentType": "MembershipsDropdownMenuItemFragment";
 };
-export type OrganizationDropdownMenuItemFragment$key = {
-  readonly " $data"?: OrganizationDropdownMenuItemFragment$data;
-  readonly " $fragmentSpreads": FragmentRefs<"OrganizationDropdownMenuItemFragment">;
+export type MembershipsDropdownMenuItemFragment$key = {
+  readonly " $data"?: MembershipsDropdownMenuItemFragment$data;
+  readonly " $fragmentSpreads": FragmentRefs<"MembershipsDropdownMenuItemFragment">;
 };
 
 const node: ReaderFragment = (function(){
@@ -40,7 +40,7 @@ return {
   "argumentDefinitions": [],
   "kind": "Fragment",
   "metadata": null,
-  "name": "OrganizationDropdownMenuItemFragment",
+  "name": "MembershipsDropdownMenuItemFragment",
   "selections": [
     (v0/*: any*/),
     {
@@ -98,6 +98,6 @@ return {
 };
 })();
 
-(node as any).hash = "22fea7c8463774a5fa9ea5f56d1e876c";
+(node as any).hash = "915a6fb0071b4890010401a56f3affa6";
 
 export default node;
