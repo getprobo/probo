@@ -7,8 +7,11 @@ import {
 } from "@probo/ui";
 import { graphql } from "relay-runtime";
 import type { OrganizationDropdownMenuItemFragment$key } from "./__generated__/OrganizationDropdownMenuItemFragment.graphql";
-import { useFragment } from "react-relay";
+import { useFragment, useMutation } from "react-relay";
 import { parseDate } from "@probo/helpers";
+import { useCallback } from "react";
+import { useNavigate } from "react-router";
+import type { OrganizationDropdownMenuItem_assumeMutation } from "./__generated__/OrganizationDropdownMenuItem_assumeMutation.graphql";
 
 const fragment = graphql`
   fragment OrganizationDropdownMenuItemFragment on Membership {
@@ -18,8 +21,28 @@ const fragment = graphql`
       expiresAt
     }
     organization @required(action: THROW) {
+      id
       logoUrl
       name
+    }
+  }
+`;
+
+const assumeOrganizationSessionMutation = graphql`
+  mutation OrganizationDropdownMenuItem_assumeMutation(
+    $input: AssumeOrganizationSessionInput!
+  ) {
+    assumeOrganizationSession(input: $input) {
+      result {
+        __typename
+        ... on PasswordRequired {
+          reason
+        }
+        ... on SAMLAuthenticationRequired {
+          reason
+          redirectUrl
+        }
+      }
     }
   }
 `;
@@ -28,15 +51,51 @@ export function OrganizationDropdownMenuItem(props: {
   fKey: OrganizationDropdownMenuItemFragment$key;
 }) {
   const { fKey } = props;
+
+  const navigate = useNavigate();
+
   const { id, lastSession, organization } =
     useFragment<OrganizationDropdownMenuItemFragment$key>(fragment, fKey);
 
   const isAuthenticated = !!lastSession;
   const isExpired =
-    lastSession && parseDate(lastSession.expiresAt) >= new Date();
+    lastSession && parseDate(lastSession.expiresAt) < new Date();
+
+  const [assumeOrganizationSession] =
+    useMutation<OrganizationDropdownMenuItem_assumeMutation>(
+      assumeOrganizationSessionMutation,
+    );
+
+  const handleAssumeOrganizationSession = useCallback(() => {
+    assumeOrganizationSession({
+      variables: {
+        input: {
+          organizationId: organization.id,
+        },
+      },
+      onCompleted: ({ assumeOrganizationSession }) => {
+        if (!assumeOrganizationSession) {
+          throw new Error("complete mutation result is empty");
+        }
+
+        const { result } = assumeOrganizationSession;
+
+        switch (result.__typename) {
+          case "PasswordRequired":
+            navigate("auth/login");
+            break;
+          case "SAMLAuthenticationRequired":
+            window.location.href = result.redirectUrl;
+            break;
+          default:
+            navigate(`/organizations/${organization.id}`);
+        }
+      },
+    });
+  }, [assumeOrganizationSession, navigate, organization.id]);
 
   return (
-    <DropdownItem key={id}>
+    <DropdownItem key={id} onClick={handleAssumeOrganizationSession}>
       {/* TODO add link or anchor */}
       <Avatar name={organization.name} src={organization.logoUrl} />
       <span className="flex-1">{organization.name}</span>
