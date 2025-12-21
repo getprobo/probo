@@ -78,11 +78,11 @@ func IsViewerDirective(ctx context.Context, obj any, next graphql.Resolver) (any
 			return nil, ErrForbidden
 		}
 	case *types.Membership:
-		if identity.ID != node.IdentityID {
+		if identity.ID != node.Identity.ID {
 			return nil, ErrForbidden
 		}
 	case *types.Session:
-		if identity.ID != node.IdentityID {
+		if identity.ID != node.Identity.ID {
 			return nil, ErrForbidden
 		}
 	default:

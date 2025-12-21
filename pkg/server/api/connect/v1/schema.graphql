@@ -193,11 +193,6 @@ type IdentityProfile implements Node {
   updatedAt: Datetime!
 }
 
-type CustomAttribute {
-  key: String!
-  value: String!
-}
-
 type Organization implements Node {
   id: ID!
   name: String!
@@ -248,16 +243,12 @@ enum MembershipRole
 
 type Membership implements Node {
   id: ID!
-  identityId: ID!
   createdAt: Datetime!
   profile: IdentityProfile!
   identity: Identity @goField(forceResolver: true)
   organization: Organization @goField(forceResolver: true)
   role: MembershipRole!
   permissions: [Permission!]!
-  provisionedBy: ProvisioningSource!
-  active: Boolean!
-  lastSyncedAt: Datetime
 
   lastSession: Session @goField(forceResolver: true) @isViewer
 }
@@ -275,7 +266,7 @@ type Invitation implements Node {
 
 type Session implements Node {
   id: ID!
-  identityId: ID!
+  identity: Identity @goField(forceResolver: true) @isViewer
   ipAddress: String!
   userAgent: String!
   updatedAt: Datetime!
@@ -313,13 +304,6 @@ type Application {
   name: String!
   description: String!
   availableAccessLevels: [AccessLevel!]!
-}
-
-type SessionPolicy {
-  maxSessionDurationHours: Int!
-  idleTimeoutMinutes: Int!
-  maxConcurrentSessions: Int
-  requireReauthForSensitiveActions: Boolean!
 }
 
 type SAMLConfiguration implements Node {
@@ -418,12 +402,6 @@ enum TokenScope {
   READ_TRUST_CENTER
   WRITE_TRUST_CENTER
   ADMIN
-}
-
-enum ProvisioningSource {
-  MANUAL
-  INVITATION
-  SAML
 }
 
 enum ReauthenticationReason {
@@ -598,15 +576,6 @@ input AssumeOrganizationSessionInput {
   organizationId: ID!
 }
 
-input DeactivateAccountInput {
-  password: String!
-}
-
-input DeleteAccountInput {
-  password: String!
-  confirmation: String!
-}
-
 input UpdateIdentityProfileInput {
   membershipId: ID!
   displayName: String
@@ -662,23 +631,6 @@ input DeleteOrganizationInput {
 
 input DeleteOrganizationHorizontalLogoInput {
   organizationId: ID!
-}
-
-input SessionPolicyInput {
-  maxSessionDurationHours: Int
-  idleTimeoutMinutes: Int
-  maxConcurrentSessions: Int
-  requireReauthForSensitiveActions: Boolean
-}
-
-input AddIPAllowlistEntryInput {
-  organizationId: ID!
-  cidr: String!
-  description: String
-}
-
-input RemoveIPAllowlistEntryInput {
-  entryId: ID!
 }
 
 input InviteMemberInput {
