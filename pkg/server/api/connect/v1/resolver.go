@@ -19,6 +19,7 @@ package connect_v1
 import (
 	"time"
 
+	"github.com/99designs/gqlgen/graphql"
 	"github.com/go-chi/chi/v5"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/baseurl"
@@ -64,4 +65,12 @@ func NewMux(logger *log.Logger, svc *iam.Service, cookieConfig securecookie.Conf
 	router.Get("/saml/2.0/{samlConfigID}", samlHandler.LoginHandler)
 
 	return r
+}
+
+func UnwrapOmittable[T any](field graphql.Omittable[T]) *T {
+	if !field.IsSet() {
+		return nil
+	}
+	value := field.Value()
+	return &value
 }

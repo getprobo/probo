@@ -58,8 +58,12 @@ type (
 
 	UpdateOrganizationRequest struct {
 		Name               *string
-		LogoFile           **UploadedFile
-		HorizontalLogoFile **UploadedFile
+		LogoFile           *UploadedFile
+		HorizontalLogoFile *UploadedFile
+		Description        **string
+		WebsiteURL         **string
+		Email              **string
+		HeadquarterAddress **string
 	}
 
 	CreateSAMLConfigurationRequest struct {
@@ -90,6 +94,8 @@ type (
 
 const (
 	TokenTypeAPIKey = "api_key"
+
+	ContentMaxLength = 5000
 
 	DefaultAttributeEmail     = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
 	DefaultAttributeFirstname = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname"
@@ -124,21 +130,23 @@ func (req UpdateOrganizationRequest) Validate() error {
 	v := validator.New()
 	fv := filevalidation.NewValidator(filevalidation.WithCategories(filevalidation.CategoryImage))
 
-	if req.LogoFile != nil && *req.LogoFile != nil {
-		err := fv.Validate((**req.LogoFile).Filename, (**req.LogoFile).ContentType, (**req.LogoFile).Size)
-		if err != nil {
+	v.Check(req.Name, "name", validator.SafeTextNoNewLine(255))
+	v.Check(req.Description, "description", validator.SafeText(ContentMaxLength))
+	v.Check(req.WebsiteURL, "website_url", validator.SafeText(2048))
+	v.Check(req.Email, "email", validator.SafeText(255))
+	v.Check(req.HeadquarterAddress, "headquarter_address", validator.SafeText(2048))
+	v.Check(req.LogoFile, "logo_file", validator.NotEmpty())
+	if req.LogoFile != nil {
+		if err := fv.Validate(req.LogoFile.Filename, req.LogoFile.ContentType, req.LogoFile.Size); err != nil {
 			return fmt.Errorf("invalid logo file: %w", err)
 		}
 	}
-
-	if req.HorizontalLogoFile != nil && *req.HorizontalLogoFile != nil {
-		err := fv.Validate((**req.HorizontalLogoFile).Filename, (**req.HorizontalLogoFile).ContentType, (**req.HorizontalLogoFile).Size)
-		if err != nil {
+	v.Check(req.HorizontalLogoFile, "horizontal_logo_file", validator.NotEmpty())
+	if req.HorizontalLogoFile != nil {
+		if err := fv.Validate(req.HorizontalLogoFile.Filename, req.HorizontalLogoFile.ContentType, req.HorizontalLogoFile.Size); err != nil {
 			return fmt.Errorf("invalid horizontal logo file: %w", err)
 		}
 	}
-
-	v.Check(req.Name, "name", validator.Required(), validator.SafeTextNoNewLine(255))
 
 	return v.Error()
 }
@@ -543,12 +551,12 @@ func (s *OrganizationService) UpdateOrganization(ctx context.Context, organizati
 
 	// TODO: s3 upload happen before we validate the tenantID
 
-	if req.LogoFile != nil && *req.LogoFile != nil {
+	if req.LogoFile != nil {
 		var (
 			fileID      = gid.New(tenantID, coredata.FileEntityType)
 			objectKey   = uuid.MustNewV7()
-			filename    = (**req.LogoFile).Filename
-			contentType = (**req.LogoFile).ContentType
+			filename    = (*req.LogoFile).Filename
+			contentType = (*req.LogoFile).ContentType
 		)
 
 		logoFile = &coredata.File{
@@ -557,7 +565,7 @@ func (s *OrganizationService) UpdateOrganization(ctx context.Context, organizati
 			MimeType:   contentType,
 			FileName:   filename,
 			FileKey:    objectKey.String(),
-			FileSize:   (**req.LogoFile).Size,
+			FileSize:   (*req.LogoFile).Size,
 			CreatedAt:  now,
 			UpdatedAt:  now,
 		}
@@ -565,7 +573,7 @@ func (s *OrganizationService) UpdateOrganization(ctx context.Context, organizati
 		fileSize, err := s.fm.PutFile(
 			ctx,
 			logoFile,
-			(**req.LogoFile).Content,
+			(*req.LogoFile).Content,
 			map[string]string{
 				"file-id":         fileID.String(),
 				"organization-id": organizationID.String(),
@@ -579,12 +587,12 @@ func (s *OrganizationService) UpdateOrganization(ctx context.Context, organizati
 		logoFile.FileSize = fileSize
 	}
 
-	if req.HorizontalLogoFile != nil && *req.HorizontalLogoFile != nil {
+	if req.HorizontalLogoFile != nil {
 		var (
 			fileID      = gid.New(tenantID, coredata.FileEntityType)
 			objectKey   = uuid.MustNewV7()
-			filename    = (**req.HorizontalLogoFile).Filename
-			contentType = (**req.HorizontalLogoFile).ContentType
+			filename    = (*req.HorizontalLogoFile).Filename
+			contentType = (*req.HorizontalLogoFile).ContentType
 			now         = time.Now()
 		)
 
@@ -594,7 +602,7 @@ func (s *OrganizationService) UpdateOrganization(ctx context.Context, organizati
 			MimeType:   contentType,
 			FileName:   filename,
 			FileKey:    objectKey.String(),
-			FileSize:   (**req.HorizontalLogoFile).Size,
+			FileSize:   (*req.HorizontalLogoFile).Size,
 			CreatedAt:  now,
 			UpdatedAt:  now,
 		}
@@ -602,7 +610,7 @@ func (s *OrganizationService) UpdateOrganization(ctx context.Context, organizati
 		fileSize, err := s.fm.PutFile(
 			ctx,
 			horizontalLogoFile,
-			(**req.HorizontalLogoFile).Content,
+			(*req.HorizontalLogoFile).Content,
 			map[string]string{
 				"file-id":         fileID.String(),
 				"organization-id": organizationID.String(),
@@ -630,30 +638,46 @@ func (s *OrganizationService) UpdateOrganization(ctx context.Context, organizati
 				organization.Name = *req.Name
 			}
 
-			if req.LogoFile != nil {
-				if *req.LogoFile != nil {
-					err := logoFile.Insert(ctx, tx, scope)
-					if err != nil {
-						return fmt.Errorf("cannot insert file: %w", err)
-					}
-
-					organization.LogoFileID = &logoFile.ID
-				} else {
-					organization.LogoFileID = nil
-				}
-
+			if req.Name != nil {
+				organization.Name = *req.Name
 			}
 
-			if req.HorizontalLogoFile != nil {
-				if *req.HorizontalLogoFile != nil {
-					err := horizontalLogoFile.Insert(ctx, tx, scope)
-					if err != nil {
-						return fmt.Errorf("cannot insert file: %w", err)
+			if req.Description != nil {
+				organization.Description = *req.Description
+			}
+
+			if req.WebsiteURL != nil {
+				organization.WebsiteURL = *req.WebsiteURL
+			}
+
+			if req.Email != nil {
+				if *req.Email != nil {
+					if _, err := mail.ParseAddr(**req.Email); err != nil {
+						return fmt.Errorf("invalid email address: %w", err)
 					}
-					organization.HorizontalLogoFileID = &horizontalLogoFile.ID
-				} else {
-					organization.HorizontalLogoFileID = nil
 				}
+				organization.Email = *req.Email
+			}
+
+			if req.HeadquarterAddress != nil {
+				organization.HeadquarterAddress = *req.HeadquarterAddress
+			}
+
+			if logoFile != nil {
+				err := logoFile.Insert(ctx, tx, scope)
+				if err != nil {
+					return fmt.Errorf("cannot insert file: %w", err)
+				}
+
+				organization.LogoFileID = &logoFile.ID
+			}
+
+			if horizontalLogoFile != nil {
+				err := horizontalLogoFile.Insert(ctx, tx, scope)
+				if err != nil {
+					return fmt.Errorf("cannot insert file: %w", err)
+				}
+				organization.HorizontalLogoFileID = &horizontalLogoFile.ID
 			}
 
 			err = organization.Update(ctx, scope, tx)

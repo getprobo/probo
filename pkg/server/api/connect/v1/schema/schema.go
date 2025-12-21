@@ -119,6 +119,10 @@ type ComplexityRoot struct {
 		DeletedInvitationID func(childComplexity int) int
 	}
 
+	DeleteOrganizationHorizontalLogoPayload struct {
+		Organization func(childComplexity int) int
+	}
+
 	DeleteOrganizationPayload struct {
 		DeletedOrganizationID func(childComplexity int) int
 	}
@@ -218,37 +222,41 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		AcceptInvitation          func(childComplexity int, input types.AcceptInvitationInput) int
-		AssumeOrganizationSession func(childComplexity int, input types.AssumeOrganizationSessionInput) int
-		ChangeEmail               func(childComplexity int, input types.ChangeEmailInput) int
-		ChangePassword            func(childComplexity int, input types.ChangePasswordInput) int
-		CreateOrganization        func(childComplexity int, input types.CreateOrganizationInput) int
-		CreatePersonalAPIKey      func(childComplexity int, input types.CreatePersonalAPIKeyInput) int
-		CreateSAMLConfiguration   func(childComplexity int, input types.CreateSAMLConfigurationInput) int
-		DeleteInvitation          func(childComplexity int, input types.DeleteInvitationInput) int
-		DeleteOrganization        func(childComplexity int, input types.DeleteOrganizationInput) int
-		DeleteSAMLConfiguration   func(childComplexity int, input types.DeleteSAMLConfigurationInput) int
-		ForgotPassword            func(childComplexity int, input types.ForgotPasswordInput) int
-		InviteMember              func(childComplexity int, input types.InviteMemberInput) int
-		RemoveMember              func(childComplexity int, input types.RemoveMemberInput) int
-		ResetPassword             func(childComplexity int, input types.ResetPasswordInput) int
-		RevokeAllSessions         func(childComplexity int) int
-		RevokePersonalAPIKey      func(childComplexity int, input types.RevokePersonalAPIKeyInput) int
-		RevokeSession             func(childComplexity int, input types.RevokeSessionInput) int
-		SignIn                    func(childComplexity int, input types.SignInInput) int
-		SignOut                   func(childComplexity int) int
-		SignUp                    func(childComplexity int, input types.SignUpInput) int
-		SignUpFromInvitation      func(childComplexity int, input types.SignUpFromInvitationInput) int
-		UpdateIdentityProfile     func(childComplexity int, input types.UpdateIdentityProfileInput) int
-		UpdateOrganization        func(childComplexity int, input types.UpdateOrganizationInput) int
-		UpdatePersonalAPIKey      func(childComplexity int, input types.UpdatePersonalAPIKeyInput) int
-		UpdateSAMLConfiguration   func(childComplexity int, input types.UpdateSAMLConfigurationInput) int
-		VerifyEmail               func(childComplexity int, input types.VerifyEmailInput) int
+		AcceptInvitation                 func(childComplexity int, input types.AcceptInvitationInput) int
+		AssumeOrganizationSession        func(childComplexity int, input types.AssumeOrganizationSessionInput) int
+		ChangeEmail                      func(childComplexity int, input types.ChangeEmailInput) int
+		ChangePassword                   func(childComplexity int, input types.ChangePasswordInput) int
+		CreateOrganization               func(childComplexity int, input types.CreateOrganizationInput) int
+		CreatePersonalAPIKey             func(childComplexity int, input types.CreatePersonalAPIKeyInput) int
+		CreateSAMLConfiguration          func(childComplexity int, input types.CreateSAMLConfigurationInput) int
+		DeleteInvitation                 func(childComplexity int, input types.DeleteInvitationInput) int
+		DeleteOrganization               func(childComplexity int, input types.DeleteOrganizationInput) int
+		DeleteOrganizationHorizontalLogo func(childComplexity int, input types.DeleteOrganizationHorizontalLogoInput) int
+		DeleteSAMLConfiguration          func(childComplexity int, input types.DeleteSAMLConfigurationInput) int
+		ForgotPassword                   func(childComplexity int, input types.ForgotPasswordInput) int
+		InviteMember                     func(childComplexity int, input types.InviteMemberInput) int
+		RemoveMember                     func(childComplexity int, input types.RemoveMemberInput) int
+		ResetPassword                    func(childComplexity int, input types.ResetPasswordInput) int
+		RevokeAllSessions                func(childComplexity int) int
+		RevokePersonalAPIKey             func(childComplexity int, input types.RevokePersonalAPIKeyInput) int
+		RevokeSession                    func(childComplexity int, input types.RevokeSessionInput) int
+		SignIn                           func(childComplexity int, input types.SignInInput) int
+		SignOut                          func(childComplexity int) int
+		SignUp                           func(childComplexity int, input types.SignUpInput) int
+		SignUpFromInvitation             func(childComplexity int, input types.SignUpFromInvitationInput) int
+		UpdateIdentityProfile            func(childComplexity int, input types.UpdateIdentityProfileInput) int
+		UpdateOrganization               func(childComplexity int, input types.UpdateOrganizationInput) int
+		UpdatePersonalAPIKey             func(childComplexity int, input types.UpdatePersonalAPIKeyInput) int
+		UpdateSAMLConfiguration          func(childComplexity int, input types.UpdateSAMLConfigurationInput) int
+		VerifyEmail                      func(childComplexity int, input types.VerifyEmailInput) int
 	}
 
 	Organization struct {
 		AvailableApplications func(childComplexity int) int
 		CreatedAt             func(childComplexity int) int
+		Description           func(childComplexity int) int
+		Email                 func(childComplexity int) int
+		HeadquarterAddress    func(childComplexity int) int
 		HorizontalLogoURL     func(childComplexity int) int
 		ID                    func(childComplexity int) int
 		Invitations           func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, status *coredata.InvitationStatus) int
@@ -257,6 +265,7 @@ type ComplexityRoot struct {
 		Name                  func(childComplexity int) int
 		SamlConfigurations    func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
 		UpdatedAt             func(childComplexity int) int
+		WebsiteURL            func(childComplexity int) int
 	}
 
 	OrganizationSessionCreated struct {
@@ -491,6 +500,7 @@ type MutationResolver interface {
 	CreateOrganization(ctx context.Context, input types.CreateOrganizationInput) (*types.CreateOrganizationPayload, error)
 	UpdateOrganization(ctx context.Context, input types.UpdateOrganizationInput) (*types.UpdateOrganizationPayload, error)
 	DeleteOrganization(ctx context.Context, input types.DeleteOrganizationInput) (*types.DeleteOrganizationPayload, error)
+	DeleteOrganizationHorizontalLogo(ctx context.Context, input types.DeleteOrganizationHorizontalLogoInput) (*types.DeleteOrganizationHorizontalLogoPayload, error)
 	InviteMember(ctx context.Context, input types.InviteMemberInput) (*types.InviteMemberPayload, error)
 	DeleteInvitation(ctx context.Context, input types.DeleteInvitationInput) (*types.DeleteInvitationPayload, error)
 	RemoveMember(ctx context.Context, input types.RemoveMemberInput) (*types.RemoveMemberPayload, error)
@@ -660,6 +670,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.DeleteInvitationPayload.DeletedInvitationID(childComplexity), true
+
+	case "DeleteOrganizationHorizontalLogoPayload.organization":
+		if e.complexity.DeleteOrganizationHorizontalLogoPayload.Organization == nil {
+			break
+		}
+
+		return e.complexity.DeleteOrganizationHorizontalLogoPayload.Organization(childComplexity), true
 
 	case "DeleteOrganizationPayload.deletedOrganizationId":
 		if e.complexity.DeleteOrganizationPayload.DeletedOrganizationID == nil {
@@ -1169,6 +1186,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.DeleteOrganization(childComplexity, args["input"].(types.DeleteOrganizationInput)), true
+	case "Mutation.deleteOrganizationHorizontalLogo":
+		if e.complexity.Mutation.DeleteOrganizationHorizontalLogo == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteOrganizationHorizontalLogo_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteOrganizationHorizontalLogo(childComplexity, args["input"].(types.DeleteOrganizationHorizontalLogoInput)), true
 	case "Mutation.deleteSAMLConfiguration":
 		if e.complexity.Mutation.DeleteSAMLConfiguration == nil {
 			break
@@ -1359,6 +1387,24 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Organization.CreatedAt(childComplexity), true
+	case "Organization.description":
+		if e.complexity.Organization.Description == nil {
+			break
+		}
+
+		return e.complexity.Organization.Description(childComplexity), true
+	case "Organization.email":
+		if e.complexity.Organization.Email == nil {
+			break
+		}
+
+		return e.complexity.Organization.Email(childComplexity), true
+	case "Organization.headquarterAddress":
+		if e.complexity.Organization.HeadquarterAddress == nil {
+			break
+		}
+
+		return e.complexity.Organization.HeadquarterAddress(childComplexity), true
 	case "Organization.horizontalLogoUrl":
 		if e.complexity.Organization.HorizontalLogoURL == nil {
 			break
@@ -1422,6 +1468,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Organization.UpdatedAt(childComplexity), true
+	case "Organization.websiteUrl":
+		if e.complexity.Organization.WebsiteURL == nil {
+			break
+		}
+
+		return e.complexity.Organization.WebsiteURL(childComplexity), true
 
 	case "OrganizationSessionCreated.membership":
 		if e.complexity.OrganizationSessionCreated.Membership == nil {
@@ -2031,6 +2083,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputDeactivateAccountInput,
 		ec.unmarshalInputDeleteAccountInput,
 		ec.unmarshalInputDeleteInvitationInput,
+		ec.unmarshalInputDeleteOrganizationHorizontalLogoInput,
 		ec.unmarshalInputDeleteOrganizationInput,
 		ec.unmarshalInputDeleteSAMLConfigurationInput,
 		ec.unmarshalInputForgotPasswordInput,
@@ -2258,6 +2311,9 @@ type Mutation {
   deleteOrganization(
     input: DeleteOrganizationInput!
   ): DeleteOrganizationPayload @session(required: PRESENT)
+  deleteOrganizationHorizontalLogo(
+    input: DeleteOrganizationHorizontalLogoInput!
+  ): DeleteOrganizationHorizontalLogoPayload @session(required: PRESENT)
 
   inviteMember(input: InviteMemberInput!): InviteMemberPayload
     @session(required: PRESENT)
@@ -2352,6 +2408,10 @@ type Organization implements Node {
   name: String!
   logoUrl: String @goField(forceResolver: true)
   horizontalLogoUrl: String @goField(forceResolver: true)
+  email: String
+  description: String
+  websiteUrl: String
+  headquarterAddress: String
   createdAt: Datetime!
   updatedAt: Datetime!
 
@@ -2793,11 +2853,19 @@ input CreateOrganizationInput {
 input UpdateOrganizationInput {
   organizationId: ID!
   name: String
-  logoFile: Upload @goField(omittable: true)
-  horizontalLogoFile: Upload @goField(omittable: true)
+  logoFile: Upload
+  horizontalLogoFile: Upload
+  description: String @goField(omittable: true)
+  websiteUrl: String @goField(omittable: true)
+  email: String @goField(omittable: true)
+  headquarterAddress: String @goField(omittable: true)
 }
 
 input DeleteOrganizationInput {
+  organizationId: ID!
+}
+
+input DeleteOrganizationHorizontalLogoInput {
   organizationId: ID!
 }
 
@@ -2975,6 +3043,10 @@ type UpdateOrganizationPayload {
 
 type DeleteOrganizationPayload {
   deletedOrganizationId: ID!
+}
+
+type DeleteOrganizationHorizontalLogoPayload {
+  organization: Organization!
 }
 
 type InviteMemberPayload {
@@ -3234,6 +3306,17 @@ func (ec *executionContext) field_Mutation_deleteInvitation_args(ctx context.Con
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNDeleteInvitationInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐDeleteInvitationInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_deleteOrganizationHorizontalLogo_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNDeleteOrganizationHorizontalLogoInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐDeleteOrganizationHorizontalLogoInput)
 	if err != nil {
 		return nil, err
 	}
@@ -3855,6 +3938,14 @@ func (ec *executionContext) fieldContext_CreateOrganizationPayload_organization(
 				return ec.fieldContext_Organization_logoUrl(ctx, field)
 			case "horizontalLogoUrl":
 				return ec.fieldContext_Organization_horizontalLogoUrl(ctx, field)
+			case "email":
+				return ec.fieldContext_Organization_email(ctx, field)
+			case "description":
+				return ec.fieldContext_Organization_description(ctx, field)
+			case "websiteUrl":
+				return ec.fieldContext_Organization_websiteUrl(ctx, field)
+			case "headquarterAddress":
+				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -4148,6 +4239,65 @@ func (ec *executionContext) fieldContext_DeleteInvitationPayload_deletedInvitati
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DeleteOrganizationHorizontalLogoPayload_organization(ctx context.Context, field graphql.CollectedField, obj *types.DeleteOrganizationHorizontalLogoPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_DeleteOrganizationHorizontalLogoPayload_organization,
+		func(ctx context.Context) (any, error) {
+			return obj.Organization, nil
+		},
+		nil,
+		ec.marshalNOrganization2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐOrganization,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_DeleteOrganizationHorizontalLogoPayload_organization(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DeleteOrganizationHorizontalLogoPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Organization_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Organization_name(ctx, field)
+			case "logoUrl":
+				return ec.fieldContext_Organization_logoUrl(ctx, field)
+			case "horizontalLogoUrl":
+				return ec.fieldContext_Organization_horizontalLogoUrl(ctx, field)
+			case "email":
+				return ec.fieldContext_Organization_email(ctx, field)
+			case "description":
+				return ec.fieldContext_Organization_description(ctx, field)
+			case "websiteUrl":
+				return ec.fieldContext_Organization_websiteUrl(ctx, field)
+			case "headquarterAddress":
+				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Organization_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Organization_updatedAt(ctx, field)
+			case "members":
+				return ec.fieldContext_Organization_members(ctx, field)
+			case "invitations":
+				return ec.fieldContext_Organization_invitations(ctx, field)
+			case "samlConfigurations":
+				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
+			case "availableApplications":
+				return ec.fieldContext_Organization_availableApplications(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
 		},
 	}
 	return fc, nil
@@ -5257,6 +5407,14 @@ func (ec *executionContext) fieldContext_IdentityProfile_organization(_ context.
 				return ec.fieldContext_Organization_logoUrl(ctx, field)
 			case "horizontalLogoUrl":
 				return ec.fieldContext_Organization_horizontalLogoUrl(ctx, field)
+			case "email":
+				return ec.fieldContext_Organization_email(ctx, field)
+			case "description":
+				return ec.fieldContext_Organization_description(ctx, field)
+			case "websiteUrl":
+				return ec.fieldContext_Organization_websiteUrl(ctx, field)
+			case "headquarterAddress":
+				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -5569,6 +5727,14 @@ func (ec *executionContext) fieldContext_Invitation_organization(_ context.Conte
 				return ec.fieldContext_Organization_logoUrl(ctx, field)
 			case "horizontalLogoUrl":
 				return ec.fieldContext_Organization_horizontalLogoUrl(ctx, field)
+			case "email":
+				return ec.fieldContext_Organization_email(ctx, field)
+			case "description":
+				return ec.fieldContext_Organization_description(ctx, field)
+			case "websiteUrl":
+				return ec.fieldContext_Organization_websiteUrl(ctx, field)
+			case "headquarterAddress":
+				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -6039,6 +6205,14 @@ func (ec *executionContext) fieldContext_Membership_organization(_ context.Conte
 				return ec.fieldContext_Organization_logoUrl(ctx, field)
 			case "horizontalLogoUrl":
 				return ec.fieldContext_Organization_horizontalLogoUrl(ctx, field)
+			case "email":
+				return ec.fieldContext_Organization_email(ctx, field)
+			case "description":
+				return ec.fieldContext_Organization_description(ctx, field)
+			case "websiteUrl":
+				return ec.fieldContext_Organization_websiteUrl(ctx, field)
+			case "headquarterAddress":
+				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -7643,6 +7817,69 @@ func (ec *executionContext) fieldContext_Mutation_deleteOrganization(ctx context
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_deleteOrganizationHorizontalLogo(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_deleteOrganizationHorizontalLogo,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().DeleteOrganizationHorizontalLogo(ctx, fc.Args["input"].(types.DeleteOrganizationHorizontalLogoInput))
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSessionRequirement(ctx, "PRESENT")
+				if err != nil {
+					var zeroVal *types.DeleteOrganizationHorizontalLogoPayload
+					return zeroVal, err
+				}
+				if ec.directives.Session == nil {
+					var zeroVal *types.DeleteOrganizationHorizontalLogoPayload
+					return zeroVal, errors.New("directive session is not implemented")
+				}
+				return ec.directives.Session(ctx, nil, directive0, required)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalODeleteOrganizationHorizontalLogoPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐDeleteOrganizationHorizontalLogoPayload,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteOrganizationHorizontalLogo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "organization":
+				return ec.fieldContext_DeleteOrganizationHorizontalLogoPayload_organization(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DeleteOrganizationHorizontalLogoPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteOrganizationHorizontalLogo_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_inviteMember(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -8193,6 +8430,122 @@ func (ec *executionContext) fieldContext_Organization_horizontalLogoUrl(_ contex
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Organization_email(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Organization_email,
+		func(ctx context.Context) (any, error) {
+			return obj.Email, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Organization_email(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Organization",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Organization_description(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Organization_description,
+		func(ctx context.Context) (any, error) {
+			return obj.Description, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Organization_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Organization",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Organization_websiteUrl(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Organization_websiteUrl,
+		func(ctx context.Context) (any, error) {
+			return obj.WebsiteURL, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Organization_websiteUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Organization",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Organization_headquarterAddress(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Organization_headquarterAddress,
+		func(ctx context.Context) (any, error) {
+			return obj.HeadquarterAddress, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Organization_headquarterAddress(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Organization",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
 		},
@@ -8847,6 +9200,14 @@ func (ec *executionContext) fieldContext_Permission_organization(_ context.Conte
 				return ec.fieldContext_Organization_logoUrl(ctx, field)
 			case "horizontalLogoUrl":
 				return ec.fieldContext_Organization_horizontalLogoUrl(ctx, field)
+			case "email":
+				return ec.fieldContext_Organization_email(ctx, field)
+			case "description":
+				return ec.fieldContext_Organization_description(ctx, field)
+			case "websiteUrl":
+				return ec.fieldContext_Organization_websiteUrl(ctx, field)
+			case "headquarterAddress":
+				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -9198,6 +9559,14 @@ func (ec *executionContext) fieldContext_PersonalAPIKey_organizations(_ context.
 				return ec.fieldContext_Organization_logoUrl(ctx, field)
 			case "horizontalLogoUrl":
 				return ec.fieldContext_Organization_horizontalLogoUrl(ctx, field)
+			case "email":
+				return ec.fieldContext_Organization_email(ctx, field)
+			case "description":
+				return ec.fieldContext_Organization_description(ctx, field)
+			case "websiteUrl":
+				return ec.fieldContext_Organization_websiteUrl(ctx, field)
+			case "headquarterAddress":
+				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -11569,6 +11938,14 @@ func (ec *executionContext) fieldContext_UpdateOrganizationPayload_organization(
 				return ec.fieldContext_Organization_logoUrl(ctx, field)
 			case "horizontalLogoUrl":
 				return ec.fieldContext_Organization_horizontalLogoUrl(ctx, field)
+			case "email":
+				return ec.fieldContext_Organization_email(ctx, field)
+			case "description":
+				return ec.fieldContext_Organization_description(ctx, field)
+			case "websiteUrl":
+				return ec.fieldContext_Organization_websiteUrl(ctx, field)
+			case "headquarterAddress":
+				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -13578,6 +13955,33 @@ func (ec *executionContext) unmarshalInputDeleteInvitationInput(ctx context.Cont
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputDeleteOrganizationHorizontalLogoInput(ctx context.Context, obj any) (types.DeleteOrganizationHorizontalLogoInput, error) {
+	var it types.DeleteOrganizationHorizontalLogoInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"organizationId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "organizationId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("organizationId"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OrganizationID = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputDeleteOrganizationInput(ctx context.Context, obj any) (types.DeleteOrganizationInput, error) {
 	var it types.DeleteOrganizationInput
 	asMap := map[string]any{}
@@ -14253,7 +14657,7 @@ func (ec *executionContext) unmarshalInputUpdateOrganizationInput(ctx context.Co
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"organizationId", "name", "logoFile", "horizontalLogoFile"}
+	fieldsInOrder := [...]string{"organizationId", "name", "logoFile", "horizontalLogoFile", "description", "websiteUrl", "email", "headquarterAddress"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -14280,14 +14684,42 @@ func (ec *executionContext) unmarshalInputUpdateOrganizationInput(ctx context.Co
 			if err != nil {
 				return it, err
 			}
-			it.LogoFile = graphql.OmittableOf(data)
+			it.LogoFile = data
 		case "horizontalLogoFile":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("horizontalLogoFile"))
 			data, err := ec.unmarshalOUpload2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.HorizontalLogoFile = graphql.OmittableOf(data)
+			it.HorizontalLogoFile = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = graphql.OmittableOf(data)
+		case "websiteUrl":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("websiteUrl"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.WebsiteURL = graphql.OmittableOf(data)
+		case "email":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Email = graphql.OmittableOf(data)
+		case "headquarterAddress":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("headquarterAddress"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.HeadquarterAddress = graphql.OmittableOf(data)
 		}
 	}
 
@@ -15017,6 +15449,45 @@ func (ec *executionContext) _DeleteInvitationPayload(ctx context.Context, sel as
 			out.Values[i] = graphql.MarshalString("DeleteInvitationPayload")
 		case "deletedInvitationId":
 			out.Values[i] = ec._DeleteInvitationPayload_deletedInvitationId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var deleteOrganizationHorizontalLogoPayloadImplementors = []string{"DeleteOrganizationHorizontalLogoPayload"}
+
+func (ec *executionContext) _DeleteOrganizationHorizontalLogoPayload(ctx context.Context, sel ast.SelectionSet, obj *types.DeleteOrganizationHorizontalLogoPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, deleteOrganizationHorizontalLogoPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DeleteOrganizationHorizontalLogoPayload")
+		case "organization":
+			out.Values[i] = ec._DeleteOrganizationHorizontalLogoPayload_organization(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -16100,6 +16571,10 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_deleteOrganization(ctx, field)
 			})
+		case "deleteOrganizationHorizontalLogo":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteOrganizationHorizontalLogo(ctx, field)
+			})
 		case "inviteMember":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_inviteMember(ctx, field)
@@ -16238,6 +16713,14 @@ func (ec *executionContext) _Organization(ctx context.Context, sel ast.Selection
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "email":
+			out.Values[i] = ec._Organization_email(ctx, field, obj)
+		case "description":
+			out.Values[i] = ec._Organization_description(ctx, field, obj)
+		case "websiteUrl":
+			out.Values[i] = ec._Organization_websiteUrl(ctx, field, obj)
+		case "headquarterAddress":
+			out.Values[i] = ec._Organization_headquarterAddress(ctx, field, obj)
 		case "createdAt":
 			out.Values[i] = ec._Organization_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -18669,6 +19152,11 @@ func (ec *executionContext) unmarshalNDeleteInvitationInput2goᚗproboᚗincᚋp
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalNDeleteOrganizationHorizontalLogoInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐDeleteOrganizationHorizontalLogoInput(ctx context.Context, v any) (types.DeleteOrganizationHorizontalLogoInput, error) {
+	res, err := ec.unmarshalInputDeleteOrganizationHorizontalLogoInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalNDeleteOrganizationInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐDeleteOrganizationInput(ctx context.Context, v any) (types.DeleteOrganizationInput, error) {
 	res, err := ec.unmarshalInputDeleteOrganizationInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -20083,6 +20571,13 @@ func (ec *executionContext) marshalODeleteInvitationPayload2ᚖgoᚗproboᚗinc�
 		return graphql.Null
 	}
 	return ec._DeleteInvitationPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalODeleteOrganizationHorizontalLogoPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐDeleteOrganizationHorizontalLogoPayload(ctx context.Context, sel ast.SelectionSet, v *types.DeleteOrganizationHorizontalLogoPayload) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._DeleteOrganizationHorizontalLogoPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalODeleteOrganizationPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐDeleteOrganizationPayload(ctx context.Context, sel ast.SelectionSet, v *types.DeleteOrganizationPayload) graphql.Marshaler {

@@ -24,9 +24,13 @@ type (
 
 func NewOrganization(organization *coredata.Organization) *Organization {
 	return &Organization{
-		ID:        organization.ID,
-		Name:      organization.Name,
-		CreatedAt: organization.CreatedAt,
-		UpdatedAt: organization.UpdatedAt,
+		ID:                 organization.ID,
+		Name:               organization.Name,
+		Email:              organization.Email,
+		Description:        organization.Description,
+		WebsiteURL:         organization.WebsiteURL,
+		HeadquarterAddress: organization.HeadquarterAddress,
+		CreatedAt:          organization.CreatedAt,
+		UpdatedAt:          organization.UpdatedAt,
 	}
 }

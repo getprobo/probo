@@ -106,6 +106,9 @@ type Mutation {
   deleteOrganization(
     input: DeleteOrganizationInput!
   ): DeleteOrganizationPayload @session(required: PRESENT)
+  deleteOrganizationHorizontalLogo(
+    input: DeleteOrganizationHorizontalLogoInput!
+  ): DeleteOrganizationHorizontalLogoPayload @session(required: PRESENT)
 
   inviteMember(input: InviteMemberInput!): InviteMemberPayload
     @session(required: PRESENT)
@@ -200,6 +203,10 @@ type Organization implements Node {
   name: String!
   logoUrl: String @goField(forceResolver: true)
   horizontalLogoUrl: String @goField(forceResolver: true)
+  email: String
+  description: String
+  websiteUrl: String
+  headquarterAddress: String
   createdAt: Datetime!
   updatedAt: Datetime!
 
@@ -641,11 +648,19 @@ input CreateOrganizationInput {
 input UpdateOrganizationInput {
   organizationId: ID!
   name: String
-  logoFile: Upload @goField(omittable: true)
-  horizontalLogoFile: Upload @goField(omittable: true)
+  logoFile: Upload
+  horizontalLogoFile: Upload
+  description: String @goField(omittable: true)
+  websiteUrl: String @goField(omittable: true)
+  email: String @goField(omittable: true)
+  headquarterAddress: String @goField(omittable: true)
 }
 
 input DeleteOrganizationInput {
+  organizationId: ID!
+}
+
+input DeleteOrganizationHorizontalLogoInput {
   organizationId: ID!
 }
 
@@ -823,6 +838,10 @@ type UpdateOrganizationPayload {
 
 type DeleteOrganizationPayload {
   deletedOrganizationId: ID!
+}
+
+type DeleteOrganizationHorizontalLogoPayload {
+  organization: Organization!
 }
 
 type InviteMemberPayload {

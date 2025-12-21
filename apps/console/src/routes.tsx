@@ -12,7 +12,6 @@ import { riskRoutes } from "./routes/riskRoutes.ts";
 import { measureRoutes } from "./routes/measureRoutes.ts";
 import { documentsRoutes } from "./routes/documentsRoutes.ts";
 import { vendorRoutes } from "./routes/vendorRoutes.ts";
-import { organizationViewQuery } from "./hooks/graph/OrganizationGraph.ts";
 import { peopleRoutes } from "./routes/peopleRoutes.ts";
 import { frameworkRoutes } from "./routes/frameworkRoutes.ts";
 import { PageError } from "./components/PageError.tsx";
@@ -209,27 +208,23 @@ const routes = [
       {
         path: "settings",
         Fallback: PageSkeleton,
-        loader: loaderFromQueryLoader(({ organizationId }) =>
-          loadQuery(coreEnvironment, organizationViewQuery, {
-            organizationId: organizationId!,
-          }),
-        ),
-        Component: withQueryRef(
-          lazy(() => import("./pages/organizations/SettingsPage")),
+        Component: lazy(
+          () => import("./pages/iam/organizations/settings/SettingsLayout.tsx"),
         ),
         children: [
           {
-            path: "",
+            index: true,
             loader: () => {
               throw redirect("general");
             },
           },
-          // {
-          //   path: "general",
-          //   Component: lazy(
-          //     () => import("./pages/organizations/settings/GeneralSettingsTab")
-          //   ),
-          // },
+          {
+            path: "general",
+            Component: lazy(
+              () =>
+                import("./pages/iam/organizations/settings/GeneralSettingsPageQuery.tsx"),
+            ),
+          },
           // {
           //   path: "members",
           //   Component: lazy(
