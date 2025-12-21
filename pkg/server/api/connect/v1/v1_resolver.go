@@ -637,12 +637,36 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input types.C
 
 // UpdateOrganization is the resolver for the updateOrganization field.
 func (r *mutationResolver) UpdateOrganization(ctx context.Context, input types.UpdateOrganizationInput) (*types.UpdateOrganizationPayload, error) {
+	req := &iam.UpdateOrganizationRequest{
+		Name:               input.Name,
+		Description:        UnwrapOmittable(input.Description),
+		WebsiteURL:         UnwrapOmittable(input.WebsiteURL),
+		Email:              UnwrapOmittable(input.Email),
+		HeadquarterAddress: UnwrapOmittable(input.HeadquarterAddress),
+	}
+
+	if input.LogoFile != nil {
+		req.LogoFile = &iam.UploadedFile{
+			Filename:    input.LogoFile.Filename,
+			ContentType: input.LogoFile.ContentType,
+			Size:        input.LogoFile.Size,
+			Content:     input.LogoFile.File,
+		}
+	}
+
+	if input.HorizontalLogoFile != nil {
+		req.HorizontalLogoFile = &iam.UploadedFile{
+			Filename:    input.HorizontalLogoFile.Filename,
+			ContentType: input.HorizontalLogoFile.ContentType,
+			Size:        input.HorizontalLogoFile.Size,
+			Content:     input.HorizontalLogoFile.File,
+		}
+	}
+
 	organization, err := r.iam.OrganizationService.UpdateOrganization(
 		ctx,
 		input.OrganizationID,
-		&iam.UpdateOrganizationRequest{
-			Name: input.Name,
-		},
+		req,
 	)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot update organization", log.Error(err))
@@ -668,6 +692,11 @@ func (r *mutationResolver) DeleteOrganization(ctx context.Context, input types.D
 	}
 
 	return &types.DeleteOrganizationPayload{DeletedOrganizationID: input.OrganizationID}, nil
+}
+
+// DeleteOrganizationHorizontalLogo is the resolver for the deleteOrganizationHorizontalLogo field.
+func (r *mutationResolver) DeleteOrganizationHorizontalLogo(ctx context.Context, input types.DeleteOrganizationHorizontalLogoInput) (*types.DeleteOrganizationHorizontalLogoPayload, error) {
+	panic(fmt.Errorf("not implemented: DeleteOrganizationHorizontalLogo - deleteOrganizationHorizontalLogo"))
 }
 
 // InviteMember is the resolver for the inviteMember field.

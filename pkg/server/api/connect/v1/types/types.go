@@ -139,6 +139,14 @@ type DeleteInvitationPayload struct {
 	DeletedInvitationID gid.GID `json:"deletedInvitationId"`
 }
 
+type DeleteOrganizationHorizontalLogoInput struct {
+	OrganizationID gid.GID `json:"organizationId"`
+}
+
+type DeleteOrganizationHorizontalLogoPayload struct {
+	Organization *Organization `json:"organization"`
+}
+
 type DeleteOrganizationInput struct {
 	OrganizationID gid.GID `json:"organizationId"`
 }
@@ -264,6 +272,10 @@ type Organization struct {
 	Name                  string                       `json:"name"`
 	LogoURL               *string                      `json:"logoUrl,omitempty"`
 	HorizontalLogoURL     *string                      `json:"horizontalLogoUrl,omitempty"`
+	Email                 *string                      `json:"email,omitempty"`
+	Description           *string                      `json:"description,omitempty"`
+	WebsiteURL            *string                      `json:"websiteUrl,omitempty"`
+	HeadquarterAddress    *string                      `json:"headquarterAddress,omitempty"`
 	CreatedAt             time.Time                    `json:"createdAt"`
 	UpdatedAt             time.Time                    `json:"updatedAt"`
 	Members               *MembershipConnection        `json:"members,omitempty"`
@@ -516,10 +528,14 @@ type UpdateIdentityProfilePayload struct {
 }
 
 type UpdateOrganizationInput struct {
-	OrganizationID     gid.GID                            `json:"organizationId"`
-	Name               *string                            `json:"name,omitempty"`
-	LogoFile           graphql.Omittable[*graphql.Upload] `json:"logoFile,omitempty"`
-	HorizontalLogoFile graphql.Omittable[*graphql.Upload] `json:"horizontalLogoFile,omitempty"`
+	OrganizationID     gid.GID                    `json:"organizationId"`
+	Name               *string                    `json:"name,omitempty"`
+	LogoFile           *graphql.Upload            `json:"logoFile,omitempty"`
+	HorizontalLogoFile *graphql.Upload            `json:"horizontalLogoFile,omitempty"`
+	Description        graphql.Omittable[*string] `json:"description,omitempty"`
+	WebsiteURL         graphql.Omittable[*string] `json:"websiteUrl,omitempty"`
+	Email              graphql.Omittable[*string] `json:"email,omitempty"`
+	HeadquarterAddress graphql.Omittable[*string] `json:"headquarterAddress,omitempty"`
 }
 
 type UpdateOrganizationPayload struct {
