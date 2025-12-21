@@ -1,27 +1,25 @@
 import { usePreloadedQuery, type PreloadedQuery } from "react-relay";
-import { organizationLayoutQuery } from "./OrganizationLayoutQuery";
+import { membershipLayoutQuery } from "./MembershipLayoutQuery";
 import { Link, Outlet } from "react-router";
 import { Badge, Button, IconPeopleAdd, Layout, Skeleton } from "@probo/ui";
 import { Sidebar } from "./_components/Sidebar";
-import { OrganizationDropdown } from "./_components/OrganizationDropdown";
-import type { OrganizationLayoutQuery } from "./__generated__/OrganizationLayoutQuery.graphql";
+import { MembershipsDropdown } from "./MembershipsDropdown";
+import type { MembershipLayoutQuery } from "./__generated__/MembershipLayoutQuery.graphql";
 import { PermissionsProvider } from "/providers/PermissionsProvider";
 import { SessionDropdown } from "./_components/SessionDropdown";
 import { Suspense } from "react";
 import { useTranslate } from "@probo/i18n";
 import { CoreRelayProvider } from "/providers/CoreRelayProvider";
 
-interface OrganizationLayoutProps {
-  queryRef: PreloadedQuery<OrganizationLayoutQuery>;
-}
-
-export default function OrganizationLayout(props: OrganizationLayoutProps) {
+export default function MembershipLayout(props: {
+  queryRef: PreloadedQuery<MembershipLayoutQuery>;
+}) {
   const { queryRef } = props;
 
   const { __ } = useTranslate();
 
-  const { organization, viewer } = usePreloadedQuery<OrganizationLayoutQuery>(
-    organizationLayoutQuery,
+  const { organization, viewer } = usePreloadedQuery<MembershipLayoutQuery>(
+    membershipLayoutQuery,
     queryRef,
   );
 
@@ -31,7 +29,7 @@ export default function OrganizationLayout(props: OrganizationLayoutProps) {
         header={
           <>
             <div className="mr-auto">
-              <OrganizationDropdown
+              <MembershipsDropdown
                 organizationFKey={organization}
                 viewerFKey={viewer}
               />

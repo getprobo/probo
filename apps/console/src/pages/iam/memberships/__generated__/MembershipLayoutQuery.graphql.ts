@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<09fbc762db2d00eb944a0ef9afe3756d>>
+ * @generated SignedSource<<4b0d5d271f19e23939fc2b392aa79fbc>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,23 +10,23 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
-export type OrganizationLayoutQuery$variables = {
+export type MembershipLayoutQuery$variables = {
   organizationId: string;
 };
-export type OrganizationLayoutQuery$data = {
+export type MembershipLayoutQuery$data = {
   readonly organization: {
-    readonly " $fragmentSpreads": FragmentRefs<"OrganizationDropdown_organizationFragment">;
+    readonly " $fragmentSpreads": FragmentRefs<"MembershipsDropdown_organizationFragment">;
   };
   readonly viewer: {
     readonly pendingInvitations: {
       readonly totalCount: number;
     };
-    readonly " $fragmentSpreads": FragmentRefs<"OrganizationDropdown_viewerFragment" | "SessionDropdownFragment">;
+    readonly " $fragmentSpreads": FragmentRefs<"MembershipsDropdown_viewerFragment" | "SessionDropdownFragment">;
   };
 };
-export type OrganizationLayoutQuery = {
-  response: OrganizationLayoutQuery$data;
-  variables: OrganizationLayoutQuery$variables;
+export type MembershipLayoutQuery = {
+  response: MembershipLayoutQuery$data;
+  variables: MembershipLayoutQuery$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -70,7 +70,7 @@ return {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Fragment",
     "metadata": null,
-    "name": "OrganizationLayoutQuery",
+    "name": "MembershipLayoutQuery",
     "selections": [
       {
         "kind": "RequiredField",
@@ -88,7 +88,7 @@ return {
                 {
                   "args": null,
                   "kind": "FragmentSpread",
-                  "name": "OrganizationDropdown_organizationFragment"
+                  "name": "MembershipsDropdown_organizationFragment"
                 }
               ],
               "type": "Organization",
@@ -112,7 +112,7 @@ return {
             {
               "args": null,
               "kind": "FragmentSpread",
-              "name": "OrganizationDropdown_viewerFragment"
+              "name": "MembershipsDropdown_viewerFragment"
             },
             {
               "kind": "RequiredField",
@@ -152,7 +152,7 @@ return {
   "operation": {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
-    "name": "OrganizationLayoutQuery",
+    "name": "MembershipLayoutQuery",
     "selections": [
       {
         "alias": "organization",
@@ -247,16 +247,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "ca7f41668eb74024237351d0e076819e",
+    "cacheID": "a849dd96b5088ddc9a3bbab50273c411",
     "id": null,
     "metadata": {},
-    "name": "OrganizationLayoutQuery",
+    "name": "MembershipLayoutQuery",
     "operationKind": "query",
-    "text": "query OrganizationLayoutQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      ...OrganizationDropdown_organizationFragment\n    }\n    id\n  }\n  viewer {\n    ...OrganizationDropdown_viewerFragment\n    pendingInvitations {\n      totalCount\n    }\n    ...SessionDropdownFragment_4xMPKw\n    id\n  }\n}\n\nfragment OrganizationDropdown_organizationFragment on Organization {\n  name\n}\n\nfragment OrganizationDropdown_viewerFragment on Identity {\n  pendingInvitations {\n    totalCount\n  }\n}\n\nfragment SessionDropdownFragment_4xMPKw on Identity {\n  email\n  profileFor(organizationId: $organizationId) {\n    firstName\n    lastName\n    id\n  }\n}\n"
+    "text": "query MembershipLayoutQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      ...MembershipsDropdown_organizationFragment\n    }\n    id\n  }\n  viewer {\n    ...MembershipsDropdown_viewerFragment\n    pendingInvitations {\n      totalCount\n    }\n    ...SessionDropdownFragment_4xMPKw\n    id\n  }\n}\n\nfragment MembershipsDropdown_organizationFragment on Organization {\n  name\n}\n\nfragment MembershipsDropdown_viewerFragment on Identity {\n  pendingInvitations {\n    totalCount\n  }\n}\n\nfragment SessionDropdownFragment_4xMPKw on Identity {\n  email\n  profileFor(organizationId: $organizationId) {\n    firstName\n    lastName\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "81b8eb0af21d649268e30c80d16226de";
+(node as any).hash = "e28f1f5e510386718b39cd547d4ce59f";
 
 export default node;

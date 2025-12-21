@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<d4b9efa7b9092ceb3f995507108a68e3>>
+ * @generated SignedSource<<842fffc896db6311ff3c5901eae70176>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,22 +10,22 @@
 
 import { ReaderFragment } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
-export type OrganizationDropdown_viewerFragment$data = {
+export type MembershipsDropdown_viewerFragment$data = {
   readonly pendingInvitations: {
     readonly totalCount: number;
   };
-  readonly " $fragmentType": "OrganizationDropdown_viewerFragment";
+  readonly " $fragmentType": "MembershipsDropdown_viewerFragment";
 };
-export type OrganizationDropdown_viewerFragment$key = {
-  readonly " $data"?: OrganizationDropdown_viewerFragment$data;
-  readonly " $fragmentSpreads": FragmentRefs<"OrganizationDropdown_viewerFragment">;
+export type MembershipsDropdown_viewerFragment$key = {
+  readonly " $data"?: MembershipsDropdown_viewerFragment$data;
+  readonly " $fragmentSpreads": FragmentRefs<"MembershipsDropdown_viewerFragment">;
 };
 
 const node: ReaderFragment = {
   "argumentDefinitions": [],
   "kind": "Fragment",
   "metadata": null,
-  "name": "OrganizationDropdown_viewerFragment",
+  "name": "MembershipsDropdown_viewerFragment",
   "selections": [
     {
       "kind": "RequiredField",
@@ -58,6 +58,6 @@ const node: ReaderFragment = {
   "abstractKey": null
 };
 
-(node as any).hash = "ce947f812c95b74e9f250b8d5821ebb0";
+(node as any).hash = "96b64fbc2481273728051e42d74bc8b5";
 
 export default node;

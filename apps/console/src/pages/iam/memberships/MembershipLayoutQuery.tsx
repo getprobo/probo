@@ -4,19 +4,19 @@ import { graphql } from "relay-runtime";
 import { Suspense, useEffect } from "react";
 import { Skeleton } from "@probo/ui";
 import { useOrganizationId } from "/hooks/useOrganizationId";
-import type { OrganizationLayoutQuery } from "./__generated__/OrganizationLayoutQuery.graphql";
+import type { MembershipLayoutQuery } from "./__generated__/MembershipLayoutQuery.graphql";
 
-const Layout = lazy(() => import("./OrganizationLayout"));
+const Layout = lazy(() => import("./MembershipLayout"));
 
-export const organizationLayoutQuery = graphql`
-  query OrganizationLayoutQuery($organizationId: ID!) {
+export const membershipLayoutQuery = graphql`
+  query MembershipLayoutQuery($organizationId: ID!) {
     organization: node(id: $organizationId) @required(action: THROW) {
       ... on Organization {
-        ...OrganizationDropdown_organizationFragment
+        ...MembershipsDropdown_organizationFragment
       }
     }
     viewer @required(action: THROW) {
-      ...OrganizationDropdown_viewerFragment
+      ...MembershipsDropdown_viewerFragment
       pendingInvitations @required(action: THROW) {
         totalCount @required(action: THROW)
       }
@@ -25,10 +25,10 @@ export const organizationLayoutQuery = graphql`
   }
 `;
 
-export function OrganizationLayoutQuery() {
+export function MembershipLayoutQuery() {
   const organizationId = useOrganizationId();
-  const [queryRef, loadQuery] = useQueryLoader<OrganizationLayoutQuery>(
-    organizationLayoutQuery,
+  const [queryRef, loadQuery] = useQueryLoader<MembershipLayoutQuery>(
+    membershipLayoutQuery,
   );
 
   useEffect(() => {

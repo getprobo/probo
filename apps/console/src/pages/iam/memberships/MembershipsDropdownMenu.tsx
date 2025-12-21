@@ -1,10 +1,10 @@
 import { graphql, usePreloadedQuery, type PreloadedQuery } from "react-relay";
-import type { OrganizationDropdownMenuQuery } from "./__generated__/OrganizationDropdownMenuQuery.graphql";
+import type { MembershipsDropdownMenuQuery } from "./__generated__/MembershipsDropdownMenuQuery.graphql";
 import { useMemo } from "react";
-import { OrganizationDropdownMenuItem } from "./OrganizationDropdownMenuItem";
+import { MembershipsDropdownMenuItem } from "./MembershipsDropdownMenuItem";
 
-export const organizationDropdownMenuQuery = graphql`
-  query OrganizationDropdownMenuQuery {
+export const membershipsDropdownMenuQuery = graphql`
+  query MembershipsDropdownMenuQuery {
     viewer @required(action: THROW) {
       memberships(first: 1000, orderBy: { direction: DESC, field: CREATED_AT })
         @required(action: THROW) {
@@ -14,7 +14,7 @@ export const organizationDropdownMenuQuery = graphql`
             organization @required(action: THROW) {
               name
             }
-            ...OrganizationDropdownMenuItemFragment
+            ...MembershipsDropdownMenuItemFragment
           }
         }
       }
@@ -22,20 +22,20 @@ export const organizationDropdownMenuQuery = graphql`
   }
 `;
 
-interface OrganizationDropdownMenuProps {
-  queryRef: PreloadedQuery<OrganizationDropdownMenuQuery>;
+interface MembershipsDropdownMenuProps {
+  queryRef: PreloadedQuery<MembershipsDropdownMenuQuery>;
   search: string;
 }
 
-export function OrganizationDropdownMenu(props: OrganizationDropdownMenuProps) {
+export function MembershipsDropdownMenu(props: MembershipsDropdownMenuProps) {
   const { queryRef, search } = props;
 
   const {
     viewer: {
       memberships: { edges: initialMemberships },
     },
-  } = usePreloadedQuery<OrganizationDropdownMenuQuery>(
-    organizationDropdownMenuQuery,
+  } = usePreloadedQuery<MembershipsDropdownMenuQuery>(
+    membershipsDropdownMenuQuery,
     queryRef,
   );
 
@@ -52,7 +52,7 @@ export function OrganizationDropdownMenu(props: OrganizationDropdownMenuProps) {
   return (
     <>
       {memberships.map(({ node }) => (
-        <OrganizationDropdownMenuItem fKey={node} key={node.id} />
+        <MembershipsDropdownMenuItem fKey={node} key={node.id} />
       ))}
     </>
   );

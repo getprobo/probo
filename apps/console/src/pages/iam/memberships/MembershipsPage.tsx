@@ -9,15 +9,15 @@ import {
 } from "@probo/ui";
 import { useMemo, useState } from "react";
 import { InvitationCard } from "./_components/InvitationCard";
-import { organizationsPageQuery } from "./OrganizationsPageQuery";
+import { membershipsPageQuery } from "./MembershipsPageQuery";
 import { MembershipCard } from "./_components/MembershipCard";
-import type { OrganizationsPageQuery } from "./__generated__/OrganizationsPageQuery.graphql";
+import type { MembershipsPageQuery } from "./__generated__/MembershipsPageQuery.graphql";
 
 interface PageProps {
-  queryRef: PreloadedQuery<OrganizationsPageQuery>;
+  queryRef: PreloadedQuery<MembershipsPageQuery>;
 }
 
-export default function Page(props: PageProps) {
+export default function MembershipsPage(props: PageProps) {
   const { __ } = useTranslate();
   const [search, setSearch] = useState("");
 
@@ -27,10 +27,7 @@ export default function Page(props: PageProps) {
       memberships: { edges: initialMemberships },
       pendingInvitations: { edges: invitations },
     },
-  } = usePreloadedQuery<OrganizationsPageQuery>(
-    organizationsPageQuery,
-    queryRef,
-  );
+  } = usePreloadedQuery<MembershipsPageQuery>(membershipsPageQuery, queryRef);
 
   const memberships = useMemo(() => {
     if (!search.trim()) {

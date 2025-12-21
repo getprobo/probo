@@ -46,8 +46,8 @@ import {
   UnAuthenticatedError,
   UnauthorizedError,
 } from "@probo/relay";
-import { OrganizationsPageQuery } from "./pages/iam/organizations/OrganizationsPageQuery.tsx";
-import { OrganizationLayoutQuery } from "./pages/iam/organizations/OrganizationLayoutQuery.tsx";
+import { MembershipsPageQuery } from "./pages/iam/memberships/MembershipsPageQuery.tsx";
+import { MembershipLayoutQuery } from "./pages/iam/memberships/MembershipLayoutQuery.tsx";
 import { IAMRelayProvider } from "./providers/IAMRelayProvider.tsx";
 
 const NewOrganizationPage = lazy(
@@ -120,7 +120,7 @@ const routes = [
         index: true,
         Component: () => (
           <IAMRelayProvider>
-            <OrganizationsPageQuery />
+            <MembershipsPageQuery />
           </IAMRelayProvider>
         ),
       },
@@ -186,7 +186,7 @@ const routes = [
     path: "/organizations/:organizationId",
     Component: () => (
       <IAMRelayProvider>
-        <OrganizationLayoutQuery />
+        <MembershipLayoutQuery />
       </IAMRelayProvider>
     ),
     ErrorBoundary: ErrorBoundary,

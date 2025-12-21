@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<6ac0b24d615666de1a5ea1c751095e6d>>
+ * @generated SignedSource<<ab48c4d454e4f9fa4472a103b8144b7c>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,8 +10,8 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
-export type OrganizationsPageQuery$variables = Record<PropertyKey, never>;
-export type OrganizationsPageQuery$data = {
+export type MembershipsPageQuery$variables = Record<PropertyKey, never>;
+export type MembershipsPageQuery$data = {
   readonly viewer: {
     readonly memberships: {
       readonly edges: ReadonlyArray<{
@@ -34,9 +34,9 @@ export type OrganizationsPageQuery$data = {
     };
   };
 };
-export type OrganizationsPageQuery = {
-  response: OrganizationsPageQuery$data;
-  variables: OrganizationsPageQuery$variables;
+export type MembershipsPageQuery = {
+  response: MembershipsPageQuery$data;
+  variables: MembershipsPageQuery$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -74,7 +74,7 @@ return {
     "argumentDefinitions": [],
     "kind": "Fragment",
     "metadata": null,
-    "name": "OrganizationsPageQuery",
+    "name": "MembershipsPageQuery",
     "selections": [
       {
         "kind": "RequiredField",
@@ -217,7 +217,7 @@ return {
   "operation": {
     "argumentDefinitions": [],
     "kind": "Operation",
-    "name": "OrganizationsPageQuery",
+    "name": "MembershipsPageQuery",
     "selections": [
       {
         "alias": null,
@@ -368,16 +368,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "146deb87c5d32960212f323b4f5c792c",
+    "cacheID": "70ba2b8cec46ba8154cf7a6a51e03932",
     "id": null,
     "metadata": {},
-    "name": "OrganizationsPageQuery",
+    "name": "MembershipsPageQuery",
     "operationKind": "query",
-    "text": "query OrganizationsPageQuery {\n  viewer {\n    memberships(first: 1000, orderBy: {direction: DESC, field: CREATED_AT}) {\n      edges {\n        node {\n          id\n          ...MembershipCardFragment\n          organization {\n            name\n            id\n          }\n        }\n      }\n    }\n    pendingInvitations(first: 1000, orderBy: {direction: DESC, field: CREATED_AT}) {\n      edges {\n        node {\n          id\n          ...InvitationCardFragment\n        }\n      }\n    }\n    id\n  }\n}\n\nfragment InvitationCardFragment on Invitation {\n  id\n  role\n  createdAt\n  organization {\n    id\n    name\n  }\n}\n\nfragment MembershipCardFragment on Membership {\n  lastSession {\n    id\n    expiresAt\n  }\n  organization {\n    id\n    name\n    logoUrl\n  }\n}\n"
+    "text": "query MembershipsPageQuery {\n  viewer {\n    memberships(first: 1000, orderBy: {direction: DESC, field: CREATED_AT}) {\n      edges {\n        node {\n          id\n          ...MembershipCardFragment\n          organization {\n            name\n            id\n          }\n        }\n      }\n    }\n    pendingInvitations(first: 1000, orderBy: {direction: DESC, field: CREATED_AT}) {\n      edges {\n        node {\n          id\n          ...InvitationCardFragment\n        }\n      }\n    }\n    id\n  }\n}\n\nfragment InvitationCardFragment on Invitation {\n  id\n  role\n  createdAt\n  organization {\n    id\n    name\n  }\n}\n\nfragment MembershipCardFragment on Membership {\n  lastSession {\n    id\n    expiresAt\n  }\n  organization {\n    id\n    name\n    logoUrl\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "7c03287e592920408306cac9bfa7fc81";
+(node as any).hash = "4148521eb3eaba1670a2d181b6d2468f";
 
 export default node;
