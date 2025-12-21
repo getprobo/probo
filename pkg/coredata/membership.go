@@ -62,18 +62,32 @@ func (m Membership) CursorKey(orderBy MembershipOrderField) page.CursorKey {
 
 func (m *Membership) LoadByIdentityInOrganization(ctx context.Context, conn pg.Conn, identityID gid.GID, organizationID gid.GID) error {
 	q := `
+WITH mbr AS (
+    SELECT
+        id,
+        identity_id,
+        organization_id,
+        role,
+        created_at,
+        updated_at
+    FROM
+        iam_memberships
+    WHERE
+        identity_id = @identity_id
+        AND organization_id = @organization_id
+)
 SELECT
-		id,
-		identity_id,
-		organization_id,
-		role,
-		created_at,
-		updated_at
+    mbr.id,
+    mbr.identity_id,
+    mbr.organization_id,
+    mbr.role,
+    i.fullname AS full_name,
+    i.email_address,
+    mbr.created_at,
+    mbr.updated_at
 FROM
-	iam_memberships
-WHERE
-	identity_id = @identity_id
-	AND organization_id = @organization_id
+    mbr
+JOIN identities i ON mbr.identity_id = i.id
 `
 
 	args := pgx.StrictNamedArgs{
@@ -157,18 +171,18 @@ func (m *Membership) LoadByID(
 ) error {
 	query := `
 WITH mbr AS (
-	SELECT
-		id,
-		identity_id,
-		organization_id,
-		role,
-		created_at,
-		updated_at
-	FROM
-		iam_memberships
-	WHERE
-		id = @membership_id
-		AND %s
+    SELECT
+        id,
+        identity_id,
+        organization_id,
+        role,
+        created_at,
+        updated_at
+    FROM
+        iam_memberships
+    WHERE
+        id = @membership_id
+        AND %s
 )
 SELECT
     mbr.id,
@@ -237,19 +251,19 @@ func (m *Membership) LoadRoleByIdentityAndEntityID(
 
 	query := fmt.Sprintf(`
 SELECT
-	m.id,
-	m.identity_id,
-	m.organization_id,
-	m.role,
-	m.created_at,
-	m.updated_at
+    m.id,
+    m.identity_id,
+    m.organization_id,
+    m.role,
+    m.created_at,
+    m.updated_at
 FROM
-	iam_memberships m
-	INNER JOIN %s e ON e.id = @entity_id
+    iam_memberships m
+    INNER JOIN %s e ON e.id = @entity_id
 WHERE
-	%s
-	AND m.identity_id = @identity_id
-	AND m.organization_id = e.organization_id
+    %s
+    AND m.identity_id = @identity_id
+    AND m.organization_id = e.organization_id
 LIMIT 1;
 `, tableName, scopeFragment)
 
@@ -296,19 +310,19 @@ func (m *Membership) LoadByIdentityAndOrg(
 ) error {
 	q := `
 WITH mbr AS (
-	SELECT
-		am.id,
-		am.identity_id,
-		am.organization_id,
-		am.role,
-		am.created_at,
-		am.updated_at
-	FROM
-		iam_memberships am
-	WHERE
-		am.identity_id = @identity_id
-		AND am.organization_id = @organization_id
-		AND %s
+    SELECT
+        am.id,
+        am.identity_id,
+        am.organization_id,
+        am.role,
+        am.created_at,
+        am.updated_at
+    FROM
+        iam_memberships am
+    WHERE
+        am.identity_id = @identity_id
+        AND am.organization_id = @organization_id
+        AND %s
 )
 SELECT
     mbr.id,
@@ -389,7 +403,7 @@ func (m *Membership) Delete(ctx context.Context, conn pg.Conn, scope Scoper, mem
 DELETE FROM
     iam_memberships
 WHERE
-	%s
+    %s
     AND id = @membership_id
 `
 
@@ -421,20 +435,20 @@ func (m *Memberships) LoadByIdentityID(
 ) error {
 	query := `
 WITH mbr AS (
-	SELECT
-		id,
-		identity_id,
-		organization_id,
-		role,
-		created_at,
-		updated_at
-	FROM
-		iam_memberships
-	WHERE
-		identity_id = @identity_id
-		AND %s
-	ORDER BY
-		created_at DESC
+    SELECT
+        id,
+        identity_id,
+        organization_id,
+        role,
+        created_at,
+        updated_at
+    FROM
+        iam_memberships
+    WHERE
+        identity_id = @identity_id
+        AND %s
+    ORDER BY
+        created_at DESC
 )
 SELECT
     mbr.id,
@@ -483,18 +497,18 @@ func (m *Memberships) LoadByOrganizationID(
 ) error {
 	query := `
 WITH mbr AS (
-	SELECT
-		id,
-		identity_id,
-		organization_id,
-		role,
-		created_at,
-		updated_at
-	FROM
-		iam_memberships
-	WHERE
-		organization_id = @organization_id
-		AND %s
+    SELECT
+        id,
+        identity_id,
+        organization_id,
+        role,
+        created_at,
+        updated_at
+    FROM
+        iam_memberships
+    WHERE
+        organization_id = @organization_id
+        AND %s
 )
 SELECT
     id,
@@ -506,19 +520,19 @@ SELECT
     created_at,
     updated_at
 FROM (
-	SELECT
-		mbr.id,
-		mbr.identity_id,
-		mbr.organization_id,
-		mbr.role,
-		i.fullname as full_name,
-		i.email_address,
-		mbr.created_at,
-		mbr.updated_at
-	FROM
-		mbr
-	JOIN
-		identities i ON mbr.identity_id = i.id
+    SELECT
+        mbr.id,
+        mbr.identity_id,
+        mbr.organization_id,
+        mbr.role,
+        i.fullname as full_name,
+        i.email_address,
+        mbr.created_at,
+        mbr.updated_at
+    FROM
+        mbr
+    JOIN
+        identities i ON mbr.identity_id = i.id
 ) AS membership_with_identity
 WHERE %s
 `

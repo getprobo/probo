@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<2bde2fba4e4897436af08d9dd700b265>>
+ * @generated SignedSource<<034b9a96de4b1efda9529e8165779342>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -248,12 +248,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "8338998501d59b0036d1eaf98dff1ffb",
+    "cacheID": "b880e24e59e2bb500bbb2b9026423c20",
     "id": null,
     "metadata": {},
     "name": "OrganizationDropdownMenuQuery",
     "operationKind": "query",
-    "text": "query OrganizationDropdownMenuQuery {\n  viewer {\n    memberships(first: 1000, orderBy: {direction: DESC, field: CREATED_AT}) {\n      edges {\n        node {\n          id\n          organization {\n            name\n            id\n          }\n          ...OrganizationDropdownMenuItemFragment\n        }\n      }\n    }\n    id\n  }\n}\n\nfragment OrganizationDropdownMenuItemFragment on Membership {\n  id\n  lastSession {\n    id\n    expiresAt\n  }\n  organization {\n    logoUrl\n    name\n    id\n  }\n}\n"
+    "text": "query OrganizationDropdownMenuQuery {\n  viewer {\n    memberships(first: 1000, orderBy: {direction: DESC, field: CREATED_AT}) {\n      edges {\n        node {\n          id\n          organization {\n            name\n            id\n          }\n          ...OrganizationDropdownMenuItemFragment\n        }\n      }\n    }\n    id\n  }\n}\n\nfragment OrganizationDropdownMenuItemFragment on Membership {\n  id\n  lastSession {\n    id\n    expiresAt\n  }\n  organization {\n    id\n    logoUrl\n    name\n  }\n}\n"
   }
 };
 })();
