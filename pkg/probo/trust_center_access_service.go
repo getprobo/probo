@@ -16,6 +16,7 @@ package probo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 	"time"
@@ -26,6 +27,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
+	"go.probo.inc/probo/pkg/slack"
 	"go.probo.inc/probo/pkg/statelesstoken"
 	"go.probo.inc/probo/pkg/validator"
 )
@@ -365,7 +367,10 @@ func (s TrustCenterAccessService) Update(
 
 	if shouldUpdateSlackMessage {
 		if err := s.svc.SlackMessages.QueueSlackNotification(ctx, access.Email, access.TrustCenterID); err != nil {
-			return nil, fmt.Errorf("cannot queue slack notification: %w", err)
+			var noConnectorErr slack.ErrNoSlackConnector
+			if !errors.Is(err, noConnectorErr) {
+				return nil, fmt.Errorf("cannot queue slack notification: %w", err)
+			}
 		}
 	}
 
