@@ -81,11 +81,8 @@ func NewMux(
 
 	safeRedirect := &saferedirect.SafeRedirect{AllowedHost: baseURL.Host()}
 
-	sessionMiddleware := connect_v1.NewSessionMiddleware(iamSvc, cookieConfig)
-	apiKeyMiddleware := connect_v1.NewAPIKeyMiddleware(iamSvc)
-
-	r.Use(sessionMiddleware)
-	r.Use(apiKeyMiddleware)
+	r.Use(connect_v1.NewSessionMiddleware(iamSvc, cookieConfig))
+	r.Use(connect_v1.NewAPIKeyMiddleware(iamSvc))
 
 	config := schema.Config{
 		Resolvers: &Resolver{
@@ -313,14 +310,6 @@ func NewMux(
 
 func (r *Resolver) ProboService(ctx context.Context, tenantID gid.TenantID) *probo.TenantService {
 	return GetTenantService(ctx, r.probo, tenantID)
-}
-
-func UnwrapOmittable[T any](field graphql.Omittable[T]) *T {
-	if !field.IsSet() {
-		return nil
-	}
-	value := field.Value()
-	return &value
 }
 
 func GetTenantService(ctx context.Context, proboSvc *probo.Service, tenantID gid.TenantID) *probo.TenantService {
