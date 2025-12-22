@@ -2126,6 +2126,10 @@ func (r *mutationResolver) DeletePeople(ctx context.Context, input types.DeleteP
 
 	err := prb.Peoples.Delete(ctx, input.PeopleID)
 	if err != nil {
+		var errReferenced *coredata.ErrPeopleReferenced
+		if errors.As(err, &errReferenced) {
+			return nil, gqlutils.Conflict(errReferenced)
+		}
 		panic(fmt.Errorf("cannot delete people: %w", err))
 	}
 
