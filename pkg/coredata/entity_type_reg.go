@@ -70,6 +70,7 @@ const (
 	DataProtectionImpactAssessmentEntityType   uint16 = 46
 	TransferImpactAssessmentEntityType         uint16 = 47
 	RightsRequestEntityType                    uint16 = 48
+	IdentityProfileEntityType                  uint16 = 49
 )
 
 type EntityInfo struct {
@@ -273,6 +274,10 @@ var entityRegistry = map[uint16]EntityInfo{
 	RightsRequestEntityType: {
 		Model: "RightsRequest",
 		Table: "rights_requests",
+	},
+	IdentityProfileEntityType: {
+		Model: "IdentityProfile",
+		Table: "iam_identity_profiles",
 	},
 }
 

@@ -61,9 +61,14 @@ func NewMembershipEdge(membership *coredata.Membership, orderField coredata.Memb
 
 func NewMembership(membership *coredata.Membership) *Membership {
 	return &Membership{
-		ID:         membership.ID,
-		IdentityID: membership.IdentityID,
-		CreatedAt:  membership.CreatedAt,
+		ID:        membership.ID,
+		CreatedAt: membership.CreatedAt,
+		Identity: &Identity{
+			ID: membership.IdentityID,
+		},
+		Organization: &Organization{
+			ID: membership.OrganizationID,
+		},
 		// Permissions:   membership.Permissions,
 		// ProvisionedBy: membership.ProvisionedBy,
 		// Active:        membership.Active,

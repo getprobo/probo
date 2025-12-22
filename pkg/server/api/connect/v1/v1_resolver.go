@@ -24,6 +24,17 @@ import (
 	"go.probo.inc/probo/pkg/server/gqlutils/types/cursor"
 )
 
+// DefaultProfile is the resolver for the defaultProfile field.
+func (r *identityResolver) DefaultProfile(ctx context.Context, obj *types.Identity) (*types.IdentityProfile, error) {
+	profile, err := r.iam.AccountService.GetDefaultProfile(ctx, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get default profile", log.Error(err))
+		return nil, gqlutils.InternalServerError(ctx)
+	}
+
+	return types.NewIdentityProfile(profile), nil
+}
+
 // Memberships is the resolver for the memberships field.
 func (r *identityResolver) Memberships(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MembershipOrderBy) (*types.MembershipConnection, error) {
 	pageOrderBy := page.OrderBy[coredata.MembershipOrderField]{
@@ -41,7 +52,8 @@ func (r *identityResolver) Memberships(ctx context.Context, obj *types.Identity,
 
 	page, err := r.iam.AccountService.ListMemberships(ctx, obj.ID, cursor)
 	if err != nil {
-		panic(fmt.Errorf("cannot list memberships: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot list memberships", log.Error(err))
+		return nil, gqlutils.InternalServerError(ctx)
 	}
 
 	return types.NewMembershipConnection(page, r, obj.ID), nil
@@ -58,7 +70,8 @@ func (r *identityResolver) PendingInvitations(ctx context.Context, obj *types.Id
 
 	page, err := r.iam.AccountService.ListPendingInvitations(ctx, obj.ID, cursor)
 	if err != nil {
-		panic(fmt.Errorf("cannot list pending invitations: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot list pending invitations", log.Error(err))
+		return nil, gqlutils.InternalServerError(ctx)
 	}
 
 	return types.NewInvitationConnection(page, r, obj.ID, nil), nil
@@ -81,7 +94,8 @@ func (r *identityResolver) Sessions(ctx context.Context, obj *types.Identity, fi
 
 	page, err := r.iam.AccountService.ListSessions(ctx, obj.ID, cursor)
 	if err != nil {
-		panic(fmt.Errorf("cannot list sessions: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot list sessions", log.Error(err))
+		return nil, gqlutils.InternalServerError(ctx)
 	}
 
 	return types.NewSessionConnection(page, r, obj.ID), nil
@@ -98,7 +112,8 @@ func (r *identityResolver) PersonalAPIKeys(ctx context.Context, obj *types.Ident
 
 	page, err := r.iam.AccountService.ListPersonalAPIKeys(ctx, obj.ID, cursor)
 	if err != nil {
-		panic(fmt.Errorf("cannot list personal api keys: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot list personal api keys", log.Error(err))
+		return nil, gqlutils.InternalServerError(ctx)
 	}
 
 	return types.NewPersonalAPIKeyConnection(page, r, obj.ID), nil
@@ -108,7 +123,8 @@ func (r *identityResolver) PersonalAPIKeys(ctx context.Context, obj *types.Ident
 func (r *invitationResolver) Organization(ctx context.Context, obj *types.Invitation) (*types.Organization, error) {
 	organization, err := r.iam.OrganizationService.GetOrganizationForInvitation(ctx, obj.ID)
 	if err != nil {
-		panic(fmt.Errorf("cannot get organization for invitation: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot get organization for invitation", log.Error(err))
+		return nil, gqlutils.InternalServerError(ctx)
 	}
 
 	return types.NewOrganization(organization), nil
@@ -120,29 +136,49 @@ func (r *invitationConnectionResolver) TotalCount(ctx context.Context, obj *type
 	case *organizationResolver:
 		count, err := r.iam.OrganizationService.CountInvitations(ctx, obj.ParentID, obj.Filters)
 		if err != nil {
-			panic(fmt.Errorf("cannot count invitations: %w", err))
+			r.logger.ErrorCtx(ctx, "cannot count invitations", log.Error(err))
+			return nil, gqlutils.InternalServerError(ctx)
 		}
 		return &count, nil
 	case *identityResolver:
 		count, err := r.iam.AccountService.CountPendingInvitations(ctx, obj.ParentID)
 		if err != nil {
-			panic(fmt.Errorf("cannot count invitations: %w", err))
+			r.logger.ErrorCtx(ctx, "cannot count invitations", log.Error(err))
+			return nil, gqlutils.InternalServerError(ctx)
 		}
 
 		return &count, nil
 	}
 
-	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
+	r.logger.ErrorCtx(ctx, "unsupported resolver", log.Any("resolver", obj.Resolver))
+	return nil, gqlutils.InternalServerError(ctx)
 }
 
 // Identity is the resolver for the identity field.
 func (r *membershipResolver) Identity(ctx context.Context, obj *types.Membership) (*types.Identity, error) {
 	identity, err := r.iam.AccountService.GetIdentityForMembership(ctx, obj.ID)
 	if err != nil {
-		panic(fmt.Errorf("cannot get identity: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot get identity for membership", log.Error(err))
+		return nil, gqlutils.InternalServerError(ctx)
 	}
 
 	return types.NewIdentity(identity), nil
+}
+
+// Profile is the resolver for the profile field.
+func (r *membershipResolver) Profile(ctx context.Context, obj *types.Membership) (*types.IdentityProfile, error) {
+	profile, err := r.iam.AccountService.GetProfileForMembership(ctx, obj.ID)
+	if err != nil {
+		var errProfileNotFound *iam.ErrProfileNotFound
+		if errors.As(err, &errProfileNotFound) {
+			return nil, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get profile for membership", log.Error(err))
+		return nil, gqlutils.InternalServerError(ctx)
+	}
+
+	return types.NewIdentityProfile(profile), nil
 }
 
 // Organization is the resolver for the organization field.
@@ -517,7 +553,29 @@ func (r *mutationResolver) AssumeOrganizationSession(ctx context.Context, input 
 
 // UpdateIdentityProfile is the resolver for the updateIdentityProfile field.
 func (r *mutationResolver) UpdateIdentityProfile(ctx context.Context, input types.UpdateIdentityProfileInput) (*types.UpdateIdentityProfilePayload, error) {
-	panic(fmt.Errorf("not implemented: UpdateIdentityProfile - updateIdentityProfile"))
+	identity := IdentityFromContext(ctx)
+
+	profile, err := r.iam.AccountService.UpdateIdentityProfile(
+		ctx,
+		identity.ID,
+		&iam.UpdateIdentityProfileRequest{
+			MembershipID: input.MembershipID,
+			FullName:     input.FullName,
+		},
+	)
+	if err != nil {
+		var errMembershipNotFound *iam.ErrMembershipNotFound
+		if errors.As(err, &errMembershipNotFound) {
+			return nil, gqlutils.NotFound(err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot update identity profile", log.Error(err))
+		return nil, gqlutils.InternalServerError(ctx)
+	}
+
+	return &types.UpdateIdentityProfilePayload{
+		Profile: types.NewIdentityProfile(profile),
+	}, nil
 }
 
 // RevokeSession is the resolver for the revokeSession field.
@@ -801,7 +859,8 @@ func (r *mutationResolver) CreateSAMLConfiguration(ctx context.Context, input ty
 	)
 
 	if err != nil {
-		panic(fmt.Errorf("cannot create saml configuration: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot create saml configuration", log.Error(err))
+		return nil, gqlutils.InternalServerError(ctx)
 	}
 
 	return &types.CreateSAMLConfigurationPayload{
@@ -1095,6 +1154,17 @@ func (r *sAMLConfigurationConnectionResolver) TotalCount(ctx context.Context, ob
 	return nil, gqlutils.InternalServerError(ctx)
 }
 
+// Identity is the resolver for the identity field.
+func (r *sessionResolver) Identity(ctx context.Context, obj *types.Session) (*types.Identity, error) {
+	identity, err := r.iam.AccountService.GetIdentity(ctx, obj.Identity.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get identity for session", log.Error(err))
+		return nil, gqlutils.InternalServerError(ctx)
+	}
+
+	return types.NewIdentity(identity), nil
+}
+
 // TotalCount is the resolver for the totalCount field.
 func (r *sessionConnectionResolver) TotalCount(ctx context.Context, obj *types.SessionConnection) (*int, error) {
 	switch obj.Resolver.(type) {
@@ -1150,6 +1220,9 @@ func (r *Resolver) SAMLConfigurationConnection() schema.SAMLConfigurationConnect
 	return &sAMLConfigurationConnectionResolver{r}
 }
 
+// Session returns schema.SessionResolver implementation.
+func (r *Resolver) Session() schema.SessionResolver { return &sessionResolver{r} }
+
 // SessionConnection returns schema.SessionConnectionResolver implementation.
 func (r *Resolver) SessionConnection() schema.SessionConnectionResolver {
 	return &sessionConnectionResolver{r}
@@ -1165,4 +1238,5 @@ type organizationResolver struct{ *Resolver }
 type personalAPIKeyConnectionResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type sAMLConfigurationConnectionResolver struct{ *Resolver }
+type sessionResolver struct{ *Resolver }
 type sessionConnectionResolver struct{ *Resolver }

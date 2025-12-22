@@ -158,7 +158,6 @@ func (s *AuthService) CreateIdentityFromInvitation(
 				EmailAddress:         invitation.Email,
 				HashedPassword:       hashedPassword,
 				EmailAddressVerified: true,
-				FullName:             invitation.FullName,
 				CreatedAt:            now,
 				UpdatedAt:            now,
 			}
@@ -170,6 +169,19 @@ func (s *AuthService) CreateIdentityFromInvitation(
 				}
 
 				return fmt.Errorf("cannot insert identity: %w", err)
+			}
+
+			defaultProfile := &coredata.IdentityProfile{
+				ID:         gid.New(gid.NilTenant, coredata.IdentityProfileEntityType),
+				IdentityID: identity.ID,
+				FullName:   invitation.FullName,
+				CreatedAt:  now,
+				UpdatedAt:  now,
+			}
+
+			err = defaultProfile.Insert(ctx, tx)
+			if err != nil {
+				return fmt.Errorf("cannot insert default profile: %w", err)
 			}
 
 			session = coredata.NewRootSession(identity.ID, coredata.AuthMethodPassword, s.sessionDuration)
@@ -273,9 +285,14 @@ func (s AuthService) SendPasswordResetInstructionByEmail(
 				return fmt.Errorf("cannot load identity: %w", err)
 			}
 
+			profile := &coredata.IdentityProfile{}
+			if err := profile.LoadDefaultByIdentityID(ctx, tx, identity.ID); err != nil {
+				return fmt.Errorf("cannot load default profile: %w", err)
+			}
+
 			subject, textBody, htmlBody, err := emails.RenderPasswordReset(
 				s.baseURL,
-				identity.FullName,
+				profile.FullName,
 				resetPasswordUrl,
 			)
 			if err != nil {
@@ -283,7 +300,7 @@ func (s AuthService) SendPasswordResetInstructionByEmail(
 			}
 
 			passwordResetEmail := coredata.NewEmail(
-				identity.FullName,
+				profile.FullName,
 				identity.EmailAddress,
 				subject,
 				textBody,
@@ -325,9 +342,16 @@ func (s AuthService) CreateIdentityWithPassword(
 			EmailAddress:         req.Email,
 			HashedPassword:       hashedPassword,
 			EmailAddressVerified: false,
-			FullName:             req.FullName,
 			CreatedAt:            now,
 			UpdatedAt:            now,
+		}
+
+		defaultProfile = &coredata.IdentityProfile{
+			ID:         gid.New(gid.NilTenant, coredata.IdentityProfileEntityType),
+			IdentityID: identity.ID,
+			FullName:   req.FullName,
+			CreatedAt:  now,
+			UpdatedAt:  now,
 		}
 
 		session = coredata.NewRootSession(identity.ID, coredata.AuthMethodPassword, 24*time.Hour*7)
@@ -358,7 +382,7 @@ func (s AuthService) CreateIdentityWithPassword(
 
 	subject, textBody, htmlBody, err := emails.RenderConfirmEmail(
 		s.baseURL,
-		identity.FullName,
+		req.FullName,
 		confirmationUrl,
 	)
 	if err != nil {
@@ -366,7 +390,7 @@ func (s AuthService) CreateIdentityWithPassword(
 	}
 
 	confirmationEmail := coredata.NewEmail(
-		identity.FullName,
+		req.FullName,
 		identity.EmailAddress,
 		subject,
 		textBody,
@@ -383,6 +407,11 @@ func (s AuthService) CreateIdentityWithPassword(
 				}
 
 				return fmt.Errorf("cannot insert identity: %w", err)
+			}
+
+			err = defaultProfile.Insert(ctx, tx)
+			if err != nil {
+				return fmt.Errorf("cannot insert default profile: %w", err)
 			}
 
 			if err := confirmationEmail.Insert(ctx, tx); err != nil {
