@@ -3766,6 +3766,81 @@ func (r *mutationResolver) ExportSignableVersionDocumentPDF(ctx context.Context,
 	}, nil
 }
 
+// ExportProcessingActivitiesPDF is the resolver for the exportProcessingActivitiesPDF field.
+func (r *mutationResolver) ExportProcessingActivitiesPDF(ctx context.Context, input types.ExportProcessingActivitiesPDFInput) (*types.ExportProcessingActivitiesPDFPayload, error) {
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionExportProcessingActivitiesPDF)
+
+	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
+
+	processingActivityFilter := coredata.NewProcessingActivityFilter(nil)
+	if input.Filter != nil {
+		processingActivityFilter = coredata.NewProcessingActivityFilter(&input.Filter.SnapshotID)
+	}
+
+	pdf, err := prb.ProcessingActivities.ExportPDF(ctx, input.OrganizationID, processingActivityFilter)
+	if err != nil {
+		var errNotFound *coredata.ErrNoProcessingActivitiesFound
+		if errors.As(err, &errNotFound) {
+			return nil, gqlutils.NotFound(errNotFound)
+		}
+		panic(fmt.Errorf("cannot export processing activities PDF: %w", err))
+	}
+
+	return &types.ExportProcessingActivitiesPDFPayload{
+		Data: fmt.Sprintf("data:application/pdf;base64,%s", base64.StdEncoding.EncodeToString(pdf)),
+	}, nil
+}
+
+// ExportDataProtectionImpactAssessmentsPDF is the resolver for the exportDataProtectionImpactAssessmentsPDF field.
+func (r *mutationResolver) ExportDataProtectionImpactAssessmentsPDF(ctx context.Context, input types.ExportDataProtectionImpactAssessmentsPDFInput) (*types.ExportDataProtectionImpactAssessmentsPDFPayload, error) {
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionExportDataProtectionImpactAssessmentsPDF)
+
+	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
+
+	dpiaFilter := coredata.NewDataProtectionImpactAssessmentFilter(nil)
+	if input.Filter != nil {
+		dpiaFilter = coredata.NewDataProtectionImpactAssessmentFilter(&input.Filter.SnapshotID)
+	}
+
+	pdf, err := prb.DataProtectionImpactAssessments.ExportPDF(ctx, input.OrganizationID, dpiaFilter)
+	if err != nil {
+		var errNotFound *coredata.ErrNoDataProtectionImpactAssessmentsFound
+		if errors.As(err, &errNotFound) {
+			return nil, gqlutils.NotFound(errNotFound)
+		}
+		panic(fmt.Errorf("cannot export data protection impact assessments PDF: %w", err))
+	}
+
+	return &types.ExportDataProtectionImpactAssessmentsPDFPayload{
+		Data: fmt.Sprintf("data:application/pdf;base64,%s", base64.StdEncoding.EncodeToString(pdf)),
+	}, nil
+}
+
+// ExportTransferImpactAssessmentsPDF is the resolver for the exportTransferImpactAssessmentsPDF field.
+func (r *mutationResolver) ExportTransferImpactAssessmentsPDF(ctx context.Context, input types.ExportTransferImpactAssessmentsPDFInput) (*types.ExportTransferImpactAssessmentsPDFPayload, error) {
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionExportTransferImpactAssessmentsPDF)
+
+	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
+
+	tiaFilter := coredata.NewTransferImpactAssessmentFilter(nil)
+	if input.Filter != nil {
+		tiaFilter = coredata.NewTransferImpactAssessmentFilter(&input.Filter.SnapshotID)
+	}
+
+	pdf, err := prb.TransferImpactAssessments.ExportPDF(ctx, input.OrganizationID, tiaFilter)
+	if err != nil {
+		var errNotFound *coredata.ErrNoTransferImpactAssessmentsFound
+		if errors.As(err, &errNotFound) {
+			return nil, gqlutils.NotFound(errNotFound)
+		}
+		panic(fmt.Errorf("cannot export transfer impact assessments PDF: %w", err))
+	}
+
+	return &types.ExportTransferImpactAssessmentsPDFPayload{
+		Data: fmt.Sprintf("data:application/pdf;base64,%s", base64.StdEncoding.EncodeToString(pdf)),
+	}, nil
+}
+
 // CreateVendorRiskAssessment is the resolver for the createVendorRiskAssessment field.
 func (r *mutationResolver) CreateVendorRiskAssessment(ctx context.Context, input types.CreateVendorRiskAssessmentInput) (*types.CreateVendorRiskAssessmentPayload, error) {
 	r.MustBeAuthorized(ctx, input.VendorID, authz.ActionCreateVendorRiskAssessment)
