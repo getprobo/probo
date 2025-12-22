@@ -1013,6 +1013,19 @@ func (r *organizationResolver) SamlConfigurations(ctx context.Context, obj *type
 	return types.NewSAMLConfigurationConnection(page, r, obj.ID), nil
 }
 
+// ViewerMembership is the resolver for the viewerMembership field.
+func (r *organizationResolver) ViewerMembership(ctx context.Context, obj *types.Organization) (*types.Membership, error) {
+	identity := IdentityFromContext(ctx)
+
+	membership, err := r.iam.AccountService.GetMembershipForOrganization(ctx, identity.ID, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get membership for organization", log.Error(err))
+		return nil, gqlutils.InternalServerError(ctx)
+	}
+
+	return types.NewMembership(membership), nil
+}
+
 // TotalCount is the resolver for the totalCount field.
 func (r *personalAPIKeyConnectionResolver) TotalCount(ctx context.Context, obj *types.PersonalAPIKeyConnection) (*int, error) {
 	switch obj.Resolver.(type) {

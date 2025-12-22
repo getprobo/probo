@@ -5,7 +5,7 @@ import {
   useRouteError,
 } from "react-router";
 import { EmployeeLayout } from "./layouts/EmployeeLayout";
-import { AuthLayout, CenteredLayout, CenteredLayoutSkeleton } from "@probo/ui";
+import { CenteredLayout, CenteredLayoutSkeleton } from "@probo/ui";
 import { PageSkeleton } from "./components/skeletons/PageSkeleton.tsx";
 import { loadQuery } from "react-relay";
 import { riskRoutes } from "./routes/riskRoutes.ts";
@@ -46,13 +46,6 @@ import {
   UnAuthenticatedError,
   UnauthorizedError,
 } from "@probo/relay";
-import { MembershipsPageQuery } from "./pages/iam/memberships/MembershipsPageQuery.tsx";
-import { MembershipLayoutQuery } from "./pages/iam/memberships/MembershipLayoutQuery.tsx";
-import { IAMRelayProvider } from "./providers/IAMRelayProvider.tsx";
-
-const NewOrganizationPage = lazy(
-  () => import("./pages/iam/organizations/NewOrganizationPage"),
-);
 
 /**
  * Top level error boundary
@@ -78,11 +71,7 @@ function ErrorBoundary({ error: propsError }: { error?: string }) {
 const routes = [
   {
     path: "/auth",
-    Component: () => (
-      <IAMRelayProvider>
-        <AuthLayout />
-      </IAMRelayProvider>
-    ),
+    Component: lazy(() => import("./pages/iam/auth/AuthLayout")),
     children: [
       {
         path: "login",
@@ -118,18 +107,14 @@ const routes = [
     children: [
       {
         index: true,
-        Component: () => (
-          <IAMRelayProvider>
-            <MembershipsPageQuery />
-          </IAMRelayProvider>
+        Component: lazy(
+          () => import("./pages/iam/memberships/MembershipsPageLoader"),
         ),
       },
       {
         path: "organizations/new",
-        Component: () => (
-          <IAMRelayProvider>
-            <NewOrganizationPage />
-          </IAMRelayProvider>
+        Component: lazy(
+          () => import("./pages/iam/organizations/NewOrganizationPage"),
         ),
       },
       {
@@ -184,10 +169,8 @@ const routes = [
   },
   {
     path: "/organizations/:organizationId",
-    Component: () => (
-      <IAMRelayProvider>
-        <MembershipLayoutQuery />
-      </IAMRelayProvider>
+    Component: lazy(
+      () => import("./pages/iam/memberships/MembershipLayoutLoader.tsx"),
     ),
     ErrorBoundary: ErrorBoundary,
     children: [
@@ -222,7 +205,7 @@ const routes = [
             path: "general",
             Component: lazy(
               () =>
-                import("./pages/iam/organizations/settings/GeneralSettingsPageQuery.tsx"),
+                import("./pages/iam/organizations/settings/GeneralSettingsPageLoader.tsx"),
             ),
           },
           // {

@@ -1,6 +1,5 @@
 // Layouts
 export { Layout, Drawer } from "./Layouts/Layout";
-export { AuthLayout } from "./Layouts/AuthLayout";
 export { ErrorLayout } from "./Layouts/ErrorLayout";
 export {
     CenteredLayout,

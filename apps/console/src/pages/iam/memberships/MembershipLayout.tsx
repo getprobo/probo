@@ -1,5 +1,4 @@
-import { usePreloadedQuery, type PreloadedQuery } from "react-relay";
-import { membershipLayoutQuery } from "./MembershipLayoutQuery";
+import { graphql, usePreloadedQuery, type PreloadedQuery } from "react-relay";
 import { Link, Outlet } from "react-router";
 import { Badge, Button, IconPeopleAdd, Layout, Skeleton } from "@probo/ui";
 import { Sidebar } from "./_components/Sidebar";
@@ -11,7 +10,24 @@ import { Suspense } from "react";
 import { useTranslate } from "@probo/i18n";
 import { CoreRelayProvider } from "/providers/CoreRelayProvider";
 
-export default function MembershipLayout(props: {
+export const membershipLayoutQuery = graphql`
+  query MembershipLayoutQuery($organizationId: ID!) {
+    organization: node(id: $organizationId) @required(action: THROW) {
+      ... on Organization {
+        ...MembershipsDropdown_organizationFragment
+        ...SessionDropdownFragment
+      }
+    }
+    viewer @required(action: THROW) {
+      ...MembershipsDropdown_viewerFragment
+      pendingInvitations @required(action: THROW) {
+        totalCount @required(action: THROW)
+      }
+    }
+  }
+`;
+
+export function MembershipLayout(props: {
   queryRef: PreloadedQuery<MembershipLayoutQuery>;
 }) {
   const { queryRef } = props;
@@ -47,7 +63,7 @@ export default function MembershipLayout(props: {
               )}
             </div>
             <Suspense fallback={<Skeleton className="w-32 h-8" />}>
-              <SessionDropdown fKey={viewer} />
+              <SessionDropdown fKey={organization} />
             </Suspense>
           </>
         }

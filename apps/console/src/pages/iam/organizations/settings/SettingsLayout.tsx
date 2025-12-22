@@ -11,7 +11,7 @@ import { Outlet } from "react-router";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { useTranslate } from "@probo/i18n";
 
-export default function SettingsLayout() {
+export default function () {
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
 

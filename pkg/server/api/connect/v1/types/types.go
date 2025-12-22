@@ -239,6 +239,7 @@ type Organization struct {
 	Members            *MembershipConnection        `json:"members,omitempty"`
 	Invitations        *InvitationConnection        `json:"invitations,omitempty"`
 	SamlConfigurations *SAMLConfigurationConnection `json:"samlConfigurations,omitempty"`
+	ViewerMembership   *Membership                  `json:"viewerMembership,omitempty"`
 }
 
 func (Organization) IsNode()             {}

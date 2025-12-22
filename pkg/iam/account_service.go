@@ -16,6 +16,7 @@ package iam
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -713,6 +714,41 @@ func (s AccountService) ListOrganizations(ctx context.Context, identityID gid.GI
 	}
 
 	return organizations, nil
+}
+
+func (s AccountService) GetMembershipForOrganization(
+	ctx context.Context,
+	identityID gid.GID,
+	organizationID gid.GID,
+) (*coredata.Membership, error) {
+	membership := &coredata.Membership{}
+
+	err := s.pg.WithTx(
+		ctx,
+		func(tx pg.Conn) error {
+			identity := &coredata.Identity{}
+
+			if err := identity.LoadByID(ctx, tx, identityID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return NewIdentityNotFoundError(identityID)
+				}
+
+				return fmt.Errorf("cannot load identity %q: %w", identityID, err)
+			}
+
+			if err := membership.LoadByIdentityInOrganization(ctx, tx, identityID, organizationID); err != nil {
+				return fmt.Errorf("cannot load membership: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return membership, nil
 }
 
 func (s AccountService) GetProfileForMembership(ctx context.Context, membershipID gid.GID) (*coredata.MembershipProfile, error) {
