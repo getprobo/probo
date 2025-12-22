@@ -4,9 +4,15 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.112.0] - 2025-12-22
+
 ### Added
 
 - Add new GDPR registries
+
+### Fixed
+
+- Create Slack notification when updating trust center access if no existing message found
 
 ## [0.111.2] - 2025-12-19
 
