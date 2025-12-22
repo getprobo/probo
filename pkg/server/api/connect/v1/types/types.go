@@ -33,12 +33,6 @@ type AcceptInvitationPayload struct {
 	MembershipEdge *MembershipEdge `json:"membershipEdge"`
 }
 
-type AddIPAllowlistEntryInput struct {
-	OrganizationID gid.GID `json:"organizationId"`
-	Cidr           string  `json:"cidr"`
-	Description    *string `json:"description,omitempty"`
-}
-
 type Application struct {
 	ID                    ApplicationID `json:"id"`
 	Name                  string        `json:"name"`
@@ -108,25 +102,7 @@ type CreateSAMLConfigurationPayload struct {
 	SamlConfigurationEdge *SAMLConfigurationEdge `json:"samlConfigurationEdge"`
 }
 
-type CustomAttribute struct {
-	Key   string `json:"key"`
-	Value string `json:"value"`
-}
-
-type DeactivateAccountInput struct {
-	Password string `json:"password"`
-}
-
 type DeactivateAccountPayload struct {
-	Success bool `json:"success"`
-}
-
-type DeleteAccountInput struct {
-	Password     string `json:"password"`
-	Confirmation string `json:"confirmation"`
-}
-
-type DeleteAccountPayload struct {
 	Success bool `json:"success"`
 }
 
@@ -178,35 +154,22 @@ type Identity struct {
 	EmailVerified      bool                      `json:"emailVerified"`
 	CreatedAt          time.Time                 `json:"createdAt"`
 	UpdatedAt          time.Time                 `json:"updatedAt"`
+	DefaultProfile     *IdentityProfile          `json:"defaultProfile,omitempty"`
 	Memberships        *MembershipConnection     `json:"memberships,omitempty"`
 	PendingInvitations *InvitationConnection     `json:"pendingInvitations,omitempty"`
 	Sessions           *SessionConnection        `json:"sessions,omitempty"`
 	PersonalAPIKeys    *PersonalAPIKeyConnection `json:"personalAPIKeys,omitempty"`
-	ProfileFor         *IdentityProfile          `json:"profileFor,omitempty"`
 }
 
 func (Identity) IsNode()             {}
 func (this Identity) GetID() gid.GID { return this.ID }
 
 type IdentityProfile struct {
-	ID               gid.GID            `json:"id"`
-	DisplayName      string             `json:"displayName"`
-	FirstName        *string            `json:"firstName,omitempty"`
-	LastName         *string            `json:"lastName,omitempty"`
-	JobTitle         *string            `json:"jobTitle,omitempty"`
-	Department       *string            `json:"department,omitempty"`
-	PhoneNumber      *string            `json:"phoneNumber,omitempty"`
-	AvatarURL        *string            `json:"avatarUrl,omitempty"`
-	Manager          *IdentityProfile   `json:"manager,omitempty"`
-	Timezone         *string            `json:"timezone,omitempty"`
-	Locale           *string            `json:"locale,omitempty"`
-	CustomAttributes []*CustomAttribute `json:"customAttributes"`
-	ProvisionedBy    ProvisioningSource `json:"provisionedBy"`
-	ExternalID       *string            `json:"externalId,omitempty"`
-	Identity         *Identity          `json:"identity"`
-	Organization     *Organization      `json:"organization"`
-	CreatedAt        time.Time          `json:"createdAt"`
-	UpdatedAt        time.Time          `json:"updatedAt"`
+	ID        gid.GID   `json:"id"`
+	FullName  string    `json:"fullName"`
+	Identity  *Identity `json:"identity"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
 }
 
 func (IdentityProfile) IsNode()             {}
@@ -242,18 +205,14 @@ type InviteMemberPayload struct {
 }
 
 type Membership struct {
-	ID            gid.GID                 `json:"id"`
-	IdentityID    gid.GID                 `json:"identityId"`
-	CreatedAt     time.Time               `json:"createdAt"`
-	Profile       *IdentityProfile        `json:"profile"`
-	Identity      *Identity               `json:"identity,omitempty"`
-	Organization  *Organization           `json:"organization,omitempty"`
-	Role          coredata.MembershipRole `json:"role"`
-	Permissions   []*Permission           `json:"permissions"`
-	ProvisionedBy ProvisioningSource      `json:"provisionedBy"`
-	Active        bool                    `json:"active"`
-	LastSyncedAt  *time.Time              `json:"lastSyncedAt,omitempty"`
-	LastSession   *Session                `json:"lastSession,omitempty"`
+	ID           gid.GID                 `json:"id"`
+	CreatedAt    time.Time               `json:"createdAt"`
+	Identity     *Identity               `json:"identity,omitempty"`
+	Profile      *IdentityProfile        `json:"profile,omitempty"`
+	Organization *Organization           `json:"organization,omitempty"`
+	Role         coredata.MembershipRole `json:"role"`
+	Permissions  []*Permission           `json:"permissions"`
+	LastSession  *Session                `json:"lastSession,omitempty"`
 }
 
 func (Membership) IsNode()             {}
@@ -344,10 +303,6 @@ type PersonalAPIKeyEdge struct {
 }
 
 type Query struct {
-}
-
-type RemoveIPAllowlistEntryInput struct {
-	EntryID gid.GID `json:"entryId"`
 }
 
 type RemoveMemberInput struct {
@@ -442,13 +397,13 @@ type SSOAvailability struct {
 }
 
 type Session struct {
-	ID         gid.GID   `json:"id"`
-	IdentityID gid.GID   `json:"identityId"`
-	IPAddress  string    `json:"ipAddress"`
-	UserAgent  string    `json:"userAgent"`
-	UpdatedAt  time.Time `json:"updatedAt"`
-	CreatedAt  time.Time `json:"createdAt"`
-	ExpiresAt  time.Time `json:"expiresAt"`
+	ID        gid.GID   `json:"id"`
+	Identity  *Identity `json:"identity,omitempty"`
+	IPAddress string    `json:"ipAddress"`
+	UserAgent string    `json:"userAgent"`
+	UpdatedAt time.Time `json:"updatedAt"`
+	CreatedAt time.Time `json:"createdAt"`
+	ExpiresAt time.Time `json:"expiresAt"`
 }
 
 func (Session) IsNode()             {}
@@ -462,20 +417,6 @@ type SessionEdge struct {
 type SessionOrder struct {
 	Direction page.OrderDirection        `json:"direction"`
 	Field     coredata.SessionOrderField `json:"field"`
-}
-
-type SessionPolicy struct {
-	MaxSessionDurationHours          int  `json:"maxSessionDurationHours"`
-	IdleTimeoutMinutes               int  `json:"idleTimeoutMinutes"`
-	MaxConcurrentSessions            *int `json:"maxConcurrentSessions,omitempty"`
-	RequireReauthForSensitiveActions bool `json:"requireReauthForSensitiveActions"`
-}
-
-type SessionPolicyInput struct {
-	MaxSessionDurationHours          *int  `json:"maxSessionDurationHours,omitempty"`
-	IdleTimeoutMinutes               *int  `json:"idleTimeoutMinutes,omitempty"`
-	MaxConcurrentSessions            *int  `json:"maxConcurrentSessions,omitempty"`
-	RequireReauthForSensitiveActions *bool `json:"requireReauthForSensitiveActions,omitempty"`
 }
 
 type SignInInput struct {
@@ -513,14 +454,7 @@ type SignUpPayload struct {
 
 type UpdateIdentityProfileInput struct {
 	MembershipID gid.GID `json:"membershipId"`
-	DisplayName  *string `json:"displayName,omitempty"`
-	FirstName    *string `json:"firstName,omitempty"`
-	LastName     *string `json:"lastName,omitempty"`
-	JobTitle     *string `json:"jobTitle,omitempty"`
-	Department   *string `json:"department,omitempty"`
-	PhoneNumber  *string `json:"phoneNumber,omitempty"`
-	Timezone     *string `json:"timezone,omitempty"`
-	Locale       *string `json:"locale,omitempty"`
+	FullName     *string `json:"fullName,omitempty"`
 }
 
 type UpdateIdentityProfilePayload struct {
@@ -699,63 +633,6 @@ func (e ApplicationID) MarshalJSON() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-type AuthMethod string
-
-const (
-	AuthMethodPassword     AuthMethod = "PASSWORD"
-	AuthMethodSaml         AuthMethod = "SAML"
-	AuthMethodRecoveryCode AuthMethod = "RECOVERY_CODE"
-)
-
-var AllAuthMethod = []AuthMethod{
-	AuthMethodPassword,
-	AuthMethodSaml,
-	AuthMethodRecoveryCode,
-}
-
-func (e AuthMethod) IsValid() bool {
-	switch e {
-	case AuthMethodPassword, AuthMethodSaml, AuthMethodRecoveryCode:
-		return true
-	}
-	return false
-}
-
-func (e AuthMethod) String() string {
-	return string(e)
-}
-
-func (e *AuthMethod) UnmarshalGQL(v any) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = AuthMethod(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid AuthMethod", str)
-	}
-	return nil
-}
-
-func (e AuthMethod) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
-func (e *AuthMethod) UnmarshalJSON(b []byte) error {
-	s, err := strconv.Unquote(string(b))
-	if err != nil {
-		return err
-	}
-	return e.UnmarshalGQL(s)
-}
-
-func (e AuthMethod) MarshalJSON() ([]byte, error) {
-	var buf bytes.Buffer
-	e.MarshalGQL(&buf)
-	return buf.Bytes(), nil
-}
-
 type PrincipalType string
 
 const (
@@ -806,63 +683,6 @@ func (e *PrincipalType) UnmarshalJSON(b []byte) error {
 }
 
 func (e PrincipalType) MarshalJSON() ([]byte, error) {
-	var buf bytes.Buffer
-	e.MarshalGQL(&buf)
-	return buf.Bytes(), nil
-}
-
-type ProvisioningSource string
-
-const (
-	ProvisioningSourceManual     ProvisioningSource = "MANUAL"
-	ProvisioningSourceInvitation ProvisioningSource = "INVITATION"
-	ProvisioningSourceSaml       ProvisioningSource = "SAML"
-)
-
-var AllProvisioningSource = []ProvisioningSource{
-	ProvisioningSourceManual,
-	ProvisioningSourceInvitation,
-	ProvisioningSourceSaml,
-}
-
-func (e ProvisioningSource) IsValid() bool {
-	switch e {
-	case ProvisioningSourceManual, ProvisioningSourceInvitation, ProvisioningSourceSaml:
-		return true
-	}
-	return false
-}
-
-func (e ProvisioningSource) String() string {
-	return string(e)
-}
-
-func (e *ProvisioningSource) UnmarshalGQL(v any) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = ProvisioningSource(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid ProvisioningSource", str)
-	}
-	return nil
-}
-
-func (e ProvisioningSource) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
-func (e *ProvisioningSource) UnmarshalJSON(b []byte) error {
-	s, err := strconv.Unquote(string(b))
-	if err != nil {
-		return err
-	}
-	return e.UnmarshalGQL(s)
-}
-
-func (e ProvisioningSource) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil

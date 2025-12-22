@@ -138,6 +138,8 @@ type Identity implements Node {
   createdAt: Datetime!
   updatedAt: Datetime!
 
+  defaultProfile: IdentityProfile @goField(forceResolver: true) @isViewer
+
   memberships(
     first: Int
     after: CursorKey
@@ -168,27 +170,12 @@ type Identity implements Node {
     last: Int
     before: CursorKey
   ): PersonalAPIKeyConnection @goField(forceResolver: true) @isViewer
-
-  profileFor(organizationId: ID!): IdentityProfile @isViewer
 }
 
 type IdentityProfile implements Node {
   id: ID!
-  displayName: String!
-  firstName: String
-  lastName: String
-  jobTitle: String
-  department: String
-  phoneNumber: String
-  avatarUrl: String
-  manager: IdentityProfile
-  timezone: String
-  locale: String
-  customAttributes: [CustomAttribute!]!
-  provisionedBy: ProvisioningSource!
-  externalId: String
+  fullName: String!
   identity: Identity!
-  organization: Organization!
   createdAt: Datetime!
   updatedAt: Datetime!
 }
@@ -244,8 +231,8 @@ enum MembershipRole
 type Membership implements Node {
   id: ID!
   createdAt: Datetime!
-  profile: IdentityProfile!
   identity: Identity @goField(forceResolver: true)
+  profile: IdentityProfile @goField(forceResolver: true) @isViewer
   organization: Organization @goField(forceResolver: true)
   role: MembershipRole!
   permissions: [Permission!]!
@@ -380,12 +367,6 @@ enum SAMLEnforcementPolicy
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.SAMLEnforcementPolicyRequired"
     )
-}
-
-enum AuthMethod {
-  PASSWORD
-  SAML
-  RECOVERY_CODE
 }
 
 enum TokenScope {
@@ -578,14 +559,7 @@ input AssumeOrganizationSessionInput {
 
 input UpdateIdentityProfileInput {
   membershipId: ID!
-  displayName: String
-  firstName: String
-  lastName: String
-  jobTitle: String
-  department: String
-  phoneNumber: String
-  timezone: String
-  locale: String
+  fullName: String
 }
 
 input RevokeSessionInput {
@@ -747,10 +721,6 @@ type AssumeOrganizationSessionPayload {
 }
 
 type DeactivateAccountPayload {
-  success: Boolean!
-}
-
-type DeleteAccountPayload {
   success: Boolean!
 }
 

@@ -35,7 +35,6 @@ type (
 		ID                   gid.GID   `db:"id"`
 		EmailAddress         mail.Addr `db:"email_address"`
 		HashedPassword       []byte    `db:"hashed_password"`
-		FullName             string    `db:"fullname"`
 		EmailAddressVerified bool      `db:"email_address_verified"`
 		SAMLSubject          *string   `db:"saml_subject"`
 		CreatedAt            time.Time `db:"created_at"`
@@ -66,9 +65,8 @@ SELECT
     email_address,
     hashed_password,
     email_address_verified,
-    fullname,
-	created_at,
-	updated_at
+    created_at,
+    updated_at
 FROM
 	identities
 WHERE
@@ -143,7 +141,6 @@ SELECT
     email_address,
     hashed_password,
     email_address_verified,
-    fullname,
     saml_subject,
     created_at,
     updated_at
@@ -186,8 +183,7 @@ SELECT
     id,
     email_address,
     hashed_password,
-	email_address_verified,
-    fullname,
+    email_address_verified,
     saml_subject,
     created_at,
     updated_at
@@ -225,13 +221,12 @@ func (i *Identity) Insert(
 ) error {
 	q := `
 INSERT INTO
-    identities (id, email_address, hashed_password, email_address_verified, fullname, saml_subject, created_at, updated_at)
+    identities (id, email_address, hashed_password, email_address_verified, saml_subject, created_at, updated_at)
 VALUES (
     @identity_id,
     @email_address,
     @hashed_password,
     @email_address_verified,
-    @fullname,
     @saml_subject,
     @created_at,
     @updated_at
@@ -242,7 +237,6 @@ VALUES (
 		"identity_id":            i.ID,
 		"email_address":          i.EmailAddress,
 		"hashed_password":        i.HashedPassword,
-		"fullname":               i.FullName,
 		"saml_subject":           i.SAMLSubject,
 		"created_at":             i.CreatedAt,
 		"updated_at":             i.UpdatedAt,
@@ -273,8 +267,7 @@ SET
     email_address = @email_address,
     email_address_verified = @email_address_verified,
     saml_subject = @saml_subject,
-	fullname = @fullname,
-	hashed_password = @hashed_password,
+    hashed_password = @hashed_password,
     updated_at = @updated_at
 WHERE
     id = @identity_id
@@ -286,7 +279,6 @@ WHERE
 		"email_address_verified": i.EmailAddressVerified,
 		"saml_subject":           i.SAMLSubject,
 		"updated_at":             i.UpdatedAt,
-		"fullname":               i.FullName,
 		"hashed_password":        i.HashedPassword,
 	}
 
@@ -314,7 +306,6 @@ SELECT
     email_address,
     hashed_password,
     email_address_verified,
-    fullname,
     saml_subject,
     created_at,
     updated_at

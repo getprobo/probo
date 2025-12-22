@@ -1,6 +1,6 @@
 import { lazy } from "@probo/react-lazy";
 import { loadQuery } from "react-relay";
-import { consoleEnvironment } from "/environments";
+import { coreEnvironment } from "/environments";
 import { PageSkeleton } from "/components/skeletons/PageSkeleton.tsx";
 import {
   paginatedStateOfApplicabilityQuery,
@@ -16,7 +16,7 @@ export const statesOfApplicabilityRoutes = [
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ organizationId }) =>
       loadQuery<StateOfApplicabilityGraphPaginatedQuery>(
-        consoleEnvironment,
+        coreEnvironment,
         paginatedStateOfApplicabilityQuery,
         { organizationId: organizationId! },
       ),
@@ -30,7 +30,7 @@ export const statesOfApplicabilityRoutes = [
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ organizationId }) =>
       loadQuery<StateOfApplicabilityGraphPaginatedQuery>(
-        consoleEnvironment,
+        coreEnvironment,
         paginatedStateOfApplicabilityQuery,
         { organizationId: organizationId! },
       ),
@@ -44,7 +44,7 @@ export const statesOfApplicabilityRoutes = [
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ stateOfApplicabilityId }) =>
       loadQuery<StateOfApplicabilityGraphNodeQuery>(
-        consoleEnvironment,
+        coreEnvironment,
         stateOfApplicabilityNodeQuery,
         { stateOfApplicabilityId: stateOfApplicabilityId! },
       ),
@@ -58,7 +58,7 @@ export const statesOfApplicabilityRoutes = [
     Fallback: PageSkeleton,
     loader: loaderFromQueryLoader(({ stateOfApplicabilityId }) =>
       loadQuery<StateOfApplicabilityGraphNodeQuery>(
-        consoleEnvironment,
+        coreEnvironment,
         stateOfApplicabilityNodeQuery,
         { stateOfApplicabilityId: stateOfApplicabilityId! },
       ),

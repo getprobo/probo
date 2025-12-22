@@ -13,6 +13,7 @@ import {
   IconInboxEmpty,
   IconListStack,
   IconMedal,
+  IconPageCheck,
   IconPageTextLine,
   IconRotateCw,
   IconSettingsGear2,
@@ -137,6 +138,13 @@ export function Sidebar() {
           label={__("Processing Activities")}
           icon={IconCircleProgress}
           to={`${prefix}/processing-activities`}
+        />
+      )}
+      {isAuthorized("Organization", "listStatesOfApplicability") && (
+        <SidebarItem
+          label={__("States of Applicability")}
+          icon={IconPageCheck}
+          to={`${prefix}/states-of-applicability`}
         />
       )}
       {isAuthorized("Organization", "listSnapshots") && (
