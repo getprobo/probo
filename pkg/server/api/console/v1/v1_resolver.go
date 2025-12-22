@@ -1410,7 +1410,7 @@ connect_v1 "go.probo.inc/probo/pkg/server/api/connect/v1"
 
 	req := probo.UpdateOrganizationContextRequest{
 		OrganizationID: input.OrganizationID,
-		Summary:        UnwrapOmittable(input.Summary),
+		Summary:        gqlutils.UnwrapOmittable(input.Summary),
 	}
 
 	organizationContext, err := prb.Organizations.UpdateContext(ctx, req)
@@ -1598,7 +1598,7 @@ connect_v1 "go.probo.inc/probo/pkg/server/api/connect/v1"
 	req := &probo.UpdateTrustCenterReferenceRequest{
 		ID:          input.ID,
 		Name:        input.Name,
-		Description: UnwrapOmittable(input.Description),
+		Description: gqlutils.UnwrapOmittable(input.Description),
 		WebsiteURL:  input.WebsiteURL,
 		Rank:        input.Rank,
 	}
@@ -1765,11 +1765,11 @@ func (r *mutationResolver) CreatePeople(ctx context.Context, input types.CreateP
 			ID:                       input.ID,
 			FullName:                 input.FullName,
 			PrimaryEmailAddress:      input.PrimaryEmailAddress,
-			AdditionalEmailAddresses: UnwrapOmittable(input.AdditionalEmailAddresses),
+			AdditionalEmailAddresses: gqlutils.UnwrapOmittable(input.AdditionalEmailAddresses),
 			Kind:                     input.Kind,
-			Position:                 UnwrapOmittable(input.Position),
-			ContractStartDate:        UnwrapOmittable(input.ContractStartDate),
-			ContractEndDate:          UnwrapOmittable(input.ContractEndDate),
+			Position:                 gqlutils.UnwrapOmittable(input.Position),
+			ContractStartDate:        gqlutils.UnwrapOmittable(input.ContractStartDate),
+			ContractEndDate:          gqlutils.UnwrapOmittable(input.ContractEndDate),
 		},
 	)
 	if err != nil {
@@ -1853,23 +1853,23 @@ func (r *mutationResolver) CreatePeople(ctx context.Context, input types.CreateP
 	vendor, err := prb.Vendors.Update(ctx, probo.UpdateVendorRequest{
 		ID:                            input.ID,
 		Name:                          input.Name,
-		Description:                   UnwrapOmittable(input.Description),
-		StatusPageURL:                 UnwrapOmittable(input.StatusPageURL),
-		TermsOfServiceURL:             UnwrapOmittable(input.TermsOfServiceURL),
-		PrivacyPolicyURL:              UnwrapOmittable(input.PrivacyPolicyURL),
-		ServiceLevelAgreementURL:      UnwrapOmittable(input.ServiceLevelAgreementURL),
-		DataProcessingAgreementURL:    UnwrapOmittable(input.DataProcessingAgreementURL),
-		BusinessAssociateAgreementURL: UnwrapOmittable(input.BusinessAssociateAgreementURL),
-		SubprocessorsListURL:          UnwrapOmittable(input.SubprocessorsListURL),
-		SecurityPageURL:               UnwrapOmittable(input.SecurityPageURL),
-		TrustPageURL:                  UnwrapOmittable(input.TrustPageURL),
-		HeadquarterAddress:            UnwrapOmittable(input.HeadquarterAddress),
-		LegalName:                     UnwrapOmittable(input.LegalName),
-		WebsiteURL:                    UnwrapOmittable(input.WebsiteURL),
+		Description:                   gqlutils.UnwrapOmittable(input.Description),
+		StatusPageURL:                 gqlutils.UnwrapOmittable(input.StatusPageURL),
+		TermsOfServiceURL:             gqlutils.UnwrapOmittable(input.TermsOfServiceURL),
+		PrivacyPolicyURL:              gqlutils.UnwrapOmittable(input.PrivacyPolicyURL),
+		ServiceLevelAgreementURL:      gqlutils.UnwrapOmittable(input.ServiceLevelAgreementURL),
+		DataProcessingAgreementURL:    gqlutils.UnwrapOmittable(input.DataProcessingAgreementURL),
+		BusinessAssociateAgreementURL: gqlutils.UnwrapOmittable(input.BusinessAssociateAgreementURL),
+		SubprocessorsListURL:          gqlutils.UnwrapOmittable(input.SubprocessorsListURL),
+		SecurityPageURL:               gqlutils.UnwrapOmittable(input.SecurityPageURL),
+		TrustPageURL:                  gqlutils.UnwrapOmittable(input.TrustPageURL),
+		HeadquarterAddress:            gqlutils.UnwrapOmittable(input.HeadquarterAddress),
+		LegalName:                     gqlutils.UnwrapOmittable(input.LegalName),
+		WebsiteURL:                    gqlutils.UnwrapOmittable(input.WebsiteURL),
 		Category:                      input.Category,
 		Certifications:                input.Certifications,
-		BusinessOwnerID:               UnwrapOmittable(input.BusinessOwnerID),
-		SecurityOwnerID:               UnwrapOmittable(input.SecurityOwnerID),
+		BusinessOwnerID:               gqlutils.UnwrapOmittable(input.BusinessOwnerID),
+		SecurityOwnerID:               gqlutils.UnwrapOmittable(input.SecurityOwnerID),
 		ShowOnTrustCenter:             input.ShowOnTrustCenter,
 		Countries:                     input.Countries,
 	})
@@ -1930,10 +1930,10 @@ func (r *mutationResolver) CreatePeople(ctx context.Context, input types.CreateP
 
 	req := probo.UpdateVendorContactRequest{
 		ID:       input.ID,
-		FullName: UnwrapOmittable(input.FullName),
-		Email:    UnwrapOmittable(input.Email),
-		Phone:    UnwrapOmittable(input.Phone),
-		Role:     UnwrapOmittable(input.Role),
+		FullName: gqlutils.UnwrapOmittable(input.FullName),
+		Email:    gqlutils.UnwrapOmittable(input.Email),
+		Phone:    gqlutils.UnwrapOmittable(input.Phone),
+		Role:     gqlutils.UnwrapOmittable(input.Role),
 	}
 
 	vendorContact, err := prb.VendorContacts.Update(ctx, req)
@@ -1993,7 +1993,7 @@ func (r *mutationResolver) CreatePeople(ctx context.Context, input types.CreateP
 	req := probo.UpdateVendorServiceRequest{
 		ID:          input.ID,
 		Name:        input.Name,
-		Description: UnwrapOmittable(input.Description),
+		Description: gqlutils.UnwrapOmittable(input.Description),
 	}
 
 	vendorService, err := prb.VendorServices.Update(ctx, req)
@@ -2050,7 +2050,7 @@ func (r *mutationResolver) CreatePeople(ctx context.Context, input types.CreateP
 	framework, err := prb.Frameworks.Update(ctx, probo.UpdateFrameworkRequest{
 		ID:          input.ID,
 		Name:        input.Name,
-		Description: UnwrapOmittable(input.Description),
+		Description: gqlutils.UnwrapOmittable(input.Description),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("cannot update framework: %w", err)
@@ -2179,7 +2179,7 @@ func (r *mutationResolver) CreatePeople(ctx context.Context, input types.CreateP
 	control, err := prb.Controls.Update(ctx, probo.UpdateControlRequest{
 		ID:                     input.ID,
 		Name:                   input.Name,
-		Description:            UnwrapOmittable(input.Description),
+		Description:            gqlutils.UnwrapOmittable(input.Description),
 		SectionTitle:           input.SectionTitle,
 		Status:                 input.Status,
 		ExclusionJustification: input.ExclusionJustification,
@@ -2245,7 +2245,7 @@ func (r *mutationResolver) CreatePeople(ctx context.Context, input types.CreateP
 	measure, err := prb.Measures.Update(ctx, probo.UpdateMeasureRequest{
 		ID:          input.ID,
 		Name:        input.Name,
-		Description: UnwrapOmittable(input.Description),
+		Description: gqlutils.UnwrapOmittable(input.Description),
 		Category:    input.Category,
 		State:       input.State,
 	})
@@ -2476,10 +2476,10 @@ func (r *mutationResolver) CreatePeople(ctx context.Context, input types.CreateP
 	task, err := prb.Tasks.Update(ctx, probo.UpdateTaskRequest{
 		TaskID:       input.TaskID,
 		Name:         input.Name,
-		Description:  UnwrapOmittable(input.Description),
+		Description:  gqlutils.UnwrapOmittable(input.Description),
 		State:        input.State,
-		TimeEstimate: UnwrapOmittable(input.TimeEstimate),
-		Deadline:     UnwrapOmittable(input.Deadline),
+		TimeEstimate: gqlutils.UnwrapOmittable(input.TimeEstimate),
+		Deadline:     gqlutils.UnwrapOmittable(input.Deadline),
 	})
 	if err != nil {
 		panic(fmt.Errorf("cannot update task: %w", err))
@@ -2580,10 +2580,10 @@ func (r *mutationResolver) CreatePeople(ctx context.Context, input types.CreateP
 		probo.UpdateRiskRequest{
 			ID:                 input.ID,
 			Name:               input.Name,
-			Description:        UnwrapOmittable(input.Description),
+			Description:        gqlutils.UnwrapOmittable(input.Description),
 			Category:           input.Category,
 			Treatment:          input.Treatment,
-			OwnerID:            UnwrapOmittable(input.OwnerID),
+			OwnerID:            gqlutils.UnwrapOmittable(input.OwnerID),
 			InherentLikelihood: input.InherentLikelihood,
 			InherentImpact:     input.InherentImpact,
 			ResidualLikelihood: input.ResidualLikelihood,
@@ -2837,8 +2837,8 @@ func (r *mutationResolver) CreatePeople(ctx context.Context, input types.CreateP
 		ctx,
 		input.VendorID,
 		&probo.VendorBusinessAssociateAgreementUpdateRequest{
-			ValidFrom:  UnwrapOmittable(input.ValidFrom),
-			ValidUntil: UnwrapOmittable(input.ValidUntil),
+			ValidFrom:  gqlutils.UnwrapOmittable(input.ValidFrom),
+			ValidUntil: gqlutils.UnwrapOmittable(input.ValidUntil),
 		},
 	)
 	if err != nil {
@@ -2901,8 +2901,8 @@ func (r *mutationResolver) CreatePeople(ctx context.Context, input types.CreateP
 		ctx,
 		input.VendorID,
 		&probo.VendorDataPrivacyAgreementUpdateRequest{
-			ValidFrom:  UnwrapOmittable(input.ValidFrom),
-			ValidUntil: UnwrapOmittable(input.ValidUntil),
+			ValidFrom:  gqlutils.UnwrapOmittable(input.ValidFrom),
+			ValidUntil: gqlutils.UnwrapOmittable(input.ValidUntil),
 		},
 	)
 	if err != nil {
@@ -3047,7 +3047,7 @@ func (r *mutationResolver) CreatePeople(ctx context.Context, input types.CreateP
 			Name:        input.Name,
 			Date:        input.Date,
 			AttendeeIDs: attendeeIDs,
-			Minutes:     UnwrapOmittable(input.Minutes),
+			Minutes:     gqlutils.UnwrapOmittable(input.Minutes),
 		},
 	)
 	if err != nil {
@@ -3620,7 +3620,7 @@ func (r *mutationResolver) CreatePeople(ctx context.Context, input types.CreateP
 
 	req := probo.UpdateAuditRequest{
 		ID:                    input.ID,
-		Name:                  UnwrapOmittable(input.Name),
+		Name:                  gqlutils.UnwrapOmittable(input.Name),
 		ValidFrom:             input.ValidFrom,
 		ValidUntil:            input.ValidUntil,
 		State:                 input.State,
@@ -3734,15 +3734,15 @@ func (r *mutationResolver) CreatePeople(ctx context.Context, input types.CreateP
 	req := probo.UpdateNonconformityRequest{
 		ID:                 input.ID,
 		ReferenceID:        input.ReferenceID,
-		Description:        UnwrapOmittable(input.Description),
-		DateIdentified:     UnwrapOmittable(input.DateIdentified),
+		Description:        gqlutils.UnwrapOmittable(input.Description),
+		DateIdentified:     gqlutils.UnwrapOmittable(input.DateIdentified),
 		RootCause:          input.RootCause,
-		CorrectiveAction:   UnwrapOmittable(input.CorrectiveAction),
+		CorrectiveAction:   gqlutils.UnwrapOmittable(input.CorrectiveAction),
 		OwnerID:            input.OwnerID,
-		AuditID:            UnwrapOmittable(input.AuditID),
-		DueDate:            UnwrapOmittable(input.DueDate),
+		AuditID:            gqlutils.UnwrapOmittable(input.AuditID),
+		DueDate:            gqlutils.UnwrapOmittable(input.DueDate),
 		Status:             input.Status,
-		EffectivenessCheck: UnwrapOmittable(input.EffectivenessCheck),
+		EffectivenessCheck: gqlutils.UnwrapOmittable(input.EffectivenessCheck),
 	}
 
 	nonconformity, err := prb.Nonconformities.Update(ctx, &req)
@@ -3808,14 +3808,14 @@ func (r *mutationResolver) CreatePeople(ctx context.Context, input types.CreateP
 
 	req := probo.UpdateObligationRequest{
 		ID:                     input.ID,
-		Area:                   UnwrapOmittable(input.Area),
-		Source:                 UnwrapOmittable(input.Source),
-		Requirement:            UnwrapOmittable(input.Requirement),
-		ActionsToBeImplemented: UnwrapOmittable(input.ActionsToBeImplemented),
-		Regulator:              UnwrapOmittable(input.Regulator),
+		Area:                   gqlutils.UnwrapOmittable(input.Area),
+		Source:                 gqlutils.UnwrapOmittable(input.Source),
+		Requirement:            gqlutils.UnwrapOmittable(input.Requirement),
+		ActionsToBeImplemented: gqlutils.UnwrapOmittable(input.ActionsToBeImplemented),
+		Regulator:              gqlutils.UnwrapOmittable(input.Regulator),
 		OwnerID:                input.OwnerID,
-		LastReviewDate:         UnwrapOmittable(input.LastReviewDate),
-		DueDate:                UnwrapOmittable(input.DueDate),
+		LastReviewDate:         gqlutils.UnwrapOmittable(input.LastReviewDate),
+		DueDate:                gqlutils.UnwrapOmittable(input.DueDate),
 		Status:                 input.Status,
 	}
 
@@ -3881,10 +3881,10 @@ func (r *mutationResolver) CreatePeople(ctx context.Context, input types.CreateP
 	req := probo.UpdateContinualImprovementRequest{
 		ID:          input.ID,
 		ReferenceID: input.ReferenceID,
-		Description: UnwrapOmittable(input.Description),
-		Source:      UnwrapOmittable(input.Source),
+		Description: gqlutils.UnwrapOmittable(input.Description),
+		Source:      gqlutils.UnwrapOmittable(input.Source),
 		OwnerID:     input.OwnerID,
-		TargetDate:  UnwrapOmittable(input.TargetDate),
+		TargetDate:  gqlutils.UnwrapOmittable(input.TargetDate),
 		Status:      input.Status,
 		Priority:    input.Priority,
 	}
@@ -3961,26 +3961,26 @@ func (r *mutationResolver) CreatePeople(ctx context.Context, input types.CreateP
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
 	req := probo.UpdateProcessingActivityRequest{
-		ID:                                   input.ID,
-		Name:                                 input.Name,
-		Purpose:                              UnwrapOmittable(input.Purpose),
-		DataSubjectCategory:                  UnwrapOmittable(input.DataSubjectCategory),
-		PersonalDataCategory:                 UnwrapOmittable(input.PersonalDataCategory),
-		SpecialOrCriminalData:                input.SpecialOrCriminalData,
-		LawfulBasis:                          input.LawfulBasis,
-		Recipients:                           UnwrapOmittable(input.Recipients),
-		Location:                             UnwrapOmittable(input.Location),
-		InternationalTransfers:               input.InternationalTransfers,
-		TransferSafeguard:                    UnwrapOmittable(input.TransferSafeguards),
-		RetentionPeriod:                      UnwrapOmittable(input.RetentionPeriod),
-		SecurityMeasures:                     UnwrapOmittable(input.SecurityMeasures),
-		DataProtectionImpactAssessmentNeeded: input.DataProtectionImpactAssessmentNeeded,
-		TransferImpactAssessmentNeeded:       input.TransferImpactAssessmentNeeded,
-		LastReviewDate:                       UnwrapOmittable(input.LastReviewDate),
-		NextReviewDate:                       UnwrapOmittable(input.NextReviewDate),
-		Role:                                 input.Role,
-		DataProtectionOfficerID:              UnwrapOmittable(input.DataProtectionOfficerID),
-		VendorIDs:                            &input.VendorIds,
+		ID:                             input.ID,
+		Name:                           input.Name,
+		Purpose:                        gqlutils.UnwrapOmittable(input.Purpose),
+		DataSubjectCategory:            gqlutils.UnwrapOmittable(input.DataSubjectCategory),
+		PersonalDataCategory:           gqlutils.UnwrapOmittable(input.PersonalDataCategory),
+		SpecialOrCriminalData:          input.SpecialOrCriminalData,
+		LawfulBasis:                    input.LawfulBasis,
+		Recipients:                     gqlutils.UnwrapOmittable(input.Recipients),
+		Location:                       gqlutils.UnwrapOmittable(input.Location),
+		InternationalTransfers:         input.InternationalTransfers,
+		TransferSafeguard:              gqlutils.UnwrapOmittable(input.TransferSafeguards),
+		RetentionPeriod:                gqlutils.UnwrapOmittable(input.RetentionPeriod),
+		SecurityMeasures:               gqlutils.UnwrapOmittable(input.SecurityMeasures),
+		DataProtectionImpactAssessment: input.DataProtectionImpactAssessment,
+		TransferImpactAssessment:       input.TransferImpactAssessment,
+		LastReviewDate:                 gqlutils.UnwrapOmittable(input.LastReviewDate),
+		NextReviewDate:                 gqlutils.UnwrapOmittable(input.NextReviewDate),
+		Role:                            input.Role,
+		DataProtectionOfficerID:        gqlutils.UnwrapOmittable(input.DataProtectionOfficerID),
+		VendorIDs:                      &input.VendorIds,
 	}
 
 	activity, err := prb.ProcessingActivities.Update(ctx, &req)
