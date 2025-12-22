@@ -125,14 +125,9 @@ func (s AccountService) ChangeEmail(ctx context.Context, identityID gid.GID, req
 				return fmt.Errorf("cannot update identity: %w", err)
 			}
 
-			profile := &coredata.IdentityProfile{}
-			if err := profile.LoadDefaultByIdentityID(ctx, tx, identityID); err != nil {
-				return fmt.Errorf("cannot load default profile: %w", err)
-			}
-
 			subject, textBody, htmlBody, err := emails.RenderConfirmEmail(
 				s.baseURL,
-				profile.FullName,
+				identity.FullName,
 				confirmationUrl,
 			)
 			if err != nil {
@@ -140,7 +135,7 @@ func (s AccountService) ChangeEmail(ctx context.Context, identityID gid.GID, req
 			}
 
 			confirmationEmail := coredata.NewEmail(
-				profile.FullName,
+				identity.FullName,
 				identity.EmailAddress,
 				subject,
 				textBody,
@@ -720,10 +715,10 @@ func (s AccountService) ListOrganizations(ctx context.Context, identityID gid.GI
 	return organizations, nil
 }
 
-func (s AccountService) GetProfileForMembership(ctx context.Context, membershipID gid.GID) (*coredata.IdentityProfile, error) {
+func (s AccountService) GetProfileForMembership(ctx context.Context, membershipID gid.GID) (*coredata.MembershipProfile, error) {
 	var (
 		scope   = coredata.NewScopeFromObjectID(membershipID)
-		profile = &coredata.IdentityProfile{}
+		profile = &coredata.MembershipProfile{}
 	)
 
 	err := s.pg.WithConn(
@@ -757,119 +752,4 @@ func (s AccountService) GetProfileForMembership(ctx context.Context, membershipI
 	}
 
 	return profile, nil
-}
-
-func (s AccountService) GetDefaultProfile(ctx context.Context, identityID gid.GID) (*coredata.IdentityProfile, error) {
-	var profile = &coredata.IdentityProfile{}
-
-	err := s.pg.WithConn(
-		ctx,
-		func(conn pg.Conn) error {
-			err := profile.LoadDefaultByIdentityID(ctx, conn, identityID)
-			if err != nil {
-				if err == coredata.ErrResourceNotFound {
-					return NewProfileNotFoundError(identityID)
-				}
-
-				return fmt.Errorf("cannot load default profile: %w", err)
-			}
-
-			return nil
-		},
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return profile, nil
-}
-
-type UpdateIdentityProfileRequest struct {
-	MembershipID gid.GID
-	FullName     *string
-}
-
-func (s AccountService) UpdateIdentityProfile(
-	ctx context.Context,
-	identityID gid.GID,
-	req *UpdateIdentityProfileRequest,
-) (*coredata.IdentityProfile, error) {
-	// var (
-	// 	scope   = coredata.NewScopeFromObjectID(req.MembershipID)
-	// 	profile = &coredata.IdentityProfile{}
-	// )
-
-	// err := s.pg.WithTx(
-	// 	ctx,
-	// 	func(tx pg.Conn) error {
-	// 		// First verify the membership belongs to the identity
-	// 		membership := &coredata.Membership{}
-	// 		err := membership.LoadByID(ctx, tx, scope, req.MembershipID)
-	// 		if err != nil {
-	// 			if err == coredata.ErrResourceNotFound {
-	// 				return NewMembershipNotFoundError(req.MembershipID)
-	// 			}
-
-	// 			return fmt.Errorf("cannot load membership: %w", err)
-	// 		}
-
-	// 		if membership.IdentityID != identityID {
-	// 			return NewMembershipNotFoundError(req.MembershipID)
-	// 		}
-
-	// 		// Try to load existing membership profile
-	// 		err = profile.LoadByMembershipID(ctx, tx, scope, req.MembershipID)
-	// 		if err != nil && err != coredata.ErrResourceNotFound {
-	// 			return fmt.Errorf("cannot load identity profile: %w", err)
-	// 		}
-
-	// 		now := time.Now()
-
-	// 		if err == coredata.ErrResourceNotFound {
-	// 			// Create new membership profile, optionally inheriting from default
-	// 			tenantID := req.MembershipID.TenantID()
-	// 			membershipID := req.MembershipID
-
-	// 			// Try to get default profile to inherit FullName
-	// 			defaultProfile := &coredata.IdentityProfile{}
-	// 			defaultFullName := ""
-	// 			if loadErr := defaultProfile.LoadDefaultByIdentityID(ctx, tx, identityID); loadErr == nil {
-	// 				defaultFullName = defaultProfile.FullName
-	// 			}
-
-	// 			tenantIDStr := tenantID.String()
-	// 			profile = &coredata.IdentityProfile{
-	// 				ID:           gid.New(tenantID, coredata.IdentityProfileEntityType),
-	// 				TenantID:     &tenantIDStr,
-	// 				IdentityID:   identityID,
-	// 				MembershipID: &membershipID,
-	// 				FullName:     defaultFullName,
-	// 				CreatedAt:    now,
-	// 				UpdatedAt:    now,
-	// 			}
-	// 		}
-
-	// 		// Apply updates
-	// 		if req.FullName != nil {
-	// 			profile.FullName = *req.FullName
-	// 		}
-	// 		profile.UpdatedAt = now
-
-	// 		// Upsert the membership profile
-	// 		err = profile.UpsertMembership(ctx, tx)
-	// 		if err != nil {
-	// 			return fmt.Errorf("cannot upsert identity profile: %w", err)
-	// 		}
-
-	// 		return nil
-	// 	},
-	// )
-
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	// return profile, nil
-	return nil, nil
 }

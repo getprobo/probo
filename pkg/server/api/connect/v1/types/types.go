@@ -151,10 +151,10 @@ type ForgotPasswordPayload struct {
 type Identity struct {
 	ID                 gid.GID                   `json:"id"`
 	Email              mail.Addr                 `json:"email"`
+	FullName           string                    `json:"fullName"`
 	EmailVerified      bool                      `json:"emailVerified"`
 	CreatedAt          time.Time                 `json:"createdAt"`
 	UpdatedAt          time.Time                 `json:"updatedAt"`
-	DefaultProfile     *IdentityProfile          `json:"defaultProfile,omitempty"`
 	Memberships        *MembershipConnection     `json:"memberships,omitempty"`
 	PendingInvitations *InvitationConnection     `json:"pendingInvitations,omitempty"`
 	Sessions           *SessionConnection        `json:"sessions,omitempty"`
@@ -163,17 +163,6 @@ type Identity struct {
 
 func (Identity) IsNode()             {}
 func (this Identity) GetID() gid.GID { return this.ID }
-
-type IdentityProfile struct {
-	ID        gid.GID   `json:"id"`
-	FullName  string    `json:"fullName"`
-	Identity  *Identity `json:"identity"`
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
-}
-
-func (IdentityProfile) IsNode()             {}
-func (this IdentityProfile) GetID() gid.GID { return this.ID }
 
 type Invitation struct {
 	ID           gid.GID                   `json:"id"`
@@ -208,7 +197,7 @@ type Membership struct {
 	ID           gid.GID                 `json:"id"`
 	CreatedAt    time.Time               `json:"createdAt"`
 	Identity     *Identity               `json:"identity,omitempty"`
-	Profile      *IdentityProfile        `json:"profile,omitempty"`
+	Profile      *MembershipProfile      `json:"profile,omitempty"`
 	Organization *Organization           `json:"organization,omitempty"`
 	Role         coredata.MembershipRole `json:"role"`
 	Permissions  []*Permission           `json:"permissions"`
@@ -222,6 +211,16 @@ type MembershipEdge struct {
 	Node   *Membership    `json:"node"`
 	Cursor page.CursorKey `json:"cursor"`
 }
+
+type MembershipProfile struct {
+	ID        gid.GID   `json:"id"`
+	FullName  string    `json:"fullName"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
+}
+
+func (MembershipProfile) IsNode()             {}
+func (this MembershipProfile) GetID() gid.GID { return this.ID }
 
 type Mutation struct {
 }
@@ -450,15 +449,6 @@ type SignUpInput struct {
 
 type SignUpPayload struct {
 	Identity *Identity `json:"identity,omitempty"`
-}
-
-type UpdateIdentityProfileInput struct {
-	MembershipID gid.GID `json:"membershipId"`
-	FullName     *string `json:"fullName,omitempty"`
-}
-
-type UpdateIdentityProfilePayload struct {
-	Profile *IdentityProfile `json:"profile,omitempty"`
 }
 
 type UpdateOrganizationInput struct {

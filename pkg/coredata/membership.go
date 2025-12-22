@@ -81,13 +81,14 @@ SELECT
     mbr.identity_id,
     mbr.organization_id,
     mbr.role,
-    i.fullname AS full_name,
+    COALESCE(mp.full_name, i.full_name, '') as full_name,
     i.email_address,
     mbr.created_at,
     mbr.updated_at
 FROM
     mbr
 JOIN identities i ON mbr.identity_id = i.id
+LEFT JOIN iam_membership_profiles mp ON mp.membership_id = mbr.id
 `
 
 	args := pgx.StrictNamedArgs{
@@ -189,7 +190,7 @@ SELECT
     mbr.identity_id,
     mbr.organization_id,
     mbr.role,
-    COALESCE(mp.full_name, dp.full_name, '') as full_name,
+    COALESCE(mp.full_name, i.full_name, '') as full_name,
     i.email_address,
     mbr.created_at,
     mbr.updated_at
@@ -198,9 +199,7 @@ FROM
 JOIN
     identities i ON mbr.identity_id = i.id
 LEFT JOIN
-    iam_identity_profiles mp ON mp.membership_id = mbr.id
-LEFT JOIN
-    iam_identity_profiles dp ON dp.identity_id = mbr.identity_id AND dp.membership_id IS NULL
+    iam_membership_profiles mp ON mp.membership_id = mbr.id
 `
 
 	query = fmt.Sprintf(query, scope.SQLFragment())
@@ -333,7 +332,7 @@ SELECT
     mbr.identity_id,
     mbr.organization_id,
     mbr.role,
-    COALESCE(mp.full_name, dp.full_name, '') as full_name,
+    COALESCE(mp.full_name, i.full_name, '') as full_name,
     i.email_address,
     mbr.created_at,
     mbr.updated_at
@@ -342,9 +341,7 @@ FROM
 JOIN
     identities i ON mbr.identity_id = i.id
 LEFT JOIN
-    iam_identity_profiles mp ON mp.membership_id = mbr.id
-LEFT JOIN
-    iam_identity_profiles dp ON dp.identity_id = mbr.identity_id AND dp.membership_id IS NULL
+    iam_membership_profiles mp ON mp.membership_id = mbr.id
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -463,7 +460,7 @@ SELECT
     mbr.identity_id,
     mbr.organization_id,
     mbr.role,
-    COALESCE(mp.full_name, dp.full_name, '') as full_name,
+    COALESCE(mp.full_name, i.full_name, '') as full_name,
     i.email_address,
     mbr.created_at,
     mbr.updated_at
@@ -472,19 +469,18 @@ FROM
 JOIN
     identities i ON mbr.identity_id = i.id
 LEFT JOIN
-    iam_identity_profiles mp ON mp.membership_id = mbr.id
-LEFT JOIN
-    iam_identity_profiles dp ON dp.identity_id = mbr.identity_id AND dp.membership_id IS NULL
-ORDER BY
-    mbr.created_at DESC
+    iam_membership_profiles mp ON mp.membership_id = mbr.id
+WHERE
+	%s
 `
 
-	query = fmt.Sprintf(query, scope.SQLFragment())
+	query = fmt.Sprintf(query, scope.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"identity_id": identityID,
 	}
 	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, query, args)
 	if err != nil {
@@ -508,18 +504,24 @@ func (m *Memberships) LoadByOrganizationID(
 	cursor *page.Cursor[MembershipOrderField],
 ) error {
 	query := `
-WITH mbr AS (
+WITH membership_with_profile AS (
     SELECT
-        id,
-        identity_id,
-        organization_id,
-        role,
-        created_at,
-        updated_at
+        m.id,
+        m.identity_id,
+        m.organization_id,
+        m.role,
+        COALESCE(mp.full_name, i.full_name, '') AS full_name,
+        i.email_address,
+        m.created_at,
+        m.updated_at
     FROM
-        iam_memberships
+        iam_memberships m
+    JOIN
+        identities i ON m.identity_id = i.id
+    LEFT JOIN
+        iam_membership_profiles mp ON mp.membership_id = m.id
     WHERE
-        organization_id = @organization_id
+        m.organization_id = @organization_id
         AND %s
 )
 SELECT
@@ -531,26 +533,10 @@ SELECT
     email_address,
     created_at,
     updated_at
-FROM (
-	SELECT
-		mbr.id,
-		mbr.identity_id,
-		mbr.organization_id,
-		mbr.role,
-		COALESCE(mp.full_name, dp.full_name, '') as full_name,
-		i.email_address,
-		mbr.created_at,
-		mbr.updated_at
-	FROM
-		mbr
-	JOIN
-		identities i ON mbr.identity_id = i.id
-	LEFT JOIN
-		iam_identity_profiles mp ON mp.membership_id = mbr.id
-	LEFT JOIN
-		iam_identity_profiles dp ON dp.identity_id = mbr.identity_id AND dp.membership_id IS NULL
-) AS membership_with_identity
-WHERE %s
+FROM
+    membership_with_profile
+WHERE
+    %s
 `
 
 	query = fmt.Sprintf(query, scope.SQLFragment(), cursor.SQLFragment())

@@ -258,6 +258,7 @@ func (s *Service) HandleAssertion(
 				*identity = coredata.Identity{
 					ID:                   gid.New(gid.NilTenant, coredata.IdentityEntityType),
 					EmailAddress:         email,
+					FullName:             fullname,
 					HashedPassword:       nil,
 					EmailAddressVerified: true,
 					CreatedAt:            now,
@@ -268,24 +269,12 @@ func (s *Service) HandleAssertion(
 				if err != nil {
 					return fmt.Errorf("cannot insert identity: %w", err)
 				}
-
-				defaultProfile := &coredata.IdentityProfile{
-					ID:         gid.New(gid.NilTenant, coredata.IdentityProfileEntityType),
-					IdentityID: identity.ID,
-					FullName:   fullname,
-					CreatedAt:  now,
-					UpdatedAt:  now,
-				}
-
-				err = defaultProfile.Insert(ctx, tx)
-				if err != nil {
-					return fmt.Errorf("cannot insert default profile: %w", err)
-				}
 			} else if err != nil {
 				return fmt.Errorf("cannot load identity: %w", err)
 			} else {
 				identity.SAMLSubject = &assertion.Subject.NameID.Value
 				identity.EmailAddress = email
+				identity.FullName = fullname
 				identity.EmailAddressVerified = true
 				identity.UpdatedAt = now
 
@@ -316,10 +305,9 @@ func (s *Service) HandleAssertion(
 					return fmt.Errorf("cannot insert membership: %w", err)
 				}
 
-				membershipProfile := &coredata.IdentityProfile{
-					ID:           gid.New(membership.ID.TenantID(), coredata.IdentityProfileEntityType),
-					IdentityID:   identity.ID,
-					MembershipID: &membership.ID,
+				membershipProfile := &coredata.MembershipProfile{
+					ID:           gid.New(membership.ID.TenantID(), coredata.MembershipProfileEntityType),
+					MembershipID: membership.ID,
 					FullName:     fullname,
 					CreatedAt:    now,
 					UpdatedAt:    now,
@@ -341,7 +329,7 @@ func (s *Service) HandleAssertion(
 				}
 			}
 
-			memberProfile := &coredata.IdentityProfile{}
+			memberProfile := &coredata.MembershipProfile{}
 			err = memberProfile.LoadByMembershipID(ctx, tx, coredata.NewNoScope(), membership.ID)
 			if err != nil {
 				return fmt.Errorf("cannot load membership profile: %w", err)
