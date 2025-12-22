@@ -208,8 +208,6 @@ type Organization implements Node {
     last: Int
     before: CursorKey
   ): SAMLConfigurationConnection @goField(forceResolver: true)
-
-  availableApplications: [Application!]!
 }
 
 enum MembershipRole

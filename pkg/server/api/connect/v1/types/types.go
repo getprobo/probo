@@ -226,20 +226,19 @@ type Mutation struct {
 }
 
 type Organization struct {
-	ID                    gid.GID                      `json:"id"`
-	Name                  string                       `json:"name"`
-	LogoURL               *string                      `json:"logoUrl,omitempty"`
-	HorizontalLogoURL     *string                      `json:"horizontalLogoUrl,omitempty"`
-	Email                 *string                      `json:"email,omitempty"`
-	Description           *string                      `json:"description,omitempty"`
-	WebsiteURL            *string                      `json:"websiteUrl,omitempty"`
-	HeadquarterAddress    *string                      `json:"headquarterAddress,omitempty"`
-	CreatedAt             time.Time                    `json:"createdAt"`
-	UpdatedAt             time.Time                    `json:"updatedAt"`
-	Members               *MembershipConnection        `json:"members,omitempty"`
-	Invitations           *InvitationConnection        `json:"invitations,omitempty"`
-	SamlConfigurations    *SAMLConfigurationConnection `json:"samlConfigurations,omitempty"`
-	AvailableApplications []*Application               `json:"availableApplications"`
+	ID                 gid.GID                      `json:"id"`
+	Name               string                       `json:"name"`
+	LogoURL            *string                      `json:"logoUrl,omitempty"`
+	HorizontalLogoURL  *string                      `json:"horizontalLogoUrl,omitempty"`
+	Email              *string                      `json:"email,omitempty"`
+	Description        *string                      `json:"description,omitempty"`
+	WebsiteURL         *string                      `json:"websiteUrl,omitempty"`
+	HeadquarterAddress *string                      `json:"headquarterAddress,omitempty"`
+	CreatedAt          time.Time                    `json:"createdAt"`
+	UpdatedAt          time.Time                    `json:"updatedAt"`
+	Members            *MembershipConnection        `json:"members,omitempty"`
+	Invitations        *InvitationConnection        `json:"invitations,omitempty"`
+	SamlConfigurations *SAMLConfigurationConnection `json:"samlConfigurations,omitempty"`
 }
 
 func (Organization) IsNode()             {}
