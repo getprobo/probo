@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Added
+
+- Add new GDPR registries
+
 ## [0.111.2] - 2025-12-19
 
 ### Fixed
