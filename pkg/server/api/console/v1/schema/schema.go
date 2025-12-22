@@ -9473,17 +9473,11 @@ enum ContinualImprovementPriority
 }
 
 enum RightsRequestType
-  @goModel(
-    model: "go.probo.inc/probo/pkg/coredata.RightsRequestType"
-  ) {
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.RightsRequestType") {
   ACCESS
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.RightsRequestTypeAccess"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.RightsRequestTypeAccess")
   DELETION
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.RightsRequestTypeDeletion"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.RightsRequestTypeDeletion")
   PORTABILITY
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.RightsRequestTypePortability"
@@ -9491,21 +9485,13 @@ enum RightsRequestType
 }
 
 enum RightsRequestState
-  @goModel(
-    model: "go.probo.inc/probo/pkg/coredata.RightsRequestState"
-  ) {
-  TODO
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.RightsRequestStateTodo"
-    )
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.RightsRequestState") {
+  TODO @goEnum(value: "go.probo.inc/probo/pkg/coredata.RightsRequestStateTodo")
   IN_PROGRESS
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.RightsRequestStateInProgress"
     )
-  DONE
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.RightsRequestStateDone"
-    )
+  DONE @goEnum(value: "go.probo.inc/probo/pkg/coredata.RightsRequestStateDone")
 }
 
 enum ProcessingActivitySpecialOrCriminalDatum
@@ -9633,9 +9619,7 @@ enum DataProtectionImpactAssessmentResidualRisk
 }
 
 enum ProcessingActivityRole
-  @goModel(
-    model: "go.probo.inc/probo/pkg/coredata.ProcessingActivityRole"
-  ) {
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.ProcessingActivityRole") {
   CONTROLLER
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityRoleController"
@@ -10308,9 +10292,7 @@ enum ContinualImprovementOrderField
 }
 
 enum RightsRequestOrderField
-  @goModel(
-    model: "go.probo.inc/probo/pkg/coredata.RightsRequestOrderField"
-  ) {
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.RightsRequestOrderField") {
   CREATED_AT
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.RightsRequestOrderFieldCreatedAt"
@@ -10717,7 +10699,6 @@ input ObligationFilter {
 input ContinualImprovementFilter {
   snapshotId: ID
 }
-
 
 input ProcessingActivityFilter {
   snapshotId: ID
@@ -11150,10 +11131,7 @@ type Framework implements Node {
   updatedAt: Datetime!
 }
 
-type Control implements Node
-  @goModel(
-    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.Control"
-  ) {
+type Control implements Node {
   id: ID!
   sectionTitle: String!
   name: String!
@@ -11534,8 +11512,10 @@ type ProcessingActivity implements Node {
     before: CursorKey
     orderBy: VendorOrder
   ): VendorConnection! @goField(forceResolver: true)
-  dataProtectionImpactAssessment: DataProtectionImpactAssessment @goField(forceResolver: true)
-  transferImpactAssessment: TransferImpactAssessment @goField(forceResolver: true)
+  dataProtectionImpactAssessment: DataProtectionImpactAssessment
+    @goField(forceResolver: true)
+  transferImpactAssessment: TransferImpactAssessment
+    @goField(forceResolver: true)
   createdAt: Datetime!
   updatedAt: Datetime!
 }
@@ -12707,7 +12687,6 @@ input DeleteTaskInput {
   taskId: ID!
 }
 
-
 input CreateControlMeasureMappingInput {
   controlId: ID!
   measureId: ID!
@@ -13399,7 +13378,6 @@ type UpdateTaskPayload {
 type DeleteTaskPayload {
   deletedTaskId: ID!
 }
-
 
 type CreateControlMeasureMappingPayload {
   controlEdge: ControlEdge!

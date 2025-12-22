@@ -41,22 +41,25 @@ func NewAssetConnection(
 	}
 }
 
-func NewAsset(asset *coredata.Asset) *Asset {
-	return &Asset{
-		ID:              asset.ID,
-		SnapshotID:      asset.SnapshotID,
-		Name:            asset.Name,
-		Amount:          asset.Amount,
-		AssetType:       asset.AssetType,
-		DataTypesStored: asset.DataTypesStored,
-		CreatedAt:       asset.CreatedAt,
-		UpdatedAt:       asset.UpdatedAt,
-	}
-}
-
 func NewAssetEdge(asset *coredata.Asset, orderField coredata.AssetOrderField) *AssetEdge {
 	return &AssetEdge{
 		Node:   NewAsset(asset),
 		Cursor: asset.CursorKey(orderField),
+	}
+}
+
+func NewAsset(asset *coredata.Asset) *Asset {
+	return &Asset{
+		ID:         asset.ID,
+		SnapshotID: asset.SnapshotID,
+		Name:       asset.Name,
+		Amount:     asset.Amount,
+		Owner: &People{
+			ID: asset.OwnerID,
+		},
+		AssetType:       asset.AssetType,
+		DataTypesStored: asset.DataTypesStored,
+		CreatedAt:       asset.CreatedAt,
+		UpdatedAt:       asset.UpdatedAt,
 	}
 }

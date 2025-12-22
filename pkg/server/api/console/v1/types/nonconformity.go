@@ -55,9 +55,22 @@ func NewNonconformityConnection(
 	}
 }
 
+func NewNonconformityEdge(nr *coredata.Nonconformity, orderField coredata.NonconformityOrderField) *NonconformityEdge {
+	return &NonconformityEdge{
+		Node:   NewNonconformity(nr),
+		Cursor: nr.CursorKey(orderField),
+	}
+}
+
 func NewNonconformity(nr *coredata.Nonconformity) *Nonconformity {
-	return &Nonconformity{
-		ID:                 nr.ID,
+	nc := &Nonconformity{
+		ID: nr.ID,
+		Organization: &Organization{
+			ID: nr.OrganizationID,
+		},
+		Owner: &People{
+			ID: nr.OwnerID,
+		},
 		ReferenceID:        nr.ReferenceID,
 		SnapshotID:         nr.SnapshotID,
 		Description:        nr.Description,
@@ -70,11 +83,12 @@ func NewNonconformity(nr *coredata.Nonconformity) *Nonconformity {
 		CreatedAt:          nr.CreatedAt,
 		UpdatedAt:          nr.UpdatedAt,
 	}
-}
 
-func NewNonconformityEdge(nr *coredata.Nonconformity, orderField coredata.NonconformityOrderField) *NonconformityEdge {
-	return &NonconformityEdge{
-		Node:   NewNonconformity(nr),
-		Cursor: nr.CursorKey(orderField),
+	if nr.AuditID != nil {
+		nc.Audit = &Audit{
+			ID: *nr.AuditID,
+		}
 	}
+
+	return nc
 }

@@ -62,19 +62,29 @@ func NewTaskEdge(t *coredata.Task, orderBy coredata.TaskOrderField) *TaskEdge {
 
 func NewTask(t *coredata.Task) *Task {
 	node := &Task{
-		ID:           t.ID,
+		ID: t.ID,
+		Organization: &Organization{
+			ID: t.OrganizationID,
+		},
+
 		Name:         t.Name,
 		Description:  t.Description,
 		State:        t.State,
 		TimeEstimate: t.TimeEstimate,
+		Deadline:     t.Deadline,
 		CreatedAt:    t.CreatedAt,
 		UpdatedAt:    t.UpdatedAt,
-		Deadline:     t.Deadline,
 	}
 
 	if t.MeasureID != nil {
 		node.Measure = &Measure{
 			ID: *t.MeasureID,
+		}
+	}
+
+	if t.AssignedToID != nil {
+		node.AssignedTo = &People{
+			ID: *t.AssignedToID,
 		}
 	}
 
