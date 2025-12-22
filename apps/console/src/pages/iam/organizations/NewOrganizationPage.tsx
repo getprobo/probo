@@ -5,6 +5,7 @@ import type { FormEventHandler } from "react";
 import { useNavigate } from "react-router";
 import { formatError, type GraphQLError } from "@probo/helpers";
 import type { NewOrganizationPageMutation } from "./__generated__/NewOrganizationPageMutation.graphql";
+import { IAMRelayProvider } from "/providers/IAMRelayProvider";
 
 const createOrganizationMutation = graphql`
   mutation NewOrganizationPageMutation($input: CreateOrganizationInput!) {
@@ -17,7 +18,7 @@ const createOrganizationMutation = graphql`
   }
 `;
 
-export default function Page() {
+function NewOrganizationPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { __ } = useTranslate();
@@ -95,5 +96,13 @@ export default function Page() {
         </form>
       </Card>
     </div>
+  );
+}
+
+export default function () {
+  return (
+    <IAMRelayProvider>
+      <NewOrganizationPage />
+    </IAMRelayProvider>
   );
 }

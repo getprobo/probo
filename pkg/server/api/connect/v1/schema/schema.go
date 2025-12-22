@@ -237,6 +237,7 @@ type ComplexityRoot struct {
 		Name               func(childComplexity int) int
 		SamlConfigurations func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
 		UpdatedAt          func(childComplexity int) int
+		ViewerMembership   func(childComplexity int) int
 		WebsiteURL         func(childComplexity int) int
 	}
 
@@ -477,6 +478,7 @@ type OrganizationResolver interface {
 	Members(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MembershipOrderBy) (*types.MembershipConnection, error)
 	Invitations(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, status *coredata.InvitationStatus) (*types.InvitationConnection, error)
 	SamlConfigurations(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.SAMLConfigurationConnection, error)
+	ViewerMembership(ctx context.Context, obj *types.Organization) (*types.Membership, error)
 }
 type PersonalAPIKeyConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.PersonalAPIKeyConnection) (*int, error)
@@ -1282,6 +1284,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Organization.UpdatedAt(childComplexity), true
+	case "Organization.viewerMembership":
+		if e.complexity.Organization.ViewerMembership == nil {
+			break
+		}
+
+		return e.complexity.Organization.ViewerMembership(childComplexity), true
 	case "Organization.websiteUrl":
 		if e.complexity.Organization.WebsiteURL == nil {
 			break
@@ -2189,6 +2197,8 @@ type Organization implements Node {
     last: Int
     before: CursorKey
   ): SAMLConfigurationConnection @goField(forceResolver: true)
+
+  viewerMembership: Membership @goField(forceResolver: true)
 }
 
 enum MembershipRole
@@ -3621,6 +3631,8 @@ func (ec *executionContext) fieldContext_CreateOrganizationPayload_organization(
 				return ec.fieldContext_Organization_invitations(ctx, field)
 			case "samlConfigurations":
 				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
+			case "viewerMembership":
+				return ec.fieldContext_Organization_viewerMembership(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
 		},
@@ -3870,6 +3882,8 @@ func (ec *executionContext) fieldContext_DeleteOrganizationHorizontalLogoPayload
 				return ec.fieldContext_Organization_invitations(ctx, field)
 			case "samlConfigurations":
 				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
+			case "viewerMembership":
+				return ec.fieldContext_Organization_viewerMembership(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
 		},
@@ -4639,6 +4653,8 @@ func (ec *executionContext) fieldContext_Invitation_organization(_ context.Conte
 				return ec.fieldContext_Organization_invitations(ctx, field)
 			case "samlConfigurations":
 				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
+			case "viewerMembership":
+				return ec.fieldContext_Organization_viewerMembership(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
 		},
@@ -5071,6 +5087,8 @@ func (ec *executionContext) fieldContext_Membership_organization(_ context.Conte
 				return ec.fieldContext_Organization_invitations(ctx, field)
 			case "samlConfigurations":
 				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
+			case "viewerMembership":
+				return ec.fieldContext_Organization_viewerMembership(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
 		},
@@ -7562,6 +7580,53 @@ func (ec *executionContext) fieldContext_Organization_samlConfigurations(ctx con
 	return fc, nil
 }
 
+func (ec *executionContext) _Organization_viewerMembership(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Organization_viewerMembership,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.Organization().ViewerMembership(ctx, obj)
+		},
+		nil,
+		ec.marshalOMembership2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐMembership,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Organization_viewerMembership(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Organization",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Membership_id(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Membership_createdAt(ctx, field)
+			case "identity":
+				return ec.fieldContext_Membership_identity(ctx, field)
+			case "profile":
+				return ec.fieldContext_Membership_profile(ctx, field)
+			case "organization":
+				return ec.fieldContext_Membership_organization(ctx, field)
+			case "role":
+				return ec.fieldContext_Membership_role(ctx, field)
+			case "permissions":
+				return ec.fieldContext_Membership_permissions(ctx, field)
+			case "lastSession":
+				return ec.fieldContext_Membership_lastSession(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Membership", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _OrganizationSessionCreated_session(ctx context.Context, field graphql.CollectedField, obj *types.OrganizationSessionCreated) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -7975,6 +8040,8 @@ func (ec *executionContext) fieldContext_Permission_organization(_ context.Conte
 				return ec.fieldContext_Organization_invitations(ctx, field)
 			case "samlConfigurations":
 				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
+			case "viewerMembership":
+				return ec.fieldContext_Organization_viewerMembership(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
 		},
@@ -8332,6 +8399,8 @@ func (ec *executionContext) fieldContext_PersonalAPIKey_organizations(_ context.
 				return ec.fieldContext_Organization_invitations(ctx, field)
 			case "samlConfigurations":
 				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
+			case "viewerMembership":
+				return ec.fieldContext_Organization_viewerMembership(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
 		},
@@ -10561,6 +10630,8 @@ func (ec *executionContext) fieldContext_UpdateOrganizationPayload_organization(
 				return ec.fieldContext_Organization_invitations(ctx, field)
 			case "samlConfigurations":
 				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
+			case "viewerMembership":
+				return ec.fieldContext_Organization_viewerMembership(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
 		},
@@ -15060,6 +15131,39 @@ func (ec *executionContext) _Organization(ctx context.Context, sel ast.Selection
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "viewerMembership":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Organization_viewerMembership(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -18729,6 +18833,13 @@ func (ec *executionContext) marshalOInviteMemberPayload2ᚖgoᚗproboᚗincᚋpr
 		return graphql.Null
 	}
 	return ec._InviteMemberPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOMembership2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐMembership(ctx context.Context, sel ast.SelectionSet, v *types.Membership) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Membership(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOMembershipConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐMembershipConnection(ctx context.Context, sel ast.SelectionSet, v *types.MembershipConnection) graphql.Marshaler {

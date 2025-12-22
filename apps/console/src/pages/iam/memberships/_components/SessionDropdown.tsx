@@ -17,12 +17,14 @@ import { useTranslate } from "@probo/i18n";
 import type { SessionDropdownFragment$key } from "./__generated__/SessionDropdownFragment.graphql";
 
 export const fragment = graphql`
-  fragment SessionDropdownFragment on Identity
-  @argumentDefinitions(organizationId: { type: "ID!" }) {
-    email
-    profileFor(organizationId: $organizationId) {
-      firstName
-      lastName
+  fragment SessionDropdownFragment on Organization {
+    viewerMembership @required(action: THROW) {
+      identity @required(action: THROW) {
+        email
+      }
+      profile @required(action: THROW) {
+        fullName
+      }
     }
   }
 `;
@@ -43,8 +45,12 @@ export function SessionDropdown(props: { fKey: SessionDropdownFragment$key }) {
   const { isAuthorized } = use(PermissionsContext);
   const { toast } = useToast();
 
-  const { email, profileFor: profile } =
-    useFragment<SessionDropdownFragment$key>(fragment, fKey);
+  const {
+    viewerMembership: {
+      identity: { email },
+      profile: { fullName },
+    },
+  } = useFragment<SessionDropdownFragment$key>(fragment, fKey);
   const [signOut] = useMutation(signOutMutation);
 
   const handleLogout: React.MouseEventHandler<HTMLAnchorElement> = (e) => {
@@ -64,11 +70,6 @@ export function SessionDropdown(props: { fKey: SessionDropdownFragment$key }) {
       },
     });
   };
-
-  // FIXME: user should always have a default profile
-  const fullName = profile?.firstName
-    ? `${profile.firstName} ${profile.lastName}`
-    : email;
 
   return (
     <UserDropdown fullName={fullName} email={email}>
