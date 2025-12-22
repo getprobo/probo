@@ -225,20 +225,19 @@ type ComplexityRoot struct {
 	}
 
 	Organization struct {
-		AvailableApplications func(childComplexity int) int
-		CreatedAt             func(childComplexity int) int
-		Description           func(childComplexity int) int
-		Email                 func(childComplexity int) int
-		HeadquarterAddress    func(childComplexity int) int
-		HorizontalLogoURL     func(childComplexity int) int
-		ID                    func(childComplexity int) int
-		Invitations           func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, status *coredata.InvitationStatus) int
-		LogoURL               func(childComplexity int) int
-		Members               func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MembershipOrderBy) int
-		Name                  func(childComplexity int) int
-		SamlConfigurations    func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
-		UpdatedAt             func(childComplexity int) int
-		WebsiteURL            func(childComplexity int) int
+		CreatedAt          func(childComplexity int) int
+		Description        func(childComplexity int) int
+		Email              func(childComplexity int) int
+		HeadquarterAddress func(childComplexity int) int
+		HorizontalLogoURL  func(childComplexity int) int
+		ID                 func(childComplexity int) int
+		Invitations        func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, status *coredata.InvitationStatus) int
+		LogoURL            func(childComplexity int) int
+		Members            func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MembershipOrderBy) int
+		Name               func(childComplexity int) int
+		SamlConfigurations func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
+		UpdatedAt          func(childComplexity int) int
+		WebsiteURL         func(childComplexity int) int
 	}
 
 	OrganizationSessionCreated struct {
@@ -1196,12 +1195,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Mutation.VerifyEmail(childComplexity, args["input"].(types.VerifyEmailInput)), true
 
-	case "Organization.availableApplications":
-		if e.complexity.Organization.AvailableApplications == nil {
-			break
-		}
-
-		return e.complexity.Organization.AvailableApplications(childComplexity), true
 	case "Organization.createdAt":
 		if e.complexity.Organization.CreatedAt == nil {
 			break
@@ -2196,8 +2189,6 @@ type Organization implements Node {
     last: Int
     before: CursorKey
   ): SAMLConfigurationConnection @goField(forceResolver: true)
-
-  availableApplications: [Application!]!
 }
 
 enum MembershipRole
@@ -3630,8 +3621,6 @@ func (ec *executionContext) fieldContext_CreateOrganizationPayload_organization(
 				return ec.fieldContext_Organization_invitations(ctx, field)
 			case "samlConfigurations":
 				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
-			case "availableApplications":
-				return ec.fieldContext_Organization_availableApplications(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
 		},
@@ -3881,8 +3870,6 @@ func (ec *executionContext) fieldContext_DeleteOrganizationHorizontalLogoPayload
 				return ec.fieldContext_Organization_invitations(ctx, field)
 			case "samlConfigurations":
 				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
-			case "availableApplications":
-				return ec.fieldContext_Organization_availableApplications(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
 		},
@@ -4652,8 +4639,6 @@ func (ec *executionContext) fieldContext_Invitation_organization(_ context.Conte
 				return ec.fieldContext_Organization_invitations(ctx, field)
 			case "samlConfigurations":
 				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
-			case "availableApplications":
-				return ec.fieldContext_Organization_availableApplications(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
 		},
@@ -5086,8 +5071,6 @@ func (ec *executionContext) fieldContext_Membership_organization(_ context.Conte
 				return ec.fieldContext_Organization_invitations(ctx, field)
 			case "samlConfigurations":
 				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
-			case "availableApplications":
-				return ec.fieldContext_Organization_availableApplications(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
 		},
@@ -7579,45 +7562,6 @@ func (ec *executionContext) fieldContext_Organization_samlConfigurations(ctx con
 	return fc, nil
 }
 
-func (ec *executionContext) _Organization_availableApplications(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Organization_availableApplications,
-		func(ctx context.Context) (any, error) {
-			return obj.AvailableApplications, nil
-		},
-		nil,
-		ec.marshalNApplication2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐApplicationᚄ,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Organization_availableApplications(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Organization",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Application_id(ctx, field)
-			case "name":
-				return ec.fieldContext_Application_name(ctx, field)
-			case "description":
-				return ec.fieldContext_Application_description(ctx, field)
-			case "availableAccessLevels":
-				return ec.fieldContext_Application_availableAccessLevels(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Application", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _OrganizationSessionCreated_session(ctx context.Context, field graphql.CollectedField, obj *types.OrganizationSessionCreated) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -8031,8 +7975,6 @@ func (ec *executionContext) fieldContext_Permission_organization(_ context.Conte
 				return ec.fieldContext_Organization_invitations(ctx, field)
 			case "samlConfigurations":
 				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
-			case "availableApplications":
-				return ec.fieldContext_Organization_availableApplications(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
 		},
@@ -8390,8 +8332,6 @@ func (ec *executionContext) fieldContext_PersonalAPIKey_organizations(_ context.
 				return ec.fieldContext_Organization_invitations(ctx, field)
 			case "samlConfigurations":
 				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
-			case "availableApplications":
-				return ec.fieldContext_Organization_availableApplications(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
 		},
@@ -10621,8 +10561,6 @@ func (ec *executionContext) fieldContext_UpdateOrganizationPayload_organization(
 				return ec.fieldContext_Organization_invitations(ctx, field)
 			case "samlConfigurations":
 				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
-			case "availableApplications":
-				return ec.fieldContext_Organization_availableApplications(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
 		},
@@ -15122,11 +15060,6 @@ func (ec *executionContext) _Organization(ctx context.Context, sel ast.Selection
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "availableApplications":
-			out.Values[i] = ec._Organization_availableApplications(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -17155,50 +17088,6 @@ func (ec *executionContext) marshalNAccessLevel2ᚕgoᚗproboᚗincᚋproboᚋpk
 				defer wg.Done()
 			}
 			ret[i] = ec.marshalNAccessLevel2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐAccessLevel(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
-func (ec *executionContext) marshalNApplication2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐApplicationᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.Application) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNApplication2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐApplication(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
