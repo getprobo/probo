@@ -15,47 +15,51 @@
 package coredata
 
 import (
-	"go.probo.inc/probo/pkg/gid"
+	"time"
+
 	"github.com/jackc/pgx/v5"
 )
 
 type (
-	ProcessingActivityFilter struct {
-		snapshotID **gid.GID
+	SnapshotFilter struct {
+		snapshotType *SnapshotsType
+		beforeDate   *time.Time
 	}
 )
 
-func NewProcessingActivityFilter(snapshotID **gid.GID) *ProcessingActivityFilter {
-	return &ProcessingActivityFilter{
-		snapshotID: snapshotID,
+func NewSnapshotFilter(snapshotType *SnapshotsType) *SnapshotFilter {
+	return &SnapshotFilter{
+		snapshotType: snapshotType,
 	}
 }
 
-func (f *ProcessingActivityFilter) SQLArguments() pgx.NamedArgs {
-	args := pgx.NamedArgs{}
+func (f *SnapshotFilter) WithBeforeDate(beforeDate *time.Time) *SnapshotFilter {
+	f.beforeDate = beforeDate
+	return f
+}
 
-	if f.snapshotID != nil && *f.snapshotID != nil {
-		args["filter_snapshot_id"] = **f.snapshotID
+func (f *SnapshotFilter) SQLArguments() pgx.NamedArgs {
+	args := pgx.NamedArgs{
+		"filter_snapshot_type": f.snapshotType,
+		"filter_before_date":   f.beforeDate,
 	}
 
 	return args
 }
 
-func (f *ProcessingActivityFilter) SQLFragment() string {
-	if f.snapshotID == nil {
-		return "TRUE"
-	}
-
-	if *f.snapshotID == nil {
-		return "snapshot_id IS NULL"
-	} else {
-		return "snapshot_id = @filter_snapshot_id"
-	}
-}
-
-func (f *ProcessingActivityFilter) SnapshotID() *gid.GID {
-	if f.snapshotID == nil || *f.snapshotID == nil {
-		return nil
-	}
-	return *f.snapshotID
+func (f *SnapshotFilter) SQLFragment() string {
+	return `
+(
+	CASE
+		WHEN @filter_snapshot_type::snapshots_type IS NOT NULL THEN
+			type = @filter_snapshot_type::snapshots_type
+		ELSE TRUE
+	END
+	AND
+	CASE
+		WHEN @filter_before_date::timestamptz IS NOT NULL THEN
+			created_at <= @filter_before_date::timestamptz
+		ELSE TRUE
+	END
+)`
 }

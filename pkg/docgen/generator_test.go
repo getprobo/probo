@@ -195,7 +195,7 @@ func TestTemplateFunctions(t *testing.T) {
 	})
 
 	t.Run("eq function", func(t *testing.T) {
-		eqFunc := templateFuncs["eq"].(func(string, string) bool)
+		eqFunc := templateFuncs["eq"].(func(any, any) bool)
 		assert.True(t, eqFunc("test", "test"))
 		assert.False(t, eqFunc("test", "other"))
 	})
@@ -266,7 +266,7 @@ func TestHTMLEscaping(t *testing.T) {
 
 	resultStr := string(result)
 
-	// Verify dangerous content is escaped 
+	// Verify dangerous content is escaped
 	assert.NotContains(t, resultStr, "<script>alert('xss')</script>")
 	assert.NotContains(t, resultStr, "<malicious>tag")
 	assert.Contains(t, resultStr, "&lt;script&gt;")

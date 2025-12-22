@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Processing Activities Export</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 2.5cm;
+            @bottom-right {
+                content: "Page " counter(page) " of " counter(pages);
+                font-family: Arial, sans-serif;
+                font-size: 9pt;
+                color: #666;
+            }
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 7.5pt;
+            line-height: 1.4;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background: white;
+        }
+
+        /* Cover page */
+        .cover-page {
+            page-break-after: always;
+        }
+
+        .company-header {
+            margin-bottom: 30px;
+            page-break-after: avoid;
+        }
+
+        .company-logo {
+            max-height: 50px;
+            max-width: 250px;
+            object-fit: contain;
+            display: block;
+        }
+
+        .company-name {
+            font-size: 16pt;
+            color: #1a1a1a;
+            margin-top: 10px;
+            font-weight: 600;
+        }
+
+        .export-title {
+            font-size: 22pt;
+            font-weight: normal;
+            color: #1a1a1a;
+            margin: 0 0 25px 0;
+            text-align: left;
+        }
+
+        .document-meta {
+            margin: 0 0 30px 0;
+            font-size: 9pt;
+        }
+
+        .meta-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid #333;
+        }
+
+        .meta-table td {
+            padding: 6px 8px;
+            border: 1px solid #333;
+            vertical-align: middle;
+        }
+
+        .meta-table td:first-child {
+            font-weight: 600;
+            width: 25%;
+            background: #f8f8f8;
+            color: #333;
+        }
+
+        .classification {
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .purpose-section {
+            margin: 30px 0;
+            page-break-after: avoid;
+        }
+
+        .purpose-title {
+            font-size: 15pt;
+            font-weight: bold;
+            color: #000;
+            margin: 0 0 15px 0;
+            page-break-after: avoid;
+        }
+
+        .purpose-text {
+            font-size: 10pt;
+            color: #333;
+            line-height: 1.5;
+            text-align: justify;
+        }
+
+
+        /* Activity page */
+        .activity-page {
+            page-break-before: always;
+            page-break-after: always;
+        }
+
+        .activity-page:last-child {
+            page-break-after: auto;
+        }
+
+        .activity-title {
+            font-size: 15pt;
+            font-weight: bold;
+            color: #000;
+            margin: 0 0 15px 0;
+            page-break-after: avoid;
+        }
+
+        .activity-section {
+            margin-bottom: 8px;
+            page-break-inside: avoid;
+        }
+
+        .activity-section-title {
+            font-size: 10pt;
+            font-weight: bold;
+            color: #333;
+            margin: 12px 0 6px 0;
+            page-break-after: avoid;
+            page-break-inside: avoid;
+        }
+
+        .activity-field {
+            margin-bottom: 8px;
+            page-break-inside: avoid;
+        }
+
+        .activity-field-label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 3px;
+            font-size: 7.5pt;
+        }
+
+        .activity-field-value {
+            color: #000;
+            font-size: 7.5pt;
+            line-height: 1.4;
+        }
+
+        .empty-value {
+            color: #999;
+            font-style: italic;
+        }
+
+        .activity-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .activity-grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        /* Annex page */
+        .annex-page {
+            page-break-before: always;
+        }
+
+        .annex-title {
+            font-size: 15pt;
+            font-weight: bold;
+            color: #000;
+            margin: 0 0 15px 0;
+            page-break-after: avoid;
+        }
+
+        .annex-section {
+            margin-bottom: 20px;
+        }
+
+        .annex-section-title {
+            font-size: 13pt;
+            font-weight: bold;
+            color: #000;
+            margin: 15px 0 10px 0;
+        }
+
+        .annex-subsection-title {
+            font-size: 10pt;
+            font-weight: bold;
+            color: #333;
+            margin: 12px 0 8px 0;
+        }
+
+        .annex-enum-list {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+
+        .annex-enum-item {
+            margin-bottom: 8px;
+            font-size: 10pt;
+            line-height: 1.5;
+        }
+
+        .annex-enum-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .annex-enum-description {
+            color: #000;
+            margin-left: 5px;
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="cover-page">
+        <div class="company-header">
+            {{- if .CompanyHorizontalLogoBase64}}
+            {{imgTag .CompanyHorizontalLogoBase64 "Company Logo" "company-logo"}}
+            {{- else}}
+            <div class="company-name">{{.CompanyName}}</div>
+            {{- end}}
+        </div>
+
+        <h1 class="export-title">Processing Activities</h1>
+
+        <div class="document-meta">
+            <table class="meta-table">
+                <tr>
+                    <td>Classification</td>
+                    <td>
+                        <span class="classification">CONFIDENTIAL</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Version</td>
+                    <td>{{.Version}}</td>
+                </tr>
+                <tr>
+                    <td>Published</td>
+                    <td>{{.PublishedAt.Format "January 2, 2006"}}</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="purpose-section">
+            <div class="purpose-title">1. Purpose</div>
+            <div class="purpose-text">
+                This document provides a comprehensive overview of all processing activities within the organization.
+                It serves as a record of personal data processing operations, documenting the purposes, legal bases,
+                data categories, and associated safeguards for each activity.
+            </div>
+        </div>
+    </div>
+
+    {{- range $index, $activity := .Activities}}
+    <div class="activity-page">
+        {{if eq $index 0}}
+        <h1 class="annex-title">2. Records</h1>
+        {{end}}
+        <h1 class="annex-section-title">2.{{add $index 1}} {{$activity.Name}}</h1>
+
+        <div class="activity-section">
+            <div class="activity-section-title">2.{{add $index 1}}.1 General Information</div>
+            <div class="activity-field">
+                <div class="activity-field-label">Purpose</div>
+                <div class="activity-field-value">{{if .Purpose}}{{.Purpose}}{{else}}<span class="empty-value">Not specified</span>{{end}}</div>
+            </div>
+            <div class="activity-grid">
+                <div class="activity-field">
+                    <div class="activity-field-label">Role</div>
+                    <div class="activity-field-value">{{.Role | formatRole}}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="activity-section">
+            <div class="activity-section-title">2.{{add $index 1}}.2 Data Categories</div>
+            <div class="activity-grid-3">
+                <div class="activity-field">
+                    <div class="activity-field-label">Data Subject Category</div>
+                    <div class="activity-field-value">{{if .DataSubjectCategory}}{{.DataSubjectCategory}}{{else}}<span class="empty-value">Not specified</span>{{end}}</div>
+                </div>
+                <div class="activity-field">
+                    <div class="activity-field-label">Personal Data Category</div>
+                    <div class="activity-field-value">{{if .PersonalDataCategory}}{{.PersonalDataCategory}}{{else}}<span class="empty-value">Not specified</span>{{end}}</div>
+                </div>
+                <div class="activity-field">
+                    <div class="activity-field-label">Special/Criminal Data</div>
+                    <div class="activity-field-value">{{.SpecialOrCriminalData | formatSpecialOrCriminalData}}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="activity-section">
+            <div class="activity-section-title">2.{{add $index 1}}.3 Legal Basis</div>
+            <div class="activity-grid">
+                <div class="activity-field">
+                    <div class="activity-field-label">Lawful Basis</div>
+                    <div class="activity-field-value">{{.LawfulBasis | formatLawfulBasis}}</div>
+                </div>
+                <div class="activity-field">
+                    <div class="activity-field-label">Consent Evidence Link</div>
+                    <div class="activity-field-value">{{if .ConsentEvidenceLink}}{{.ConsentEvidenceLink}}{{else}}<span class="empty-value">Not specified</span>{{end}}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="activity-section">
+            <div class="activity-section-title">2.{{add $index 1}}.4 Data Sharing & Transfers</div>
+            <div class="activity-grid">
+                <div class="activity-field">
+                    <div class="activity-field-label">Recipients</div>
+                    <div class="activity-field-value">{{if .Recipients}}{{.Recipients}}{{else}}<span class="empty-value">Not specified</span>{{end}}</div>
+                </div>
+                <div class="activity-field">
+                    <div class="activity-field-label">Location</div>
+                    <div class="activity-field-value">{{if .Location}}{{.Location}}{{else}}<span class="empty-value">Not specified</span>{{end}}</div>
+                </div>
+                <div class="activity-field">
+                    <div class="activity-field-label">International Transfers</div>
+                    <div class="activity-field-value">{{if .InternationalTransfers}}Yes{{else}}No{{end}}</div>
+                </div>
+                <div class="activity-field">
+                    <div class="activity-field-label">Transfer Safeguards</div>
+                    <div class="activity-field-value">{{if .TransferSafeguards}}{{.TransferSafeguards | formatTransferSafeguard}}{{else}}<span class="empty-value">Not specified</span>{{end}}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="activity-section">
+            <div class="activity-section-title">2.{{add $index 1}}.5 Retention & Security</div>
+            <div class="activity-grid">
+                <div class="activity-field">
+                    <div class="activity-field-label">Retention Period</div>
+                    <div class="activity-field-value">{{if .RetentionPeriod}}{{.RetentionPeriod}}{{else}}<span class="empty-value">Not specified</span>{{end}}</div>
+                </div>
+            </div>
+            <div class="activity-field">
+                <div class="activity-field-label">Security Measures</div>
+                <div class="activity-field-value">{{if .SecurityMeasures}}{{.SecurityMeasures}}{{else}}<span class="empty-value">Not specified</span>{{end}}</div>
+            </div>
+        </div>
+
+        <div class="activity-section">
+            <div class="activity-section-title">2.{{add $index 1}}.6 Assessments & Reviews</div>
+            <div class="activity-grid">
+                <div class="activity-field">
+                    <div class="activity-field-label">DPIA Needed</div>
+                    <div class="activity-field-value">{{.DataProtectionImpactAssessmentNeeded | formatDPIANeeded}}</div>
+                </div>
+                <div class="activity-field">
+                    <div class="activity-field-label">TIA Needed</div>
+                    <div class="activity-field-value">{{.TransferImpactAssessmentNeeded | formatTIANeeded}}</div>
+                </div>
+                <div class="activity-field">
+                    <div class="activity-field-label">Last Review Date</div>
+                    <div class="activity-field-value">{{if .LastReviewDate}}{{.LastReviewDate.Format "January 2, 2006"}}{{else}}<span class="empty-value">Not specified</span>{{end}}</div>
+                </div>
+                <div class="activity-field">
+                    <div class="activity-field-label">Next Review Date</div>
+                    <div class="activity-field-value">{{if .NextReviewDate}}{{.NextReviewDate.Format "January 2, 2006"}}{{else}}<span class="empty-value">Not specified</span>{{end}}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="activity-section">
+            <div class="activity-section-title">2.{{add $index 1}}.7 Responsible Parties</div>
+            <div class="activity-grid">
+                <div class="activity-field">
+                    <div class="activity-field-label">Data Protection Officer</div>
+                    <div class="activity-field-value">{{if .DataProtectionOfficerFullName}}{{.DataProtectionOfficerFullName}}{{else}}<span class="empty-value">Not assigned</span>{{end}}</div>
+                </div>
+                <div class="activity-field">
+                    <div class="activity-field-label">Vendors</div>
+                    <div class="activity-field-value">{{if .Vendors}}{{.Vendors}}{{else}}<span class="empty-value">None</span>{{end}}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {{- end}}
+
+    <div class="annex-page">
+        <h1 class="annex-title">3. Annexes</h1>
+
+        <div class="annex-section">
+            <div class="annex-section-title">3.1 Lexicon</div>
+        </div>
+
+        <div class="annex-section">
+            <div class="annex-subsection-title">Role</div>
+            <ul class="annex-enum-list">
+                <li class="annex-enum-item">
+                    <span class="annex-enum-name">Controller:</span>
+                    <span class="annex-enum-description">The entity that determines the purposes and means of processing personal data.</span>
+                </li>
+                <li class="annex-enum-item">
+                    <span class="annex-enum-name">Processor:</span>
+                    <span class="annex-enum-description">The entity that processes personal data on behalf of the controller.</span>
+                </li>
+            </ul>
+        </div>
+
+        <div class="annex-section">
+            <div class="annex-subsection-title">Lawful Basis</div>
+            <ul class="annex-enum-list">
+                <li class="annex-enum-item">
+                    <span class="annex-enum-name">Consent:</span>
+                    <span class="annex-enum-description">The data subject has given consent to the processing of their personal data.</span>
+                </li>
+                <li class="annex-enum-item">
+                    <span class="annex-enum-name">Contractual Necessity:</span>
+                    <span class="annex-enum-description">Processing is necessary for the performance of a contract to which the data subject is party.</span>
+                </li>
+                <li class="annex-enum-item">
+                    <span class="annex-enum-name">Legal Obligation:</span>
+                    <span class="annex-enum-description">Processing is necessary for compliance with a legal obligation to which the controller is subject.</span>
+                </li>
+                <li class="annex-enum-item">
+                    <span class="annex-enum-name">Legitimate Interest:</span>
+                    <span class="annex-enum-description">Processing is necessary for the purposes of the legitimate interests pursued by the controller or a third party.</span>
+                </li>
+                <li class="annex-enum-item">
+                    <span class="annex-enum-name">Public Task:</span>
+                    <span class="annex-enum-description">Processing is necessary for the performance of a task carried out in the public interest or in the exercise of official authority.</span>
+                </li>
+                <li class="annex-enum-item">
+                    <span class="annex-enum-name">Vital Interests:</span>
+                    <span class="annex-enum-description">Processing is necessary to protect the vital interests of the data subject or of another natural person.</span>
+                </li>
+            </ul>
+        </div>
+
+        <div class="annex-section">
+            <div class="annex-subsection-title">Special/Criminal Data</div>
+            <ul class="annex-enum-list">
+                <li class="annex-enum-item">
+                    <span class="annex-enum-name">Yes:</span>
+                    <span class="annex-enum-description">The processing activity involves special categories of personal data or data relating to criminal convictions and offences.</span>
+                </li>
+                <li class="annex-enum-item">
+                    <span class="annex-enum-name">No:</span>
+                    <span class="annex-enum-description">The processing activity does not involve special categories of personal data or data relating to criminal convictions and offences.</span>
+                </li>
+                <li class="annex-enum-item">
+                    <span class="annex-enum-name">Possible:</span>
+                    <span class="annex-enum-description">The processing activity may involve special categories of personal data or data relating to criminal convictions and offences.</span>
+                </li>
+            </ul>
+        </div>
+
+        <div class="annex-section">
+            <div class="annex-subsection-title">Transfer Safeguards</div>
+            <ul class="annex-enum-list">
+                <li class="annex-enum-item">
+                    <span class="annex-enum-name">Standard Contractual Clauses:</span>
+                    <span class="annex-enum-description">Standard contractual clauses approved by the European Commission are used to ensure adequate protection for international transfers.</span>
+                </li>
+                <li class="annex-enum-item">
+                    <span class="annex-enum-name">Binding Corporate Rules:</span>
+                    <span class="annex-enum-description">Binding corporate rules approved by a supervisory authority are used to ensure adequate protection for international transfers.</span>
+                </li>
+                <li class="annex-enum-item">
+                    <span class="annex-enum-name">Adequacy Decision:</span>
+                    <span class="annex-enum-description">The European Commission has determined that the third country ensures an adequate level of protection.</span>
+                </li>
+                <li class="annex-enum-item">
+                    <span class="annex-enum-name">Derogations:</span>
+                    <span class="annex-enum-description">A derogation under Article 49 of the GDPR is used for the international transfer.</span>
+                </li>
+                <li class="annex-enum-item">
+                    <span class="annex-enum-name">Codes of Conduct:</span>
+                    <span class="annex-enum-description">An approved code of conduct together with binding and enforceable commitments is used to ensure adequate protection.</span>
+                </li>
+                <li class="annex-enum-item">
+                    <span class="annex-enum-name">Certification Mechanisms:</span>
+                    <span class="annex-enum-description">An approved certification mechanism together with binding and enforceable commitments is used to ensure adequate protection.</span>
+                </li>
+            </ul>
+        </div>
+
+        <div class="annex-section">
+            <div class="annex-subsection-title">DPIA Needed</div>
+            <ul class="annex-enum-list">
+                <li class="annex-enum-item">
+                    <span class="annex-enum-name">Yes:</span>
+                    <span class="annex-enum-description">A Data Protection Impact Assessment is required for this processing activity.</span>
+                </li>
+                <li class="annex-enum-item">
+                    <span class="annex-enum-name">No:</span>
+                    <span class="annex-enum-description">A Data Protection Impact Assessment is not required for this processing activity.</span>
+                </li>
+            </ul>
+        </div>
+
+        <div class="annex-section">
+            <div class="annex-subsection-title">TIA Needed</div>
+            <ul class="annex-enum-list">
+                <li class="annex-enum-item">
+                    <span class="annex-enum-name">Yes:</span>
+                    <span class="annex-enum-description">A Transfer Impact Assessment is required for this processing activity.</span>
+                </li>
+                <li class="annex-enum-item">
+                    <span class="annex-enum-name">No:</span>
+                    <span class="annex-enum-description">A Transfer Impact Assessment is not required for this processing activity.</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

@@ -16,6 +16,10 @@ import {
   useConfirm,
   Tabs,
   TabItem,
+  IconArrowDown,
+  IconChevronDown,
+  Spinner,
+  Dropdown,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { usePageTitle } from "@probo/hooks";
@@ -32,7 +36,8 @@ import { useOrganizationId } from "/hooks/useOrganizationId";
 import { useParams } from "react-router";
 import { CreateProcessingActivityDialog } from "./dialogs/CreateProcessingActivityDialog";
 import { deleteProcessingActivityMutation, ProcessingActivitiesConnectionKey, processingActivitiesQuery } from "../../../hooks/graph/ProcessingActivityGraph";
-import { sprintf, promisifyMutation } from "@probo/helpers";
+import { sprintf, promisifyMutation, downloadFile, toDateInput } from "@probo/helpers";
+import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { SnapshotBanner } from "/components/SnapshotBanner";
 import type { NodeOf } from "/types";
 import type {
@@ -174,6 +179,36 @@ const tiaListPageFragment = graphql`
   }
 `;
 
+const exportProcessingActivitiesPDFMutation = graphql`
+  mutation ProcessingActivitiesPageExportPDFMutation(
+    $input: ExportProcessingActivitiesPDFInput!
+  ) {
+    exportProcessingActivitiesPDF(input: $input) {
+      data
+    }
+  }
+`;
+
+const exportDataProtectionImpactAssessmentsPDFMutation = graphql`
+  mutation ProcessingActivitiesPageExportDPIAPDFMutation(
+    $input: ExportDataProtectionImpactAssessmentsPDFInput!
+  ) {
+    exportDataProtectionImpactAssessmentsPDF(input: $input) {
+      data
+    }
+  }
+`;
+
+const exportTransferImpactAssessmentsPDFMutation = graphql`
+  mutation ProcessingActivitiesPageExportTIAPDFMutation(
+    $input: ExportTransferImpactAssessmentsPDFInput!
+  ) {
+    exportTransferImpactAssessmentsPDF(input: $input) {
+      data
+    }
+  }
+`;
+
 export default function ProcessingActivitiesPage({ queryRef }: ProcessingActivitiesPageProps) {
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
@@ -233,12 +268,169 @@ export default function ProcessingActivitiesPage({ queryRef }: ProcessingActivit
     isAuthorized("ProcessingActivity", "deleteProcessingActivity")
   );
 
+  const canExportPDF = isAuthorized("ProcessingActivity", "exportProcessingActivitiesPDF");
+  const [exportPDF, isExportingPDF] = useMutationWithToasts<{
+    response: {
+      exportProcessingActivitiesPDF?: {
+        data: string;
+      };
+    };
+    variables: {
+      input: {
+        organizationId: string;
+        filter: { snapshotId: string } | null;
+      };
+    };
+  }>(
+    exportProcessingActivitiesPDFMutation,
+    {
+      successMessage: __("PDF download started."),
+      errorMessage: __("Failed to generate PDF"),
+    }
+  );
+
+  const handleExportPDF = () => {
+    exportPDF({
+      variables: {
+        input: {
+          organizationId: organizationId,
+          filter: snapshotId ? { snapshotId } : null,
+        },
+      },
+      onCompleted: (data) => {
+        if (data.exportProcessingActivitiesPDF?.data) {
+          downloadFile(
+            data.exportProcessingActivitiesPDF.data,
+            `processing-activities-${toDateInput(new Date().toISOString())}.pdf`
+          );
+        }
+      },
+    });
+  };
+
+  const canExportDPIAPDF = isAuthorized("Organization", "exportDataProtectionImpactAssessmentsPDF");
+  const [exportDPIAPDF, isExportingDPIAPDF] = useMutationWithToasts<{
+    response: {
+      exportDataProtectionImpactAssessmentsPDF?: {
+        data: string;
+      };
+    };
+    variables: {
+      input: {
+        organizationId: string;
+        filter: { snapshotId: string } | null;
+      };
+    };
+  }>(
+    exportDataProtectionImpactAssessmentsPDFMutation,
+    {
+      successMessage: __("PDF download started."),
+      errorMessage: __("Failed to generate PDF"),
+    }
+  );
+
+  const handleExportDPIAPDF = () => {
+    exportDPIAPDF({
+      variables: {
+        input: {
+          organizationId: organizationId,
+          filter: snapshotId ? { snapshotId } : null,
+        },
+      },
+      onCompleted: (data) => {
+        if (data.exportDataProtectionImpactAssessmentsPDF?.data) {
+          downloadFile(
+            data.exportDataProtectionImpactAssessmentsPDF.data,
+            `data-protection-impact-assessments-${toDateInput(new Date().toISOString())}.pdf`
+          );
+        }
+      },
+    });
+  };
+
+  const canExportTIAPDF = isAuthorized("Organization", "exportTransferImpactAssessmentsPDF");
+  const [exportTIAPDF, isExportingTIAPDF] = useMutationWithToasts<{
+    response: {
+      exportTransferImpactAssessmentsPDF?: {
+        data: string;
+      };
+    };
+    variables: {
+      input: {
+        organizationId: string;
+        filter: { snapshotId: string } | null;
+      };
+    };
+  }>(
+    exportTransferImpactAssessmentsPDFMutation,
+    {
+      successMessage: __("PDF download started."),
+      errorMessage: __("Failed to generate PDF"),
+    }
+  );
+
+  const handleExportTIAPDF = () => {
+    exportTIAPDF({
+      variables: {
+        input: {
+          organizationId: organizationId,
+          filter: snapshotId ? { snapshotId } : null,
+        },
+      },
+      onCompleted: (data) => {
+        if (data.exportTransferImpactAssessmentsPDF?.data) {
+          downloadFile(
+            data.exportTransferImpactAssessmentsPDF.data,
+            `transfer-impact-assessments-${toDateInput(new Date().toISOString())}.pdf`
+          );
+        }
+      },
+    });
+  };
+
   return (
     <div className="space-y-6">
       {isSnapshotMode && snapshotId && (
         <SnapshotBanner snapshotId={snapshotId} />
       )}
       <PageHeader title={__("Processing Activities")} description={__("Manage your processing activities under GDPR")}>
+        {(canExportPDF || canExportDPIAPDF || canExportTIAPDF) && (
+          <Dropdown
+            toggle={
+              <Button variant="secondary" icon={IconArrowDown} iconAfter={IconChevronDown}>
+                {__("Export")}
+              </Button>
+            }
+          >
+            {canExportPDF && (
+              <DropdownItem
+                onClick={handleExportPDF}
+                disabled={isExportingPDF}
+                icon={isExportingPDF ? Spinner : undefined}
+              >
+                {__("Processing Activities")}
+              </DropdownItem>
+            )}
+            {canExportDPIAPDF && (
+              <DropdownItem
+                onClick={handleExportDPIAPDF}
+                disabled={isExportingDPIAPDF}
+                icon={isExportingDPIAPDF ? Spinner : undefined}
+              >
+                {__("Data Protection Impact Assessments")}
+              </DropdownItem>
+            )}
+            {canExportTIAPDF && (
+              <DropdownItem
+                onClick={handleExportTIAPDF}
+                disabled={isExportingTIAPDF}
+                icon={isExportingTIAPDF ? Spinner : undefined}
+              >
+                {__("Transfer Impact Assessments")}
+              </DropdownItem>
+            )}
+          </Dropdown>
+        )}
         {!isSnapshotMode && activeTab === "activities" && (
           isAuthorized("Organization", "createProcessingActivity") && (
             <CreateProcessingActivityDialog
@@ -272,13 +464,13 @@ export default function ProcessingActivitiesPage({ queryRef }: ProcessingActivit
               <Table>
                 <Thead>
                   <Tr>
-                    <Th>{__("Name")}</Th>
-                    <Th>{__("Purpose")}</Th>
-                    <Th>{__("Data Subject")}</Th>
-                    <Th>{__("Lawful Basis")}</Th>
-                    <Th>{__("Location")}</Th>
-                    <Th>{__("International Transfers")}</Th>
-                    {hasAnyAction && <Th>{__("Actions")}</Th>}
+                    <Th className="px-3">{__("Name")}</Th>
+                    <Th className="px-3">{__("Purpose")}</Th>
+                    <Th className="px-3">{__("Data Subject")}</Th>
+                    <Th className="px-3">{__("Lawful Basis")}</Th>
+                    <Th className="px-3">{__("Location")}</Th>
+                    <Th className="px-3">{__("International Transfers")}</Th>
+                    {hasAnyAction && <Th className="px-3">{__("Actions")}</Th>}
                   </Tr>
                 </Thead>
                 <Tbody>

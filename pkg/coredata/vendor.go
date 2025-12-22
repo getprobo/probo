@@ -21,10 +21,10 @@ import (
 	"maps"
 	"time"
 
-	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/page"
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 )
 
 type (
@@ -848,6 +848,74 @@ WHERE %s
 	*v = vendors
 
 	return nil
+}
+
+func (v *Vendors) LoadAllByProcessingActivities(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	organizationID gid.GID,
+	filter *ProcessingActivityFilter,
+) (map[gid.GID][]string, error) {
+	q := `
+WITH filtered_processing_activities AS (
+	SELECT
+		pa.id
+	FROM
+		processing_activities pa
+	WHERE
+		pa.tenant_id = @tenant_id
+		AND pa.organization_id = @organization_id
+		AND %s
+),
+filtered_vendors AS (
+	SELECT
+		v.id,
+		v.name
+	FROM
+		vendors v
+	WHERE
+		v.tenant_id = @tenant_id
+)
+SELECT
+	pav.processing_activity_id,
+	fv.name
+FROM
+	processing_activity_vendors pav
+INNER JOIN
+	filtered_vendors fv ON fv.id = pav.vendor_id
+INNER JOIN
+	filtered_processing_activities fpa ON fpa.id = pav.processing_activity_id
+WHERE
+	pav.tenant_id = @tenant_id
+ORDER BY
+	pav.processing_activity_id, fv.name
+	`
+	q = fmt.Sprintf(q, filter.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"organization_id": organizationID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query vendors: %w", err)
+	}
+	defer rows.Close()
+
+	vendorMap := make(map[gid.GID][]string)
+	for rows.Next() {
+		var processingActivityID gid.GID
+		var vendorName string
+		if err := rows.Scan(&processingActivityID, &vendorName); err != nil {
+			return nil, fmt.Errorf("cannot scan vendor: %w", err)
+		}
+		vendorMap[processingActivityID] = append(vendorMap[processingActivityID], vendorName)
+	}
+
+	return vendorMap, nil
 }
 
 func (d Vendors) InsertDataSnapshots(

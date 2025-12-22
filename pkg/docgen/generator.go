@@ -23,21 +23,36 @@ import (
 	"strings"
 	"time"
 
-	"go.probo.inc/probo/pkg/coredata"
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
 	gmhtml "github.com/yuin/goldmark/renderer/html"
+	"go.probo.inc/probo/pkg/coredata"
+)
+
+const (
+	firstPageTOCItems = 21
+	otherPageTOCItems = 28
 )
 
 var (
 	//go:embed template.html
 	htmlTemplateContent string
 
+	//go:embed processing_activities_template.html
+	processingActivitiesTemplateContent string
+
+	//go:embed data_protection_impact_assessments_template.html
+	dataProtectionImpactAssessmentsTemplateContent string
+
+	//go:embed transfer_impact_assessments_template.html
+	transferImpactAssessmentsTemplateContent string
+
 	templateFuncs = template.FuncMap{
 		"now":                  func() time.Time { return time.Now() },
-		"eq":                   func(a, b string) bool { return a == b },
+		"eq":                   func(a, b any) bool { return a == b },
 		"string":               func(v fmt.Stringer) string { return v.String() },
 		"lower":                func(s string) string { return strings.ToLower(s) },
+		"add":                  func(a, b int) int { return a + b },
 		"classificationString": func(c Classification) string { return string(c) },
 		"formatContent": func(content string) template.HTML {
 			md := goldmark.New(
@@ -56,9 +71,111 @@ var (
 		"imgTag": func(src, alt, class string) template.HTML {
 			return template.HTML(fmt.Sprintf(`<img src="%s" alt="%s" class="%s">`, html.EscapeString(src), html.EscapeString(alt), html.EscapeString(class)))
 		},
+		"formatLawfulBasis": func(basis coredata.ProcessingActivityLawfulBasis) string {
+			switch basis {
+			case coredata.ProcessingActivityLawfulBasisConsent:
+				return "Consent"
+			case coredata.ProcessingActivityLawfulBasisContractualNecessity:
+				return "Contractual Necessity"
+			case coredata.ProcessingActivityLawfulBasisLegalObligation:
+				return "Legal Obligation"
+			case coredata.ProcessingActivityLawfulBasisLegitimateInterest:
+				return "Legitimate Interest"
+			case coredata.ProcessingActivityLawfulBasisPublicTask:
+				return "Public Task"
+			case coredata.ProcessingActivityLawfulBasisVitalInterests:
+				return "Vital Interests"
+			default:
+				return basis.String()
+			}
+		},
+		"formatSpecialOrCriminalData": func(data coredata.ProcessingActivitySpecialOrCriminalDatum) string {
+			switch data {
+			case coredata.ProcessingActivitySpecialOrCriminalDatumYes:
+				return "Yes"
+			case coredata.ProcessingActivitySpecialOrCriminalDatumNo:
+				return "No"
+			case coredata.ProcessingActivitySpecialOrCriminalDatumPossible:
+				return "Possible"
+			default:
+				return data.String()
+			}
+		},
+		"formatTransferSafeguard": func(safeguard *coredata.ProcessingActivityTransferSafeguard) string {
+			if safeguard == nil {
+				return ""
+			}
+			switch *safeguard {
+			case coredata.ProcessingActivityTransferSafeguardStandardContractualClauses:
+				return "Standard Contractual Clauses"
+			case coredata.ProcessingActivityTransferSafeguardBindingCorporateRules:
+				return "Binding Corporate Rules"
+			case coredata.ProcessingActivityTransferSafeguardAdequacyDecision:
+				return "Adequacy Decision"
+			case coredata.ProcessingActivityTransferSafeguardDerogations:
+				return "Derogations"
+			case coredata.ProcessingActivityTransferSafeguardCodesOfConduct:
+				return "Codes of Conduct"
+			case coredata.ProcessingActivityTransferSafeguardCertificationMechanisms:
+				return "Certification Mechanisms"
+			default:
+				return safeguard.String()
+			}
+		},
+		"formatDPIANeeded": func(needed coredata.ProcessingActivityDataProtectionImpactAssessment) string {
+			switch needed {
+			case coredata.ProcessingActivityDataProtectionImpactAssessmentNeeded:
+				return "Yes"
+			case coredata.ProcessingActivityDataProtectionImpactAssessmentNotNeeded:
+				return "No"
+			default:
+				return needed.String()
+			}
+		},
+		"formatTIANeeded": func(needed coredata.ProcessingActivityTransferImpactAssessment) string {
+			switch needed {
+			case coredata.ProcessingActivityTransferImpactAssessmentNeeded:
+				return "Yes"
+			case coredata.ProcessingActivityTransferImpactAssessmentNotNeeded:
+				return "No"
+			default:
+				return needed.String()
+			}
+		},
+		"formatRole": func(role coredata.ProcessingActivityRole) string {
+			switch role {
+			case coredata.ProcessingActivityRoleController:
+				return "Controller"
+			case coredata.ProcessingActivityRoleProcessor:
+				return "Processor"
+			default:
+				return role.String()
+			}
+		},
+		"formatResidualRisk": func(risk *coredata.DataProtectionImpactAssessmentResidualRisk) string {
+			if risk == nil {
+				return ""
+			}
+			switch *risk {
+			case coredata.DataProtectionImpactAssessmentResidualRiskLow:
+				return "Low"
+			case coredata.DataProtectionImpactAssessmentResidualRiskMedium:
+				return "Medium"
+			case coredata.DataProtectionImpactAssessmentResidualRiskHigh:
+				return "High"
+			default:
+				return risk.String()
+			}
+		},
 	}
 
 	documentTemplate = template.Must(template.New("document").Funcs(templateFuncs).Parse(htmlTemplateContent))
+
+	processingActivitiesTemplate = template.Must(template.New("processingActivities").Funcs(templateFuncs).Parse(processingActivitiesTemplateContent))
+
+	dataProtectionImpactAssessmentsTemplate = template.Must(template.New("dataProtectionImpactAssessments").Funcs(templateFuncs).Parse(dataProtectionImpactAssessmentsTemplateContent))
+
+	transferImpactAssessmentsTemplate = template.Must(template.New("transferImpactAssessments").Funcs(templateFuncs).Parse(transferImpactAssessmentsTemplateContent))
 )
 
 type (
@@ -82,6 +199,71 @@ type (
 		State       coredata.DocumentVersionSignatureState
 		RequestedAt time.Time
 	}
+
+	ProcessingActivityTableData struct {
+		CompanyName                 string
+		CompanyHorizontalLogoBase64 string
+		Version                     int
+		PublishedAt                 time.Time
+		Activities                  []ProcessingActivityRowData
+	}
+
+	ProcessingActivityRowData struct {
+		Name                                 string
+		Purpose                              *string
+		DataSubjectCategory                  *string
+		PersonalDataCategory                 *string
+		SpecialOrCriminalData                coredata.ProcessingActivitySpecialOrCriminalDatum
+		ConsentEvidenceLink                  *string
+		LawfulBasis                          coredata.ProcessingActivityLawfulBasis
+		Recipients                           *string
+		Location                             *string
+		InternationalTransfers               bool
+		TransferSafeguards                   *coredata.ProcessingActivityTransferSafeguard
+		RetentionPeriod                      *string
+		SecurityMeasures                     *string
+		DataProtectionImpactAssessmentNeeded coredata.ProcessingActivityDataProtectionImpactAssessment
+		TransferImpactAssessmentNeeded       coredata.ProcessingActivityTransferImpactAssessment
+		LastReviewDate                       *time.Time
+		NextReviewDate                       *time.Time
+		Role                                 coredata.ProcessingActivityRole
+		DataProtectionOfficerFullName        *string
+		Vendors                              string
+	}
+
+	DataProtectionImpactAssessmentTableData struct {
+		CompanyName                 string
+		CompanyHorizontalLogoBase64 string
+		Version                     int
+		PublishedAt                 time.Time
+		Assessments                 []DataProtectionImpactAssessmentRowData
+	}
+
+	DataProtectionImpactAssessmentRowData struct {
+		ProcessingActivityName      string
+		Description                 *string
+		NecessityAndProportionality *string
+		PotentialRisk               *string
+		Mitigations                 *string
+		ResidualRisk                *coredata.DataProtectionImpactAssessmentResidualRisk
+	}
+
+	TransferImpactAssessmentTableData struct {
+		CompanyName                 string
+		CompanyHorizontalLogoBase64 string
+		Version                     int
+		PublishedAt                 time.Time
+		Assessments                 []TransferImpactAssessmentRowData
+	}
+
+	TransferImpactAssessmentRowData struct {
+		ProcessingActivityName string
+		DataSubjects           *string
+		LegalMechanism         *string
+		Transfer               *string
+		LocalLawRisk           *string
+		SupplementaryMeasures  *string
+	}
 )
 
 const (
@@ -95,6 +277,33 @@ func RenderHTML(data DocumentData) ([]byte, error) {
 	var buf bytes.Buffer
 	if err := documentTemplate.Execute(&buf, data); err != nil {
 		return nil, fmt.Errorf("cannot execute template: %w", err)
+	}
+
+	return buf.Bytes(), nil
+}
+
+func RenderProcessingActivitiesTableHTML(data ProcessingActivityTableData) ([]byte, error) {
+	var buf bytes.Buffer
+	if err := processingActivitiesTemplate.Execute(&buf, data); err != nil {
+		return nil, fmt.Errorf("cannot execute processing activities template: %w", err)
+	}
+
+	return buf.Bytes(), nil
+}
+
+func RenderDataProtectionImpactAssessmentsTableHTML(data DataProtectionImpactAssessmentTableData) ([]byte, error) {
+	var buf bytes.Buffer
+	if err := dataProtectionImpactAssessmentsTemplate.Execute(&buf, data); err != nil {
+		return nil, fmt.Errorf("cannot execute data protection impact assessments template: %w", err)
+	}
+
+	return buf.Bytes(), nil
+}
+
+func RenderTransferImpactAssessmentsTableHTML(data TransferImpactAssessmentTableData) ([]byte, error) {
+	var buf bytes.Buffer
+	if err := transferImpactAssessmentsTemplate.Execute(&buf, data); err != nil {
+		return nil, fmt.Errorf("cannot execute transfer impact assessments template: %w", err)
 	}
 
 	return buf.Bytes(), nil

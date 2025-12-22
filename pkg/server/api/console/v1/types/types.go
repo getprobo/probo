@@ -1220,6 +1220,15 @@ type EvidenceEdge struct {
 	Node   *Evidence      `json:"node"`
 }
 
+type ExportDataProtectionImpactAssessmentsPDFInput struct {
+	OrganizationID gid.GID                               `json:"organizationId"`
+	Filter         *DataProtectionImpactAssessmentFilter `json:"filter,omitempty"`
+}
+
+type ExportDataProtectionImpactAssessmentsPDFPayload struct {
+	Data string `json:"data"`
+}
+
 type ExportDocumentVersionPDFInput struct {
 	DocumentVersionID gid.GID    `json:"documentVersionId"`
 	WithWatermark     bool       `json:"withWatermark"`
@@ -1239,11 +1248,29 @@ type ExportFrameworkPayload struct {
 	ExportJobID gid.GID `json:"exportJobId"`
 }
 
+type ExportProcessingActivitiesPDFInput struct {
+	OrganizationID gid.GID                   `json:"organizationId"`
+	Filter         *ProcessingActivityFilter `json:"filter,omitempty"`
+}
+
+type ExportProcessingActivitiesPDFPayload struct {
+	Data string `json:"data"`
+}
+
 type ExportSignableDocumentVersionPDFInput struct {
 	DocumentVersionID gid.GID `json:"documentVersionId"`
 }
 
 type ExportSignableDocumentVersionPDFPayload struct {
+	Data string `json:"data"`
+}
+
+type ExportTransferImpactAssessmentsPDFInput struct {
+	OrganizationID gid.GID                         `json:"organizationId"`
+	Filter         *TransferImpactAssessmentFilter `json:"filter,omitempty"`
+}
+
+type ExportTransferImpactAssessmentsPDFPayload struct {
 	Data string `json:"data"`
 }
 

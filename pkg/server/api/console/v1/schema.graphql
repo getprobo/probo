@@ -3310,6 +3310,15 @@ type Mutation {
   exportSignableVersionDocumentPDF(
     input: ExportSignableDocumentVersionPDFInput!
   ): ExportSignableDocumentVersionPDFPayload!
+  exportProcessingActivitiesPDF(
+    input: ExportProcessingActivitiesPDFInput!
+  ): ExportProcessingActivitiesPDFPayload!
+  exportDataProtectionImpactAssessmentsPDF(
+    input: ExportDataProtectionImpactAssessmentsPDFInput!
+  ): ExportDataProtectionImpactAssessmentsPDFPayload!
+  exportTransferImpactAssessmentsPDF(
+    input: ExportTransferImpactAssessmentsPDFInput!
+  ): ExportTransferImpactAssessmentsPDFPayload!
   createVendorRiskAssessment(
     input: CreateVendorRiskAssessmentInput!
   ): CreateVendorRiskAssessmentPayload!
@@ -3939,6 +3948,21 @@ input ExportDocumentVersionPDFInput {
 
 input ExportSignableDocumentVersionPDFInput {
   documentVersionId: ID!
+}
+
+input ExportProcessingActivitiesPDFInput {
+  organizationId: ID!
+  filter: ProcessingActivityFilter
+}
+
+input ExportDataProtectionImpactAssessmentsPDFInput {
+  organizationId: ID!
+  filter: DataProtectionImpactAssessmentFilter
+}
+
+input ExportTransferImpactAssessmentsPDFInput {
+  organizationId: ID!
+  filter: TransferImpactAssessmentFilter
 }
 
 input DeleteDocumentInput {
@@ -4597,6 +4621,18 @@ type ExportDocumentVersionPDFPayload {
 }
 
 type ExportSignableDocumentVersionPDFPayload {
+  data: String!
+}
+
+type ExportProcessingActivitiesPDFPayload {
+  data: String!
+}
+
+type ExportDataProtectionImpactAssessmentsPDFPayload {
+  data: String!
+}
+
+type ExportTransferImpactAssessmentsPDFPayload {
   data: String!
 }
 

@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Protection Impact Assessments Export</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 2.5cm;
+            @bottom-right {
+                content: "Page " counter(page) " of " counter(pages);
+                font-family: Arial, sans-serif;
+                font-size: 9pt;
+                color: #666;
+            }
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 7.5pt;
+            line-height: 1.4;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background: white;
+        }
+
+        /* Cover page */
+        .cover-page {
+            page-break-after: always;
+        }
+
+        .company-header {
+            margin-bottom: 30px;
+            page-break-after: avoid;
+        }
+
+        .company-logo {
+            max-height: 50px;
+            max-width: 250px;
+            object-fit: contain;
+            display: block;
+        }
+
+        .company-name {
+            font-size: 16pt;
+            color: #1a1a1a;
+            margin-top: 10px;
+            font-weight: 600;
+        }
+
+        .export-title {
+            font-size: 22pt;
+            font-weight: normal;
+            color: #1a1a1a;
+            margin: 0 0 25px 0;
+            text-align: left;
+        }
+
+        .document-meta {
+            margin: 0 0 30px 0;
+            font-size: 9pt;
+        }
+
+        .meta-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid #333;
+        }
+
+        .meta-table td {
+            padding: 6px 8px;
+            border: 1px solid #333;
+            vertical-align: middle;
+        }
+
+        .meta-table td:first-child {
+            font-weight: 600;
+            width: 25%;
+            background: #f8f8f8;
+            color: #333;
+        }
+
+        .classification {
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .purpose-section {
+            margin: 30px 0;
+            page-break-after: avoid;
+        }
+
+        .purpose-title {
+            font-size: 15pt;
+            font-weight: bold;
+            color: #000;
+            margin: 0 0 15px 0;
+            page-break-after: avoid;
+        }
+
+        .purpose-text {
+            font-size: 10pt;
+            color: #333;
+            line-height: 1.5;
+            text-align: justify;
+        }
+
+
+        /* Assessment page */
+        .assessment-page {
+            page-break-before: always;
+            page-break-after: always;
+        }
+
+        .assessment-page:last-child {
+            page-break-after: auto;
+        }
+
+        .assessment-title {
+            font-size: 15pt;
+            font-weight: bold;
+            color: #000;
+            margin: 0 0 15px 0;
+            page-break-after: avoid;
+        }
+
+        .assessment-field {
+            margin-bottom: 8px;
+            page-break-inside: avoid;
+        }
+
+        .assessment-field-label {
+            font-size: 10pt;
+            font-weight: bold;
+            color: #333;
+            margin: 12px 0 6px 0;
+            page-break-after: avoid;
+            page-break-inside: avoid;
+        }
+
+        .assessment-field-value {
+            color: #000;
+            font-size: 7.5pt;
+            line-height: 1.4;
+        }
+
+        .empty-value {
+            color: #999;
+            font-style: italic;
+        }
+
+        /* Annex page */
+        .annex-page {
+            page-break-before: always;
+        }
+
+        .annex-title {
+            font-size: 15pt;
+            font-weight: bold;
+            color: #000;
+            margin: 0 0 15px 0;
+            page-break-after: avoid;
+        }
+
+        .annex-section {
+            margin-bottom: 20px;
+        }
+
+        .annex-section-title {
+            font-size: 13pt;
+            font-weight: bold;
+            color: #000;
+            margin: 15px 0 10px 0;
+        }
+
+        .annex-subsection-title {
+            font-size: 10pt;
+            font-weight: bold;
+            color: #333;
+            margin: 12px 0 8px 0;
+        }
+
+        .annex-enum-list {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+
+        .annex-enum-item {
+            margin-bottom: 8px;
+            font-size: 10pt;
+            line-height: 1.5;
+        }
+
+        .annex-enum-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .annex-enum-description {
+            color: #000;
+            margin-left: 5px;
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="cover-page">
+        <div class="company-header">
+            {{- if .CompanyHorizontalLogoBase64}}
+            {{imgTag .CompanyHorizontalLogoBase64 "Company Logo" "company-logo"}}
+            {{- else}}
+            <div class="company-name">{{.CompanyName}}</div>
+            {{- end}}
+        </div>
+
+        <h1 class="export-title">Data Protection Impact Assessments</h1>
+
+        <div class="document-meta">
+            <table class="meta-table">
+                <tr>
+                    <td>Classification</td>
+                    <td>
+                        <span class="classification">CONFIDENTIAL</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Version</td>
+                    <td>{{.Version}}</td>
+                </tr>
+                <tr>
+                    <td>Published</td>
+                    <td>{{.PublishedAt.Format "January 2, 2006"}}</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="purpose-section">
+            <div class="purpose-title">1. Purpose</div>
+            <div class="purpose-text">
+                This document contains Data Protection Impact Assessments (DPIAs) conducted for processing activities
+                that present a high risk to individuals' rights and freedoms. DPIAs are systematic assessments that
+                evaluate the necessity, proportionality, and risks associated with data processing operations, along
+                with the measures implemented to mitigate identified risks.
+            </div>
+        </div>
+    </div>
+
+    {{- range $index, $assessment := .Assessments}}
+    <div class="assessment-page">
+        {{if eq $index 0}}
+        <h1 class="annex-title">2. Records</h1>
+        {{end}}
+        <h1 class="annex-section-title">2.{{add $index 1}} {{$assessment.ProcessingActivityName}}</h1>
+
+        <div class="assessment-field">
+            <div class="assessment-field-label">Description</div>
+            <div class="assessment-field-value">{{if .Description}}{{.Description}}{{else}}<span class="empty-value">Not specified</span>{{end}}</div>
+        </div>
+
+        <div class="assessment-field">
+            <div class="assessment-field-label">Necessity and Proportionality</div>
+            <div class="assessment-field-value">{{if .NecessityAndProportionality}}{{.NecessityAndProportionality}}{{else}}<span class="empty-value">Not specified</span>{{end}}</div>
+        </div>
+
+        <div class="assessment-field">
+            <div class="assessment-field-label">Potential Risk</div>
+            <div class="assessment-field-value">{{if .PotentialRisk}}{{.PotentialRisk}}{{else}}<span class="empty-value">Not specified</span>{{end}}</div>
+        </div>
+
+        <div class="assessment-field">
+            <div class="assessment-field-label">Mitigations</div>
+            <div class="assessment-field-value">{{if .Mitigations}}{{.Mitigations}}{{else}}<span class="empty-value">Not specified</span>{{end}}</div>
+        </div>
+
+        <div class="assessment-field">
+            <div class="assessment-field-label">Residual Risk</div>
+            <div class="assessment-field-value">{{if .ResidualRisk}}{{.ResidualRisk | formatResidualRisk}}{{else}}<span class="empty-value">Not specified</span>{{end}}</div>
+        </div>
+    </div>
+    {{- end}}
+
+    <div class="annex-page">
+        <h1 class="annex-title">3. Annexes</h1>
+
+        <div class="annex-section">
+            <div class="annex-section-title">3.1 Lexicon</div>
+        </div>
+
+        <div class="annex-section">
+            <div class="annex-subsection-title">Residual Risk</div>
+            <ul class="annex-enum-list">
+                <li class="annex-enum-item">
+                    <span class="annex-enum-name">Low:</span>
+                    <span class="annex-enum-description">The residual risk after implementing mitigation measures is considered low. The processing activity poses minimal risk to individuals' rights and freedoms.</span>
+                </li>
+                <li class="annex-enum-item">
+                    <span class="annex-enum-name">Medium:</span>
+                    <span class="annex-enum-description">The residual risk after implementing mitigation measures is considered medium. The processing activity poses a moderate risk to individuals' rights and freedoms, requiring ongoing monitoring.</span>
+                </li>
+                <li class="annex-enum-item">
+                    <span class="annex-enum-name">High:</span>
+                    <span class="annex-enum-description">The residual risk after implementing mitigation measures is considered high. The processing activity poses significant risk to individuals' rights and freedoms, requiring enhanced safeguards and regular review.</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

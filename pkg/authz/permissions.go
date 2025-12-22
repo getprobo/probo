@@ -92,7 +92,7 @@ const (
 	ActionListComplianceReports       Action = "listComplianceReports"
 	ActionListContacts                Action = "listContacts"
 	ActionListContinualImprovements   Action = "listContinualImprovements"
-	ActionListRightsRequests           Action = "listRightsRequests"
+	ActionListRightsRequests          Action = "listRightsRequests"
 	ActionListControls                Action = "listControls"
 	ActionListData                    Action = "listData"
 	ActionListDocuments               Action = "listDocuments"
@@ -235,39 +235,42 @@ const (
 	ActionDeleteVendorDataPrivacyAgreement       Action = "deleteVendorDataPrivacyAgreement"
 	ActionDeleteVendorService                    Action = "deleteVendorService"
 
-	ActionAcceptInvitation                       Action = "acceptInvitation"
-	ActionAssessVendor                           Action = "assessVendor"
-	ActionAssignTask                             Action = "assignTask"
-	ActionBulkDeleteDocuments                    Action = "bulkDeleteDocuments"
-	ActionBulkExportDocuments                    Action = "bulkExportDocuments"
-	ActionBulkPublishDocumentVersions            Action = "bulkPublishDocumentVersions"
-	ActionBulkRequestSignatures                  Action = "bulkRequestSignatures"
-	ActionCancelSignatureRequest                 Action = "cancelSignatureRequest"
-	ActionSignDocument                           Action = "signDocument"
-	ActionConfirmEmail                           Action = "confirmEmail"
-	ActionDisableSAML                            Action = "disableSAML"
-	ActionEnableSAML                             Action = "enableSAML"
-	ActionExportDocumentVersionPDF               Action = "exportDocumentVersionPDF"
-	ActionExportSignableVersionDocumentPDF       Action = "exportSignableVersionDocumentPDF"
-	ActionExportFramework                        Action = "exportFramework"
-	ActionGenerateDocumentChangelog              Action = "generateDocumentChangelog"
-	ActionGenerateFrameworkStateOfApplicability  Action = "generateFrameworkStateOfApplicability"
-	ActionImportFramework                        Action = "importFramework"
-	ActionImportMeasure                          Action = "importMeasure"
-	ActionInitiateDomainVerification             Action = "initiateDomainVerification"
-	ActionInviteUser                             Action = "inviteUser"
-	ActionPublishDocumentVersion                 Action = "publishDocumentVersion"
-	ActionRemoveMember                           Action = "removeMember"
-	ActionRequestSignature                       Action = "requestSignature"
-	ActionSendSigningNotifications               Action = "sendSigningNotifications"
-	ActionUnassignTask                           Action = "unassignTask"
-	ActionUploadAuditReport                      Action = "uploadAuditReport"
-	ActionUploadMeasureEvidence                  Action = "uploadMeasureEvidence"
-	ActionUploadTrustCenterNDA                   Action = "uploadTrustCenterNDA"
-	ActionUploadVendorBusinessAssociateAgreement Action = "uploadVendorBusinessAssociateAgreement"
-	ActionUploadVendorComplianceReport           Action = "uploadVendorComplianceReport"
-	ActionUploadVendorDataPrivacyAgreement       Action = "uploadVendorDataPrivacyAgreement"
-	ActionVerifyDomain                           Action = "verifyDomain"
+	ActionAcceptInvitation                         Action = "acceptInvitation"
+	ActionAssessVendor                             Action = "assessVendor"
+	ActionAssignTask                               Action = "assignTask"
+	ActionBulkDeleteDocuments                      Action = "bulkDeleteDocuments"
+	ActionBulkExportDocuments                      Action = "bulkExportDocuments"
+	ActionBulkPublishDocumentVersions              Action = "bulkPublishDocumentVersions"
+	ActionBulkRequestSignatures                    Action = "bulkRequestSignatures"
+	ActionCancelSignatureRequest                   Action = "cancelSignatureRequest"
+	ActionSignDocument                             Action = "signDocument"
+	ActionConfirmEmail                             Action = "confirmEmail"
+	ActionDisableSAML                              Action = "disableSAML"
+	ActionEnableSAML                               Action = "enableSAML"
+	ActionExportDocumentVersionPDF                 Action = "exportDocumentVersionPDF"
+	ActionExportSignableVersionDocumentPDF         Action = "exportSignableVersionDocumentPDF"
+	ActionExportProcessingActivitiesPDF            Action = "exportProcessingActivitiesPDF"
+	ActionExportDataProtectionImpactAssessmentsPDF Action = "exportDataProtectionImpactAssessmentsPDF"
+	ActionExportTransferImpactAssessmentsPDF       Action = "exportTransferImpactAssessmentsPDF"
+	ActionExportFramework                          Action = "exportFramework"
+	ActionGenerateDocumentChangelog                Action = "generateDocumentChangelog"
+	ActionGenerateFrameworkStateOfApplicability    Action = "generateFrameworkStateOfApplicability"
+	ActionImportFramework                          Action = "importFramework"
+	ActionImportMeasure                            Action = "importMeasure"
+	ActionInitiateDomainVerification               Action = "initiateDomainVerification"
+	ActionInviteUser                               Action = "inviteUser"
+	ActionPublishDocumentVersion                   Action = "publishDocumentVersion"
+	ActionRemoveMember                             Action = "removeMember"
+	ActionRequestSignature                         Action = "requestSignature"
+	ActionSendSigningNotifications                 Action = "sendSigningNotifications"
+	ActionUnassignTask                             Action = "unassignTask"
+	ActionUploadAuditReport                        Action = "uploadAuditReport"
+	ActionUploadMeasureEvidence                    Action = "uploadMeasureEvidence"
+	ActionUploadTrustCenterNDA                     Action = "uploadTrustCenterNDA"
+	ActionUploadVendorBusinessAssociateAgreement   Action = "uploadVendorBusinessAssociateAgreement"
+	ActionUploadVendorComplianceReport             Action = "uploadVendorComplianceReport"
+	ActionUploadVendorDataPrivacyAgreement         Action = "uploadVendorDataPrivacyAgreement"
+	ActionVerifyDomain                             Action = "verifyDomain"
 )
 
 var (
@@ -287,27 +290,30 @@ var Permissions = map[uint16]map[Action][]Role{
 
 		ActionListSignableDocuments: InternalRoles,
 
-		ActionListDocuments:             NonEmployeeRoles,
-		ActionGetHorizontalLogoUrl:      NonEmployeeRoles,
-		ActionPeoples:                   NonEmployeeRoles,
-		ActionTotalCount:                NonEmployeeRoles,
-		ActionListFrameworks:            NonEmployeeRoles,
-		ActionListControls:              NonEmployeeRoles,
-		ActionListVendors:               NonEmployeeRoles,
-		ActionListPeople:                NonEmployeeRoles,
-		ActionListMeasures:              NonEmployeeRoles,
-		ActionListRisks:                 NonEmployeeRoles,
-		ActionListAssets:                NonEmployeeRoles,
-		ActionListData:                  NonEmployeeRoles,
-		ActionListAudits:                NonEmployeeRoles,
-		ActionListNonconformities:       NonEmployeeRoles,
-		ActionListObligations:           NonEmployeeRoles,
-		ActionListContinualImprovements: NonEmployeeRoles,
-		ActionListRightsRequests:         NonEmployeeRoles,
-		ActionListProcessingActivities:  NonEmployeeRoles,
-		ActionListSnapshots:             NonEmployeeRoles,
-		ActionConfirmEmail:              NonEmployeeRoles,
-		ActionAcceptInvitation:          NonEmployeeRoles,
+		ActionListDocuments:                            NonEmployeeRoles,
+		ActionGetHorizontalLogoUrl:                     NonEmployeeRoles,
+		ActionPeoples:                                  NonEmployeeRoles,
+		ActionTotalCount:                               NonEmployeeRoles,
+		ActionListFrameworks:                           NonEmployeeRoles,
+		ActionListControls:                             NonEmployeeRoles,
+		ActionListVendors:                              NonEmployeeRoles,
+		ActionListPeople:                               NonEmployeeRoles,
+		ActionListMeasures:                             NonEmployeeRoles,
+		ActionListRisks:                                NonEmployeeRoles,
+		ActionListAssets:                               NonEmployeeRoles,
+		ActionListData:                                 NonEmployeeRoles,
+		ActionListAudits:                               NonEmployeeRoles,
+		ActionListNonconformities:                      NonEmployeeRoles,
+		ActionListObligations:                          NonEmployeeRoles,
+		ActionListContinualImprovements:                NonEmployeeRoles,
+		ActionListRightsRequests:                       NonEmployeeRoles,
+		ActionListProcessingActivities:                 NonEmployeeRoles,
+		ActionExportProcessingActivitiesPDF:            NonEmployeeRoles,
+		ActionExportDataProtectionImpactAssessmentsPDF: NonEmployeeRoles,
+		ActionExportTransferImpactAssessmentsPDF:       NonEmployeeRoles,
+		ActionListSnapshots:                            NonEmployeeRoles,
+		ActionConfirmEmail:                             NonEmployeeRoles,
+		ActionAcceptInvitation:                         NonEmployeeRoles,
 
 		ActionListTrustCenterFiles:   CoreRoles,
 		ActionGetTrustCenter:         CoreRoles,
@@ -694,6 +700,7 @@ var Permissions = map[uint16]map[Action][]Role{
 		ActionGetDataProtectionOfficer:          NonEmployeeRoles,
 		ActionGetDataProtectionImpactAssessment: NonEmployeeRoles,
 		ActionGetTransferImpactAssessment:       NonEmployeeRoles,
+		ActionExportProcessingActivitiesPDF:     NonEmployeeRoles,
 
 		ActionUpdateProcessingActivity:             EditRoles,
 		ActionDeleteProcessingActivity:             EditRoles,

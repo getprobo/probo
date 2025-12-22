@@ -779,6 +779,10 @@ type ComplexityRoot struct {
 		Node   func(childComplexity int) int
 	}
 
+	ExportDataProtectionImpactAssessmentsPDFPayload struct {
+		Data func(childComplexity int) int
+	}
+
 	ExportDocumentVersionPDFPayload struct {
 		Data func(childComplexity int) int
 	}
@@ -787,7 +791,15 @@ type ComplexityRoot struct {
 		ExportJobID func(childComplexity int) int
 	}
 
+	ExportProcessingActivitiesPDFPayload struct {
+		Data func(childComplexity int) int
+	}
+
 	ExportSignableDocumentVersionPDFPayload struct {
+		Data func(childComplexity int) int
+	}
+
+	ExportTransferImpactAssessmentsPDFPayload struct {
 		Data func(childComplexity int) int
 	}
 
@@ -951,151 +963,154 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		AcceptInvitation                       func(childComplexity int, input types.AcceptInvitationInput) int
-		AssessVendor                           func(childComplexity int, input types.AssessVendorInput) int
-		BulkDeleteDocuments                    func(childComplexity int, input types.BulkDeleteDocumentsInput) int
-		BulkExportDocuments                    func(childComplexity int, input types.BulkExportDocumentsInput) int
-		BulkPublishDocumentVersions            func(childComplexity int, input types.BulkPublishDocumentVersionsInput) int
-		BulkRequestSignatures                  func(childComplexity int, input types.BulkRequestSignaturesInput) int
-		CancelSignatureRequest                 func(childComplexity int, input types.CancelSignatureRequestInput) int
-		ConfirmEmail                           func(childComplexity int, input types.ConfirmEmailInput) int
-		CreateAsset                            func(childComplexity int, input types.CreateAssetInput) int
-		CreateAudit                            func(childComplexity int, input types.CreateAuditInput) int
-		CreateContinualImprovement             func(childComplexity int, input types.CreateContinualImprovementInput) int
-		CreateControl                          func(childComplexity int, input types.CreateControlInput) int
-		CreateControlAuditMapping              func(childComplexity int, input types.CreateControlAuditMappingInput) int
-		CreateControlDocumentMapping           func(childComplexity int, input types.CreateControlDocumentMappingInput) int
-		CreateControlMeasureMapping            func(childComplexity int, input types.CreateControlMeasureMappingInput) int
-		CreateControlSnapshotMapping           func(childComplexity int, input types.CreateControlSnapshotMappingInput) int
-		CreateCustomDomain                     func(childComplexity int, input types.CreateCustomDomainInput) int
-		CreateDataProtectionImpactAssessment   func(childComplexity int, input types.CreateDataProtectionImpactAssessmentInput) int
-		CreateDatum                            func(childComplexity int, input types.CreateDatumInput) int
-		CreateDocument                         func(childComplexity int, input types.CreateDocumentInput) int
-		CreateDraftDocumentVersion             func(childComplexity int, input types.CreateDraftDocumentVersionInput) int
-		CreateFramework                        func(childComplexity int, input types.CreateFrameworkInput) int
-		CreateMeasure                          func(childComplexity int, input types.CreateMeasureInput) int
-		CreateMeeting                          func(childComplexity int, input types.CreateMeetingInput) int
-		CreateNonconformity                    func(childComplexity int, input types.CreateNonconformityInput) int
-		CreateObligation                       func(childComplexity int, input types.CreateObligationInput) int
-		CreateOrganization                     func(childComplexity int, input types.CreateOrganizationInput) int
-		CreatePeople                           func(childComplexity int, input types.CreatePeopleInput) int
-		CreateProcessingActivity               func(childComplexity int, input types.CreateProcessingActivityInput) int
-		CreateRightsRequest                    func(childComplexity int, input types.CreateRightsRequestInput) int
-		CreateRisk                             func(childComplexity int, input types.CreateRiskInput) int
-		CreateRiskDocumentMapping              func(childComplexity int, input types.CreateRiskDocumentMappingInput) int
-		CreateRiskMeasureMapping               func(childComplexity int, input types.CreateRiskMeasureMappingInput) int
-		CreateRiskObligationMapping            func(childComplexity int, input types.CreateRiskObligationMappingInput) int
-		CreateSAMLConfiguration                func(childComplexity int, input types.CreateSAMLConfigurationInput) int
-		CreateSnapshot                         func(childComplexity int, input types.CreateSnapshotInput) int
-		CreateTask                             func(childComplexity int, input types.CreateTaskInput) int
-		CreateTransferImpactAssessment         func(childComplexity int, input types.CreateTransferImpactAssessmentInput) int
-		CreateTrustCenterAccess                func(childComplexity int, input types.CreateTrustCenterAccessInput) int
-		CreateTrustCenterFile                  func(childComplexity int, input types.CreateTrustCenterFileInput) int
-		CreateTrustCenterReference             func(childComplexity int, input types.CreateTrustCenterReferenceInput) int
-		CreateVendor                           func(childComplexity int, input types.CreateVendorInput) int
-		CreateVendorContact                    func(childComplexity int, input types.CreateVendorContactInput) int
-		CreateVendorRiskAssessment             func(childComplexity int, input types.CreateVendorRiskAssessmentInput) int
-		CreateVendorService                    func(childComplexity int, input types.CreateVendorServiceInput) int
-		DeleteAsset                            func(childComplexity int, input types.DeleteAssetInput) int
-		DeleteAudit                            func(childComplexity int, input types.DeleteAuditInput) int
-		DeleteAuditReport                      func(childComplexity int, input types.DeleteAuditReportInput) int
-		DeleteContinualImprovement             func(childComplexity int, input types.DeleteContinualImprovementInput) int
-		DeleteControl                          func(childComplexity int, input types.DeleteControlInput) int
-		DeleteControlAuditMapping              func(childComplexity int, input types.DeleteControlAuditMappingInput) int
-		DeleteControlDocumentMapping           func(childComplexity int, input types.DeleteControlDocumentMappingInput) int
-		DeleteControlMeasureMapping            func(childComplexity int, input types.DeleteControlMeasureMappingInput) int
-		DeleteControlSnapshotMapping           func(childComplexity int, input types.DeleteControlSnapshotMappingInput) int
-		DeleteCustomDomain                     func(childComplexity int, input types.DeleteCustomDomainInput) int
-		DeleteDataProtectionImpactAssessment   func(childComplexity int, input types.DeleteDataProtectionImpactAssessmentInput) int
-		DeleteDatum                            func(childComplexity int, input types.DeleteDatumInput) int
-		DeleteDocument                         func(childComplexity int, input types.DeleteDocumentInput) int
-		DeleteDraftDocumentVersion             func(childComplexity int, input types.DeleteDraftDocumentVersionInput) int
-		DeleteEvidence                         func(childComplexity int, input types.DeleteEvidenceInput) int
-		DeleteFramework                        func(childComplexity int, input types.DeleteFrameworkInput) int
-		DeleteInvitation                       func(childComplexity int, input types.DeleteInvitationInput) int
-		DeleteMeasure                          func(childComplexity int, input types.DeleteMeasureInput) int
-		DeleteMeeting                          func(childComplexity int, input types.DeleteMeetingInput) int
-		DeleteNonconformity                    func(childComplexity int, input types.DeleteNonconformityInput) int
-		DeleteObligation                       func(childComplexity int, input types.DeleteObligationInput) int
-		DeleteOrganization                     func(childComplexity int, input types.DeleteOrganizationInput) int
-		DeleteOrganizationHorizontalLogo       func(childComplexity int, input types.DeleteOrganizationHorizontalLogoInput) int
-		DeletePeople                           func(childComplexity int, input types.DeletePeopleInput) int
-		DeleteProcessingActivity               func(childComplexity int, input types.DeleteProcessingActivityInput) int
-		DeleteRightsRequest                    func(childComplexity int, input types.DeleteRightsRequestInput) int
-		DeleteRisk                             func(childComplexity int, input types.DeleteRiskInput) int
-		DeleteRiskDocumentMapping              func(childComplexity int, input types.DeleteRiskDocumentMappingInput) int
-		DeleteRiskMeasureMapping               func(childComplexity int, input types.DeleteRiskMeasureMappingInput) int
-		DeleteRiskObligationMapping            func(childComplexity int, input types.DeleteRiskObligationMappingInput) int
-		DeleteSAMLConfiguration                func(childComplexity int, input types.DeleteSAMLConfigurationInput) int
-		DeleteSnapshot                         func(childComplexity int, input types.DeleteSnapshotInput) int
-		DeleteTask                             func(childComplexity int, input types.DeleteTaskInput) int
-		DeleteTransferImpactAssessment         func(childComplexity int, input types.DeleteTransferImpactAssessmentInput) int
-		DeleteTrustCenterAccess                func(childComplexity int, input types.DeleteTrustCenterAccessInput) int
-		DeleteTrustCenterFile                  func(childComplexity int, input types.DeleteTrustCenterFileInput) int
-		DeleteTrustCenterNda                   func(childComplexity int, input types.DeleteTrustCenterNDAInput) int
-		DeleteTrustCenterReference             func(childComplexity int, input types.DeleteTrustCenterReferenceInput) int
-		DeleteVendor                           func(childComplexity int, input types.DeleteVendorInput) int
-		DeleteVendorBusinessAssociateAgreement func(childComplexity int, input types.DeleteVendorBusinessAssociateAgreementInput) int
-		DeleteVendorComplianceReport           func(childComplexity int, input types.DeleteVendorComplianceReportInput) int
-		DeleteVendorContact                    func(childComplexity int, input types.DeleteVendorContactInput) int
-		DeleteVendorDataPrivacyAgreement       func(childComplexity int, input types.DeleteVendorDataPrivacyAgreementInput) int
-		DeleteVendorService                    func(childComplexity int, input types.DeleteVendorServiceInput) int
-		DisableSaml                            func(childComplexity int, input types.DisableSAMLInput) int
-		EnableSaml                             func(childComplexity int, input types.EnableSAMLInput) int
-		ExportDocumentVersionPDF               func(childComplexity int, input types.ExportDocumentVersionPDFInput) int
-		ExportFramework                        func(childComplexity int, input types.ExportFrameworkInput) int
-		ExportSignableVersionDocumentPDF       func(childComplexity int, input types.ExportSignableDocumentVersionPDFInput) int
-		GenerateDocumentChangelog              func(childComplexity int, input types.GenerateDocumentChangelogInput) int
-		GenerateFrameworkStateOfApplicability  func(childComplexity int, input types.GenerateFrameworkStateOfApplicabilityInput) int
-		GetTrustCenterFile                     func(childComplexity int, input types.GetTrustCenterFileInput) int
-		ImportFramework                        func(childComplexity int, input types.ImportFrameworkInput) int
-		ImportMeasure                          func(childComplexity int, input types.ImportMeasureInput) int
-		InitiateDomainVerification             func(childComplexity int, input types.InitiateDomainVerificationInput) int
-		InviteUser                             func(childComplexity int, input types.InviteUserInput) int
-		PublishDocumentVersion                 func(childComplexity int, input types.PublishDocumentVersionInput) int
-		RemoveMember                           func(childComplexity int, input types.RemoveMemberInput) int
-		RequestSignature                       func(childComplexity int, input types.RequestSignatureInput) int
-		SendSigningNotifications               func(childComplexity int, input types.SendSigningNotificationsInput) int
-		SignDocument                           func(childComplexity int, input types.SignDocumentInput) int
-		UpdateAsset                            func(childComplexity int, input types.UpdateAssetInput) int
-		UpdateAudit                            func(childComplexity int, input types.UpdateAuditInput) int
-		UpdateContinualImprovement             func(childComplexity int, input types.UpdateContinualImprovementInput) int
-		UpdateControl                          func(childComplexity int, input types.UpdateControlInput) int
-		UpdateDataProtectionImpactAssessment   func(childComplexity int, input types.UpdateDataProtectionImpactAssessmentInput) int
-		UpdateDatum                            func(childComplexity int, input types.UpdateDatumInput) int
-		UpdateDocument                         func(childComplexity int, input types.UpdateDocumentInput) int
-		UpdateDocumentVersion                  func(childComplexity int, input types.UpdateDocumentVersionInput) int
-		UpdateFramework                        func(childComplexity int, input types.UpdateFrameworkInput) int
-		UpdateMeasure                          func(childComplexity int, input types.UpdateMeasureInput) int
-		UpdateMeeting                          func(childComplexity int, input types.UpdateMeetingInput) int
-		UpdateMembership                       func(childComplexity int, input types.UpdateMembershipInput) int
-		UpdateNonconformity                    func(childComplexity int, input types.UpdateNonconformityInput) int
-		UpdateObligation                       func(childComplexity int, input types.UpdateObligationInput) int
-		UpdateOrganization                     func(childComplexity int, input types.UpdateOrganizationInput) int
-		UpdateOrganizationContext              func(childComplexity int, input types.UpdateOrganizationContextInput) int
-		UpdatePeople                           func(childComplexity int, input types.UpdatePeopleInput) int
-		UpdateProcessingActivity               func(childComplexity int, input types.UpdateProcessingActivityInput) int
-		UpdateRightsRequest                    func(childComplexity int, input types.UpdateRightsRequestInput) int
-		UpdateRisk                             func(childComplexity int, input types.UpdateRiskInput) int
-		UpdateSAMLConfiguration                func(childComplexity int, input types.UpdateSAMLConfigurationInput) int
-		UpdateTask                             func(childComplexity int, input types.UpdateTaskInput) int
-		UpdateTransferImpactAssessment         func(childComplexity int, input types.UpdateTransferImpactAssessmentInput) int
-		UpdateTrustCenter                      func(childComplexity int, input types.UpdateTrustCenterInput) int
-		UpdateTrustCenterAccess                func(childComplexity int, input types.UpdateTrustCenterAccessInput) int
-		UpdateTrustCenterFile                  func(childComplexity int, input types.UpdateTrustCenterFileInput) int
-		UpdateTrustCenterReference             func(childComplexity int, input types.UpdateTrustCenterReferenceInput) int
-		UpdateVendor                           func(childComplexity int, input types.UpdateVendorInput) int
-		UpdateVendorBusinessAssociateAgreement func(childComplexity int, input types.UpdateVendorBusinessAssociateAgreementInput) int
-		UpdateVendorContact                    func(childComplexity int, input types.UpdateVendorContactInput) int
-		UpdateVendorDataPrivacyAgreement       func(childComplexity int, input types.UpdateVendorDataPrivacyAgreementInput) int
-		UpdateVendorService                    func(childComplexity int, input types.UpdateVendorServiceInput) int
-		UploadAuditReport                      func(childComplexity int, input types.UploadAuditReportInput) int
-		UploadMeasureEvidence                  func(childComplexity int, input types.UploadMeasureEvidenceInput) int
-		UploadTrustCenterNda                   func(childComplexity int, input types.UploadTrustCenterNDAInput) int
-		UploadVendorBusinessAssociateAgreement func(childComplexity int, input types.UploadVendorBusinessAssociateAgreementInput) int
-		UploadVendorComplianceReport           func(childComplexity int, input types.UploadVendorComplianceReportInput) int
-		UploadVendorDataPrivacyAgreement       func(childComplexity int, input types.UploadVendorDataPrivacyAgreementInput) int
-		VerifyDomain                           func(childComplexity int, input types.VerifyDomainInput) int
+		AcceptInvitation                         func(childComplexity int, input types.AcceptInvitationInput) int
+		AssessVendor                             func(childComplexity int, input types.AssessVendorInput) int
+		BulkDeleteDocuments                      func(childComplexity int, input types.BulkDeleteDocumentsInput) int
+		BulkExportDocuments                      func(childComplexity int, input types.BulkExportDocumentsInput) int
+		BulkPublishDocumentVersions              func(childComplexity int, input types.BulkPublishDocumentVersionsInput) int
+		BulkRequestSignatures                    func(childComplexity int, input types.BulkRequestSignaturesInput) int
+		CancelSignatureRequest                   func(childComplexity int, input types.CancelSignatureRequestInput) int
+		ConfirmEmail                             func(childComplexity int, input types.ConfirmEmailInput) int
+		CreateAsset                              func(childComplexity int, input types.CreateAssetInput) int
+		CreateAudit                              func(childComplexity int, input types.CreateAuditInput) int
+		CreateContinualImprovement               func(childComplexity int, input types.CreateContinualImprovementInput) int
+		CreateControl                            func(childComplexity int, input types.CreateControlInput) int
+		CreateControlAuditMapping                func(childComplexity int, input types.CreateControlAuditMappingInput) int
+		CreateControlDocumentMapping             func(childComplexity int, input types.CreateControlDocumentMappingInput) int
+		CreateControlMeasureMapping              func(childComplexity int, input types.CreateControlMeasureMappingInput) int
+		CreateControlSnapshotMapping             func(childComplexity int, input types.CreateControlSnapshotMappingInput) int
+		CreateCustomDomain                       func(childComplexity int, input types.CreateCustomDomainInput) int
+		CreateDataProtectionImpactAssessment     func(childComplexity int, input types.CreateDataProtectionImpactAssessmentInput) int
+		CreateDatum                              func(childComplexity int, input types.CreateDatumInput) int
+		CreateDocument                           func(childComplexity int, input types.CreateDocumentInput) int
+		CreateDraftDocumentVersion               func(childComplexity int, input types.CreateDraftDocumentVersionInput) int
+		CreateFramework                          func(childComplexity int, input types.CreateFrameworkInput) int
+		CreateMeasure                            func(childComplexity int, input types.CreateMeasureInput) int
+		CreateMeeting                            func(childComplexity int, input types.CreateMeetingInput) int
+		CreateNonconformity                      func(childComplexity int, input types.CreateNonconformityInput) int
+		CreateObligation                         func(childComplexity int, input types.CreateObligationInput) int
+		CreateOrganization                       func(childComplexity int, input types.CreateOrganizationInput) int
+		CreatePeople                             func(childComplexity int, input types.CreatePeopleInput) int
+		CreateProcessingActivity                 func(childComplexity int, input types.CreateProcessingActivityInput) int
+		CreateRightsRequest                      func(childComplexity int, input types.CreateRightsRequestInput) int
+		CreateRisk                               func(childComplexity int, input types.CreateRiskInput) int
+		CreateRiskDocumentMapping                func(childComplexity int, input types.CreateRiskDocumentMappingInput) int
+		CreateRiskMeasureMapping                 func(childComplexity int, input types.CreateRiskMeasureMappingInput) int
+		CreateRiskObligationMapping              func(childComplexity int, input types.CreateRiskObligationMappingInput) int
+		CreateSAMLConfiguration                  func(childComplexity int, input types.CreateSAMLConfigurationInput) int
+		CreateSnapshot                           func(childComplexity int, input types.CreateSnapshotInput) int
+		CreateTask                               func(childComplexity int, input types.CreateTaskInput) int
+		CreateTransferImpactAssessment           func(childComplexity int, input types.CreateTransferImpactAssessmentInput) int
+		CreateTrustCenterAccess                  func(childComplexity int, input types.CreateTrustCenterAccessInput) int
+		CreateTrustCenterFile                    func(childComplexity int, input types.CreateTrustCenterFileInput) int
+		CreateTrustCenterReference               func(childComplexity int, input types.CreateTrustCenterReferenceInput) int
+		CreateVendor                             func(childComplexity int, input types.CreateVendorInput) int
+		CreateVendorContact                      func(childComplexity int, input types.CreateVendorContactInput) int
+		CreateVendorRiskAssessment               func(childComplexity int, input types.CreateVendorRiskAssessmentInput) int
+		CreateVendorService                      func(childComplexity int, input types.CreateVendorServiceInput) int
+		DeleteAsset                              func(childComplexity int, input types.DeleteAssetInput) int
+		DeleteAudit                              func(childComplexity int, input types.DeleteAuditInput) int
+		DeleteAuditReport                        func(childComplexity int, input types.DeleteAuditReportInput) int
+		DeleteContinualImprovement               func(childComplexity int, input types.DeleteContinualImprovementInput) int
+		DeleteControl                            func(childComplexity int, input types.DeleteControlInput) int
+		DeleteControlAuditMapping                func(childComplexity int, input types.DeleteControlAuditMappingInput) int
+		DeleteControlDocumentMapping             func(childComplexity int, input types.DeleteControlDocumentMappingInput) int
+		DeleteControlMeasureMapping              func(childComplexity int, input types.DeleteControlMeasureMappingInput) int
+		DeleteControlSnapshotMapping             func(childComplexity int, input types.DeleteControlSnapshotMappingInput) int
+		DeleteCustomDomain                       func(childComplexity int, input types.DeleteCustomDomainInput) int
+		DeleteDataProtectionImpactAssessment     func(childComplexity int, input types.DeleteDataProtectionImpactAssessmentInput) int
+		DeleteDatum                              func(childComplexity int, input types.DeleteDatumInput) int
+		DeleteDocument                           func(childComplexity int, input types.DeleteDocumentInput) int
+		DeleteDraftDocumentVersion               func(childComplexity int, input types.DeleteDraftDocumentVersionInput) int
+		DeleteEvidence                           func(childComplexity int, input types.DeleteEvidenceInput) int
+		DeleteFramework                          func(childComplexity int, input types.DeleteFrameworkInput) int
+		DeleteInvitation                         func(childComplexity int, input types.DeleteInvitationInput) int
+		DeleteMeasure                            func(childComplexity int, input types.DeleteMeasureInput) int
+		DeleteMeeting                            func(childComplexity int, input types.DeleteMeetingInput) int
+		DeleteNonconformity                      func(childComplexity int, input types.DeleteNonconformityInput) int
+		DeleteObligation                         func(childComplexity int, input types.DeleteObligationInput) int
+		DeleteOrganization                       func(childComplexity int, input types.DeleteOrganizationInput) int
+		DeleteOrganizationHorizontalLogo         func(childComplexity int, input types.DeleteOrganizationHorizontalLogoInput) int
+		DeletePeople                             func(childComplexity int, input types.DeletePeopleInput) int
+		DeleteProcessingActivity                 func(childComplexity int, input types.DeleteProcessingActivityInput) int
+		DeleteRightsRequest                      func(childComplexity int, input types.DeleteRightsRequestInput) int
+		DeleteRisk                               func(childComplexity int, input types.DeleteRiskInput) int
+		DeleteRiskDocumentMapping                func(childComplexity int, input types.DeleteRiskDocumentMappingInput) int
+		DeleteRiskMeasureMapping                 func(childComplexity int, input types.DeleteRiskMeasureMappingInput) int
+		DeleteRiskObligationMapping              func(childComplexity int, input types.DeleteRiskObligationMappingInput) int
+		DeleteSAMLConfiguration                  func(childComplexity int, input types.DeleteSAMLConfigurationInput) int
+		DeleteSnapshot                           func(childComplexity int, input types.DeleteSnapshotInput) int
+		DeleteTask                               func(childComplexity int, input types.DeleteTaskInput) int
+		DeleteTransferImpactAssessment           func(childComplexity int, input types.DeleteTransferImpactAssessmentInput) int
+		DeleteTrustCenterAccess                  func(childComplexity int, input types.DeleteTrustCenterAccessInput) int
+		DeleteTrustCenterFile                    func(childComplexity int, input types.DeleteTrustCenterFileInput) int
+		DeleteTrustCenterNda                     func(childComplexity int, input types.DeleteTrustCenterNDAInput) int
+		DeleteTrustCenterReference               func(childComplexity int, input types.DeleteTrustCenterReferenceInput) int
+		DeleteVendor                             func(childComplexity int, input types.DeleteVendorInput) int
+		DeleteVendorBusinessAssociateAgreement   func(childComplexity int, input types.DeleteVendorBusinessAssociateAgreementInput) int
+		DeleteVendorComplianceReport             func(childComplexity int, input types.DeleteVendorComplianceReportInput) int
+		DeleteVendorContact                      func(childComplexity int, input types.DeleteVendorContactInput) int
+		DeleteVendorDataPrivacyAgreement         func(childComplexity int, input types.DeleteVendorDataPrivacyAgreementInput) int
+		DeleteVendorService                      func(childComplexity int, input types.DeleteVendorServiceInput) int
+		DisableSaml                              func(childComplexity int, input types.DisableSAMLInput) int
+		EnableSaml                               func(childComplexity int, input types.EnableSAMLInput) int
+		ExportDataProtectionImpactAssessmentsPDF func(childComplexity int, input types.ExportDataProtectionImpactAssessmentsPDFInput) int
+		ExportDocumentVersionPDF                 func(childComplexity int, input types.ExportDocumentVersionPDFInput) int
+		ExportFramework                          func(childComplexity int, input types.ExportFrameworkInput) int
+		ExportProcessingActivitiesPDF            func(childComplexity int, input types.ExportProcessingActivitiesPDFInput) int
+		ExportSignableVersionDocumentPDF         func(childComplexity int, input types.ExportSignableDocumentVersionPDFInput) int
+		ExportTransferImpactAssessmentsPDF       func(childComplexity int, input types.ExportTransferImpactAssessmentsPDFInput) int
+		GenerateDocumentChangelog                func(childComplexity int, input types.GenerateDocumentChangelogInput) int
+		GenerateFrameworkStateOfApplicability    func(childComplexity int, input types.GenerateFrameworkStateOfApplicabilityInput) int
+		GetTrustCenterFile                       func(childComplexity int, input types.GetTrustCenterFileInput) int
+		ImportFramework                          func(childComplexity int, input types.ImportFrameworkInput) int
+		ImportMeasure                            func(childComplexity int, input types.ImportMeasureInput) int
+		InitiateDomainVerification               func(childComplexity int, input types.InitiateDomainVerificationInput) int
+		InviteUser                               func(childComplexity int, input types.InviteUserInput) int
+		PublishDocumentVersion                   func(childComplexity int, input types.PublishDocumentVersionInput) int
+		RemoveMember                             func(childComplexity int, input types.RemoveMemberInput) int
+		RequestSignature                         func(childComplexity int, input types.RequestSignatureInput) int
+		SendSigningNotifications                 func(childComplexity int, input types.SendSigningNotificationsInput) int
+		SignDocument                             func(childComplexity int, input types.SignDocumentInput) int
+		UpdateAsset                              func(childComplexity int, input types.UpdateAssetInput) int
+		UpdateAudit                              func(childComplexity int, input types.UpdateAuditInput) int
+		UpdateContinualImprovement               func(childComplexity int, input types.UpdateContinualImprovementInput) int
+		UpdateControl                            func(childComplexity int, input types.UpdateControlInput) int
+		UpdateDataProtectionImpactAssessment     func(childComplexity int, input types.UpdateDataProtectionImpactAssessmentInput) int
+		UpdateDatum                              func(childComplexity int, input types.UpdateDatumInput) int
+		UpdateDocument                           func(childComplexity int, input types.UpdateDocumentInput) int
+		UpdateDocumentVersion                    func(childComplexity int, input types.UpdateDocumentVersionInput) int
+		UpdateFramework                          func(childComplexity int, input types.UpdateFrameworkInput) int
+		UpdateMeasure                            func(childComplexity int, input types.UpdateMeasureInput) int
+		UpdateMeeting                            func(childComplexity int, input types.UpdateMeetingInput) int
+		UpdateMembership                         func(childComplexity int, input types.UpdateMembershipInput) int
+		UpdateNonconformity                      func(childComplexity int, input types.UpdateNonconformityInput) int
+		UpdateObligation                         func(childComplexity int, input types.UpdateObligationInput) int
+		UpdateOrganization                       func(childComplexity int, input types.UpdateOrganizationInput) int
+		UpdateOrganizationContext                func(childComplexity int, input types.UpdateOrganizationContextInput) int
+		UpdatePeople                             func(childComplexity int, input types.UpdatePeopleInput) int
+		UpdateProcessingActivity                 func(childComplexity int, input types.UpdateProcessingActivityInput) int
+		UpdateRightsRequest                      func(childComplexity int, input types.UpdateRightsRequestInput) int
+		UpdateRisk                               func(childComplexity int, input types.UpdateRiskInput) int
+		UpdateSAMLConfiguration                  func(childComplexity int, input types.UpdateSAMLConfigurationInput) int
+		UpdateTask                               func(childComplexity int, input types.UpdateTaskInput) int
+		UpdateTransferImpactAssessment           func(childComplexity int, input types.UpdateTransferImpactAssessmentInput) int
+		UpdateTrustCenter                        func(childComplexity int, input types.UpdateTrustCenterInput) int
+		UpdateTrustCenterAccess                  func(childComplexity int, input types.UpdateTrustCenterAccessInput) int
+		UpdateTrustCenterFile                    func(childComplexity int, input types.UpdateTrustCenterFileInput) int
+		UpdateTrustCenterReference               func(childComplexity int, input types.UpdateTrustCenterReferenceInput) int
+		UpdateVendor                             func(childComplexity int, input types.UpdateVendorInput) int
+		UpdateVendorBusinessAssociateAgreement   func(childComplexity int, input types.UpdateVendorBusinessAssociateAgreementInput) int
+		UpdateVendorContact                      func(childComplexity int, input types.UpdateVendorContactInput) int
+		UpdateVendorDataPrivacyAgreement         func(childComplexity int, input types.UpdateVendorDataPrivacyAgreementInput) int
+		UpdateVendorService                      func(childComplexity int, input types.UpdateVendorServiceInput) int
+		UploadAuditReport                        func(childComplexity int, input types.UploadAuditReportInput) int
+		UploadMeasureEvidence                    func(childComplexity int, input types.UploadMeasureEvidenceInput) int
+		UploadTrustCenterNda                     func(childComplexity int, input types.UploadTrustCenterNDAInput) int
+		UploadVendorBusinessAssociateAgreement   func(childComplexity int, input types.UploadVendorBusinessAssociateAgreementInput) int
+		UploadVendorComplianceReport             func(childComplexity int, input types.UploadVendorComplianceReportInput) int
+		UploadVendorDataPrivacyAgreement         func(childComplexity int, input types.UploadVendorDataPrivacyAgreementInput) int
+		VerifyDomain                             func(childComplexity int, input types.VerifyDomainInput) int
 	}
 
 	Nonconformity struct {
@@ -2200,6 +2215,9 @@ type MutationResolver interface {
 	SignDocument(ctx context.Context, input types.SignDocumentInput) (*types.SignDocumentPayload, error)
 	ExportDocumentVersionPDF(ctx context.Context, input types.ExportDocumentVersionPDFInput) (*types.ExportDocumentVersionPDFPayload, error)
 	ExportSignableVersionDocumentPDF(ctx context.Context, input types.ExportSignableDocumentVersionPDFInput) (*types.ExportSignableDocumentVersionPDFPayload, error)
+	ExportProcessingActivitiesPDF(ctx context.Context, input types.ExportProcessingActivitiesPDFInput) (*types.ExportProcessingActivitiesPDFPayload, error)
+	ExportDataProtectionImpactAssessmentsPDF(ctx context.Context, input types.ExportDataProtectionImpactAssessmentsPDFInput) (*types.ExportDataProtectionImpactAssessmentsPDFPayload, error)
+	ExportTransferImpactAssessmentsPDF(ctx context.Context, input types.ExportTransferImpactAssessmentsPDFInput) (*types.ExportTransferImpactAssessmentsPDFPayload, error)
 	CreateVendorRiskAssessment(ctx context.Context, input types.CreateVendorRiskAssessmentInput) (*types.CreateVendorRiskAssessmentPayload, error)
 	AssessVendor(ctx context.Context, input types.AssessVendorInput) (*types.AssessVendorPayload, error)
 	CreateAsset(ctx context.Context, input types.CreateAssetInput) (*types.CreateAssetPayload, error)
@@ -4350,6 +4368,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.EvidenceEdge.Node(childComplexity), true
 
+	case "ExportDataProtectionImpactAssessmentsPDFPayload.data":
+		if e.complexity.ExportDataProtectionImpactAssessmentsPDFPayload.Data == nil {
+			break
+		}
+
+		return e.complexity.ExportDataProtectionImpactAssessmentsPDFPayload.Data(childComplexity), true
+
 	case "ExportDocumentVersionPDFPayload.data":
 		if e.complexity.ExportDocumentVersionPDFPayload.Data == nil {
 			break
@@ -4364,12 +4389,26 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.ExportFrameworkPayload.ExportJobID(childComplexity), true
 
+	case "ExportProcessingActivitiesPDFPayload.data":
+		if e.complexity.ExportProcessingActivitiesPDFPayload.Data == nil {
+			break
+		}
+
+		return e.complexity.ExportProcessingActivitiesPDFPayload.Data(childComplexity), true
+
 	case "ExportSignableDocumentVersionPDFPayload.data":
 		if e.complexity.ExportSignableDocumentVersionPDFPayload.Data == nil {
 			break
 		}
 
 		return e.complexity.ExportSignableDocumentVersionPDFPayload.Data(childComplexity), true
+
+	case "ExportTransferImpactAssessmentsPDFPayload.data":
+		if e.complexity.ExportTransferImpactAssessmentsPDFPayload.Data == nil {
+			break
+		}
+
+		return e.complexity.ExportTransferImpactAssessmentsPDFPayload.Data(childComplexity), true
 
 	case "File.createdAt":
 		if e.complexity.File.CreatedAt == nil {
@@ -5943,6 +5982,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.EnableSaml(childComplexity, args["input"].(types.EnableSAMLInput)), true
+	case "Mutation.exportDataProtectionImpactAssessmentsPDF":
+		if e.complexity.Mutation.ExportDataProtectionImpactAssessmentsPDF == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_exportDataProtectionImpactAssessmentsPDF_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.ExportDataProtectionImpactAssessmentsPDF(childComplexity, args["input"].(types.ExportDataProtectionImpactAssessmentsPDFInput)), true
 	case "Mutation.exportDocumentVersionPDF":
 		if e.complexity.Mutation.ExportDocumentVersionPDF == nil {
 			break
@@ -5965,6 +6015,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.ExportFramework(childComplexity, args["input"].(types.ExportFrameworkInput)), true
+	case "Mutation.exportProcessingActivitiesPDF":
+		if e.complexity.Mutation.ExportProcessingActivitiesPDF == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_exportProcessingActivitiesPDF_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.ExportProcessingActivitiesPDF(childComplexity, args["input"].(types.ExportProcessingActivitiesPDFInput)), true
 	case "Mutation.exportSignableVersionDocumentPDF":
 		if e.complexity.Mutation.ExportSignableVersionDocumentPDF == nil {
 			break
@@ -5976,6 +6037,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.ExportSignableVersionDocumentPDF(childComplexity, args["input"].(types.ExportSignableDocumentVersionPDFInput)), true
+	case "Mutation.exportTransferImpactAssessmentsPDF":
+		if e.complexity.Mutation.ExportTransferImpactAssessmentsPDF == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_exportTransferImpactAssessmentsPDF_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.ExportTransferImpactAssessmentsPDF(childComplexity, args["input"].(types.ExportTransferImpactAssessmentsPDFInput)), true
 	case "Mutation.generateDocumentChangelog":
 		if e.complexity.Mutation.GenerateDocumentChangelog == nil {
 			break
@@ -10030,9 +10102,12 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputDocumentVersionSignatureOrder,
 		ec.unmarshalInputEnableSAMLInput,
 		ec.unmarshalInputEvidenceOrder,
+		ec.unmarshalInputExportDataProtectionImpactAssessmentsPDFInput,
 		ec.unmarshalInputExportDocumentVersionPDFInput,
 		ec.unmarshalInputExportFrameworkInput,
+		ec.unmarshalInputExportProcessingActivitiesPDFInput,
 		ec.unmarshalInputExportSignableDocumentVersionPDFInput,
+		ec.unmarshalInputExportTransferImpactAssessmentsPDFInput,
 		ec.unmarshalInputFrameworkOrder,
 		ec.unmarshalInputFulfillEvidenceInput,
 		ec.unmarshalInputGenerateDocumentChangelogInput,
@@ -13530,6 +13605,15 @@ type Mutation {
   exportSignableVersionDocumentPDF(
     input: ExportSignableDocumentVersionPDFInput!
   ): ExportSignableDocumentVersionPDFPayload!
+  exportProcessingActivitiesPDF(
+    input: ExportProcessingActivitiesPDFInput!
+  ): ExportProcessingActivitiesPDFPayload!
+  exportDataProtectionImpactAssessmentsPDF(
+    input: ExportDataProtectionImpactAssessmentsPDFInput!
+  ): ExportDataProtectionImpactAssessmentsPDFPayload!
+  exportTransferImpactAssessmentsPDF(
+    input: ExportTransferImpactAssessmentsPDFInput!
+  ): ExportTransferImpactAssessmentsPDFPayload!
   createVendorRiskAssessment(
     input: CreateVendorRiskAssessmentInput!
   ): CreateVendorRiskAssessmentPayload!
@@ -14159,6 +14243,21 @@ input ExportDocumentVersionPDFInput {
 
 input ExportSignableDocumentVersionPDFInput {
   documentVersionId: ID!
+}
+
+input ExportProcessingActivitiesPDFInput {
+  organizationId: ID!
+  filter: ProcessingActivityFilter
+}
+
+input ExportDataProtectionImpactAssessmentsPDFInput {
+  organizationId: ID!
+  filter: DataProtectionImpactAssessmentFilter
+}
+
+input ExportTransferImpactAssessmentsPDFInput {
+  organizationId: ID!
+  filter: TransferImpactAssessmentFilter
 }
 
 input DeleteDocumentInput {
@@ -14817,6 +14916,18 @@ type ExportDocumentVersionPDFPayload {
 }
 
 type ExportSignableDocumentVersionPDFPayload {
+  data: String!
+}
+
+type ExportProcessingActivitiesPDFPayload {
+  data: String!
+}
+
+type ExportDataProtectionImpactAssessmentsPDFPayload {
+  data: String!
+}
+
+type ExportTransferImpactAssessmentsPDFPayload {
   data: String!
 }
 
@@ -17125,6 +17236,17 @@ func (ec *executionContext) field_Mutation_enableSAML_args(ctx context.Context, 
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_exportDataProtectionImpactAssessmentsPDF_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNExportDataProtectionImpactAssessmentsPDFInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐExportDataProtectionImpactAssessmentsPDFInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_exportDocumentVersionPDF_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -17147,10 +17269,32 @@ func (ec *executionContext) field_Mutation_exportFramework_args(ctx context.Cont
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_exportProcessingActivitiesPDF_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNExportProcessingActivitiesPDFInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐExportProcessingActivitiesPDFInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_exportSignableVersionDocumentPDF_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNExportSignableDocumentVersionPDFInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐExportSignableDocumentVersionPDFInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_exportTransferImpactAssessmentsPDF_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNExportTransferImpactAssessmentsPDFInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐExportTransferImpactAssessmentsPDFInput)
 	if err != nil {
 		return nil, err
 	}
@@ -29640,6 +29784,35 @@ func (ec *executionContext) fieldContext_EvidenceEdge_node(_ context.Context, fi
 	return fc, nil
 }
 
+func (ec *executionContext) _ExportDataProtectionImpactAssessmentsPDFPayload_data(ctx context.Context, field graphql.CollectedField, obj *types.ExportDataProtectionImpactAssessmentsPDFPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ExportDataProtectionImpactAssessmentsPDFPayload_data,
+		func(ctx context.Context) (any, error) {
+			return obj.Data, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ExportDataProtectionImpactAssessmentsPDFPayload_data(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ExportDataProtectionImpactAssessmentsPDFPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _ExportDocumentVersionPDFPayload_data(ctx context.Context, field graphql.CollectedField, obj *types.ExportDocumentVersionPDFPayload) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -29698,6 +29871,35 @@ func (ec *executionContext) fieldContext_ExportFrameworkPayload_exportJobId(_ co
 	return fc, nil
 }
 
+func (ec *executionContext) _ExportProcessingActivitiesPDFPayload_data(ctx context.Context, field graphql.CollectedField, obj *types.ExportProcessingActivitiesPDFPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ExportProcessingActivitiesPDFPayload_data,
+		func(ctx context.Context) (any, error) {
+			return obj.Data, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ExportProcessingActivitiesPDFPayload_data(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ExportProcessingActivitiesPDFPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _ExportSignableDocumentVersionPDFPayload_data(ctx context.Context, field graphql.CollectedField, obj *types.ExportSignableDocumentVersionPDFPayload) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -29717,6 +29919,35 @@ func (ec *executionContext) _ExportSignableDocumentVersionPDFPayload_data(ctx co
 func (ec *executionContext) fieldContext_ExportSignableDocumentVersionPDFPayload_data(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ExportSignableDocumentVersionPDFPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ExportTransferImpactAssessmentsPDFPayload_data(ctx context.Context, field graphql.CollectedField, obj *types.ExportTransferImpactAssessmentsPDFPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ExportTransferImpactAssessmentsPDFPayload_data,
+		func(ctx context.Context) (any, error) {
+			return obj.Data, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ExportTransferImpactAssessmentsPDFPayload_data(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ExportTransferImpactAssessmentsPDFPayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -37406,6 +37637,141 @@ func (ec *executionContext) fieldContext_Mutation_exportSignableVersionDocumentP
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_exportSignableVersionDocumentPDF_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_exportProcessingActivitiesPDF(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_exportProcessingActivitiesPDF,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().ExportProcessingActivitiesPDF(ctx, fc.Args["input"].(types.ExportProcessingActivitiesPDFInput))
+		},
+		nil,
+		ec.marshalNExportProcessingActivitiesPDFPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐExportProcessingActivitiesPDFPayload,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_exportProcessingActivitiesPDF(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "data":
+				return ec.fieldContext_ExportProcessingActivitiesPDFPayload_data(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ExportProcessingActivitiesPDFPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_exportProcessingActivitiesPDF_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_exportDataProtectionImpactAssessmentsPDF(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_exportDataProtectionImpactAssessmentsPDF,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().ExportDataProtectionImpactAssessmentsPDF(ctx, fc.Args["input"].(types.ExportDataProtectionImpactAssessmentsPDFInput))
+		},
+		nil,
+		ec.marshalNExportDataProtectionImpactAssessmentsPDFPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐExportDataProtectionImpactAssessmentsPDFPayload,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_exportDataProtectionImpactAssessmentsPDF(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "data":
+				return ec.fieldContext_ExportDataProtectionImpactAssessmentsPDFPayload_data(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ExportDataProtectionImpactAssessmentsPDFPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_exportDataProtectionImpactAssessmentsPDF_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_exportTransferImpactAssessmentsPDF(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_exportTransferImpactAssessmentsPDF,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().ExportTransferImpactAssessmentsPDF(ctx, fc.Args["input"].(types.ExportTransferImpactAssessmentsPDFInput))
+		},
+		nil,
+		ec.marshalNExportTransferImpactAssessmentsPDFPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐExportTransferImpactAssessmentsPDFPayload,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_exportTransferImpactAssessmentsPDF(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "data":
+				return ec.fieldContext_ExportTransferImpactAssessmentsPDFPayload_data(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ExportTransferImpactAssessmentsPDFPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_exportTransferImpactAssessmentsPDF_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -65022,6 +65388,40 @@ func (ec *executionContext) unmarshalInputEvidenceOrder(ctx context.Context, obj
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputExportDataProtectionImpactAssessmentsPDFInput(ctx context.Context, obj any) (types.ExportDataProtectionImpactAssessmentsPDFInput, error) {
+	var it types.ExportDataProtectionImpactAssessmentsPDFInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"organizationId", "filter"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "organizationId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("organizationId"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OrganizationID = data
+		case "filter":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("filter"))
+			data, err := ec.unmarshalODataProtectionImpactAssessmentFilter2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDataProtectionImpactAssessmentFilter(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Filter = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputExportDocumentVersionPDFInput(ctx context.Context, obj any) (types.ExportDocumentVersionPDFInput, error) {
 	var it types.ExportDocumentVersionPDFInput
 	asMap := map[string]any{}
@@ -65097,6 +65497,40 @@ func (ec *executionContext) unmarshalInputExportFrameworkInput(ctx context.Conte
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputExportProcessingActivitiesPDFInput(ctx context.Context, obj any) (types.ExportProcessingActivitiesPDFInput, error) {
+	var it types.ExportProcessingActivitiesPDFInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"organizationId", "filter"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "organizationId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("organizationId"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OrganizationID = data
+		case "filter":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("filter"))
+			data, err := ec.unmarshalOProcessingActivityFilter2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityFilter(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Filter = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputExportSignableDocumentVersionPDFInput(ctx context.Context, obj any) (types.ExportSignableDocumentVersionPDFInput, error) {
 	var it types.ExportSignableDocumentVersionPDFInput
 	asMap := map[string]any{}
@@ -65118,6 +65552,40 @@ func (ec *executionContext) unmarshalInputExportSignableDocumentVersionPDFInput(
 				return it, err
 			}
 			it.DocumentVersionID = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputExportTransferImpactAssessmentsPDFInput(ctx context.Context, obj any) (types.ExportTransferImpactAssessmentsPDFInput, error) {
+	var it types.ExportTransferImpactAssessmentsPDFInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"organizationId", "filter"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "organizationId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("organizationId"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OrganizationID = data
+		case "filter":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("filter"))
+			data, err := ec.unmarshalOTransferImpactAssessmentFilter2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐTransferImpactAssessmentFilter(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Filter = data
 		}
 	}
 
@@ -76415,6 +76883,45 @@ func (ec *executionContext) _EvidenceEdge(ctx context.Context, sel ast.Selection
 	return out
 }
 
+var exportDataProtectionImpactAssessmentsPDFPayloadImplementors = []string{"ExportDataProtectionImpactAssessmentsPDFPayload"}
+
+func (ec *executionContext) _ExportDataProtectionImpactAssessmentsPDFPayload(ctx context.Context, sel ast.SelectionSet, obj *types.ExportDataProtectionImpactAssessmentsPDFPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, exportDataProtectionImpactAssessmentsPDFPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ExportDataProtectionImpactAssessmentsPDFPayload")
+		case "data":
+			out.Values[i] = ec._ExportDataProtectionImpactAssessmentsPDFPayload_data(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var exportDocumentVersionPDFPayloadImplementors = []string{"ExportDocumentVersionPDFPayload"}
 
 func (ec *executionContext) _ExportDocumentVersionPDFPayload(ctx context.Context, sel ast.SelectionSet, obj *types.ExportDocumentVersionPDFPayload) graphql.Marshaler {
@@ -76493,6 +77000,45 @@ func (ec *executionContext) _ExportFrameworkPayload(ctx context.Context, sel ast
 	return out
 }
 
+var exportProcessingActivitiesPDFPayloadImplementors = []string{"ExportProcessingActivitiesPDFPayload"}
+
+func (ec *executionContext) _ExportProcessingActivitiesPDFPayload(ctx context.Context, sel ast.SelectionSet, obj *types.ExportProcessingActivitiesPDFPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, exportProcessingActivitiesPDFPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ExportProcessingActivitiesPDFPayload")
+		case "data":
+			out.Values[i] = ec._ExportProcessingActivitiesPDFPayload_data(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var exportSignableDocumentVersionPDFPayloadImplementors = []string{"ExportSignableDocumentVersionPDFPayload"}
 
 func (ec *executionContext) _ExportSignableDocumentVersionPDFPayload(ctx context.Context, sel ast.SelectionSet, obj *types.ExportSignableDocumentVersionPDFPayload) graphql.Marshaler {
@@ -76506,6 +77052,45 @@ func (ec *executionContext) _ExportSignableDocumentVersionPDFPayload(ctx context
 			out.Values[i] = graphql.MarshalString("ExportSignableDocumentVersionPDFPayload")
 		case "data":
 			out.Values[i] = ec._ExportSignableDocumentVersionPDFPayload_data(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var exportTransferImpactAssessmentsPDFPayloadImplementors = []string{"ExportTransferImpactAssessmentsPDFPayload"}
+
+func (ec *executionContext) _ExportTransferImpactAssessmentsPDFPayload(ctx context.Context, sel ast.SelectionSet, obj *types.ExportTransferImpactAssessmentsPDFPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, exportTransferImpactAssessmentsPDFPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ExportTransferImpactAssessmentsPDFPayload")
+		case "data":
+			out.Values[i] = ec._ExportTransferImpactAssessmentsPDFPayload_data(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -79038,6 +79623,27 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "exportSignableVersionDocumentPDF":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_exportSignableVersionDocumentPDF(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "exportProcessingActivitiesPDF":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_exportProcessingActivitiesPDF(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "exportDataProtectionImpactAssessmentsPDF":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_exportDataProtectionImpactAssessmentsPDF(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "exportTransferImpactAssessmentsPDF":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_exportTransferImpactAssessmentsPDF(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -93526,6 +94132,25 @@ var (
 	}
 )
 
+func (ec *executionContext) unmarshalNExportDataProtectionImpactAssessmentsPDFInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐExportDataProtectionImpactAssessmentsPDFInput(ctx context.Context, v any) (types.ExportDataProtectionImpactAssessmentsPDFInput, error) {
+	res, err := ec.unmarshalInputExportDataProtectionImpactAssessmentsPDFInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNExportDataProtectionImpactAssessmentsPDFPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐExportDataProtectionImpactAssessmentsPDFPayload(ctx context.Context, sel ast.SelectionSet, v types.ExportDataProtectionImpactAssessmentsPDFPayload) graphql.Marshaler {
+	return ec._ExportDataProtectionImpactAssessmentsPDFPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNExportDataProtectionImpactAssessmentsPDFPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐExportDataProtectionImpactAssessmentsPDFPayload(ctx context.Context, sel ast.SelectionSet, v *types.ExportDataProtectionImpactAssessmentsPDFPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ExportDataProtectionImpactAssessmentsPDFPayload(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNExportDocumentVersionPDFInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐExportDocumentVersionPDFInput(ctx context.Context, v any) (types.ExportDocumentVersionPDFInput, error) {
 	res, err := ec.unmarshalInputExportDocumentVersionPDFInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -93564,6 +94189,25 @@ func (ec *executionContext) marshalNExportFrameworkPayload2ᚖgoᚗproboᚗinc�
 	return ec._ExportFrameworkPayload(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNExportProcessingActivitiesPDFInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐExportProcessingActivitiesPDFInput(ctx context.Context, v any) (types.ExportProcessingActivitiesPDFInput, error) {
+	res, err := ec.unmarshalInputExportProcessingActivitiesPDFInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNExportProcessingActivitiesPDFPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐExportProcessingActivitiesPDFPayload(ctx context.Context, sel ast.SelectionSet, v types.ExportProcessingActivitiesPDFPayload) graphql.Marshaler {
+	return ec._ExportProcessingActivitiesPDFPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNExportProcessingActivitiesPDFPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐExportProcessingActivitiesPDFPayload(ctx context.Context, sel ast.SelectionSet, v *types.ExportProcessingActivitiesPDFPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ExportProcessingActivitiesPDFPayload(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNExportSignableDocumentVersionPDFInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐExportSignableDocumentVersionPDFInput(ctx context.Context, v any) (types.ExportSignableDocumentVersionPDFInput, error) {
 	res, err := ec.unmarshalInputExportSignableDocumentVersionPDFInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -93581,6 +94225,25 @@ func (ec *executionContext) marshalNExportSignableDocumentVersionPDFPayload2ᚖg
 		return graphql.Null
 	}
 	return ec._ExportSignableDocumentVersionPDFPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNExportTransferImpactAssessmentsPDFInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐExportTransferImpactAssessmentsPDFInput(ctx context.Context, v any) (types.ExportTransferImpactAssessmentsPDFInput, error) {
+	res, err := ec.unmarshalInputExportTransferImpactAssessmentsPDFInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNExportTransferImpactAssessmentsPDFPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐExportTransferImpactAssessmentsPDFPayload(ctx context.Context, sel ast.SelectionSet, v types.ExportTransferImpactAssessmentsPDFPayload) graphql.Marshaler {
+	return ec._ExportTransferImpactAssessmentsPDFPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNExportTransferImpactAssessmentsPDFPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐExportTransferImpactAssessmentsPDFPayload(ctx context.Context, sel ast.SelectionSet, v *types.ExportTransferImpactAssessmentsPDFPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ExportTransferImpactAssessmentsPDFPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNFramework2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐFramework(ctx context.Context, sel ast.SelectionSet, v types.Framework) graphql.Marshaler {

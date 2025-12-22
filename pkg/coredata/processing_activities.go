@@ -26,6 +26,12 @@ import (
 	"go.probo.inc/probo/pkg/page"
 )
 
+type ErrNoProcessingActivitiesFound struct{}
+
+func (e ErrNoProcessingActivitiesFound) Error() string {
+	return "no processing activities found"
+}
+
 type (
 	ProcessingActivity struct {
 		ID                                   gid.GID                                          `db:"id"`
@@ -215,6 +221,70 @@ WHERE
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query processing activities: %w", err)
+	}
+
+	processingActivities, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[ProcessingActivity])
+	if err != nil {
+		return fmt.Errorf("cannot collect processing activities: %w", err)
+	}
+
+	*p = processingActivities
+
+	return nil
+}
+
+func (p *ProcessingActivities) LoadAllByOrganizationID(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	organizationID gid.GID,
+	filter *ProcessingActivityFilter,
+) error {
+	q := `
+SELECT
+	id,
+	snapshot_id,
+	source_id,
+	organization_id,
+	name,
+	purpose,
+	data_subject_category,
+	personal_data_category,
+	special_or_criminal_data,
+	consent_evidence_link,
+	lawful_basis,
+	recipients,
+	location,
+	international_transfers,
+	transfer_safeguards,
+	retention_period,
+	security_measures,
+	data_protection_impact_assessment_needed,
+	transfer_impact_assessment_needed,
+	last_review_date,
+	next_review_date,
+	role,
+	data_protection_officer_id,
+	created_at,
+	updated_at
+FROM
+	processing_activities
+WHERE
+	%s
+	AND organization_id = @organization_id
+	AND %s
+ORDER BY created_at DESC
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"organization_id": organizationID}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
