@@ -2167,18 +2167,11 @@ func (r *mutationResolver) ExportFramework(ctx context.Context, input types.Expo
 	prb := r.ProboService(ctx, input.FrameworkID.TenantID())
 	identity := connect_v1.IdentityFromContext(ctx)
 
-	// Load default profile to get the full name
-	recipientName := ""
-	profile, err := r.iam.AccountService.GetDefaultProfile(ctx, identity.ID)
-	if err == nil {
-		recipientName = profile.FullName
-	}
-
 	exportErr, exportJobID := prb.Frameworks.RequestExport(
 		ctx,
 		input.FrameworkID,
 		identity.EmailAddress,
-		recipientName,
+		identity.FullName,
 	)
 	if exportErr != nil {
 		panic(fmt.Errorf("cannot export framework: %w", exportErr))
@@ -3352,20 +3345,13 @@ func (r *mutationResolver) BulkExportDocuments(ctx context.Context, input types.
 
 	identity := connect_v1.IdentityFromContext(ctx)
 
-	// Load default profile to get the full name
-	recipientName := ""
-	profile, err := r.iam.AccountService.GetDefaultProfile(ctx, identity.ID)
-	if err == nil {
-		recipientName = profile.FullName
-	}
-
 	options := probo.ExportPDFOptions{
 		WithWatermark:  input.WithWatermark,
 		WithSignatures: input.WithSignatures,
 		WatermarkEmail: input.WatermarkEmail,
 	}
 
-	documentExport, exportErr := prb.Documents.RequestExport(ctx, input.DocumentIds, identity.EmailAddress, recipientName, options)
+	documentExport, exportErr := prb.Documents.RequestExport(ctx, input.DocumentIds, identity.EmailAddress, identity.FullName, options)
 	if exportErr != nil {
 		panic(fmt.Errorf("cannot request document export: %w", exportErr))
 	}

@@ -27,68 +27,16 @@ import (
 )
 
 type (
-	IdentityProfile struct {
+	MembershipProfile struct {
 		ID           gid.GID   `db:"id"`
-		IdentityID   gid.GID   `db:"identity_id"`
-		MembershipID *gid.GID  `db:"membership_id"`
+		MembershipID gid.GID   `db:"membership_id"`
 		FullName     string    `db:"full_name"`
 		CreatedAt    time.Time `db:"created_at"`
 		UpdatedAt    time.Time `db:"updated_at"`
 	}
-
-	IdentityProfiles []*IdentityProfile
 )
 
-func (p *IdentityProfile) IsDefault() bool {
-	return p.MembershipID == nil
-}
-
-// LoadDefaultByIdentityID loads the default profile for an identity (where membership_id is NULL)
-func (p *IdentityProfile) LoadDefaultByIdentityID(
-	ctx context.Context,
-	conn pg.Conn,
-	identityID gid.GID,
-) error {
-	q := `
-SELECT
-    id,
-    identity_id,
-    membership_id,
-    full_name,
-    created_at,
-    updated_at
-FROM
-    iam_identity_profiles
-WHERE
-	tenant_id IS NULL
-    AND identity_id = @identity_id
-    AND membership_id IS NULL
-LIMIT 1;
-`
-
-	args := pgx.StrictNamedArgs{"identity_id": identityID}
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query default identity profile: %w", err)
-	}
-
-	profile, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[IdentityProfile])
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return ErrResourceNotFound
-		}
-
-		return fmt.Errorf("cannot collect default identity profile: %w", err)
-	}
-
-	*p = profile
-
-	return nil
-}
-
-// LoadByMembershipID loads the profile for a specific membership
-func (p *IdentityProfile) LoadByMembershipID(
+func (p *MembershipProfile) LoadByMembershipID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
@@ -97,13 +45,12 @@ func (p *IdentityProfile) LoadByMembershipID(
 	q := `
 SELECT
     id,
-    identity_id,
     membership_id,
     full_name,
     created_at,
     updated_at
 FROM
-    iam_identity_profiles
+    iam_membership_profiles
 WHERE
 	%s
     AND membership_id = @membership_id
@@ -120,7 +67,7 @@ LIMIT 1;
 		return fmt.Errorf("cannot query identity profile: %w", err)
 	}
 
-	profile, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[IdentityProfile])
+	profile, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[MembershipProfile])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
@@ -134,7 +81,7 @@ LIMIT 1;
 	return nil
 }
 
-func (p *IdentityProfile) LoadByID(
+func (p *MembershipProfile) LoadByID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
@@ -143,13 +90,12 @@ func (p *IdentityProfile) LoadByID(
 	q := `
 SELECT
     id,
-    identity_id,
     membership_id,
     full_name,
     created_at,
     updated_at
 FROM
-    iam_identity_profiles
+    iam_membership_profiles
 WHERE
 	%s
     AND id = @profile_id
@@ -166,7 +112,7 @@ LIMIT 1;
 		return fmt.Errorf("cannot query identity profile: %w", err)
 	}
 
-	profile, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[IdentityProfile])
+	profile, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[MembershipProfile])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrResourceNotFound
@@ -180,16 +126,15 @@ LIMIT 1;
 	return nil
 }
 
-func (p *IdentityProfile) Insert(
+func (p *MembershipProfile) Insert(
 	ctx context.Context,
 	conn pg.Conn,
 ) error {
 	q := `
 INSERT INTO
-    iam_identity_profiles (
+    iam_membership_profiles (
         tenant_id,
         id,
-        identity_id,
         membership_id,
         full_name,
         created_at,
@@ -198,7 +143,6 @@ INSERT INTO
 VALUES (
     @tenant_id,
     @id,
-    @identity_id,
     @membership_id,
     @full_name,
     @created_at,
@@ -209,7 +153,6 @@ VALUES (
 	args := pgx.StrictNamedArgs{
 		"tenant_id":     p.ID.TenantID().String(),
 		"id":            p.ID,
-		"identity_id":   p.IdentityID,
 		"membership_id": p.MembershipID,
 		"full_name":     p.FullName,
 		"created_at":    p.CreatedAt,
@@ -224,14 +167,14 @@ VALUES (
 	return nil
 }
 
-func (p *IdentityProfile) Update(
+func (p *MembershipProfile) Update(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
 ) error {
 	q := `
 UPDATE
-    iam_identity_profiles
+    iam_membership_profiles
 SET
     full_name = @full_name,
     updated_at = @updated_at
@@ -261,7 +204,7 @@ WHERE
 	return nil
 }
 
-func (p *IdentityProfile) Delete(
+func (p *MembershipProfile) Delete(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
@@ -269,7 +212,7 @@ func (p *IdentityProfile) Delete(
 ) error {
 	q := `
 DELETE FROM
-    iam_identity_profiles
+    iam_membership_profiles
 WHERE
     id = @profile_id
     AND %s

@@ -24,17 +24,6 @@ import (
 	"go.probo.inc/probo/pkg/server/gqlutils/types/cursor"
 )
 
-// DefaultProfile is the resolver for the defaultProfile field.
-func (r *identityResolver) DefaultProfile(ctx context.Context, obj *types.Identity) (*types.IdentityProfile, error) {
-	profile, err := r.iam.AccountService.GetDefaultProfile(ctx, obj.ID)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot get default profile", log.Error(err))
-		return nil, gqlutils.InternalServerError(ctx)
-	}
-
-	return types.NewIdentityProfile(profile), nil
-}
-
 // Memberships is the resolver for the memberships field.
 func (r *identityResolver) Memberships(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MembershipOrderBy) (*types.MembershipConnection, error) {
 	pageOrderBy := page.OrderBy[coredata.MembershipOrderField]{
@@ -166,7 +155,7 @@ func (r *membershipResolver) Identity(ctx context.Context, obj *types.Membership
 }
 
 // Profile is the resolver for the profile field.
-func (r *membershipResolver) Profile(ctx context.Context, obj *types.Membership) (*types.IdentityProfile, error) {
+func (r *membershipResolver) Profile(ctx context.Context, obj *types.Membership) (*types.MembershipProfile, error) {
 	profile, err := r.iam.AccountService.GetProfileForMembership(ctx, obj.ID)
 	if err != nil {
 		var errProfileNotFound *iam.ErrProfileNotFound
@@ -178,7 +167,7 @@ func (r *membershipResolver) Profile(ctx context.Context, obj *types.Membership)
 		return nil, gqlutils.InternalServerError(ctx)
 	}
 
-	return types.NewIdentityProfile(profile), nil
+	return types.NewMembershipProfile(profile), nil
 }
 
 // Organization is the resolver for the organization field.
@@ -548,33 +537,6 @@ func (r *mutationResolver) AssumeOrganizationSession(ctx context.Context, input 
 			Session:    types.NewSession(childSession),
 			Membership: types.NewMembership(membership),
 		},
-	}, nil
-}
-
-// UpdateIdentityProfile is the resolver for the updateIdentityProfile field.
-func (r *mutationResolver) UpdateIdentityProfile(ctx context.Context, input types.UpdateIdentityProfileInput) (*types.UpdateIdentityProfilePayload, error) {
-	identity := IdentityFromContext(ctx)
-
-	profile, err := r.iam.AccountService.UpdateIdentityProfile(
-		ctx,
-		identity.ID,
-		&iam.UpdateIdentityProfileRequest{
-			MembershipID: input.MembershipID,
-			FullName:     input.FullName,
-		},
-	)
-	if err != nil {
-		var errMembershipNotFound *iam.ErrMembershipNotFound
-		if errors.As(err, &errMembershipNotFound) {
-			return nil, gqlutils.NotFound(err)
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot update identity profile", log.Error(err))
-		return nil, gqlutils.InternalServerError(ctx)
-	}
-
-	return &types.UpdateIdentityProfilePayload{
-		Profile: types.NewIdentityProfile(profile),
 	}, nil
 }
 

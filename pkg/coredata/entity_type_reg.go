@@ -72,7 +72,7 @@ const (
 	RightsRequestEntityType                    uint16 = 48
 	StateOfApplicabilityEntityType             uint16 = 49
 	StateOfApplicabilityControlEntityType      uint16 = 50
-	IdentityProfileEntityType                  uint16 = 51
+	MembershipProfileEntityType                uint16 = 51
 )
 
 type EntityInfo struct {
@@ -285,9 +285,9 @@ var entityRegistry = map[uint16]EntityInfo{
 		Model: "StateOfApplicabilityControl",
 		Table: "states_of_applicability_controls",
 	},
-	IdentityProfileEntityType: {
-		Model: "IdentityProfile",
-		Table: "iam_identity_profiles",
+	MembershipProfileEntityType: {
+		Model: "MembershipProfile",
+		Table: "iam_membership_profiles",
 	},
 }
 

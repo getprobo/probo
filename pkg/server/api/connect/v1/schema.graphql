@@ -79,10 +79,6 @@ type Mutation {
     input: AssumeOrganizationSessionInput!
   ): AssumeOrganizationSessionPayload @session(required: PRESENT)
 
-  updateIdentityProfile(
-    input: UpdateIdentityProfileInput!
-  ): UpdateIdentityProfilePayload @session(required: PRESENT)
-
   revokeSession(input: RevokeSessionInput!): RevokeSessionPayload!
     @session(required: PRESENT)
   revokeAllSessions: RevokeAllSessionsPayload @session(required: PRESENT)
@@ -134,11 +130,10 @@ type Mutation {
 type Identity implements Node {
   id: ID!
   email: EmailAddr!
+  fullName: String!
   emailVerified: Boolean!
   createdAt: Datetime!
   updatedAt: Datetime!
-
-  defaultProfile: IdentityProfile @goField(forceResolver: true) @isViewer
 
   memberships(
     first: Int
@@ -172,10 +167,9 @@ type Identity implements Node {
   ): PersonalAPIKeyConnection @goField(forceResolver: true) @isViewer
 }
 
-type IdentityProfile implements Node {
+type MembershipProfile implements Node {
   id: ID!
   fullName: String!
-  identity: Identity!
   createdAt: Datetime!
   updatedAt: Datetime!
 }
@@ -233,7 +227,7 @@ type Membership implements Node {
   id: ID!
   createdAt: Datetime!
   identity: Identity @goField(forceResolver: true)
-  profile: IdentityProfile @goField(forceResolver: true) @isViewer
+  profile: MembershipProfile @goField(forceResolver: true) @isViewer
   organization: Organization @goField(forceResolver: true)
   role: MembershipRole!
   permissions: [Permission!]!
@@ -558,11 +552,6 @@ input AssumeOrganizationSessionInput {
   organizationId: ID!
 }
 
-input UpdateIdentityProfileInput {
-  membershipId: ID!
-  fullName: String
-}
-
 input RevokeSessionInput {
   sessionId: ID!
 }
@@ -723,10 +712,6 @@ type AssumeOrganizationSessionPayload {
 
 type DeactivateAccountPayload {
   success: Boolean!
-}
-
-type UpdateIdentityProfilePayload {
-  profile: IdentityProfile
 }
 
 type RevokeSessionPayload {

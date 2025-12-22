@@ -34,6 +34,7 @@ type (
 	Identity struct {
 		ID                   gid.GID   `db:"id"`
 		EmailAddress         mail.Addr `db:"email_address"`
+		FullName             string    `db:"full_name"`
 		HashedPassword       []byte    `db:"hashed_password"`
 		EmailAddressVerified bool      `db:"email_address_verified"`
 		SAMLSubject          *string   `db:"saml_subject"`
@@ -63,8 +64,10 @@ func (i *Identities) LoadByOrganizationID(
 SELECT
     id,
     email_address,
+    full_name,
     hashed_password,
     email_address_verified,
+    saml_subject,
     created_at,
     updated_at
 FROM
@@ -139,6 +142,7 @@ func (i *Identity) LoadByEmail(
 SELECT
     id,
     email_address,
+    full_name,
     hashed_password,
     email_address_verified,
     saml_subject,
@@ -182,6 +186,7 @@ func (i *Identity) LoadByID(
 SELECT
     id,
     email_address,
+    full_name,
     hashed_password,
     email_address_verified,
     saml_subject,
@@ -221,10 +226,11 @@ func (i *Identity) Insert(
 ) error {
 	q := `
 INSERT INTO
-    identities (id, email_address, hashed_password, email_address_verified, saml_subject, created_at, updated_at)
+    identities (id, email_address, full_name, hashed_password, email_address_verified, saml_subject, created_at, updated_at)
 VALUES (
     @identity_id,
     @email_address,
+    @full_name,
     @hashed_password,
     @email_address_verified,
     @saml_subject,
@@ -236,6 +242,7 @@ VALUES (
 	args := pgx.StrictNamedArgs{
 		"identity_id":            i.ID,
 		"email_address":          i.EmailAddress,
+		"full_name":              i.FullName,
 		"hashed_password":        i.HashedPassword,
 		"saml_subject":           i.SAMLSubject,
 		"created_at":             i.CreatedAt,
@@ -265,6 +272,7 @@ UPDATE
     identities
 SET
     email_address = @email_address,
+    full_name = @full_name,
     email_address_verified = @email_address_verified,
     saml_subject = @saml_subject,
     hashed_password = @hashed_password,
@@ -276,6 +284,7 @@ WHERE
 	args := pgx.StrictNamedArgs{
 		"identity_id":            i.ID,
 		"email_address":          i.EmailAddress,
+		"full_name":              i.FullName,
 		"email_address_verified": i.EmailAddressVerified,
 		"saml_subject":           i.SAMLSubject,
 		"updated_at":             i.UpdatedAt,
@@ -304,6 +313,7 @@ func (i *Identity) LoadBySAMLSubject(
 SELECT
     id,
     email_address,
+    full_name,
     hashed_password,
     email_address_verified,
     saml_subject,

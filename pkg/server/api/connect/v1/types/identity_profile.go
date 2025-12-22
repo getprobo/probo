@@ -16,8 +16,8 @@ package types
 
 import "go.probo.inc/probo/pkg/coredata"
 
-func NewIdentityProfile(profile *coredata.IdentityProfile) *IdentityProfile {
-	return &IdentityProfile{
+func NewMembershipProfile(profile *coredata.MembershipProfile) *MembershipProfile {
+	return &MembershipProfile{
 		ID:        profile.ID,
 		FullName:  profile.FullName,
 		CreatedAt: profile.CreatedAt,
