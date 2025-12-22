@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/mail"
@@ -52,6 +53,10 @@ type (
 	ErrPeopleAlreadyExists struct {
 		message string
 	}
+
+	ErrPeopleReferenced struct {
+		message string
+	}
 )
 
 func (e ErrPeopleNotFound) Error() string {
@@ -59,6 +64,10 @@ func (e ErrPeopleNotFound) Error() string {
 }
 
 func (e ErrPeopleAlreadyExists) Error() string {
+	return e.message
+}
+
+func (e ErrPeopleReferenced) Error() string {
 	return e.message
 }
 
@@ -349,7 +358,19 @@ DELETE FROM peoples WHERE %s AND id = @people_id
 	maps.Copy(args, scope.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
-	return err
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) {
+			if pgErr.Code == "23503" {
+				return &ErrPeopleReferenced{
+					message: fmt.Sprintf("person with id %s cannot be deleted because it is referenced by other records", p.ID),
+				}
+			}
+		}
+		return fmt.Errorf("cannot delete person: %w", err)
+	}
+
+	return nil
 }
 
 func (p *Peoples) CountByOrganizationID(
