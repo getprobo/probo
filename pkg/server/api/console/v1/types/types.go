@@ -166,6 +166,28 @@ type ContinualImprovementFilter struct {
 	SnapshotID *gid.GID `json:"snapshotId,omitempty"`
 }
 
+type Control struct {
+	ID                           gid.GID                                `json:"id"`
+	SectionTitle                 string                                 `json:"sectionTitle"`
+	Name                         string                                 `json:"name"`
+	Description                  *string                                `json:"description,omitempty"`
+	Status                       coredata.ControlStatus                 `json:"status"`
+	ExclusionJustification       *string                                `json:"exclusionJustification,omitempty"`
+	BestPractice                 bool                                   `json:"bestPractice"`
+	Framework                    *Framework                             `json:"framework"`
+	Measures                     *MeasureConnection                     `json:"measures"`
+	Documents                    *DocumentConnection                    `json:"documents"`
+	Audits                       *AuditConnection                       `json:"audits"`
+	Obligations                  *ObligationConnection                  `json:"obligations"`
+	Snapshots                    *SnapshotConnection                    `json:"snapshots"`
+	StateOfApplicabilityControls *StateOfApplicabilityControlConnection `json:"stateOfApplicabilityControls"`
+	CreatedAt                    time.Time                              `json:"createdAt"`
+	UpdatedAt                    time.Time                              `json:"updatedAt"`
+}
+
+func (Control) IsNode()             {}
+func (this Control) GetID() gid.GID { return this.ID }
+
 type ControlEdge struct {
 	Cursor page.CursorKey `json:"cursor"`
 	Node   *Control       `json:"node"`

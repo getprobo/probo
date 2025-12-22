@@ -45,7 +45,10 @@ func NewVendorServiceEdge(s *coredata.VendorService, orderBy coredata.VendorServ
 
 func NewVendorService(s *coredata.VendorService) *VendorService {
 	return &VendorService{
-		ID:          s.ID,
+		ID: s.ID,
+		Vendor: &Vendor{
+			ID: s.VendorID,
+		},
 		Name:        s.Name,
 		Description: s.Description,
 		CreatedAt:   s.CreatedAt,

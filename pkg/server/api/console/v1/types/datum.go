@@ -75,7 +75,10 @@ func NewDataConnection(
 
 func NewDatum(d *coredata.Datum) *Datum {
 	return &Datum{
-		ID:                 d.ID,
+		ID: d.ID,
+		Organization: &Organization{
+			ID: d.OrganizationID,
+		},
 		OrganizationID:     d.OrganizationID,
 		Name:               d.Name,
 		SnapshotID:         d.SnapshotID,

@@ -20,7 +20,10 @@ import (
 
 func NewCustomDomain(d *coredata.CustomDomain, cnameTarget string) *CustomDomain {
 	result := &CustomDomain{
-		ID:           d.ID,
+		ID: d.ID,
+		Organization: &Organization{
+			ID: d.OrganizationID,
+		},
 		Domain:       d.Domain,
 		SslStatus:    d.SSLStatus,
 		CreatedAt:    d.CreatedAt,

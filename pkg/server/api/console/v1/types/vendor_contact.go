@@ -45,7 +45,10 @@ func NewVendorContactEdge(c *coredata.VendorContact, orderBy coredata.VendorCont
 
 func NewVendorContact(c *coredata.VendorContact) *VendorContact {
 	return &VendorContact{
-		ID:        c.ID,
+		ID: c.ID,
+		Vendor: &Vendor{
+			ID: c.VendorID,
+		},
 		FullName:  c.FullName,
 		Email:     c.Email,
 		Phone:     c.Phone,

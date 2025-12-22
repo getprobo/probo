@@ -64,7 +64,7 @@ func NewRiskEdge(r *coredata.Risk, orderBy coredata.RiskOrderField) *RiskEdge {
 }
 
 func NewRisk(r *coredata.Risk) *Risk {
-	return &Risk{
+	risk := &Risk{
 		ID:                 r.ID,
 		Name:               r.Name,
 		SnapshotID:         r.SnapshotID,
@@ -76,9 +76,20 @@ func NewRisk(r *coredata.Risk) *Risk {
 		ResidualLikelihood: r.ResidualLikelihood,
 		ResidualImpact:     r.ResidualImpact,
 		ResidualRiskScore:  r.ResidualRiskScore,
-		Category:           r.Category,
-		CreatedAt:          r.CreatedAt,
-		UpdatedAt:          r.UpdatedAt,
-		Note:               r.Note,
+		Organization: &Organization{
+			ID: r.OrganizationID,
+		},
+		Category:  r.Category,
+		CreatedAt: r.CreatedAt,
+		UpdatedAt: r.UpdatedAt,
+		Note:      r.Note,
 	}
+
+	if r.OwnerID != nil {
+		risk.Owner = &People{
+			ID: *r.OwnerID,
+		}
+	}
+
+	return risk
 }

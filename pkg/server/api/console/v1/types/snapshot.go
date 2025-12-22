@@ -52,19 +52,22 @@ func NewSnapshotConnection(
 	}
 }
 
-func NewSnapshot(s *coredata.Snapshot) *Snapshot {
-	return &Snapshot{
-		ID:          s.ID,
-		Name:        s.Name,
-		Type:        s.Type,
-		Description: s.Description,
-		CreatedAt:   s.CreatedAt,
-	}
-}
-
 func NewSnapshotEdge(s *coredata.Snapshot, orderField coredata.SnapshotOrderField) *SnapshotEdge {
 	return &SnapshotEdge{
 		Node:   NewSnapshot(s),
 		Cursor: s.CursorKey(orderField),
+	}
+}
+
+func NewSnapshot(s *coredata.Snapshot) *Snapshot {
+	return &Snapshot{
+		ID: s.ID,
+		Organization: &Organization{
+			ID: s.OrganizationID,
+		},
+		Name:        s.Name,
+		Type:        s.Type,
+		Description: s.Description,
+		CreatedAt:   s.CreatedAt,
 	}
 }

@@ -19,14 +19,26 @@ import (
 )
 
 func NewOrganization(o *coredata.Organization) *Organization {
-	return &Organization{
-		ID:                 o.ID,
-		Name:               o.Name,
-		Description:        o.Description,
-		WebsiteURL:         o.WebsiteURL,
-		Email:              o.Email,
+	org := &Organization{
+		ID:          o.ID,
+		Name:        o.Name,
+		Description: o.Description,
+		WebsiteURL:  o.WebsiteURL,
+		Email:       o.Email,
+		Context: &OrganizationContext{
+			OrganizationID: o.ID,
+		},
+
 		HeadquarterAddress: o.HeadquarterAddress,
 		CreatedAt:          o.CreatedAt,
 		UpdatedAt:          o.UpdatedAt,
 	}
+
+	if o.CustomDomainID != nil {
+		org.CustomDomain = &CustomDomain{
+			ID: *o.CustomDomainID,
+		}
+	}
+
+	return org
 }

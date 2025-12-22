@@ -20,7 +20,10 @@ import (
 
 func NewVendorDataPrivacyAgreement(v *coredata.VendorDataPrivacyAgreement, file *coredata.File) *VendorDataPrivacyAgreement {
 	return &VendorDataPrivacyAgreement{
-		ID:         v.ID,
+		ID: v.ID,
+		Vendor: &Vendor{
+			ID: v.VendorID,
+		},
 		ValidFrom:  v.ValidFrom,
 		ValidUntil: v.ValidUntil,
 		FileName:   file.FileName,

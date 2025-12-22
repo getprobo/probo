@@ -53,6 +53,12 @@ func NewDocumentVersionSignatureEdge(documentVersionSignature *coredata.Document
 
 func NewDocumentVersionSignature(documentVersionSignature *coredata.DocumentVersionSignature) *DocumentVersionSignature {
 	return &DocumentVersionSignature{
+		DocumentVersion: &DocumentVersion{
+			ID: documentVersionSignature.DocumentVersionID,
+		},
+		SignedBy: &People{
+			ID: documentVersionSignature.SignedBy,
+		},
 		ID:          documentVersionSignature.ID,
 		State:       documentVersionSignature.State,
 		SignedAt:    documentVersionSignature.SignedAt,

@@ -44,12 +44,23 @@ func NewVendorComplianceReportEdge(c *coredata.VendorComplianceReport, orderBy c
 }
 
 func NewVendorComplianceReport(c *coredata.VendorComplianceReport) *VendorComplianceReport {
-	return &VendorComplianceReport{
-		ID:         c.ID,
+	object := &VendorComplianceReport{
+		ID: c.ID,
+		Vendor: &Vendor{
+			ID: c.VendorID,
+		},
 		ReportDate: c.ReportDate,
 		ValidUntil: c.ValidUntil,
 		ReportName: c.ReportName,
 		CreatedAt:  c.CreatedAt,
 		UpdatedAt:  c.UpdatedAt,
 	}
+
+	if c.ReportFileId != nil {
+		object.File = &File{
+			ID: *c.ReportFileId,
+		}
+	}
+
+	return object
 }

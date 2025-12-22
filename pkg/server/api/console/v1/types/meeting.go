@@ -72,8 +72,11 @@ func NewMeetingEdge(meeting *coredata.Meeting, orderBy coredata.MeetingOrderFiel
 
 func NewMeeting(meeting *coredata.Meeting) *Meeting {
 	return &Meeting{
-		ID:        meeting.ID,
-		Name:      meeting.Name,
+		ID:   meeting.ID,
+		Name: meeting.Name,
+		Organization: &Organization{
+			ID: meeting.OrganizationID,
+		},
 		Date:      meeting.Date,
 		Minutes:   meeting.Minutes,
 		CreatedAt: meeting.CreatedAt,

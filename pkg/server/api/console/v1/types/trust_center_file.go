@@ -37,6 +37,9 @@ func NewTrustCenterFile(tcf *coredata.TrustCenterFile) *TrustCenterFile {
 		TrustCenterVisibility: tcf.TrustCenterVisibility,
 		CreatedAt:             tcf.CreatedAt,
 		UpdatedAt:             tcf.UpdatedAt,
+		Organization: &Organization{
+			ID: tcf.OrganizationID,
+		},
 	}
 }
 

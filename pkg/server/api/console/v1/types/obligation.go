@@ -57,9 +57,15 @@ func NewObligationConnection(
 
 func NewObligation(cr *coredata.Obligation) *Obligation {
 	return &Obligation{
-		ID:                     cr.ID,
-		SnapshotID:             cr.SnapshotID,
-		SourceID:               cr.SourceID,
+		ID:         cr.ID,
+		SnapshotID: cr.SnapshotID,
+		SourceID:   cr.SourceID,
+		Organization: &Organization{
+			ID: cr.OrganizationID,
+		},
+		Owner: &People{
+			ID: cr.OwnerID,
+		},
 		Area:                   cr.Area,
 		Source:                 cr.Source,
 		Requirement:            cr.Requirement,

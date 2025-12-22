@@ -20,7 +20,10 @@ import (
 
 func NewVendorBusinessAssociateAgreement(v *coredata.VendorBusinessAssociateAgreement, file *coredata.File) *VendorBusinessAssociateAgreement {
 	return &VendorBusinessAssociateAgreement{
-		ID:         v.ID,
+		ID: v.ID,
+		Vendor: &Vendor{
+			ID: v.VendorID,
+		},
 		ValidFrom:  v.ValidFrom,
 		ValidUntil: v.ValidUntil,
 		FileName:   file.FileName,
