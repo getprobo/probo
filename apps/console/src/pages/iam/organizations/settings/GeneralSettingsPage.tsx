@@ -7,10 +7,22 @@ import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { graphql } from "relay-runtime";
 import { usePreloadedQuery, type PreloadedQuery } from "react-relay";
 import type { GeneralSettingsPageQuery } from "./__generated__/GeneralSettingsPageQuery.graphql";
-import { generalSettingsPageQuery } from "./GeneralSettingsPageQuery";
 import type { GeneralSettingsPage_deleteMutation } from "./__generated__/GeneralSettingsPage_deleteMutation.graphql";
 import { DeleteOrganizationDialog } from "/components/organizations/DeleteOrganizationDialog";
 import { OrganizationForm } from "./_components/OrganizationForm";
+
+export const generalSettingsPageQuery = graphql`
+  query GeneralSettingsPageQuery($organizationId: ID!) {
+    organization: node(id: $organizationId) @required(action: THROW) {
+      __typename
+      ... on Organization {
+        id
+        name @required(action: THROW)
+        ...OrganizationFormFragment
+      }
+    }
+  }
+`;
 
 const deleteOrganizationMutation = graphql`
   mutation GeneralSettingsPage_deleteMutation(

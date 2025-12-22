@@ -1,4 +1,4 @@
-import { usePreloadedQuery, type PreloadedQuery } from "react-relay";
+import { graphql, usePreloadedQuery, type PreloadedQuery } from "react-relay";
 import { useTranslate } from "@probo/i18n";
 import {
   Button,
@@ -9,15 +9,42 @@ import {
 } from "@probo/ui";
 import { useMemo, useState } from "react";
 import { InvitationCard } from "./_components/InvitationCard";
-import { membershipsPageQuery } from "./MembershipsPageQuery";
 import { MembershipCard } from "./_components/MembershipCard";
 import type { MembershipsPageQuery } from "./__generated__/MembershipsPageQuery.graphql";
 
-interface PageProps {
-  queryRef: PreloadedQuery<MembershipsPageQuery>;
-}
+export const membershipsPageQuery = graphql`
+  query MembershipsPageQuery {
+    viewer @required(action: THROW) {
+      memberships(first: 1000, orderBy: { direction: DESC, field: CREATED_AT })
+        @required(action: THROW) {
+        edges @required(action: THROW) {
+          node @required(action: THROW) {
+            id
+            ...MembershipCardFragment
+            organization @required(action: THROW) {
+              name
+            }
+          }
+        }
+      }
+      pendingInvitations(
+        first: 1000
+        orderBy: { direction: DESC, field: CREATED_AT }
+      ) @required(action: THROW) {
+        edges @required(action: THROW) {
+          node @required(action: THROW) {
+            id
+            ...InvitationCardFragment
+          }
+        }
+      }
+    }
+  }
+`;
 
-export default function MembershipsPage(props: PageProps) {
+export function MembershipsPage(props: {
+  queryRef: PreloadedQuery<MembershipsPageQuery>;
+}) {
   const { __ } = useTranslate();
   const [search, setSearch] = useState("");
 
