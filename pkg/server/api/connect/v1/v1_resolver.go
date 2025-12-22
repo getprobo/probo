@@ -110,6 +110,12 @@ func (r *identityResolver) PersonalAPIKeys(ctx context.Context, obj *types.Ident
 
 // Organization is the resolver for the organization field.
 func (r *invitationResolver) Organization(ctx context.Context, obj *types.Invitation) (*types.Organization, error) {
+	if gqlutils.OnlyIDSelected(ctx) {
+		return &types.Organization{
+			ID: obj.Organization.ID,
+		}, nil
+	}
+
 	organization, err := r.iam.OrganizationService.GetOrganizationForInvitation(ctx, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get organization for invitation", log.Error(err))
@@ -145,6 +151,12 @@ func (r *invitationConnectionResolver) TotalCount(ctx context.Context, obj *type
 
 // Identity is the resolver for the identity field.
 func (r *membershipResolver) Identity(ctx context.Context, obj *types.Membership) (*types.Identity, error) {
+	if gqlutils.OnlyIDSelected(ctx) {
+		return &types.Identity{
+			ID: obj.Identity.ID,
+		}, nil
+	}
+
 	identity, err := r.iam.AccountService.GetIdentityForMembership(ctx, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get identity for membership", log.Error(err))
@@ -156,6 +168,12 @@ func (r *membershipResolver) Identity(ctx context.Context, obj *types.Membership
 
 // Profile is the resolver for the profile field.
 func (r *membershipResolver) Profile(ctx context.Context, obj *types.Membership) (*types.MembershipProfile, error) {
+	if gqlutils.OnlyIDSelected(ctx) {
+		return &types.MembershipProfile{
+			ID: obj.Profile.ID,
+		}, nil
+	}
+
 	profile, err := r.iam.AccountService.GetProfileForMembership(ctx, obj.ID)
 	if err != nil {
 		var errProfileNotFound *iam.ErrProfileNotFound
@@ -172,6 +190,12 @@ func (r *membershipResolver) Profile(ctx context.Context, obj *types.Membership)
 
 // Organization is the resolver for the organization field.
 func (r *membershipResolver) Organization(ctx context.Context, obj *types.Membership) (*types.Organization, error) {
+	if gqlutils.OnlyIDSelected(ctx) {
+		return &types.Organization{
+			ID: obj.Organization.ID,
+		}, nil
+	}
+
 	organization, err := r.iam.OrganizationService.GetOrganizationForMembership(ctx, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get organization for membership", log.Error(err))
@@ -1122,6 +1146,12 @@ func (r *sAMLConfigurationConnectionResolver) TotalCount(ctx context.Context, ob
 
 // Identity is the resolver for the identity field.
 func (r *sessionResolver) Identity(ctx context.Context, obj *types.Session) (*types.Identity, error) {
+	if gqlutils.OnlyIDSelected(ctx) {
+		return &types.Identity{
+			ID: obj.Identity.ID,
+		}, nil
+	}
+
 	identity, err := r.iam.AccountService.GetIdentity(ctx, obj.Identity.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get identity for session", log.Error(err))
