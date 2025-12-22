@@ -61,12 +61,14 @@ func NewSessionEdge(session *coredata.Session, orderField coredata.SessionOrderF
 
 func NewSession(session *coredata.Session) *Session {
 	return &Session{
-		ID:         session.ID,
-		IPAddress:  session.IPAddress.String(),
-		IdentityID: session.IdentityID,
-		UserAgent:  session.UserAgent,
-		UpdatedAt:  session.UpdatedAt,
-		CreatedAt:  session.CreatedAt,
-		ExpiresAt:  session.ExpiredAt,
+		ID: session.ID,
+		Identity: &Identity{
+			ID: session.IdentityID,
+		},
+		IPAddress: session.IPAddress.String(),
+		UserAgent: session.UserAgent,
+		UpdatedAt: session.UpdatedAt,
+		CreatedAt: session.CreatedAt,
+		ExpiresAt: session.ExpiredAt,
 	}
 }

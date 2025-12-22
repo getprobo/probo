@@ -260,7 +260,6 @@ func (s *Service) HandleAssertion(
 					EmailAddress:         email,
 					HashedPassword:       nil,
 					EmailAddressVerified: true,
-					FullName:             fullname,
 					CreatedAt:            now,
 					UpdatedAt:            now,
 				}
@@ -269,11 +268,23 @@ func (s *Service) HandleAssertion(
 				if err != nil {
 					return fmt.Errorf("cannot insert identity: %w", err)
 				}
+
+				defaultProfile := &coredata.IdentityProfile{
+					ID:         gid.New(gid.NilTenant, coredata.IdentityProfileEntityType),
+					IdentityID: identity.ID,
+					FullName:   fullname,
+					CreatedAt:  now,
+					UpdatedAt:  now,
+				}
+
+				err = defaultProfile.Insert(ctx, tx)
+				if err != nil {
+					return fmt.Errorf("cannot insert default profile: %w", err)
+				}
 			} else if err != nil {
 				return fmt.Errorf("cannot load identity: %w", err)
 			} else {
 				identity.SAMLSubject = &assertion.Subject.NameID.Value
-				identity.FullName = fullname
 				identity.EmailAddress = email
 				identity.EmailAddressVerified = true
 				identity.UpdatedAt = now
@@ -304,6 +315,20 @@ func (s *Service) HandleAssertion(
 				if err != nil {
 					return fmt.Errorf("cannot insert membership: %w", err)
 				}
+
+				membershipProfile := &coredata.IdentityProfile{
+					ID:           gid.New(membership.ID.TenantID(), coredata.IdentityProfileEntityType),
+					IdentityID:   identity.ID,
+					MembershipID: &membership.ID,
+					FullName:     fullname,
+					CreatedAt:    now,
+					UpdatedAt:    now,
+				}
+
+				err = membershipProfile.Insert(ctx, tx)
+				if err != nil {
+					return fmt.Errorf("cannot insert membership profile: %w", err)
+				}
 			}
 
 			if role != nil {
@@ -314,6 +339,19 @@ func (s *Service) HandleAssertion(
 				if err != nil {
 					return fmt.Errorf("cannot update membership: %w", err)
 				}
+			}
+
+			memberProfile := &coredata.IdentityProfile{}
+			err = memberProfile.LoadByMembershipID(ctx, tx, coredata.NewNoScope(), membership.ID)
+			if err != nil {
+				return fmt.Errorf("cannot load membership profile: %w", err)
+			}
+
+			memberProfile.FullName = fullname
+			memberProfile.UpdatedAt = now
+			err = memberProfile.Update(ctx, tx, coredata.NewNoScope())
+			if err != nil {
+				return fmt.Errorf("cannot update membership profile: %w", err)
 			}
 
 			return nil

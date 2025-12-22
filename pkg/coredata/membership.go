@@ -189,7 +189,7 @@ SELECT
     mbr.identity_id,
     mbr.organization_id,
     mbr.role,
-    i.fullname as full_name,
+    COALESCE(mp.full_name, dp.full_name, '') as full_name,
     i.email_address,
     mbr.created_at,
     mbr.updated_at
@@ -197,6 +197,10 @@ FROM
     mbr
 JOIN
     identities i ON mbr.identity_id = i.id
+LEFT JOIN
+    iam_identity_profiles mp ON mp.membership_id = mbr.id
+LEFT JOIN
+    iam_identity_profiles dp ON dp.identity_id = mbr.identity_id AND dp.membership_id IS NULL
 `
 
 	query = fmt.Sprintf(query, scope.SQLFragment())
@@ -329,7 +333,7 @@ SELECT
     mbr.identity_id,
     mbr.organization_id,
     mbr.role,
-    i.fullname as full_name,
+    COALESCE(mp.full_name, dp.full_name, '') as full_name,
     i.email_address,
     mbr.created_at,
     mbr.updated_at
@@ -337,6 +341,10 @@ FROM
     mbr
 JOIN
     identities i ON mbr.identity_id = i.id
+LEFT JOIN
+    iam_identity_profiles mp ON mp.membership_id = mbr.id
+LEFT JOIN
+    iam_identity_profiles dp ON dp.identity_id = mbr.identity_id AND dp.membership_id IS NULL
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -455,7 +463,7 @@ SELECT
     mbr.identity_id,
     mbr.organization_id,
     mbr.role,
-    i.fullname as full_name,
+    COALESCE(mp.full_name, dp.full_name, '') as full_name,
     i.email_address,
     mbr.created_at,
     mbr.updated_at
@@ -463,6 +471,10 @@ FROM
     mbr
 JOIN
     identities i ON mbr.identity_id = i.id
+LEFT JOIN
+    iam_identity_profiles mp ON mp.membership_id = mbr.id
+LEFT JOIN
+    iam_identity_profiles dp ON dp.identity_id = mbr.identity_id AND dp.membership_id IS NULL
 ORDER BY
     mbr.created_at DESC
 `
@@ -520,19 +532,23 @@ SELECT
     created_at,
     updated_at
 FROM (
-    SELECT
-        mbr.id,
-        mbr.identity_id,
-        mbr.organization_id,
-        mbr.role,
-        i.fullname as full_name,
-        i.email_address,
-        mbr.created_at,
-        mbr.updated_at
-    FROM
-        mbr
-    JOIN
-        identities i ON mbr.identity_id = i.id
+	SELECT
+		mbr.id,
+		mbr.identity_id,
+		mbr.organization_id,
+		mbr.role,
+		COALESCE(mp.full_name, dp.full_name, '') as full_name,
+		i.email_address,
+		mbr.created_at,
+		mbr.updated_at
+	FROM
+		mbr
+	JOIN
+		identities i ON mbr.identity_id = i.id
+	LEFT JOIN
+		iam_identity_profiles mp ON mp.membership_id = mbr.id
+	LEFT JOIN
+		iam_identity_profiles dp ON dp.identity_id = mbr.identity_id AND dp.membership_id IS NULL
 ) AS membership_with_identity
 WHERE %s
 `
