@@ -69,6 +69,9 @@ func NewMembership(membership *coredata.Membership) *Membership {
 		Organization: &Organization{
 			ID: membership.OrganizationID,
 		},
+		Profile: &MembershipProfile{
+			ID: membership.ID,
+		},
 		// Permissions:   membership.Permissions,
 		// ProvisionedBy: membership.ProvisionedBy,
 		// Active:        membership.Active,
