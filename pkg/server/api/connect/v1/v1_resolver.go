@@ -26,6 +26,10 @@ import (
 
 // Memberships is the resolver for the memberships field.
 func (r *identityResolver) Memberships(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MembershipOrderBy) (*types.MembershipConnection, error) {
+	if gqlutils.OnlyTotalCountSelected(ctx) {
+		return &types.MembershipConnection{TotalCount: 0}, nil
+	}
+
 	pageOrderBy := page.OrderBy[coredata.MembershipOrderField]{
 		Field:     coredata.MembershipOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
@@ -50,6 +54,10 @@ func (r *identityResolver) Memberships(ctx context.Context, obj *types.Identity,
 
 // PendingInvitations is the resolver for the pendingInvitations field.
 func (r *identityResolver) PendingInvitations(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.InvitationOrderBy) (*types.InvitationConnection, error) {
+	if gqlutils.OnlyTotalCountSelected(ctx) {
+		return &types.InvitationConnection{TotalCount: 0}, nil
+	}
+
 	pageOrderBy := page.OrderBy[coredata.InvitationOrderField]{
 		Field:     coredata.InvitationOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
@@ -68,6 +76,10 @@ func (r *identityResolver) PendingInvitations(ctx context.Context, obj *types.Id
 
 // Sessions is the resolver for the sessions field.
 func (r *identityResolver) Sessions(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.SessionOrder) (*types.SessionConnection, error) {
+	if gqlutils.OnlyTotalCountSelected(ctx) {
+		return &types.SessionConnection{TotalCount: 0}, nil
+	}
+
 	pageOrderBy := page.OrderBy[coredata.SessionOrderField]{
 		Field:     coredata.SessionOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
@@ -92,6 +104,10 @@ func (r *identityResolver) Sessions(ctx context.Context, obj *types.Identity, fi
 
 // PersonalAPIKeys is the resolver for the personalAPIKeys field.
 func (r *identityResolver) PersonalAPIKeys(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.PersonalAPIKeyConnection, error) {
+	if gqlutils.OnlyTotalCountSelected(ctx) {
+		return &types.PersonalAPIKeyConnection{TotalCount: 0}, nil
+	}
+
 	pageOrderBy := page.OrderBy[coredata.PersonalAPIKeyOrderField]{
 		Field:     coredata.PersonalAPIKeyOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
@@ -924,6 +940,10 @@ func (r *organizationResolver) HorizontalLogoURL(ctx context.Context, obj *types
 
 // Members is the resolver for the members field.
 func (r *organizationResolver) Members(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MembershipOrderBy) (*types.MembershipConnection, error) {
+	if gqlutils.OnlyTotalCountSelected(ctx) {
+		return &types.MembershipConnection{TotalCount: 0}, nil
+	}
+
 	pageOrderBy := page.OrderBy[coredata.MembershipOrderField]{
 		Field:     coredata.MembershipOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
@@ -946,6 +966,10 @@ func (r *organizationResolver) Members(ctx context.Context, obj *types.Organizat
 
 // Invitations is the resolver for the invitations field.
 func (r *organizationResolver) Invitations(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, status *coredata.InvitationStatus) (*types.InvitationConnection, error) {
+	if gqlutils.OnlyTotalCountSelected(ctx) {
+		return &types.InvitationConnection{TotalCount: 0}, nil
+	}
+
 	pageOrderBy := page.OrderBy[coredata.InvitationOrderField]{
 		Field:     coredata.InvitationOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
@@ -969,6 +993,10 @@ func (r *organizationResolver) Invitations(ctx context.Context, obj *types.Organ
 
 // SamlConfigurations is the resolver for the samlConfigurations field.
 func (r *organizationResolver) SamlConfigurations(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.SAMLConfigurationConnection, error) {
+	if gqlutils.OnlyTotalCountSelected(ctx) {
+		return &types.SAMLConfigurationConnection{TotalCount: 0}, nil
+	}
+
 	pageOrderBy := page.OrderBy[coredata.SAMLConfigurationOrderField]{
 		Field:     coredata.SAMLConfigurationOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,

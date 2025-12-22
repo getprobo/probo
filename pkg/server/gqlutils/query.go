@@ -29,3 +29,13 @@ func OnlyIDSelected(ctx context.Context) bool {
 
 	return fields[0].Name == "id"
 }
+
+func OnlyTotalCountSelected(ctx context.Context) bool {
+	fields := graphql.CollectFieldsCtx(ctx, nil)
+
+	if len(fields) != 1 {
+		return false
+	}
+
+	return fields[0].Name == "totalCount"
+}
