@@ -75,8 +75,14 @@ func NewDocumentEdge(document *coredata.Document, orderBy coredata.DocumentOrder
 
 func NewDocument(document *coredata.Document) *Document {
 	return &Document{
-		ID:                      document.ID,
-		Title:                   document.Title,
+		ID:    document.ID,
+		Title: document.Title,
+		Organization: &Organization{
+			ID: document.OrganizationID,
+		},
+		Owner: &People{
+			ID: document.OwnerID,
+		},
 		DocumentType:            document.DocumentType,
 		Classification:          document.Classification,
 		CurrentPublishedVersion: document.CurrentPublishedVersion,

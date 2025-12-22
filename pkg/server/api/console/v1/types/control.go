@@ -25,9 +25,6 @@ type Control struct {
 	UpdatedAt              time.Time              `json:"updatedAt"`
 }
 
-func (Control) IsNode()          {}
-func (c Control) GetID() gid.GID { return c.ID }
-
 type (
 	ControlOrderBy OrderBy[coredata.ControlOrderField]
 
@@ -63,10 +60,20 @@ func NewControlConnection(
 	}
 }
 
+func NewControlEdge(control *coredata.Control, orderField coredata.ControlOrderField) *ControlEdge {
+	return &ControlEdge{
+		Node:   NewControl(control),
+		Cursor: control.CursorKey(orderField),
+	}
+}
+
 func NewControl(control *coredata.Control) *Control {
 	return &Control{
-		ID:                     control.ID,
-		OrganizationID:         control.OrganizationID,
+		ID:             control.ID,
+		OrganizationID: control.OrganizationID,
+		Framework: &Framework{
+			ID: control.FrameworkID,
+		},
 		SectionTitle:           control.SectionTitle,
 		Name:                   control.Name,
 		Description:            control.Description,
@@ -74,12 +81,5 @@ func NewControl(control *coredata.Control) *Control {
 		ExclusionJustification: control.ExclusionJustification,
 		CreatedAt:              control.CreatedAt,
 		UpdatedAt:              control.UpdatedAt,
-	}
-}
-
-func NewControlEdge(control *coredata.Control, orderField coredata.ControlOrderField) *ControlEdge {
-	return &ControlEdge{
-		Node:   NewControl(control),
-		Cursor: control.CursorKey(orderField),
 	}
 }

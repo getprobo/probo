@@ -55,9 +55,19 @@ func NewProcessingActivityConnection(
 	}
 }
 
+func NewProcessingActivityEdge(par *coredata.ProcessingActivity, orderField coredata.ProcessingActivityOrderField) *ProcessingActivityEdge {
+	return &ProcessingActivityEdge{
+		Node:   NewProcessingActivity(par),
+		Cursor: par.CursorKey(orderField),
+	}
+}
+
 func NewProcessingActivity(par *coredata.ProcessingActivity) *ProcessingActivity {
 	return &ProcessingActivity{
-		ID:                                   par.ID,
+		ID: par.ID,
+		Organization: &Organization{
+			ID: par.OrganizationID,
+		},
 		SnapshotID:                           par.SnapshotID,
 		SourceID:                             par.SourceID,
 		Name:                                 par.Name,
@@ -80,12 +90,5 @@ func NewProcessingActivity(par *coredata.ProcessingActivity) *ProcessingActivity
 		Role:                                 par.Role,
 		CreatedAt:                            par.CreatedAt,
 		UpdatedAt:                            par.UpdatedAt,
-	}
-}
-
-func NewProcessingActivityEdge(par *coredata.ProcessingActivity, orderField coredata.ProcessingActivityOrderField) *ProcessingActivityEdge {
-	return &ProcessingActivityEdge{
-		Node:   NewProcessingActivity(par),
-		Cursor: par.CursorKey(orderField),
 	}
 }

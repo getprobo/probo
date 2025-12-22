@@ -62,8 +62,11 @@ func NewFrameworkEdge(f *coredata.Framework, orderBy coredata.FrameworkOrderFiel
 
 func NewFramework(f *coredata.Framework) *Framework {
 	return &Framework{
-		ID:          f.ID,
-		Name:        f.Name,
+		ID:   f.ID,
+		Name: f.Name,
+		Organization: &Organization{
+			ID: f.OrganizationID,
+		},
 		Description: f.Description,
 		CreatedAt:   f.CreatedAt,
 		UpdatedAt:   f.UpdatedAt,
