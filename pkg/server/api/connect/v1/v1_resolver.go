@@ -937,10 +937,14 @@ func (r *organizationResolver) HorizontalLogoURL(ctx context.Context, obj *types
 }
 
 // Members is the resolver for the members field.
-func (r *organizationResolver) Members(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.MembershipConnection, error) {
+func (r *organizationResolver) Members(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MembershipOrderBy) (*types.MembershipConnection, error) {
 	pageOrderBy := page.OrderBy[coredata.MembershipOrderField]{
 		Field:     coredata.MembershipOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy.Field = coredata.MembershipOrderField(orderBy.Field)
+		pageOrderBy.Direction = page.OrderDirection(orderBy.Direction)
 	}
 
 	cursor := cursor.NewCursor(first, after, last, before, pageOrderBy)

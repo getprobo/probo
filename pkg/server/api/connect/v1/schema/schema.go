@@ -236,7 +236,7 @@ type ComplexityRoot struct {
 		ID                    func(childComplexity int) int
 		Invitations           func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, status *coredata.InvitationStatus) int
 		LogoURL               func(childComplexity int) int
-		Members               func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
+		Members               func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MembershipOrderBy) int
 		Name                  func(childComplexity int) int
 		SamlConfigurations    func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
 		UpdatedAt             func(childComplexity int) int
@@ -483,7 +483,7 @@ type OrganizationResolver interface {
 	LogoURL(ctx context.Context, obj *types.Organization) (*string, error)
 	HorizontalLogoURL(ctx context.Context, obj *types.Organization) (*string, error)
 
-	Members(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.MembershipConnection, error)
+	Members(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MembershipOrderBy) (*types.MembershipConnection, error)
 	Invitations(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, status *coredata.InvitationStatus) (*types.InvitationConnection, error)
 	SamlConfigurations(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.SAMLConfigurationConnection, error)
 }
@@ -1290,7 +1290,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Organization.Members(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey)), true
+		return e.complexity.Organization.Members(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.MembershipOrderBy)), true
 	case "Organization.name":
 		if e.complexity.Organization.Name == nil {
 			break
@@ -2218,6 +2218,7 @@ type Organization implements Node {
     after: CursorKey
     last: Int
     before: CursorKey
+    orderBy: MembershipOrder
   ): MembershipConnection @goField(forceResolver: true)
 
   invitations(
@@ -2626,23 +2627,6 @@ input DeleteOrganizationInput {
 
 input DeleteOrganizationHorizontalLogoInput {
   organizationId: ID!
-}
-
-input SessionPolicyInput {
-  maxSessionDurationHours: Int
-  idleTimeoutMinutes: Int
-  maxConcurrentSessions: Int
-  requireReauthForSensitiveActions: Boolean
-}
-
-input AddIPAllowlistEntryInput {
-  organizationId: ID!
-  cidr: String!
-  description: String
-}
-
-input RemoveIPAllowlistEntryInput {
-  entryId: ID!
 }
 
 input InviteMemberInput {
@@ -3298,6 +3282,11 @@ func (ec *executionContext) field_Organization_members_args(ctx context.Context,
 		return nil, err
 	}
 	args["before"] = arg3
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "orderBy", ec.unmarshalOMembershipOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐMembershipOrderBy)
+	if err != nil {
+		return nil, err
+	}
+	args["orderBy"] = arg4
 	return args, nil
 }
 
@@ -7651,7 +7640,7 @@ func (ec *executionContext) _Organization_members(ctx context.Context, field gra
 		ec.fieldContext_Organization_members,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Organization().Members(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey))
+			return ec.resolvers.Organization().Members(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.MembershipOrderBy))
 		},
 		nil,
 		ec.marshalOMembershipConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐMembershipConnection,
