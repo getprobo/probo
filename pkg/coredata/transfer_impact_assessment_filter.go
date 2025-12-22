@@ -53,3 +53,9 @@ func (f *TransferImpactAssessmentFilter) SQLFragment() string {
 	}
 }
 
+func (f *TransferImpactAssessmentFilter) SnapshotID() *gid.GID {
+	if f.snapshotID == nil || *f.snapshotID == nil {
+		return nil
+	}
+	return *f.snapshotID
+}

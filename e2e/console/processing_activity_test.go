@@ -2596,3 +2596,392 @@ func TestProcessingActivity_Snapshot_DPIA_TIA(t *testing.T) {
 		}
 	})
 }
+
+func TestProcessingActivity_ExportPDF(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	t.Run("export processing activities PDF", func(t *testing.T) {
+		_ = factory.NewProcessingActivity(owner).
+			WithName("PA Export Test 1").
+			WithLawfulBasis("CONSENT").
+			Create()
+		_ = factory.NewProcessingActivity(owner).
+			WithName("PA Export Test 2").
+			WithLawfulBasis("LEGITIMATE_INTEREST").
+			Create()
+
+		query := `
+			mutation ExportProcessingActivitiesPDF($input: ExportProcessingActivitiesPDFInput!) {
+				exportProcessingActivitiesPDF(input: $input) {
+					data
+				}
+			}
+		`
+
+		var result struct {
+			ExportProcessingActivitiesPDF struct {
+				Data string `json:"data"`
+			} `json:"exportProcessingActivitiesPDF"`
+		}
+
+		err := owner.Execute(query, map[string]any{
+			"input": map[string]any{
+				"organizationId": owner.GetOrganizationID().String(),
+				"filter":         nil,
+			},
+		}, &result)
+		require.NoError(t, err)
+		assert.NotEmpty(t, result.ExportProcessingActivitiesPDF.Data)
+		assert.Contains(t, result.ExportProcessingActivitiesPDF.Data, "data:application/pdf;base64,")
+	})
+
+	t.Run("export processing activities PDF with snapshot filter", func(t *testing.T) {
+		_ = factory.NewProcessingActivity(owner).
+			WithName("PA Snapshot Export Test").
+			Create()
+
+		// Create snapshot
+		var snapshotResult struct {
+			CreateSnapshot struct {
+				SnapshotEdge struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"snapshotEdge"`
+			} `json:"createSnapshot"`
+		}
+		err := owner.Execute(`
+			mutation($input: CreateSnapshotInput!) {
+				createSnapshot(input: $input) {
+					snapshotEdge {
+						node { id }
+					}
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"organizationId": owner.GetOrganizationID().String(),
+				"name":           fmt.Sprintf("PA Export Snapshot Test %d", time.Now().UnixNano()),
+				"type":           "PROCESSING_ACTIVITIES",
+			},
+		}, &snapshotResult)
+		require.NoError(t, err)
+		snapshotID := snapshotResult.CreateSnapshot.SnapshotEdge.Node.ID
+
+		query := `
+			mutation ExportProcessingActivitiesPDF($input: ExportProcessingActivitiesPDFInput!) {
+				exportProcessingActivitiesPDF(input: $input) {
+					data
+				}
+			}
+		`
+
+		var result struct {
+			ExportProcessingActivitiesPDF struct {
+				Data string `json:"data"`
+			} `json:"exportProcessingActivitiesPDF"`
+		}
+
+		err = owner.Execute(query, map[string]any{
+			"input": map[string]any{
+				"organizationId": owner.GetOrganizationID().String(),
+				"filter": map[string]any{
+					"snapshotId": snapshotID,
+				},
+			},
+		}, &result)
+		require.NoError(t, err)
+		assert.NotEmpty(t, result.ExportProcessingActivitiesPDF.Data)
+		assert.Contains(t, result.ExportProcessingActivitiesPDF.Data, "data:application/pdf;base64,")
+	})
+
+	t.Run("export fails with no processing activities", func(t *testing.T) {
+		newOwner := testutil.NewClient(t, testutil.RoleOwner)
+
+		query := `
+			mutation ExportProcessingActivitiesPDF($input: ExportProcessingActivitiesPDFInput!) {
+				exportProcessingActivitiesPDF(input: $input) {
+					data
+				}
+			}
+		`
+
+		_, err := newOwner.Do(query, map[string]any{
+			"input": map[string]any{
+				"organizationId": newOwner.GetOrganizationID().String(),
+				"filter":         nil,
+			},
+		})
+		testutil.RequireErrorCode(t, err, "NOT_FOUND")
+		assert.Contains(t, err.Error(), "no processing activities found")
+	})
+}
+
+func TestDataProtectionImpactAssessment_ExportPDF(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	t.Run("export DPIA PDF", func(t *testing.T) {
+		pa1ID := factory.NewProcessingActivity(owner).
+			WithName("DPIA Export Test PA 1").
+			Create()
+		pa2ID := factory.NewProcessingActivity(owner).
+			WithName("DPIA Export Test PA 2").
+			Create()
+
+		_, err := owner.Do(`
+			mutation($input: CreateDataProtectionImpactAssessmentInput!) {
+				createDataProtectionImpactAssessment(input: $input) {
+					dataProtectionImpactAssessment { id }
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"processingActivityId": pa1ID,
+				"description":          "DPIA 1 description",
+				"residualRisk":         "LOW",
+			},
+		})
+		require.NoError(t, err)
+
+		_, err = owner.Do(`
+			mutation($input: CreateDataProtectionImpactAssessmentInput!) {
+				createDataProtectionImpactAssessment(input: $input) {
+					dataProtectionImpactAssessment { id }
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"processingActivityId": pa2ID,
+				"description":          "DPIA 2 description",
+				"residualRisk":         "MEDIUM",
+			},
+		})
+		require.NoError(t, err)
+
+		query := `
+			mutation ExportDataProtectionImpactAssessmentsPDF($input: ExportDataProtectionImpactAssessmentsPDFInput!) {
+				exportDataProtectionImpactAssessmentsPDF(input: $input) {
+					data
+				}
+			}
+		`
+
+		var result struct {
+			ExportDataProtectionImpactAssessmentsPDF struct {
+				Data string `json:"data"`
+			} `json:"exportDataProtectionImpactAssessmentsPDF"`
+		}
+
+		err = owner.Execute(query, map[string]any{
+			"input": map[string]any{
+				"organizationId": owner.GetOrganizationID().String(),
+				"filter":         nil,
+			},
+		}, &result)
+		require.NoError(t, err)
+		assert.NotEmpty(t, result.ExportDataProtectionImpactAssessmentsPDF.Data)
+		assert.Contains(t, result.ExportDataProtectionImpactAssessmentsPDF.Data, "data:application/pdf;base64,")
+	})
+
+	t.Run("export fails with no DPIAs", func(t *testing.T) {
+		newOwner := testutil.NewClient(t, testutil.RoleOwner)
+
+		query := `
+			mutation ExportDataProtectionImpactAssessmentsPDF($input: ExportDataProtectionImpactAssessmentsPDFInput!) {
+				exportDataProtectionImpactAssessmentsPDF(input: $input) {
+					data
+				}
+			}
+		`
+
+		_, err := newOwner.Do(query, map[string]any{
+			"input": map[string]any{
+				"organizationId": newOwner.GetOrganizationID().String(),
+				"filter":         nil,
+			},
+		})
+		testutil.RequireErrorCode(t, err, "NOT_FOUND")
+		assert.Contains(t, err.Error(), "no data protection impact assessments found")
+	})
+}
+
+func TestTransferImpactAssessment_ExportPDF(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	t.Run("export TIA PDF", func(t *testing.T) {
+		pa1ID := factory.NewProcessingActivity(owner).
+			WithName("TIA Export Test PA 1").
+			Create()
+		pa2ID := factory.NewProcessingActivity(owner).
+			WithName("TIA Export Test PA 2").
+			Create()
+
+		_, err := owner.Do(`
+			mutation($input: CreateTransferImpactAssessmentInput!) {
+				createTransferImpactAssessment(input: $input) {
+					transferImpactAssessment { id }
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"processingActivityId": pa1ID,
+				"dataSubjects":         "TIA 1 subjects",
+				"transfer":             "EU to US",
+			},
+		})
+		require.NoError(t, err)
+
+		_, err = owner.Do(`
+			mutation($input: CreateTransferImpactAssessmentInput!) {
+				createTransferImpactAssessment(input: $input) {
+					transferImpactAssessment { id }
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{
+				"processingActivityId": pa2ID,
+				"dataSubjects":         "TIA 2 subjects",
+				"transfer":             "EU to UK",
+			},
+		})
+		require.NoError(t, err)
+
+		query := `
+			mutation ExportTransferImpactAssessmentsPDF($input: ExportTransferImpactAssessmentsPDFInput!) {
+				exportTransferImpactAssessmentsPDF(input: $input) {
+					data
+				}
+			}
+		`
+
+		var result struct {
+			ExportTransferImpactAssessmentsPDF struct {
+				Data string `json:"data"`
+			} `json:"exportTransferImpactAssessmentsPDF"`
+		}
+
+		err = owner.Execute(query, map[string]any{
+			"input": map[string]any{
+				"organizationId": owner.GetOrganizationID().String(),
+				"filter":         nil,
+			},
+		}, &result)
+		require.NoError(t, err)
+		assert.NotEmpty(t, result.ExportTransferImpactAssessmentsPDF.Data)
+		assert.Contains(t, result.ExportTransferImpactAssessmentsPDF.Data, "data:application/pdf;base64,")
+	})
+
+	t.Run("export fails with no TIAs", func(t *testing.T) {
+		newOwner := testutil.NewClient(t, testutil.RoleOwner)
+
+		query := `
+			mutation ExportTransferImpactAssessmentsPDF($input: ExportTransferImpactAssessmentsPDFInput!) {
+				exportTransferImpactAssessmentsPDF(input: $input) {
+					data
+				}
+			}
+		`
+
+		_, err := newOwner.Do(query, map[string]any{
+			"input": map[string]any{
+				"organizationId": newOwner.GetOrganizationID().String(),
+				"filter":         nil,
+			},
+		})
+		testutil.RequireErrorCode(t, err, "NOT_FOUND")
+		assert.Contains(t, err.Error(), "no transfer impact assessments found")
+	})
+}
+
+func TestProcessingActivity_ExportPDF_RBAC(t *testing.T) {
+	t.Parallel()
+
+	t.Run("owner can export PDF", func(t *testing.T) {
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+		_ = factory.NewProcessingActivity(owner).WithName("RBAC Export Test").Create()
+
+		query := `
+			mutation ExportProcessingActivitiesPDF($input: ExportProcessingActivitiesPDFInput!) {
+				exportProcessingActivitiesPDF(input: $input) {
+					data
+				}
+			}
+		`
+
+		var result struct {
+			ExportProcessingActivitiesPDF struct {
+				Data string `json:"data"`
+			} `json:"exportProcessingActivitiesPDF"`
+		}
+
+		err := owner.Execute(query, map[string]any{
+			"input": map[string]any{
+				"organizationId": owner.GetOrganizationID().String(),
+				"filter":         nil,
+			},
+		}, &result)
+		require.NoError(t, err, "owner should be able to export PDF")
+		assert.NotEmpty(t, result.ExportProcessingActivitiesPDF.Data)
+	})
+
+	t.Run("admin can export PDF", func(t *testing.T) {
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+		admin := testutil.NewClientInOrg(t, testutil.RoleAdmin, owner)
+		_ = factory.NewProcessingActivity(owner).WithName("RBAC Export Test").Create()
+
+		query := `
+			mutation ExportProcessingActivitiesPDF($input: ExportProcessingActivitiesPDFInput!) {
+				exportProcessingActivitiesPDF(input: $input) {
+					data
+				}
+			}
+		`
+
+		var result struct {
+			ExportProcessingActivitiesPDF struct {
+				Data string `json:"data"`
+			} `json:"exportProcessingActivitiesPDF"`
+		}
+
+		err := admin.Execute(query, map[string]any{
+			"input": map[string]any{
+				"organizationId": admin.GetOrganizationID().String(),
+				"filter":         nil,
+			},
+		}, &result)
+		require.NoError(t, err, "admin should be able to export PDF")
+		assert.NotEmpty(t, result.ExportProcessingActivitiesPDF.Data)
+	})
+
+	t.Run("viewer can export PDF", func(t *testing.T) {
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+		viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+		_ = factory.NewProcessingActivity(owner).WithName("RBAC Export Test").Create()
+
+		query := `
+			mutation ExportProcessingActivitiesPDF($input: ExportProcessingActivitiesPDFInput!) {
+				exportProcessingActivitiesPDF(input: $input) {
+					data
+				}
+			}
+		`
+
+		var result struct {
+			ExportProcessingActivitiesPDF struct {
+				Data string `json:"data"`
+			} `json:"exportProcessingActivitiesPDF"`
+		}
+
+		err := viewer.Execute(query, map[string]any{
+			"input": map[string]any{
+				"organizationId": viewer.GetOrganizationID().String(),
+				"filter":         nil,
+			},
+		}, &result)
+		require.NoError(t, err, "viewer should be able to export PDF")
+		assert.NotEmpty(t, result.ExportProcessingActivitiesPDF.Data)
+	})
+}

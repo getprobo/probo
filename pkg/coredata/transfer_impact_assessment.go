@@ -35,6 +35,12 @@ func (e ErrTransferImpactAssessmentNotFound) Error() string {
 	return fmt.Sprintf("transfer impact assessment not found: %q", e.Identifier)
 }
 
+type ErrNoTransferImpactAssessmentsFound struct{}
+
+func (e ErrNoTransferImpactAssessmentsFound) Error() string {
+	return "no transfer impact assessments found"
+}
+
 type (
 	TransferImpactAssessment struct {
 		ID                    gid.GID   `db:"id"`
@@ -135,6 +141,56 @@ WHERE
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query transfer impact assessments: %w", err)
+	}
+
+	results, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[TransferImpactAssessment])
+	if err != nil {
+		return fmt.Errorf("cannot collect transfer impact assessments: %w", err)
+	}
+
+	*tias = results
+
+	return nil
+}
+
+func (tias *TransferImpactAssessments) LoadAllByOrganizationID(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	organizationID gid.GID,
+	filter *TransferImpactAssessmentFilter,
+) error {
+	q := `
+SELECT
+	id,
+	snapshot_id,
+	source_id,
+	organization_id,
+	processing_activity_id,
+	data_subjects,
+	legal_mechanism,
+	transfer,
+	local_law_risk,
+	supplementary_measures,
+	created_at,
+	updated_at
+FROM
+	processing_activity_transfer_impact_assessments
+WHERE
+	%s
+	AND organization_id = @organization_id
+	AND %s
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"organization_id": organizationID}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -429,4 +485,3 @@ WHERE tia.tenant_id = @tenant_id AND tia.organization_id = @organization_id AND 
 
 	return nil
 }
-
