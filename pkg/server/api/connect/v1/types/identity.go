@@ -20,6 +20,7 @@ func NewIdentity(identity *coredata.Identity) *Identity {
 	return &Identity{
 		ID:            identity.ID,
 		Email:         identity.EmailAddress,
+		FullName:      identity.FullName,
 		EmailVerified: identity.EmailAddressVerified,
 		CreatedAt:     identity.CreatedAt,
 		UpdatedAt:     identity.UpdatedAt,

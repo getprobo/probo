@@ -69,7 +69,7 @@ const (
 	MeetingEntityType                          uint16 = 45
 	DataProtectionImpactAssessmentEntityType   uint16 = 46
 	TransferImpactAssessmentEntityType         uint16 = 47
-	IdentityProfileEntityType                  uint16 = 48
+	MembershipProfileEntityType                uint16 = 48
 )
 
 type EntityInfo struct {
@@ -273,6 +273,10 @@ var entityRegistry = map[uint16]EntityInfo{
 	IdentityProfileEntityType: {
 		Model: "IdentityProfile",
 		Table: "iam_identity_profiles",
+	},
+	MembershipProfileEntityType: {
+		Model: "MembershipProfile",
+		Table: "iam_membership_profiles",
 	},
 }
 
