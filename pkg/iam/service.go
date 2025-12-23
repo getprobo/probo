@@ -36,14 +36,13 @@ type (
 		privateKey                 *rsa.PrivateKey
 		logger                     *log.Logger
 
-		AccountService                *AccountService
-		OrganizationService           *OrganizationService
-		SessionService                *SessionService
-		AuthService                   *AuthService
-		SAMLService                   *saml.Service
-		APIKeyService                 *APIKeyService
-		LegacyAccessManagementService *AccessManagementService
-		Authorizer                    *Authorizer
+		AccountService      *AccountService
+		OrganizationService *OrganizationService
+		SessionService      *SessionService
+		AuthService         *AuthService
+		SAMLService         *saml.Service
+		APIKeyService       *APIKeyService
+		Authorizer          *Authorizer
 
 		samlDomainVerifier *SAMLDomainVerifier
 	}
@@ -110,7 +109,6 @@ func NewService(
 	svc.SessionService = NewSessionService(svc)
 	svc.AuthService = NewAuthService(svc)
 	svc.APIKeyService = NewAPIKeyService(svc)
-	svc.LegacyAccessManagementService = NewAccessManagementService(svc)
 
 	svc.Authorizer = NewAuthorizer(pgClient)
 	svc.Authorizer.RegisterPolicySet(IAMPolicySet())

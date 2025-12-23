@@ -309,15 +309,12 @@ func NewMux(
 }
 
 func (r *Resolver) ProboService(ctx context.Context, tenantID gid.TenantID) *probo.TenantService {
-	return GetTenantService(ctx, r.probo, tenantID)
-}
-
-func GetTenantService(ctx context.Context, proboSvc *probo.Service, tenantID gid.TenantID) *probo.TenantService {
-	return proboSvc.WithTenant(tenantID)
+	return r.probo.WithTenant(tenantID)
 }
 
 func (r *Resolver) MustAuthorize(ctx context.Context, entityID gid.GID, action iam.Action) {
-	user := connect_v1.IdentityFromContext(ctx)
+	identity := connect_v1.IdentityFromContext(ctx)
+	// TODO: Add API key authorization
 	// apiKey := connect_v1.APIKeyFromContext(ctx)
 
 	// var credentialID *gid.GID
@@ -328,7 +325,7 @@ func (r *Resolver) MustAuthorize(ctx context.Context, entityID gid.GID, action i
 	err := r.iam.Authorizer.Authorize(
 		ctx,
 		iam.AuthorizeParams{
-			Principal: user.ID,
+			Principal: identity.ID,
 			Resource:  entityID,
 			Action:    action,
 		},

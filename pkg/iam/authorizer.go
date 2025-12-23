@@ -17,9 +17,7 @@ package iam
 import (
 	"context"
 	"errors"
-	"fmt"
 	"maps"
-	"slices"
 
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
@@ -27,21 +25,12 @@ import (
 	"go.probo.inc/probo/pkg/iam/policy"
 )
 
-// Authorizer handles authorization using the policy engine.
 type Authorizer struct {
 	pg        *pg.Client
 	evaluator *policy.Evaluator
 	policySet *PolicySet
 }
 
-// NewAuthorizer creates a new authorizer.
-// Services register their policies by calling RegisterPolicySet.
-//
-// Example:
-//
-//	authorizer := iam.NewAuthorizer(pgClient)
-//	authorizer.RegisterPolicySet(iam.IAMPolicySet())
-//	authorizer.RegisterPolicySet(probo.ProboPolicySet())
 func NewAuthorizer(pgClient *pg.Client) *Authorizer {
 	return &Authorizer{
 		pg:        pgClient,
@@ -50,87 +39,24 @@ func NewAuthorizer(pgClient *pg.Client) *Authorizer {
 	}
 }
 
-// RegisterPolicySet merges policies from another service into this authorizer.
-// Services call this method to register their policies.
 func (a *Authorizer) RegisterPolicySet(policySet *PolicySet) {
 	a.policySet.Merge(policySet)
 }
 
-// AuthorizeParams contains all parameters for an authorization check.
 type AuthorizeParams struct {
-	// Principal is the user requesting access.
-	Principal gid.GID
-
-	// Resource is the target resource.
-	Resource gid.GID
-
-	// Action is the operation being performed (e.g., "iam:organization:get").
-	Action string
-
-	// ResourceAttributes provides additional context for condition evaluation.
-	// Keys like "user_id", "owner_id" are used for self-management checks.
+	Principal          gid.GID
+	Resource           gid.GID
+	Action             string
 	ResourceAttributes map[string]string
 }
 
-func (a *Authorizer) GetPermissionsForMembership(ctx context.Context, identityID gid.GID, membershipID gid.GID) (map[string]map[Action]bool, error) {
-	var (
-		scope      = coredata.NewScopeFromObjectID(membershipID)
-		membership = &coredata.Membership{}
-	)
-
-	err := a.pg.WithConn(
-		ctx,
-		func(conn pg.Conn) error {
-			err := membership.LoadByID(ctx, conn, scope, membershipID)
-			if err != nil {
-				if err == coredata.ErrResourceNotFound {
-					return NewMembershipNotFoundError(membershipID)
-				}
-
-				return fmt.Errorf("cannot load membership: %w", err)
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	permissions := make(map[string]map[Action]bool)
-
-	for entityType, actions := range Permissions {
-		entityTypeName, ok := coredata.EntityModel(entityType)
-		if !ok {
-			continue
-		}
-
-		if permissions[entityTypeName] == nil {
-			permissions[entityTypeName] = make(map[Action]bool)
-		}
-
-		for action, allowedRoles := range actions {
-			if slices.Contains(allowedRoles, Role(membership.Role)) {
-				permissions[entityTypeName][action] = true
-			}
-		}
-	}
-
-	return permissions, nil
-}
-
-// Authorize checks if the principal can perform the action on the resource.
-// It combines self-management policies with role-based policies.
 func (a *Authorizer) Authorize(ctx context.Context, params AuthorizeParams) error {
-	// Validate principal type
 	if params.Principal.EntityType() != coredata.IdentityEntityType {
 		return NewUnsupportedPrincipalTypeError(params.Principal.EntityType())
 	}
 
-	// Build policies to evaluate
 	policies := a.buildPolicies(ctx, params)
 
-	// Build condition context
 	conditionCtx := policy.ConditionContext{
 		Principal: map[string]string{
 			"id": params.Principal.String(),
@@ -142,7 +68,6 @@ func (a *Authorizer) Authorize(ctx context.Context, params AuthorizeParams) erro
 
 	maps.Copy(conditionCtx.Resource, params.ResourceAttributes)
 
-	// Evaluate
 	req := policy.AuthorizationRequest{
 		Principal:        params.Principal,
 		Resource:         params.Resource,
@@ -160,7 +85,6 @@ func (a *Authorizer) Authorize(ctx context.Context, params AuthorizeParams) erro
 		return NewInsufficientPermissionsError(params.Principal, params.Resource, params.Action)
 	}
 
-	// No match = implicit deny
 	return NewInsufficientPermissionsError(params.Principal, params.Resource, params.Action)
 }
 
