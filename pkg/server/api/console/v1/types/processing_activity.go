@@ -63,7 +63,7 @@ func NewProcessingActivityEdge(par *coredata.ProcessingActivity, orderField core
 }
 
 func NewProcessingActivity(par *coredata.ProcessingActivity) *ProcessingActivity {
-	return &ProcessingActivity{
+	object := &ProcessingActivity{
 		ID: par.ID,
 		Organization: &Organization{
 			ID: par.OrganizationID,
@@ -91,4 +91,12 @@ func NewProcessingActivity(par *coredata.ProcessingActivity) *ProcessingActivity
 		CreatedAt:                            par.CreatedAt,
 		UpdatedAt:                            par.UpdatedAt,
 	}
+
+	if par.DataProtectionOfficerID != nil {
+		object.DataProtectionOfficer = &People{
+			ID: *par.DataProtectionOfficerID,
+		}
+	}
+
+	return object
 }
