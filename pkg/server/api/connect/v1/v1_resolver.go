@@ -136,6 +136,23 @@ func (r *identityResolver) PersonalAPIKeys(ctx context.Context, obj *types.Ident
 	return types.NewPersonalAPIKeyConnection(page, r, obj.ID), nil
 }
 
+// Permission is the resolver for the permission field.
+func (r *identityResolver) Permission(ctx context.Context, obj *types.Identity, action string, id gid.GID) (bool, error) {
+	err := r.iam.Authorizer.Authorize(
+		ctx,
+		iam.AuthorizeParams{
+			Principal: obj.ID,
+			Resource:  id,
+			Action:    action,
+		},
+	)
+	if err != nil {
+		return false, nil
+	}
+
+	return true, nil
+}
+
 // Organization is the resolver for the organization field.
 func (r *invitationResolver) Organization(ctx context.Context, obj *types.Invitation) (*types.Organization, error) {
 	if gqlutils.OnlyIDSelected(ctx) {

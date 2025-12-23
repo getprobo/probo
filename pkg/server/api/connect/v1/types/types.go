@@ -159,6 +159,7 @@ type Identity struct {
 	PendingInvitations *InvitationConnection     `json:"pendingInvitations,omitempty"`
 	Sessions           *SessionConnection        `json:"sessions,omitempty"`
 	PersonalAPIKeys    *PersonalAPIKeyConnection `json:"personalAPIKeys,omitempty"`
+	Permission         bool                      `json:"permission"`
 }
 
 func (Identity) IsNode()             {}
