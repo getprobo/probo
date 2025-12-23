@@ -64,7 +64,13 @@ func NewDataProtectionImpactAssessmentEdge(dpia *coredata.DataProtectionImpactAs
 
 func NewDataProtectionImpactAssessment(dpia *coredata.DataProtectionImpactAssessment) *DataProtectionImpactAssessment {
 	return &DataProtectionImpactAssessment{
-		ID:                          dpia.ID,
+		ID: dpia.ID,
+		ProcessingActivity: &ProcessingActivity{
+			ID: dpia.ProcessingActivityID,
+		},
+		Organization: &Organization{
+			ID: dpia.OrganizationID,
+		},
 		Description:                 dpia.Description,
 		NecessityAndProportionality: dpia.NecessityAndProportionality,
 		PotentialRisk:               dpia.PotentialRisk,
@@ -74,4 +80,3 @@ func NewDataProtectionImpactAssessment(dpia *coredata.DataProtectionImpactAssess
 		UpdatedAt:                   dpia.UpdatedAt,
 	}
 }
-
