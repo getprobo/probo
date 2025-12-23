@@ -3,6 +3,7 @@ CP ?=	cp
 DOCKER ?=	docker
 GO ?=	go
 GRYPE ?=	grype
+TRIVY ?=	trivy
 MKCERT ?=	mkcert
 MKDIR ?=	mkdir -p
 NPM ?=	npm
@@ -134,6 +135,10 @@ scan-docker: docker-build
 
 .PHONY: scan
 scan: scan-sbom scan-sbom-docker scan-docker
+
+.PHONY: scan-license
+scan-license: ## Check dependencies licenses compliance
+	$(TRIVY) fs --license-full --scanners license --ignorefile .trivyignore.yaml --severity UNKNOWN,HIGH,CRITICAL --exit-code 1 .
 
 .PHONY: docker-build
 docker-build:

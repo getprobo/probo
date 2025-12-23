@@ -1,0 +1,8 @@
+# Trivy ignore file
+# https://trivy.dev/docs/latest/configuration/filtering/
+
+licenses:
+  # n8n packages - manually reviewed, custom license acceptable for our use case
+  - id: "SEE LICENSE IN LICENSE.md"
+    paths:
+      - "package-lock.json"

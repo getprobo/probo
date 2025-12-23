@@ -104,6 +104,16 @@ jobs:
             coverage.html
           retention-days: 30
       - run: "make lint"
+      - name: "Scan licenses"
+        uses: "aquasecurity/trivy-action@0.28.0"
+        with:
+          scan-type: "fs"
+          scanners: "license"
+          severity: "UNKNOWN,HIGH,CRITICAL"
+          exit-code: 1
+          ignorefile: ".trivyignore.yaml"
+          trivy-config: "trivy.yaml"
+          license-full: true
 
   test-e2e:
     name: "test-e2e"
