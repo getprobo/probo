@@ -35,6 +35,7 @@ const (
 	ActionTrustCenterReferenceCreate              = "core:trust-center:create-reference"
 
 	// TrustCenterAccess actions
+	ActionTrustCenterAccessGet    = "core:trust-center-access:get"
 	ActionTrustCenterAccessUpdate = "core:trust-center-access:update"
 	ActionTrustCenterAccessDelete = "core:trust-center-access:delete"
 
@@ -65,16 +66,19 @@ const (
 	ActionVendorAssess = "core:vendor:assess"
 
 	// VendorContact actions
+	ActionVendorContactGet    = "core:vendor-contact:get"
 	ActionVendorContactCreate = "core:vendor-contact:create"
 	ActionVendorContactUpdate = "core:vendor-contact:update"
 	ActionVendorContactDelete = "core:vendor-contact:delete"
 
 	// VendorService actions
+	ActionVendorServiceGet    = "core:vendor-service:get"
 	ActionVendorServiceCreate = "core:vendor-service:create"
 	ActionVendorServiceUpdate = "core:vendor-service:update"
 	ActionVendorServiceDelete = "core:vendor-service:delete"
 
 	// VendorComplianceReport actions
+	ActionVendorComplianceReportGet    = "core:vendor-compliance-report:get"
 	ActionVendorComplianceReportUpload = "core:vendor-compliance-report:upload"
 	ActionVendorComplianceReportDelete = "core:vendor-compliance-report:delete"
 
@@ -243,6 +247,7 @@ const (
 
 	// Meeting actions
 	ActionMeetingList   = "core:meeting:list"
+	ActionMeetingGet    = "core:meeting:get"
 	ActionMeetingCreate = "core:meeting:create"
 	ActionMeetingUpdate = "core:meeting:update"
 	ActionMeetingDelete = "core:meeting:delete"
@@ -263,6 +268,7 @@ const (
 	ActionDataProtectionOfficerList = "core:data-protection-officer:list"
 
 	ActionRightsRequesList = "core:rights-request:list"
+	ActionRightsRequestGet = "core:rights-request:get"
 
 	ActionStateOfApplicabilityList   = "core:state-of-applicability:list"
 	ActionStateOfApplicabilityGet    = "core:state-of-applicability:get"

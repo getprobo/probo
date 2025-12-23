@@ -5798,282 +5798,309 @@ func (r *processingActivityConnectionResolver) TotalCount(ctx context.Context, o
 
 // Node is the resolver for the node field.
 func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error) {
-	// TODO use right action
-	//r.MustAuthorize(ctx, id, probo.ActionGet)
-
-	prb := r.ProboService(ctx, id.TenantID())
+	var (
+		loadNode func(ctx context.Context, id gid.GID) (types.Node, error)
+		action   string
+		prb      = r.ProboService(ctx, id.TenantID())
+	)
 
 	switch id.EntityType() {
 	case coredata.OrganizationEntityType:
-		organization, err := prb.Organizations.Get(ctx, id)
-		if err != nil {
-			if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-				return nil, gqlutils.Conflict(err)
+		action = iam.ActionIAMOrganizationGet
+		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
+			organization, err := prb.Organizations.Get(ctx, id)
+			if err != nil {
+				return nil, err
 			}
-
-			panic(fmt.Errorf("cannot get organization: %w", err))
+			return types.NewOrganization(organization), nil
 		}
-
-		return types.NewOrganization(organization), nil
 	case coredata.PeopleEntityType:
-		people, err := prb.Peoples.Get(ctx, id)
-		if err != nil {
-			if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-				return nil, gqlutils.Conflict(err)
+		action = probo.ActionPeopleGet
+		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
+			people, err := prb.Peoples.Get(ctx, id)
+			if err != nil {
+				return nil, err
 			}
-
-			panic(fmt.Errorf("cannot get people: %w", err))
+			return types.NewPeople(people), nil
 		}
-
-		return types.NewPeople(people), nil
 	case coredata.VendorEntityType:
-		vendor, err := prb.Vendors.Get(ctx, id)
-		if err != nil {
-			if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-				return nil, gqlutils.Conflict(err)
+		action = probo.ActionVendorGet
+		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
+			vendor, err := prb.Vendors.Get(ctx, id)
+			if err != nil {
+				return nil, err
 			}
-
-			panic(fmt.Errorf("cannot get vendor: %w", err))
+			return types.NewVendor(vendor), nil
 		}
-
-		return types.NewVendor(vendor), nil
 	case coredata.FrameworkEntityType:
-		framework, err := prb.Frameworks.Get(ctx, id)
-		if err != nil {
-			if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-				return nil, gqlutils.Conflict(err)
+		action = probo.ActionFrameworkGet
+		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
+			framework, err := prb.Frameworks.Get(ctx, id)
+			if err != nil {
+				return nil, err
 			}
-
-			panic(fmt.Errorf("cannot get framework: %w", err))
+			return types.NewFramework(framework), nil
 		}
-
-		return types.NewFramework(framework), nil
 	case coredata.MeasureEntityType:
-		measure, err := prb.Measures.Get(ctx, id)
-		if err != nil {
-			if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-				return nil, gqlutils.Conflict(err)
+		action = probo.ActionMeasureGet
+		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
+			measure, err := prb.Measures.Get(ctx, id)
+			if err != nil {
+				return nil, err
 			}
-
-			panic(fmt.Errorf("cannot get measure: %w", err))
+			return types.NewMeasure(measure), nil
 		}
-
-		return types.NewMeasure(measure), nil
 	case coredata.TaskEntityType:
-		task, err := prb.Tasks.Get(ctx, id)
-		if err != nil {
-			if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-				return nil, gqlutils.Conflict(err)
+		action = probo.ActionTaskGet
+		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
+			task, err := prb.Tasks.Get(ctx, id)
+			if err != nil {
+				return nil, err
 			}
-
-			panic(fmt.Errorf("cannot get task: %w", err))
+			return types.NewTask(task), nil
 		}
-
-		return types.NewTask(task), nil
 	case coredata.EvidenceEntityType:
-		evidence, err := prb.Evidences.Get(ctx, id)
-		if err != nil {
-			panic(fmt.Errorf("cannot get evidence: %w", err))
+		action = probo.ActionEvidenceList
+		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
+			evidence, err := prb.Evidences.Get(ctx, id)
+			if err != nil {
+				return nil, err
+			}
+			return types.NewEvidence(evidence), nil
 		}
-
-		return types.NewEvidence(evidence), nil
 	case coredata.DocumentEntityType:
-		document, err := prb.Documents.Get(ctx, id)
-		if err != nil {
-			if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-				return nil, gqlutils.Conflict(err)
+		action = probo.ActionDocumentGet
+		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
+			document, err := prb.Documents.Get(ctx, id)
+			if err != nil {
+				return nil, err
 			}
-
-			panic(fmt.Errorf("cannot get document: %w", err))
+			return types.NewDocument(document), nil
 		}
-
-		return types.NewDocument(document), nil
 	case coredata.ControlEntityType:
-		control, err := prb.Controls.Get(ctx, id)
-		if err != nil {
-			if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-				return nil, gqlutils.Conflict(err)
+		action = probo.ActionControlList
+		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
+			control, err := prb.Controls.Get(ctx, id)
+			if err != nil {
+				return nil, err
 			}
-
-			panic(fmt.Errorf("cannot get control: %w", err))
+			return types.NewControl(control), nil
 		}
-
-		return types.NewControl(control), nil
 	case coredata.RiskEntityType:
-		risk, err := prb.Risks.Get(ctx, id)
-		if err != nil {
-			if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-				return nil, gqlutils.Conflict(err)
+		action = probo.ActionRiskList
+		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
+			risk, err := prb.Risks.Get(ctx, id)
+			if err != nil {
+				return nil, err
 			}
-
-			panic(fmt.Errorf("cannot get risk: %w", err))
+			return types.NewRisk(risk), nil
 		}
-
-		return types.NewRisk(risk), nil
 	case coredata.VendorComplianceReportEntityType:
-		vendorComplianceReport, err := prb.VendorComplianceReports.Get(ctx, id)
-		if err != nil {
-			panic(fmt.Errorf("cannot get vendor compliance report: %w", err))
+		action = probo.ActionVendorComplianceReportGet
+		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
+			vendorComplianceReport, err := prb.VendorComplianceReports.Get(ctx, id)
+			if err != nil {
+				return nil, err
+			}
+			return types.NewVendorComplianceReport(vendorComplianceReport), nil
 		}
-		return types.NewVendorComplianceReport(vendorComplianceReport), nil
 	case coredata.VendorContactEntityType:
-		vendorContact, err := prb.VendorContacts.Get(ctx, id)
-		if err != nil {
-			panic(fmt.Errorf("cannot get vendor contact: %w", err))
+		action = probo.ActionVendorContactGet
+		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
+			vendorContact, err := prb.VendorContacts.Get(ctx, id)
+			if err != nil {
+				return nil, err
+			}
+			return types.NewVendorContact(vendorContact), nil
 		}
-		return types.NewVendorContact(vendorContact), nil
 	case coredata.VendorServiceEntityType:
-		vendorService, err := prb.VendorServices.Get(ctx, id)
-		if err != nil {
-			panic(fmt.Errorf("cannot get vendor service: %w", err))
+		action = probo.ActionVendorServiceGet
+		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
+			vendorService, err := prb.VendorServices.Get(ctx, id)
+			if err != nil {
+				return nil, err
+			}
+			return types.NewVendorService(vendorService), nil
 		}
-		return types.NewVendorService(vendorService), nil
 	case coredata.DocumentVersionEntityType:
-		documentVersion, err := prb.Documents.GetVersion(ctx, id)
-		if err != nil {
-			panic(fmt.Errorf("cannot get document version: %w", err))
+		action = probo.ActionDocumentVersionList
+		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
+			documentVersion, err := prb.Documents.GetVersion(ctx, id)
+			if err != nil {
+				return nil, err
+			}
+			return types.NewDocumentVersion(documentVersion), nil
 		}
-		return types.NewDocumentVersion(documentVersion), nil
 	case coredata.DocumentVersionSignatureEntityType:
-		documentVersionSignature, err := prb.Documents.GetVersionSignature(ctx, id)
-		if err != nil {
-			panic(fmt.Errorf("cannot get document version signature: %w", err))
+		action = probo.ActionDocumentVersionSignatureList
+		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
+			documentVersionSignature, err := prb.Documents.GetVersionSignature(ctx, id)
+			if err != nil {
+				return nil, err
+			}
+			return types.NewDocumentVersionSignature(documentVersionSignature), nil
 		}
-		return types.NewDocumentVersionSignature(documentVersionSignature), nil
 	case coredata.AssetEntityType:
-		asset, err := prb.Assets.Get(ctx, id)
-		if err != nil {
-			if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-				return nil, gqlutils.Conflict(err)
+		action = probo.ActionAssetList
+		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
+			asset, err := prb.Assets.Get(ctx, id)
+			if err != nil {
+				return nil, err
 			}
-
-			panic(fmt.Errorf("cannot get asset: %w", err))
+			return types.NewAsset(asset), nil
 		}
-
-		return types.NewAsset(asset), nil
 	case coredata.DatumEntityType:
-		datum, err := prb.Data.Get(ctx, id)
-		if err != nil {
-			panic(fmt.Errorf("cannot get data: %w", err))
+		action = probo.ActionDatumList
+		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
+			datum, err := prb.Data.Get(ctx, id)
+			if err != nil {
+				return nil, err
+			}
+			return types.NewDatum(datum), nil
 		}
-
-		return types.NewDatum(datum), nil
 	case coredata.AuditEntityType:
-		audit, err := prb.Audits.Get(ctx, id)
-		if err != nil {
-			if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-				return nil, gqlutils.Conflict(err)
+		action = probo.ActionAuditList
+		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
+			audit, err := prb.Audits.Get(ctx, id)
+			if err != nil {
+				return nil, err
 			}
-
-			panic(fmt.Errorf("cannot get audit: %w", err))
+			return types.NewAudit(audit), nil
 		}
-
-		return types.NewAudit(audit), nil
 	case coredata.NonconformityEntityType:
-		nonconformity, err := prb.Nonconformities.Get(ctx, id)
-		if err != nil {
-			panic(fmt.Errorf("cannot get nonconformity: %w", err))
+		action = probo.ActionNonconformityList
+		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
+			nonconformity, err := prb.Nonconformities.Get(ctx, id)
+			if err != nil {
+				return nil, err
+			}
+			return types.NewNonconformity(nonconformity), nil
 		}
-
-		return types.NewNonconformity(nonconformity), nil
 	case coredata.ObligationEntityType:
-		obligation, err := prb.Obligations.Get(ctx, id)
-		if err != nil {
-			panic(fmt.Errorf("cannot get obligation: %w", err))
+		action = probo.ActionObligationList
+		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
+			obligation, err := prb.Obligations.Get(ctx, id)
+			if err != nil {
+				return nil, err
+			}
+			return types.NewObligation(obligation), nil
 		}
-
-		return types.NewObligation(obligation), nil
 	case coredata.ContinualImprovementEntityType:
-		continualImprovement, err := prb.ContinualImprovements.Get(ctx, id)
-		if err != nil {
-			panic(fmt.Errorf("cannot get continual improvement: %w", err))
+		action = probo.ActionContinualImprovementList
+		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
+			continualImprovement, err := prb.ContinualImprovements.Get(ctx, id)
+			if err != nil {
+				return nil, err
+			}
+			return types.NewContinualImprovement(continualImprovement), nil
 		}
-
-		return types.NewContinualImprovement(continualImprovement), nil
 	case coredata.ReportEntityType:
-		report, err := prb.Reports.Get(ctx, id)
-		if err != nil {
-			panic(fmt.Errorf("cannot get report: %w", err))
+		action = probo.ActionReportGet
+		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
+			report, err := prb.Reports.Get(ctx, id)
+			if err != nil {
+				return nil, err
+			}
+			return types.NewReport(report), nil
 		}
-		return types.NewReport(report), nil
 	case coredata.ProcessingActivityEntityType:
-		processingActivity, err := prb.ProcessingActivities.Get(ctx, id)
-		if err != nil {
-			panic(fmt.Errorf("cannot get processing activity: %w", err))
+		action = probo.ActionProcessingActivityList
+		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
+			processingActivity, err := prb.ProcessingActivities.Get(ctx, id)
+			if err != nil {
+				return nil, err
+			}
+			return types.NewProcessingActivity(processingActivity), nil
 		}
-
-		return types.NewProcessingActivity(processingActivity), nil
 	case coredata.DataProtectionImpactAssessmentEntityType:
-		dpia, err := prb.DataProtectionImpactAssessments.Get(ctx, id)
-		if err != nil {
-			panic(fmt.Errorf("cannot get processing activity dpia: %w", err))
+		// TODO: add action
+		// action = probo.ActionDataProtectionImpactAssessmentGet
+		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
+			dpia, err := prb.DataProtectionImpactAssessments.Get(ctx, id)
+			if err != nil {
+				return nil, err
+			}
+			return types.NewDataProtectionImpactAssessment(dpia), nil
 		}
-
-		return types.NewDataProtectionImpactAssessment(dpia), nil
 	case coredata.TransferImpactAssessmentEntityType:
-		tia, err := prb.TransferImpactAssessments.Get(ctx, id)
-		if err != nil {
-			panic(fmt.Errorf("cannot get processing activity tia: %w", err))
+		// TODO: add action
+		//action = probo.ActionTransferImpactAssessmentGet
+		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
+			tia, err := prb.TransferImpactAssessments.Get(ctx, id)
+			if err != nil {
+				return nil, err
+			}
+			return types.NewTransferImpactAssessment(tia), nil
 		}
-
-		return types.NewTransferImpactAssessment(tia), nil
 	case coredata.SnapshotEntityType:
-		snapshot, err := prb.Snapshots.Get(ctx, id)
-		if err != nil {
-			panic(fmt.Errorf("cannot get snapshot: %w", err))
+		action = probo.ActionSnapshotList
+		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
+			snapshot, err := prb.Snapshots.Get(ctx, id)
+			if err != nil {
+				return nil, err
+			}
+			return types.NewSnapshot(snapshot), nil
 		}
-
-		return types.NewSnapshot(snapshot), nil
 	case coredata.TrustCenterEntityType:
-		trustCenter, file, err := prb.TrustCenters.Get(ctx, id)
-		if err != nil {
-			panic(fmt.Errorf("cannot get trust center with file: %w", err))
+		action = probo.ActionTrustCenterGet
+		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
+			trustCenter, file, err := prb.TrustCenters.Get(ctx, id)
+			if err != nil {
+				return nil, err
+			}
+			return types.NewTrustCenter(trustCenter, file), nil
 		}
-
-		return types.NewTrustCenter(trustCenter, file), nil
 	case coredata.TrustCenterAccessEntityType:
-		trustCenterAccess, err := prb.TrustCenterAccesses.Get(ctx, id)
-		if err != nil {
-			panic(fmt.Errorf("cannot get trust center access: %w", err))
+		action = probo.ActionTrustCenterAccessGet
+		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
+			trustCenterAccess, err := prb.TrustCenterAccesses.Get(ctx, id)
+			if err != nil {
+				return nil, err
+			}
+			return types.NewTrustCenterAccess(trustCenterAccess), nil
 		}
-
-		return types.NewTrustCenterAccess(trustCenterAccess), nil
 	case coredata.MeetingEntityType:
-		meeting, err := prb.Meetings.Get(ctx, id)
-		if err != nil {
-			if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-				return nil, gqlutils.Conflict(err)
+		action = probo.ActionMeetingGet
+		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
+			meeting, err := prb.Meetings.Get(ctx, id)
+			if err != nil {
+				return nil, err
 			}
-
-			panic(fmt.Errorf("cannot get meeting: %w", err))
+			return types.NewMeeting(meeting), nil
 		}
-
-		return types.NewMeeting(meeting), nil
 	case coredata.RightsRequestEntityType:
-		rightsRequest, err := prb.RightsRequests.Get(ctx, id)
-		if err != nil {
-			var errNotFound *coredata.ErrRightsRequestNotFound
-			if errors.As(err, &errNotFound) {
-				return nil, gqlutils.NotFound(errNotFound)
+		action = probo.ActionRightsRequestGet
+		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
+			rightsRequest, err := prb.RightsRequests.Get(ctx, id)
+			if err != nil {
+				return nil, err
 			}
-			panic(fmt.Errorf("cannot get rights request: %w", err))
+			return types.NewRightsRequest(rightsRequest), nil
 		}
-
-		return types.NewRightsRequest(rightsRequest), nil
 	case coredata.StateOfApplicabilityEntityType:
-		stateOfApplicability, err := prb.StatesOfApplicability.Get(ctx, id)
-		if err != nil {
-			if errors.Is(err, coredata.ErrResourceNotFound) {
-				return nil, gqlutils.NotFound(err)
+		action = probo.ActionStateOfApplicabilityGet
+		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
+			stateOfApplicability, err := prb.StatesOfApplicability.Get(ctx, id)
+			if err != nil {
+				return nil, err
 			}
-			panic(fmt.Errorf("cannot get state_of_applicability: %w", err))
+			return types.NewStateOfApplicability(stateOfApplicability), nil
 		}
-
-		return types.NewStateOfApplicability(stateOfApplicability), nil
 	default:
 	}
 
-	panic(fmt.Errorf("unknown entity type: %d", id.EntityType()))
+	r.MustAuthorize(ctx, id, action)
+
+	node, err := loadNode(ctx, id)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(err)
+		}
+
+		panic(fmt.Errorf("cannot load node: %w", err))
+	}
+
+	return node, nil
 }
 
 // Viewer is the resolver for the viewer field.
