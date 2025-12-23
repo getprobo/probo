@@ -200,7 +200,7 @@ type Membership struct {
 	Profile      *MembershipProfile      `json:"profile,omitempty"`
 	Organization *Organization           `json:"organization,omitempty"`
 	Role         coredata.MembershipRole `json:"role"`
-	Permissions  []*Permission           `json:"permissions"`
+	Permissions  []*Permission           `json:"permissions,omitempty"`
 	LastSession  *Session                `json:"lastSession,omitempty"`
 }
 
@@ -277,11 +277,6 @@ type Permission struct {
 
 func (Permission) IsNode()             {}
 func (this Permission) GetID() gid.GID { return this.ID }
-
-type PermissionGrant struct {
-	Application *Application `json:"application"`
-	AccessLevel AccessLevel  `json:"accessLevel"`
-}
 
 type PersonalAPIKey struct {
 	ID            gid.GID         `json:"id"`
@@ -378,7 +373,6 @@ type SAMLConfiguration struct {
 	SpMetadataURL           string                         `json:"spMetadataUrl"`
 	TestLoginURL            string                         `json:"testLoginUrl"`
 	AttributeMappings       *SAMLAttributeMappings         `json:"attributeMappings"`
-	DefaultPermissions      []*PermissionGrant             `json:"defaultPermissions"`
 }
 
 func (SAMLConfiguration) IsNode()             {}

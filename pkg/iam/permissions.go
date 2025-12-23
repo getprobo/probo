@@ -12,9 +12,25 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// LEGACY: This is the legacy access management service that is used to authorize actions on entities.
-// It is deprecated and will be removed in the future.
-// Use the Authorizer instead.
+// LEGACY PERMISSION SYSTEM - DEPRECATED
+//
+// This file contains the legacy permission system that maps entity types and actions
+// to allowed roles. It is being replaced by a policy-based authorization system.
+//
+// Migration path:
+//   - New actions are defined in core_actions.go with namespaced format (e.g., "core:asset:get")
+//   - New policies are defined in core_policies.go and iam_policies.go
+//   - The action_mapping.go file provides a bridge between legacy and new actions
+//   - The Authorizer in authorizer.go evaluates policies using the new system
+//
+// During the migration period, the MustBeAuthorized function in resolvers will:
+//   1. Attempt to map legacy actions to new namespaced actions
+//   2. Use the new Authorizer if mapping succeeds
+//   3. Fall back to LegacyAccessManagementService for unmapped actions or API key requests
+//
+// Once migration is complete, this file and access_management_service.go will be removed.
+//
+// Deprecated: Use Authorizer.Authorize() with new namespaced actions instead.
 package iam
 
 import (

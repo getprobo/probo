@@ -12,9 +12,20 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// LEGACY: This is the legacy access management service that is used to authorize actions on entities.
-// It is deprecated and will be removed in the future.
-// Use the Authorizer instead.
+// LEGACY ACCESS MANAGEMENT SERVICE - DEPRECATED
+//
+// This service implements the legacy authorization model that uses the Permissions
+// map from permissions.go to check if a principal can perform an action.
+//
+// It is being replaced by Authorizer which uses a policy-based evaluation system.
+// During migration, this service is still used for:
+//   - API key authorization (intersection semantics between user and API key roles)
+//   - Fallback for any unmapped legacy actions
+//
+// Once all actions are migrated and API key authorization is implemented in the
+// new system, this service will be removed.
+//
+// Deprecated: Use Authorizer.Authorize() instead for new code.
 package iam
 
 import (
@@ -148,18 +159,21 @@ func (s *AccessManagementService) loadAPIKeyRoleForEntity(
 	apiKeyID gid.GID,
 	entityID gid.GID,
 ) (Role, error) {
-	var akm coredata.PersonalAPIKeyMembership
-	if err := akm.LoadRoleByAPIKeyAndEntityID(ctx, conn, scope, apiKeyID, entityID); err != nil {
-		return "", err
+	// Load the API key to get the identity
+	apiKey := &coredata.PersonalAPIKey{}
+	if err := apiKey.LoadByID(ctx, conn, apiKeyID); err != nil {
+		return "", fmt.Errorf("cannot load api key: %w", err)
 	}
 
-	// Strict API key semantics: FULL only matches RoleFull explicitly.
-	switch akm.Role {
-	case coredata.APIRoleFull:
-		return RoleFull, nil
-	default:
-		return "", fmt.Errorf("unsupported api key role: %s", akm.Role)
+	// Use the Identity's membership role for authorization
+	var m coredata.Membership
+	if err := m.LoadRoleByIdentityAndEntityID(ctx, conn, scope, apiKey.IdentityID, entityID); err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return "", err
+		}
+		return "", err
 	}
+	return Role(m.Role.String()), nil
 }
 
 // requiredRoleNamesContain is a temporary evaluator for the current in-code permissions registry

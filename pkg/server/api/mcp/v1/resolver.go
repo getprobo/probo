@@ -30,7 +30,34 @@ func (r *Resolver) MustBeAuthorized(ctx context.Context, entityID gid.GID, actio
 		credentialID = &apiKey.ID
 	}
 
-	err := r.iamSvc.LegacyAccessManagementService.Authorize(ctx, user.ID, credentialID, entityID, action)
+	// When API key is used, fall back to legacy system for intersection semantics.
+	// The legacy system handles API key role checking properly.
+	// TODO: Migrate API key authorization to new system.
+	if credentialID != nil {
+		err := r.iamSvc.LegacyAccessManagementService.Authorize(ctx, user.ID, credentialID, entityID, action)
+		if err != nil {
+			panic(err)
+		}
+		return
+	}
+
+	// Map legacy action to new namespaced action
+	newAction, ok := probo.MapLegacyAction(entityID.EntityType(), action)
+	if !ok {
+		// Fall back to legacy system for unmapped actions
+		err := r.iamSvc.LegacyAccessManagementService.Authorize(ctx, user.ID, credentialID, entityID, action)
+		if err != nil {
+			panic(err)
+		}
+		return
+	}
+
+	// Use new authorizer with mapped action
+	err := r.iamSvc.Authorizer.Authorize(ctx, iam.AuthorizeParams{
+		Principal: user.ID,
+		Resource:  entityID,
+		Action:    newAction,
+	})
 	if err != nil {
 		panic(err)
 	}

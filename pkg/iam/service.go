@@ -60,7 +60,6 @@ type (
 		Certificate                    *x509.Certificate
 		PrivateKey                     *rsa.PrivateKey
 		Logger                         *log.Logger
-		PolicySet                      *PolicySet
 		TracerProvider                 trace.TracerProvider
 		DomainVerificationInterval     time.Duration
 		DomainVerificationResolverAddr string
@@ -113,15 +112,8 @@ func NewService(
 	svc.APIKeyService = NewAPIKeyService(svc)
 	svc.LegacyAccessManagementService = NewAccessManagementService(svc)
 
-	// Use provided PolicySet or default to IAM-only policies
-	policySet := NewPolicySet()
-	if cfg.PolicySet != nil {
-		policySet = cfg.PolicySet
-	}
-
-	policySet.Merge(IAMPolicySet())
-
-	svc.Authorizer = NewAuthorizer(pgClient, policySet)
+	svc.Authorizer = NewAuthorizer(pgClient)
+	svc.Authorizer.RegisterPolicySet(IAMPolicySet())
 
 	samlService, err := saml.NewService(svc.pg, svc.encryptionKey, svc.baseURL, svc.certificate, svc.privateKey, cfg.Logger)
 	if err != nil {
