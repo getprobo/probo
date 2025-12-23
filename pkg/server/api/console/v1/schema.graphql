@@ -1809,11 +1809,9 @@ type Framework implements Node {
   updatedAt: Datetime!
 }
 
-type Control implements Node
-  @goModel(
-    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.Control"
-  ) {
+type Control implements Node {
   id: ID!
+  organization: Organization @goField(forceResolver: true)
   sectionTitle: String!
   name: String!
   description: String
