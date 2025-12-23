@@ -57,16 +57,17 @@ func (a *Authorizer) Authorize(ctx context.Context, params AuthorizeParams) erro
 
 	policies := a.buildPolicies(ctx, params)
 
+	// Pre-allocate Resource map with capacity for id + attributes
+	resourceAttrs := make(map[string]string, 1+len(params.ResourceAttributes))
+	resourceAttrs["id"] = params.Resource.String()
+	maps.Copy(resourceAttrs, params.ResourceAttributes)
+
 	conditionCtx := policy.ConditionContext{
 		Principal: map[string]string{
 			"id": params.Principal.String(),
 		},
-		Resource: map[string]string{
-			"id": params.Resource.String(),
-		},
+		Resource: resourceAttrs,
 	}
-
-	maps.Copy(conditionCtx.Resource, params.ResourceAttributes)
 
 	req := policy.AuthorizationRequest{
 		Principal:        params.Principal,
@@ -81,53 +82,44 @@ func (a *Authorizer) Authorize(ctx context.Context, params AuthorizeParams) erro
 		return nil
 	}
 
-	if result.Decision == policy.DecisionDeny {
-		return NewInsufficientPermissionsError(params.Principal, params.Resource, params.Action)
-	}
-
 	return NewInsufficientPermissionsError(params.Principal, params.Resource, params.Action)
 }
 
-// buildPolicies constructs the list of policies to evaluate.
-// This includes self-management policies and role-based policies.
 func (a *Authorizer) buildPolicies(ctx context.Context, params AuthorizeParams) []*policy.Policy {
-	// Start with self-management policies
-	policies := make([]*policy.Policy, len(a.policySet.SelfManagePolicies))
-	copy(policies, a.policySet.SelfManagePolicies)
+	selfManageCount := len(a.policySet.SelfManagePolicies)
 
-	// For organization-scoped resources, add role-based policies
+	var rolePolicies []*policy.Policy
 	if params.Resource.TenantID() != gid.NilTenant {
-		rolePolicies := a.loadRolePolicies(ctx, params.Principal, params.Resource)
-		policies = append(policies, rolePolicies...)
+		rolePolicies = a.loadRolePolicies(ctx, params.Principal, params.Resource)
 	}
+
+	totalCount := selfManageCount + len(rolePolicies)
+	policies := make([]*policy.Policy, selfManageCount, totalCount)
+	copy(policies, a.policySet.SelfManagePolicies)
+	policies = append(policies, rolePolicies...)
 
 	return policies
 }
 
-// loadRolePolicies loads the role-based policies for a user in an organization.
 func (a *Authorizer) loadRolePolicies(ctx context.Context, principalID gid.GID, resourceID gid.GID) []*policy.Policy {
-	var roleName string
+	var role coredata.MembershipRole
 
-	err := a.pg.WithConn(ctx, func(conn pg.Conn) error {
-		scope := coredata.NewScopeFromObjectID(resourceID)
-
-		var m coredata.Membership
-		if err := m.LoadRoleByIdentityAndEntityID(ctx, conn, scope, principalID, resourceID); err != nil {
+	err := a.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) (err error) {
+			scope := coredata.NewScopeFromObjectID(resourceID)
+			role, err = coredata.LoadRoleByIdentityAndEntityIDOnly(ctx, conn, scope, principalID, resourceID)
 			if errors.Is(err, coredata.ErrResourceNotFound) {
 				return nil // No membership = no role-based policies
 			}
+
 			return err
-		}
+		},
+	)
 
-		roleName = m.Role.String()
-		return nil
-	})
-
-	if err != nil || roleName == "" {
-		// On error or no role, return empty policies (fail closed)
+	if err != nil || role == "" {
 		return nil
 	}
 
-	// Get policies for the user's role
-	return a.policySet.RolePolicies[roleName]
+	return a.policySet.RolePolicies[role.String()]
 }
