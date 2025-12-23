@@ -13,8 +13,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/jackc/pgx/v5"
-	"go.probo.inc/probo/pkg/authz"
+	pgx "github.com/jackc/pgx/v5"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
@@ -6444,7 +6443,7 @@ func (r *signableDocumentResolver) Versions(ctx context.Context, obj *types.Sign
 
 // Organization is the resolver for the organization field.
 func (r *snapshotResolver) Organization(ctx context.Context, obj *types.Snapshot) (*types.Organization, error) {
-	r.MustAuthorize(ctx, obj.ID, authz.ActionGetOrganization)
+	r.MustAuthorize(ctx, obj.ID, probo.ActionOrganizationGet)
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -7318,6 +7317,7 @@ func (r *vendorResolver) SecurityOwner(ctx context.Context, obj *types.Vendor) (
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(err)
 		}
+
 		panic(fmt.Errorf("cannot get security owner: %w", err))
 	}
 
@@ -7521,34 +7521,6 @@ func (r *vendorServiceResolver) Vendor(ctx context.Context, obj *types.VendorSer
 	}
 
 	return types.NewVendor(vendor), nil
-}
-
-// Organizations is the resolver for the organizations field.
-func (r *viewerResolver) Organizations(ctx context.Context, obj *types.Viewer, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrganizationOrder) (*types.OrganizationConnection, error) {
-	identity := connect_v1.IdentityFromContext(ctx)
-
-	pageOrderBy := page.OrderBy[coredata.OrganizationOrderField]{
-		Field:     coredata.OrganizationOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.OrganizationOrderField]{
-			Field:     orderBy.Field,
-			Direction: orderBy.Direction,
-		}
-	}
-	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-
-	organizations, err := r.authzSvc.GetUserOrganizations(ctx, identity.ID, cursor)
-	if err != nil {
-		panic(fmt.Errorf("cannot list organizations for user: %w", err))
-	}
-
-	// Show all organizations the user is a member of
-	// Authentication requirements will be enforced when switching to an organization
-	page := page.NewPage(organizations, cursor)
-
-	return types.NewOrganizationConnection(page), nil
 }
 
 // SignableDocuments is the resolver for the signableDocuments field.
