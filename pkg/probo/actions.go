@@ -117,6 +117,7 @@ const (
 	ActionFrameworkImport                       = "core:framework:import"
 
 	// Control actions
+	ActionControlGet                   = "core:control:get"
 	ActionControlList                  = "core:control:list"
 	ActionControlCreate                = "core:control:create"
 	ActionControlUpdate                = "core:control:update"
@@ -176,9 +177,11 @@ const (
 	ActionDocumentVersionExport           = "core:document-version:export"
 
 	// DocumentVersionSignature actions
+	ActionDocumentVersionSignatureGet  = "core:document-version-signature:get"
 	ActionDocumentVersionSignatureList = "core:document-version-signature:list"
 
 	// Risk actions
+	ActionRiskGet                     = "core:risk:get"
 	ActionRiskList                    = "core:risk:list"
 	ActionRiskCreate                  = "core:risk:create"
 	ActionRiskUpdate                  = "core:risk:update"
@@ -191,12 +194,14 @@ const (
 	ActionRiskObligationMappingDelete = "core:risk:delete-obligation-mapping"
 
 	// Asset actions
+	ActionAssetGet    = "core:asset:get"
 	ActionAssetList   = "core:asset:list"
 	ActionAssetCreate = "core:asset:create"
 	ActionAssetUpdate = "core:asset:update"
 	ActionAssetDelete = "core:asset:delete"
 
 	// Datum actions
+	ActionDatumGet    = "core:datum:get"
 	ActionDatumList   = "core:datum:list"
 	ActionDatumCreate = "core:datum:create"
 	ActionDatumUpdate = "core:datum:update"
@@ -217,18 +222,21 @@ const (
 	ActionReportDownloadUrlGet = "core:report:get-download-url"
 
 	// Nonconformity actions
+	ActionNonconformityGet    = "core:nonconformity:get"
 	ActionNonconformityList   = "core:nonconformity:list"
 	ActionNonconformityCreate = "core:nonconformity:create"
 	ActionNonconformityUpdate = "core:nonconformity:update"
 	ActionNonconformityDelete = "core:nonconformity:delete"
 
 	// Obligation actions
+	ActionObligationGet    = "core:obligation:get"
 	ActionObligationList   = "core:obligation:list"
 	ActionObligationCreate = "core:obligation:create"
 	ActionObligationUpdate = "core:obligation:update"
 	ActionObligationDelete = "core:obligation:delete"
 
 	// ContinualImprovement actions
+	ActionContinualImprovementGet    = "core:continual-improvement:get"
 	ActionContinualImprovementList   = "core:continual-improvement:list"
 	ActionContinualImprovementCreate = "core:continual-improvement:create"
 	ActionContinualImprovementUpdate = "core:continual-improvement:update"
@@ -243,6 +251,7 @@ const (
 	ActionProcessingActivityExport = "core:processing-activity:export"
 
 	// Snapshot actions
+	ActionSnapshotGet    = "core:snapshot:get"
 	ActionSnapshotList   = "core:snapshot:list"
 	ActionSnapshotCreate = "core:snapshot:create"
 	ActionSnapshotDelete = "core:snapshot:delete"
