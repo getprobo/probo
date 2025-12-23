@@ -266,10 +266,6 @@ var entityRegistry = map[uint16]EntityInfo{
 		Model: "TransferImpactAssessment",
 		Table: "processing_activity_transfer_impact_assessments",
 	},
-	IdentityProfileEntityType: {
-		Model: "IdentityProfile",
-		Table: "iam_identity_profiles",
-	},
 	MembershipProfileEntityType: {
 		Model: "MembershipProfile",
 		Table: "iam_membership_profiles",
