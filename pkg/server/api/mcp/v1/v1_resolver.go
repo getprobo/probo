@@ -10,7 +10,6 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
 	connect_v1 "go.probo.inc/probo/pkg/server/api/connect/v1"
@@ -41,7 +40,7 @@ func (r *Resolver) ListOrganizationsTool(ctx context.Context, req *mcp.CallToolR
 // ListVendorsTool handles the listVendors tool
 // List all vendors for the organization
 func (r *Resolver) ListVendorsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListVendorsInput) (*mcp.CallToolResult, types.ListVendorsOutput, error) {
-	r.MustBeAuthorized(ctx, input.OrganizationID, iam.ActionListVendors)
+	r.MustBeAuthorized(ctx, input.OrganizationID, probo.ActionVendorList)
 
 	prb := r.ProboService(ctx, input.OrganizationID)
 
@@ -74,7 +73,7 @@ func (r *Resolver) ListVendorsTool(ctx context.Context, req *mcp.CallToolRequest
 // AddVendorTool handles the addVendor tool
 // Add a new vendor to the organization
 func (r *Resolver) AddVendorTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddVendorInput) (*mcp.CallToolResult, types.AddVendorOutput, error) {
-	r.MustBeAuthorized(ctx, input.OrganizationID, iam.ActionCreateAsset)
+	r.MustBeAuthorized(ctx, input.OrganizationID, probo.ActionVendorCreate)
 
 	svc := r.ProboService(ctx, input.OrganizationID)
 
@@ -113,12 +112,32 @@ func (r *Resolver) AddVendorTool(ctx context.Context, req *mcp.CallToolRequest, 
 // UpdateVendorTool handles the updateVendor tool
 // Update an existing vendor
 func (r *Resolver) UpdateVendorTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateVendorInput) (*mcp.CallToolResult, types.UpdateVendorOutput, error) {
+	r.MustBeAuthorized(ctx, input.ID, probo.ActionVendorUpdate)
 
-	return nil, types.UpdateVendorOutput{}, fmt.Errorf("updateVendor not implemented")
+	svc := r.ProboService(ctx, input.ID)
+
+	var description **string
+	if input.Description != nil {
+		description = &input.Description
+	}
+
+	vendor, err := svc.Vendors.Update(
+		ctx,
+		probo.UpdateVendorRequest{
+			ID:          input.ID,
+			Name:        input.Name,
+			Description: description,
+		},
+	)
+	if err != nil {
+		return nil, types.UpdateVendorOutput{}, fmt.Errorf("failed to update vendor: %w", err)
+	}
+
+	return nil, types.NewUpdateVendorOutput(vendor), nil
 }
 
 func (r *Resolver) ListPeopleTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListPeopleInput) (*mcp.CallToolResult, types.ListPeopleOutput, error) {
-	r.MustBeAuthorized(ctx, input.OrganizationID, iam.ActionListPeople)
+	r.MustBeAuthorized(ctx, input.OrganizationID, probo.ActionPeopleList)
 
 	prb := r.ProboService(ctx, input.OrganizationID)
 
@@ -149,7 +168,7 @@ func (r *Resolver) ListPeopleTool(ctx context.Context, req *mcp.CallToolRequest,
 }
 
 func (r *Resolver) GetPeopleTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetPeopleInput) (*mcp.CallToolResult, types.GetPeopleOutput, error) {
-	r.MustBeAuthorized(ctx, input.ID, iam.ActionGet)
+	r.MustBeAuthorized(ctx, input.ID, probo.ActionPeopleGet)
 
 	prb := r.ProboService(ctx, input.ID)
 
@@ -164,7 +183,7 @@ func (r *Resolver) GetPeopleTool(ctx context.Context, req *mcp.CallToolRequest, 
 }
 
 func (r *Resolver) AddPeopleTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddPeopleInput) (*mcp.CallToolResult, types.AddPeopleOutput, error) {
-	r.MustBeAuthorized(ctx, input.OrganizationID, iam.ActionCreatePeople)
+	r.MustBeAuthorized(ctx, input.OrganizationID, probo.ActionPeopleCreate)
 
 	svc := r.ProboService(ctx, input.OrganizationID)
 
@@ -191,7 +210,7 @@ func (r *Resolver) AddPeopleTool(ctx context.Context, req *mcp.CallToolRequest, 
 }
 
 func (r *Resolver) UpdatePeopleTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdatePeopleInput) (*mcp.CallToolResult, types.UpdatePeopleOutput, error) {
-	r.MustBeAuthorized(ctx, input.ID, iam.ActionUpdatePeople)
+	r.MustBeAuthorized(ctx, input.ID, probo.ActionPeopleUpdate)
 
 	svc := r.ProboService(ctx, input.ID)
 
@@ -218,7 +237,7 @@ func (r *Resolver) UpdatePeopleTool(ctx context.Context, req *mcp.CallToolReques
 }
 
 func (r *Resolver) ListRisksTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListRisksInput) (*mcp.CallToolResult, types.ListRisksOutput, error) {
-	r.MustBeAuthorized(ctx, input.OrganizationID, iam.ActionListRisks)
+	r.MustBeAuthorized(ctx, input.OrganizationID, probo.ActionRiskList)
 
 	prb := r.ProboService(ctx, input.OrganizationID)
 
@@ -249,7 +268,7 @@ func (r *Resolver) ListRisksTool(ctx context.Context, req *mcp.CallToolRequest, 
 }
 
 func (r *Resolver) GetRiskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetRiskInput) (*mcp.CallToolResult, types.GetRiskOutput, error) {
-	r.MustBeAuthorized(ctx, input.ID, iam.ActionGet)
+	r.MustBeAuthorized(ctx, input.ID, probo.ActionRiskGet)
 
 	prb := r.ProboService(ctx, input.ID)
 
@@ -264,7 +283,7 @@ func (r *Resolver) GetRiskTool(ctx context.Context, req *mcp.CallToolRequest, in
 }
 
 func (r *Resolver) AddRiskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddRiskInput) (*mcp.CallToolResult, types.AddRiskOutput, error) {
-	r.MustBeAuthorized(ctx, input.OrganizationID, iam.ActionCreateRisk)
+	r.MustBeAuthorized(ctx, input.OrganizationID, probo.ActionRiskCreate)
 
 	svc := r.ProboService(ctx, input.OrganizationID)
 
@@ -292,7 +311,7 @@ func (r *Resolver) AddRiskTool(ctx context.Context, req *mcp.CallToolRequest, in
 }
 
 func (r *Resolver) UpdateRiskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateRiskInput) (*mcp.CallToolResult, types.UpdateRiskOutput, error) {
-	r.MustBeAuthorized(ctx, input.ID, iam.ActionUpdateRisk)
+	r.MustBeAuthorized(ctx, input.ID, probo.ActionRiskUpdate)
 
 	svc := r.ProboService(ctx, input.ID)
 
@@ -321,7 +340,7 @@ func (r *Resolver) UpdateRiskTool(ctx context.Context, req *mcp.CallToolRequest,
 }
 
 func (r *Resolver) ListMeasuresTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListMeasuresInput) (*mcp.CallToolResult, types.ListMeasuresOutput, error) {
-	r.MustBeAuthorized(ctx, input.OrganizationID, iam.ActionListMeasures)
+	r.MustBeAuthorized(ctx, input.OrganizationID, probo.ActionMeasureList)
 
 	prb := r.ProboService(ctx, input.OrganizationID)
 
@@ -352,7 +371,7 @@ func (r *Resolver) ListMeasuresTool(ctx context.Context, req *mcp.CallToolReques
 }
 
 func (r *Resolver) GetMeasureTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetMeasureInput) (*mcp.CallToolResult, types.GetMeasureOutput, error) {
-	r.MustBeAuthorized(ctx, input.ID, iam.ActionGet)
+	r.MustBeAuthorized(ctx, input.ID, probo.ActionMeasureGet)
 
 	prb := r.ProboService(ctx, input.ID)
 
@@ -367,7 +386,7 @@ func (r *Resolver) GetMeasureTool(ctx context.Context, req *mcp.CallToolRequest,
 }
 
 func (r *Resolver) AddMeasureTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddMeasureInput) (*mcp.CallToolResult, types.AddMeasureOutput, error) {
-	r.MustBeAuthorized(ctx, input.OrganizationID, iam.ActionCreateMeasure)
+	r.MustBeAuthorized(ctx, input.OrganizationID, probo.ActionMeasureCreate)
 
 	svc := r.ProboService(ctx, input.OrganizationID)
 
@@ -390,7 +409,7 @@ func (r *Resolver) AddMeasureTool(ctx context.Context, req *mcp.CallToolRequest,
 }
 
 func (r *Resolver) UpdateMeasureTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateMeasureInput) (*mcp.CallToolResult, types.UpdateMeasureOutput, error) {
-	r.MustBeAuthorized(ctx, input.ID, iam.ActionUpdateMeasure)
+	r.MustBeAuthorized(ctx, input.ID, probo.ActionMeasureUpdate)
 
 	svc := r.ProboService(ctx, input.ID)
 
@@ -414,7 +433,7 @@ func (r *Resolver) UpdateMeasureTool(ctx context.Context, req *mcp.CallToolReque
 }
 
 func (r *Resolver) ListFrameworksTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListFrameworksInput) (*mcp.CallToolResult, types.ListFrameworksOutput, error) {
-	r.MustBeAuthorized(ctx, input.OrganizationID, iam.ActionListFrameworks)
+	r.MustBeAuthorized(ctx, input.OrganizationID, probo.ActionFrameworkList)
 
 	prb := r.ProboService(ctx, input.OrganizationID)
 
@@ -440,7 +459,7 @@ func (r *Resolver) ListFrameworksTool(ctx context.Context, req *mcp.CallToolRequ
 }
 
 func (r *Resolver) GetFrameworkTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetFrameworkInput) (*mcp.CallToolResult, types.GetFrameworkOutput, error) {
-	r.MustBeAuthorized(ctx, input.ID, iam.ActionGet)
+	r.MustBeAuthorized(ctx, input.ID, probo.ActionFrameworkGet)
 
 	prb := r.ProboService(ctx, input.ID)
 
@@ -455,7 +474,7 @@ func (r *Resolver) GetFrameworkTool(ctx context.Context, req *mcp.CallToolReques
 }
 
 func (r *Resolver) AddFrameworkTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddFrameworkInput) (*mcp.CallToolResult, types.AddFrameworkOutput, error) {
-	r.MustBeAuthorized(ctx, input.OrganizationID, iam.ActionCreateFramework)
+	r.MustBeAuthorized(ctx, input.OrganizationID, probo.ActionFrameworkCreate)
 
 	svc := r.ProboService(ctx, input.OrganizationID)
 
@@ -477,7 +496,7 @@ func (r *Resolver) AddFrameworkTool(ctx context.Context, req *mcp.CallToolReques
 }
 
 func (r *Resolver) UpdateFrameworkTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateFrameworkInput) (*mcp.CallToolResult, types.UpdateFrameworkOutput, error) {
-	r.MustBeAuthorized(ctx, input.ID, iam.ActionUpdateFramework)
+	r.MustBeAuthorized(ctx, input.ID, probo.ActionFrameworkUpdate)
 
 	svc := r.ProboService(ctx, input.ID)
 
@@ -499,7 +518,7 @@ func (r *Resolver) UpdateFrameworkTool(ctx context.Context, req *mcp.CallToolReq
 }
 
 func (r *Resolver) ListAssetsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListAssetsInput) (*mcp.CallToolResult, types.ListAssetsOutput, error) {
-	r.MustBeAuthorized(ctx, input.OrganizationID, iam.ActionListAssets)
+	r.MustBeAuthorized(ctx, input.OrganizationID, probo.ActionAssetList)
 
 	prb := r.ProboService(ctx, input.OrganizationID)
 
@@ -530,7 +549,7 @@ func (r *Resolver) ListAssetsTool(ctx context.Context, req *mcp.CallToolRequest,
 }
 
 func (r *Resolver) GetAssetTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetAssetInput) (*mcp.CallToolResult, types.GetAssetOutput, error) {
-	r.MustBeAuthorized(ctx, input.ID, iam.ActionGet)
+	r.MustBeAuthorized(ctx, input.ID, probo.ActionAssetGet)
 
 	prb := r.ProboService(ctx, input.ID)
 
@@ -545,7 +564,7 @@ func (r *Resolver) GetAssetTool(ctx context.Context, req *mcp.CallToolRequest, i
 }
 
 func (r *Resolver) AddAssetTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddAssetInput) (*mcp.CallToolResult, types.AddAssetOutput, error) {
-	r.MustBeAuthorized(ctx, input.OrganizationID, iam.ActionCreateAsset)
+	r.MustBeAuthorized(ctx, input.OrganizationID, probo.ActionAssetCreate)
 
 	svc := r.ProboService(ctx, input.OrganizationID)
 
@@ -571,7 +590,7 @@ func (r *Resolver) AddAssetTool(ctx context.Context, req *mcp.CallToolRequest, i
 }
 
 func (r *Resolver) UpdateAssetTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateAssetInput) (*mcp.CallToolResult, types.UpdateAssetOutput, error) {
-	r.MustBeAuthorized(ctx, input.ID, iam.ActionUpdateAsset)
+	r.MustBeAuthorized(ctx, input.ID, probo.ActionAssetUpdate)
 
 	svc := r.ProboService(ctx, input.ID)
 
@@ -597,7 +616,7 @@ func (r *Resolver) UpdateAssetTool(ctx context.Context, req *mcp.CallToolRequest
 }
 
 func (r *Resolver) ListDataTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListDataInput) (*mcp.CallToolResult, types.ListDataOutput, error) {
-	r.MustBeAuthorized(ctx, input.OrganizationID, iam.ActionListData)
+	r.MustBeAuthorized(ctx, input.OrganizationID, probo.ActionDatumList)
 
 	prb := r.ProboService(ctx, input.OrganizationID)
 
@@ -628,7 +647,7 @@ func (r *Resolver) ListDataTool(ctx context.Context, req *mcp.CallToolRequest, i
 }
 
 func (r *Resolver) GetDatumTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetDatumInput) (*mcp.CallToolResult, types.GetDatumOutput, error) {
-	r.MustBeAuthorized(ctx, input.ID, iam.ActionGet)
+	r.MustBeAuthorized(ctx, input.ID, probo.ActionDatumGet)
 
 	prb := r.ProboService(ctx, input.ID)
 
@@ -643,7 +662,7 @@ func (r *Resolver) GetDatumTool(ctx context.Context, req *mcp.CallToolRequest, i
 }
 
 func (r *Resolver) AddDatumTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddDatumInput) (*mcp.CallToolResult, types.AddDatumOutput, error) {
-	r.MustBeAuthorized(ctx, input.OrganizationID, iam.ActionCreateDatum)
+	r.MustBeAuthorized(ctx, input.OrganizationID, probo.ActionDatumCreate)
 
 	svc := r.ProboService(ctx, input.OrganizationID)
 
@@ -667,7 +686,7 @@ func (r *Resolver) AddDatumTool(ctx context.Context, req *mcp.CallToolRequest, i
 }
 
 func (r *Resolver) UpdateDatumTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateDatumInput) (*mcp.CallToolResult, types.UpdateDatumOutput, error) {
-	r.MustBeAuthorized(ctx, input.ID, iam.ActionUpdateDatum)
+	r.MustBeAuthorized(ctx, input.ID, probo.ActionDatumUpdate)
 
 	svc := r.ProboService(ctx, input.ID)
 
@@ -691,7 +710,7 @@ func (r *Resolver) UpdateDatumTool(ctx context.Context, req *mcp.CallToolRequest
 }
 
 func (r *Resolver) ListNonconformitiesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListNonconformitiesInput) (*mcp.CallToolResult, types.ListNonconformitiesOutput, error) {
-	r.MustBeAuthorized(ctx, input.OrganizationID, iam.ActionListNonconformities)
+	r.MustBeAuthorized(ctx, input.OrganizationID, probo.ActionNonconformityList)
 
 	prb := r.ProboService(ctx, input.OrganizationID)
 
@@ -722,7 +741,7 @@ func (r *Resolver) ListNonconformitiesTool(ctx context.Context, req *mcp.CallToo
 }
 
 func (r *Resolver) GetNonconformityTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetNonconformityInput) (*mcp.CallToolResult, types.GetNonconformityOutput, error) {
-	r.MustBeAuthorized(ctx, input.ID, iam.ActionGet)
+	r.MustBeAuthorized(ctx, input.ID, probo.ActionNonconformityGet)
 
 	prb := r.ProboService(ctx, input.ID)
 
@@ -737,7 +756,7 @@ func (r *Resolver) GetNonconformityTool(ctx context.Context, req *mcp.CallToolRe
 }
 
 func (r *Resolver) AddNonconformityTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddNonconformityInput) (*mcp.CallToolResult, types.AddNonconformityOutput, error) {
-	r.MustBeAuthorized(ctx, input.OrganizationID, iam.ActionCreateNonconformity)
+	r.MustBeAuthorized(ctx, input.OrganizationID, probo.ActionNonconformityCreate)
 
 	svc := r.ProboService(ctx, input.OrganizationID)
 
@@ -767,7 +786,7 @@ func (r *Resolver) AddNonconformityTool(ctx context.Context, req *mcp.CallToolRe
 }
 
 func (r *Resolver) UpdateNonconformityTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateNonconformityInput) (*mcp.CallToolResult, types.UpdateNonconformityOutput, error) {
-	r.MustBeAuthorized(ctx, input.ID, iam.ActionUpdateNonconformity)
+	r.MustBeAuthorized(ctx, input.ID, probo.ActionNonconformityUpdate)
 
 	svc := r.ProboService(ctx, input.ID)
 
@@ -797,7 +816,7 @@ func (r *Resolver) UpdateNonconformityTool(ctx context.Context, req *mcp.CallToo
 }
 
 func (r *Resolver) ListObligationsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListObligationsInput) (*mcp.CallToolResult, types.ListObligationsOutput, error) {
-	r.MustBeAuthorized(ctx, input.OrganizationID, iam.ActionListObligations)
+	r.MustBeAuthorized(ctx, input.OrganizationID, probo.ActionObligationList)
 
 	prb := r.ProboService(ctx, input.OrganizationID)
 
@@ -828,7 +847,7 @@ func (r *Resolver) ListObligationsTool(ctx context.Context, req *mcp.CallToolReq
 }
 
 func (r *Resolver) GetObligationTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetObligationInput) (*mcp.CallToolResult, types.GetObligationOutput, error) {
-	r.MustBeAuthorized(ctx, input.ID, iam.ActionGet)
+	r.MustBeAuthorized(ctx, input.ID, probo.ActionObligationGet)
 
 	prb := r.ProboService(ctx, input.ID)
 
@@ -843,7 +862,7 @@ func (r *Resolver) GetObligationTool(ctx context.Context, req *mcp.CallToolReque
 }
 
 func (r *Resolver) AddObligationTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddObligationInput) (*mcp.CallToolResult, types.AddObligationOutput, error) {
-	r.MustBeAuthorized(ctx, input.OrganizationID, iam.ActionCreateObligation)
+	r.MustBeAuthorized(ctx, input.OrganizationID, probo.ActionObligationCreate)
 
 	svc := r.ProboService(ctx, input.OrganizationID)
 
@@ -872,7 +891,7 @@ func (r *Resolver) AddObligationTool(ctx context.Context, req *mcp.CallToolReque
 }
 
 func (r *Resolver) UpdateObligationTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateObligationInput) (*mcp.CallToolResult, types.UpdateObligationOutput, error) {
-	r.MustBeAuthorized(ctx, input.ID, iam.ActionUpdateObligation)
+	r.MustBeAuthorized(ctx, input.ID, probo.ActionObligationUpdate)
 
 	svc := r.ProboService(ctx, input.ID)
 
@@ -901,7 +920,7 @@ func (r *Resolver) UpdateObligationTool(ctx context.Context, req *mcp.CallToolRe
 }
 
 func (r *Resolver) ListContinualImprovementsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListContinualImprovementsInput) (*mcp.CallToolResult, types.ListContinualImprovementsOutput, error) {
-	r.MustBeAuthorized(ctx, input.OrganizationID, iam.ActionListContinualImprovements)
+	r.MustBeAuthorized(ctx, input.OrganizationID, probo.ActionContinualImprovementList)
 
 	prb := r.ProboService(ctx, input.OrganizationID)
 
@@ -932,7 +951,7 @@ func (r *Resolver) ListContinualImprovementsTool(ctx context.Context, req *mcp.C
 }
 
 func (r *Resolver) GetContinualImprovementTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetContinualImprovementInput) (*mcp.CallToolResult, types.GetContinualImprovementOutput, error) {
-	r.MustBeAuthorized(ctx, input.ID, iam.ActionGet)
+	r.MustBeAuthorized(ctx, input.ID, probo.ActionContinualImprovementGet)
 
 	prb := r.ProboService(ctx, input.ID)
 
@@ -947,7 +966,7 @@ func (r *Resolver) GetContinualImprovementTool(ctx context.Context, req *mcp.Cal
 }
 
 func (r *Resolver) AddContinualImprovementTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddContinualImprovementInput) (*mcp.CallToolResult, types.AddContinualImprovementOutput, error) {
-	r.MustBeAuthorized(ctx, input.OrganizationID, iam.ActionCreateContinualImprovement)
+	r.MustBeAuthorized(ctx, input.OrganizationID, probo.ActionContinualImprovementCreate)
 
 	svc := r.ProboService(ctx, input.OrganizationID)
 
@@ -974,7 +993,7 @@ func (r *Resolver) AddContinualImprovementTool(ctx context.Context, req *mcp.Cal
 }
 
 func (r *Resolver) UpdateContinualImprovementTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateContinualImprovementInput) (*mcp.CallToolResult, types.UpdateContinualImprovementOutput, error) {
-	r.MustBeAuthorized(ctx, input.ID, iam.ActionUpdateContinualImprovement)
+	r.MustBeAuthorized(ctx, input.ID, probo.ActionContinualImprovementUpdate)
 
 	svc := r.ProboService(ctx, input.ID)
 
@@ -1001,7 +1020,7 @@ func (r *Resolver) UpdateContinualImprovementTool(ctx context.Context, req *mcp.
 }
 
 func (r *Resolver) ListAuditsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListAuditsInput) (*mcp.CallToolResult, types.ListAuditsOutput, error) {
-	r.MustBeAuthorized(ctx, input.OrganizationID, iam.ActionListAudits)
+	r.MustBeAuthorized(ctx, input.OrganizationID, probo.ActionAuditList)
 
 	prb := r.ProboService(ctx, input.OrganizationID)
 
@@ -1027,7 +1046,7 @@ func (r *Resolver) ListAuditsTool(ctx context.Context, req *mcp.CallToolRequest,
 }
 
 func (r *Resolver) GetAuditTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetAuditInput) (*mcp.CallToolResult, types.GetAuditOutput, error) {
-	r.MustBeAuthorized(ctx, input.ID, iam.ActionGet)
+	r.MustBeAuthorized(ctx, input.ID, probo.ActionAuditGet)
 
 	prb := r.ProboService(ctx, input.ID)
 
@@ -1042,7 +1061,7 @@ func (r *Resolver) GetAuditTool(ctx context.Context, req *mcp.CallToolRequest, i
 }
 
 func (r *Resolver) AddAuditTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddAuditInput) (*mcp.CallToolResult, types.AddAuditOutput, error) {
-	r.MustBeAuthorized(ctx, input.OrganizationID, iam.ActionCreateAudit)
+	r.MustBeAuthorized(ctx, input.OrganizationID, probo.ActionAuditCreate)
 
 	svc := r.ProboService(ctx, input.OrganizationID)
 
@@ -1067,7 +1086,7 @@ func (r *Resolver) AddAuditTool(ctx context.Context, req *mcp.CallToolRequest, i
 }
 
 func (r *Resolver) UpdateAuditTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateAuditInput) (*mcp.CallToolResult, types.UpdateAuditOutput, error) {
-	r.MustBeAuthorized(ctx, input.ID, iam.ActionUpdateAudit)
+	r.MustBeAuthorized(ctx, input.ID, probo.ActionAuditUpdate)
 
 	svc := r.ProboService(ctx, input.ID)
 
@@ -1092,7 +1111,7 @@ func (r *Resolver) UpdateAuditTool(ctx context.Context, req *mcp.CallToolRequest
 }
 
 func (r *Resolver) ListControlsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListControlsInput) (*mcp.CallToolResult, types.ListControlsOutput, error) {
-	r.MustBeAuthorized(ctx, input.OrganizationID, iam.ActionListControls)
+	r.MustBeAuthorized(ctx, input.OrganizationID, probo.ActionControlList)
 
 	prb := r.ProboService(ctx, input.OrganizationID)
 
@@ -1123,7 +1142,7 @@ func (r *Resolver) ListControlsTool(ctx context.Context, req *mcp.CallToolReques
 }
 
 func (r *Resolver) GetControlTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetControlInput) (*mcp.CallToolResult, types.GetControlOutput, error) {
-	r.MustBeAuthorized(ctx, input.ID, iam.ActionGet)
+	r.MustBeAuthorized(ctx, input.ID, probo.ActionControlGet)
 
 	prb := r.ProboService(ctx, input.ID)
 
@@ -1138,7 +1157,7 @@ func (r *Resolver) GetControlTool(ctx context.Context, req *mcp.CallToolRequest,
 }
 
 func (r *Resolver) AddControlTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddControlInput) (*mcp.CallToolResult, types.AddControlOutput, error) {
-	r.MustBeAuthorized(ctx, input.FrameworkID, iam.ActionCreateControl)
+	r.MustBeAuthorized(ctx, input.FrameworkID, probo.ActionControlCreate)
 
 	svc := r.ProboService(ctx, input.FrameworkID)
 
@@ -1163,7 +1182,7 @@ func (r *Resolver) AddControlTool(ctx context.Context, req *mcp.CallToolRequest,
 }
 
 func (r *Resolver) UpdateControlTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateControlInput) (*mcp.CallToolResult, types.UpdateControlOutput, error) {
-	r.MustBeAuthorized(ctx, input.ID, iam.ActionUpdateControl)
+	r.MustBeAuthorized(ctx, input.ID, probo.ActionControlUpdate)
 
 	svc := r.ProboService(ctx, input.ID)
 
@@ -1188,7 +1207,7 @@ func (r *Resolver) UpdateControlTool(ctx context.Context, req *mcp.CallToolReque
 }
 
 func (r *Resolver) LinkControlMeasureTool(ctx context.Context, req *mcp.CallToolRequest, input *types.LinkControlMeasureInput) (*mcp.CallToolResult, types.LinkControlMeasureOutput, error) {
-	r.MustBeAuthorized(ctx, input.ControlID, iam.ActionCreateControlMeasureMapping)
+	r.MustBeAuthorized(ctx, input.ControlID, probo.ActionControlMeasureMappingCreate)
 
 	svc := r.ProboService(ctx, input.ControlID)
 
@@ -1201,7 +1220,7 @@ func (r *Resolver) LinkControlMeasureTool(ctx context.Context, req *mcp.CallTool
 }
 
 func (r *Resolver) UnlinkControlMeasureTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UnlinkControlMeasureInput) (*mcp.CallToolResult, types.UnlinkControlMeasureOutput, error) {
-	r.MustBeAuthorized(ctx, input.ControlID, iam.ActionDeleteControlMeasureMapping)
+	r.MustBeAuthorized(ctx, input.ControlID, probo.ActionControlMeasureMappingDelete)
 
 	svc := r.ProboService(ctx, input.ControlID)
 
@@ -1214,7 +1233,7 @@ func (r *Resolver) UnlinkControlMeasureTool(ctx context.Context, req *mcp.CallTo
 }
 
 func (r *Resolver) LinkControlDocumentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.LinkControlDocumentInput) (*mcp.CallToolResult, types.LinkControlDocumentOutput, error) {
-	r.MustBeAuthorized(ctx, input.ControlID, iam.ActionCreateControlDocumentMapping)
+	r.MustBeAuthorized(ctx, input.ControlID, probo.ActionControlDocumentMappingCreate)
 
 	svc := r.ProboService(ctx, input.ControlID)
 
@@ -1227,7 +1246,7 @@ func (r *Resolver) LinkControlDocumentTool(ctx context.Context, req *mcp.CallToo
 }
 
 func (r *Resolver) UnlinkControlDocumentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UnlinkControlDocumentInput) (*mcp.CallToolResult, types.UnlinkControlDocumentOutput, error) {
-	r.MustBeAuthorized(ctx, input.ControlID, iam.ActionDeleteControlDocumentMapping)
+	r.MustBeAuthorized(ctx, input.ControlID, probo.ActionControlDocumentMappingDelete)
 
 	svc := r.ProboService(ctx, input.ControlID)
 
@@ -1240,7 +1259,7 @@ func (r *Resolver) UnlinkControlDocumentTool(ctx context.Context, req *mcp.CallT
 }
 
 func (r *Resolver) LinkControlAuditTool(ctx context.Context, req *mcp.CallToolRequest, input *types.LinkControlAuditInput) (*mcp.CallToolResult, types.LinkControlAuditOutput, error) {
-	r.MustBeAuthorized(ctx, input.ControlID, iam.ActionCreateControlAuditMapping)
+	r.MustBeAuthorized(ctx, input.ControlID, probo.ActionControlAuditMappingCreate)
 
 	svc := r.ProboService(ctx, input.ControlID)
 
@@ -1253,7 +1272,7 @@ func (r *Resolver) LinkControlAuditTool(ctx context.Context, req *mcp.CallToolRe
 }
 
 func (r *Resolver) UnlinkControlAuditTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UnlinkControlAuditInput) (*mcp.CallToolResult, types.UnlinkControlAuditOutput, error) {
-	r.MustBeAuthorized(ctx, input.ControlID, iam.ActionDeleteControlAuditMapping)
+	r.MustBeAuthorized(ctx, input.ControlID, probo.ActionControlAuditMappingDelete)
 
 	svc := r.ProboService(ctx, input.ControlID)
 
@@ -1266,7 +1285,7 @@ func (r *Resolver) UnlinkControlAuditTool(ctx context.Context, req *mcp.CallTool
 }
 
 func (r *Resolver) LinkControlSnapshotTool(ctx context.Context, req *mcp.CallToolRequest, input *types.LinkControlSnapshotInput) (*mcp.CallToolResult, types.LinkControlSnapshotOutput, error) {
-	r.MustBeAuthorized(ctx, input.ControlID, iam.ActionCreateControlSnapshotMapping)
+	r.MustBeAuthorized(ctx, input.ControlID, probo.ActionControlSnapshotMappingCreate)
 
 	svc := r.ProboService(ctx, input.ControlID)
 
@@ -1279,7 +1298,7 @@ func (r *Resolver) LinkControlSnapshotTool(ctx context.Context, req *mcp.CallToo
 }
 
 func (r *Resolver) UnlinkControlSnapshotTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UnlinkControlSnapshotInput) (*mcp.CallToolResult, types.UnlinkControlSnapshotOutput, error) {
-	r.MustBeAuthorized(ctx, input.ControlID, iam.ActionDeleteControlSnapshotMapping)
+	r.MustBeAuthorized(ctx, input.ControlID, probo.ActionControlSnapshotMappingDelete)
 
 	svc := r.ProboService(ctx, input.ControlID)
 
@@ -1292,7 +1311,7 @@ func (r *Resolver) UnlinkControlSnapshotTool(ctx context.Context, req *mcp.CallT
 }
 
 func (r *Resolver) ListTasksTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListTasksInput) (*mcp.CallToolResult, types.ListTasksOutput, error) {
-	r.MustBeAuthorized(ctx, input.OrganizationID, iam.ActionListTasks)
+	r.MustBeAuthorized(ctx, input.OrganizationID, probo.ActionTaskList)
 
 	prb := r.ProboService(ctx, input.OrganizationID)
 
@@ -1318,7 +1337,7 @@ func (r *Resolver) ListTasksTool(ctx context.Context, req *mcp.CallToolRequest, 
 }
 
 func (r *Resolver) GetTaskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetTaskInput) (*mcp.CallToolResult, types.GetTaskOutput, error) {
-	r.MustBeAuthorized(ctx, input.ID, iam.ActionGet)
+	r.MustBeAuthorized(ctx, input.ID, probo.ActionTaskGet)
 
 	prb := r.ProboService(ctx, input.ID)
 
@@ -1332,7 +1351,7 @@ func (r *Resolver) GetTaskTool(ctx context.Context, req *mcp.CallToolRequest, in
 }
 
 func (r *Resolver) AddTaskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddTaskInput) (*mcp.CallToolResult, types.AddTaskOutput, error) {
-	r.MustBeAuthorized(ctx, input.OrganizationID, iam.ActionCreateTask)
+	r.MustBeAuthorized(ctx, input.OrganizationID, probo.ActionTaskCreate)
 
 	svc := r.ProboService(ctx, input.OrganizationID)
 
@@ -1356,7 +1375,7 @@ func (r *Resolver) AddTaskTool(ctx context.Context, req *mcp.CallToolRequest, in
 }
 
 func (r *Resolver) UpdateTaskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateTaskInput) (*mcp.CallToolResult, types.UpdateTaskOutput, error) {
-	r.MustBeAuthorized(ctx, input.ID, iam.ActionUpdateTask)
+	r.MustBeAuthorized(ctx, input.ID, probo.ActionTaskUpdate)
 
 	svc := r.ProboService(ctx, input.ID)
 
@@ -1380,7 +1399,7 @@ func (r *Resolver) UpdateTaskTool(ctx context.Context, req *mcp.CallToolRequest,
 }
 
 func (r *Resolver) AssignTaskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AssignTaskInput) (*mcp.CallToolResult, types.AssignTaskOutput, error) {
-	r.MustBeAuthorized(ctx, input.ID, iam.ActionAssignTask)
+	r.MustBeAuthorized(ctx, input.ID, probo.ActionTaskAssign)
 
 	svc := r.ProboService(ctx, input.ID)
 
@@ -1395,7 +1414,7 @@ func (r *Resolver) AssignTaskTool(ctx context.Context, req *mcp.CallToolRequest,
 }
 
 func (r *Resolver) UnassignTaskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UnassignTaskInput) (*mcp.CallToolResult, types.UnassignTaskOutput, error) {
-	r.MustBeAuthorized(ctx, input.ID, iam.ActionUnassignTask)
+	r.MustBeAuthorized(ctx, input.ID, probo.ActionTaskUnassign)
 
 	svc := r.ProboService(ctx, input.ID)
 
@@ -1409,7 +1428,7 @@ func (r *Resolver) UnassignTaskTool(ctx context.Context, req *mcp.CallToolReques
 }
 
 func (r *Resolver) ListSnapshotsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListSnapshotsInput) (*mcp.CallToolResult, types.ListSnapshotsOutput, error) {
-	r.MustBeAuthorized(ctx, input.OrganizationID, iam.ActionListSnapshots)
+	r.MustBeAuthorized(ctx, input.OrganizationID, probo.ActionSnapshotList)
 
 	prb := r.ProboService(ctx, input.OrganizationID)
 
@@ -1435,7 +1454,7 @@ func (r *Resolver) ListSnapshotsTool(ctx context.Context, req *mcp.CallToolReque
 }
 
 func (r *Resolver) GetSnapshotTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetSnapshotInput) (*mcp.CallToolResult, types.GetSnapshotOutput, error) {
-	r.MustBeAuthorized(ctx, input.ID, iam.ActionGet)
+	r.MustBeAuthorized(ctx, input.ID, probo.ActionSnapshotGet)
 
 	prb := r.ProboService(ctx, input.ID)
 
@@ -1449,7 +1468,7 @@ func (r *Resolver) GetSnapshotTool(ctx context.Context, req *mcp.CallToolRequest
 }
 
 func (r *Resolver) TakeSnapshotTool(ctx context.Context, req *mcp.CallToolRequest, input *types.TakeSnapshotInput) (*mcp.CallToolResult, types.TakeSnapshotOutput, error) {
-	r.MustBeAuthorized(ctx, input.OrganizationID, iam.ActionCreateSnapshot)
+	r.MustBeAuthorized(ctx, input.OrganizationID, probo.ActionSnapshotCreate)
 
 	prb := r.ProboService(ctx, input.OrganizationID)
 
@@ -1471,7 +1490,7 @@ func (r *Resolver) TakeSnapshotTool(ctx context.Context, req *mcp.CallToolReques
 }
 
 func (r *Resolver) ListDocumentsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListDocumentsInput) (*mcp.CallToolResult, types.ListDocumentsOutput, error) {
-	r.MustBeAuthorized(ctx, input.OrganizationID, iam.ActionListDocuments)
+	r.MustBeAuthorized(ctx, input.OrganizationID, probo.ActionDocumentList)
 
 	prb := r.ProboService(ctx, input.OrganizationID)
 
@@ -1507,7 +1526,7 @@ func (r *Resolver) ListDocumentsTool(ctx context.Context, req *mcp.CallToolReque
 }
 
 func (r *Resolver) GetDocumentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetDocumentInput) (*mcp.CallToolResult, types.GetDocumentOutput, error) {
-	r.MustBeAuthorized(ctx, input.ID, iam.ActionGet)
+	r.MustBeAuthorized(ctx, input.ID, probo.ActionDocumentGet)
 
 	prb := r.ProboService(ctx, input.ID)
 
@@ -1522,7 +1541,7 @@ func (r *Resolver) GetDocumentTool(ctx context.Context, req *mcp.CallToolRequest
 }
 
 func (r *Resolver) AddDocumentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddDocumentInput) (*mcp.CallToolResult, types.AddDocumentOutput, error) {
-	r.MustBeAuthorized(ctx, input.OrganizationID, iam.ActionCreateDocument)
+	r.MustBeAuthorized(ctx, input.OrganizationID, probo.ActionDocumentCreate)
 
 	svc := r.ProboService(ctx, input.OrganizationID)
 
@@ -1551,7 +1570,7 @@ func (r *Resolver) AddDocumentTool(ctx context.Context, req *mcp.CallToolRequest
 }
 
 func (r *Resolver) UpdateDocumentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateDocumentInput) (*mcp.CallToolResult, types.UpdateDocumentOutput, error) {
-	r.MustBeAuthorized(ctx, input.ID, iam.ActionUpdateDocument)
+	r.MustBeAuthorized(ctx, input.ID, probo.ActionDocumentUpdate)
 
 	svc := r.ProboService(ctx, input.ID)
 
@@ -1576,7 +1595,7 @@ func (r *Resolver) UpdateDocumentTool(ctx context.Context, req *mcp.CallToolRequ
 }
 
 func (r *Resolver) ListDocumentVersionsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListDocumentVersionsInput) (*mcp.CallToolResult, types.ListDocumentVersionsOutput, error) {
-	r.MustBeAuthorized(ctx, input.DocumentID, iam.ActionDocumentVersion)
+	r.MustBeAuthorized(ctx, input.DocumentID, probo.ActionDocumentVersionList)
 
 	pageOrderBy := page.OrderBy[coredata.DocumentVersionOrderField]{
 		Field:     coredata.DocumentVersionOrderFieldCreatedAt,
@@ -1601,7 +1620,7 @@ func (r *Resolver) ListDocumentVersionsTool(ctx context.Context, req *mcp.CallTo
 }
 
 func (r *Resolver) GetDocumentVersionTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetDocumentVersionInput) (*mcp.CallToolResult, types.GetDocumentVersionOutput, error) {
-	r.MustBeAuthorized(ctx, input.ID, iam.ActionGet)
+	r.MustBeAuthorized(ctx, input.ID, probo.ActionDocumentVersionGet)
 
 	svc := r.ProboService(ctx, input.ID)
 
@@ -1616,7 +1635,7 @@ func (r *Resolver) GetDocumentVersionTool(ctx context.Context, req *mcp.CallTool
 }
 
 func (r *Resolver) CreateDraftDocumentVersionTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CreateDraftDocumentVersionInput) (*mcp.CallToolResult, types.CreateDraftDocumentVersionOutput, error) {
-	r.MustBeAuthorized(ctx, input.DocumentID, iam.ActionCreateDraftDocumentVersion)
+	r.MustBeAuthorized(ctx, input.DocumentID, probo.ActionDocumentDraftVersionCreate)
 
 	svc := r.ProboService(ctx, input.DocumentID)
 
@@ -1631,7 +1650,7 @@ func (r *Resolver) CreateDraftDocumentVersionTool(ctx context.Context, req *mcp.
 }
 
 func (r *Resolver) UpdateDocumentVersionTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateDocumentVersionInput) (*mcp.CallToolResult, types.UpdateDocumentVersionOutput, error) {
-	r.MustBeAuthorized(ctx, input.DocumentVersionID, iam.ActionUpdateDocumentVersion)
+	r.MustBeAuthorized(ctx, input.DocumentVersionID, probo.ActionDocumentVersionUpdate)
 
 	svc := r.ProboService(ctx, input.DocumentVersionID)
 
@@ -1652,7 +1671,7 @@ func (r *Resolver) UpdateDocumentVersionTool(ctx context.Context, req *mcp.CallT
 }
 
 func (r *Resolver) PublishDocumentVersionTool(ctx context.Context, req *mcp.CallToolRequest, input *types.PublishDocumentVersionInput) (*mcp.CallToolResult, types.PublishDocumentVersionOutput, error) {
-	r.MustBeAuthorized(ctx, input.DocumentID, iam.ActionPublishDocumentVersion)
+	r.MustBeAuthorized(ctx, input.DocumentID, probo.ActionDocumentVersionPublish)
 
 	svc := r.ProboService(ctx, input.DocumentID)
 
@@ -1670,7 +1689,7 @@ func (r *Resolver) PublishDocumentVersionTool(ctx context.Context, req *mcp.Call
 }
 
 func (r *Resolver) ListDocumentVersionSignaturesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListDocumentVersionSignaturesInput) (*mcp.CallToolResult, types.ListDocumentVersionSignaturesOutput, error) {
-	r.MustBeAuthorized(ctx, input.DocumentVersionID, iam.ActionDocumentVersion)
+	r.MustBeAuthorized(ctx, input.DocumentVersionID, probo.ActionDocumentVersionSignatureList)
 
 	prb := r.ProboService(ctx, input.DocumentVersionID)
 
@@ -1703,7 +1722,7 @@ func (r *Resolver) ListDocumentVersionSignaturesTool(ctx context.Context, req *m
 }
 
 func (r *Resolver) GetDocumentVersionSignatureTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetDocumentVersionSignatureInput) (*mcp.CallToolResult, types.GetDocumentVersionSignatureOutput, error) {
-	r.MustBeAuthorized(ctx, input.ID, iam.ActionGet)
+	r.MustBeAuthorized(ctx, input.ID, probo.ActionDocumentVersionSignatureGet)
 
 	prb := r.ProboService(ctx, input.ID)
 
@@ -1718,7 +1737,7 @@ func (r *Resolver) GetDocumentVersionSignatureTool(ctx context.Context, req *mcp
 }
 
 func (r *Resolver) RequestDocumentVersionSignatureTool(ctx context.Context, req *mcp.CallToolRequest, input *types.RequestDocumentVersionSignatureInput) (*mcp.CallToolResult, types.RequestDocumentVersionSignatureOutput, error) {
-	r.MustBeAuthorized(ctx, input.DocumentVersionID, iam.ActionRequestSignature)
+	r.MustBeAuthorized(ctx, input.DocumentVersionID, probo.ActionDocumentVersionSignatureRequest)
 
 	svc := r.ProboService(ctx, input.DocumentVersionID)
 
@@ -1739,7 +1758,7 @@ func (r *Resolver) RequestDocumentVersionSignatureTool(ctx context.Context, req 
 }
 
 func (r *Resolver) DeleteDraftDocumentVersionTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteDraftDocumentVersionInput) (*mcp.CallToolResult, types.DeleteDraftDocumentVersionOutput, error) {
-	r.MustBeAuthorized(ctx, input.DocumentVersionID, iam.ActionDeleteDraftDocumentVersion)
+	r.MustBeAuthorized(ctx, input.DocumentVersionID, probo.ActionDocumentVersionDeleteDraft)
 
 	svc := r.ProboService(ctx, input.DocumentVersionID)
 
@@ -1754,7 +1773,7 @@ func (r *Resolver) DeleteDraftDocumentVersionTool(ctx context.Context, req *mcp.
 }
 
 func (r *Resolver) DeleteDocumentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteDocumentInput) (*mcp.CallToolResult, types.DeleteDocumentOutput, error) {
-	r.MustBeAuthorized(ctx, input.DocumentID, iam.ActionDeleteDocument)
+	r.MustBeAuthorized(ctx, input.DocumentID, probo.ActionDocumentDelete)
 
 	svc := r.ProboService(ctx, input.DocumentID)
 
@@ -1769,7 +1788,7 @@ func (r *Resolver) DeleteDocumentTool(ctx context.Context, req *mcp.CallToolRequ
 }
 
 func (r *Resolver) CancelSignatureRequestTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CancelSignatureRequestInput) (*mcp.CallToolResult, types.CancelSignatureRequestOutput, error) {
-	r.MustBeAuthorized(ctx, input.DocumentVersionSignatureID, iam.ActionCancelSignatureRequest)
+	r.MustBeAuthorized(ctx, input.DocumentVersionSignatureID, probo.ActionDocumentVersionCancelSignature)
 
 	svc := r.ProboService(ctx, input.DocumentVersionSignatureID)
 
