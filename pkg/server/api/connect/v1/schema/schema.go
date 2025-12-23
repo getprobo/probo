@@ -135,6 +135,7 @@ type ComplexityRoot struct {
 		ID                 func(childComplexity int) int
 		Memberships        func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MembershipOrderBy) int
 		PendingInvitations func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.InvitationOrderBy) int
+		Permission         func(childComplexity int, action string, id gid.GID) int
 		PersonalAPIKeys    func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
 		Sessions           func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.SessionOrder) int
 		UpdatedAt          func(childComplexity int) int
@@ -420,6 +421,7 @@ type IdentityResolver interface {
 	PendingInvitations(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.InvitationOrderBy) (*types.InvitationConnection, error)
 	Sessions(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.SessionOrder) (*types.SessionConnection, error)
 	PersonalAPIKeys(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.PersonalAPIKeyConnection, error)
+	Permission(ctx context.Context, obj *types.Identity, action string, id gid.GID) (bool, error)
 }
 type InvitationResolver interface {
 	Organization(ctx context.Context, obj *types.Invitation) (*types.Organization, error)
@@ -692,6 +694,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Identity.PendingInvitations(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.InvitationOrderBy)), true
+	case "Identity.permission":
+		if e.complexity.Identity.Permission == nil {
+			break
+		}
+
+		args, err := ec.field_Identity_permission_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Identity.Permission(childComplexity, args["action"].(string), args["id"].(gid.GID)), true
 	case "Identity.personalAPIKeys":
 		if e.complexity.Identity.PersonalAPIKeys == nil {
 			break
@@ -2130,6 +2143,11 @@ type Identity implements Node {
     last: Int
     before: CursorKey
   ): PersonalAPIKeyConnection @goField(forceResolver: true) @isViewer
+
+  permission(action: String!, id: ID!): Boolean!
+    @goField(forceResolver: true)
+    @session(required: PRESENT)
+    @isViewer
 }
 
 type MembershipProfile implements Node {
@@ -2816,6 +2834,22 @@ func (ec *executionContext) field_Identity_pendingInvitations_args(ctx context.C
 		return nil, err
 	}
 	args["orderBy"] = arg4
+	return args, nil
+}
+
+func (ec *executionContext) field_Identity_permission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "action", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["action"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg1
 	return args, nil
 }
 
@@ -4370,6 +4404,72 @@ func (ec *executionContext) fieldContext_Identity_personalAPIKeys(ctx context.Co
 	return fc, nil
 }
 
+func (ec *executionContext) _Identity_permission(ctx context.Context, field graphql.CollectedField, obj *types.Identity) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Identity_permission,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Identity().Permission(ctx, obj, fc.Args["action"].(string), fc.Args["id"].(gid.GID))
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSessionRequirement(ctx, "PRESENT")
+				if err != nil {
+					var zeroVal bool
+					return zeroVal, err
+				}
+				if ec.directives.Session == nil {
+					var zeroVal bool
+					return zeroVal, errors.New("directive session is not implemented")
+				}
+				return ec.directives.Session(ctx, obj, directive0, required)
+			}
+			directive2 := func(ctx context.Context) (any, error) {
+				if ec.directives.IsViewer == nil {
+					var zeroVal bool
+					return zeroVal, errors.New("directive isViewer is not implemented")
+				}
+				return ec.directives.IsViewer(ctx, obj, directive1)
+			}
+
+			next = directive2
+			return next
+		},
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Identity_permission(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Identity",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Identity_permission_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Invitation_id(ctx context.Context, field graphql.CollectedField, obj *types.Invitation) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -4948,6 +5048,8 @@ func (ec *executionContext) fieldContext_Membership_identity(_ context.Context, 
 				return ec.fieldContext_Identity_sessions(ctx, field)
 			case "personalAPIKeys":
 				return ec.fieldContext_Identity_personalAPIKeys(ctx, field)
+			case "permission":
+				return ec.fieldContext_Identity_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Identity", field.Name)
 		},
@@ -8608,6 +8710,8 @@ func (ec *executionContext) fieldContext_Query_viewer(_ context.Context, field g
 				return ec.fieldContext_Identity_sessions(ctx, field)
 			case "personalAPIKeys":
 				return ec.fieldContext_Identity_personalAPIKeys(ctx, field)
+			case "permission":
+				return ec.fieldContext_Identity_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Identity", field.Name)
 		},
@@ -9889,6 +9993,8 @@ func (ec *executionContext) fieldContext_Session_identity(_ context.Context, fie
 				return ec.fieldContext_Identity_sessions(ctx, field)
 			case "personalAPIKeys":
 				return ec.fieldContext_Identity_personalAPIKeys(ctx, field)
+			case "permission":
+				return ec.fieldContext_Identity_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Identity", field.Name)
 		},
@@ -10262,6 +10368,8 @@ func (ec *executionContext) fieldContext_SignInPayload_identity(_ context.Contex
 				return ec.fieldContext_Identity_sessions(ctx, field)
 			case "personalAPIKeys":
 				return ec.fieldContext_Identity_personalAPIKeys(ctx, field)
+			case "permission":
+				return ec.fieldContext_Identity_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Identity", field.Name)
 		},
@@ -10387,6 +10495,8 @@ func (ec *executionContext) fieldContext_SignUpFromInvitationPayload_identity(_ 
 				return ec.fieldContext_Identity_sessions(ctx, field)
 			case "personalAPIKeys":
 				return ec.fieldContext_Identity_personalAPIKeys(ctx, field)
+			case "permission":
+				return ec.fieldContext_Identity_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Identity", field.Name)
 		},
@@ -10438,6 +10548,8 @@ func (ec *executionContext) fieldContext_SignUpPayload_identity(_ context.Contex
 				return ec.fieldContext_Identity_sessions(ctx, field)
 			case "personalAPIKeys":
 				return ec.fieldContext_Identity_personalAPIKeys(ctx, field)
+			case "permission":
+				return ec.fieldContext_Identity_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Identity", field.Name)
 		},
@@ -13975,6 +14087,42 @@ func (ec *executionContext) _Identity(ctx context.Context, sel ast.SelectionSet,
 					}
 				}()
 				res = ec._Identity_personalAPIKeys(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "permission":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Identity_permission(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
 				return res
 			}
 
