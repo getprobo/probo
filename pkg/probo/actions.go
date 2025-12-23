@@ -29,6 +29,7 @@ const (
 	// TrustCenter actions
 	ActionTrustCenterGet                          = "core:trust-center:get"
 	ActionTrustCenterUpdate                       = "core:trust-center:update"
+	ActionTrustCenterGetNda                       = "core:trust-center:get-nda"
 	ActionTrustCenterNonDisclosureAgreementUpload = "core:trust-center:upload-nda"
 	ActionTrustCenterNonDisclosureAgreementDelete = "core:trust-center:delete-nda"
 	ActionTrustCenterAccessCreate                 = "core:trust-center:create-access"
@@ -36,19 +37,23 @@ const (
 
 	// TrustCenterAccess actions
 	ActionTrustCenterAccessGet    = "core:trust-center-access:get"
+	ActionTrustCenterAccessList   = "core:trust-center-access:list"
 	ActionTrustCenterAccessUpdate = "core:trust-center-access:update"
 	ActionTrustCenterAccessDelete = "core:trust-center-access:delete"
 
 	// TrustCenterReference actions
-	ActionTrustCenterReferenceUpdate = "core:trust-center-reference:update"
-	ActionTrustCenterReferenceDelete = "core:trust-center-reference:delete"
+	ActionTrustCenterReferenceList       = "core:trust-center-reference:list"
+	ActionTrustCenterReferenceGetLogoUrl = "core:trust-center-reference:get-logo-url"
+	ActionTrustCenterReferenceUpdate     = "core:trust-center-reference:update"
+	ActionTrustCenterReferenceDelete     = "core:trust-center-reference:delete"
 
 	// TrustCenterFile actions
-	ActionTrustCenterFileGet    = "core:trust-center-file:get"
-	ActionTrustCenterFileList   = "core:trust-center-file:list"
-	ActionTrustCenterFileUpdate = "core:trust-center-file:update"
-	ActionTrustCenterFileDelete = "core:trust-center-file:delete"
-	ActionTrustCenterFileCreate = "core:trust-center-file:create"
+	ActionTrustCenterFileGet        = "core:trust-center-file:get"
+	ActionTrustCenterFileList       = "core:trust-center-file:list"
+	ActionTrustCenterFileGetFileUrl = "core:trust-center-file:get-file-url"
+	ActionTrustCenterFileUpdate     = "core:trust-center-file:update"
+	ActionTrustCenterFileDelete     = "core:trust-center-file:delete"
+	ActionTrustCenterFileCreate     = "core:trust-center-file:create"
 
 	// People actions
 	ActionPeopleGet    = "core:people:get"
@@ -67,33 +72,39 @@ const (
 
 	// VendorContact actions
 	ActionVendorContactGet    = "core:vendor-contact:get"
+	ActionVendorContactList   = "core:vendor-contact:list"
 	ActionVendorContactCreate = "core:vendor-contact:create"
 	ActionVendorContactUpdate = "core:vendor-contact:update"
 	ActionVendorContactDelete = "core:vendor-contact:delete"
 
 	// VendorService actions
 	ActionVendorServiceGet    = "core:vendor-service:get"
+	ActionVendorServiceList   = "core:vendor-service:list"
 	ActionVendorServiceCreate = "core:vendor-service:create"
 	ActionVendorServiceUpdate = "core:vendor-service:update"
 	ActionVendorServiceDelete = "core:vendor-service:delete"
 
 	// VendorComplianceReport actions
 	ActionVendorComplianceReportGet    = "core:vendor-compliance-report:get"
+	ActionVendorComplianceReportList   = "core:vendor-compliance-report:list"
 	ActionVendorComplianceReportUpload = "core:vendor-compliance-report:upload"
 	ActionVendorComplianceReportDelete = "core:vendor-compliance-report:delete"
 
 	// VendorBusinessAssociateAgreement actions
+	ActionVendorBusinessAssociateAgreementGet    = "core:vendor-business-associate-agreement:get"
 	ActionVendorBusinessAssociateAgreementUpload = "core:vendor-business-associate-agreement:upload"
 	ActionVendorBusinessAssociateAgreementUpdate = "core:vendor-business-associate-agreement:update"
 	ActionVendorBusinessAssociateAgreementDelete = "core:vendor-business-associate-agreement:delete"
 
 	// VendorDataPrivacyAgreement actions
+	ActionVendorDataPrivacyAgreementGet    = "core:vendor-data-privacy-agreement:get"
 	ActionVendorDataPrivacyAgreementUpload = "core:vendor-data-privacy-agreement:upload"
 	ActionVendorDataPrivacyAgreementUpdate = "core:vendor-data-privacy-agreement:update"
 	ActionVendorDataPrivacyAgreementDelete = "core:vendor-data-privacy-agreement:delete"
 
 	// VendorRiskAssessment actions
 	ActionVendorRiskAssessmentCreate = "core:vendor-risk-assessment:create"
+	ActionVendorRiskAssessmentList   = "core:vendor-risk-assessment:list"
 
 	// Framework actions
 	ActionFrameworkGet                          = "core:framework:get"
@@ -224,6 +235,7 @@ const (
 	ActionContinualImprovementDelete = "core:continual-improvement:delete"
 
 	// ProcessingActivity actions
+	ActionProcessingActivityGet    = "core:processing-activity:get"
 	ActionProcessingActivityList   = "core:processing-activity:list"
 	ActionProcessingActivityCreate = "core:processing-activity:create"
 	ActionProcessingActivityUpdate = "core:processing-activity:update"
@@ -252,4 +264,14 @@ const (
 
 	// SlackConnection actions
 	ActionSlackConnectionList = "core:slack-connection:list"
+
+	// DataProtectionImpactAssessment actions
+	ActionDataProtectionImpactAssessmentGet = "core:data-protection-impact-assessment:get"
+
+	// TransferImpactAssessment actions
+	ActionTransferImpactAssessmentGet  = "core:transfer-impact-assessment:get"
+	ActionTransferImpactAssessmentList = "core:transfer-impact-assessment:list"
+
+	// TrustCenterDocumentAccess actions
+	ActionTrustCenterDocumentAccessList = "core:trust-center-document-access:list"
 )
