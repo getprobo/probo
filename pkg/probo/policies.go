@@ -49,7 +49,10 @@ var ViewerPolicy = policy.NewPolicy(
 	// Entity read actions
 	policy.Allow(
 		ActionPeopleGet, ActionPeopleList,
-		ActionVendorList,
+		ActionVendorGet, ActionVendorList,
+		ActionVendorContactGet,
+		ActionVendorServiceGet,
+		ActionVendorComplianceReportGet,
 		ActionFrameworkGet, ActionFrameworkList,
 		ActionControlList,
 		ActionMeasureGet, ActionMeasureList,
@@ -68,7 +71,7 @@ var ViewerPolicy = policy.NewPolicy(
 		ActionContinualImprovementList,
 		ActionProcessingActivityList,
 		ActionSnapshotList,
-		ActionMeetingList,
+		ActionMeetingGet, ActionMeetingList,
 		ActionFileGet, ActionFileDownloadUrl,
 		ActionSlackConnectionList,
 	).WithSID("entity-read-access"),
@@ -76,6 +79,7 @@ var ViewerPolicy = policy.NewPolicy(
 	// TrustCenter read actions
 	policy.Allow(
 		ActionTrustCenterGet,
+		ActionTrustCenterAccessGet,
 		ActionTrustCenterFileGet, ActionTrustCenterFileList,
 	).WithSID("trust-center-read-access"),
 
@@ -106,7 +110,10 @@ var AuditorPolicy = policy.NewPolicy(
 	// Entity read access (same as viewer)
 	policy.Allow(
 		ActionPeopleGet, ActionPeopleList,
-		ActionVendorList,
+		ActionVendorGet, ActionVendorList,
+		ActionVendorContactGet,
+		ActionVendorServiceGet,
+		ActionVendorComplianceReportGet,
 		ActionFrameworkGet, ActionFrameworkList,
 		ActionControlList,
 		ActionMeasureGet, ActionMeasureList,
@@ -124,6 +131,7 @@ var AuditorPolicy = policy.NewPolicy(
 		ActionContinualImprovementList,
 		ActionProcessingActivityList,
 		ActionSnapshotList,
+		ActionMeetingGet, ActionMeetingList,
 		ActionFileGet, ActionFileDownloadUrl,
 	).WithSID("entity-read-access"),
 
