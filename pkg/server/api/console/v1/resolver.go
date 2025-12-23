@@ -225,20 +225,23 @@ func NewMux(
 			panic(fmt.Errorf("cannot parse organization id: %w", err))
 		}
 
-		identity := connect_v1.IdentityFromContext(r.Context())
 		apiKey := connect_v1.APIKeyFromContext(r.Context())
+		if apiKey != nil {
+			httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("api key authentication cannot be used for this endpoint"))
+			return
+		}
+
+		identity := connect_v1.IdentityFromContext(r.Context())
 		if identity == nil {
 			httpserver.RenderError(w, http.StatusUnauthorized, fmt.Errorf("authentication required"))
 			return
 		}
 
-		var credentialID *gid.GID
-		if apiKey != nil {
-			credentialID = &apiKey.ID
-		}
-
-		// Ensure the actor (and optional API key) can access this organization.
-		if err := iamSvc.LegacyAccessManagementService.Authorize(r.Context(), identity.ID, credentialID, organizationID, iam.ActionGet); err != nil {
+		if err := iamSvc.Authorizer.Authorize(r.Context(), iam.AuthorizeParams{
+			Principal: identity.ID,
+			Resource:  organizationID,
+			Action:    probo.ActionConnectorInitiate,
+		}); err != nil {
 			httpserver.RenderError(w, http.StatusForbidden, err)
 			return
 		}

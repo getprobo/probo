@@ -263,6 +263,9 @@ const (
 	ActionMeetingUpdate = "core:meeting:update"
 	ActionMeetingDelete = "core:meeting:delete"
 
+	// Connector actions
+	ActionConnectorInitiate = "core:connector:initiate"
+
 	// SlackConnection actions
 	ActionSlackConnectionList = "core:slack-connection:list"
 
