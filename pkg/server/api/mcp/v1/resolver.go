@@ -18,7 +18,7 @@ type Resolver struct {
 	logger   *log.Logger
 }
 
-func (r *Resolver) MustBeAuthorized(ctx context.Context, entityID gid.GID, action iam.Action) {
+func (r *Resolver) MustAuthorize(ctx context.Context, entityID gid.GID, action iam.Action) {
 	identity := connect_v1.IdentityFromContext(ctx)
 
 	err := r.iamSvc.Authorizer.Authorize(
