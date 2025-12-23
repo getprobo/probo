@@ -14,11 +14,8 @@
 
 package iam
 
-// Action represents a permission action string.
-// Used for backward compatibility with the existing permission system.
 type Action = string
 
-// IAM Service Actions
 const (
 	// Organization actions
 	ActionIAMOrganizationCreate          = "iam:organization:create"
