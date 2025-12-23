@@ -410,6 +410,14 @@ func (s *OrganizationService) CreateOrganization(
 			CreatedAt: now,
 			UpdatedAt: now,
 		}
+		membership = &coredata.Membership{
+			ID:             gid.New(tenantID, coredata.MembershipEntityType),
+			IdentityID:     identityID,
+			OrganizationID: organizationID,
+			Role:           coredata.MembershipRoleOwner,
+			CreatedAt:      now,
+			UpdatedAt:      now,
+		}
 		logoFile           *coredata.File
 		horizontalLogoFile *coredata.File
 		scope              = coredata.NewScope(tenantID)
@@ -492,8 +500,13 @@ func (s *OrganizationService) CreateOrganization(
 	err := s.pg.WithTx(
 		ctx,
 		func(tx pg.Conn) error {
+			identity := &coredata.Identity{}
+			err := identity.LoadByID(ctx, tx, identityID)
+			if err != nil {
+				return fmt.Errorf("cannot load identity: %w", err)
+			}
 
-			err := organization.Insert(ctx, tx)
+			err = organization.Insert(ctx, tx)
 			if err != nil {
 				return fmt.Errorf("cannot insert organization: %w", err)
 			}
@@ -512,17 +525,22 @@ func (s *OrganizationService) CreateOrganization(
 				}
 			}
 
-			membership := &coredata.Membership{
-				ID:             gid.New(tenantID, coredata.MembershipEntityType),
-				IdentityID:     identityID,
-				OrganizationID: organizationID,
-				Role:           coredata.MembershipRoleOwner,
-				CreatedAt:      now,
-				UpdatedAt:      now,
-			}
 			err = membership.Insert(ctx, tx, scope)
 			if err != nil {
 				return fmt.Errorf("cannot create membership: %w", err)
+			}
+
+			profile := &coredata.MembershipProfile{
+				ID:           gid.New(tenantID, coredata.MembershipProfileEntityType),
+				MembershipID: membership.ID,
+				FullName:     identity.FullName,
+				CreatedAt:    now,
+				UpdatedAt:    now,
+			}
+
+			err = profile.Insert(ctx, tx)
+			if err != nil {
+				return fmt.Errorf("cannot insert profile: %w", err)
 			}
 
 			return nil
