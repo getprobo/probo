@@ -53,3 +53,9 @@ func NewAddVendorOutput(v *coredata.Vendor) AddVendorOutput {
 		Vendor: NewVendor(v),
 	}
 }
+
+func NewUpdateVendorOutput(v *coredata.Vendor) UpdateVendorOutput {
+	return UpdateVendorOutput{
+		Vendor: NewVendor(v),
+	}
+}

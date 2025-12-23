@@ -5888,7 +5888,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			return types.NewControl(control), nil
 		}
 	case coredata.RiskEntityType:
-		action = probo.ActionRiskList
+		action = probo.ActionRiskGet
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
 			risk, err := prb.Risks.Get(ctx, id)
 			if err != nil {
