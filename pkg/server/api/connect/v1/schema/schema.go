@@ -267,11 +267,6 @@ type ComplexityRoot struct {
 		PrincipalType func(childComplexity int) int
 	}
 
-	PermissionGrant struct {
-		AccessLevel func(childComplexity int) int
-		Application func(childComplexity int) int
-	}
-
 	PersonalAPIKey struct {
 		CreatedAt     func(childComplexity int) int
 		ExpiresAt     func(childComplexity int) int
@@ -335,7 +330,6 @@ type ComplexityRoot struct {
 		AttributeMappings       func(childComplexity int) int
 		AutoSignupEnabled       func(childComplexity int) int
 		CreatedAt               func(childComplexity int) int
-		DefaultPermissions      func(childComplexity int) int
 		DomainVerificationToken func(childComplexity int) int
 		DomainVerifiedAt        func(childComplexity int) int
 		EmailDomain             func(childComplexity int) int
@@ -438,6 +432,7 @@ type MembershipResolver interface {
 	Profile(ctx context.Context, obj *types.Membership) (*types.MembershipProfile, error)
 	Organization(ctx context.Context, obj *types.Membership) (*types.Organization, error)
 
+	Permissions(ctx context.Context, obj *types.Membership) ([]*types.Permission, error)
 	LastSession(ctx context.Context, obj *types.Membership) (*types.Session, error)
 }
 type MembershipConnectionResolver interface {
@@ -1385,19 +1380,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Permission.PrincipalType(childComplexity), true
 
-	case "PermissionGrant.accessLevel":
-		if e.complexity.PermissionGrant.AccessLevel == nil {
-			break
-		}
-
-		return e.complexity.PermissionGrant.AccessLevel(childComplexity), true
-	case "PermissionGrant.application":
-		if e.complexity.PermissionGrant.Application == nil {
-			break
-		}
-
-		return e.complexity.PermissionGrant.Application(childComplexity), true
-
 	case "PersonalAPIKey.createdAt":
 		if e.complexity.PersonalAPIKey.CreatedAt == nil {
 			break
@@ -1593,12 +1575,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.SAMLConfiguration.CreatedAt(childComplexity), true
-	case "SAMLConfiguration.defaultPermissions":
-		if e.complexity.SAMLConfiguration.DefaultPermissions == nil {
-			break
-		}
-
-		return e.complexity.SAMLConfiguration.DefaultPermissions(childComplexity), true
 	case "SAMLConfiguration.domainVerificationToken":
 		if e.complexity.SAMLConfiguration.DomainVerificationToken == nil {
 			break
@@ -2219,7 +2195,7 @@ type Membership implements Node {
   profile: MembershipProfile @goField(forceResolver: true) @isViewer
   organization: Organization @goField(forceResolver: true)
   role: MembershipRole!
-  permissions: [Permission!]!
+  permissions: [Permission!] @goField(forceResolver: true)
 
   lastSession: Session @goField(forceResolver: true) @isViewer
 }
@@ -2265,11 +2241,6 @@ type Permission implements Node {
   principalId: ID!
 }
 
-type PermissionGrant {
-  application: Application!
-  accessLevel: AccessLevel!
-}
-
 type Application {
   id: ApplicationId!
   name: String!
@@ -2292,7 +2263,6 @@ type SAMLConfiguration implements Node {
   spMetadataUrl: String!
   testLoginUrl: String!
   attributeMappings: SAMLAttributeMappings!
-  defaultPermissions: [PermissionGrant!]!
 }
 
 type SAMLAttributeMappings {
@@ -5132,12 +5102,12 @@ func (ec *executionContext) _Membership_permissions(ctx context.Context, field g
 		field,
 		ec.fieldContext_Membership_permissions,
 		func(ctx context.Context) (any, error) {
-			return obj.Permissions, nil
+			return ec.resolvers.Membership().Permissions(ctx, obj)
 		},
 		nil,
-		ec.marshalNPermission2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐPermissionᚄ,
+		ec.marshalOPermission2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐPermissionᚄ,
 		true,
-		true,
+		false,
 	)
 }
 
@@ -5145,8 +5115,8 @@ func (ec *executionContext) fieldContext_Membership_permissions(_ context.Contex
 	fc = &graphql.FieldContext{
 		Object:     "Membership",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
@@ -8107,74 +8077,6 @@ func (ec *executionContext) fieldContext_Permission_principalId(_ context.Contex
 	return fc, nil
 }
 
-func (ec *executionContext) _PermissionGrant_application(ctx context.Context, field graphql.CollectedField, obj *types.PermissionGrant) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_PermissionGrant_application,
-		func(ctx context.Context) (any, error) {
-			return obj.Application, nil
-		},
-		nil,
-		ec.marshalNApplication2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐApplication,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_PermissionGrant_application(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "PermissionGrant",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Application_id(ctx, field)
-			case "name":
-				return ec.fieldContext_Application_name(ctx, field)
-			case "description":
-				return ec.fieldContext_Application_description(ctx, field)
-			case "availableAccessLevels":
-				return ec.fieldContext_Application_availableAccessLevels(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Application", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _PermissionGrant_accessLevel(ctx context.Context, field graphql.CollectedField, obj *types.PermissionGrant) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_PermissionGrant_accessLevel,
-		func(ctx context.Context) (any, error) {
-			return obj.AccessLevel, nil
-		},
-		nil,
-		ec.marshalNAccessLevel2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐAccessLevel,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_PermissionGrant_accessLevel(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "PermissionGrant",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type AccessLevel does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _PersonalAPIKey_id(ctx context.Context, field graphql.CollectedField, obj *types.PersonalAPIKey) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -9623,41 +9525,6 @@ func (ec *executionContext) fieldContext_SAMLConfiguration_attributeMappings(_ c
 	return fc, nil
 }
 
-func (ec *executionContext) _SAMLConfiguration_defaultPermissions(ctx context.Context, field graphql.CollectedField, obj *types.SAMLConfiguration) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_SAMLConfiguration_defaultPermissions,
-		func(ctx context.Context) (any, error) {
-			return obj.DefaultPermissions, nil
-		},
-		nil,
-		ec.marshalNPermissionGrant2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐPermissionGrantᚄ,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_SAMLConfiguration_defaultPermissions(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SAMLConfiguration",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "application":
-				return ec.fieldContext_PermissionGrant_application(ctx, field)
-			case "accessLevel":
-				return ec.fieldContext_PermissionGrant_accessLevel(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type PermissionGrant", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _SAMLConfigurationConnection_edges(ctx context.Context, field graphql.CollectedField, obj *types.SAMLConfigurationConnection) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -9813,8 +9680,6 @@ func (ec *executionContext) fieldContext_SAMLConfigurationEdge_node(_ context.Co
 				return ec.fieldContext_SAMLConfiguration_testLoginUrl(ctx, field)
 			case "attributeMappings":
 				return ec.fieldContext_SAMLConfiguration_attributeMappings(ctx, field)
-			case "defaultPermissions":
-				return ec.fieldContext_SAMLConfiguration_defaultPermissions(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type SAMLConfiguration", field.Name)
 		},
@@ -10736,8 +10601,6 @@ func (ec *executionContext) fieldContext_UpdateSAMLConfigurationPayload_samlConf
 				return ec.fieldContext_SAMLConfiguration_testLoginUrl(ctx, field)
 			case "attributeMappings":
 				return ec.fieldContext_SAMLConfiguration_attributeMappings(ctx, field)
-			case "defaultPermissions":
-				return ec.fieldContext_SAMLConfiguration_defaultPermissions(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type SAMLConfiguration", field.Name)
 		},
@@ -14543,10 +14406,38 @@ func (ec *executionContext) _Membership(ctx context.Context, sel ast.SelectionSe
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "permissions":
-			out.Values[i] = ec._Membership_permissions(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Membership_permissions(ctx, field, obj)
+				return res
 			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "lastSession":
 			field := field
 
@@ -15387,50 +15278,6 @@ func (ec *executionContext) _Permission(ctx context.Context, sel ast.SelectionSe
 	return out
 }
 
-var permissionGrantImplementors = []string{"PermissionGrant"}
-
-func (ec *executionContext) _PermissionGrant(ctx context.Context, sel ast.SelectionSet, obj *types.PermissionGrant) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, permissionGrantImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("PermissionGrant")
-		case "application":
-			out.Values[i] = ec._PermissionGrant_application(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "accessLevel":
-			out.Values[i] = ec._PermissionGrant_accessLevel(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
 var personalAPIKeyImplementors = []string{"PersonalAPIKey", "Node"}
 
 func (ec *executionContext) _PersonalAPIKey(ctx context.Context, sel ast.SelectionSet, obj *types.PersonalAPIKey) graphql.Marshaler {
@@ -16093,11 +15940,6 @@ func (ec *executionContext) _SAMLConfiguration(ctx context.Context, sel ast.Sele
 			}
 		case "attributeMappings":
 			out.Values[i] = ec._SAMLConfiguration_attributeMappings(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "defaultPermissions":
-			out.Values[i] = ec._SAMLConfiguration_defaultPermissions(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -17767,50 +17609,6 @@ func (ec *executionContext) marshalNPageInfo2goᚗproboᚗincᚋproboᚋpkgᚋse
 	return ec._PageInfo(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNPermission2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐPermissionᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.Permission) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNPermission2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐPermission(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
 func (ec *executionContext) marshalNPermission2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐPermission(ctx context.Context, sel ast.SelectionSet, v *types.Permission) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -17819,60 +17617,6 @@ func (ec *executionContext) marshalNPermission2ᚖgoᚗproboᚗincᚋproboᚋpkg
 		return graphql.Null
 	}
 	return ec._Permission(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNPermissionGrant2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐPermissionGrantᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.PermissionGrant) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNPermissionGrant2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐPermissionGrant(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
-func (ec *executionContext) marshalNPermissionGrant2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐPermissionGrant(ctx context.Context, sel ast.SelectionSet, v *types.PermissionGrant) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._PermissionGrant(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNPersonalAPIKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐPersonalAPIKey(ctx context.Context, sel ast.SelectionSet, v *types.PersonalAPIKey) graphql.Marshaler {
@@ -18876,6 +18620,53 @@ func (ec *executionContext) marshalOOrganization2ᚖgoᚗproboᚗincᚋproboᚋp
 		return graphql.Null
 	}
 	return ec._Organization(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOPermission2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐPermissionᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.Permission) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNPermission2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐPermission(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) marshalOPersonalAPIKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐPersonalAPIKey(ctx context.Context, sel ast.SelectionSet, v *types.PersonalAPIKey) graphql.Marshaler {

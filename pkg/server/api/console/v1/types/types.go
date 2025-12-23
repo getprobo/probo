@@ -168,6 +168,7 @@ type ContinualImprovementFilter struct {
 
 type Control struct {
 	ID                           gid.GID                                `json:"id"`
+	Organization                 *Organization                          `json:"organization,omitempty"`
 	SectionTitle                 string                                 `json:"sectionTitle"`
 	Name                         string                                 `json:"name"`
 	Description                  *string                                `json:"description,omitempty"`

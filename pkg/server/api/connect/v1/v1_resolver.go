@@ -233,6 +233,11 @@ func (r *membershipResolver) Organization(ctx context.Context, obj *types.Member
 	return types.NewOrganization(organization), nil
 }
 
+// Permissions is the resolver for the permissions field.
+func (r *membershipResolver) Permissions(ctx context.Context, obj *types.Membership) ([]*types.Permission, error) {
+	panic("not implemented")
+}
+
 // LastSession is the resolver for the lastSession field.
 func (r *membershipResolver) LastSession(ctx context.Context, obj *types.Membership) (*types.Session, error) {
 	session := SessionFromContext(ctx)

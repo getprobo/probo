@@ -388,6 +388,7 @@ func (impl *Implm) Run(
 		fileManagerService,
 		l.Named("probo"),
 		slackService,
+		iamService,
 	)
 	if err != nil {
 		return fmt.Errorf("cannot create probo service: %w", err)

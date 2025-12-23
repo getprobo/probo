@@ -65,7 +65,7 @@ const (
 	TrustCenterFileEntityType                  uint16 = 41
 	SAMLConfigurationEntityType                uint16 = 42
 	PersonalAPIKeyEntityType                   uint16 = 43
-	PersonalAPIKeyMembershipEntityType         uint16 = 44
+	_                                          uint16 = 44 // PersonalAPIKeyMembershipEntityType - removed
 	MeetingEntityType                          uint16 = 45
 	DataProtectionImpactAssessmentEntityType   uint16 = 46
 	TransferImpactAssessmentEntityType         uint16 = 47
@@ -256,10 +256,6 @@ var entityRegistry = map[uint16]EntityInfo{
 	PersonalAPIKeyEntityType: {
 		Model: "PersonalAPIKey",
 		Table: "iam_personal_api_keys",
-	},
-	PersonalAPIKeyMembershipEntityType: {
-		Model: "PersonalAPIKeyMembership",
-		Table: "iam_personal_api_key_memberships",
 	},
 	MeetingEntityType: {
 		Model: "Meeting",

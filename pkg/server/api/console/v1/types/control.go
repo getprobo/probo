@@ -51,6 +51,9 @@ func NewControlEdge(control *coredata.Control, orderField coredata.ControlOrderF
 func NewControl(control *coredata.Control) *Control {
 	return &Control{
 		ID: control.ID,
+		Organization: &Organization{
+			ID: control.OrganizationID,
+		},
 		Framework: &Framework{
 			ID: control.FrameworkID,
 		},

@@ -32,12 +32,13 @@ const (
 	ActionIAMOrganizationListInvitations = "iam:organization:list-invitations"
 
 	// Identity actions
-	ActionIAMIdentityGet             = "iam:identity:get"
-	ActionIAMIdentityUpdate          = "iam:identity:update"
-	ActionIAMIdentityDelete          = "iam:identity:delete"
-	ActionIAMIdentityListMemberships = "iam:identity:list-memberships"
-	ActionIAMIdentityListInvitations = "iam:identity:list-invitations"
-	ActionIAMIdentityListSessions    = "iam:identity:list-sessions"
+	ActionIAMIdentityGet                 = "iam:identity:get"
+	ActionIAMIdentityUpdate              = "iam:identity:update"
+	ActionIAMIdentityDelete              = "iam:identity:delete"
+	ActionIAMIdentityListMemberships     = "iam:identity:list-memberships"
+	ActionIAMIdentityListInvitations     = "iam:identity:list-invitations"
+	ActionIAMIdentityListSessions        = "iam:identity:list-sessions"
+	ActionIAMIdentityListPersonalAPIKeys = "iam:identity:list-personal-api-keys"
 
 	// Session actions
 	ActionIAMSessionGet       = "iam:session:get"
@@ -52,4 +53,17 @@ const (
 	// Membership actions
 	ActionIAMMembershipGet    = "iam:membership:get"
 	ActionIAMMembershipUpdate = "iam:membership:update"
+
+	// Personal API Key actions
+	ActionIAMPersonalAPIKeyCreate = "iam:personal-api-key:create"
+	ActionIAMPersonalAPIKeyGet    = "iam:personal-api-key:get"
+	ActionIAMPersonalAPIKeyUpdate = "iam:personal-api-key:update"
+	ActionIAMPersonalAPIKeyDelete = "iam:personal-api-key:delete"
+
+	// SAML Configuration actions
+	ActionIAMSAMLConfigurationCreate = "iam:saml-configuration:create"
+	ActionIAMSAMLConfigurationGet    = "iam:saml-configuration:get"
+	ActionIAMSAMLConfigurationUpdate = "iam:saml-configuration:update"
+	ActionIAMSAMLConfigurationDelete = "iam:saml-configuration:delete"
+	ActionIAMSAMLConfigurationList   = "iam:saml-configuration:list"
 )
