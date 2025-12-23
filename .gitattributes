@@ -1,1 +1,3 @@
-pkg/server/api/console/v1/v1_resolver.go linguist-detectable
+pkg/server/api/console/v1/v1_resolver.go -linguist-generated
+pkg/server/api/connect/v1/v1_resolver.go -linguist-generated
+pkg/server/api/mcp/v1/v1_resolver.go -linguist-generated
