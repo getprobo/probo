@@ -109,7 +109,7 @@ func (a *Authorizer) loadRolePolicies(ctx context.Context, principalID gid.GID, 
 	var roleName string
 
 	err := a.pg.WithConn(ctx, func(conn pg.Conn) error {
-		scope := coredata.NewScope(resourceID.TenantID())
+		scope := coredata.NewScopeFromObjectID(resourceID)
 
 		var m coredata.Membership
 		if err := m.LoadRoleByIdentityAndEntityID(ctx, conn, scope, principalID, resourceID); err != nil {
