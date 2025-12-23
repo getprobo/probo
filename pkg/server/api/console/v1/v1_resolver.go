@@ -6203,9 +6203,7 @@ func (r *viewerResolver) SignableDocument(ctx context.Context, obj *types.Viewer
 }
 
 // Asset returns schema.AssetResolver implementation.
-func (r *Resolver) Asset() schema.AssetResolver {
-	return &assetResolver{r}
-}
+func (r *Resolver) Asset() schema.AssetResolver { return &assetResolver{r} }
 
 // AssetConnection returns schema.AssetConnectionResolver implementation.
 func (r *Resolver) AssetConnection() schema.AssetConnectionResolver {

@@ -19406,6 +19406,10 @@ func (ec *executionContext) fieldContext_Control_organization(_ context.Context,
 				return ec.fieldContext_Organization_continualImprovements(ctx, field)
 			case "processingActivities":
 				return ec.fieldContext_Organization_processingActivities(ctx, field)
+			case "dataProtectionImpactAssessments":
+				return ec.fieldContext_Organization_dataProtectionImpactAssessments(ctx, field)
+			case "transferImpactAssessments":
+				return ec.fieldContext_Organization_transferImpactAssessments(ctx, field)
 			case "snapshots":
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenterFiles":
