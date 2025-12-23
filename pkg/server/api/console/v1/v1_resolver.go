@@ -13,6 +13,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/jackc/pgx/v5"
+	"go.probo.inc/probo/pkg/authz"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
@@ -6395,27 +6397,122 @@ func (r *riskConnectionResolver) TotalCount(ctx context.Context, obj *types.Risk
 
 // Signed is the resolver for the signed field.
 func (r *signableDocumentResolver) Signed(ctx context.Context, obj *types.SignableDocument) (bool, error) {
-	panic(fmt.Errorf("not implemented: Signed - signed"))
+	r.MustAuthorize(ctx, obj.ID, probo.ActionDocumentGet)
+
+	identity := connect_v1.IdentityFromContext(ctx)
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	signed, err := prb.Documents.IsSigned(ctx, obj.ID, identity.EmailAddress)
+	if err != nil {
+		panic(fmt.Errorf("cannot check if document is signed: %w", err))
+	}
+
+	return signed, nil
 }
 
 // Versions is the resolver for the versions field.
 func (r *signableDocumentResolver) Versions(ctx context.Context, obj *types.SignableDocument, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentVersionOrderBy, filter *types.DocumentVersionFilter) (*types.DocumentVersionConnection, error) {
-	panic(fmt.Errorf("not implemented: Versions - versions"))
+	r.MustAuthorize(ctx, obj.ID, probo.ActionDocumentVersionList)
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.DocumentVersionOrderField]{
+		Field:     coredata.DocumentVersionOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.DocumentVersionOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	user := connect_v1.IdentityFromContext(ctx)
+
+	versionFilter := coredata.NewDocumentVersionFilter().WithUserEmail(&user.EmailAddress)
+
+	page, err := prb.Documents.ListVersions(ctx, obj.ID, cursor, versionFilter)
+	if err != nil {
+		panic(fmt.Errorf("cannot list signable document versions: %w", err))
+	}
+
+	return types.NewDocumentVersionConnection(page), nil
 }
 
 // Organization is the resolver for the organization field.
 func (r *snapshotResolver) Organization(ctx context.Context, obj *types.Snapshot) (*types.Organization, error) {
-	panic(fmt.Errorf("not implemented: Organization - organization"))
+	r.MustAuthorize(ctx, obj.ID, authz.ActionGetOrganization)
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	snapshot, err := prb.Snapshots.Get(ctx, obj.ID)
+	if err != nil {
+		panic(fmt.Errorf("cannot get snapshot: %w", err))
+	}
+
+	organization, err := prb.Organizations.Get(ctx, snapshot.OrganizationID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(err)
+		}
+
+		panic(fmt.Errorf("cannot get organization: %w", err))
+	}
+
+	return types.NewOrganization(organization), nil
 }
 
 // Controls is the resolver for the controls field.
 func (r *snapshotResolver) Controls(ctx context.Context, obj *types.Snapshot, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) (*types.ControlConnection, error) {
-	panic(fmt.Errorf("not implemented: Controls - controls"))
+	r.MustAuthorize(ctx, obj.ID, probo.ActionControlList)
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.ControlOrderField]{
+		Field:     coredata.ControlOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.ControlOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	var controlFilter = coredata.NewControlFilter(nil)
+	if filter != nil {
+		controlFilter = coredata.NewControlFilter(filter.Query)
+	}
+
+	page, err := prb.Controls.ListForSnapshotID(ctx, obj.ID, cursor, controlFilter)
+	if err != nil {
+		panic(fmt.Errorf("cannot list snapshot controls: %w", err))
+	}
+
+	return types.NewControlConnection(page, r, obj.ID, controlFilter), nil
 }
 
 // TotalCount is the resolver for the totalCount field.
 func (r *snapshotConnectionResolver) TotalCount(ctx context.Context, obj *types.SnapshotConnection) (int, error) {
-	panic(fmt.Errorf("not implemented: TotalCount - totalCount"))
+	r.MustAuthorize(ctx, obj.ParentID, probo.ActionSnapshotList)
+
+	prb := r.ProboService(ctx, obj.ParentID.TenantID())
+
+	switch obj.Resolver.(type) {
+	case *organizationResolver:
+		count, err := prb.Snapshots.CountForOrganizationID(ctx, obj.ParentID)
+		if err != nil {
+			panic(fmt.Errorf("cannot count snapshots: %w", err))
+		}
+		return count, nil
+	}
+
+	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
 }
 
 // Organization is the resolver for the organization field.
@@ -6549,12 +6646,42 @@ func (r *stateOfApplicabilityControlResolver) StateOfApplicability(ctx context.C
 
 // AssignedTo is the resolver for the assignedTo field.
 func (r *taskResolver) AssignedTo(ctx context.Context, obj *types.Task) (*types.People, error) {
-	panic(fmt.Errorf("not implemented: AssignedTo - assignedTo"))
+	r.MustAuthorize(ctx, obj.ID, probo.ActionPeopleGet)
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	if obj.AssignedTo == nil {
+		return nil, nil
+	}
+
+	people, err := prb.Peoples.Get(ctx, obj.AssignedTo.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(err)
+		}
+
+		panic(fmt.Errorf("cannot get assigned to: %w", err))
+	}
+
+	return types.NewPeople(people), nil
 }
 
 // Organization is the resolver for the organization field.
 func (r *taskResolver) Organization(ctx context.Context, obj *types.Task) (*types.Organization, error) {
-	panic(fmt.Errorf("not implemented: Organization - organization"))
+	r.MustAuthorize(ctx, obj.ID, probo.ActionOrganizationGet)
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	organization, err := prb.Organizations.Get(ctx, obj.Organization.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(err)
+		}
+
+		panic(fmt.Errorf("cannot get organization: %w", err))
+	}
+
+	return types.NewOrganization(organization), nil
 }
 
 // Measure is the resolver for the measure field.
@@ -6572,6 +6699,7 @@ func (r *taskResolver) Measure(ctx context.Context, obj *types.Task) (*types.Mea
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(err)
 		}
+
 		panic(fmt.Errorf("cannot get measure: %w", err))
 	}
 
@@ -6580,12 +6708,52 @@ func (r *taskResolver) Measure(ctx context.Context, obj *types.Task) (*types.Mea
 
 // Evidences is the resolver for the evidences field.
 func (r *taskResolver) Evidences(ctx context.Context, obj *types.Task, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.EvidenceOrderBy) (*types.EvidenceConnection, error) {
-	panic(fmt.Errorf("not implemented: Evidences - evidences"))
+	r.MustAuthorize(ctx, obj.ID, probo.ActionEvidenceList)
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.EvidenceOrderField]{
+		Field:     coredata.EvidenceOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.EvidenceOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+	page, err := prb.Evidences.ListForTaskID(ctx, obj.ID, cursor)
+	if err != nil {
+		panic(fmt.Errorf("cannot list task evidences: %w", err))
+	}
+
+	return types.NewEvidenceConnection(page, r, obj.ID), nil
 }
 
 // TotalCount is the resolver for the totalCount field.
 func (r *taskConnectionResolver) TotalCount(ctx context.Context, obj *types.TaskConnection) (int, error) {
-	panic(fmt.Errorf("not implemented: TotalCount - totalCount"))
+	r.MustAuthorize(ctx, obj.ParentID, probo.ActionTaskList)
+
+	prb := r.ProboService(ctx, obj.ParentID.TenantID())
+
+	switch obj.Resolver.(type) {
+	case *measureResolver:
+		count, err := prb.Tasks.CountForMeasureID(ctx, obj.ParentID)
+		if err != nil {
+			panic(fmt.Errorf("cannot count tasks: %w", err))
+		}
+		return count, nil
+	case *organizationResolver:
+		count, err := prb.Tasks.CountForOrganizationID(ctx, obj.ParentID)
+		if err != nil {
+			panic(fmt.Errorf("cannot count tasks: %w", err))
+		}
+		return count, nil
+	}
+
+	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
 }
 
 // ProcessingActivity is the resolver for the processingActivity field.
@@ -6594,12 +6762,7 @@ func (r *transferImpactAssessmentResolver) ProcessingActivity(ctx context.Contex
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
-	tia, err := prb.TransferImpactAssessments.Get(ctx, obj.ID)
-	if err != nil {
-		panic(fmt.Errorf("cannot get transfer impact assessment: %w", err))
-	}
-
-	processingActivity, err := prb.ProcessingActivities.Get(ctx, tia.ProcessingActivityID)
+	processingActivity, err := prb.ProcessingActivities.Get(ctx, obj.ProcessingActivity.ID)
 	if err != nil {
 		panic(fmt.Errorf("cannot get processing activity: %w", err))
 	}
@@ -6613,16 +6776,12 @@ func (r *transferImpactAssessmentResolver) Organization(ctx context.Context, obj
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
-	tia, err := prb.TransferImpactAssessments.Get(ctx, obj.ID)
-	if err != nil {
-		panic(fmt.Errorf("cannot get transfer impact assessment: %w", err))
-	}
-
-	organization, err := prb.Organizations.Get(ctx, tia.OrganizationID)
+	organization, err := prb.Organizations.Get(ctx, obj.Organization.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(err)
 		}
+
 		panic(fmt.Errorf("cannot get organization: %w", err))
 	}
 
@@ -6649,167 +6808,683 @@ func (r *transferImpactAssessmentConnectionResolver) TotalCount(ctx context.Cont
 
 // NdaFileURL is the resolver for the ndaFileUrl field.
 func (r *trustCenterResolver) NdaFileURL(ctx context.Context, obj *types.TrustCenter) (*string, error) {
-	panic(fmt.Errorf("not implemented: NdaFileURL - ndaFileUrl"))
+	r.MustAuthorize(ctx, obj.ID, probo.ActionTrustCenterGetNda)
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	fileURL, err := prb.TrustCenters.GenerateNDAFileURL(ctx, obj.ID, 15*time.Minute)
+	if err != nil {
+		panic(fmt.Errorf("cannot generate NDA file URL: %w", err))
+	}
+
+	return fileURL, nil
 }
 
 // Organization is the resolver for the organization field.
 func (r *trustCenterResolver) Organization(ctx context.Context, obj *types.TrustCenter) (*types.Organization, error) {
-	panic(fmt.Errorf("not implemented: Organization - organization"))
+	r.MustAuthorize(ctx, obj.ID, probo.ActionOrganizationGet)
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	trustCenter, _, err := prb.TrustCenters.Get(ctx, obj.ID)
+	if err != nil {
+		panic(fmt.Errorf("cannot get trust center: %w", err))
+	}
+
+	organization, err := prb.Organizations.Get(ctx, trustCenter.OrganizationID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(err)
+		}
+
+		panic(fmt.Errorf("cannot get organization: %w", err))
+	}
+
+	return types.NewOrganization(organization), nil
 }
 
 // Accesses is the resolver for the accesses field.
 func (r *trustCenterResolver) Accesses(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterAccessOrderField]) (*types.TrustCenterAccessConnection, error) {
-	panic(fmt.Errorf("not implemented: Accesses - accesses"))
+	r.MustAuthorize(ctx, obj.ID, probo.ActionTrustCenterAccessList)
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.TrustCenterAccessOrderField]{
+		Field:     coredata.TrustCenterAccessOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.TrustCenterAccessOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	result, err := prb.TrustCenterAccesses.ListForTrustCenterID(ctx, obj.ID, cursor)
+	if err != nil {
+		panic(fmt.Errorf("cannot list trust center accesses: %w", err))
+	}
+
+	return types.NewTrustCenterAccessConnection(result), nil
 }
 
 // References is the resolver for the references field.
 func (r *trustCenterResolver) References(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterReferenceOrderField]) (*types.TrustCenterReferenceConnection, error) {
-	panic(fmt.Errorf("not implemented: References - references"))
+	r.MustAuthorize(ctx, obj.ID, probo.ActionTrustCenterReferenceList)
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.TrustCenterReferenceOrderField]{
+		Field:     coredata.TrustCenterReferenceOrderFieldRank,
+		Direction: page.OrderDirectionAsc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.TrustCenterReferenceOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	result, err := prb.TrustCenterReferences.ListForTrustCenterID(ctx, obj.ID, cursor)
+	if err != nil {
+		panic(fmt.Errorf("cannot list trust center references: %w", err))
+	}
+
+	return types.NewTrustCenterReferenceConnection(result, obj.ID), nil
 }
 
 // PendingRequestCount is the resolver for the pendingRequestCount field.
 func (r *trustCenterAccessResolver) PendingRequestCount(ctx context.Context, obj *types.TrustCenterAccess) (int, error) {
-	panic(fmt.Errorf("not implemented: PendingRequestCount - pendingRequestCount"))
+	r.MustAuthorize(ctx, obj.ID, probo.ActionTrustCenterAccessGet)
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	count, err := prb.TrustCenterAccesses.CountPendingRequestDocumentAccesses(ctx, obj.ID)
+	if err != nil {
+		panic(fmt.Errorf("cannot count pending request document accesses: %w", err))
+	}
+
+	return count, nil
 }
 
 // ActiveCount is the resolver for the activeCount field.
 func (r *trustCenterAccessResolver) ActiveCount(ctx context.Context, obj *types.TrustCenterAccess) (int, error) {
-	panic(fmt.Errorf("not implemented: ActiveCount - activeCount"))
+	r.MustAuthorize(ctx, obj.ID, probo.ActionTrustCenterAccessGet)
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	count, err := prb.TrustCenterAccesses.CountActiveDocumentAccesses(ctx, obj.ID)
+	if err != nil {
+		panic(fmt.Errorf("cannot count active document accesses: %w", err))
+	}
+
+	return count, nil
 }
 
 // AvailableDocumentAccesses is the resolver for the availableDocumentAccesses field.
 func (r *trustCenterAccessResolver) AvailableDocumentAccesses(ctx context.Context, obj *types.TrustCenterAccess, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterDocumentAccessOrderField]) (*types.TrustCenterDocumentAccessConnection, error) {
-	panic(fmt.Errorf("not implemented: AvailableDocumentAccesses - availableDocumentAccesses"))
+	r.MustAuthorize(ctx, obj.ID, probo.ActionTrustCenterAccessGet)
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.TrustCenterDocumentAccessOrderField]{
+		Field:     coredata.TrustCenterDocumentAccessOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.TrustCenterDocumentAccessOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	result, err := prb.TrustCenterAccesses.ListAvailableDocumentAccesses(ctx, obj.ID, cursor)
+	if err != nil {
+		panic(fmt.Errorf("cannot list trust center document accesses: %w", err))
+	}
+
+	return types.NewTrustCenterDocumentAccessConnection(result, obj, obj.ID), nil
 }
 
 // Document is the resolver for the document field.
 func (r *trustCenterDocumentAccessResolver) Document(ctx context.Context, obj *types.TrustCenterDocumentAccess) (*types.Document, error) {
-	panic(fmt.Errorf("not implemented: Document - document"))
+	r.MustAuthorize(ctx, obj.ID, probo.ActionDocumentGet)
+
+	if obj.DocumentID == nil {
+		return nil, nil
+	}
+
+	prb := r.ProboService(ctx, obj.TrustCenterAccessID.TenantID())
+
+	document, err := prb.Documents.Get(ctx, *obj.DocumentID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(err)
+		}
+
+		panic(fmt.Errorf("cannot load document: %w", err))
+	}
+
+	return types.NewDocument(document), nil
 }
 
 // Report is the resolver for the report field.
 func (r *trustCenterDocumentAccessResolver) Report(ctx context.Context, obj *types.TrustCenterDocumentAccess) (*types.Report, error) {
-	panic(fmt.Errorf("not implemented: Report - report"))
+	r.MustAuthorize(ctx, obj.TrustCenterAccessID, probo.ActionReportGet)
+
+	if obj.ReportID == nil {
+		return nil, nil
+	}
+
+	prb := r.ProboService(ctx, obj.TrustCenterAccessID.TenantID())
+
+	report, err := prb.Reports.Get(ctx, *obj.ReportID)
+	if err != nil {
+		panic(fmt.Errorf("cannot load report: %w", err))
+	}
+
+	return types.NewReport(report), nil
 }
 
 // TrustCenterFile is the resolver for the trustCenterFile field.
 func (r *trustCenterDocumentAccessResolver) TrustCenterFile(ctx context.Context, obj *types.TrustCenterDocumentAccess) (*types.TrustCenterFile, error) {
-	panic(fmt.Errorf("not implemented: TrustCenterFile - trustCenterFile"))
+	r.MustAuthorize(ctx, obj.TrustCenterAccessID, probo.ActionTrustCenterFileGet)
+
+	if obj.TrustCenterFileID == nil {
+		return nil, nil
+	}
+
+	prb := r.ProboService(ctx, obj.TrustCenterAccessID.TenantID())
+
+	trustCenterFile, err := prb.TrustCenterFiles.Get(ctx, *obj.TrustCenterFileID)
+	if err != nil {
+		panic(fmt.Errorf("cannot load trust center file: %w", err))
+	}
+
+	return types.NewTrustCenterFile(trustCenterFile), nil
 }
 
 // TotalCount is the resolver for the totalCount field.
 func (r *trustCenterDocumentAccessConnectionResolver) TotalCount(ctx context.Context, obj *types.TrustCenterDocumentAccessConnection) (int, error) {
-	panic(fmt.Errorf("not implemented: TotalCount - totalCount"))
+	r.MustAuthorize(ctx, obj.ParentID, probo.ActionTrustCenterDocumentAccessList)
+
+	prb := r.ProboService(ctx, obj.ParentID.TenantID())
+
+	count, err := prb.TrustCenterAccesses.CountDocumentAccesses(ctx, obj.ParentID)
+	if err != nil {
+		panic(fmt.Errorf("cannot count trust center document accesses: %w", err))
+	}
+
+	return count, nil
 }
 
 // FileURL is the resolver for the fileUrl field.
 func (r *trustCenterFileResolver) FileURL(ctx context.Context, obj *types.TrustCenterFile) (string, error) {
-	panic(fmt.Errorf("not implemented: FileURL - fileUrl"))
+	r.MustAuthorize(ctx, obj.ID, probo.ActionTrustCenterFileGetFileUrl)
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	fileURL, err := prb.TrustCenterFiles.GenerateFileURL(ctx, obj.ID, 1*time.Hour)
+	if err != nil {
+		panic(fmt.Errorf("cannot generate file URL: %w", err))
+	}
+
+	return fileURL, nil
 }
 
 // Organization is the resolver for the organization field.
 func (r *trustCenterFileResolver) Organization(ctx context.Context, obj *types.TrustCenterFile) (*types.Organization, error) {
-	panic(fmt.Errorf("not implemented: Organization - organization"))
+	r.MustAuthorize(ctx, obj.ID, probo.ActionOrganizationGet)
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	trustCenterFile, err := prb.TrustCenterFiles.Get(ctx, obj.ID)
+	if err != nil {
+		panic(fmt.Errorf("cannot get trust center file: %w", err))
+	}
+
+	organization, err := prb.Organizations.Get(ctx, trustCenterFile.OrganizationID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(err)
+		}
+
+		panic(fmt.Errorf("cannot get organization: %w", err))
+	}
+
+	return types.NewOrganization(organization), nil
 }
 
 // TotalCount is the resolver for the totalCount field.
 func (r *trustCenterFileConnectionResolver) TotalCount(ctx context.Context, obj *types.TrustCenterFileConnection) (int, error) {
-	panic(fmt.Errorf("not implemented: TotalCount - totalCount"))
+	r.MustAuthorize(ctx, obj.ParentID, probo.ActionTrustCenterFileList)
+
+	prb := r.ProboService(ctx, obj.ParentID.TenantID())
+
+	count, err := prb.TrustCenterFiles.CountForOrganizationID(ctx, obj.ParentID)
+	if err != nil {
+		panic(fmt.Errorf("cannot count trust center files: %w", err))
+	}
+	return count, nil
 }
 
 // LogoURL is the resolver for the logoUrl field.
 func (r *trustCenterReferenceResolver) LogoURL(ctx context.Context, obj *types.TrustCenterReference) (string, error) {
-	panic(fmt.Errorf("not implemented: LogoURL - logoUrl"))
+	r.MustAuthorize(ctx, obj.ID, probo.ActionTrustCenterReferenceGetLogoUrl)
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	fileURL, err := prb.TrustCenterReferences.GenerateLogoURL(ctx, obj.ID, 1*time.Hour)
+	if err != nil {
+		panic(fmt.Errorf("cannot generate logo URL: %w", err))
+	}
+
+	return fileURL, nil
 }
 
 // TotalCount is the resolver for the totalCount field.
 func (r *trustCenterReferenceConnectionResolver) TotalCount(ctx context.Context, obj *types.TrustCenterReferenceConnection) (int, error) {
-	panic(fmt.Errorf("not implemented: TotalCount - totalCount"))
+	r.MustAuthorize(ctx, obj.ParentID, probo.ActionTrustCenterReferenceList)
+
+	prb := r.ProboService(ctx, obj.ParentID.TenantID())
+
+	count, err := prb.TrustCenterReferences.CountForTrustCenterID(ctx, obj.ParentID)
+	if err != nil {
+		panic(fmt.Errorf("cannot count trust center references: %w", err))
+	}
+
+	return count, nil
 }
 
 // Organization is the resolver for the organization field.
 func (r *vendorResolver) Organization(ctx context.Context, obj *types.Vendor) (*types.Organization, error) {
-	panic(fmt.Errorf("not implemented: Organization - organization"))
+	r.MustAuthorize(ctx, obj.ID, probo.ActionOrganizationGet)
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	organization, err := prb.Organizations.Get(ctx, obj.Organization.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(err)
+		}
+
+		panic(fmt.Errorf("cannot get organization: %w", err))
+	}
+
+	return types.NewOrganization(organization), nil
 }
 
 // ComplianceReports is the resolver for the complianceReports field.
 func (r *vendorResolver) ComplianceReports(ctx context.Context, obj *types.Vendor, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorComplianceReportOrderBy) (*types.VendorComplianceReportConnection, error) {
-	panic(fmt.Errorf("not implemented: ComplianceReports - complianceReports"))
+	r.MustAuthorize(ctx, obj.ID, probo.ActionVendorComplianceReportList)
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.VendorComplianceReportOrderField]{
+		Field:     coredata.VendorComplianceReportOrderFieldReportDate,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.VendorComplianceReportOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	page, err := prb.VendorComplianceReports.ListForVendorID(ctx, obj.ID, cursor)
+	if err != nil {
+		panic(fmt.Errorf("cannot list vendor compliance reports: %w", err))
+	}
+
+	return types.NewVendorComplianceReportConnection(page), nil
 }
 
 // BusinessAssociateAgreement is the resolver for the businessAssociateAgreement field.
 func (r *vendorResolver) BusinessAssociateAgreement(ctx context.Context, obj *types.Vendor) (*types.VendorBusinessAssociateAgreement, error) {
-	panic(fmt.Errorf("not implemented: BusinessAssociateAgreement - businessAssociateAgreement"))
+	r.MustAuthorize(ctx, obj.ID, probo.ActionVendorBusinessAssociateAgreementGet)
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	vendorBusinessAssociateAgreement, file, err := prb.VendorBusinessAssociateAgreements.GetByVendorID(ctx, obj.ID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
+
+		panic(fmt.Errorf("cannot get vendor business associate agreement: %w", err))
+	}
+
+	return types.NewVendorBusinessAssociateAgreement(vendorBusinessAssociateAgreement, file), nil
 }
 
 // DataPrivacyAgreement is the resolver for the dataPrivacyAgreement field.
 func (r *vendorResolver) DataPrivacyAgreement(ctx context.Context, obj *types.Vendor) (*types.VendorDataPrivacyAgreement, error) {
-	panic(fmt.Errorf("not implemented: DataPrivacyAgreement - dataPrivacyAgreement"))
+	r.MustAuthorize(ctx, obj.ID, probo.ActionVendorDataPrivacyAgreementGet)
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	vendorDataPrivacyAgreement, file, err := prb.VendorDataPrivacyAgreements.GetByVendorID(ctx, obj.ID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
+
+		panic(fmt.Errorf("cannot get vendor data privacy agreement: %w", err))
+	}
+
+	return types.NewVendorDataPrivacyAgreement(vendorDataPrivacyAgreement, file), nil
 }
 
 // Contacts is the resolver for the contacts field.
 func (r *vendorResolver) Contacts(ctx context.Context, obj *types.Vendor, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorContactOrderBy) (*types.VendorContactConnection, error) {
-	panic(fmt.Errorf("not implemented: Contacts - contacts"))
+	r.MustAuthorize(ctx, obj.ID, probo.ActionVendorContactList)
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.VendorContactOrderField]{
+		Field:     coredata.VendorContactOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.VendorContactOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	page, err := prb.VendorContacts.List(ctx, obj.ID, cursor)
+	if err != nil {
+		panic(fmt.Errorf("cannot list vendor contacts: %w", err))
+	}
+
+	return types.NewVendorContactConnection(page), nil
 }
 
 // Services is the resolver for the services field.
 func (r *vendorResolver) Services(ctx context.Context, obj *types.Vendor, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorServiceOrderBy) (*types.VendorServiceConnection, error) {
-	panic(fmt.Errorf("not implemented: Services - services"))
+	r.MustAuthorize(ctx, obj.ID, probo.ActionVendorServiceList)
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.VendorServiceOrderField]{
+		Field:     coredata.VendorServiceOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.VendorServiceOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	page, err := prb.VendorServices.List(ctx, obj.ID, cursor)
+	if err != nil {
+		panic(fmt.Errorf("cannot list vendor services: %w", err))
+	}
+
+	return types.NewVendorServiceConnection(page), nil
 }
 
 // RiskAssessments is the resolver for the riskAssessments field.
 func (r *vendorResolver) RiskAssessments(ctx context.Context, obj *types.Vendor, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorRiskAssessmentOrder) (*types.VendorRiskAssessmentConnection, error) {
-	panic(fmt.Errorf("not implemented: RiskAssessments - riskAssessments"))
+	r.MustAuthorize(ctx, obj.ID, probo.ActionVendorRiskAssessmentList)
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.VendorRiskAssessmentOrderField]{
+		Field:     coredata.VendorRiskAssessmentOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.VendorRiskAssessmentOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	page, err := prb.Vendors.ListRiskAssessments(ctx, obj.ID, cursor)
+	if err != nil {
+		panic(fmt.Errorf("cannot list vendor risk assessments: %w", err))
+	}
+
+	return types.NewVendorRiskAssessmentConnection(page), nil
 }
 
 // BusinessOwner is the resolver for the businessOwner field.
 func (r *vendorResolver) BusinessOwner(ctx context.Context, obj *types.Vendor) (*types.People, error) {
-	panic(fmt.Errorf("not implemented: BusinessOwner - businessOwner"))
+	r.MustAuthorize(ctx, obj.ID, probo.ActionPeopleGet)
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	vendor, err := prb.Vendors.Get(ctx, obj.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(err)
+		}
+
+		panic(fmt.Errorf("cannot get vendor: %w", err))
+	}
+
+	if vendor.BusinessOwnerID == nil {
+		return nil, nil
+	}
+
+	people, err := prb.Peoples.Get(ctx, *vendor.BusinessOwnerID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(err)
+		}
+
+		panic(fmt.Errorf("cannot get business owner: %w", err))
+	}
+
+	return types.NewPeople(people), nil
 }
 
 // SecurityOwner is the resolver for the securityOwner field.
 func (r *vendorResolver) SecurityOwner(ctx context.Context, obj *types.Vendor) (*types.People, error) {
-	panic(fmt.Errorf("not implemented: SecurityOwner - securityOwner"))
+	r.MustAuthorize(ctx, obj.ID, probo.ActionPeopleGet)
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	vendor, err := prb.Vendors.Get(ctx, obj.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(err)
+		}
+
+		panic(fmt.Errorf("cannot get vendor: %w", err))
+	}
+
+	if vendor.SecurityOwnerID == nil {
+		return nil, nil
+	}
+
+	people, err := prb.Peoples.Get(ctx, *vendor.SecurityOwnerID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(err)
+		}
+		panic(fmt.Errorf("cannot get security owner: %w", err))
+	}
+
+	return types.NewPeople(people), nil
 }
 
 // Vendor is the resolver for the vendor field.
 func (r *vendorBusinessAssociateAgreementResolver) Vendor(ctx context.Context, obj *types.VendorBusinessAssociateAgreement) (*types.Vendor, error) {
-	panic(fmt.Errorf("not implemented: Vendor - vendor"))
+	r.MustAuthorize(ctx, obj.ID, probo.ActionVendorGet)
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	vendor, err := prb.Vendors.Get(ctx, obj.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(err)
+		}
+
+		return nil, fmt.Errorf("cannot get vendor: %w", err)
+	}
+
+	return types.NewVendor(vendor), nil
 }
 
 // FileURL is the resolver for the fileUrl field.
 func (r *vendorBusinessAssociateAgreementResolver) FileURL(ctx context.Context, obj *types.VendorBusinessAssociateAgreement) (string, error) {
-	panic(fmt.Errorf("not implemented: FileURL - fileUrl"))
+	r.MustAuthorize(ctx, obj.ID, probo.ActionFileDownloadUrl)
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	fileURL, err := prb.VendorBusinessAssociateAgreements.GenerateFileURL(ctx, obj.ID, 1*time.Hour)
+	if err != nil {
+		panic(fmt.Errorf("cannot generate file URL: %w", err))
+	}
+
+	return fileURL, nil
 }
 
 // Vendor is the resolver for the vendor field.
 func (r *vendorComplianceReportResolver) Vendor(ctx context.Context, obj *types.VendorComplianceReport) (*types.Vendor, error) {
-	panic(fmt.Errorf("not implemented: Vendor - vendor"))
+	r.MustAuthorize(ctx, obj.ID, probo.ActionVendorGet)
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	vendor, err := prb.Vendors.Get(ctx, obj.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(err)
+		}
+
+		panic(fmt.Errorf("cannot get vendor: %w", err))
+	}
+
+	return types.NewVendor(vendor), nil
 }
 
 // File is the resolver for the file field.
 func (r *vendorComplianceReportResolver) File(ctx context.Context, obj *types.VendorComplianceReport) (*types.File, error) {
-	panic(fmt.Errorf("not implemented: File - file"))
+	r.MustAuthorize(ctx, obj.ID, probo.ActionFileGet)
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	evidence, err := prb.VendorComplianceReports.Get(ctx, obj.ID)
+	if err != nil {
+		panic(fmt.Errorf("cannot load evidence: %w", err))
+	}
+
+	if evidence.ReportFileId == nil {
+		return nil, nil
+	}
+
+	file, err := prb.Files.Get(ctx, *evidence.ReportFileId)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(err)
+		}
+
+		panic(fmt.Errorf("cannot load evidence file: %w", err))
+	}
+
+	return types.NewFile(file), nil
 }
 
 // TotalCount is the resolver for the totalCount field.
 func (r *vendorConnectionResolver) TotalCount(ctx context.Context, obj *types.VendorConnection) (int, error) {
-	panic(fmt.Errorf("not implemented: TotalCount - totalCount"))
+	r.MustAuthorize(ctx, obj.ParentID, probo.ActionVendorList)
+
+	prb := r.ProboService(ctx, obj.ParentID.TenantID())
+
+	switch obj.Resolver.(type) {
+	case *organizationResolver:
+		count, err := prb.Vendors.CountForOrganizationID(ctx, obj.ParentID)
+		if err != nil {
+			panic(fmt.Errorf("cannot count vendors: %w", err))
+		}
+		return count, nil
+	case *assetResolver:
+		count, err := prb.Vendors.CountForAssetID(ctx, obj.ParentID)
+		if err != nil {
+			panic(fmt.Errorf("cannot count vendors: %w", err))
+		}
+		return count, nil
+	case *datumResolver:
+		count, err := prb.Vendors.CountForDatumID(ctx, obj.ParentID)
+		if err != nil {
+			panic(fmt.Errorf("cannot count vendors: %w", err))
+		}
+		return count, nil
+	}
+
+	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
 }
 
 // Vendor is the resolver for the vendor field.
 func (r *vendorContactResolver) Vendor(ctx context.Context, obj *types.VendorContact) (*types.Vendor, error) {
-	panic(fmt.Errorf("not implemented: Vendor - vendor"))
+	r.MustAuthorize(ctx, obj.ID, probo.ActionVendorGet)
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	// Get the vendor contact to access the VendorID
+	vendorContact, err := prb.VendorContacts.Get(ctx, obj.ID)
+	if err != nil {
+		panic(fmt.Errorf("cannot get vendor contact: %w", err))
+	}
+
+	vendor, err := prb.Vendors.Get(ctx, vendorContact.VendorID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(err)
+		}
+
+		panic(fmt.Errorf("cannot get vendor: %w", err))
+	}
+
+	return types.NewVendor(vendor), nil
 }
 
 // Vendor is the resolver for the vendor field.
 func (r *vendorDataPrivacyAgreementResolver) Vendor(ctx context.Context, obj *types.VendorDataPrivacyAgreement) (*types.Vendor, error) {
-	panic(fmt.Errorf("not implemented: Vendor - vendor"))
+	r.MustAuthorize(ctx, obj.ID, probo.ActionVendorGet)
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	vendor, err := prb.Vendors.Get(ctx, obj.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(err)
+		}
+
+		panic(fmt.Errorf("cannot get vendor: %w", err))
+	}
+
+	return types.NewVendor(vendor), nil
 }
 
 // FileURL is the resolver for the fileUrl field.
 func (r *vendorDataPrivacyAgreementResolver) FileURL(ctx context.Context, obj *types.VendorDataPrivacyAgreement) (string, error) {
-	panic(fmt.Errorf("not implemented: FileURL - fileUrl"))
+	r.MustAuthorize(ctx, obj.ID, probo.ActionFileDownloadUrl)
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	fileURL, err := prb.VendorDataPrivacyAgreements.GenerateFileURL(ctx, obj.ID, 1*time.Hour)
+	if err != nil {
+		panic(fmt.Errorf("cannot generate file URL: %w", err))
+	}
+
+	return fileURL, nil
 }
 
 // Vendor is the resolver for the vendor field.
@@ -6823,6 +7498,7 @@ func (r *vendorRiskAssessmentResolver) Vendor(ctx context.Context, obj *types.Ve
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(err)
 		}
+
 		panic(fmt.Errorf("cannot get vendor: %w", err))
 	}
 
@@ -6831,17 +7507,121 @@ func (r *vendorRiskAssessmentResolver) Vendor(ctx context.Context, obj *types.Ve
 
 // Vendor is the resolver for the vendor field.
 func (r *vendorServiceResolver) Vendor(ctx context.Context, obj *types.VendorService) (*types.Vendor, error) {
-	panic(fmt.Errorf("not implemented: Vendor - vendor"))
+	r.MustAuthorize(ctx, obj.ID, probo.ActionVendorGet)
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	vendor, err := prb.Vendors.Get(ctx, obj.Vendor.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(err)
+		}
+
+		panic(fmt.Errorf("cannot get vendor: %w", err))
+	}
+
+	return types.NewVendor(vendor), nil
+}
+
+// Organizations is the resolver for the organizations field.
+func (r *viewerResolver) Organizations(ctx context.Context, obj *types.Viewer, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrganizationOrder) (*types.OrganizationConnection, error) {
+	identity := connect_v1.IdentityFromContext(ctx)
+
+	pageOrderBy := page.OrderBy[coredata.OrganizationOrderField]{
+		Field:     coredata.OrganizationOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.OrganizationOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	organizations, err := r.authzSvc.GetUserOrganizations(ctx, identity.ID, cursor)
+	if err != nil {
+		panic(fmt.Errorf("cannot list organizations for user: %w", err))
+	}
+
+	// Show all organizations the user is a member of
+	// Authentication requirements will be enforced when switching to an organization
+	page := page.NewPage(organizations, cursor)
+
+	return types.NewOrganizationConnection(page), nil
 }
 
 // SignableDocuments is the resolver for the signableDocuments field.
 func (r *viewerResolver) SignableDocuments(ctx context.Context, obj *types.Viewer, organizationID gid.GID, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy) (*types.SignableDocumentConnection, error) {
-	panic(fmt.Errorf("not implemented: SignableDocuments - signableDocuments"))
+	r.MustAuthorize(ctx, organizationID, probo.ActionDocumentList)
+
+	prb := r.ProboService(ctx, organizationID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.DocumentOrderField]{
+		Field:     coredata.DocumentOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.DocumentOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	identity := connect_v1.IdentityFromContext(ctx)
+
+	documentFilter := coredata.NewDocumentFilter(nil).WithUserEmail(&identity.EmailAddress)
+
+	documentsPage, err := prb.Documents.ListByOrganizationID(ctx, organizationID, cursor, documentFilter)
+	if err != nil {
+		panic(fmt.Errorf("cannot list organization signable documents: %w", err))
+	}
+
+	signableDocuments := make([]*types.SignableDocument, len(documentsPage.Data))
+	for i, doc := range documentsPage.Data {
+		signableDocuments[i] = &types.SignableDocument{
+			ID:             doc.ID,
+			Title:          doc.Title,
+			DocumentType:   doc.DocumentType,
+			Classification: doc.Classification,
+			CreatedAt:      doc.CreatedAt,
+			UpdatedAt:      doc.UpdatedAt,
+		}
+	}
+
+	page := page.NewPage(signableDocuments, documentsPage.Cursor)
+
+	return types.NewSignableDocumentConnection(page), nil
 }
 
 // SignableDocument is the resolver for the signableDocument field.
 func (r *viewerResolver) SignableDocument(ctx context.Context, obj *types.Viewer, id gid.GID) (*types.SignableDocument, error) {
-	panic(fmt.Errorf("not implemented: SignableDocument - signableDocument"))
+	r.MustAuthorize(ctx, id, probo.ActionDocumentGet)
+
+	prb := r.ProboService(ctx, id.TenantID())
+
+	identity := connect_v1.IdentityFromContext(ctx)
+
+	documentFilter := coredata.NewDocumentFilter(nil).WithUserEmail(&identity.EmailAddress)
+	document, err := prb.Documents.GetWithFilter(ctx, id, documentFilter)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(err)
+		}
+
+		panic(fmt.Errorf("cannot get signable document: %w", err))
+	}
+
+	return &types.SignableDocument{
+		ID:             document.ID,
+		Title:          document.Title,
+		DocumentType:   document.DocumentType,
+		Classification: document.Classification,
+		CreatedAt:      document.CreatedAt,
+		UpdatedAt:      document.UpdatedAt,
+	}, nil
 }
 
 // Asset returns schema.AssetResolver implementation.
