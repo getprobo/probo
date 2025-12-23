@@ -1,0 +1,3 @@
+DELETE FROM iam_personal_api_key_memberships;
+DROP TABLE iam_personal_api_key_memberships;
+

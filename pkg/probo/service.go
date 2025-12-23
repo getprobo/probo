@@ -31,6 +31,7 @@ import (
 	"go.probo.inc/probo/pkg/filevalidation"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/html2pdf"
+	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/slack"
 )
@@ -133,10 +134,13 @@ func NewService(
 	fileManagerService *filemanager.Service,
 	logger *log.Logger,
 	slackService *slack.Service,
+	iamService *iam.Service,
 ) (*Service, error) {
 	if bucket == "" {
 		return nil, fmt.Errorf("bucket is required")
 	}
+
+	iamService.Authorizer.RegisterPolicySet(ProboPolicySet())
 
 	svc := &Service{
 		pg:                pgClient,

@@ -230,7 +230,7 @@ type Membership implements Node {
   profile: MembershipProfile @goField(forceResolver: true) @isViewer
   organization: Organization @goField(forceResolver: true)
   role: MembershipRole!
-  permissions: [Permission!]!
+  permissions: [Permission!] @goField(forceResolver: true)
 
   lastSession: Session @goField(forceResolver: true) @isViewer
 }
@@ -276,11 +276,6 @@ type Permission implements Node {
   principalId: ID!
 }
 
-type PermissionGrant {
-  application: Application!
-  accessLevel: AccessLevel!
-}
-
 type Application {
   id: ApplicationId!
   name: String!
@@ -303,7 +298,6 @@ type SAMLConfiguration implements Node {
   spMetadataUrl: String!
   testLoginUrl: String!
   attributeMappings: SAMLAttributeMappings!
-  defaultPermissions: [PermissionGrant!]!
 }
 
 type SAMLAttributeMappings {

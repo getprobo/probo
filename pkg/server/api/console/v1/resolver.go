@@ -316,16 +316,23 @@ func GetTenantService(ctx context.Context, proboSvc *probo.Service, tenantID gid
 	return proboSvc.WithTenant(tenantID)
 }
 
-func (r *Resolver) MustBeAuthorized(ctx context.Context, entityID gid.GID, action iam.Action) {
+func (r *Resolver) MustAuthorize(ctx context.Context, entityID gid.GID, action iam.Action) {
 	user := connect_v1.IdentityFromContext(ctx)
-	apiKey := connect_v1.APIKeyFromContext(ctx)
+	// apiKey := connect_v1.APIKeyFromContext(ctx)
 
-	var credentialID *gid.GID
-	if apiKey != nil {
-		credentialID = &apiKey.ID
-	}
+	// var credentialID *gid.GID
+	// if apiKey != nil {
+	// 	credentialID = &apiKey.ID
+	// }
 
-	err := r.iam.LegacyAccessManagementService.Authorize(ctx, user.ID, credentialID, entityID, action)
+	err := r.iam.Authorizer.Authorize(
+		ctx,
+		iam.AuthorizeParams{
+			Principal: user.ID,
+			Resource:  entityID,
+			Action:    action,
+		},
+	)
 	if err != nil {
 		panic(err)
 	}

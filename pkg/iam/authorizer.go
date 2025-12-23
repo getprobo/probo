@@ -17,7 +17,9 @@ package iam
 import (
 	"context"
 	"errors"
+	"fmt"
 	"maps"
+	"slices"
 
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
@@ -32,22 +34,26 @@ type Authorizer struct {
 	policySet *PolicySet
 }
 
-// NewAuthorizer creates a new authorizer with the given PolicySet.
-// The PolicySet should contain all role-based and self-management policies
-// from all services that need authorization.
+// NewAuthorizer creates a new authorizer.
+// Services register their policies by calling RegisterPolicySet.
 //
 // Example:
 //
-//	policySet := iam.IAMPolicySet().
-//	    Merge(documents.DocumentPolicySet()).
-//	    Merge(risks.RiskPolicySet())
-//	authorizer := iam.NewAuthorizer(pgClient, policySet)
-func NewAuthorizer(pgClient *pg.Client, policySet *PolicySet) *Authorizer {
+//	authorizer := iam.NewAuthorizer(pgClient)
+//	authorizer.RegisterPolicySet(iam.IAMPolicySet())
+//	authorizer.RegisterPolicySet(probo.ProboPolicySet())
+func NewAuthorizer(pgClient *pg.Client) *Authorizer {
 	return &Authorizer{
 		pg:        pgClient,
 		evaluator: policy.NewEvaluator(),
-		policySet: policySet,
+		policySet: NewPolicySet(),
 	}
+}
+
+// RegisterPolicySet merges policies from another service into this authorizer.
+// Services call this method to register their policies.
+func (a *Authorizer) RegisterPolicySet(policySet *PolicySet) {
+	a.policySet.Merge(policySet)
 }
 
 // AuthorizeParams contains all parameters for an authorization check.
@@ -64,6 +70,53 @@ type AuthorizeParams struct {
 	// ResourceAttributes provides additional context for condition evaluation.
 	// Keys like "user_id", "owner_id" are used for self-management checks.
 	ResourceAttributes map[string]string
+}
+
+func (a *Authorizer) GetPermissionsForMembership(ctx context.Context, identityID gid.GID, membershipID gid.GID) (map[string]map[Action]bool, error) {
+	var (
+		scope      = coredata.NewScopeFromObjectID(membershipID)
+		membership = &coredata.Membership{}
+	)
+
+	err := a.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			err := membership.LoadByID(ctx, conn, scope, membershipID)
+			if err != nil {
+				if err == coredata.ErrResourceNotFound {
+					return NewMembershipNotFoundError(membershipID)
+				}
+
+				return fmt.Errorf("cannot load membership: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	permissions := make(map[string]map[Action]bool)
+
+	for entityType, actions := range Permissions {
+		entityTypeName, ok := coredata.EntityModel(entityType)
+		if !ok {
+			continue
+		}
+
+		if permissions[entityTypeName] == nil {
+			permissions[entityTypeName] = make(map[Action]bool)
+		}
+
+		for action, allowedRoles := range actions {
+			if slices.Contains(allowedRoles, Role(membership.Role)) {
+				permissions[entityTypeName][action] = true
+			}
+		}
+	}
+
+	return permissions, nil
 }
 
 // Authorize checks if the principal can perform the action on the resource.
