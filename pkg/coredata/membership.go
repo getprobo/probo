@@ -19,7 +19,6 @@ import (
 	"errors"
 	"fmt"
 	"maps"
-	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -227,81 +226,63 @@ LEFT JOIN
 	return nil
 }
 
-// LoadRoleByIdentityAndEntityID loads an identity's role by querying any entity to extract its organization_id
-func (m *Membership) LoadRoleByIdentityAndEntityID(
+func LoadRoleByIdentityAndEntityIDOnly(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
 	identityID gid.GID,
 	entityID gid.GID,
-) error {
+) (MembershipRole, error) {
 	entityType := entityID.EntityType()
 
-	// For organization, the entity ID is the organization ID
+	// For organization, the entity ID is the organization ID - optimized path
 	if entityType == OrganizationEntityType {
-		return m.LoadByIdentityAndOrg(ctx, conn, scope, identityID, entityID)
+		query := `
+SELECT role
+FROM iam_memberships
+WHERE
+    identity_id = $1
+    AND tenant_id = $2
+    AND organization_id = $3
+LIMIT 1;
+`
+		var role MembershipRole
+		err := conn.QueryRow(ctx, query, identityID, scope.GetTenantID(), entityID).Scan(&role)
+		if err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				return "", ErrResourceNotFound
+			}
+			return "", fmt.Errorf("cannot query role: %w", err)
+		}
+		return role, nil
 	}
 
 	tableName, ok := EntityTable(entityType)
 	if !ok {
-		return fmt.Errorf("unsupported entity type for role lookup: %d", entityType)
+		return "", fmt.Errorf("unsupported entity type for role lookup: %d", entityType)
 	}
 
-	// Build scope fragment with table alias to avoid ambiguity
-	scopeFragment := scope.SQLFragment()
-	// Replace column references with table-qualified versions
-	scopeFragment = strings.ReplaceAll(scopeFragment, "tenant_id =", "m.tenant_id =")
-
-	query := fmt.Sprintf(`
-SELECT
-    m.id,
-    m.identity_id,
-    m.organization_id,
-    m.role,
-    m.created_at,
-    m.updated_at
-FROM
-    iam_memberships m
-    INNER JOIN %s e ON e.id = @entity_id
+	query := `
+SELECT m.role
+FROM iam_memberships m
 WHERE
-    %s
-    AND m.identity_id = @identity_id
-    AND m.organization_id = e.organization_id
+    m.identity_id = $1
+    AND tenant_id = $2
+    AND m.organization_id = (SELECT organization_id FROM ` + tableName + ` WHERE id = $3)
 LIMIT 1;
-`, tableName, scopeFragment)
+`
 
-	args := pgx.NamedArgs{
-		"identity_id": identityID,
-		"entity_id":   entityID,
-	}
-	maps.Copy(args, scope.SQLArguments())
-
-	rows, err := conn.Query(ctx, query, args)
+	var role MembershipRole
+	err := conn.QueryRow(ctx, query, identityID, scope.GetTenantID(), entityID).Scan(&role)
 	if err != nil {
-		return fmt.Errorf("cannot query membership by entity: %w", err)
-	}
-	defer rows.Close()
+		if errors.Is(err, pgx.ErrNoRows) {
+			return "", ErrResourceNotFound
+		}
 
-	if !rows.Next() {
-		return ErrResourceNotFound
-	}
-
-	var membership Membership
-	err = rows.Scan(
-		&membership.ID,
-		&membership.IdentityID,
-		&membership.OrganizationID,
-		&membership.Role,
-		&membership.CreatedAt,
-		&membership.UpdatedAt,
-	)
-
-	if err != nil {
-		return fmt.Errorf("cannot scan membership: %w", err)
+		return "", fmt.Errorf("cannot query role: %w", err)
 	}
 
-	*m = membership
-	return nil
+	return role, nil
 }
 
 func (m *Membership) LoadByIdentityAndOrg(
