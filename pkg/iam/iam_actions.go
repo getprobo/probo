@@ -49,6 +49,7 @@ const (
 
 	// Membership actions
 	ActionIAMMembershipGet    = "iam:membership:get"
+	ActionIAMMembershipLit    = "iam:membership:list"
 	ActionIAMMembershipUpdate = "iam:membership:update"
 
 	// Personal API Key actions
