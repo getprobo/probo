@@ -133,11 +133,8 @@ var IAMAdminPolicy = policy.NewPolicy(
 		ActionIAMInvitationGet,
 		ActionIAMInvitationDelete,
 	).WithSID("invitation-admin-access"),
-	// Can view SAML configurations
-	policy.Allow(
-		ActionIAMSAMLConfigurationGet,
-		ActionIAMSAMLConfigurationList,
-	).WithSID("saml-viewer-access"),
+	// Can view and update SAML configurations
+	policy.Allow(ActionIAMSAMLConfigurationGet).WithSID("saml-configuration-admin-access"),
 	// Cannot delete organization
 	policy.Deny(ActionIAMOrganizationDelete).WithSID("deny-org-delete"),
 	// Cannot remove members (only owner can)

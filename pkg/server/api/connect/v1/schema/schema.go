@@ -55,6 +55,7 @@ type ResolverRoot interface {
 	Organization() OrganizationResolver
 	PersonalAPIKeyConnection() PersonalAPIKeyConnectionResolver
 	Query() QueryResolver
+	SAMLConfiguration() SAMLConfigurationResolver
 	SAMLConfigurationConnection() SAMLConfigurationConnectionResolver
 	Session() SessionResolver
 	SessionConnection() SessionConnectionResolver
@@ -339,7 +340,6 @@ type ComplexityRoot struct {
 		IdpCertificate          func(childComplexity int) int
 		IdpEntityID             func(childComplexity int) int
 		IdpSsoURL               func(childComplexity int) int
-		SpMetadataURL           func(childComplexity int) int
 		TestLoginURL            func(childComplexity int) int
 		UpdatedAt               func(childComplexity int) int
 	}
@@ -484,6 +484,9 @@ type QueryResolver interface {
 	Node(ctx context.Context, id gid.GID) (types.Node, error)
 	Viewer(ctx context.Context) (*types.Identity, error)
 	CheckSSOAvailability(ctx context.Context, email string) (*types.SSOAvailability, error)
+}
+type SAMLConfigurationResolver interface {
+	TestLoginURL(ctx context.Context, obj *types.SAMLConfiguration) (string, error)
 }
 type SAMLConfigurationConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.SAMLConfigurationConnection) (*int, error)
@@ -1636,12 +1639,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.SAMLConfiguration.IdpSsoURL(childComplexity), true
-	case "SAMLConfiguration.spMetadataUrl":
-		if e.complexity.SAMLConfiguration.SpMetadataURL == nil {
-			break
-		}
-
-		return e.complexity.SAMLConfiguration.SpMetadataURL(childComplexity), true
 	case "SAMLConfiguration.testLoginUrl":
 		if e.complexity.SAMLConfiguration.TestLoginURL == nil {
 			break
@@ -2278,8 +2275,7 @@ type SAMLConfiguration implements Node {
   autoSignupEnabled: Boolean!
   createdAt: Datetime!
   updatedAt: Datetime!
-  spMetadataUrl: String!
-  testLoginUrl: String!
+  testLoginUrl: String! @goField(forceResolver: true)
   attributeMappings: SAMLAttributeMappings!
 }
 
@@ -2618,7 +2614,7 @@ input UpdateSAMLConfigurationInput {
   idpSsoUrl: String
   idpCertificate: String
   autoSignupEnabled: Boolean
-  enforcementPolicy: SAMLEnforcementPolicy
+  enforcementPolicy: SAMLEnforcementPolicy!
   attributeMappings: SAMLAttributeMappingsInput
 }
 
@@ -9532,35 +9528,6 @@ func (ec *executionContext) fieldContext_SAMLConfiguration_updatedAt(_ context.C
 	return fc, nil
 }
 
-func (ec *executionContext) _SAMLConfiguration_spMetadataUrl(ctx context.Context, field graphql.CollectedField, obj *types.SAMLConfiguration) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_SAMLConfiguration_spMetadataUrl,
-		func(ctx context.Context) (any, error) {
-			return obj.SpMetadataURL, nil
-		},
-		nil,
-		ec.marshalNString2string,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_SAMLConfiguration_spMetadataUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SAMLConfiguration",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _SAMLConfiguration_testLoginUrl(ctx context.Context, field graphql.CollectedField, obj *types.SAMLConfiguration) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -9568,7 +9535,7 @@ func (ec *executionContext) _SAMLConfiguration_testLoginUrl(ctx context.Context,
 		field,
 		ec.fieldContext_SAMLConfiguration_testLoginUrl,
 		func(ctx context.Context) (any, error) {
-			return obj.TestLoginURL, nil
+			return ec.resolvers.SAMLConfiguration().TestLoginURL(ctx, obj)
 		},
 		nil,
 		ec.marshalNString2string,
@@ -9581,8 +9548,8 @@ func (ec *executionContext) fieldContext_SAMLConfiguration_testLoginUrl(_ contex
 	fc = &graphql.FieldContext{
 		Object:     "SAMLConfiguration",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
 		},
@@ -9778,8 +9745,6 @@ func (ec *executionContext) fieldContext_SAMLConfigurationEdge_node(_ context.Co
 				return ec.fieldContext_SAMLConfiguration_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_SAMLConfiguration_updatedAt(ctx, field)
-			case "spMetadataUrl":
-				return ec.fieldContext_SAMLConfiguration_spMetadataUrl(ctx, field)
 			case "testLoginUrl":
 				return ec.fieldContext_SAMLConfiguration_testLoginUrl(ctx, field)
 			case "attributeMappings":
@@ -10707,8 +10672,6 @@ func (ec *executionContext) fieldContext_UpdateSAMLConfigurationPayload_samlConf
 				return ec.fieldContext_SAMLConfiguration_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_SAMLConfiguration_updatedAt(ctx, field)
-			case "spMetadataUrl":
-				return ec.fieldContext_SAMLConfiguration_spMetadataUrl(ctx, field)
 			case "testLoginUrl":
 				return ec.fieldContext_SAMLConfiguration_testLoginUrl(ctx, field)
 			case "attributeMappings":
@@ -13214,7 +13177,7 @@ func (ec *executionContext) unmarshalInputUpdateSAMLConfigurationInput(ctx conte
 			it.AutoSignupEnabled = data
 		case "enforcementPolicy":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("enforcementPolicy"))
-			data, err := ec.unmarshalOSAMLEnforcementPolicy2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐSAMLEnforcementPolicy(ctx, v)
+			data, err := ec.unmarshalNSAMLEnforcementPolicy2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐSAMLEnforcementPolicy(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -16030,17 +15993,17 @@ func (ec *executionContext) _SAMLConfiguration(ctx context.Context, sel ast.Sele
 		case "id":
 			out.Values[i] = ec._SAMLConfiguration_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "emailDomain":
 			out.Values[i] = ec._SAMLConfiguration_emailDomain(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "enforcementPolicy":
 			out.Values[i] = ec._SAMLConfiguration_enforcementPolicy(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "domainVerifiedAt":
 			out.Values[i] = ec._SAMLConfiguration_domainVerifiedAt(ctx, field, obj)
@@ -16049,47 +16012,73 @@ func (ec *executionContext) _SAMLConfiguration(ctx context.Context, sel ast.Sele
 		case "idpEntityId":
 			out.Values[i] = ec._SAMLConfiguration_idpEntityId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "idpSsoUrl":
 			out.Values[i] = ec._SAMLConfiguration_idpSsoUrl(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "idpCertificate":
 			out.Values[i] = ec._SAMLConfiguration_idpCertificate(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "autoSignupEnabled":
 			out.Values[i] = ec._SAMLConfiguration_autoSignupEnabled(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "createdAt":
 			out.Values[i] = ec._SAMLConfiguration_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "updatedAt":
 			out.Values[i] = ec._SAMLConfiguration_updatedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "spMetadataUrl":
-			out.Values[i] = ec._SAMLConfiguration_spMetadataUrl(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "testLoginUrl":
-			out.Values[i] = ec._SAMLConfiguration_testLoginUrl(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._SAMLConfiguration_testLoginUrl(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
 			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "attributeMappings":
 			out.Values[i] = ec._SAMLConfiguration_attributeMappings(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -18880,38 +18869,6 @@ func (ec *executionContext) marshalOSAMLConfigurationConnection2ᚖgoᚗproboᚗ
 	}
 	return ec._SAMLConfigurationConnection(ctx, sel, v)
 }
-
-func (ec *executionContext) unmarshalOSAMLEnforcementPolicy2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐSAMLEnforcementPolicy(ctx context.Context, v any) (*coredata.SAMLEnforcementPolicy, error) {
-	if v == nil {
-		return nil, nil
-	}
-	tmp, err := graphql.UnmarshalString(v)
-	res := unmarshalOSAMLEnforcementPolicy2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐSAMLEnforcementPolicy[tmp]
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalOSAMLEnforcementPolicy2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐSAMLEnforcementPolicy(ctx context.Context, sel ast.SelectionSet, v *coredata.SAMLEnforcementPolicy) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	_ = sel
-	_ = ctx
-	res := graphql.MarshalString(marshalOSAMLEnforcementPolicy2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐSAMLEnforcementPolicy[*v])
-	return res
-}
-
-var (
-	unmarshalOSAMLEnforcementPolicy2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐSAMLEnforcementPolicy = map[string]coredata.SAMLEnforcementPolicy{
-		"OFF":      coredata.SAMLEnforcementPolicyOff,
-		"OPTIONAL": coredata.SAMLEnforcementPolicyOptional,
-		"REQUIRED": coredata.SAMLEnforcementPolicyRequired,
-	}
-	marshalOSAMLEnforcementPolicy2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐSAMLEnforcementPolicy = map[coredata.SAMLEnforcementPolicy]string{
-		coredata.SAMLEnforcementPolicyOff:      "OFF",
-		coredata.SAMLEnforcementPolicyOptional: "OPTIONAL",
-		coredata.SAMLEnforcementPolicyRequired: "REQUIRED",
-	}
-)
 
 func (ec *executionContext) marshalOSession2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSession(ctx context.Context, sel ast.SelectionSet, v *types.Session) graphql.Marshaler {
 	if v == nil {

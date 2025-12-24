@@ -1,0 +1,123 @@
+import {
+  graphql,
+  usePreloadedQuery,
+  useQueryLoader,
+  type PreloadedQuery,
+} from "react-relay";
+import type { SAMLSettingsPageQuery } from "./__generated__/SAMLSettingsPageQuery.graphql";
+import { Suspense, use, useState } from "react";
+import { PermissionsContext } from "/providers/PermissionsContext";
+import { Breadcrumb, Button, Dialog, useDialogRef } from "@probo/ui";
+import { useTranslate } from "@probo/i18n";
+import { SAMLConfigurationList } from "./_components/SAMLConfigurationList";
+import { NewSAMLConfigurationForm } from "./_components/NewSAMLConfigurationForm";
+import {
+  EditSAMLConfigurationForm,
+  samlConfigurationFormQuery,
+} from "./_components/EditSAMLConfigurationForm";
+import type { EditSAMLConfigurationFormQuery } from "./_components/__generated__/EditSAMLConfigurationFormQuery.graphql";
+import { SAMLDomainVerifyDialog } from "./_components/SAMLDomainVerifyDialog";
+
+export const samlSettingsPageQuery = graphql`
+  query SAMLSettingsPageQuery($organizationId: ID!) {
+    organization: node(id: $organizationId) @required(action: THROW) {
+      ...SAMLConfigurationListFragment
+    }
+  }
+`;
+
+export function SAMLSettingsPage(props: {
+  queryRef: PreloadedQuery<SAMLSettingsPageQuery>;
+}) {
+  const { queryRef } = props;
+
+  const formDialogRef = useDialogRef();
+  const domainDialogRef = useDialogRef();
+  const [isEditing, setIsEditing] = useState<boolean>();
+  const [domainVerificationToken, setDomainVerificationToken] =
+    useState<string>();
+
+  const { __ } = useTranslate();
+  const { isAuthorized } = use(PermissionsContext);
+
+  const { organization } = usePreloadedQuery(samlSettingsPageQuery, queryRef);
+  const [formQueryRef, loadFormQuery] =
+    useQueryLoader<EditSAMLConfigurationFormQuery>(samlConfigurationFormQuery);
+
+  const handleOpenFormDialog = (samlConfigurationId?: string) => {
+    setIsEditing(!!samlConfigurationId);
+    if (samlConfigurationId) {
+      loadFormQuery({ samlConfigurationId }, { fetchPolicy: "network-only" });
+    }
+    formDialogRef.current?.open();
+  };
+  const handleCloseFormDialog = () => {
+    setIsEditing(false);
+    formDialogRef.current?.close();
+  };
+
+  const handleOpenVerifyDomainDialog = (domainVerificationToken: string) => {
+    setDomainVerificationToken(domainVerificationToken);
+    domainDialogRef.current?.open();
+  };
+  const handleCloseVerifyDomainDialog = () => {
+    setDomainVerificationToken("");
+    formDialogRef.current?.close();
+  };
+
+  return (
+    <>
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
+          <h2 className="text-base font-medium">{__("SAML Single Sign-On")}</h2>
+          {isAuthorized("Organization", "createSAMLConfiguration") && (
+            <Button onClick={() => handleOpenFormDialog()}>
+              {__("Add Configuration")}
+            </Button>
+          )}
+        </div>
+
+        <SAMLConfigurationList
+          fKey={organization}
+          onNew={handleOpenFormDialog}
+          onEdit={(id: string) => handleOpenFormDialog(id)}
+          onVerifyDomain={handleOpenVerifyDomainDialog}
+        />
+      </div>
+
+      <Dialog
+        ref={formDialogRef}
+        onClose={handleCloseFormDialog}
+        title={<Breadcrumb items={[__("SAML Settings"), __("Configure")]} />}
+      >
+        {isEditing ? (
+          <Suspense>
+            {formQueryRef && (
+              <EditSAMLConfigurationForm
+                queryRef={formQueryRef}
+                onUpdate={handleCloseFormDialog}
+              />
+            )}
+          </Suspense>
+        ) : (
+          <NewSAMLConfigurationForm onCreate={handleCloseFormDialog} />
+        )}
+      </Dialog>
+
+      <Dialog
+        ref={domainDialogRef}
+        onClose={handleCloseVerifyDomainDialog}
+        title={
+          <Breadcrumb items={[__("SAML Settings"), __("Verify Domain")]} />
+        }
+      >
+        {domainVerificationToken && (
+          <SAMLDomainVerifyDialog
+            key={domainVerificationToken}
+            domainVerificationToken={domainVerificationToken}
+          />
+        )}
+      </Dialog>
+    </>
+  );
+}

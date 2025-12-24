@@ -9,6 +9,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/99designs/gqlgen/graphql"
@@ -933,6 +934,7 @@ func (r *mutationResolver) UpdateSAMLConfiguration(ctx context.Context, input ty
 		IdPSsoURL:         input.IdpSsoURL,
 		IdPCertificate:    input.IdpCertificate,
 		AutoSignupEnabled: input.AutoSignupEnabled,
+		EnforcementPolicy: &input.EnforcementPolicy,
 	}
 
 	if input.AttributeMappings != nil {
@@ -1163,6 +1165,16 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 			return types.NewInvitation(invitation), nil
 		}
+	case coredata.SAMLConfigurationEntityType:
+		action = iam.ActionIAMSAMLConfigurationGet
+		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
+			samlConfiguration, err := r.iam.GetSAMLconfiguration(ctx, id)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewSAMLConfiguration(samlConfiguration), nil
+		}
 	default:
 		return nil, fmt.Errorf("unsupported entity type: %d", id.EntityType())
 	}
@@ -1229,6 +1241,17 @@ func (r *queryResolver) Viewer(ctx context.Context) (*types.Identity, error) {
 // CheckSSOAvailability is the resolver for the checkSSOAvailability field.
 func (r *queryResolver) CheckSSOAvailability(ctx context.Context, email string) (*types.SSOAvailability, error) {
 	panic(fmt.Errorf("not implemented: CheckSSOAvailability - checkSSOAvailability"))
+}
+
+// TestLoginURL is the resolver for the testLoginUrl field.
+func (r *sAMLConfigurationResolver) TestLoginURL(ctx context.Context, obj *types.SAMLConfiguration) (string, error) {
+	entityID := r.iam.SAMLService.GetEntityID()
+	parts := strings.Split(entityID, "/connect/saml/metadata")
+	if len(parts) != 2 {
+		return "", fmt.Errorf("invalid entity ID format")
+	}
+
+	return fmt.Sprintf("%s/connect/saml/login/%s", parts[0], obj.ID), nil
 }
 
 // TotalCount is the resolver for the totalCount field.
@@ -1314,6 +1337,11 @@ func (r *Resolver) PersonalAPIKeyConnection() schema.PersonalAPIKeyConnectionRes
 // Query returns schema.QueryResolver implementation.
 func (r *Resolver) Query() schema.QueryResolver { return &queryResolver{r} }
 
+// SAMLConfiguration returns schema.SAMLConfigurationResolver implementation.
+func (r *Resolver) SAMLConfiguration() schema.SAMLConfigurationResolver {
+	return &sAMLConfigurationResolver{r}
+}
+
 // SAMLConfigurationConnection returns schema.SAMLConfigurationConnectionResolver implementation.
 func (r *Resolver) SAMLConfigurationConnection() schema.SAMLConfigurationConnectionResolver {
 	return &sAMLConfigurationConnectionResolver{r}
@@ -1336,6 +1364,7 @@ type mutationResolver struct{ *Resolver }
 type organizationResolver struct{ *Resolver }
 type personalAPIKeyConnectionResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+type sAMLConfigurationResolver struct{ *Resolver }
 type sAMLConfigurationConnectionResolver struct{ *Resolver }
 type sessionResolver struct{ *Resolver }
 type sessionConnectionResolver struct{ *Resolver }
