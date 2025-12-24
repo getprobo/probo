@@ -104,7 +104,7 @@ jobs:
             coverage.html
           retention-days: 30
       - run: "make lint"
-      - uses: "aquasecurity/trivy-action@0.28.0"
+      - uses: "aquasecurity/trivy-action@0.68.0"
         with:
           scan-type: "fs"
           scanners: "license"

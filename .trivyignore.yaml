@@ -6,4 +6,3 @@ licenses:
   - id: "SEE LICENSE IN LICENSE.md"
     paths:
       - "package-lock.json"
-      - "node_modules/**"
