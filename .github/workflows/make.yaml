@@ -111,9 +111,8 @@ jobs:
           scanners: "license"
           severity: "UNKNOWN,HIGH,CRITICAL"
           exit-code: 1
-          ignorefile: ".trivyignore.yaml"
+          trivyignores: ".trivyignore.yaml"
           trivy-config: "trivy.yaml"
-          license-full: true
 
   test-e2e:
     name: "test-e2e"
