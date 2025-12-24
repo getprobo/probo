@@ -17,17 +17,21 @@ package probo
 import (
 	"context"
 	"fmt"
+	"io"
 	"time"
 
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/docgen"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/html2pdf"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/validator"
 )
 
 type DataProtectionImpactAssessmentService struct {
-	svc *TenantService
+	svc               *TenantService
+	html2pdfConverter *html2pdf.Converter
 }
 
 type (
@@ -298,3 +302,101 @@ func (s *DataProtectionImpactAssessmentService) Delete(
 	return err
 }
 
+func (s *DataProtectionImpactAssessmentService) ExportPDF(
+	ctx context.Context,
+	organizationID gid.GID,
+	filter *coredata.DataProtectionImpactAssessmentFilter,
+) ([]byte, error) {
+	var tableData docgen.DataProtectionImpactAssessmentTableData
+
+	err := s.svc.pg.WithTx(
+		ctx,
+		func(conn pg.Conn) error {
+			var assessments coredata.DataProtectionImpactAssessments
+			if err := assessments.LoadAllByOrganizationID(ctx, conn, s.svc.scope, organizationID, filter); err != nil {
+				return fmt.Errorf("cannot load data protection impact assessments: %w", err)
+			}
+
+			if len(assessments) == 0 {
+				return &coredata.ErrNoDataProtectionImpactAssessmentsFound{}
+			}
+
+			organization := &coredata.Organization{}
+			if err := organization.LoadByID(ctx, conn, s.svc.scope, organizationID); err != nil {
+				return fmt.Errorf("cannot load organization: %w", err)
+			}
+
+			horizontalLogoBase64 := ""
+			if organization.HorizontalLogoFileID != nil {
+				fileRecord := &coredata.File{}
+				fileErr := s.svc.pg.WithConn(ctx, func(conn pg.Conn) error {
+					return fileRecord.LoadByID(ctx, conn, s.svc.scope, *organization.HorizontalLogoFileID)
+				})
+				if fileErr == nil {
+					base64Data, mimeType, logoErr := s.svc.fileManager.GetFileBase64(ctx, fileRecord)
+					if logoErr == nil {
+						horizontalLogoBase64 = fmt.Sprintf("data:%s;base64,%s", mimeType, base64Data)
+					}
+				}
+			}
+
+			assessmentRows := make([]docgen.DataProtectionImpactAssessmentRowData, len(assessments))
+			for i, assessment := range assessments {
+				processingActivity := &coredata.ProcessingActivity{}
+				if err := processingActivity.LoadByID(ctx, conn, s.svc.scope, assessment.ProcessingActivityID); err != nil {
+					return fmt.Errorf("cannot load processing activity: %w", err)
+				}
+
+				assessmentRows[i] = docgen.DataProtectionImpactAssessmentRowData{
+					ProcessingActivityName:      processingActivity.Name,
+					Description:                 assessment.Description,
+					NecessityAndProportionality: assessment.NecessityAndProportionality,
+					PotentialRisk:               assessment.PotentialRisk,
+					Mitigations:                 assessment.Mitigations,
+					ResidualRisk:                assessment.ResidualRisk,
+				}
+			}
+
+			tableData = docgen.DataProtectionImpactAssessmentTableData{
+				CompanyName:                 organization.Name,
+				CompanyHorizontalLogoBase64: horizontalLogoBase64,
+				ExportDate:                  time.Now(),
+				Assessments:                 assessmentRows,
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	htmlContent, err := docgen.RenderDataProtectionImpactAssessmentsTableHTML(tableData)
+	if err != nil {
+		return nil, fmt.Errorf("cannot render HTML: %w", err)
+	}
+
+	cfg := html2pdf.RenderConfig{
+		PageFormat:      html2pdf.PageFormatA4,
+		Orientation:     html2pdf.OrientationPortrait,
+		MarginTop:       html2pdf.NewMarginInches(0.98),
+		MarginBottom:    html2pdf.NewMarginInches(0.98),
+		MarginLeft:      html2pdf.NewMarginInches(0.98),
+		MarginRight:     html2pdf.NewMarginInches(0.98),
+		PrintBackground: true,
+		Scale:           1.0,
+	}
+
+	pdfReader, err := s.html2pdfConverter.GeneratePDF(ctx, htmlContent, cfg)
+	if err != nil {
+		return nil, fmt.Errorf("cannot generate PDF: %w", err)
+	}
+
+	pdfData, err := io.ReadAll(pdfReader)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read PDF data: %w", err)
+	}
+
+	return pdfData, nil
+}

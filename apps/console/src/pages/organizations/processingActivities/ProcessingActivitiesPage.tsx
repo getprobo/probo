@@ -16,6 +16,8 @@ import {
   useConfirm,
   Tabs,
   TabItem,
+  IconArrowDown,
+  Spinner,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { usePageTitle } from "@probo/hooks";
@@ -32,7 +34,8 @@ import { useOrganizationId } from "/hooks/useOrganizationId";
 import { useParams } from "react-router";
 import { CreateProcessingActivityDialog } from "./dialogs/CreateProcessingActivityDialog";
 import { deleteProcessingActivityMutation, ProcessingActivitiesConnectionKey, processingActivitiesQuery } from "../../../hooks/graph/ProcessingActivityGraph";
-import { sprintf, promisifyMutation } from "@probo/helpers";
+import { sprintf, promisifyMutation, downloadFile, toDateInput } from "@probo/helpers";
+import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { SnapshotBanner } from "/components/SnapshotBanner";
 import type { NodeOf } from "/types";
 import type {
@@ -174,6 +177,36 @@ const tiaListPageFragment = graphql`
   }
 `;
 
+const exportProcessingActivitiesPDFMutation = graphql`
+  mutation ProcessingActivitiesPageExportPDFMutation(
+    $input: ExportProcessingActivitiesPDFInput!
+  ) {
+    exportProcessingActivitiesPDF(input: $input) {
+      data
+    }
+  }
+`;
+
+const exportDataProtectionImpactAssessmentsPDFMutation = graphql`
+  mutation ProcessingActivitiesPageExportDPIAPDFMutation(
+    $input: ExportDataProtectionImpactAssessmentsPDFInput!
+  ) {
+    exportDataProtectionImpactAssessmentsPDF(input: $input) {
+      data
+    }
+  }
+`;
+
+const exportTransferImpactAssessmentsPDFMutation = graphql`
+  mutation ProcessingActivitiesPageExportTIAPDFMutation(
+    $input: ExportTransferImpactAssessmentsPDFInput!
+  ) {
+    exportTransferImpactAssessmentsPDF(input: $input) {
+      data
+    }
+  }
+`;
+
 export default function ProcessingActivitiesPage({ queryRef }: ProcessingActivitiesPageProps) {
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
@@ -233,6 +266,126 @@ export default function ProcessingActivitiesPage({ queryRef }: ProcessingActivit
     isAuthorized("ProcessingActivity", "deleteProcessingActivity")
   );
 
+  const canExportPDF = !isSnapshotMode && isAuthorized("ProcessingActivity", "exportProcessingActivitiesPDF");
+  const [exportPDF, isExportingPDF] = useMutationWithToasts<{
+    response: {
+      exportProcessingActivitiesPDF?: {
+        data: string;
+      };
+    };
+    variables: {
+      input: {
+        organizationId: string;
+        filter: { snapshotId: string } | null;
+      };
+    };
+  }>(
+    exportProcessingActivitiesPDFMutation,
+    {
+      successMessage: __("PDF download started."),
+      errorMessage: __("Failed to generate PDF"),
+    }
+  );
+
+  const handleExportPDF = () => {
+    exportPDF({
+      variables: {
+        input: {
+          organizationId: organizationId,
+          filter: snapshotId ? { snapshotId } : null,
+        },
+      },
+      onCompleted: (data) => {
+        if (data.exportProcessingActivitiesPDF?.data) {
+          downloadFile(
+            data.exportProcessingActivitiesPDF.data,
+            `processing-activities-${toDateInput(new Date().toISOString())}.pdf`
+          );
+        }
+      },
+    });
+  };
+
+  const canExportDPIAPDF = !isSnapshotMode && isAuthorized("Organization", "exportDataProtectionImpactAssessmentsPDF");
+  const [exportDPIAPDF, isExportingDPIAPDF] = useMutationWithToasts<{
+    response: {
+      exportDataProtectionImpactAssessmentsPDF?: {
+        data: string;
+      };
+    };
+    variables: {
+      input: {
+        organizationId: string;
+        filter: { snapshotId: string } | null;
+      };
+    };
+  }>(
+    exportDataProtectionImpactAssessmentsPDFMutation,
+    {
+      successMessage: __("PDF download started."),
+      errorMessage: __("Failed to generate PDF"),
+    }
+  );
+
+  const handleExportDPIAPDF = () => {
+    exportDPIAPDF({
+      variables: {
+        input: {
+          organizationId: organizationId,
+          filter: snapshotId ? { snapshotId } : null,
+        },
+      },
+      onCompleted: (data) => {
+        if (data.exportDataProtectionImpactAssessmentsPDF?.data) {
+          downloadFile(
+            data.exportDataProtectionImpactAssessmentsPDF.data,
+            `data-protection-impact-assessments-${toDateInput(new Date().toISOString())}.pdf`
+          );
+        }
+      },
+    });
+  };
+
+  const canExportTIAPDF = !isSnapshotMode && isAuthorized("Organization", "exportTransferImpactAssessmentsPDF");
+  const [exportTIAPDF, isExportingTIAPDF] = useMutationWithToasts<{
+    response: {
+      exportTransferImpactAssessmentsPDF?: {
+        data: string;
+      };
+    };
+    variables: {
+      input: {
+        organizationId: string;
+        filter: { snapshotId: string } | null;
+      };
+    };
+  }>(
+    exportTransferImpactAssessmentsPDFMutation,
+    {
+      successMessage: __("PDF download started."),
+      errorMessage: __("Failed to generate PDF"),
+    }
+  );
+
+  const handleExportTIAPDF = () => {
+    exportTIAPDF({
+      variables: {
+        input: {
+          organizationId: organizationId,
+          filter: snapshotId ? { snapshotId } : null,
+        },
+      },
+      onCompleted: (data) => {
+        if (data.exportTransferImpactAssessmentsPDF?.data) {
+          downloadFile(
+            data.exportTransferImpactAssessmentsPDF.data,
+            `transfer-impact-assessments-${toDateInput(new Date().toISOString())}.pdf`
+          );
+        }
+      },
+    });
+  };
+
   return (
     <div className="space-y-6">
       {isSnapshotMode && snapshotId && (
@@ -267,6 +420,18 @@ export default function ProcessingActivitiesPage({ queryRef }: ProcessingActivit
 
       {activeTab === "activities" && (
         <>
+          {canExportPDF && (
+            <div className="flex justify-end mb-2 -mt-4">
+              <Button
+                variant="secondary"
+                icon={isExportingPDF ? Spinner : IconArrowDown}
+                disabled={isExportingPDF}
+                onClick={handleExportPDF}
+              >
+                {__("Export PDF")}
+              </Button>
+            </div>
+          )}
           {activities.length > 0 ? (
             <Card>
               <Table>
@@ -322,6 +487,18 @@ export default function ProcessingActivitiesPage({ queryRef }: ProcessingActivit
 
       {activeTab === "dpia" && (
         <>
+          {canExportDPIAPDF && (
+            <div className="flex justify-end mb-2 -mt-4">
+              <Button
+                variant="secondary"
+                icon={isExportingDPIAPDF ? Spinner : IconArrowDown}
+                disabled={isExportingDPIAPDF}
+                onClick={handleExportDPIAPDF}
+              >
+                {__("Export PDF")}
+              </Button>
+            </div>
+          )}
           {dpias.length > 0 ? (
             <Card>
               <Table>
@@ -369,6 +546,18 @@ export default function ProcessingActivitiesPage({ queryRef }: ProcessingActivit
 
       {activeTab === "tia" && (
         <>
+          {canExportTIAPDF && (
+            <div className="flex justify-end mb-2 -mt-4">
+              <Button
+                variant="secondary"
+                icon={isExportingTIAPDF ? Spinner : IconArrowDown}
+                disabled={isExportingTIAPDF}
+                onClick={handleExportTIAPDF}
+              >
+                {__("Export PDF")}
+              </Button>
+            </div>
+          )}
           {tias.length > 0 ? (
             <Card>
               <Table>
