@@ -21,6 +21,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/schema"
@@ -91,11 +92,12 @@ func IsViewerDirective(ctx context.Context, obj any, next graphql.Resolver) (any
 	return next(ctx)
 }
 
-func NewGraphQLHandler(svc *iam.Service, logger *log.Logger, cookieConfig securecookie.Config) http.Handler {
+func NewGraphQLHandler(svc *iam.Service, logger *log.Logger, baseURL *baseurl.BaseURL, cookieConfig securecookie.Config) http.Handler {
 	config := schema.Config{
 		Resolvers: &Resolver{
 			logger:       logger,
 			iam:          svc,
+			baseURL:      baseURL,
 			cookieConfig: cookieConfig,
 		},
 		Directives: schema.DirectiveRoot{
