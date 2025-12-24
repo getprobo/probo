@@ -55,11 +55,10 @@ const deleteMutation = graphql`
 
 export function SAMLConfigurationList(props: {
   fKey: SAMLConfigurationListFragment$key;
-  onNew: () => void;
   onEdit: (id: string) => void;
   onVerifyDomain: (dnsVerificationToken: string) => void;
 }) {
-  const { fKey, onNew, onEdit, onVerifyDomain } = props;
+  const { fKey, onEdit, onVerifyDomain } = props;
 
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
@@ -120,11 +119,6 @@ export function SAMLConfigurationList(props: {
               "Set up SAML 2.0 single sign-on for your organization by adding a configuration for each email domain."
             )}
           </p>
-          {isAuthorized("Organization", "createSAMLConfiguration") && (
-            <Button onClick={onNew}>
-              {__("Add Your First Configuration")}
-            </Button>
-          )}
         </div>
       </Card>
     );

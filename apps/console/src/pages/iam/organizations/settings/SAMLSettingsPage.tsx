@@ -79,7 +79,6 @@ export function SAMLSettingsPage(props: {
 
         <SAMLConfigurationList
           fKey={organization}
-          onNew={handleOpenFormDialog}
           onEdit={(id: string) => handleOpenFormDialog(id)}
           onVerifyDomain={handleOpenVerifyDomainDialog}
         />
