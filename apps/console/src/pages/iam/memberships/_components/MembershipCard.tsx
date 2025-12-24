@@ -8,7 +8,7 @@ import {
   IconClock,
   IconLock,
 } from "@probo/ui";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { graphql } from "relay-runtime";
 import { useFragment, useMutation } from "react-relay";
 import type { MembershipCardFragment$key } from "./__generated__/MembershipCardFragment.graphql";
@@ -60,7 +60,7 @@ export function MembershipCard(props: MembershipCardProps) {
 
   const { lastSession, organization } = useFragment<MembershipCardFragment$key>(
     fragment,
-    fKey,
+    fKey
   );
   const isAuthenticated = !!lastSession;
   const isExpired =
@@ -68,7 +68,7 @@ export function MembershipCard(props: MembershipCardProps) {
 
   const [assumeOrganizationSession] =
     useMutation<MembershipCard_assumeMutation>(
-      assumeOrganizationSessionMutation,
+      assumeOrganizationSessionMutation
     );
 
   const handleAssumeOrganizationSession = useCallback(() => {
@@ -139,9 +139,15 @@ export function MembershipCard(props: MembershipCardProps) {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <Button onClick={handleAssumeOrganizationSession}>
-            {__("Login")}
-          </Button>
+          {isAuthenticated ? (
+            <Link to={`/organizations/${organization.id}`}>
+              <Button variant="secondary">{__("View organization")}</Button>
+            </Link>
+          ) : (
+            <Button onClick={handleAssumeOrganizationSession}>
+              {__("Login")}
+            </Button>
+          )}
         </div>
       </div>
     </Card>
