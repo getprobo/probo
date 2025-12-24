@@ -104,14 +104,15 @@ jobs:
             coverage.html
           retention-days: 30
       - run: "make lint"
-      - uses: "aquasecurity/trivy-action@0.33.1"
-        with:
-          scan-type: "fs"
-          scanners: "license"
-          severity: "UNKNOWN,HIGH,CRITICAL"
-          exit-code: 1
-          trivyignores: ".trivyignore.yaml"
-          trivy-config: "trivy.yaml"
+      # Trivy ignore does not work for license scanning in Github action
+      # - uses: "aquasecurity/trivy-action@0.33.1"
+      #   with:
+      #     scan-type: "fs"
+      #     scanners: "license"
+      #     severity: "UNKNOWN,HIGH,CRITICAL"
+      #     exit-code: 1
+      #     trivyignores: ".trivyignore.yaml"
+      #     trivy-config: "trivy.yaml"
 
   test-e2e:
     name: "test-e2e"
