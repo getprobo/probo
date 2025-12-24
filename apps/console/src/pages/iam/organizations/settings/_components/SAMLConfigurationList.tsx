@@ -12,7 +12,7 @@ import {
   Tr,
   useConfirm,
 } from "@probo/ui";
-import { graphql } from "relay-runtime";
+import { ConnectionHandler, graphql } from "relay-runtime";
 import { useFragment } from "react-relay";
 import type {
   SAMLConfigurationListFragment$data,
@@ -46,9 +46,10 @@ const fragment = graphql`
 const deleteMutation = graphql`
   mutation SAMLConfigurationList_deleteMutation(
     $input: DeleteSAMLConfigurationInput!
+    $connections: [ID!]!
   ) {
     deleteSAMLConfiguration(input: $input) {
-      deletedSamlConfigurationId
+      deletedSamlConfigurationId @deleteEdge(connections: $connections)
     }
   }
 `;
@@ -91,6 +92,12 @@ export function SAMLConfigurationList(props: {
               organizationId,
               samlConfigurationId: config.id,
             },
+            connections: [
+              ConnectionHandler.getConnectionID(
+                organizationId,
+                "SAMLConfigurationListFragment_samlConfigurations"
+              ),
+            ],
           },
         });
       },
