@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/99designs/gqlgen/graphql"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
@@ -146,8 +147,26 @@ func (r *identityResolver) Permission(ctx context.Context, obj *types.Identity, 
 			Action:    action,
 		},
 	)
+
 	if err != nil {
-		return false, nil
+		var errInsufficientPermissions *iam.ErrInsufficientPermissions
+		if errors.As(err, &errInsufficientPermissions) {
+			graphql.AddError(
+				ctx,
+				&gqlerror.Error{
+					Path:    graphql.GetPath(ctx),
+					Message: err.Error(),
+					Extensions: map[string]interface{}{
+						"code": "UNAUTHORIZED",
+					},
+				},
+			)
+
+			return false, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot authorize", log.Error(err))
+		return false, gqlutils.InternalServerError(ctx)
 	}
 
 	return true, nil
