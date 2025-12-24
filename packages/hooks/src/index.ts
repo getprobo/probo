@@ -4,3 +4,4 @@ export { useRefSync } from "./useRefSync";
 export { useList } from "./useList";
 export { useStateWithRef } from "./useStateWithRef";
 export { useCleanup } from "./useCleanup";
+export { useCopy } from "./useCopy";

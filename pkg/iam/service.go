@@ -219,3 +219,31 @@ func (s *Service) GetSession(ctx context.Context, sessionID gid.GID) (*coredata.
 
 	return session, nil
 }
+
+func (s *Service) GetSAMLconfiguration(ctx context.Context, samlConfigurationID gid.GID) (*coredata.SAMLConfiguration, error) {
+	var (
+		scope             = coredata.NewScopeFromObjectID(samlConfigurationID)
+		samlConfiguration = &coredata.SAMLConfiguration{}
+	)
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			err := samlConfiguration.LoadByID(ctx, conn, scope, samlConfigurationID)
+			if err != nil {
+				if err == coredata.ErrResourceNotFound {
+					return saml.NewSAMLConfigurationNotFoundError(samlConfigurationID)
+				}
+
+				return fmt.Errorf("cannot load SAML configuration: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return samlConfiguration, nil
+}

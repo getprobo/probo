@@ -300,8 +300,7 @@ type SAMLConfiguration implements Node {
   autoSignupEnabled: Boolean!
   createdAt: Datetime!
   updatedAt: Datetime!
-  spMetadataUrl: String!
-  testLoginUrl: String!
+  testLoginUrl: String! @goField(forceResolver: true)
   attributeMappings: SAMLAttributeMappings!
 }
 
@@ -640,7 +639,7 @@ input UpdateSAMLConfigurationInput {
   idpSsoUrl: String
   idpCertificate: String
   autoSignupEnabled: Boolean
-  enforcementPolicy: SAMLEnforcementPolicy
+  enforcementPolicy: SAMLEnforcementPolicy!
   attributeMappings: SAMLAttributeMappingsInput
 }
 

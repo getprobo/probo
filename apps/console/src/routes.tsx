@@ -220,12 +220,13 @@ const routes = [
               () => import("./pages/organizations/settings/DomainSettingsTab"),
             ),
           },
-          // {
-          //   path: "saml-sso",
-          //   Component: lazy(
-          //     () => import("./pages/organizations/settings/SAMLSettingsTab")
-          //   ),
-          // },
+          {
+            path: "saml-sso",
+            Component: lazy(
+              () =>
+                import("./pages/iam/organizations/settings/SAMLSettingsPageLoader"),
+            ),
+          },
         ],
       },
       ...riskRoutes,

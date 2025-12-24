@@ -1,0 +1,111 @@
+import { usePreloadedQuery, type PreloadedQuery } from "react-relay";
+import { graphql } from "relay-runtime";
+import type { EditSAMLConfigurationForm_updateMutation } from "./__generated__/EditSAMLConfigurationForm_updateMutation.graphql";
+import { useCallback } from "react";
+import type { EditSAMLConfigurationFormQuery } from "./__generated__/EditSAMLConfigurationFormQuery.graphql";
+import { useOrganizationId } from "/hooks/useOrganizationId";
+import {
+  SAMLConfigurationForm,
+  type SAMLConfigurationFormData,
+} from "./SAMLConfigurationForm";
+import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
+
+export const samlConfigurationFormQuery = graphql`
+  query EditSAMLConfigurationFormQuery($samlConfigurationId: ID!) {
+    samlConfiguration: node(id: $samlConfigurationId) @required(action: THROW) {
+      __typename
+      ... on SAMLConfiguration {
+        id
+        emailDomain
+        enforcementPolicy
+        domainVerificationToken
+        domainVerifiedAt
+        testLoginUrl
+        idpEntityId
+        idpSsoUrl
+        idpCertificate
+        attributeMappings {
+          email
+          firstName
+          lastName
+          role
+        }
+        autoSignupEnabled
+      }
+    }
+  }
+`;
+
+const updateSAMLConfigurationMutation = graphql`
+  mutation EditSAMLConfigurationForm_updateMutation(
+    $input: UpdateSAMLConfigurationInput!
+  ) {
+    updateSAMLConfiguration(input: $input) {
+      samlConfiguration {
+        id
+        emailDomain
+        enforcementPolicy
+        domainVerificationToken
+        domainVerifiedAt
+        testLoginUrl
+      }
+    }
+  }
+`;
+
+export function EditSAMLConfigurationForm(props: {
+  onUpdate: () => void;
+  queryRef: PreloadedQuery<EditSAMLConfigurationFormQuery>;
+}) {
+  const { onUpdate, queryRef } = props;
+
+  const organizationId = useOrganizationId();
+
+  const { samlConfiguration } =
+    usePreloadedQuery<EditSAMLConfigurationFormQuery>(
+      samlConfigurationFormQuery,
+      queryRef,
+    );
+  if (samlConfiguration.__typename !== "SAMLConfiguration") {
+    throw new Error("node is not a SAML configuration");
+  }
+
+  const [update, isUpdating] =
+    useMutationWithToasts<EditSAMLConfigurationForm_updateMutation>(
+      updateSAMLConfigurationMutation,
+      {
+        successMessage: "SAML configuration updated successfully.",
+        errorMessage: "Failed to update SAML configuration. Please try again.",
+      },
+    );
+
+  const handleUpdate = useCallback(
+    (data: SAMLConfigurationFormData) => {
+      update({
+        variables: {
+          input: {
+            samlConfigurationId: samlConfiguration.id,
+            organizationId,
+            idpEntityId: data.idpEntityId,
+            idpSsoUrl: data.idpSsoUrl,
+            idpCertificate: data.idpCertificate,
+            autoSignupEnabled: data.autoSignupEnabled,
+            enforcementPolicy: data.enforcementPolicy,
+            attributeMappings: data.attributeMappings,
+          },
+        },
+        onCompleted: onUpdate,
+      });
+    },
+    [onUpdate, organizationId, samlConfiguration.id, update],
+  );
+
+  return (
+    <SAMLConfigurationForm
+      disabled={isUpdating}
+      initialValues={samlConfiguration}
+      isEditing
+      onSubmit={handleUpdate}
+    />
+  );
+}

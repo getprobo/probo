@@ -371,7 +371,6 @@ type SAMLConfiguration struct {
 	AutoSignupEnabled       bool                           `json:"autoSignupEnabled"`
 	CreatedAt               time.Time                      `json:"createdAt"`
 	UpdatedAt               time.Time                      `json:"updatedAt"`
-	SpMetadataURL           string                         `json:"spMetadataUrl"`
 	TestLoginURL            string                         `json:"testLoginUrl"`
 	AttributeMappings       *SAMLAttributeMappings         `json:"attributeMappings"`
 }
@@ -472,14 +471,14 @@ type UpdatePersonalAPIKeyPayload struct {
 }
 
 type UpdateSAMLConfigurationInput struct {
-	OrganizationID      gid.GID                         `json:"organizationId"`
-	SamlConfigurationID gid.GID                         `json:"samlConfigurationId"`
-	IdpEntityID         *string                         `json:"idpEntityId,omitempty"`
-	IdpSsoURL           *string                         `json:"idpSsoUrl,omitempty"`
-	IdpCertificate      *string                         `json:"idpCertificate,omitempty"`
-	AutoSignupEnabled   *bool                           `json:"autoSignupEnabled,omitempty"`
-	EnforcementPolicy   *coredata.SAMLEnforcementPolicy `json:"enforcementPolicy,omitempty"`
-	AttributeMappings   *SAMLAttributeMappingsInput     `json:"attributeMappings,omitempty"`
+	OrganizationID      gid.GID                        `json:"organizationId"`
+	SamlConfigurationID gid.GID                        `json:"samlConfigurationId"`
+	IdpEntityID         *string                        `json:"idpEntityId,omitempty"`
+	IdpSsoURL           *string                        `json:"idpSsoUrl,omitempty"`
+	IdpCertificate      *string                        `json:"idpCertificate,omitempty"`
+	AutoSignupEnabled   *bool                          `json:"autoSignupEnabled,omitempty"`
+	EnforcementPolicy   coredata.SAMLEnforcementPolicy `json:"enforcementPolicy"`
+	AttributeMappings   *SAMLAttributeMappingsInput    `json:"attributeMappings,omitempty"`
 }
 
 type UpdateSAMLConfigurationPayload struct {

@@ -99,6 +99,14 @@ func (s *Service) Run(ctx context.Context) error {
 	}
 }
 
+func (s *Service) GetEntityID() string {
+	return fmt.Sprintf("%s/connect/saml/metadata", s.baseURL)
+}
+
+func (s *Service) GetAcsURL() string {
+	return fmt.Sprintf("%s/connect/saml/consume", s.baseURL)
+}
+
 func (s *Service) GenerateSpMetadata() ([]byte, error) {
 	sp := s.baseServiceProvider()
 	return xml.MarshalIndent(sp.Metadata(), "", "  ")
