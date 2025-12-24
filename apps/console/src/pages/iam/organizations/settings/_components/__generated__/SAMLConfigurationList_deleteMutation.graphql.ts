@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<4ce15b49974b7e512f334f47765caaa4>>
+ * @generated SignedSource<<6466caf236dccf64aadc80e85172d8e3>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -14,6 +14,7 @@ export type DeleteSAMLConfigurationInput = {
   samlConfigurationId: string;
 };
 export type SAMLConfigurationList_deleteMutation$variables = {
+  connections: ReadonlyArray<string>;
   input: DeleteSAMLConfigurationInput;
 };
 export type SAMLConfigurationList_deleteMutation$data = {
@@ -27,55 +28,94 @@ export type SAMLConfigurationList_deleteMutation = {
 };
 
 const node: ConcreteRequest = (function(){
-var v0 = [
+var v0 = {
+  "defaultValue": null,
+  "kind": "LocalArgument",
+  "name": "connections"
+},
+v1 = {
+  "defaultValue": null,
+  "kind": "LocalArgument",
+  "name": "input"
+},
+v2 = [
   {
-    "defaultValue": null,
-    "kind": "LocalArgument",
-    "name": "input"
+    "kind": "Variable",
+    "name": "input",
+    "variableName": "input"
   }
 ],
-v1 = [
-  {
-    "alias": null,
-    "args": [
-      {
-        "kind": "Variable",
-        "name": "input",
-        "variableName": "input"
-      }
-    ],
-    "concreteType": "DeleteSAMLConfigurationPayload",
-    "kind": "LinkedField",
-    "name": "deleteSAMLConfiguration",
-    "plural": false,
-    "selections": [
-      {
-        "alias": null,
-        "args": null,
-        "kind": "ScalarField",
-        "name": "deletedSamlConfigurationId",
-        "storageKey": null
-      }
-    ],
-    "storageKey": null
-  }
-];
+v3 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "deletedSamlConfigurationId",
+  "storageKey": null
+};
 return {
   "fragment": {
-    "argumentDefinitions": (v0/*: any*/),
+    "argumentDefinitions": [
+      (v0/*: any*/),
+      (v1/*: any*/)
+    ],
     "kind": "Fragment",
     "metadata": null,
     "name": "SAMLConfigurationList_deleteMutation",
-    "selections": (v1/*: any*/),
+    "selections": [
+      {
+        "alias": null,
+        "args": (v2/*: any*/),
+        "concreteType": "DeleteSAMLConfigurationPayload",
+        "kind": "LinkedField",
+        "name": "deleteSAMLConfiguration",
+        "plural": false,
+        "selections": [
+          (v3/*: any*/)
+        ],
+        "storageKey": null
+      }
+    ],
     "type": "Mutation",
     "abstractKey": null
   },
   "kind": "Request",
   "operation": {
-    "argumentDefinitions": (v0/*: any*/),
+    "argumentDefinitions": [
+      (v1/*: any*/),
+      (v0/*: any*/)
+    ],
     "kind": "Operation",
     "name": "SAMLConfigurationList_deleteMutation",
-    "selections": (v1/*: any*/)
+    "selections": [
+      {
+        "alias": null,
+        "args": (v2/*: any*/),
+        "concreteType": "DeleteSAMLConfigurationPayload",
+        "kind": "LinkedField",
+        "name": "deleteSAMLConfiguration",
+        "plural": false,
+        "selections": [
+          (v3/*: any*/),
+          {
+            "alias": null,
+            "args": null,
+            "filters": null,
+            "handle": "deleteEdge",
+            "key": "",
+            "kind": "ScalarHandle",
+            "name": "deletedSamlConfigurationId",
+            "handleArgs": [
+              {
+                "kind": "Variable",
+                "name": "connections",
+                "variableName": "connections"
+              }
+            ]
+          }
+        ],
+        "storageKey": null
+      }
+    ]
   },
   "params": {
     "cacheID": "cb46bb31e5d10f0ddad38795a72b1ab1",
@@ -88,6 +128,6 @@ return {
 };
 })();
 
-(node as any).hash = "2ebbe76aae843f00570f7ae1848ee995";
+(node as any).hash = "aba27afc1e97268478c5159cedf70026";
 
 export default node;
