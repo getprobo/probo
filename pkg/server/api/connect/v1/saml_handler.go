@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"go.gearno.de/kit/httpserver"
+	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
@@ -17,10 +18,15 @@ type SAMLHandler struct {
 	iam          *iam.Service
 	cookieConfig securecookie.Config
 	baseURL      *baseurl.BaseURL
+	logger       *log.Logger
 }
 
-func NewSAMLHandler(iam *iam.Service, cookieConfig securecookie.Config, baseURL *baseurl.BaseURL) *SAMLHandler {
-	return &SAMLHandler{iam: iam, cookieConfig: cookieConfig, baseURL: baseURL}
+func NewSAMLHandler(iam *iam.Service, cookieConfig securecookie.Config, baseURL *baseurl.BaseURL, logger *log.Logger) *SAMLHandler {
+	return &SAMLHandler{iam: iam, cookieConfig: cookieConfig, baseURL: baseURL, logger: logger}
+}
+
+func (h *SAMLHandler) renderInternalServerError(w http.ResponseWriter, r *http.Request) {
+	httpserver.RenderError(w, http.StatusInternalServerError, errors.New("internal server error"))
 }
 
 func (h *SAMLHandler) MetadataHandler(w http.ResponseWriter, r *http.Request) {
@@ -58,17 +64,41 @@ func (h *SAMLHandler) ConsumeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session := SessionFromContext(ctx)
-	if session == nil {
-		h.iam.AuthService.OpenSessionWithSAML(ctx, user.ID, membership.OrganizationID)
+	rootSession := SessionFromContext(ctx)
+
+	switch {
+	case rootSession == nil:
+		rootSession, err = h.iam.AuthService.OpenSessionWithSAML(ctx, user.ID, membership.OrganizationID)
+		if err != nil {
+			h.logger.ErrorCtx(ctx, "cannot open root session", log.Error(err))
+			h.renderInternalServerError(w, r)
+			return
+		}
+	case rootSession.IdentityID != user.ID:
+		err = h.iam.SessionService.CloseSession(ctx, rootSession.ID)
+		if err != nil {
+			h.logger.ErrorCtx(ctx, "cannot close session", log.Error(err))
+			h.renderInternalServerError(w, r)
+			return
+		}
+
+		rootSession, err = h.iam.AuthService.OpenSessionWithSAML(ctx, user.ID, membership.OrganizationID)
+		if err != nil {
+			h.logger.ErrorCtx(ctx, "cannot open root session", log.Error(err))
+			h.renderInternalServerError(w, r)
+			return
+		}
 	}
 
-	// TODO open or update the organization session
+	_, _, err = h.iam.SessionService.AssumeOrganizationSession(ctx, rootSession.ID, membership.OrganizationID)
+	if err != nil {
+		h.logger.ErrorCtx(ctx, "cannot assume organization session", log.Error(err))
+		h.renderInternalServerError(w, r)
+		return
+	}
 
-	securecookie.Set(w, h.cookieConfig, session.ID.String())
-
+	securecookie.Set(w, h.cookieConfig, rootSession.ID.String())
 	redirectURL := h.baseURL.WithPath("/organizations/" + membership.OrganizationID.String()).MustString()
-
 	http.Redirect(w, r, redirectURL, http.StatusFound)
 }
 

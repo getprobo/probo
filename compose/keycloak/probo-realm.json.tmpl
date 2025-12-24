@@ -29,7 +29,7 @@
   "defaultRoles": ["member"],
   "clients": [
     {
-      "clientId": "http://localhost:5173/connect/saml/metadata",
+      "clientId": "http://localhost:5173/api/connect/v1/saml/2.0/metadata",
       "name": "Probo Console",
       "description": "Probo GRC Platform - SAML Service Provider",
       "enabled": true,
@@ -48,13 +48,13 @@
         "saml_name_id_format": "email",
         "saml.client.signature": "false",
         "saml.authnstatement": "true",
-        "saml_single_logout_service_url_post": "http://localhost:5173/connect/saml/logout",
-        "saml_single_logout_service_url_redirect": "http://localhost:5173/connect/saml/logout",
+        "saml_single_logout_service_url_post": "http://localhost:5173/api/connect/v1/saml/2.0/consume",
+        "saml_single_logout_service_url_redirect": "http://localhost:5173/api/connect/v1/saml/2.0/consume",
         "saml.onetimeuse.condition": "false"
       },
       "rootUrl": "http://localhost:5173",
       "baseUrl": "/",
-      "adminUrl": "http://localhost:5173/connect/saml/consume",
+      "adminUrl": "http://localhost:5173/api/connect/v1/saml/2.0/consume",
       "redirectUris": ["http://localhost:5173/*"],
       "webOrigins": ["http://localhost:5173"],
       "protocolMappers": [

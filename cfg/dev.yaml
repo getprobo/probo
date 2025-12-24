@@ -1,6 +1,6 @@
 unit:
   metrics:
-    addr: "localhost:8081"
+    addr: "localhost:5173"
   tracing:
     addr: "localhost:4317"
     max-batch-size: 512

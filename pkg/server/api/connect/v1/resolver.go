@@ -55,7 +55,7 @@ func NewMux(logger *log.Logger, svc *iam.Service, cookieConfig securecookie.Conf
 
 	sessionMiddleware := NewSessionMiddleware(svc, cookieConfig)
 	graphqlHandler := NewGraphQLHandler(svc, logger, baseURL, cookieConfig)
-	samlHandler := NewSAMLHandler(svc, cookieConfig, baseURL)
+	samlHandler := NewSAMLHandler(svc, cookieConfig, baseURL, logger)
 
 	router := r.With(sessionMiddleware)
 

@@ -284,7 +284,9 @@ func (s *Service) HandleAssertion(
 				}
 			}
 
-			err = membership.LoadByIdentityAndOrg(ctx, tx, coredata.NewNoScope(), identity.ID, config.OrganizationID)
+			scope := coredata.NewScopeFromObjectID(config.OrganizationID)
+
+			err = membership.LoadByIdentityAndOrg(ctx, tx, scope, identity.ID, config.OrganizationID)
 			if err != nil && err != coredata.ErrResourceNotFound {
 				return fmt.Errorf("cannot load membership: %w", err)
 			}
@@ -300,7 +302,7 @@ func (s *Service) HandleAssertion(
 					UpdatedAt:      now,
 				}
 
-				err = membership.Insert(ctx, tx, coredata.NewNoScope())
+				err = membership.Insert(ctx, tx, scope)
 				if err != nil {
 					return fmt.Errorf("cannot insert membership: %w", err)
 				}
@@ -323,21 +325,21 @@ func (s *Service) HandleAssertion(
 				membership.Role = *role
 				membership.UpdatedAt = now
 
-				err = membership.Update(ctx, tx, coredata.NewNoScope())
+				err = membership.Update(ctx, tx, scope)
 				if err != nil {
 					return fmt.Errorf("cannot update membership: %w", err)
 				}
 			}
 
 			memberProfile := &coredata.MembershipProfile{}
-			err = memberProfile.LoadByMembershipID(ctx, tx, coredata.NewNoScope(), membership.ID)
+			err = memberProfile.LoadByMembershipID(ctx, tx, scope, membership.ID)
 			if err != nil {
 				return fmt.Errorf("cannot load membership profile: %w", err)
 			}
 
 			memberProfile.FullName = fullname
 			memberProfile.UpdatedAt = now
-			err = memberProfile.Update(ctx, tx, coredata.NewNoScope())
+			err = memberProfile.Update(ctx, tx, scope)
 			if err != nil {
 				return fmt.Errorf("cannot update membership profile: %w", err)
 			}
