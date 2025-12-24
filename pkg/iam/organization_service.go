@@ -1069,6 +1069,10 @@ func (s OrganizationService) CreateSAMLConfiguration(
 
 			err = config.Insert(ctx, tx, scope)
 			if err != nil {
+				if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+					return NewSAMLConfigurationEmailDomainAlreadyExistsError(req.EmailDomain)
+				}
+
 				return fmt.Errorf("cannot insert saml configuration: %w", err)
 			}
 

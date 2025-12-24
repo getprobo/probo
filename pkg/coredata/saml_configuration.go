@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
@@ -317,6 +318,13 @@ INSERT INTO iam_saml_configurations (
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) {
+			if pgErr.Code == "23505" && pgErr.ConstraintName == "idx_saml_config_domain_org_unique" {
+				return ErrResourceAlreadyExists
+			}
+		}
+
 		return fmt.Errorf("cannot insert saml_configuration: %w", err)
 	}
 
