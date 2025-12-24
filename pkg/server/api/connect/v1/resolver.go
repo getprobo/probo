@@ -30,6 +30,7 @@ type (
 	Resolver struct {
 		logger       *log.Logger
 		iam          *iam.Service
+		baseURL      *baseurl.BaseURL
 		cookieConfig securecookie.Config
 	}
 )
@@ -53,7 +54,7 @@ func NewMux(logger *log.Logger, svc *iam.Service, cookieConfig securecookie.Conf
 	r.Use(HTTPContextMiddleware)
 
 	sessionMiddleware := NewSessionMiddleware(svc, cookieConfig)
-	graphqlHandler := NewGraphQLHandler(svc, logger, cookieConfig)
+	graphqlHandler := NewGraphQLHandler(svc, logger, baseURL, cookieConfig)
 	samlHandler := NewSAMLHandler(svc, cookieConfig, baseURL)
 
 	router := r.With(sessionMiddleware)
