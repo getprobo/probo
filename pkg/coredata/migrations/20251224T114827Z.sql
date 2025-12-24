@@ -1,0 +1,1 @@
+ALTER TABLE iam_saml_requests DROP COLUMN IF EXISTS tenant_id;
