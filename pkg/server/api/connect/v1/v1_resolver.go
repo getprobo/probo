@@ -9,7 +9,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/99designs/gqlgen/graphql"
@@ -1250,13 +1249,7 @@ func (r *queryResolver) CheckSSOAvailability(ctx context.Context, email string) 
 
 // TestLoginURL is the resolver for the testLoginUrl field.
 func (r *sAMLConfigurationResolver) TestLoginURL(ctx context.Context, obj *types.SAMLConfiguration) (string, error) {
-	entityID := r.iam.SAMLService.GetEntityID()
-	parts := strings.Split(entityID, "/connect/saml/metadata")
-	if len(parts) != 2 {
-		return "", fmt.Errorf("invalid entity ID format")
-	}
-
-	return fmt.Sprintf("%s/connect/saml/login/%s", parts[0], obj.ID), nil
+	return r.baseURL.WithPath("/api/connect/v1/saml/2.0/" + obj.ID.String()).MustString(), nil
 }
 
 // TotalCount is the resolver for the totalCount field.
