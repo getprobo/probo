@@ -374,15 +374,19 @@ func (s SessionService) AssumeOrganizationSession(
 			}
 
 			if err == nil && samlConfig.EnforcementPolicy == coredata.SAMLEnforcementPolicyRequired {
-				redirectURL, err := s.SAMLService.InitiateLogin(ctx, samlConfig.ID)
-				if err != nil {
-					return fmt.Errorf("cannot initiate SAML login: %w", err)
+				if rootSession.AuthMethod != coredata.AuthMethodSAML {
+					redirectURL, err := s.SAMLService.InitiateLogin(ctx, samlConfig.ID)
+					if err != nil {
+						return fmt.Errorf("cannot initiate SAML login: %w", err)
+					}
+
+					return NewSAMLAuthenticationRequiredError("policy_requirement", redirectURL.String())
 				}
-
-				return NewSAMLAuthenticationRequiredError("policy_requirement", redirectURL.String())
-			}
-
-			if rootSession.AuthMethod != coredata.AuthMethodPassword {
+			} else if err == nil && samlConfig.EnforcementPolicy == coredata.SAMLEnforcementPolicyOptional {
+				// SAML is optional: both PASSWORD and SAML root sessions are allowed.
+			} else if rootSession.AuthMethod != coredata.AuthMethodPassword {
+				// No (or non-required) SAML configuration: require a password-authenticated root session
+				// (eg. when switching into a password-based org from a SAML login).
 				return NewPasswordRequiredError("password_authentication_required")
 			}
 
@@ -393,7 +397,7 @@ func (s SessionService) AssumeOrganizationSession(
 				TenantID:        &tenantID,
 				MembershipID:    &membership.ID,
 				ParentSessionID: &rootSession.ID,
-				AuthMethod:      coredata.AuthMethodPassword,
+				AuthMethod:      rootSession.AuthMethod,
 				AuthenticatedAt: now,
 				ExpiredAt:       rootSession.ExpiredAt,
 				CreatedAt:       now,
