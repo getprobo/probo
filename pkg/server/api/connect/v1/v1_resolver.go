@@ -915,6 +915,11 @@ func (r *mutationResolver) CreateSAMLConfiguration(ctx context.Context, input ty
 	)
 
 	if err != nil {
+		var errSAMLConfigurationEmailDomainAlreadyExists *iam.ErrSAMLConfigurationEmailDomainAlreadyExists
+		if errors.As(err, &errSAMLConfigurationEmailDomainAlreadyExists) {
+			return nil, gqlutils.Conflict(err)
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot create saml configuration", log.Error(err))
 		return nil, gqlutils.InternalServerError(ctx)
 	}

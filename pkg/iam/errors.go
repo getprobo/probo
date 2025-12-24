@@ -308,6 +308,16 @@ func (e *ErrSAMLAuthenticationRequired) Error() string {
 	return fmt.Sprintf("SAML authentication required: %s", e.Reason)
 }
 
+type ErrSAMLConfigurationEmailDomainAlreadyExists struct{ EmailDomain string }
+
+func NewSAMLConfigurationEmailDomainAlreadyExistsError(emailDomain string) error {
+	return &ErrSAMLConfigurationEmailDomainAlreadyExists{EmailDomain: emailDomain}
+}
+
+func (e ErrSAMLConfigurationEmailDomainAlreadyExists) Error() string {
+	return fmt.Sprintf("SAML configuration email domain %q already exists", e.EmailDomain)
+}
+
 // TenantAccessError is used by API recovery middleware to translate authorization/tenant failures
 // into a consistent client-facing error response.
 //
