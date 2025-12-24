@@ -78,11 +78,11 @@ export function SAMLConfigurationList(props: {
       {
         successMessage: "SAML configuration deleted successfully.",
         errorMessage: "Failed to delete SAML configuration. Please try again.",
-      },
+      }
     );
 
   const handleDelete = (
-    config: NodeOf<SAMLConfigurationListFragment$data["samlConfigurations"]>,
+    config: NodeOf<SAMLConfigurationListFragment$data["samlConfigurations"]>
   ) => {
     confirm(
       async () => {
@@ -100,11 +100,11 @@ export function SAMLConfigurationList(props: {
         message: __(
           "Are you sure you want to delete the SAML configuration for " +
             config.emailDomain +
-            "? This action cannot be undone.",
+            "? This action cannot be undone."
         ),
         label: __("Delete"),
         variant: "danger",
-      },
+      }
     );
   };
 
@@ -117,7 +117,7 @@ export function SAMLConfigurationList(props: {
           </h3>
           <p className="text-gray-600 mb-6">
             {__(
-              "Set up SAML 2.0 single sign-on for your organization by adding a configuration for each email domain.",
+              "Set up SAML 2.0 single sign-on for your organization by adding a configuration for each email domain."
             )}
           </p>
           {isAuthorized("Organization", "createSAMLConfiguration") && (
@@ -198,13 +198,21 @@ export function SAMLConfigurationList(props: {
                   <>
                     {isAuthorized(
                       "SAMLConfiguration",
-                      "updateSAMLConfiguration",
+                      "updateSAMLConfiguration"
                     ) && (
                       <Button
                         variant="secondary"
                         onClick={() => onEdit(config.id)}
                       >
                         {__("Edit")}
+                      </Button>
+                    )}
+                    {isAuthorized("Organization", "deleteOrganization") && (
+                      <Button
+                        variant="danger"
+                        onClick={() => handleDelete(config)}
+                      >
+                        {__("Delete")}
                       </Button>
                     )}
                   </>
