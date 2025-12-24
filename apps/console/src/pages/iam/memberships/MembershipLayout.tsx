@@ -19,6 +19,7 @@ export const membershipLayoutQuery = graphql`
       }
     }
     viewer @required(action: THROW) {
+      ...SidebarFragment @arguments(organizationId: $organizationId)
       ...MembershipsDropdown_viewerFragment
       pendingInvitations @required(action: THROW) {
         totalCount @required(action: THROW)
@@ -67,7 +68,7 @@ export function MembershipLayout(props: {
             </Suspense>
           </>
         }
-        sidebar={<Sidebar />}
+        sidebar={<Sidebar fKey={viewer} />}
       >
         <CoreRelayProvider>
           <Outlet />

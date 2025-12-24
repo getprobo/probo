@@ -1,5 +1,3 @@
-import { use } from "react";
-import { PermissionsContext } from "/providers/PermissionsContext";
 import {
   IconBank,
   IconBook,
@@ -24,144 +22,210 @@ import {
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { useOrganizationId } from "/hooks/useOrganizationId";
+import { graphql } from "relay-runtime";
+import { useFragment } from "react-relay";
+import type { SidebarFragment$key } from "./__generated__/SidebarFragment.graphql";
 
-export function Sidebar() {
+const fragment = graphql`
+  fragment SidebarFragment on Identity
+  @argumentDefinitions(organizationId: { type: "ID!" }) {
+    canListMeetings: permission(
+      action: "core:meeting:list"
+      id: $organizationId
+    )
+    canListTasks: permission(action: "core:task:list", id: $organizationId)
+    canListMeasures: permission(
+      action: "core:measures:list"
+      id: $organizationId
+    )
+    canListRisks: permission(action: "core:risk:list", id: $organizationId)
+    canListFrameworks: permission(
+      action: "core:frameworks:list"
+      id: $organizationId
+    )
+    canListPeople: permission(action: "core:people:list", id: $organizationId)
+    canListVendors: permission(action: "core:vendor:list", id: $organizationId)
+    canListDocuments: permission(
+      action: "core:document:list"
+      id: $organizationId
+    )
+    canListAssets: permission(action: "core:asset:list", id: $organizationId)
+    canListData: permission(action: "core:datum:list", id: $organizationId)
+    canListAudits: permission(action: "core:audit:list", id: $organizationId)
+    canListNonconformities: permission(
+      action: "core:nonconformity:list"
+      id: $organizationId
+    )
+    canListObligations: permission(
+      action: "core:obligation:list"
+      id: $organizationId
+    )
+    canListContinualImprovements: permission(
+      action: "core:continual-improvement:list"
+      id: $organizationId
+    )
+    canListProcessingActivities: permission(
+      action: "core:processing-activity:list"
+      id: $organizationId
+    )
+    canListStatesOfApplicability: permission(
+      action: "core:state-of-applicability:list"
+      id: $organizationId
+    )
+    canListSnapshots: permission(
+      action: "core:snapshot:list"
+      id: $organizationId
+    )
+    canGetTrustCenter: permission(
+      action: "core:trust-center:get"
+      id: $organizationId
+    )
+    canUpdateOrganization: permission(
+      action: "iam:organization:update"
+      id: $organizationId
+    )
+  }
+`;
+
+export function Sidebar(props: { fKey: SidebarFragment$key }) {
+  const { fKey } = props;
+
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
 
-  const { isAuthorized } = use(PermissionsContext);
+  const permissions = useFragment<SidebarFragment$key>(fragment, fKey);
 
   const prefix = `/organizations/${organizationId}`;
 
   return (
     <ul className="space-y-[2px]">
-      {isAuthorized("Organization", "listMeetings") && (
+      {permissions.canListMeetings && (
         <SidebarItem
           label={__("Meetings")}
           icon={IconCalendar1}
           to={`${prefix}/meetings`}
         />
       )}
-      {isAuthorized("Organization", "listTasks") && (
+      {permissions.canListTasks && (
         <SidebarItem
           label={__("Tasks")}
           icon={IconInboxEmpty}
           to={`${prefix}/tasks`}
         />
       )}
-      {isAuthorized("Organization", "listMeasures") && (
+      {permissions.canListMeasures && (
         <SidebarItem
           label={__("Measures")}
           icon={IconTodo}
           to={`${prefix}/measures`}
         />
       )}
-      {isAuthorized("Organization", "listRisks") && (
+      {permissions.canListRisks && (
         <SidebarItem
           label={__("Risks")}
           icon={IconFire3}
           to={`${prefix}/risks`}
         />
       )}
-      {isAuthorized("Organization", "listFrameworks") && (
+      {permissions.canListFrameworks && (
         <SidebarItem
           label={__("Frameworks")}
           icon={IconBank}
           to={`${prefix}/frameworks`}
         />
       )}
-      {isAuthorized("Organization", "listPeople") && (
+      {permissions.canListPeople && (
         <SidebarItem
           label={__("People")}
           icon={IconGroup1}
           to={`${prefix}/people`}
         />
       )}
-      {isAuthorized("Organization", "listVendors") && (
+      {permissions.canListVendors && (
         <SidebarItem
           label={__("Vendors")}
           icon={IconStore}
           to={`${prefix}/vendors`}
         />
       )}
-      {isAuthorized("Organization", "listDocuments") && (
+      {permissions.canListDocuments && (
         <SidebarItem
           label={__("Documents")}
           icon={IconPageTextLine}
           to={`${prefix}/documents`}
         />
       )}
-      {isAuthorized("Organization", "listAssets") && (
+      {permissions.canListAssets && (
         <SidebarItem
           label={__("Assets")}
           icon={IconBox}
           to={`${prefix}/assets`}
         />
       )}
-      {isAuthorized("Organization", "listData") && (
+      {permissions.canListData && (
         <SidebarItem
           label={__("Data")}
           icon={IconListStack}
           to={`${prefix}/data`}
         />
       )}
-      {isAuthorized("Organization", "listAudits") && (
+      {permissions.canListAudits && (
         <SidebarItem
           label={__("Audits")}
           icon={IconMedal}
           to={`${prefix}/audits`}
         />
       )}
-      {isAuthorized("Organization", "listNonconformities") && (
+      {permissions.canListNonconformities && (
         <SidebarItem
           label={__("Nonconformities")}
           icon={IconCrossLargeX}
           to={`${prefix}/nonconformities`}
         />
       )}
-      {isAuthorized("Organization", "listObligations") && (
+      {permissions.canListObligations && (
         <SidebarItem
           label={__("Obligations")}
           icon={IconBook}
           to={`${prefix}/obligations`}
         />
       )}
-      {isAuthorized("Organization", "listContinualImprovements") && (
+      {permissions.canListContinualImprovements && (
         <SidebarItem
           label={__("Continual Improvements")}
           icon={IconRotateCw}
           to={`${prefix}/continual-improvements`}
         />
       )}
-      {isAuthorized("Organization", "listProcessingActivities") && (
+      {permissions.canListProcessingActivities && (
         <SidebarItem
           label={__("Processing Activities")}
           icon={IconCircleProgress}
           to={`${prefix}/processing-activities`}
         />
       )}
-      {isAuthorized("Organization", "listStatesOfApplicability") && (
+      {permissions.canListStatesOfApplicability && (
         <SidebarItem
           label={__("States of Applicability")}
           icon={IconPageCheck}
           to={`${prefix}/states-of-applicability`}
         />
       )}
-      {isAuthorized("Organization", "listSnapshots") && (
+      {permissions.canListSnapshots && (
         <SidebarItem
           label={__("Snapshots")}
           icon={IconClock}
           to={`${prefix}/snapshots`}
         />
       )}
-      {isAuthorized("Organization", "getTrustCenter") && (
+      {permissions.canGetTrustCenter && (
         <SidebarItem
           label={__("Trust Center")}
           icon={IconShield}
           to={`${prefix}/trust-center`}
         />
       )}
-      {isAuthorized("Organization", "listMembers") && (
+      {permissions.canUpdateOrganization && (
         <SidebarItem
           label={__("Settings")}
           icon={IconSettingsGear2}
