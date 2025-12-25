@@ -119,66 +119,70 @@ export function Select<T>({
     });
 
     return (
-        <Root
-            defaultOpen={defaultOpen}
-            open={open}
-            onOpenChange={onOpenChange}
-            onValueChange={onValueChange}
-            value={value as string}
-        >
-            <Trigger
-                {...props}
-                className={trigger({
-                    className: props.className,
-                    disabled: props.disabled,
-                })}
+        <div className="relative">
+            <Root
+                defaultOpen={defaultOpen}
+                open={open}
+                onOpenChange={onOpenChange}
+                onValueChange={onValueChange}
+                value={value as string}
             >
-                <Value placeholder={placeholder} />
-                <Icon className={icon()}>
-                    {loading ? (
-                        <Spinner size={16} />
-                    ) : (
-                        <IconChevronGrabberVertical size={16} />
-                    )}
-                </Icon>
-            </Trigger>
-            <Portal>
-                <Content
-                    position="popper"
-                    sideOffset={5}
-                    {...dropdownProps}
-                    style={{
-                        minWidth: "var(--radix-select-trigger-width)",
-                        maxHeight:
-                        "var(--radix-select-content-available-height)",
-                        ...dropdownProps?.style,
-                    }}
-                    className={content({ className: dropdownProps?.className })}
+                <Trigger
+                    {...props}
+                    className={trigger({
+                        className: props.className,
+                        disabled: props.disabled,
+                    })}
                 >
-                    {onSearch && (
-                        <Input
-                            // Prevent radix behaviour
-                            onBlurCapture={(e) => {
-                                e.stopPropagation();
-                                e.preventDefault();
-                            }}
-                            autoFocus
-                            icon={IconMagnifyingGlass}
-                            placeholder={searchPlaceholder}
-                            value={searchValue}
-                            onChange={(e) => onSearch(e.target.value)}
-                        />
-                    )}
-                    <ScrollArea.Root className="ScrollAreaRoot" type="auto">
-                        <Viewport asChild>
-                            <ScrollArea.Viewport className="ScrollAreaViewport">
-                                {children}
-                            </ScrollArea.Viewport>
-                        </Viewport>
-                    </ScrollArea.Root>
-                </Content>
-            </Portal>
-        </Root>
+                    <Value placeholder={placeholder} />
+                    <Icon className={icon()}>
+                        {loading ? (
+                            <Spinner size={16} />
+                        ) : (
+                            <IconChevronGrabberVertical size={16} />
+                        )}
+                    </Icon>
+                </Trigger>
+                <Portal>
+                    <Content
+                        position="popper"
+                        sideOffset={5}
+                        {...dropdownProps}
+                        style={{
+                            minWidth: "var(--radix-select-trigger-width)",
+                            maxHeight:
+                                "var(--radix-select-content-available-height)",
+                            ...dropdownProps?.style,
+                        }}
+                        className={content({
+                            className: dropdownProps?.className,
+                        })}
+                    >
+                        {onSearch && (
+                            <Input
+                                // Prevent radix behaviour
+                                onBlurCapture={(e) => {
+                                    e.stopPropagation();
+                                    e.preventDefault();
+                                }}
+                                autoFocus
+                                icon={IconMagnifyingGlass}
+                                placeholder={searchPlaceholder}
+                                value={searchValue}
+                                onChange={(e) => onSearch(e.target.value)}
+                            />
+                        )}
+                        <ScrollArea.Root className="ScrollAreaRoot" type="auto">
+                            <Viewport asChild>
+                                <ScrollArea.Viewport className="ScrollAreaViewport">
+                                    {children}
+                                </ScrollArea.Viewport>
+                            </Viewport>
+                        </ScrollArea.Root>
+                    </Content>
+                </Portal>
+            </Root>
+        </div>
     );
 }
 
