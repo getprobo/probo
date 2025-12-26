@@ -303,6 +303,14 @@ func (r *membershipConnectionResolver) TotalCount(ctx context.Context, obj *type
 		}
 
 		return &count, nil
+	case *organizationResolver:
+		count, err := r.iam.OrganizationService.CountMemberships(ctx, obj.ParentID)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot count memberships", log.Error(err))
+			return nil, gqlutils.InternalServerError(ctx)
+		}
+
+		return &count, nil
 	}
 
 	r.logger.ErrorCtx(ctx, "unsupported resolver", log.Any("resolver", obj.Resolver))
@@ -862,6 +870,19 @@ func (r *mutationResolver) DeleteInvitation(ctx context.Context, input types.Del
 	}
 
 	return &types.DeleteInvitationPayload{DeletedInvitationID: input.InvitationID}, nil
+}
+
+// UpdateMembership is the resolver for the updateMembership field.
+func (r *mutationResolver) UpdateMembership(ctx context.Context, input types.UpdateMembershipInput) (*types.UpdateMembershipPayload, error) {
+	membership, err := r.iam.OrganizationService.UpdateMempership(ctx, input.OrganizationID, input.MembershipID, input.Role)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot update membership", log.Error(err))
+		return nil, gqlutils.InternalServerError(ctx)
+	}
+
+	return &types.UpdateMembershipPayload{
+		Membership: types.NewMembership(membership),
+	}, nil
 }
 
 // RemoveMember is the resolver for the removeMember field.

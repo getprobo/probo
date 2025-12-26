@@ -51,6 +51,7 @@ const (
 	ActionIAMMembershipGet    = "iam:membership:get"
 	ActionIAMMembershipLit    = "iam:membership:list"
 	ActionIAMMembershipUpdate = "iam:membership:update"
+	ActionIAMMembershipDelete = "iam:membership:delete"
 
 	// Personal API Key actions
 	ActionIAMPersonalAPIKeyCreate = "iam:personal-api-key:create"

@@ -155,6 +155,73 @@ func NewOrganizationService(svc *Service) *OrganizationService {
 	return &OrganizationService{Service: svc}
 }
 
+func (s *OrganizationService) CountMemberships(
+	ctx context.Context,
+	organizationID gid.GID,
+) (int, error) {
+	var count int
+	scope := coredata.NewScopeFromObjectID(organizationID)
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) (err error) {
+			memberships := coredata.Memberships{}
+			count, err = memberships.CountByOrganizationID(ctx, conn, scope, organizationID)
+			if err != nil {
+				return fmt.Errorf("cannot count memberships: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (s *OrganizationService) UpdateMempership(
+	ctx context.Context,
+	organizationID gid.GID,
+	membershipID gid.GID,
+	role coredata.MembershipRole,
+) (*coredata.Membership, error) {
+	scope := coredata.NewScopeFromObjectID(organizationID)
+
+	membership := coredata.Membership{}
+	if err := s.pg.WithTx(ctx,
+		func(tx pg.Conn) error {
+
+			if err := membership.LoadByID(ctx, tx, scope, membershipID); err != nil {
+				if err == coredata.ErrResourceNotFound {
+					return NewMembershipNotFoundError(membershipID)
+				}
+
+				return fmt.Errorf("cannot load membership: %w", err)
+			}
+
+			if membership.OrganizationID != organizationID {
+				return NewMembershipNotFoundError(membership.ID)
+			}
+
+			membership.Role = role
+			membership.UpdatedAt = time.Now()
+
+			if err := membership.Update(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot update membership: %w", err)
+			}
+
+			return nil
+		},
+	); err != nil {
+		return nil, err
+	}
+
+	return &membership, nil
+}
+
 func (s *OrganizationService) RemoveMember(
 	ctx context.Context,
 	organizationID gid.GID,

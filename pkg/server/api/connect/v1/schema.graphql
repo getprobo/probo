@@ -110,6 +110,7 @@ type Mutation {
     @session(required: PRESENT)
   deleteInvitation(input: DeleteInvitationInput!): DeleteInvitationPayload
     @session(required: PRESENT)
+  updateMembership(input: UpdateMembershipInput!): UpdateMembershipPayload!
   removeMember(input: RemoveMemberInput!): RemoveMemberPayload
     @session(required: PRESENT)
 
@@ -232,7 +233,7 @@ type Membership implements Node {
   id: ID!
   createdAt: Datetime!
   identity: Identity @goField(forceResolver: true)
-  profile: MembershipProfile @goField(forceResolver: true) @isViewer
+  profile: MembershipProfile @goField(forceResolver: true)
   organization: Organization @goField(forceResolver: true)
   role: MembershipRole!
   permissions: [Permission!] @goField(forceResolver: true)
@@ -601,6 +602,12 @@ input InviteMemberInput {
   fullName: String!
 }
 
+input UpdateMembershipInput {
+  organizationId: ID!
+  membershipId: ID!
+  role: MembershipRole!
+}
+
 input RemoveMemberInput {
   organizationId: ID!
   membershipId: ID!
@@ -752,6 +759,10 @@ type DeleteOrganizationHorizontalLogoPayload {
 
 type InviteMemberPayload {
   invitationEdge: InvitationEdge!
+}
+
+type UpdateMembershipPayload {
+  membership: Membership!
 }
 
 type RemoveMemberPayload {

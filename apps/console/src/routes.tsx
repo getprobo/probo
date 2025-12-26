@@ -208,12 +208,13 @@ const routes = [
                 import("./pages/iam/organizations/settings/GeneralSettingsPageLoader.tsx"),
             ),
           },
-          // {
-          //   path: "members",
-          //   Component: lazy(
-          //     () => import("./pages/organizations/settings/MembersSettingsTab")
-          //   ),
-          // },
+          {
+            path: "members",
+            Component: lazy(
+              () =>
+                import("./pages/iam/organizations/settings/MembersPageLoader.tsx"),
+            ),
+          },
           {
             path: "domain",
             Component: lazy(

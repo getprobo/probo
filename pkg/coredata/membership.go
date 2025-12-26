@@ -503,7 +503,7 @@ WITH membership_with_profile AS (
         iam_membership_profiles mp ON mp.membership_id = m.id
     WHERE
         m.organization_id = @organization_id
-        AND %s
+        AND m.%s
 )
 SELECT
     id,
