@@ -67,13 +67,30 @@ func NewEvidence(e *coredata.Evidence) *Evidence {
 		urlPtr = &urlCopy
 	}
 
-	return &Evidence{
-		ID:          e.ID,
-		State:       e.State,
-		Type:        e.Type,
-		URL:         urlPtr,
+	evidence := &Evidence{
+		ID:    e.ID,
+		State: e.State,
+		Type:  e.Type,
+		URL:   urlPtr,
+		Measure: &Measure{
+			ID: e.MeasureID,
+		},
 		Description: e.Description,
 		CreatedAt:   e.CreatedAt,
 		UpdatedAt:   e.UpdatedAt,
 	}
+
+	if e.EvidenceFileId != nil {
+		evidence.File = &File{
+			ID: *e.EvidenceFileId,
+		}
+	}
+
+	if e.TaskID != nil {
+		evidence.Task = &Task{
+			ID: *e.TaskID,
+		}
+	}
+
+	return evidence
 }

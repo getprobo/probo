@@ -1,0 +1,14 @@
+ALTER TABLE users RENAME TO identities;
+ALTER TABLE sessions RENAME COLUMN user_id TO identity_id;
+ALTER TABLE authz_memberships RENAME COLUMN user_id TO identity_id;
+ALTER TABLE peoples RENAME COLUMN user_id TO identity_id;
+ALTER TABLE auth_user_api_keys RENAME COLUMN user_id TO identity_id;
+ALTER TABLE authz_api_keys_memberships RENAME COLUMN auth_user_api_key_id TO personal_api_key_id;
+ALTER TABLE sessions RENAME TO iam_sessions;
+ALTER TABLE authz_memberships RENAME TO iam_memberships;
+ALTER TABLE authz_invitations RENAME TO iam_invitations;
+ALTER TABLE auth_user_api_keys RENAME TO iam_personal_api_keys;
+ALTER TABLE authz_api_keys_memberships RENAME TO iam_personal_api_key_memberships;
+ALTER TABLE auth_saml_configurations RENAME TO iam_saml_configurations;
+ALTER TABLE auth_saml_assertions RENAME TO iam_saml_assertions;
+ALTER TABLE auth_saml_requests RENAME TO iam_saml_requests;

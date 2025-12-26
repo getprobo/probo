@@ -4,7 +4,6 @@ import {
   loadQuery,
   useFragment,
   usePreloadedQuery,
-  useLazyLoadQuery,
 } from "react-relay";
 import type { DocumentGraphNodeQuery } from "/hooks/graph/__generated__/DocumentGraphNodeQuery.graphql";
 import {
@@ -19,7 +18,6 @@ import type {
 } from "./__generated__/DocumentDetailPageDocumentFragment.graphql";
 import type { DocumentDetailPageExportPDFMutation } from "./__generated__/DocumentDetailPageExportPDFMutation.graphql";
 import type { DocumentDetailPageUpdateMutation } from "./__generated__/DocumentDetailPageUpdateMutation.graphql";
-import type { DocumentDetailPageUserEmailQuery } from "./__generated__/DocumentDetailPageUserEmailQuery.graphql";
 import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
@@ -178,15 +176,13 @@ const documentUpdateSchema = z.object({
   classification: z.enum(documentClassifications),
 });
 
-const UserEmailQuery = graphql`
-  query DocumentDetailPageUserEmailQuery {
-    viewer {
-      user {
-        email
-      }
-    }
-  }
-`;
+// const UserEmailQuery = graphql`
+//   query DocumentDetailPageUserEmailQuery {
+//     viewer {
+//       email
+//     }
+//   }
+// `;
 
 export default function DocumentDetailPage(props: Props) {
   const { versionId } = useParams<{ versionId?: string }>();
@@ -230,15 +226,19 @@ export default function DocumentDetailPage(props: Props) {
       }
     );
 
-  const userEmailData = useLazyLoadQuery<DocumentDetailPageUserEmailQuery>(UserEmailQuery, {});
-  const defaultEmail = userEmailData.viewer.user.email;
-  const [updateDocument, isUpdatingDocument] = useMutationWithToasts<DocumentDetailPageUpdateMutation>(
-    updateDocumentMutation,
-    {
-      successMessage: __("Document updated successfully."),
-      errorMessage: __("Failed to update document"),
-    }
-  );
+  // const userEmailData = useLazyLoadQuery<DocumentDetailPageUserEmailQuery>(
+  //   UserEmailQuery,
+  //   {}
+  // );
+  // const defaultEmail = userEmailData.viewer.user.email;
+  const [updateDocument, isUpdatingDocument] =
+    useMutationWithToasts<DocumentDetailPageUpdateMutation>(
+      updateDocumentMutation,
+      {
+        successMessage: __("Document updated successfully."),
+        errorMessage: __("Failed to update document"),
+      }
+    );
   const versionConnectionId = document.versions.__id;
 
   const { register, control, handleSubmit, reset } = useFormWithSchema(
@@ -443,7 +443,7 @@ export default function DocumentDetailPage(props: Props) {
         ref={pdfDownloadDialogRef}
         onDownload={handleDownloadPdf}
         isLoading={isExporting}
-        defaultEmail={defaultEmail}
+        // defaultEmail={defaultEmail}
       >
         {null}
       </PdfDownloadDialog>
@@ -499,15 +499,17 @@ export default function DocumentDetailPage(props: Props) {
                   {isDraft ? __("Edit draft document") : __("Create new draft")}
                 </DropdownItem>
               )}
-              {isDraft && versions.length > 1 && isAuthorized("Document", "deleteDraftDocumentVersion") && (
-                <DropdownItem
-                  onClick={handleDeleteDraft}
-                  icon={IconTrashCan}
-                  disabled={isDeletingDraft}
-                >
-                  {__("Delete draft document")}
-                </DropdownItem>
-              )}
+              {isDraft &&
+                versions.length > 1 &&
+                isAuthorized("Document", "deleteDraftDocumentVersion") && (
+                  <DropdownItem
+                    onClick={handleDeleteDraft}
+                    icon={IconTrashCan}
+                    disabled={isDeletingDraft}
+                  >
+                    {__("Delete draft document")}
+                  </DropdownItem>
+                )}
               <DropdownItem
                 onClick={() => pdfDownloadDialogRef.current?.open()}
                 icon={IconArrowDown}
@@ -616,7 +618,10 @@ export default function DocumentDetailPage(props: Props) {
               />
             </EditablePropertyContent>
           ) : (
-            <ReadOnlyPropertyContent onEdit={() => setIsEditingOwner(true)} canEdit={isAuthorized("Document", "updateDocument")}>
+            <ReadOnlyPropertyContent
+              onEdit={() => setIsEditingOwner(true)}
+              canEdit={isAuthorized("Document", "updateDocument")}
+            >
               <Badge variant="highlight" size="md" className="gap-2">
                 <Avatar name={currentVersion.owner?.fullName ?? ""} />
                 {currentVersion.owner?.fullName}
@@ -643,7 +648,10 @@ export default function DocumentDetailPage(props: Props) {
               </ControlledField>
             </EditablePropertyContent>
           ) : (
-            <ReadOnlyPropertyContent onEdit={() => setIsEditingType(true)} canEdit={isAuthorized("Document", "updateDocument")}>
+            <ReadOnlyPropertyContent
+              onEdit={() => setIsEditingType(true)}
+              canEdit={isAuthorized("Document", "updateDocument")}
+            >
               <div className="text-sm text-txt-secondary">
                 {getDocumentTypeLabel(__, document.documentType)}
               </div>
@@ -674,7 +682,10 @@ export default function DocumentDetailPage(props: Props) {
               canEdit={isAuthorized("Document", "updateDocument")}
             >
               <div className="text-sm text-txt-secondary">
-                {getDocumentClassificationLabel(__, currentVersion.classification)}
+                {getDocumentClassificationLabel(
+                  __,
+                  currentVersion.classification
+                )}
               </div>
             </ReadOnlyPropertyContent>
           )}
@@ -749,7 +760,9 @@ function ReadOnlyPropertyContent({
   return (
     <div className="flex items-center justify-between gap-3">
       {children}
-      {canEdit && <Button variant="quaternary" icon={IconPencil} onClick={onEdit} />}
+      {canEdit && (
+        <Button variant="quaternary" icon={IconPencil} onClick={onEdit} />
+      )}
     </div>
   );
 }

@@ -32,7 +32,6 @@ import type { EmployeeLayoutQuery as EmployeeLayoutQueryType } from "./__generat
 import { Suspense, useState, useEffect, useMemo, use } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { PageError } from "/components/PageError";
-import { buildEndpoint } from "/providers/RelayProviders";
 import { PermissionsProvider } from "/providers/PermissionsProvider";
 import { PermissionsContext } from "/providers/PermissionsContext";
 
@@ -40,10 +39,10 @@ const EmployeeLayoutQuery = graphql`
   query EmployeeLayoutQuery($organizationId: ID!) {
     viewer {
       id
-      user {
-        fullName
-        email
-      }
+      # user {
+      #   fullName
+      #   email
+      # }
     }
     organization: node(id: $organizationId) {
       ... on Organization {
@@ -71,11 +70,7 @@ export function EmployeeLayout() {
   );
 }
 
-function EmployeeLayoutContent({
-  organizationId,
-}: {
-  organizationId: string;
-}) {
+function EmployeeLayoutContent({ organizationId }: { organizationId: string }) {
   const data = useLazyLoadQuery<EmployeeLayoutQueryType>(EmployeeLayoutQuery, {
     organizationId,
   });
@@ -98,7 +93,7 @@ function EmployeeLayoutContent({
           <OrganizationSelector currentOrganization={data.organization} />
         </div>
         <Suspense fallback={<Skeleton className="w-32 h-8" />}>
-          <UserDropdown organizationId={organizationId} />
+          <UserDropdown />
         </Suspense>
       </header>
       <main className="overflow-y-auto w-full pt-12 h-[calc(100vh-3rem)]">
@@ -237,8 +232,8 @@ function OrganizationSelector({
               placeholder={__("Search organizations...")}
               value={search}
               onValueChange={setSearch}
-              onKeyDown={(e) => { 
-                  e.stopPropagation();
+              onKeyDown={(e) => {
+                e.stopPropagation();
               }}
               autoFocus
             />
@@ -339,20 +334,24 @@ function OrganizationSelector({
   );
 }
 
-function UserDropdown({ organizationId }: { organizationId: string }) {
+function UserDropdown() {
   const { __ } = useTranslate();
   const { toast } = useToast();
   const { isAuthorized } = use(PermissionsContext);
-  const user = useLazyLoadQuery<EmployeeLayoutQueryType>(EmployeeLayoutQuery, {
-    organizationId,
-  }).viewer.user;
+  const user = {
+    fullName: "",
+    email: "",
+  };
+  // const user = useLazyLoadQuery<EmployeeLayoutQueryType>(EmployeeLayoutQuery, {
+  //   organizationId,
+  // }).viewer.user;
 
   const handleLogout: React.MouseEventHandler<HTMLAnchorElement> = async (
     e
   ) => {
     e.preventDefault();
 
-    fetch(buildEndpoint("/connect/logout"), {
+    fetch("/connect/logout", {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",

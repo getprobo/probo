@@ -61,8 +61,11 @@ func NewVendorEdge(v *coredata.Vendor, orderBy coredata.VendorOrderField) *Vendo
 }
 
 func NewVendor(v *coredata.Vendor) *Vendor {
-	return &Vendor{
-		ID:                            v.ID,
+	object := &Vendor{
+		ID: v.ID,
+		Organization: &Organization{
+			ID: v.OrganizationID,
+		},
 		Name:                          v.Name,
 		Description:                   v.Description,
 		StatusPageURL:                 v.StatusPageURL,
@@ -85,4 +88,18 @@ func NewVendor(v *coredata.Vendor) *Vendor {
 		UpdatedAt:                     v.UpdatedAt,
 		CreatedAt:                     v.CreatedAt,
 	}
+
+	if v.BusinessOwnerID != nil {
+		object.BusinessOwner = &People{
+			ID: *v.BusinessOwnerID,
+		}
+	}
+
+	if v.SecurityOwnerID != nil {
+		object.SecurityOwner = &People{
+			ID: *v.SecurityOwnerID,
+		}
+	}
+
+	return object
 }

@@ -33,7 +33,7 @@ type TokenAccessData struct {
 }
 
 type ContextAccessor interface {
-	UserFromContext(ctx context.Context) *coredata.User
+	IdentityFromContext(ctx context.Context) *coredata.Identity
 	TokenAccessFromContext(ctx context.Context) *TokenAccessData
 }
 
@@ -46,8 +46,8 @@ func ValidateTenantAccess(ctx context.Context, accessor ContextAccessor, userTen
 		return nil
 	}
 
-	user := accessor.UserFromContext(ctx)
-	if user != nil {
+	identity := accessor.IdentityFromContext(ctx)
+	if identity != nil {
 		userTenants, ok := ctx.Value(userTenantContextKey).(*[]gid.TenantID)
 		if !ok || userTenants == nil {
 			return fmt.Errorf("access denied: no tenant information available")
@@ -65,10 +65,10 @@ func ValidateTenantAccess(ctx context.Context, accessor ContextAccessor, userTen
 }
 
 func GetCurrentUserRole(ctx context.Context, accessor ContextAccessor) types.Role {
-	user := accessor.UserFromContext(ctx)
+	identity := accessor.IdentityFromContext(ctx)
 	tokenAccess := accessor.TokenAccessFromContext(ctx)
 
-	if user != nil || tokenAccess != nil {
+	if identity != nil || tokenAccess != nil {
 		return types.RoleUser
 	}
 	return types.RoleNone

@@ -22,8 +22,7 @@ import (
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/auth"
-	"go.probo.inc/probo/pkg/authz"
+	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/validator"
 )
 
@@ -32,24 +31,25 @@ func RecoverFunc(ctx context.Context, err any) error {
 		return gqlErr
 	}
 
-	var errSAMLRequired auth.ErrSAMLAuthRequired
-	if errors.As(asError(err), &errSAMLRequired) {
-		return AuthenticationRequired(map[string]any{
-			"requiresSaml":   true,
-			"redirectUrl":    errSAMLRequired.RedirectURL,
-			"samlConfigId":   errSAMLRequired.ConfigID.String(),
-			"organizationId": errSAMLRequired.OrganizationID.String(),
-		})
-	}
+	// TODO: multi session here
+	// var errSAMLRequired iam.ErrSAMLAuthRequired
+	// if errors.As(asError(err), &errSAMLRequired) {
+	// 	return AuthenticationRequired(map[string]any{
+	// 		"requiresSaml":   true,
+	// 		"redirectUrl":    errSAMLRequired.RedirectURL,
+	// 		"samlConfigId":   errSAMLRequired.ConfigID.String(),
+	// 		"organizationId": errSAMLRequired.OrganizationID.String(),
+	// 	})
+	// }
 
-	var errPasswordRequired auth.ErrPasswordAuthRequired
-	if errors.As(asError(err), &errPasswordRequired) {
-		return AuthenticationRequired(map[string]any{
-			"requiresSaml":   false,
-			"redirectUrl":    errPasswordRequired.RedirectURL,
-			"organizationId": errPasswordRequired.OrganizationID.String(),
-		})
-	}
+	// var errPasswordRequired iam.ErrPasswordAuthRequired
+	// if errors.As(asError(err), &errPasswordRequired) {
+	// 	return AuthenticationRequired(map[string]any{
+	// 		"requiresSaml":   false,
+	// 		"redirectUrl":    errPasswordRequired.RedirectURL,
+	// 		"organizationId": errPasswordRequired.OrganizationID.String(),
+	// 	})
+	// }
 
 	var errValidations validator.ValidationErrors
 	if errors.As(asError(err), &errValidations) {
@@ -72,12 +72,12 @@ func RecoverFunc(ctx context.Context, err any) error {
 		return gqlErrors
 	}
 
-	var tenantAccessErr *authz.TenantAccessError
+	var tenantAccessErr *iam.TenantAccessError
 	if errTyped, ok := err.(error); ok && errors.As(errTyped, &tenantAccessErr) {
 		return Unauthorized()
 	}
 
-	var permissionDeniedErr *authz.PermissionDeniedError
+	var permissionDeniedErr *iam.ErrInsufficientPermissions
 	if errTyped, ok := err.(error); ok && errors.As(errTyped, &permissionDeniedErr) {
 		return Forbidden(permissionDeniedErr)
 	}

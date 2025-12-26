@@ -18,59 +18,78 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
+	"net"
 	"time"
 
-	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/page"
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 )
 
 type (
 	Session struct {
-		ID        gid.GID     `db:"id"`
-		UserID    gid.GID     `db:"user_id"`
-		Data      SessionData `db:"data"`
-		ExpiredAt time.Time   `db:"expired_at"`
-		CreatedAt time.Time   `db:"created_at"`
-		UpdatedAt time.Time   `db:"updated_at"`
+		ID              gid.GID       `db:"id"`
+		IdentityID      gid.GID       `db:"identity_id"`
+		TenantID        *gid.TenantID `db:"tenant_id"`
+		MembershipID    *gid.GID      `db:"membership_id"`
+		ParentSessionID *gid.GID      `db:"parent_session_id"`
+		Data            SessionData   `db:"data"`
+		AuthMethod      AuthMethod    `db:"auth_method"`
+		AuthenticatedAt time.Time     `db:"authenticated_at"`
+		UserAgent       string        `db:"user_agent"`
+		IPAddress       net.IP        `db:"ip_address"`
+		ExpireReason    *ExpireReason `db:"expire_reason"`
+		ExpiredAt       time.Time     `db:"expired_at"`
+		CreatedAt       time.Time     `db:"created_at"`
+		UpdatedAt       time.Time     `db:"updated_at"`
 	}
 
-	SessionData struct {
-		PasswordAuthenticated bool                   `json:"password_authenticated"`
-		SAMLAuthenticatedOrgs map[string]SAMLAuthInfo `json:"saml_authenticated_orgs,omitempty"`
-	}
+	Sessions []*Session
 
-	SAMLAuthInfo struct {
-		AuthenticatedAt time.Time `json:"authenticated_at"`
-		SAMLConfigID    gid.GID   `json:"saml_config_id"`
-		SAMLSubject     string    `json:"saml_subject"`
-	}
+	SessionData struct{}
 
-	ErrSessionNotFound struct {
-		Identifier string
-	}
-
-	ErrSessionAlreadyExists struct {
-		message string
-	}
+	AuthMethod string
 )
 
-func (e ErrSessionNotFound) Error() string {
-	return fmt.Sprintf("session not found: %q", e.Identifier)
-}
+const (
+	AuthMethodPassword AuthMethod = "PASSWORD"
+	AuthMethodSAML     AuthMethod = "SAML"
+)
 
-func (e ErrSessionAlreadyExists) Error() string {
-	return e.message
+func NewRootSession(identityID gid.GID, method AuthMethod, duration time.Duration) *Session {
+	now := time.Now()
+	return &Session{
+		ID:              gid.New(gid.NilTenant, SessionEntityType),
+		IdentityID:      identityID,
+		ExpiredAt:       now.Add(duration),
+		AuthMethod:      method,
+		AuthenticatedAt: now,
+		CreatedAt:       now,
+		UpdatedAt:       now,
+	}
 }
 
 func (s Session) CursorKey(orderBy SessionOrderField) page.CursorKey {
 	switch orderBy {
 	case SessionOrderFieldCreatedAt:
 		return page.NewCursorKey(s.ID, s.CreatedAt)
+	case SessionOrderFieldExpiredAt:
+		return page.NewCursorKey(s.ID, s.ExpiredAt)
+	case SessionOrderFieldUpdatedAt:
+		return page.NewCursorKey(s.ID, s.UpdatedAt)
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
+}
+
+func (s *Session) IsRootSession() bool {
+	return s.ParentSessionID == nil
+}
+
+func (s *Session) IsChildSession() bool {
+	return s.ParentSessionID != nil
 }
 
 func (s *Session) LoadByID(
@@ -81,13 +100,21 @@ func (s *Session) LoadByID(
 	q := `
 SELECT
     id,
-    user_id,
-	data,
+    identity_id,
+    tenant_id,
+    membership_id,
+    data,
+    parent_session_id,
+    auth_method,
+    authenticated_at,
+    expire_reason,
+    user_agent,
+    ip_address,
     expired_at,
     created_at,
     updated_at
 FROM
-    sessions
+    iam_sessions
 WHERE
     id = @session_id
 LIMIT 1;
@@ -103,7 +130,7 @@ LIMIT 1;
 	session, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Session])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrSessionNotFound{Identifier: sessionID.String()}
+			return ErrResourceNotFound
 		}
 
 		return fmt.Errorf("cannot collect session: %w", err)
@@ -119,11 +146,19 @@ func (s *Session) Insert(
 ) error {
 	q := `
 INSERT INTO
-    sessions (id, user_id, data, expired_at, created_at, updated_at)
+    iam_sessions (id, identity_id, tenant_id, membership_id, data, parent_session_id, auth_method, authenticated_at, expire_reason, user_agent, ip_address, expired_at, created_at, updated_at)
 VALUES (
     @session_id,
-    @user_id,
+    @identity_id,
+    @tenant_id,
+    @membership_id,
     @data,
+    @parent_session_id,
+    @auth_method,
+    @authenticated_at,
+    @expire_reason,
+    @user_agent,
+    @ip_address,
     @expired_at,
     @created_at,
     @updated_at
@@ -131,12 +166,20 @@ VALUES (
 `
 
 	args := pgx.StrictNamedArgs{
-		"session_id": s.ID,
-		"user_id":    s.UserID,
-		"data":       s.Data,
-		"expired_at": s.ExpiredAt,
-		"created_at": s.CreatedAt,
-		"updated_at": s.UpdatedAt,
+		"session_id":        s.ID,
+		"identity_id":       s.IdentityID,
+		"tenant_id":         s.TenantID,
+		"membership_id":     s.MembershipID,
+		"data":              s.Data,
+		"parent_session_id": s.ParentSessionID,
+		"auth_method":       s.AuthMethod,
+		"authenticated_at":  s.AuthenticatedAt,
+		"expire_reason":     s.ExpireReason,
+		"user_agent":        s.UserAgent,
+		"ip_address":        s.IPAddress,
+		"expired_at":        s.ExpiredAt,
+		"created_at":        s.CreatedAt,
+		"updated_at":        s.UpdatedAt,
 	}
 
 	_, err := conn.Exec(ctx, q, args)
@@ -148,40 +191,178 @@ func (s *Session) Update(
 	conn pg.Conn,
 ) error {
 	q := `
-UPDATE sessions
+UPDATE iam_sessions
 SET
     expired_at = @expired_at,
     updated_at = @updated_at,
+    user_agent = @user_agent,
+    ip_address = @ip_address,
+    expire_reason = @expire_reason,
     data = @data
 WHERE
     id = @session_id
 `
 
 	args := pgx.StrictNamedArgs{
-		"session_id": s.ID,
-		"data":       s.Data,
-		"expired_at": s.ExpiredAt,
-		"updated_at": s.UpdatedAt,
+		"session_id":    s.ID,
+		"user_agent":    s.UserAgent,
+		"ip_address":    s.IPAddress,
+		"expire_reason": s.ExpireReason,
+		"data":          s.Data,
+		"expired_at":    s.ExpiredAt,
+		"updated_at":    s.UpdatedAt,
 	}
 
-	_, err := conn.Exec(ctx, q, args)
-	return err
+	result, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot update session: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return ErrResourceNotFound
+	}
+
+	return nil
 }
 
-func DeleteSession(
-	ctx context.Context,
-	conn pg.Conn,
-	sessionID gid.GID,
-) error {
+func (s *Sessions) LoadByIdentityID(ctx context.Context, conn pg.Conn, identityID gid.GID, cursor *page.Cursor[SessionOrderField]) error {
 	q := `
-DELETE FROM
-    sessions
+SELECT
+    id,
+    identity_id,
+    tenant_id,
+    membership_id,
+    data,
+    parent_session_id,
+    auth_method,
+    authenticated_at,
+    expire_reason,
+    user_agent,
+    ip_address,
+    expired_at,
+    created_at,
+    updated_at
+FROM
+    iam_sessions
 WHERE
-    id = @session_id
+    identity_id = @identity_id
+    AND %s
 `
 
-	args := pgx.StrictNamedArgs{"session_id": sessionID}
+	q = fmt.Sprintf(q, cursor.SQLFragment())
 
-	_, err := conn.Exec(ctx, q, args)
-	return err
+	args := pgx.StrictNamedArgs{"identity_id": identityID}
+	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query sessions: %w", err)
+	}
+
+	sessions, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Session])
+	if err != nil {
+		return fmt.Errorf("cannot collect sessions: %w", err)
+	}
+
+	*s = sessions
+
+	return nil
+}
+
+func (s *Sessions) CountByIdentityID(ctx context.Context, conn pg.Conn, identityID gid.GID) (int, error) {
+	q := `
+SELECT
+    COUNT(*)
+FROM
+    iam_sessions
+WHERE
+    identity_id = @identity_id
+`
+
+	args := pgx.StrictNamedArgs{"identity_id": identityID}
+
+	row := conn.QueryRow(ctx, q, args)
+
+	var count int
+	if err := row.Scan(&count); err != nil {
+		return 0, fmt.Errorf("cannot scan count: %w", err)
+	}
+
+	return count, nil
+}
+
+func (s *Sessions) ExpireAllForIdentityExceptOneSession(ctx context.Context, conn pg.Conn, identityID gid.GID, sessionID gid.GID) (int64, error) {
+	q := `
+UPDATE iam_sessions
+SET
+    expired_at = NOW(),
+    updated_at = NOW(),
+    expire_reason = 'revoked'
+WHERE
+    id != @session_id
+    AND identity_id = @identity_id
+    AND expire_reason IS NULL
+`
+
+	args := pgx.StrictNamedArgs{
+		"session_id":  sessionID,
+		"identity_id": identityID,
+	}
+
+	result, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return 0, fmt.Errorf("cannot query sessions: %w", err)
+	}
+
+	return result.RowsAffected(), nil
+}
+
+func (s *Session) LoadByRootSessionIDAndMembershipID(ctx context.Context, conn pg.Conn, rootSessionID gid.GID, membershipID gid.GID) error {
+	q := `
+SELECT
+    id,
+    identity_id,
+    tenant_id,
+    membership_id,
+    data,
+    parent_session_id,
+    auth_method,
+    authenticated_at,
+    expire_reason,
+    user_agent,
+    ip_address,
+    expired_at,
+    created_at,
+    updated_at
+FROM
+    iam_sessions
+WHERE
+    parent_session_id = @root_session_id
+    AND membership_id = @membership_id
+ORDER BY created_at DESC
+LIMIT 1
+`
+
+	args := pgx.StrictNamedArgs{
+		"root_session_id": rootSessionID,
+		"membership_id":   membershipID,
+	}
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query session: %w", err)
+	}
+
+	session, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Session])
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect session: %w", err)
+	}
+
+	*s = session
+
+	return nil
 }

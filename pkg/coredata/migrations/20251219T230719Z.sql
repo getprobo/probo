@@ -1,0 +1,2 @@
+CREATE UNIQUE INDEX idx_saml_config_domain_verification_token_unique
+    ON auth_saml_configurations(domain_verification_token);

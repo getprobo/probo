@@ -54,7 +54,7 @@ type (
 )
 
 func NewTrustCenterDocumentAccess(tcda *coredata.TrustCenterDocumentAccess) *TrustCenterDocumentAccess {
-	return &TrustCenterDocumentAccess{
+	object := &TrustCenterDocumentAccess{
 		ID:                  tcda.ID,
 		OrganizationID:      tcda.OrganizationID,
 		Status:              tcda.Status,
@@ -65,6 +65,26 @@ func NewTrustCenterDocumentAccess(tcda *coredata.TrustCenterDocumentAccess) *Tru
 		ReportID:            tcda.ReportID,
 		TrustCenterFileID:   tcda.TrustCenterFileID,
 	}
+
+	if tcda.DocumentID != nil {
+		object.Document = &Document{
+			ID: *tcda.DocumentID,
+		}
+	}
+
+	if tcda.ReportID != nil {
+		object.Report = &Report{
+			ID: *tcda.ReportID,
+		}
+	}
+
+	if tcda.TrustCenterFileID != nil {
+		object.TrustCenterFile = &TrustCenterFile{
+			ID: *tcda.TrustCenterFileID,
+		}
+	}
+
+	return object
 }
 
 func NewTrustCenterDocumentAccessConnection(

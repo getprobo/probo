@@ -41,15 +41,7 @@ type (
 	}
 
 	VendorServices []*VendorService
-
-	ErrVendorServiceNotFound struct {
-		Identifier string
-	}
 )
-
-func (e ErrVendorServiceNotFound) Error() string {
-	return fmt.Sprintf("vendor service not found: %s", e.Identifier)
-}
 
 func (vs VendorService) CursorKey(orderBy VendorServiceOrderField) page.CursorKey {
 	switch orderBy {
@@ -101,7 +93,7 @@ LIMIT 1;
 	vendorService, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[VendorService])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrVendorServiceNotFound{Identifier: vendorServiceID.String()}
+			return ErrResourceNotFound
 		}
 
 		return fmt.Errorf("cannot collect vendor service: %w", err)

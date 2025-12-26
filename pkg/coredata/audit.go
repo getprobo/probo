@@ -21,10 +21,10 @@ import (
 	"maps"
 	"time"
 
-	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/page"
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 )
 
 type (
@@ -43,23 +43,7 @@ type (
 	}
 
 	Audits []*Audit
-
-	ErrAuditNotFound struct {
-		Identifier string
-	}
-
-	ErrAuditAlreadyExists struct {
-		message string
-	}
 )
-
-func (e ErrAuditNotFound) Error() string {
-	return fmt.Sprintf("audit not found: %q", e.Identifier)
-}
-
-func (e ErrAuditAlreadyExists) Error() string {
-	return e.message
-}
 
 func (a *Audit) CursorKey(field AuditOrderField) page.CursorKey {
 	switch field {
@@ -116,7 +100,7 @@ LIMIT 1;
 	audit, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Audit])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrAuditNotFound{Identifier: auditID.String()}
+			return ErrResourceNotFound
 		}
 
 		return fmt.Errorf("cannot collect audit: %w", err)
@@ -530,7 +514,7 @@ LIMIT 1;
 	audit, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Audit])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrAuditNotFound{Identifier: reportID.String()}
+			return ErrResourceNotFound
 		}
 
 		return fmt.Errorf("cannot collect audit: %w", err)

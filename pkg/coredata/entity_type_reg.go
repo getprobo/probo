@@ -32,7 +32,7 @@ const (
 	PeopleEntityType                           uint16 = 8
 	VendorComplianceReportEntityType           uint16 = 9
 	DocumentEntityType                         uint16 = 10
-	UserEntityType                             uint16 = 11
+	IdentityEntityType                         uint16 = 11
 	SessionEntityType                          uint16 = 12
 	EmailEntityType                            uint16 = 13
 	ControlEntityType                          uint16 = 14
@@ -64,11 +64,12 @@ const (
 	SlackMessageEntityType                     uint16 = 40
 	TrustCenterFileEntityType                  uint16 = 41
 	SAMLConfigurationEntityType                uint16 = 42
-	UserAPIKeyEntityType                       uint16 = 43
-	UserAPIKeyMembershipEntityType             uint16 = 44
+	PersonalAPIKeyEntityType                   uint16 = 43
+	_                                          uint16 = 44 // PersonalAPIKeyMembershipEntityType - removed
 	MeetingEntityType                          uint16 = 45
 	DataProtectionImpactAssessmentEntityType   uint16 = 46
 	TransferImpactAssessmentEntityType         uint16 = 47
+	MembershipProfileEntityType                uint16 = 48
 )
 
 type EntityInfo struct {
@@ -121,17 +122,17 @@ var entityRegistry = map[uint16]EntityInfo{
 		Model: "Document",
 		Table: "documents",
 	},
-	UserEntityType: {
-		Model: "User",
-		Table: "auth_users",
+	IdentityEntityType: {
+		Model: "Identity",
+		Table: "identities",
 	},
 	SessionEntityType: {
 		Model: "Session",
-		Table: "auth_sessions",
+		Table: "iam_sessions",
 	},
 	EmailEntityType: {
 		Model: "Email",
-		Table: "auth_emails",
+		Table: "emails",
 	},
 	ControlEntityType: {
 		Model: "Control",
@@ -231,11 +232,11 @@ var entityRegistry = map[uint16]EntityInfo{
 	},
 	InvitationEntityType: {
 		Model: "Invitation",
-		Table: "authz_invitations",
+		Table: "iam_invitations",
 	},
 	MembershipEntityType: {
 		Model: "Membership",
-		Table: "authz_memberships",
+		Table: "iam_memberships",
 	},
 	SlackMessageEntityType: {
 		Model: "SlackMessage",
@@ -247,15 +248,11 @@ var entityRegistry = map[uint16]EntityInfo{
 	},
 	SAMLConfigurationEntityType: {
 		Model: "SAMLConfiguration",
-		Table: "auth_saml_configurations",
+		Table: "iam_saml_configurations",
 	},
-	UserAPIKeyEntityType: {
-		Model: "UserAPIKey",
-		Table: "auth_user_api_keys",
-	},
-	UserAPIKeyMembershipEntityType: {
-		Model: "UserAPIKeyMembership",
-		Table: "authz_api_keys_memberships",
+	PersonalAPIKeyEntityType: {
+		Model: "PersonalAPIKey",
+		Table: "iam_personal_api_keys",
 	},
 	MeetingEntityType: {
 		Model: "Meeting",
@@ -268,6 +265,10 @@ var entityRegistry = map[uint16]EntityInfo{
 	TransferImpactAssessmentEntityType: {
 		Model: "TransferImpactAssessment",
 		Table: "processing_activity_transfer_impact_assessments",
+	},
+	MembershipProfileEntityType: {
+		Model: "MembershipProfile",
+		Table: "iam_membership_profiles",
 	},
 }
 

@@ -64,7 +64,6 @@ func NewPeopleEdge(p *coredata.People, orderBy coredata.PeopleOrderField) *Peopl
 }
 
 func NewPeople(p *coredata.People) *People {
-
 	return &People{
 		ID:                       p.ID,
 		FullName:                 p.FullName,
