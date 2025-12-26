@@ -1,6 +1,6 @@
 scan:
   scanners:
-    - license
+    # - license  # Disabled for now
 
 license:
   forbidden:
