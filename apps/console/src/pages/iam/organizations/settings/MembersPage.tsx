@@ -3,21 +3,36 @@ import { graphql } from "relay-runtime";
 import { MemberList } from "./_components/MemberList";
 import type { MembersPageQuery } from "./__generated__/MembersPageQuery.graphql";
 import { useTranslate } from "@probo/i18n";
-import { Card, TabBadge, TabItem, Tabs } from "@probo/ui";
+import { Button, Card, TabBadge, TabItem, Tabs } from "@probo/ui";
 import { useState } from "react";
+import { InvitationList } from "./_components/InvitationList";
+import { InviteUserDialog } from "./_components/InviteUserDialog";
 
 export const membersPageQuery = graphql`
   query MembersPageQuery($organizationId: ID!) {
     viewer @required(action: THROW) {
+      canInviteUser: permission(
+        action: "iam:membership:create"
+        id: $organizationId
+      )
+      ...InvitationListItem_permissionsFragment
+        @arguments(organizationId: $organizationId)
       ...MemberListItem_permissionsFragment
         @arguments(organizationId: $organizationId)
     }
     organization: node(id: $organizationId) @required(action: THROW) {
       __typename
       ... on Organization {
+        ...InviteUserDialog_currentRoleFragment
         ...MemberListFragment
           @arguments(first: 20, order: { direction: ASC, field: CREATED_AT })
         members(first: 20, orderBy: { direction: ASC, field: CREATED_AT })
+          @required(action: THROW) {
+          totalCount
+        }
+        ...InvitationListFragment
+          @arguments(first: 20, order: { direction: ASC, field: CREATED_AT })
+        invitations(first: 20, orderBy: { direction: ASC, field: CREATED_AT })
           @required(action: THROW) {
           totalCount
         }
@@ -49,14 +64,11 @@ export function MembersPage(props: {
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <h2 className="text-base font-medium">{__("Workspace members")}</h2>
-        {/* {isAuthorized("Organization", "inviteUser") && (
-          <InviteUserDialog
-            connectionId={invitationsPagination.data.invitations?.__id}
-            onRefetch={refetchInvitations}
-          >
+        {viewer.canInviteUser && (
+          <InviteUserDialog viewerMembershipFKey={organization}>
             <Button variant="secondary">{__("Invite member")}</Button>
           </InviteUserDialog>
-        )} */}
+        )}
       </div>
 
       <Tabs>
@@ -69,85 +81,26 @@ export function MembersPage(props: {
             <TabBadge>{organization.members.totalCount}</TabBadge>
           )}
         </TabItem>
-        {/* <TabItem
+        <TabItem
           active={activeTab === "invitations"}
           onClick={() => setActiveTab("invitations")}
         >
           {__("Invitations")}
-          {(invitationsPagination.data.invitations?.totalCount || 0) > 0 && (
-            <TabBadge>
-              {invitationsPagination.data.invitations?.totalCount}
-            </TabBadge>
+          {(organization.invitations.totalCount ?? 0) > 0 && (
+            <TabBadge>{organization.invitations.totalCount}</TabBadge>
           )}
-        </TabItem> */}
+        </TabItem>
       </Tabs>
 
       <Card>
         <div className="px-6 pb-6 pt-6">
           {activeTab === "memberships" && (
-            <MemberList fKey={organization} viewerFKey={viewer} />
+            <MemberList fKey={organization} permissionsFKey={viewer} />
           )}
 
-          {/* {activeTab === "invitations" && (
-            <SortableTable
-              {...invitationsPagination}
-              refetch={({
-                order,
-              }: {
-                order: { direction: string; field: string };
-              }) => {
-                invitationsPagination.refetch({
-                  order: {
-                    direction: order.direction as "ASC" | "DESC",
-                    field: order.field as
-                      | "CREATED_AT"
-                      | "EXPIRES_AT"
-                      | "FULL_NAME"
-                      | "EMAIL"
-                      | "ROLE"
-                      | "STATUS"
-                      | "ACCEPTED_AT",
-                  },
-                });
-              }}
-              pageSize={20}
-            >
-              <Thead>
-                <Tr>
-                  <SortableTh field="FULL_NAME">{__("Name")}</SortableTh>
-                  <SortableTh field="EMAIL">{__("Email")}</SortableTh>
-                  <SortableTh field="ROLE">{__("Role")}</SortableTh>
-                  <SortableTh field="CREATED_AT">{__("Invited")}</SortableTh>
-                  <Th>{__("Status")}</Th>
-                  <SortableTh field="ACCEPTED_AT">
-                    {__("Accepted at")}
-                  </SortableTh>
-                  <Th></Th>
-                </Tr>
-              </Thead>
-              <Tbody>
-                {invitations.length === 0 ? (
-                  <Tr>
-                    <Td colSpan={7} className="text-center text-txt-secondary">
-                      {__("No invitations")}
-                    </Td>
-                  </Tr>
-                ) : (
-                  invitations.map((invitation) => (
-                    <InvitationRow
-                      key={invitation.id}
-                      invitation={invitation}
-                      connectionId={
-                        invitationsPagination.data.invitations?.__id
-                      }
-                      organizationId={(organizationKey as { id: string }).id}
-                      onRefetch={refetchInvitations}
-                    />
-                  ))
-                )}
-              </Tbody>
-            </SortableTable>
-          )} */}
+          {activeTab === "invitations" && (
+            <InvitationList fKey={organization} permissionsFKey={viewer} />
+          )}
         </div>
       </Card>
     </div>

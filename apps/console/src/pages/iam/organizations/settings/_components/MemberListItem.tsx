@@ -12,7 +12,7 @@ import {
 import clsx from "clsx";
 import { useState } from "react";
 import { useFragment } from "react-relay";
-import { ConnectionHandler, graphql } from "relay-runtime";
+import { graphql } from "relay-runtime";
 import type { MemberListItemFragment$key } from "./__generated__/MemberListItemFragment.graphql";
 import type { MemberListItem_permissionsFragment$key } from "./__generated__/MemberListItem_permissionsFragment.graphql";
 import type { MemberListItem_currentRoleFragment$key } from "./__generated__/MemberListItem_currentRoleFragment.graphql";
@@ -69,12 +69,13 @@ const removeMemberMutation = graphql`
 `;
 
 export function MemberListItem(props: {
+  connectionId: string;
   fKey: MemberListItemFragment$key;
-  permissionsFKey: MemberListItem_currentRoleFragment$key;
-  viewerFKey: MemberListItem_permissionsFragment$key;
+  permissionsFKey: MemberListItem_permissionsFragment$key;
+  viewerFKey: MemberListItem_currentRoleFragment$key;
   onRefetch: () => void;
 }) {
-  const { fKey, onRefetch, permissionsFKey, viewerFKey } = props;
+  const { fKey, connectionId, permissionsFKey, viewerFKey } = props;
 
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
@@ -85,11 +86,11 @@ export function MemberListItem(props: {
   const { viewerMembership } =
     useFragment<MemberListItem_currentRoleFragment$key>(
       currentRoleFragment,
-      permissionsFKey,
+      viewerFKey,
     );
   const permissions = useFragment<MemberListItem_permissionsFragment$key>(
     permissionsFragment,
-    viewerFKey,
+    permissionsFKey,
   );
 
   // Only OWNER can edit OWNER members
@@ -105,10 +106,6 @@ export function MemberListItem(props: {
   );
 
   const handleRemove = async () => {
-    const connectionId = ConnectionHandler.getConnectionID(
-      organizationId,
-      "MembersListFragment_members",
-    );
     confirm(
       () => {
         return removeMembership({
@@ -119,7 +116,6 @@ export function MemberListItem(props: {
             },
             connections: [connectionId],
           },
-          onCompleted: onRefetch,
         });
       },
       {

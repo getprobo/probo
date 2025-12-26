@@ -27,7 +27,7 @@ const fragment = graphql`
       last: $last
       before: $before
       orderBy: $order
-    ) @connection(key: "MembersListFragment_members") @required(action: THROW) {
+    ) @connection(key: "MemberListFragment_members") @required(action: THROW) {
       __id
       totalCount
       edges @required(action: THROW) {
@@ -42,9 +42,9 @@ const fragment = graphql`
 
 export function MemberList(props: {
   fKey: MemberListFragment$key;
-  viewerFKey: MemberListItem_permissionsFragment$key;
+  permissionsFKey: MemberListItem_permissionsFragment$key;
 }) {
-  const { fKey, viewerFKey } = props;
+  const { fKey, permissionsFKey } = props;
 
   const { __ } = useTranslate();
 
@@ -85,7 +85,7 @@ export function MemberList(props: {
         </Tr>
       </Thead>
       <Tbody>
-        {membersPagination.data.members.edges.length === 0 ? (
+        {membersPagination.data.members.totalCount === 0 ? (
           <Tr>
             <Td colSpan={5} className="text-center text-txt-secondary">
               {__("No members")}
@@ -94,11 +94,12 @@ export function MemberList(props: {
         ) : (
           membersPagination.data.members.edges.map(({ node: membership }) => (
             <MemberListItem
+              connectionId={membersPagination.data.members.__id}
               key={membership.id}
               fKey={membership}
-              permissionsFKey={membersPagination.data}
               onRefetch={refetchMemberships}
-              viewerFKey={viewerFKey}
+              permissionsFKey={permissionsFKey}
+              viewerFKey={membersPagination.data}
             />
           ))
         )}

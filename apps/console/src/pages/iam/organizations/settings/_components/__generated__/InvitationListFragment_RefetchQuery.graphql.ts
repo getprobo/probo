@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<75b9df3cc430ed26d41b88a67a410aca>>
+ * @generated SignedSource<<f1bb84b37a7d8df3e9e563fe6204a307>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,28 +10,28 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
-export type MembershipOrderField = "CREATED_AT" | "ROLE";
+export type InvitationOrderField = "ACCEPTED_AT" | "CREATED_AT" | "EMAIL" | "EXPIRES_AT" | "ROLE";
 export type OrderDirection = "ASC" | "DESC";
-export type MembershipOrder = {
+export type InvitationOrder = {
   direction: OrderDirection;
-  field: MembershipOrderField;
+  field: InvitationOrderField;
 };
-export type MemberListFragment_RefetchQuery$variables = {
+export type InvitationListFragment_RefetchQuery$variables = {
   after?: any | null | undefined;
   before?: any | null | undefined;
   first?: number | null | undefined;
   id: string;
   last?: number | null | undefined;
-  order?: MembershipOrder | null | undefined;
+  order?: InvitationOrder | null | undefined;
 };
-export type MemberListFragment_RefetchQuery$data = {
+export type InvitationListFragment_RefetchQuery$data = {
   readonly node: {
-    readonly " $fragmentSpreads": FragmentRefs<"MemberListFragment">;
+    readonly " $fragmentSpreads": FragmentRefs<"InvitationListFragment">;
   } | null | undefined;
 };
-export type MemberListFragment_RefetchQuery = {
-  response: MemberListFragment_RefetchQuery$data;
-  variables: MemberListFragment_RefetchQuery$variables;
+export type InvitationListFragment_RefetchQuery = {
+  response: InvitationListFragment_RefetchQuery$data;
+  variables: InvitationListFragment_RefetchQuery$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -109,14 +109,7 @@ v12 = {
   "name": "id",
   "storageKey": null
 },
-v13 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "role",
-  "storageKey": null
-},
-v14 = [
+v13 = [
   (v7/*: any*/),
   (v8/*: any*/),
   (v9/*: any*/),
@@ -139,7 +132,7 @@ return {
     ],
     "kind": "Fragment",
     "metadata": null,
-    "name": "MemberListFragment_RefetchQuery",
+    "name": "InvitationListFragment_RefetchQuery",
     "selections": [
       {
         "alias": null,
@@ -162,7 +155,7 @@ return {
               }
             ],
             "kind": "FragmentSpread",
-            "name": "MemberListFragment"
+            "name": "InvitationListFragment"
           }
         ],
         "storageKey": null
@@ -182,7 +175,7 @@ return {
       (v3/*: any*/)
     ],
     "kind": "Operation",
-    "name": "MemberListFragment_RefetchQuery",
+    "name": "InvitationListFragment_RefetchQuery",
     "selections": [
       {
         "alias": null,
@@ -199,23 +192,10 @@ return {
             "selections": [
               {
                 "alias": null,
-                "args": null,
-                "concreteType": "Membership",
+                "args": (v13/*: any*/),
+                "concreteType": "InvitationConnection",
                 "kind": "LinkedField",
-                "name": "viewerMembership",
-                "plural": false,
-                "selections": [
-                  (v13/*: any*/),
-                  (v12/*: any*/)
-                ],
-                "storageKey": null
-              },
-              {
-                "alias": null,
-                "args": (v14/*: any*/),
-                "concreteType": "MembershipConnection",
-                "kind": "LinkedField",
-                "name": "members",
+                "name": "invitations",
                 "plural": false,
                 "selections": [
                   {
@@ -228,7 +208,7 @@ return {
                   {
                     "alias": null,
                     "args": null,
-                    "concreteType": "MembershipEdge",
+                    "concreteType": "InvitationEdge",
                     "kind": "LinkedField",
                     "name": "edges",
                     "plural": true,
@@ -236,49 +216,38 @@ return {
                       {
                         "alias": null,
                         "args": null,
-                        "concreteType": "Membership",
+                        "concreteType": "Invitation",
                         "kind": "LinkedField",
                         "name": "node",
                         "plural": false,
                         "selections": [
                           (v12/*: any*/),
-                          (v13/*: any*/),
                           {
                             "alias": null,
                             "args": null,
-                            "concreteType": "MembershipProfile",
-                            "kind": "LinkedField",
-                            "name": "profile",
-                            "plural": false,
-                            "selections": [
-                              {
-                                "alias": null,
-                                "args": null,
-                                "kind": "ScalarField",
-                                "name": "fullName",
-                                "storageKey": null
-                              },
-                              (v12/*: any*/)
-                            ],
+                            "kind": "ScalarField",
+                            "name": "fullName",
                             "storageKey": null
                           },
                           {
                             "alias": null,
                             "args": null,
-                            "concreteType": "Identity",
-                            "kind": "LinkedField",
-                            "name": "identity",
-                            "plural": false,
-                            "selections": [
-                              {
-                                "alias": null,
-                                "args": null,
-                                "kind": "ScalarField",
-                                "name": "email",
-                                "storageKey": null
-                              },
-                              (v12/*: any*/)
-                            ],
+                            "kind": "ScalarField",
+                            "name": "email",
+                            "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "role",
+                            "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "status",
                             "storageKey": null
                           },
                           {
@@ -286,6 +255,20 @@ return {
                             "args": null,
                             "kind": "ScalarField",
                             "name": "createdAt",
+                            "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "expiresAt",
+                            "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "acceptedAt",
                             "storageKey": null
                           },
                           (v11/*: any*/)
@@ -358,14 +341,14 @@ return {
               },
               {
                 "alias": null,
-                "args": (v14/*: any*/),
+                "args": (v13/*: any*/),
                 "filters": [
                   "orderBy"
                 ],
                 "handle": "connection",
-                "key": "MemberListFragment_members",
+                "key": "InvitationListFragment_invitations",
                 "kind": "LinkedHandle",
-                "name": "members"
+                "name": "invitations"
               }
             ],
             "type": "Organization",
@@ -377,16 +360,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "df1f40dcee56d6e5181849cd82acb824",
+    "cacheID": "4cc36c8fb50b104ebe3fae66bf847ecc",
     "id": null,
     "metadata": {},
-    "name": "MemberListFragment_RefetchQuery",
+    "name": "InvitationListFragment_RefetchQuery",
     "operationKind": "query",
-    "text": "query MemberListFragment_RefetchQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 20\n  $last: Int = null\n  $order: MembershipOrder = {direction: ASC, field: CREATED_AT}\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...MemberListFragment_16fISc\n    id\n  }\n}\n\nfragment MemberListFragment_16fISc on Organization {\n  ...MemberListItem_currentRoleFragment\n  members(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    totalCount\n    edges {\n      node {\n        id\n        ...MemberListItemFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment MemberListItemFragment on Membership {\n  id\n  role\n  profile {\n    fullName\n    id\n  }\n  identity {\n    email\n    id\n  }\n  createdAt\n}\n\nfragment MemberListItem_currentRoleFragment on Organization {\n  viewerMembership {\n    role\n    id\n  }\n}\n"
+    "text": "query InvitationListFragment_RefetchQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 20\n  $last: Int = null\n  $order: InvitationOrder = {direction: ASC, field: CREATED_AT}\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...InvitationListFragment_16fISc\n    id\n  }\n}\n\nfragment InvitationListFragment_16fISc on Organization {\n  invitations(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    totalCount\n    edges {\n      node {\n        id\n        ...InvitationListItemFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment InvitationListItemFragment on Invitation {\n  id\n  fullName\n  email\n  role\n  status\n  createdAt\n  expiresAt\n  acceptedAt\n}\n"
   }
 };
 })();
 
-(node as any).hash = "909f6c9ed0fcaf7b0d170bded8c97562";
+(node as any).hash = "837e567be489574a7f0350e26a8e5454";
 
 export default node;
