@@ -1048,7 +1048,7 @@ func (r *organizationResolver) Members(ctx context.Context, obj *types.Organizat
 }
 
 // Invitations is the resolver for the invitations field.
-func (r *organizationResolver) Invitations(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, status *coredata.InvitationStatus) (*types.InvitationConnection, error) {
+func (r *organizationResolver) Invitations(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, status *coredata.InvitationStatus, orderBy *types.InvitationOrderBy) (*types.InvitationConnection, error) {
 	if gqlutils.OnlyTotalCountSelected(ctx) {
 		return &types.InvitationConnection{
 			Resolver: r,

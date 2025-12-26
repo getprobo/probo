@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<30bea11238a554ed69a88c9f07d33d9e>>
+ * @generated SignedSource<<6067ce11fa959cba895d2b10862592de>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,31 +10,30 @@
 
 import { ReaderFragment } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
-export type MemberListFragment$data = {
+export type InvitationListFragment$data = {
   readonly id: string;
-  readonly members: {
+  readonly invitations: {
     readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly node: {
         readonly id: string;
-        readonly " $fragmentSpreads": FragmentRefs<"MemberListItemFragment">;
+        readonly " $fragmentSpreads": FragmentRefs<"InvitationListItemFragment">;
       };
     }>;
     readonly totalCount: number | null | undefined;
   };
-  readonly " $fragmentSpreads": FragmentRefs<"MemberListItem_currentRoleFragment">;
-  readonly " $fragmentType": "MemberListFragment";
+  readonly " $fragmentType": "InvitationListFragment";
 };
-export type MemberListFragment$key = {
-  readonly " $data"?: MemberListFragment$data;
-  readonly " $fragmentSpreads": FragmentRefs<"MemberListFragment">;
+export type InvitationListFragment$key = {
+  readonly " $data"?: InvitationListFragment$data;
+  readonly " $fragmentSpreads": FragmentRefs<"InvitationListFragment">;
 };
 
-import MemberListFragment_RefetchQuery_graphql from './MemberListFragment_RefetchQuery.graphql';
+import InvitationListFragment_RefetchQuery_graphql from './InvitationListFragment_RefetchQuery.graphql';
 
 const node: ReaderFragment = (function(){
 var v0 = [
-  "members"
+  "invitations"
 ],
 v1 = {
   "alias": null,
@@ -99,24 +98,19 @@ return {
       "fragmentPathInResult": [
         "node"
       ],
-      "operation": MemberListFragment_RefetchQuery_graphql,
+      "operation": InvitationListFragment_RefetchQuery_graphql,
       "identifierInfo": {
         "identifierField": "id",
         "identifierQueryVariableName": "id"
       }
     }
   },
-  "name": "MemberListFragment",
+  "name": "InvitationListFragment",
   "selections": [
-    {
-      "args": null,
-      "kind": "FragmentSpread",
-      "name": "MemberListItem_currentRoleFragment"
-    },
     {
       "kind": "RequiredField",
       "field": {
-        "alias": "members",
+        "alias": "invitations",
         "args": [
           {
             "kind": "Variable",
@@ -124,9 +118,9 @@ return {
             "variableName": "order"
           }
         ],
-        "concreteType": "MembershipConnection",
+        "concreteType": "InvitationConnection",
         "kind": "LinkedField",
-        "name": "__MemberListFragment_members_connection",
+        "name": "__InvitationListFragment_invitations_connection",
         "plural": false,
         "selections": [
           {
@@ -141,7 +135,7 @@ return {
             "field": {
               "alias": null,
               "args": null,
-              "concreteType": "MembershipEdge",
+              "concreteType": "InvitationEdge",
               "kind": "LinkedField",
               "name": "edges",
               "plural": true,
@@ -149,7 +143,7 @@ return {
                 {
                   "alias": null,
                   "args": null,
-                  "concreteType": "Membership",
+                  "concreteType": "Invitation",
                   "kind": "LinkedField",
                   "name": "node",
                   "plural": false,
@@ -158,7 +152,7 @@ return {
                     {
                       "args": null,
                       "kind": "FragmentSpread",
-                      "name": "MemberListItemFragment"
+                      "name": "InvitationListItemFragment"
                     },
                     {
                       "alias": null,
@@ -245,6 +239,6 @@ return {
 };
 })();
 
-(node as any).hash = "909f6c9ed0fcaf7b0d170bded8c97562";
+(node as any).hash = "837e567be489574a7f0350e26a8e5454";
 
 export default node;

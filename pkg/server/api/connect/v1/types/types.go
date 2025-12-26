@@ -168,6 +168,7 @@ func (this Identity) GetID() gid.GID { return this.ID }
 type Invitation struct {
 	ID           gid.GID                   `json:"id"`
 	Email        mail.Addr                 `json:"email"`
+	FullName     string                    `json:"fullName"`
 	Role         coredata.MembershipRole   `json:"role"`
 	ExpiresAt    time.Time                 `json:"expiresAt"`
 	AcceptedAt   *time.Time                `json:"acceptedAt,omitempty"`
@@ -185,9 +186,11 @@ type InvitationEdge struct {
 }
 
 type InviteMemberInput struct {
-	OrganizationID gid.GID   `json:"organizationId"`
-	Email          mail.Addr `json:"email"`
-	FullName       string    `json:"fullName"`
+	OrganizationID gid.GID                 `json:"organizationId"`
+	Email          mail.Addr               `json:"email"`
+	FullName       string                  `json:"fullName"`
+	Role           coredata.MembershipRole `json:"role"`
+	CreatePeople   bool                    `json:"createPeople"`
 }
 
 type InviteMemberPayload struct {
