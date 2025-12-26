@@ -141,7 +141,7 @@ export function MembershipCard(props: MembershipCardProps) {
         <div className="flex items-center gap-3">
           {isAuthenticated ? (
             <Link to={`/organizations/${organization.id}`}>
-              <Button variant="secondary">{__("View organization")}</Button>
+              <Button variant="secondary">{__("Start")}</Button>
             </Link>
           ) : (
             <Button onClick={handleAssumeOrganizationSession}>
