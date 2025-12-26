@@ -1,6 +1,10 @@
 export { objectKeys, objectEntries, cleanFormData } from "./object";
 export { sprintf, faviconUrl, slugify, domain } from "./string";
 export {
+  getCustomDomainStatusBadgeLabel,
+  getCustomDomainStatusBadgeVariant,
+} from "./customDomain";
+export {
   getTreatment,
   getRiskImpacts,
   getRiskLikelihoods,
