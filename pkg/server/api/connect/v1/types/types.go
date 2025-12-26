@@ -445,6 +445,16 @@ type SignUpPayload struct {
 	Identity *Identity `json:"identity,omitempty"`
 }
 
+type UpdateMembershipInput struct {
+	OrganizationID gid.GID                 `json:"organizationId"`
+	MembershipID   gid.GID                 `json:"membershipId"`
+	Role           coredata.MembershipRole `json:"role"`
+}
+
+type UpdateMembershipPayload struct {
+	Membership *Membership `json:"membership"`
+}
+
 type UpdateOrganizationInput struct {
 	OrganizationID     gid.GID                    `json:"organizationId"`
 	Name               *string                    `json:"name,omitempty"`
