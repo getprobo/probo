@@ -48,6 +48,10 @@ type (
 	}
 )
 
+const (
+	MinutesMaxLength = 50_000
+)
+
 func (cmr *CreateMeetingRequest) Validate() error {
 	v := validator.New()
 
@@ -57,7 +61,7 @@ func (cmr *CreateMeetingRequest) Validate() error {
 	v.CheckEach(cmr.AttendeeIDs, "attendee_ids", func(index int, item any) {
 		v.Check(item, fmt.Sprintf("attendee_ids[%d]", index), validator.Required(), validator.GID(coredata.PeopleEntityType))
 	})
-	v.Check(cmr.Minutes, "minutes", validator.SafeText(ContentMaxLength))
+	v.Check(cmr.Minutes, "minutes", validator.SafeText(MinutesMaxLength))
 
 	return v.Error()
 }
@@ -70,7 +74,7 @@ func (umr *UpdateMeetingRequest) Validate() error {
 	v.CheckEach(umr.AttendeeIDs, "attendee_ids", func(index int, item any) {
 		v.Check(item, fmt.Sprintf("attendee_ids[%d]", index), validator.Required(), validator.GID(coredata.PeopleEntityType))
 	})
-	v.Check(umr.Minutes, "minutes", validator.SafeText(ContentMaxLength))
+	v.Check(umr.Minutes, "minutes", validator.SafeText(MinutesMaxLength))
 
 	return v.Error()
 }
