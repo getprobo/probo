@@ -147,6 +147,7 @@ type ComplexityRoot struct {
 		CreatedAt    func(childComplexity int) int
 		Email        func(childComplexity int) int
 		ExpiresAt    func(childComplexity int) int
+		FullName     func(childComplexity int) int
 		ID           func(childComplexity int) int
 		Organization func(childComplexity int) int
 		Role         func(childComplexity int) int
@@ -234,7 +235,7 @@ type ComplexityRoot struct {
 		HeadquarterAddress func(childComplexity int) int
 		HorizontalLogoURL  func(childComplexity int) int
 		ID                 func(childComplexity int) int
-		Invitations        func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, status *coredata.InvitationStatus) int
+		Invitations        func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, status *coredata.InvitationStatus, orderBy *types.InvitationOrderBy) int
 		LogoURL            func(childComplexity int) int
 		Members            func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MembershipOrderBy) int
 		Name               func(childComplexity int) int
@@ -479,7 +480,7 @@ type OrganizationResolver interface {
 	HorizontalLogoURL(ctx context.Context, obj *types.Organization) (*string, error)
 
 	Members(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MembershipOrderBy) (*types.MembershipConnection, error)
-	Invitations(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, status *coredata.InvitationStatus) (*types.InvitationConnection, error)
+	Invitations(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, status *coredata.InvitationStatus, orderBy *types.InvitationOrderBy) (*types.InvitationConnection, error)
 	SamlConfigurations(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.SAMLConfigurationConnection, error)
 	ViewerMembership(ctx context.Context, obj *types.Organization) (*types.Membership, error)
 }
@@ -767,6 +768,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Invitation.ExpiresAt(childComplexity), true
+	case "Invitation.fullName":
+		if e.complexity.Invitation.FullName == nil {
+			break
+		}
+
+		return e.complexity.Invitation.FullName(childComplexity), true
 	case "Invitation.id":
 		if e.complexity.Invitation.ID == nil {
 			break
@@ -1271,7 +1278,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Organization.Invitations(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["status"].(*coredata.InvitationStatus)), true
+		return e.complexity.Organization.Invitations(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["status"].(*coredata.InvitationStatus), args["orderBy"].(*types.InvitationOrderBy)), true
 	case "Organization.logoUrl":
 		if e.complexity.Organization.LogoURL == nil {
 			break
@@ -2206,6 +2213,7 @@ type Organization implements Node {
     last: Int
     before: CursorKey
     status: InvitationStatus
+    orderBy: InvitationOrder
   ): InvitationConnection @goField(forceResolver: true)
 
   samlConfigurations(
@@ -2244,6 +2252,7 @@ type Membership implements Node {
 type Invitation implements Node {
   id: ID!
   email: EmailAddr!
+  fullName: String!
   role: MembershipRole!
   expiresAt: Datetime!
   acceptedAt: Datetime
@@ -2600,6 +2609,8 @@ input InviteMemberInput {
   organizationId: ID!
   email: EmailAddr!
   fullName: String!
+  role: MembershipRole!
+  createPeople: Boolean!
 }
 
 input UpdateMembershipInput {
@@ -3245,6 +3256,11 @@ func (ec *executionContext) field_Organization_invitations_args(ctx context.Cont
 		return nil, err
 	}
 	args["status"] = arg4
+	arg5, err := graphql.ProcessArgField(ctx, rawArgs, "orderBy", ec.unmarshalOInvitationOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐInvitationOrderBy)
+	if err != nil {
+		return nil, err
+	}
+	args["orderBy"] = arg5
 	return args, nil
 }
 
@@ -4571,6 +4587,35 @@ func (ec *executionContext) fieldContext_Invitation_email(_ context.Context, fie
 	return fc, nil
 }
 
+func (ec *executionContext) _Invitation_fullName(ctx context.Context, field graphql.CollectedField, obj *types.Invitation) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Invitation_fullName,
+		func(ctx context.Context) (any, error) {
+			return obj.FullName, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Invitation_fullName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Invitation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Invitation_role(ctx context.Context, field graphql.CollectedField, obj *types.Invitation) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -4906,6 +4951,8 @@ func (ec *executionContext) fieldContext_InvitationEdge_node(_ context.Context, 
 				return ec.fieldContext_Invitation_id(ctx, field)
 			case "email":
 				return ec.fieldContext_Invitation_email(ctx, field)
+			case "fullName":
+				return ec.fieldContext_Invitation_fullName(ctx, field)
 			case "role":
 				return ec.fieldContext_Invitation_role(ctx, field)
 			case "expiresAt":
@@ -7637,7 +7684,7 @@ func (ec *executionContext) _Organization_invitations(ctx context.Context, field
 		ec.fieldContext_Organization_invitations,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Organization().Invitations(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["status"].(*coredata.InvitationStatus))
+			return ec.resolvers.Organization().Invitations(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["status"].(*coredata.InvitationStatus), fc.Args["orderBy"].(*types.InvitationOrderBy))
 		},
 		nil,
 		ec.marshalOInvitationConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐInvitationConnection,
@@ -12747,7 +12794,7 @@ func (ec *executionContext) unmarshalInputInviteMemberInput(ctx context.Context,
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"organizationId", "email", "fullName"}
+	fieldsInOrder := [...]string{"organizationId", "email", "fullName", "role", "createPeople"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -12775,6 +12822,20 @@ func (ec *executionContext) unmarshalInputInviteMemberInput(ctx context.Context,
 				return it, err
 			}
 			it.FullName = data
+		case "role":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("role"))
+			data, err := ec.unmarshalNMembershipRole2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipRole(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Role = data
+		case "createPeople":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createPeople"))
+			data, err := ec.unmarshalNBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CreatePeople = data
 		}
 	}
 
@@ -14317,6 +14378,11 @@ func (ec *executionContext) _Invitation(ctx context.Context, sel ast.SelectionSe
 			}
 		case "email":
 			out.Values[i] = ec._Invitation_email(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "fullName":
+			out.Values[i] = ec._Invitation_fullName(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
