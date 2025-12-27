@@ -23,10 +23,12 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	proxyproto "github.com/pires/go-proxyproto"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.gearno.de/kit/httpclient"
 	"go.gearno.de/kit/httpserver"
@@ -579,6 +581,22 @@ func (impl *Implm) runApiServer(
 		return fmt.Errorf("cannot listen on %q: %w", apiServer.Addr, err)
 	}
 	defer listener.Close()
+
+	if len(impl.cfg.Api.ProxyProtocol.TrustedProxies) > 0 {
+		policy, err := proxyproto.StrictWhiteListPolicy(impl.cfg.Api.ProxyProtocol.TrustedProxies)
+		if err != nil {
+			return fmt.Errorf("cannot create proxy protocol policy: %w", err)
+		}
+
+		listener = &proxyproto.Listener{
+			Listener:          listener,
+			ReadHeaderTimeout: 10 * time.Second,
+			Policy:            policy,
+		}
+		defer listener.Close()
+
+		l.Info("using proxy protocol", log.String("trusted-proxies", strings.Join(impl.cfg.Api.ProxyProtocol.TrustedProxies, ", ")))
+	}
 
 	serverErrCh := make(chan error, 1)
 	go func() {

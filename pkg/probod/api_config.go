@@ -19,9 +19,14 @@ type (
 		AllowedOrigins []string `json:"allowed-origins"`
 	}
 
+	proxyProtocolConfig struct {
+		TrustedProxies []string `json:"trusted-proxies"`
+	}
+
 	apiConfig struct {
-		Addr              string            `json:"addr"`
-		Cors              corsConfig        `json:"cors"`
-		ExtraHeaderFields map[string]string `json:"extra-header-fields"`
+		Addr              string              `json:"addr"`
+		ProxyProtocol     proxyProtocolConfig `json:"proxy-protocol"`
+		Cors              corsConfig          `json:"cors"`
+		ExtraHeaderFields map[string]string   `json:"extra-header-fields"`
 	}
 )
