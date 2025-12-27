@@ -10,7 +10,7 @@ import {
   IconBank,
   IconBook,
   IconBox,
-  IconCalendar1,
+  IconCalendar2,
   IconCheckmark1,
   IconChevronGrabberVertical,
   IconCircleProgress,
@@ -122,7 +122,7 @@ function MainLayoutContent({
           {isAuthorized("Organization", "listMeetings") && (
             <SidebarItem
               label={__("Meetings")}
-              icon={IconCalendar1}
+              icon={IconCalendar2}
               to={`${prefix}/meetings`}
             />
           )}
@@ -441,7 +441,7 @@ function OrganizationSelector({
             {isLoading ? __("Loading...") : currentOrganization?.name || ""}
           </Button>
         }
-      >  
+      >
         <div className="px-3 py-2">
           <Input
             icon={IconMagnifyingGlass}
@@ -449,7 +449,7 @@ function OrganizationSelector({
             value={search}
             onValueChange={setSearch}
             onKeyDown={(e) => {
-                e.stopPropagation(); 
+                e.stopPropagation();
             }}
             autoFocus
           />
