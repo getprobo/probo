@@ -319,6 +319,8 @@ func (r *membershipConnectionResolver) TotalCount(ctx context.Context, obj *type
 
 // SignIn is the resolver for the signIn field.
 func (r *mutationResolver) SignIn(ctx context.Context, input types.SignInInput) (*types.SignInPayload, error) {
+	// TODO: handle existing session to only open child session and chnage root session auth method to PASSWORD
+
 	user, session, err := r.iam.AuthService.OpenSessionWithPassword(ctx, input.Email, input.Password)
 	if err != nil {
 		var ErrInvalidCredentials *iam.ErrInvalidCredentials
