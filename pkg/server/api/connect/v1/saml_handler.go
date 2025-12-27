@@ -90,9 +90,9 @@ func (h *SAMLHandler) ConsumeHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	_, _, err = h.iam.SessionService.AssumeOrganizationSession(ctx, rootSession.ID, membership.OrganizationID)
+	_, _, err = h.iam.SessionService.OpenSAMLChildSessionForOrganization(ctx, rootSession.ID, membership.OrganizationID)
 	if err != nil {
-		h.logger.ErrorCtx(ctx, "cannot assume organization session", log.Error(err))
+		h.logger.ErrorCtx(ctx, "cannot open SAML child session", log.Error(err))
 		h.renderInternalServerError(w, r)
 		return
 	}
