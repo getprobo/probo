@@ -82,7 +82,7 @@ func NewMux(
 	safeRedirect := &saferedirect.SafeRedirect{AllowedHost: baseURL.Host()}
 
 	r.Use(connect_v1.NewSessionMiddleware(iamSvc, cookieConfig))
-	r.Use(connect_v1.NewAPIKeyMiddleware(iamSvc))
+	r.Use(connect_v1.NewAPIKeyMiddleware(iamSvc, tokenSecret))
 
 	config := schema.Config{
 		Resolvers: &Resolver{
@@ -317,13 +317,6 @@ func (r *Resolver) ProboService(ctx context.Context, tenantID gid.TenantID) *pro
 
 func (r *Resolver) MustAuthorize(ctx context.Context, entityID gid.GID, action iam.Action) {
 	identity := connect_v1.IdentityFromContext(ctx)
-	// TODO: Add API key authorization
-	// apiKey := connect_v1.APIKeyFromContext(ctx)
-
-	// var credentialID *gid.GID
-	// if apiKey != nil {
-	// 	credentialID = &apiKey.ID
-	// }
 
 	err := r.iam.Authorizer.Authorize(
 		ctx,
