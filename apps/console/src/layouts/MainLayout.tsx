@@ -224,6 +224,13 @@ function MainLayoutContent({
               to={`${prefix}/processing-activities`}
             />
           )}
+          {isAuthorized("Organization", "listRightsRequests") && (
+            <SidebarItem
+              label={__("Rights Requests")}
+              icon={IconLock}
+              to={`${prefix}/rights-requests`}
+            />
+          )}
           {isAuthorized("Organization", "listSnapshots") && (
             <SidebarItem
               label={__("Snapshots")}

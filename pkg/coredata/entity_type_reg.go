@@ -69,6 +69,7 @@ const (
 	MeetingEntityType                          uint16 = 45
 	DataProtectionImpactAssessmentEntityType   uint16 = 46
 	TransferImpactAssessmentEntityType         uint16 = 47
+	RightsRequestEntityType                    uint16 = 48
 )
 
 type EntityInfo struct {
@@ -268,6 +269,10 @@ var entityRegistry = map[uint16]EntityInfo{
 	TransferImpactAssessmentEntityType: {
 		Model: "TransferImpactAssessment",
 		Table: "processing_activity_transfer_impact_assessments",
+	},
+	RightsRequestEntityType: {
+		Model: "RightsRequest",
+		Table: "rights_requests",
 	},
 }
 

@@ -464,6 +464,21 @@ type CreateProcessingActivityPayload struct {
 	ProcessingActivityEdge *ProcessingActivityEdge `json:"processingActivityEdge"`
 }
 
+type CreateRightsRequestInput struct {
+	OrganizationID gid.GID                     `json:"organizationId"`
+	RequestType    coredata.RightsRequestType  `json:"requestType"`
+	RequestState   coredata.RightsRequestState `json:"requestState"`
+	DataSubject    *string                     `json:"dataSubject,omitempty"`
+	Contact        *string                     `json:"contact,omitempty"`
+	Details        *string                     `json:"details,omitempty"`
+	Deadline       *time.Time                  `json:"deadline,omitempty"`
+	ActionTaken    *string                     `json:"actionTaken,omitempty"`
+}
+
+type CreateRightsRequestPayload struct {
+	RightsRequestEdge *RightsRequestEdge `json:"rightsRequestEdge"`
+}
+
 type CreateRiskDocumentMappingInput struct {
 	RiskID     gid.GID `json:"riskId"`
 	DocumentID gid.GID `json:"documentId"`
@@ -932,6 +947,14 @@ type DeleteProcessingActivityInput struct {
 
 type DeleteProcessingActivityPayload struct {
 	DeletedProcessingActivityID gid.GID `json:"deletedProcessingActivityId"`
+}
+
+type DeleteRightsRequestInput struct {
+	RightsRequestID gid.GID `json:"rightsRequestId"`
+}
+
+type DeleteRightsRequestPayload struct {
+	DeletedRightsRequestID gid.GID `json:"deletedRightsRequestId"`
 }
 
 type DeleteRiskDocumentMappingInput struct {
@@ -1515,6 +1538,7 @@ type Organization struct {
 	Nonconformities                 *NonconformityConnection                  `json:"nonconformities"`
 	Obligations                     *ObligationConnection                     `json:"obligations"`
 	ContinualImprovements           *ContinualImprovementConnection           `json:"continualImprovements"`
+	RightsRequests                  *RightsRequestConnection                  `json:"rightsRequests"`
 	ProcessingActivities            *ProcessingActivityConnection             `json:"processingActivities"`
 	DataProtectionImpactAssessments *DataProtectionImpactAssessmentConnection `json:"dataProtectionImpactAssessments"`
 	TransferImpactAssessments       *TransferImpactAssessmentConnection       `json:"transferImpactAssessments"`
@@ -1680,6 +1704,28 @@ type RequestSignatureInput struct {
 
 type RequestSignaturePayload struct {
 	DocumentVersionSignatureEdge *DocumentVersionSignatureEdge `json:"documentVersionSignatureEdge"`
+}
+
+type RightsRequest struct {
+	ID           gid.GID                     `json:"id"`
+	Organization *Organization               `json:"organization"`
+	RequestType  coredata.RightsRequestType  `json:"requestType"`
+	RequestState coredata.RightsRequestState `json:"requestState"`
+	DataSubject  *string                     `json:"dataSubject,omitempty"`
+	Contact      *string                     `json:"contact,omitempty"`
+	Details      *string                     `json:"details,omitempty"`
+	Deadline     *time.Time                  `json:"deadline,omitempty"`
+	ActionTaken  *string                     `json:"actionTaken,omitempty"`
+	CreatedAt    time.Time                   `json:"createdAt"`
+	UpdatedAt    time.Time                   `json:"updatedAt"`
+}
+
+func (RightsRequest) IsNode()             {}
+func (this RightsRequest) GetID() gid.GID { return this.ID }
+
+type RightsRequestEdge struct {
+	Cursor page.CursorKey `json:"cursor"`
+	Node   *RightsRequest `json:"node"`
 }
 
 type Risk struct {
@@ -2197,6 +2243,21 @@ type UpdateProcessingActivityInput struct {
 
 type UpdateProcessingActivityPayload struct {
 	ProcessingActivity *ProcessingActivity `json:"processingActivity"`
+}
+
+type UpdateRightsRequestInput struct {
+	ID           gid.GID                       `json:"id"`
+	RequestType  *coredata.RightsRequestType   `json:"requestType,omitempty"`
+	RequestState *coredata.RightsRequestState  `json:"requestState,omitempty"`
+	DataSubject  graphql.Omittable[*string]    `json:"dataSubject,omitempty"`
+	Contact      graphql.Omittable[*string]    `json:"contact,omitempty"`
+	Details      graphql.Omittable[*string]    `json:"details,omitempty"`
+	Deadline     graphql.Omittable[*time.Time] `json:"deadline,omitempty"`
+	ActionTaken  graphql.Omittable[*string]    `json:"actionTaken,omitempty"`
+}
+
+type UpdateRightsRequestPayload struct {
+	RightsRequest *RightsRequest `json:"rightsRequest"`
 }
 
 type UpdateRiskInput struct {

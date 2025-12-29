@@ -4243,6 +4243,76 @@ func (r *mutationResolver) DeleteContinualImprovement(ctx context.Context, input
 	}, nil
 }
 
+// CreateRightsRequest is the resolver for the createRightsRequest field.
+func (r *mutationResolver) CreateRightsRequest(ctx context.Context, input types.CreateRightsRequestInput) (*types.CreateRightsRequestPayload, error) {
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionCreateRightsRequest)
+
+	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
+
+	req := probo.CreateRightsRequestRequest{
+		OrganizationID: input.OrganizationID,
+		RequestType:    &input.RequestType,
+		RequestState:   &input.RequestState,
+		DataSubject:    input.DataSubject,
+		Contact:        input.Contact,
+		Details:        input.Details,
+		Deadline:       input.Deadline,
+		ActionTaken:    input.ActionTaken,
+	}
+
+	rightsRequest, err := prb.RightsRequests.Create(ctx, &req)
+	if err != nil {
+		panic(fmt.Errorf("cannot create rights request: %w", err))
+	}
+
+	return &types.CreateRightsRequestPayload{
+		RightsRequestEdge: types.NewRightsRequestEdge(rightsRequest, coredata.RightsRequestOrderFieldCreatedAt),
+	}, nil
+}
+
+// UpdateRightsRequest is the resolver for the updateRightsRequest field.
+func (r *mutationResolver) UpdateRightsRequest(ctx context.Context, input types.UpdateRightsRequestInput) (*types.UpdateRightsRequestPayload, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionUpdateRightsRequest)
+
+	prb := r.ProboService(ctx, input.ID.TenantID())
+
+	req := probo.UpdateRightsRequestRequest{
+		ID:           input.ID,
+		RequestType:  input.RequestType,
+		RequestState: input.RequestState,
+		DataSubject:  UnwrapOmittable(input.DataSubject),
+		Contact:      UnwrapOmittable(input.Contact),
+		Details:      UnwrapOmittable(input.Details),
+		Deadline:     UnwrapOmittable(input.Deadline),
+		ActionTaken:  UnwrapOmittable(input.ActionTaken),
+	}
+
+	rightsRequest, err := prb.RightsRequests.Update(ctx, &req)
+	if err != nil {
+		panic(fmt.Errorf("cannot update rights request: %w", err))
+	}
+
+	return &types.UpdateRightsRequestPayload{
+		RightsRequest: types.NewRightsRequest(rightsRequest),
+	}, nil
+}
+
+// DeleteRightsRequest is the resolver for the deleteRightsRequest field.
+func (r *mutationResolver) DeleteRightsRequest(ctx context.Context, input types.DeleteRightsRequestInput) (*types.DeleteRightsRequestPayload, error) {
+	r.MustBeAuthorized(ctx, input.RightsRequestID, authz.ActionDeleteRightsRequest)
+
+	prb := r.ProboService(ctx, input.RightsRequestID.TenantID())
+
+	err := prb.RightsRequests.Delete(ctx, input.RightsRequestID)
+	if err != nil {
+		panic(fmt.Errorf("cannot delete rights request: %w", err))
+	}
+
+	return &types.DeleteRightsRequestPayload{
+		DeletedRightsRequestID: input.RightsRequestID,
+	}, nil
+}
+
 // CreateProcessingActivity is the resolver for the createProcessingActivity field.
 func (r *mutationResolver) CreateProcessingActivity(ctx context.Context, input types.CreateProcessingActivityInput) (*types.CreateProcessingActivityPayload, error) {
 	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionCreateProcessingActivity)
@@ -5535,6 +5605,34 @@ func (r *organizationResolver) ContinualImprovements(ctx context.Context, obj *t
 	return types.NewContinualImprovementConnection(page, r, obj.ID, filter), nil
 }
 
+// RightsRequests is the resolver for the rightsRequests field.
+func (r *organizationResolver) RightsRequests(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RightsRequestOrderBy) (*types.RightsRequestConnection, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListRightsRequests)
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.RightsRequestOrderField]{
+		Field:     coredata.RightsRequestOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.RightsRequestOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	page, err := prb.RightsRequests.ListForOrganizationID(ctx, obj.ID, cursor)
+	if err != nil {
+		panic(fmt.Errorf("cannot list organization rights requests: %w", err))
+	}
+
+	return types.NewRightsRequestConnection(page, r, obj.ID), nil
+}
+
 // ProcessingActivities is the resolver for the processingActivities field.
 func (r *organizationResolver) ProcessingActivities(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityOrderBy, filter *types.ProcessingActivityFilter) (*types.ProcessingActivityConnection, error) {
 	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListProcessingActivities)
@@ -6146,6 +6244,17 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 		}
 
 		return types.NewMeeting(meeting), nil
+	case coredata.RightsRequestEntityType:
+		rightsRequest, err := prb.RightsRequests.Get(ctx, id)
+		if err != nil {
+			var errNotFound *coredata.ErrRightsRequestNotFound
+			if errors.As(err, &errNotFound) {
+				return nil, gqlutils.NotFound(errNotFound)
+			}
+			panic(fmt.Errorf("cannot get rights request: %w", err))
+		}
+
+		return types.NewRightsRequest(rightsRequest), nil
 	default:
 	}
 
@@ -6199,6 +6308,48 @@ func (r *reportResolver) Audit(ctx context.Context, obj *types.Report) (*types.A
 	}
 
 	return types.NewAudit(audit), nil
+}
+
+// Organization is the resolver for the organization field.
+func (r *rightsRequestResolver) Organization(ctx context.Context, obj *types.RightsRequest) (*types.Organization, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionGetOrganization)
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	rightsRequest, err := prb.RightsRequests.Get(ctx, obj.ID)
+	if err != nil {
+		panic(fmt.Errorf("cannot get rights request: %w", err))
+	}
+
+	organization, err := prb.Organizations.Get(ctx, rightsRequest.OrganizationID)
+	if err != nil {
+		var errNotFound *coredata.ErrOrganizationNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, gqlutils.NotFound(errNotFound)
+		}
+		panic(fmt.Errorf("cannot get organization: %w", err))
+	}
+
+	return types.NewOrganization(organization), nil
+}
+
+// TotalCount is the resolver for the totalCount field.
+func (r *rightsRequestConnectionResolver) TotalCount(ctx context.Context, obj *types.RightsRequestConnection) (int, error) {
+	r.MustBeAuthorized(ctx, obj.ParentID, authz.ActionTotalCount)
+
+	prb := r.ProboService(ctx, obj.ParentID.TenantID())
+
+	switch obj.Resolver.(type) {
+	case *organizationResolver:
+		count, err := prb.RightsRequests.CountByOrganizationID(ctx, obj.ParentID)
+		if err != nil {
+			panic(fmt.Errorf("cannot count rights requests: %w", err))
+		}
+
+		return count, nil
+	default:
+		panic(fmt.Errorf("unsupported resolver type for RightsRequestConnection: %T", obj.Resolver))
+	}
 }
 
 // Owner is the resolver for the owner field.
@@ -7789,6 +7940,14 @@ func (r *Resolver) Query() schema.QueryResolver { return &queryResolver{r} }
 // Report returns schema.ReportResolver implementation.
 func (r *Resolver) Report() schema.ReportResolver { return &reportResolver{r} }
 
+// RightsRequest returns schema.RightsRequestResolver implementation.
+func (r *Resolver) RightsRequest() schema.RightsRequestResolver { return &rightsRequestResolver{r} }
+
+// RightsRequestConnection returns schema.RightsRequestConnectionResolver implementation.
+func (r *Resolver) RightsRequestConnection() schema.RightsRequestConnectionResolver {
+	return &rightsRequestConnectionResolver{r}
+}
+
 // Risk returns schema.RiskResolver implementation.
 func (r *Resolver) Risk() schema.RiskResolver { return &riskResolver{r} }
 
@@ -7947,6 +8106,8 @@ type processingActivityResolver struct{ *Resolver }
 type processingActivityConnectionResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type reportResolver struct{ *Resolver }
+type rightsRequestResolver struct{ *Resolver }
+type rightsRequestConnectionResolver struct{ *Resolver }
 type riskResolver struct{ *Resolver }
 type riskConnectionResolver struct{ *Resolver }
 type sAMLConfigurationResolver struct{ *Resolver }
