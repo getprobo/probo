@@ -1,100 +1,47 @@
+import { graphql, usePreloadedQuery, type PreloadedQuery } from "react-relay";
 import { useTranslate } from "@probo/i18n";
-import {
-  PageHeader,
-  Tbody,
-  Thead,
-  Tr,
-  Th,
-  Td,
-  Badge,
-  Card,
-} from "@probo/ui";
-import { SortableTable } from "/components/SortableTable";
-import {
-  useFragment,
-  usePaginationFragment,
-  usePreloadedQuery,
-  type PreloadedQuery,
-} from "react-relay";
-import { graphql } from "relay-runtime";
-import type { EmployeeDocumentsPageListQuery } from "./__generated__/EmployeeDocumentsPageListQuery.graphql";
-import type { EmployeeDocumentsPageListFragment$key } from "./__generated__/EmployeeDocumentsPageListFragment.graphql";
+import { PageHeader, Tbody, Thead, Tr, Th, Card } from "@probo/ui";
+import type { EmployeeDocumentsPageQuery } from "./__generated__/EmployeeDocumentsPageQuery.graphql";
 import { usePageTitle } from "@probo/hooks";
-import { getDocumentClassificationLabel, getDocumentTypeLabel, formatDate } from "@probo/helpers";
-import type { EmployeeDocumentsPageRowFragment$key } from "./__generated__/EmployeeDocumentsPageRowFragment.graphql";
-import { useEffect } from "react";
-import { useParams } from "react-router";
+import { useOrganizationId } from "/hooks/useOrganizationId";
+import { DocumentRow } from "./_components/DocumentRow";
 
-export const employeeDocumentsQuery = graphql`
-  query EmployeeDocumentsPageListQuery($organizationId: ID!) {
-    viewer {
-      id
-      ...EmployeeDocumentsPageListFragment @arguments(organizationId: $organizationId)
-    }
-  }
-`;
-
-const employeeDocumentsFragment = graphql`
-  fragment EmployeeDocumentsPageListFragment on Viewer
-  @refetchable(queryName: "EmployeeDocumentsListQuery")
-  @argumentDefinitions(
-    organizationId: { type: "ID!" }
-    first: { type: "Int", defaultValue: 50 }
-    order: {
-      type: "DocumentOrder"
-      defaultValue: { field: CREATED_AT, direction: DESC }
-    }
-    after: { type: "CursorKey", defaultValue: null }
-    before: { type: "CursorKey", defaultValue: null }
-    last: { type: "Int", defaultValue: null }
-  ) {
-    signableDocuments(
-      organizationId: $organizationId
-      first: $first
-      after: $after
-      last: $last
-      before: $before
-      orderBy: $order
-    ) @connection(key: "EmployeeDocumentsListQuery_signableDocuments") {
-      __id
-      edges {
-        node {
-          id
-          ...EmployeeDocumentsPageRowFragment
+export const employeeDocumentsPageQuery = graphql`
+  query EmployeeDocumentsPageQuery($organizationId: ID!) {
+    viewer @required(action: THROW) {
+      signableDocuments(
+        organizationId: $organizationId
+        first: 1000
+        orderBy: { field: CREATED_AT, direction: DESC }
+      ) @required(action: THROW) {
+        edges @required(action: THROW) {
+          node @required(action: THROW) {
+            id
+            ...DocumentRowFragment
+          }
         }
       }
     }
   }
 `;
 
-type Props = {
-  queryRef: PreloadedQuery<EmployeeDocumentsPageListQuery>;
-};
-
-export default function EmployeeDocumentsPage(props: Props) {
+export function EmployeeDocumentsPage(props: {
+  queryRef: PreloadedQuery<EmployeeDocumentsPageQuery>;
+}) {
   const { __ } = useTranslate();
-  const params = useParams<{ organizationId: string }>();
-  const organizationId = params.organizationId!;
+  const organizationId = useOrganizationId();
 
-  const data = usePreloadedQuery(
-    employeeDocumentsQuery,
-    props.queryRef
+  const { queryRef } = props;
+  const {
+    viewer: {
+      signableDocuments: { edges: initialDocuments },
+    },
+  } = usePreloadedQuery<EmployeeDocumentsPageQuery>(
+    employeeDocumentsPageQuery,
+    queryRef
   );
 
-  const pagination = usePaginationFragment(
-    employeeDocumentsFragment,
-    data.viewer as EmployeeDocumentsPageListFragment$key
-  );
-
-  const { refetch } = pagination;
-
-  useEffect(() => {
-    refetch({ organizationId }, { fetchPolicy: 'network-only' });
-  }, [organizationId, refetch]);
-
-  const documents = pagination.data.signableDocuments?.edges
-    ?.map((edge) => edge?.node)
-    .filter(Boolean) || [];
+  const documents = initialDocuments.map((edge) => edge.node).filter(Boolean);
 
   usePageTitle(__("Documents"));
 
@@ -102,22 +49,28 @@ export default function EmployeeDocumentsPage(props: Props) {
     <div className="space-y-6">
       <PageHeader title={__("Documents")} />
       {documents.length > 0 ? (
-        <SortableTable {...pagination}>
-          <Thead>
-          <Tr>
-            <Th className="min-w-0 pr-12">{__("Name")}</Th>
-            <Th className="w-48">{__("Type")}</Th>
-            <Th className="w-36">{__("Classification")}</Th>
-            <Th className="w-40">{__("Last update")}</Th>
-            <Th className="w-32">{__("Signed")}</Th>
-          </Tr>
-          </Thead>
-          <Tbody>
-                {documents.map((document) => (
-                  <DocumentRow key={document.id} document={document} organizationId={organizationId} />
-                ))}
-          </Tbody>
-        </SortableTable>
+        <Card>
+          <table className="w-full">
+            <Thead>
+              <Tr>
+                <Th className="min-w-0 pr-12">{__("Name")}</Th>
+                <Th className="w-48">{__("Type")}</Th>
+                <Th className="w-36">{__("Classification")}</Th>
+                <Th className="w-40">{__("Last update")}</Th>
+                <Th className="w-32">{__("Signed")}</Th>
+              </Tr>
+            </Thead>
+            <Tbody>
+              {documents.map((document) => (
+                <DocumentRow
+                  key={document.id}
+                  fKey={document}
+                  organizationId={organizationId}
+                />
+              ))}
+            </Tbody>
+          </table>
+        </Card>
       ) : (
         <Card padded>
           <div className="text-center py-12">
@@ -131,50 +84,5 @@ export default function EmployeeDocumentsPage(props: Props) {
         </Card>
       )}
     </div>
-  );
-}
-
-const rowFragment = graphql`
-  fragment EmployeeDocumentsPageRowFragment on SignableDocument {
-    id
-    title
-    documentType
-    classification
-    signed
-    updatedAt
-  }
-`;
-
-function DocumentRow({
-  document: documentKey,
-  organizationId,
-}: {
-  document: EmployeeDocumentsPageRowFragment$key;
-  organizationId: string;
-}) {
-  const document = useFragment<EmployeeDocumentsPageRowFragment$key>(
-    rowFragment,
-    documentKey
-  );
-  const { __ } = useTranslate();
-
-  return (
-    <Tr
-      to={`/organizations/${organizationId}/employee/${document.id}`}
-    >
-      <Td className="min-w-0 pr-12">{document.title}</Td>
-      <Td className="w-48">{getDocumentTypeLabel(__, document.documentType)}</Td>
-      <Td className="w-36">
-        <Badge variant="neutral">
-          {getDocumentClassificationLabel(__, document.classification)}
-        </Badge>
-      </Td>
-      <Td className="w-40">{formatDate(document.updatedAt)}</Td>
-      <Td className="w-32">
-        <Badge variant={document.signed ? "success" : "danger"}>
-          {document.signed ? __("Yes") : __("No")}
-        </Badge>
-      </Td>
-    </Tr>
   );
 }

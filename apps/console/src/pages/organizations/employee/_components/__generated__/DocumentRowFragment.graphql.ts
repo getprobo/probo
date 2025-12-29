@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<f3d939f80d769a19b8f8ef64207ae911>>
+ * @generated SignedSource<<74a0df62fb3bfbd741d69cc1b7c023bb>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,25 +12,25 @@ import { ReaderFragment } from 'relay-runtime';
 export type DocumentClassification = "CONFIDENTIAL" | "INTERNAL" | "PUBLIC" | "SECRET";
 export type DocumentType = "ISMS" | "OTHER" | "POLICY" | "PROCEDURE";
 import { FragmentRefs } from "relay-runtime";
-export type EmployeeDocumentsPageRowFragment$data = {
+export type DocumentRowFragment$data = {
   readonly classification: DocumentClassification;
   readonly documentType: DocumentType;
   readonly id: string;
   readonly signed: boolean;
   readonly title: string;
   readonly updatedAt: any;
-  readonly " $fragmentType": "EmployeeDocumentsPageRowFragment";
+  readonly " $fragmentType": "DocumentRowFragment";
 };
-export type EmployeeDocumentsPageRowFragment$key = {
-  readonly " $data"?: EmployeeDocumentsPageRowFragment$data;
-  readonly " $fragmentSpreads": FragmentRefs<"EmployeeDocumentsPageRowFragment">;
+export type DocumentRowFragment$key = {
+  readonly " $data"?: DocumentRowFragment$data;
+  readonly " $fragmentSpreads": FragmentRefs<"DocumentRowFragment">;
 };
 
 const node: ReaderFragment = {
   "argumentDefinitions": [],
   "kind": "Fragment",
   "metadata": null,
-  "name": "EmployeeDocumentsPageRowFragment",
+  "name": "DocumentRowFragment",
   "selections": [
     {
       "alias": null,
@@ -79,6 +79,6 @@ const node: ReaderFragment = {
   "abstractKey": null
 };
 
-(node as any).hash = "929301e6f6216fb0678b32061b70dd17";
+(node as any).hash = "43959adf3e4545cce78ba06f34c82cd2";
 
 export default node;

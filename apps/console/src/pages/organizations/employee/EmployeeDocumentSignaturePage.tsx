@@ -1,38 +1,30 @@
 import { useTranslate } from "@probo/i18n";
-import {
-  Button,
-  Card,
-  Spinner,
-  IconCircleCheck,
-  IconRadioUnchecked,
-} from "@probo/ui";
-import clsx from "clsx";
+import { Card, Spinner } from "@probo/ui";
 import {
   usePreloadedQuery,
   useFragment,
   useMutation,
   type PreloadedQuery,
 } from "react-relay";
-import { graphql } from "relay-runtime";
+import { graphql } from "react-relay";
 import type { EmployeeDocumentSignaturePageQuery } from "./__generated__/EmployeeDocumentSignaturePageQuery.graphql";
 import { usePageTitle } from "@probo/hooks";
-import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import type { EmployeeDocumentSignaturePageSignMutation } from "./__generated__/EmployeeDocumentSignaturePageSignMutation.graphql";
 import type { EmployeeDocumentSignaturePageExportSignablePDFMutation } from "./__generated__/EmployeeDocumentSignaturePageExportSignablePDFMutation.graphql";
 import { useNavigate } from "react-router";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { PDFPreview } from "/components/documents/PDFPreview";
 import { useWindowSize } from "usehooks-ts";
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { EmployeeDocumentSignaturePageDocumentFragment$key } from "./__generated__/EmployeeDocumentSignaturePageDocumentFragment.graphql";
-import type { EmployeeDocumentSignaturePageVersionFragment$key } from "./__generated__/EmployeeDocumentSignaturePageVersionFragment.graphql";
 import { useToast } from "@probo/ui";
 import { formatError, type GraphQLError } from "@probo/helpers";
+import { VersionActions } from "./_components/VersionActions";
+import { VersionRow } from "./_components/VersionRow";
 
-export const employeeDocumentSignatureQuery = graphql`
+export const employeeDocumentSignaturePageQuery = graphql`
   query EmployeeDocumentSignaturePageQuery($documentId: ID!) {
-    viewer {
-      id
+    viewer @required(action: THROW) {
       signableDocument(id: $documentId) {
         id
         ...EmployeeDocumentSignaturePageDocumentFragment
@@ -46,28 +38,23 @@ const documentFragment = graphql`
     id
     title
     signed
-    versions(first: 100, orderBy: { field: CREATED_AT, direction: DESC }) {
-      edges {
-        node {
+    versions(first: 100, orderBy: { field: CREATED_AT, direction: DESC })
+      @required(action: THROW) {
+      edges @required(action: THROW) {
+        node @required(action: THROW) {
           id
-          ...EmployeeDocumentSignaturePageVersionFragment
+          ...VersionActionsFragment
+          ...VersionRowFragment
         }
       }
     }
   }
 `;
 
-const versionFragment = graphql`
-  fragment EmployeeDocumentSignaturePageVersionFragment on DocumentVersion {
-    id
-    version
-    signed
-    publishedAt
-  }
-`;
-
 const signDocumentMutation = graphql`
-  mutation EmployeeDocumentSignaturePageSignMutation($input: SignDocumentInput!) {
+  mutation EmployeeDocumentSignaturePageSignMutation(
+    $input: SignDocumentInput!
+  ) {
     signDocument(input: $input) {
       documentVersionSignature {
         id
@@ -87,13 +74,15 @@ const exportSignableVersionDocumentPDFMutation = graphql`
   }
 `;
 
-type Props = {
+export function EmployeeDocumentSignaturePage(props: {
   queryRef: PreloadedQuery<EmployeeDocumentSignaturePageQuery>;
-};
-
-export default function EmployeeDocumentSignaturePage(props: Props) {
-  const data = usePreloadedQuery(employeeDocumentSignatureQuery, props.queryRef);
-  const document = data.viewer.signableDocument;
+}) {
+  const { queryRef } = props;
+  const { viewer } = usePreloadedQuery<EmployeeDocumentSignaturePageQuery>(
+    employeeDocumentSignaturePageQuery,
+    queryRef
+  );
+  const document = viewer.signableDocument;
 
   if (!document) {
     return (
@@ -103,13 +92,13 @@ export default function EmployeeDocumentSignaturePage(props: Props) {
     );
   }
 
-  return <DocumentSignatureContent document={document} />;
+  return <DocumentSignatureContent fKey={document} />;
 }
 
 function DocumentSignatureContent({
-  document,
+  fKey,
 }: {
-  document: EmployeeDocumentSignaturePageDocumentFragment$key;
+  fKey: EmployeeDocumentSignaturePageDocumentFragment$key;
 }) {
   const { __ } = useTranslate();
   const navigate = useNavigate();
@@ -118,45 +107,38 @@ function DocumentSignatureContent({
   const isDesktop = !isMobile;
   const organizationId = useOrganizationId();
 
-  const documentData = useFragment<EmployeeDocumentSignaturePageDocumentFragment$key>(
-    documentFragment,
-    document
-  );
+  const documentData =
+    useFragment<EmployeeDocumentSignaturePageDocumentFragment$key>(
+      documentFragment,
+      fKey
+    );
 
-  const versions = useMemo(() => {
-    return documentData.versions?.edges
-      ?.map((edge) => edge?.node)
-      .filter(Boolean) || [];
-  }, [documentData.versions?.edges]);
+  const versions = documentData.versions.edges.map(({ node }) => node);
 
-  const [selectedVersionId, setSelectedVersionId] = useState<string | undefined>(
-    () => versions[0]?.id
-  );
+  const [selectedVersionId, setSelectedVersionId] = useState<
+    string | undefined
+  >(() => versions[0]?.id);
 
-  const selectedVersion = useMemo(() => {
-    return versions.find((v) => v?.id === selectedVersionId);
-  }, [versions, selectedVersionId]);
+  const selectedVersion = versions.find((v) => v?.id === selectedVersionId);
 
   usePageTitle(__("Sign Document"));
   const { toast } = useToast();
 
-  const [signDocument, isSigning] = useMutationWithToasts<EmployeeDocumentSignaturePageSignMutation>(
-    signDocumentMutation,
-    {
-      successMessage: __("Document signed successfully"),
-      errorMessage: __("Failed to sign document"),
-    }
-  );
+  const [signDocument, isSigning] =
+    useMutation<EmployeeDocumentSignaturePageSignMutation>(
+      signDocumentMutation
+    );
 
-  const [exportSignableVersionDocumentPDF] = useMutation<EmployeeDocumentSignaturePageExportSignablePDFMutation>(
-    exportSignableVersionDocumentPDFMutation
-  );
+  const [exportSignableVersionDocumentPDF] =
+    useMutation<EmployeeDocumentSignaturePageExportSignablePDFMutation>(
+      exportSignableVersionDocumentPDFMutation
+    );
 
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const pdfUrlRef = useRef<string | null>(null);
 
   const handleSign = async (versionId: string) => {
-    await signDocument({
+    signDocument({
       variables: {
         input: {
           documentVersionId: versionId,
@@ -170,10 +152,22 @@ function DocumentSignatureContent({
         store.invalidateStore();
       },
       onCompleted: () => {
+        toast({
+          title: __("Success"),
+          description: __("Document signed successfully"),
+          variant: "success",
+        });
         navigate(`/organizations/${organizationId}/employee`);
       },
       onError: (error) => {
-        console.error("Error signing document:", error);
+        toast({
+          title: __("Error"),
+          description: formatError(
+            __("Failed to sign document"),
+            error as GraphQLError
+          ),
+          variant: "error",
+        });
       },
     });
   };
@@ -191,7 +185,10 @@ function DocumentSignatureContent({
         if (errors) {
           toast({
             title: __("Error"),
-            description: formatError(__("Failed to load PDF"), errors as GraphQLError[]),
+            description: formatError(
+              __("Failed to load PDF"),
+              errors as GraphQLError[]
+            ),
             variant: "error",
           });
           return;
@@ -205,7 +202,10 @@ function DocumentSignatureContent({
       onError: (error) => {
         toast({
           title: __("Error"),
-          description: formatError(__("Failed to load PDF"), error as GraphQLError),
+          description: formatError(
+            __("Failed to load PDF"),
+            error as GraphQLError
+          ),
           variant: "error",
         });
       },
@@ -217,7 +217,10 @@ function DocumentSignatureContent({
   }, [selectedVersion?.id, exportSignableVersionDocumentPDF, toast, __]);
 
   return (
-    <div className="fixed bg-level-2 flex flex-col" style={{ top: '3rem', left: 0, right: 0, bottom: 0 }}>
+    <div
+      className="fixed bg-level-2 flex flex-col"
+      style={{ top: "3rem", left: 0, right: 0, bottom: 0 }}
+    >
       <div className="grid lg:grid-cols-2 min-h-0 h-full">
         <div className="w-full lg:w-[440px] mx-auto py-20 overflow-y-auto scrollbar-hide">
           <h1 className="text-2xl font-semibold mb-6">
@@ -230,7 +233,7 @@ function DocumentSignatureContent({
                 return (
                   <VersionRow
                     key={version.id}
-                    version={version}
+                    fKey={version}
                     isSelected={version.id === selectedVersionId}
                     onSelect={() => setSelectedVersionId(version.id)}
                   />
@@ -246,10 +249,12 @@ function DocumentSignatureContent({
           <div className="min-h-[60px]">
             {selectedVersion ? (
               <VersionActions
-                version={selectedVersion}
+                fKey={selectedVersion}
                 isSigning={isSigning}
                 onSign={handleSign}
-                onBack={() => navigate(`/organizations/${organizationId}/employee`)}
+                onBack={() =>
+                  navigate(`/organizations/${organizationId}/employee`)
+                }
               />
             ) : null}
           </div>
@@ -257,142 +262,11 @@ function DocumentSignatureContent({
 
         {isDesktop && (
           <div className="bg-subtle h-full border-l border-border-solid min-h-0">
-            {pdfUrl && <PDFPreview src={pdfUrl} name={documentData.title || ""} />}
+            {pdfUrl && (
+              <PDFPreview src={pdfUrl} name={documentData.title || ""} />
+            )}
           </div>
         )}
-      </div>
-    </div>
-  );
-}
-
-function VersionActions({
-  version,
-  isSigning,
-  onSign,
-  onBack,
-}: {
-  version: EmployeeDocumentSignaturePageVersionFragment$key;
-  isSigning: boolean;
-  onSign: (versionId: string) => void;
-  onBack: () => void;
-}) {
-  const { __ } = useTranslate();
-  const versionData = useFragment<EmployeeDocumentSignaturePageVersionFragment$key>(
-    versionFragment,
-    version
-  );
-  const isSigned = versionData.signed;
-
-  if (isSigned) {
-    return (
-      <>
-        <Button
-          onClick={onBack}
-          className="h-10 w-full"
-          variant="secondary"
-        >
-          {__("Back to Documents")}
-        </Button>
-        <p className="text-xs text-txt-tertiary mt-2 h-5" />
-      </>
-    );
-  }
-
-  return (
-    <>
-      <Button
-        onClick={() => onSign(versionData.id)}
-        className="h-10 w-full"
-        disabled={isSigning}
-        icon={isSigning ? Spinner : undefined}
-      >
-        {__("I acknowledge and agree")}
-      </Button>
-      <p className="text-xs text-txt-tertiary mt-2 h-5">
-        {__(
-          "By clicking 'I acknowledge and agree', your digital signature will be recorded."
-        )}
-      </p>
-    </>
-  );
-}
-
-function VersionRow({
-  version,
-  isSelected,
-  onSelect,
-}: {
-  version: EmployeeDocumentSignaturePageVersionFragment$key;
-  isSelected: boolean;
-  onSelect: () => void;
-}) {
-  const { __ } = useTranslate();
-  const versionData = useFragment<EmployeeDocumentSignaturePageVersionFragment$key>(
-    versionFragment,
-    version
-  );
-  const isVersionSigned = versionData.signed;
-
-  return (
-    <div
-      onClick={onSelect}
-      className={clsx(
-        "flex items-center gap-3 py-3 px-4 transition-colors cursor-pointer",
-        isSelected
-          ? "bg-blue-50 border-l-4 border-blue-500"
-          : "bg-transparent hover:bg-level-1"
-      )}
-    >
-      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-level-2 flex-shrink-0">
-        {isVersionSigned ? (
-          <IconCircleCheck
-            size={20}
-            className="text-txt-success"
-          />
-        ) : (
-          <IconRadioUnchecked
-            size={20}
-            className="text-txt-tertiary"
-          />
-        )}
-      </div>
-      <div className="flex-1 min-w-0">
-        <p
-          className={clsx(
-            "text-sm font-medium truncate",
-            isVersionSigned
-              ? "text-txt-tertiary"
-              : "text-txt-primary"
-          )}
-        >
-          {versionData.publishedAt
-            ? `v${versionData.version} - ${(() => {
-                const date = new Date(versionData.publishedAt);
-                const day = String(date.getDate()).padStart(2, '0');
-                const month = String(date.getMonth() + 1).padStart(2, '0');
-                const year = date.getFullYear();
-                return `${day}/${month}/${year}`;
-              })()}`
-            : `v${versionData.version}`}
-        </p>
-      </div>
-      <div className="flex-shrink-0">
-        <span
-          className={clsx(
-            "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium",
-            isVersionSigned
-              ? "bg-green-100 text-green-800"
-              : isSelected
-              ? "bg-blue-100 text-blue-800"
-              : "bg-gray-100 text-gray-700"
-          )}
-        >
-          {isVersionSigned
-            ? __("Signed")
-            : isSelected
-            ? __("In review")
-            : __("Waiting signature")}
-        </span>
       </div>
     </div>
   );
