@@ -321,6 +321,14 @@ type ResetPasswordPayload struct {
 	Success bool `json:"success"`
 }
 
+type RevealPersonalAPIKeyTokenInput struct {
+	TokenID gid.GID `json:"tokenId"`
+}
+
+type RevealPersonalAPIKeyTokenPayload struct {
+	Token string `json:"token"`
+}
+
 type RevokeAllSessionsPayload struct {
 	RevokedCount int `json:"revokedCount"`
 }
@@ -471,16 +479,6 @@ type UpdateOrganizationInput struct {
 
 type UpdateOrganizationPayload struct {
 	Organization *Organization `json:"organization,omitempty"`
-}
-
-type UpdatePersonalAPIKeyInput struct {
-	TokenID     gid.GID `json:"tokenId"`
-	Name        *string `json:"name,omitempty"`
-	Description *string `json:"description,omitempty"`
-}
-
-type UpdatePersonalAPIKeyPayload struct {
-	PersonalAPIKey *PersonalAPIKey `json:"personalAPIKey,omitempty"`
 }
 
 type UpdateSAMLConfigurationInput struct {
