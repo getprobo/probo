@@ -36,13 +36,13 @@ func APIKeyFromContext(ctx context.Context) *coredata.PersonalAPIKey {
 	return apiKey
 }
 
-func NewAPIKeyMiddleware(svc *iam.Service) func(next http.Handler) http.Handler {
+func NewAPIKeyMiddleware(svc *iam.Service, tokenSecret string) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(
 			func(w http.ResponseWriter, r *http.Request) {
 				ctx := r.Context()
 
-				tokenValue, err := securetoken.Get(r, "")
+				tokenValue, err := securetoken.Get(r, tokenSecret)
 				if err != nil {
 					next.ServeHTTP(w, r)
 					return

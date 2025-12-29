@@ -47,6 +47,7 @@ type Config struct {
 	Trust             *trust.Service
 	Slack             *slack.Service
 	Cookie            securecookie.Config
+	TokenSecret       string
 	ConnectorRegistry *connector.ConnectorRegistry
 	Agent             *agents.Agent
 	CustomDomainCname string
@@ -72,6 +73,7 @@ func NewServer(cfg Config) (*Server, error) {
 		Trust:             cfg.Trust,
 		Slack:             cfg.Slack,
 		Cookie:            cfg.Cookie,
+		TokenSecret:       cfg.TokenSecret,
 		ConnectorRegistry: cfg.ConnectorRegistry,
 		CustomDomainCname: cfg.CustomDomainCname,
 		Logger:            cfg.Logger.Named("api"),

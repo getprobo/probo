@@ -20,7 +20,7 @@ func (r *Resolver) ProboService(ctx context.Context, objectID gid.GID) *probo.Te
 	return r.proboSvc.WithTenant(objectID.TenantID())
 }
 
-func NewMux(logger *log.Logger, proboSvc *probo.Service, iamSvc *iam.Service) *chi.Mux {
+func NewMux(logger *log.Logger, proboSvc *probo.Service, iamSvc *iam.Service, tokenSecret string) *chi.Mux {
 	logger = logger.Named("mcp.v1")
 
 	logger.Info("initializing MCP server")
@@ -52,7 +52,7 @@ func NewMux(logger *log.Logger, proboSvc *probo.Service, iamSvc *iam.Service) *c
 	)
 
 	r := chi.NewMux()
-	r.Use(connect_v1.NewAPIKeyMiddleware(iamSvc))
+	r.Use(connect_v1.NewAPIKeyMiddleware(iamSvc, tokenSecret))
 	r.Handle("/", RequireAPIKeyHandler(logger, handler))
 
 	logger.Info("MCP server initialized successfully")
