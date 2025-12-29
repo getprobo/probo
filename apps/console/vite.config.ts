@@ -22,14 +22,6 @@ export default defineConfig({
   ],
   server: {
     proxy: {
-      "/connect": {
-        target: "http://localhost:8080",
-        changeOrigin: true,
-      },
-      "/authz": {
-        target: "http://localhost:8080",
-        changeOrigin: true,
-      },
       "/api": {
         target: "http://localhost:8080",
         changeOrigin: true,
