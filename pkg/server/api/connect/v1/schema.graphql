@@ -86,9 +86,9 @@ type Mutation {
   createPersonalAPIKey(
     input: CreatePersonalAPIKeyInput!
   ): CreatePersonalAPIKeyPayload @session(required: PRESENT)
-  updatePersonalAPIKey(
-    input: UpdatePersonalAPIKeyInput!
-  ): UpdatePersonalAPIKeyPayload @session(required: PRESENT)
+  revealPersonalAPIKeyToken(
+    input: RevealPersonalAPIKeyTokenInput!
+  ): RevealPersonalAPIKeyTokenPayload @session(required: PRESENT)
   revokePersonalAPIKey(
     input: RevokePersonalAPIKeyInput!
   ): RevokePersonalAPIKeyPayload @session(required: PRESENT)
@@ -563,13 +563,11 @@ input CreatePersonalAPIKeyInput {
   organizationIds: [ID!]!
 }
 
-input UpdatePersonalAPIKeyInput {
+input RevokePersonalAPIKeyInput {
   tokenId: ID!
-  name: String
-  description: String
 }
 
-input RevokePersonalAPIKeyInput {
+input RevealPersonalAPIKeyTokenInput {
   tokenId: ID!
 }
 
@@ -736,12 +734,12 @@ type CreatePersonalAPIKeyPayload {
   token: String!
 }
 
-type UpdatePersonalAPIKeyPayload {
-  personalAPIKey: PersonalAPIKey
-}
-
 type RevokePersonalAPIKeyPayload {
   success: Boolean!
+}
+
+type RevealPersonalAPIKeyTokenPayload {
+  token: String!
 }
 
 type CreateOrganizationPayload {
