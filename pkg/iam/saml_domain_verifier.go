@@ -154,6 +154,7 @@ func (v *SAMLDomainVerifier) tryVerifyDomain(ctx context.Context, configID gid.G
 			now := time.Now()
 			config.DomainVerificationToken = nil
 			config.DomainVerifiedAt = &now
+			config.EnforcementPolicy = coredata.SAMLEnforcementPolicyOptional
 			config.UpdatedAt = now
 
 			scope := coredata.NewScopeFromObjectID(config.OrganizationID)
