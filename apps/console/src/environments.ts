@@ -1,18 +1,18 @@
 import { Environment, Network, RecordSource, Store } from "relay-runtime";
 import { makeFetchQuery } from "@probo/relay";
 
-const source = new RecordSource();
-const store = new Store(source, {
-  queryCacheExpirationTime: 1 * 60 * 1000,
-  gcReleaseBufferSize: 20,
-});
-
 export const coreEnvironment = new Environment({
   network: Network.create(makeFetchQuery("/api/console/v1/graphql")),
-  store,
+  store: new Store(new RecordSource(), {
+    queryCacheExpirationTime: 1 * 60 * 1000,
+    gcReleaseBufferSize: 20,
+  }),
 });
 
 export const iamEnvironment = new Environment({
   network: Network.create(makeFetchQuery("/api/connect/v1/graphql")),
-  store,
+  store: new Store(new RecordSource(), {
+    queryCacheExpirationTime: 1 * 60 * 1000,
+    gcReleaseBufferSize: 20,
+  }),
 });
