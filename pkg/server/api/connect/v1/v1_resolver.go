@@ -139,10 +139,6 @@ func (r *identityResolver) PersonalAPIKeys(ctx context.Context, obj *types.Ident
 
 // Permission is the resolver for the permission field.
 func (r *identityResolver) Permission(ctx context.Context, obj *types.Identity, action string, id gid.GID) (bool, error) {
-
-	fmt.Printf("action: %s, id: %s\n", action, id.String())
-	fmt.Printf("obj: %+v\n", obj)
-
 	err := r.iam.Authorizer.Authorize(
 		ctx,
 		iam.AuthorizeParams{
