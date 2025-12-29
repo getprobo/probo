@@ -54,15 +54,16 @@ var (
 
 func SessionDirective(ctx context.Context, obj any, next graphql.Resolver, required types.SessionRequirement) (any, error) {
 	session := SessionFromContext(ctx)
+	apiKey := APIKeyFromContext(ctx)
 
 	switch required {
 	case types.SessionRequirementOptional:
 	case types.SessionRequirementPresent:
-		if session == nil {
+		if session == nil && apiKey == nil {
 			return nil, ErrUnauthenticated
 		}
 	case types.SessionRequirementNone:
-		if session != nil {
+		if session != nil && apiKey != nil {
 			return nil, ErrAlreadyAuthenticated
 		}
 	}
