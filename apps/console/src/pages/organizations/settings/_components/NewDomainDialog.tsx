@@ -1,22 +1,23 @@
 import { useTranslate } from "@probo/i18n";
-import { graphql } from "react-relay";
 import {
+  Breadcrumb,
   Button,
   Dialog,
   DialogContent,
   DialogFooter,
   Field,
   useDialogRef,
-  Breadcrumb,
 } from "@probo/ui";
-import { z } from "zod";
+import { graphql } from "relay-runtime";
+import z from "zod";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
-import type { ReactNode } from "react";
-import type { CreateCustomDomainDialogMutation } from "./__generated__/CreateCustomDomainDialogMutation.graphql";
+import { useOrganizationId } from "/hooks/useOrganizationId";
+import type { PropsWithChildren } from "react";
+import type { NewDomainDialogMutation } from "./__generated__/NewDomainDialogMutation.graphql";
 
 const createCustomDomainMutation = graphql`
-  mutation CreateCustomDomainDialogMutation($input: CreateCustomDomainInput!) {
+  mutation NewDomainDialogMutation($input: CreateCustomDomainInput!) {
     createCustomDomain(input: $input) {
       customDomain {
         id
@@ -43,21 +44,16 @@ const schema = z.object({
     .min(1, "Domain is required")
     .regex(
       /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$/i,
-      "Please enter a valid domain (e.g., compliance.example.com)"
+      "Please enter a valid domain (e.g., compliance.example.com)",
     ),
 });
 
-type FormData = z.infer<typeof schema>;
+type CustomDomainFormData = z.infer<typeof schema>;
 
-interface CreateCustomDomainDialogProps {
-  children: ReactNode;
-  organizationId: string;
-}
+export function NewDomainDialog(props: PropsWithChildren) {
+  const { children } = props;
 
-export function CreateCustomDomainDialog({
-  children,
-  organizationId,
-}: CreateCustomDomainDialogProps) {
+  const organizationId = useOrganizationId();
   const { __ } = useTranslate();
   const dialogRef = useDialogRef();
 
@@ -67,21 +63,18 @@ export function CreateCustomDomainDialog({
       defaultValues: {
         domain: "",
       },
-    }
+    },
   );
 
   const [createCustomDomain, isCreating] =
-    useMutationWithToasts<CreateCustomDomainDialogMutation>(
-      createCustomDomainMutation,
-      {
-        successMessage: __(
-          "Domain added successfully. Configure the DNS records to verify and activate your domain."
-        ),
-        errorMessage: __("Failed to add domain"),
-      }
-    );
+    useMutationWithToasts<NewDomainDialogMutation>(createCustomDomainMutation, {
+      successMessage: __(
+        "Domain added successfully. Configure the DNS records to verify and activate your domain.",
+      ),
+      errorMessage: __("Failed to add domain"),
+    });
 
-  const onSubmit = handleSubmit(async (data: FormData) => {
+  const onSubmit = handleSubmit(async (data: CustomDomainFormData) => {
     const normalizedDomain = data.domain
       .trim()
       .toLowerCase()
@@ -100,12 +93,12 @@ export function CreateCustomDomainDialog({
         const organizationRecord = store.get(organizationId);
         if (organizationRecord && data?.createCustomDomain?.customDomain) {
           const customDomainRecord = store.get(
-            data.createCustomDomain.customDomain.id
+            data.createCustomDomain.customDomain.id,
           );
           if (customDomainRecord) {
             organizationRecord.setLinkedRecord(
               customDomainRecord,
-              "customDomain"
+              "customDomain",
             );
           }
         }
@@ -128,7 +121,7 @@ export function CreateCustomDomainDialog({
           <div>
             <p className="text-sm text-txt-secondary mb-4">
               {__(
-                "Enter your domain and we'll generate the DNS records you need to add"
+                "Enter your domain and we'll generate the DNS records you need to add",
               )}
             </p>
           </div>

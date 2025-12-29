@@ -118,9 +118,7 @@ const routes = [
       },
       {
         path: "documents/signing-requests",
-        Component: lazy(
-          () => import("./pages/DocumentSigningRequestsPage.tsx"),
-        ),
+        Component: lazy(() => import("./pages/DocumentSigningRequestsPage")),
       },
       {
         path: "api-keys",
@@ -169,7 +167,7 @@ const routes = [
   {
     path: "/organizations/:organizationId",
     Component: lazy(
-      () => import("./pages/iam/memberships/MembershipLayoutLoader.tsx"),
+      () => import("./pages/iam/memberships/MembershipLayoutLoader"),
     ),
     ErrorBoundary: ErrorBoundary,
     children: [
@@ -191,7 +189,7 @@ const routes = [
         path: "settings",
         Fallback: PageSkeleton,
         Component: lazy(
-          () => import("./pages/iam/organizations/settings/SettingsLayout.tsx"),
+          () => import("./pages/iam/organizations/settings/SettingsLayout"),
         ),
         children: [
           {
@@ -204,20 +202,21 @@ const routes = [
             path: "general",
             Component: lazy(
               () =>
-                import("./pages/iam/organizations/settings/GeneralSettingsPageLoader.tsx"),
+                import("./pages/iam/organizations/settings/GeneralSettingsPageLoader"),
             ),
           },
           {
             path: "members",
             Component: lazy(
               () =>
-                import("./pages/iam/organizations/settings/MembersPageLoader.tsx"),
+                import("./pages/iam/organizations/settings/MembersPageLoader"),
             ),
           },
           {
             path: "domain",
             Component: lazy(
-              () => import("./pages/organizations/settings/DomainSettingsTab"),
+              () =>
+                import("./pages/organizations/settings/DomainSettingsPageLoader"),
             ),
           },
           {
