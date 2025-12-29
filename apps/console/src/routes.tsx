@@ -4,7 +4,6 @@ import {
   redirect,
   useRouteError,
 } from "react-router";
-import { EmployeeLayout } from "./layouts/EmployeeLayout.tsx";
 import { CenteredLayout, CenteredLayoutSkeleton } from "@probo/ui";
 import { PageSkeleton } from "./components/skeletons/PageSkeleton.tsx";
 import { riskRoutes } from "./routes/riskRoutes.ts";
@@ -27,7 +26,6 @@ import { continualImprovementRoutes } from "./routes/continualImprovementRoutes.
 import { rightsRequestRoutes } from "./routes/rightsRequestRoutes.ts";
 import { processingActivityRoutes } from "./routes/processingActivityRoutes.ts";
 import { statesOfApplicabilityRoutes } from "./routes/statesOfApplicabilityRoutes.ts";
-import { CoreRelayProvider } from "./providers/CoreRelayProvider.tsx";
 import { lazy } from "@probo/react-lazy";
 import { routeFromAppRoute, type AppRoute } from "@probo/routes";
 import { Role } from "@probo/helpers";
@@ -121,15 +119,15 @@ const routes = [
   },
   {
     path: "/organizations/:organizationId/employee",
-    Component: () => (
-      <CoreRelayProvider>
-        <EmployeeLayout />
-      </CoreRelayProvider>
+    Fallback: () => "fallback employee...",
+    Component: lazy(
+      () => import("./pages/iam/memberships/MembershipLayoutLoader")
     ),
     ErrorBoundary: ErrorBoundary,
     children: [
       {
-        path: "",
+        index: true,
+        // Component: () => "hello world",
         Component: lazy(
           () =>
             import("./pages/organizations/employee/EmployeeDocumentsPageLoader")
