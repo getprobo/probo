@@ -27,6 +27,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
+	"go.probo.inc/probo/pkg/securetoken"
 	"go.probo.inc/probo/pkg/statelesstoken"
 	"go.probo.inc/probo/pkg/validator"
 )
@@ -561,6 +562,46 @@ func (s AccountService) CountPersonalAPIKeys(ctx context.Context, identityID gid
 
 	return count, err
 }
+func (s *AccountService) RevealPersonalAPIKeyToken(
+	ctx context.Context,
+	identityID gid.GID,
+	personalAPIKeyID gid.GID,
+) (string, error) {
+	var token string
+
+	err := s.pg.WithTx(
+		ctx,
+		func(tx pg.Conn) (err error) {
+			personalAPIKey := &coredata.PersonalAPIKey{}
+			if err := personalAPIKey.LoadByID(ctx, tx, personalAPIKeyID); err != nil {
+				if err == coredata.ErrResourceNotFound {
+					return NewPersonalAPIKeyNotFoundError(personalAPIKeyID)
+				}
+				return fmt.Errorf("cannot load personal api key: %w", err)
+			}
+
+			if personalAPIKey.IdentityID != identityID {
+				return NewPersonalAPIKeyNotFoundError(personalAPIKeyID)
+			}
+
+			token, err = securetoken.Sign(
+				personalAPIKey.ID.String(),
+				s.tokenSecret,
+			)
+			if err != nil {
+				return fmt.Errorf("cannot generate personal api key token: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return "", err
+	}
+
+	return token, nil
+}
 
 func (s AccountService) GetIdentityForMembership(ctx context.Context, membershipID gid.GID) (*coredata.Identity, error) {
 	var (
@@ -630,17 +671,9 @@ func (s *AccountService) CreatePersonalAPIKey(
 				return fmt.Errorf("cannot insert personal api key: %w", err)
 			}
 
-			token, err = statelesstoken.NewDeterministicToken(
+			token, err = securetoken.Sign(
+				personalAPIKey.ID.String(),
 				s.tokenSecret,
-				TokenTypeAPIKey,
-				personalAPIKey.ExpiresAt,
-				personalAPIKey.CreatedAt,
-				PersonalAPIKeyTokenData{
-					Version:     2,
-					KeyID:       personalAPIKey.ID,
-					PrincipalID: identityID,
-					IssuedAt:    personalAPIKey.CreatedAt,
-				},
 			)
 			if err != nil {
 				return fmt.Errorf("cannot generate personal api key token: %w", err)
