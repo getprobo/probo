@@ -92,6 +92,7 @@ const (
 	ActionListComplianceReports       Action = "listComplianceReports"
 	ActionListContacts                Action = "listContacts"
 	ActionListContinualImprovements   Action = "listContinualImprovements"
+	ActionListRightsRequests           Action = "listRightsRequests"
 	ActionListControls                Action = "listControls"
 	ActionListData                    Action = "listData"
 	ActionListDocuments               Action = "listDocuments"
@@ -122,6 +123,7 @@ const (
 	ActionCreateAsset                          Action = "createAsset"
 	ActionCreateAudit                          Action = "createAudit"
 	ActionCreateContinualImprovement           Action = "createContinualImprovement"
+	ActionCreateRightsRequest                  Action = "createRightsRequest"
 	ActionCreateControl                        Action = "createControl"
 	ActionCreateControlAuditMapping            Action = "createControlAuditMapping"
 	ActionCreateControlDocumentMapping         Action = "createControlDocumentMapping"
@@ -159,6 +161,7 @@ const (
 	ActionUpdateAsset                            Action = "updateAsset"
 	ActionUpdateAudit                            Action = "updateAudit"
 	ActionUpdateContinualImprovement             Action = "updateContinualImprovement"
+	ActionUpdateRightsRequest                    Action = "updateRightsRequest"
 	ActionUpdateControl                          Action = "updateControl"
 	ActionUpdateDatum                            Action = "updateDatum"
 	ActionUpdateDocument                         Action = "updateDocument"
@@ -191,6 +194,7 @@ const (
 	ActionDeleteAudit                            Action = "deleteAudit"
 	ActionDeleteAuditReport                      Action = "deleteAuditReport"
 	ActionDeleteContinualImprovement             Action = "deleteContinualImprovement"
+	ActionDeleteRightsRequest                    Action = "deleteRightsRequest"
 	ActionDeleteControl                          Action = "deleteControl"
 	ActionDeleteControlAuditMapping              Action = "deleteControlAuditMapping"
 	ActionDeleteControlDocumentMapping           Action = "deleteControlDocumentMapping"
@@ -299,6 +303,7 @@ var Permissions = map[uint16]map[Action][]Role{
 		ActionListNonconformities:       NonEmployeeRoles,
 		ActionListObligations:           NonEmployeeRoles,
 		ActionListContinualImprovements: NonEmployeeRoles,
+		ActionListRightsRequests:         NonEmployeeRoles,
 		ActionListProcessingActivities:  NonEmployeeRoles,
 		ActionListSnapshots:             NonEmployeeRoles,
 		ActionConfirmEmail:              NonEmployeeRoles,
@@ -337,6 +342,7 @@ var Permissions = map[uint16]map[Action][]Role{
 		ActionCreateNonconformity:              EditRoles,
 		ActionCreateObligation:                 EditRoles,
 		ActionCreateContinualImprovement:       EditRoles,
+		ActionCreateRightsRequest:              EditRoles,
 		ActionCreateProcessingActivity:         EditRoles,
 		ActionCreateSnapshot:                   EditRoles,
 		ActionCreateTrustCenterFile:            EditRoles,
@@ -673,6 +679,13 @@ var Permissions = map[uint16]map[Action][]Role{
 
 		ActionUpdateContinualImprovement: EditRoles,
 		ActionDeleteContinualImprovement: EditRoles,
+	},
+	coredata.RightsRequestEntityType: {
+		ActionGet:             NonEmployeeRoles,
+		ActionGetOrganization: NonEmployeeRoles,
+
+		ActionUpdateRightsRequest: EditRoles,
+		ActionDeleteRightsRequest: EditRoles,
 	},
 	coredata.ProcessingActivityEntityType: {
 		ActionGet:                               NonEmployeeRoles,

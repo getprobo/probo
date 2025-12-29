@@ -33,6 +33,7 @@ import { nonconformityRoutes } from "./routes/nonconformityRoutes.ts";
 import { obligationRoutes } from "./routes/obligationRoutes.ts";
 import { snapshotsRoutes } from "./routes/snapshotsRoutes.ts";
 import { continualImprovementRoutes } from "./routes/continualImprovementRoutes.ts";
+import { rightsRequestRoutes } from "./routes/rightsRequestRoutes.ts";
 import { processingActivityRoutes } from "./routes/processingActivityRoutes.ts";
 import { lazy } from "@probo/react-lazy";
 import { loaderFromQueryLoader, routeFromAppRoute, withQueryRef, type AppRoute } from "@probo/routes";
@@ -224,6 +225,7 @@ const routes = [
       ...nonconformityRoutes,
       ...obligationRoutes,
       ...continualImprovementRoutes,
+      ...rightsRequestRoutes,
       ...processingActivityRoutes,
       ...snapshotsRoutes,
       ...trustCenterRoutes,
