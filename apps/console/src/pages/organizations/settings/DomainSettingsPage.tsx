@@ -30,7 +30,7 @@ export function DomainSettingsPage(props: {
 
   const { organization } = usePreloadedQuery<DomainSettingsPageQuery>(
     domainSettingsPageQuery,
-    queryRef,
+    queryRef
   );
   if (organization.__typename !== "Organization") {
     throw new Error("invalid type for node");
@@ -49,7 +49,7 @@ export function DomainSettingsPage(props: {
             </h3>
             <p className="text-txt-tertiary mb-4">
               {__(
-                "Add your own domain to make your trust center more professional",
+                "Add your own domain to make your trust center more professional"
               )}
             </p>
             <div className="flex justify-center">

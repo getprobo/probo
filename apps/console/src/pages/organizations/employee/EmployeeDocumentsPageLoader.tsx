@@ -22,20 +22,18 @@ function EmployeeDocumentsPageLoader() {
   }, [loadQuery, organizationId]);
 
   if (!queryRef) {
-    return <PageSkeleton />;
+    return null;
   }
 
-  return (
-    <Suspense fallback={<PageSkeleton />}>
-      <EmployeeDocumentsPage queryRef={queryRef} />
-    </Suspense>
-  );
+  return <EmployeeDocumentsPage queryRef={queryRef} />;
 }
 
 export default function () {
   return (
     <CoreRelayProvider>
-      <EmployeeDocumentsPageLoader />
+      <Suspense fallback={<PageSkeleton />}>
+        <EmployeeDocumentsPageLoader />
+      </Suspense>
     </CoreRelayProvider>
   );
 }
