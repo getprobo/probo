@@ -133,6 +133,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.Logger.Named("mcp.v1"),
 			cfg.Probo,
 			cfg.IAM,
+			cfg.TokenSecret,
 		),
 		slackHandler: slack_v1.NewMux(
 			cfg.Logger.Named("slack.v1"),
@@ -143,6 +144,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.Logger.Named("connect.v1"),
 			cfg.IAM,
 			cfg.Cookie,
+			cfg.TokenSecret,
 			cfg.BaseURL,
 		),
 	}, nil

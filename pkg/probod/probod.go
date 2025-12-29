@@ -423,6 +423,7 @@ func (impl *Implm) Run(
 			BaseURL:           impl.cfg.BaseURL,
 			Agent:             agent,
 			CustomDomainCname: impl.cfg.CustomDomains.CnameTarget,
+			TokenSecret:       impl.cfg.Auth.Cookie.Secret,
 			Logger:            l.Named("http.server"),
 			Cookie: securecookie.Config{
 				Name:     impl.cfg.Auth.Cookie.Name,
