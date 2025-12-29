@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<b25e2b88094ba632cc451508af4df1e3>>
+ * @generated SignedSource<<4f27f16c09a86fda0f17b4d33866fcb2>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,17 +12,17 @@ import { ConcreteRequest } from 'relay-runtime';
 export type DeleteCustomDomainInput = {
   organizationId: string;
 };
-export type CustomDomainManagerDeleteMutation$variables = {
+export type DeleteDomainDialogMutation$variables = {
   input: DeleteCustomDomainInput;
 };
-export type CustomDomainManagerDeleteMutation$data = {
+export type DeleteDomainDialogMutation$data = {
   readonly deleteCustomDomain: {
     readonly deletedCustomDomainId: string;
   };
 };
-export type CustomDomainManagerDeleteMutation = {
-  response: CustomDomainManagerDeleteMutation$data;
-  variables: CustomDomainManagerDeleteMutation$variables;
+export type DeleteDomainDialogMutation = {
+  response: DeleteDomainDialogMutation$data;
+  variables: DeleteDomainDialogMutation$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -64,7 +64,7 @@ return {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Fragment",
     "metadata": null,
-    "name": "CustomDomainManagerDeleteMutation",
+    "name": "DeleteDomainDialogMutation",
     "selections": (v1/*: any*/),
     "type": "Mutation",
     "abstractKey": null
@@ -73,20 +73,20 @@ return {
   "operation": {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
-    "name": "CustomDomainManagerDeleteMutation",
+    "name": "DeleteDomainDialogMutation",
     "selections": (v1/*: any*/)
   },
   "params": {
-    "cacheID": "9f4a3ed02de61bc60a8370e3771ca7bd",
+    "cacheID": "68e7fb0109af8d99c9947e5ef2314ad2",
     "id": null,
     "metadata": {},
-    "name": "CustomDomainManagerDeleteMutation",
+    "name": "DeleteDomainDialogMutation",
     "operationKind": "mutation",
-    "text": "mutation CustomDomainManagerDeleteMutation(\n  $input: DeleteCustomDomainInput!\n) {\n  deleteCustomDomain(input: $input) {\n    deletedCustomDomainId\n  }\n}\n"
+    "text": "mutation DeleteDomainDialogMutation(\n  $input: DeleteCustomDomainInput!\n) {\n  deleteCustomDomain(input: $input) {\n    deletedCustomDomainId\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "e3878d11e361c3da2471363664150f3d";
+(node as any).hash = "4ff39445b000bd5416e04e1460f11571";
 
 export default node;

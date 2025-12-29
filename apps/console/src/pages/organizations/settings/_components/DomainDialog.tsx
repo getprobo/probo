@@ -1,62 +1,46 @@
+import {
+  getCustomDomainStatusBadgeLabel,
+  getCustomDomainStatusBadgeVariant,
+} from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
+  Badge,
   Button,
   Dialog,
   DialogContent,
-  Badge,
   useDialogRef,
   useToast,
 } from "@probo/ui";
-import type { ReactNode } from "react";
+import type { PropsWithChildren } from "react";
+import { useFragment } from "react-relay";
+import { graphql } from "relay-runtime";
+import type { DomainDialogFragment$key } from "./__generated__/DomainDialogFragment.graphql";
 
-interface DomainDetailsDialogProps {
-  children: ReactNode;
-  domain: {
-    readonly id: string;
-    readonly domain: string;
-    readonly sslStatus: string;
-    readonly dnsRecords?:
-      | readonly {
-          readonly type: string;
-          readonly name: string;
-          readonly value: string;
-          readonly ttl?: number;
-          readonly purpose: string;
-        }[]
-      | null;
-    readonly sslExpiresAt?: string | null;
-  };
-}
+const fragment = graphql`
+  fragment DomainDialogFragment on CustomDomain {
+    sslStatus
+    domain
+    dnsRecords {
+      type
+      name
+      value
+      ttl
+      purpose
+    }
+    createdAt
+    updatedAt
+    sslExpiresAt
+  }
+`;
 
-export function DomainDetailsDialog({
-  children,
-  domain,
-}: DomainDetailsDialogProps) {
+type DomainDialogProps = PropsWithChildren<{ fKey: DomainDialogFragment$key }>;
+
+export function DomainDialog(props: DomainDialogProps) {
+  const { children, fKey } = props;
+
   const { __ } = useTranslate();
-  const { toast } = useToast();
   const dialogRef = useDialogRef();
-
-  const getStatusBadge = (domain: DomainDetailsDialogProps["domain"]) => {
-    if (domain.sslStatus === "ACTIVE") {
-      return <Badge variant="success">{__("Active")}</Badge>;
-    }
-    if (
-      domain.sslStatus === "PROVISIONING" ||
-      domain.sslStatus === "RENEWING"
-    ) {
-      return <Badge variant="warning">{__("Provisioning")}</Badge>;
-    }
-    if (domain.sslStatus === "PENDING") {
-      return <Badge variant="warning">{__("Pending")}</Badge>;
-    }
-    if (domain.sslStatus === "FAILED") {
-      return <Badge variant="danger">{__("Failed")}</Badge>;
-    }
-    if (domain.sslStatus === "EXPIRED") {
-      return <Badge variant="danger">{__("Expired")}</Badge>;
-    }
-    return <Badge variant="neutral">{__("Unknown")}</Badge>;
-  };
+  const { toast } = useToast();
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -67,6 +51,8 @@ export function DomainDetailsDialog({
     });
   };
 
+  const domain = useFragment<DomainDialogFragment$key>(fragment, fKey);
+
   return (
     <Dialog
       ref={dialogRef}
@@ -74,7 +60,9 @@ export function DomainDetailsDialog({
       title={
         <div className="flex items-center gap-3">
           <span>{domain.domain}</span>
-          {getStatusBadge(domain)}
+          <Badge variant={getCustomDomainStatusBadgeVariant(domain.sslStatus)}>
+            {getCustomDomainStatusBadgeLabel(domain.sslStatus, __)}
+          </Badge>
         </div>
       }
     >
@@ -83,7 +71,7 @@ export function DomainDetailsDialog({
           <div className="bg-subtle rounded-lg p-4">
             <div className="flex items-start">
               <svg
-                className="w-5 h-5 text-green-500 mt-0.5 mr-3 flex-shrink-0"
+                className="w-5 h-5 text-green-500 mt-0.5 mr-3 shrink-0"
                 fill="none"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -97,7 +85,7 @@ export function DomainDetailsDialog({
                 <p className="font-medium mb-1">{__("Domain is active")}</p>
                 <p className="text-sm text-txt-secondary">
                   {__(
-                    "Your custom domain is verified and SSL certificate is active"
+                    "Your custom domain is verified and SSL certificate is active",
                   )}
                 </p>
                 {domain.sslExpiresAt && (
@@ -114,7 +102,7 @@ export function DomainDetailsDialog({
             <h4 className="font-medium mb-3">{__("DNS Configuration")}</h4>
             <p className="text-sm text-txt-secondary mb-4">
               {__(
-                "Add these DNS records to your domain to complete verification"
+                "Add these DNS records to your domain to complete verification",
               )}
             </p>
 
@@ -172,7 +160,7 @@ export function DomainDetailsDialog({
               <div className="bg-subtle rounded-lg p-4 mt-4">
                 <p className="text-sm">
                   {__(
-                    "After adding the DNS records, verification will happen automatically. This may take a few minutes to propagate."
+                    "After adding the DNS records, verification will happen automatically. This may take a few minutes to propagate.",
                   )}
                 </p>
               </div>

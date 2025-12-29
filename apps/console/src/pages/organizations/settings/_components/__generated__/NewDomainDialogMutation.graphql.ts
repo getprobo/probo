@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<c1db974cc1fa82299f39a71ece9bf7e3>>
+ * @generated SignedSource<<e47b433cc9fb58392ff933788bbe3deb>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -14,10 +14,10 @@ export type CreateCustomDomainInput = {
   domain: string;
   organizationId: string;
 };
-export type CreateCustomDomainDialogMutation$variables = {
+export type NewDomainDialogMutation$variables = {
   input: CreateCustomDomainInput;
 };
-export type CreateCustomDomainDialogMutation$data = {
+export type NewDomainDialogMutation$data = {
   readonly createCustomDomain: {
     readonly customDomain: {
       readonly createdAt: any;
@@ -36,9 +36,9 @@ export type CreateCustomDomainDialogMutation$data = {
     };
   };
 };
-export type CreateCustomDomainDialogMutation = {
-  response: CreateCustomDomainDialogMutation$data;
-  variables: CreateCustomDomainDialogMutation$variables;
+export type NewDomainDialogMutation = {
+  response: NewDomainDialogMutation$data;
+  variables: NewDomainDialogMutation$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -172,7 +172,7 @@ return {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Fragment",
     "metadata": null,
-    "name": "CreateCustomDomainDialogMutation",
+    "name": "NewDomainDialogMutation",
     "selections": (v1/*: any*/),
     "type": "Mutation",
     "abstractKey": null
@@ -181,20 +181,20 @@ return {
   "operation": {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
-    "name": "CreateCustomDomainDialogMutation",
+    "name": "NewDomainDialogMutation",
     "selections": (v1/*: any*/)
   },
   "params": {
-    "cacheID": "5e5bf90d17b1dc5129d6a0fc5d68d46c",
+    "cacheID": "b8aa27fe9ab3442dea9b96a70966524b",
     "id": null,
     "metadata": {},
-    "name": "CreateCustomDomainDialogMutation",
+    "name": "NewDomainDialogMutation",
     "operationKind": "mutation",
-    "text": "mutation CreateCustomDomainDialogMutation(\n  $input: CreateCustomDomainInput!\n) {\n  createCustomDomain(input: $input) {\n    customDomain {\n      id\n      domain\n      sslStatus\n      dnsRecords {\n        type\n        name\n        value\n        ttl\n        purpose\n      }\n      createdAt\n      updatedAt\n      sslExpiresAt\n    }\n  }\n}\n"
+    "text": "mutation NewDomainDialogMutation(\n  $input: CreateCustomDomainInput!\n) {\n  createCustomDomain(input: $input) {\n    customDomain {\n      id\n      domain\n      sslStatus\n      dnsRecords {\n        type\n        name\n        value\n        ttl\n        purpose\n      }\n      createdAt\n      updatedAt\n      sslExpiresAt\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "fb3bede811b12db54f54af3dd375e335";
+(node as any).hash = "f49cd22c5d6656e662fad5afab6fc344";
 
 export default node;
