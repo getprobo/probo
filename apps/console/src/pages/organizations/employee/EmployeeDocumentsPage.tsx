@@ -28,20 +28,18 @@ export const employeeDocumentsPageQuery = graphql`
 export function EmployeeDocumentsPage(props: {
   queryRef: PreloadedQuery<EmployeeDocumentsPageQuery>;
 }) {
+  const { queryRef } = props;
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
 
-  const { queryRef } = props;
   const {
-    viewer: {
-      signableDocuments: { edges: initialDocuments },
-    },
+    viewer: { signableDocuments },
   } = usePreloadedQuery<EmployeeDocumentsPageQuery>(
     employeeDocumentsPageQuery,
     queryRef
   );
 
-  const documents = initialDocuments.map((edge) => edge.node).filter(Boolean);
+  const documents = signableDocuments.edges.map((edge) => edge.node);
 
   usePageTitle(__("Documents"));
 
