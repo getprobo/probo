@@ -379,7 +379,7 @@ function UserDropdown() {
     <UserDropdownRoot fullName={user.fullName} email={user.email}>
       {isAuthorized("Organization", "deleteOrganization") && (
         <UserDropdownItem
-          to="/api-keys"
+          to="/me/api-keys"
           icon={IconKey}
           label={__("API Keys")}
         />

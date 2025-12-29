@@ -123,8 +123,8 @@ const routes = [
         Component: lazy(() => import("./pages/DocumentSigningRequestsPage")),
       },
       {
-        path: "api-keys",
-        Component: lazy(() => import("./pages/APIKeysPage")),
+        path: "me/api-keys",
+        Component: lazy(() => import("./pages/iam/apiKeys/APIKeysPageLoader")),
       },
     ],
   },

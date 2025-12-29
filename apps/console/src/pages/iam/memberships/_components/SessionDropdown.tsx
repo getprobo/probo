@@ -75,7 +75,7 @@ export function SessionDropdown(props: { fKey: SessionDropdownFragment$key }) {
     <UserDropdown fullName={fullName} email={email}>
       {isAuthorized("Organization", "deleteOrganization") && (
         <UserDropdownItem
-          to="/api-keys"
+          to="/me/api-keys"
           icon={IconKey}
           label={__("API Keys")}
         />
