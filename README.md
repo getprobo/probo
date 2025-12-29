@@ -25,7 +25,7 @@ Probo is designed to be accessible, transparent, and community-driven.
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/getprobo/probo.git
+   git clone --recurse-submodules https://github.com/getprobo/probo.git
    cd probo
    ```
 
