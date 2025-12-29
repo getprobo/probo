@@ -71,3 +71,7 @@ export {
     getTrustCenterDocumentAccessStatusLabel,
     type TrustCenterDocumentAccessInfo,
 } from "./trustCenterDocumentAccess";
+export {
+    getCustomDomainStatusBadgeVariant,
+    getCustomDomainStatusBadgeLabel
+} from "./customDomain"
