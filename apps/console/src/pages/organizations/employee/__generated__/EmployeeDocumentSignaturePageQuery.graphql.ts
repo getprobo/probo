@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<9e8c0459987993bb4b217618a46fdbf5>>
+ * @generated SignedSource<<92e104374ca160bd4ce96fe2c60aecc6>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -15,7 +15,6 @@ export type EmployeeDocumentSignaturePageQuery$variables = {
 };
 export type EmployeeDocumentSignaturePageQuery$data = {
   readonly viewer: {
-    readonly id: string;
     readonly signableDocument: {
       readonly id: string;
       readonly " $fragmentSpreads": FragmentRefs<"EmployeeDocumentSignaturePageDocumentFragment">;
@@ -35,20 +34,20 @@ var v0 = [
     "name": "documentId"
   }
 ],
-v1 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "id",
-  "storageKey": null
-},
-v2 = [
+v1 = [
   {
     "kind": "Variable",
     "name": "id",
     "variableName": "documentId"
   }
 ],
+v2 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "id",
+  "storageKey": null
+},
 v3 = {
   "alias": null,
   "args": null,
@@ -64,33 +63,36 @@ return {
     "name": "EmployeeDocumentSignaturePageQuery",
     "selections": [
       {
-        "alias": null,
-        "args": null,
-        "concreteType": "Viewer",
-        "kind": "LinkedField",
-        "name": "viewer",
-        "plural": false,
-        "selections": [
-          (v1/*: any*/),
-          {
-            "alias": null,
-            "args": (v2/*: any*/),
-            "concreteType": "SignableDocument",
-            "kind": "LinkedField",
-            "name": "signableDocument",
-            "plural": false,
-            "selections": [
-              (v1/*: any*/),
-              {
-                "args": null,
-                "kind": "FragmentSpread",
-                "name": "EmployeeDocumentSignaturePageDocumentFragment"
-              }
-            ],
-            "storageKey": null
-          }
-        ],
-        "storageKey": null
+        "kind": "RequiredField",
+        "field": {
+          "alias": null,
+          "args": null,
+          "concreteType": "Viewer",
+          "kind": "LinkedField",
+          "name": "viewer",
+          "plural": false,
+          "selections": [
+            {
+              "alias": null,
+              "args": (v1/*: any*/),
+              "concreteType": "SignableDocument",
+              "kind": "LinkedField",
+              "name": "signableDocument",
+              "plural": false,
+              "selections": [
+                (v2/*: any*/),
+                {
+                  "args": null,
+                  "kind": "FragmentSpread",
+                  "name": "EmployeeDocumentSignaturePageDocumentFragment"
+                }
+              ],
+              "storageKey": null
+            }
+          ],
+          "storageKey": null
+        },
+        "action": "THROW"
       }
     ],
     "type": "Query",
@@ -110,16 +112,15 @@ return {
         "name": "viewer",
         "plural": false,
         "selections": [
-          (v1/*: any*/),
           {
             "alias": null,
-            "args": (v2/*: any*/),
+            "args": (v1/*: any*/),
             "concreteType": "SignableDocument",
             "kind": "LinkedField",
             "name": "signableDocument",
             "plural": false,
             "selections": [
-              (v1/*: any*/),
+              (v2/*: any*/),
               {
                 "alias": null,
                 "args": null,
@@ -166,7 +167,8 @@ return {
                         "name": "node",
                         "plural": false,
                         "selections": [
-                          (v1/*: any*/),
+                          (v2/*: any*/),
+                          (v3/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -174,7 +176,6 @@ return {
                             "name": "version",
                             "storageKey": null
                           },
-                          (v3/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -193,23 +194,24 @@ return {
               }
             ],
             "storageKey": null
-          }
+          },
+          (v2/*: any*/)
         ],
         "storageKey": null
       }
     ]
   },
   "params": {
-    "cacheID": "a4866db288e1bf46e6562aa06bff4231",
+    "cacheID": "6ae29e4a10d7e0eb4afa03eef60d6762",
     "id": null,
     "metadata": {},
     "name": "EmployeeDocumentSignaturePageQuery",
     "operationKind": "query",
-    "text": "query EmployeeDocumentSignaturePageQuery(\n  $documentId: ID!\n) {\n  viewer {\n    id\n    signableDocument(id: $documentId) {\n      id\n      ...EmployeeDocumentSignaturePageDocumentFragment\n    }\n  }\n}\n\nfragment EmployeeDocumentSignaturePageDocumentFragment on SignableDocument {\n  id\n  title\n  signed\n  versions(first: 100, orderBy: {field: CREATED_AT, direction: DESC}) {\n    edges {\n      node {\n        id\n        ...EmployeeDocumentSignaturePageVersionFragment\n      }\n    }\n  }\n}\n\nfragment EmployeeDocumentSignaturePageVersionFragment on DocumentVersion {\n  id\n  version\n  signed\n  publishedAt\n}\n"
+    "text": "query EmployeeDocumentSignaturePageQuery(\n  $documentId: ID!\n) {\n  viewer {\n    signableDocument(id: $documentId) {\n      id\n      ...EmployeeDocumentSignaturePageDocumentFragment\n    }\n    id\n  }\n}\n\nfragment EmployeeDocumentSignaturePageDocumentFragment on SignableDocument {\n  id\n  title\n  signed\n  versions(first: 100, orderBy: {field: CREATED_AT, direction: DESC}) {\n    edges {\n      node {\n        id\n        ...VersionActionsFragment\n        ...VersionRowFragment\n      }\n    }\n  }\n}\n\nfragment VersionActionsFragment on DocumentVersion {\n  id\n  signed\n}\n\nfragment VersionRowFragment on DocumentVersion {\n  id\n  version\n  signed\n  publishedAt\n}\n"
   }
 };
 })();
 
-(node as any).hash = "a2ac190853e8f078ff90213605a66e29";
+(node as any).hash = "4b2db4d00f02f0826166b729e61e4e5d";
 
 export default node;

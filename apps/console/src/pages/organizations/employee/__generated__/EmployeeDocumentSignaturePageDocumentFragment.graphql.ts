@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<29c63d1f06c36d3670b5a4757b725b95>>
+ * @generated SignedSource<<30cf9ee1e00a276d2719e8d7d5ea0949>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -18,7 +18,7 @@ export type EmployeeDocumentSignaturePageDocumentFragment$data = {
     readonly edges: ReadonlyArray<{
       readonly node: {
         readonly id: string;
-        readonly " $fragmentSpreads": FragmentRefs<"EmployeeDocumentSignaturePageVersionFragment">;
+        readonly " $fragmentSpreads": FragmentRefs<"VersionActionsFragment" | "VersionRowFragment">;
       };
     }>;
   };
@@ -59,57 +59,74 @@ return {
       "storageKey": null
     },
     {
-      "alias": null,
-      "args": [
-        {
-          "kind": "Literal",
-          "name": "first",
-          "value": 100
-        },
-        {
-          "kind": "Literal",
-          "name": "orderBy",
-          "value": {
-            "direction": "DESC",
-            "field": "CREATED_AT"
+      "kind": "RequiredField",
+      "field": {
+        "alias": null,
+        "args": [
+          {
+            "kind": "Literal",
+            "name": "first",
+            "value": 100
+          },
+          {
+            "kind": "Literal",
+            "name": "orderBy",
+            "value": {
+              "direction": "DESC",
+              "field": "CREATED_AT"
+            }
           }
-        }
-      ],
-      "concreteType": "DocumentVersionConnection",
-      "kind": "LinkedField",
-      "name": "versions",
-      "plural": false,
-      "selections": [
-        {
-          "alias": null,
-          "args": null,
-          "concreteType": "DocumentVersionEdge",
-          "kind": "LinkedField",
-          "name": "edges",
-          "plural": true,
-          "selections": [
-            {
+        ],
+        "concreteType": "DocumentVersionConnection",
+        "kind": "LinkedField",
+        "name": "versions",
+        "plural": false,
+        "selections": [
+          {
+            "kind": "RequiredField",
+            "field": {
               "alias": null,
               "args": null,
-              "concreteType": "DocumentVersion",
+              "concreteType": "DocumentVersionEdge",
               "kind": "LinkedField",
-              "name": "node",
-              "plural": false,
+              "name": "edges",
+              "plural": true,
               "selections": [
-                (v0/*: any*/),
                 {
-                  "args": null,
-                  "kind": "FragmentSpread",
-                  "name": "EmployeeDocumentSignaturePageVersionFragment"
+                  "kind": "RequiredField",
+                  "field": {
+                    "alias": null,
+                    "args": null,
+                    "concreteType": "DocumentVersion",
+                    "kind": "LinkedField",
+                    "name": "node",
+                    "plural": false,
+                    "selections": [
+                      (v0/*: any*/),
+                      {
+                        "args": null,
+                        "kind": "FragmentSpread",
+                        "name": "VersionActionsFragment"
+                      },
+                      {
+                        "args": null,
+                        "kind": "FragmentSpread",
+                        "name": "VersionRowFragment"
+                      }
+                    ],
+                    "storageKey": null
+                  },
+                  "action": "THROW"
                 }
               ],
               "storageKey": null
-            }
-          ],
-          "storageKey": null
-        }
-      ],
-      "storageKey": "versions(first:100,orderBy:{\"direction\":\"DESC\",\"field\":\"CREATED_AT\"})"
+            },
+            "action": "THROW"
+          }
+        ],
+        "storageKey": "versions(first:100,orderBy:{\"direction\":\"DESC\",\"field\":\"CREATED_AT\"})"
+      },
+      "action": "THROW"
     }
   ],
   "type": "SignableDocument",
@@ -117,6 +134,6 @@ return {
 };
 })();
 
-(node as any).hash = "a516f97725320f4fe0282d70cef83a62";
+(node as any).hash = "aaa20cc1293a2b1ce5d760631c30804c";
 
 export default node;
