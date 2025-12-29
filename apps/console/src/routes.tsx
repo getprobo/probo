@@ -4,10 +4,9 @@ import {
   redirect,
   useRouteError,
 } from "react-router";
-import { EmployeeLayout } from "./layouts/EmployeeLayout";
+import { EmployeeLayout } from "./layouts/EmployeeLayout.tsx";
 import { CenteredLayout, CenteredLayoutSkeleton } from "@probo/ui";
 import { PageSkeleton } from "./components/skeletons/PageSkeleton.tsx";
-import { loadQuery } from "react-relay";
 import { riskRoutes } from "./routes/riskRoutes.ts";
 import { measureRoutes } from "./routes/measureRoutes.ts";
 import { documentsRoutes } from "./routes/documentsRoutes.ts";
@@ -30,18 +29,10 @@ import { processingActivityRoutes } from "./routes/processingActivityRoutes.ts";
 import { statesOfApplicabilityRoutes } from "./routes/statesOfApplicabilityRoutes.ts";
 import { CoreRelayProvider } from "./providers/CoreRelayProvider.tsx";
 import { lazy } from "@probo/react-lazy";
-import {
-  loaderFromQueryLoader,
-  routeFromAppRoute,
-  withQueryRef,
-  type AppRoute,
-} from "@probo/routes";
-import { employeeDocumentsQuery } from "./pages/organizations/employee/EmployeeDocumentsPage";
-import { employeeDocumentSignatureQuery } from "./pages/organizations/employee/EmployeeDocumentSignaturePage";
+import { routeFromAppRoute, type AppRoute } from "@probo/routes";
 import { Role } from "@probo/helpers";
 import { PermissionsContext } from "./providers/PermissionsContext";
 import { use } from "react";
-import { coreEnvironment } from "./environments.ts";
 import {
   ForbiddenError,
   UnAuthenticatedError,
@@ -139,32 +130,17 @@ const routes = [
     children: [
       {
         path: "",
-        Fallback: PageSkeleton,
-        loader: loaderFromQueryLoader(({ organizationId }) =>
-          loadQuery(coreEnvironment, employeeDocumentsQuery, {
-            organizationId: organizationId!,
-          })
-        ),
-        Component: withQueryRef(
-          lazy(
-            () => import("./pages/organizations/employee/EmployeeDocumentsPage")
-          )
+        Component: lazy(
+          () =>
+            import("./pages/organizations/employee/EmployeeDocumentsPageLoader")
         ),
       },
       {
         path: ":documentId",
-        Fallback: PageSkeleton,
         ErrorBoundary: ErrorBoundary,
-        loader: loaderFromQueryLoader(({ documentId }) =>
-          loadQuery(coreEnvironment, employeeDocumentSignatureQuery, {
-            documentId: documentId!,
-          })
-        ),
-        Component: withQueryRef(
-          lazy(
-            () =>
-              import("./pages/organizations/employee/EmployeeDocumentSignaturePage")
-          )
+        Component: lazy(
+          () =>
+            import("./pages/organizations/employee/EmployeeDocumentSignaturePageLoader")
         ),
       },
     ],
