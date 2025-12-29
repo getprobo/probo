@@ -139,6 +139,10 @@ func (r *identityResolver) PersonalAPIKeys(ctx context.Context, obj *types.Ident
 
 // Permission is the resolver for the permission field.
 func (r *identityResolver) Permission(ctx context.Context, obj *types.Identity, action string, id gid.GID) (bool, error) {
+
+	fmt.Printf("action: %s, id: %s\n", action, id.String())
+	fmt.Printf("obj: %+v\n", obj)
+
 	err := r.iam.Authorizer.Authorize(
 		ctx,
 		iam.AuthorizeParams{
@@ -277,6 +281,9 @@ func (r *membershipResolver) Permissions(ctx context.Context, obj *types.Members
 // LastSession is the resolver for the lastSession field.
 func (r *membershipResolver) LastSession(ctx context.Context, obj *types.Membership) (*types.Session, error) {
 	session := SessionFromContext(ctx)
+	if session == nil {
+		return nil, nil
+	}
 
 	childSession, err := r.iam.SessionService.GetActiveSessionForMembership(ctx, session.ID, obj.ID)
 	if err != nil {
@@ -695,9 +702,17 @@ func (r *mutationResolver) CreatePersonalAPIKey(ctx context.Context, input types
 	}, nil
 }
 
-// UpdatePersonalAPIKey is the resolver for the updatePersonalAPIKey field.
-func (r *mutationResolver) UpdatePersonalAPIKey(ctx context.Context, input types.UpdatePersonalAPIKeyInput) (*types.UpdatePersonalAPIKeyPayload, error) {
-	panic(fmt.Errorf("not implemented: UpdatePersonalAPIKey - updatePersonalAPIKey"))
+// RevealPersonalAPIKeyToken is the resolver for the revealPersonalAPIKeyToken field.
+func (r *mutationResolver) RevealPersonalAPIKeyToken(ctx context.Context, input types.RevealPersonalAPIKeyTokenInput) (*types.RevealPersonalAPIKeyTokenPayload, error) {
+	identity := IdentityFromContext(ctx)
+
+	token, err := r.iam.AccountService.RevealPersonalAPIKeyToken(ctx, identity.ID, input.TokenID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot reveal personal api key token", log.Error(err))
+		return nil, gqlutils.InternalServerError(ctx)
+	}
+
+	return &types.RevealPersonalAPIKeyTokenPayload{Token: token}, nil
 }
 
 // RevokePersonalAPIKey is the resolver for the revokePersonalAPIKey field.
@@ -1389,3 +1404,15 @@ type sAMLConfigurationResolver struct{ *Resolver }
 type sAMLConfigurationConnectionResolver struct{ *Resolver }
 type sessionResolver struct{ *Resolver }
 type sessionConnectionResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//    it when you're done.
+//  - You have helper methods in this file. Move them out to keep these resolver files clean.
+/*
+	func (r *mutationResolver) UpdatePersonalAPIKey(ctx context.Context, input types.UpdatePersonalAPIKeyInput) (*types.UpdatePersonalAPIKeyPayload, error) {
+	panic(fmt.Errorf("not implemented: UpdatePersonalAPIKey - updatePersonalAPIKey"))
+}
+*/

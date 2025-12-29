@@ -48,16 +48,17 @@ func (r *Resolver) sessionCookieConfig(maxAge time.Duration) securecookie.Config
 	}
 }
 
-func NewMux(logger *log.Logger, svc *iam.Service, cookieConfig securecookie.Config, baseURL *baseurl.BaseURL) *chi.Mux {
+func NewMux(logger *log.Logger, svc *iam.Service, cookieConfig securecookie.Config, tokenSecret string, baseURL *baseurl.BaseURL) *chi.Mux {
 	r := chi.NewMux()
 
 	r.Use(HTTPContextMiddleware)
 
 	sessionMiddleware := NewSessionMiddleware(svc, cookieConfig)
+	apiKeyMiddleware := NewAPIKeyMiddleware(svc, tokenSecret)
 	graphqlHandler := NewGraphQLHandler(svc, logger, baseURL, cookieConfig)
 	samlHandler := NewSAMLHandler(svc, cookieConfig, baseURL, logger)
 
-	router := r.With(sessionMiddleware)
+	router := r.With(sessionMiddleware, apiKeyMiddleware)
 
 	router.Handle("/graphql", graphqlHandler)
 	router.Get("/saml/2.0/metadata", samlHandler.MetadataHandler)

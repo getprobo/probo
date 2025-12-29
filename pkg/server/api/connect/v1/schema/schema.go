@@ -214,6 +214,7 @@ type ComplexityRoot struct {
 		InviteMember                     func(childComplexity int, input types.InviteMemberInput) int
 		RemoveMember                     func(childComplexity int, input types.RemoveMemberInput) int
 		ResetPassword                    func(childComplexity int, input types.ResetPasswordInput) int
+		RevealPersonalAPIKeyToken        func(childComplexity int, input types.RevealPersonalAPIKeyTokenInput) int
 		RevokeAllSessions                func(childComplexity int) int
 		RevokePersonalAPIKey             func(childComplexity int, input types.RevokePersonalAPIKeyInput) int
 		RevokeSession                    func(childComplexity int, input types.RevokeSessionInput) int
@@ -223,7 +224,6 @@ type ComplexityRoot struct {
 		SignUpFromInvitation             func(childComplexity int, input types.SignUpFromInvitationInput) int
 		UpdateMembership                 func(childComplexity int, input types.UpdateMembershipInput) int
 		UpdateOrganization               func(childComplexity int, input types.UpdateOrganizationInput) int
-		UpdatePersonalAPIKey             func(childComplexity int, input types.UpdatePersonalAPIKeyInput) int
 		UpdateSAMLConfiguration          func(childComplexity int, input types.UpdateSAMLConfigurationInput) int
 		VerifyEmail                      func(childComplexity int, input types.VerifyEmailInput) int
 	}
@@ -304,6 +304,10 @@ type ComplexityRoot struct {
 
 	ResetPasswordPayload struct {
 		Success func(childComplexity int) int
+	}
+
+	RevealPersonalAPIKeyTokenPayload struct {
+		Token func(childComplexity int) int
 	}
 
 	RevokeAllSessionsPayload struct {
@@ -409,10 +413,6 @@ type ComplexityRoot struct {
 		Organization func(childComplexity int) int
 	}
 
-	UpdatePersonalAPIKeyPayload struct {
-		PersonalAPIKey func(childComplexity int) int
-	}
-
 	UpdateSAMLConfigurationPayload struct {
 		SamlConfiguration func(childComplexity int) int
 	}
@@ -460,7 +460,7 @@ type MutationResolver interface {
 	RevokeSession(ctx context.Context, input types.RevokeSessionInput) (*types.RevokeSessionPayload, error)
 	RevokeAllSessions(ctx context.Context) (*types.RevokeAllSessionsPayload, error)
 	CreatePersonalAPIKey(ctx context.Context, input types.CreatePersonalAPIKeyInput) (*types.CreatePersonalAPIKeyPayload, error)
-	UpdatePersonalAPIKey(ctx context.Context, input types.UpdatePersonalAPIKeyInput) (*types.UpdatePersonalAPIKeyPayload, error)
+	RevealPersonalAPIKeyToken(ctx context.Context, input types.RevealPersonalAPIKeyTokenInput) (*types.RevealPersonalAPIKeyTokenPayload, error)
 	RevokePersonalAPIKey(ctx context.Context, input types.RevokePersonalAPIKeyInput) (*types.RevokePersonalAPIKeyPayload, error)
 	CreateOrganization(ctx context.Context, input types.CreateOrganizationInput) (*types.CreateOrganizationPayload, error)
 	UpdateOrganization(ctx context.Context, input types.UpdateOrganizationInput) (*types.UpdateOrganizationPayload, error)
@@ -1109,6 +1109,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.ResetPassword(childComplexity, args["input"].(types.ResetPasswordInput)), true
+	case "Mutation.revealPersonalAPIKeyToken":
+		if e.complexity.Mutation.RevealPersonalAPIKeyToken == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_revealPersonalAPIKeyToken_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.RevealPersonalAPIKeyToken(childComplexity, args["input"].(types.RevealPersonalAPIKeyTokenInput)), true
 	case "Mutation.revokeAllSessions":
 		if e.complexity.Mutation.RevokeAllSessions == nil {
 			break
@@ -1198,17 +1209,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.UpdateOrganization(childComplexity, args["input"].(types.UpdateOrganizationInput)), true
-	case "Mutation.updatePersonalAPIKey":
-		if e.complexity.Mutation.UpdatePersonalAPIKey == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_updatePersonalAPIKey_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.UpdatePersonalAPIKey(childComplexity, args["input"].(types.UpdatePersonalAPIKeyInput)), true
 	case "Mutation.updateSAMLConfiguration":
 		if e.complexity.Mutation.UpdateSAMLConfiguration == nil {
 			break
@@ -1538,6 +1538,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.ResetPasswordPayload.Success(childComplexity), true
 
+	case "RevealPersonalAPIKeyTokenPayload.token":
+		if e.complexity.RevealPersonalAPIKeyTokenPayload.Token == nil {
+			break
+		}
+
+		return e.complexity.RevealPersonalAPIKeyTokenPayload.Token(childComplexity), true
+
 	case "RevokeAllSessionsPayload.revokedCount":
 		if e.complexity.RevokeAllSessionsPayload.RevokedCount == nil {
 			break
@@ -1850,13 +1857,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.UpdateOrganizationPayload.Organization(childComplexity), true
 
-	case "UpdatePersonalAPIKeyPayload.personalAPIKey":
-		if e.complexity.UpdatePersonalAPIKeyPayload.PersonalAPIKey == nil {
-			break
-		}
-
-		return e.complexity.UpdatePersonalAPIKeyPayload.PersonalAPIKey(childComplexity), true
-
 	case "UpdateSAMLConfigurationPayload.samlConfiguration":
 		if e.complexity.UpdateSAMLConfigurationPayload.SamlConfiguration == nil {
 			break
@@ -1896,6 +1896,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputMembershipOrder,
 		ec.unmarshalInputRemoveMemberInput,
 		ec.unmarshalInputResetPasswordInput,
+		ec.unmarshalInputRevealPersonalAPIKeyTokenInput,
 		ec.unmarshalInputRevokePersonalAPIKeyInput,
 		ec.unmarshalInputRevokeSessionInput,
 		ec.unmarshalInputSAMLAttributeMappingsInput,
@@ -1905,7 +1906,6 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputSignUpInput,
 		ec.unmarshalInputUpdateMembershipInput,
 		ec.unmarshalInputUpdateOrganizationInput,
-		ec.unmarshalInputUpdatePersonalAPIKeyInput,
 		ec.unmarshalInputUpdateSAMLConfigurationInput,
 		ec.unmarshalInputVerifyEmailInput,
 	)
@@ -2093,9 +2093,9 @@ type Mutation {
   createPersonalAPIKey(
     input: CreatePersonalAPIKeyInput!
   ): CreatePersonalAPIKeyPayload @session(required: PRESENT)
-  updatePersonalAPIKey(
-    input: UpdatePersonalAPIKeyInput!
-  ): UpdatePersonalAPIKeyPayload @session(required: PRESENT)
+  revealPersonalAPIKeyToken(
+    input: RevealPersonalAPIKeyTokenInput!
+  ): RevealPersonalAPIKeyTokenPayload @session(required: PRESENT)
   revokePersonalAPIKey(
     input: RevokePersonalAPIKeyInput!
   ): RevokePersonalAPIKeyPayload @session(required: PRESENT)
@@ -2570,13 +2570,11 @@ input CreatePersonalAPIKeyInput {
   organizationIds: [ID!]!
 }
 
-input UpdatePersonalAPIKeyInput {
+input RevokePersonalAPIKeyInput {
   tokenId: ID!
-  name: String
-  description: String
 }
 
-input RevokePersonalAPIKeyInput {
+input RevealPersonalAPIKeyTokenInput {
   tokenId: ID!
 }
 
@@ -2743,12 +2741,12 @@ type CreatePersonalAPIKeyPayload {
   token: String!
 }
 
-type UpdatePersonalAPIKeyPayload {
-  personalAPIKey: PersonalAPIKey
-}
-
 type RevokePersonalAPIKeyPayload {
   success: Boolean!
+}
+
+type RevealPersonalAPIKeyTokenPayload {
+  token: String!
 }
 
 type CreateOrganizationPayload {
@@ -3118,6 +3116,17 @@ func (ec *executionContext) field_Mutation_resetPassword_args(ctx context.Contex
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_revealPersonalAPIKeyToken_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNRevealPersonalAPIKeyTokenInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐRevealPersonalAPIKeyTokenInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_revokePersonalAPIKey_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -3188,17 +3197,6 @@ func (ec *executionContext) field_Mutation_updateOrganization_args(ctx context.C
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateOrganizationInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐUpdateOrganizationInput)
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_updatePersonalAPIKey_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdatePersonalAPIKeyInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐUpdatePersonalAPIKeyInput)
 	if err != nil {
 		return nil, err
 	}
@@ -6471,15 +6469,15 @@ func (ec *executionContext) fieldContext_Mutation_createPersonalAPIKey(ctx conte
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_updatePersonalAPIKey(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_revealPersonalAPIKeyToken(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_Mutation_updatePersonalAPIKey,
+		ec.fieldContext_Mutation_revealPersonalAPIKeyToken,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().UpdatePersonalAPIKey(ctx, fc.Args["input"].(types.UpdatePersonalAPIKeyInput))
+			return ec.resolvers.Mutation().RevealPersonalAPIKeyToken(ctx, fc.Args["input"].(types.RevealPersonalAPIKeyTokenInput))
 		},
 		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
 			directive0 := next
@@ -6487,11 +6485,11 @@ func (ec *executionContext) _Mutation_updatePersonalAPIKey(ctx context.Context, 
 			directive1 := func(ctx context.Context) (any, error) {
 				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSessionRequirement(ctx, "PRESENT")
 				if err != nil {
-					var zeroVal *types.UpdatePersonalAPIKeyPayload
+					var zeroVal *types.RevealPersonalAPIKeyTokenPayload
 					return zeroVal, err
 				}
 				if ec.directives.Session == nil {
-					var zeroVal *types.UpdatePersonalAPIKeyPayload
+					var zeroVal *types.RevealPersonalAPIKeyTokenPayload
 					return zeroVal, errors.New("directive session is not implemented")
 				}
 				return ec.directives.Session(ctx, nil, directive0, required)
@@ -6500,13 +6498,13 @@ func (ec *executionContext) _Mutation_updatePersonalAPIKey(ctx context.Context, 
 			next = directive1
 			return next
 		},
-		ec.marshalOUpdatePersonalAPIKeyPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐUpdatePersonalAPIKeyPayload,
+		ec.marshalORevealPersonalAPIKeyTokenPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐRevealPersonalAPIKeyTokenPayload,
 		true,
 		false,
 	)
 }
 
-func (ec *executionContext) fieldContext_Mutation_updatePersonalAPIKey(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_revealPersonalAPIKeyToken(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -6514,10 +6512,10 @@ func (ec *executionContext) fieldContext_Mutation_updatePersonalAPIKey(ctx conte
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "personalAPIKey":
-				return ec.fieldContext_UpdatePersonalAPIKeyPayload_personalAPIKey(ctx, field)
+			case "token":
+				return ec.fieldContext_RevealPersonalAPIKeyTokenPayload_token(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type UpdatePersonalAPIKeyPayload", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type RevealPersonalAPIKeyTokenPayload", field.Name)
 		},
 	}
 	defer func() {
@@ -6527,7 +6525,7 @@ func (ec *executionContext) fieldContext_Mutation_updatePersonalAPIKey(ctx conte
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_updatePersonalAPIKey_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_revealPersonalAPIKeyToken_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -9074,6 +9072,35 @@ func (ec *executionContext) fieldContext_ResetPasswordPayload_success(_ context.
 	return fc, nil
 }
 
+func (ec *executionContext) _RevealPersonalAPIKeyTokenPayload_token(ctx context.Context, field graphql.CollectedField, obj *types.RevealPersonalAPIKeyTokenPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_RevealPersonalAPIKeyTokenPayload_token,
+		func(ctx context.Context) (any, error) {
+			return obj.Token, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_RevealPersonalAPIKeyTokenPayload_token(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RevealPersonalAPIKeyTokenPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _RevokeAllSessionsPayload_revokedCount(ctx context.Context, field graphql.CollectedField, obj *types.RevokeAllSessionsPayload) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -10749,51 +10776,6 @@ func (ec *executionContext) fieldContext_UpdateOrganizationPayload_organization(
 				return ec.fieldContext_Organization_viewerMembership(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _UpdatePersonalAPIKeyPayload_personalAPIKey(ctx context.Context, field graphql.CollectedField, obj *types.UpdatePersonalAPIKeyPayload) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_UpdatePersonalAPIKeyPayload_personalAPIKey,
-		func(ctx context.Context) (any, error) {
-			return obj.PersonalAPIKey, nil
-		},
-		nil,
-		ec.marshalOPersonalAPIKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐPersonalAPIKey,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_UpdatePersonalAPIKeyPayload_personalAPIKey(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "UpdatePersonalAPIKeyPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_PersonalAPIKey_id(ctx, field)
-			case "name":
-				return ec.fieldContext_PersonalAPIKey_name(ctx, field)
-			case "lastUsedAt":
-				return ec.fieldContext_PersonalAPIKey_lastUsedAt(ctx, field)
-			case "expiresAt":
-				return ec.fieldContext_PersonalAPIKey_expiresAt(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_PersonalAPIKey_createdAt(ctx, field)
-			case "scopes":
-				return ec.fieldContext_PersonalAPIKey_scopes(ctx, field)
-			case "organizations":
-				return ec.fieldContext_PersonalAPIKey_organizations(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type PersonalAPIKey", field.Name)
 		},
 	}
 	return fc, nil
@@ -12944,6 +12926,33 @@ func (ec *executionContext) unmarshalInputResetPasswordInput(ctx context.Context
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputRevealPersonalAPIKeyTokenInput(ctx context.Context, obj any) (types.RevealPersonalAPIKeyTokenInput, error) {
+	var it types.RevealPersonalAPIKeyTokenInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"tokenId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "tokenId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tokenId"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TokenID = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputRevokePersonalAPIKeyInput(ctx context.Context, obj any) (types.RevokePersonalAPIKeyInput, error) {
 	var it types.RevokePersonalAPIKeyInput
 	asMap := map[string]any{}
@@ -13300,47 +13309,6 @@ func (ec *executionContext) unmarshalInputUpdateOrganizationInput(ctx context.Co
 				return it, err
 			}
 			it.HeadquarterAddress = graphql.OmittableOf(data)
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputUpdatePersonalAPIKeyInput(ctx context.Context, obj any) (types.UpdatePersonalAPIKeyInput, error) {
-	var it types.UpdatePersonalAPIKeyInput
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"tokenId", "name", "description"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "tokenId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tokenId"))
-			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.TokenID = data
-		case "name":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Name = data
-		case "description":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Description = data
 		}
 	}
 
@@ -15087,9 +15055,9 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_createPersonalAPIKey(ctx, field)
 			})
-		case "updatePersonalAPIKey":
+		case "revealPersonalAPIKeyToken":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_updatePersonalAPIKey(ctx, field)
+				return ec._Mutation_revealPersonalAPIKeyToken(ctx, field)
 			})
 		case "revokePersonalAPIKey":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
@@ -15978,6 +15946,45 @@ func (ec *executionContext) _ResetPasswordPayload(ctx context.Context, sel ast.S
 			out.Values[i] = graphql.MarshalString("ResetPasswordPayload")
 		case "success":
 			out.Values[i] = ec._ResetPasswordPayload_success(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var revealPersonalAPIKeyTokenPayloadImplementors = []string{"RevealPersonalAPIKeyTokenPayload"}
+
+func (ec *executionContext) _RevealPersonalAPIKeyTokenPayload(ctx context.Context, sel ast.SelectionSet, obj *types.RevealPersonalAPIKeyTokenPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, revealPersonalAPIKeyTokenPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("RevealPersonalAPIKeyTokenPayload")
+		case "token":
+			out.Values[i] = ec._RevealPersonalAPIKeyTokenPayload_token(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -16926,42 +16933,6 @@ func (ec *executionContext) _UpdateOrganizationPayload(ctx context.Context, sel 
 			out.Values[i] = graphql.MarshalString("UpdateOrganizationPayload")
 		case "organization":
 			out.Values[i] = ec._UpdateOrganizationPayload_organization(ctx, field, obj)
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var updatePersonalAPIKeyPayloadImplementors = []string{"UpdatePersonalAPIKeyPayload"}
-
-func (ec *executionContext) _UpdatePersonalAPIKeyPayload(ctx context.Context, sel ast.SelectionSet, obj *types.UpdatePersonalAPIKeyPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, updatePersonalAPIKeyPayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("UpdatePersonalAPIKeyPayload")
-		case "personalAPIKey":
-			out.Values[i] = ec._UpdatePersonalAPIKeyPayload_personalAPIKey(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -18129,6 +18100,11 @@ func (ec *executionContext) unmarshalNResetPasswordInput2goᚗproboᚗincᚋprob
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalNRevealPersonalAPIKeyTokenInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐRevealPersonalAPIKeyTokenInput(ctx context.Context, v any) (types.RevealPersonalAPIKeyTokenInput, error) {
+	res, err := ec.unmarshalInputRevealPersonalAPIKeyTokenInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalNRevokePersonalAPIKeyInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐRevokePersonalAPIKeyInput(ctx context.Context, v any) (types.RevokePersonalAPIKeyInput, error) {
 	res, err := ec.unmarshalInputRevokePersonalAPIKeyInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -18496,11 +18472,6 @@ func (ec *executionContext) marshalNUpdateMembershipPayload2ᚖgoᚗproboᚗinc�
 
 func (ec *executionContext) unmarshalNUpdateOrganizationInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐUpdateOrganizationInput(ctx context.Context, v any) (types.UpdateOrganizationInput, error) {
 	res, err := ec.unmarshalInputUpdateOrganizationInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) unmarshalNUpdatePersonalAPIKeyInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐUpdatePersonalAPIKeyInput(ctx context.Context, v any) (types.UpdatePersonalAPIKeyInput, error) {
-	res, err := ec.unmarshalInputUpdatePersonalAPIKeyInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -19104,13 +19075,6 @@ func (ec *executionContext) marshalOPermission2ᚕᚖgoᚗproboᚗincᚋproboᚋ
 	return ret
 }
 
-func (ec *executionContext) marshalOPersonalAPIKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐPersonalAPIKey(ctx context.Context, sel ast.SelectionSet, v *types.PersonalAPIKey) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._PersonalAPIKey(ctx, sel, v)
-}
-
 func (ec *executionContext) marshalOPersonalAPIKeyConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐPersonalAPIKeyConnection(ctx context.Context, sel ast.SelectionSet, v *types.PersonalAPIKeyConnection) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -19130,6 +19094,13 @@ func (ec *executionContext) marshalOResetPasswordPayload2ᚖgoᚗproboᚗincᚋp
 		return graphql.Null
 	}
 	return ec._ResetPasswordPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalORevealPersonalAPIKeyTokenPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐRevealPersonalAPIKeyTokenPayload(ctx context.Context, sel ast.SelectionSet, v *types.RevealPersonalAPIKeyTokenPayload) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._RevealPersonalAPIKeyTokenPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalORevokeAllSessionsPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐRevokeAllSessionsPayload(ctx context.Context, sel ast.SelectionSet, v *types.RevokeAllSessionsPayload) graphql.Marshaler {
@@ -19277,13 +19248,6 @@ func (ec *executionContext) marshalOUpdateOrganizationPayload2ᚖgoᚗproboᚗin
 		return graphql.Null
 	}
 	return ec._UpdateOrganizationPayload(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOUpdatePersonalAPIKeyPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐUpdatePersonalAPIKeyPayload(ctx context.Context, sel ast.SelectionSet, v *types.UpdatePersonalAPIKeyPayload) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._UpdatePersonalAPIKeyPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOUpdateSAMLConfigurationPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐUpdateSAMLConfigurationPayload(ctx context.Context, sel ast.SelectionSet, v *types.UpdateSAMLConfigurationPayload) graphql.Marshaler {
