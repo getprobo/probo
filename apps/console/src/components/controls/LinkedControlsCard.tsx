@@ -11,7 +11,7 @@ import {
   TrButton,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
-import type { LinkedControlsCardFragment$key } from "./__generated__/LinkedControlsCardFragment.graphql";
+import type { LinkedControlsCardFragment$key } from "/__generated__/core/LinkedControlsCardFragment.graphql";
 import { useFragment } from "react-relay";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { LinkedControlsDialog } from "./LinkedControlsDialog";
@@ -103,7 +103,10 @@ export function LinkedControlsCard<Params>(props: Props<Params>) {
       <Tbody>
         {controls.length === 0 && (
           <Tr>
-            <Td colSpan={props.readOnly ? 2 : 3} className="text-center text-txt-secondary">
+            <Td
+              colSpan={props.readOnly ? 2 : 3}
+              className="text-center text-txt-secondary"
+            >
               {__("No controls linked")}
             </Td>
           </Tr>

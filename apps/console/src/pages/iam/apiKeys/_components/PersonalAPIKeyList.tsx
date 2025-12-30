@@ -27,10 +27,10 @@ import {
   useToast,
 } from "@probo/ui";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
-import type { PersonalAPIKeyListFragment$key } from "./__generated__/PersonalAPIKeyListFragment.graphql";
-import type { PersonalAPIKeyListCreateMutation } from "./__generated__/PersonalAPIKeyListCreateMutation.graphql";
-import type { PersonalAPIKeyListRevokeMutation } from "./__generated__/PersonalAPIKeyListRevokeMutation.graphql";
-import type { PersonalAPIKeyListRevealTokenMutation } from "./__generated__/PersonalAPIKeyListRevealTokenMutation.graphql";
+import type { PersonalAPIKeyListFragment$key } from "/__generated__/iam/PersonalAPIKeyListFragment.graphql";
+import type { PersonalAPIKeyListCreateMutation } from "/__generated__/iam/PersonalAPIKeyListCreateMutation.graphql";
+import type { PersonalAPIKeyListRevokeMutation } from "/__generated__/iam/PersonalAPIKeyListRevokeMutation.graphql";
+import type { PersonalAPIKeyListRevealTokenMutation } from "/__generated__/iam/PersonalAPIKeyListRevealTokenMutation.graphql";
 import { PersonalAPIKeysTable } from "./PersonalAPIKeysTable";
 import { PersonalAPIKeyTokenDialog } from "./PersonalAPIKeyTokenDialog";
 
@@ -157,7 +157,7 @@ export function PersonalAPIKeyList(props: {
     const expiresAt = computeExpiresAt(data.expiresIn);
     const connectionID = ConnectionHandler.getConnectionID(
       viewer.id,
-      "PersonalAPIKeyListFragment_personalAPIKeys"
+      "PersonalAPIKeyListFragment_personalAPIKeys",
     );
 
     createCommit({
@@ -207,7 +207,7 @@ export function PersonalAPIKeyList(props: {
               if (!viewerRecord) return;
               const connection = ConnectionHandler.getConnection(
                 viewerRecord,
-                "PersonalAPIKeyListFragment_personalAPIKeys"
+                "PersonalAPIKeyListFragment_personalAPIKeys",
               );
               if (connection) {
                 ConnectionHandler.deleteNode(connection, key.id);
@@ -219,7 +219,7 @@ export function PersonalAPIKeyList(props: {
                   title: __("Error"),
                   description: formatError(
                     __("Failed to revoke API key."),
-                    errors as GraphQLError[]
+                    errors as GraphQLError[],
                   ),
                   variant: "error",
                 });
@@ -238,7 +238,7 @@ export function PersonalAPIKeyList(props: {
                 title: __("Error"),
                 description: formatError(
                   __("Failed to revoke API key."),
-                  error
+                  error,
                 ),
                 variant: "error",
               });
@@ -250,11 +250,11 @@ export function PersonalAPIKeyList(props: {
       {
         title: __("Revoke API Key"),
         message: __(
-          `Are you sure you want to revoke the API key "${key.name}"? This action cannot be undone.`
+          `Are you sure you want to revoke the API key "${key.name}"? This action cannot be undone.`,
         ),
         label: __("Revoke"),
         variant: "danger",
-      }
+      },
     );
   };
 
@@ -271,7 +271,7 @@ export function PersonalAPIKeyList(props: {
             title: __("Error"),
             description: formatError(
               __("Failed to reveal API key token."),
-              errors as any
+              errors as any,
             ),
             variant: "error",
           });
@@ -296,7 +296,7 @@ export function PersonalAPIKeyList(props: {
           title: __("Error"),
           description: formatError(
             __("Failed to reveal API key token."),
-            error
+            error,
           ),
           variant: "error",
         });

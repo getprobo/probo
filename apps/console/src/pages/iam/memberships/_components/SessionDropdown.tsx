@@ -14,7 +14,7 @@ import { graphql } from "relay-runtime";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { useFragment, useMutation } from "react-relay";
 import { useTranslate } from "@probo/i18n";
-import type { SessionDropdownFragment$key } from "./__generated__/SessionDropdownFragment.graphql";
+import type { SessionDropdownFragment$key } from "/__generated__/iam/SessionDropdownFragment.graphql";
 
 export const fragment = graphql`
   fragment SessionDropdownFragment on Organization {

@@ -3,7 +3,7 @@ import { useTranslate } from "@probo/i18n";
 import { useOutletContext } from "react-router";
 import { TrustCenterVendorsCard } from "/components/trustCenter/TrustCenterVendorsCard";
 import { useTrustCenterVendorUpdate } from "/hooks/graph/TrustCenterVendorGraph";
-import type { TrustCenterVendorsCardFragment$key } from "/components/trustCenter/__generated__/TrustCenterVendorsCardFragment.graphql";
+import type { TrustCenterVendorsCardFragment$key } from "/__generated__/core/TrustCenterVendorsCardFragment.graphql";
 
 type ContextType = {
   organization: {
@@ -18,7 +18,8 @@ type ContextType = {
 export default function TrustCenterVendorsTab() {
   const { __ } = useTranslate();
   const { organization } = useOutletContext<ContextType>();
-  const [updateVendorVisibility, isUpdatingVendors] = useTrustCenterVendorUpdate();
+  const [updateVendorVisibility, isUpdatingVendors] =
+    useTrustCenterVendorUpdate();
 
   const vendors = organization.vendors?.edges?.map((edge) => edge.node) || [];
 

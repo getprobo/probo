@@ -40,7 +40,7 @@ import {
   getRightsRequestStateOptions,
 } from "@probo/helpers";
 import z from "zod";
-import type { RightsRequestGraphNodeQuery } from "/hooks/graph/__generated__/RightsRequestGraphNodeQuery.graphql";
+import type { RightsRequestGraphNodeQuery } from "/__generated__/core/RightsRequestGraphNodeQuery.graphql";
 import { use } from "react";
 import { PermissionsContext } from "/providers/PermissionsContext";
 
@@ -59,7 +59,10 @@ type Props = {
 };
 
 export default function RightsRequestDetailsPage(props: Props) {
-  const data = usePreloadedQuery<RightsRequestGraphNodeQuery>(rightsRequestNodeQuery, props.queryRef);
+  const data = usePreloadedQuery<RightsRequestGraphNodeQuery>(
+    rightsRequestNodeQuery,
+    props.queryRef,
+  );
   const request = data.node;
   const { __ } = useTranslate();
   const { toast } = useToast();
@@ -70,10 +73,13 @@ export default function RightsRequestDetailsPage(props: Props) {
 
   const connectionId = ConnectionHandler.getConnectionID(
     organizationId,
-    RightsRequestsConnectionKey
+    RightsRequestsConnectionKey,
   );
 
-  const deleteRequest = useDeleteRightsRequest({ id: request.id! }, connectionId);
+  const deleteRequest = useDeleteRightsRequest(
+    { id: request.id! },
+    connectionId,
+  );
 
   const { register, handleSubmit, formState, control } = useFormWithSchema(
     updateRequestSchema,
@@ -87,7 +93,7 @@ export default function RightsRequestDetailsPage(props: Props) {
         deadline: toDateInput(request.deadline),
         actionTaken: request.actionTaken || "",
       },
-    }
+    },
   );
 
   const onSubmit = handleSubmit(async (formData) => {
@@ -111,7 +117,10 @@ export default function RightsRequestDetailsPage(props: Props) {
     } catch (error) {
       toast({
         title: __("Error"),
-        description: formatError(__("Failed to update rights request"), error as GraphQLError),
+        description: formatError(
+          __("Failed to update rights request"),
+          error as GraphQLError,
+        ),
         variant: "error",
       });
     }
@@ -144,9 +153,17 @@ export default function RightsRequestDetailsPage(props: Props) {
         <div className="p-6">
           <div className="mb-6">
             <div className="flex items-center gap-4">
-              <h1 className="text-2xl font-bold">{getRightsRequestTypeLabel(__, request.requestType || "ACCESS")}</h1>
-              <Badge variant="neutral">{getRightsRequestTypeLabel(__, request.requestType || "ACCESS")}</Badge>
-              <Badge variant={getRightsRequestStateVariant(request.requestState || "TODO")}>
+              <h1 className="text-2xl font-bold">
+                {getRightsRequestTypeLabel(__, request.requestType || "ACCESS")}
+              </h1>
+              <Badge variant="neutral">
+                {getRightsRequestTypeLabel(__, request.requestType || "ACCESS")}
+              </Badge>
+              <Badge
+                variant={getRightsRequestStateVariant(
+                  request.requestState || "TODO",
+                )}
+              >
                 {getRightsRequestStateLabel(__, request.requestState || "TODO")}
               </Badge>
             </div>
@@ -160,10 +177,7 @@ export default function RightsRequestDetailsPage(props: Props) {
                 render={({ field }) => (
                   <div>
                     <Label>{__("Request Type")} *</Label>
-                    <Select
-                      value={field.value}
-                      onValueChange={field.onChange}
-                    >
+                    <Select value={field.value} onValueChange={field.onChange}>
                       {typeOptions.map((option) => (
                         <Option key={option.value} value={option.value}>
                           {option.label}
@@ -185,10 +199,7 @@ export default function RightsRequestDetailsPage(props: Props) {
                 render={({ field }) => (
                   <div>
                     <Label>{__("State")} *</Label>
-                    <Select
-                      value={field.value}
-                      onValueChange={field.onChange}
-                    >
+                    <Select value={field.value} onValueChange={field.onChange}>
                       {stateOptions.map((option) => (
                         <Option key={option.value} value={option.value}>
                           {option.label}
@@ -234,10 +245,7 @@ export default function RightsRequestDetailsPage(props: Props) {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>{__("Deadline")}</Label>
-                <Input
-                  type="date"
-                  {...register("deadline")}
-                />
+                <Input type="date" {...register("deadline")} />
                 {formState.errors.deadline?.message && (
                   <div className="text-red-500 text-sm mt-1">
                     {formState.errors.deadline.message}
@@ -267,7 +275,9 @@ export default function RightsRequestDetailsPage(props: Props) {
                   variant="primary"
                   disabled={formState.isSubmitting}
                 >
-                  {formState.isSubmitting ? __("Saving...") : __("Save Changes")}
+                  {formState.isSubmitting
+                    ? __("Saving...")
+                    : __("Save Changes")}
                 </Button>
               )}
             </div>

@@ -9,8 +9,8 @@ import {
   withQueryRef,
   type AppRoute,
 } from "@probo/routes";
-import type { VendorGraphListQuery } from "/hooks/graph/__generated__/VendorGraphListQuery.graphql";
-import type { VendorGraphNodeQuery } from "/hooks/graph/__generated__/VendorGraphNodeQuery.graphql";
+import type { VendorGraphListQuery } from "/__generated__/core/VendorGraphListQuery.graphql";
+import type { VendorGraphNodeQuery } from "/__generated__/core/VendorGraphNodeQuery.graphql";
 
 export const vendorRoutes = [
   {

@@ -15,9 +15,15 @@ import {
 import { useTranslate } from "@probo/i18n";
 import { useFragment } from "react-relay";
 import { useMemo, useState, useCallback, useEffect, use } from "react";
-import { sprintf, getAuditStateVariant, getAuditStateLabel, formatDate, getTrustCenterVisibilityOptions } from "@probo/helpers";
+import {
+  sprintf,
+  getAuditStateVariant,
+  getAuditStateLabel,
+  formatDate,
+  getTrustCenterVisibilityOptions,
+} from "@probo/helpers";
 import { useOrganizationId } from "/hooks/useOrganizationId";
-import type { TrustCenterAuditsCardFragment$key } from "./__generated__/TrustCenterAuditsCardFragment.graphql";
+import type { TrustCenterAuditsCardFragment$key } from "/__generated__/core/TrustCenterAuditsCardFragment.graphql";
 import { PermissionsContext } from "/providers/PermissionsContext";
 
 const trustCenterAuditFragment = graphql`
@@ -59,7 +65,10 @@ export function TrustCenterAuditsCard<Params>(props: Props<Params>) {
   }, [props.audits, limit]);
   const showMoreButton = limit !== null && props.audits.length > limit;
 
-  const onChangeVisibility = (auditId: string, trustCenterVisibility: "NONE" | "PRIVATE" | "PUBLIC") => {
+  const onChangeVisibility = (
+    auditId: string,
+    trustCenterVisibility: "NONE" | "PRIVATE" | "PUBLIC",
+  ) => {
     props.onChangeVisibility({
       variables: {
         input: {
@@ -117,7 +126,10 @@ export function TrustCenterAuditsCard<Params>(props: Props<Params>) {
 
 function AuditRow(props: {
   auditFragmentRef: TrustCenterAuditsCardFragment$key;
-  onChangeVisibility: (auditId: string, trustCenterVisibility: "NONE" | "PRIVATE" | "PUBLIC") => void;
+  onChangeVisibility: (
+    auditId: string,
+    trustCenterVisibility: "NONE" | "PRIVATE" | "PUBLIC",
+  ) => void;
   disabled?: boolean;
 }) {
   const { auditFragmentRef, onChangeVisibility, disabled } = props;
@@ -126,14 +138,19 @@ function AuditRow(props: {
   const { __ } = useTranslate();
   const [optimisticValue, setOptimisticValue] = useState<string | null>(null);
   const { isAuthorized } = use(PermissionsContext);
-  const canUpdate = organizationId ? isAuthorized("TrustCenter", "updateTrustCenter") : false;
+  const canUpdate = organizationId
+    ? isAuthorized("TrustCenter", "updateTrustCenter")
+    : false;
 
-  const handleValueChange = useCallback((value: string) => {
-    const stringValue = typeof value === 'string' ? value : '';
-    const typedValue = stringValue as "NONE" | "PRIVATE" | "PUBLIC";
-    setOptimisticValue(typedValue);
-    onChangeVisibility(audit.id, typedValue);
-  }, [audit.id, onChangeVisibility]);
+  const handleValueChange = useCallback(
+    (value: string) => {
+      const stringValue = typeof value === "string" ? value : "";
+      const typedValue = stringValue as "NONE" | "PRIVATE" | "PUBLIC";
+      setOptimisticValue(typedValue);
+      onChangeVisibility(audit.id, typedValue);
+    },
+    [audit.id, onChangeVisibility],
+  );
 
   useEffect(() => {
     if (optimisticValue && audit.trustCenterVisibility === optimisticValue) {
@@ -152,9 +169,7 @@ function AuditRow(props: {
   return (
     <Tr to={`/organizations/${organizationId}/audits/${audit.id}`}>
       <Td>
-        <div className="flex gap-4 items-center">
-          {audit.framework.name}
-        </div>
+        <div className="flex gap-4 items-center">{audit.framework.name}</div>
       </Td>
       <Td>{audit.name || __("Untitled")}</Td>
       <Td>{validUntilFormatted}</Td>
@@ -174,9 +189,7 @@ function AuditRow(props: {
           {visibilityOptions.map((option) => (
             <Option key={option.value} value={option.value}>
               <div className="flex items-center justify-between w-full">
-                <Badge variant={option.variant}>
-                  {option.label}
-                </Badge>
+                <Badge variant={option.variant}>{option.label}</Badge>
               </div>
             </Option>
           ))}

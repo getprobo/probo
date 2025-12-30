@@ -21,7 +21,7 @@ import { graphql } from "relay-runtime";
 import z from "zod";
 import { useTranslate } from "@probo/i18n";
 import { useFragment } from "react-relay";
-import type { OrganizationFormFragment$key } from "./__generated__/OrganizationFormFragment.graphql";
+import type { OrganizationFormFragment$key } from "/__generated__/iam/OrganizationFormFragment.graphql";
 
 const fragment = graphql`
   fragment OrganizationFormFragment on Organization {

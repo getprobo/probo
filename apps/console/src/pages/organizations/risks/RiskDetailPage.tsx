@@ -17,7 +17,11 @@ import {
 } from "@probo/ui";
 import { Outlet, useNavigate, useParams } from "react-router";
 import { useTranslate } from "@probo/i18n";
-import { getTreatment, sprintf, validateSnapshotConsistency } from "@probo/helpers";
+import {
+  getTreatment,
+  sprintf,
+  validateSnapshotConsistency,
+} from "@probo/helpers";
 import { ConnectionHandler } from "relay-runtime";
 import { usePreloadedQuery, type PreloadedQuery } from "react-relay";
 import FormRiskDialog from "./FormRiskDialog";
@@ -28,7 +32,7 @@ import {
   RisksConnectionKey,
   useDeleteRiskMutation,
 } from "/hooks/graph/RiskGraph";
-import type { RiskGraphNodeQuery } from "/hooks/graph/__generated__/RiskGraphNodeQuery.graphql";
+import type { RiskGraphNodeQuery } from "/__generated__/core/RiskGraphNodeQuery.graphql";
 import { SnapshotBanner } from "/components/SnapshotBanner";
 import { use } from "react";
 import { PermissionsContext } from "/providers/PermissionsContext";
@@ -38,7 +42,10 @@ type Props = {
 };
 
 export default function RiskDetailPage(props: Props) {
-  const { riskId, snapshotId } = useParams<{ riskId: string; snapshotId?: string }>();
+  const { riskId, snapshotId } = useParams<{
+    riskId: string;
+    snapshotId?: string;
+  }>();
   const organizationId = useOrganizationId();
   const navigate = useNavigate();
   const isSnapshotMode = Boolean(snapshotId);
@@ -49,7 +56,10 @@ export default function RiskDetailPage(props: Props) {
   }
 
   const { __ } = useTranslate();
-  const data = usePreloadedQuery<RiskGraphNodeQuery>(riskNodeQuery, props.queryRef);
+  const data = usePreloadedQuery<RiskGraphNodeQuery>(
+    riskNodeQuery,
+    props.queryRef,
+  );
   const risk = data.node;
 
   validateSnapshotConsistency(risk, snapshotId);
@@ -62,7 +72,7 @@ export default function RiskDetailPage(props: Props) {
     const connectionId = ConnectionHandler.getConnectionID(
       organizationId,
       RisksConnectionKey,
-      { filter: { snapshotId: snapshotId || null } }
+      { filter: { snapshotId: snapshotId || null } },
     );
     confirm(
       () =>
@@ -73,9 +83,10 @@ export default function RiskDetailPage(props: Props) {
               connections: [connectionId],
             },
             onSuccess() {
-              const risksUrl = isSnapshotMode && snapshotId
-                ? `/organizations/${organizationId}/snapshots/${snapshotId}/risks`
-                : `/organizations/${organizationId}/risks`;
+              const risksUrl =
+                isSnapshotMode && snapshotId
+                  ? `/organizations/${organizationId}/snapshots/${snapshotId}/risks`
+                  : `/organizations/${organizationId}/risks`;
               navigate(risksUrl);
               resolve();
             },
@@ -84,11 +95,11 @@ export default function RiskDetailPage(props: Props) {
       {
         message: sprintf(
           __(
-            'This will permanently delete the risk "%s". This action cannot be undone.'
+            'This will permanently delete the risk "%s". This action cannot be undone.',
           ),
-          risk.name
+          risk.name,
         ),
-      }
+      },
     );
   };
 
@@ -97,13 +108,15 @@ export default function RiskDetailPage(props: Props) {
   const controlsCount = risk.controlsInfo?.totalCount ?? 0;
   const obligationsCount = risk.obligationsInfo?.totalCount ?? 0;
 
-  const risksUrl = isSnapshotMode && snapshotId
-    ? `/organizations/${organizationId}/snapshots/${snapshotId}/risks`
-    : `/organizations/${organizationId}/risks`;
+  const risksUrl =
+    isSnapshotMode && snapshotId
+      ? `/organizations/${organizationId}/snapshots/${snapshotId}/risks`
+      : `/organizations/${organizationId}/risks`;
 
-  const baseTabUrl = isSnapshotMode && snapshotId
-    ? `/organizations/${organizationId}/snapshots/${snapshotId}/risks/${riskId}`
-    : `/organizations/${organizationId}/risks/${riskId}`;
+  const baseTabUrl =
+    isSnapshotMode && snapshotId
+      ? `/organizations/${organizationId}/snapshots/${snapshotId}/risks/${riskId}`
+      : `/organizations/${organizationId}/risks/${riskId}`;
 
   return (
     <div className="space-y-6">
@@ -150,9 +163,7 @@ export default function RiskDetailPage(props: Props) {
 
       <PageHeader title={risk.name} description={risk.description} />
       <Tabs>
-        <TabLink to={`${baseTabUrl}/overview`}>
-          {__("Overview")}
-        </TabLink>
+        <TabLink to={`${baseTabUrl}/overview`}>{__("Overview")}</TabLink>
         {!isSnapshotMode && (
           <>
             <TabLink to={`${baseTabUrl}/measures`}>

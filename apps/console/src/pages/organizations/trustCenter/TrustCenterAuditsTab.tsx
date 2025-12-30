@@ -3,7 +3,7 @@ import { useTranslate } from "@probo/i18n";
 import { useOutletContext } from "react-router";
 import { TrustCenterAuditsCard } from "/components/trustCenter/TrustCenterAuditsCard";
 import { useTrustCenterAuditUpdate } from "/hooks/graph/TrustCenterAuditGraph";
-import type { TrustCenterAuditsCardFragment$key } from "/components/trustCenter/__generated__/TrustCenterAuditsCardFragment.graphql";
+import type { TrustCenterAuditsCardFragment$key } from "/__generated__/core/TrustCenterAuditsCardFragment.graphql";
 
 type ContextType = {
   organization: {

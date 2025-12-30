@@ -12,8 +12,8 @@ import {
   withQueryRef,
   type AppRoute,
 } from "@probo/routes";
-import type { PeopleGraphPaginatedQuery } from "/hooks/graph/__generated__/PeopleGraphPaginatedQuery.graphql";
-import type { PeopleGraphNodeQuery } from "/hooks/graph/__generated__/PeopleGraphNodeQuery.graphql";
+import type { PeopleGraphPaginatedQuery } from "/__generated__/core/PeopleGraphPaginatedQuery.graphql";
+import type { PeopleGraphNodeQuery } from "/__generated__/core/PeopleGraphNodeQuery.graphql";
 
 export const peopleRoutes = [
   {

@@ -5,9 +5,9 @@ import {
   type PreloadedQuery,
 } from "react-relay";
 import { graphql } from "relay-runtime";
-import type { TaskGraphQuery } from "/hooks/graph/__generated__/TaskGraphQuery.graphql";
+import type { TaskGraphQuery } from "/__generated__/core/TaskGraphQuery.graphql";
 import { useTranslate } from "@probo/i18n";
-import type { TasksPageFragment$key } from "./__generated__/TasksPageFragment.graphql";
+import type { TasksPageFragment$key } from "/__generated__/core/TasksPageFragment.graphql";
 import { tasksQuery } from "/hooks/graph/TaskGraph";
 import { usePageTitle } from "@probo/hooks";
 import TasksCard from "/components/tasks/TasksCard";
@@ -65,7 +65,7 @@ export default function TasksPage({ queryRef }: Props) {
   const query = usePreloadedQuery(tasksQuery, queryRef);
   const [data] = useRefetchableFragment(
     tasksFragment,
-    query.organization as TasksPageFragment$key
+    query.organization as TasksPageFragment$key,
   );
   const tasks = data.tasks?.edges.map((edge) => edge.node);
   const connectionId = data.tasks.__id;
@@ -77,7 +77,7 @@ export default function TasksPage({ queryRef }: Props) {
       <PageHeader
         title={__("Tasks")}
         description={__(
-          "Track your assigned compliance tasks and keep progress on track."
+          "Track your assigned compliance tasks and keep progress on track.",
         )}
       >
         {isAuthorized("Organization", "createTask") && (

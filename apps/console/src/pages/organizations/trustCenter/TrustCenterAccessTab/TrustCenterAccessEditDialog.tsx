@@ -1,9 +1,30 @@
-import type { TrustCenterAccess, TrustCenterDocumentAccessStatus } from "@probo/coredata";
-import { getTrustCenterDocumentAccessInfo, type TrustCenterDocumentAccessInfo } from "@probo/helpers";
-import { Button, Checkbox, Dialog, DialogContent, DialogFooter, Field, Spinner } from "@probo/ui";
-import { usePreloadedQuery, type PreloadedQuery, useQueryLoader } from "react-relay";
-import type { TrustCenterAccessGraphLoadDocumentAccessesQuery } from "/hooks/graph/__generated__/TrustCenterAccessGraphLoadDocumentAccessesQuery.graphql";
-import { loadTrustCenterAccessDocumentAccessesQuery, updateTrustCenterAccessMutation } from "/hooks/graph/TrustCenterAccessGraph";
+import type {
+  TrustCenterAccess,
+  TrustCenterDocumentAccessStatus,
+} from "@probo/coredata";
+import {
+  getTrustCenterDocumentAccessInfo,
+  type TrustCenterDocumentAccessInfo,
+} from "@probo/helpers";
+import {
+  Button,
+  Checkbox,
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  Field,
+  Spinner,
+} from "@probo/ui";
+import {
+  usePreloadedQuery,
+  type PreloadedQuery,
+  useQueryLoader,
+} from "react-relay";
+import type { TrustCenterAccessGraphLoadDocumentAccessesQuery } from "/__generated__/core/TrustCenterAccessGraphLoadDocumentAccessesQuery.graphql";
+import {
+  loadTrustCenterAccessDocumentAccessesQuery,
+  updateTrustCenterAccessMutation,
+} from "/hooks/graph/TrustCenterAccessGraph";
 import { useTranslate } from "@probo/i18n";
 import z from "zod";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
@@ -16,29 +37,32 @@ interface TrustCenterAccessEditDialogProps {
   onClose: () => void;
 }
 
-export function TrustCenterAccessEditDialog(props: TrustCenterAccessEditDialogProps) {
+export function TrustCenterAccessEditDialog(
+  props: TrustCenterAccessEditDialogProps,
+) {
   const { access, onClose } = props;
 
   const { __ } = useTranslate();
 
   const [queryRef, loadDocumentAccessesQuery] =
-    useQueryLoader<TrustCenterAccessGraphLoadDocumentAccessesQuery>(loadTrustCenterAccessDocumentAccessesQuery);
+    useQueryLoader<TrustCenterAccessGraphLoadDocumentAccessesQuery>(
+      loadTrustCenterAccessDocumentAccessesQuery,
+    );
 
   useEffect(() => {
-    loadDocumentAccessesQuery({
-      accessId: access.id
-    }, {
-      fetchPolicy: "network-only",
-    });
-  }, [access.id, loadDocumentAccessesQuery])
+    loadDocumentAccessesQuery(
+      {
+        accessId: access.id,
+      },
+      {
+        fetchPolicy: "network-only",
+      },
+    );
+  }, [access.id, loadDocumentAccessesQuery]);
 
   return (
-    <Dialog
-      defaultOpen={true}
-      title={__("Edit Access")}
-      onClose={onClose}
-    >
-      {queryRef &&
+    <Dialog defaultOpen={true} title={__("Edit Access")} onClose={onClose}>
+      {queryRef && (
         <Suspense>
           <TrustCenterAccessEditForm
             access={access}
@@ -46,7 +70,7 @@ export function TrustCenterAccessEditDialog(props: TrustCenterAccessEditDialogPr
             onSubmit={onClose}
           />
         </Suspense>
-      }
+      )}
     </Dialog>
   );
 }
@@ -57,70 +81,111 @@ interface TrustCenterAccessEditFormProps {
   queryRef: PreloadedQuery<TrustCenterAccessGraphLoadDocumentAccessesQuery>;
 }
 
-export function TrustCenterAccessEditForm(props: TrustCenterAccessEditFormProps) {
+export function TrustCenterAccessEditForm(
+  props: TrustCenterAccessEditFormProps,
+) {
   const { access, onSubmit, queryRef } = props;
 
   const { __ } = useTranslate();
-  const data = usePreloadedQuery<TrustCenterAccessGraphLoadDocumentAccessesQuery>(
-    loadTrustCenterAccessDocumentAccessesQuery,
-    queryRef,
-  )
+  const data =
+    usePreloadedQuery<TrustCenterAccessGraphLoadDocumentAccessesQuery>(
+      loadTrustCenterAccessDocumentAccessesQuery,
+      queryRef,
+    );
 
-  const initialDocumentAccesses = data.node.availableDocumentAccesses?.edges.map(edge => getTrustCenterDocumentAccessInfo(edge.node, __)) ?? []
-  const initialStatusByID = initialDocumentAccesses.reduce<Record<string, TrustCenterDocumentAccessStatus>>((acc, docAccess) => {
+  const initialDocumentAccesses =
+    data.node.availableDocumentAccesses?.edges.map((edge) =>
+      getTrustCenterDocumentAccessInfo(edge.node, __),
+    ) ?? [];
+  const initialStatusByID = initialDocumentAccesses.reduce<
+    Record<string, TrustCenterDocumentAccessStatus>
+  >((acc, docAccess) => {
     acc[docAccess.id] = docAccess.status;
-    return acc
-  }, {})
-  const [documentAccesses, setDocumentAccesses] = useState<TrustCenterDocumentAccessInfo[]>(initialDocumentAccesses);
+    return acc;
+  }, {});
+  const [documentAccesses, setDocumentAccesses] = useState<
+    TrustCenterDocumentAccessInfo[]
+  >(initialDocumentAccesses);
 
-  const handleUpdateDocumentAccessStatus = useCallback((documentAccess: TrustCenterDocumentAccessInfo, status: TrustCenterDocumentAccessStatus) => {
-    setDocumentAccesses((prev) => {
-      const nextDocumentAccesses = [...prev];
-      const docAccessIndex = nextDocumentAccesses.findIndex(element => element.id === documentAccess.id)
-      const previousDocAccess = nextDocumentAccesses[docAccessIndex];
-      nextDocumentAccesses.splice(docAccessIndex, 1, { ...previousDocAccess, status });
+  const handleUpdateDocumentAccessStatus = useCallback(
+    (
+      documentAccess: TrustCenterDocumentAccessInfo,
+      status: TrustCenterDocumentAccessStatus,
+    ) => {
+      setDocumentAccesses((prev) => {
+        const nextDocumentAccesses = [...prev];
+        const docAccessIndex = nextDocumentAccesses.findIndex(
+          (element) => element.id === documentAccess.id,
+        );
+        const previousDocAccess = nextDocumentAccesses[docAccessIndex];
+        nextDocumentAccesses.splice(docAccessIndex, 1, {
+          ...previousDocAccess,
+          status,
+        });
 
-      return nextDocumentAccesses;
-    })
-  }, [])
+        return nextDocumentAccesses;
+      });
+    },
+    [],
+  );
   const handleGrantAllDocumentAccess = useCallback(() => {
-    setDocumentAccesses((prev) => prev.map(element => ({...element, status: "GRANTED"})))
-  }, [])
+    setDocumentAccesses((prev) =>
+      prev.map((element) => ({ ...element, status: "GRANTED" })),
+    );
+  }, []);
   const handleRejectOrRevokeAllDocumentAccess = useCallback(() => {
-    setDocumentAccesses((prev) => prev
-      .map(element => ({...element, status: initialStatusByID[element.id] === "GRANTED" ? "REVOKED" : "REJECTED"}))
-    )
-  }, [initialStatusByID])
+    setDocumentAccesses((prev) =>
+      prev.map((element) => ({
+        ...element,
+        status:
+          initialStatusByID[element.id] === "GRANTED" ? "REVOKED" : "REJECTED",
+      })),
+    );
+  }, [initialStatusByID]);
 
   const editSchema = z.object({
-    name: z.string().min(1, __("Name is required")).min(2, __("Name must be at least 2 characters long")),
+    name: z
+      .string()
+      .min(1, __("Name is required"))
+      .min(2, __("Name must be at least 2 characters long")),
     active: z.boolean(),
   });
   const editForm = useFormWithSchema(editSchema, {
     defaultValues: { name: access.name, active: access.active },
   });
 
-  const [updateTrustCenterAccess, isUpdating] = useMutationWithToasts(updateTrustCenterAccessMutation, {
-    successMessage: __("Access updated successfully"),
-    errorMessage: __("Failed to update access"),
-  });
+  const [updateTrustCenterAccess, isUpdating] = useMutationWithToasts(
+    updateTrustCenterAccessMutation,
+    {
+      successMessage: __("Access updated successfully"),
+      errorMessage: __("Failed to update access"),
+    },
+  );
 
   const handleSubmit = editForm.handleSubmit(async (data) => {
-    const documents: { id: string, status: TrustCenterDocumentAccessStatus }[] = []
-    const reports: { id: string, status: TrustCenterDocumentAccessStatus }[] = []
-    const trustCenterFiles: { id: string, status: TrustCenterDocumentAccessStatus }[] = []
+    const documents: { id: string; status: TrustCenterDocumentAccessStatus }[] =
+      [];
+    const reports: { id: string; status: TrustCenterDocumentAccessStatus }[] =
+      [];
+    const trustCenterFiles: {
+      id: string;
+      status: TrustCenterDocumentAccessStatus;
+    }[] = [];
 
     for (const docAccess of documentAccesses) {
       if (docAccess.persisted || docAccess.status !== "REQUESTED") {
         switch (docAccess.type) {
           case "document":
-            documents.push({id: docAccess.id, status: docAccess.status});
+            documents.push({ id: docAccess.id, status: docAccess.status });
             break;
           case "report":
-            reports.push({id: docAccess.id, status: docAccess.status});
+            reports.push({ id: docAccess.id, status: docAccess.status });
             break;
           case "file":
-            trustCenterFiles.push({id: docAccess.id, status: docAccess.status});
+            trustCenterFiles.push({
+              id: docAccess.id,
+              status: docAccess.status,
+            });
             break;
         }
       }

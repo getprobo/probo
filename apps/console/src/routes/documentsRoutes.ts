@@ -12,8 +12,8 @@ import {
   withQueryRef,
   type AppRoute,
 } from "@probo/routes";
-import type { DocumentGraphListQuery } from "/hooks/graph/__generated__/DocumentGraphListQuery.graphql";
-import type { DocumentGraphNodeQuery } from "/hooks/graph/__generated__/DocumentGraphNodeQuery.graphql";
+import type { DocumentGraphListQuery } from "/__generated__/core/DocumentGraphListQuery.graphql";
+import type { DocumentGraphNodeQuery } from "/__generated__/core/DocumentGraphNodeQuery.graphql";
 
 const documentTabs = (prefix: string) => {
   return [

@@ -23,13 +23,17 @@ import {
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { CreateAuditDialog } from "./dialogs/CreateAuditDialog";
 import { useDeleteAudit, auditsQuery } from "../../../hooks/graph/AuditGraph";
-import type { AuditGraphListQuery } from "/hooks/graph/__generated__/AuditGraphListQuery.graphql";
+import type { AuditGraphListQuery } from "/__generated__/core/AuditGraphListQuery.graphql";
 import type { NodeOf } from "/types";
-import { getAuditStateLabel, getAuditStateVariant, formatDate } from "@probo/helpers";
+import {
+  getAuditStateLabel,
+  getAuditStateVariant,
+  formatDate,
+} from "@probo/helpers";
 import type {
   AuditsPageFragment$data,
   AuditsPageFragment$key,
-} from "./__generated__/AuditsPageFragment.graphql";
+} from "/__generated__/core/AuditsPageFragment.graphql";
 import { SortableTable } from "/components/SortableTable";
 import { PermissionsContext } from "/providers/PermissionsContext";
 import { use } from "react";
@@ -88,14 +92,15 @@ export default function AuditsPage(props: Props) {
   const data = usePreloadedQuery(auditsQuery, props.queryRef);
   const pagination = usePaginationFragment(
     paginatedAuditsFragment,
-    data.node as AuditsPageFragment$key
+    data.node as AuditsPageFragment$key,
   );
   const audits = pagination.data.audits?.edges?.map((edge) => edge.node) ?? [];
   const connectionId = pagination.data.audits.__id;
 
   usePageTitle(__("Audits"));
 
-  const hasAnyAction = isAuthorized("Audit", "updateAudit") ||
+  const hasAnyAction =
+    isAuthorized("Audit", "updateAudit") ||
     isAuthorized("Audit", "deleteAudit");
 
   return (
@@ -103,7 +108,7 @@ export default function AuditsPage(props: Props) {
       <PageHeader
         title={__("Audits")}
         description={__(
-          "Manage your organization's compliance audits and their progress."
+          "Manage your organization's compliance audits and their progress.",
         )}
       >
         {isAuthorized("Organization", "createAudit") && (
@@ -111,7 +116,7 @@ export default function AuditsPage(props: Props) {
             connection={connectionId}
             organizationId={organizationId}
           >
-          <Button icon={IconPlusLarge}>{__("Add audit")}</Button>
+            <Button icon={IconPlusLarge}>{__("Add audit")}</Button>
           </CreateAuditDialog>
         )}
       </PageHeader>

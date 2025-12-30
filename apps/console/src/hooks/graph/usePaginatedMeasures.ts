@@ -1,6 +1,6 @@
 import { graphql, useLazyLoadQuery, usePaginationFragment } from "react-relay";
-import type { usePaginatedMeasuresQuery } from "./__generated__/usePaginatedMeasuresQuery.graphql";
-import type { usePaginatedMeasuresFragment$key } from "./__generated__/usePaginatedMeasuresFragment.graphql";
+import type { usePaginatedMeasuresQuery } from "/__generated__/core/usePaginatedMeasuresQuery.graphql";
+import type { usePaginatedMeasuresFragment$key } from "/__generated__/core/usePaginatedMeasuresFragment.graphql";
 
 const measuresQuery = graphql`
   query usePaginatedMeasuresQuery($organizationId: ID!) {
@@ -47,11 +47,15 @@ const measuresFragment = graphql`
  * Hook to retrieve measured paginated (used for link dialog and measure selectors)
  */
 export function usePaginatedMeasures(organizationId: string) {
-  const query = useLazyLoadQuery<usePaginatedMeasuresQuery>(measuresQuery, {
-    organizationId,
-  }, { fetchPolicy: "network-only" });
+  const query = useLazyLoadQuery<usePaginatedMeasuresQuery>(
+    measuresQuery,
+    {
+      organizationId,
+    },
+    { fetchPolicy: "network-only" },
+  );
   return usePaginationFragment(
     measuresFragment,
-    query.organization as usePaginatedMeasuresFragment$key
+    query.organization as usePaginatedMeasuresFragment$key,
   );
 }

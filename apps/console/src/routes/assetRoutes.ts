@@ -3,8 +3,8 @@ import { coreEnvironment } from "/environments";
 import { PageSkeleton } from "/components/skeletons/PageSkeleton";
 import { lazy } from "@probo/react-lazy";
 import { assetsQuery, assetNodeQuery } from "../hooks/graph/AssetGraph";
-import type { AssetGraphListQuery } from "/hooks/graph/__generated__/AssetGraphListQuery.graphql";
-import type { AssetGraphNodeQuery } from "/hooks/graph/__generated__/AssetGraphNodeQuery.graphql";
+import type { AssetGraphListQuery } from "/__generated__/core/AssetGraphListQuery.graphql";
+import type { AssetGraphNodeQuery } from "/__generated__/core/AssetGraphNodeQuery.graphql";
 import {
   loaderFromQueryLoader,
   withQueryRef,

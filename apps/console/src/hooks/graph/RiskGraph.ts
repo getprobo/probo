@@ -1,14 +1,14 @@
 import { graphql } from "relay-runtime";
 import { useTranslate } from "@probo/i18n";
 import { useMutationWithToasts } from "../useMutationWithToasts.ts";
-import type { RiskGraphDeleteMutation } from "./__generated__/RiskGraphDeleteMutation.graphql.ts";
+import type { RiskGraphDeleteMutation } from "/__generated__/core/RiskGraphDeleteMutation.graphql.ts";
 import {
   usePreloadedQuery,
   usePaginationFragment,
   type PreloadedQuery,
 } from "react-relay";
-import type { RiskGraphListQuery } from "./__generated__/RiskGraphListQuery.graphql.ts";
-import type { RiskGraphFragment$key } from "./__generated__/RiskGraphFragment.graphql.ts";
+import type { RiskGraphListQuery } from "/__generated__/core/RiskGraphListQuery.graphql.ts";
+import type { RiskGraphFragment$key } from "/__generated__/core/RiskGraphFragment.graphql.ts";
 
 const deleteRiskMutation = graphql`
   mutation RiskGraphDeleteMutation(
@@ -44,7 +44,10 @@ const risksFragment = graphql`
   @refetchable(queryName: "RisksListQuery")
   @argumentDefinitions(
     first: { type: "Int", defaultValue: 50 }
-    order: { type: "RiskOrder", defaultValue: { direction: DESC, field: CREATED_AT } }
+    order: {
+      type: "RiskOrder"
+      defaultValue: { direction: DESC, field: CREATED_AT }
+    }
     after: { type: "CursorKey", defaultValue: null }
     before: { type: "CursorKey", defaultValue: null }
     last: { type: "Int", defaultValue: null }

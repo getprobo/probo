@@ -88,3 +88,7 @@ export {
   type RightsRequestType,
   type RightsRequestState,
 } from "./rightsRequest";
+export {
+  getCustomDomainStatusBadgeVariant,
+  getCustomDomainStatusBadgeLabel,
+} from "./customDomain";

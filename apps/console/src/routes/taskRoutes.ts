@@ -8,7 +8,7 @@ import {
   withQueryRef,
   type AppRoute,
 } from "@probo/routes";
-import type { TaskGraphQuery } from "/hooks/graph/__generated__/TaskGraphQuery.graphql";
+import type { TaskGraphQuery } from "/__generated__/core/TaskGraphQuery.graphql";
 export const taskRoutes = [
   {
     path: "tasks",

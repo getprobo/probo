@@ -1,9 +1,9 @@
 import { useTranslate } from "@probo/i18n";
 import { graphql } from "relay-runtime";
 import { useMutationWithToasts } from "../useMutationWithToasts.ts";
-import type { VendorGraphCreateMutation } from "./__generated__/VendorGraphCreateMutation.graphql.ts";
-import type { VendorGraphDeleteMutation } from "./__generated__/VendorGraphDeleteMutation.graphql.ts";
-import type { VendorGraphSelectQuery } from "./__generated__/VendorGraphSelectQuery.graphql.ts";
+import type { VendorGraphCreateMutation } from "/__generated__/core/VendorGraphCreateMutation.graphql.ts";
+import type { VendorGraphDeleteMutation } from "/__generated__/core/VendorGraphDeleteMutation.graphql.ts";
+import type { VendorGraphSelectQuery } from "/__generated__/core/VendorGraphSelectQuery.graphql.ts";
 import { useMutation, useLazyLoadQuery } from "react-relay";
 import { useConfirm } from "@probo/ui";
 import { promisifyMutation, sprintf } from "@probo/helpers";
@@ -37,7 +37,7 @@ export function useCreateVendorMutation() {
     {
       successMessage: __("Vendor created successfully."),
       errorMessage: __("Failed to create vendor"),
-    }
+    },
   );
 }
 
@@ -54,7 +54,7 @@ const deleteVendorMutation = graphql`
 
 export const useDeleteVendor = (
   vendor: { id?: string; name?: string },
-  connectionId: string
+  connectionId: string,
 ) => {
   const [mutate] = useMutation<VendorGraphDeleteMutation>(deleteVendorMutation);
   const confirm = useConfirm();
@@ -77,11 +77,11 @@ export const useDeleteVendor = (
       {
         message: sprintf(
           __(
-            'This will permanently delete vendor "%s". This action cannot be undone.'
+            'This will permanently delete vendor "%s". This action cannot be undone.',
           ),
-          vendor.name
+          vendor.name,
         ),
-      }
+      },
     );
   };
 };
@@ -193,7 +193,7 @@ export function useVendors(organizationId: string) {
     {
       organizationId: organizationId,
     },
-    { fetchPolicy: "network-only" }
+    { fetchPolicy: "network-only" },
   );
   return useMemo(() => {
     return data.organization?.vendors?.edges.map((edge) => edge.node) ?? [];

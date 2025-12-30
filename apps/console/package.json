@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "relay": "find src -type d -name \"__generated__\" -exec rm -rf {} + && npx relay-compiler ./relay.core.json && npx relay-compiler ./relay.iam.json",
+    "relay": "find src -type d -name \"__generated__\" -exec rm -rf {} + && npx relay-compiler",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "check": "tsc --noEmit -p tsconfig.app.json",

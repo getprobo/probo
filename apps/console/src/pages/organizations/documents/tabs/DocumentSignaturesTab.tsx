@@ -15,11 +15,11 @@ import { usePeople } from "/hooks/graph/PeopleGraph.ts";
 import { useOrganizationId } from "/hooks/useOrganizationId.ts";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts.ts";
 import { sprintf } from "@probo/helpers";
-import type { DocumentDetailPageDocumentFragment$data } from "../__generated__/DocumentDetailPageDocumentFragment.graphql";
+import type { DocumentDetailPageDocumentFragment$data } from "/__generated__/core/DocumentDetailPageDocumentFragment.graphql";
 import { useOutletContext } from "react-router";
-import type { DocumentSignaturesTab_signature$key } from "/pages/organizations/documents/tabs/__generated__/DocumentSignaturesTab_signature.graphql.ts";
-import type { DocumentSignaturesTab_version$key } from "/pages/organizations/documents/tabs/__generated__/DocumentSignaturesTab_version.graphql.ts";
-import type { DocumentSignaturesTabRefetchQuery } from "./__generated__/DocumentSignaturesTabRefetchQuery.graphql";
+import type { DocumentSignaturesTab_signature$key } from "/__generated__/core/DocumentSignaturesTab_signature.graphql.ts";
+import type { DocumentSignaturesTab_version$key } from "/__generated__/core/DocumentSignaturesTab_version.graphql.ts";
+import type { DocumentSignaturesTabRefetchQuery } from "/__generated__/core/DocumentSignaturesTabRefetchQuery.graphql";
 import { PermissionsContext } from "/providers/PermissionsContext";
 
 type Version = NodeOf<DocumentDetailPageDocumentFragment$data["versions"]>;
@@ -71,7 +71,7 @@ export default function DocumentSignaturesTab() {
 
   const toggleState = (state: SignatureState) => {
     setSelectedStates((prev) =>
-      prev.includes(state) ? prev.filter((s) => s !== state) : [...prev, state]
+      prev.includes(state) ? prev.filter((s) => s !== state) : [...prev, state],
     );
   };
 
@@ -253,14 +253,14 @@ function SignatureItem(props: {
     {
       successMessage: __("Signature request sent successfully"),
       errorMessage: __("Failed to send signature request"),
-    }
+    },
   );
   const [cancelSignature, isCancellingSignature] = useMutationWithToasts(
     cancelSignatureMutation,
     {
       successMessage: __("Request cancelled successfully"),
       errorMessage: __("Failed to cancel signature request"),
-    }
+    },
   );
 
   // No signature request for this user
@@ -276,27 +276,25 @@ function SignatureItem(props: {
             {props.people.primaryEmailAddress}
           </div>
         </div>
-        {props.signable && (
-          isAuthorized("Document", "requestSignature") && (
-            <Button
-              variant="secondary"
-              className="ml-auto"
-              disabled={isSendingRequest}
-              onClick={() => {
-                requestSignature({
-                  variables: {
-                    input: {
-                      documentVersionId: props.versionId,
-                      signatoryId: props.people.id,
-                    },
-                    connections: [props.connectionId],
+        {props.signable && isAuthorized("Document", "requestSignature") && (
+          <Button
+            variant="secondary"
+            className="ml-auto"
+            disabled={isSendingRequest}
+            onClick={() => {
+              requestSignature({
+                variables: {
+                  input: {
+                    documentVersionId: props.versionId,
+                    signatoryId: props.people.id,
                   },
-                });
-              }}
-            >
-              {__("Request signature")}
-            </Button>
-          )
+                  connections: [props.connectionId],
+                },
+              });
+            }}
+          >
+            {__("Request signature")}
+          </Button>
         )}
       </div>
     );
@@ -322,8 +320,8 @@ function SignatureItem(props: {
             {sprintf(
               label,
               dateTimeFormat(
-                isSigned ? signature.signedAt : signature.requestedAt
-              )
+                isSigned ? signature.signedAt : signature.requestedAt,
+              ),
             )}
           </span>
         </div>

@@ -1,7 +1,7 @@
 import { graphql } from "relay-runtime";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { useTranslate } from "@probo/i18n";
-import type { TrustCenterDocumentGraphUpdateMutation } from "./__generated__/TrustCenterDocumentGraphUpdateMutation.graphql";
+import type { TrustCenterDocumentGraphUpdateMutation } from "/__generated__/core/TrustCenterDocumentGraphUpdateMutation.graphql";
 
 export const trustCenterDocumentsQuery = graphql`
   query TrustCenterDocumentGraphQuery($organizationId: ID!) {
@@ -22,7 +22,9 @@ export const trustCenterDocumentsQuery = graphql`
 `;
 
 export const updateDocumentVisibilityMutation = graphql`
-  mutation TrustCenterDocumentGraphUpdateMutation($input: UpdateDocumentInput!) {
+  mutation TrustCenterDocumentGraphUpdateMutation(
+    $input: UpdateDocumentInput!
+  ) {
     updateDocument(input: $input) {
       document {
         id
@@ -41,6 +43,6 @@ export function useUpdateDocumentVisibilityMutation() {
     {
       successMessage: __("Document visibility updated successfully."),
       errorMessage: __("Failed to update document visibility"),
-    }
+    },
   );
 }

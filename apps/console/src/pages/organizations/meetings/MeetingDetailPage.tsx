@@ -1,8 +1,8 @@
 import type { PreloadedQuery } from "react-relay";
 import { graphql, useFragment, usePreloadedQuery } from "react-relay";
-import type { MeetingGraphNodeQuery } from "/hooks/graph/__generated__/MeetingGraphNodeQuery.graphql";
+import type { MeetingGraphNodeQuery } from "/__generated__/core/MeetingGraphNodeQuery.graphql";
 import { usePageTitle } from "@probo/hooks";
-import type { MeetingDetailPageMeetingFragment$key } from "./__generated__/MeetingDetailPageMeetingFragment.graphql";
+import type { MeetingDetailPageMeetingFragment$key } from "/__generated__/core/MeetingDetailPageMeetingFragment.graphql";
 import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
@@ -49,7 +49,7 @@ export default function MeetingDetailPage(props: Props) {
   const node = usePreloadedQuery(meetingNodeQuery, props.queryRef).node;
   const meeting = useFragment<MeetingDetailPageMeetingFragment$key>(
     meetingFragment,
-    node
+    node,
   );
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
@@ -133,11 +133,11 @@ export default function MeetingDetailPage(props: Props) {
       {
         message: sprintf(
           __(
-            'This will permanently delete the meeting "%s". This action cannot be undone.'
+            'This will permanently delete the meeting "%s". This action cannot be undone.',
           ),
-          meeting.name
+          meeting.name,
         ),
-      }
+      },
     );
   };
 

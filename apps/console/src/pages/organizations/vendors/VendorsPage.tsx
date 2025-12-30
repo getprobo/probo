@@ -30,11 +30,11 @@ import {
   useDeleteVendor,
   vendorsQuery,
 } from "/hooks/graph/VendorGraph";
-import type { VendorGraphListQuery } from "/hooks/graph/__generated__/VendorGraphListQuery.graphql";
+import type { VendorGraphListQuery } from "/__generated__/core/VendorGraphListQuery.graphql";
 import type {
   VendorGraphPaginatedFragment$data,
   VendorGraphPaginatedFragment$key,
-} from "/hooks/graph/__generated__/VendorGraphPaginatedFragment.graphql";
+} from "/__generated__/core/VendorGraphPaginatedFragment.graphql";
 import { SortableTable, SortableTh } from "/components/SortableTable";
 import { SnapshotBanner } from "/components/SnapshotBanner";
 import { use } from "react";
@@ -56,7 +56,7 @@ export default function VendorsPage(props: Props) {
   const data = usePreloadedQuery(vendorsQuery, props.queryRef);
   const pagination = usePaginationFragment(
     paginatedVendorsFragment,
-    data.node as VendorGraphPaginatedFragment$key
+    data.node as VendorGraphPaginatedFragment$key,
   );
 
   const vendors = pagination.data.vendors?.edges.map((edge) => edge.node);
@@ -64,10 +64,10 @@ export default function VendorsPage(props: Props) {
 
   usePageTitle(__("Vendors"));
 
-  const hasAnyAction = !isSnapshotMode && (
-    isAuthorized("Vendor", "updateVendor") ||
-    isAuthorized("Vendor", "deleteVendor")
-  );
+  const hasAnyAction =
+    !isSnapshotMode &&
+    (isAuthorized("Vendor", "updateVendor") ||
+      isAuthorized("Vendor", "deleteVendor"));
 
   return (
     <div className="space-y-6">
@@ -75,18 +75,16 @@ export default function VendorsPage(props: Props) {
       <PageHeader
         title={__("Vendors")}
         description={__(
-          "Vendors are third-party services that your company uses. Add them to keep track of their risk and compliance status."
+          "Vendors are third-party services that your company uses. Add them to keep track of their risk and compliance status.",
         )}
       >
-        {!isSnapshotMode && (
-          isAuthorized("Organization", "createVendor") && (
-            <CreateVendorDialog
-              connection={connectionId}
-              organizationId={organizationId}
-            >
-              <Button icon={IconPlusLarge}>{__("Add vendor")}</Button>
-            </CreateVendorDialog>
-          )
+        {!isSnapshotMode && isAuthorized("Organization", "createVendor") && (
+          <CreateVendorDialog
+            connection={connectionId}
+            organizationId={organizationId}
+          >
+            <Button icon={IconPlusLarge}>{__("Add vendor")}</Button>
+          </CreateVendorDialog>
         )}
       </PageHeader>
       <SortableTable {...pagination}>
@@ -133,9 +131,10 @@ function VendorRow({
   const { isAuthorized } = use(PermissionsContext);
   const deleteVendor = useDeleteVendor(vendor, connectionId);
 
-  const vendorUrl = isSnapshotMode && snapshotId
-    ? `/organizations/${organizationId}/snapshots/${snapshotId}/vendors/${vendor.id}/overview`
-    : `/organizations/${organizationId}/vendors/${vendor.id}/overview`;
+  const vendorUrl =
+    isSnapshotMode && snapshotId
+      ? `/organizations/${organizationId}/snapshots/${snapshotId}/vendors/${vendor.id}/overview`
+      : `/organizations/${organizationId}/vendors/${vendor.id}/overview`;
 
   return (
     <>

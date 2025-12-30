@@ -12,17 +12,20 @@ import {
   Badge,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
-import { getObligationStatusVariant, getObligationStatusLabel } from "@probo/helpers";
+import {
+  getObligationStatusVariant,
+  getObligationStatusLabel,
+} from "@probo/helpers";
 import { Suspense, useMemo, useState, type ReactNode } from "react";
 import { graphql } from "relay-runtime";
 import { useLazyLoadQuery, usePaginationFragment } from "react-relay";
-import type { LinkedObligationsDialogQuery } from "./__generated__/LinkedObligationsDialogQuery.graphql";
+import type { LinkedObligationsDialogQuery } from "/__generated__/core/LinkedObligationsDialogQuery.graphql";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import type { NodeOf } from "/types";
 import type {
   LinkedObligationsDialogFragment$data,
   LinkedObligationsDialogFragment$key,
-} from "./__generated__/LinkedObligationsDialogFragment.graphql";
+} from "/__generated__/core/LinkedObligationsDialogFragment.graphql";
 
 const obligationsQuery = graphql`
   query LinkedObligationsDialogQuery($organizationId: ID!) {
@@ -94,25 +97,35 @@ export function LinkedObligationDialog({ children, ...props }: Props) {
 
 function LinkedObligationsDialogContent(props: Omit<Props, "children">) {
   const organizationId = useOrganizationId();
-  const query = useLazyLoadQuery<LinkedObligationsDialogQuery>(obligationsQuery, {
-    organizationId,
-  }, { fetchPolicy: "network-only" });
+  const query = useLazyLoadQuery<LinkedObligationsDialogQuery>(
+    obligationsQuery,
+    {
+      organizationId,
+    },
+    { fetchPolicy: "network-only" },
+  );
   const { data, loadNext, hasNext, isLoadingNext } = usePaginationFragment(
     obligationsFragment,
-    query.organization as LinkedObligationsDialogFragment$key
+    query.organization as LinkedObligationsDialogFragment$key,
   );
   const { __ } = useTranslate();
   const [search, setSearch] = useState("");
-  const obligations = useMemo(() => data.obligations?.edges?.map((edge) => edge.node) ?? [], [data.obligations]);
+  const obligations = useMemo(
+    () => data.obligations?.edges?.map((edge) => edge.node) ?? [],
+    [data.obligations],
+  );
   const linkedIds = useMemo(() => {
     return new Set(props.linkedObligations?.map((o) => o.id) ?? []);
   }, [props.linkedObligations]);
 
   const filteredObligations = useMemo(() => {
-    return obligations.filter((obligation) =>
-      obligation.area?.toLowerCase().includes(search.toLowerCase()) ||
-      obligation.source?.toLowerCase().includes(search.toLowerCase()) ||
-      obligation.owner?.fullName?.toLowerCase().includes(search.toLowerCase())
+    return obligations.filter(
+      (obligation) =>
+        obligation.area?.toLowerCase().includes(search.toLowerCase()) ||
+        obligation.source?.toLowerCase().includes(search.toLowerCase()) ||
+        obligation.owner?.fullName
+          ?.toLowerCase()
+          .includes(search.toLowerCase()),
     );
   }, [obligations, search]);
 

@@ -1,15 +1,19 @@
-import { graphql } from 'react-relay';
-import { useLazyLoadQuery, usePaginationFragment } from 'react-relay';
+import { graphql } from "react-relay";
+import { useLazyLoadQuery, usePaginationFragment } from "react-relay";
+import type { TrustCenterAccessGraphQuery } from "/__generated__/core/TrustCenterAccessGraphQuery.graphql";
 import type {
-  TrustCenterAccessGraphQuery,
-} from "./__generated__/TrustCenterAccessGraphQuery.graphql";
-import type { TrustCenterAccessGraph_accesses$data, TrustCenterAccessGraph_accesses$key } from './__generated__/TrustCenterAccessGraph_accesses.graphql';
+  TrustCenterAccessGraph_accesses$data,
+  TrustCenterAccessGraph_accesses$key,
+} from "/__generated__/core/TrustCenterAccessGraph_accesses.graphql";
 
 export const trustCenterAccessesPaginationFragment = graphql`
   fragment TrustCenterAccessGraph_accesses on TrustCenter
   @refetchable(queryName: "TrustCenterAccessGraphPaginationQuery") {
-    accesses(first: $count, after: $cursor, orderBy: { field: CREATED_AT, direction: DESC })
-      @connection(key: "TrustCenterAccessGraph_accesses") {
+    accesses(
+      first: $count
+      after: $cursor
+      orderBy: { field: CREATED_AT, direction: DESC }
+    ) @connection(key: "TrustCenterAccessGraph_accesses") {
       __id
       pageInfo {
         hasNextPage
@@ -36,7 +40,11 @@ export const trustCenterAccessesPaginationFragment = graphql`
 `;
 
 export const trustCenterAccessesQuery = graphql`
-  query TrustCenterAccessGraphQuery($trustCenterId: ID!, $count: Int!, $cursor: CursorKey) {
+  query TrustCenterAccessGraphQuery(
+    $trustCenterId: ID!
+    $count: Int!
+    $cursor: CursorKey
+  ) {
     node(id: $trustCenterId) {
       ... on TrustCenter {
         id
@@ -107,7 +115,10 @@ export const loadTrustCenterAccessDocumentAccessesQuery = graphql`
     node(id: $accessId) {
       ... on TrustCenterAccess {
         id
-        availableDocumentAccesses(first: 100, orderBy: { field: CREATED_AT, direction: DESC }) {
+        availableDocumentAccesses(
+          first: 100
+          orderBy: { field: CREATED_AT, direction: DESC }
+        ) {
           edges {
             node {
               id
@@ -153,9 +164,9 @@ export function useTrustCenterAccesses(trustCenterId: string): PaginatedData {
     {
       trustCenterId: trustCenterId || "",
       count: 10,
-      cursor: null
+      cursor: null,
     },
-    { fetchPolicy: 'store-and-network' }
+    { fetchPolicy: "store-and-network" },
   );
 
   const trustCenter = data?.node;
@@ -165,10 +176,10 @@ export function useTrustCenterAccesses(trustCenterId: string): PaginatedData {
     loadNext,
     hasNext,
     isLoadingNext,
-  } = usePaginationFragment<TrustCenterAccessGraphQuery, TrustCenterAccessGraph_accesses$key>(
-    trustCenterAccessesPaginationFragment,
-    trustCenter
-  );
+  } = usePaginationFragment<
+    TrustCenterAccessGraphQuery,
+    TrustCenterAccessGraph_accesses$key
+  >(trustCenterAccessesPaginationFragment, trustCenter);
 
   if (!trustCenterId) {
     return {

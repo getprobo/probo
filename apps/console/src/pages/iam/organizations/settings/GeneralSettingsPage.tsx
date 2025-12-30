@@ -6,8 +6,8 @@ import { useNavigate } from "react-router";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { graphql } from "relay-runtime";
 import { usePreloadedQuery, type PreloadedQuery } from "react-relay";
-import type { GeneralSettingsPageQuery } from "./__generated__/GeneralSettingsPageQuery.graphql";
-import type { GeneralSettingsPage_deleteMutation } from "./__generated__/GeneralSettingsPage_deleteMutation.graphql";
+import type { GeneralSettingsPageQuery } from "/__generated__/iam/GeneralSettingsPageQuery.graphql";
+import type { GeneralSettingsPage_deleteMutation } from "/__generated__/iam/GeneralSettingsPage_deleteMutation.graphql";
 import { DeleteOrganizationDialog } from "/components/organizations/DeleteOrganizationDialog";
 import { OrganizationForm } from "./_components/OrganizationForm";
 

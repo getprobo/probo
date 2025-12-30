@@ -6,8 +6,8 @@ import {
   continualImprovementsQuery,
   continualImprovementNodeQuery,
 } from "/hooks/graph/ContinualImprovementGraph";
-import type { ContinualImprovementGraphListQuery } from "/hooks/graph/__generated__/ContinualImprovementGraphListQuery.graphql";
-import type { ContinualImprovementGraphNodeQuery } from "/hooks/graph/__generated__/ContinualImprovementGraphNodeQuery.graphql";
+import type { ContinualImprovementGraphListQuery } from "/__generated__/core/ContinualImprovementGraphListQuery.graphql";
+import type { ContinualImprovementGraphNodeQuery } from "/__generated__/core/ContinualImprovementGraphNodeQuery.graphql";
 import {
   loaderFromQueryLoader,
   withQueryRef,

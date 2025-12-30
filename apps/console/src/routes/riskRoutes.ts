@@ -7,13 +7,13 @@ import { PageSkeleton } from "/components/skeletons/PageSkeleton";
 import { redirect } from "react-router";
 import { lazy } from "@probo/react-lazy";
 import { LinkCardSkeleton } from "/components/skeletons/LinkCardSkeleton";
-import type { RiskGraphNodeQuery } from "/hooks/graph/__generated__/RiskGraphNodeQuery.graphql";
+import type { RiskGraphNodeQuery } from "/__generated__/core/RiskGraphNodeQuery.graphql";
 import {
   loaderFromQueryLoader,
   withQueryRef,
   type AppRoute,
 } from "@probo/routes";
-import type { RiskGraphListQuery } from "/hooks/graph/__generated__/RiskGraphListQuery.graphql";
+import type { RiskGraphListQuery } from "/__generated__/core/RiskGraphListQuery.graphql";
 
 export const riskRoutes = [
   {

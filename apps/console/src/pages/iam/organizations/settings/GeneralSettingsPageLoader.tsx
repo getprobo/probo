@@ -5,7 +5,7 @@ import {
   GeneralSettingsPage,
   generalSettingsPageQuery,
 } from "./GeneralSettingsPage";
-import type { GeneralSettingsPageQuery } from "./__generated__/GeneralSettingsPageQuery.graphql";
+import type { GeneralSettingsPageQuery } from "/__generated__/iam/GeneralSettingsPageQuery.graphql";
 import { IAMRelayProvider } from "/providers/IAMRelayProvider";
 
 function GeneralSettingsPageLoader() {

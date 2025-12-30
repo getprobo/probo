@@ -1,14 +1,14 @@
-import { graphql } from 'react-relay';
-import { useLazyLoadQuery } from 'react-relay';
+import { graphql } from "react-relay";
+import { useLazyLoadQuery } from "react-relay";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import type {
   TrustCenterReferenceGraphQuery,
-  TrustCenterReferenceGraphQuery$data
-} from "./__generated__/TrustCenterReferenceGraphQuery.graphql";
-import type { TrustCenterReferenceGraphCreateMutation } from "./__generated__/TrustCenterReferenceGraphCreateMutation.graphql";
-import type { TrustCenterReferenceGraphUpdateMutation } from "./__generated__/TrustCenterReferenceGraphUpdateMutation.graphql";
-import type { TrustCenterReferenceGraphUpdateRankMutation } from "./__generated__/TrustCenterReferenceGraphUpdateRankMutation.graphql";
-import type { TrustCenterReferenceGraphDeleteMutation } from "./__generated__/TrustCenterReferenceGraphDeleteMutation.graphql";
+  TrustCenterReferenceGraphQuery$data,
+} from "/__generated__/core/TrustCenterReferenceGraphQuery.graphql";
+import type { TrustCenterReferenceGraphCreateMutation } from "/__generated__/core/TrustCenterReferenceGraphCreateMutation.graphql";
+import type { TrustCenterReferenceGraphUpdateMutation } from "/__generated__/core/TrustCenterReferenceGraphUpdateMutation.graphql";
+import type { TrustCenterReferenceGraphUpdateRankMutation } from "/__generated__/core/TrustCenterReferenceGraphUpdateRankMutation.graphql";
+import type { TrustCenterReferenceGraphDeleteMutation } from "/__generated__/core/TrustCenterReferenceGraphDeleteMutation.graphql";
 
 export const trustCenterReferencesQuery = graphql`
   query TrustCenterReferenceGraphQuery($trustCenterId: ID!) {
@@ -96,11 +96,14 @@ export const deleteTrustCenterReferenceMutation = graphql`
   }
 `;
 
-export function useTrustCenterReferences(trustCenterId: string, refetchKey = 0): TrustCenterReferenceGraphQuery$data | null {
+export function useTrustCenterReferences(
+  trustCenterId: string,
+  refetchKey = 0,
+): TrustCenterReferenceGraphQuery$data | null {
   const data = useLazyLoadQuery<TrustCenterReferenceGraphQuery>(
     trustCenterReferencesQuery,
     { trustCenterId: trustCenterId || "" },
-    { fetchPolicy: 'network-only', fetchKey: refetchKey }
+    { fetchPolicy: "network-only", fetchKey: refetchKey },
   );
 
   return trustCenterId ? data : null;
@@ -112,7 +115,7 @@ export function useCreateTrustCenterReferenceMutation() {
     {
       successMessage: "Reference created successfully",
       errorMessage: "Failed to create reference",
-    }
+    },
   );
 }
 
@@ -122,7 +125,7 @@ export function useUpdateTrustCenterReferenceMutation() {
     {
       successMessage: "Reference updated successfully",
       errorMessage: "Failed to update reference",
-    }
+    },
   );
 }
 
@@ -145,7 +148,7 @@ export function useUpdateTrustCenterReferenceRankMutation() {
     {
       successMessage: "Order updated successfully",
       errorMessage: "Failed to update order",
-    }
+    },
   );
 }
 
@@ -155,6 +158,6 @@ export function useDeleteTrustCenterReferenceMutation() {
     {
       successMessage: "Reference deleted successfully",
       errorMessage: "Failed to delete reference",
-    }
+    },
   );
 }

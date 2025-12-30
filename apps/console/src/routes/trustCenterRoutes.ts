@@ -4,7 +4,7 @@ import { PageSkeleton } from "/components/skeletons/PageSkeleton";
 import { LinkCardSkeleton } from "/components/skeletons/LinkCardSkeleton";
 import { lazy } from "@probo/react-lazy";
 import { trustCenterQuery } from "../hooks/graph/TrustCenterGraph";
-import type { TrustCenterGraphQuery } from "/hooks/graph/__generated__/TrustCenterGraphQuery.graphql";
+import type { TrustCenterGraphQuery } from "/__generated__/core/TrustCenterGraphQuery.graphql";
 import {
   loaderFromQueryLoader,
   withQueryRef,

@@ -3,8 +3,8 @@ import { coreEnvironment } from "/environments";
 import { PageSkeleton } from "/components/skeletons/PageSkeleton";
 import { lazy } from "@probo/react-lazy";
 import { auditsQuery, auditNodeQuery } from "../hooks/graph/AuditGraph";
-import type { AuditGraphListQuery } from "/hooks/graph/__generated__/AuditGraphListQuery.graphql";
-import type { AuditGraphNodeQuery } from "/hooks/graph/__generated__/AuditGraphNodeQuery.graphql";
+import type { AuditGraphListQuery } from "/__generated__/core/AuditGraphListQuery.graphql";
+import type { AuditGraphNodeQuery } from "/__generated__/core/AuditGraphNodeQuery.graphql";
 import {
   loaderFromQueryLoader,
   withQueryRef,

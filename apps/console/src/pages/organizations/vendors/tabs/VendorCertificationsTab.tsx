@@ -10,7 +10,7 @@ import {
 } from "@probo/ui";
 import { Controller } from "react-hook-form";
 import { useVendorForm } from "/hooks/forms/useVendorForm";
-import type { useVendorFormFragment$key } from "/hooks/forms/__generated__/useVendorFormFragment.graphql";
+import type { useVendorFormFragment$key } from "/__generated__/core/useVendorFormFragment.graphql";
 import { useOutletContext, useParams } from "react-router";
 import {
   certificationCategoryLabel,
@@ -36,7 +36,10 @@ export default function VendorCertificationsTab() {
   const canUpdateVendor = isAuthorized("Vendor", "updateVendor");
 
   return (
-    <form className="space-y-4" onSubmit={!isSnapshotMode && canUpdateVendor ? handleSubmit : undefined}>
+    <form
+      className="space-y-4"
+      onSubmit={!isSnapshotMode && canUpdateVendor ? handleSubmit : undefined}
+    >
       <Card padded>
         <Controller
           control={control}
@@ -75,7 +78,7 @@ function Certifications(props: CertificationsProps) {
   const categories = objectEntries(certifications)
     .map(
       ([key, value]) =>
-        [key, value.filter((c) => props.value.includes(c))] as const
+        [key, value.filter((c) => props.value.includes(c))] as const,
     )
     .filter(([, certifications]) => certifications.length > 0);
   categories.push([
@@ -112,7 +115,7 @@ function Certifications(props: CertificationsProps) {
                     className={clsx(
                       "hover:bg-subtle-hover cursor-pointer",
                       animateBadge.current &&
-                        "starting:opacity-0 starting:w-0 w-max transition-all duration-500 starting:bg-accent"
+                        "starting:opacity-0 starting:w-0 w-max transition-all duration-500 starting:bg-accent",
                     )}
                   >
                     {certification}
@@ -129,7 +132,7 @@ function Certifications(props: CertificationsProps) {
       {!props.readOnly && (
         <CertificationInput
           certifications={categorizedCertifications.filter(
-            (c) => !props.value.includes(c)
+            (c) => !props.value.includes(c),
           )}
           onAdd={addCertificate}
         />
@@ -152,7 +155,7 @@ function CertificationInput({
   const [search, setSearch] = useState("");
   const isCustom = !certifications.includes(search.trim());
   const filteredCertifications = certifications.filter((c) =>
-    c.toLowerCase().includes(search.toLowerCase())
+    c.toLowerCase().includes(search.toLowerCase()),
   );
 
   return (

@@ -5,7 +5,7 @@ import {
   useFragment,
   usePreloadedQuery,
 } from "react-relay";
-import type { DocumentGraphNodeQuery } from "/hooks/graph/__generated__/DocumentGraphNodeQuery.graphql";
+import type { DocumentGraphNodeQuery } from "/__generated__/core/DocumentGraphNodeQuery.graphql";
 import {
   documentNodeQuery,
   useDeleteDocumentMutation,
@@ -15,9 +15,9 @@ import { usePageTitle } from "@probo/hooks";
 import type {
   DocumentDetailPageDocumentFragment$data,
   DocumentDetailPageDocumentFragment$key,
-} from "./__generated__/DocumentDetailPageDocumentFragment.graphql";
-import type { DocumentDetailPageExportPDFMutation } from "./__generated__/DocumentDetailPageExportPDFMutation.graphql";
-import type { DocumentDetailPageUpdateMutation } from "./__generated__/DocumentDetailPageUpdateMutation.graphql";
+} from "/__generated__/core/DocumentDetailPageDocumentFragment.graphql";
+import type { DocumentDetailPageExportPDFMutation } from "/__generated__/core/DocumentDetailPageExportPDFMutation.graphql";
+import type { DocumentDetailPageUpdateMutation } from "/__generated__/core/DocumentDetailPageUpdateMutation.graphql";
 import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
@@ -189,7 +189,7 @@ export default function DocumentDetailPage(props: Props) {
   const node = usePreloadedQuery(documentNodeQuery, props.queryRef).node;
   const document = useFragment<DocumentDetailPageDocumentFragment$key>(
     documentFragment,
-    node
+    node,
   );
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
@@ -212,7 +212,7 @@ export default function DocumentDetailPage(props: Props) {
     {
       successMessage: __("Document published successfully."),
       errorMessage: __("Failed to publish document"),
-    }
+    },
   );
   const [deleteDocument, isDeleting] = useDeleteDocumentMutation();
   const [deleteDraftDocumentVersion, isDeletingDraft] =
@@ -223,7 +223,7 @@ export default function DocumentDetailPage(props: Props) {
       {
         successMessage: __("PDF download started."),
         errorMessage: __("Failed to generate PDF"),
-      }
+      },
     );
 
   // const userEmailData = useLazyLoadQuery<DocumentDetailPageUserEmailQuery>(
@@ -237,7 +237,7 @@ export default function DocumentDetailPage(props: Props) {
       {
         successMessage: __("Document updated successfully."),
         errorMessage: __("Failed to update document"),
-      }
+      },
     );
   const versionConnectionId = document.versions.__id;
 
@@ -250,7 +250,7 @@ export default function DocumentDetailPage(props: Props) {
         documentType: document.documentType,
         classification: currentVersion.classification,
       },
-    }
+    },
   );
 
   usePageTitle(document.title);
@@ -299,7 +299,7 @@ export default function DocumentDetailPage(props: Props) {
           props.queryRef.environment,
           documentNodeQuery,
           props.queryRef.variables,
-          { fetchPolicy: "network-only" }
+          { fetchPolicy: "network-only" },
         );
       },
     });
@@ -321,7 +321,7 @@ export default function DocumentDetailPage(props: Props) {
           props.queryRef.environment,
           documentNodeQuery,
           props.queryRef.variables,
-          { fetchPolicy: "network-only" }
+          { fetchPolicy: "network-only" },
         );
       },
     });
@@ -355,11 +355,11 @@ export default function DocumentDetailPage(props: Props) {
       {
         message: sprintf(
           __(
-            'This will permanently delete the document "%s". This action cannot be undone.'
+            'This will permanently delete the document "%s". This action cannot be undone.',
           ),
-          document.title
+          document.title,
         ),
-      }
+      },
     );
   };
 
@@ -377,7 +377,7 @@ export default function DocumentDetailPage(props: Props) {
                 props.queryRef.environment,
                 documentNodeQuery,
                 props.queryRef.variables,
-                { fetchPolicy: "network-only" }
+                { fetchPolicy: "network-only" },
               );
 
               resolve();
@@ -388,12 +388,12 @@ export default function DocumentDetailPage(props: Props) {
       {
         message: sprintf(
           __(
-            'This will permanently delete the draft version %s of "%s". This action cannot be undone.'
+            'This will permanently delete the draft version %s of "%s". This action cannot be undone.',
           ),
           currentVersion.version,
-          document.title
+          document.title,
         ),
-      }
+      },
     );
   };
 
@@ -684,7 +684,7 @@ export default function DocumentDetailPage(props: Props) {
               <div className="text-sm text-txt-secondary">
                 {getDocumentClassificationLabel(
                   __,
-                  currentVersion.classification
+                  currentVersion.classification,
                 )}
               </div>
             </ReadOnlyPropertyContent>
@@ -793,7 +793,7 @@ function VersionItem({
         <div
           className={clsx(
             "flex-shrink-0 flex items-center justify-center size-10",
-            active && "bg-active rounded"
+            active && "bg-active rounded",
           )}
         >
           <div className="text-base text-txt-primary whitespace-nowrap font-bold text-center">

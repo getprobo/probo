@@ -10,7 +10,7 @@ import {
 import { useMemo, useState } from "react";
 import { InvitationCard } from "./_components/InvitationCard";
 import { MembershipCard } from "./_components/MembershipCard";
-import type { MembershipsPageQuery } from "./__generated__/MembershipsPageQuery.graphql";
+import type { MembershipsPageQuery } from "/__generated__/iam/MembershipsPageQuery.graphql";
 
 export const membershipsPageQuery = graphql`
   query MembershipsPageQuery {

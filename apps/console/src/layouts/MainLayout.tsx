@@ -46,7 +46,7 @@ import { ErrorBoundary } from "react-error-boundary";
 import { useLazyLoadQuery } from "react-relay";
 import { Link, Navigate, Outlet, useParams } from "react-router";
 import { graphql } from "relay-runtime";
-import type { MainLayoutQuery as MainLayoutQueryType } from "./__generated__/MainLayoutQuery.graphql";
+import type { MainLayoutQuery as MainLayoutQueryType } from "/__generated__/core/MainLayoutQuery.graphql";
 import { PageError } from "/components/PageError";
 import { PermissionsProvider } from "/providers/PermissionsProvider";
 import { PermissionsContext } from "/providers/PermissionsContext";
@@ -270,7 +270,7 @@ function UserDropdown({ organizationId }: { organizationId: string }) {
   };
 
   const handleLogout: React.MouseEventHandler<HTMLAnchorElement> = async (
-    e
+    e,
   ) => {
     e.preventDefault();
 
@@ -379,7 +379,7 @@ function OrganizationSelector({
       return organizations;
     }
     return organizations.filter((org) =>
-      org.name.toLowerCase().includes(search.toLowerCase())
+      org.name.toLowerCase().includes(search.toLowerCase()),
     );
   }, [organizations, search]);
 
@@ -406,7 +406,7 @@ function OrganizationSelector({
           await invitationsResponse.json();
 
         const pendingCount = invitationsData.invitations.filter(
-          (inv) => !inv.acceptedAt
+          (inv) => !inv.acceptedAt,
         ).length;
 
         setOrganizations(orgsData.organizations);

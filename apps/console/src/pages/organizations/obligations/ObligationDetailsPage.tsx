@@ -32,9 +32,15 @@ import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { Controller } from "react-hook-form";
 import { formatError, type GraphQLError } from "@probo/helpers";
 import z from "zod";
-import { getObligationStatusVariant, getObligationStatusLabel, formatDatetime, getObligationStatusOptions, validateSnapshotConsistency } from "@probo/helpers";
+import {
+  getObligationStatusVariant,
+  getObligationStatusLabel,
+  formatDatetime,
+  getObligationStatusOptions,
+  validateSnapshotConsistency,
+} from "@probo/helpers";
 import { SnapshotBanner } from "/components/SnapshotBanner";
-import type { ObligationGraphNodeQuery } from "/hooks/graph/__generated__/ObligationGraphNodeQuery.graphql";
+import type { ObligationGraphNodeQuery } from "/__generated__/core/ObligationGraphNodeQuery.graphql";
 import { use } from "react";
 import { PermissionsContext } from "/providers/PermissionsContext";
 
@@ -55,7 +61,10 @@ type Props = {
 };
 
 export default function ObligationDetailsPage(props: Props) {
-  const data = usePreloadedQuery<ObligationGraphNodeQuery>(obligationNodeQuery, props.queryRef);
+  const data = usePreloadedQuery<ObligationGraphNodeQuery>(
+    obligationNodeQuery,
+    props.queryRef,
+  );
   const obligation = data.node;
   const { __ } = useTranslate();
   const { toast } = useToast();
@@ -71,12 +80,12 @@ export default function ObligationDetailsPage(props: Props) {
 
   const connectionId = ConnectionHandler.getConnectionID(
     organizationId,
-    ObligationsConnectionKey
+    ObligationsConnectionKey,
   );
 
   const deleteObligation = useDeleteObligation(
     { id: obligation?.id ?? "" },
-    connectionId
+    connectionId,
   );
 
   const { register, handleSubmit, formState, control } = useFormWithSchema(
@@ -97,7 +106,7 @@ export default function ObligationDetailsPage(props: Props) {
         status: obligation?.status ?? "NON_COMPLIANT",
         ownerId: obligation?.owner?.id || "",
       },
-    }
+    },
   );
 
   const onSubmit = handleSubmit(async (formData) => {
@@ -123,13 +132,16 @@ export default function ObligationDetailsPage(props: Props) {
     } catch (error) {
       toast({
         title: __("Error"),
-        description: formatError(__("Failed to update obligation"), error as GraphQLError),
+        description: formatError(
+          __("Failed to update obligation"),
+          error as GraphQLError,
+        ),
         variant: "error",
       });
     }
   });
 
-    const breadcrumbObligationsUrl = isSnapshotMode
+  const breadcrumbObligationsUrl = isSnapshotMode
     ? `/organizations/${organizationId}/snapshots/${snapshotId}/obligations`
     : `/organizations/${organizationId}/obligations`;
 
@@ -140,39 +152,37 @@ export default function ObligationDetailsPage(props: Props) {
       )}
       <div className="flex justify-between items-start">
         <div>
-                   <Breadcrumb
-           items={[
-             { label: __("Obligations"), to: breadcrumbObligationsUrl },
-             { label: __("Obligation Details") },
-           ]}
-         />
-        <div className="flex items-center gap-3 mt-2">
-          <h1 className="text-2xl font-bold">{__("Obligation")}</h1>
-          <Badge variant={getObligationStatusVariant(obligation.status ?? "NON_COMPLIANT")}>
-            {getObligationStatusLabel(obligation.status ?? "NON_COMPLIANT")}
-          </Badge>
+          <Breadcrumb
+            items={[
+              { label: __("Obligations"), to: breadcrumbObligationsUrl },
+              { label: __("Obligation Details") },
+            ]}
+          />
+          <div className="flex items-center gap-3 mt-2">
+            <h1 className="text-2xl font-bold">{__("Obligation")}</h1>
+            <Badge
+              variant={getObligationStatusVariant(
+                obligation.status ?? "NON_COMPLIANT",
+              )}
+            >
+              {getObligationStatusLabel(obligation.status ?? "NON_COMPLIANT")}
+            </Badge>
+          </div>
         </div>
-      </div>
 
-        {!isSnapshotMode && (
-          isAuthorized("Obligation", "deleteObligation") && (
-            <ActionDropdown>
-              <DropdownItem icon={IconTrashCan} onClick={deleteObligation}>
-                {__("Delete")}
-              </DropdownItem>
-            </ActionDropdown>
-          )
+        {!isSnapshotMode && isAuthorized("Obligation", "deleteObligation") && (
+          <ActionDropdown>
+            <DropdownItem icon={IconTrashCan} onClick={deleteObligation}>
+              {__("Delete")}
+            </DropdownItem>
+          </ActionDropdown>
         )}
       </div>
 
       <Card padded>
         <form onSubmit={onSubmit} className="space-y-6">
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Field
-              label={__("Area")}
-              error={formState.errors.area?.message}
-            >
+            <Field label={__("Area")} error={formState.errors.area?.message}>
               <Input
                 {...register("area")}
                 placeholder={__("Enter area")}
@@ -215,7 +225,9 @@ export default function ObligationDetailsPage(props: Props) {
                 )}
               />
               {formState.errors.status && (
-                <p className="text-sm text-red-500 mt-1">{formState.errors.status.message}</p>
+                <p className="text-sm text-red-500 mt-1">
+                  {formState.errors.status.message}
+                </p>
               )}
             </Field>
 
@@ -300,11 +312,10 @@ export default function ObligationDetailsPage(props: Props) {
           {!isSnapshotMode && (
             <div className="flex justify-end">
               {isAuthorized("Obligation", "updateObligation") && (
-                <Button
-                  type="submit"
-                  disabled={formState.isSubmitting}
-                >
-                  {formState.isSubmitting ? __("Saving...") : __("Save Changes")}
+                <Button type="submit" disabled={formState.isSubmitting}>
+                  {formState.isSubmitting
+                    ? __("Saving...")
+                    : __("Save Changes")}
                 </Button>
               )}
             </div>

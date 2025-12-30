@@ -20,7 +20,7 @@ import {
 import { Fragment, use } from "react";
 import { graphql, useMutation, useRelayEnvironment } from "react-relay";
 import { Link, useLocation, useParams } from "react-router";
-import type { TaskFormDialogFragment$key } from "./__generated__/TaskFormDialogFragment.graphql";
+import type { TaskFormDialogFragment$key } from "/__generated__/core/TaskFormDialogFragment.graphql";
 import TaskFormDialog, {
   taskUpdateMutation,
 } from "/components/tasks/TaskFormDialog";
@@ -71,8 +71,8 @@ export default function TasksCard({ tasks, connectionId }: Props) {
 
   const { isAuthorized } = use(PermissionsContext);
 
-  const hasAnyAction = isAuthorized("Task", "updateTask") ||
-    isAuthorized("Task", "deleteTask");
+  const hasAnyAction =
+    isAuthorized("Task", "updateTask") || isAuthorized("Task", "deleteTask");
 
   return (
     <div className="space-y-6">
@@ -182,14 +182,14 @@ function TaskRow(props: TaskRowProps) {
                 relayEnv,
                 params.measureId,
                 "tasks(first:0)",
-                -1
+                -1,
               );
             }
           },
         }),
       {
         message: "Are you sure you want to delete this task?",
-      }
+      },
     );
   };
 
