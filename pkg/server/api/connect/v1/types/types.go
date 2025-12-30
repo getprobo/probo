@@ -175,6 +175,7 @@ type Invitation struct {
 	CreatedAt    time.Time                 `json:"createdAt"`
 	Status       coredata.InvitationStatus `json:"status"`
 	Organization *Organization             `json:"organization,omitempty"`
+	Permission   bool                      `json:"permission"`
 }
 
 func (Invitation) IsNode()             {}
@@ -204,8 +205,8 @@ type Membership struct {
 	Profile      *MembershipProfile      `json:"profile,omitempty"`
 	Organization *Organization           `json:"organization,omitempty"`
 	Role         coredata.MembershipRole `json:"role"`
-	Permissions  []*Permission           `json:"permissions,omitempty"`
 	LastSession  *Session                `json:"lastSession,omitempty"`
+	Permission   bool                    `json:"permission"`
 }
 
 func (Membership) IsNode()             {}
@@ -217,10 +218,11 @@ type MembershipEdge struct {
 }
 
 type MembershipProfile struct {
-	ID        gid.GID   `json:"id"`
-	FullName  string    `json:"fullName"`
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
+	ID         gid.GID   `json:"id"`
+	FullName   string    `json:"fullName"`
+	CreatedAt  time.Time `json:"createdAt"`
+	UpdatedAt  time.Time `json:"updatedAt"`
+	Permission bool      `json:"permission"`
 }
 
 func (MembershipProfile) IsNode()             {}
@@ -244,6 +246,7 @@ type Organization struct {
 	Invitations        *InvitationConnection        `json:"invitations,omitempty"`
 	SamlConfigurations *SAMLConfigurationConnection `json:"samlConfigurations,omitempty"`
 	ViewerMembership   *Membership                  `json:"viewerMembership,omitempty"`
+	Permission         bool                         `json:"permission"`
 }
 
 func (Organization) IsNode()             {}
@@ -269,19 +272,6 @@ type PasswordRequired struct {
 
 func (PasswordRequired) IsAssumeOrganizationSessionResult() {}
 
-type Permission struct {
-	ID            gid.GID       `json:"id"`
-	CreatedAt     time.Time     `json:"createdAt"`
-	Application   *Application  `json:"application"`
-	AccessLevel   AccessLevel   `json:"accessLevel"`
-	Organization  *Organization `json:"organization"`
-	PrincipalType PrincipalType `json:"principalType"`
-	PrincipalID   gid.GID       `json:"principalId"`
-}
-
-func (Permission) IsNode()             {}
-func (this Permission) GetID() gid.GID { return this.ID }
-
 type PersonalAPIKey struct {
 	ID            gid.GID         `json:"id"`
 	Name          string          `json:"name"`
@@ -290,6 +280,7 @@ type PersonalAPIKey struct {
 	CreatedAt     time.Time       `json:"createdAt"`
 	Scopes        []TokenScope    `json:"scopes"`
 	Organizations []*Organization `json:"organizations"`
+	Permission    bool            `json:"permission"`
 }
 
 func (PersonalAPIKey) IsNode()             {}
@@ -384,6 +375,7 @@ type SAMLConfiguration struct {
 	UpdatedAt               time.Time                      `json:"updatedAt"`
 	TestLoginURL            string                         `json:"testLoginUrl"`
 	AttributeMappings       *SAMLAttributeMappings         `json:"attributeMappings"`
+	Permission              bool                           `json:"permission"`
 }
 
 func (SAMLConfiguration) IsNode()             {}
@@ -401,13 +393,14 @@ type SSOAvailability struct {
 }
 
 type Session struct {
-	ID        gid.GID   `json:"id"`
-	Identity  *Identity `json:"identity,omitempty"`
-	IPAddress string    `json:"ipAddress"`
-	UserAgent string    `json:"userAgent"`
-	UpdatedAt time.Time `json:"updatedAt"`
-	CreatedAt time.Time `json:"createdAt"`
-	ExpiresAt time.Time `json:"expiresAt"`
+	ID         gid.GID   `json:"id"`
+	Identity   *Identity `json:"identity,omitempty"`
+	IPAddress  string    `json:"ipAddress"`
+	UserAgent  string    `json:"userAgent"`
+	UpdatedAt  time.Time `json:"updatedAt"`
+	CreatedAt  time.Time `json:"createdAt"`
+	ExpiresAt  time.Time `json:"expiresAt"`
+	Permission bool      `json:"permission"`
 }
 
 func (Session) IsNode()             {}

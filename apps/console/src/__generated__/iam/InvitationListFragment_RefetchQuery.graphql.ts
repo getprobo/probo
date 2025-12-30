@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<f1bb84b37a7d8df3e9e563fe6204a307>>
+ * @generated SignedSource<<0da865b38342a3574ae7dc7185a6071d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -271,6 +271,19 @@ return {
                             "name": "acceptedAt",
                             "storageKey": null
                           },
+                          {
+                            "alias": "canDelete",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "iam:invitation:delete"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"iam:invitation:delete\")"
+                          },
                           (v11/*: any*/)
                         ],
                         "storageKey": null
@@ -360,12 +373,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "4cc36c8fb50b104ebe3fae66bf847ecc",
+    "cacheID": "2f419e2fcb92f5a188dcd35ff5661fd7",
     "id": null,
     "metadata": {},
     "name": "InvitationListFragment_RefetchQuery",
     "operationKind": "query",
-    "text": "query InvitationListFragment_RefetchQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 20\n  $last: Int = null\n  $order: InvitationOrder = {direction: ASC, field: CREATED_AT}\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...InvitationListFragment_16fISc\n    id\n  }\n}\n\nfragment InvitationListFragment_16fISc on Organization {\n  invitations(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    totalCount\n    edges {\n      node {\n        id\n        ...InvitationListItemFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment InvitationListItemFragment on Invitation {\n  id\n  fullName\n  email\n  role\n  status\n  createdAt\n  expiresAt\n  acceptedAt\n}\n"
+    "text": "query InvitationListFragment_RefetchQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 20\n  $last: Int = null\n  $order: InvitationOrder = {direction: ASC, field: CREATED_AT}\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...InvitationListFragment_16fISc\n    id\n  }\n}\n\nfragment InvitationListFragment_16fISc on Organization {\n  invitations(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    totalCount\n    edges {\n      node {\n        id\n        ...InvitationListItemFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment InvitationListItemFragment on Invitation {\n  id\n  fullName\n  email\n  role\n  status\n  createdAt\n  expiresAt\n  acceptedAt\n  canDelete: permission(action: \"iam:invitation:delete\")\n}\n"
   }
 };
 })();

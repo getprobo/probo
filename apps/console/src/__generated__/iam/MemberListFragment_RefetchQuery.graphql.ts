@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<75b9df3cc430ed26d41b88a67a410aca>>
+ * @generated SignedSource<<a828bfcd067f92e4dc3a1adcd4fe786d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -288,6 +288,32 @@ return {
                             "name": "createdAt",
                             "storageKey": null
                           },
+                          {
+                            "alias": "canUpdate",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "iam:membership:update"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"iam:membership:update\")"
+                          },
+                          {
+                            "alias": "canDelete",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "iam:membership:delete"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"iam:membership:delete\")"
+                          },
                           (v11/*: any*/)
                         ],
                         "storageKey": null
@@ -377,12 +403,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "df1f40dcee56d6e5181849cd82acb824",
+    "cacheID": "a879076e1e75bea4d524852533db17b6",
     "id": null,
     "metadata": {},
     "name": "MemberListFragment_RefetchQuery",
     "operationKind": "query",
-    "text": "query MemberListFragment_RefetchQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 20\n  $last: Int = null\n  $order: MembershipOrder = {direction: ASC, field: CREATED_AT}\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...MemberListFragment_16fISc\n    id\n  }\n}\n\nfragment MemberListFragment_16fISc on Organization {\n  ...MemberListItem_currentRoleFragment\n  members(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    totalCount\n    edges {\n      node {\n        id\n        ...MemberListItemFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment MemberListItemFragment on Membership {\n  id\n  role\n  profile {\n    fullName\n    id\n  }\n  identity {\n    email\n    id\n  }\n  createdAt\n}\n\nfragment MemberListItem_currentRoleFragment on Organization {\n  viewerMembership {\n    role\n    id\n  }\n}\n"
+    "text": "query MemberListFragment_RefetchQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 20\n  $last: Int = null\n  $order: MembershipOrder = {direction: ASC, field: CREATED_AT}\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...MemberListFragment_16fISc\n    id\n  }\n}\n\nfragment MemberListFragment_16fISc on Organization {\n  ...MemberListItem_currentRoleFragment\n  members(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    totalCount\n    edges {\n      node {\n        id\n        ...MemberListItemFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment MemberListItemFragment on Membership {\n  id\n  role\n  profile {\n    fullName\n    id\n  }\n  identity {\n    email\n    id\n  }\n  createdAt\n  canUpdate: permission(action: \"iam:membership:update\")\n  canDelete: permission(action: \"iam:membership:delete\")\n}\n\nfragment MemberListItem_currentRoleFragment on Organization {\n  viewerMembership {\n    role\n    id\n  }\n}\n"
   }
 };
 })();
