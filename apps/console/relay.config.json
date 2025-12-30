@@ -15,11 +15,22 @@
       "eagerEsModules": true,
       "noFutureProofEnums": true,
       "output": "apps/console/src/__generated__/core",
-      "relativizeJsModulePaths": false
+      "relativizeJsModulePaths": false,
+      "excludesExtensions": ["*.iam.ts"]
+    },
+    "inline-iam": {
+      "base": "core",
+      "schema": "pkg/server/api/connect/v1/schema.graphql",
+      "language": "typescript",
+      "eagerEsModules": true,
+      "noFutureProofEnums": true,
+      "output": "apps/console/src/__generated__/iam",
+      "relativizeJsModulePaths": false,
+      "excludesExtensions": ["*.tsx", "**/hooks/**.ts"]
     }
   },
   "sources": {
     "apps/console/src/pages/iam": "iam",
-    "apps/console/src": "core"
+    "apps/console/src": ["core", "inline-iam"]
   }
 }
