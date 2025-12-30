@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/99designs/gqlgen/graphql"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
@@ -138,38 +137,8 @@ func (r *identityResolver) PersonalAPIKeys(ctx context.Context, obj *types.Ident
 }
 
 // Permission is the resolver for the permission field.
-func (r *identityResolver) Permission(ctx context.Context, obj *types.Identity, action string, id gid.GID) (bool, error) {
-	err := r.iam.Authorizer.Authorize(
-		ctx,
-		iam.AuthorizeParams{
-			Principal: obj.ID,
-			Resource:  id,
-			Action:    action,
-		},
-	)
-
-	if err != nil {
-		var errInsufficientPermissions *iam.ErrInsufficientPermissions
-		if errors.As(err, &errInsufficientPermissions) {
-			graphql.AddError(
-				ctx,
-				&gqlerror.Error{
-					Path:    graphql.GetPath(ctx),
-					Message: err.Error(),
-					Extensions: map[string]interface{}{
-						"code": "UNAUTHORIZED",
-					},
-				},
-			)
-
-			return false, nil
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot authorize", log.Error(err))
-		return false, gqlutils.InternalServerError(ctx)
-	}
-
-	return true, nil
+func (r *identityResolver) Permission(ctx context.Context, obj *types.Identity, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
 }
 
 // Organization is the resolver for the organization field.
@@ -187,6 +156,11 @@ func (r *invitationResolver) Organization(ctx context.Context, obj *types.Invita
 	}
 
 	return types.NewOrganization(organization), nil
+}
+
+// Permission is the resolver for the permission field.
+func (r *invitationResolver) Permission(ctx context.Context, obj *types.Invitation, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
 }
 
 // TotalCount is the resolver for the totalCount field.
@@ -269,11 +243,6 @@ func (r *membershipResolver) Organization(ctx context.Context, obj *types.Member
 	return types.NewOrganization(organization), nil
 }
 
-// Permissions is the resolver for the permissions field.
-func (r *membershipResolver) Permissions(ctx context.Context, obj *types.Membership) ([]*types.Permission, error) {
-	panic("not implemented")
-}
-
 // LastSession is the resolver for the lastSession field.
 func (r *membershipResolver) LastSession(ctx context.Context, obj *types.Membership) (*types.Session, error) {
 	session := SessionFromContext(ctx)
@@ -293,6 +262,11 @@ func (r *membershipResolver) LastSession(ctx context.Context, obj *types.Members
 	}
 
 	return types.NewSession(childSession), nil
+}
+
+// Permission is the resolver for the permission field.
+func (r *membershipResolver) Permission(ctx context.Context, obj *types.Membership, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
 }
 
 // TotalCount is the resolver for the totalCount field.
@@ -318,6 +292,11 @@ func (r *membershipConnectionResolver) TotalCount(ctx context.Context, obj *type
 
 	r.logger.ErrorCtx(ctx, "unsupported resolver", log.Any("resolver", obj.Resolver))
 	return nil, gqlutils.InternalServerError(ctx)
+}
+
+// Permission is the resolver for the permission field.
+func (r *membershipProfileResolver) Permission(ctx context.Context, obj *types.MembershipProfile, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
 }
 
 // SignIn is the resolver for the signIn field.
@@ -1128,6 +1107,16 @@ func (r *organizationResolver) ViewerMembership(ctx context.Context, obj *types.
 	return types.NewMembership(membership), nil
 }
 
+// Permission is the resolver for the permission field.
+func (r *organizationResolver) Permission(ctx context.Context, obj *types.Organization, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
+}
+
+// Permission is the resolver for the permission field.
+func (r *personalAPIKeyResolver) Permission(ctx context.Context, obj *types.PersonalAPIKey, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
+}
+
 // TotalCount is the resolver for the totalCount field.
 func (r *personalAPIKeyConnectionResolver) TotalCount(ctx context.Context, obj *types.PersonalAPIKeyConnection) (*int, error) {
 	switch obj.Resolver.(type) {
@@ -1286,6 +1275,11 @@ func (r *sAMLConfigurationResolver) TestLoginURL(ctx context.Context, obj *types
 	return r.baseURL.WithPath("/api/connect/v1/saml/2.0/" + obj.ID.String()).MustString(), nil
 }
 
+// Permission is the resolver for the permission field.
+func (r *sAMLConfigurationResolver) Permission(ctx context.Context, obj *types.SAMLConfiguration, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
+}
+
 // TotalCount is the resolver for the totalCount field.
 func (r *sAMLConfigurationConnectionResolver) TotalCount(ctx context.Context, obj *types.SAMLConfigurationConnection) (*int, error) {
 	switch obj.Resolver.(type) {
@@ -1317,6 +1311,11 @@ func (r *sessionResolver) Identity(ctx context.Context, obj *types.Session) (*ty
 	}
 
 	return types.NewIdentity(identity), nil
+}
+
+// Permission is the resolver for the permission field.
+func (r *sessionResolver) Permission(ctx context.Context, obj *types.Session, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
 }
 
 // TotalCount is the resolver for the totalCount field.
@@ -1355,11 +1354,19 @@ func (r *Resolver) MembershipConnection() schema.MembershipConnectionResolver {
 	return &membershipConnectionResolver{r}
 }
 
+// MembershipProfile returns schema.MembershipProfileResolver implementation.
+func (r *Resolver) MembershipProfile() schema.MembershipProfileResolver {
+	return &membershipProfileResolver{r}
+}
+
 // Mutation returns schema.MutationResolver implementation.
 func (r *Resolver) Mutation() schema.MutationResolver { return &mutationResolver{r} }
 
 // Organization returns schema.OrganizationResolver implementation.
 func (r *Resolver) Organization() schema.OrganizationResolver { return &organizationResolver{r} }
+
+// PersonalAPIKey returns schema.PersonalAPIKeyResolver implementation.
+func (r *Resolver) PersonalAPIKey() schema.PersonalAPIKeyResolver { return &personalAPIKeyResolver{r} }
 
 // PersonalAPIKeyConnection returns schema.PersonalAPIKeyConnectionResolver implementation.
 func (r *Resolver) PersonalAPIKeyConnection() schema.PersonalAPIKeyConnectionResolver {
@@ -1392,11 +1399,25 @@ type invitationResolver struct{ *Resolver }
 type invitationConnectionResolver struct{ *Resolver }
 type membershipResolver struct{ *Resolver }
 type membershipConnectionResolver struct{ *Resolver }
+type membershipProfileResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type organizationResolver struct{ *Resolver }
+type personalAPIKeyResolver struct{ *Resolver }
 type personalAPIKeyConnectionResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type sAMLConfigurationResolver struct{ *Resolver }
 type sAMLConfigurationConnectionResolver struct{ *Resolver }
 type sessionResolver struct{ *Resolver }
 type sessionConnectionResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//    it when you're done.
+//  - You have helper methods in this file. Move them out to keep these resolver files clean.
+/*
+	func (r *membershipResolver) Permissions(ctx context.Context, obj *types.Membership) ([]*types.Permission, error) {
+	panic("not implemented")
+}
+*/

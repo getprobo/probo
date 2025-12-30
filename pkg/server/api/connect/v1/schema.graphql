@@ -167,10 +167,9 @@ type Identity implements Node {
     before: CursorKey
   ): PersonalAPIKeyConnection @goField(forceResolver: true) @isViewer
 
-  permission(action: String!, id: ID!): Boolean!
+  permission(action: String!): Boolean!
     @goField(forceResolver: true)
     @session(required: PRESENT)
-    @isViewer
 }
 
 type MembershipProfile implements Node {
@@ -178,6 +177,10 @@ type MembershipProfile implements Node {
   fullName: String!
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean!
+    @goField(forceResolver: true)
+    @session(required: PRESENT)
 }
 
 type Organization implements Node {
@@ -217,6 +220,10 @@ type Organization implements Node {
   ): SAMLConfigurationConnection @goField(forceResolver: true)
 
   viewerMembership: Membership @goField(forceResolver: true)
+
+  permission(action: String!): Boolean!
+    @goField(forceResolver: true)
+    @session(required: PRESENT)
 }
 
 enum MembershipRole
@@ -237,9 +244,12 @@ type Membership implements Node {
   profile: MembershipProfile @goField(forceResolver: true)
   organization: Organization @goField(forceResolver: true)
   role: MembershipRole!
-  permissions: [Permission!] @goField(forceResolver: true)
 
   lastSession: Session @goField(forceResolver: true) @isViewer
+
+  permission(action: String!): Boolean!
+    @goField(forceResolver: true)
+    @session(required: PRESENT)
 }
 
 type Invitation implements Node {
@@ -252,6 +262,10 @@ type Invitation implements Node {
   createdAt: Datetime!
   status: InvitationStatus!
   organization: Organization @goField(forceResolver: true)
+
+  permission(action: String!): Boolean!
+    @goField(forceResolver: true)
+    @session(required: PRESENT)
 }
 
 type Session implements Node {
@@ -262,6 +276,10 @@ type Session implements Node {
   updatedAt: Datetime!
   createdAt: Datetime!
   expiresAt: Datetime!
+
+  permission(action: String!): Boolean!
+    @goField(forceResolver: true)
+    @session(required: PRESENT)
 }
 
 type PersonalAPIKey implements Node {
@@ -272,16 +290,10 @@ type PersonalAPIKey implements Node {
   createdAt: Datetime!
   scopes: [TokenScope!]!
   organizations: [Organization!]!
-}
 
-type Permission implements Node {
-  id: ID!
-  createdAt: Datetime!
-  application: Application!
-  accessLevel: AccessLevel!
-  organization: Organization!
-  principalType: PrincipalType!
-  principalId: ID!
+  permission(action: String!): Boolean!
+    @goField(forceResolver: true)
+    @session(required: PRESENT)
 }
 
 type Application {
@@ -305,6 +317,10 @@ type SAMLConfiguration implements Node {
   updatedAt: Datetime!
   testLoginUrl: String! @goField(forceResolver: true)
   attributeMappings: SAMLAttributeMappings!
+
+  permission(action: String!): Boolean!
+    @goField(forceResolver: true)
+    @session(required: PRESENT)
 }
 
 type SAMLAttributeMappings {

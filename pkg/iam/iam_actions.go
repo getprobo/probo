@@ -43,6 +43,7 @@ const (
 	ActionIAMSessionRevokeAll = "iam:session:revoke-all"
 
 	// Invitation actions
+	ActionIAMInvitationCreate = "iam:invitation:create"
 	ActionIAMInvitationGet    = "iam:invitation:get"
 	ActionIAMInvitationAccept = "iam:invitation:accept"
 	ActionIAMInvitationDelete = "iam:invitation:delete"
@@ -56,6 +57,7 @@ const (
 	// Personal API Key actions
 	ActionIAMPersonalAPIKeyCreate = "iam:personal-api-key:create"
 	ActionIAMPersonalAPIKeyGet    = "iam:personal-api-key:get"
+	ActionIAMPersonalAPIKeyList   = "iam:personal-api-key:list"
 	ActionIAMPersonalAPIKeyUpdate = "iam:personal-api-key:update"
 	ActionIAMPersonalAPIKeyDelete = "iam:personal-api-key:delete"
 
