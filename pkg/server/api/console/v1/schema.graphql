@@ -331,9 +331,7 @@ enum DataProtectionImpactAssessmentResidualRisk
 }
 
 enum ProcessingActivityRole
-  @goModel(
-    model: "go.probo.inc/probo/pkg/coredata.ProcessingActivityRole"
-  ) {
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.ProcessingActivityRole") {
   CONTROLLER
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityRoleController"
@@ -1431,6 +1429,8 @@ type TrustCenter implements Node {
     before: CursorKey
     orderBy: TrustCenterReferenceOrder
   ): TrustCenterReferenceConnection! @goField(forceResolver: true)
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type Organization implements Node {
@@ -1632,6 +1632,8 @@ type Organization implements Node {
 
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type SlackConnection {
@@ -1663,6 +1665,8 @@ type People implements Node {
   contractEndDate: Datetime
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type Vendor implements Node {
@@ -1730,6 +1734,8 @@ type Vendor implements Node {
   showOnTrustCenter: Boolean!
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type VendorComplianceReport implements Node {
@@ -1741,6 +1747,8 @@ type VendorComplianceReport implements Node {
   file: File @goField(forceResolver: true)
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type VendorBusinessAssociateAgreement implements Node {
@@ -1753,6 +1761,8 @@ type VendorBusinessAssociateAgreement implements Node {
   fileSize: BigInt!
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type VendorContact implements Node {
@@ -1764,6 +1774,8 @@ type VendorContact implements Node {
   role: String
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type VendorService implements Node {
@@ -1773,6 +1785,8 @@ type VendorService implements Node {
   description: String
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type VendorDataPrivacyAgreement implements Node {
@@ -1785,6 +1799,8 @@ type VendorDataPrivacyAgreement implements Node {
   fileSize: BigInt!
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type Framework implements Node {
@@ -1807,6 +1823,8 @@ type Framework implements Node {
 
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type Control implements Node {
@@ -1856,6 +1874,8 @@ type Control implements Node {
 
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type Measure implements Node {
@@ -1901,6 +1921,8 @@ type Measure implements Node {
 
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type Task implements Node {
@@ -1925,6 +1947,8 @@ type Task implements Node {
 
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type Evidence implements Node {
@@ -1941,6 +1965,8 @@ type Evidence implements Node {
 
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type Document implements Node {
@@ -1974,6 +2000,8 @@ type Document implements Node {
 
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type SignableDocument
@@ -2009,6 +2037,8 @@ type Meeting implements Node {
   organization: Organization! @goField(forceResolver: true)
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type Risk implements Node {
@@ -2067,6 +2097,8 @@ type Risk implements Node {
 
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type Audit implements Node {
@@ -2092,6 +2124,8 @@ type Audit implements Node {
   trustCenterVisibility: TrustCenterVisibility!
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type Nonconformity implements Node {
@@ -2110,6 +2144,8 @@ type Nonconformity implements Node {
   effectivenessCheck: String
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type Obligation implements Node {
@@ -2128,6 +2164,8 @@ type Obligation implements Node {
   status: ObligationStatus!
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type ContinualImprovement implements Node {
@@ -2144,6 +2182,8 @@ type ContinualImprovement implements Node {
   priority: ContinualImprovementPriority!
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type ProcessingActivity implements Node {
@@ -2177,10 +2217,14 @@ type ProcessingActivity implements Node {
     before: CursorKey
     orderBy: VendorOrder
   ): VendorConnection! @goField(forceResolver: true)
-  dataProtectionImpactAssessment: DataProtectionImpactAssessment @goField(forceResolver: true)
-  transferImpactAssessment: TransferImpactAssessment @goField(forceResolver: true)
+  dataProtectionImpactAssessment: DataProtectionImpactAssessment
+    @goField(forceResolver: true)
+  transferImpactAssessment: TransferImpactAssessment
+    @goField(forceResolver: true)
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type DataProtectionImpactAssessment implements Node {
@@ -2194,6 +2238,8 @@ type DataProtectionImpactAssessment implements Node {
   residualRisk: DataProtectionImpactAssessmentResidualRisk
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type TransferImpactAssessment implements Node {
@@ -2207,6 +2253,8 @@ type TransferImpactAssessment implements Node {
   supplementaryMeasures: String
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type Snapshot implements Node {
@@ -2226,6 +2274,8 @@ type Snapshot implements Node {
   ): ControlConnection! @goField(forceResolver: true)
 
   createdAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type Report implements Node {
@@ -2238,6 +2288,8 @@ type Report implements Node {
   createdAt: Datetime!
   updatedAt: Datetime!
   audit: Audit @goField(forceResolver: true)
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type Session {
@@ -2289,6 +2341,8 @@ type TrustCenterAccess implements Node {
     before: CursorKey
     orderBy: TrustCenterDocumentAccessOrder
   ): TrustCenterDocumentAccessConnection! @goField(forceResolver: true)
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type TrustCenterDocumentAccess
@@ -2335,6 +2389,8 @@ type TrustCenterReference implements Node {
   rank: Int!
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type TrustCenterReferenceConnection
@@ -4158,6 +4214,8 @@ type VendorRiskAssessment implements Node {
   notes: String
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 enum VendorRiskAssessmentOrderField
@@ -4280,6 +4338,8 @@ type DocumentVersionSignature implements Node {
   requestedAt: Datetime!
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 input RequestSignatureInput {
@@ -4432,6 +4492,8 @@ type Asset implements Node {
   organization: Organization! @goField(forceResolver: true)
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type AssetConnection
@@ -4689,6 +4751,8 @@ type CustomDomain implements Node {
   dnsRecords: [DNSRecordInstruction!]!
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type DNSRecordInstruction {

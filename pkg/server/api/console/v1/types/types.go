@@ -38,6 +38,7 @@ type Asset struct {
 	Organization    *Organization      `json:"organization"`
 	CreatedAt       time.Time          `json:"createdAt"`
 	UpdatedAt       time.Time          `json:"updatedAt"`
+	Permission      bool               `json:"permission"`
 }
 
 func (Asset) IsNode()             {}
@@ -75,6 +76,7 @@ type Audit struct {
 	TrustCenterVisibility coredata.TrustCenterVisibility `json:"trustCenterVisibility"`
 	CreatedAt             time.Time                      `json:"createdAt"`
 	UpdatedAt             time.Time                      `json:"updatedAt"`
+	Permission            bool                           `json:"permission"`
 }
 
 func (Audit) IsNode()             {}
@@ -145,6 +147,7 @@ type ContinualImprovement struct {
 	Priority     coredata.ContinualImprovementPriority `json:"priority"`
 	CreatedAt    time.Time                             `json:"createdAt"`
 	UpdatedAt    time.Time                             `json:"updatedAt"`
+	Permission   bool                                  `json:"permission"`
 }
 
 func (ContinualImprovement) IsNode()             {}
@@ -174,6 +177,7 @@ type Control struct {
 	Snapshots              *SnapshotConnection    `json:"snapshots"`
 	CreatedAt              time.Time              `json:"createdAt"`
 	UpdatedAt              time.Time              `json:"updatedAt"`
+	Permission             bool                   `json:"permission"`
 }
 
 func (Control) IsNode()             {}
@@ -658,6 +662,7 @@ type CustomDomain struct {
 	DNSRecords   []*DNSRecordInstruction        `json:"dnsRecords"`
 	CreatedAt    time.Time                      `json:"createdAt"`
 	UpdatedAt    time.Time                      `json:"updatedAt"`
+	Permission   bool                           `json:"permission"`
 }
 
 func (CustomDomain) IsNode()             {}
@@ -682,6 +687,7 @@ type DataProtectionImpactAssessment struct {
 	ResidualRisk                *coredata.DataProtectionImpactAssessmentResidualRisk `json:"residualRisk,omitempty"`
 	CreatedAt                   time.Time                                            `json:"createdAt"`
 	UpdatedAt                   time.Time                                            `json:"updatedAt"`
+	Permission                  bool                                                 `json:"permission"`
 }
 
 func (DataProtectionImpactAssessment) IsNode()             {}
@@ -1045,6 +1051,7 @@ type Document struct {
 	Controls                *ControlConnection              `json:"controls"`
 	CreatedAt               time.Time                       `json:"createdAt"`
 	UpdatedAt               time.Time                       `json:"updatedAt"`
+	Permission              bool                            `json:"permission"`
 }
 
 func (Document) IsNode()             {}
@@ -1082,6 +1089,7 @@ type DocumentVersionSignature struct {
 	RequestedAt     time.Time                              `json:"requestedAt"`
 	CreatedAt       time.Time                              `json:"createdAt"`
 	UpdatedAt       time.Time                              `json:"updatedAt"`
+	Permission      bool                                   `json:"permission"`
 }
 
 func (DocumentVersionSignature) IsNode()             {}
@@ -1118,6 +1126,7 @@ type Evidence struct {
 	Measure     *Measure               `json:"measure"`
 	CreatedAt   time.Time              `json:"createdAt"`
 	UpdatedAt   time.Time              `json:"updatedAt"`
+	Permission  bool                   `json:"permission"`
 }
 
 func (Evidence) IsNode()             {}
@@ -1175,6 +1184,7 @@ type Framework struct {
 	DarkLogoURL  *string            `json:"darkLogoURL,omitempty"`
 	CreatedAt    time.Time          `json:"createdAt"`
 	UpdatedAt    time.Time          `json:"updatedAt"`
+	Permission   bool               `json:"permission"`
 }
 
 func (Framework) IsNode()             {}
@@ -1250,6 +1260,7 @@ type Measure struct {
 	Controls    *ControlConnection    `json:"controls"`
 	CreatedAt   time.Time             `json:"createdAt"`
 	UpdatedAt   time.Time             `json:"updatedAt"`
+	Permission  bool                  `json:"permission"`
 }
 
 func (Measure) IsNode()             {}
@@ -1274,6 +1285,7 @@ type Meeting struct {
 	Organization *Organization `json:"organization"`
 	CreatedAt    time.Time     `json:"createdAt"`
 	UpdatedAt    time.Time     `json:"updatedAt"`
+	Permission   bool          `json:"permission"`
 }
 
 func (Meeting) IsNode()             {}
@@ -1303,6 +1315,7 @@ type Nonconformity struct {
 	EffectivenessCheck *string                      `json:"effectivenessCheck,omitempty"`
 	CreatedAt          time.Time                    `json:"createdAt"`
 	UpdatedAt          time.Time                    `json:"updatedAt"`
+	Permission         bool                         `json:"permission"`
 }
 
 func (Nonconformity) IsNode()             {}
@@ -1333,6 +1346,7 @@ type Obligation struct {
 	Status                 coredata.ObligationStatus `json:"status"`
 	CreatedAt              time.Time                 `json:"createdAt"`
 	UpdatedAt              time.Time                 `json:"updatedAt"`
+	Permission             bool                      `json:"permission"`
 }
 
 func (Obligation) IsNode()             {}
@@ -1382,6 +1396,7 @@ type Organization struct {
 	CustomDomain                    *CustomDomain                             `json:"customDomain,omitempty"`
 	CreatedAt                       time.Time                                 `json:"createdAt"`
 	UpdatedAt                       time.Time                                 `json:"updatedAt"`
+	Permission                      bool                                      `json:"permission"`
 }
 
 func (Organization) IsNode()             {}
@@ -1415,6 +1430,7 @@ type People struct {
 	ContractEndDate          *time.Time          `json:"contractEndDate,omitempty"`
 	CreatedAt                time.Time           `json:"createdAt"`
 	UpdatedAt                time.Time           `json:"updatedAt"`
+	Permission               bool                `json:"permission"`
 }
 
 func (People) IsNode()             {}
@@ -1458,6 +1474,7 @@ type ProcessingActivity struct {
 	TransferImpactAssessment             *TransferImpactAssessment                                 `json:"transferImpactAssessment,omitempty"`
 	CreatedAt                            time.Time                                                 `json:"createdAt"`
 	UpdatedAt                            time.Time                                                 `json:"updatedAt"`
+	Permission                           bool                                                      `json:"permission"`
 }
 
 func (ProcessingActivity) IsNode()             {}
@@ -1495,6 +1512,7 @@ type Report struct {
 	CreatedAt   time.Time `json:"createdAt"`
 	UpdatedAt   time.Time `json:"updatedAt"`
 	Audit       *Audit    `json:"audit,omitempty"`
+	Permission  bool      `json:"permission"`
 }
 
 func (Report) IsNode()             {}
@@ -1542,6 +1560,7 @@ type Risk struct {
 	Obligations        *ObligationConnection  `json:"obligations"`
 	CreatedAt          time.Time              `json:"createdAt"`
 	UpdatedAt          time.Time              `json:"updatedAt"`
+	Permission         bool                   `json:"permission"`
 }
 
 func (Risk) IsNode()             {}
@@ -1604,6 +1623,7 @@ type Snapshot struct {
 	Type         coredata.SnapshotsType `json:"type"`
 	Controls     *ControlConnection     `json:"controls"`
 	CreatedAt    time.Time              `json:"createdAt"`
+	Permission   bool                   `json:"permission"`
 }
 
 func (Snapshot) IsNode()             {}
@@ -1627,6 +1647,7 @@ type Task struct {
 	Evidences    *EvidenceConnection `json:"evidences"`
 	CreatedAt    time.Time           `json:"createdAt"`
 	UpdatedAt    time.Time           `json:"updatedAt"`
+	Permission   bool                `json:"permission"`
 }
 
 func (Task) IsNode()             {}
@@ -1648,6 +1669,7 @@ type TransferImpactAssessment struct {
 	SupplementaryMeasures *string             `json:"supplementaryMeasures,omitempty"`
 	CreatedAt             time.Time           `json:"createdAt"`
 	UpdatedAt             time.Time           `json:"updatedAt"`
+	Permission            bool                `json:"permission"`
 }
 
 func (TransferImpactAssessment) IsNode()             {}
@@ -1672,6 +1694,7 @@ type TrustCenter struct {
 	Organization *Organization                   `json:"organization"`
 	Accesses     *TrustCenterAccessConnection    `json:"accesses"`
 	References   *TrustCenterReferenceConnection `json:"references"`
+	Permission   bool                            `json:"permission"`
 }
 
 func (TrustCenter) IsNode()             {}
@@ -1689,6 +1712,7 @@ type TrustCenterAccess struct {
 	PendingRequestCount               int                                  `json:"pendingRequestCount"`
 	ActiveCount                       int                                  `json:"activeCount"`
 	AvailableDocumentAccesses         *TrustCenterDocumentAccessConnection `json:"availableDocumentAccesses"`
+	Permission                        bool                                 `json:"permission"`
 }
 
 func (TrustCenterAccess) IsNode()             {}
@@ -1749,6 +1773,7 @@ type TrustCenterReference struct {
 	Rank        int       `json:"rank"`
 	CreatedAt   time.Time `json:"createdAt"`
 	UpdatedAt   time.Time `json:"updatedAt"`
+	Permission  bool      `json:"permission"`
 }
 
 func (TrustCenterReference) IsNode()             {}
@@ -2249,6 +2274,7 @@ type Vendor struct {
 	ShowOnTrustCenter             bool                              `json:"showOnTrustCenter"`
 	CreatedAt                     time.Time                         `json:"createdAt"`
 	UpdatedAt                     time.Time                         `json:"updatedAt"`
+	Permission                    bool                              `json:"permission"`
 }
 
 func (Vendor) IsNode()             {}
@@ -2264,6 +2290,7 @@ type VendorBusinessAssociateAgreement struct {
 	FileSize   int64      `json:"fileSize"`
 	CreatedAt  time.Time  `json:"createdAt"`
 	UpdatedAt  time.Time  `json:"updatedAt"`
+	Permission bool       `json:"permission"`
 }
 
 func (VendorBusinessAssociateAgreement) IsNode()             {}
@@ -2278,6 +2305,7 @@ type VendorComplianceReport struct {
 	File       *File      `json:"file,omitempty"`
 	CreatedAt  time.Time  `json:"createdAt"`
 	UpdatedAt  time.Time  `json:"updatedAt"`
+	Permission bool       `json:"permission"`
 }
 
 func (VendorComplianceReport) IsNode()             {}
@@ -2294,14 +2322,15 @@ type VendorComplianceReportEdge struct {
 }
 
 type VendorContact struct {
-	ID        gid.GID    `json:"id"`
-	Vendor    *Vendor    `json:"vendor"`
-	FullName  *string    `json:"fullName,omitempty"`
-	Email     *mail.Addr `json:"email,omitempty"`
-	Phone     *string    `json:"phone,omitempty"`
-	Role      *string    `json:"role,omitempty"`
-	CreatedAt time.Time  `json:"createdAt"`
-	UpdatedAt time.Time  `json:"updatedAt"`
+	ID         gid.GID    `json:"id"`
+	Vendor     *Vendor    `json:"vendor"`
+	FullName   *string    `json:"fullName,omitempty"`
+	Email      *mail.Addr `json:"email,omitempty"`
+	Phone      *string    `json:"phone,omitempty"`
+	Role       *string    `json:"role,omitempty"`
+	CreatedAt  time.Time  `json:"createdAt"`
+	UpdatedAt  time.Time  `json:"updatedAt"`
+	Permission bool       `json:"permission"`
 }
 
 func (VendorContact) IsNode()             {}
@@ -2327,6 +2356,7 @@ type VendorDataPrivacyAgreement struct {
 	FileSize   int64      `json:"fileSize"`
 	CreatedAt  time.Time  `json:"createdAt"`
 	UpdatedAt  time.Time  `json:"updatedAt"`
+	Permission bool       `json:"permission"`
 }
 
 func (VendorDataPrivacyAgreement) IsNode()             {}
@@ -2350,6 +2380,7 @@ type VendorRiskAssessment struct {
 	Notes           *string                  `json:"notes,omitempty"`
 	CreatedAt       time.Time                `json:"createdAt"`
 	UpdatedAt       time.Time                `json:"updatedAt"`
+	Permission      bool                     `json:"permission"`
 }
 
 func (VendorRiskAssessment) IsNode()             {}
@@ -2377,6 +2408,7 @@ type VendorService struct {
 	Description *string   `json:"description,omitempty"`
 	CreatedAt   time.Time `json:"createdAt"`
 	UpdatedAt   time.Time `json:"updatedAt"`
+	Permission  bool      `json:"permission"`
 }
 
 func (VendorService) IsNode()             {}
