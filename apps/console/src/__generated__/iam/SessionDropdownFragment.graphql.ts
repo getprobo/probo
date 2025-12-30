@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<0d0906bc941900bb200a6a9824aaacc4>>
+ * @generated SignedSource<<2c57cb9a331fb7fedf72b0113bf7cb66>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,6 +11,7 @@
 import { ReaderFragment } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type SessionDropdownFragment$data = {
+  readonly canDelete: boolean;
   readonly viewerMembership: {
     readonly identity: {
       readonly email: any;
@@ -32,6 +33,19 @@ const node: ReaderFragment = {
   "metadata": null,
   "name": "SessionDropdownFragment",
   "selections": [
+    {
+      "alias": "canDelete",
+      "args": [
+        {
+          "kind": "Literal",
+          "name": "action",
+          "value": "iam:organization:delete"
+        }
+      ],
+      "kind": "ScalarField",
+      "name": "permission",
+      "storageKey": "permission(action:\"iam:organization:delete\")"
+    },
     {
       "kind": "RequiredField",
       "field": {
@@ -96,6 +110,6 @@ const node: ReaderFragment = {
   "abstractKey": null
 };
 
-(node as any).hash = "c283fcefcab15b977b44ece82f7cf450";
+(node as any).hash = "51810eafbf165e7b5eeec42cb268ae54";
 
 export default node;

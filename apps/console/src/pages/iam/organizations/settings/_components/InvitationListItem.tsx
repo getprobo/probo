@@ -15,7 +15,6 @@ import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { sprintf } from "@probo/helpers";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import type { InvitationListItemFragment$key } from "/__generated__/iam/InvitationListItemFragment.graphql";
-import type { InvitationListItem_permissionsFragment$key } from "/__generated__/iam/InvitationListItem_permissionsFragment.graphql";
 
 const fragment = graphql`
   fragment InvitationListItemFragment on Invitation {
@@ -27,16 +26,7 @@ const fragment = graphql`
     createdAt
     expiresAt
     acceptedAt
-  }
-`;
-
-const permissionsFragment = graphql`
-  fragment InvitationListItem_permissionsFragment on Identity
-  @argumentDefinitions(organizationId: { type: "ID!" }) {
-    canDeleteInvitation: permission(
-      action: "iam:invitation:delete"
-      id: $organizationId
-    )
+    canDelete: permission(action: "iam:invitation:delete")
   }
 `;
 
@@ -54,10 +44,9 @@ const deleteInvitationMutation = graphql`
 export function InvitationListItem(props: {
   connectionId: string;
   fKey: InvitationListItemFragment$key;
-  permissionsFKey: InvitationListItem_permissionsFragment$key;
   onRefetch: () => void;
 }) {
-  const { connectionId, fKey, permissionsFKey } = props;
+  const { connectionId, fKey } = props;
 
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
@@ -66,10 +55,6 @@ export function InvitationListItem(props: {
   const invitation = useFragment<InvitationListItemFragment$key>(
     fragment,
     fKey,
-  );
-  const permissions = useFragment<InvitationListItem_permissionsFragment$key>(
-    permissionsFragment,
-    permissionsFKey,
   );
 
   const [deleteInvitation, isDeleting] = useMutationWithToasts(
@@ -134,7 +119,7 @@ export function InvitationListItem(props: {
           {isDeleting ? (
             <Spinner size={16} />
           ) : (
-            permissions.canDeleteInvitation && (
+            invitation.canDelete && (
               <Button
                 variant="danger"
                 onClick={handleDelete}

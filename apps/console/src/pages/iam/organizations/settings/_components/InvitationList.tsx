@@ -4,7 +4,6 @@ import { useTranslate } from "@probo/i18n";
 import { graphql, usePaginationFragment } from "react-relay";
 import { InvitationListItem } from "./InvitationListItem";
 import type { InvitationListFragment$key } from "/__generated__/iam/InvitationListFragment.graphql";
-import type { InvitationListItem_permissionsFragment$key } from "/__generated__/iam/InvitationListItem_permissionsFragment.graphql";
 import type { InvitationListFragment_RefetchQuery } from "/__generated__/iam/InvitationListFragment_RefetchQuery.graphql";
 
 const fragment = graphql`
@@ -41,11 +40,8 @@ const fragment = graphql`
   }
 `;
 
-export function InvitationList(props: {
-  fKey: InvitationListFragment$key;
-  permissionsFKey: InvitationListItem_permissionsFragment$key;
-}) {
-  const { fKey, permissionsFKey } = props;
+export function InvitationList(props: { fKey: InvitationListFragment$key }) {
+  const { fKey } = props;
 
   const { __ } = useTranslate();
 
@@ -106,7 +102,6 @@ export function InvitationList(props: {
                 key={invitation.id}
                 fKey={invitation}
                 onRefetch={refetchInvitations}
-                permissionsFKey={permissionsFKey}
               />
             ),
           )

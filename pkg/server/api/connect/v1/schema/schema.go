@@ -51,8 +51,10 @@ type ResolverRoot interface {
 	InvitationConnection() InvitationConnectionResolver
 	Membership() MembershipResolver
 	MembershipConnection() MembershipConnectionResolver
+	MembershipProfile() MembershipProfileResolver
 	Mutation() MutationResolver
 	Organization() OrganizationResolver
+	PersonalAPIKey() PersonalAPIKeyResolver
 	PersonalAPIKeyConnection() PersonalAPIKeyConnectionResolver
 	Query() QueryResolver
 	SAMLConfiguration() SAMLConfigurationResolver
@@ -136,7 +138,7 @@ type ComplexityRoot struct {
 		ID                 func(childComplexity int) int
 		Memberships        func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MembershipOrderBy) int
 		PendingInvitations func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.InvitationOrderBy) int
-		Permission         func(childComplexity int, action string, id gid.GID) int
+		Permission         func(childComplexity int, action string) int
 		PersonalAPIKeys    func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
 		Sessions           func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.SessionOrder) int
 		UpdatedAt          func(childComplexity int) int
@@ -150,6 +152,7 @@ type ComplexityRoot struct {
 		FullName     func(childComplexity int) int
 		ID           func(childComplexity int) int
 		Organization func(childComplexity int) int
+		Permission   func(childComplexity int, action string) int
 		Role         func(childComplexity int) int
 		Status       func(childComplexity int) int
 	}
@@ -175,7 +178,7 @@ type ComplexityRoot struct {
 		Identity     func(childComplexity int) int
 		LastSession  func(childComplexity int) int
 		Organization func(childComplexity int) int
-		Permissions  func(childComplexity int) int
+		Permission   func(childComplexity int, action string) int
 		Profile      func(childComplexity int) int
 		Role         func(childComplexity int) int
 	}
@@ -192,10 +195,11 @@ type ComplexityRoot struct {
 	}
 
 	MembershipProfile struct {
-		CreatedAt func(childComplexity int) int
-		FullName  func(childComplexity int) int
-		ID        func(childComplexity int) int
-		UpdatedAt func(childComplexity int) int
+		CreatedAt  func(childComplexity int) int
+		FullName   func(childComplexity int) int
+		ID         func(childComplexity int) int
+		Permission func(childComplexity int, action string) int
+		UpdatedAt  func(childComplexity int) int
 	}
 
 	Mutation struct {
@@ -239,6 +243,7 @@ type ComplexityRoot struct {
 		LogoURL            func(childComplexity int) int
 		Members            func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MembershipOrderBy) int
 		Name               func(childComplexity int) int
+		Permission         func(childComplexity int, action string) int
 		SamlConfigurations func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
 		UpdatedAt          func(childComplexity int) int
 		ViewerMembership   func(childComplexity int) int
@@ -261,16 +266,6 @@ type ComplexityRoot struct {
 		Reason func(childComplexity int) int
 	}
 
-	Permission struct {
-		AccessLevel   func(childComplexity int) int
-		Application   func(childComplexity int) int
-		CreatedAt     func(childComplexity int) int
-		ID            func(childComplexity int) int
-		Organization  func(childComplexity int) int
-		PrincipalID   func(childComplexity int) int
-		PrincipalType func(childComplexity int) int
-	}
-
 	PersonalAPIKey struct {
 		CreatedAt     func(childComplexity int) int
 		ExpiresAt     func(childComplexity int) int
@@ -278,6 +273,7 @@ type ComplexityRoot struct {
 		LastUsedAt    func(childComplexity int) int
 		Name          func(childComplexity int) int
 		Organizations func(childComplexity int) int
+		Permission    func(childComplexity int, action string) int
 		Scopes        func(childComplexity int) int
 	}
 
@@ -346,6 +342,7 @@ type ComplexityRoot struct {
 		IdpCertificate          func(childComplexity int) int
 		IdpEntityID             func(childComplexity int) int
 		IdpSsoURL               func(childComplexity int) int
+		Permission              func(childComplexity int, action string) int
 		TestLoginURL            func(childComplexity int) int
 		UpdatedAt               func(childComplexity int) int
 	}
@@ -368,13 +365,14 @@ type ComplexityRoot struct {
 	}
 
 	Session struct {
-		CreatedAt func(childComplexity int) int
-		ExpiresAt func(childComplexity int) int
-		ID        func(childComplexity int) int
-		IPAddress func(childComplexity int) int
-		Identity  func(childComplexity int) int
-		UpdatedAt func(childComplexity int) int
-		UserAgent func(childComplexity int) int
+		CreatedAt  func(childComplexity int) int
+		ExpiresAt  func(childComplexity int) int
+		ID         func(childComplexity int) int
+		IPAddress  func(childComplexity int) int
+		Identity   func(childComplexity int) int
+		Permission func(childComplexity int, action string) int
+		UpdatedAt  func(childComplexity int) int
+		UserAgent  func(childComplexity int) int
 	}
 
 	SessionConnection struct {
@@ -427,10 +425,11 @@ type IdentityResolver interface {
 	PendingInvitations(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.InvitationOrderBy) (*types.InvitationConnection, error)
 	Sessions(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.SessionOrder) (*types.SessionConnection, error)
 	PersonalAPIKeys(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.PersonalAPIKeyConnection, error)
-	Permission(ctx context.Context, obj *types.Identity, action string, id gid.GID) (bool, error)
+	Permission(ctx context.Context, obj *types.Identity, action string) (bool, error)
 }
 type InvitationResolver interface {
 	Organization(ctx context.Context, obj *types.Invitation) (*types.Organization, error)
+	Permission(ctx context.Context, obj *types.Invitation, action string) (bool, error)
 }
 type InvitationConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.InvitationConnection) (*int, error)
@@ -440,11 +439,14 @@ type MembershipResolver interface {
 	Profile(ctx context.Context, obj *types.Membership) (*types.MembershipProfile, error)
 	Organization(ctx context.Context, obj *types.Membership) (*types.Organization, error)
 
-	Permissions(ctx context.Context, obj *types.Membership) ([]*types.Permission, error)
 	LastSession(ctx context.Context, obj *types.Membership) (*types.Session, error)
+	Permission(ctx context.Context, obj *types.Membership, action string) (bool, error)
 }
 type MembershipConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.MembershipConnection) (*int, error)
+}
+type MembershipProfileResolver interface {
+	Permission(ctx context.Context, obj *types.MembershipProfile, action string) (bool, error)
 }
 type MutationResolver interface {
 	SignIn(ctx context.Context, input types.SignInInput) (*types.SignInPayload, error)
@@ -483,6 +485,10 @@ type OrganizationResolver interface {
 	Invitations(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, status *coredata.InvitationStatus, orderBy *types.InvitationOrderBy) (*types.InvitationConnection, error)
 	SamlConfigurations(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.SAMLConfigurationConnection, error)
 	ViewerMembership(ctx context.Context, obj *types.Organization) (*types.Membership, error)
+	Permission(ctx context.Context, obj *types.Organization, action string) (bool, error)
+}
+type PersonalAPIKeyResolver interface {
+	Permission(ctx context.Context, obj *types.PersonalAPIKey, action string) (bool, error)
 }
 type PersonalAPIKeyConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.PersonalAPIKeyConnection) (*int, error)
@@ -494,12 +500,16 @@ type QueryResolver interface {
 }
 type SAMLConfigurationResolver interface {
 	TestLoginURL(ctx context.Context, obj *types.SAMLConfiguration) (string, error)
+
+	Permission(ctx context.Context, obj *types.SAMLConfiguration, action string) (bool, error)
 }
 type SAMLConfigurationConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.SAMLConfigurationConnection) (*int, error)
 }
 type SessionResolver interface {
 	Identity(ctx context.Context, obj *types.Session) (*types.Identity, error)
+
+	Permission(ctx context.Context, obj *types.Session, action string) (bool, error)
 }
 type SessionConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.SessionConnection) (*int, error)
@@ -714,7 +724,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Identity.Permission(childComplexity, args["action"].(string), args["id"].(gid.GID)), true
+		return e.complexity.Identity.Permission(childComplexity, args["action"].(string)), true
 	case "Identity.personalAPIKeys":
 		if e.complexity.Identity.PersonalAPIKeys == nil {
 			break
@@ -786,6 +796,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Invitation.Organization(childComplexity), true
+	case "Invitation.permission":
+		if e.complexity.Invitation.Permission == nil {
+			break
+		}
+
+		args, err := ec.field_Invitation_permission_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Invitation.Permission(childComplexity, args["action"].(string)), true
 	case "Invitation.role":
 		if e.complexity.Invitation.Role == nil {
 			break
@@ -868,12 +889,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Membership.Organization(childComplexity), true
-	case "Membership.permissions":
-		if e.complexity.Membership.Permissions == nil {
+	case "Membership.permission":
+		if e.complexity.Membership.Permission == nil {
 			break
 		}
 
-		return e.complexity.Membership.Permissions(childComplexity), true
+		args, err := ec.field_Membership_permission_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Membership.Permission(childComplexity, args["action"].(string)), true
 	case "Membership.profile":
 		if e.complexity.Membership.Profile == nil {
 			break
@@ -937,6 +963,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.MembershipProfile.ID(childComplexity), true
+	case "MembershipProfile.permission":
+		if e.complexity.MembershipProfile.Permission == nil {
+			break
+		}
+
+		args, err := ec.field_MembershipProfile_permission_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.MembershipProfile.Permission(childComplexity, args["action"].(string)), true
 	case "MembershipProfile.updatedAt":
 		if e.complexity.MembershipProfile.UpdatedAt == nil {
 			break
@@ -1302,6 +1339,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Organization.Name(childComplexity), true
+	case "Organization.permission":
+		if e.complexity.Organization.Permission == nil {
+			break
+		}
+
+		args, err := ec.field_Organization_permission_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Organization.Permission(childComplexity, args["action"].(string)), true
 	case "Organization.samlConfigurations":
 		if e.complexity.Organization.SamlConfigurations == nil {
 			break
@@ -1377,49 +1425,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.PasswordRequired.Reason(childComplexity), true
 
-	case "Permission.accessLevel":
-		if e.complexity.Permission.AccessLevel == nil {
-			break
-		}
-
-		return e.complexity.Permission.AccessLevel(childComplexity), true
-	case "Permission.application":
-		if e.complexity.Permission.Application == nil {
-			break
-		}
-
-		return e.complexity.Permission.Application(childComplexity), true
-	case "Permission.createdAt":
-		if e.complexity.Permission.CreatedAt == nil {
-			break
-		}
-
-		return e.complexity.Permission.CreatedAt(childComplexity), true
-	case "Permission.id":
-		if e.complexity.Permission.ID == nil {
-			break
-		}
-
-		return e.complexity.Permission.ID(childComplexity), true
-	case "Permission.organization":
-		if e.complexity.Permission.Organization == nil {
-			break
-		}
-
-		return e.complexity.Permission.Organization(childComplexity), true
-	case "Permission.principalId":
-		if e.complexity.Permission.PrincipalID == nil {
-			break
-		}
-
-		return e.complexity.Permission.PrincipalID(childComplexity), true
-	case "Permission.principalType":
-		if e.complexity.Permission.PrincipalType == nil {
-			break
-		}
-
-		return e.complexity.Permission.PrincipalType(childComplexity), true
-
 	case "PersonalAPIKey.createdAt":
 		if e.complexity.PersonalAPIKey.CreatedAt == nil {
 			break
@@ -1456,6 +1461,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.PersonalAPIKey.Organizations(childComplexity), true
+	case "PersonalAPIKey.permission":
+		if e.complexity.PersonalAPIKey.Permission == nil {
+			break
+		}
+
+		args, err := ec.field_PersonalAPIKey_permission_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.PersonalAPIKey.Permission(childComplexity, args["action"].(string)), true
 	case "PersonalAPIKey.scopes":
 		if e.complexity.PersonalAPIKey.Scopes == nil {
 			break
@@ -1670,6 +1686,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.SAMLConfiguration.IdpSsoURL(childComplexity), true
+	case "SAMLConfiguration.permission":
+		if e.complexity.SAMLConfiguration.Permission == nil {
+			break
+		}
+
+		args, err := ec.field_SAMLConfiguration_permission_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.SAMLConfiguration.Permission(childComplexity, args["action"].(string)), true
 	case "SAMLConfiguration.testLoginUrl":
 		if e.complexity.SAMLConfiguration.TestLoginURL == nil {
 			break
@@ -1764,6 +1791,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Session.Identity(childComplexity), true
+	case "Session.permission":
+		if e.complexity.Session.Permission == nil {
+			break
+		}
+
+		args, err := ec.field_Session_permission_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Session.Permission(childComplexity, args["action"].(string)), true
 	case "Session.updatedAt":
 		if e.complexity.Session.UpdatedAt == nil {
 			break
@@ -2174,10 +2212,9 @@ type Identity implements Node {
     before: CursorKey
   ): PersonalAPIKeyConnection @goField(forceResolver: true) @isViewer
 
-  permission(action: String!, id: ID!): Boolean!
+  permission(action: String!): Boolean!
     @goField(forceResolver: true)
     @session(required: PRESENT)
-    @isViewer
 }
 
 type MembershipProfile implements Node {
@@ -2185,6 +2222,10 @@ type MembershipProfile implements Node {
   fullName: String!
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean!
+    @goField(forceResolver: true)
+    @session(required: PRESENT)
 }
 
 type Organization implements Node {
@@ -2224,6 +2265,10 @@ type Organization implements Node {
   ): SAMLConfigurationConnection @goField(forceResolver: true)
 
   viewerMembership: Membership @goField(forceResolver: true)
+
+  permission(action: String!): Boolean!
+    @goField(forceResolver: true)
+    @session(required: PRESENT)
 }
 
 enum MembershipRole
@@ -2244,9 +2289,12 @@ type Membership implements Node {
   profile: MembershipProfile @goField(forceResolver: true)
   organization: Organization @goField(forceResolver: true)
   role: MembershipRole!
-  permissions: [Permission!] @goField(forceResolver: true)
 
   lastSession: Session @goField(forceResolver: true) @isViewer
+
+  permission(action: String!): Boolean!
+    @goField(forceResolver: true)
+    @session(required: PRESENT)
 }
 
 type Invitation implements Node {
@@ -2259,6 +2307,10 @@ type Invitation implements Node {
   createdAt: Datetime!
   status: InvitationStatus!
   organization: Organization @goField(forceResolver: true)
+
+  permission(action: String!): Boolean!
+    @goField(forceResolver: true)
+    @session(required: PRESENT)
 }
 
 type Session implements Node {
@@ -2269,6 +2321,10 @@ type Session implements Node {
   updatedAt: Datetime!
   createdAt: Datetime!
   expiresAt: Datetime!
+
+  permission(action: String!): Boolean!
+    @goField(forceResolver: true)
+    @session(required: PRESENT)
 }
 
 type PersonalAPIKey implements Node {
@@ -2279,16 +2335,10 @@ type PersonalAPIKey implements Node {
   createdAt: Datetime!
   scopes: [TokenScope!]!
   organizations: [Organization!]!
-}
 
-type Permission implements Node {
-  id: ID!
-  createdAt: Datetime!
-  application: Application!
-  accessLevel: AccessLevel!
-  organization: Organization!
-  principalType: PrincipalType!
-  principalId: ID!
+  permission(action: String!): Boolean!
+    @goField(forceResolver: true)
+    @session(required: PRESENT)
 }
 
 type Application {
@@ -2312,6 +2362,10 @@ type SAMLConfiguration implements Node {
   updatedAt: Datetime!
   testLoginUrl: String! @goField(forceResolver: true)
   attributeMappings: SAMLAttributeMappings!
+
+  permission(action: String!): Boolean!
+    @goField(forceResolver: true)
+    @session(required: PRESENT)
 }
 
 type SAMLAttributeMappings {
@@ -2886,11 +2940,6 @@ func (ec *executionContext) field_Identity_permission_args(ctx context.Context, 
 		return nil, err
 	}
 	args["action"] = arg0
-	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID)
-	if err != nil {
-		return nil, err
-	}
-	args["id"] = arg1
 	return args, nil
 }
 
@@ -2948,6 +2997,39 @@ func (ec *executionContext) field_Identity_sessions_args(ctx context.Context, ra
 		return nil, err
 	}
 	args["orderBy"] = arg4
+	return args, nil
+}
+
+func (ec *executionContext) field_Invitation_permission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "action", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["action"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_MembershipProfile_permission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "action", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["action"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Membership_permission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "action", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["action"] = arg0
 	return args, nil
 }
 
@@ -3293,6 +3375,17 @@ func (ec *executionContext) field_Organization_members_args(ctx context.Context,
 	return args, nil
 }
 
+func (ec *executionContext) field_Organization_permission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "action", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["action"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Organization_samlConfigurations_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -3316,6 +3409,17 @@ func (ec *executionContext) field_Organization_samlConfigurations_args(ctx conte
 		return nil, err
 	}
 	args["before"] = arg3
+	return args, nil
+}
+
+func (ec *executionContext) field_PersonalAPIKey_permission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "action", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["action"] = arg0
 	return args, nil
 }
 
@@ -3349,6 +3453,28 @@ func (ec *executionContext) field_Query_node_args(ctx context.Context, rawArgs m
 		return nil, err
 	}
 	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_SAMLConfiguration_permission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "action", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["action"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Session_permission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "action", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["action"] = arg0
 	return args, nil
 }
 
@@ -3694,6 +3820,8 @@ func (ec *executionContext) fieldContext_CreateOrganizationPayload_organization(
 				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
 			case "viewerMembership":
 				return ec.fieldContext_Organization_viewerMembership(ctx, field)
+			case "permission":
+				return ec.fieldContext_Organization_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
 		},
@@ -3945,6 +4073,8 @@ func (ec *executionContext) fieldContext_DeleteOrganizationHorizontalLogoPayload
 				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
 			case "viewerMembership":
 				return ec.fieldContext_Organization_viewerMembership(ctx, field)
+			case "permission":
+				return ec.fieldContext_Organization_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
 		},
@@ -4469,7 +4599,7 @@ func (ec *executionContext) _Identity_permission(ctx context.Context, field grap
 		ec.fieldContext_Identity_permission,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Identity().Permission(ctx, obj, fc.Args["action"].(string), fc.Args["id"].(gid.GID))
+			return ec.resolvers.Identity().Permission(ctx, obj, fc.Args["action"].(string))
 		},
 		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
 			directive0 := next
@@ -4486,15 +4616,8 @@ func (ec *executionContext) _Identity_permission(ctx context.Context, field grap
 				}
 				return ec.directives.Session(ctx, obj, directive0, required)
 			}
-			directive2 := func(ctx context.Context) (any, error) {
-				if ec.directives.IsViewer == nil {
-					var zeroVal bool
-					return zeroVal, errors.New("directive isViewer is not implemented")
-				}
-				return ec.directives.IsViewer(ctx, obj, directive1)
-			}
 
-			next = directive2
+			next = directive1
 			return next
 		},
 		ec.marshalNBoolean2bool,
@@ -4811,9 +4934,70 @@ func (ec *executionContext) fieldContext_Invitation_organization(_ context.Conte
 				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
 			case "viewerMembership":
 				return ec.fieldContext_Organization_viewerMembership(ctx, field)
+			case "permission":
+				return ec.fieldContext_Organization_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Invitation_permission(ctx context.Context, field graphql.CollectedField, obj *types.Invitation) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Invitation_permission,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Invitation().Permission(ctx, obj, fc.Args["action"].(string))
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSessionRequirement(ctx, "PRESENT")
+				if err != nil {
+					var zeroVal bool
+					return zeroVal, err
+				}
+				if ec.directives.Session == nil {
+					var zeroVal bool
+					return zeroVal, errors.New("directive session is not implemented")
+				}
+				return ec.directives.Session(ctx, obj, directive0, required)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Invitation_permission(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Invitation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Invitation_permission_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -4963,6 +5147,8 @@ func (ec *executionContext) fieldContext_InvitationEdge_node(_ context.Context, 
 				return ec.fieldContext_Invitation_status(ctx, field)
 			case "organization":
 				return ec.fieldContext_Invitation_organization(ctx, field)
+			case "permission":
+				return ec.fieldContext_Invitation_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Invitation", field.Name)
 		},
@@ -5177,6 +5363,8 @@ func (ec *executionContext) fieldContext_Membership_profile(_ context.Context, f
 				return ec.fieldContext_MembershipProfile_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_MembershipProfile_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_MembershipProfile_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type MembershipProfile", field.Name)
 		},
@@ -5236,6 +5424,8 @@ func (ec *executionContext) fieldContext_Membership_organization(_ context.Conte
 				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
 			case "viewerMembership":
 				return ec.fieldContext_Organization_viewerMembership(ctx, field)
+			case "permission":
+				return ec.fieldContext_Organization_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
 		},
@@ -5267,51 +5457,6 @@ func (ec *executionContext) fieldContext_Membership_role(_ context.Context, fiel
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type MembershipRole does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Membership_permissions(ctx context.Context, field graphql.CollectedField, obj *types.Membership) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Membership_permissions,
-		func(ctx context.Context) (any, error) {
-			return ec.resolvers.Membership().Permissions(ctx, obj)
-		},
-		nil,
-		ec.marshalOPermission2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐPermissionᚄ,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_Membership_permissions(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Membership",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Permission_id(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Permission_createdAt(ctx, field)
-			case "application":
-				return ec.fieldContext_Permission_application(ctx, field)
-			case "accessLevel":
-				return ec.fieldContext_Permission_accessLevel(ctx, field)
-			case "organization":
-				return ec.fieldContext_Permission_organization(ctx, field)
-			case "principalType":
-				return ec.fieldContext_Permission_principalType(ctx, field)
-			case "principalId":
-				return ec.fieldContext_Permission_principalId(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Permission", field.Name)
 		},
 	}
 	return fc, nil
@@ -5368,9 +5513,70 @@ func (ec *executionContext) fieldContext_Membership_lastSession(_ context.Contex
 				return ec.fieldContext_Session_createdAt(ctx, field)
 			case "expiresAt":
 				return ec.fieldContext_Session_expiresAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Session_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Session", field.Name)
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Membership_permission(ctx context.Context, field graphql.CollectedField, obj *types.Membership) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Membership_permission,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Membership().Permission(ctx, obj, fc.Args["action"].(string))
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSessionRequirement(ctx, "PRESENT")
+				if err != nil {
+					var zeroVal bool
+					return zeroVal, err
+				}
+				if ec.directives.Session == nil {
+					var zeroVal bool
+					return zeroVal, errors.New("directive session is not implemented")
+				}
+				return ec.directives.Session(ctx, obj, directive0, required)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Membership_permission(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Membership",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Membership_permission_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -5514,10 +5720,10 @@ func (ec *executionContext) fieldContext_MembershipEdge_node(_ context.Context, 
 				return ec.fieldContext_Membership_organization(ctx, field)
 			case "role":
 				return ec.fieldContext_Membership_role(ctx, field)
-			case "permissions":
-				return ec.fieldContext_Membership_permissions(ctx, field)
 			case "lastSession":
 				return ec.fieldContext_Membership_lastSession(ctx, field)
+			case "permission":
+				return ec.fieldContext_Membership_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Membership", field.Name)
 		},
@@ -5666,6 +5872,65 @@ func (ec *executionContext) fieldContext_MembershipProfile_updatedAt(_ context.C
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Datetime does not have child fields")
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MembershipProfile_permission(ctx context.Context, field graphql.CollectedField, obj *types.MembershipProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_MembershipProfile_permission,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.MembershipProfile().Permission(ctx, obj, fc.Args["action"].(string))
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSessionRequirement(ctx, "PRESENT")
+				if err != nil {
+					var zeroVal bool
+					return zeroVal, err
+				}
+				if ec.directives.Session == nil {
+					var zeroVal bool
+					return zeroVal, errors.New("directive session is not implemented")
+				}
+				return ec.directives.Session(ctx, obj, directive0, required)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_MembershipProfile_permission(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MembershipProfile",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_MembershipProfile_permission_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -7808,13 +8073,72 @@ func (ec *executionContext) fieldContext_Organization_viewerMembership(_ context
 				return ec.fieldContext_Membership_organization(ctx, field)
 			case "role":
 				return ec.fieldContext_Membership_role(ctx, field)
-			case "permissions":
-				return ec.fieldContext_Membership_permissions(ctx, field)
 			case "lastSession":
 				return ec.fieldContext_Membership_lastSession(ctx, field)
+			case "permission":
+				return ec.fieldContext_Membership_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Membership", field.Name)
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Organization_permission(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Organization_permission,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Organization().Permission(ctx, obj, fc.Args["action"].(string))
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSessionRequirement(ctx, "PRESENT")
+				if err != nil {
+					var zeroVal bool
+					return zeroVal, err
+				}
+				if ec.directives.Session == nil {
+					var zeroVal bool
+					return zeroVal, errors.New("directive session is not implemented")
+				}
+				return ec.directives.Session(ctx, obj, directive0, required)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Organization_permission(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Organization",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Organization_permission_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -7857,6 +8181,8 @@ func (ec *executionContext) fieldContext_OrganizationSessionCreated_session(_ co
 				return ec.fieldContext_Session_createdAt(ctx, field)
 			case "expiresAt":
 				return ec.fieldContext_Session_expiresAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Session_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Session", field.Name)
 		},
@@ -7900,10 +8226,10 @@ func (ec *executionContext) fieldContext_OrganizationSessionCreated_membership(_
 				return ec.fieldContext_Membership_organization(ctx, field)
 			case "role":
 				return ec.fieldContext_Membership_role(ctx, field)
-			case "permissions":
-				return ec.fieldContext_Membership_permissions(ctx, field)
 			case "lastSession":
 				return ec.fieldContext_Membership_lastSession(ctx, field)
+			case "permission":
+				return ec.fieldContext_Membership_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Membership", field.Name)
 		},
@@ -8051,249 +8377,6 @@ func (ec *executionContext) fieldContext_PasswordRequired_reason(_ context.Conte
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type ReauthenticationReason does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Permission_id(ctx context.Context, field graphql.CollectedField, obj *types.Permission) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Permission_id,
-		func(ctx context.Context) (any, error) {
-			return obj.ID, nil
-		},
-		nil,
-		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Permission_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Permission",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Permission_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.Permission) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Permission_createdAt,
-		func(ctx context.Context) (any, error) {
-			return obj.CreatedAt, nil
-		},
-		nil,
-		ec.marshalNDatetime2timeᚐTime,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Permission_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Permission",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Datetime does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Permission_application(ctx context.Context, field graphql.CollectedField, obj *types.Permission) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Permission_application,
-		func(ctx context.Context) (any, error) {
-			return obj.Application, nil
-		},
-		nil,
-		ec.marshalNApplication2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐApplication,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Permission_application(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Permission",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Application_id(ctx, field)
-			case "name":
-				return ec.fieldContext_Application_name(ctx, field)
-			case "description":
-				return ec.fieldContext_Application_description(ctx, field)
-			case "availableAccessLevels":
-				return ec.fieldContext_Application_availableAccessLevels(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Application", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Permission_accessLevel(ctx context.Context, field graphql.CollectedField, obj *types.Permission) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Permission_accessLevel,
-		func(ctx context.Context) (any, error) {
-			return obj.AccessLevel, nil
-		},
-		nil,
-		ec.marshalNAccessLevel2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐAccessLevel,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Permission_accessLevel(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Permission",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type AccessLevel does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Permission_organization(ctx context.Context, field graphql.CollectedField, obj *types.Permission) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Permission_organization,
-		func(ctx context.Context) (any, error) {
-			return obj.Organization, nil
-		},
-		nil,
-		ec.marshalNOrganization2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐOrganization,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Permission_organization(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Permission",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Organization_id(ctx, field)
-			case "name":
-				return ec.fieldContext_Organization_name(ctx, field)
-			case "logoUrl":
-				return ec.fieldContext_Organization_logoUrl(ctx, field)
-			case "horizontalLogoUrl":
-				return ec.fieldContext_Organization_horizontalLogoUrl(ctx, field)
-			case "email":
-				return ec.fieldContext_Organization_email(ctx, field)
-			case "description":
-				return ec.fieldContext_Organization_description(ctx, field)
-			case "websiteUrl":
-				return ec.fieldContext_Organization_websiteUrl(ctx, field)
-			case "headquarterAddress":
-				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Organization_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_Organization_updatedAt(ctx, field)
-			case "members":
-				return ec.fieldContext_Organization_members(ctx, field)
-			case "invitations":
-				return ec.fieldContext_Organization_invitations(ctx, field)
-			case "samlConfigurations":
-				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
-			case "viewerMembership":
-				return ec.fieldContext_Organization_viewerMembership(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Permission_principalType(ctx context.Context, field graphql.CollectedField, obj *types.Permission) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Permission_principalType,
-		func(ctx context.Context) (any, error) {
-			return obj.PrincipalType, nil
-		},
-		nil,
-		ec.marshalNPrincipalType2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐPrincipalType,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Permission_principalType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Permission",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type PrincipalType does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Permission_principalId(ctx context.Context, field graphql.CollectedField, obj *types.Permission) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Permission_principalId,
-		func(ctx context.Context) (any, error) {
-			return obj.PrincipalID, nil
-		},
-		nil,
-		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Permission_principalId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Permission",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
 		},
 	}
 	return fc, nil
@@ -8525,9 +8608,70 @@ func (ec *executionContext) fieldContext_PersonalAPIKey_organizations(_ context.
 				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
 			case "viewerMembership":
 				return ec.fieldContext_Organization_viewerMembership(ctx, field)
+			case "permission":
+				return ec.fieldContext_Organization_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PersonalAPIKey_permission(ctx context.Context, field graphql.CollectedField, obj *types.PersonalAPIKey) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_PersonalAPIKey_permission,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.PersonalAPIKey().Permission(ctx, obj, fc.Args["action"].(string))
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSessionRequirement(ctx, "PRESENT")
+				if err != nil {
+					var zeroVal bool
+					return zeroVal, err
+				}
+				if ec.directives.Session == nil {
+					var zeroVal bool
+					return zeroVal, errors.New("directive session is not implemented")
+				}
+				return ec.directives.Session(ctx, obj, directive0, required)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_PersonalAPIKey_permission(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PersonalAPIKey",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_PersonalAPIKey_permission_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -8673,6 +8817,8 @@ func (ec *executionContext) fieldContext_PersonalAPIKeyEdge_node(_ context.Conte
 				return ec.fieldContext_PersonalAPIKey_scopes(ctx, field)
 			case "organizations":
 				return ec.fieldContext_PersonalAPIKey_organizations(ctx, field)
+			case "permission":
+				return ec.fieldContext_PersonalAPIKey_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type PersonalAPIKey", field.Name)
 		},
@@ -9749,6 +9895,65 @@ func (ec *executionContext) fieldContext_SAMLConfiguration_attributeMappings(_ c
 	return fc, nil
 }
 
+func (ec *executionContext) _SAMLConfiguration_permission(ctx context.Context, field graphql.CollectedField, obj *types.SAMLConfiguration) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SAMLConfiguration_permission,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.SAMLConfiguration().Permission(ctx, obj, fc.Args["action"].(string))
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSessionRequirement(ctx, "PRESENT")
+				if err != nil {
+					var zeroVal bool
+					return zeroVal, err
+				}
+				if ec.directives.Session == nil {
+					var zeroVal bool
+					return zeroVal, errors.New("directive session is not implemented")
+				}
+				return ec.directives.Session(ctx, obj, directive0, required)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SAMLConfiguration_permission(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SAMLConfiguration",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_SAMLConfiguration_permission_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _SAMLConfigurationConnection_edges(ctx context.Context, field graphql.CollectedField, obj *types.SAMLConfigurationConnection) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -9902,6 +10107,8 @@ func (ec *executionContext) fieldContext_SAMLConfigurationEdge_node(_ context.Co
 				return ec.fieldContext_SAMLConfiguration_testLoginUrl(ctx, field)
 			case "attributeMappings":
 				return ec.fieldContext_SAMLConfiguration_attributeMappings(ctx, field)
+			case "permission":
+				return ec.fieldContext_SAMLConfiguration_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type SAMLConfiguration", field.Name)
 		},
@@ -10265,6 +10472,65 @@ func (ec *executionContext) fieldContext_Session_expiresAt(_ context.Context, fi
 	return fc, nil
 }
 
+func (ec *executionContext) _Session_permission(ctx context.Context, field graphql.CollectedField, obj *types.Session) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Session_permission,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Session().Permission(ctx, obj, fc.Args["action"].(string))
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSessionRequirement(ctx, "PRESENT")
+				if err != nil {
+					var zeroVal bool
+					return zeroVal, err
+				}
+				if ec.directives.Session == nil {
+					var zeroVal bool
+					return zeroVal, errors.New("directive session is not implemented")
+				}
+				return ec.directives.Session(ctx, obj, directive0, required)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Session_permission(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Session",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Session_permission_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _SessionConnection_edges(ctx context.Context, field graphql.CollectedField, obj *types.SessionConnection) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -10406,6 +10672,8 @@ func (ec *executionContext) fieldContext_SessionEdge_node(_ context.Context, fie
 				return ec.fieldContext_Session_createdAt(ctx, field)
 			case "expiresAt":
 				return ec.fieldContext_Session_expiresAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Session_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Session", field.Name)
 		},
@@ -10533,6 +10801,8 @@ func (ec *executionContext) fieldContext_SignInPayload_session(_ context.Context
 				return ec.fieldContext_Session_createdAt(ctx, field)
 			case "expiresAt":
 				return ec.fieldContext_Session_expiresAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Session_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Session", field.Name)
 		},
@@ -10711,10 +10981,10 @@ func (ec *executionContext) fieldContext_UpdateMembershipPayload_membership(_ co
 				return ec.fieldContext_Membership_organization(ctx, field)
 			case "role":
 				return ec.fieldContext_Membership_role(ctx, field)
-			case "permissions":
-				return ec.fieldContext_Membership_permissions(ctx, field)
 			case "lastSession":
 				return ec.fieldContext_Membership_lastSession(ctx, field)
+			case "permission":
+				return ec.fieldContext_Membership_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Membership", field.Name)
 		},
@@ -10774,6 +11044,8 @@ func (ec *executionContext) fieldContext_UpdateOrganizationPayload_organization(
 				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
 			case "viewerMembership":
 				return ec.fieldContext_Organization_viewerMembership(ctx, field)
+			case "permission":
+				return ec.fieldContext_Organization_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
 		},
@@ -10831,6 +11103,8 @@ func (ec *executionContext) fieldContext_UpdateSAMLConfigurationPayload_samlConf
 				return ec.fieldContext_SAMLConfiguration_testLoginUrl(ctx, field)
 			case "attributeMappings":
 				return ec.fieldContext_SAMLConfiguration_attributeMappings(ctx, field)
+			case "permission":
+				return ec.fieldContext_SAMLConfiguration_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type SAMLConfiguration", field.Name)
 		},
@@ -13477,13 +13751,6 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._PersonalAPIKey(ctx, sel, obj)
-	case types.Permission:
-		return ec._Permission(ctx, sel, &obj)
-	case *types.Permission:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._Permission(ctx, sel, obj)
 	case types.Organization:
 		return ec._Organization(ctx, sel, &obj)
 	case *types.Organization:
@@ -14409,6 +14676,42 @@ func (ec *executionContext) _Invitation(ctx context.Context, sel ast.SelectionSe
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "permission":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Invitation_permission(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -14717,7 +15020,7 @@ func (ec *executionContext) _Membership(ctx context.Context, sel ast.SelectionSe
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
-		case "permissions":
+		case "lastSession":
 			field := field
 
 			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
@@ -14726,7 +15029,7 @@ func (ec *executionContext) _Membership(ctx context.Context, sel ast.SelectionSe
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Membership_permissions(ctx, field, obj)
+				res = ec._Membership_lastSession(ctx, field, obj)
 				return res
 			}
 
@@ -14750,16 +15053,19 @@ func (ec *executionContext) _Membership(ctx context.Context, sel ast.SelectionSe
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "lastSession":
+		case "permission":
 			field := field
 
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Membership_lastSession(ctx, field, obj)
+				res = ec._Membership_permission(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
 				return res
 			}
 
@@ -14941,23 +15247,59 @@ func (ec *executionContext) _MembershipProfile(ctx context.Context, sel ast.Sele
 		case "id":
 			out.Values[i] = ec._MembershipProfile_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "fullName":
 			out.Values[i] = ec._MembershipProfile_fullName(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "createdAt":
 			out.Values[i] = ec._MembershipProfile_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "updatedAt":
 			out.Values[i] = ec._MembershipProfile_updatedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "permission":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._MembershipProfile_permission(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -15374,6 +15716,42 @@ func (ec *executionContext) _Organization(ctx context.Context, sel ast.Selection
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "permission":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Organization_permission(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -15528,75 +15906,6 @@ func (ec *executionContext) _PasswordRequired(ctx context.Context, sel ast.Selec
 	return out
 }
 
-var permissionImplementors = []string{"Permission", "Node"}
-
-func (ec *executionContext) _Permission(ctx context.Context, sel ast.SelectionSet, obj *types.Permission) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, permissionImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("Permission")
-		case "id":
-			out.Values[i] = ec._Permission_id(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "createdAt":
-			out.Values[i] = ec._Permission_createdAt(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "application":
-			out.Values[i] = ec._Permission_application(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "accessLevel":
-			out.Values[i] = ec._Permission_accessLevel(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "organization":
-			out.Values[i] = ec._Permission_organization(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "principalType":
-			out.Values[i] = ec._Permission_principalType(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "principalId":
-			out.Values[i] = ec._Permission_principalId(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
 var personalAPIKeyImplementors = []string{"PersonalAPIKey", "Node"}
 
 func (ec *executionContext) _PersonalAPIKey(ctx context.Context, sel ast.SelectionSet, obj *types.PersonalAPIKey) graphql.Marshaler {
@@ -15611,35 +15920,71 @@ func (ec *executionContext) _PersonalAPIKey(ctx context.Context, sel ast.Selecti
 		case "id":
 			out.Values[i] = ec._PersonalAPIKey_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "name":
 			out.Values[i] = ec._PersonalAPIKey_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "lastUsedAt":
 			out.Values[i] = ec._PersonalAPIKey_lastUsedAt(ctx, field, obj)
 		case "expiresAt":
 			out.Values[i] = ec._PersonalAPIKey_expiresAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "createdAt":
 			out.Values[i] = ec._PersonalAPIKey_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "scopes":
 			out.Values[i] = ec._PersonalAPIKey_scopes(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "organizations":
 			out.Values[i] = ec._PersonalAPIKey_organizations(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "permission":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._PersonalAPIKey_permission(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -16327,6 +16672,42 @@ func (ec *executionContext) _SAMLConfiguration(ctx context.Context, sel ast.Sele
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "permission":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._SAMLConfiguration_permission(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -16588,6 +16969,42 @@ func (ec *executionContext) _Session(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "permission":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Session_permission(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -17440,16 +17857,6 @@ func (ec *executionContext) marshalNAccessLevel2ᚕgoᚗproboᚗincᚋproboᚋpk
 	return ret
 }
 
-func (ec *executionContext) marshalNApplication2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐApplication(ctx context.Context, sel ast.SelectionSet, v *types.Application) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._Application(ctx, sel, v)
-}
-
 func (ec *executionContext) unmarshalNApplicationId2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐApplicationID(ctx context.Context, v any) (types.ApplicationID, error) {
 	var res types.ApplicationID
 	err := res.UnmarshalGQL(v)
@@ -17996,16 +18403,6 @@ func (ec *executionContext) marshalNPageInfo2goᚗproboᚗincᚋproboᚋpkgᚋse
 	return ec._PageInfo(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNPermission2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐPermission(ctx context.Context, sel ast.SelectionSet, v *types.Permission) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._Permission(ctx, sel, v)
-}
-
 func (ec *executionContext) marshalNPersonalAPIKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐPersonalAPIKey(ctx context.Context, sel ast.SelectionSet, v *types.PersonalAPIKey) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -18068,16 +18465,6 @@ func (ec *executionContext) marshalNPersonalAPIKeyEdge2ᚖgoᚗproboᚗincᚋpro
 		return graphql.Null
 	}
 	return ec._PersonalAPIKeyEdge(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalNPrincipalType2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐPrincipalType(ctx context.Context, v any) (types.PrincipalType, error) {
-	var res types.PrincipalType
-	err := res.UnmarshalGQL(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNPrincipalType2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐPrincipalType(ctx context.Context, sel ast.SelectionSet, v types.PrincipalType) graphql.Marshaler {
-	return v
 }
 
 func (ec *executionContext) unmarshalNReauthenticationReason2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐReauthenticationReason(ctx context.Context, v any) (types.ReauthenticationReason, error) {
@@ -19026,53 +19413,6 @@ func (ec *executionContext) marshalOOrganization2ᚖgoᚗproboᚗincᚋproboᚋp
 		return graphql.Null
 	}
 	return ec._Organization(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOPermission2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐPermissionᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.Permission) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNPermission2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐPermission(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
 }
 
 func (ec *executionContext) marshalOPersonalAPIKeyConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐPersonalAPIKeyConnection(ctx context.Context, sel ast.SelectionSet, v *types.PersonalAPIKeyConnection) graphql.Marshaler {

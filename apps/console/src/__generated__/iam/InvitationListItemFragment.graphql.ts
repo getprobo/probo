@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<748bbadd485b1e131e583c119f980e91>>
+ * @generated SignedSource<<1ff88dc8e6cbfc1d0db4f6d041cd7e51>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -14,6 +14,7 @@ export type MembershipRole = "ADMIN" | "AUDITOR" | "EMPLOYEE" | "OWNER" | "VIEWE
 import { FragmentRefs } from "relay-runtime";
 export type InvitationListItemFragment$data = {
   readonly acceptedAt: any | null | undefined;
+  readonly canDelete: boolean;
   readonly createdAt: any;
   readonly email: any;
   readonly expiresAt: any;
@@ -89,12 +90,25 @@ const node: ReaderFragment = {
       "kind": "ScalarField",
       "name": "acceptedAt",
       "storageKey": null
+    },
+    {
+      "alias": "canDelete",
+      "args": [
+        {
+          "kind": "Literal",
+          "name": "action",
+          "value": "iam:invitation:delete"
+        }
+      ],
+      "kind": "ScalarField",
+      "name": "permission",
+      "storageKey": "permission(action:\"iam:invitation:delete\")"
     }
   ],
   "type": "Invitation",
   "abstractKey": null
 };
 
-(node as any).hash = "772414270b8ce2fed6c7b5fe97082c17";
+(node as any).hash = "c0e21d5dd227cd3fff739dc9f0922657";
 
 export default node;

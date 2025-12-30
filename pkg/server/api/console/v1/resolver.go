@@ -348,17 +348,6 @@ func (r *Resolver) Permission(ctx context.Context, obj types.Node, action string
 	if err != nil {
 		var errInsufficientPermissions *iam.ErrInsufficientPermissions
 		if errors.As(err, &errInsufficientPermissions) {
-			graphql.AddError(
-				ctx,
-				&gqlerror.Error{
-					Path:    graphql.GetPath(ctx),
-					Message: err.Error(),
-					Extensions: map[string]interface{}{
-						"code": "UNAUTHORIZED",
-					},
-				},
-			)
-
 			return false, nil
 		}
 

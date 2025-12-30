@@ -10,16 +10,6 @@ import { InviteUserDialog } from "./_components/InviteUserDialog";
 
 export const membersPageQuery = graphql`
   query MembersPageQuery($organizationId: ID!) {
-    viewer @required(action: THROW) {
-      canInviteUser: permission(
-        action: "iam:membership:create"
-        id: $organizationId
-      )
-      ...InvitationListItem_permissionsFragment
-        @arguments(organizationId: $organizationId)
-      ...MemberListItem_permissionsFragment
-        @arguments(organizationId: $organizationId)
-    }
     organization: node(id: $organizationId) @required(action: THROW) {
       __typename
       ... on Organization {
@@ -36,6 +26,7 @@ export const membersPageQuery = graphql`
           @required(action: THROW) {
           totalCount
         }
+        canInviteUser: permission(action: "iam:invitation:create")
       }
     }
   }
@@ -52,7 +43,7 @@ export function MembersPage(props: {
     "memberships",
   );
 
-  const { organization, viewer } = usePreloadedQuery<MembersPageQuery>(
+  const { organization } = usePreloadedQuery<MembersPageQuery>(
     membersPageQuery,
     queryRef,
   );
@@ -64,7 +55,7 @@ export function MembersPage(props: {
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <h2 className="text-base font-medium">{__("Workspace members")}</h2>
-        {viewer.canInviteUser && (
+        {organization.canInviteUser && (
           <InviteUserDialog viewerMembershipFKey={organization}>
             <Button variant="secondary">{__("Invite member")}</Button>
           </InviteUserDialog>
@@ -94,12 +85,10 @@ export function MembersPage(props: {
 
       <Card>
         <div className="px-6 pb-6 pt-6">
-          {activeTab === "memberships" && (
-            <MemberList fKey={organization} permissionsFKey={viewer} />
-          )}
+          {activeTab === "memberships" && <MemberList fKey={organization} />}
 
           {activeTab === "invitations" && (
-            <InvitationList fKey={organization} permissionsFKey={viewer} />
+            <InvitationList fKey={organization} />
           )}
         </div>
       </Card>

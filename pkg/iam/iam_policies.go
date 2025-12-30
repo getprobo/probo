@@ -39,7 +39,7 @@ var IAMSelfManageIdentityPolicy = policy.NewPolicy(
 		ActionIAMIdentityListMemberships,
 		ActionIAMIdentityListInvitations,
 		ActionIAMIdentityListSessions,
-		ActionIAMIdentityListPersonalAPIKeys,
+		ActionIAMPersonalAPIKeyList,
 	).WithSID("list-own-associations").
 		When(policy.Equals("principal.id", "resource.id")),
 ).WithDescription("Allows users to manage their own identity, sessions, API keys, and view their memberships")
@@ -104,6 +104,7 @@ var IAMOwnerPolicy = policy.NewPolicy(
 	policy.Allow("iam:membership:*").WithSID("full-membership-access"),
 	// Can manage invitations
 	policy.Allow(
+		ActionIAMInvitationCreate,
 		ActionIAMInvitationGet,
 		ActionIAMInvitationDelete,
 	).WithSID("manage-invitations"),

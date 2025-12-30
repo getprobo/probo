@@ -17,6 +17,8 @@
 package connect_v1
 
 import (
+	"context"
+	"errors"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -24,6 +26,8 @@ import (
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/securecookie"
+	"go.probo.inc/probo/pkg/server/api/connect/v1/types"
+	"go.probo.inc/probo/pkg/server/gqlutils"
 )
 
 type (
@@ -66,4 +70,29 @@ func NewMux(logger *log.Logger, svc *iam.Service, cookieConfig securecookie.Conf
 	router.Get("/saml/2.0/{samlConfigID}", samlHandler.LoginHandler)
 
 	return r
+}
+
+func (r *Resolver) Permission(ctx context.Context, obj types.Node, action string) (bool, error) {
+	identity := IdentityFromContext(ctx)
+
+	err := r.iam.Authorizer.Authorize(
+		ctx,
+		iam.AuthorizeParams{
+			Principal: identity.ID,
+			Resource:  obj.GetID(),
+			Action:    action,
+		},
+	)
+
+	if err != nil {
+		var errInsufficientPermissions *iam.ErrInsufficientPermissions
+		if errors.As(err, &errInsufficientPermissions) {
+			return false, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot authorize", log.Error(err))
+		return false, gqlutils.InternalServerError(ctx)
+	}
+
+	return true, nil
 }

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<d7cb6d45a4e2a8960d1984e0e1f74b0a>>
+ * @generated SignedSource<<e98eac6c530fd62defd06d5978d9724b>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -37,20 +37,8 @@ export type SidebarFragment$key = {
   readonly " $fragmentSpreads": FragmentRefs<"SidebarFragment">;
 };
 
-const node: ReaderFragment = (function(){
-var v0 = {
-  "kind": "Variable",
-  "name": "id",
-  "variableName": "organizationId"
-};
-return {
-  "argumentDefinitions": [
-    {
-      "defaultValue": null,
-      "kind": "LocalArgument",
-      "name": "organizationId"
-    }
-  ],
+const node: ReaderFragment = {
+  "argumentDefinitions": [],
   "kind": "Fragment",
   "metadata": null,
   "name": "SidebarFragment",
@@ -62,12 +50,11 @@ return {
           "kind": "Literal",
           "name": "action",
           "value": "core:meeting:list"
-        },
-        (v0/*: any*/)
+        }
       ],
       "kind": "ScalarField",
       "name": "permission",
-      "storageKey": null
+      "storageKey": "permission(action:\"core:meeting:list\")"
     },
     {
       "alias": "canListTasks",
@@ -76,12 +63,11 @@ return {
           "kind": "Literal",
           "name": "action",
           "value": "core:task:list"
-        },
-        (v0/*: any*/)
+        }
       ],
       "kind": "ScalarField",
       "name": "permission",
-      "storageKey": null
+      "storageKey": "permission(action:\"core:task:list\")"
     },
     {
       "alias": "canListMeasures",
@@ -90,12 +76,11 @@ return {
           "kind": "Literal",
           "name": "action",
           "value": "core:measures:list"
-        },
-        (v0/*: any*/)
+        }
       ],
       "kind": "ScalarField",
       "name": "permission",
-      "storageKey": null
+      "storageKey": "permission(action:\"core:measures:list\")"
     },
     {
       "alias": "canListRisks",
@@ -104,12 +89,11 @@ return {
           "kind": "Literal",
           "name": "action",
           "value": "core:risk:list"
-        },
-        (v0/*: any*/)
+        }
       ],
       "kind": "ScalarField",
       "name": "permission",
-      "storageKey": null
+      "storageKey": "permission(action:\"core:risk:list\")"
     },
     {
       "alias": "canListFrameworks",
@@ -118,12 +102,11 @@ return {
           "kind": "Literal",
           "name": "action",
           "value": "core:frameworks:list"
-        },
-        (v0/*: any*/)
+        }
       ],
       "kind": "ScalarField",
       "name": "permission",
-      "storageKey": null
+      "storageKey": "permission(action:\"core:frameworks:list\")"
     },
     {
       "alias": "canListPeople",
@@ -132,12 +115,11 @@ return {
           "kind": "Literal",
           "name": "action",
           "value": "core:people:list"
-        },
-        (v0/*: any*/)
+        }
       ],
       "kind": "ScalarField",
       "name": "permission",
-      "storageKey": null
+      "storageKey": "permission(action:\"core:people:list\")"
     },
     {
       "alias": "canListVendors",
@@ -146,12 +128,11 @@ return {
           "kind": "Literal",
           "name": "action",
           "value": "core:vendor:list"
-        },
-        (v0/*: any*/)
+        }
       ],
       "kind": "ScalarField",
       "name": "permission",
-      "storageKey": null
+      "storageKey": "permission(action:\"core:vendor:list\")"
     },
     {
       "alias": "canListDocuments",
@@ -160,12 +141,11 @@ return {
           "kind": "Literal",
           "name": "action",
           "value": "core:document:list"
-        },
-        (v0/*: any*/)
+        }
       ],
       "kind": "ScalarField",
       "name": "permission",
-      "storageKey": null
+      "storageKey": "permission(action:\"core:document:list\")"
     },
     {
       "alias": "canListAssets",
@@ -174,12 +154,11 @@ return {
           "kind": "Literal",
           "name": "action",
           "value": "core:asset:list"
-        },
-        (v0/*: any*/)
+        }
       ],
       "kind": "ScalarField",
       "name": "permission",
-      "storageKey": null
+      "storageKey": "permission(action:\"core:asset:list\")"
     },
     {
       "alias": "canListData",
@@ -188,12 +167,11 @@ return {
           "kind": "Literal",
           "name": "action",
           "value": "core:datum:list"
-        },
-        (v0/*: any*/)
+        }
       ],
       "kind": "ScalarField",
       "name": "permission",
-      "storageKey": null
+      "storageKey": "permission(action:\"core:datum:list\")"
     },
     {
       "alias": "canListAudits",
@@ -202,12 +180,11 @@ return {
           "kind": "Literal",
           "name": "action",
           "value": "core:audit:list"
-        },
-        (v0/*: any*/)
+        }
       ],
       "kind": "ScalarField",
       "name": "permission",
-      "storageKey": null
+      "storageKey": "permission(action:\"core:audit:list\")"
     },
     {
       "alias": "canListNonconformities",
@@ -216,12 +193,11 @@ return {
           "kind": "Literal",
           "name": "action",
           "value": "core:nonconformity:list"
-        },
-        (v0/*: any*/)
+        }
       ],
       "kind": "ScalarField",
       "name": "permission",
-      "storageKey": null
+      "storageKey": "permission(action:\"core:nonconformity:list\")"
     },
     {
       "alias": "canListObligations",
@@ -230,12 +206,11 @@ return {
           "kind": "Literal",
           "name": "action",
           "value": "core:obligation:list"
-        },
-        (v0/*: any*/)
+        }
       ],
       "kind": "ScalarField",
       "name": "permission",
-      "storageKey": null
+      "storageKey": "permission(action:\"core:obligation:list\")"
     },
     {
       "alias": "canListContinualImprovements",
@@ -244,12 +219,11 @@ return {
           "kind": "Literal",
           "name": "action",
           "value": "core:continual-improvement:list"
-        },
-        (v0/*: any*/)
+        }
       ],
       "kind": "ScalarField",
       "name": "permission",
-      "storageKey": null
+      "storageKey": "permission(action:\"core:continual-improvement:list\")"
     },
     {
       "alias": "canListProcessingActivities",
@@ -258,12 +232,11 @@ return {
           "kind": "Literal",
           "name": "action",
           "value": "core:processing-activity:list"
-        },
-        (v0/*: any*/)
+        }
       ],
       "kind": "ScalarField",
       "name": "permission",
-      "storageKey": null
+      "storageKey": "permission(action:\"core:processing-activity:list\")"
     },
     {
       "alias": "canListStatesOfApplicability",
@@ -272,12 +245,11 @@ return {
           "kind": "Literal",
           "name": "action",
           "value": "core:state-of-applicability:list"
-        },
-        (v0/*: any*/)
+        }
       ],
       "kind": "ScalarField",
       "name": "permission",
-      "storageKey": null
+      "storageKey": "permission(action:\"core:state-of-applicability:list\")"
     },
     {
       "alias": "canListSnapshots",
@@ -286,12 +258,11 @@ return {
           "kind": "Literal",
           "name": "action",
           "value": "core:snapshot:list"
-        },
-        (v0/*: any*/)
+        }
       ],
       "kind": "ScalarField",
       "name": "permission",
-      "storageKey": null
+      "storageKey": "permission(action:\"core:snapshot:list\")"
     },
     {
       "alias": "canGetTrustCenter",
@@ -300,12 +271,11 @@ return {
           "kind": "Literal",
           "name": "action",
           "value": "core:trust-center:get"
-        },
-        (v0/*: any*/)
+        }
       ],
       "kind": "ScalarField",
       "name": "permission",
-      "storageKey": null
+      "storageKey": "permission(action:\"core:trust-center:get\")"
     },
     {
       "alias": "canUpdateOrganization",
@@ -314,19 +284,17 @@ return {
           "kind": "Literal",
           "name": "action",
           "value": "iam:organization:update"
-        },
-        (v0/*: any*/)
+        }
       ],
       "kind": "ScalarField",
       "name": "permission",
-      "storageKey": null
+      "storageKey": "permission(action:\"iam:organization:update\")"
     }
   ],
-  "type": "Identity",
+  "type": "Organization",
   "abstractKey": null
 };
-})();
 
-(node as any).hash = "a116eb6c3f1c2808f90316b34ef43979";
+(node as any).hash = "2baad6a78a98c3e9458cdb1ada294d76";
 
 export default node;

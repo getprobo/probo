@@ -14,7 +14,6 @@ import { useState } from "react";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 import type { MemberListItemFragment$key } from "/__generated__/iam/MemberListItemFragment.graphql";
-import type { MemberListItem_permissionsFragment$key } from "/__generated__/iam/MemberListItem_permissionsFragment.graphql";
 import type { MemberListItem_currentRoleFragment$key } from "/__generated__/iam/MemberListItem_currentRoleFragment.graphql";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { useOrganizationId } from "/hooks/useOrganizationId";
@@ -32,6 +31,8 @@ const fragment = graphql`
       email
     }
     createdAt
+    canUpdate: permission(action: "iam:membership:update")
+    canDelete: permission(action: "iam:membership:delete")
   }
 `;
 
@@ -40,20 +41,6 @@ const currentRoleFragment = graphql`
     viewerMembership @required(action: THROW) {
       role
     }
-  }
-`;
-
-const permissionsFragment = graphql`
-  fragment MemberListItem_permissionsFragment on Identity
-  @argumentDefinitions(organizationId: { type: "ID!" }) {
-    canUpdateMembership: permission(
-      action: "iam:membership:update"
-      id: $organizationId
-    )
-    canDeleteMembership: permission(
-      action: "iam:membership:delete"
-      id: $organizationId
-    )
   }
 `;
 
@@ -71,11 +58,10 @@ const removeMemberMutation = graphql`
 export function MemberListItem(props: {
   connectionId: string;
   fKey: MemberListItemFragment$key;
-  permissionsFKey: MemberListItem_permissionsFragment$key;
   viewerFKey: MemberListItem_currentRoleFragment$key;
   onRefetch: () => void;
 }) {
-  const { fKey, connectionId, permissionsFKey, viewerFKey } = props;
+  const { fKey, connectionId, viewerFKey } = props;
 
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
@@ -88,10 +74,6 @@ export function MemberListItem(props: {
       currentRoleFragment,
       viewerFKey,
     );
-  const permissions = useFragment<MemberListItem_permissionsFragment$key>(
-    permissionsFragment,
-    permissionsFKey,
-  );
 
   // Only OWNER can edit OWNER members
   const canEditThisRole =
@@ -151,7 +133,7 @@ export function MemberListItem(props: {
             className="flex gap-2 justify-end"
             onClick={(e) => e.stopPropagation()}
           >
-            {permissions.canUpdateMembership && canEditThisRole && (
+            {membership.canUpdate && canEditThisRole && (
               <Button
                 variant="secondary"
                 onClick={() => setDialogOpen(true)}
@@ -163,7 +145,7 @@ export function MemberListItem(props: {
             {isRemoving ? (
               <Spinner size={16} />
             ) : (
-              permissions.canDeleteMembership &&
+              membership.canDelete &&
               canEditThisRole && (
                 <Button
                   variant="danger"

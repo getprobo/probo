@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<50f7d8bffdec238d8a262e892db7be39>>
+ * @generated SignedSource<<2a646771572f86908a4000fae533c4d8>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,6 +12,8 @@ import { ReaderFragment } from 'relay-runtime';
 export type MembershipRole = "ADMIN" | "AUDITOR" | "EMPLOYEE" | "OWNER" | "VIEWER";
 import { FragmentRefs } from "relay-runtime";
 export type MemberListItemFragment$data = {
+  readonly canDelete: boolean;
+  readonly canUpdate: boolean;
   readonly createdAt: any;
   readonly id: string;
   readonly identity: {
@@ -98,12 +100,38 @@ const node: ReaderFragment = {
       "kind": "ScalarField",
       "name": "createdAt",
       "storageKey": null
+    },
+    {
+      "alias": "canUpdate",
+      "args": [
+        {
+          "kind": "Literal",
+          "name": "action",
+          "value": "iam:membership:update"
+        }
+      ],
+      "kind": "ScalarField",
+      "name": "permission",
+      "storageKey": "permission(action:\"iam:membership:update\")"
+    },
+    {
+      "alias": "canDelete",
+      "args": [
+        {
+          "kind": "Literal",
+          "name": "action",
+          "value": "iam:membership:delete"
+        }
+      ],
+      "kind": "ScalarField",
+      "name": "permission",
+      "storageKey": "permission(action:\"iam:membership:delete\")"
     }
   ],
   "type": "Membership",
   "abstractKey": null
 };
 
-(node as any).hash = "31ca1c20d23f9709b0c1575ae56aeb64";
+(node as any).hash = "a7adb3da099816d296abd56c0b8dde16";
 
 export default node;

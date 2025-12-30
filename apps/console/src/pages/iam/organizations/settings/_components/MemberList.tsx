@@ -5,7 +5,6 @@ import { SortableTable, SortableTh } from "/components/SortableTable";
 import type { MemberListFragment_RefetchQuery } from "/__generated__/iam/MemberListFragment_RefetchQuery.graphql";
 import { MemberListItem } from "./MemberListItem";
 import type { MemberListFragment$key } from "/__generated__/iam/MemberListFragment.graphql";
-import type { MemberListItem_permissionsFragment$key } from "/__generated__/iam/MemberListItem_permissionsFragment.graphql";
 
 const fragment = graphql`
   fragment MemberListFragment on Organization
@@ -40,11 +39,8 @@ const fragment = graphql`
   }
 `;
 
-export function MemberList(props: {
-  fKey: MemberListFragment$key;
-  permissionsFKey: MemberListItem_permissionsFragment$key;
-}) {
-  const { fKey, permissionsFKey } = props;
+export function MemberList(props: { fKey: MemberListFragment$key }) {
+  const { fKey } = props;
 
   const { __ } = useTranslate();
 
@@ -98,7 +94,6 @@ export function MemberList(props: {
               key={membership.id}
               fKey={membership}
               onRefetch={refetchMemberships}
-              permissionsFKey={permissionsFKey}
               viewerFKey={membersPagination.data}
             />
           ))

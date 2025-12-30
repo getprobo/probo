@@ -8,8 +8,6 @@ import {
   UserDropdownItem,
   useToast,
 } from "@probo/ui";
-import { use } from "react";
-import { PermissionsContext } from "/providers/PermissionsContext";
 import { graphql } from "relay-runtime";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { useFragment, useMutation } from "react-relay";
@@ -18,6 +16,7 @@ import type { SessionDropdownFragment$key } from "/__generated__/iam/SessionDrop
 
 export const fragment = graphql`
   fragment SessionDropdownFragment on Organization {
+    canDelete: permission(action: "iam:organization:delete")
     viewerMembership @required(action: THROW) {
       identity @required(action: THROW) {
         email
@@ -42,10 +41,10 @@ export function SessionDropdown(props: { fKey: SessionDropdownFragment$key }) {
 
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
-  const { isAuthorized } = use(PermissionsContext);
   const { toast } = useToast();
 
   const {
+    canDelete,
     viewerMembership: {
       identity: { email },
       profile: { fullName },
@@ -73,20 +72,18 @@ export function SessionDropdown(props: { fKey: SessionDropdownFragment$key }) {
 
   return (
     <UserDropdown fullName={fullName} email={email}>
-      {isAuthorized("Organization", "deleteOrganization") && (
+      {canDelete && (
         <UserDropdownItem
           to="/me/api-keys"
           icon={IconKey}
           label={__("API Keys")}
         />
       )}
-      {isAuthorized("Organization", "listSignableDocuments") && (
-        <UserDropdownItem
-          to={`/organizations/${organizationId}/employee`}
-          icon={IconPageTextLine}
-          label={__("My Signatures")}
-        />
-      )}
+      <UserDropdownItem
+        to={`/organizations/${organizationId}/employee`}
+        icon={IconPageTextLine}
+        label={__("My Signatures")}
+      />
       <UserDropdownItem
         to="mailto:support@getprobo.com"
         icon={IconCircleQuestionmark}
