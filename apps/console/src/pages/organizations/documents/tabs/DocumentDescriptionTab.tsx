@@ -1,5 +1,5 @@
 import { useOutletContext } from "react-router";
-import type { DocumentDetailPageDocumentFragment$data } from "../__generated__/DocumentDetailPageDocumentFragment.graphql";
+import type { DocumentDetailPageDocumentFragment$data } from "/__generated__/core/DocumentDetailPageDocumentFragment.graphql";
 import type { NodeOf } from "/types";
 import { Markdown } from "@probo/ui";
 

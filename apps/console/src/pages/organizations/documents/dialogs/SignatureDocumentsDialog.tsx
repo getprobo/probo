@@ -20,7 +20,7 @@ import { graphql } from "relay-runtime";
 import { sprintf } from "@probo/helpers";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts.ts";
 import { useOrganizationId } from "/hooks/useOrganizationId.ts";
-import type { SignatureDocumentsDialogMutation } from "./__generated__/SignatureDocumentsDialogMutation.graphql.ts";
+import type { SignatureDocumentsDialogMutation } from "/__generated__/core/SignatureDocumentsDialogMutation.graphql.ts";
 import { useFormWithSchema } from "/hooks/useFormWithSchema.ts";
 import z from "zod";
 import {
@@ -29,8 +29,8 @@ import {
 } from "/hooks/graph/PeopleGraph.ts";
 import { useList } from "@probo/hooks";
 import { useLazyLoadQuery, usePaginationFragment } from "react-relay";
-import type { PeopleGraphPaginatedFragment$key } from "/hooks/graph/__generated__/PeopleGraphPaginatedFragment.graphql.ts";
-import type { PeopleGraphPaginatedQuery } from "/hooks/graph/__generated__/PeopleGraphPaginatedQuery.graphql.ts";
+import type { PeopleGraphPaginatedFragment$key } from "/__generated__/core/PeopleGraphPaginatedFragment.graphql.ts";
+import type { PeopleGraphPaginatedQuery } from "/__generated__/core/PeopleGraphPaginatedQuery.graphql.ts";
 
 type Props = {
   documentIds: string[];
@@ -64,13 +64,18 @@ export function SignatureDocumentsDialog({
 
   const schema = z.object({});
 
-  const [publishMutation] = useMutationWithToasts<SignatureDocumentsDialogMutation>(documentsSignatureMutation, {
-    successMessage: (response) => {
-      const actualRequestsCount = response.bulkRequestSignatures.documentVersionSignatureEdges.length;
-      return sprintf(__("%s signature requests sent"), actualRequestsCount);
-    },
-    errorMessage: __("Failed to send signature requests"),
-  });
+  const [publishMutation] =
+    useMutationWithToasts<SignatureDocumentsDialogMutation>(
+      documentsSignatureMutation,
+      {
+        successMessage: (response) => {
+          const actualRequestsCount =
+            response.bulkRequestSignatures.documentVersionSignatureEdges.length;
+          return sprintf(__("%s signature requests sent"), actualRequestsCount);
+        },
+        errorMessage: __("Failed to send signature requests"),
+      },
+    );
 
   const {
     handleSubmit,
@@ -106,7 +111,10 @@ export function SignatureDocumentsDialog({
           </Suspense>
         </DialogContent>
         <DialogFooter>
-          <Button type="submit" disabled={selectedPeople.length === 0 || isSubmitting}>
+          <Button
+            type="submit"
+            disabled={selectedPeople.length === 0 || isSubmitting}
+          >
             {__("Send signature requests")}
           </Button>
         </DialogFooter>
@@ -128,7 +136,7 @@ function PeopleList({
     paginatedPeopleQuery,
     {
       organizationId,
-    }
+    },
   );
   const {
     data: page,
@@ -137,7 +145,7 @@ function PeopleList({
     isLoadingNext,
   } = usePaginationFragment(
     paginatedPeopleFragment,
-    data.organization as PeopleGraphPaginatedFragment$key
+    data.organization as PeopleGraphPaginatedFragment$key,
   );
   const people = page.peoples.edges.map((edge) => edge.node);
   return (

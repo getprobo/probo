@@ -3,9 +3,9 @@ import { SortableTable, SortableTh } from "/components/SortableTable";
 import { useTranslate } from "@probo/i18n";
 import { graphql, usePaginationFragment } from "react-relay";
 import { InvitationListItem } from "./InvitationListItem";
-import type { InvitationListFragment$key } from "./__generated__/InvitationListFragment.graphql";
-import type { InvitationListItem_permissionsFragment$key } from "./__generated__/InvitationListItem_permissionsFragment.graphql";
-import type { InvitationListFragment_RefetchQuery } from "./__generated__/InvitationListFragment_RefetchQuery.graphql";
+import type { InvitationListFragment$key } from "/__generated__/iam/InvitationListFragment.graphql";
+import type { InvitationListItem_permissionsFragment$key } from "/__generated__/iam/InvitationListItem_permissionsFragment.graphql";
+import type { InvitationListFragment_RefetchQuery } from "/__generated__/iam/InvitationListFragment_RefetchQuery.graphql";
 
 const fragment = graphql`
   fragment InvitationListFragment on Organization

@@ -17,7 +17,7 @@ import { useFragment } from "react-relay";
 import { useMemo, useState, use } from "react";
 import { sprintf } from "@probo/helpers";
 import { useOrganizationId } from "/hooks/useOrganizationId";
-import type { TrustCenterVendorsCardFragment$key } from "./__generated__/TrustCenterVendorsCardFragment.graphql";
+import type { TrustCenterVendorsCardFragment$key } from "/__generated__/core/TrustCenterVendorsCardFragment.graphql";
 import { PermissionsContext } from "/providers/PermissionsContext";
 
 const trustCenterVendorFragment = graphql`
@@ -83,7 +83,10 @@ export function TrustCenterVendorsCard<Params>(props: Props<Params>) {
         <Tbody>
           {vendors.length === 0 && (
             <Tr>
-              <Td colSpan={canUpdate ? 4 : 3} className="text-center text-txt-secondary">
+              <Td
+                colSpan={canUpdate ? 4 : 3}
+                className="text-center text-txt-secondary"
+              >
                 {__("No vendors available")}
               </Td>
             </Tr>
@@ -126,14 +129,10 @@ function VendorRow(props: {
   return (
     <Tr to={`/organizations/${organizationId}/vendors/${vendor.id}/overview`}>
       <Td>
-        <div className="flex gap-4 items-center">
-          {vendor.name}
-        </div>
+        <div className="flex gap-4 items-center">{vendor.name}</div>
       </Td>
       <Td>
-        <Badge variant="neutral">
-          {vendor.category}
-        </Badge>
+        <Badge variant="neutral">{vendor.category}</Badge>
       </Td>
       <Td>
         <Badge variant={vendor.showOnTrustCenter ? "success" : "danger"}>
@@ -144,7 +143,9 @@ function VendorRow(props: {
         <Td noLink width={100} className="text-end">
           <Button
             variant="secondary"
-            onClick={() => props.onToggleVisibility(vendor.id, !vendor.showOnTrustCenter)}
+            onClick={() =>
+              props.onToggleVisibility(vendor.id, !vendor.showOnTrustCenter)
+            }
             icon={vendor.showOnTrustCenter ? IconCrossLargeX : IconCheckmark1}
             disabled={props.disabled}
           >

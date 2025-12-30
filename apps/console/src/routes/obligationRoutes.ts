@@ -6,8 +6,8 @@ import {
   obligationsQuery,
   obligationNodeQuery,
 } from "/hooks/graph/ObligationGraph";
-import type { ObligationGraphListQuery } from "/hooks/graph/__generated__/ObligationGraphListQuery.graphql";
-import type { ObligationGraphNodeQuery } from "/hooks/graph/__generated__/ObligationGraphNodeQuery.graphql";
+import type { ObligationGraphListQuery } from "/__generated__/core/ObligationGraphListQuery.graphql";
+import type { ObligationGraphNodeQuery } from "/__generated__/core/ObligationGraphNodeQuery.graphql";
 import {
   loaderFromQueryLoader,
   withQueryRef,

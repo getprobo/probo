@@ -24,7 +24,7 @@ import { useTranslate } from "@probo/i18n";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { graphql } from "relay-runtime";
 import { useFragment } from "react-relay";
-import type { SidebarFragment$key } from "./__generated__/SidebarFragment.graphql";
+import type { SidebarFragment$key } from "/__generated__/iam/SidebarFragment.graphql";
 
 const fragment = graphql`
   fragment SidebarFragment on Identity

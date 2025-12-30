@@ -4,7 +4,7 @@ import {
   useQueryLoader,
   type PreloadedQuery,
 } from "react-relay";
-import type { SAMLSettingsPageQuery } from "./__generated__/SAMLSettingsPageQuery.graphql";
+import type { SAMLSettingsPageQuery } from "/__generated__/iam/SAMLSettingsPageQuery.graphql";
 import { Suspense, use, useState } from "react";
 import { PermissionsContext } from "/providers/PermissionsContext";
 import { Breadcrumb, Button, Dialog, useDialogRef } from "@probo/ui";
@@ -15,7 +15,7 @@ import {
   EditSAMLConfigurationForm,
   samlConfigurationFormQuery,
 } from "./_components/EditSAMLConfigurationForm";
-import type { EditSAMLConfigurationFormQuery } from "./_components/__generated__/EditSAMLConfigurationFormQuery.graphql";
+import type { EditSAMLConfigurationFormQuery } from "/__generated__/iam/EditSAMLConfigurationFormQuery.graphql";
 import { SAMLDomainVerifyDialog } from "./_components/SAMLDomainVerifyDialog";
 
 export const samlSettingsPageQuery = graphql`

@@ -3,7 +3,7 @@ import { useTranslate } from "@probo/i18n";
 import { Card } from "@probo/ui";
 import { graphql } from "relay-runtime";
 import { useFragment } from "react-relay";
-import type { InvitationCardFragment$key } from "./__generated__/InvitationCardFragment.graphql";
+import type { InvitationCardFragment$key } from "/__generated__/iam/InvitationCardFragment.graphql";
 
 const fragment = graphql`
   fragment InvitationCardFragment on Invitation {

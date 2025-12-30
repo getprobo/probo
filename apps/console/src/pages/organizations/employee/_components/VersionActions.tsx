@@ -2,7 +2,7 @@ import { useTranslate } from "@probo/i18n";
 import { Button, Spinner } from "@probo/ui";
 import { useFragment } from "react-relay";
 import { graphql } from "react-relay";
-import type { VersionActionsFragment$key } from "./__generated__/VersionActionsFragment.graphql";
+import type { VersionActionsFragment$key } from "/__generated__/core/VersionActionsFragment.graphql";
 
 const fragment = graphql`
   fragment VersionActionsFragment on DocumentVersion {
@@ -49,7 +49,7 @@ export function VersionActions({
       </Button>
       <p className="text-xs text-txt-tertiary mt-2 h-5">
         {__(
-          "By clicking 'I acknowledge and agree', your digital signature will be recorded."
+          "By clicking 'I acknowledge and agree', your digital signature will be recorded.",
         )}
       </p>
     </>

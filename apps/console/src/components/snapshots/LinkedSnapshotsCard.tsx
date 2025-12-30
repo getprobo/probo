@@ -15,10 +15,15 @@ import {
   TrButton,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
-import type { LinkedSnapshotsCardFragment$key } from "./__generated__/LinkedSnapshotsCardFragment.graphql";
+import type { LinkedSnapshotsCardFragment$key } from "/__generated__/core/LinkedSnapshotsCardFragment.graphql";
 import { useFragment } from "react-relay";
 import { useMemo, useState } from "react";
-import { sprintf, getSnapshotTypeLabel, getSnapshotTypeUrlPath, formatDate } from "@probo/helpers";
+import {
+  sprintf,
+  getSnapshotTypeLabel,
+  getSnapshotTypeUrlPath,
+  formatDate,
+} from "@probo/helpers";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { LinkedSnapshotsDialog } from "./LinkedSnapshotsDialog";
 import clsx from "clsx";
@@ -123,7 +128,10 @@ export function LinkedSnapshotsCard<Params>(props: Props<Params>) {
         <Tbody>
           {snapshots.length === 0 && (
             <Tr>
-              <Td colSpan={variant === "table" ? colSpanTable : colSpanCard} className="text-center text-txt-secondary">
+              <Td
+                colSpan={variant === "table" ? colSpanTable : colSpanCard}
+                className="text-center text-txt-secondary"
+              >
                 {__("No snapshots linked")}
               </Td>
             </Tr>
@@ -191,9 +199,7 @@ function SnapshotRow(props: {
           {snapshot.description || __("No description")}
         </Td>
       )}
-      <Td className="text-txt-tertiary">
-        {formatDate(snapshot.createdAt)}
-      </Td>
+      <Td className="text-txt-tertiary">{formatDate(snapshot.createdAt)}</Td>
       {!props.readOnly && (
         <Td noLink width={50} className="text-end">
           <Button

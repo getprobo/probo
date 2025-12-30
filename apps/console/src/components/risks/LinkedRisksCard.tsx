@@ -12,7 +12,7 @@ import {
   TrButton,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
-import type { LinkedRisksCardFragment$key } from "./__generated__/LinkedRisksCardFragment.graphql";
+import type { LinkedRisksCardFragment$key } from "/__generated__/core/LinkedRisksCardFragment.graphql";
 import { useFragment } from "react-relay";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { LinkedRisksDialog } from "./LinkedRisksDialog.tsx";
@@ -95,13 +95,21 @@ export function LinkedRisksCard<Params>(props: Props<Params>) {
         <Tbody>
           {props.risks.length === 0 && (
             <Tr>
-              <Td colSpan={props.readOnly ? 3 : 4} className="text-center text-txt-secondary">
+              <Td
+                colSpan={props.readOnly ? 3 : 4}
+                className="text-center text-txt-secondary"
+              >
                 {__("No risks linked")}
               </Td>
             </Tr>
           )}
           {props.risks.map((risk) => (
-            <RiskRow key={risk.id} risk={risk} onClick={onDetach} readOnly={props.readOnly} />
+            <RiskRow
+              key={risk.id}
+              risk={risk}
+              onClick={onDetach}
+              readOnly={props.readOnly}
+            />
           ))}
           {!props.readOnly && (
             <LinkedRisksDialog

@@ -1,4 +1,4 @@
-import type { MeasureGraphListQuery } from "/hooks/graph/__generated__/MeasureGraphListQuery.graphql";
+import type { MeasureGraphListQuery } from "/__generated__/core/MeasureGraphListQuery.graphql";
 import {
   useFragment,
   usePreloadedQuery,
@@ -17,7 +17,6 @@ import {
   IconPencil,
   IconPlusLarge,
   IconTrashCan,
-
   MeasureImplementation,
   PageHeader,
   Table,
@@ -38,11 +37,11 @@ import { graphql } from "relay-runtime";
 import type {
   MeasuresPageFragment$data,
   MeasuresPageFragment$key,
-} from "./__generated__/MeasuresPageFragment.graphql";
+} from "/__generated__/core/MeasuresPageFragment.graphql";
 import { groupBy, objectKeys, slugify, sprintf } from "@probo/helpers";
 import { useMemo, useRef, useState, type ChangeEventHandler, use } from "react";
 import type { NodeOf } from "/types";
-import type { MeasuresPageImportMutation } from "./__generated__/MeasuresPageImportMutation.graphql";
+import type { MeasuresPageImportMutation } from "/__generated__/core/MeasuresPageImportMutation.graphql";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { Link, useParams } from "react-router";
@@ -94,11 +93,11 @@ export default function MeasuresPage(props: Props) {
   const { isAuthorized } = use(PermissionsContext);
   const organization = usePreloadedQuery(
     measuresQuery,
-    props.queryRef
+    props.queryRef,
   ).organization;
   const data = useFragment<MeasuresPageFragment$key>(
     measuresFragment,
-    organization
+    organization,
   );
   const connectionId = data.measures.__id;
   const measures = data.measures.edges.map((edge) => edge.node);
@@ -110,12 +109,13 @@ export default function MeasuresPage(props: Props) {
     {
       successMessage: __("Measures imported successfully."),
       errorMessage: __("Failed to import measures"),
-    }
+    },
   );
   const importFileRef = useRef<HTMLInputElement>(null);
   usePageTitle(__("Measures"));
 
-  const hasAnyAction = isAuthorized("Measure", "updateMeasure") ||
+  const hasAnyAction =
+    isAuthorized("Measure", "updateMeasure") ||
     isAuthorized("Measure", "deleteMeasure");
 
   const handleImport: ChangeEventHandler<HTMLInputElement> = (event) => {
@@ -145,7 +145,7 @@ export default function MeasuresPage(props: Props) {
       <PageHeader
         title={__("Measures")}
         description={__(
-          "Measures are actions taken to reduce the risk. Add them to track their implementation status."
+          "Measures are actions taken to reduce the risk. Add them to track their implementation status.",
         )}
       >
         {isAuthorized("Organization", "createMeasure") && (
@@ -202,7 +202,7 @@ function Category(props: CategoryProps) {
   const isExpanded = categoryId === params.categoryId;
   const ExpandComponent = isExpanded ? IconChevronUp : IconChevronDown;
   const completedMeasures = props.measures.filter(
-    (m) => m.state === "IMPLEMENTED"
+    (m) => m.state === "IMPLEMENTED",
   );
 
   return (
@@ -288,11 +288,11 @@ function MeasureRow(props: MeasureRowProps) {
       {
         message: sprintf(
           __(
-            'This will permanently delete the measure "%s". This action cannot be undone.'
+            'This will permanently delete the measure "%s". This action cannot be undone.',
           ),
-          props.measure.name
+          props.measure.name,
         ),
-      }
+      },
     );
   };
 

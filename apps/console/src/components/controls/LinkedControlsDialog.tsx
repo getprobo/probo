@@ -22,11 +22,11 @@ import { useTranslate } from "@probo/i18n";
 import { graphql } from "relay-runtime";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { useLazyLoadQuery, usePaginationFragment } from "react-relay";
-import type { LinkedControlsDialogQuery } from "./__generated__/LinkedControlsDialogQuery.graphql";
+import type { LinkedControlsDialogQuery } from "/__generated__/core/LinkedControlsDialogQuery.graphql";
 import type {
   LinkedControlsDialogFragment$data,
   LinkedControlsDialogFragment$key,
-} from "./__generated__/LinkedControlsDialogFragment.graphql";
+} from "/__generated__/core/LinkedControlsDialogFragment.graphql";
 import type { NodeOf } from "/types";
 import { useDebounceCallback } from "usehooks-ts";
 
@@ -126,7 +126,7 @@ function LinkedControlsDialogContent(props: Props & { ref: SearchRef }) {
   const { data, loadNext, hasNext, isLoadingNext, refetch } =
     usePaginationFragment(
       controlsFragment,
-      mainData.organization as LinkedControlsDialogFragment$key
+      mainData.organization as LinkedControlsDialogFragment$key,
     );
 
   const controls = data.controls?.edges?.map((edge) => edge.node) ?? [];
@@ -171,7 +171,7 @@ function ControlRow(
   props: {
     control: NodeOf<LinkedControlsDialogFragment$data["controls"]>;
     controlIds: Set<string>;
-  } & Props
+  } & Props,
 ) {
   const { __ } = useTranslate();
   const isLinked = props.controlIds.has(props.control.id);

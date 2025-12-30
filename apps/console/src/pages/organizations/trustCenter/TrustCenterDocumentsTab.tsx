@@ -3,7 +3,7 @@ import { useTranslate } from "@probo/i18n";
 import { useOutletContext } from "react-router";
 import { TrustCenterDocumentsCard } from "/components/trustCenter/TrustCenterDocumentsCard";
 import { useUpdateDocumentVisibilityMutation } from "/hooks/graph/TrustCenterDocumentGraph";
-import type { TrustCenterDocumentsCardFragment$key } from "/components/trustCenter/__generated__/TrustCenterDocumentsCardFragment.graphql";
+import type { TrustCenterDocumentsCardFragment$key } from "/__generated__/core/TrustCenterDocumentsCardFragment.graphql";
 
 type ContextType = {
   organization: {
@@ -18,9 +18,11 @@ type ContextType = {
 export default function TrustCenterDocumentsTab() {
   const { __ } = useTranslate();
   const { organization } = useOutletContext<ContextType>();
-  const [updateDocumentVisibility, isUpdatingDocuments] = useUpdateDocumentVisibilityMutation();
+  const [updateDocumentVisibility, isUpdatingDocuments] =
+    useUpdateDocumentVisibilityMutation();
 
-  const documents = organization.documents?.edges?.map((edge) => edge.node) || [];
+  const documents =
+    organization.documents?.edges?.map((edge) => edge.node) || [];
 
   return (
     <div className="space-y-4">

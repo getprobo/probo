@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<e1da65c68225be2c9a9768b31a0bf255>>
+ * @generated SignedSource<<f441167b6ed9402b92fcdf6dbaa77170>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,10 +9,10 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
-export type EmployeeLayoutQuery$variables = {
+export type MainLayoutQuery$variables = {
   organizationId: string;
 };
-export type EmployeeLayoutQuery$data = {
+export type MainLayoutQuery$data = {
   readonly organization: {
     readonly id?: string;
     readonly logoUrl?: string | null | undefined;
@@ -22,9 +22,9 @@ export type EmployeeLayoutQuery$data = {
     readonly id: string;
   };
 };
-export type EmployeeLayoutQuery = {
-  response: EmployeeLayoutQuery$data;
-  variables: EmployeeLayoutQuery$variables;
+export type MainLayoutQuery = {
+  response: MainLayoutQuery$data;
+  variables: MainLayoutQuery$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -80,7 +80,7 @@ return {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Fragment",
     "metadata": null,
-    "name": "EmployeeLayoutQuery",
+    "name": "MainLayoutQuery",
     "selections": [
       (v2/*: any*/),
       {
@@ -112,7 +112,7 @@ return {
   "operation": {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
-    "name": "EmployeeLayoutQuery",
+    "name": "MainLayoutQuery",
     "selections": [
       (v2/*: any*/),
       {
@@ -146,16 +146,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "2a4f5ec8a38110f9fe87a7f83cc38612",
+    "cacheID": "2ec49ff40720bacec29e7b6b1bf1408b",
     "id": null,
     "metadata": {},
-    "name": "EmployeeLayoutQuery",
+    "name": "MainLayoutQuery",
     "operationKind": "query",
-    "text": "query EmployeeLayoutQuery(\n  $organizationId: ID!\n) {\n  viewer {\n    id\n  }\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      name\n      logoUrl\n    }\n    id\n  }\n}\n"
+    "text": "query MainLayoutQuery(\n  $organizationId: ID!\n) {\n  viewer {\n    id\n  }\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      name\n      logoUrl\n    }\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "71cd50a44823e7919089a137ca0c282e";
+(node as any).hash = "d958a2acbd9d13698b9c2b350b05d5a0";
 
 export default node;

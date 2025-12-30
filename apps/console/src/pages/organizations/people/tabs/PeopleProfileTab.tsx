@@ -1,11 +1,11 @@
 import z from "zod";
 import { peopleRoles, formatDatetime } from "@probo/helpers";
 import { useOutletContext } from "react-router";
-import type { PeopleGraphNodeQuery$data } from "/hooks/graph/__generated__/PeopleGraphNodeQuery.graphql";
+import type { PeopleGraphNodeQuery$data } from "/__generated__/core/PeopleGraphNodeQuery.graphql";
 import { useTranslate } from "@probo/i18n";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
-import type { PeopleGraphUpdateMutation } from "/hooks/graph/__generated__/PeopleGraphUpdateMutation.graphql";
+import type { PeopleGraphUpdateMutation } from "/__generated__/core/PeopleGraphUpdateMutation.graphql";
 import { updatePeopleMutation } from "/hooks/graph/PeopleGraph";
 import { Button, Card, Field, Input } from "@probo/ui";
 import { EmailsField } from "/components/form/EmailsField";
@@ -19,7 +19,7 @@ const schema = z.object({
   additionalEmailAddresses: z.preprocess(
     // Empty additional emails are skipped
     (v) => (v as string[]).filter((v) => !!v),
-    z.array(z.string().email())
+    z.array(z.string().email()),
   ),
   kind: z.enum(peopleRoles),
   contractStartDate: z.string().optional().nullable(),
@@ -39,8 +39,8 @@ export default function PeopleProfileTab() {
         primaryEmailAddress: people.primaryEmailAddress,
         position: people.position,
         additionalEmailAddresses: [...(people.additionalEmailAddresses ?? [])],
-        contractStartDate: people.contractStartDate?.split('T')[0] || "",
-        contractEndDate: people.contractEndDate?.split('T')[0] || "",
+        contractStartDate: people.contractStartDate?.split("T")[0] || "",
+        contractEndDate: people.contractEndDate?.split("T")[0] || "",
       },
     });
   const [mutate, isMutating] = useMutationWithToasts<PeopleGraphUpdateMutation>(
@@ -48,7 +48,7 @@ export default function PeopleProfileTab() {
     {
       successMessage: __("Member updated successfully."),
       errorMessage: __("Failed to update member"),
-    }
+    },
   );
   const { isAuthorized } = use(PermissionsContext);
   const onSubmit = handleSubmit((data) => {
@@ -95,12 +95,10 @@ export default function PeopleProfileTab() {
         </Field>
       </Card>
       <div className="flex justify-end">
-        {formState.isDirty && (
-          isAuthorized("People", "updatePeople") && (
-            <Button type="submit" disabled={isMutating}>
-              {__("Update")}
-            </Button>
-          )
+        {formState.isDirty && isAuthorized("People", "updatePeople") && (
+          <Button type="submit" disabled={isMutating}>
+            {__("Update")}
+          </Button>
         )}
       </div>
     </form>

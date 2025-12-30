@@ -14,7 +14,7 @@ import { useFormWithSchema } from "/hooks/useFormWithSchema.ts";
 import { graphql } from "relay-runtime";
 import { sprintf } from "@probo/helpers";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts.ts";
-import type { PublishDocumentsDialogMutation } from "./__generated__/PublishDocumentsDialogMutation.graphql.ts";
+import type { PublishDocumentsDialogMutation } from "/__generated__/core/PublishDocumentsDialogMutation.graphql.ts";
 
 type Props = {
   documentIds: string[];
@@ -49,16 +49,21 @@ export function PublishDocumentsDialog({
     changelog: z.string().min(1, __("Changelog is required")),
   });
 
-  const [publishMutation] = useMutationWithToasts<PublishDocumentsDialogMutation>(documentsPublishMutation, {
-    successMessage: (response) => {
-      const actualPublishedCount = response.bulkPublishDocumentVersions.documentEdges.length;
-      return sprintf(__("%s documents published"), actualPublishedCount);
-    },
-    errorMessage: sprintf(
-      __("Failed to publish %s documents"),
-      documentIds.length
-    ),
-  });
+  const [publishMutation] =
+    useMutationWithToasts<PublishDocumentsDialogMutation>(
+      documentsPublishMutation,
+      {
+        successMessage: (response) => {
+          const actualPublishedCount =
+            response.bulkPublishDocumentVersions.documentEdges.length;
+          return sprintf(__("%s documents published"), actualPublishedCount);
+        },
+        errorMessage: sprintf(
+          __("Failed to publish %s documents"),
+          documentIds.length,
+        ),
+      },
+    );
 
   const {
     handleSubmit,

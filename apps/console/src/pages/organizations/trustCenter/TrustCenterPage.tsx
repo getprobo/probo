@@ -15,7 +15,7 @@ import {
 } from "@probo/ui";
 import { usePreloadedQuery, type PreloadedQuery } from "react-relay";
 import { trustCenterQuery } from "/hooks/graph/TrustCenterGraph";
-import type { TrustCenterGraphQuery } from "/hooks/graph/__generated__/TrustCenterGraphQuery.graphql";
+import type { TrustCenterGraphQuery } from "/__generated__/core/TrustCenterGraphQuery.graphql";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { Outlet } from "react-router";
 
@@ -37,7 +37,7 @@ export default function TrustCenterPage({ queryRef }: Props) {
       <PageHeader
         title={__("Trust Center")}
         description={__(
-          "Configure your public trust center to showcase your security and compliance posture."
+          "Configure your public trust center to showcase your security and compliance posture.",
         )}
       >
         <Badge variant={isActive ? "success" : "danger"}>

@@ -19,7 +19,7 @@ import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import type { PropsWithChildren } from "react";
-import type { InviteUserDialog_currentRoleFragment$key } from "./__generated__/InviteUserDialog_currentRoleFragment.graphql";
+import type { InviteUserDialog_currentRoleFragment$key } from "/__generated__/iam/InviteUserDialog_currentRoleFragment.graphql";
 
 const currentRoleFragment = graphql`
   fragment InviteUserDialog_currentRoleFragment on Organization {

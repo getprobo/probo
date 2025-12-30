@@ -40,7 +40,11 @@ import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { Controller, useForm } from "react-hook-form";
 import { formatError, type GraphQLError } from "@probo/helpers";
 import z from "zod";
-import { validateSnapshotConsistency, formatDatetime, toDateInput } from "@probo/helpers";
+import {
+  validateSnapshotConsistency,
+  formatDatetime,
+  toDateInput,
+} from "@probo/helpers";
 import { SnapshotBanner } from "/components/SnapshotBanner";
 import { VendorsMultiSelectField } from "/components/form/VendorsMultiSelectField";
 import { PeopleSelectField } from "/components/form/PeopleSelectField";
@@ -53,7 +57,7 @@ import {
   RoleOptions,
 } from "../../../components/form/ProcessingActivityEnumOptions";
 
-import type { ProcessingActivityGraphNodeQuery } from "/hooks/graph/__generated__/ProcessingActivityGraphNodeQuery.graphql";
+import type { ProcessingActivityGraphNodeQuery } from "/__generated__/core/ProcessingActivityGraphNodeQuery.graphql";
 import { use, useState, useEffect } from "react";
 import { PermissionsContext } from "/providers/PermissionsContext";
 
@@ -64,14 +68,24 @@ const updateProcessingActivitySchema = z.object({
   personalDataCategory: z.string().optional(),
   specialOrCriminalData: z.enum(["YES", "NO", "POSSIBLE"] as const),
   consentEvidenceLink: z.string().optional(),
-  lawfulBasis: z.enum(["CONSENT", "CONTRACTUAL_NECESSITY", "LEGAL_OBLIGATION", "LEGITIMATE_INTEREST", "PUBLIC_TASK", "VITAL_INTERESTS"] as const),
+  lawfulBasis: z.enum([
+    "CONSENT",
+    "CONTRACTUAL_NECESSITY",
+    "LEGAL_OBLIGATION",
+    "LEGITIMATE_INTEREST",
+    "PUBLIC_TASK",
+    "VITAL_INTERESTS",
+  ] as const),
   recipients: z.string().optional(),
   location: z.string().optional(),
   internationalTransfers: z.boolean(),
   transferSafeguards: z.string(),
   retentionPeriod: z.string().optional(),
   securityMeasures: z.string().optional(),
-  dataProtectionImpactAssessmentNeeded: z.enum(["NEEDED", "NOT_NEEDED"] as const),
+  dataProtectionImpactAssessmentNeeded: z.enum([
+    "NEEDED",
+    "NOT_NEEDED",
+  ] as const),
   transferImpactAssessmentNeeded: z.enum(["NEEDED", "NOT_NEEDED"] as const),
   lastReviewDate: z.string().optional(),
   nextReviewDate: z.string().optional(),
@@ -85,7 +99,10 @@ type Props = {
 };
 
 export default function ProcessingActivityDetailsPage(props: Props) {
-  const data = usePreloadedQuery<ProcessingActivityGraphNodeQuery>(processingActivityNodeQuery, props.queryRef);
+  const data = usePreloadedQuery<ProcessingActivityGraphNodeQuery>(
+    processingActivityNodeQuery,
+    props.queryRef,
+  );
   const activity = data.node;
   const { __ } = useTranslate();
   const { toast } = useToast();
@@ -101,11 +118,17 @@ export default function ProcessingActivityDetailsPage(props: Props) {
     return "overview";
   };
 
-  const [activeTab, setActiveTab] = useState<"overview" | "dpia" | "tia">(getInitialTab);
+  const [activeTab, setActiveTab] = useState<"overview" | "dpia" | "tia">(
+    getInitialTab,
+  );
   const [dpiaSubmitting, setDpiaSubmitting] = useState(false);
   const [tiaSubmitting, setTiaSubmitting] = useState(false);
-  const [showDpiaForm, setShowDpiaForm] = useState(Boolean(activity?.dataProtectionImpactAssessment?.id));
-  const [showTiaForm, setShowTiaForm] = useState(Boolean(activity?.transferImpactAssessment?.id));
+  const [showDpiaForm, setShowDpiaForm] = useState(
+    Boolean(activity?.dataProtectionImpactAssessment?.id),
+  );
+  const [showTiaForm, setShowTiaForm] = useState(
+    Boolean(activity?.transferImpactAssessment?.id),
+  );
   const [dpiaDeleted, setDpiaDeleted] = useState(false);
   const [tiaDeleted, setTiaDeleted] = useState(false);
 
@@ -132,7 +155,7 @@ export default function ProcessingActivityDetailsPage(props: Props) {
           residualRisk: "",
         });
       },
-    }
+    },
   );
   const createTIA = useCreateTransferImpactAssessment();
   const updateTIA = useUpdateTransferImpactAssessment();
@@ -150,16 +173,19 @@ export default function ProcessingActivityDetailsPage(props: Props) {
           supplementaryMeasures: "",
         });
       },
-    }
+    },
   );
 
   const connectionId = ConnectionHandler.getConnectionID(
     organizationId,
     ProcessingActivitiesConnectionKey,
-    { filter: { snapshotId: snapshotId || null } }
+    { filter: { snapshotId: snapshotId || null } },
   );
 
-  const deleteActivity = useDeleteProcessingActivity({ id: activity.id!, name: activity.name! }, connectionId);
+  const deleteActivity = useDeleteProcessingActivity(
+    { id: activity.id!, name: activity.name! },
+    connectionId,
+  );
 
   const vendors = activity?.vendors?.edges.map((edge) => edge.node) ?? [];
   const vendorIds = vendors.map((vendor) => vendor.id);
@@ -172,33 +198,41 @@ export default function ProcessingActivityDetailsPage(props: Props) {
         purpose: activity.purpose || "",
         dataSubjectCategory: activity.dataSubjectCategory || "",
         personalDataCategory: activity.personalDataCategory || "",
-        specialOrCriminalData: activity.specialOrCriminalData || "NO" as const,
+        specialOrCriminalData:
+          activity.specialOrCriminalData || ("NO" as const),
         consentEvidenceLink: activity.consentEvidenceLink || "",
-        lawfulBasis: activity.lawfulBasis || "LEGITIMATE_INTEREST" as const,
+        lawfulBasis: activity.lawfulBasis || ("LEGITIMATE_INTEREST" as const),
         recipients: activity.recipients || "",
         location: activity.location || "",
         internationalTransfers: activity.internationalTransfers || false,
         transferSafeguards: activity.transferSafeguards || "__NONE__",
         retentionPeriod: activity.retentionPeriod || "",
         securityMeasures: activity.securityMeasures || "",
-        dataProtectionImpactAssessmentNeeded: activity.dataProtectionImpactAssessmentNeeded || "NOT_NEEDED" as const,
-        transferImpactAssessmentNeeded: activity.transferImpactAssessmentNeeded || "NOT_NEEDED" as const,
+        dataProtectionImpactAssessmentNeeded:
+          activity.dataProtectionImpactAssessmentNeeded ||
+          ("NOT_NEEDED" as const),
+        transferImpactAssessmentNeeded:
+          activity.transferImpactAssessmentNeeded || ("NOT_NEEDED" as const),
         lastReviewDate: toDateInput(activity.lastReviewDate),
         nextReviewDate: toDateInput(activity.nextReviewDate),
-        role: activity.role || "CONTROLLER" as const,
+        role: activity.role || ("CONTROLLER" as const),
         dataProtectionOfficerId: activity.dataProtectionOfficer?.id || "",
         vendorIds: vendorIds,
       },
-    }
+    },
   );
 
   const dpiaForm = useForm({
     defaultValues: {
       description: activity?.dataProtectionImpactAssessment?.description || "",
-      necessityAndProportionality: activity?.dataProtectionImpactAssessment?.necessityAndProportionality || "",
-      potentialRisk: activity?.dataProtectionImpactAssessment?.potentialRisk || "",
+      necessityAndProportionality:
+        activity?.dataProtectionImpactAssessment?.necessityAndProportionality ||
+        "",
+      potentialRisk:
+        activity?.dataProtectionImpactAssessment?.potentialRisk || "",
       mitigations: activity?.dataProtectionImpactAssessment?.mitigations || "",
-      residualRisk: (activity?.dataProtectionImpactAssessment?.residualRisk || "") as ProcessingActivityDPIAResidualRisk | "",
+      residualRisk: (activity?.dataProtectionImpactAssessment?.residualRisk ||
+        "") as ProcessingActivityDPIAResidualRisk | "",
     },
   });
 
@@ -208,7 +242,8 @@ export default function ProcessingActivityDetailsPage(props: Props) {
       legalMechanism: activity?.transferImpactAssessment?.legalMechanism || "",
       transfer: activity?.transferImpactAssessment?.transfer || "",
       localLawRisk: activity?.transferImpactAssessment?.localLawRisk || "",
-      supplementaryMeasures: activity?.transferImpactAssessment?.supplementaryMeasures || "",
+      supplementaryMeasures:
+        activity?.transferImpactAssessment?.supplementaryMeasures || "",
     },
   });
 
@@ -226,11 +261,16 @@ export default function ProcessingActivityDetailsPage(props: Props) {
         recipients: formData.recipients || undefined,
         location: formData.location || undefined,
         internationalTransfers: formData.internationalTransfers,
-        transferSafeguards: formData.transferSafeguards === "__NONE__" ? undefined : formData.transferSafeguards || undefined,
+        transferSafeguards:
+          formData.transferSafeguards === "__NONE__"
+            ? undefined
+            : formData.transferSafeguards || undefined,
         retentionPeriod: formData.retentionPeriod || undefined,
         securityMeasures: formData.securityMeasures || undefined,
-        dataProtectionImpactAssessmentNeeded: formData.dataProtectionImpactAssessmentNeeded || undefined,
-        transferImpactAssessmentNeeded: formData.transferImpactAssessmentNeeded || undefined,
+        dataProtectionImpactAssessmentNeeded:
+          formData.dataProtectionImpactAssessmentNeeded || undefined,
+        transferImpactAssessmentNeeded:
+          formData.transferImpactAssessmentNeeded || undefined,
         lastReviewDate: formatDatetime(formData.lastReviewDate) ?? null,
         nextReviewDate: formatDatetime(formData.nextReviewDate) ?? null,
         role: formData.role,
@@ -246,7 +286,10 @@ export default function ProcessingActivityDetailsPage(props: Props) {
     } catch (error) {
       toast({
         title: __("Error"),
-        description: formatError(__("Failed to update processing activity"), error as GraphQLError),
+        description: formatError(
+          __("Failed to update processing activity"),
+          error as GraphQLError,
+        ),
         variant: "error",
       });
     }
@@ -255,16 +298,20 @@ export default function ProcessingActivityDetailsPage(props: Props) {
   const onDPIASubmit = dpiaForm.handleSubmit(async (formData) => {
     setDpiaSubmitting(true);
     try {
-      const isCreating = !activity?.dataProtectionImpactAssessment?.id || dpiaDeleted;
+      const isCreating =
+        !activity?.dataProtectionImpactAssessment?.id || dpiaDeleted;
       if (!isCreating) {
         // Update existing DPIA
         await updateDPIA({
           id: activity.dataProtectionImpactAssessment!.id,
           description: formData.description || undefined,
-          necessityAndProportionality: formData.necessityAndProportionality || undefined,
+          necessityAndProportionality:
+            formData.necessityAndProportionality || undefined,
           potentialRisk: formData.potentialRisk || undefined,
           mitigations: formData.mitigations || undefined,
-          residualRisk: formData.residualRisk as ProcessingActivityDPIAResidualRisk || undefined,
+          residualRisk:
+            (formData.residualRisk as ProcessingActivityDPIAResidualRisk) ||
+            undefined,
         });
         toast({
           title: __("Success"),
@@ -276,10 +323,13 @@ export default function ProcessingActivityDetailsPage(props: Props) {
         await createDPIA({
           processingActivityId: activity.id!,
           description: formData.description || undefined,
-          necessityAndProportionality: formData.necessityAndProportionality || undefined,
+          necessityAndProportionality:
+            formData.necessityAndProportionality || undefined,
           potentialRisk: formData.potentialRisk || undefined,
           mitigations: formData.mitigations || undefined,
-          residualRisk: formData.residualRisk as ProcessingActivityDPIAResidualRisk || undefined,
+          residualRisk:
+            (formData.residualRisk as ProcessingActivityDPIAResidualRisk) ||
+            undefined,
         });
         setDpiaDeleted(false);
         toast({
@@ -291,7 +341,10 @@ export default function ProcessingActivityDetailsPage(props: Props) {
     } catch (error) {
       toast({
         title: __("Error"),
-        description: formatError(__("Failed to save DPIA"), error as GraphQLError),
+        description: formatError(
+          __("Failed to save DPIA"),
+          error as GraphQLError,
+        ),
         variant: "error",
       });
     } finally {
@@ -338,7 +391,10 @@ export default function ProcessingActivityDetailsPage(props: Props) {
     } catch (error) {
       toast({
         title: __("Error"),
-        description: formatError(__("Failed to save TIA"), error as GraphQLError),
+        description: formatError(
+          __("Failed to save TIA"),
+          error as GraphQLError,
+        ),
         variant: "error",
       });
     } finally {
@@ -346,9 +402,10 @@ export default function ProcessingActivityDetailsPage(props: Props) {
     }
   });
 
-  const breadcrumbProcessingActivitiesUrl = isSnapshotMode && snapshotId
-    ? `/organizations/${organizationId}/snapshots/${snapshotId}/processing-activities`
-    : `/organizations/${organizationId}/processing-activities`;
+  const breadcrumbProcessingActivitiesUrl =
+    isSnapshotMode && snapshotId
+      ? `/organizations/${organizationId}/snapshots/${snapshotId}/processing-activities`
+      : `/organizations/${organizationId}/processing-activities`;
 
   return (
     <div className="space-y-6">
@@ -358,19 +415,21 @@ export default function ProcessingActivityDetailsPage(props: Props) {
       <div className="flex items-center justify-between">
         <Breadcrumb
           items={[
-            { label: __("Processing Activities"), to: breadcrumbProcessingActivitiesUrl },
+            {
+              label: __("Processing Activities"),
+              to: breadcrumbProcessingActivitiesUrl,
+            },
             { label: activity.name! },
           ]}
         />
-        {!isSnapshotMode && (
+        {!isSnapshotMode &&
           isAuthorized("ProcessingActivity", "deleteProcessingActivity") && (
             <ActionDropdown>
               <DropdownItem onClick={deleteActivity} variant="danger">
                 {__("Delete")}
               </DropdownItem>
             </ActionDropdown>
-          )
-        )}
+          )}
       </div>
 
       <div className="mb-6">
@@ -378,13 +437,22 @@ export default function ProcessingActivityDetailsPage(props: Props) {
       </div>
 
       <Tabs>
-        <TabItem active={activeTab === "overview"} onClick={() => setActiveTab("overview")}>
+        <TabItem
+          active={activeTab === "overview"}
+          onClick={() => setActiveTab("overview")}
+        >
           {__("Overview")}
         </TabItem>
-        <TabItem active={activeTab === "dpia"} onClick={() => setActiveTab("dpia")}>
+        <TabItem
+          active={activeTab === "dpia"}
+          onClick={() => setActiveTab("dpia")}
+        >
           {__("Data Protection Impact Assessment")}
         </TabItem>
-        <TabItem active={activeTab === "tia"} onClick={() => setActiveTab("tia")}>
+        <TabItem
+          active={activeTab === "tia"}
+          onClick={() => setActiveTab("tia")}
+        >
           {__("Transfer Impact Assessment")}
         </TabItem>
       </Tabs>
@@ -422,7 +490,9 @@ export default function ProcessingActivityDetailsPage(props: Props) {
                       )}
                     />
                     {formState.errors.role && (
-                      <p className="text-sm text-txt-danger mt-1">{formState.errors.role.message}</p>
+                      <p className="text-sm text-txt-danger mt-1">
+                        {formState.errors.role.message}
+                      </p>
                     )}
                   </div>
 
@@ -451,14 +521,18 @@ export default function ProcessingActivityDetailsPage(props: Props) {
                   />
 
                   <div>
-                    <Label htmlFor="specialOrCriminalData">{__("Special or Criminal Data")} *</Label>
+                    <Label htmlFor="specialOrCriminalData">
+                      {__("Special or Criminal Data")} *
+                    </Label>
                     <Controller
                       control={control}
                       name="specialOrCriminalData"
                       render={({ field }) => (
                         <Select
                           id="specialOrCriminalData"
-                          placeholder={__("Select special or criminal data status")}
+                          placeholder={__(
+                            "Select special or criminal data status",
+                          )}
                           onValueChange={field.onChange}
                           value={field.value}
                           className="w-full"
@@ -469,7 +543,9 @@ export default function ProcessingActivityDetailsPage(props: Props) {
                       )}
                     />
                     {formState.errors.specialOrCriminalData && (
-                      <p className="text-sm text-txt-danger mt-1">{formState.errors.specialOrCriminalData.message}</p>
+                      <p className="text-sm text-txt-danger mt-1">
+                        {formState.errors.specialOrCriminalData.message}
+                      </p>
                     )}
                   </div>
 
@@ -499,12 +575,16 @@ export default function ProcessingActivityDetailsPage(props: Props) {
                       )}
                     />
                     {formState.errors.lawfulBasis && (
-                      <p className="text-sm text-txt-danger mt-1">{formState.errors.lawfulBasis.message}</p>
+                      <p className="text-sm text-txt-danger mt-1">
+                        {formState.errors.lawfulBasis.message}
+                      </p>
                     )}
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="lastReviewDate">{__("Last Review Date")}</Label>
+                    <Label htmlFor="lastReviewDate">
+                      {__("Last Review Date")}
+                    </Label>
                     <Input
                       id="lastReviewDate"
                       type="date"
@@ -514,7 +594,9 @@ export default function ProcessingActivityDetailsPage(props: Props) {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="nextReviewDate">{__("Next Review Date")}</Label>
+                    <Label htmlFor="nextReviewDate">
+                      {__("Next Review Date")}
+                    </Label>
                     <Input
                       id="nextReviewDate"
                       type="date"
@@ -559,14 +641,18 @@ export default function ProcessingActivityDetailsPage(props: Props) {
                             onChange={field.onChange}
                             disabled={isSnapshotMode}
                           />
-                          <span>{__("Data is transferred internationally")}</span>
+                          <span>
+                            {__("Data is transferred internationally")}
+                          </span>
                         </div>
                       </div>
                     )}
                   />
 
                   <div>
-                    <Label htmlFor="transferSafeguards">{__("Transfer Safeguards")}</Label>
+                    <Label htmlFor="transferSafeguards">
+                      {__("Transfer Safeguards")}
+                    </Label>
                     <Controller
                       control={control}
                       name="transferSafeguards"
@@ -584,7 +670,9 @@ export default function ProcessingActivityDetailsPage(props: Props) {
                       )}
                     />
                     {formState.errors.transferSafeguards && (
-                      <p className="text-sm text-txt-danger mt-1">{formState.errors.transferSafeguards.message}</p>
+                      <p className="text-sm text-txt-danger mt-1">
+                        {formState.errors.transferSafeguards.message}
+                      </p>
                     )}
                   </div>
 
@@ -606,7 +694,9 @@ export default function ProcessingActivityDetailsPage(props: Props) {
                   </div>
 
                   <div>
-                    <Label htmlFor="dataProtectionImpactAssessmentNeeded">{__("Data Protection Impact Assessment")} *</Label>
+                    <Label htmlFor="dataProtectionImpactAssessmentNeeded">
+                      {__("Data Protection Impact Assessment")} *
+                    </Label>
                     <Controller
                       control={control}
                       name="dataProtectionImpactAssessmentNeeded"
@@ -624,12 +714,19 @@ export default function ProcessingActivityDetailsPage(props: Props) {
                       )}
                     />
                     {formState.errors.dataProtectionImpactAssessmentNeeded && (
-                      <p className="text-sm text-txt-danger mt-1">{formState.errors.dataProtectionImpactAssessmentNeeded.message}</p>
+                      <p className="text-sm text-txt-danger mt-1">
+                        {
+                          formState.errors.dataProtectionImpactAssessmentNeeded
+                            .message
+                        }
+                      </p>
                     )}
                   </div>
 
                   <div>
-                    <Label htmlFor="transferImpactAssessmentNeeded">{__("Transfer Impact Assessment")} *</Label>
+                    <Label htmlFor="transferImpactAssessmentNeeded">
+                      {__("Transfer Impact Assessment")} *
+                    </Label>
                     <Controller
                       control={control}
                       name="transferImpactAssessmentNeeded"
@@ -647,7 +744,12 @@ export default function ProcessingActivityDetailsPage(props: Props) {
                       )}
                     />
                     {formState.errors.transferImpactAssessmentNeeded && (
-                      <p className="text-sm text-txt-danger mt-1">{formState.errors.transferImpactAssessmentNeeded.message}</p>
+                      <p className="text-sm text-txt-danger mt-1">
+                        {
+                          formState.errors.transferImpactAssessmentNeeded
+                            .message
+                        }
+                      </p>
                     )}
                   </div>
                 </div>
@@ -664,13 +766,18 @@ export default function ProcessingActivityDetailsPage(props: Props) {
 
               {!isSnapshotMode && (
                 <div className="flex justify-end pt-4">
-                  {isAuthorized("ProcessingActivity", "updateProcessingActivity") && (
+                  {isAuthorized(
+                    "ProcessingActivity",
+                    "updateProcessingActivity",
+                  ) && (
                     <Button
                       type="submit"
                       variant="primary"
                       disabled={formState.isSubmitting}
                     >
-                      {formState.isSubmitting ? __("Saving...") : __("Save Changes")}
+                      {formState.isSubmitting
+                        ? __("Saving...")
+                        : __("Save Changes")}
                     </Button>
                   )}
                 </div>
@@ -683,79 +790,109 @@ export default function ProcessingActivityDetailsPage(props: Props) {
       {activeTab === "dpia" && (
         <Card>
           <div className="p-6">
-            {!showDpiaForm && (!activity?.dataProtectionImpactAssessment?.id || dpiaDeleted) ? (
+            {!showDpiaForm &&
+            (!activity?.dataProtectionImpactAssessment?.id || dpiaDeleted) ? (
               <div className="flex flex-col items-center justify-center py-16 w-full">
-                <h2 className="text-xl font-semibold mb-6 text-center">{__("Data Protection Impact Assessment")}</h2>
-                {!isSnapshotMode && isAuthorized("ProcessingActivity", "createDataProtectionImpactAssessment") && (
-                  <Button
-                    variant="primary"
-                    onClick={() => setShowDpiaForm(true)}
-                  >
-                    {__("Create DPIA")}
-                  </Button>
-                )}
+                <h2 className="text-xl font-semibold mb-6 text-center">
+                  {__("Data Protection Impact Assessment")}
+                </h2>
+                {!isSnapshotMode &&
+                  isAuthorized(
+                    "ProcessingActivity",
+                    "createDataProtectionImpactAssessment",
+                  ) && (
+                    <Button
+                      variant="primary"
+                      onClick={() => setShowDpiaForm(true)}
+                    >
+                      {__("Create DPIA")}
+                    </Button>
+                  )}
               </div>
             ) : (
               <>
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-semibold">{__("Data Protection Impact Assessment")}</h2>
-                  {!isSnapshotMode && activity?.dataProtectionImpactAssessment?.id && !dpiaDeleted && isAuthorized("DataProtectionImpactAssessment", "deleteDataProtectionImpactAssessment") && (
-                    <Button
-                      variant="danger"
-                      onClick={deleteDPIA}
-                    >
-                      {__("Delete DPIA")}
-                    </Button>
-                  )}
+                  <h2 className="text-xl font-semibold">
+                    {__("Data Protection Impact Assessment")}
+                  </h2>
+                  {!isSnapshotMode &&
+                    activity?.dataProtectionImpactAssessment?.id &&
+                    !dpiaDeleted &&
+                    isAuthorized(
+                      "DataProtectionImpactAssessment",
+                      "deleteDataProtectionImpactAssessment",
+                    ) && (
+                      <Button variant="danger" onClick={deleteDPIA}>
+                        {__("Delete DPIA")}
+                      </Button>
+                    )}
                 </div>
 
                 <form onSubmit={onDPIASubmit} className="space-y-6">
                   <div>
-                    <Label htmlFor="dpia-description">{__("Description")}</Label>
+                    <Label htmlFor="dpia-description">
+                      {__("Description")}
+                    </Label>
                     <Textarea
                       id="dpia-description"
                       {...dpiaForm.register("description")}
-                      placeholder={__("Describe the processing activity and its purpose")}
+                      placeholder={__(
+                        "Describe the processing activity and its purpose",
+                      )}
                       rows={4}
                       disabled={isSnapshotMode}
                     />
                   </div>
 
                   <div>
-                    <Label htmlFor="dpia-necessity">{__("Necessity and Proportionality")}</Label>
+                    <Label htmlFor="dpia-necessity">
+                      {__("Necessity and Proportionality")}
+                    </Label>
                     <Textarea
                       id="dpia-necessity"
                       {...dpiaForm.register("necessityAndProportionality")}
-                      placeholder={__("Explain why the processing is necessary and proportionate")}
+                      placeholder={__(
+                        "Explain why the processing is necessary and proportionate",
+                      )}
                       rows={4}
                       disabled={isSnapshotMode}
                     />
                   </div>
 
                   <div>
-                    <Label htmlFor="dpia-potential-risk">{__("Potential Risk")}</Label>
+                    <Label htmlFor="dpia-potential-risk">
+                      {__("Potential Risk")}
+                    </Label>
                     <Textarea
                       id="dpia-potential-risk"
                       {...dpiaForm.register("potentialRisk")}
-                      placeholder={__("Describe the potential risks to data subjects")}
+                      placeholder={__(
+                        "Describe the potential risks to data subjects",
+                      )}
                       rows={4}
                       disabled={isSnapshotMode}
                     />
                   </div>
 
                   <div>
-                    <Label htmlFor="dpia-mitigations">{__("Mitigations")}</Label>
+                    <Label htmlFor="dpia-mitigations">
+                      {__("Mitigations")}
+                    </Label>
                     <Textarea
                       id="dpia-mitigations"
                       {...dpiaForm.register("mitigations")}
-                      placeholder={__("Describe measures to mitigate the identified risks")}
+                      placeholder={__(
+                        "Describe measures to mitigate the identified risks",
+                      )}
                       rows={4}
                       disabled={isSnapshotMode}
                     />
                   </div>
 
                   <div>
-                    <Label htmlFor="dpia-residual-risk">{__("Residual Risk")}</Label>
+                    <Label htmlFor="dpia-residual-risk">
+                      {__("Residual Risk")}
+                    </Label>
                     <Controller
                       control={dpiaForm.control}
                       name="residualRisk"
@@ -778,7 +915,8 @@ export default function ProcessingActivityDetailsPage(props: Props) {
 
                   {!isSnapshotMode && (
                     <div className="flex justify-end gap-3 pt-4">
-                      {(!activity?.dataProtectionImpactAssessment?.id || dpiaDeleted) && (
+                      {(!activity?.dataProtectionImpactAssessment?.id ||
+                        dpiaDeleted) && (
                         <Button
                           type="button"
                           variant="secondary"
@@ -787,9 +925,16 @@ export default function ProcessingActivityDetailsPage(props: Props) {
                           {__("Cancel")}
                         </Button>
                       )}
-                      {(activity?.dataProtectionImpactAssessment?.id && !dpiaDeleted
-                        ? isAuthorized("DataProtectionImpactAssessment", "updateDataProtectionImpactAssessment")
-                        : isAuthorized("ProcessingActivity", "createDataProtectionImpactAssessment")) && (
+                      {(activity?.dataProtectionImpactAssessment?.id &&
+                      !dpiaDeleted
+                        ? isAuthorized(
+                            "DataProtectionImpactAssessment",
+                            "updateDataProtectionImpactAssessment",
+                          )
+                        : isAuthorized(
+                            "ProcessingActivity",
+                            "createDataProtectionImpactAssessment",
+                          )) && (
                         <Button
                           type="submit"
                           variant="primary"
@@ -797,9 +942,10 @@ export default function ProcessingActivityDetailsPage(props: Props) {
                         >
                           {dpiaSubmitting
                             ? __("Saving...")
-                            : activity?.dataProtectionImpactAssessment?.id && !dpiaDeleted
-                            ? __("Update DPIA")
-                            : __("Create DPIA")}
+                            : activity?.dataProtectionImpactAssessment?.id &&
+                                !dpiaDeleted
+                              ? __("Update DPIA")
+                              : __("Create DPIA")}
                         </Button>
                       )}
                     </div>
@@ -814,50 +960,70 @@ export default function ProcessingActivityDetailsPage(props: Props) {
       {activeTab === "tia" && (
         <Card>
           <div className="p-6">
-            {!showTiaForm && (!activity?.transferImpactAssessment?.id || tiaDeleted) ? (
+            {!showTiaForm &&
+            (!activity?.transferImpactAssessment?.id || tiaDeleted) ? (
               <div className="flex flex-col items-center justify-center py-16 w-full">
-                <h2 className="text-xl font-semibold mb-6 text-center">{__("Transfer Impact Assessment")}</h2>
-                {!isSnapshotMode && isAuthorized("ProcessingActivity", "createTransferImpactAssessment") && (
-                  <Button
-                    variant="primary"
-                    onClick={() => setShowTiaForm(true)}
-                  >
-                    {__("Create TIA")}
-                  </Button>
-                )}
+                <h2 className="text-xl font-semibold mb-6 text-center">
+                  {__("Transfer Impact Assessment")}
+                </h2>
+                {!isSnapshotMode &&
+                  isAuthorized(
+                    "ProcessingActivity",
+                    "createTransferImpactAssessment",
+                  ) && (
+                    <Button
+                      variant="primary"
+                      onClick={() => setShowTiaForm(true)}
+                    >
+                      {__("Create TIA")}
+                    </Button>
+                  )}
               </div>
             ) : (
               <>
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-semibold">{__("Transfer Impact Assessment")}</h2>
-                  {!isSnapshotMode && activity?.transferImpactAssessment?.id && !tiaDeleted && isAuthorized("TransferImpactAssessment", "deleteTransferImpactAssessment") && (
-                    <Button
-                      variant="danger"
-                      onClick={deleteTIA}
-                    >
-                      {__("Delete TIA")}
-                    </Button>
-                  )}
+                  <h2 className="text-xl font-semibold">
+                    {__("Transfer Impact Assessment")}
+                  </h2>
+                  {!isSnapshotMode &&
+                    activity?.transferImpactAssessment?.id &&
+                    !tiaDeleted &&
+                    isAuthorized(
+                      "TransferImpactAssessment",
+                      "deleteTransferImpactAssessment",
+                    ) && (
+                      <Button variant="danger" onClick={deleteTIA}>
+                        {__("Delete TIA")}
+                      </Button>
+                    )}
                 </div>
 
                 <form onSubmit={onTIASubmit} className="space-y-6">
                   <div>
-                    <Label htmlFor="tia-data-subjects">{__("Data Subjects")}</Label>
+                    <Label htmlFor="tia-data-subjects">
+                      {__("Data Subjects")}
+                    </Label>
                     <Textarea
                       id="tia-data-subjects"
                       {...tiaForm.register("dataSubjects")}
-                      placeholder={__("Describe the data subjects involved in the transfer")}
+                      placeholder={__(
+                        "Describe the data subjects involved in the transfer",
+                      )}
                       rows={4}
                       disabled={isSnapshotMode}
                     />
                   </div>
 
                   <div>
-                    <Label htmlFor="tia-legal-mechanism">{__("Legal Mechanism")}</Label>
+                    <Label htmlFor="tia-legal-mechanism">
+                      {__("Legal Mechanism")}
+                    </Label>
                     <Textarea
                       id="tia-legal-mechanism"
                       {...tiaForm.register("legalMechanism")}
-                      placeholder={__("Describe the legal mechanism for the transfer (e.g., SCCs, BCRs, adequacy decision)")}
+                      placeholder={__(
+                        "Describe the legal mechanism for the transfer (e.g., SCCs, BCRs, adequacy decision)",
+                      )}
                       rows={4}
                       disabled={isSnapshotMode}
                     />
@@ -868,29 +1034,39 @@ export default function ProcessingActivityDetailsPage(props: Props) {
                     <Textarea
                       id="tia-transfer"
                       {...tiaForm.register("transfer")}
-                      placeholder={__("Describe the nature and details of the data transfer")}
+                      placeholder={__(
+                        "Describe the nature and details of the data transfer",
+                      )}
                       rows={4}
                       disabled={isSnapshotMode}
                     />
                   </div>
 
                   <div>
-                    <Label htmlFor="tia-local-law-risk">{__("Local Law Risk")}</Label>
+                    <Label htmlFor="tia-local-law-risk">
+                      {__("Local Law Risk")}
+                    </Label>
                     <Textarea
                       id="tia-local-law-risk"
                       {...tiaForm.register("localLawRisk")}
-                      placeholder={__("Assess the risks related to the local laws of the destination country")}
+                      placeholder={__(
+                        "Assess the risks related to the local laws of the destination country",
+                      )}
                       rows={4}
                       disabled={isSnapshotMode}
                     />
                   </div>
 
                   <div>
-                    <Label htmlFor="tia-supplementary-measures">{__("Supplementary Measures")}</Label>
+                    <Label htmlFor="tia-supplementary-measures">
+                      {__("Supplementary Measures")}
+                    </Label>
                     <Textarea
                       id="tia-supplementary-measures"
                       {...tiaForm.register("supplementaryMeasures")}
-                      placeholder={__("Describe any supplementary measures taken to ensure adequate protection")}
+                      placeholder={__(
+                        "Describe any supplementary measures taken to ensure adequate protection",
+                      )}
                       rows={4}
                       disabled={isSnapshotMode}
                     />
@@ -898,7 +1074,8 @@ export default function ProcessingActivityDetailsPage(props: Props) {
 
                   {!isSnapshotMode && (
                     <div className="flex justify-end gap-3 pt-4">
-                      {(!activity?.transferImpactAssessment?.id || tiaDeleted) && (
+                      {(!activity?.transferImpactAssessment?.id ||
+                        tiaDeleted) && (
                         <Button
                           type="button"
                           variant="secondary"
@@ -908,8 +1085,14 @@ export default function ProcessingActivityDetailsPage(props: Props) {
                         </Button>
                       )}
                       {(activity?.transferImpactAssessment?.id && !tiaDeleted
-                        ? isAuthorized("TransferImpactAssessment", "updateTransferImpactAssessment")
-                        : isAuthorized("ProcessingActivity", "createTransferImpactAssessment")) && (
+                        ? isAuthorized(
+                            "TransferImpactAssessment",
+                            "updateTransferImpactAssessment",
+                          )
+                        : isAuthorized(
+                            "ProcessingActivity",
+                            "createTransferImpactAssessment",
+                          )) && (
                         <Button
                           type="submit"
                           variant="primary"
@@ -917,9 +1100,10 @@ export default function ProcessingActivityDetailsPage(props: Props) {
                         >
                           {tiaSubmitting
                             ? __("Saving...")
-                            : activity?.transferImpactAssessment?.id && !tiaDeleted
-                            ? __("Update TIA")
-                            : __("Create TIA")}
+                            : activity?.transferImpactAssessment?.id &&
+                                !tiaDeleted
+                              ? __("Update TIA")
+                              : __("Create TIA")}
                         </Button>
                       )}
                     </div>

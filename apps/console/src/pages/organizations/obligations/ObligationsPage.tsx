@@ -27,18 +27,27 @@ import {
 import { useParams } from "react-router";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { CreateObligationDialog } from "./dialogs/CreateObligationDialog";
-import { deleteObligationMutation, obligationsQuery } from "../../../hooks/graph/ObligationGraph";
-import { promisifyMutation, getObligationStatusVariant, getObligationStatusLabel, formatDate } from "@probo/helpers";
+import {
+  deleteObligationMutation,
+  obligationsQuery,
+} from "../../../hooks/graph/ObligationGraph";
+import {
+  promisifyMutation,
+  getObligationStatusVariant,
+  getObligationStatusLabel,
+  formatDate,
+} from "@probo/helpers";
 import { SnapshotBanner } from "/components/SnapshotBanner";
 import type {
   ObligationsPageFragment$key,
   ObligationsPageFragment$data,
-} from "./__generated__/ObligationsPageFragment.graphql";
+} from "/__generated__/core/ObligationsPageFragment.graphql";
 import { use } from "react";
 import { PermissionsContext } from "/providers/PermissionsContext";
-import type { ObligationGraphListQuery } from "/hooks/graph/__generated__/ObligationGraphListQuery.graphql";
+import type { ObligationGraphListQuery } from "/__generated__/core/ObligationGraphListQuery.graphql";
 
-type Obligation = ObligationsPageFragment$data['obligations']['edges'][number]['node'];
+type Obligation =
+  ObligationsPageFragment$data["obligations"]["edges"][number]["node"];
 
 interface ObligationsPageProps {
   queryRef: PreloadedQuery<ObligationGraphListQuery>;
@@ -57,8 +66,7 @@ const obligationsPageFragment = graphql`
       first: $first
       after: $after
       filter: { snapshotId: $snapshotId }
-    )
-      @connection(key: "ObligationsPage_obligations", filters: ["filter"]) {
+    ) @connection(key: "ObligationsPage_obligations", filters: ["filter"]) {
       __id
       totalCount
       edges {
@@ -99,23 +107,25 @@ export default function ObligationsPage({ queryRef }: ObligationsPageProps) {
 
   usePageTitle(__("Obligations"));
 
-  const organization = usePreloadedQuery(
-    obligationsQuery,
-    queryRef
-  );
+  const organization = usePreloadedQuery(obligationsQuery, queryRef);
 
-  const { data: obligationsData, loadNext, hasNext } = usePaginationFragment(
+  const {
+    data: obligationsData,
+    loadNext,
+    hasNext,
+  } = usePaginationFragment(
     obligationsPageFragment,
-    organization.node as ObligationsPageFragment$key
+    organization.node as ObligationsPageFragment$key,
   );
 
   const connectionId = obligationsData?.obligations?.__id || "";
-  const obligations: Obligation[] = obligationsData?.obligations?.edges?.map((edge) => edge.node) ?? [];
+  const obligations: Obligation[] =
+    obligationsData?.obligations?.edges?.map((edge) => edge.node) ?? [];
 
-  const hasAnyAction = !isSnapshotMode && (
-    isAuthorized("Obligation", "updateObligation") ||
-    isAuthorized("Obligation", "deleteObligation")
-  );
+  const hasAnyAction =
+    !isSnapshotMode &&
+    (isAuthorized("Obligation", "updateObligation") ||
+      isAuthorized("Obligation", "deleteObligation"));
 
   return (
     <div className="space-y-6">
@@ -124,16 +134,15 @@ export default function ObligationsPage({ queryRef }: ObligationsPageProps) {
       )}
       <PageHeader
         title={__("Obligations")}
-        description={__(
-          "Manage your organization's obligations."
-        )}
+        description={__("Manage your organization's obligations.")}
       >
-        {!snapshotId && (
-          isAuthorized("Organization", "createObligation") && (
-            <CreateObligationDialog organizationId={organizationId} connection={connectionId}>
-              <Button icon={IconPlusLarge}>{__("Add obligation")}</Button>
-            </CreateObligationDialog>
-          )
+        {!snapshotId && isAuthorized("Organization", "createObligation") && (
+          <CreateObligationDialog
+            organizationId={organizationId}
+            connection={connectionId}
+          >
+            <Button icon={IconPlusLarge}>{__("Add obligation")}</Button>
+          </CreateObligationDialog>
         )}
       </PageHeader>
 
@@ -222,9 +231,9 @@ function ObligationRow({
         }),
       {
         message: __(
-          "This will permanently delete this obligation. This action cannot be undone."
+          "This will permanently delete this obligation. This action cannot be undone.",
         ),
-      }
+      },
     );
   };
 
@@ -237,7 +246,11 @@ function ObligationRow({
       <Td>{obligation.area || "-"}</Td>
       <Td>{obligation.source || "-"}</Td>
       <Td>
-        <Badge variant={getObligationStatusVariant(obligation.status || "NON_COMPLIANT")}>
+        <Badge
+          variant={getObligationStatusVariant(
+            obligation.status || "NON_COMPLIANT",
+          )}
+        >
           {getObligationStatusLabel(obligation.status || "NON_COMPLIANT")}
         </Badge>
       </Td>

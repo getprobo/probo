@@ -3,8 +3,8 @@ import { PageSkeleton } from "/components/skeletons/PageSkeleton";
 import { coreEnvironment } from "/environments";
 import { snapshotsQuery, snapshotNodeQuery } from "/hooks/graph/SnapshotGraph";
 import { lazy } from "@probo/react-lazy";
-import type { SnapshotGraphListQuery } from "/hooks/graph/__generated__/SnapshotGraphListQuery.graphql";
-import type { SnapshotGraphNodeQuery } from "/hooks/graph/__generated__/SnapshotGraphNodeQuery.graphql";
+import type { SnapshotGraphListQuery } from "/__generated__/core/SnapshotGraphListQuery.graphql";
+import type { SnapshotGraphNodeQuery } from "/__generated__/core/SnapshotGraphNodeQuery.graphql";
 import {
   loaderFromQueryLoader,
   withQueryRef,

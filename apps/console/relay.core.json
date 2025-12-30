@@ -1,8 +1,0 @@
-{
-  "src": "./src",
-  "schema": "../../pkg/server/api/console/v1/schema.graphql",
-  "language": "typescript",
-  "eagerEsModules": true,
-  "noFutureProofEnums": true,
-  "excludes": ["**/iam/**/*", "**/node_modules/**", "**/__generated__/**"]
-}

@@ -15,10 +15,14 @@ import {
   Badge,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
-import type { LinkedObligationsCardFragment$key } from "./__generated__/LinkedObligationsCardFragment.graphql";
+import type { LinkedObligationsCardFragment$key } from "/__generated__/core/LinkedObligationsCardFragment.graphql";
 import { useFragment } from "react-relay";
 import { useMemo, useState } from "react";
-import { sprintf, getObligationStatusVariant, getObligationStatusLabel } from "@probo/helpers";
+import {
+  sprintf,
+  getObligationStatusVariant,
+  getObligationStatusLabel,
+} from "@probo/helpers";
 import { LinkedObligationDialog } from "./LinkedObligationsDialog";
 import clsx from "clsx";
 import { useParams } from "react-router";
@@ -62,7 +66,7 @@ type Props<Params> = {
 export function LinkedObligationsCard<Params>(props: Props<Params>) {
   const { __ } = useTranslate();
   const [limit, setLimit] = useState<number | null>(
-    props.variant === "card" ? 4 : null
+    props.variant === "card" ? 4 : null,
   );
 
   const onAttach = (obligationId: string) => {
@@ -131,13 +135,21 @@ export function LinkedObligationsCard<Params>(props: Props<Params>) {
         <Tbody>
           {obligations.length === 0 && (
             <Tr>
-              <Td colSpan={props.readOnly ? 4 : 5} className="text-center text-txt-secondary">
+              <Td
+                colSpan={props.readOnly ? 4 : 5}
+                className="text-center text-txt-secondary"
+              >
                 {__("No obligations linked")}
               </Td>
             </Tr>
           )}
           {obligations.map((obligation) => (
-            <ObligationRow key={obligation.id} obligation={obligation} onClick={onDetach} readOnly={props.readOnly} />
+            <ObligationRow
+              key={obligation.id}
+              obligation={obligation}
+              onClick={onDetach}
+              readOnly={props.readOnly}
+            />
           ))}
           {variant === "table" && !props.readOnly && (
             <LinkedObligationDialog
@@ -189,27 +201,17 @@ function ObligationRow(props: {
 
   return (
     <Tr to={detailsUrl}>
-      <Td>
-        {obligation.area || __("No area specified")}
-      </Td>
-      <Td>
-        {obligation.source || __("No source specified")}
-      </Td>
+      <Td>{obligation.area || __("No area specified")}</Td>
+      <Td>{obligation.source || __("No source specified")}</Td>
       <Td>
         <Badge variant={getObligationStatusVariant(obligation.status)}>
           {getObligationStatusLabel(obligation.status)}
         </Badge>
       </Td>
-      <Td>
-        {obligation.owner?.fullName || __("Unassigned")}
-      </Td>
+      <Td>{obligation.owner?.fullName || __("Unassigned")}</Td>
       {!props.readOnly && (
         <Td noLink width={50} className="text-end">
-          <Button
-            variant="secondary"
-            icon={IconTrashCan}
-            onClick={onDetach}
-          >
+          <Button variant="secondary" icon={IconTrashCan} onClick={onDetach}>
             {__("Unlink")}
           </Button>
         </Td>

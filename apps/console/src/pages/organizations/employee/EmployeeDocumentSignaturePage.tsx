@@ -7,16 +7,16 @@ import {
   type PreloadedQuery,
 } from "react-relay";
 import { graphql } from "react-relay";
-import type { EmployeeDocumentSignaturePageQuery } from "./__generated__/EmployeeDocumentSignaturePageQuery.graphql";
+import type { EmployeeDocumentSignaturePageQuery } from "/__generated__/core/EmployeeDocumentSignaturePageQuery.graphql";
 import { usePageTitle } from "@probo/hooks";
-import type { EmployeeDocumentSignaturePageSignMutation } from "./__generated__/EmployeeDocumentSignaturePageSignMutation.graphql";
-import type { EmployeeDocumentSignaturePageExportSignablePDFMutation } from "./__generated__/EmployeeDocumentSignaturePageExportSignablePDFMutation.graphql";
+import type { EmployeeDocumentSignaturePageSignMutation } from "/__generated__/core/EmployeeDocumentSignaturePageSignMutation.graphql";
+import type { EmployeeDocumentSignaturePageExportSignablePDFMutation } from "/__generated__/core/EmployeeDocumentSignaturePageExportSignablePDFMutation.graphql";
 import { useNavigate } from "react-router";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { PDFPreview } from "/components/documents/PDFPreview";
 import { useWindowSize } from "usehooks-ts";
 import { useState, useEffect, useRef } from "react";
-import type { EmployeeDocumentSignaturePageDocumentFragment$key } from "./__generated__/EmployeeDocumentSignaturePageDocumentFragment.graphql";
+import type { EmployeeDocumentSignaturePageDocumentFragment$key } from "/__generated__/core/EmployeeDocumentSignaturePageDocumentFragment.graphql";
 import { useToast } from "@probo/ui";
 import { formatError, type GraphQLError } from "@probo/helpers";
 import { VersionActions } from "./_components/VersionActions";
@@ -80,7 +80,7 @@ export function EmployeeDocumentSignaturePage(props: {
   const { queryRef } = props;
   const { viewer } = usePreloadedQuery<EmployeeDocumentSignaturePageQuery>(
     employeeDocumentSignaturePageQuery,
-    queryRef
+    queryRef,
   );
   const document = viewer.signableDocument;
 
@@ -110,7 +110,7 @@ function DocumentSignatureContent({
   const documentData =
     useFragment<EmployeeDocumentSignaturePageDocumentFragment$key>(
       documentFragment,
-      fKey
+      fKey,
     );
 
   const versions = documentData.versions.edges.map(({ node }) => node);
@@ -126,12 +126,12 @@ function DocumentSignatureContent({
 
   const [signDocument, isSigning] =
     useMutation<EmployeeDocumentSignaturePageSignMutation>(
-      signDocumentMutation
+      signDocumentMutation,
     );
 
   const [exportSignableVersionDocumentPDF] =
     useMutation<EmployeeDocumentSignaturePageExportSignablePDFMutation>(
-      exportSignableVersionDocumentPDFMutation
+      exportSignableVersionDocumentPDFMutation,
     );
 
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
@@ -164,7 +164,7 @@ function DocumentSignatureContent({
           title: __("Error"),
           description: formatError(
             __("Failed to sign document"),
-            error as GraphQLError
+            error as GraphQLError,
           ),
           variant: "error",
         });
@@ -187,7 +187,7 @@ function DocumentSignatureContent({
             title: __("Error"),
             description: formatError(
               __("Failed to load PDF"),
-              errors as GraphQLError[]
+              errors as GraphQLError[],
             ),
             variant: "error",
           });
@@ -204,7 +204,7 @@ function DocumentSignatureContent({
           title: __("Error"),
           description: formatError(
             __("Failed to load PDF"),
-            error as GraphQLError
+            error as GraphQLError,
           ),
           variant: "error",
         });

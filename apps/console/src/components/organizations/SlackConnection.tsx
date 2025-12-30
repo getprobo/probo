@@ -1,16 +1,21 @@
 import { Badge, Button, Card } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { sprintf } from "@probo/helpers";
-import type { TrustCenterGraphQuery$data } from "/hooks/graph/__generated__/TrustCenterGraphQuery.graphql";
+import type { TrustCenterGraphQuery$data } from "/__generated__/core/TrustCenterGraphQuery.graphql";
 import { use } from "react";
 import { PermissionsContext } from "/providers/PermissionsContext";
 
 type Props = {
   organizationId: string;
-  slackConnections: NonNullable<TrustCenterGraphQuery$data["organization"]["slackConnections"]>["edges"][number]["node"][];
+  slackConnections: NonNullable<
+    TrustCenterGraphQuery$data["organization"]["slackConnections"]
+  >["edges"][number]["node"][];
 };
 
-export function SlackConnections({ organizationId, slackConnections: connectedSlackConnections }: Props) {
+export function SlackConnections({
+  organizationId,
+  slackConnections: connectedSlackConnections,
+}: Props) {
   const { __, dateTimeFormat } = useTranslate();
   const { isAuthorized } = use(PermissionsContext);
   const slackConnectionDefinitions = [
@@ -46,7 +51,11 @@ export function SlackConnections({ organizationId, slackConnections: connectedSl
   return (
     <div className="space-y-2">
       {slackConnections.map((slackConnection) => (
-        <Card key={slackConnection.id} padded className="flex items-center gap-3">
+        <Card
+          key={slackConnection.id}
+          padded
+          className="flex items-center gap-3"
+        >
           <div>
             <img src={`/${slackConnection.id.toLowerCase()}.png`} alt="" />
           </div>
@@ -57,7 +66,7 @@ export function SlackConnections({ organizationId, slackConnections: connectedSl
                 <>
                   {sprintf(
                     __("Connected on %s"),
-                    dateTimeFormat(slackConnection.createdAt)
+                    dateTimeFormat(slackConnection.createdAt),
                   )}
                   {slackConnection.channel && (
                     <>

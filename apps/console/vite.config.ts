@@ -7,12 +7,28 @@ import { fileURLToPath, URL } from "node:url";
 export default defineConfig({
   plugins: [
     react({
+      exclude: "src/pages/iam/**/*",
       babel: {
         plugins: [
           [
             "relay",
             {
               eagerEsModules: true,
+              artifactDirectory: "src/__generated__/core",
+            },
+          ],
+        ],
+      },
+    }),
+    react({
+      include: "src/pages/iam/**/*",
+      babel: {
+        plugins: [
+          [
+            "relay",
+            {
+              eagerEsModules: true,
+              artifactDirectory: "src/__generated__/iam",
             },
           ],
         ],
@@ -31,11 +47,11 @@ export default defineConfig({
   resolve: {
     alias: {
       "/environments": fileURLToPath(
-        new URL("./src/environments", import.meta.url)
+        new URL("./src/environments", import.meta.url),
       ),
       "/type": fileURLToPath(new URL("./src/type.ts", import.meta.url)),
       "/components": fileURLToPath(
-        new URL("./src/components", import.meta.url)
+        new URL("./src/components", import.meta.url),
       ),
       "/coredata": fileURLToPath(new URL("./src/coredata", import.meta.url)),
       "/hooks": fileURLToPath(new URL("./src/hooks", import.meta.url)),
@@ -44,7 +60,7 @@ export default defineConfig({
       "/routes": fileURLToPath(new URL("./src/routes", import.meta.url)),
       "/providers": fileURLToPath(new URL("./src/providers", import.meta.url)),
       "/permissions": fileURLToPath(
-        new URL("./src/permissions", import.meta.url)
+        new URL("./src/permissions", import.meta.url),
       ),
     },
   },

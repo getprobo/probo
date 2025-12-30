@@ -1,10 +1,6 @@
 import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
-import {
-  Button,
-  IconPlusLarge,
-  PageHeader,
-} from "@probo/ui";
+import { Button, IconPlusLarge, PageHeader } from "@probo/ui";
 import { use } from "react";
 import {
   graphql,
@@ -15,13 +11,11 @@ import {
 import { useParams } from "react-router";
 import { AssetsTable } from "../../../components/assets/AssetsTable";
 import { ReadOnlyAssetsTable } from "../../../components/assets/ReadOnlyAssetsTable";
-import type { AssetsPageFragment$key } from "./__generated__/AssetsPageFragment.graphql";
+import type { AssetsPageFragment$key } from "/__generated__/core/AssetsPageFragment.graphql";
 import { CreateAssetDialog } from "./dialogs/CreateAssetDialog";
 import { SnapshotBanner } from "/components/SnapshotBanner";
-import {
-  assetsQuery,
-} from "/hooks/graph/AssetGraph";
-import type { AssetGraphListQuery } from "/hooks/graph/__generated__/AssetGraphListQuery.graphql";
+import { assetsQuery } from "/hooks/graph/AssetGraph";
+import type { AssetGraphListQuery } from "/__generated__/core/AssetGraphListQuery.graphql";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { PermissionsContext } from "/providers/PermissionsContext";
 
@@ -83,7 +77,10 @@ export default function AssetsPage(props: Props) {
   const { snapshotId } = useParams<{ snapshotId?: string }>();
   const isSnapshotMode = Boolean(snapshotId);
 
-  const data = usePreloadedQuery<AssetGraphListQuery>(assetsQuery, props.queryRef);
+  const data = usePreloadedQuery<AssetGraphListQuery>(
+    assetsQuery,
+    props.queryRef,
+  );
   const pagination = usePaginationFragment(
     paginatedAssetsFragment,
     data.node as AssetsPageFragment$key,
@@ -92,10 +89,9 @@ export default function AssetsPage(props: Props) {
   const connectionId = pagination.data.assets.__id;
 
   const { isAuthorized } = use(PermissionsContext);
-  const canWrite = (
+  const canWrite =
     isAuthorized("Asset", "updateAsset") ||
-    isAuthorized("Asset", "deleteAsset")
-  );
+    isAuthorized("Asset", "deleteAsset");
   usePageTitle(__("Assets"));
 
   return (
@@ -116,15 +112,15 @@ export default function AssetsPage(props: Props) {
           </CreateAssetDialog>
         )}
       </PageHeader>
-      {isSnapshotMode || !canWrite ?
+      {isSnapshotMode || !canWrite ? (
         <ReadOnlyAssetsTable pagination={pagination} assets={assets} />
-        :
+      ) : (
         <AssetsTable
           connectionId={connectionId}
           pagination={pagination}
           assets={assets}
         />
-      }
+      )}
     </div>
   );
 }

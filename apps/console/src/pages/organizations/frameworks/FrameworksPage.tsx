@@ -19,13 +19,13 @@ import {
   usePreloadedQuery,
   type PreloadedQuery,
 } from "react-relay";
-import type { FrameworkGraphListQuery } from "/hooks/graph/__generated__/FrameworkGraphListQuery.graphql";
+import type { FrameworkGraphListQuery } from "/__generated__/core/FrameworkGraphListQuery.graphql";
 import {
   frameworksQuery,
   useDeleteFrameworkMutation,
 } from "/hooks/graph/FrameworkGraph";
 import { Link } from "react-router";
-import type { FrameworksPageCardFragment$key } from "./__generated__/FrameworksPageCardFragment.graphql";
+import type { FrameworksPageCardFragment$key } from "/__generated__/core/FrameworksPageCardFragment.graphql";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { useState, type ChangeEventHandler, use } from "react";
 import { FrameworkFormDialog } from "./dialogs/FrameworkFormDialog";
@@ -64,7 +64,7 @@ export default function FrameworksPage(props: Props) {
     {
       successMessage: __("Framework imported successfully"),
       errorMessage: __("Failed to import framework"),
-    }
+    },
   );
   const [isUploading, setUploading] = useState(false);
   const dialogRef = useDialogRef();
@@ -81,7 +81,7 @@ export default function FrameworksPage(props: Props) {
       setUploading(true);
       const fileName = `${name}.json`;
       const json = await fetch(`/data/frameworks/${fileName}`).then((res) =>
-        res.text()
+        res.text(),
       );
       const file = new File([json], fileName, {
         type: "application/json",
@@ -190,7 +190,7 @@ function FrameworkCard(props: FrameworkCardProps) {
   const { isAuthorized } = use(PermissionsContext);
   const deleteFramework = useDeleteFrameworkMutation(
     framework,
-    props.connectionId
+    props.connectionId,
   );
   const { __ } = useTranslate();
   const dialogRef = useDialogRef();

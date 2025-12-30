@@ -7,8 +7,8 @@ import { PageSkeleton } from "/components/skeletons/PageSkeleton";
 import { redirect, type LoaderFunctionArgs } from "react-router";
 import { lazy } from "@probo/react-lazy";
 import { LinkCardSkeleton } from "/components/skeletons/LinkCardSkeleton";
-import type { MeetingGraphListQuery } from "/hooks/graph/__generated__/MeetingGraphListQuery.graphql";
-import type { MeetingGraphNodeQuery } from "/hooks/graph/__generated__/MeetingGraphNodeQuery.graphql";
+import type { MeetingGraphListQuery } from "/__generated__/core/MeetingGraphListQuery.graphql";
+import type { MeetingGraphNodeQuery } from "/__generated__/core/MeetingGraphNodeQuery.graphql";
 import {
   loaderFromQueryLoader,
   withQueryRef,

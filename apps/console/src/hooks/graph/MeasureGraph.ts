@@ -1,7 +1,7 @@
 import { useTranslate } from "@probo/i18n";
 import { graphql } from "relay-runtime";
 import { useMutationWithToasts } from "../useMutationWithToasts";
-import type { MeasureGraphDeleteMutation } from "./__generated__/MeasureGraphDeleteMutation.graphql";
+import type { MeasureGraphDeleteMutation } from "/__generated__/core/MeasureGraphDeleteMutation.graphql";
 
 export const measuresQuery = graphql`
   query MeasureGraphListQuery($organizationId: ID!) {
@@ -33,7 +33,7 @@ export function useDeleteMeasureMutation() {
     {
       successMessage: __("Measure deleted successfully."),
       errorMessage: __("Failed to delete measure"),
-    }
+    },
   );
 }
 

@@ -14,9 +14,9 @@ import {
   withQueryRef,
   type AppRoute,
 } from "@probo/routes";
-import type { FrameworkGraphListQuery } from "/hooks/graph/__generated__/FrameworkGraphListQuery.graphql";
-import type { FrameworkGraphNodeQuery } from "/hooks/graph/__generated__/FrameworkGraphNodeQuery.graphql";
-import type { FrameworkGraphControlNodeQuery } from "/hooks/graph/__generated__/FrameworkGraphControlNodeQuery.graphql";
+import type { FrameworkGraphListQuery } from "/__generated__/core/FrameworkGraphListQuery.graphql";
+import type { FrameworkGraphNodeQuery } from "/__generated__/core/FrameworkGraphNodeQuery.graphql";
+import type { FrameworkGraphControlNodeQuery } from "/__generated__/core/FrameworkGraphControlNodeQuery.graphql";
 
 export const frameworkRoutes = [
   {

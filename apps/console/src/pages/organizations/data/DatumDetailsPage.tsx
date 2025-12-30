@@ -28,7 +28,7 @@ import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import z from "zod";
 import { SnapshotBanner } from "/components/SnapshotBanner";
 import { validateSnapshotConsistency } from "@probo/helpers";
-import type { DatumGraphNodeQuery } from "/hooks/graph/__generated__/DatumGraphNodeQuery.graphql";
+import type { DatumGraphNodeQuery } from "/__generated__/core/DatumGraphNodeQuery.graphql";
 import { use } from "react";
 import { PermissionsContext } from "/providers/PermissionsContext";
 
@@ -49,7 +49,7 @@ export default function DatumDetailsPage(props: Props) {
 
   const queryData = usePreloadedQuery<DatumGraphNodeQuery>(
     datumNodeQuery,
-    props.queryRef
+    props.queryRef,
   );
 
   const datumEntry = queryData.node;
@@ -62,15 +62,13 @@ export default function DatumDetailsPage(props: Props) {
 
   const deleteDatum = useDeleteDatum(
     datumEntry,
-    ConnectionHandler.getConnectionID(
-      organizationId,
-      "DataPage_data",
-      { filter: { snapshotId: snapshotId || null } }
-    ),
+    ConnectionHandler.getConnectionID(organizationId, "DataPage_data", {
+      filter: { snapshotId: snapshotId || null },
+    }),
   );
 
-  const vendors = datumEntry?.vendors?.edges.map(edge => edge.node) ?? [];
-  const vendorIds = vendors.map(vendor => vendor.id);
+  const vendors = datumEntry?.vendors?.edges.map((edge) => edge.node) ?? [];
+  const vendorIds = vendors.map((vendor) => vendor.id);
 
   const { control, formState, handleSubmit, register, reset } =
     useFormWithSchema(updateDatumSchema, {
@@ -126,18 +124,16 @@ export default function DatumDetailsPage(props: Props) {
           <div className="text-2xl">{datumEntry?.name}</div>
           <Badge variant="info">{datumEntry?.dataClassification}</Badge>
         </div>
-        {!isSnapshotMode && (
-          isAuthorized("Datum", "deleteDatum") && (
-            <ActionDropdown variant="secondary">
-              <DropdownItem
-                variant="danger"
-                icon={IconTrashCan}
-                onClick={deleteDatum}
-              >
-                {__("Delete")}
-              </DropdownItem>
-            </ActionDropdown>
-          )
+        {!isSnapshotMode && isAuthorized("Datum", "deleteDatum") && (
+          <ActionDropdown variant="secondary">
+            <DropdownItem
+              variant="danger"
+              icon={IconTrashCan}
+              onClick={deleteDatum}
+            >
+              {__("Delete")}
+            </DropdownItem>
+          </ActionDropdown>
         )}
       </div>
 
@@ -181,12 +177,10 @@ export default function DatumDetailsPage(props: Props) {
 
         {!isSnapshotMode && (
           <div className="flex justify-end">
-            {formState.isDirty && (
-              isAuthorized("Datum", "updateDatum") && (
-                <Button type="submit" disabled={formState.isSubmitting}>
-                  {formState.isSubmitting ? __("Updating...") : __("Update")}
-                </Button>
-              )
+            {formState.isDirty && isAuthorized("Datum", "updateDatum") && (
+              <Button type="submit" disabled={formState.isSubmitting}>
+                {formState.isSubmitting ? __("Updating...") : __("Update")}
+              </Button>
             )}
           </div>
         )}

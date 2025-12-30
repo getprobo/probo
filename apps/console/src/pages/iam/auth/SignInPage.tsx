@@ -4,7 +4,7 @@ import type { FormEventHandler } from "react";
 import { useMutation } from "react-relay";
 import { Link } from "react-router";
 import { graphql } from "relay-runtime";
-import type { SignInPageMutation } from "./__generated__/SignInPageMutation.graphql";
+import type { SignInPageMutation } from "/__generated__/iam/SignInPageMutation.graphql";
 
 const signInMutation = graphql`
   mutation SignInPageMutation($input: SignInInput!) {

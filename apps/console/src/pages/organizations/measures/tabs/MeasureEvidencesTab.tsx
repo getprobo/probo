@@ -1,5 +1,5 @@
 import { useNavigate, useOutletContext, useParams } from "react-router";
-import type { MeasureEvidencesTabFragment$key } from "./__generated__/MeasureEvidencesTabFragment.graphql";
+import type { MeasureEvidencesTabFragment$key } from "/__generated__/core/MeasureEvidencesTabFragment.graphql";
 import { useTranslate } from "@probo/i18n";
 import { usePageTitle } from "@probo/hooks";
 import {
@@ -24,7 +24,7 @@ import {
   useRelayEnvironment,
 } from "react-relay";
 import { SortableTable } from "/components/SortableTable";
-import type { MeasureEvidencesTabFragment_evidence$key } from "./__generated__/MeasureEvidencesTabFragment_evidence.graphql";
+import type { MeasureEvidencesTabFragment_evidence$key } from "/__generated__/core/MeasureEvidencesTabFragment_evidence.graphql";
 import { fileSize, fileType, sprintf, formatDate } from "@probo/helpers";
 import { EvidencePreviewDialog } from "../dialog/EvidencePreviewDialog";
 import { useOrganizationId } from "/hooks/useOrganizationId";
@@ -58,9 +58,9 @@ export const evidencesFragment = graphql`
         node {
           id
           file {
-              fileName
-              mimeType
-              size
+            fileName
+            mimeType
+            size
           }
           ...MeasureEvidencesTabFragment_evidence
         }
@@ -73,9 +73,9 @@ export const evidenceFragment = graphql`
   fragment MeasureEvidencesTabFragment_evidence on Evidence {
     id
     file {
-        fileName
-        mimeType
-        size
+      fileName
+      mimeType
+      size
     }
     type
     createdAt
@@ -97,7 +97,10 @@ export default function MeasureEvidencesTab() {
   const { measure } = useOutletContext<{
     measure: MeasureEvidencesTabFragment$key & { id: string; name: string };
   }>();
-  const { evidenceId, snapshotId } = useParams<{ evidenceId: string; snapshotId?: string }>();
+  const { evidenceId, snapshotId } = useParams<{
+    evidenceId: string;
+    snapshotId?: string;
+  }>();
   const pagination = usePaginationFragment(evidencesFragment, measure);
   const connectionId = pagination.data.evidences.__id;
   const evidences =
@@ -187,13 +190,16 @@ function EvidenceRow(props: {
   const evidence = useFragment(evidenceFragment, props.evidenceKey);
   const { __ } = useTranslate();
 
-  const [mutateWithToasts, isDeleting] = useMutationWithToasts(deleteEvidenceMutation, {
-    successMessage: sprintf(
-      __('Evidence "%s" has been deleted successfully'),
-      evidence.file?.fileName || __("Link evidence")
-    ),
-    errorMessage: __("Failed to delete evidence"),
-  });
+  const [mutateWithToasts, isDeleting] = useMutationWithToasts(
+    deleteEvidenceMutation,
+    {
+      successMessage: sprintf(
+        __('Evidence "%s" has been deleted successfully'),
+        evidence.file?.fileName || __("Link evidence"),
+      ),
+      errorMessage: __("Failed to delete evidence"),
+    },
+  );
   const confirm = useConfirm();
   const [isDownloading, setIsDownloading] = useState(false);
   const relayEnv = useRelayEnvironment();
@@ -214,7 +220,7 @@ function EvidenceRow(props: {
                 relayEnv,
                 props.measureId,
                 "evidences(first:0)",
-                -1
+                -1,
               );
             }
           },
@@ -223,11 +229,11 @@ function EvidenceRow(props: {
       {
         message: sprintf(
           __(
-            'This will permanently delete the evidence "%s". This action cannot be undone.'
+            'This will permanently delete the evidence "%s". This action cannot be undone.',
           ),
-          evidence.file?.fileName || __("Link evidence")
+          evidence.file?.fileName || __("Link evidence"),
         ),
-      }
+      },
     );
   };
 
@@ -245,7 +251,12 @@ function EvidenceRow(props: {
       )}
       <Tr to={evidenceUrl}>
         <Td>{evidence.file?.fileName}</Td>
-        <Td>{fileType(__, {type: evidence.type, mimeType: evidence.file?.mimeType || ''})}</Td>
+        <Td>
+          {fileType(__, {
+            type: evidence.type,
+            mimeType: evidence.file?.mimeType || "",
+          })}
+        </Td>
         <Td>{fileSize(__, evidence.file?.size || 0)}</Td>
         <Td>{formatDate(evidence.createdAt)}</Td>
         <Td noLink>

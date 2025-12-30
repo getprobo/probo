@@ -2,7 +2,10 @@ import { Avatar, Badge, Tbody, Td, Th, Thead, Tr } from "@probo/ui";
 import { SortableTable } from "../SortableTable";
 import { useTranslate } from "@probo/i18n";
 import type { usePaginationFragmentHookType } from "react-relay/relay-hooks/usePaginationFragment";
-import type { AssetsPageFragment$data, AssetsPageFragment$key } from "/pages/organizations/assets/__generated__/AssetsPageFragment.graphql";
+import type {
+  AssetsPageFragment$data,
+  AssetsPageFragment$key,
+} from "/__generated__/core/AssetsPageFragment.graphql";
 import type { OperationType } from "relay-runtime";
 import type { NodeOf } from "/types";
 import { useOrganizationId } from "/hooks/useOrganizationId";
@@ -26,32 +29,25 @@ export function ReadOnlyAssetsTable(props: Props) {
 
   return (
     <SortableTable {...pagination} pageSize={10}>
-        <Thead>
-          <Tr>
-            <Th>{__("Name")}</Th>
-            <Th>{__("Type")}</Th>
-            <Th>{__("Amount")}</Th>
-            <Th>{__("Owner")}</Th>
-            <Th>{__("Vendors")}</Th>
-          </Tr>
-        </Thead>
-        <Tbody>
-          {assets.map((entry) => (
-            <AssetRow
-              key={entry.id}
-              entry={entry}
-            />
-          ))}
-        </Tbody>
-      </SortableTable>
+      <Thead>
+        <Tr>
+          <Th>{__("Name")}</Th>
+          <Th>{__("Type")}</Th>
+          <Th>{__("Amount")}</Th>
+          <Th>{__("Owner")}</Th>
+          <Th>{__("Vendors")}</Th>
+        </Tr>
+      </Thead>
+      <Tbody>
+        {assets.map((entry) => (
+          <AssetRow key={entry.id} entry={entry} />
+        ))}
+      </Tbody>
+    </SortableTable>
   );
 }
 
-function AssetRow({
-  entry,
-}: {
-  entry: AssetEntry;
-}) {
+function AssetRow({ entry }: { entry: AssetEntry }) {
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
   const { snapshotId } = useParams<{ snapshotId?: string }>();
@@ -60,8 +56,9 @@ function AssetRow({
   return (
     <Tr
       to={
-        snapshotId ?
-          `/organizations/${organizationId}/snapshots/${snapshotId}/assets/${entry.id}` : `/organizations/${organizationId}/assets/${entry.id}`
+        snapshotId
+          ? `/organizations/${organizationId}/snapshots/${snapshotId}/assets/${entry.id}`
+          : `/organizations/${organizationId}/assets/${entry.id}`
       }
     >
       <Td>{entry.name}</Td>

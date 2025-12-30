@@ -3,7 +3,7 @@ import { Link, Outlet } from "react-router";
 import { Badge, Button, IconPeopleAdd, Layout, Skeleton } from "@probo/ui";
 import { Sidebar } from "./_components/Sidebar";
 import { MembershipsDropdown } from "./MembershipsDropdown";
-import type { MembershipLayoutQuery } from "./__generated__/MembershipLayoutQuery.graphql";
+import type { MembershipLayoutQuery } from "/__generated__/iam/MembershipLayoutQuery.graphql";
 import { PermissionsProvider } from "/providers/PermissionsProvider";
 import { SessionDropdown } from "./_components/SessionDropdown";
 import { Suspense } from "react";

@@ -1,7 +1,7 @@
 import { graphql, usePreloadedQuery, type PreloadedQuery } from "react-relay";
 import { useTranslate } from "@probo/i18n";
 import { PageHeader, Tbody, Thead, Tr, Th, Card } from "@probo/ui";
-import type { EmployeeDocumentsPageQuery } from "./__generated__/EmployeeDocumentsPageQuery.graphql";
+import type { EmployeeDocumentsPageQuery } from "/__generated__/core/EmployeeDocumentsPageQuery.graphql";
 import { usePageTitle } from "@probo/hooks";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { DocumentRow } from "./_components/DocumentRow";
@@ -36,7 +36,7 @@ export function EmployeeDocumentsPage(props: {
     viewer: { signableDocuments },
   } = usePreloadedQuery<EmployeeDocumentsPageQuery>(
     employeeDocumentsPageQuery,
-    queryRef
+    queryRef,
   );
 
   const documents = signableDocuments.edges.map((edge) => edge.node);

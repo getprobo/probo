@@ -1,6 +1,6 @@
 import { graphql, usePreloadedQuery, type PreloadedQuery } from "react-relay";
 import { useTranslate } from "@probo/i18n";
-import type { APIKeysPageQuery } from "./__generated__/APIKeysPageQuery.graphql";
+import type { APIKeysPageQuery } from "/__generated__/iam/APIKeysPageQuery.graphql";
 import { PersonalAPIKeyList } from "./_components/PersonalAPIKeyList";
 
 export const apiKeysPageQuery = graphql`

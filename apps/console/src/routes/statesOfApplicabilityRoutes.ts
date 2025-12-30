@@ -6,8 +6,8 @@ import {
   paginatedStateOfApplicabilityQuery,
   stateOfApplicabilityNodeQuery,
 } from "/hooks/graph/StateOfApplicabilityGraph";
-import type { StateOfApplicabilityGraphPaginatedQuery } from "/hooks/graph/__generated__/StateOfApplicabilityGraphPaginatedQuery.graphql";
-import type { StateOfApplicabilityGraphNodeQuery } from "/hooks/graph/__generated__/StateOfApplicabilityGraphNodeQuery.graphql";
+import type { StateOfApplicabilityGraphPaginatedQuery } from "/__generated__/core/StateOfApplicabilityGraphPaginatedQuery.graphql";
+import type { StateOfApplicabilityGraphNodeQuery } from "/__generated__/core/StateOfApplicabilityGraphNodeQuery.graphql";
 import { loaderFromQueryLoader, withQueryRef, type AppRoute } from "@probo/routes";
 
 export const statesOfApplicabilityRoutes = [

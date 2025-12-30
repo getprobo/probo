@@ -14,7 +14,7 @@ import { useState } from "react";
 import { graphql } from "relay-runtime";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { useOrganizationId } from "/hooks/useOrganizationId";
-import type { MemberListItemFragment$data } from "./__generated__/MemberListItemFragment.graphql";
+import type { MemberListItemFragment$data } from "/__generated__/iam/MemberListItemFragment.graphql";
 
 const updateMembershipMutation = graphql`
   mutation EditMemberDialog_updateMutation($input: UpdateMembershipInput!) {

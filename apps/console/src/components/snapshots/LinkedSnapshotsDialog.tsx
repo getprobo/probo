@@ -16,13 +16,13 @@ import { getSnapshotTypeLabel, formatDate } from "@probo/helpers";
 import { Suspense, useMemo, useState, type ReactNode } from "react";
 import { graphql } from "relay-runtime";
 import { useLazyLoadQuery, usePaginationFragment } from "react-relay";
-import type { LinkedSnapshotsDialogQuery } from "./__generated__/LinkedSnapshotsDialogQuery.graphql";
+import type { LinkedSnapshotsDialogQuery } from "/__generated__/core/LinkedSnapshotsDialogQuery.graphql";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import type { NodeOf } from "/types";
 import type {
   LinkedSnapshotsDialogFragment$data,
   LinkedSnapshotsDialogFragment$key,
-} from "./__generated__/LinkedSnapshotsDialogFragment.graphql";
+} from "/__generated__/core/LinkedSnapshotsDialogFragment.graphql";
 
 const snapshotsQuery = graphql`
   query LinkedSnapshotsDialogQuery($organizationId: ID!) {
@@ -95,21 +95,22 @@ function LinkedSnapshotsDialogContent(props: Omit<Props, "children">) {
   });
   const { data, loadNext, hasNext, isLoadingNext } = usePaginationFragment<
     LinkedSnapshotsDialogQuery,
-    LinkedSnapshotsDialogFragment$key>(
-    snapshotsFragment,
-    query.organization
-  );
+    LinkedSnapshotsDialogFragment$key
+  >(snapshotsFragment, query.organization);
 
   const { __ } = useTranslate();
   const [search, setSearch] = useState("");
-  const snapshots = useMemo(() => data.snapshots?.edges?.map((edge) => edge.node) ?? [], [data.snapshots]);
+  const snapshots = useMemo(
+    () => data.snapshots?.edges?.map((edge) => edge.node) ?? [],
+    [data.snapshots],
+  );
   const linkedIds = useMemo(() => {
     return new Set(props.linkedSnapshots?.map((s) => s.id) ?? []);
   }, [props.linkedSnapshots]);
 
   const filteredSnapshots = useMemo(() => {
     return snapshots.filter((snapshot) =>
-      snapshot.name.toLowerCase().includes(search.toLowerCase())
+      snapshot.name.toLowerCase().includes(search.toLowerCase()),
     );
   }, [snapshots, search]);
 

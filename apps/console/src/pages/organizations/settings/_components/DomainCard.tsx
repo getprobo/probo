@@ -7,7 +7,7 @@ import {
 import { useTranslate } from "@probo/i18n";
 import { graphql } from "relay-runtime";
 import { useFragment } from "react-relay";
-import type { DomainCardFragment$key } from "./__generated__/DomainCardFragment.graphql";
+import type { DomainCardFragment$key } from "/__generated__/core/DomainCardFragment.graphql";
 import { DeleteDomainDialog } from "./DeleteDomainDialog";
 
 const fragment = graphql`

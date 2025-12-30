@@ -3,7 +3,7 @@ import { IconCircleCheck, IconRadioUnchecked } from "@probo/ui";
 import clsx from "clsx";
 import { useFragment } from "react-relay";
 import { graphql } from "react-relay";
-import type { VersionRowFragment$key } from "./__generated__/VersionRowFragment.graphql";
+import type { VersionRowFragment$key } from "/__generated__/core/VersionRowFragment.graphql";
 
 const fragment = graphql`
   fragment VersionRowFragment on DocumentVersion {
@@ -34,7 +34,7 @@ export function VersionRow({
         "flex items-center gap-3 py-3 px-4 transition-colors cursor-pointer",
         isSelected
           ? "bg-blue-50 border-l-4 border-blue-500"
-          : "bg-transparent hover:bg-level-1"
+          : "bg-transparent hover:bg-level-1",
       )}
     >
       <div className="flex items-center justify-center w-8 h-8 rounded-full bg-level-2 flex-shrink-0">
@@ -48,7 +48,7 @@ export function VersionRow({
         <p
           className={clsx(
             "text-sm font-medium truncate",
-            isVersionSigned ? "text-txt-tertiary" : "text-txt-primary"
+            isVersionSigned ? "text-txt-tertiary" : "text-txt-primary",
           )}
         >
           {versionData.publishedAt
@@ -70,7 +70,7 @@ export function VersionRow({
               ? "bg-green-100 text-green-800"
               : isSelected
                 ? "bg-blue-100 text-blue-800"
-                : "bg-gray-100 text-gray-700"
+                : "bg-gray-100 text-gray-700",
           )}
         >
           {isVersionSigned

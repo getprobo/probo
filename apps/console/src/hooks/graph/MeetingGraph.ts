@@ -1,8 +1,8 @@
 import { useTranslate } from "@probo/i18n";
 import { graphql } from "relay-runtime";
 import { useMutationWithToasts } from "../useMutationWithToasts";
-import type { MeetingGraphDeleteMutation } from "./__generated__/MeetingGraphDeleteMutation.graphql";
-import type { MeetingGraphUpdateMutation } from "./__generated__/MeetingGraphUpdateMutation.graphql";
+import type { MeetingGraphDeleteMutation } from "/__generated__/core/MeetingGraphDeleteMutation.graphql";
+import type { MeetingGraphUpdateMutation } from "/__generated__/core/MeetingGraphUpdateMutation.graphql";
 
 export const meetingsQuery = graphql`
   query MeetingGraphListQuery($organizationId: ID!) {
@@ -39,7 +39,7 @@ export function useDeleteMeetingMutation() {
     {
       successMessage: __("Meeting deleted successfully."),
       errorMessage: __("Failed to delete meeting"),
-    }
+    },
   );
 }
 
@@ -68,12 +68,15 @@ export function useUpdateMeetingMutation() {
     {
       successMessage: __("Meeting updated successfully."),
       errorMessage: __("Failed to update meeting"),
-    }
+    },
   );
 }
 
 const createMeetingMutation = graphql`
-  mutation MeetingGraphCreateMutation($input: CreateMeetingInput!, $connections: [ID!]!) {
+  mutation MeetingGraphCreateMutation(
+    $input: CreateMeetingInput!
+    $connections: [ID!]!
+  ) {
     createMeeting(input: $input) {
       meetingEdge @prependEdge(connections: $connections) {
         node {
@@ -94,12 +97,8 @@ const createMeetingMutation = graphql`
 export function useCreateMeetingMutation() {
   const { __ } = useTranslate();
 
-  return useMutationWithToasts(
-    createMeetingMutation,
-    {
-      successMessage: __("Meeting created successfully."),
-      errorMessage: __("Failed to create meeting"),
-    }
-  );
+  return useMutationWithToasts(createMeetingMutation, {
+    successMessage: __("Meeting created successfully."),
+    errorMessage: __("Failed to create meeting"),
+  });
 }
-

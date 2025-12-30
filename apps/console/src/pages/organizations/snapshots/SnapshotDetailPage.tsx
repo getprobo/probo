@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useNavigate, useParams } from "react-router";
 import { usePreloadedQuery, type PreloadedQuery } from "react-relay";
 import { snapshotNodeQuery } from "/hooks/graph/SnapshotGraph";
-import type { SnapshotGraphNodeQuery } from "/hooks/graph/__generated__/SnapshotGraphNodeQuery.graphql";
+import type { SnapshotGraphNodeQuery } from "/__generated__/core/SnapshotGraphNodeQuery.graphql";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { PageError } from "/components/PageError";
 import { getSnapshotTypeUrlPath } from "@probo/helpers";
@@ -17,7 +17,7 @@ export default function SnapshotDetailPage({ queryRef }: Props) {
   const { snapshotId } = useParams();
   const data = usePreloadedQuery(snapshotNodeQuery, queryRef);
 
-    useEffect(() => {
+  useEffect(() => {
     if (!data.node || !data.node.type) {
       return;
     }
@@ -26,9 +26,12 @@ export default function SnapshotDetailPage({ queryRef }: Props) {
     const snapshotType = snapshot.type;
     const urlPath = getSnapshotTypeUrlPath(snapshotType);
 
-    navigate(`/organizations/${organizationId}/snapshots/${snapshotId}${urlPath}`, {
-      replace: true,
-    });
+    navigate(
+      `/organizations/${organizationId}/snapshots/${snapshotId}${urlPath}`,
+      {
+        replace: true,
+      },
+    );
   }, [data.node, navigate, organizationId, snapshotId]);
 
   if (!data.node || !data.node.type) {

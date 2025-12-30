@@ -18,7 +18,7 @@ import { useOrganizationId } from "/hooks/useOrganizationId";
 import { useDocumentForm } from "/hooks/forms/useDocumentForm";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { PeopleSelectField } from "/components/form/PeopleSelectField";
-import type { CreateDocumentDialogMutation } from "./__generated__/CreateDocumentDialogMutation.graphql";
+import type { CreateDocumentDialogMutation } from "/__generated__/core/CreateDocumentDialogMutation.graphql";
 import { ControlledField } from "/components/form/ControlledField";
 import { DocumentTypeOptions } from "/components/form/DocumentTypeOptions";
 import { DocumentClassificationOptions } from "/components/form/DocumentClassificationOptions";

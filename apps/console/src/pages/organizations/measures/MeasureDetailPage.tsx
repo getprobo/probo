@@ -12,7 +12,6 @@ import {
   IconPencil,
   IconTrashCan,
   IconWarning,
-
   Option,
   PageHeader,
   PropertyRow,
@@ -31,8 +30,8 @@ import {
   useLazyLoadQuery,
   usePreloadedQuery,
 } from "react-relay";
-import type { MeasureGraphNodeQuery } from "/hooks/graph/__generated__/MeasureGraphNodeQuery.graphql";
-import type { MeasureDetailPageTasksCountQuery } from "./__generated__/MeasureDetailPageTasksCountQuery.graphql";
+import type { MeasureGraphNodeQuery } from "/__generated__/core/MeasureGraphNodeQuery.graphql";
+import type { MeasureDetailPageTasksCountQuery } from "/__generated__/core/MeasureDetailPageTasksCountQuery.graphql";
 import {
   MeasureConnectionKey,
   measureNodeQuery,
@@ -64,7 +63,7 @@ const tasksCountQuery = graphql`
 function TasksCountBadge({ measureId }: { measureId: string }) {
   const data = useLazyLoadQuery<MeasureDetailPageTasksCountQuery>(
     tasksCountQuery,
-    { measureId }
+    { measureId },
   );
   const count = data.node?.tasks?.totalCount ?? 0;
   return <TabBadge>{count}</TabBadge>;
@@ -186,7 +185,11 @@ export default function MeasureDetailPage(props: Props) {
         )}
         {isAuthorized("Measure", "deleteMeasure") && (
           <ActionDropdown variant="secondary">
-            <DropdownItem variant="danger" icon={IconTrashCan} onClick={onDelete}>
+            <DropdownItem
+              variant="danger"
+              icon={IconTrashCan}
+              onClick={onDelete}
+            >
               {__("Delete")}
             </DropdownItem>
           </ActionDropdown>

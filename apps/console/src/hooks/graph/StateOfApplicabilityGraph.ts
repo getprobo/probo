@@ -1,6 +1,6 @@
 import { graphql } from "relay-runtime";
-import type { StateOfApplicabilityGraphPaginatedQuery } from "./__generated__/StateOfApplicabilityGraphPaginatedQuery.graphql";
-import type { StateOfApplicabilityGraphPaginatedFragment$key } from "./__generated__/StateOfApplicabilityGraphPaginatedFragment.graphql";
+import type { StateOfApplicabilityGraphPaginatedQuery } from "/__generated__/core/StateOfApplicabilityGraphPaginatedQuery.graphql";
+import type { StateOfApplicabilityGraphPaginatedFragment$key } from "/__generated__/core/StateOfApplicabilityGraphPaginatedFragment.graphql";
 import {
   useMutation,
   usePaginationFragment,
@@ -8,7 +8,7 @@ import {
   type PreloadedQuery,
 } from "react-relay";
 import { useConfirm, useToast } from "@probo/ui";
-import type { StateOfApplicabilityGraphDeleteMutation } from "./__generated__/StateOfApplicabilityGraphDeleteMutation.graphql";
+import type { StateOfApplicabilityGraphDeleteMutation } from "/__generated__/core/StateOfApplicabilityGraphDeleteMutation.graphql";
 import {
   promisifyMutation,
   sprintf,

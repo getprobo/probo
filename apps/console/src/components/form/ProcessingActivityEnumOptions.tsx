@@ -5,7 +5,7 @@ import type {
   ProcessingActivityLawfulBasis,
   ProcessingActivityDataProtectionImpactAssessment,
   ProcessingActivityTransferImpactAssessment,
-} from "../../hooks/graph/__generated__/ProcessingActivityGraphCreateMutation.graphql";
+} from "/__generated__/core/ProcessingActivityGraphCreateMutation.graphql";
 
 export function SpecialOrCriminalDataOptions() {
   const { __ } = useTranslate();
@@ -58,7 +58,7 @@ export function LawfulBasisOptions() {
 
 export function getLawfulBasisLabel(
   value: ProcessingActivityLawfulBasis | null | undefined,
-  __: (key: string) => string
+  __: (key: string) => string,
 ): string {
   if (!value) return "-";
 
@@ -76,7 +76,7 @@ export function getLawfulBasisLabel(
 
 export function getResidualRiskLabel(
   value: "LOW" | "MEDIUM" | "HIGH" | null | undefined,
-  __: (key: string) => string
+  __: (key: string) => string,
 ): string {
   if (!value) return "-";
 

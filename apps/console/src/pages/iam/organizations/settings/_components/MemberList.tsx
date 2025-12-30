@@ -2,10 +2,10 @@ import { graphql, usePaginationFragment } from "react-relay";
 import { Tbody, Td, Th, Thead, Tr } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { SortableTable, SortableTh } from "/components/SortableTable";
-import type { MemberListFragment_RefetchQuery } from "./__generated__/MemberListFragment_RefetchQuery.graphql";
+import type { MemberListFragment_RefetchQuery } from "/__generated__/iam/MemberListFragment_RefetchQuery.graphql";
 import { MemberListItem } from "./MemberListItem";
-import type { MemberListFragment$key } from "./__generated__/MemberListFragment.graphql";
-import type { MemberListItem_permissionsFragment$key } from "./__generated__/MemberListItem_permissionsFragment.graphql";
+import type { MemberListFragment$key } from "/__generated__/iam/MemberListFragment.graphql";
+import type { MemberListItem_permissionsFragment$key } from "/__generated__/iam/MemberListItem_permissionsFragment.graphql";
 
 const fragment = graphql`
   fragment MemberListFragment on Organization

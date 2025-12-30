@@ -1,6 +1,6 @@
 import { useOutletContext, useParams } from "react-router";
 import { graphql } from "relay-runtime";
-import type { VendorContactsTabFragment$key } from "./__generated__/VendorContactsTabFragment.graphql";
+import type { VendorContactsTabFragment$key } from "/__generated__/core/VendorContactsTabFragment.graphql";
 import { useTranslate } from "@probo/i18n";
 import { usePageTitle } from "@probo/hooks";
 import {
@@ -19,7 +19,7 @@ import {
   useConfirm,
 } from "@probo/ui";
 import { useFragment, useRefetchableFragment } from "react-relay";
-import type { VendorContactsTabFragment_contact$key } from "./__generated__/VendorContactsTabFragment_contact.graphql";
+import type { VendorContactsTabFragment_contact$key } from "/__generated__/core/VendorContactsTabFragment_contact.graphql";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { sprintf } from "@probo/helpers";
 import { SortableTable, SortableTh } from "/components/SortableTable";
@@ -85,7 +85,7 @@ export default function VendorContactsTab() {
   }>();
   const [data, refetch] = useRefetchableFragment(
     vendorContactsFragment,
-    vendor
+    vendor,
   );
   const connectionId = data.contacts.__id;
   const contacts = data.contacts.edges.map((edge) => edge.node);
@@ -114,10 +114,7 @@ export default function VendorContactsTab() {
         description={__("Manage vendor contacts and their information.")}
       >
         {!isSnapshotMode && canCreateContact && (
-          <CreateContactDialog
-            vendorId={vendor.id}
-            connectionId={connectionId}
-          >
+          <CreateContactDialog vendorId={vendor.id} connectionId={connectionId}>
             <Button icon={IconPlusLarge}>{__("Add contact")}</Button>
           </CreateContactDialog>
         )}
@@ -178,7 +175,7 @@ function ContactRow(props: ContactRowProps) {
   const { __ } = useTranslate();
   const contact = useFragment<VendorContactsTabFragment_contact$key>(
     contactFragment,
-    props.contactKey
+    props.contactKey,
   );
   const confirm = useConfirm();
   const [deleteContact] = useMutationWithToasts(deleteContactMutation, {
@@ -201,11 +198,11 @@ function ContactRow(props: ContactRowProps) {
       {
         message: sprintf(
           __(
-            'This will permanently delete the contact "%s". This action cannot be undone.'
+            'This will permanently delete the contact "%s". This action cannot be undone.',
           ),
-          contact.fullName || contact.email || __("Unnamed contact")
+          contact.fullName || contact.email || __("Unnamed contact"),
         ),
-      }
+      },
     );
   };
 
@@ -243,13 +240,15 @@ function ContactRow(props: ContactRowProps) {
             {props.canUpdate && (
               <DropdownItem
                 icon={IconPencil}
-                onClick={() => props.onEdit({
-                  id: contact.id,
-                  fullName: contact.fullName,
-                  email: contact.email,
-                  phone: contact.phone,
-                  role: contact.role,
-                })}
+                onClick={() =>
+                  props.onEdit({
+                    id: contact.id,
+                    fullName: contact.fullName,
+                    email: contact.email,
+                    phone: contact.phone,
+                    role: contact.role,
+                  })
+                }
               >
                 {__("Edit")}
               </DropdownItem>

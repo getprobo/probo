@@ -28,17 +28,27 @@ import {
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { useParams } from "react-router";
 import { CreateContinualImprovementDialog } from "./dialogs/CreateContinualImprovementDialog";
-import { deleteContinualImprovementMutation, ContinualImprovementsConnectionKey, continualImprovementsQuery } from "../../../hooks/graph/ContinualImprovementGraph";
-import { sprintf, promisifyMutation, getStatusVariant, getStatusLabel, formatDate } from "@probo/helpers";
+import {
+  deleteContinualImprovementMutation,
+  ContinualImprovementsConnectionKey,
+  continualImprovementsQuery,
+} from "../../../hooks/graph/ContinualImprovementGraph";
+import {
+  sprintf,
+  promisifyMutation,
+  getStatusVariant,
+  getStatusLabel,
+  formatDate,
+} from "@probo/helpers";
 import { SnapshotBanner } from "/components/SnapshotBanner";
 import type { NodeOf } from "/types";
 import type {
   ContinualImprovementsPageFragment$key,
   ContinualImprovementsPageFragment$data,
-} from "./__generated__/ContinualImprovementsPageFragment.graphql";
+} from "/__generated__/core/ContinualImprovementsPageFragment.graphql";
 import { use } from "react";
 import { PermissionsContext } from "/providers/PermissionsContext";
-import type { ContinualImprovementGraphListQuery } from "/hooks/graph/__generated__/ContinualImprovementGraphListQuery.graphql";
+import type { ContinualImprovementGraphListQuery } from "/__generated__/core/ContinualImprovementGraphListQuery.graphql";
 
 interface ContinualImprovementsPageProps {
   queryRef: PreloadedQuery<ContinualImprovementGraphListQuery>;
@@ -58,7 +68,10 @@ const continualImprovementsPageFragment = graphql`
       after: $after
       filter: { snapshotId: $snapshotId }
     )
-      @connection(key: "ContinualImprovementsPage_continualImprovements", filters: ["filter"]) {
+      @connection(
+        key: "ContinualImprovementsPage_continualImprovements"
+        filters: ["filter"]
+      ) {
       __id
       totalCount
       edges {
@@ -88,7 +101,9 @@ const continualImprovementsPageFragment = graphql`
   }
 `;
 
-export default function ContinualImprovementsPage({ queryRef }: ContinualImprovementsPageProps) {
+export default function ContinualImprovementsPage({
+  queryRef,
+}: ContinualImprovementsPageProps) {
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
   const { snapshotId } = useParams<{ snapshotId?: string }>();
@@ -97,17 +112,9 @@ export default function ContinualImprovementsPage({ queryRef }: ContinualImprove
 
   usePageTitle(__("Continual Improvements"));
 
-  const organization = usePreloadedQuery(
-    continualImprovementsQuery,
-    queryRef
-  );
+  const organization = usePreloadedQuery(continualImprovementsQuery, queryRef);
 
-  const {
-    data,
-    loadNext,
-    hasNext,
-    isLoadingNext,
-  } = usePaginationFragment<
+  const { data, loadNext, hasNext, isLoadingNext } = usePaginationFragment<
     ContinualImprovementGraphListQuery,
     ContinualImprovementsPageFragment$key
   >(continualImprovementsPageFragment, organization.node);
@@ -115,22 +122,26 @@ export default function ContinualImprovementsPage({ queryRef }: ContinualImprove
   const connectionId = ConnectionHandler.getConnectionID(
     organizationId,
     ContinualImprovementsConnectionKey,
-    { filter: { snapshotId: snapshotId || null } }
+    { filter: { snapshotId: snapshotId || null } },
   );
-  const improvements = data?.continualImprovements?.edges?.map((edge) => edge.node) ?? [];
+  const improvements =
+    data?.continualImprovements?.edges?.map((edge) => edge.node) ?? [];
 
-  const hasAnyAction = !isSnapshotMode && (
-    isAuthorized("ContinualImprovement", "updateContinualImprovement") ||
-    isAuthorized("ContinualImprovement", "deleteContinualImprovement")
-  );
+  const hasAnyAction =
+    !isSnapshotMode &&
+    (isAuthorized("ContinualImprovement", "updateContinualImprovement") ||
+      isAuthorized("ContinualImprovement", "deleteContinualImprovement"));
 
   return (
     <div className="space-y-6">
       {isSnapshotMode && snapshotId && (
         <SnapshotBanner snapshotId={snapshotId} />
       )}
-      <PageHeader title={__("Continual Improvements")} description={__("Manage your continual improvements.")}>
-        {!isSnapshotMode && (
+      <PageHeader
+        title={__("Continual Improvements")}
+        description={__("Manage your continual improvements.")}
+      >
+        {!isSnapshotMode &&
           isAuthorized("Organization", "createContinualImprovement") && (
             <CreateContinualImprovementDialog
               organizationId={organizationId}
@@ -140,8 +151,7 @@ export default function ContinualImprovementsPage({ queryRef }: ContinualImprove
                 {__("Add continual improvement")}
               </Button>
             </CreateContinualImprovementDialog>
-          )
-        )}
+          )}
       </PageHeader>
 
       {improvements.length > 0 ? (
@@ -205,7 +215,9 @@ function ImprovementRow({
   snapshotId,
   hasAnyAction,
 }: {
-  improvement: NodeOf<NonNullable<ContinualImprovementsPageFragment$data['continualImprovements']>>;
+  improvement: NodeOf<
+    NonNullable<ContinualImprovementsPageFragment$data["continualImprovements"]>
+  >;
   connectionId: string;
   snapshotId?: string;
   hasAnyAction: boolean;
@@ -216,7 +228,6 @@ function ImprovementRow({
   const confirm = useConfirm();
   const isSnapshotMode = Boolean(snapshotId);
   const { isAuthorized } = use(PermissionsContext);
-
 
   const handleDelete = () => {
     confirm(
@@ -232,11 +243,11 @@ function ImprovementRow({
       {
         message: sprintf(
           __(
-            "This will permanently delete the continual improvement entry %s. This action cannot be undone."
+            "This will permanently delete the continual improvement entry %s. This action cannot be undone.",
           ),
-          improvement.referenceId
+          improvement.referenceId,
         ),
-      }
+      },
     );
   };
 
@@ -256,8 +267,20 @@ function ImprovementRow({
         </Badge>
       </Td>
       <Td>
-        <Badge variant={improvement.priority === "HIGH" ? "danger" : improvement.priority === "MEDIUM" ? "warning" : "success"}>
-          {improvement.priority === "HIGH" ? __("High") : improvement.priority === "MEDIUM" ? __("Medium") : __("Low")}
+        <Badge
+          variant={
+            improvement.priority === "HIGH"
+              ? "danger"
+              : improvement.priority === "MEDIUM"
+                ? "warning"
+                : "success"
+          }
+        >
+          {improvement.priority === "HIGH"
+            ? __("High")
+            : improvement.priority === "MEDIUM"
+              ? __("Medium")
+              : __("Low")}
         </Badge>
       </Td>
       <Td>{improvement.owner?.fullName || "-"}</Td>
@@ -273,7 +296,10 @@ function ImprovementRow({
       {hasAnyAction && (
         <Td noLink width={50} className="text-end">
           <ActionDropdown>
-            {isAuthorized("ContinualImprovement", "deleteContinualImprovement") && (
+            {isAuthorized(
+              "ContinualImprovement",
+              "deleteContinualImprovement",
+            ) && (
               <DropdownItem
                 icon={IconTrashCan}
                 variant="danger"

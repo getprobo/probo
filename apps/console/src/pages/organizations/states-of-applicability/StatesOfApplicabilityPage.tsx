@@ -1,26 +1,26 @@
 import {
-  Button,
-  IconPlusLarge,
-  PageHeader,
-  Card,
-  Thead,
-  Tbody,
-  Tr,
-  Th,
-  Td,
-  ActionDropdown,
-  DropdownItem,
-  IconTrashCan,
-  Table,
+    Button,
+    IconPlusLarge,
+    PageHeader,
+    Card,
+    Thead,
+    Tbody,
+    Tr,
+    Th,
+    Td,
+    ActionDropdown,
+    DropdownItem,
+    IconTrashCan,
+    Table,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
-import type { StateOfApplicabilityGraphPaginatedQuery } from "/hooks/graph/__generated__/StateOfApplicabilityGraphPaginatedQuery.graphql";
+import type { StateOfApplicabilityGraphPaginatedQuery } from "/__generated__/core/StateOfApplicabilityGraphPaginatedQuery.graphql";
 import { type PreloadedQuery } from "react-relay";
 import {
-  useStateOfApplicabilityQuery,
-  useDeleteStateOfApplicability,
+    useStateOfApplicabilityQuery,
+    useDeleteStateOfApplicability,
 } from "/hooks/graph/StateOfApplicabilityGraph";
-import type { StateOfApplicabilityGraphPaginatedFragment$data } from "/hooks/graph/__generated__/StateOfApplicabilityGraphPaginatedFragment.graphql";
+import type { StateOfApplicabilityGraphPaginatedFragment$data } from "/__generated__/core/StateOfApplicabilityGraphPaginatedFragment.graphql";
 import type { NodeOf } from "/types";
 import { usePageTitle } from "@probo/hooks";
 import { CreateStateOfApplicabilityDialog } from "./dialogs/CreateStateOfApplicabilityDialog";
@@ -32,161 +32,175 @@ import { useParams } from "react-router";
 import { SnapshotBanner } from "/components/SnapshotBanner";
 
 type StateOfApplicability = NodeOf<
-  StateOfApplicabilityGraphPaginatedFragment$data["statesOfApplicability"]
+    StateOfApplicabilityGraphPaginatedFragment$data["statesOfApplicability"]
 >;
 
 export default function StatesOfApplicabilityPage({
-  queryRef,
+    queryRef,
 }: {
-  queryRef: PreloadedQuery<StateOfApplicabilityGraphPaginatedQuery>;
+    queryRef: PreloadedQuery<StateOfApplicabilityGraphPaginatedQuery>;
 }) {
-  const { __ } = useTranslate();
-  const { isAuthorized } = use(PermissionsContext);
-  const { snapshotId } = useParams<{ snapshotId?: string }>();
-  const isSnapshotMode = Boolean(snapshotId);
-  const {
-    statesOfApplicability,
-    connectionId,
-    hasNext,
-    loadNext,
-    isLoadingNext,
-    refetch,
-  } = useStateOfApplicabilityQuery(queryRef);
+    const { __ } = useTranslate();
+    const { isAuthorized } = use(PermissionsContext);
+    const { snapshotId } = useParams<{ snapshotId?: string }>();
+    const isSnapshotMode = Boolean(snapshotId);
+    const {
+        statesOfApplicability,
+        connectionId,
+        hasNext,
+        loadNext,
+        isLoadingNext,
+        refetch,
+    } = useStateOfApplicabilityQuery(queryRef);
 
-  usePageTitle(__("States of Applicability"));
+    usePageTitle(__("States of Applicability"));
 
-  // Refetch with snapshot filter when in snapshot mode
-  useEffect(() => {
-    if (snapshotId) {
-      refetch({ filter: { snapshotId } }, { fetchPolicy: 'store-or-network' });
-    }
-  }, [snapshotId, refetch]);
+    // Refetch with snapshot filter when in snapshot mode
+    useEffect(() => {
+        if (snapshotId) {
+            refetch(
+                { filter: { snapshotId } },
+                { fetchPolicy: "store-or-network" },
+            );
+        }
+    }, [snapshotId, refetch]);
 
-  const hasAnyAction = !isSnapshotMode &&
-    isAuthorized("StateOfApplicability", "deleteStateOfApplicability");
+    const hasAnyAction =
+        !isSnapshotMode &&
+        isAuthorized("StateOfApplicability", "deleteStateOfApplicability");
 
-  return (
-    <div className="space-y-6">
-      {snapshotId && <SnapshotBanner snapshotId={snapshotId} />}
-      <PageHeader
-        title={__("States of Applicability")}
-        description={__(
-          "Manage states of applicability for your organization's frameworks.",
-        )}
-      >
-        {!isSnapshotMode && isAuthorized("Organization", "createStateOfApplicability") && (
-          <CreateStateOfApplicabilityDialog connectionId={connectionId}>
-            <Button icon={IconPlusLarge}>
-              {__("Add state of applicability")}
-            </Button>
-          </CreateStateOfApplicabilityDialog>
-        )}
-      </PageHeader>
+    return (
+        <div className="space-y-6">
+            {snapshotId && <SnapshotBanner snapshotId={snapshotId} />}
+            <PageHeader
+                title={__("States of Applicability")}
+                description={__(
+                    "Manage states of applicability for your organization's frameworks.",
+                )}
+            >
+                {!isSnapshotMode &&
+                    isAuthorized(
+                        "Organization",
+                        "createStateOfApplicability",
+                    ) && (
+                        <CreateStateOfApplicabilityDialog
+                            connectionId={connectionId}
+                        >
+                            <Button icon={IconPlusLarge}>
+                                {__("Add state of applicability")}
+                            </Button>
+                        </CreateStateOfApplicabilityDialog>
+                    )}
+            </PageHeader>
 
-      {statesOfApplicability && statesOfApplicability.length > 0 ? (
-        <Card>
-          <Table>
-            <Thead>
-              <Tr>
-                <Th>{__("Name")}</Th>
-                <Th>{__("Created at")}</Th>
-                <Th>{__("Controls")}</Th>
-                {hasAnyAction && <Th>{__("Actions")}</Th>}
-              </Tr>
-            </Thead>
-            <Tbody>
-              {statesOfApplicability.map((soa) => (
-                <StateOfApplicabilityRow
-                  key={soa.id}
-                  stateOfApplicability={soa}
-                  connectionId={connectionId}
-                  hasAnyAction={hasAnyAction}
-                />
-              ))}
-            </Tbody>
-          </Table>
+            {statesOfApplicability && statesOfApplicability.length > 0 ? (
+                <Card>
+                    <Table>
+                        <Thead>
+                            <Tr>
+                                <Th>{__("Name")}</Th>
+                                <Th>{__("Created at")}</Th>
+                                <Th>{__("Controls")}</Th>
+                                {hasAnyAction && <Th>{__("Actions")}</Th>}
+                            </Tr>
+                        </Thead>
+                        <Tbody>
+                            {statesOfApplicability.map((soa) => (
+                                <StateOfApplicabilityRow
+                                    key={soa.id}
+                                    stateOfApplicability={soa}
+                                    connectionId={connectionId}
+                                    hasAnyAction={hasAnyAction}
+                                />
+                            ))}
+                        </Tbody>
+                    </Table>
 
-          {hasNext && (
-            <div className="p-4 border-t">
-              <Button
-                variant="secondary"
-                onClick={() => loadNext(50)}
-                disabled={isLoadingNext}
-              >
-                {isLoadingNext ? __("Loading...") : __("Load more")}
-              </Button>
-            </div>
-          )}
-        </Card>
-      ) : (
-        <Card padded>
-          <div className="text-center py-12">
-            <h3 className="text-lg font-semibold mb-2">
-              {__("No states of applicability yet")}
-            </h3>
-            <p className="text-txt-tertiary mb-4">
-              {__("Create your first state of applicability to get started.")}
-            </p>
-          </div>
-        </Card>
-      )}
-    </div>
-  );
+                    {hasNext && (
+                        <div className="p-4 border-t">
+                            <Button
+                                variant="secondary"
+                                onClick={() => loadNext(50)}
+                                disabled={isLoadingNext}
+                            >
+                                {isLoadingNext
+                                    ? __("Loading...")
+                                    : __("Load more")}
+                            </Button>
+                        </div>
+                    )}
+                </Card>
+            ) : (
+                <Card padded>
+                    <div className="text-center py-12">
+                        <h3 className="text-lg font-semibold mb-2">
+                            {__("No states of applicability yet")}
+                        </h3>
+                        <p className="text-txt-tertiary mb-4">
+                            {__(
+                                "Create your first state of applicability to get started.",
+                            )}
+                        </p>
+                    </div>
+                </Card>
+            )}
+        </div>
+    );
 }
 
 function StateOfApplicabilityRow({
-  stateOfApplicability,
-  connectionId,
-  hasAnyAction,
-}: {
-  stateOfApplicability: StateOfApplicability;
-  connectionId: string;
-  hasAnyAction: boolean;
-}) {
-  const { __ } = useTranslate();
-  const organizationId = useOrganizationId();
-  const { snapshotId } = useParams<{ snapshotId?: string }>();
-  const deleteStateOfApplicability = useDeleteStateOfApplicability(
     stateOfApplicability,
     connectionId,
-  );
-  const { isAuthorized } = use(PermissionsContext);
+    hasAnyAction,
+}: {
+    stateOfApplicability: StateOfApplicability;
+    connectionId: string;
+    hasAnyAction: boolean;
+}) {
+    const { __ } = useTranslate();
+    const organizationId = useOrganizationId();
+    const { snapshotId } = useParams<{ snapshotId?: string }>();
+    const deleteStateOfApplicability = useDeleteStateOfApplicability(
+        stateOfApplicability,
+        connectionId,
+    );
+    const { isAuthorized } = use(PermissionsContext);
 
-  const detailUrl = snapshotId
-    ? `/organizations/${organizationId}/snapshots/${snapshotId}/states-of-applicability/${stateOfApplicability.id}`
-    : `/organizations/${organizationId}/states-of-applicability/${stateOfApplicability.id}`;
+    const detailUrl = snapshotId
+        ? `/organizations/${organizationId}/snapshots/${snapshotId}/states-of-applicability/${stateOfApplicability.id}`
+        : `/organizations/${organizationId}/states-of-applicability/${stateOfApplicability.id}`;
 
-  return (
-    <Tr to={detailUrl}>
-      <Td>{stateOfApplicability.name}</Td>
-      <Td>
-        <time dateTime={stateOfApplicability.createdAt}>
-          {formatDate(stateOfApplicability.createdAt)}
-        </time>
-      </Td>
-      <Td>{stateOfApplicability.controlsInfo?.totalCount ?? 0}</Td>
-      {hasAnyAction && (
-        <Td noLink width={50} className="text-end">
-          <ActionDropdown>
-            {isAuthorized(
-              "StateOfApplicability",
-              "deleteStateOfApplicability",
-            ) && (
-              <DropdownItem
-                icon={IconTrashCan}
-                variant="danger"
-                onSelect={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  deleteStateOfApplicability();
-                }}
-              >
-                {__("Delete")}
-              </DropdownItem>
+    return (
+        <Tr to={detailUrl}>
+            <Td>{stateOfApplicability.name}</Td>
+            <Td>
+                <time dateTime={stateOfApplicability.createdAt}>
+                    {formatDate(stateOfApplicability.createdAt)}
+                </time>
+            </Td>
+            <Td>{stateOfApplicability.controlsInfo?.totalCount ?? 0}</Td>
+            {hasAnyAction && (
+                <Td noLink width={50} className="text-end">
+                    <ActionDropdown>
+                        {isAuthorized(
+                            "StateOfApplicability",
+                            "deleteStateOfApplicability",
+                        ) && (
+                            <DropdownItem
+                                icon={IconTrashCan}
+                                variant="danger"
+                                onSelect={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    deleteStateOfApplicability();
+                                }}
+                            >
+                                {__("Delete")}
+                            </DropdownItem>
+                        )}
+                    </ActionDropdown>
+                </Td>
             )}
-          </ActionDropdown>
-        </Td>
-      )}
-    </Tr>
-  );
+        </Tr>
+    );
 }

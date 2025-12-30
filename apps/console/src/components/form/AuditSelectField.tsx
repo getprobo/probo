@@ -1,10 +1,15 @@
 import { Field, Option, Select, Badge } from "@probo/ui";
 import { Suspense, type ComponentProps } from "react";
 import { useTranslate } from "@probo/i18n";
-import { type Control, Controller, type FieldValues, type Path } from "react-hook-form";
+import {
+  type Control,
+  Controller,
+  type FieldValues,
+  type Path,
+} from "react-hook-form";
 import { useLazyLoadQuery, graphql } from "react-relay";
 import { getAuditStateVariant, getAuditStateLabel } from "@probo/helpers";
-import type { AuditSelectFieldQuery } from "./__generated__/AuditSelectFieldQuery.graphql";
+import type { AuditSelectFieldQuery } from "/__generated__/core/AuditSelectFieldQuery.graphql";
 
 const auditsQuery = graphql`
   query AuditSelectFieldQuery($organizationId: ID!) {
@@ -60,12 +65,19 @@ export function AuditSelectField<T extends FieldValues = FieldValues>({
 }
 
 function AuditSelectWithQuery<T extends FieldValues = FieldValues>(
-  props: Pick<Props<T>, "organizationId" | "control" | "name" | "disabled">
+  props: Pick<Props<T>, "organizationId" | "control" | "name" | "disabled">,
 ) {
   const { __ } = useTranslate();
   const { name, organizationId, control } = props;
-  const data = useLazyLoadQuery<AuditSelectFieldQuery>(auditsQuery, { organizationId }, { fetchPolicy: "network-only" });
-  const audits = data?.organization?.audits?.edges?.map((edge) => edge.node).filter((node) => node !== null) ?? [];
+  const data = useLazyLoadQuery<AuditSelectFieldQuery>(
+    auditsQuery,
+    { organizationId },
+    { fetchPolicy: "network-only" },
+  );
+  const audits =
+    data?.organization?.audits?.edges
+      ?.map((edge) => edge.node)
+      .filter((node) => node !== null) ?? [];
 
   const NONE_VALUE = "__NONE__";
 
@@ -79,7 +91,9 @@ function AuditSelectWithQuery<T extends FieldValues = FieldValues>(
           id={name}
           variant="editor"
           placeholder={__("Select an audit")}
-          onValueChange={(value) => field.onChange(value === NONE_VALUE ? "" : value)}
+          onValueChange={(value) =>
+            field.onChange(value === NONE_VALUE ? "" : value)
+          }
           key={audits?.length.toString() ?? "0"}
           {...field}
           className="w-full"
@@ -94,8 +108,7 @@ function AuditSelectWithQuery<T extends FieldValues = FieldValues>(
                 <span>
                   {audit.name
                     ? `${audit.framework.name} - ${audit.name}`
-                    : audit.framework.name
-                  }
+                    : audit.framework.name}
                 </span>
                 <div className="ml-3">
                   <Badge variant={getAuditStateVariant(audit.state)}>

@@ -4,7 +4,7 @@ import { graphql } from "relay-runtime";
 import type {
   useRiskFormFragment$data,
   useRiskFormFragment$key,
-} from "./__generated__/useRiskFormFragment.graphql";
+} from "/__generated__/core/useRiskFormFragment.graphql";
 import { useFragment } from "react-relay";
 
 const RiskFragment = graphql`

@@ -1,6 +1,6 @@
 import { graphql } from "relay-runtime";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
-import type { TrustCenterGraphUpdateMutation } from "./__generated__/TrustCenterGraphUpdateMutation.graphql";
+import type { TrustCenterGraphUpdateMutation } from "/__generated__/core/TrustCenterGraphUpdateMutation.graphql";
 
 export const trustCenterQuery = graphql`
   query TrustCenterGraphQuery($organizationId: ID!) {
@@ -19,7 +19,10 @@ export const trustCenterQuery = graphql`
           ndaFileUrl
           createdAt
           updatedAt
-          references(first: 100, orderBy: { field: CREATED_AT, direction: DESC }) {
+          references(
+            first: 100
+            orderBy: { field: CREATED_AT, direction: DESC }
+          ) {
             edges {
               node {
                 id
@@ -57,7 +60,8 @@ export const trustCenterQuery = graphql`
             }
           }
         }
-        trustCenterFiles(first: 100) @connection(key: "TrustCenterPage_trustCenterFiles") {
+        trustCenterFiles(first: 100)
+          @connection(key: "TrustCenterPage_trustCenterFiles") {
           __id
           edges {
             node {
@@ -100,12 +104,14 @@ export function useUpdateTrustCenterMutation() {
     {
       successMessage: "Trust center updated successfully",
       errorMessage: "Failed to update trust center",
-    }
+    },
   );
 }
 
 export const uploadTrustCenterNDAMutation = graphql`
-  mutation TrustCenterGraphUploadNDAMutation($input: UploadTrustCenterNDAInput!) {
+  mutation TrustCenterGraphUploadNDAMutation(
+    $input: UploadTrustCenterNDAInput!
+  ) {
     uploadTrustCenterNDA(input: $input) {
       trustCenter {
         id
@@ -117,17 +123,16 @@ export const uploadTrustCenterNDAMutation = graphql`
 `;
 
 export function useUploadTrustCenterNDAMutation() {
-  return useMutationWithToasts(
-    uploadTrustCenterNDAMutation,
-    {
-      successMessage: "NDA uploaded successfully",
-      errorMessage: "Failed to upload NDA",
-    }
-  );
+  return useMutationWithToasts(uploadTrustCenterNDAMutation, {
+    successMessage: "NDA uploaded successfully",
+    errorMessage: "Failed to upload NDA",
+  });
 }
 
 export const deleteTrustCenterNDAMutation = graphql`
-  mutation TrustCenterGraphDeleteNDAMutation($input: DeleteTrustCenterNDAInput!) {
+  mutation TrustCenterGraphDeleteNDAMutation(
+    $input: DeleteTrustCenterNDAInput!
+  ) {
     deleteTrustCenterNDA(input: $input) {
       trustCenter {
         id
@@ -139,11 +144,8 @@ export const deleteTrustCenterNDAMutation = graphql`
 `;
 
 export function useDeleteTrustCenterNDAMutation() {
-  return useMutationWithToasts(
-    deleteTrustCenterNDAMutation,
-    {
-      successMessage: "NDA deleted successfully",
-      errorMessage: "Failed to delete NDA",
-    }
-  );
+  return useMutationWithToasts(deleteTrustCenterNDAMutation, {
+    successMessage: "NDA deleted successfully",
+    errorMessage: "Failed to delete NDA",
+  });
 }

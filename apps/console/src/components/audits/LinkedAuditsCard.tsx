@@ -15,7 +15,7 @@ import {
   TrButton,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
-import type { LinkedAuditsCardFragment$key } from "./__generated__/LinkedAuditsCardFragment.graphql";
+import type { LinkedAuditsCardFragment$key } from "/__generated__/core/LinkedAuditsCardFragment.graphql";
 import { useFragment } from "react-relay";
 import { useMemo, useState } from "react";
 import { sprintf, getAuditStateVariant } from "@probo/helpers";
@@ -123,7 +123,10 @@ export function LinkedAuditsCard<Params>(props: Props<Params>) {
         <Tbody>
           {audits.length === 0 && (
             <Tr>
-              <Td colSpan={props.readOnly ? 2 : 3} className="text-center text-txt-secondary">
+              <Td
+                colSpan={props.readOnly ? 2 : 3}
+                className="text-center text-txt-secondary"
+              >
                 {__("No audits linked")}
               </Td>
             </Tr>
@@ -177,13 +180,9 @@ function AuditRow(props: {
     <Tr to={`/organizations/${organizationId}/audits/${audit.id}`}>
       <Td>
         <div className="flex flex-col">
-          <div className="font-medium">
-            {audit.framework?.name}
-          </div>
+          <div className="font-medium">{audit.framework?.name}</div>
           {audit.name && (
-            <div className="text-sm text-txt-secondary">
-              {audit.name}
-            </div>
+            <div className="text-sm text-txt-secondary">{audit.name}</div>
           )}
         </div>
       </Td>

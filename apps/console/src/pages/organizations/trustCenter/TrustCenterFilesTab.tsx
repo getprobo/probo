@@ -23,7 +23,7 @@ import {
 } from "/hooks/graph/TrustCenterFileGraph";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { TrustCenterFilesCard } from "/components/trustCenter/TrustCenterFilesCard";
-import type { TrustCenterFilesCardFragment$key } from "/components/trustCenter/__generated__/TrustCenterFilesCardFragment.graphql";
+import type { TrustCenterFilesCardFragment$key } from "/__generated__/core/TrustCenterFilesCardFragment.graphql";
 import { PermissionsContext } from "/providers/PermissionsContext";
 
 type ContextType = {
@@ -48,9 +48,15 @@ const acceptedFileTypes = {
   "application/vnd.oasis.opendocument.presentation": [".odp"],
   "application/vnd.oasis.opendocument.spreadsheet": [".ods"],
   "application/vnd.oasis.opendocument.text": [".odt"],
-  "application/vnd.openxmlformats-officedocument.presentationml.presentation": [".pptx"],
-  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"],
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx"],
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation": [
+    ".pptx",
+  ],
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [
+    ".xlsx",
+  ],
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [
+    ".docx",
+  ],
   "application/yaml": [".yaml", ".yml"],
   "image/gif": [".gif"],
   "image/jpeg": [".jpeg", ".jpg"],
@@ -65,7 +71,7 @@ const acceptedFileTypes = {
   "text/uri-list": [".uri"],
   "text/x-log": [".log"],
   "text/yaml": [".yaml", ".yml"],
-}
+};
 
 export default function TrustCenterFilesTab() {
   const { __ } = useTranslate();
@@ -90,7 +96,11 @@ export default function TrustCenterFilesTab() {
   const editDialogRef = useDialogRef();
   const deleteDialogRef = useDialogRef();
 
-  const [editingFile, setEditingFile] = useState<{ id: string; name: string; category: string } | null>(null);
+  const [editingFile, setEditingFile] = useState<{
+    id: string;
+    name: string;
+    category: string;
+  } | null>(null);
   const [deletingFileId, setDeletingFileId] = useState<string | null>(null);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -103,27 +113,31 @@ export default function TrustCenterFilesTab() {
     defaultValues: { name: "", category: "" },
   });
 
-  const files = organization.trustCenterFiles?.edges?.map((edge) => edge.node) || [];
+  const files =
+    organization.trustCenterFiles?.edges?.map((edge) => edge.node) || [];
 
-  const handleFileUpload = useCallback((acceptedFiles: File[]) => {
-    if (acceptedFiles.length > 0) {
-      const file = acceptedFiles[0];
+  const handleFileUpload = useCallback(
+    (acceptedFiles: File[]) => {
+      if (acceptedFiles.length > 0) {
+        const file = acceptedFiles[0];
 
-      if (!Object.keys(acceptedFileTypes).includes(file.type)) {
-        createForm.setError("root", {
-          type: "manual",
-          message: __("File type is not allowed"),
-        });
-        return;
+        if (!Object.keys(acceptedFileTypes).includes(file.type)) {
+          createForm.setError("root", {
+            type: "manual",
+            message: __("File type is not allowed"),
+          });
+          return;
+        }
+
+        setUploadedFile(file);
+        createForm.clearErrors("root");
+        if (!createForm.getValues().name) {
+          createForm.setValue("name", file.name.replace(/\.[^/.]+$/, ""));
+        }
       }
-
-      setUploadedFile(file);
-      createForm.clearErrors("root");
-      if (!createForm.getValues().name) {
-        createForm.setValue("name", file.name.replace(/\.[^/.]+$/, ""));
-      }
-    }
-  }, [createForm, __]);
+    },
+    [createForm, __],
+  );
 
   const handleCreate = createForm.handleSubmit(async (data) => {
     if (!uploadedFile) {
@@ -160,11 +174,14 @@ export default function TrustCenterFilesTab() {
     }
   });
 
-  const handleEdit = useCallback((file: { id: string; name: string; category: string }) => {
-    setEditingFile(file);
-    editForm.reset({ name: file.name, category: file.category });
-    editDialogRef.current?.open();
-  }, [editDialogRef, editForm]);
+  const handleEdit = useCallback(
+    (file: { id: string; name: string; category: string }) => {
+      setEditingFile(file);
+      editForm.reset({ name: file.name, category: file.category });
+      editDialogRef.current?.open();
+    },
+    [editDialogRef, editForm],
+  );
 
   const handleUpdate = editForm.handleSubmit(async (data) => {
     if (!editingFile) {
@@ -186,10 +203,13 @@ export default function TrustCenterFilesTab() {
     });
   });
 
-  const handleDeleteClick = useCallback((id: string) => {
-    setDeletingFileId(id);
-    deleteDialogRef.current?.open();
-  }, [deleteDialogRef]);
+  const handleDeleteClick = useCallback(
+    (id: string) => {
+      setDeletingFileId(id);
+      deleteDialogRef.current?.open();
+    },
+    [deleteDialogRef],
+  );
 
   const handleDeleteConfirm = useCallback(async () => {
     if (!deletingFileId) {
@@ -208,18 +228,26 @@ export default function TrustCenterFilesTab() {
         setDeletingFileId(null);
       },
     });
-  }, [deletingFileId, deleteFile, deleteDialogRef, organization.trustCenterFiles?.__id]);
+  }, [
+    deletingFileId,
+    deleteFile,
+    deleteDialogRef,
+    organization.trustCenterFiles?.__id,
+  ]);
 
-  const handleChangeVisibility = useCallback((params: {
-    variables: {
-      input: {
-        id: string;
-        trustCenterVisibility: "NONE" | "PRIVATE" | "PUBLIC";
+  const handleChangeVisibility = useCallback(
+    (params: {
+      variables: {
+        input: {
+          id: string;
+          trustCenterVisibility: "NONE" | "PRIVATE" | "PUBLIC";
+        };
       };
-    };
-  }) => {
-    updateFile(params);
-  }, [updateFile]);
+    }) => {
+      updateFile(params);
+    },
+    [updateFile],
+  );
 
   return (
     <div className="space-y-4">
@@ -231,7 +259,10 @@ export default function TrustCenterFilesTab() {
           </p>
         </div>
         {isAuthorized("Organization", "createTrustCenterFile") && (
-          <Button icon={IconPlusLarge} onClick={() => createDialogRef.current?.open()}>
+          <Button
+            icon={IconPlusLarge}
+            onClick={() => createDialogRef.current?.open()}
+          >
             {__("Add File")}
           </Button>
         )}
@@ -286,15 +317,18 @@ export default function TrustCenterFilesTab() {
               label={__("Visibility")}
               type="select"
               value={createForm.watch("trustCenterVisibility")}
-              onValueChange={(value) => createForm.setValue("trustCenterVisibility", value as "NONE" | "PRIVATE" | "PUBLIC")}
+              onValueChange={(value) =>
+                createForm.setValue(
+                  "trustCenterVisibility",
+                  value as "NONE" | "PRIVATE" | "PUBLIC",
+                )
+              }
               error={createForm.formState.errors.trustCenterVisibility?.message}
             >
               {getTrustCenterVisibilityOptions(__).map((option) => (
                 <Option key={option.value} value={option.value}>
                   <div className="flex items-center justify-between w-full">
-                    <Badge variant={option.variant}>
-                      {option.label}
-                    </Badge>
+                    <Badge variant={option.variant}>{option.label}</Badge>
                   </div>
                 </Option>
               ))}
@@ -329,10 +363,7 @@ export default function TrustCenterFilesTab() {
             />
           </DialogContent>
           <DialogFooter>
-            <Button
-              type="submit"
-              disabled={isUpdating}
-            >
+            <Button type="submit" disabled={isUpdating}>
               {isUpdating && <Spinner />}
               {__("Save")}
             </Button>
@@ -342,7 +373,11 @@ export default function TrustCenterFilesTab() {
 
       <Dialog ref={deleteDialogRef} title={__("Delete File")}>
         <DialogContent padded>
-          <p>{__("Are you sure you want to delete this file? This action cannot be undone.")}</p>
+          <p>
+            {__(
+              "Are you sure you want to delete this file? This action cannot be undone.",
+            )}
+          </p>
         </DialogContent>
         <DialogFooter>
           <Button

@@ -1,7 +1,7 @@
 import { graphql, useRefetchableFragment } from "react-relay";
 import { useOutletContext } from "react-router";
 import { LinkedControlsCard } from "/components/controls/LinkedControlsCard";
-import type { MeasureControlsTabFragment$key } from "./__generated__/MeasureControlsTabFragment.graphql";
+import type { MeasureControlsTabFragment$key } from "/__generated__/core/MeasureControlsTabFragment.graphql";
 import { useMutationWithIncrement } from "/hooks/useMutationWithIncrement";
 import { use } from "react";
 import { PermissionsContext } from "/providers/PermissionsContext";
@@ -74,7 +74,10 @@ export default function MeasureControlsTab() {
   const { isAuthorized } = use(PermissionsContext);
 
   const canLinkControl = isAuthorized("Control", "createControlMeasureMapping");
-  const canUnlinkControl = isAuthorized("Control", "deleteControlMeasureMapping");
+  const canUnlinkControl = isAuthorized(
+    "Control",
+    "deleteControlMeasureMapping",
+  );
   const readOnly = !canLinkControl && !canUnlinkControl;
 
   const incrementOptions = {

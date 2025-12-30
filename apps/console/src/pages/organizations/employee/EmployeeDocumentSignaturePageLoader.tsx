@@ -2,7 +2,7 @@ import { useQueryLoader } from "react-relay";
 import { Suspense, useEffect } from "react";
 import { PageSkeleton } from "/components/skeletons/PageSkeleton";
 import { useParams } from "react-router";
-import type { EmployeeDocumentSignaturePageQuery } from "./__generated__/EmployeeDocumentSignaturePageQuery.graphql";
+import type { EmployeeDocumentSignaturePageQuery } from "/__generated__/core/EmployeeDocumentSignaturePageQuery.graphql";
 import {
   EmployeeDocumentSignaturePage,
   employeeDocumentSignaturePageQuery,
@@ -13,7 +13,7 @@ function EmployeeDocumentSignaturePageLoader() {
   const { documentId } = useParams();
   const [queryRef, loadQuery] =
     useQueryLoader<EmployeeDocumentSignaturePageQuery>(
-      employeeDocumentSignaturePageQuery
+      employeeDocumentSignaturePageQuery,
     );
 
   useEffect(() => {

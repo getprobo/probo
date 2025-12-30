@@ -2,7 +2,7 @@ import { useQueryLoader } from "react-relay";
 import { Suspense, useEffect } from "react";
 import { PageSkeleton } from "/components/skeletons/PageSkeleton";
 import { useOrganizationId } from "/hooks/useOrganizationId";
-import type { EmployeeDocumentsPageQuery } from "./__generated__/EmployeeDocumentsPageQuery.graphql";
+import type { EmployeeDocumentsPageQuery } from "/__generated__/core/EmployeeDocumentsPageQuery.graphql";
 import {
   EmployeeDocumentsPage,
   employeeDocumentsPageQuery,
@@ -12,7 +12,7 @@ import { CoreRelayProvider } from "/providers/CoreRelayProvider";
 function EmployeeDocumentsPageLoader() {
   const organizationId = useOrganizationId();
   const [queryRef, loadQuery] = useQueryLoader<EmployeeDocumentsPageQuery>(
-    employeeDocumentsPageQuery
+    employeeDocumentsPageQuery,
   );
 
   useEffect(() => {

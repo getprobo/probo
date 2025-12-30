@@ -15,13 +15,13 @@ import { useTranslate } from "@probo/i18n";
 import { Suspense, useMemo, useState, type ReactNode } from "react";
 import { graphql } from "relay-runtime";
 import { useLazyLoadQuery, usePaginationFragment } from "react-relay";
-import type { LinkedDocumentsDialogQuery } from "./__generated__/LinkedDocumentsDialogQuery.graphql";
+import type { LinkedDocumentsDialogQuery } from "/__generated__/core/LinkedDocumentsDialogQuery.graphql";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import type { NodeOf } from "/types";
 import type {
   LinkedDocumentsDialogFragment$data,
   LinkedDocumentsDialogFragment$key,
-} from "./__generated__/LinkedDocumentsDialogFragment.graphql";
+} from "/__generated__/core/LinkedDocumentsDialogFragment.graphql";
 
 const documentsQuery = graphql`
   query LinkedDocumentsDialogQuery($organizationId: ID!) {
@@ -88,23 +88,30 @@ export function LinkedDocumentDialog({ children, ...props }: Props) {
 
 function LinkedDocumentsDialogContent(props: Omit<Props, "children">) {
   const organizationId = useOrganizationId();
-  const query = useLazyLoadQuery<LinkedDocumentsDialogQuery>(documentsQuery, {
-    organizationId,
-  }, { fetchPolicy: "network-only" });
+  const query = useLazyLoadQuery<LinkedDocumentsDialogQuery>(
+    documentsQuery,
+    {
+      organizationId,
+    },
+    { fetchPolicy: "network-only" },
+  );
   const { data, loadNext, hasNext, isLoadingNext } = usePaginationFragment(
     documentsFragment,
-    query.organization as LinkedDocumentsDialogFragment$key
+    query.organization as LinkedDocumentsDialogFragment$key,
   );
   const { __ } = useTranslate();
   const [search, setSearch] = useState("");
-  const documents = useMemo(() => data.documents?.edges?.map((edge) => edge.node) ?? [], [data.documents]);
+  const documents = useMemo(
+    () => data.documents?.edges?.map((edge) => edge.node) ?? [],
+    [data.documents],
+  );
   const linkedIds = useMemo(() => {
     return new Set(props.linkedDocuments?.map((m) => m.id) ?? []);
   }, [props.linkedDocuments]);
 
   const filteredDocuments = useMemo(() => {
     return documents.filter((document) =>
-      document.title.toLowerCase().includes(search.toLowerCase())
+      document.title.toLowerCase().includes(search.toLowerCase()),
     );
   }, [documents, search]);
 
