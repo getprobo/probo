@@ -24,10 +24,10 @@ import {
 import { useTranslate } from "@probo/i18n";
 import { Navigate, Outlet, useNavigate, useParams } from "react-router";
 import { useOrganizationId } from "/hooks/useOrganizationId";
-import type { FrameworkGraphNodeQuery } from "/hooks/graph/__generated__/FrameworkGraphNodeQuery.graphql";
-import type { FrameworkDetailPageFragment$key } from "./__generated__/FrameworkDetailPageFragment.graphql";
-import type { FrameworkDetailPageGenerateFrameworkStateOfApplicabilityMutation } from "./__generated__/FrameworkDetailPageGenerateFrameworkStateOfApplicabilityMutation.graphql";
-import type { FrameworkDetailPageExportFrameworkMutation } from "./__generated__/FrameworkDetailPageExportFrameworkMutation.graphql";
+import type { FrameworkGraphNodeQuery } from "/__generated__/core/FrameworkGraphNodeQuery.graphql";
+import type { FrameworkDetailPageFragment$key } from "/__generated__/core/FrameworkDetailPageFragment.graphql";
+import type { FrameworkDetailPageGenerateFrameworkStateOfApplicabilityMutation } from "/__generated__/core/FrameworkDetailPageGenerateFrameworkStateOfApplicabilityMutation.graphql";
+import type { FrameworkDetailPageExportFrameworkMutation } from "/__generated__/core/FrameworkDetailPageExportFrameworkMutation.graphql";
 import { FrameworkFormDialog } from "./dialogs/FrameworkFormDialog";
 import { FrameworkControlDialog } from "./dialogs/FrameworkControlDialog";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
@@ -90,7 +90,7 @@ export default function FrameworkDetailPage(props: Props) {
   const data = usePreloadedQuery(frameworkNodeQuery, props.queryRef);
   const framework = useFragment<FrameworkDetailPageFragment$key>(
     frameworkDetailFragment,
-    data.node
+    data.node,
   );
   const navigate = useNavigate();
   const controls = framework.controls.edges.map((edge) => edge.node);
@@ -100,7 +100,7 @@ export default function FrameworkDetailPage(props: Props) {
   const connectionId = framework.controls.__id;
   const deleteFramework = useDeleteFrameworkMutation(
     framework,
-    ConnectionHandler.getConnectionID(organizationId, connectionListKey)!
+    ConnectionHandler.getConnectionID(organizationId, connectionListKey)!,
   );
   const { isAuthorized } = use(PermissionsContext);
   const [generateFrameworkStateOfApplicability] =
@@ -110,7 +110,7 @@ export default function FrameworkDetailPage(props: Props) {
         errorMessage: "Failed to generate framework state of applicability",
         successMessage:
           "Framework state of applicability generated successfully",
-      }
+      },
     );
 
   const [exportFramework] =
@@ -120,7 +120,7 @@ export default function FrameworkDetailPage(props: Props) {
         errorMessage: "Failed to export framework",
         successMessage:
           "Framework export started successfully. You will receive an email when the export is ready.",
-      }
+      },
     );
 
   usePageTitle(`${framework.name} | ${selectedControl?.sectionTitle}`);

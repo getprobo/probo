@@ -1,8 +1,8 @@
 import { usePreloadedQuery, type PreloadedQuery } from "react-relay";
 import { graphql } from "relay-runtime";
-import type { EditSAMLConfigurationForm_updateMutation } from "./__generated__/EditSAMLConfigurationForm_updateMutation.graphql";
+import type { EditSAMLConfigurationForm_updateMutation } from "/__generated__/iam/EditSAMLConfigurationForm_updateMutation.graphql";
 import { useCallback } from "react";
-import type { EditSAMLConfigurationFormQuery } from "./__generated__/EditSAMLConfigurationFormQuery.graphql";
+import type { EditSAMLConfigurationFormQuery } from "/__generated__/iam/EditSAMLConfigurationFormQuery.graphql";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import {
   SAMLConfigurationForm,

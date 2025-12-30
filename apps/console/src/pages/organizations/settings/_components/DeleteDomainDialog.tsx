@@ -13,7 +13,7 @@ import { useState, type PropsWithChildren } from "react";
 import { graphql } from "relay-runtime";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { useOrganizationId } from "/hooks/useOrganizationId";
-import type { DeleteDomainDialogMutation } from "./__generated__/DeleteDomainDialogMutation.graphql";
+import type { DeleteDomainDialogMutation } from "/__generated__/core/DeleteDomainDialogMutation.graphql";
 
 const deleteCustomDomainMutation = graphql`
   mutation DeleteDomainDialogMutation($input: DeleteCustomDomainInput!) {

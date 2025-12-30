@@ -14,7 +14,7 @@ import {
 import type { PropsWithChildren } from "react";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
-import type { DomainDialogFragment$key } from "./__generated__/DomainDialogFragment.graphql";
+import type { DomainDialogFragment$key } from "/__generated__/core/DomainDialogFragment.graphql";
 
 const fragment = graphql`
   fragment DomainDialogFragment on CustomDomain {

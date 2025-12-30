@@ -14,8 +14,8 @@ import { graphql } from "relay-runtime";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { sprintf } from "@probo/helpers";
 import { useOrganizationId } from "/hooks/useOrganizationId";
-import type { InvitationListItemFragment$key } from "./__generated__/InvitationListItemFragment.graphql";
-import type { InvitationListItem_permissionsFragment$key } from "./__generated__/InvitationListItem_permissionsFragment.graphql";
+import type { InvitationListItemFragment$key } from "/__generated__/iam/InvitationListItemFragment.graphql";
+import type { InvitationListItem_permissionsFragment$key } from "/__generated__/iam/InvitationListItem_permissionsFragment.graphql";
 
 const fragment = graphql`
   fragment InvitationListItemFragment on Invitation {

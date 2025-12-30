@@ -14,11 +14,11 @@ import {
   IconCalendar2,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
-import type { PeopleGraphPaginatedQuery } from "/hooks/graph/__generated__/PeopleGraphPaginatedQuery.graphql";
+import type { PeopleGraphPaginatedQuery } from "/__generated__/core/PeopleGraphPaginatedQuery.graphql";
 import { type PreloadedQuery } from "react-relay";
 import { useDeletePeople, usePeopleQuery } from "/hooks/graph/PeopleGraph";
 import { SortableTable, SortableTh } from "/components/SortableTable";
-import type { PeopleGraphPaginatedFragment$data } from "/hooks/graph/__generated__/PeopleGraphPaginatedFragment.graphql";
+import type { PeopleGraphPaginatedFragment$data } from "/__generated__/core/PeopleGraphPaginatedFragment.graphql";
 import type { NodeOf } from "/types";
 import { usePageTitle } from "@probo/hooks";
 import { getRole } from "@probo/helpers";
@@ -50,7 +50,8 @@ export default function PeopleListPage({
 
   usePageTitle(__("Members"));
 
-  const hasAnyAction = isAuthorized("People", "updatePeople") ||
+  const hasAnyAction =
+    isAuthorized("People", "updatePeople") ||
     isAuthorized("People", "deletePeople");
 
   return (
@@ -58,7 +59,7 @@ export default function PeopleListPage({
       <PageHeader
         title={__("Members")}
         description={__(
-          "Keep track of your company's workforce and their progress towards completing tasks assigned to them."
+          "Keep track of your company's workforce and their progress towards completing tasks assigned to them.",
         )}
       >
         {isAuthorized("Organization", "createPeople") && (

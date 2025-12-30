@@ -6,7 +6,7 @@ import {
 } from "./DomainSettingsPage";
 import { useQueryLoader } from "react-relay";
 import { CoreRelayProvider } from "/providers/CoreRelayProvider";
-import type { DomainSettingsPageQuery } from "./__generated__/DomainSettingsPageQuery.graphql";
+import type { DomainSettingsPageQuery } from "/__generated__/core/DomainSettingsPageQuery.graphql";
 
 function DomainSettingsPageLoader() {
   const organizationId = useOrganizationId();

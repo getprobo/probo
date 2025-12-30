@@ -13,7 +13,7 @@ import { useTranslate } from "@probo/i18n";
 import { Suspense, useEffect } from "react";
 import { useLazyLoadQuery } from "react-relay";
 import { evidenceFileQuery } from "/hooks/graph/EvidenceGraph.ts";
-import type { EvidenceGraphFileQuery } from "/hooks/graph/__generated__/EvidenceGraphFileQuery.graphql.ts";
+import type { EvidenceGraphFileQuery } from "/__generated__/core/EvidenceGraphFileQuery.graphql.ts";
 
 type Props = {
   evidenceId: string;
@@ -75,7 +75,8 @@ function EvidencePreviewContent({
   const { __ } = useTranslate();
   const { toast } = useToast();
   const isUriFile =
-    evidence.file?.mimeType === "text/uri-list" || evidence.file?.mimeType === "text/uri";
+    evidence.file?.mimeType === "text/uri-list" ||
+    evidence.file?.mimeType === "text/uri";
   useEffect(() => {
     if (!isUriFile) {
       return;

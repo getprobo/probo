@@ -3,7 +3,7 @@ import { MembersPage, membersPageQuery } from "./MembersPage";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { IAMRelayProvider } from "/providers/IAMRelayProvider";
 import { useEffect } from "react";
-import type { MembersPageQuery } from "./__generated__/MembersPageQuery.graphql";
+import type { MembersPageQuery } from "/__generated__/iam/MembersPageQuery.graphql";
 
 function MembersPageLoader() {
   const organizationId = useOrganizationId();

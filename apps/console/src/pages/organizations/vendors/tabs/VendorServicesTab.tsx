@@ -1,6 +1,6 @@
 import { useOutletContext, useParams } from "react-router";
 import { graphql } from "relay-runtime";
-import type { VendorServicesTabFragment$key } from "./__generated__/VendorServicesTabFragment.graphql";
+import type { VendorServicesTabFragment$key } from "/__generated__/core/VendorServicesTabFragment.graphql";
 import { useTranslate } from "@probo/i18n";
 import { usePageTitle } from "@probo/hooks";
 import {
@@ -19,7 +19,7 @@ import {
   useConfirm,
 } from "@probo/ui";
 import { useFragment, useRefetchableFragment } from "react-relay";
-import type { VendorServicesTabFragment_service$key } from "./__generated__/VendorServicesTabFragment_service.graphql";
+import type { VendorServicesTabFragment_service$key } from "/__generated__/core/VendorServicesTabFragment_service.graphql";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { sprintf } from "@probo/helpers";
 import { SortableTable, SortableTh } from "/components/SortableTable";
@@ -83,7 +83,7 @@ export default function VendorServicesTab() {
   }>();
   const [data, refetch] = useRefetchableFragment(
     vendorServicesFragment,
-    vendor
+    vendor,
   );
   const connectionId = data.services.__id;
   const services = data.services.edges.map((edge) => edge.node);
@@ -110,10 +110,7 @@ export default function VendorServicesTab() {
         description={__("Manage services provided by this vendor.")}
       >
         {!isSnapshotMode && canCreateService && (
-          <CreateServiceDialog
-            vendorId={vendor.id}
-            connectionId={connectionId}
-          >
+          <CreateServiceDialog vendorId={vendor.id} connectionId={connectionId}>
             <Button icon={IconPlusLarge}>{__("Add service")}</Button>
           </CreateServiceDialog>
         )}
@@ -170,7 +167,7 @@ function ServiceRow(props: ServiceRowProps) {
   const { __ } = useTranslate();
   const service = useFragment<VendorServicesTabFragment_service$key>(
     serviceFragment,
-    props.serviceKey
+    props.serviceKey,
   );
   const confirm = useConfirm();
   const [deleteService] = useMutationWithToasts(deleteServiceMutation, {
@@ -193,11 +190,11 @@ function ServiceRow(props: ServiceRowProps) {
       {
         message: sprintf(
           __(
-            'This will permanently delete the service "%s". This action cannot be undone.'
+            'This will permanently delete the service "%s". This action cannot be undone.',
           ),
-          service.name
+          service.name,
         ),
-      }
+      },
     );
   };
 
@@ -211,11 +208,13 @@ function ServiceRow(props: ServiceRowProps) {
             {props.canUpdate && (
               <DropdownItem
                 icon={IconPencil}
-                onClick={() => props.onEdit({
-                  id: service.id,
-                  name: service.name,
-                  description: service.description,
-                })}
+                onClick={() =>
+                  props.onEdit({
+                    id: service.id,
+                    name: service.name,
+                    description: service.description,
+                  })
+                }
               >
                 {__("Edit")}
               </DropdownItem>

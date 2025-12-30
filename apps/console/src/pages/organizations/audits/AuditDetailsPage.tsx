@@ -43,7 +43,7 @@ import {
   formatDate,
   type GraphQLError,
 } from "@probo/helpers";
-import type { AuditGraphNodeQuery } from "/hooks/graph/__generated__/AuditGraphNodeQuery.graphql";
+import type { AuditGraphNodeQuery } from "/__generated__/core/AuditGraphNodeQuery.graphql";
 import { use } from "react";
 import { PermissionsContext } from "/providers/PermissionsContext";
 import { useNavigate } from "react-router";
@@ -68,7 +68,7 @@ type Props = {
 export default function AuditDetailsPage(props: Props) {
   const audit = usePreloadedQuery<AuditGraphNodeQuery>(
     auditNodeQuery,
-    props.queryRef
+    props.queryRef,
   );
   const auditEntry = audit.node;
   const { __ } = useTranslate();
@@ -79,7 +79,7 @@ export default function AuditDetailsPage(props: Props) {
   const deleteAudit = useDeleteAudit(
     { id: auditEntry.id!, framework: { name: auditEntry.framework!.name } },
     ConnectionHandler.getConnectionID(organizationId, "AuditsPage_audits"),
-    () => navigate(`/organizations/${organizationId}/audits`)
+    () => navigate(`/organizations/${organizationId}/audits`),
   );
 
   const { control, formState, handleSubmit, register, reset } =
@@ -120,7 +120,7 @@ export default function AuditDetailsPage(props: Props) {
         title: __("Error"),
         description: formatError(
           __("Failed to update audit"),
-          error as GraphQLError
+          error as GraphQLError,
         ),
         variant: "error",
       });
@@ -137,11 +137,11 @@ export default function AuditDetailsPage(props: Props) {
       {
         message: sprintf(
           __(
-            'This will permanently delete the audit report "%s". This action cannot be undone.'
+            'This will permanently delete the audit report "%s". This action cannot be undone.',
           ),
-          auditEntry.report.filename
+          auditEntry.report.filename,
         ),
-      }
+      },
     );
   };
 
@@ -273,12 +273,12 @@ export default function AuditDetailsPage(props: Props) {
               <div className="space-y-4">
                 <p className="text-neutral-600">
                   {__(
-                    "Upload the final audit report document (PDF recommended)"
+                    "Upload the final audit report document (PDF recommended)",
                   )}
                 </p>
                 <Dropzone
                   description={__(
-                    "Only PDF, DOCX files up to 25MB are allowed"
+                    "Only PDF, DOCX files up to 25MB are allowed",
                   )}
                   isUploading={isUploading}
                   onDrop={async (files) => {

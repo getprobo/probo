@@ -9,8 +9,12 @@ import {
   IconTrashCan,
 } from "@probo/ui";
 import { useOutletContext } from "react-router";
-import { useUpdateTrustCenterMutation, useUploadTrustCenterNDAMutation, useDeleteTrustCenterNDAMutation } from "/hooks/graph/TrustCenterGraph";
-import type { TrustCenterGraphQuery$data } from "/hooks/graph/__generated__/TrustCenterGraphQuery.graphql";
+import {
+  useUpdateTrustCenterMutation,
+  useUploadTrustCenterNDAMutation,
+  useDeleteTrustCenterNDAMutation,
+} from "/hooks/graph/TrustCenterGraph";
+import type { TrustCenterGraphQuery$data } from "/__generated__/core/TrustCenterGraphQuery.graphql";
 import { use, useState } from "react";
 import { SlackConnections } from "../../../components/organizations/SlackConnection";
 import { PermissionsContext } from "/providers/PermissionsContext";
@@ -28,7 +32,9 @@ export default function TrustCenterOverviewTab() {
   const [updateTrustCenter, isUpdating] = useUpdateTrustCenterMutation();
   const [uploadNDA, isUploadingNDA] = useUploadTrustCenterNDAMutation();
   const [deleteNDA, isDeletingNDA] = useDeleteTrustCenterNDAMutation();
-  const [isActive, setIsActive] = useState(organization.trustCenter?.active || false);
+  const [isActive, setIsActive] = useState(
+    organization.trustCenter?.active || false,
+  );
 
   const canUpdateTrustCenter = isAuthorized("TrustCenter", "updateTrustCenter");
 
@@ -126,7 +132,9 @@ export default function TrustCenterOverviewTab() {
             <div className="space-y-1">
               <h3 className="font-medium">{__("Activate Trust Center")}</h3>
               <p className="text-sm text-txt-tertiary">
-                {__("Make your trust center publicly accessible to build customer confidence")}
+                {__(
+                  "Make your trust center publicly accessible to build customer confidence",
+                )}
               </p>
             </div>
             <Checkbox
@@ -157,7 +165,9 @@ export default function TrustCenterOverviewTab() {
                 </div>
                 <Button
                   variant="secondary"
-                  onClick={() => window.open(trustCenterUrl, '_blank', 'noopener,noreferrer')}
+                  onClick={() =>
+                    window.open(trustCenterUrl, "_blank", "noopener,noreferrer")
+                  }
                 >
                   {__("View")}
                 </Button>
@@ -171,7 +181,9 @@ export default function TrustCenterOverviewTab() {
                 {__("Trust Center is Inactive")}
               </h4>
               <p className="text-sm text-txt-tertiary mt-1">
-                {__("Your trust center is currently not accessible to the public. Enable it to start sharing your compliance status.")}
+                {__(
+                  "Your trust center is currently not accessible to the public. Enable it to start sharing your compliance status.",
+                )}
               </p>
             </div>
           )}
@@ -180,27 +192,36 @@ export default function TrustCenterOverviewTab() {
 
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-medium">{__("Non-Disclosure Agreement")}</h2>
+          <h2 className="text-base font-medium">
+            {__("Non-Disclosure Agreement")}
+          </h2>
           {(isUploadingNDA || isDeletingNDA) && <Spinner />}
         </div>
         <Card padded className="space-y-4">
           <div className="space-y-2">
-            {!organization.trustCenter?.ndaFileName ?  (
+            {!organization.trustCenter?.ndaFileName ? (
               <p className="text-sm text-txt-tertiary">
-                {__("Upload a Non-Disclosure Agreement that visitors must accept before accessing your trust center")}
+                {__(
+                  "Upload a Non-Disclosure Agreement that visitors must accept before accessing your trust center",
+                )}
               </p>
-            ) : (<></>)}
+            ) : (
+              <></>
+            )}
             {organization.trustCenter?.ndaFileName ? (
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <p className="text-sm font-medium">
-                        {organization.trustCenter.ndaFileName || __("Non-Disclosure Agreement")}
+                        {organization.trustCenter.ndaFileName ||
+                          __("Non-Disclosure Agreement")}
                       </p>
                     </div>
                     <p className="text-xs text-txt-tertiary">
-                      {__("Visitors will need to accept this NDA before accessing your trust center")}
+                      {__(
+                        "Visitors will need to accept this NDA before accessing your trust center",
+                      )}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -209,7 +230,10 @@ export default function TrustCenterOverviewTab() {
                       variant="secondary"
                       onClick={() => {
                         if (organization.trustCenter?.ndaFileUrl) {
-                          window.open(organization.trustCenter.ndaFileUrl, '_blank');
+                          window.open(
+                            organization.trustCenter.ndaFileUrl,
+                            "_blank",
+                          );
                         }
                       }}
                     >
@@ -254,7 +278,10 @@ export default function TrustCenterOverviewTab() {
         <Card padded>
           <SlackConnections
             organizationId={organization.id!}
-            slackConnections={organization.slackConnections?.edges?.map((edge) => edge.node) ?? []}
+            slackConnections={
+              organization.slackConnections?.edges?.map((edge) => edge.node) ??
+              []
+            }
           />
         </Card>
       </div>

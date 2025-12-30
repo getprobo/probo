@@ -1,7 +1,7 @@
 import { usePreloadedQuery, type PreloadedQuery } from "react-relay";
 import { graphql } from "relay-runtime";
 import { MemberList } from "./_components/MemberList";
-import type { MembersPageQuery } from "./__generated__/MembersPageQuery.graphql";
+import type { MembersPageQuery } from "/__generated__/iam/MembersPageQuery.graphql";
 import { useTranslate } from "@probo/i18n";
 import { Button, Card, TabBadge, TabItem, Tabs } from "@probo/ui";
 import { useState } from "react";

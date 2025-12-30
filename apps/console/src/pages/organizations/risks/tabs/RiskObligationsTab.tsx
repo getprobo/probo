@@ -1,5 +1,5 @@
 import { graphql, useFragment } from "react-relay";
-import type { RiskObligationsTabFragment$key } from "./__generated__/RiskObligationsTabFragment.graphql";
+import type { RiskObligationsTabFragment$key } from "/__generated__/core/RiskObligationsTabFragment.graphql";
 import { useOutletContext } from "react-router";
 import { LinkedObligationsCard } from "/components/obligations/LinkedObligationsCard";
 import { useMutationWithIncrement } from "/hooks/useMutationWithIncrement";
@@ -58,7 +58,10 @@ export default function RiskObligationsTab() {
   const { isAuthorized } = use(PermissionsContext);
 
   const canLinkObligation = isAuthorized("Risk", "createRiskObligationMapping");
-  const canUnlinkObligation = isAuthorized("Risk", "deleteRiskObligationMapping");
+  const canUnlinkObligation = isAuthorized(
+    "Risk",
+    "deleteRiskObligationMapping",
+  );
   const readOnly = !canLinkObligation && !canUnlinkObligation;
 
   const incrementOptions = {

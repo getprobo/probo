@@ -6,8 +6,8 @@ import {
   nonconformitiesQuery,
   nonconformityNodeQuery,
 } from "../hooks/graph/NonconformityGraph";
-import type { NonconformityGraphListQuery } from "/hooks/graph/__generated__/NonconformityGraphListQuery.graphql";
-import type { NonconformityGraphNodeQuery } from "/hooks/graph/__generated__/NonconformityGraphNodeQuery.graphql";
+import type { NonconformityGraphListQuery } from "/__generated__/core/NonconformityGraphListQuery.graphql";
+import type { NonconformityGraphNodeQuery } from "/__generated__/core/NonconformityGraphNodeQuery.graphql";
 import {
   loaderFromQueryLoader,
   withQueryRef,

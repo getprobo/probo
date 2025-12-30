@@ -32,8 +32,8 @@ import {
 } from "/hooks/forms/useRiskForm";
 import type { FieldErrors } from "react-hook-form";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
-import type { FormRiskDialogMutation } from "./__generated__/FormRiskDialogMutation.graphql";
-import type { FormRiskDialogUpdateRiskMutation } from "./__generated__/FormRiskDialogUpdateRiskMutation.graphql";
+import type { FormRiskDialogMutation } from "/__generated__/core/FormRiskDialogMutation.graphql";
+import type { FormRiskDialogUpdateRiskMutation } from "/__generated__/core/FormRiskDialogUpdateRiskMutation.graphql";
 import { getRiskImpacts, getRiskLikelihoods } from "@probo/helpers";
 
 type Props = {
@@ -326,19 +326,19 @@ function TemplateSelector({
     "/data/risks/risks.json",
     {
       staleTime: 100_000,
-    }
+    },
   );
 
   const categories = useMemo(
     () => Array.from(new Set(risks?.map((t) => t.category))),
-    [risks]
+    [risks],
   );
 
   const selectedCategory = watch("category");
 
   const templates = useMemo(
     () => risks?.filter((r) => r.category === selectedCategory) ?? [],
-    [risks, selectedCategory]
+    [risks, selectedCategory],
   );
 
   const onTemplateChange = (template: string) => {

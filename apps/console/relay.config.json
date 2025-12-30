@@ -1,0 +1,25 @@
+{
+  "root": "../..",
+  "projects": {
+    "iam": {
+      "schema": "pkg/server/api/connect/v1/schema.graphql",
+      "language": "typescript",
+      "eagerEsModules": true,
+      "noFutureProofEnums": true,
+      "output": "apps/console/src/__generated__/iam",
+      "relativizeJsModulePaths": false
+    },
+    "core": {
+      "schema": "pkg/server/api/console/v1/schema.graphql",
+      "language": "typescript",
+      "eagerEsModules": true,
+      "noFutureProofEnums": true,
+      "output": "apps/console/src/__generated__/core",
+      "relativizeJsModulePaths": false
+    }
+  },
+  "sources": {
+    "apps/console/src/pages/iam": "iam",
+    "apps/console/src": "core"
+  }
+}

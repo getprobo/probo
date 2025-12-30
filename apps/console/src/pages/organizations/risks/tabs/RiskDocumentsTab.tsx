@@ -1,7 +1,7 @@
 import { graphql, useFragment } from "react-relay";
 import { useOutletContext } from "react-router";
 import { LinkedDocumentsCard } from "/components/documents/LinkedDocumentsCard";
-import type { RiskDocumentsTabFragment$key } from "./__generated__/RiskDocumentsTabFragment.graphql";
+import type { RiskDocumentsTabFragment$key } from "/__generated__/core/RiskDocumentsTabFragment.graphql";
 import { useMutationWithIncrement } from "/hooks/useMutationWithIncrement";
 import { use } from "react";
 import { PermissionsContext } from "/providers/PermissionsContext";

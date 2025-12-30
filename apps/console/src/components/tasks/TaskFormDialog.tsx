@@ -21,7 +21,7 @@ import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { PeopleSelectField } from "/components/form/PeopleSelectField";
-import type { TaskFormDialogFragment$key } from "./__generated__/TaskFormDialogFragment.graphql";
+import type { TaskFormDialogFragment$key } from "/__generated__/core/TaskFormDialogFragment.graphql";
 import { MeasureSelectField } from "/components/form/MeasureSelectField";
 import { Controller } from "react-hook-form";
 import { updateStoreCounter } from "/hooks/useMutationWithIncrement";
@@ -75,11 +75,15 @@ const createTaskSchema = z.object({
   timeEstimate: z.string().optional().nullable(),
   assignedToId: z.preprocess(
     (val) => (val === "" || val == null ? undefined : val),
-    z.string({ required_error: "Assigned to is required" }).min(1, "Assigned to is required")
+    z
+      .string({ required_error: "Assigned to is required" })
+      .min(1, "Assigned to is required"),
   ),
   measureId: z.preprocess(
     (val) => (val === "" || val == null ? undefined : val),
-    z.string({ required_error: "Measure is required" }).min(1, "Measure is required")
+    z
+      .string({ required_error: "Measure is required" })
+      .min(1, "Measure is required"),
   ),
   deadline: z.string().optional().nullable(),
 });
@@ -108,10 +112,13 @@ export default function TaskFormDialog(props: Props) {
   const organizationId = useOrganizationId();
   const task = useFragment(taskFragment, props.task);
   const relayEnv = useRelayEnvironment();
-  const [mutate] = useMutationWithToasts(task? taskUpdateMutation : taskCreateMutation, {
-    successMessage: __(`Task ${task ? "updated" : "created"} successfully.`),
-    errorMessage: __(`Failed to ${task ? "update" : "create"} task`),
-  })
+  const [mutate] = useMutationWithToasts(
+    task ? taskUpdateMutation : taskCreateMutation,
+    {
+      successMessage: __(`Task ${task ? "updated" : "created"} successfully.`),
+      errorMessage: __(`Failed to ${task ? "update" : "create"} task`),
+    },
+  );
 
   const isUpdating = !!task;
 

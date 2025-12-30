@@ -1,5 +1,5 @@
 import { ConnectionHandler, graphql } from "react-relay";
-import type { NewSAMLConfigurationForm_createMutation } from "./__generated__/NewSAMLConfigurationForm_createMutation.graphql";
+import type { NewSAMLConfigurationForm_createMutation } from "/__generated__/iam/NewSAMLConfigurationForm_createMutation.graphql";
 import {
   SAMLConfigurationForm,
   type SAMLConfigurationFormData,

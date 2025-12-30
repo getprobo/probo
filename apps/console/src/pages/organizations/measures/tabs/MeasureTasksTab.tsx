@@ -1,5 +1,5 @@
 import { graphql } from "relay-runtime";
-import type { MeasureTasksTabQuery } from "./__generated__/MeasureTasksTabQuery.graphql";
+import type { MeasureTasksTabQuery } from "/__generated__/core/MeasureTasksTabQuery.graphql";
 import { useOutletContext } from "react-router";
 import { useLazyLoadQuery } from "react-relay";
 import TasksCard from "/components/tasks/TasksCard";

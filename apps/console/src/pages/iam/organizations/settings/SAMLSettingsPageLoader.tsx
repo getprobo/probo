@@ -3,7 +3,7 @@ import { SAMLSettingsPage, samlSettingsPageQuery } from "./SAMLSettingsPage";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { IAMRelayProvider } from "/providers/IAMRelayProvider";
 import { useEffect } from "react";
-import type { SAMLSettingsPageQuery } from "./__generated__/SAMLSettingsPageQuery.graphql";
+import type { SAMLSettingsPageQuery } from "/__generated__/iam/SAMLSettingsPageQuery.graphql";
 
 function SAMLSettingsPageLoader() {
   const organizationId = useOrganizationId();

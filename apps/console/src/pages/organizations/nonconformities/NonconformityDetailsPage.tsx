@@ -32,8 +32,16 @@ import { PeopleSelectField } from "/components/form/PeopleSelectField";
 import { AuditSelectField } from "/components/form/AuditSelectField";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import z from "zod";
-import { getStatusVariant, getStatusLabel, formatDatetime, validateSnapshotConsistency, getStatusOptions, formatError, type GraphQLError } from "@probo/helpers";
-import type { NonconformityGraphNodeQuery } from "/hooks/graph/__generated__/NonconformityGraphNodeQuery.graphql";
+import {
+  getStatusVariant,
+  getStatusLabel,
+  formatDatetime,
+  validateSnapshotConsistency,
+  getStatusOptions,
+  formatError,
+  type GraphQLError,
+} from "@probo/helpers";
+import type { NonconformityGraphNodeQuery } from "/__generated__/core/NonconformityGraphNodeQuery.graphql";
 import { PermissionsContext } from "/providers/PermissionsContext";
 import { use } from "react";
 
@@ -57,7 +65,7 @@ type Props = {
 export default function NonconformityDetailsPage(props: Props) {
   const data = usePreloadedQuery<NonconformityGraphNodeQuery>(
     nonconformityNodeQuery,
-    props.queryRef
+    props.queryRef,
   );
   const nonconformity = data.node;
   const { __ } = useTranslate();
@@ -73,18 +81,17 @@ export default function NonconformityDetailsPage(props: Props) {
     ConnectionHandler.getConnectionID(
       organizationId,
       NonconformitiesConnectionKey,
-      { filter: { snapshotId: snapshotId || null } }
-    )
+      { filter: { snapshotId: snapshotId || null } },
+    ),
   );
 
-  const { control, formState, handleSubmit, register, reset } = useFormWithSchema(
-    updateNonconformitySchema,
-    {
+  const { control, formState, handleSubmit, register, reset } =
+    useFormWithSchema(updateNonconformitySchema, {
       defaultValues: {
         referenceId: nonconformity.referenceId || "",
         description: nonconformity.description || "",
-        dateIdentified: nonconformity.dateIdentified?.split('T')[0] || "",
-        dueDate: nonconformity.dueDate?.split('T')[0] || "",
+        dateIdentified: nonconformity.dateIdentified?.split("T")[0] || "",
+        dueDate: nonconformity.dueDate?.split("T")[0] || "",
         rootCause: nonconformity.rootCause || "",
         correctiveAction: nonconformity.correctiveAction || "",
         effectivenessCheck: nonconformity.effectivenessCheck || "",
@@ -92,8 +99,7 @@ export default function NonconformityDetailsPage(props: Props) {
         ownerId: nonconformity.owner?.id || "",
         auditId: nonconformity.audit?.id || "",
       },
-    }
-  );
+    });
 
   const updateNonconformity = useUpdateNonconformity();
   const { toast } = useToast();
@@ -124,7 +130,10 @@ export default function NonconformityDetailsPage(props: Props) {
     } catch (error) {
       toast({
         title: __("Error"),
-        description: formatError(__("Failed to update nonconformity"), error as GraphQLError),
+        description: formatError(
+          __("Failed to update nonconformity"),
+          error as GraphQLError,
+        ),
         variant: "error",
       });
     }
@@ -138,9 +147,7 @@ export default function NonconformityDetailsPage(props: Props) {
 
   return (
     <div className="space-y-6">
-      {isSnapshotMode && (
-        <SnapshotBanner snapshotId={snapshotId!} />
-      )}
+      {isSnapshotMode && <SnapshotBanner snapshotId={snapshotId!} />}
       <Breadcrumb
         items={[
           {
@@ -239,11 +246,19 @@ export default function NonconformityDetailsPage(props: Props) {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Field label={__("Date Identified")}>
-                <Input {...register("dateIdentified")} type="date" disabled={isSnapshotMode} />
+                <Input
+                  {...register("dateIdentified")}
+                  type="date"
+                  disabled={isSnapshotMode}
+                />
               </Field>
 
               <Field label={__("Due Date")}>
-                <Input {...register("dueDate")} type="date" disabled={isSnapshotMode} />
+                <Input
+                  {...register("dueDate")}
+                  type="date"
+                  disabled={isSnapshotMode}
+                />
               </Field>
             </div>
 
@@ -279,13 +294,13 @@ export default function NonconformityDetailsPage(props: Props) {
             </Field>
 
             <div className="flex justify-end">
-              {formState.isDirty && !isSnapshotMode && (
+              {formState.isDirty &&
+                !isSnapshotMode &&
                 isAuthorized("Nonconformity", "updateNonconformity") && (
                   <Button type="submit" disabled={formState.isSubmitting}>
                     {formState.isSubmitting ? __("Updating...") : __("Update")}
                   </Button>
-                )
-              )}
+                )}
             </div>
           </form>
         </Card>

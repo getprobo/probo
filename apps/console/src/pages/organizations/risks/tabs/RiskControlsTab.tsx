@@ -3,7 +3,7 @@ import { useOutletContext } from "react-router";
 import { Badge, Tbody, Td, Th, Thead, Tr } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { useOrganizationId } from "/hooks/useOrganizationId";
-import type { RiskControlsTabFragment$key } from "./__generated__/RiskControlsTabFragment.graphql";
+import type { RiskControlsTabFragment$key } from "/__generated__/core/RiskControlsTabFragment.graphql";
 import { SortableTable, SortableTh } from "/components/SortableTable";
 
 export const controlsFragment = graphql`

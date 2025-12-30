@@ -32,9 +32,14 @@ import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { Controller } from "react-hook-form";
 import { formatError, type GraphQLError } from "@probo/helpers";
 import z from "zod";
-import { getStatusVariant, getStatusLabel, formatDatetime, validateSnapshotConsistency } from "@probo/helpers";
+import {
+  getStatusVariant,
+  getStatusLabel,
+  formatDatetime,
+  validateSnapshotConsistency,
+} from "@probo/helpers";
 import { SnapshotBanner } from "/components/SnapshotBanner";
-import type { ContinualImprovementGraphNodeQuery } from "/hooks/graph/__generated__/ContinualImprovementGraphNodeQuery.graphql";
+import type { ContinualImprovementGraphNodeQuery } from "/__generated__/core/ContinualImprovementGraphNodeQuery.graphql";
 import { use } from "react";
 import { PermissionsContext } from "/providers/PermissionsContext";
 
@@ -53,7 +58,10 @@ type Props = {
 };
 
 export default function ContinualImprovementDetailsPage(props: Props) {
-  const data = usePreloadedQuery<ContinualImprovementGraphNodeQuery>(continualImprovementNodeQuery, props.queryRef);
+  const data = usePreloadedQuery<ContinualImprovementGraphNodeQuery>(
+    continualImprovementNodeQuery,
+    props.queryRef,
+  );
   const improvement = data.node;
   const { __ } = useTranslate();
   const { toast } = useToast();
@@ -69,10 +77,13 @@ export default function ContinualImprovementDetailsPage(props: Props) {
   const connectionId = ConnectionHandler.getConnectionID(
     organizationId,
     ContinualImprovementsConnectionKey,
-    { filter: { snapshotId: snapshotId || null } }
+    { filter: { snapshotId: snapshotId || null } },
   );
 
-  const deleteImprovement = useDeleteContinualImprovement({ id: improvement.id!, referenceId: improvement.referenceId! }, connectionId);
+  const deleteImprovement = useDeleteContinualImprovement(
+    { id: improvement.id!, referenceId: improvement.referenceId! },
+    connectionId,
+  );
 
   const { register, handleSubmit, formState, control } = useFormWithSchema(
     updateImprovementSchema,
@@ -88,7 +99,7 @@ export default function ContinualImprovementDetailsPage(props: Props) {
         priority: improvement.priority || "MEDIUM",
         ownerId: improvement.owner?.id || "",
       },
-    }
+    },
   );
 
   const onSubmit = handleSubmit(async (formData) => {
@@ -102,7 +113,6 @@ export default function ContinualImprovementDetailsPage(props: Props) {
         status: formData.status,
         priority: formData.priority,
         ownerId: formData.ownerId,
-
       });
 
       toast({
@@ -113,7 +123,10 @@ export default function ContinualImprovementDetailsPage(props: Props) {
     } catch (error) {
       toast({
         title: __("Error"),
-        description: formatError(__("Failed to update continual improvement"), error as GraphQLError),
+        description: formatError(
+          __("Failed to update continual improvement"),
+          error as GraphQLError,
+        ),
         variant: "error",
       });
     }
@@ -143,19 +156,24 @@ export default function ContinualImprovementDetailsPage(props: Props) {
       <div className="flex items-center justify-between">
         <Breadcrumb
           items={[
-            { label: __("Continual Improvements"), to: breadcrumbImprovementsUrl },
+            {
+              label: __("Continual Improvements"),
+              to: breadcrumbImprovementsUrl,
+            },
             { label: improvement.referenceId! },
           ]}
         />
-        {!isSnapshotMode && (
-          isAuthorized("ContinualImprovement", "deleteContinualImprovement") && (
+        {!isSnapshotMode &&
+          isAuthorized(
+            "ContinualImprovement",
+            "deleteContinualImprovement",
+          ) && (
             <ActionDropdown>
               <DropdownItem onClick={deleteImprovement} variant="danger">
                 {__("Delete")}
               </DropdownItem>
             </ActionDropdown>
-          )
-        )}
+          )}
       </div>
 
       <Card>
@@ -166,8 +184,20 @@ export default function ContinualImprovementDetailsPage(props: Props) {
               <Badge variant={getStatusVariant(improvement.status || "OPEN")}>
                 {getStatusLabel(improvement.status || "OPEN")}
               </Badge>
-              <Badge variant={improvement.priority === "HIGH" ? "danger" : improvement.priority === "MEDIUM" ? "warning" : "success"}>
-                {improvement.priority === "HIGH" ? __("High") : improvement.priority === "MEDIUM" ? __("Medium") : __("Low")}
+              <Badge
+                variant={
+                  improvement.priority === "HIGH"
+                    ? "danger"
+                    : improvement.priority === "MEDIUM"
+                      ? "warning"
+                      : "success"
+                }
+              >
+                {improvement.priority === "HIGH"
+                  ? __("High")
+                  : improvement.priority === "MEDIUM"
+                    ? __("Medium")
+                    : __("Low")}
               </Badge>
             </div>
           </div>
@@ -180,8 +210,6 @@ export default function ContinualImprovementDetailsPage(props: Props) {
               readOnly={isSnapshotMode}
               required
             />
-
-
 
             <div>
               <Label>{__("Description")}</Label>
@@ -287,13 +315,18 @@ export default function ContinualImprovementDetailsPage(props: Props) {
 
             {!isSnapshotMode && (
               <div className="flex justify-end pt-4">
-                {isAuthorized("ContinualImprovement", "updateContinualImprovement") && (
+                {isAuthorized(
+                  "ContinualImprovement",
+                  "updateContinualImprovement",
+                ) && (
                   <Button
                     type="submit"
                     variant="primary"
                     disabled={formState.isSubmitting}
                   >
-                    {formState.isSubmitting ? __("Saving...") : __("Save Changes")}
+                    {formState.isSubmitting
+                      ? __("Saving...")
+                      : __("Save Changes")}
                   </Button>
                 )}
               </div>

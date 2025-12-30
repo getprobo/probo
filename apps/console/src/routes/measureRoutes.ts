@@ -11,8 +11,8 @@ import {
   withQueryRef,
   type AppRoute,
 } from "@probo/routes";
-import type { MeasureGraphListQuery } from "/hooks/graph/__generated__/MeasureGraphListQuery.graphql";
-import type { MeasureGraphNodeQuery } from "/hooks/graph/__generated__/MeasureGraphNodeQuery.graphql";
+import type { MeasureGraphListQuery } from "/__generated__/core/MeasureGraphListQuery.graphql";
+import type { MeasureGraphNodeQuery } from "/__generated__/core/MeasureGraphNodeQuery.graphql";
 
 export const measureRoutes = [
   {

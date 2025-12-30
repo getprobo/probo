@@ -3,7 +3,7 @@ import {
   usePreloadedQuery,
   type PreloadedQuery,
 } from "react-relay";
-import type { PeopleGraphNodeQuery } from "/hooks/graph/__generated__/PeopleGraphNodeQuery.graphql";
+import type { PeopleGraphNodeQuery } from "/__generated__/core/PeopleGraphNodeQuery.graphql";
 import {
   PeopleConnectionKey,
   peopleNodeQuery,
@@ -36,7 +36,7 @@ export default function PeopleDetailPage(props: Props) {
   const { isAuthorized } = use(PermissionsContext);
   const deletePeople = useDeletePeople(
     people,
-    ConnectionHandler.getConnectionID(organizationId, PeopleConnectionKey)
+    ConnectionHandler.getConnectionID(organizationId, PeopleConnectionKey),
   );
 
   return (

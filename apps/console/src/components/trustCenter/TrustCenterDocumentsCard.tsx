@@ -15,7 +15,7 @@ import {
   Badge,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
-import type { TrustCenterDocumentsCardFragment$key } from "./__generated__/TrustCenterDocumentsCardFragment.graphql";
+import type { TrustCenterDocumentsCardFragment$key } from "/__generated__/core/TrustCenterDocumentsCardFragment.graphql";
 import { useFragment } from "react-relay";
 import { useMemo, useState, useCallback, useEffect, use } from "react";
 import { sprintf, getTrustCenterVisibilityOptions } from "@probo/helpers";
@@ -64,7 +64,10 @@ export function TrustCenterDocumentsCard<Params>(props: Props<Params>) {
   }, [props.documents, limit]);
   const showMoreButton = limit !== null && props.documents.length > limit;
 
-  const onChangeVisibility = (documentId: string, trustCenterVisibility: "NONE" | "PRIVATE" | "PUBLIC") => {
+  const onChangeVisibility = (
+    documentId: string,
+    trustCenterVisibility: "NONE" | "PRIVATE" | "PUBLIC",
+  ) => {
     props.onChangeVisibility({
       variables: {
         input: {
@@ -103,7 +106,6 @@ export function TrustCenterDocumentsCard<Params>(props: Props<Params>) {
               disabled={props.disabled}
             />
           ))}
-
         </Tbody>
       </Table>
       {showMoreButton && (
@@ -122,23 +124,32 @@ export function TrustCenterDocumentsCard<Params>(props: Props<Params>) {
 
 function DocumentRow(props: {
   documentFragmentRef: TrustCenterDocumentsCardFragment$key;
-  onChangeVisibility: (documentId: string, trustCenterVisibility: "NONE" | "PRIVATE" | "PUBLIC") => void;
+  onChangeVisibility: (
+    documentId: string,
+    trustCenterVisibility: "NONE" | "PRIVATE" | "PUBLIC",
+  ) => void;
   disabled?: boolean;
 }) {
   const { documentFragmentRef, onChangeVisibility, disabled } = props;
-  const document = useFragment(trustCenterDocumentFragment, documentFragmentRef);
+  const document = useFragment(
+    trustCenterDocumentFragment,
+    documentFragmentRef,
+  );
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
   const [optimisticValue, setOptimisticValue] = useState<string | null>(null);
   const { isAuthorized } = use(PermissionsContext);
   const canUpdate = isAuthorized("TrustCenter", "updateTrustCenter");
 
-  const handleValueChange = useCallback((value: string) => {
-    const stringValue = typeof value === 'string' ? value : '';
-    const typedValue = stringValue as "NONE" | "PRIVATE" | "PUBLIC";
-    setOptimisticValue(typedValue);
-    onChangeVisibility(document.id, typedValue);
-  }, [document.id, onChangeVisibility]);
+  const handleValueChange = useCallback(
+    (value: string) => {
+      const stringValue = typeof value === "string" ? value : "";
+      const typedValue = stringValue as "NONE" | "PRIVATE" | "PUBLIC";
+      setOptimisticValue(typedValue);
+      onChangeVisibility(document.id, typedValue);
+    },
+    [document.id, onChangeVisibility],
+  );
 
   useEffect(() => {
     if (optimisticValue && document.trustCenterVisibility === optimisticValue) {
@@ -153,15 +164,15 @@ function DocumentRow(props: {
   return (
     <Tr to={`/organizations/${organizationId}/documents/${document.id}`}>
       <Td>
-        <div className="flex gap-4 items-center">
-          {document.title}
-        </div>
+        <div className="flex gap-4 items-center">{document.title}</div>
       </Td>
       <Td>
         <DocumentTypeBadge type={document.documentType} />
       </Td>
       <Td>
-        <DocumentVersionBadge state={document.versions?.edges?.[0]?.node?.status} />
+        <DocumentVersionBadge
+          state={document.versions?.edges?.[0]?.node?.status}
+        />
       </Td>
       <Td noLink width={130} className="pr-0">
         <Field
@@ -174,9 +185,7 @@ function DocumentRow(props: {
           {visibilityOptions.map((option) => (
             <Option key={option.value} value={option.value}>
               <div className="flex items-center justify-between w-full">
-                <Badge variant={option.variant}>
-                  {option.label}
-                </Badge>
+                <Badge variant={option.variant}>{option.label}</Badge>
               </div>
             </Option>
           ))}

@@ -1,12 +1,12 @@
 import { useOutletContext } from "react-router";
-import type { MeetingDetailPageMeetingFragment$data } from "../__generated__/MeetingDetailPageMeetingFragment.graphql";
+import type { MeetingDetailPageMeetingFragment$data } from "/__generated__/core/MeetingDetailPageMeetingFragment.graphql";
 import { Markdown } from "@probo/ui";
 
 export default function MeetingMinutesTab() {
   const { meeting } = useOutletContext<{
     meeting: MeetingDetailPageMeetingFragment$data;
   }>();
-  
+
   return (
     <div>
       {meeting.minutes ? (
@@ -19,4 +19,3 @@ export default function MeetingMinutesTab() {
     </div>
   );
 }
-

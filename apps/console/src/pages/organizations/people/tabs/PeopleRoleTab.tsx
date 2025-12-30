@@ -6,11 +6,11 @@ import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { ControlledField } from "/components/form/ControlledField";
 import { Option } from "@probo/ui";
 import { getRoles, peopleRoles } from "@probo/helpers";
-import type { PeopleGraphNodeQuery$data } from "/hooks/graph/__generated__/PeopleGraphNodeQuery.graphql";
+import type { PeopleGraphNodeQuery$data } from "/__generated__/core/PeopleGraphNodeQuery.graphql";
 import { useOutletContext } from "react-router";
 import { updatePeopleMutation } from "/hooks/graph/PeopleGraph";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
-import type { PeopleGraphUpdateMutation } from "/hooks/graph/__generated__/PeopleGraphUpdateMutation.graphql";
+import type { PeopleGraphUpdateMutation } from "/__generated__/core/PeopleGraphUpdateMutation.graphql";
 import { PermissionsContext } from "/providers/PermissionsContext";
 
 const schema = z.object({
@@ -30,14 +30,14 @@ export default function PeopleRoleTab() {
       defaultValues: {
         kind: people.kind,
       },
-    }
+    },
   );
   const [mutate, isMutating] = useMutationWithToasts<PeopleGraphUpdateMutation>(
     updatePeopleMutation,
     {
       successMessage: __("Member updated successfully."),
       errorMessage: __("Failed to update member"),
-    }
+    },
   );
 
   const onSubmit = handleSubmit((data) => {

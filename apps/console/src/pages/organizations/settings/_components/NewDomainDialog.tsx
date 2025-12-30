@@ -14,7 +14,7 @@ import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import type { PropsWithChildren } from "react";
-import type { NewDomainDialogMutation } from "./__generated__/NewDomainDialogMutation.graphql";
+import type { NewDomainDialogMutation } from "/__generated__/core/NewDomainDialogMutation.graphql";
 
 const createCustomDomainMutation = graphql`
   mutation NewDomainDialogMutation($input: CreateCustomDomainInput!) {

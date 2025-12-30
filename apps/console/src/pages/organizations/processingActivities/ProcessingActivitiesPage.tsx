@@ -19,7 +19,10 @@ import {
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { usePageTitle } from "@probo/hooks";
-import { getLawfulBasisLabel, getResidualRiskLabel } from "../../../components/form/ProcessingActivityEnumOptions";
+import {
+  getLawfulBasisLabel,
+  getResidualRiskLabel,
+} from "../../../components/form/ProcessingActivityEnumOptions";
 import {
   ConnectionHandler,
   graphql,
@@ -31,25 +34,29 @@ import {
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { useParams } from "react-router";
 import { CreateProcessingActivityDialog } from "./dialogs/CreateProcessingActivityDialog";
-import { deleteProcessingActivityMutation, ProcessingActivitiesConnectionKey, processingActivitiesQuery } from "../../../hooks/graph/ProcessingActivityGraph";
+import {
+  deleteProcessingActivityMutation,
+  ProcessingActivitiesConnectionKey,
+  processingActivitiesQuery,
+} from "../../../hooks/graph/ProcessingActivityGraph";
 import { sprintf, promisifyMutation } from "@probo/helpers";
 import { SnapshotBanner } from "/components/SnapshotBanner";
 import type { NodeOf } from "/types";
 import type {
   ProcessingActivitiesPageFragment$key,
   ProcessingActivitiesPageFragment$data,
-} from "./__generated__/ProcessingActivitiesPageFragment.graphql";
+} from "/__generated__/core/ProcessingActivitiesPageFragment.graphql";
 import type {
   ProcessingActivitiesPageDPIAFragment$key,
   ProcessingActivitiesPageDPIAFragment$data,
-} from "./__generated__/ProcessingActivitiesPageDPIAFragment.graphql";
+} from "/__generated__/core/ProcessingActivitiesPageDPIAFragment.graphql";
 import type {
   ProcessingActivitiesPageTIAFragment$key,
   ProcessingActivitiesPageTIAFragment$data,
-} from "./__generated__/ProcessingActivitiesPageTIAFragment.graphql";
+} from "/__generated__/core/ProcessingActivitiesPageTIAFragment.graphql";
 import { PermissionsContext } from "/providers/PermissionsContext";
 import { use, useState } from "react";
-import type { ProcessingActivityGraphListQuery } from "/hooks/graph/__generated__/ProcessingActivityGraphListQuery.graphql";
+import type { ProcessingActivityGraphListQuery } from "/__generated__/core/ProcessingActivityGraphListQuery.graphql";
 
 interface ProcessingActivitiesPageProps {
   queryRef: PreloadedQuery<ProcessingActivityGraphListQuery>;
@@ -69,7 +76,10 @@ const processingActivitiesPageFragment = graphql`
       after: $after
       filter: { snapshotId: $snapshotId }
     )
-      @connection(key: "ProcessingActivitiesPage_processingActivities", filters: ["filter"]) {
+      @connection(
+        key: "ProcessingActivitiesPage_processingActivities"
+        filters: ["filter"]
+      ) {
       __id
       totalCount
       edges {
@@ -110,7 +120,10 @@ const dpiaListPageFragment = graphql`
       after: $after
       filter: { snapshotId: $snapshotId }
     )
-      @connection(key: "ProcessingActivitiesPage_dataProtectionImpactAssessments", filters: ["filter"]) {
+      @connection(
+        key: "ProcessingActivitiesPage_dataProtectionImpactAssessments"
+        filters: ["filter"]
+      ) {
       __id
       totalCount
       edges {
@@ -149,7 +162,10 @@ const tiaListPageFragment = graphql`
       after: $after
       filter: { snapshotId: $snapshotId }
     )
-      @connection(key: "ProcessingActivitiesPage_transferImpactAssessments", filters: ["filter"]) {
+      @connection(
+        key: "ProcessingActivitiesPage_transferImpactAssessments"
+        filters: ["filter"]
+      ) {
       __id
       totalCount
       edges {
@@ -174,20 +190,21 @@ const tiaListPageFragment = graphql`
   }
 `;
 
-export default function ProcessingActivitiesPage({ queryRef }: ProcessingActivitiesPageProps) {
+export default function ProcessingActivitiesPage({
+  queryRef,
+}: ProcessingActivitiesPageProps) {
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
   const { snapshotId } = useParams<{ snapshotId?: string }>();
   const isSnapshotMode = Boolean(snapshotId);
   const { isAuthorized } = use(PermissionsContext);
-  const [activeTab, setActiveTab] = useState<"activities" | "dpia" | "tia">("activities");
+  const [activeTab, setActiveTab] = useState<"activities" | "dpia" | "tia">(
+    "activities",
+  );
 
   usePageTitle(__("Processing Activities"));
 
-  const organization = usePreloadedQuery(
-    processingActivitiesQuery,
-    queryRef
-  );
+  const organization = usePreloadedQuery(processingActivitiesQuery, queryRef);
 
   const {
     data: activitiesData,
@@ -222,24 +239,33 @@ export default function ProcessingActivitiesPage({ queryRef }: ProcessingActivit
   const connectionId = ConnectionHandler.getConnectionID(
     organizationId,
     ProcessingActivitiesConnectionKey,
-    { filter: { snapshotId: snapshotId || null } }
+    { filter: { snapshotId: snapshotId || null } },
   );
-  const activities = activitiesData?.processingActivities?.edges?.map((edge) => edge.node) ?? [];
-  const dpias = dpiaData?.dataProtectionImpactAssessments?.edges?.map((edge) => edge.node) ?? [];
-  const tias = tiaData?.transferImpactAssessments?.edges?.map((edge) => edge.node) ?? [];
+  const activities =
+    activitiesData?.processingActivities?.edges?.map((edge) => edge.node) ?? [];
+  const dpias =
+    dpiaData?.dataProtectionImpactAssessments?.edges?.map(
+      (edge) => edge.node,
+    ) ?? [];
+  const tias =
+    tiaData?.transferImpactAssessments?.edges?.map((edge) => edge.node) ?? [];
 
-  const hasAnyAction = !isSnapshotMode && (
-    isAuthorized("ProcessingActivity", "updateProcessingActivity") ||
-    isAuthorized("ProcessingActivity", "deleteProcessingActivity")
-  );
+  const hasAnyAction =
+    !isSnapshotMode &&
+    (isAuthorized("ProcessingActivity", "updateProcessingActivity") ||
+      isAuthorized("ProcessingActivity", "deleteProcessingActivity"));
 
   return (
     <div className="space-y-6">
       {isSnapshotMode && snapshotId && (
         <SnapshotBanner snapshotId={snapshotId} />
       )}
-      <PageHeader title={__("Processing Activities")} description={__("Manage your processing activities under GDPR")}>
-        {!isSnapshotMode && activeTab === "activities" && (
+      <PageHeader
+        title={__("Processing Activities")}
+        description={__("Manage your processing activities under GDPR")}
+      >
+        {!isSnapshotMode &&
+          activeTab === "activities" &&
           isAuthorized("Organization", "createProcessingActivity") && (
             <CreateProcessingActivityDialog
               organizationId={organizationId}
@@ -249,18 +275,26 @@ export default function ProcessingActivitiesPage({ queryRef }: ProcessingActivit
                 {__("Add processing activity")}
               </Button>
             </CreateProcessingActivityDialog>
-          )
-        )}
+          )}
       </PageHeader>
 
       <Tabs>
-        <TabItem active={activeTab === "activities"} onClick={() => setActiveTab("activities")}>
+        <TabItem
+          active={activeTab === "activities"}
+          onClick={() => setActiveTab("activities")}
+        >
           {__("Processing Activities")}
         </TabItem>
-        <TabItem active={activeTab === "dpia"} onClick={() => setActiveTab("dpia")}>
+        <TabItem
+          active={activeTab === "dpia"}
+          onClick={() => setActiveTab("dpia")}
+        >
           {__("Data Protection Impact Assessments")}
         </TabItem>
-        <TabItem active={activeTab === "tia"} onClick={() => setActiveTab("tia")}>
+        <TabItem
+          active={activeTab === "tia"}
+          onClick={() => setActiveTab("tia")}
+        >
           {__("Transfer Impact Assessments")}
         </TabItem>
       </Tabs>
@@ -300,7 +334,9 @@ export default function ProcessingActivitiesPage({ queryRef }: ProcessingActivit
                     onClick={() => loadNextActivities(10)}
                     disabled={isLoadingNextActivities}
                   >
-                    {isLoadingNextActivities ? __("Loading...") : __("Load more")}
+                    {isLoadingNextActivities
+                      ? __("Loading...")
+                      : __("Load more")}
                   </Button>
                 </div>
               )}
@@ -312,7 +348,9 @@ export default function ProcessingActivitiesPage({ queryRef }: ProcessingActivit
                   {__("No processing activities yet")}
                 </h3>
                 <p className="text-txt-tertiary mb-4">
-                  {__("Create your first processing activity to get started with GDPR compliance.")}
+                  {__(
+                    "Create your first processing activity to get started with GDPR compliance.",
+                  )}
                 </p>
               </div>
             </Card>
@@ -359,7 +397,9 @@ export default function ProcessingActivitiesPage({ queryRef }: ProcessingActivit
                   {__("No Data Protection Impact Assessments yet")}
                 </h3>
                 <p className="text-txt-tertiary mb-4">
-                  {__("DPIAs are created from within individual processing activities.")}
+                  {__(
+                    "DPIAs are created from within individual processing activities.",
+                  )}
                 </p>
               </div>
             </Card>
@@ -406,7 +446,9 @@ export default function ProcessingActivitiesPage({ queryRef }: ProcessingActivit
                   {__("No Transfer Impact Assessments yet")}
                 </h3>
                 <p className="text-txt-tertiary mb-4">
-                  {__("TIAs are created from within individual processing activities.")}
+                  {__(
+                    "TIAs are created from within individual processing activities.",
+                  )}
                 </p>
               </div>
             </Card>
@@ -422,7 +464,9 @@ function ActivityRow({
   connectionId,
   hasAnyAction,
 }: {
-  activity: NodeOf<NonNullable<ProcessingActivitiesPageFragment$data['processingActivities']>>;
+  activity: NodeOf<
+    NonNullable<ProcessingActivitiesPageFragment$data["processingActivities"]>
+  >;
   connectionId: string;
   hasAnyAction: boolean;
 }) {
@@ -448,17 +492,18 @@ function ActivityRow({
       {
         message: sprintf(
           __(
-            "This will permanently delete the processing activity %s. This action cannot be undone."
+            "This will permanently delete the processing activity %s. This action cannot be undone.",
           ),
-          activity.name
+          activity.name,
         ),
-      }
+      },
     );
   };
 
-  const activityUrl = isSnapshotMode && snapshotId
-    ? `/organizations/${organizationId}/snapshots/${snapshotId}/processing-activities/${activity.id}`
-    : `/organizations/${organizationId}/processing-activities/${activity.id}`;
+  const activityUrl =
+    isSnapshotMode && snapshotId
+      ? `/organizations/${organizationId}/snapshots/${snapshotId}/processing-activities/${activity.id}`
+      : `/organizations/${organizationId}/processing-activities/${activity.id}`;
 
   return (
     <Tr to={activityUrl}>
@@ -474,7 +519,9 @@ function ActivityRow({
       <Td>{getLawfulBasisLabel(activity.lawfulBasis, __)}</Td>
       <Td>{activity.location || "-"}</Td>
       <Td>
-        <Badge variant={activity.internationalTransfers ? "warning" : "success"}>
+        <Badge
+          variant={activity.internationalTransfers ? "warning" : "success"}
+        >
           {activity.internationalTransfers ? __("Yes") : __("No")}
         </Badge>
       </Td>
@@ -500,16 +547,21 @@ function ActivityRow({
 function DPIARow({
   dpia,
 }: {
-  dpia: NodeOf<NonNullable<ProcessingActivitiesPageDPIAFragment$data['dataProtectionImpactAssessments']>>;
+  dpia: NodeOf<
+    NonNullable<
+      ProcessingActivitiesPageDPIAFragment$data["dataProtectionImpactAssessments"]
+    >
+  >;
 }) {
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
   const { snapshotId } = useParams<{ snapshotId?: string }>();
   const isSnapshotMode = Boolean(snapshotId);
 
-  const activityUrl = isSnapshotMode && snapshotId
-    ? `/organizations/${organizationId}/snapshots/${snapshotId}/processing-activities/${dpia.processingActivity.id}#dpia`
-    : `/organizations/${organizationId}/processing-activities/${dpia.processingActivity.id}#dpia`;
+  const activityUrl =
+    isSnapshotMode && snapshotId
+      ? `/organizations/${organizationId}/snapshots/${snapshotId}/processing-activities/${dpia.processingActivity.id}#dpia`
+      : `/organizations/${organizationId}/processing-activities/${dpia.processingActivity.id}#dpia`;
 
   return (
     <Tr to={activityUrl}>
@@ -528,10 +580,20 @@ function DPIARow({
       </Td>
       <Td>
         {dpia.residualRisk ? (
-          <Badge variant={dpia.residualRisk === "LOW" ? "success" : dpia.residualRisk === "MEDIUM" ? "warning" : "danger"}>
+          <Badge
+            variant={
+              dpia.residualRisk === "LOW"
+                ? "success"
+                : dpia.residualRisk === "MEDIUM"
+                  ? "warning"
+                  : "danger"
+            }
+          >
             {getResidualRiskLabel(dpia.residualRisk, __)}
           </Badge>
-        ) : "-"}
+        ) : (
+          "-"
+        )}
       </Td>
     </Tr>
   );
@@ -540,15 +602,20 @@ function DPIARow({
 function TIARow({
   tia,
 }: {
-  tia: NodeOf<NonNullable<ProcessingActivitiesPageTIAFragment$data['transferImpactAssessments']>>;
+  tia: NodeOf<
+    NonNullable<
+      ProcessingActivitiesPageTIAFragment$data["transferImpactAssessments"]
+    >
+  >;
 }) {
   const organizationId = useOrganizationId();
   const { snapshotId } = useParams<{ snapshotId?: string }>();
   const isSnapshotMode = Boolean(snapshotId);
 
-  const activityUrl = isSnapshotMode && snapshotId
-    ? `/organizations/${organizationId}/snapshots/${snapshotId}/processing-activities/${tia.processingActivity.id}#tia`
-    : `/organizations/${organizationId}/processing-activities/${tia.processingActivity.id}#tia`;
+  const activityUrl =
+    isSnapshotMode && snapshotId
+      ? `/organizations/${organizationId}/snapshots/${snapshotId}/processing-activities/${tia.processingActivity.id}#tia`
+      : `/organizations/${organizationId}/processing-activities/${tia.processingActivity.id}#tia`;
 
   return (
     <Tr to={activityUrl}>

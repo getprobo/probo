@@ -11,8 +11,8 @@ import {
   withQueryRef,
   type AppRoute,
 } from "@probo/routes";
-import type { ProcessingActivityGraphListQuery } from "/hooks/graph/__generated__/ProcessingActivityGraphListQuery.graphql";
-import type { ProcessingActivityGraphNodeQuery } from "/hooks/graph/__generated__/ProcessingActivityGraphNodeQuery.graphql";
+import type { ProcessingActivityGraphListQuery } from "/__generated__/core/ProcessingActivityGraphListQuery.graphql";
+import type { ProcessingActivityGraphNodeQuery } from "/__generated__/core/ProcessingActivityGraphNodeQuery.graphql";
 
 export const processingActivityRoutes = [
   {

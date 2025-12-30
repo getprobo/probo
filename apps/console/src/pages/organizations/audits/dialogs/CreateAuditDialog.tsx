@@ -16,12 +16,18 @@ import z from "zod";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { ControlledField } from "/components/form/ControlledField";
 import { useCreateAudit } from "/hooks/graph/AuditGraph";
-import { auditStates, getAuditStateLabel, formatDatetime, formatError, type GraphQLError } from "@probo/helpers";
+import {
+  auditStates,
+  getAuditStateLabel,
+  formatDatetime,
+  formatError,
+  type GraphQLError,
+} from "@probo/helpers";
 import { useLazyLoadQuery } from "react-relay";
 import { graphql } from "relay-runtime";
 import { Suspense } from "react";
 import { Controller, type Control } from "react-hook-form";
-import type { CreateAuditDialogFrameworksQuery } from "./__generated__/CreateAuditDialogFrameworksQuery.graphql";
+import type { CreateAuditDialogFrameworksQuery } from "/__generated__/core/CreateAuditDialogFrameworksQuery.graphql";
 
 const frameworksQuery = graphql`
   query CreateAuditDialogFrameworksQuery($organizationId: ID!) {
@@ -45,7 +51,13 @@ const schema = z.object({
   name: z.string().optional(),
   validFrom: z.string().optional(),
   validUntil: z.string().optional(),
-  state: z.enum(["NOT_STARTED", "IN_PROGRESS", "COMPLETED", "REJECTED", "OUTDATED"]),
+  state: z.enum([
+    "NOT_STARTED",
+    "IN_PROGRESS",
+    "COMPLETED",
+    "REJECTED",
+    "OUTDATED",
+  ]),
 });
 
 type Props = {
@@ -94,7 +106,10 @@ export function CreateAuditDialog({
     } catch (error) {
       toast({
         title: __("Error"),
-        description: formatError(__("Failed to create audit"), error as GraphQLError),
+        description: formatError(
+          __("Failed to create audit"),
+          error as GraphQLError,
+        ),
         variant: "error",
       });
     }
@@ -109,7 +124,11 @@ export function CreateAuditDialog({
       <form onSubmit={onSubmit} className="space-y-4">
         <DialogContent padded className="space-y-4">
           <Field label={__("Framework")}>
-            <Suspense fallback={<Select variant="editor" disabled placeholder="Loading..." />}>
+            <Suspense
+              fallback={
+                <Select variant="editor" disabled placeholder="Loading..." />
+              }
+            >
               <FrameworkSelect
                 organizationId={organizationId}
                 control={control}
@@ -157,15 +176,22 @@ type FormSchema = z.infer<typeof schema>;
 function FrameworkSelect({
   organizationId,
   control,
-  name
+  name,
 }: {
   organizationId: string;
   control: Control<FormSchema>;
   name: keyof FormSchema;
 }) {
   const { __ } = useTranslate();
-  const data = useLazyLoadQuery<CreateAuditDialogFrameworksQuery>(frameworksQuery, { organizationId }, { fetchPolicy: "network-only" });
-  const frameworks = data?.organization?.frameworks?.edges?.map((edge) => edge.node).filter((node): node is NonNullable<typeof node> => node !== null) ?? [];
+  const data = useLazyLoadQuery<CreateAuditDialogFrameworksQuery>(
+    frameworksQuery,
+    { organizationId },
+    { fetchPolicy: "network-only" },
+  );
+  const frameworks =
+    data?.organization?.frameworks?.edges
+      ?.map((edge) => edge.node)
+      .filter((node): node is NonNullable<typeof node> => node !== null) ?? [];
 
   return (
     <Controller

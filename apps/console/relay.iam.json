@@ -1,8 +1,0 @@
-{
-  "src": "./src/pages/iam",
-  "schema": "../../pkg/server/api/connect/v1/schema.graphql",
-  "language": "typescript",
-  "eagerEsModules": true,
-  "noFutureProofEnums": true,
-  "excludes": ["**/node_modules/**", "**/__generated__/**"]
-}

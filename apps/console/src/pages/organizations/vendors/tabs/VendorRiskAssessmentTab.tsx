@@ -1,6 +1,6 @@
 import { useOutletContext, useParams } from "react-router";
 import { graphql } from "relay-runtime";
-import type { VendorRiskAssessmentTabFragment$key } from "./__generated__/VendorRiskAssessmentTabFragment.graphql";
+import type { VendorRiskAssessmentTabFragment$key } from "/__generated__/core/VendorRiskAssessmentTabFragment.graphql";
 import { useTranslate } from "@probo/i18n";
 import { usePageTitle } from "@probo/hooks";
 import {
@@ -17,7 +17,7 @@ import {
 } from "@probo/ui";
 import { formatDate } from "@probo/helpers";
 import { useFragment, useRefetchableFragment } from "react-relay";
-import type { VendorRiskAssessmentTabFragment_assessment$key } from "./__generated__/VendorRiskAssessmentTabFragment_assessment.graphql";
+import type { VendorRiskAssessmentTabFragment_assessment$key } from "/__generated__/core/VendorRiskAssessmentTabFragment_assessment.graphql";
 import { SortableTable, SortableTh } from "/components/SortableTable";
 import { CreateRiskAssessmentDialog } from "../dialogs/CreateRiskAssessmentDialog";
 import clsx from "clsx";
@@ -75,7 +75,7 @@ export default function VendorRiskAssessmentTab() {
   }>();
   const [data, refetch] = useRefetchableFragment(
     riskAssessmentsFragment,
-    vendor
+    vendor,
   );
   const assessments = data.riskAssessments.edges.map((edge) => edge.node);
   const { __ } = useTranslate();
@@ -83,7 +83,10 @@ export default function VendorRiskAssessmentTab() {
   const isSnapshotMode = Boolean(snapshotId);
   const [expanded, setExpanded] = useState<string | null>(null);
   const { isAuthorized } = use(PermissionsContext);
-  const canCreateRiskAssessment = isAuthorized("Vendor", "createVendorRiskAssessment");
+  const canCreateRiskAssessment = isAuthorized(
+    "Vendor",
+    "createVendorRiskAssessment",
+  );
 
   usePageTitle(vendor.name + " - " + __("Risk Assessments"));
 
@@ -136,7 +139,7 @@ export default function VendorRiskAssessmentTab() {
                 isExpanded={expanded === assessment.id}
                 onClick={() =>
                   setExpanded((prev) =>
-                    prev === assessment.id ? null : assessment.id
+                    prev === assessment.id ? null : assessment.id,
                   )
                 }
               />
@@ -159,7 +162,7 @@ function AssessmentRow(props: AssessmentRowProps) {
   const assessment =
     useFragment<VendorRiskAssessmentTabFragment_assessment$key>(
       riskAssessmentFragment,
-      props.assessmentKey
+      props.assessmentKey,
     );
   const { relativeDateFormat } = useTranslate();
   const isExpired = new Date(assessment.expiresAt) < new Date();
@@ -170,7 +173,7 @@ function AssessmentRow(props: AssessmentRowProps) {
         className={clsx(
           isExpired && "opacity-50",
           "cursor-pointer",
-          props.isExpanded && "border-none"
+          props.isExpanded && "border-none",
         )}
         onClick={() => props.onClick(assessment.id)}
       >
