@@ -9,13 +9,12 @@ import { graphql } from "relay-runtime";
 import { useFragment } from "react-relay";
 import type { DomainCardFragment$key } from "/__generated__/core/DomainCardFragment.graphql";
 import { DeleteDomainDialog } from "./DeleteDomainDialog";
-import { use } from "react";
-import { PermissionsContext } from "/providers/NewPermissionsContext";
 
 const fragment = graphql`
   fragment DomainCardFragment on CustomDomain {
     domain
     sslStatus
+    canDelete: permission(action: "core:custom-domain:delete")
     ...DomainDialogFragment
   }
 `;
@@ -24,7 +23,6 @@ export function DomainCard(props: { fKey: DomainCardFragment$key }) {
   const { fKey } = props;
 
   const { __ } = useTranslate();
-  const { canDeleteCustomDomain } = use(PermissionsContext);
 
   const domain = useFragment<DomainCardFragment$key>(fragment, fKey);
 
@@ -53,7 +51,7 @@ export function DomainCard(props: { fKey: DomainCardFragment$key }) {
               <Button variant="secondary">{__("View Details")}</Button>
             </DomainDialog>
 
-            {canDeleteCustomDomain && (
+            {domain.canDelete && (
               <DeleteDomainDialog domain={domain.domain}>
                 <Button variant="danger">{__("Delete")}</Button>
               </DeleteDomainDialog>

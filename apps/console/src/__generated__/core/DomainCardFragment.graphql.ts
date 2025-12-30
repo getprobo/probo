@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<efdbeab080fabb165a3a169fbedf3d8f>>
+ * @generated SignedSource<<ab516d36b92795ed8d94d69153957f93>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,6 +12,7 @@ import { ReaderFragment } from 'relay-runtime';
 export type SSLStatus = "ACTIVE" | "EXPIRED" | "FAILED" | "PENDING" | "PROVISIONING" | "RENEWING";
 import { FragmentRefs } from "relay-runtime";
 export type DomainCardFragment$data = {
+  readonly canDelete: boolean;
   readonly domain: string;
   readonly sslStatus: SSLStatus;
   readonly " $fragmentSpreads": FragmentRefs<"DomainDialogFragment">;
@@ -43,6 +44,19 @@ const node: ReaderFragment = {
       "storageKey": null
     },
     {
+      "alias": "canDelete",
+      "args": [
+        {
+          "kind": "Literal",
+          "name": "action",
+          "value": "core:custom-domain:delete"
+        }
+      ],
+      "kind": "ScalarField",
+      "name": "permission",
+      "storageKey": "permission(action:\"core:custom-domain:delete\")"
+    },
+    {
       "args": null,
       "kind": "FragmentSpread",
       "name": "DomainDialogFragment"
@@ -52,6 +66,6 @@ const node: ReaderFragment = {
   "abstractKey": null
 };
 
-(node as any).hash = "672098f5351cf031d958263155e180ac";
+(node as any).hash = "91cc7871d5ac257f2540568a9a10ce0f";
 
 export default node;

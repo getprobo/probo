@@ -5,8 +5,6 @@ import { useTranslate } from "@probo/i18n";
 import { DomainCard } from "./_components/DomainCard";
 import { NewDomainDialog } from "./_components/NewDomainDialog";
 import { Button, Card, IconPlusLarge } from "@probo/ui";
-import { PermissionsContext } from "/providers/NewPermissionsContext";
-import { use } from "react";
 
 export const domainSettingsPageQuery = graphql`
   query DomainSettingsPageQuery($organizationId: ID!) {
@@ -14,6 +12,7 @@ export const domainSettingsPageQuery = graphql`
       __typename
       ... on Organization {
         id
+        canCreateCustomDomain: permission(action: "core:custom-domain:create")
         customDomain {
           domain
           ...DomainCardFragment
@@ -29,7 +28,6 @@ export function DomainSettingsPage(props: {
   const { queryRef } = props;
 
   const { __ } = useTranslate();
-  const { canCreateCustomDomain } = use(PermissionsContext);
 
   const { organization } = usePreloadedQuery<DomainSettingsPageQuery>(
     domainSettingsPageQuery,
@@ -56,7 +54,7 @@ export function DomainSettingsPage(props: {
               )}
             </p>
             <div className="flex justify-center">
-              {canCreateCustomDomain && (
+              {organization.canCreateCustomDomain && (
                 <NewDomainDialog>
                   <Button icon={IconPlusLarge}>{__("Add Domain")}</Button>
                 </NewDomainDialog>

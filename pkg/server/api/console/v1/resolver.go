@@ -19,6 +19,7 @@ package console_v1
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -39,6 +40,7 @@ import (
 	"go.probo.inc/probo/pkg/securecookie"
 	connect_v1 "go.probo.inc/probo/pkg/server/api/connect/v1"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
+	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 	"go.probo.inc/probo/pkg/statelesstoken"
 )
@@ -329,4 +331,39 @@ func (r *Resolver) MustAuthorize(ctx context.Context, entityID gid.GID, action i
 	if err != nil {
 		panic(err)
 	}
+}
+
+func (r *Resolver) Permission(ctx context.Context, obj types.Node, action string) (bool, error) {
+	identity := connect_v1.IdentityFromContext(ctx)
+
+	err := r.iam.Authorizer.Authorize(
+		ctx,
+		iam.AuthorizeParams{
+			Principal: identity.ID,
+			Resource:  obj.GetID(),
+			Action:    action,
+		},
+	)
+
+	if err != nil {
+		var errInsufficientPermissions *iam.ErrInsufficientPermissions
+		if errors.As(err, &errInsufficientPermissions) {
+			graphql.AddError(
+				ctx,
+				&gqlerror.Error{
+					Path:    graphql.GetPath(ctx),
+					Message: err.Error(),
+					Extensions: map[string]interface{}{
+						"code": "UNAUTHORIZED",
+					},
+				},
+			)
+
+			return false, nil
+		}
+
+		panic(fmt.Errorf("cannot authorize: %w", err))
+	}
+
+	return true, nil
 }

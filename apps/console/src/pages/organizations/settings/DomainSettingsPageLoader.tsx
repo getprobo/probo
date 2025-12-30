@@ -7,10 +7,6 @@ import {
 import { useQueryLoader } from "react-relay";
 import { CoreRelayProvider } from "/providers/CoreRelayProvider";
 import type { DomainSettingsPageQuery } from "/__generated__/core/DomainSettingsPageQuery.graphql";
-import { PermissionsProviderLoader } from "/providers/NewPermissionsProvider";
-import { IAMRelayProvider } from "/providers/IAMRelayProvider";
-import { domainSettingsPagePermissionsQuery } from "./domainSettingsPage.iam";
-import type { domainSettingsPage_permissionsQuery } from "/__generated__/iam/domainSettingsPage_permissionsQuery.graphql";
 
 function DomainSettingsPageLoader() {
   const organizationId = useOrganizationId();
@@ -33,16 +29,10 @@ function DomainSettingsPageLoader() {
 
 export default function () {
   return (
-    <IAMRelayProvider>
-      <PermissionsProviderLoader<domainSettingsPage_permissionsQuery>
-        query={domainSettingsPagePermissionsQuery}
-      >
-        <CoreRelayProvider>
-          <Suspense>
-            <DomainSettingsPageLoader />
-          </Suspense>
-        </CoreRelayProvider>
-      </PermissionsProviderLoader>
-    </IAMRelayProvider>
+    <CoreRelayProvider>
+      <Suspense>
+        <DomainSettingsPageLoader />
+      </Suspense>
+    </CoreRelayProvider>
   );
 }

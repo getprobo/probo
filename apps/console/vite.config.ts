@@ -7,7 +7,7 @@ import { fileURLToPath, URL } from "node:url";
 export default defineConfig({
   plugins: [
     react({
-      exclude: ["src/pages/iam/**/*", "src/pages/**/*.iam.ts"],
+      exclude: ["src/pages/iam/**/*"],
       babel: {
         plugins: [
           [
@@ -21,7 +21,7 @@ export default defineConfig({
       },
     }),
     react({
-      include: ["src/pages/iam/**/*", "src/pages/**/*.iam.ts"],
+      include: ["src/pages/iam/**/*"],
       babel: {
         plugins: [
           [
