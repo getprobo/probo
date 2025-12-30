@@ -55,6 +55,7 @@ type ResolverRoot interface {
 	ContinualImprovementConnection() ContinualImprovementConnectionResolver
 	Control() ControlResolver
 	ControlConnection() ControlConnectionResolver
+	CustomDomain() CustomDomainResolver
 	DataProtectionImpactAssessment() DataProtectionImpactAssessmentResolver
 	DataProtectionImpactAssessmentConnection() DataProtectionImpactAssessmentConnectionResolver
 	Datum() DatumResolver
@@ -78,6 +79,7 @@ type ResolverRoot interface {
 	Obligation() ObligationResolver
 	ObligationConnection() ObligationConnectionResolver
 	Organization() OrganizationResolver
+	People() PeopleResolver
 	PeopleConnection() PeopleConnectionResolver
 	ProcessingActivity() ProcessingActivityResolver
 	ProcessingActivityConnection() ProcessingActivityConnectionResolver
@@ -130,6 +132,7 @@ type ComplexityRoot struct {
 		Name            func(childComplexity int) int
 		Organization    func(childComplexity int) int
 		Owner           func(childComplexity int) int
+		Permission      func(childComplexity int, action string) int
 		SnapshotID      func(childComplexity int) int
 		UpdatedAt       func(childComplexity int) int
 		Vendors         func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorOrderBy) int
@@ -153,6 +156,7 @@ type ComplexityRoot struct {
 		ID                    func(childComplexity int) int
 		Name                  func(childComplexity int) int
 		Organization          func(childComplexity int) int
+		Permission            func(childComplexity int, action string) int
 		Report                func(childComplexity int) int
 		ReportURL             func(childComplexity int) int
 		State                 func(childComplexity int) int
@@ -200,6 +204,7 @@ type ComplexityRoot struct {
 		ID           func(childComplexity int) int
 		Organization func(childComplexity int) int
 		Owner        func(childComplexity int) int
+		Permission   func(childComplexity int, action string) int
 		Priority     func(childComplexity int) int
 		ReferenceID  func(childComplexity int) int
 		SnapshotID   func(childComplexity int) int
@@ -232,6 +237,7 @@ type ComplexityRoot struct {
 		Measures               func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy, filter *types.MeasureFilter) int
 		Name                   func(childComplexity int) int
 		Organization           func(childComplexity int) int
+		Permission             func(childComplexity int, action string) int
 		SectionTitle           func(childComplexity int) int
 		Snapshots              func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.SnapshotOrderBy) int
 		Status                 func(childComplexity int) int
@@ -407,6 +413,7 @@ type ComplexityRoot struct {
 		Domain       func(childComplexity int) int
 		ID           func(childComplexity int) int
 		Organization func(childComplexity int) int
+		Permission   func(childComplexity int, action string) int
 		SslExpiresAt func(childComplexity int) int
 		SslStatus    func(childComplexity int) int
 		UpdatedAt    func(childComplexity int) int
@@ -427,6 +434,7 @@ type ComplexityRoot struct {
 		Mitigations                 func(childComplexity int) int
 		NecessityAndProportionality func(childComplexity int) int
 		Organization                func(childComplexity int) int
+		Permission                  func(childComplexity int, action string) int
 		PotentialRisk               func(childComplexity int) int
 		ProcessingActivity          func(childComplexity int) int
 		ResidualRisk                func(childComplexity int) int
@@ -644,6 +652,7 @@ type ComplexityRoot struct {
 		ID                      func(childComplexity int) int
 		Organization            func(childComplexity int) int
 		Owner                   func(childComplexity int) int
+		Permission              func(childComplexity int, action string) int
 		Title                   func(childComplexity int) int
 		TrustCenterVisibility   func(childComplexity int) int
 		UpdatedAt               func(childComplexity int) int
@@ -692,6 +701,7 @@ type ComplexityRoot struct {
 		CreatedAt       func(childComplexity int) int
 		DocumentVersion func(childComplexity int) int
 		ID              func(childComplexity int) int
+		Permission      func(childComplexity int, action string) int
 		RequestedAt     func(childComplexity int) int
 		SignedAt        func(childComplexity int) int
 		SignedBy        func(childComplexity int) int
@@ -715,6 +725,7 @@ type ComplexityRoot struct {
 		File        func(childComplexity int) int
 		ID          func(childComplexity int) int
 		Measure     func(childComplexity int) int
+		Permission  func(childComplexity int, action string) int
 		Size        func(childComplexity int) int
 		State       func(childComplexity int) int
 		Task        func(childComplexity int) int
@@ -777,6 +788,7 @@ type ComplexityRoot struct {
 		LightLogoURL func(childComplexity int) int
 		Name         func(childComplexity int) int
 		Organization func(childComplexity int) int
+		Permission   func(childComplexity int, action string) int
 		UpdatedAt    func(childComplexity int) int
 	}
 
@@ -823,6 +835,7 @@ type ComplexityRoot struct {
 		Evidences   func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.EvidenceOrderBy) int
 		ID          func(childComplexity int) int
 		Name        func(childComplexity int) int
+		Permission  func(childComplexity int, action string) int
 		Risks       func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskOrderBy, filter *types.RiskFilter) int
 		State       func(childComplexity int) int
 		Tasks       func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TaskOrderBy) int
@@ -848,6 +861,7 @@ type ComplexityRoot struct {
 		Minutes      func(childComplexity int) int
 		Name         func(childComplexity int) int
 		Organization func(childComplexity int) int
+		Permission   func(childComplexity int, action string) int
 		UpdatedAt    func(childComplexity int) int
 	}
 
@@ -1007,6 +1021,7 @@ type ComplexityRoot struct {
 		ID                 func(childComplexity int) int
 		Organization       func(childComplexity int) int
 		Owner              func(childComplexity int) int
+		Permission         func(childComplexity int, action string) int
 		ReferenceID        func(childComplexity int) int
 		RootCause          func(childComplexity int) int
 		SnapshotID         func(childComplexity int) int
@@ -1034,6 +1049,7 @@ type ComplexityRoot struct {
 		LastReviewDate         func(childComplexity int) int
 		Organization           func(childComplexity int) int
 		Owner                  func(childComplexity int) int
+		Permission             func(childComplexity int, action string) int
 		Regulator              func(childComplexity int) int
 		Requirement            func(childComplexity int) int
 		SnapshotID             func(childComplexity int) int
@@ -1078,6 +1094,7 @@ type ComplexityRoot struct {
 		Nonconformities                 func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.NonconformityOrderBy, filter *types.NonconformityFilter) int
 		Obligations                     func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ObligationOrderBy, filter *types.ObligationFilter) int
 		Peoples                         func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.PeopleOrderBy, filter *types.PeopleFilter) int
+		Permission                      func(childComplexity int, action string) int
 		ProcessingActivities            func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityOrderBy, filter *types.ProcessingActivityFilter) int
 		RightsRequests                  func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RightsRequestOrderBy) int
 		Risks                           func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskOrderBy, filter *types.RiskFilter) int
@@ -1112,6 +1129,7 @@ type ComplexityRoot struct {
 		FullName                 func(childComplexity int) int
 		ID                       func(childComplexity int) int
 		Kind                     func(childComplexity int) int
+		Permission               func(childComplexity int, action string) int
 		Position                 func(childComplexity int) int
 		PrimaryEmailAddress      func(childComplexity int) int
 		UpdatedAt                func(childComplexity int) int
@@ -1143,6 +1161,7 @@ type ComplexityRoot struct {
 		Name                                 func(childComplexity int) int
 		NextReviewDate                       func(childComplexity int) int
 		Organization                         func(childComplexity int) int
+		Permission                           func(childComplexity int, action string) int
 		PersonalDataCategory                 func(childComplexity int) int
 		Purpose                              func(childComplexity int) int
 		Recipients                           func(childComplexity int) int
@@ -1188,6 +1207,7 @@ type ComplexityRoot struct {
 		ID          func(childComplexity int) int
 		MimeType    func(childComplexity int) int
 		ObjectKey   func(childComplexity int) int
+		Permission  func(childComplexity int, action string) int
 		Size        func(childComplexity int) int
 		UpdatedAt   func(childComplexity int) int
 	}
@@ -1241,6 +1261,7 @@ type ComplexityRoot struct {
 		Obligations        func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ObligationOrderBy, filter *types.ObligationFilter) int
 		Organization       func(childComplexity int) int
 		Owner              func(childComplexity int) int
+		Permission         func(childComplexity int, action string) int
 		ResidualImpact     func(childComplexity int) int
 		ResidualLikelihood func(childComplexity int) int
 		ResidualRiskScore  func(childComplexity int) int
@@ -1320,6 +1341,7 @@ type ComplexityRoot struct {
 		ID           func(childComplexity int) int
 		Name         func(childComplexity int) int
 		Organization func(childComplexity int) int
+		Permission   func(childComplexity int, action string) int
 		Type         func(childComplexity int) int
 	}
 
@@ -1344,6 +1366,7 @@ type ComplexityRoot struct {
 		Measure      func(childComplexity int) int
 		Name         func(childComplexity int) int
 		Organization func(childComplexity int) int
+		Permission   func(childComplexity int, action string) int
 		State        func(childComplexity int) int
 		TimeEstimate func(childComplexity int) int
 		UpdatedAt    func(childComplexity int) int
@@ -1367,6 +1390,7 @@ type ComplexityRoot struct {
 		LegalMechanism        func(childComplexity int) int
 		LocalLawRisk          func(childComplexity int) int
 		Organization          func(childComplexity int) int
+		Permission            func(childComplexity int, action string) int
 		ProcessingActivity    func(childComplexity int) int
 		SupplementaryMeasures func(childComplexity int) int
 		Transfer              func(childComplexity int) int
@@ -1392,6 +1416,7 @@ type ComplexityRoot struct {
 		NdaFileName  func(childComplexity int) int
 		NdaFileURL   func(childComplexity int) int
 		Organization func(childComplexity int) int
+		Permission   func(childComplexity int, action string) int
 		References   func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterReferenceOrderField]) int
 		UpdatedAt    func(childComplexity int) int
 	}
@@ -1407,6 +1432,7 @@ type ComplexityRoot struct {
 		LastTokenExpiresAt                func(childComplexity int) int
 		Name                              func(childComplexity int) int
 		PendingRequestCount               func(childComplexity int) int
+		Permission                        func(childComplexity int, action string) int
 		UpdatedAt                         func(childComplexity int) int
 	}
 
@@ -1477,6 +1503,7 @@ type ComplexityRoot struct {
 		ID          func(childComplexity int) int
 		LogoURL     func(childComplexity int) int
 		Name        func(childComplexity int) int
+		Permission  func(childComplexity int, action string) int
 		Rank        func(childComplexity int) int
 		UpdatedAt   func(childComplexity int) int
 		WebsiteURL  func(childComplexity int) int
@@ -1651,6 +1678,7 @@ type ComplexityRoot struct {
 		LegalName                     func(childComplexity int) int
 		Name                          func(childComplexity int) int
 		Organization                  func(childComplexity int) int
+		Permission                    func(childComplexity int, action string) int
 		PrivacyPolicyURL              func(childComplexity int) int
 		RiskAssessments               func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorRiskAssessmentOrder) int
 		SecurityOwner                 func(childComplexity int) int
@@ -1673,6 +1701,7 @@ type ComplexityRoot struct {
 		FileSize   func(childComplexity int) int
 		FileURL    func(childComplexity int) int
 		ID         func(childComplexity int) int
+		Permission func(childComplexity int, action string) int
 		UpdatedAt  func(childComplexity int) int
 		ValidFrom  func(childComplexity int) int
 		ValidUntil func(childComplexity int) int
@@ -1683,6 +1712,7 @@ type ComplexityRoot struct {
 		CreatedAt  func(childComplexity int) int
 		File       func(childComplexity int) int
 		ID         func(childComplexity int) int
+		Permission func(childComplexity int, action string) int
 		ReportDate func(childComplexity int) int
 		ReportName func(childComplexity int) int
 		UpdatedAt  func(childComplexity int) int
@@ -1707,14 +1737,15 @@ type ComplexityRoot struct {
 	}
 
 	VendorContact struct {
-		CreatedAt func(childComplexity int) int
-		Email     func(childComplexity int) int
-		FullName  func(childComplexity int) int
-		ID        func(childComplexity int) int
-		Phone     func(childComplexity int) int
-		Role      func(childComplexity int) int
-		UpdatedAt func(childComplexity int) int
-		Vendor    func(childComplexity int) int
+		CreatedAt  func(childComplexity int) int
+		Email      func(childComplexity int) int
+		FullName   func(childComplexity int) int
+		ID         func(childComplexity int) int
+		Permission func(childComplexity int, action string) int
+		Phone      func(childComplexity int) int
+		Role       func(childComplexity int) int
+		UpdatedAt  func(childComplexity int) int
+		Vendor     func(childComplexity int) int
 	}
 
 	VendorContactConnection struct {
@@ -1733,6 +1764,7 @@ type ComplexityRoot struct {
 		FileSize   func(childComplexity int) int
 		FileURL    func(childComplexity int) int
 		ID         func(childComplexity int) int
+		Permission func(childComplexity int, action string) int
 		UpdatedAt  func(childComplexity int) int
 		ValidFrom  func(childComplexity int) int
 		ValidUntil func(childComplexity int) int
@@ -1751,6 +1783,7 @@ type ComplexityRoot struct {
 		ExpiresAt       func(childComplexity int) int
 		ID              func(childComplexity int) int
 		Notes           func(childComplexity int) int
+		Permission      func(childComplexity int, action string) int
 		UpdatedAt       func(childComplexity int) int
 		Vendor          func(childComplexity int) int
 	}
@@ -1770,6 +1803,7 @@ type ComplexityRoot struct {
 		Description func(childComplexity int) int
 		ID          func(childComplexity int) int
 		Name        func(childComplexity int) int
+		Permission  func(childComplexity int, action string) int
 		UpdatedAt   func(childComplexity int) int
 		Vendor      func(childComplexity int) int
 	}
@@ -1796,6 +1830,8 @@ type AssetResolver interface {
 	Vendors(ctx context.Context, obj *types.Asset, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorOrderBy) (*types.VendorConnection, error)
 
 	Organization(ctx context.Context, obj *types.Asset) (*types.Organization, error)
+
+	Permission(ctx context.Context, obj *types.Asset, action string) (bool, error)
 }
 type AssetConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.AssetConnection) (int, error)
@@ -1808,6 +1844,8 @@ type AuditResolver interface {
 	ReportURL(ctx context.Context, obj *types.Audit) (*string, error)
 
 	Controls(ctx context.Context, obj *types.Audit, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) (*types.ControlConnection, error)
+
+	Permission(ctx context.Context, obj *types.Audit, action string) (bool, error)
 }
 type AuditConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.AuditConnection) (int, error)
@@ -1816,6 +1854,8 @@ type ContinualImprovementResolver interface {
 	Organization(ctx context.Context, obj *types.ContinualImprovement) (*types.Organization, error)
 
 	Owner(ctx context.Context, obj *types.ContinualImprovement) (*types.People, error)
+
+	Permission(ctx context.Context, obj *types.ContinualImprovement, action string) (bool, error)
 }
 type ContinualImprovementConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.ContinualImprovementConnection) (int, error)
@@ -1828,13 +1868,20 @@ type ControlResolver interface {
 	Documents(ctx context.Context, obj *types.Control, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy, filter *types.DocumentFilter) (*types.DocumentConnection, error)
 	Audits(ctx context.Context, obj *types.Control, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AuditOrderBy) (*types.AuditConnection, error)
 	Snapshots(ctx context.Context, obj *types.Control, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.SnapshotOrderBy) (*types.SnapshotConnection, error)
+
+	Permission(ctx context.Context, obj *types.Control, action string) (bool, error)
 }
 type ControlConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.ControlConnection) (int, error)
 }
+type CustomDomainResolver interface {
+	Permission(ctx context.Context, obj *types.CustomDomain, action string) (bool, error)
+}
 type DataProtectionImpactAssessmentResolver interface {
 	ProcessingActivity(ctx context.Context, obj *types.DataProtectionImpactAssessment) (*types.ProcessingActivity, error)
 	Organization(ctx context.Context, obj *types.DataProtectionImpactAssessment) (*types.Organization, error)
+
+	Permission(ctx context.Context, obj *types.DataProtectionImpactAssessment, action string) (bool, error)
 }
 type DataProtectionImpactAssessmentConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.DataProtectionImpactAssessmentConnection) (int, error)
@@ -1852,6 +1899,8 @@ type DocumentResolver interface {
 	Organization(ctx context.Context, obj *types.Document) (*types.Organization, error)
 	Versions(ctx context.Context, obj *types.Document, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentVersionOrderBy, filter *types.DocumentVersionFilter) (*types.DocumentVersionConnection, error)
 	Controls(ctx context.Context, obj *types.Document, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) (*types.ControlConnection, error)
+
+	Permission(ctx context.Context, obj *types.Document, action string) (bool, error)
 }
 type DocumentConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.DocumentConnection) (int, error)
@@ -1867,12 +1916,16 @@ type DocumentVersionSignatureResolver interface {
 	DocumentVersion(ctx context.Context, obj *types.DocumentVersionSignature) (*types.DocumentVersion, error)
 
 	SignedBy(ctx context.Context, obj *types.DocumentVersionSignature) (*types.People, error)
+
+	Permission(ctx context.Context, obj *types.DocumentVersionSignature, action string) (bool, error)
 }
 type EvidenceResolver interface {
 	File(ctx context.Context, obj *types.Evidence) (*types.File, error)
 
 	Task(ctx context.Context, obj *types.Evidence) (*types.Task, error)
 	Measure(ctx context.Context, obj *types.Evidence) (*types.Measure, error)
+
+	Permission(ctx context.Context, obj *types.Evidence, action string) (bool, error)
 }
 type EvidenceConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.EvidenceConnection) (int, error)
@@ -1885,6 +1938,8 @@ type FrameworkResolver interface {
 	Controls(ctx context.Context, obj *types.Framework, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) (*types.ControlConnection, error)
 	LightLogoURL(ctx context.Context, obj *types.Framework) (*string, error)
 	DarkLogoURL(ctx context.Context, obj *types.Framework) (*string, error)
+
+	Permission(ctx context.Context, obj *types.Framework, action string) (bool, error)
 }
 type FrameworkConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.FrameworkConnection) (int, error)
@@ -1894,6 +1949,8 @@ type MeasureResolver interface {
 	Tasks(ctx context.Context, obj *types.Measure, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TaskOrderBy) (*types.TaskConnection, error)
 	Risks(ctx context.Context, obj *types.Measure, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskOrderBy, filter *types.RiskFilter) (*types.RiskConnection, error)
 	Controls(ctx context.Context, obj *types.Measure, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) (*types.ControlConnection, error)
+
+	Permission(ctx context.Context, obj *types.Measure, action string) (bool, error)
 }
 type MeasureConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.MeasureConnection) (int, error)
@@ -1901,6 +1958,8 @@ type MeasureConnectionResolver interface {
 type MeetingResolver interface {
 	Attendees(ctx context.Context, obj *types.Meeting) ([]*types.People, error)
 	Organization(ctx context.Context, obj *types.Meeting) (*types.Organization, error)
+
+	Permission(ctx context.Context, obj *types.Meeting, action string) (bool, error)
 }
 type MeetingConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.MeetingConnection) (int, error)
@@ -2044,6 +2103,8 @@ type NonconformityResolver interface {
 	Audit(ctx context.Context, obj *types.Nonconformity) (*types.Audit, error)
 
 	Owner(ctx context.Context, obj *types.Nonconformity) (*types.People, error)
+
+	Permission(ctx context.Context, obj *types.Nonconformity, action string) (bool, error)
 }
 type NonconformityConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.NonconformityConnection) (int, error)
@@ -2052,6 +2113,8 @@ type ObligationResolver interface {
 	Organization(ctx context.Context, obj *types.Obligation) (*types.Organization, error)
 
 	Owner(ctx context.Context, obj *types.Obligation) (*types.People, error)
+
+	Permission(ctx context.Context, obj *types.Obligation, action string) (bool, error)
 }
 type ObligationConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.ObligationConnection) (int, error)
@@ -2085,6 +2148,11 @@ type OrganizationResolver interface {
 	TrustCenterFiles(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterFileOrderField]) (*types.TrustCenterFileConnection, error)
 	TrustCenter(ctx context.Context, obj *types.Organization) (*types.TrustCenter, error)
 	CustomDomain(ctx context.Context, obj *types.Organization) (*types.CustomDomain, error)
+
+	Permission(ctx context.Context, obj *types.Organization, action string) (bool, error)
+}
+type PeopleResolver interface {
+	Permission(ctx context.Context, obj *types.People, action string) (bool, error)
 }
 type PeopleConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.PeopleConnection) (int, error)
@@ -2096,6 +2164,8 @@ type ProcessingActivityResolver interface {
 	Vendors(ctx context.Context, obj *types.ProcessingActivity, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorOrderBy) (*types.VendorConnection, error)
 	DataProtectionImpactAssessment(ctx context.Context, obj *types.ProcessingActivity) (*types.DataProtectionImpactAssessment, error)
 	TransferImpactAssessment(ctx context.Context, obj *types.ProcessingActivity) (*types.TransferImpactAssessment, error)
+
+	Permission(ctx context.Context, obj *types.ProcessingActivity, action string) (bool, error)
 }
 type ProcessingActivityConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.ProcessingActivityConnection) (int, error)
@@ -2108,6 +2178,7 @@ type ReportResolver interface {
 	DownloadURL(ctx context.Context, obj *types.Report) (*string, error)
 
 	Audit(ctx context.Context, obj *types.Report) (*types.Audit, error)
+	Permission(ctx context.Context, obj *types.Report, action string) (bool, error)
 }
 type RightsRequestResolver interface {
 	Organization(ctx context.Context, obj *types.RightsRequest) (*types.Organization, error)
@@ -2122,6 +2193,8 @@ type RiskResolver interface {
 	Documents(ctx context.Context, obj *types.Risk, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy, filter *types.DocumentFilter) (*types.DocumentConnection, error)
 	Controls(ctx context.Context, obj *types.Risk, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) (*types.ControlConnection, error)
 	Obligations(ctx context.Context, obj *types.Risk, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ObligationOrderBy, filter *types.ObligationFilter) (*types.ObligationConnection, error)
+
+	Permission(ctx context.Context, obj *types.Risk, action string) (bool, error)
 }
 type RiskConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.RiskConnection) (int, error)
@@ -2134,6 +2207,8 @@ type SnapshotResolver interface {
 	Organization(ctx context.Context, obj *types.Snapshot) (*types.Organization, error)
 
 	Controls(ctx context.Context, obj *types.Snapshot, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) (*types.ControlConnection, error)
+
+	Permission(ctx context.Context, obj *types.Snapshot, action string) (bool, error)
 }
 type SnapshotConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.SnapshotConnection) (int, error)
@@ -2143,6 +2218,8 @@ type TaskResolver interface {
 	Organization(ctx context.Context, obj *types.Task) (*types.Organization, error)
 	Measure(ctx context.Context, obj *types.Task) (*types.Measure, error)
 	Evidences(ctx context.Context, obj *types.Task, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.EvidenceOrderBy) (*types.EvidenceConnection, error)
+
+	Permission(ctx context.Context, obj *types.Task, action string) (bool, error)
 }
 type TaskConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.TaskConnection) (int, error)
@@ -2150,6 +2227,8 @@ type TaskConnectionResolver interface {
 type TransferImpactAssessmentResolver interface {
 	ProcessingActivity(ctx context.Context, obj *types.TransferImpactAssessment) (*types.ProcessingActivity, error)
 	Organization(ctx context.Context, obj *types.TransferImpactAssessment) (*types.Organization, error)
+
+	Permission(ctx context.Context, obj *types.TransferImpactAssessment, action string) (bool, error)
 }
 type TransferImpactAssessmentConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.TransferImpactAssessmentConnection) (int, error)
@@ -2160,11 +2239,13 @@ type TrustCenterResolver interface {
 	Organization(ctx context.Context, obj *types.TrustCenter) (*types.Organization, error)
 	Accesses(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterAccessOrderField]) (*types.TrustCenterAccessConnection, error)
 	References(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterReferenceOrderField]) (*types.TrustCenterReferenceConnection, error)
+	Permission(ctx context.Context, obj *types.TrustCenter, action string) (bool, error)
 }
 type TrustCenterAccessResolver interface {
 	PendingRequestCount(ctx context.Context, obj *types.TrustCenterAccess) (int, error)
 	ActiveCount(ctx context.Context, obj *types.TrustCenterAccess) (int, error)
 	AvailableDocumentAccesses(ctx context.Context, obj *types.TrustCenterAccess, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterDocumentAccessOrderField]) (*types.TrustCenterDocumentAccessConnection, error)
+	Permission(ctx context.Context, obj *types.TrustCenterAccess, action string) (bool, error)
 }
 type TrustCenterDocumentAccessResolver interface {
 	Document(ctx context.Context, obj *types.TrustCenterDocumentAccess) (*types.Document, error)
@@ -2184,6 +2265,8 @@ type TrustCenterFileConnectionResolver interface {
 }
 type TrustCenterReferenceResolver interface {
 	LogoURL(ctx context.Context, obj *types.TrustCenterReference) (string, error)
+
+	Permission(ctx context.Context, obj *types.TrustCenterReference, action string) (bool, error)
 }
 type TrustCenterReferenceConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.TrustCenterReferenceConnection) (int, error)
@@ -2198,33 +2281,47 @@ type VendorResolver interface {
 	RiskAssessments(ctx context.Context, obj *types.Vendor, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorRiskAssessmentOrder) (*types.VendorRiskAssessmentConnection, error)
 	BusinessOwner(ctx context.Context, obj *types.Vendor) (*types.People, error)
 	SecurityOwner(ctx context.Context, obj *types.Vendor) (*types.People, error)
+
+	Permission(ctx context.Context, obj *types.Vendor, action string) (bool, error)
 }
 type VendorBusinessAssociateAgreementResolver interface {
 	Vendor(ctx context.Context, obj *types.VendorBusinessAssociateAgreement) (*types.Vendor, error)
 
 	FileURL(ctx context.Context, obj *types.VendorBusinessAssociateAgreement) (string, error)
+
+	Permission(ctx context.Context, obj *types.VendorBusinessAssociateAgreement, action string) (bool, error)
 }
 type VendorComplianceReportResolver interface {
 	Vendor(ctx context.Context, obj *types.VendorComplianceReport) (*types.Vendor, error)
 
 	File(ctx context.Context, obj *types.VendorComplianceReport) (*types.File, error)
+
+	Permission(ctx context.Context, obj *types.VendorComplianceReport, action string) (bool, error)
 }
 type VendorConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.VendorConnection) (int, error)
 }
 type VendorContactResolver interface {
 	Vendor(ctx context.Context, obj *types.VendorContact) (*types.Vendor, error)
+
+	Permission(ctx context.Context, obj *types.VendorContact, action string) (bool, error)
 }
 type VendorDataPrivacyAgreementResolver interface {
 	Vendor(ctx context.Context, obj *types.VendorDataPrivacyAgreement) (*types.Vendor, error)
 
 	FileURL(ctx context.Context, obj *types.VendorDataPrivacyAgreement) (string, error)
+
+	Permission(ctx context.Context, obj *types.VendorDataPrivacyAgreement, action string) (bool, error)
 }
 type VendorRiskAssessmentResolver interface {
 	Vendor(ctx context.Context, obj *types.VendorRiskAssessment) (*types.Vendor, error)
+
+	Permission(ctx context.Context, obj *types.VendorRiskAssessment, action string) (bool, error)
 }
 type VendorServiceResolver interface {
 	Vendor(ctx context.Context, obj *types.VendorService) (*types.Vendor, error)
+
+	Permission(ctx context.Context, obj *types.VendorService, action string) (bool, error)
 }
 type ViewerResolver interface {
 	SignableDocuments(ctx context.Context, obj *types.Viewer, organizationID gid.GID, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy) (*types.SignableDocumentConnection, error)
@@ -2305,6 +2402,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Asset.Owner(childComplexity), true
+	case "Asset.permission":
+		if e.complexity.Asset.Permission == nil {
+			break
+		}
+
+		args, err := ec.field_Asset_permission_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Asset.Permission(childComplexity, args["action"].(string)), true
 	case "Asset.snapshotId":
 		if e.complexity.Asset.SnapshotID == nil {
 			break
@@ -2402,6 +2510,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Audit.Organization(childComplexity), true
+	case "Audit.permission":
+		if e.complexity.Audit.Permission == nil {
+			break
+		}
+
+		args, err := ec.field_Audit_permission_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Audit.Permission(childComplexity, args["action"].(string)), true
 	case "Audit.report":
 		if e.complexity.Audit.Report == nil {
 			break
@@ -2548,6 +2667,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.ContinualImprovement.Owner(childComplexity), true
+	case "ContinualImprovement.permission":
+		if e.complexity.ContinualImprovement.Permission == nil {
+			break
+		}
+
+		args, err := ec.field_ContinualImprovement_permission_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.ContinualImprovement.Permission(childComplexity, args["action"].(string)), true
 	case "ContinualImprovement.priority":
 		if e.complexity.ContinualImprovement.Priority == nil {
 			break
@@ -2704,6 +2834,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Control.Organization(childComplexity), true
+	case "Control.permission":
+		if e.complexity.Control.Permission == nil {
+			break
+		}
+
+		args, err := ec.field_Control_permission_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Control.Permission(childComplexity, args["action"].(string)), true
 	case "Control.sectionTitle":
 		if e.complexity.Control.SectionTitle == nil {
 			break
@@ -3096,6 +3237,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.CustomDomain.Organization(childComplexity), true
+	case "CustomDomain.permission":
+		if e.complexity.CustomDomain.Permission == nil {
+			break
+		}
+
+		args, err := ec.field_CustomDomain_permission_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.CustomDomain.Permission(childComplexity, args["action"].(string)), true
 	case "CustomDomain.sslExpiresAt":
 		if e.complexity.CustomDomain.SslExpiresAt == nil {
 			break
@@ -3182,6 +3334,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.DataProtectionImpactAssessment.Organization(childComplexity), true
+	case "DataProtectionImpactAssessment.permission":
+		if e.complexity.DataProtectionImpactAssessment.Permission == nil {
+			break
+		}
+
+		args, err := ec.field_DataProtectionImpactAssessment_permission_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.DataProtectionImpactAssessment.Permission(childComplexity, args["action"].(string)), true
 	case "DataProtectionImpactAssessment.potentialRisk":
 		if e.complexity.DataProtectionImpactAssessment.PotentialRisk == nil {
 			break
@@ -3712,6 +3875,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Document.Owner(childComplexity), true
+	case "Document.permission":
+		if e.complexity.Document.Permission == nil {
+			break
+		}
+
+		args, err := ec.field_Document_permission_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Document.Permission(childComplexity, args["action"].(string)), true
 	case "Document.title":
 		if e.complexity.Document.Title == nil {
 			break
@@ -3908,6 +4082,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.DocumentVersionSignature.ID(childComplexity), true
+	case "DocumentVersionSignature.permission":
+		if e.complexity.DocumentVersionSignature.Permission == nil {
+			break
+		}
+
+		args, err := ec.field_DocumentVersionSignature_permission_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.DocumentVersionSignature.Permission(childComplexity, args["action"].(string)), true
 	case "DocumentVersionSignature.requestedAt":
 		if e.complexity.DocumentVersionSignature.RequestedAt == nil {
 			break
@@ -3995,6 +4180,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Evidence.Measure(childComplexity), true
+	case "Evidence.permission":
+		if e.complexity.Evidence.Permission == nil {
+			break
+		}
+
+		args, err := ec.field_Evidence_permission_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Evidence.Permission(childComplexity, args["action"].(string)), true
 	case "Evidence.size":
 		if e.complexity.Evidence.Size == nil {
 			break
@@ -4202,6 +4398,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Framework.Organization(childComplexity), true
+	case "Framework.permission":
+		if e.complexity.Framework.Permission == nil {
+			break
+		}
+
+		args, err := ec.field_Framework_permission_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Framework.Permission(childComplexity, args["action"].(string)), true
 	case "Framework.updatedAt":
 		if e.complexity.Framework.UpdatedAt == nil {
 			break
@@ -4335,6 +4542,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Measure.Name(childComplexity), true
+	case "Measure.permission":
+		if e.complexity.Measure.Permission == nil {
+			break
+		}
+
+		args, err := ec.field_Measure_permission_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Measure.Permission(childComplexity, args["action"].(string)), true
 	case "Measure.risks":
 		if e.complexity.Measure.Risks == nil {
 			break
@@ -4444,6 +4662,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Meeting.Organization(childComplexity), true
+	case "Meeting.permission":
+		if e.complexity.Meeting.Permission == nil {
+			break
+		}
+
+		args, err := ec.field_Meeting_permission_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Meeting.Permission(childComplexity, args["action"].(string)), true
 	case "Meeting.updatedAt":
 		if e.complexity.Meeting.UpdatedAt == nil {
 			break
@@ -5985,6 +6214,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Nonconformity.Owner(childComplexity), true
+	case "Nonconformity.permission":
+		if e.complexity.Nonconformity.Permission == nil {
+			break
+		}
+
+		args, err := ec.field_Nonconformity_permission_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Nonconformity.Permission(childComplexity, args["action"].(string)), true
 	case "Nonconformity.referenceId":
 		if e.complexity.Nonconformity.ReferenceID == nil {
 			break
@@ -6096,6 +6336,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Obligation.Owner(childComplexity), true
+	case "Obligation.permission":
+		if e.complexity.Obligation.Permission == nil {
+			break
+		}
+
+		args, err := ec.field_Obligation_permission_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Obligation.Permission(childComplexity, args["action"].(string)), true
 	case "Obligation.regulator":
 		if e.complexity.Obligation.Regulator == nil {
 			break
@@ -6374,6 +6625,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Organization.Peoples(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.PeopleOrderBy), args["filter"].(*types.PeopleFilter)), true
+	case "Organization.permission":
+		if e.complexity.Organization.Permission == nil {
+			break
+		}
+
+		args, err := ec.field_Organization_permission_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Organization.Permission(childComplexity, args["action"].(string)), true
 	case "Organization.processingActivities":
 		if e.complexity.Organization.ProcessingActivities == nil {
 			break
@@ -6572,6 +6834,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.People.Kind(childComplexity), true
+	case "People.permission":
+		if e.complexity.People.Permission == nil {
+			break
+		}
+
+		args, err := ec.field_People_permission_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.People.Permission(childComplexity, args["action"].(string)), true
 	case "People.position":
 		if e.complexity.People.Position == nil {
 			break
@@ -6707,6 +6980,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.ProcessingActivity.Organization(childComplexity), true
+	case "ProcessingActivity.permission":
+		if e.complexity.ProcessingActivity.Permission == nil {
+			break
+		}
+
+		args, err := ec.field_ProcessingActivity_permission_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.ProcessingActivity.Permission(childComplexity, args["action"].(string)), true
 	case "ProcessingActivity.personalDataCategory":
 		if e.complexity.ProcessingActivity.PersonalDataCategory == nil {
 			break
@@ -6902,6 +7186,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Report.ObjectKey(childComplexity), true
+	case "Report.permission":
+		if e.complexity.Report.Permission == nil {
+			break
+		}
+
+		args, err := ec.field_Report_permission_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Report.Permission(childComplexity, args["action"].(string)), true
 	case "Report.size":
 		if e.complexity.Report.Size == nil {
 			break
@@ -7138,6 +7433,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Risk.Owner(childComplexity), true
+	case "Risk.permission":
+		if e.complexity.Risk.Permission == nil {
+			break
+		}
+
+		args, err := ec.field_Risk_permission_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Risk.Permission(childComplexity, args["action"].(string)), true
 	case "Risk.residualImpact":
 		if e.complexity.Risk.ResidualImpact == nil {
 			break
@@ -7418,6 +7724,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Snapshot.Organization(childComplexity), true
+	case "Snapshot.permission":
+		if e.complexity.Snapshot.Permission == nil {
+			break
+		}
+
+		args, err := ec.field_Snapshot_permission_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Snapshot.Permission(childComplexity, args["action"].(string)), true
 	case "Snapshot.type":
 		if e.complexity.Snapshot.Type == nil {
 			break
@@ -7516,6 +7833,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Task.Organization(childComplexity), true
+	case "Task.permission":
+		if e.complexity.Task.Permission == nil {
+			break
+		}
+
+		args, err := ec.field_Task_permission_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Task.Permission(childComplexity, args["action"].(string)), true
 	case "Task.state":
 		if e.complexity.Task.State == nil {
 			break
@@ -7603,6 +7931,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.TransferImpactAssessment.Organization(childComplexity), true
+	case "TransferImpactAssessment.permission":
+		if e.complexity.TransferImpactAssessment.Permission == nil {
+			break
+		}
+
+		args, err := ec.field_TransferImpactAssessment_permission_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.TransferImpactAssessment.Permission(childComplexity, args["action"].(string)), true
 	case "TransferImpactAssessment.processingActivity":
 		if e.complexity.TransferImpactAssessment.ProcessingActivity == nil {
 			break
@@ -7707,6 +8046,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.TrustCenter.Organization(childComplexity), true
+	case "TrustCenter.permission":
+		if e.complexity.TrustCenter.Permission == nil {
+			break
+		}
+
+		args, err := ec.field_TrustCenter_permission_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.TrustCenter.Permission(childComplexity, args["action"].(string)), true
 	case "TrustCenter.references":
 		if e.complexity.TrustCenter.References == nil {
 			break
@@ -7790,6 +8140,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.TrustCenterAccess.PendingRequestCount(childComplexity), true
+	case "TrustCenterAccess.permission":
+		if e.complexity.TrustCenterAccess.Permission == nil {
+			break
+		}
+
+		args, err := ec.field_TrustCenterAccess_permission_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.TrustCenterAccess.Permission(childComplexity, args["action"].(string)), true
 	case "TrustCenterAccess.updatedAt":
 		if e.complexity.TrustCenterAccess.UpdatedAt == nil {
 			break
@@ -8023,6 +8384,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.TrustCenterReference.Name(childComplexity), true
+	case "TrustCenterReference.permission":
+		if e.complexity.TrustCenterReference.Permission == nil {
+			break
+		}
+
+		args, err := ec.field_TrustCenterReference_permission_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.TrustCenterReference.Permission(childComplexity, args["action"].(string)), true
 	case "TrustCenterReference.rank":
 		if e.complexity.TrustCenterReference.Rank == nil {
 			break
@@ -8431,6 +8803,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Vendor.Organization(childComplexity), true
+	case "Vendor.permission":
+		if e.complexity.Vendor.Permission == nil {
+			break
+		}
+
+		args, err := ec.field_Vendor_permission_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Vendor.Permission(childComplexity, args["action"].(string)), true
 	case "Vendor.privacyPolicyUrl":
 		if e.complexity.Vendor.PrivacyPolicyURL == nil {
 			break
@@ -8556,6 +8939,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.VendorBusinessAssociateAgreement.ID(childComplexity), true
+	case "VendorBusinessAssociateAgreement.permission":
+		if e.complexity.VendorBusinessAssociateAgreement.Permission == nil {
+			break
+		}
+
+		args, err := ec.field_VendorBusinessAssociateAgreement_permission_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.VendorBusinessAssociateAgreement.Permission(childComplexity, args["action"].(string)), true
 	case "VendorBusinessAssociateAgreement.updatedAt":
 		if e.complexity.VendorBusinessAssociateAgreement.UpdatedAt == nil {
 			break
@@ -8599,6 +8993,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.VendorComplianceReport.ID(childComplexity), true
+	case "VendorComplianceReport.permission":
+		if e.complexity.VendorComplianceReport.Permission == nil {
+			break
+		}
+
+		args, err := ec.field_VendorComplianceReport_permission_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.VendorComplianceReport.Permission(childComplexity, args["action"].(string)), true
 	case "VendorComplianceReport.reportDate":
 		if e.complexity.VendorComplianceReport.ReportDate == nil {
 			break
@@ -8699,6 +9104,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.VendorContact.ID(childComplexity), true
+	case "VendorContact.permission":
+		if e.complexity.VendorContact.Permission == nil {
+			break
+		}
+
+		args, err := ec.field_VendorContact_permission_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.VendorContact.Permission(childComplexity, args["action"].(string)), true
 	case "VendorContact.phone":
 		if e.complexity.VendorContact.Phone == nil {
 			break
@@ -8780,6 +9196,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.VendorDataPrivacyAgreement.ID(childComplexity), true
+	case "VendorDataPrivacyAgreement.permission":
+		if e.complexity.VendorDataPrivacyAgreement.Permission == nil {
+			break
+		}
+
+		args, err := ec.field_VendorDataPrivacyAgreement_permission_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.VendorDataPrivacyAgreement.Permission(childComplexity, args["action"].(string)), true
 	case "VendorDataPrivacyAgreement.updatedAt":
 		if e.complexity.VendorDataPrivacyAgreement.UpdatedAt == nil {
 			break
@@ -8854,6 +9281,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.VendorRiskAssessment.Notes(childComplexity), true
+	case "VendorRiskAssessment.permission":
+		if e.complexity.VendorRiskAssessment.Permission == nil {
+			break
+		}
+
+		args, err := ec.field_VendorRiskAssessment_permission_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.VendorRiskAssessment.Permission(childComplexity, args["action"].(string)), true
 	case "VendorRiskAssessment.updatedAt":
 		if e.complexity.VendorRiskAssessment.UpdatedAt == nil {
 			break
@@ -8917,6 +9355,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.VendorService.Name(childComplexity), true
+	case "VendorService.permission":
+		if e.complexity.VendorService.Permission == nil {
+			break
+		}
+
+		args, err := ec.field_VendorService_permission_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.VendorService.Permission(childComplexity, args["action"].(string)), true
 	case "VendorService.updatedAt":
 		if e.complexity.VendorService.UpdatedAt == nil {
 			break
@@ -10754,6 +11203,8 @@ type TrustCenter implements Node {
     before: CursorKey
     orderBy: TrustCenterReferenceOrder
   ): TrustCenterReferenceConnection! @goField(forceResolver: true)
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type Organization implements Node {
@@ -10963,6 +11414,8 @@ type Organization implements Node {
 
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type SlackConnection {
@@ -10994,6 +11447,8 @@ type People implements Node {
   contractEndDate: Datetime
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type Vendor implements Node {
@@ -11061,6 +11516,8 @@ type Vendor implements Node {
   showOnTrustCenter: Boolean!
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type VendorComplianceReport implements Node {
@@ -11072,6 +11529,8 @@ type VendorComplianceReport implements Node {
   file: File @goField(forceResolver: true)
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type VendorBusinessAssociateAgreement implements Node {
@@ -11084,6 +11543,8 @@ type VendorBusinessAssociateAgreement implements Node {
   fileSize: BigInt!
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type VendorContact implements Node {
@@ -11095,6 +11556,8 @@ type VendorContact implements Node {
   role: String
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type VendorService implements Node {
@@ -11104,6 +11567,8 @@ type VendorService implements Node {
   description: String
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type VendorDataPrivacyAgreement implements Node {
@@ -11116,6 +11581,8 @@ type VendorDataPrivacyAgreement implements Node {
   fileSize: BigInt!
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type Framework implements Node {
@@ -11138,6 +11605,8 @@ type Framework implements Node {
 
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type Control implements Node {
@@ -11187,6 +11656,8 @@ type Control implements Node {
 
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type Measure implements Node {
@@ -11232,6 +11703,8 @@ type Measure implements Node {
 
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type Task implements Node {
@@ -11256,6 +11729,8 @@ type Task implements Node {
 
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type Evidence implements Node {
@@ -11272,6 +11747,8 @@ type Evidence implements Node {
 
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type Document implements Node {
@@ -11305,6 +11782,8 @@ type Document implements Node {
 
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type SignableDocument
@@ -11340,6 +11819,8 @@ type Meeting implements Node {
   organization: Organization! @goField(forceResolver: true)
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type Risk implements Node {
@@ -11398,6 +11879,8 @@ type Risk implements Node {
 
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type Audit implements Node {
@@ -11423,6 +11906,8 @@ type Audit implements Node {
   trustCenterVisibility: TrustCenterVisibility!
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type Nonconformity implements Node {
@@ -11441,6 +11926,8 @@ type Nonconformity implements Node {
   effectivenessCheck: String
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type Obligation implements Node {
@@ -11459,6 +11946,8 @@ type Obligation implements Node {
   status: ObligationStatus!
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type ContinualImprovement implements Node {
@@ -11475,6 +11964,8 @@ type ContinualImprovement implements Node {
   priority: ContinualImprovementPriority!
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type RightsRequest implements Node {
@@ -11528,6 +12019,8 @@ type ProcessingActivity implements Node {
     @goField(forceResolver: true)
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type DataProtectionImpactAssessment implements Node {
@@ -11541,6 +12034,8 @@ type DataProtectionImpactAssessment implements Node {
   residualRisk: DataProtectionImpactAssessmentResidualRisk
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type TransferImpactAssessment implements Node {
@@ -11554,6 +12049,8 @@ type TransferImpactAssessment implements Node {
   supplementaryMeasures: String
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type Snapshot implements Node {
@@ -11573,6 +12070,8 @@ type Snapshot implements Node {
   ): ControlConnection! @goField(forceResolver: true)
 
   createdAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type Report implements Node {
@@ -11585,6 +12084,8 @@ type Report implements Node {
   createdAt: Datetime!
   updatedAt: Datetime!
   audit: Audit @goField(forceResolver: true)
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type Session {
@@ -11636,6 +12137,8 @@ type TrustCenterAccess implements Node {
     before: CursorKey
     orderBy: TrustCenterDocumentAccessOrder
   ): TrustCenterDocumentAccessConnection! @goField(forceResolver: true)
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type TrustCenterDocumentAccess
@@ -11682,6 +12185,8 @@ type TrustCenterReference implements Node {
   rank: Int!
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type TrustCenterReferenceConnection
@@ -13578,6 +14083,8 @@ type VendorRiskAssessment implements Node {
   notes: String
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 enum VendorRiskAssessmentOrderField
@@ -13700,6 +14207,8 @@ type DocumentVersionSignature implements Node {
   requestedAt: Datetime!
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 input RequestSignatureInput {
@@ -13852,6 +14361,8 @@ type Asset implements Node {
   organization: Organization! @goField(forceResolver: true)
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type AssetConnection
@@ -14121,6 +14632,8 @@ type CustomDomain implements Node {
   dnsRecords: [DNSRecordInstruction!]!
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type DNSRecordInstruction {
@@ -14154,6 +14667,17 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
+
+func (ec *executionContext) field_Asset_permission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "action", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["action"] = arg0
+	return args, nil
+}
 
 func (ec *executionContext) field_Asset_vendors_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
@@ -14219,6 +14743,28 @@ func (ec *executionContext) field_Audit_controls_args(ctx context.Context, rawAr
 		return nil, err
 	}
 	args["filter"] = arg5
+	return args, nil
+}
+
+func (ec *executionContext) field_Audit_permission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "action", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["action"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_ContinualImprovement_permission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "action", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["action"] = arg0
 	return args, nil
 }
 
@@ -14325,6 +14871,17 @@ func (ec *executionContext) field_Control_measures_args(ctx context.Context, raw
 	return args, nil
 }
 
+func (ec *executionContext) field_Control_permission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "action", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["action"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Control_snapshots_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -14356,6 +14913,28 @@ func (ec *executionContext) field_Control_snapshots_args(ctx context.Context, ra
 	return args, nil
 }
 
+func (ec *executionContext) field_CustomDomain_permission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "action", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["action"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_DataProtectionImpactAssessment_permission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "action", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["action"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Datum_vendors_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -14384,6 +14963,17 @@ func (ec *executionContext) field_Datum_vendors_args(ctx context.Context, rawArg
 		return nil, err
 	}
 	args["orderBy"] = arg4
+	return args, nil
+}
+
+func (ec *executionContext) field_DocumentVersionSignature_permission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "action", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["action"] = arg0
 	return args, nil
 }
 
@@ -14459,6 +15049,17 @@ func (ec *executionContext) field_Document_controls_args(ctx context.Context, ra
 	return args, nil
 }
 
+func (ec *executionContext) field_Document_permission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "action", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["action"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Document_versions_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -14495,6 +15096,17 @@ func (ec *executionContext) field_Document_versions_args(ctx context.Context, ra
 	return args, nil
 }
 
+func (ec *executionContext) field_Evidence_permission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "action", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["action"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Framework_controls_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -14528,6 +15140,17 @@ func (ec *executionContext) field_Framework_controls_args(ctx context.Context, r
 		return nil, err
 	}
 	args["filter"] = arg5
+	return args, nil
+}
+
+func (ec *executionContext) field_Framework_permission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "action", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["action"] = arg0
 	return args, nil
 }
 
@@ -14598,6 +15221,17 @@ func (ec *executionContext) field_Measure_evidences_args(ctx context.Context, ra
 	return args, nil
 }
 
+func (ec *executionContext) field_Measure_permission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "action", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["action"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Measure_risks_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -14662,6 +15296,17 @@ func (ec *executionContext) field_Measure_tasks_args(ctx context.Context, rawArg
 		return nil, err
 	}
 	args["orderBy"] = arg4
+	return args, nil
+}
+
+func (ec *executionContext) field_Meeting_permission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "action", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["action"] = arg0
 	return args, nil
 }
 
@@ -16106,6 +16751,28 @@ func (ec *executionContext) field_Mutation_uploadVendorDataPrivacyAgreement_args
 	return args, nil
 }
 
+func (ec *executionContext) field_Nonconformity_permission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "action", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["action"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Obligation_permission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "action", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["action"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Organization_assets_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -16559,6 +17226,17 @@ func (ec *executionContext) field_Organization_peoples_args(ctx context.Context,
 	return args, nil
 }
 
+func (ec *executionContext) field_Organization_permission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "action", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["action"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Organization_processingActivities_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -16853,6 +17531,28 @@ func (ec *executionContext) field_Organization_vendors_args(ctx context.Context,
 	return args, nil
 }
 
+func (ec *executionContext) field_People_permission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "action", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["action"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_ProcessingActivity_permission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "action", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["action"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_ProcessingActivity_vendors_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -16903,6 +17603,17 @@ func (ec *executionContext) field_Query_node_args(ctx context.Context, rawArgs m
 		return nil, err
 	}
 	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Report_permission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "action", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["action"] = arg0
 	return args, nil
 }
 
@@ -17050,6 +17761,17 @@ func (ec *executionContext) field_Risk_obligations_args(ctx context.Context, raw
 	return args, nil
 }
 
+func (ec *executionContext) field_Risk_permission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "action", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["action"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_SignableDocument_versions_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -17122,6 +17844,17 @@ func (ec *executionContext) field_Snapshot_controls_args(ctx context.Context, ra
 	return args, nil
 }
 
+func (ec *executionContext) field_Snapshot_permission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "action", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["action"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Task_evidences_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -17150,6 +17883,28 @@ func (ec *executionContext) field_Task_evidences_args(ctx context.Context, rawAr
 		return nil, err
 	}
 	args["orderBy"] = arg4
+	return args, nil
+}
+
+func (ec *executionContext) field_Task_permission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "action", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["action"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_TransferImpactAssessment_permission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "action", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["action"] = arg0
 	return args, nil
 }
 
@@ -17184,6 +17939,28 @@ func (ec *executionContext) field_TrustCenterAccess_availableDocumentAccesses_ar
 	return args, nil
 }
 
+func (ec *executionContext) field_TrustCenterAccess_permission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "action", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["action"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_TrustCenterReference_permission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "action", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["action"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_TrustCenter_accesses_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -17215,6 +17992,17 @@ func (ec *executionContext) field_TrustCenter_accesses_args(ctx context.Context,
 	return args, nil
 }
 
+func (ec *executionContext) field_TrustCenter_permission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "action", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["action"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_TrustCenter_references_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -17243,6 +18031,72 @@ func (ec *executionContext) field_TrustCenter_references_args(ctx context.Contex
 		return nil, err
 	}
 	args["orderBy"] = arg4
+	return args, nil
+}
+
+func (ec *executionContext) field_VendorBusinessAssociateAgreement_permission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "action", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["action"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_VendorComplianceReport_permission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "action", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["action"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_VendorContact_permission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "action", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["action"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_VendorDataPrivacyAgreement_permission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "action", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["action"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_VendorRiskAssessment_permission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "action", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["action"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_VendorService_permission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "action", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["action"] = arg0
 	return args, nil
 }
 
@@ -17305,6 +18159,17 @@ func (ec *executionContext) field_Vendor_contacts_args(ctx context.Context, rawA
 		return nil, err
 	}
 	args["orderBy"] = arg4
+	return args, nil
+}
+
+func (ec *executionContext) field_Vendor_permission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "action", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["action"] = arg0
 	return args, nil
 }
 
@@ -17555,6 +18420,8 @@ func (ec *executionContext) fieldContext_AssessVendorPayload_vendor(_ context.Co
 				return ec.fieldContext_Vendor_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Vendor_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Vendor_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Vendor", field.Name)
 		},
@@ -17722,6 +18589,8 @@ func (ec *executionContext) fieldContext_Asset_owner(_ context.Context, field gr
 				return ec.fieldContext_People_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_People_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_People_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type People", field.Name)
 		},
@@ -17930,6 +18799,8 @@ func (ec *executionContext) fieldContext_Asset_organization(_ context.Context, f
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Organization_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Organization_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
 		},
@@ -17991,6 +18862,47 @@ func (ec *executionContext) fieldContext_Asset_updatedAt(_ context.Context, fiel
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Datetime does not have child fields")
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Asset_permission(ctx context.Context, field graphql.CollectedField, obj *types.Asset) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Asset_permission,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Asset().Permission(ctx, obj, fc.Args["action"].(string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Asset_permission(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Asset",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Asset_permission_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -18173,6 +19085,8 @@ func (ec *executionContext) fieldContext_AssetEdge_node(_ context.Context, field
 				return ec.fieldContext_Asset_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Asset_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Asset_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Asset", field.Name)
 		},
@@ -18332,6 +19246,8 @@ func (ec *executionContext) fieldContext_Audit_organization(_ context.Context, f
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Organization_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Organization_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
 		},
@@ -18381,6 +19297,8 @@ func (ec *executionContext) fieldContext_Audit_framework(_ context.Context, fiel
 				return ec.fieldContext_Framework_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Framework_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Framework_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Framework", field.Name)
 		},
@@ -18488,6 +19406,8 @@ func (ec *executionContext) fieldContext_Audit_report(_ context.Context, field g
 				return ec.fieldContext_Report_updatedAt(ctx, field)
 			case "audit":
 				return ec.fieldContext_Report_audit(ctx, field)
+			case "permission":
+				return ec.fieldContext_Report_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Report", field.Name)
 		},
@@ -18689,6 +19609,47 @@ func (ec *executionContext) fieldContext_Audit_updatedAt(_ context.Context, fiel
 	return fc, nil
 }
 
+func (ec *executionContext) _Audit_permission(ctx context.Context, field graphql.CollectedField, obj *types.Audit) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Audit_permission,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Audit().Permission(ctx, obj, fc.Args["action"].(string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Audit_permission(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Audit",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Audit_permission_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _AuditConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *types.AuditConnection) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -18871,6 +19832,8 @@ func (ec *executionContext) fieldContext_AuditEdge_node(_ context.Context, field
 				return ec.fieldContext_Audit_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Audit_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Audit_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Audit", field.Name)
 		},
@@ -19251,6 +20214,8 @@ func (ec *executionContext) fieldContext_ContinualImprovement_organization(_ con
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Organization_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Organization_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
 		},
@@ -19389,6 +20354,8 @@ func (ec *executionContext) fieldContext_ContinualImprovement_owner(_ context.Co
 				return ec.fieldContext_People_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_People_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_People_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type People", field.Name)
 		},
@@ -19537,6 +20504,47 @@ func (ec *executionContext) fieldContext_ContinualImprovement_updatedAt(_ contex
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Datetime does not have child fields")
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ContinualImprovement_permission(ctx context.Context, field graphql.CollectedField, obj *types.ContinualImprovement) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ContinualImprovement_permission,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.ContinualImprovement().Permission(ctx, obj, fc.Args["action"].(string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ContinualImprovement_permission(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ContinualImprovement",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_ContinualImprovement_permission_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -19723,6 +20731,8 @@ func (ec *executionContext) fieldContext_ContinualImprovementEdge_node(_ context
 				return ec.fieldContext_ContinualImprovement_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_ContinualImprovement_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_ContinualImprovement_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type ContinualImprovement", field.Name)
 		},
@@ -19853,6 +20863,8 @@ func (ec *executionContext) fieldContext_Control_organization(_ context.Context,
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Organization_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Organization_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
 		},
@@ -20047,6 +21059,8 @@ func (ec *executionContext) fieldContext_Control_framework(_ context.Context, fi
 				return ec.fieldContext_Framework_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Framework_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Framework_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Framework", field.Name)
 		},
@@ -20308,6 +21322,47 @@ func (ec *executionContext) fieldContext_Control_updatedAt(_ context.Context, fi
 	return fc, nil
 }
 
+func (ec *executionContext) _Control_permission(ctx context.Context, field graphql.CollectedField, obj *types.Control) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Control_permission,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Control().Permission(ctx, obj, fc.Args["action"].(string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Control_permission(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Control",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Control_permission_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _ControlConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *types.ControlConnection) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -20492,6 +21547,8 @@ func (ec *executionContext) fieldContext_ControlEdge_node(_ context.Context, fie
 				return ec.fieldContext_Control_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Control_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Control_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Control", field.Name)
 		},
@@ -20959,6 +22016,8 @@ func (ec *executionContext) fieldContext_CreateCustomDomainPayload_customDomain(
 				return ec.fieldContext_CustomDomain_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_CustomDomain_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_CustomDomain_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type CustomDomain", field.Name)
 		},
@@ -21010,6 +22069,8 @@ func (ec *executionContext) fieldContext_CreateDataProtectionImpactAssessmentPay
 				return ec.fieldContext_DataProtectionImpactAssessment_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_DataProtectionImpactAssessment_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_DataProtectionImpactAssessment_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type DataProtectionImpactAssessment", field.Name)
 		},
@@ -21831,6 +22892,8 @@ func (ec *executionContext) fieldContext_CreateTransferImpactAssessmentPayload_t
 				return ec.fieldContext_TransferImpactAssessment_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_TransferImpactAssessment_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_TransferImpactAssessment_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type TransferImpactAssessment", field.Name)
 		},
@@ -22206,6 +23269,8 @@ func (ec *executionContext) fieldContext_CustomDomain_organization(_ context.Con
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Organization_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Organization_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
 		},
@@ -22395,6 +23460,47 @@ func (ec *executionContext) fieldContext_CustomDomain_updatedAt(_ context.Contex
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Datetime does not have child fields")
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CustomDomain_permission(ctx context.Context, field graphql.CollectedField, obj *types.CustomDomain) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_CustomDomain_permission,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.CustomDomain().Permission(ctx, obj, fc.Args["action"].(string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_CustomDomain_permission(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CustomDomain",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_CustomDomain_permission_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -22653,6 +23759,8 @@ func (ec *executionContext) fieldContext_DataProtectionImpactAssessment_processi
 				return ec.fieldContext_ProcessingActivity_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_ProcessingActivity_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_ProcessingActivity_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type ProcessingActivity", field.Name)
 		},
@@ -22754,6 +23862,8 @@ func (ec *executionContext) fieldContext_DataProtectionImpactAssessment_organiza
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Organization_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Organization_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
 		},
@@ -22964,6 +24074,47 @@ func (ec *executionContext) fieldContext_DataProtectionImpactAssessment_updatedA
 	return fc, nil
 }
 
+func (ec *executionContext) _DataProtectionImpactAssessment_permission(ctx context.Context, field graphql.CollectedField, obj *types.DataProtectionImpactAssessment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_DataProtectionImpactAssessment_permission,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.DataProtectionImpactAssessment().Permission(ctx, obj, fc.Args["action"].(string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_DataProtectionImpactAssessment_permission(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DataProtectionImpactAssessment",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_DataProtectionImpactAssessment_permission_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _DataProtectionImpactAssessmentConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *types.DataProtectionImpactAssessmentConnection) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -23140,6 +24291,8 @@ func (ec *executionContext) fieldContext_DataProtectionImpactAssessmentEdge_node
 				return ec.fieldContext_DataProtectionImpactAssessment_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_DataProtectionImpactAssessment_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_DataProtectionImpactAssessment_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type DataProtectionImpactAssessment", field.Name)
 		},
@@ -23307,6 +24460,8 @@ func (ec *executionContext) fieldContext_Datum_owner(_ context.Context, field gr
 				return ec.fieldContext_People_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_People_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_People_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type People", field.Name)
 		},
@@ -23457,6 +24612,8 @@ func (ec *executionContext) fieldContext_Datum_organization(_ context.Context, f
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Organization_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Organization_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
 		},
@@ -23811,6 +24968,8 @@ func (ec *executionContext) fieldContext_DeleteAuditReportPayload_audit(_ contex
 				return ec.fieldContext_Audit_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Audit_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Audit_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Audit", field.Name)
 		},
@@ -24904,6 +26063,8 @@ func (ec *executionContext) fieldContext_DeleteTrustCenterNDAPayload_trustCenter
 				return ec.fieldContext_TrustCenter_accesses(ctx, field)
 			case "references":
 				return ec.fieldContext_TrustCenter_references(ctx, field)
+			case "permission":
+				return ec.fieldContext_TrustCenter_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type TrustCenter", field.Name)
 		},
@@ -25361,6 +26522,8 @@ func (ec *executionContext) fieldContext_Document_owner(_ context.Context, field
 				return ec.fieldContext_People_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_People_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_People_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type People", field.Name)
 		},
@@ -25462,6 +26625,8 @@ func (ec *executionContext) fieldContext_Document_organization(_ context.Context
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Organization_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Organization_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
 		},
@@ -25619,6 +26784,47 @@ func (ec *executionContext) fieldContext_Document_updatedAt(_ context.Context, f
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Datetime does not have child fields")
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Document_permission(ctx context.Context, field graphql.CollectedField, obj *types.Document) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Document_permission,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Document().Permission(ctx, obj, fc.Args["action"].(string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Document_permission(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Document",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Document_permission_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -25805,6 +27011,8 @@ func (ec *executionContext) fieldContext_DocumentEdge_node(_ context.Context, fi
 				return ec.fieldContext_Document_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Document_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Document_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Document", field.Name)
 		},
@@ -25891,6 +27099,8 @@ func (ec *executionContext) fieldContext_DocumentVersion_document(_ context.Cont
 				return ec.fieldContext_Document_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Document_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Document_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Document", field.Name)
 		},
@@ -26116,6 +27326,8 @@ func (ec *executionContext) fieldContext_DocumentVersion_owner(_ context.Context
 				return ec.fieldContext_People_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_People_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_People_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type People", field.Name)
 		},
@@ -26609,6 +27821,8 @@ func (ec *executionContext) fieldContext_DocumentVersionSignature_signedBy(_ con
 				return ec.fieldContext_People_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_People_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_People_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type People", field.Name)
 		},
@@ -26728,6 +27942,47 @@ func (ec *executionContext) fieldContext_DocumentVersionSignature_updatedAt(_ co
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Datetime does not have child fields")
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DocumentVersionSignature_permission(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersionSignature) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_DocumentVersionSignature_permission,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.DocumentVersionSignature().Permission(ctx, obj, fc.Args["action"].(string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_DocumentVersionSignature_permission(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DocumentVersionSignature",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_DocumentVersionSignature_permission_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -26875,6 +28130,8 @@ func (ec *executionContext) fieldContext_DocumentVersionSignatureEdge_node(_ con
 				return ec.fieldContext_DocumentVersionSignature_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_DocumentVersionSignature_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_DocumentVersionSignature_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type DocumentVersionSignature", field.Name)
 		},
@@ -27149,6 +28406,8 @@ func (ec *executionContext) fieldContext_Evidence_task(_ context.Context, field 
 				return ec.fieldContext_Task_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Task_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Task_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Task", field.Name)
 		},
@@ -27202,6 +28461,8 @@ func (ec *executionContext) fieldContext_Evidence_measure(_ context.Context, fie
 				return ec.fieldContext_Measure_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Measure_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Measure_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Measure", field.Name)
 		},
@@ -27263,6 +28524,47 @@ func (ec *executionContext) fieldContext_Evidence_updatedAt(_ context.Context, f
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Datetime does not have child fields")
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Evidence_permission(ctx context.Context, field graphql.CollectedField, obj *types.Evidence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Evidence_permission,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Evidence().Permission(ctx, obj, fc.Args["action"].(string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Evidence_permission(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Evidence",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Evidence_permission_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -27445,6 +28747,8 @@ func (ec *executionContext) fieldContext_EvidenceEdge_node(_ context.Context, fi
 				return ec.fieldContext_Evidence_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Evidence_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Evidence_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Evidence", field.Name)
 		},
@@ -28010,6 +29314,8 @@ func (ec *executionContext) fieldContext_Framework_organization(_ context.Contex
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Organization_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Organization_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
 		},
@@ -28178,6 +29484,47 @@ func (ec *executionContext) fieldContext_Framework_updatedAt(_ context.Context, 
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Datetime does not have child fields")
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Framework_permission(ctx context.Context, field graphql.CollectedField, obj *types.Framework) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Framework_permission,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Framework().Permission(ctx, obj, fc.Args["action"].(string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Framework_permission(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Framework",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Framework_permission_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -28356,6 +29703,8 @@ func (ec *executionContext) fieldContext_FrameworkEdge_node(_ context.Context, f
 				return ec.fieldContext_Framework_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Framework_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Framework_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Framework", field.Name)
 		},
@@ -28972,6 +30321,47 @@ func (ec *executionContext) fieldContext_Measure_updatedAt(_ context.Context, fi
 	return fc, nil
 }
 
+func (ec *executionContext) _Measure_permission(ctx context.Context, field graphql.CollectedField, obj *types.Measure) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Measure_permission,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Measure().Permission(ctx, obj, fc.Args["action"].(string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Measure_permission(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Measure",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Measure_permission_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _MeasureConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *types.MeasureConnection) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -29150,6 +30540,8 @@ func (ec *executionContext) fieldContext_MeasureEdge_node(_ context.Context, fie
 				return ec.fieldContext_Measure_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Measure_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Measure_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Measure", field.Name)
 		},
@@ -29317,6 +30709,8 @@ func (ec *executionContext) fieldContext_Meeting_attendees(_ context.Context, fi
 				return ec.fieldContext_People_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_People_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_People_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type People", field.Name)
 		},
@@ -29418,6 +30812,8 @@ func (ec *executionContext) fieldContext_Meeting_organization(_ context.Context,
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Organization_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Organization_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
 		},
@@ -29479,6 +30875,47 @@ func (ec *executionContext) fieldContext_Meeting_updatedAt(_ context.Context, fi
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Datetime does not have child fields")
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Meeting_permission(ctx context.Context, field graphql.CollectedField, obj *types.Meeting) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Meeting_permission,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Meeting().Permission(ctx, obj, fc.Args["action"].(string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Meeting_permission(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Meeting",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Meeting_permission_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -29655,6 +31092,8 @@ func (ec *executionContext) fieldContext_MeetingEdge_node(_ context.Context, fie
 				return ec.fieldContext_Meeting_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Meeting_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Meeting_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Meeting", field.Name)
 		},
@@ -35743,6 +37182,8 @@ func (ec *executionContext) fieldContext_Nonconformity_organization(_ context.Co
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Organization_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Organization_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
 		},
@@ -35858,6 +37299,8 @@ func (ec *executionContext) fieldContext_Nonconformity_audit(_ context.Context, 
 				return ec.fieldContext_Audit_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Audit_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Audit_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Audit", field.Name)
 		},
@@ -35996,6 +37439,8 @@ func (ec *executionContext) fieldContext_Nonconformity_owner(_ context.Context, 
 				return ec.fieldContext_People_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_People_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_People_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type People", field.Name)
 		},
@@ -36144,6 +37589,47 @@ func (ec *executionContext) fieldContext_Nonconformity_updatedAt(_ context.Conte
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Datetime does not have child fields")
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Nonconformity_permission(ctx context.Context, field graphql.CollectedField, obj *types.Nonconformity) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Nonconformity_permission,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Nonconformity().Permission(ctx, obj, fc.Args["action"].(string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Nonconformity_permission(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Nonconformity",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Nonconformity_permission_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -36334,6 +37820,8 @@ func (ec *executionContext) fieldContext_NonconformityEdge_node(_ context.Contex
 				return ec.fieldContext_Nonconformity_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Nonconformity_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Nonconformity_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Nonconformity", field.Name)
 		},
@@ -36522,6 +38010,8 @@ func (ec *executionContext) fieldContext_Obligation_organization(_ context.Conte
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Organization_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Organization_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
 		},
@@ -36718,6 +38208,8 @@ func (ec *executionContext) fieldContext_Obligation_owner(_ context.Context, fie
 				return ec.fieldContext_People_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_People_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_People_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type People", field.Name)
 		},
@@ -36866,6 +38358,47 @@ func (ec *executionContext) fieldContext_Obligation_updatedAt(_ context.Context,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Datetime does not have child fields")
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Obligation_permission(ctx context.Context, field graphql.CollectedField, obj *types.Obligation) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Obligation_permission,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Obligation().Permission(ctx, obj, fc.Args["action"].(string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Obligation_permission(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Obligation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Obligation_permission_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -37056,6 +38589,8 @@ func (ec *executionContext) fieldContext_ObligationEdge_node(_ context.Context, 
 				return ec.fieldContext_Obligation_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Obligation_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Obligation_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Obligation", field.Name)
 		},
@@ -38448,6 +39983,8 @@ func (ec *executionContext) fieldContext_Organization_trustCenter(_ context.Cont
 				return ec.fieldContext_TrustCenter_accesses(ctx, field)
 			case "references":
 				return ec.fieldContext_TrustCenter_references(ctx, field)
+			case "permission":
+				return ec.fieldContext_TrustCenter_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type TrustCenter", field.Name)
 		},
@@ -38495,6 +40032,8 @@ func (ec *executionContext) fieldContext_Organization_customDomain(_ context.Con
 				return ec.fieldContext_CustomDomain_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_CustomDomain_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_CustomDomain_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type CustomDomain", field.Name)
 		},
@@ -38556,6 +40095,47 @@ func (ec *executionContext) fieldContext_Organization_updatedAt(_ context.Contex
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Datetime does not have child fields")
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Organization_permission(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Organization_permission,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Organization().Permission(ctx, obj, fc.Args["action"].(string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Organization_permission(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Organization",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Organization_permission_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -39024,6 +40604,47 @@ func (ec *executionContext) fieldContext_People_updatedAt(_ context.Context, fie
 	return fc, nil
 }
 
+func (ec *executionContext) _People_permission(ctx context.Context, field graphql.CollectedField, obj *types.People) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_People_permission,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.People().Permission(ctx, obj, fc.Args["action"].(string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_People_permission(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "People",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_People_permission_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _PeopleConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *types.PeopleConnection) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -39200,6 +40821,8 @@ func (ec *executionContext) fieldContext_PeopleEdge_node(_ context.Context, fiel
 				return ec.fieldContext_People_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_People_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_People_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type People", field.Name)
 		},
@@ -39388,6 +41011,8 @@ func (ec *executionContext) fieldContext_ProcessingActivity_organization(_ conte
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Organization_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Organization_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
 		},
@@ -39961,6 +41586,8 @@ func (ec *executionContext) fieldContext_ProcessingActivity_dataProtectionOffice
 				return ec.fieldContext_People_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_People_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_People_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type People", field.Name)
 		},
@@ -40061,6 +41688,8 @@ func (ec *executionContext) fieldContext_ProcessingActivity_dataProtectionImpact
 				return ec.fieldContext_DataProtectionImpactAssessment_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_DataProtectionImpactAssessment_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_DataProtectionImpactAssessment_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type DataProtectionImpactAssessment", field.Name)
 		},
@@ -40112,6 +41741,8 @@ func (ec *executionContext) fieldContext_ProcessingActivity_transferImpactAssess
 				return ec.fieldContext_TransferImpactAssessment_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_TransferImpactAssessment_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_TransferImpactAssessment_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type TransferImpactAssessment", field.Name)
 		},
@@ -40173,6 +41804,47 @@ func (ec *executionContext) fieldContext_ProcessingActivity_updatedAt(_ context.
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Datetime does not have child fields")
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProcessingActivity_permission(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivity) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ProcessingActivity_permission,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.ProcessingActivity().Permission(ctx, obj, fc.Args["action"].(string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivity_permission(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivity",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_ProcessingActivity_permission_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -40389,6 +42061,8 @@ func (ec *executionContext) fieldContext_ProcessingActivityEdge_node(_ context.C
 				return ec.fieldContext_ProcessingActivity_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_ProcessingActivity_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_ProcessingActivity_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type ProcessingActivity", field.Name)
 		},
@@ -40505,6 +42179,8 @@ func (ec *executionContext) fieldContext_PublishDocumentVersionPayload_document(
 				return ec.fieldContext_Document_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Document_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Document_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Document", field.Name)
 		},
@@ -40980,9 +42656,52 @@ func (ec *executionContext) fieldContext_Report_audit(_ context.Context, field g
 				return ec.fieldContext_Audit_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Audit_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Audit_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Audit", field.Name)
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Report_permission(ctx context.Context, field graphql.CollectedField, obj *types.Report) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Report_permission,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Report().Permission(ctx, obj, fc.Args["action"].(string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Report_permission(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Report",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Report_permission_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -41180,6 +42899,8 @@ func (ec *executionContext) fieldContext_RightsRequest_organization(_ context.Co
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Organization_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Organization_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
 		},
@@ -42054,6 +43775,8 @@ func (ec *executionContext) fieldContext_Risk_owner(_ context.Context, field gra
 				return ec.fieldContext_People_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_People_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_People_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type People", field.Name)
 		},
@@ -42155,6 +43878,8 @@ func (ec *executionContext) fieldContext_Risk_organization(_ context.Context, fi
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Organization_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Organization_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
 		},
@@ -42416,6 +44141,47 @@ func (ec *executionContext) fieldContext_Risk_updatedAt(_ context.Context, field
 	return fc, nil
 }
 
+func (ec *executionContext) _Risk_permission(ctx context.Context, field graphql.CollectedField, obj *types.Risk) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Risk_permission,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Risk().Permission(ctx, obj, fc.Args["action"].(string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Risk_permission(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Risk",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Risk_permission_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _RiskConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *types.RiskConnection) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -42614,6 +44380,8 @@ func (ec *executionContext) fieldContext_RiskEdge_node(_ context.Context, field 
 				return ec.fieldContext_Risk_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Risk_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Risk_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Risk", field.Name)
 		},
@@ -42748,6 +44516,8 @@ func (ec *executionContext) fieldContext_SignDocumentPayload_documentVersionSign
 				return ec.fieldContext_DocumentVersionSignature_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_DocumentVersionSignature_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_DocumentVersionSignature_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type DocumentVersionSignature", field.Name)
 		},
@@ -43598,6 +45368,8 @@ func (ec *executionContext) fieldContext_Snapshot_organization(_ context.Context
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Organization_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Organization_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
 		},
@@ -43766,6 +45538,47 @@ func (ec *executionContext) fieldContext_Snapshot_createdAt(_ context.Context, f
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Datetime does not have child fields")
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Snapshot_permission(ctx context.Context, field graphql.CollectedField, obj *types.Snapshot) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Snapshot_permission,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Snapshot().Permission(ctx, obj, fc.Args["action"].(string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Snapshot_permission(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Snapshot",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Snapshot_permission_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -43940,6 +45753,8 @@ func (ec *executionContext) fieldContext_SnapshotEdge_node(_ context.Context, fi
 				return ec.fieldContext_Snapshot_controls(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Snapshot_createdAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Snapshot_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Snapshot", field.Name)
 		},
@@ -44165,6 +45980,8 @@ func (ec *executionContext) fieldContext_Task_assignedTo(_ context.Context, fiel
 				return ec.fieldContext_People_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_People_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_People_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type People", field.Name)
 		},
@@ -44266,6 +46083,8 @@ func (ec *executionContext) fieldContext_Task_organization(_ context.Context, fi
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Organization_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Organization_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
 		},
@@ -44319,6 +46138,8 @@ func (ec *executionContext) fieldContext_Task_measure(_ context.Context, field g
 				return ec.fieldContext_Measure_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Measure_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Measure_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Measure", field.Name)
 		},
@@ -44429,6 +46250,47 @@ func (ec *executionContext) fieldContext_Task_updatedAt(_ context.Context, field
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Datetime does not have child fields")
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Task_permission(ctx context.Context, field graphql.CollectedField, obj *types.Task) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Task_permission,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Task().Permission(ctx, obj, fc.Args["action"].(string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Task_permission(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Task",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Task_permission_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -44613,6 +46475,8 @@ func (ec *executionContext) fieldContext_TaskEdge_node(_ context.Context, field 
 				return ec.fieldContext_Task_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Task_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Task_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Task", field.Name)
 		},
@@ -44729,6 +46593,8 @@ func (ec *executionContext) fieldContext_TransferImpactAssessment_processingActi
 				return ec.fieldContext_ProcessingActivity_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_ProcessingActivity_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_ProcessingActivity_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type ProcessingActivity", field.Name)
 		},
@@ -44830,6 +46696,8 @@ func (ec *executionContext) fieldContext_TransferImpactAssessment_organization(_
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Organization_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Organization_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
 		},
@@ -45040,6 +46908,47 @@ func (ec *executionContext) fieldContext_TransferImpactAssessment_updatedAt(_ co
 	return fc, nil
 }
 
+func (ec *executionContext) _TransferImpactAssessment_permission(ctx context.Context, field graphql.CollectedField, obj *types.TransferImpactAssessment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_TransferImpactAssessment_permission,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.TransferImpactAssessment().Permission(ctx, obj, fc.Args["action"].(string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_TransferImpactAssessment_permission(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TransferImpactAssessment",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_TransferImpactAssessment_permission_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _TransferImpactAssessmentConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *types.TransferImpactAssessmentConnection) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -45216,6 +47125,8 @@ func (ec *executionContext) fieldContext_TransferImpactAssessmentEdge_node(_ con
 				return ec.fieldContext_TransferImpactAssessment_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_TransferImpactAssessment_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_TransferImpactAssessment_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type TransferImpactAssessment", field.Name)
 		},
@@ -45491,6 +47402,8 @@ func (ec *executionContext) fieldContext_TrustCenter_organization(_ context.Cont
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Organization_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Organization_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
 		},
@@ -45588,6 +47501,47 @@ func (ec *executionContext) fieldContext_TrustCenter_references(ctx context.Cont
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_TrustCenter_references_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TrustCenter_permission(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenter) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_TrustCenter_permission,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.TrustCenter().Permission(ctx, obj, fc.Args["action"].(string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_TrustCenter_permission(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TrustCenter",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_TrustCenter_permission_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -45933,6 +47887,47 @@ func (ec *executionContext) fieldContext_TrustCenterAccess_availableDocumentAcce
 	return fc, nil
 }
 
+func (ec *executionContext) _TrustCenterAccess_permission(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenterAccess) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_TrustCenterAccess_permission,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.TrustCenterAccess().Permission(ctx, obj, fc.Args["action"].(string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_TrustCenterAccess_permission(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TrustCenterAccess",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_TrustCenterAccess_permission_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _TrustCenterAccessConnection_edges(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenterAccessConnection) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -46082,6 +48077,8 @@ func (ec *executionContext) fieldContext_TrustCenterAccessEdge_node(_ context.Co
 				return ec.fieldContext_TrustCenterAccess_activeCount(ctx, field)
 			case "availableDocumentAccesses":
 				return ec.fieldContext_TrustCenterAccess_availableDocumentAccesses(ctx, field)
+			case "permission":
+				return ec.fieldContext_TrustCenterAccess_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type TrustCenterAccess", field.Name)
 		},
@@ -46271,6 +48268,8 @@ func (ec *executionContext) fieldContext_TrustCenterDocumentAccess_document(_ co
 				return ec.fieldContext_Document_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Document_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Document_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Document", field.Name)
 		},
@@ -46320,6 +48319,8 @@ func (ec *executionContext) fieldContext_TrustCenterDocumentAccess_report(_ cont
 				return ec.fieldContext_Report_updatedAt(ctx, field)
 			case "audit":
 				return ec.fieldContext_Report_audit(ctx, field)
+			case "permission":
+				return ec.fieldContext_Report_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Report", field.Name)
 		},
@@ -46618,6 +48619,8 @@ func (ec *executionContext) fieldContext_TrustCenterEdge_node(_ context.Context,
 				return ec.fieldContext_TrustCenter_accesses(ctx, field)
 			case "references":
 				return ec.fieldContext_TrustCenter_references(ctx, field)
+			case "permission":
+				return ec.fieldContext_TrustCenter_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type TrustCenter", field.Name)
 		},
@@ -46922,6 +48925,8 @@ func (ec *executionContext) fieldContext_TrustCenterFile_organization(_ context.
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Organization_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Organization_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
 		},
@@ -47340,6 +49345,47 @@ func (ec *executionContext) fieldContext_TrustCenterReference_updatedAt(_ contex
 	return fc, nil
 }
 
+func (ec *executionContext) _TrustCenterReference_permission(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenterReference) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_TrustCenterReference_permission,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.TrustCenterReference().Permission(ctx, obj, fc.Args["action"].(string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_TrustCenterReference_permission(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TrustCenterReference",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_TrustCenterReference_permission_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _TrustCenterReferenceConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenterReferenceConnection) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -47512,6 +49558,8 @@ func (ec *executionContext) fieldContext_TrustCenterReferenceEdge_node(_ context
 				return ec.fieldContext_TrustCenterReference_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_TrustCenterReference_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_TrustCenterReference_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type TrustCenterReference", field.Name)
 		},
@@ -47565,6 +49613,8 @@ func (ec *executionContext) fieldContext_UpdateAssetPayload_asset(_ context.Cont
 				return ec.fieldContext_Asset_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Asset_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Asset_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Asset", field.Name)
 		},
@@ -47622,6 +49672,8 @@ func (ec *executionContext) fieldContext_UpdateAuditPayload_audit(_ context.Cont
 				return ec.fieldContext_Audit_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Audit_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Audit_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Audit", field.Name)
 		},
@@ -47679,6 +49731,8 @@ func (ec *executionContext) fieldContext_UpdateContinualImprovementPayload_conti
 				return ec.fieldContext_ContinualImprovement_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_ContinualImprovement_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_ContinualImprovement_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type ContinualImprovement", field.Name)
 		},
@@ -47738,6 +49792,8 @@ func (ec *executionContext) fieldContext_UpdateControlPayload_control(_ context.
 				return ec.fieldContext_Control_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Control_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Control_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Control", field.Name)
 		},
@@ -47789,6 +49845,8 @@ func (ec *executionContext) fieldContext_UpdateDataProtectionImpactAssessmentPay
 				return ec.fieldContext_DataProtectionImpactAssessment_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_DataProtectionImpactAssessment_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_DataProtectionImpactAssessment_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type DataProtectionImpactAssessment", field.Name)
 		},
@@ -47895,6 +49953,8 @@ func (ec *executionContext) fieldContext_UpdateDocumentPayload_document(_ contex
 				return ec.fieldContext_Document_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Document_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Document_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Document", field.Name)
 		},
@@ -48003,6 +50063,8 @@ func (ec *executionContext) fieldContext_UpdateFrameworkPayload_framework(_ cont
 				return ec.fieldContext_Framework_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Framework_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Framework_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Framework", field.Name)
 		},
@@ -48056,6 +50118,8 @@ func (ec *executionContext) fieldContext_UpdateMeasurePayload_measure(_ context.
 				return ec.fieldContext_Measure_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Measure_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Measure_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Measure", field.Name)
 		},
@@ -48103,6 +50167,8 @@ func (ec *executionContext) fieldContext_UpdateMeetingPayload_meeting(_ context.
 				return ec.fieldContext_Meeting_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Meeting_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Meeting_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Meeting", field.Name)
 		},
@@ -48164,6 +50230,8 @@ func (ec *executionContext) fieldContext_UpdateNonconformityPayload_nonconformit
 				return ec.fieldContext_Nonconformity_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Nonconformity_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Nonconformity_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Nonconformity", field.Name)
 		},
@@ -48225,6 +50293,8 @@ func (ec *executionContext) fieldContext_UpdateObligationPayload_obligation(_ co
 				return ec.fieldContext_Obligation_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Obligation_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Obligation_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Obligation", field.Name)
 		},
@@ -48311,6 +50381,8 @@ func (ec *executionContext) fieldContext_UpdatePeoplePayload_people(_ context.Co
 				return ec.fieldContext_People_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_People_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_People_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type People", field.Name)
 		},
@@ -48398,6 +50470,8 @@ func (ec *executionContext) fieldContext_UpdateProcessingActivityPayload_process
 				return ec.fieldContext_ProcessingActivity_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_ProcessingActivity_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_ProcessingActivity_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type ProcessingActivity", field.Name)
 		},
@@ -48524,6 +50598,8 @@ func (ec *executionContext) fieldContext_UpdateRiskPayload_risk(_ context.Contex
 				return ec.fieldContext_Risk_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Risk_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Risk_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Risk", field.Name)
 		},
@@ -48579,6 +50655,8 @@ func (ec *executionContext) fieldContext_UpdateTaskPayload_task(_ context.Contex
 				return ec.fieldContext_Task_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Task_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Task_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Task", field.Name)
 		},
@@ -48630,6 +50708,8 @@ func (ec *executionContext) fieldContext_UpdateTransferImpactAssessmentPayload_t
 				return ec.fieldContext_TransferImpactAssessment_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_TransferImpactAssessment_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_TransferImpactAssessment_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type TransferImpactAssessment", field.Name)
 		},
@@ -48683,6 +50763,8 @@ func (ec *executionContext) fieldContext_UpdateTrustCenterAccessPayload_trustCen
 				return ec.fieldContext_TrustCenterAccess_activeCount(ctx, field)
 			case "availableDocumentAccesses":
 				return ec.fieldContext_TrustCenterAccess_availableDocumentAccesses(ctx, field)
+			case "permission":
+				return ec.fieldContext_TrustCenterAccess_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type TrustCenterAccess", field.Name)
 		},
@@ -48779,6 +50861,8 @@ func (ec *executionContext) fieldContext_UpdateTrustCenterPayload_trustCenter(_ 
 				return ec.fieldContext_TrustCenter_accesses(ctx, field)
 			case "references":
 				return ec.fieldContext_TrustCenter_references(ctx, field)
+			case "permission":
+				return ec.fieldContext_TrustCenter_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type TrustCenter", field.Name)
 		},
@@ -48826,6 +50910,8 @@ func (ec *executionContext) fieldContext_UpdateTrustCenterReferencePayload_trust
 				return ec.fieldContext_TrustCenterReference_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_TrustCenterReference_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_TrustCenterReference_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type TrustCenterReference", field.Name)
 		},
@@ -48875,6 +50961,8 @@ func (ec *executionContext) fieldContext_UpdateVendorBusinessAssociateAgreementP
 				return ec.fieldContext_VendorBusinessAssociateAgreement_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_VendorBusinessAssociateAgreement_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_VendorBusinessAssociateAgreement_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type VendorBusinessAssociateAgreement", field.Name)
 		},
@@ -48922,6 +51010,8 @@ func (ec *executionContext) fieldContext_UpdateVendorContactPayload_vendorContac
 				return ec.fieldContext_VendorContact_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_VendorContact_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_VendorContact_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type VendorContact", field.Name)
 		},
@@ -48971,6 +51061,8 @@ func (ec *executionContext) fieldContext_UpdateVendorDataPrivacyAgreementPayload
 				return ec.fieldContext_VendorDataPrivacyAgreement_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_VendorDataPrivacyAgreement_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_VendorDataPrivacyAgreement_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type VendorDataPrivacyAgreement", field.Name)
 		},
@@ -49064,6 +51156,8 @@ func (ec *executionContext) fieldContext_UpdateVendorPayload_vendor(_ context.Co
 				return ec.fieldContext_Vendor_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Vendor_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Vendor_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Vendor", field.Name)
 		},
@@ -49107,6 +51201,8 @@ func (ec *executionContext) fieldContext_UpdateVendorServicePayload_vendorServic
 				return ec.fieldContext_VendorService_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_VendorService_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_VendorService_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type VendorService", field.Name)
 		},
@@ -49164,6 +51260,8 @@ func (ec *executionContext) fieldContext_UploadAuditReportPayload_audit(_ contex
 				return ec.fieldContext_Audit_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Audit_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Audit_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Audit", field.Name)
 		},
@@ -49248,6 +51346,8 @@ func (ec *executionContext) fieldContext_UploadTrustCenterNDAPayload_trustCenter
 				return ec.fieldContext_TrustCenter_accesses(ctx, field)
 			case "references":
 				return ec.fieldContext_TrustCenter_references(ctx, field)
+			case "permission":
+				return ec.fieldContext_TrustCenter_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type TrustCenter", field.Name)
 		},
@@ -49297,6 +51397,8 @@ func (ec *executionContext) fieldContext_UploadVendorBusinessAssociateAgreementP
 				return ec.fieldContext_VendorBusinessAssociateAgreement_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_VendorBusinessAssociateAgreement_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_VendorBusinessAssociateAgreement_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type VendorBusinessAssociateAgreement", field.Name)
 		},
@@ -49381,6 +51483,8 @@ func (ec *executionContext) fieldContext_UploadVendorDataPrivacyAgreementPayload
 				return ec.fieldContext_VendorDataPrivacyAgreement_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_VendorDataPrivacyAgreement_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_VendorDataPrivacyAgreement_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type VendorDataPrivacyAgreement", field.Name)
 		},
@@ -49627,6 +51731,8 @@ func (ec *executionContext) fieldContext_Vendor_organization(_ context.Context, 
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Organization_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Organization_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
 		},
@@ -49723,6 +51829,8 @@ func (ec *executionContext) fieldContext_Vendor_businessAssociateAgreement(_ con
 				return ec.fieldContext_VendorBusinessAssociateAgreement_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_VendorBusinessAssociateAgreement_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_VendorBusinessAssociateAgreement_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type VendorBusinessAssociateAgreement", field.Name)
 		},
@@ -49772,6 +51880,8 @@ func (ec *executionContext) fieldContext_Vendor_dataPrivacyAgreement(_ context.C
 				return ec.fieldContext_VendorDataPrivacyAgreement_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_VendorDataPrivacyAgreement_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_VendorDataPrivacyAgreement_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type VendorDataPrivacyAgreement", field.Name)
 		},
@@ -49964,6 +52074,8 @@ func (ec *executionContext) fieldContext_Vendor_businessOwner(_ context.Context,
 				return ec.fieldContext_People_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_People_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_People_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type People", field.Name)
 		},
@@ -50015,6 +52127,8 @@ func (ec *executionContext) fieldContext_Vendor_securityOwner(_ context.Context,
 				return ec.fieldContext_People_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_People_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_People_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type People", field.Name)
 		},
@@ -50515,6 +52629,47 @@ func (ec *executionContext) fieldContext_Vendor_updatedAt(_ context.Context, fie
 	return fc, nil
 }
 
+func (ec *executionContext) _Vendor_permission(ctx context.Context, field graphql.CollectedField, obj *types.Vendor) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Vendor_permission,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Vendor().Permission(ctx, obj, fc.Args["action"].(string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Vendor_permission(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Vendor",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Vendor_permission_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _VendorBusinessAssociateAgreement_id(ctx context.Context, field graphql.CollectedField, obj *types.VendorBusinessAssociateAgreement) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -50630,6 +52785,8 @@ func (ec *executionContext) fieldContext_VendorBusinessAssociateAgreement_vendor
 				return ec.fieldContext_Vendor_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Vendor_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Vendor_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Vendor", field.Name)
 		},
@@ -50840,6 +52997,47 @@ func (ec *executionContext) fieldContext_VendorBusinessAssociateAgreement_update
 	return fc, nil
 }
 
+func (ec *executionContext) _VendorBusinessAssociateAgreement_permission(ctx context.Context, field graphql.CollectedField, obj *types.VendorBusinessAssociateAgreement) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_VendorBusinessAssociateAgreement_permission,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.VendorBusinessAssociateAgreement().Permission(ctx, obj, fc.Args["action"].(string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_VendorBusinessAssociateAgreement_permission(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "VendorBusinessAssociateAgreement",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_VendorBusinessAssociateAgreement_permission_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _VendorComplianceReport_id(ctx context.Context, field graphql.CollectedField, obj *types.VendorComplianceReport) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -50955,6 +53153,8 @@ func (ec *executionContext) fieldContext_VendorComplianceReport_vendor(_ context
 				return ec.fieldContext_Vendor_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Vendor_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Vendor_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Vendor", field.Name)
 		},
@@ -51152,6 +53352,47 @@ func (ec *executionContext) fieldContext_VendorComplianceReport_updatedAt(_ cont
 	return fc, nil
 }
 
+func (ec *executionContext) _VendorComplianceReport_permission(ctx context.Context, field graphql.CollectedField, obj *types.VendorComplianceReport) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_VendorComplianceReport_permission,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.VendorComplianceReport().Permission(ctx, obj, fc.Args["action"].(string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_VendorComplianceReport_permission(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "VendorComplianceReport",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_VendorComplianceReport_permission_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _VendorComplianceReportConnection_edges(ctx context.Context, field graphql.CollectedField, obj *types.VendorComplianceReportConnection) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -51295,6 +53536,8 @@ func (ec *executionContext) fieldContext_VendorComplianceReportEdge_node(_ conte
 				return ec.fieldContext_VendorComplianceReport_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_VendorComplianceReport_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_VendorComplianceReport_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type VendorComplianceReport", field.Name)
 		},
@@ -51520,6 +53763,8 @@ func (ec *executionContext) fieldContext_VendorContact_vendor(_ context.Context,
 				return ec.fieldContext_Vendor_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Vendor_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Vendor_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Vendor", field.Name)
 		},
@@ -51701,6 +53946,47 @@ func (ec *executionContext) fieldContext_VendorContact_updatedAt(_ context.Conte
 	return fc, nil
 }
 
+func (ec *executionContext) _VendorContact_permission(ctx context.Context, field graphql.CollectedField, obj *types.VendorContact) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_VendorContact_permission,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.VendorContact().Permission(ctx, obj, fc.Args["action"].(string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_VendorContact_permission(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "VendorContact",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_VendorContact_permission_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _VendorContactConnection_edges(ctx context.Context, field graphql.CollectedField, obj *types.VendorContactConnection) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -51844,6 +54130,8 @@ func (ec *executionContext) fieldContext_VendorContactEdge_node(_ context.Contex
 				return ec.fieldContext_VendorContact_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_VendorContact_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_VendorContact_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type VendorContact", field.Name)
 		},
@@ -51966,6 +54254,8 @@ func (ec *executionContext) fieldContext_VendorDataPrivacyAgreement_vendor(_ con
 				return ec.fieldContext_Vendor_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Vendor_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Vendor_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Vendor", field.Name)
 		},
@@ -52176,6 +54466,47 @@ func (ec *executionContext) fieldContext_VendorDataPrivacyAgreement_updatedAt(_ 
 	return fc, nil
 }
 
+func (ec *executionContext) _VendorDataPrivacyAgreement_permission(ctx context.Context, field graphql.CollectedField, obj *types.VendorDataPrivacyAgreement) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_VendorDataPrivacyAgreement_permission,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.VendorDataPrivacyAgreement().Permission(ctx, obj, fc.Args["action"].(string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_VendorDataPrivacyAgreement_permission(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "VendorDataPrivacyAgreement",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_VendorDataPrivacyAgreement_permission_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _VendorEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *types.VendorEdge) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -52291,6 +54622,8 @@ func (ec *executionContext) fieldContext_VendorEdge_node(_ context.Context, fiel
 				return ec.fieldContext_Vendor_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Vendor_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Vendor_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Vendor", field.Name)
 		},
@@ -52413,6 +54746,8 @@ func (ec *executionContext) fieldContext_VendorRiskAssessment_vendor(_ context.C
 				return ec.fieldContext_Vendor_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Vendor_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Vendor_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Vendor", field.Name)
 		},
@@ -52594,6 +54929,47 @@ func (ec *executionContext) fieldContext_VendorRiskAssessment_updatedAt(_ contex
 	return fc, nil
 }
 
+func (ec *executionContext) _VendorRiskAssessment_permission(ctx context.Context, field graphql.CollectedField, obj *types.VendorRiskAssessment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_VendorRiskAssessment_permission,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.VendorRiskAssessment().Permission(ctx, obj, fc.Args["action"].(string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_VendorRiskAssessment_permission(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "VendorRiskAssessment",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_VendorRiskAssessment_permission_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _VendorRiskAssessmentConnection_edges(ctx context.Context, field graphql.CollectedField, obj *types.VendorRiskAssessmentConnection) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -52737,6 +55113,8 @@ func (ec *executionContext) fieldContext_VendorRiskAssessmentEdge_node(_ context
 				return ec.fieldContext_VendorRiskAssessment_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_VendorRiskAssessment_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_VendorRiskAssessment_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type VendorRiskAssessment", field.Name)
 		},
@@ -52859,6 +55237,8 @@ func (ec *executionContext) fieldContext_VendorService_vendor(_ context.Context,
 				return ec.fieldContext_Vendor_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Vendor_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Vendor_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Vendor", field.Name)
 		},
@@ -52978,6 +55358,47 @@ func (ec *executionContext) fieldContext_VendorService_updatedAt(_ context.Conte
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Datetime does not have child fields")
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _VendorService_permission(ctx context.Context, field graphql.CollectedField, obj *types.VendorService) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_VendorService_permission,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.VendorService().Permission(ctx, obj, fc.Args["action"].(string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_VendorService_permission(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "VendorService",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_VendorService_permission_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -53121,6 +55542,8 @@ func (ec *executionContext) fieldContext_VendorServiceEdge_node(_ context.Contex
 				return ec.fieldContext_VendorService_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_VendorService_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_VendorService_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type VendorService", field.Name)
 		},
@@ -63126,6 +65549,42 @@ func (ec *executionContext) _Asset(ctx context.Context, sel ast.SelectionSet, ob
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "permission":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Asset_permission(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -63489,6 +65948,42 @@ func (ec *executionContext) _Audit(ctx context.Context, sel ast.SelectionSet, ob
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "permission":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Audit_permission(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -63959,6 +66454,42 @@ func (ec *executionContext) _ContinualImprovement(ctx context.Context, sel ast.S
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "permission":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._ContinualImprovement_permission(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -64364,6 +66895,42 @@ func (ec *executionContext) _Control(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "permission":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Control_permission(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -65969,40 +68536,76 @@ func (ec *executionContext) _CustomDomain(ctx context.Context, sel ast.Selection
 		case "id":
 			out.Values[i] = ec._CustomDomain_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "organization":
 			out.Values[i] = ec._CustomDomain_organization(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "domain":
 			out.Values[i] = ec._CustomDomain_domain(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "sslStatus":
 			out.Values[i] = ec._CustomDomain_sslStatus(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "sslExpiresAt":
 			out.Values[i] = ec._CustomDomain_sslExpiresAt(ctx, field, obj)
 		case "dnsRecords":
 			out.Values[i] = ec._CustomDomain_dnsRecords(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "createdAt":
 			out.Values[i] = ec._CustomDomain_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "updatedAt":
 			out.Values[i] = ec._CustomDomain_updatedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "permission":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._CustomDomain_permission(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -66193,6 +68796,42 @@ func (ec *executionContext) _DataProtectionImpactAssessment(ctx context.Context,
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "permission":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._DataProtectionImpactAssessment_permission(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -68422,6 +71061,42 @@ func (ec *executionContext) _Document(ctx context.Context, sel ast.SelectionSet,
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "permission":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Document_permission(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -68992,6 +71667,42 @@ func (ec *executionContext) _DocumentVersionSignature(ctx context.Context, sel a
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "permission":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._DocumentVersionSignature_permission(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -69250,6 +71961,42 @@ func (ec *executionContext) _Evidence(ctx context.Context, sel ast.SelectionSet,
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "permission":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Evidence_permission(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -69902,6 +72649,42 @@ func (ec *executionContext) _Framework(ctx context.Context, sel ast.SelectionSet
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "permission":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Framework_permission(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -70470,6 +73253,42 @@ func (ec *executionContext) _Measure(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "permission":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Measure_permission(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -70727,6 +73546,42 @@ func (ec *executionContext) _Meeting(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "permission":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Meeting_permission(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -71991,6 +74846,42 @@ func (ec *executionContext) _Nonconformity(ctx context.Context, sel ast.Selectio
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "permission":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Nonconformity_permission(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -72259,6 +75150,42 @@ func (ec *executionContext) _Obligation(ctx context.Context, sel ast.SelectionSe
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "permission":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Obligation_permission(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -73402,6 +76329,42 @@ func (ec *executionContext) _Organization(ctx context.Context, sel ast.Selection
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "permission":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Organization_permission(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -73528,27 +76491,27 @@ func (ec *executionContext) _People(ctx context.Context, sel ast.SelectionSet, o
 		case "id":
 			out.Values[i] = ec._People_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "fullName":
 			out.Values[i] = ec._People_fullName(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "primaryEmailAddress":
 			out.Values[i] = ec._People_primaryEmailAddress(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "additionalEmailAddresses":
 			out.Values[i] = ec._People_additionalEmailAddresses(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "kind":
 			out.Values[i] = ec._People_kind(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "position":
 			out.Values[i] = ec._People_position(ctx, field, obj)
@@ -73559,13 +76522,49 @@ func (ec *executionContext) _People(ctx context.Context, sel ast.SelectionSet, o
 		case "createdAt":
 			out.Values[i] = ec._People_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "updatedAt":
 			out.Values[i] = ec._People_updatedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "permission":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._People_permission(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -73971,6 +76970,42 @@ func (ec *executionContext) _ProcessingActivity(ctx context.Context, sel ast.Sel
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "permission":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._ProcessingActivity_permission(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -74345,6 +77380,42 @@ func (ec *executionContext) _Report(ctx context.Context, sel ast.SelectionSet, o
 					}
 				}()
 				res = ec._Report_audit(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "permission":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Report_permission(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
 				return res
 			}
 
@@ -74991,6 +78062,42 @@ func (ec *executionContext) _Risk(ctx context.Context, sel ast.SelectionSet, obj
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "permission":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Risk_permission(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -75732,6 +78839,42 @@ func (ec *executionContext) _Snapshot(ctx context.Context, sel ast.SelectionSet,
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "permission":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Snapshot_permission(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -76059,6 +79202,42 @@ func (ec *executionContext) _Task(ctx context.Context, sel ast.SelectionSet, obj
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "permission":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Task_permission(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -76314,6 +79493,42 @@ func (ec *executionContext) _TransferImpactAssessment(ctx context.Context, sel a
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "permission":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._TransferImpactAssessment_permission(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -76635,6 +79850,42 @@ func (ec *executionContext) _TrustCenter(ctx context.Context, sel ast.SelectionS
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "permission":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._TrustCenter_permission(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -76788,6 +80039,42 @@ func (ec *executionContext) _TrustCenterAccess(ctx context.Context, sel ast.Sele
 					}
 				}()
 				res = ec._TrustCenterAccess_availableDocumentAccesses(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "permission":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._TrustCenterAccess_permission(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -77619,6 +80906,42 @@ func (ec *executionContext) _TrustCenterReference(ctx context.Context, sel ast.S
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "permission":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._TrustCenterReference_permission(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -79522,6 +82845,42 @@ func (ec *executionContext) _Vendor(ctx context.Context, sel ast.SelectionSet, o
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "permission":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Vendor_permission(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -79657,6 +83016,42 @@ func (ec *executionContext) _VendorBusinessAssociateAgreement(ctx context.Contex
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "permission":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._VendorBusinessAssociateAgreement_permission(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -79787,6 +83182,42 @@ func (ec *executionContext) _VendorComplianceReport(ctx context.Context, sel ast
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "permission":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._VendorComplianceReport_permission(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -80048,6 +83479,42 @@ func (ec *executionContext) _VendorContact(ctx context.Context, sel ast.Selectio
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "permission":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._VendorContact_permission(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -80271,6 +83738,42 @@ func (ec *executionContext) _VendorDataPrivacyAgreement(ctx context.Context, sel
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "permission":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._VendorDataPrivacyAgreement_permission(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -80417,6 +83920,42 @@ func (ec *executionContext) _VendorRiskAssessment(ctx context.Context, sel ast.S
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "permission":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._VendorRiskAssessment_permission(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -80597,6 +84136,42 @@ func (ec *executionContext) _VendorService(ctx context.Context, sel ast.Selectio
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "permission":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._VendorService_permission(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

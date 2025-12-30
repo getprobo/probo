@@ -94,6 +94,11 @@ func (r *assetResolver) Organization(ctx context.Context, obj *types.Asset) (*ty
 	return types.NewOrganization(org), nil
 }
 
+// Permission is the resolver for the permission field.
+func (r *assetResolver) Permission(ctx context.Context, obj *types.Asset, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
+}
+
 // TotalCount is the resolver for the totalCount field.
 func (r *assetConnectionResolver) TotalCount(ctx context.Context, obj *types.AssetConnection) (int, error) {
 	r.MustAuthorize(ctx, obj.ParentID, probo.ActionAssetList)
@@ -222,6 +227,11 @@ func (r *auditResolver) Controls(ctx context.Context, obj *types.Audit, first *i
 	return types.NewControlConnection(page, r, obj.ID, controlFilter), nil
 }
 
+// Permission is the resolver for the permission field.
+func (r *auditResolver) Permission(ctx context.Context, obj *types.Audit, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
+}
+
 // TotalCount is the resolver for the totalCount field.
 func (r *auditConnectionResolver) TotalCount(ctx context.Context, obj *types.AuditConnection) (int, error) {
 	r.MustAuthorize(ctx, obj.ParentID, probo.ActionAuditList)
@@ -271,6 +281,11 @@ func (r *continualImprovementResolver) Owner(ctx context.Context, obj *types.Con
 	}
 
 	return types.NewPeople(people), nil
+}
+
+// Permission is the resolver for the permission field.
+func (r *continualImprovementResolver) Permission(ctx context.Context, obj *types.ContinualImprovement, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
 }
 
 // TotalCount is the resolver for the totalCount field.
@@ -441,6 +456,11 @@ func (r *controlResolver) Snapshots(ctx context.Context, obj *types.Control, fir
 	return types.NewSnapshotConnection(page, r, obj.ID), nil
 }
 
+// Permission is the resolver for the permission field.
+func (r *controlResolver) Permission(ctx context.Context, obj *types.Control, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
+}
+
 // TotalCount is the resolver for the totalCount field.
 func (r *controlConnectionResolver) TotalCount(ctx context.Context, obj *types.ControlConnection) (int, error) {
 	r.MustAuthorize(ctx, obj.ParentID, probo.ActionControlList)
@@ -483,6 +503,11 @@ func (r *controlConnectionResolver) TotalCount(ctx context.Context, obj *types.C
 	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
 }
 
+// Permission is the resolver for the permission field.
+func (r *customDomainResolver) Permission(ctx context.Context, obj *types.CustomDomain, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
+}
+
 // ProcessingActivity is the resolver for the processingActivity field.
 func (r *dataProtectionImpactAssessmentResolver) ProcessingActivity(ctx context.Context, obj *types.DataProtectionImpactAssessment) (*types.ProcessingActivity, error) {
 	r.MustAuthorize(ctx, obj.ID, probo.ActionProcessingActivityList)
@@ -522,6 +547,11 @@ func (r *dataProtectionImpactAssessmentResolver) Organization(ctx context.Contex
 	}
 
 	return types.NewOrganization(organization), nil
+}
+
+// Permission is the resolver for the permission field.
+func (r *dataProtectionImpactAssessmentResolver) Permission(ctx context.Context, obj *types.DataProtectionImpactAssessment, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
 }
 
 // TotalCount is the resolver for the totalCount field.
@@ -733,6 +763,11 @@ func (r *documentResolver) Controls(ctx context.Context, obj *types.Document, fi
 	return types.NewControlConnection(page, r, obj.ID, controlFilter), nil
 }
 
+// Permission is the resolver for the permission field.
+func (r *documentResolver) Permission(ctx context.Context, obj *types.Document, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
+}
+
 // TotalCount is the resolver for the totalCount field.
 func (r *documentConnectionResolver) TotalCount(ctx context.Context, obj *types.DocumentConnection) (int, error) {
 	r.MustAuthorize(ctx, obj.ParentID, probo.ActionDocumentList)
@@ -890,6 +925,11 @@ func (r *documentVersionSignatureResolver) SignedBy(ctx context.Context, obj *ty
 	return types.NewPeople(people), nil
 }
 
+// Permission is the resolver for the permission field.
+func (r *documentVersionSignatureResolver) Permission(ctx context.Context, obj *types.DocumentVersionSignature, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
+}
+
 // File is the resolver for the file field.
 func (r *evidenceResolver) File(ctx context.Context, obj *types.Evidence) (*types.File, error) {
 	r.MustAuthorize(ctx, obj.ID, probo.ActionFileGet)
@@ -952,6 +992,11 @@ func (r *evidenceResolver) Measure(ctx context.Context, obj *types.Evidence) (*t
 	}
 
 	return types.NewMeasure(measure), nil
+}
+
+// Permission is the resolver for the permission field.
+func (r *evidenceResolver) Permission(ctx context.Context, obj *types.Evidence, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
 }
 
 // TotalCount is the resolver for the totalCount field.
@@ -1065,6 +1110,11 @@ func (r *frameworkResolver) DarkLogoURL(ctx context.Context, obj *types.Framewor
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	return prb.Frameworks.GenerateDarkLogoURL(ctx, obj.ID, 1*time.Hour)
+}
+
+// Permission is the resolver for the permission field.
+func (r *frameworkResolver) Permission(ctx context.Context, obj *types.Framework, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
 }
 
 // TotalCount is the resolver for the totalCount field.
@@ -1209,6 +1259,11 @@ func (r *measureResolver) Controls(ctx context.Context, obj *types.Measure, firs
 	return types.NewControlConnection(page, r, obj.ID, controlFilter), nil
 }
 
+// Permission is the resolver for the permission field.
+func (r *measureResolver) Permission(ctx context.Context, obj *types.Measure, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
+}
+
 // TotalCount is the resolver for the totalCount field.
 func (r *measureConnectionResolver) TotalCount(ctx context.Context, obj *types.MeasureConnection) (int, error) {
 	r.MustAuthorize(ctx, obj.ParentID, probo.ActionMeasureList)
@@ -1286,6 +1341,11 @@ func (r *meetingResolver) Organization(ctx context.Context, obj *types.Meeting) 
 	}
 
 	return types.NewOrganization(organization), nil
+}
+
+// Permission is the resolver for the permission field.
+func (r *meetingResolver) Permission(ctx context.Context, obj *types.Meeting, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
 }
 
 // TotalCount is the resolver for the totalCount field.
@@ -4519,6 +4579,11 @@ func (r *nonconformityResolver) Owner(ctx context.Context, obj *types.Nonconform
 	return types.NewPeople(people), nil
 }
 
+// Permission is the resolver for the permission field.
+func (r *nonconformityResolver) Permission(ctx context.Context, obj *types.Nonconformity, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
+}
+
 // TotalCount is the resolver for the totalCount field.
 func (r *nonconformityConnectionResolver) TotalCount(ctx context.Context, obj *types.NonconformityConnection) (int, error) {
 	r.MustAuthorize(ctx, obj.ParentID, probo.ActionNonconformityList)
@@ -4579,6 +4644,11 @@ func (r *obligationResolver) Owner(ctx context.Context, obj *types.Obligation) (
 	}
 
 	return types.NewPeople(people), nil
+}
+
+// Permission is the resolver for the permission field.
+func (r *obligationResolver) Permission(ctx context.Context, obj *types.Obligation, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
 }
 
 // TotalCount is the resolver for the totalCount field.
@@ -5384,6 +5454,16 @@ func (r *organizationResolver) CustomDomain(ctx context.Context, obj *types.Orga
 	return types.NewCustomDomain(domain, r.customDomainCname), nil
 }
 
+// Permission is the resolver for the permission field.
+func (r *organizationResolver) Permission(ctx context.Context, obj *types.Organization, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
+}
+
+// Permission is the resolver for the permission field.
+func (r *peopleResolver) Permission(ctx context.Context, obj *types.People, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
+}
+
 // TotalCount is the resolver for the totalCount field.
 func (r *peopleConnectionResolver) TotalCount(ctx context.Context, obj *types.PeopleConnection) (int, error) {
 	r.MustAuthorize(ctx, obj.ParentID, probo.ActionPeopleList)
@@ -5509,6 +5589,11 @@ func (r *processingActivityResolver) TransferImpactAssessment(ctx context.Contex
 	}
 
 	return types.NewTransferImpactAssessment(tia), nil
+}
+
+// Permission is the resolver for the permission field.
+func (r *processingActivityResolver) Permission(ctx context.Context, obj *types.ProcessingActivity, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
 }
 
 // TotalCount is the resolver for the totalCount field.
@@ -5883,6 +5968,11 @@ func (r *reportResolver) Audit(ctx context.Context, obj *types.Report) (*types.A
 	return types.NewAudit(audit), nil
 }
 
+// Permission is the resolver for the permission field.
+func (r *reportResolver) Permission(ctx context.Context, obj *types.Report, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
+}
+
 // Organization is the resolver for the organization field.
 func (r *rightsRequestResolver) Organization(ctx context.Context, obj *types.RightsRequest) (*types.Organization, error) {
 	r.MustAuthorize(ctx, obj.ID, iam.ActionGetOrganization)
@@ -6097,6 +6187,11 @@ func (r *riskResolver) Obligations(ctx context.Context, obj *types.Risk, first *
 	return types.NewObligationConnection(page, r, obj.ID, filter), nil
 }
 
+// Permission is the resolver for the permission field.
+func (r *riskResolver) Permission(ctx context.Context, obj *types.Risk, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
+}
+
 // TotalCount is the resolver for the totalCount field.
 func (r *riskConnectionResolver) TotalCount(ctx context.Context, obj *types.RiskConnection) (int, error) {
 	r.MustAuthorize(ctx, obj.ParentID, probo.ActionRiskList)
@@ -6226,6 +6321,11 @@ func (r *snapshotResolver) Controls(ctx context.Context, obj *types.Snapshot, fi
 	return types.NewControlConnection(page, r, obj.ID, controlFilter), nil
 }
 
+// Permission is the resolver for the permission field.
+func (r *snapshotResolver) Permission(ctx context.Context, obj *types.Snapshot, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
+}
+
 // TotalCount is the resolver for the totalCount field.
 func (r *snapshotConnectionResolver) TotalCount(ctx context.Context, obj *types.SnapshotConnection) (int, error) {
 	r.MustAuthorize(ctx, obj.ParentID, probo.ActionSnapshotList)
@@ -6332,6 +6432,11 @@ func (r *taskResolver) Evidences(ctx context.Context, obj *types.Task, first *in
 	return types.NewEvidenceConnection(page, r, obj.ID), nil
 }
 
+// Permission is the resolver for the permission field.
+func (r *taskResolver) Permission(ctx context.Context, obj *types.Task, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
+}
+
 // TotalCount is the resolver for the totalCount field.
 func (r *taskConnectionResolver) TotalCount(ctx context.Context, obj *types.TaskConnection) (int, error) {
 	r.MustAuthorize(ctx, obj.ParentID, probo.ActionTaskList)
@@ -6386,6 +6491,11 @@ func (r *transferImpactAssessmentResolver) Organization(ctx context.Context, obj
 	}
 
 	return types.NewOrganization(organization), nil
+}
+
+// Permission is the resolver for the permission field.
+func (r *transferImpactAssessmentResolver) Permission(ctx context.Context, obj *types.TransferImpactAssessment, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
 }
 
 // TotalCount is the resolver for the totalCount field.
@@ -6497,6 +6607,11 @@ func (r *trustCenterResolver) References(ctx context.Context, obj *types.TrustCe
 	return types.NewTrustCenterReferenceConnection(result, obj.ID), nil
 }
 
+// Permission is the resolver for the permission field.
+func (r *trustCenterResolver) Permission(ctx context.Context, obj *types.TrustCenter, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
+}
+
 // PendingRequestCount is the resolver for the pendingRequestCount field.
 func (r *trustCenterAccessResolver) PendingRequestCount(ctx context.Context, obj *types.TrustCenterAccess) (int, error) {
 	r.MustAuthorize(ctx, obj.ID, probo.ActionTrustCenterAccessGet)
@@ -6549,6 +6664,11 @@ func (r *trustCenterAccessResolver) AvailableDocumentAccesses(ctx context.Contex
 	}
 
 	return types.NewTrustCenterDocumentAccessConnection(result, obj, obj.ID), nil
+}
+
+// Permission is the resolver for the permission field.
+func (r *trustCenterAccessResolver) Permission(ctx context.Context, obj *types.TrustCenterAccess, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
 }
 
 // Document is the resolver for the document field.
@@ -6685,6 +6805,11 @@ func (r *trustCenterReferenceResolver) LogoURL(ctx context.Context, obj *types.T
 	}
 
 	return fileURL, nil
+}
+
+// Permission is the resolver for the permission field.
+func (r *trustCenterReferenceResolver) Permission(ctx context.Context, obj *types.TrustCenterReference, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
 }
 
 // TotalCount is the resolver for the totalCount field.
@@ -6925,6 +7050,11 @@ func (r *vendorResolver) SecurityOwner(ctx context.Context, obj *types.Vendor) (
 	return types.NewPeople(people), nil
 }
 
+// Permission is the resolver for the permission field.
+func (r *vendorResolver) Permission(ctx context.Context, obj *types.Vendor, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
+}
+
 // Vendor is the resolver for the vendor field.
 func (r *vendorBusinessAssociateAgreementResolver) Vendor(ctx context.Context, obj *types.VendorBusinessAssociateAgreement) (*types.Vendor, error) {
 	r.MustAuthorize(ctx, obj.ID, probo.ActionVendorGet)
@@ -6955,6 +7085,11 @@ func (r *vendorBusinessAssociateAgreementResolver) FileURL(ctx context.Context, 
 	}
 
 	return fileURL, nil
+}
+
+// Permission is the resolver for the permission field.
+func (r *vendorBusinessAssociateAgreementResolver) Permission(ctx context.Context, obj *types.VendorBusinessAssociateAgreement, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
 }
 
 // Vendor is the resolver for the vendor field.
@@ -7000,6 +7135,11 @@ func (r *vendorComplianceReportResolver) File(ctx context.Context, obj *types.Ve
 	}
 
 	return types.NewFile(file), nil
+}
+
+// Permission is the resolver for the permission field.
+func (r *vendorComplianceReportResolver) Permission(ctx context.Context, obj *types.VendorComplianceReport, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
 }
 
 // TotalCount is the resolver for the totalCount field.
@@ -7056,6 +7196,11 @@ func (r *vendorContactResolver) Vendor(ctx context.Context, obj *types.VendorCon
 	return types.NewVendor(vendor), nil
 }
 
+// Permission is the resolver for the permission field.
+func (r *vendorContactResolver) Permission(ctx context.Context, obj *types.VendorContact, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
+}
+
 // Vendor is the resolver for the vendor field.
 func (r *vendorDataPrivacyAgreementResolver) Vendor(ctx context.Context, obj *types.VendorDataPrivacyAgreement) (*types.Vendor, error) {
 	r.MustAuthorize(ctx, obj.ID, probo.ActionVendorGet)
@@ -7088,6 +7233,11 @@ func (r *vendorDataPrivacyAgreementResolver) FileURL(ctx context.Context, obj *t
 	return fileURL, nil
 }
 
+// Permission is the resolver for the permission field.
+func (r *vendorDataPrivacyAgreementResolver) Permission(ctx context.Context, obj *types.VendorDataPrivacyAgreement, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
+}
+
 // Vendor is the resolver for the vendor field.
 func (r *vendorRiskAssessmentResolver) Vendor(ctx context.Context, obj *types.VendorRiskAssessment) (*types.Vendor, error) {
 	r.MustAuthorize(ctx, obj.ID, probo.ActionVendorGet)
@@ -7106,6 +7256,11 @@ func (r *vendorRiskAssessmentResolver) Vendor(ctx context.Context, obj *types.Ve
 	return types.NewVendor(vendor), nil
 }
 
+// Permission is the resolver for the permission field.
+func (r *vendorRiskAssessmentResolver) Permission(ctx context.Context, obj *types.VendorRiskAssessment, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
+}
+
 // Vendor is the resolver for the vendor field.
 func (r *vendorServiceResolver) Vendor(ctx context.Context, obj *types.VendorService) (*types.Vendor, error) {
 	r.MustAuthorize(ctx, obj.ID, probo.ActionVendorGet)
@@ -7122,6 +7277,11 @@ func (r *vendorServiceResolver) Vendor(ctx context.Context, obj *types.VendorSer
 	}
 
 	return types.NewVendor(vendor), nil
+}
+
+// Permission is the resolver for the permission field.
+func (r *vendorServiceResolver) Permission(ctx context.Context, obj *types.VendorService, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
 }
 
 // SignableDocuments is the resolver for the signableDocuments field.
@@ -7231,6 +7391,9 @@ func (r *Resolver) ControlConnection() schema.ControlConnectionResolver {
 	return &controlConnectionResolver{r}
 }
 
+// CustomDomain returns schema.CustomDomainResolver implementation.
+func (r *Resolver) CustomDomain() schema.CustomDomainResolver { return &customDomainResolver{r} }
+
 // DataProtectionImpactAssessment returns schema.DataProtectionImpactAssessmentResolver implementation.
 func (r *Resolver) DataProtectionImpactAssessment() schema.DataProtectionImpactAssessmentResolver {
 	return &dataProtectionImpactAssessmentResolver{r}
@@ -7323,6 +7486,9 @@ func (r *Resolver) ObligationConnection() schema.ObligationConnectionResolver {
 
 // Organization returns schema.OrganizationResolver implementation.
 func (r *Resolver) Organization() schema.OrganizationResolver { return &organizationResolver{r} }
+
+// People returns schema.PeopleResolver implementation.
+func (r *Resolver) People() schema.PeopleResolver { return &peopleResolver{r} }
 
 // PeopleConnection returns schema.PeopleConnectionResolver implementation.
 func (r *Resolver) PeopleConnection() schema.PeopleConnectionResolver {
@@ -7471,6 +7637,7 @@ type continualImprovementResolver struct{ *Resolver }
 type continualImprovementConnectionResolver struct{ *Resolver }
 type controlResolver struct{ *Resolver }
 type controlConnectionResolver struct{ *Resolver }
+type customDomainResolver struct{ *Resolver }
 type dataProtectionImpactAssessmentResolver struct{ *Resolver }
 type dataProtectionImpactAssessmentConnectionResolver struct{ *Resolver }
 type datumResolver struct{ *Resolver }
@@ -7494,6 +7661,7 @@ type nonconformityConnectionResolver struct{ *Resolver }
 type obligationResolver struct{ *Resolver }
 type obligationConnectionResolver struct{ *Resolver }
 type organizationResolver struct{ *Resolver }
+type peopleResolver struct{ *Resolver }
 type peopleConnectionResolver struct{ *Resolver }
 type processingActivityResolver struct{ *Resolver }
 type processingActivityConnectionResolver struct{ *Resolver }
@@ -7527,42 +7695,3 @@ type vendorDataPrivacyAgreementResolver struct{ *Resolver }
 type vendorRiskAssessmentResolver struct{ *Resolver }
 type vendorServiceResolver struct{ *Resolver }
 type viewerResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//    it when you're done.
-//  - You have helper methods in this file. Move them out to keep these resolver files clean.
-/*
-	func (r *mutationResolver) AssignTask(ctx context.Context, input types.AssignTaskInput) (*types.AssignTaskPayload, error) {
-	r.MustAuthorize(ctx, input.TaskID, probo.ActionTaskAssign)
-
-	prb := r.ProboService(ctx, input.TaskID.TenantID())
-
-	task, err := prb.Tasks.Assign(ctx, input.TaskID, input.AssignedToID)
-	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot assign task: %w", err))
-	}
-
-	return &types.AssignTaskPayload{
-		Task: types.NewTask(task),
-	}, nil
-}
-func (r *mutationResolver) UnassignTask(ctx context.Context, input types.UnassignTaskInput) (*types.UnassignTaskPayload, error) {
-	r.MustAuthorize(ctx, input.TaskID, probo.ActionTaskUnassign)
-
-	prb := r.ProboService(ctx, input.TaskID.TenantID())
-
-	task, err := prb.Tasks.Unassign(ctx, input.TaskID)
-	if err != nil {
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot unassign task: %w", err))
-	}
-
-	return &types.UnassignTaskPayload{
-		Task: types.NewTask(task),
-	}, nil
-}
-*/

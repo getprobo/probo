@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<04a0aa6648637fd8e81b371ffd8ef9fb>>
+ * @generated SignedSource<<ad1c20b90e9f5335bbcd703dc4e19963>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -16,6 +16,7 @@ export type DomainSettingsPageQuery$variables = {
 export type DomainSettingsPageQuery$data = {
   readonly organization: {
     readonly __typename: "Organization";
+    readonly canCreateCustomDomain: boolean;
     readonly customDomain: {
       readonly domain: string;
       readonly " $fragmentSpreads": FragmentRefs<"DomainCardFragment">;
@@ -62,6 +63,19 @@ v3 = {
   "storageKey": null
 },
 v4 = {
+  "alias": "canCreateCustomDomain",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "core:custom-domain:create"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"core:custom-domain:create\")"
+},
+v5 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
@@ -88,6 +102,7 @@ return {
             "kind": "InlineFragment",
             "selections": [
               (v3/*: any*/),
+              (v4/*: any*/),
               {
                 "alias": null,
                 "args": null,
@@ -96,7 +111,7 @@ return {
                 "name": "customDomain",
                 "plural": false,
                 "selections": [
-                  (v4/*: any*/),
+                  (v5/*: any*/),
                   {
                     "args": null,
                     "kind": "FragmentSpread",
@@ -135,6 +150,7 @@ return {
           {
             "kind": "InlineFragment",
             "selections": [
+              (v4/*: any*/),
               {
                 "alias": null,
                 "args": null,
@@ -143,13 +159,26 @@ return {
                 "name": "customDomain",
                 "plural": false,
                 "selections": [
-                  (v4/*: any*/),
+                  (v5/*: any*/),
                   {
                     "alias": null,
                     "args": null,
                     "kind": "ScalarField",
                     "name": "sslStatus",
                     "storageKey": null
+                  },
+                  {
+                    "alias": "canDelete",
+                    "args": [
+                      {
+                        "kind": "Literal",
+                        "name": "action",
+                        "value": "core:custom-domain:delete"
+                      }
+                    ],
+                    "kind": "ScalarField",
+                    "name": "permission",
+                    "storageKey": "permission(action:\"core:custom-domain:delete\")"
                   },
                   {
                     "alias": null,
@@ -232,16 +261,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "561dce9d969f951c2c5b0a2a5fecf29a",
+    "cacheID": "36529612fbe4366a7344b405031da1d1",
     "id": null,
     "metadata": {},
     "name": "DomainSettingsPageQuery",
     "operationKind": "query",
-    "text": "query DomainSettingsPageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      customDomain {\n        domain\n        ...DomainCardFragment\n        id\n      }\n    }\n    id\n  }\n}\n\nfragment DomainCardFragment on CustomDomain {\n  domain\n  sslStatus\n  ...DomainDialogFragment\n}\n\nfragment DomainDialogFragment on CustomDomain {\n  sslStatus\n  domain\n  dnsRecords {\n    type\n    name\n    value\n    ttl\n    purpose\n  }\n  createdAt\n  updatedAt\n  sslExpiresAt\n}\n"
+    "text": "query DomainSettingsPageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      canCreateCustomDomain: permission(action: \"core:custom-domain:create\")\n      customDomain {\n        domain\n        ...DomainCardFragment\n        id\n      }\n    }\n    id\n  }\n}\n\nfragment DomainCardFragment on CustomDomain {\n  domain\n  sslStatus\n  canDelete: permission(action: \"core:custom-domain:delete\")\n  ...DomainDialogFragment\n}\n\nfragment DomainDialogFragment on CustomDomain {\n  sslStatus\n  domain\n  dnsRecords {\n    type\n    name\n    value\n    ttl\n    purpose\n  }\n  createdAt\n  updatedAt\n  sslExpiresAt\n}\n"
   }
 };
 })();
 
-(node as any).hash = "6b7bab65eca55ec2f132cd5944fe874e";
+(node as any).hash = "75275e2fc7e7156cdf3059b8f0d4f60d";
 
 export default node;
