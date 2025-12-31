@@ -3,21 +3,11 @@ import { useTranslate } from "@probo/i18n";
 import { useOutletContext } from "react-router";
 import { TrustCenterAuditsCard } from "/components/trustCenter/TrustCenterAuditsCard";
 import { useTrustCenterAuditUpdate } from "/hooks/graph/TrustCenterAuditGraph";
-import type { TrustCenterAuditsCardFragment$key } from "/__generated__/core/TrustCenterAuditsCardFragment.graphql";
-
-type ContextType = {
-  organization: {
-    audits?: {
-      edges: Array<{
-        node: TrustCenterAuditsCardFragment$key;
-      }>;
-    };
-  };
-};
+import type { TrustCenterGraphQuery$data } from "/__generated__/core/TrustCenterGraphQuery.graphql";
 
 export default function TrustCenterAuditsTab() {
   const { __ } = useTranslate();
-  const { organization } = useOutletContext<ContextType>();
+  const { organization } = useOutletContext<TrustCenterGraphQuery$data>();
   const [updateAuditVisibility, isUpdatingAudits] = useTrustCenterAuditUpdate();
 
   const audits = (organization.audits?.edges ?? []).map((edge) => edge.node);
@@ -38,6 +28,7 @@ export default function TrustCenterAuditsTab() {
         params={{}}
         disabled={isUpdatingAudits}
         onChangeVisibility={updateAuditVisibility}
+        canUpdate={!!organization.trustCenter?.canUpdate}
       />
     </div>
   );

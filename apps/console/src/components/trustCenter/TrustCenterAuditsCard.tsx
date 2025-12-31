@@ -14,7 +14,7 @@ import {
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { useFragment } from "react-relay";
-import { useMemo, useState, useCallback, useEffect, use } from "react";
+import { useMemo, useState, useCallback, useEffect } from "react";
 import {
   sprintf,
   getAuditStateVariant,
@@ -24,7 +24,6 @@ import {
 } from "@probo/helpers";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import type { TrustCenterAuditsCardFragment$key } from "/__generated__/core/TrustCenterAuditsCardFragment.graphql";
-import { PermissionsContext } from "/providers/PermissionsContext";
 
 const trustCenterAuditFragment = graphql`
   fragment TrustCenterAuditsCardFragment on Audit {
@@ -55,6 +54,7 @@ type Props<Params> = {
   params: Params;
   disabled?: boolean;
   onChangeVisibility: Mutation<Params>;
+  canUpdate: boolean;
 };
 
 export function TrustCenterAuditsCard<Params>(props: Props<Params>) {
@@ -104,6 +104,7 @@ export function TrustCenterAuditsCard<Params>(props: Props<Params>) {
             <AuditRow
               key={index}
               auditFragmentRef={audit}
+              canUpdate={props.canUpdate}
               onChangeVisibility={onChangeVisibility}
               disabled={props.disabled}
             />
@@ -131,16 +132,13 @@ function AuditRow(props: {
     trustCenterVisibility: "NONE" | "PRIVATE" | "PUBLIC",
   ) => void;
   disabled?: boolean;
+  canUpdate: boolean;
 }) {
-  const { auditFragmentRef, onChangeVisibility, disabled } = props;
+  const { auditFragmentRef, onChangeVisibility, disabled, canUpdate } = props;
   const audit = useFragment(trustCenterAuditFragment, auditFragmentRef);
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
   const [optimisticValue, setOptimisticValue] = useState<string | null>(null);
-  const { isAuthorized } = use(PermissionsContext);
-  const canUpdate = organizationId
-    ? isAuthorized("TrustCenter", "updateTrustCenter")
-    : false;
 
   const handleValueChange = useCallback(
     (value: string) => {

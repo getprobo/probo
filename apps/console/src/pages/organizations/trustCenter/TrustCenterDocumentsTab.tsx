@@ -3,21 +3,11 @@ import { useTranslate } from "@probo/i18n";
 import { useOutletContext } from "react-router";
 import { TrustCenterDocumentsCard } from "/components/trustCenter/TrustCenterDocumentsCard";
 import { useUpdateDocumentVisibilityMutation } from "/hooks/graph/TrustCenterDocumentGraph";
-import type { TrustCenterDocumentsCardFragment$key } from "/__generated__/core/TrustCenterDocumentsCardFragment.graphql";
-
-type ContextType = {
-  organization: {
-    documents?: {
-      edges: Array<{
-        node: TrustCenterDocumentsCardFragment$key;
-      }>;
-    };
-  };
-};
+import type { TrustCenterGraphQuery$data } from "/__generated__/core/TrustCenterGraphQuery.graphql";
 
 export default function TrustCenterDocumentsTab() {
   const { __ } = useTranslate();
-  const { organization } = useOutletContext<ContextType>();
+  const { organization } = useOutletContext<TrustCenterGraphQuery$data>();
   const [updateDocumentVisibility, isUpdatingDocuments] =
     useUpdateDocumentVisibilityMutation();
 
@@ -40,6 +30,7 @@ export default function TrustCenterDocumentsTab() {
         params={{}}
         disabled={isUpdatingDocuments}
         onChangeVisibility={updateDocumentVisibility}
+        canUpdate={!!organization.trustCenter?.canUpdate}
       />
     </div>
   );

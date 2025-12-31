@@ -13,7 +13,7 @@ import {
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { useOutletContext } from "react-router";
-import { useState, useCallback, use } from "react";
+import { useState, useCallback } from "react";
 import z from "zod";
 import { getTrustCenterVisibilityOptions } from "@probo/helpers";
 import {
@@ -23,20 +23,7 @@ import {
 } from "/hooks/graph/TrustCenterFileGraph";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { TrustCenterFilesCard } from "/components/trustCenter/TrustCenterFilesCard";
-import type { TrustCenterFilesCardFragment$key } from "/__generated__/core/TrustCenterFilesCardFragment.graphql";
-import { PermissionsContext } from "/providers/PermissionsContext";
-
-type ContextType = {
-  organization: {
-    id: string;
-    trustCenterFiles?: {
-      __id?: string;
-      edges: Array<{
-        node: TrustCenterFilesCardFragment$key;
-      }>;
-    };
-  };
-};
+import type { TrustCenterGraphQuery$data } from "/__generated__/core/TrustCenterGraphQuery.graphql";
 
 const acceptedFileTypes = {
   "application/csv": [".csv"],
@@ -75,8 +62,7 @@ const acceptedFileTypes = {
 
 export default function TrustCenterFilesTab() {
   const { __ } = useTranslate();
-  const { organization } = useOutletContext<ContextType>();
-  const { isAuthorized } = use(PermissionsContext);
+  const { organization } = useOutletContext<TrustCenterGraphQuery$data>();
   const createSchema = z.object({
     name: z.string().min(1, __("Name is required")),
     category: z.string().min(1, __("Category is required")),
@@ -258,7 +244,7 @@ export default function TrustCenterFilesTab() {
             {__("Upload and manage files for your trust center")}
           </p>
         </div>
-        {isAuthorized("Organization", "createTrustCenterFile") && (
+        {organization.canCreateTrustCenterFile && (
           <Button
             icon={IconPlusLarge}
             onClick={() => createDialogRef.current?.open()}
@@ -279,6 +265,7 @@ export default function TrustCenterFilesTab() {
         onChangeVisibility={handleChangeVisibility}
         onEdit={handleEdit}
         onDelete={handleDeleteClick}
+        canUpdate={!!organization.trustCenter?.canUpdate}
       />
 
       <Dialog ref={createDialogRef} title={__("Add File")}>

@@ -1757,7 +1757,11 @@ type TrustCenterFile struct {
 	CreatedAt             time.Time                      `json:"createdAt"`
 	UpdatedAt             time.Time                      `json:"updatedAt"`
 	Organization          *Organization                  `json:"organization"`
+	Permission            bool                           `json:"permission"`
 }
+
+func (TrustCenterFile) IsNode()             {}
+func (this TrustCenterFile) GetID() gid.GID { return this.ID }
 
 type TrustCenterFileEdge struct {
 	Cursor page.CursorKey   `json:"cursor"`

@@ -21,10 +21,9 @@ import type {
   TrustCenterFilesCardFragment$data,
 } from "/__generated__/core/TrustCenterFilesCardFragment.graphql";
 import { useFragment } from "react-relay";
-import { useMemo, useState, useCallback, useEffect, use } from "react";
+import { useMemo, useState, useCallback, useEffect } from "react";
 import { sprintf, getTrustCenterVisibilityOptions } from "@probo/helpers";
 import { formatDate } from "@probo/helpers";
-import { PermissionsContext } from "/providers/PermissionsContext";
 
 const trustCenterFileFragment = graphql`
   fragment TrustCenterFilesCardFragment on TrustCenterFile {
@@ -35,6 +34,8 @@ const trustCenterFileFragment = graphql`
     trustCenterVisibility
     createdAt
     updatedAt
+    canUpdate: permission(action: "core:trust-center-file:update")
+    canDelete: permission(action: "core:trust-center-file:delete")
   }
 `;
 
@@ -54,6 +55,7 @@ type Props<Params> = {
   onChangeVisibility: Mutation<Params>;
   onEdit: (file: { id: string; name: string; category: string }) => void;
   onDelete: (id: string) => void;
+  canUpdate: boolean;
 };
 
 export function TrustCenterFilesCard<Params>(props: Props<Params>) {
@@ -107,6 +109,7 @@ export function TrustCenterFilesCard<Params>(props: Props<Params>) {
               onEdit={props.onEdit}
               onDelete={props.onDelete}
               disabled={props.disabled}
+              canUpdate={props.canUpdate}
             />
           ))}
         </Tbody>
@@ -134,6 +137,7 @@ function FileRowWrapper(props: {
   onEdit: (file: { id: string; name: string; category: string }) => void;
   onDelete: (id: string) => void;
   disabled?: boolean;
+  canUpdate: boolean;
 }) {
   const file = useFragment(trustCenterFileFragment, props.fileFragmentRef);
   return (
@@ -143,6 +147,7 @@ function FileRowWrapper(props: {
       onEdit={props.onEdit}
       onDelete={props.onDelete}
       disabled={props.disabled}
+      canUpdate={props.canUpdate}
     />
   );
 }
@@ -156,12 +161,12 @@ function FileRow(props: {
   onEdit: (file: { id: string; name: string; category: string }) => void;
   onDelete: (id: string) => void;
   disabled?: boolean;
+  canUpdate: boolean;
 }) {
-  const { file, onChangeVisibility, onEdit, onDelete, disabled } = props;
+  const { file, onChangeVisibility, onEdit, onDelete, disabled, canUpdate } =
+    props;
   const { __ } = useTranslate();
   const [optimisticValue, setOptimisticValue] = useState<string | null>(null);
-  const { isAuthorized } = use(PermissionsContext);
-  const canUpdate = isAuthorized("TrustCenter", "updateTrustCenter");
 
   const handleValueChange = useCallback(
     (value: string) => {
@@ -217,7 +222,7 @@ function FileRow(props: {
             }
             title={__("Download")}
           />
-          {isAuthorized("TrustCenterFile", "updateTrustCenterFile") && (
+          {file.canUpdate && (
             <Button
               variant="secondary"
               icon={IconPencil}
@@ -232,7 +237,7 @@ function FileRow(props: {
               title={__("Edit")}
             />
           )}
-          {isAuthorized("TrustCenterFile", "deleteTrustCenterFile") && (
+          {file.canDelete && (
             <Button
               variant="danger"
               icon={IconTrashCan}
