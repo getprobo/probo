@@ -42,8 +42,6 @@ import { Link } from "react-router";
 import { useState, useEffect, useRef } from "react";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import type { MeetingsPage_UpdateSummaryMutation } from "/__generated__/core/MeetingsPage_UpdateSummaryMutation.graphql";
-import { use } from "react";
-import { PermissionsContext } from "/providers/PermissionsContext";
 
 const meetingsFragment = graphql`
   fragment MeetingsPageListFragment on Organization
@@ -86,7 +84,6 @@ type Props = {
 
 export default function MeetingsPage(props: Props) {
   const { __ } = useTranslate();
-  const { isAuthorized } = use(PermissionsContext);
   const organization = usePreloadedQuery(
     meetingsQuery,
     props.queryRef,
@@ -219,7 +216,7 @@ export default function MeetingsPage(props: Props) {
               <h3 className="text-sm font-semibold text-txt-secondary">
                 {__("Summary")}
               </h3>
-              {isAuthorized("Meeting", "updateMeeting") && (
+              {organization.canCreateMeeting && (
                 <Button
                   variant="quaternary"
                   icon={IconPencil}
@@ -249,7 +246,7 @@ export default function MeetingsPage(props: Props) {
           "Track and manage your organization's meetings and their minutes.",
         )}
       >
-        {isAuthorized("Organization", "createMeeting") && (
+        {organization.canCreateMeeting && (
           <CreateMeetingDialog connectionId={connectionId}>
             <Button icon={IconPlusLarge}>{__("Add meeting")}</Button>
           </CreateMeetingDialog>
@@ -304,6 +301,7 @@ const rowFragment = graphql`
       id
       fullName
     }
+    canDelete: permission(action: "core:meeting:delete")
   }
 `;
 
@@ -321,7 +319,6 @@ function MeetingRow({
   const { __ } = useTranslate();
   const [deleteMeeting] = useDeleteMeetingMutation();
   const confirm = useConfirm();
-  const { isAuthorized } = use(PermissionsContext);
   const handleDelete = () => {
     confirm(
       () =>
@@ -371,7 +368,7 @@ function MeetingRow({
           </span>
         )}
       </Td>
-      {isAuthorized("Meeting", "deleteMeeting") && (
+      {meeting.canDelete && (
         <Td noLink width={50} className="text-end w-18">
           <ActionDropdown>
             <DropdownItem
