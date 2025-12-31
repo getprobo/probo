@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<8deb33fbc8305caa3d3de954cf555c79>>
+ * @generated SignedSource<<a51e172adf9985b58d315d510a665377>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,6 +11,7 @@
 import { ReaderFragment } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type OrganizationFormFragment$data = {
+  readonly canUpdate: boolean;
   readonly description: string | null | undefined;
   readonly email: string | null | undefined;
   readonly headquarterAddress: string | null | undefined;
@@ -91,12 +92,25 @@ const node: ReaderFragment = {
       "kind": "ScalarField",
       "name": "headquarterAddress",
       "storageKey": null
+    },
+    {
+      "alias": "canUpdate",
+      "args": [
+        {
+          "kind": "Literal",
+          "name": "action",
+          "value": "iam:organization:update"
+        }
+      ],
+      "kind": "ScalarField",
+      "name": "permission",
+      "storageKey": "permission(action:\"iam:organization:update\")"
     }
   ],
   "type": "Organization",
   "abstractKey": null
 };
 
-(node as any).hash = "0894093a550e5ba033a33b255b1bf2c7";
+(node as any).hash = "d1a518b08167fdd53901c4b842fa2e9c";
 
 export default node;
