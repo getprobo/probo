@@ -5,12 +5,19 @@ import { useTranslate } from "@probo/i18n";
 import { promisifyMutation, sprintf } from "@probo/helpers";
 import { useMutationWithToasts } from "../useMutationWithToasts";
 
-export const ContinualImprovementsConnectionKey = "ContinualImprovementsPage_continualImprovements";
+export const ContinualImprovementsConnectionKey =
+  "ContinualImprovementsPage_continualImprovements";
 
 export const continualImprovementsQuery = graphql`
-  query ContinualImprovementGraphListQuery($organizationId: ID!, $snapshotId: ID) {
+  query ContinualImprovementGraphListQuery(
+    $organizationId: ID!
+    $snapshotId: ID
+  ) {
     node(id: $organizationId) {
       ... on Organization {
+        canCreateContinualImprovement: permission(
+          action: "core:continual-improvement:create"
+        )
         ...ContinualImprovementsPageFragment @arguments(snapshotId: $snapshotId)
       }
     }
@@ -40,6 +47,8 @@ export const continualImprovementNodeQuery = graphql`
         }
         createdAt
         updatedAt
+        canUpdate: permission(action: "core:continual-improvement:update")
+        canDelete: permission(action: "core:continual-improvement:delete")
       }
     }
   }
@@ -65,6 +74,8 @@ export const createContinualImprovementMutation = graphql`
             fullName
           }
           createdAt
+          canUpdate: permission(action: "core:continual-improvement:update")
+          canDelete: permission(action: "core:continual-improvement:delete")
         }
       }
     }
@@ -72,7 +83,9 @@ export const createContinualImprovementMutation = graphql`
 `;
 
 export const updateContinualImprovementMutation = graphql`
-  mutation ContinualImprovementGraphUpdateMutation($input: UpdateContinualImprovementInput!) {
+  mutation ContinualImprovementGraphUpdateMutation(
+    $input: UpdateContinualImprovementInput!
+  ) {
     updateContinualImprovement(input: $input) {
       continualImprovement {
         id
@@ -105,7 +118,7 @@ export const deleteContinualImprovementMutation = graphql`
 
 export const useDeleteContinualImprovement = (
   improvement: { id: string; referenceId: string },
-  connectionId: string
+  connectionId: string,
 ) => {
   const { __ } = useTranslate();
   const [mutate] = useMutationWithToasts(deleteContinualImprovementMutation, {
@@ -128,11 +141,11 @@ export const useDeleteContinualImprovement = (
       {
         message: sprintf(
           __(
-            "This will permanently delete the continual improvement %s. This action cannot be undone."
+            "This will permanently delete the continual improvement %s. This action cannot be undone.",
           ),
-          improvement.referenceId
+          improvement.referenceId,
         ),
-      }
+      },
     );
   };
 };
@@ -152,13 +165,19 @@ export const useCreateContinualImprovement = (connectionId: string) => {
     priority: string;
   }) => {
     if (!input.organizationId) {
-      return alert(__("Failed to create continual improvement: organization is required"));
+      return alert(
+        __("Failed to create continual improvement: organization is required"),
+      );
     }
     if (!input.referenceId) {
-      return alert(__("Failed to create continual improvement: reference ID is required"));
+      return alert(
+        __("Failed to create continual improvement: reference ID is required"),
+      );
     }
     if (!input.ownerId) {
-      return alert(__("Failed to create continual improvement: owner is required"));
+      return alert(
+        __("Failed to create continual improvement: owner is required"),
+      );
     }
 
     return promisifyMutation(mutate)({
@@ -194,7 +213,9 @@ export const useUpdateContinualImprovement = () => {
     priority?: string;
   }) => {
     if (!input.id) {
-      return alert(__("Failed to update continual improvement: ID is required"));
+      return alert(
+        __("Failed to update continual improvement: ID is required"),
+      );
     }
 
     return promisifyMutation(mutate)({
