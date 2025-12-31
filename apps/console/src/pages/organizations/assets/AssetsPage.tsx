@@ -1,7 +1,6 @@
 import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import { Button, IconPlusLarge, PageHeader } from "@probo/ui";
-import { use } from "react";
 import {
   graphql,
   usePaginationFragment,
@@ -17,7 +16,6 @@ import { SnapshotBanner } from "/components/SnapshotBanner";
 import { assetsQuery } from "/hooks/graph/AssetGraph";
 import type { AssetGraphListQuery } from "/__generated__/core/AssetGraphListQuery.graphql";
 import { useOrganizationId } from "/hooks/useOrganizationId";
-import { PermissionsContext } from "/providers/PermissionsContext";
 
 const paginatedAssetsFragment = graphql`
   fragment AssetsPageFragment on Organization
@@ -61,6 +59,8 @@ const paginatedAssetsFragment = graphql`
             }
           }
           createdAt
+          canUpdate: permission(action: "core:asset:update")
+          canDelete: permission(action: "core:asset:delete")
         }
       }
     }
@@ -88,10 +88,7 @@ export default function AssetsPage(props: Props) {
   const assets = pagination.data.assets?.edges.map((edge) => edge.node);
   const connectionId = pagination.data.assets.__id;
 
-  const { isAuthorized } = use(PermissionsContext);
-  const canWrite =
-    isAuthorized("Asset", "updateAsset") ||
-    isAuthorized("Asset", "deleteAsset");
+  const canWrite = assets.some((asset) => asset.canDelete || asset.canUpdate);
   usePageTitle(__("Assets"));
 
   return (
@@ -103,7 +100,7 @@ export default function AssetsPage(props: Props) {
           "Manage your organization's assets and their classifications.",
         )}
       >
-        {!isSnapshotMode && isAuthorized("Organization", "createAsset") && (
+        {!isSnapshotMode && data.node.canCreateAsset && (
           <CreateAssetDialog
             connection={connectionId}
             organizationId={organizationId}

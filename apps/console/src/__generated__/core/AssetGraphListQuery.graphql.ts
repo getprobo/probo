@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<cd1648fe4f86e16da121483001ec1a80>>
+ * @generated SignedSource<<ff88330f4c9b747f6936824eea6d0b54>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -16,6 +16,7 @@ export type AssetGraphListQuery$variables = {
 };
 export type AssetGraphListQuery$data = {
   readonly node: {
+    readonly canCreateAsset?: boolean;
     readonly " $fragmentSpreads": FragmentRefs<"AssetsPageFragment">;
   };
 };
@@ -44,30 +45,43 @@ v1 = [
     "variableName": "organizationId"
   }
 ],
-v2 = [
+v2 = {
+  "alias": "canCreateAsset",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "core:asset:create"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"core:asset:create\")"
+},
+v3 = [
   {
     "kind": "Variable",
     "name": "snapshotId",
     "variableName": "snapshotId"
   }
 ],
-v3 = {
+v4 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "__typename",
   "storageKey": null
 },
-v4 = {
+v5 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "id",
   "storageKey": null
 },
-v5 = [
+v6 = [
   {
-    "fields": (v2/*: any*/),
+    "fields": (v3/*: any*/),
     "kind": "ObjectValue",
     "name": "filter"
   },
@@ -77,7 +91,7 @@ v5 = [
     "value": 10
   }
 ],
-v6 = {
+v7 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
@@ -102,8 +116,9 @@ return {
           {
             "kind": "InlineFragment",
             "selections": [
+              (v2/*: any*/),
               {
-                "args": (v2/*: any*/),
+                "args": (v3/*: any*/),
                 "kind": "FragmentSpread",
                 "name": "AssetsPageFragment"
               }
@@ -132,14 +147,15 @@ return {
         "name": "node",
         "plural": false,
         "selections": [
-          (v3/*: any*/),
           (v4/*: any*/),
+          (v5/*: any*/),
           {
             "kind": "InlineFragment",
             "selections": [
+              (v2/*: any*/),
               {
                 "alias": null,
-                "args": (v5/*: any*/),
+                "args": (v6/*: any*/),
                 "concreteType": "AssetConnection",
                 "kind": "LinkedField",
                 "name": "assets",
@@ -161,7 +177,7 @@ return {
                         "name": "node",
                         "plural": false,
                         "selections": [
-                          (v4/*: any*/),
+                          (v5/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -169,7 +185,7 @@ return {
                             "name": "snapshotId",
                             "storageKey": null
                           },
-                          (v6/*: any*/),
+                          (v7/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -199,7 +215,7 @@ return {
                             "name": "owner",
                             "plural": false,
                             "selections": [
-                              (v4/*: any*/),
+                              (v5/*: any*/),
                               {
                                 "alias": null,
                                 "args": null,
@@ -240,8 +256,8 @@ return {
                                     "name": "node",
                                     "plural": false,
                                     "selections": [
-                                      (v4/*: any*/),
-                                      (v6/*: any*/),
+                                      (v5/*: any*/),
+                                      (v7/*: any*/),
                                       {
                                         "alias": null,
                                         "args": null,
@@ -265,7 +281,33 @@ return {
                             "name": "createdAt",
                             "storageKey": null
                           },
-                          (v3/*: any*/)
+                          {
+                            "alias": "canUpdate",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:asset:update"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:asset:update\")"
+                          },
+                          {
+                            "alias": "canDelete",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:asset:delete"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:asset:delete\")"
+                          },
+                          (v4/*: any*/)
                         ],
                         "storageKey": null
                       },
@@ -335,7 +377,7 @@ return {
               },
               {
                 "alias": null,
-                "args": (v5/*: any*/),
+                "args": (v6/*: any*/),
                 "filters": [
                   "filter"
                 ],
@@ -354,16 +396,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "273752608722b727e8c8999b93d45cd4",
+    "cacheID": "e55d3b21b1689a03329569da5669d216",
     "id": null,
     "metadata": {},
     "name": "AssetGraphListQuery",
     "operationKind": "query",
-    "text": "query AssetGraphListQuery(\n  $organizationId: ID!\n  $snapshotId: ID\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      ...AssetsPageFragment_3iomuz\n    }\n    id\n  }\n}\n\nfragment AssetsPageFragment_3iomuz on Organization {\n  assets(first: 10, filter: {snapshotId: $snapshotId}) {\n    edges {\n      node {\n        id\n        snapshotId\n        name\n        amount\n        assetType\n        dataTypesStored\n        owner {\n          id\n          fullName\n        }\n        vendors(first: 50) {\n          edges {\n            node {\n              id\n              name\n              websiteUrl\n            }\n          }\n        }\n        createdAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
+    "text": "query AssetGraphListQuery(\n  $organizationId: ID!\n  $snapshotId: ID\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      canCreateAsset: permission(action: \"core:asset:create\")\n      ...AssetsPageFragment_3iomuz\n    }\n    id\n  }\n}\n\nfragment AssetsPageFragment_3iomuz on Organization {\n  assets(first: 10, filter: {snapshotId: $snapshotId}) {\n    edges {\n      node {\n        id\n        snapshotId\n        name\n        amount\n        assetType\n        dataTypesStored\n        owner {\n          id\n          fullName\n        }\n        vendors(first: 50) {\n          edges {\n            node {\n              id\n              name\n              websiteUrl\n            }\n          }\n        }\n        createdAt\n        canUpdate: permission(action: \"core:asset:update\")\n        canDelete: permission(action: \"core:asset:delete\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
   }
 };
 })();
 
-(node as any).hash = "4cbb1234b0884823285d3660334a2b29";
+(node as any).hash = "319c01153f98cf6c927a07cbe6eed98e";
 
 export default node;

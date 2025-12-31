@@ -9,6 +9,7 @@ export const assetsQuery = graphql`
   query AssetGraphListQuery($organizationId: ID!, $snapshotId: ID) {
     node(id: $organizationId) {
       ... on Organization {
+        canCreateAsset: permission(action: "core:asset:create")
         ...AssetsPageFragment @arguments(snapshotId: $snapshotId)
       }
     }
@@ -41,6 +42,8 @@ export const assetNodeQuery = graphql`
         }
         createdAt
         updatedAt
+        canUpdate: permission(action: "core:asset:update")
+        canDelete: permission(action: "core:asset:delete")
       }
     }
   }
@@ -74,6 +77,8 @@ export const createAssetMutation = graphql`
             }
           }
           createdAt
+          canUpdate: permission(action: "core:asset:update")
+          canDelete: permission(action: "core:asset:delete")
         }
       }
     }

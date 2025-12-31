@@ -32,8 +32,6 @@ import { VendorsMultiSelectField } from "/components/form/VendorsMultiSelectFiel
 import type { AssetGraphNodeQuery } from "/__generated__/core/AssetGraphNodeQuery.graphql";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { useOrganizationId } from "/hooks/useOrganizationId";
-import { use } from "react";
-import { PermissionsContext } from "/providers/PermissionsContext";
 
 const updateAssetSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -58,7 +56,6 @@ export default function AssetDetailsPage(props: Props) {
   const organizationId = useOrganizationId();
   const { snapshotId } = useParams<{ snapshotId?: string }>();
   const isSnapshotMode = Boolean(snapshotId);
-  const { isAuthorized } = use(PermissionsContext);
 
   validateSnapshotConsistency(assetEntry, snapshotId);
 
@@ -125,7 +122,7 @@ export default function AssetDetailsPage(props: Props) {
               : __("Virtual")}
           </Badge>
         </div>
-        {!isSnapshotMode && isAuthorized("Asset", "deleteAsset") && (
+        {!isSnapshotMode && asset.node.canDelete && (
           <ActionDropdown variant="secondary">
             <DropdownItem
               variant="danger"
@@ -189,13 +186,11 @@ export default function AssetDetailsPage(props: Props) {
         />
 
         <div className="flex justify-end">
-          {formState.isDirty &&
-            !isSnapshotMode &&
-            isAuthorized("Asset", "updateAsset") && (
-              <Button type="submit" disabled={formState.isSubmitting}>
-                {formState.isSubmitting ? __("Updating...") : __("Update")}
-              </Button>
-            )}
+          {formState.isDirty && !isSnapshotMode && asset.node.canUpdate && (
+            <Button type="submit" disabled={formState.isSubmitting}>
+              {formState.isSubmitting ? __("Updating...") : __("Update")}
+            </Button>
+          )}
         </div>
       </form>
     </div>

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<6f077a71ef62a9c059bee1b50d3a23ef>>
+ * @generated SignedSource<<f9b0ae27afd022a27fc3e8860ff72729>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -18,6 +18,8 @@ export type AssetsPageFragment$data = {
       readonly node: {
         readonly amount: number;
         readonly assetType: AssetType;
+        readonly canDelete: boolean;
+        readonly canUpdate: boolean;
         readonly createdAt: any;
         readonly dataTypesStored: string;
         readonly id: string;
@@ -275,6 +277,32 @@ return {
                   "storageKey": null
                 },
                 {
+                  "alias": "canUpdate",
+                  "args": [
+                    {
+                      "kind": "Literal",
+                      "name": "action",
+                      "value": "core:asset:update"
+                    }
+                  ],
+                  "kind": "ScalarField",
+                  "name": "permission",
+                  "storageKey": "permission(action:\"core:asset:update\")"
+                },
+                {
+                  "alias": "canDelete",
+                  "args": [
+                    {
+                      "kind": "Literal",
+                      "name": "action",
+                      "value": "core:asset:delete"
+                    }
+                  ],
+                  "kind": "ScalarField",
+                  "name": "permission",
+                  "storageKey": "permission(action:\"core:asset:delete\")"
+                },
+                {
                   "alias": null,
                   "args": null,
                   "kind": "ScalarField",
@@ -355,6 +383,6 @@ return {
 };
 })();
 
-(node as any).hash = "a230182c928f189b50fdc39950602ffd";
+(node as any).hash = "4e870b93c801e9f0b6e26ab6069863fe";
 
 export default node;

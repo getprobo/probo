@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<9ebcbef6d786f85d0b88c881d1478938>>
+ * @generated SignedSource<<ea7d06a1fdefd4e76c3f7ee3ef27f8ec>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -29,6 +29,8 @@ export type AssetGraphCreateMutation$data = {
       readonly node: {
         readonly amount: number;
         readonly assetType: AssetType;
+        readonly canDelete: boolean;
+        readonly canUpdate: boolean;
         readonly createdAt: any;
         readonly dataTypesStored: string;
         readonly id: string;
@@ -207,6 +209,32 @@ v5 = {
           "kind": "ScalarField",
           "name": "createdAt",
           "storageKey": null
+        },
+        {
+          "alias": "canUpdate",
+          "args": [
+            {
+              "kind": "Literal",
+              "name": "action",
+              "value": "core:asset:update"
+            }
+          ],
+          "kind": "ScalarField",
+          "name": "permission",
+          "storageKey": "permission(action:\"core:asset:update\")"
+        },
+        {
+          "alias": "canDelete",
+          "args": [
+            {
+              "kind": "Literal",
+              "name": "action",
+              "value": "core:asset:delete"
+            }
+          ],
+          "kind": "ScalarField",
+          "name": "permission",
+          "storageKey": "permission(action:\"core:asset:delete\")"
         }
       ],
       "storageKey": null
@@ -280,16 +308,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "bc22942b9b4b5efb63a0167c083823fc",
+    "cacheID": "6e077b7787ccbc473247d102b0540e98",
     "id": null,
     "metadata": {},
     "name": "AssetGraphCreateMutation",
     "operationKind": "mutation",
-    "text": "mutation AssetGraphCreateMutation(\n  $input: CreateAssetInput!\n) {\n  createAsset(input: $input) {\n    assetEdge {\n      node {\n        id\n        snapshotId\n        name\n        amount\n        assetType\n        dataTypesStored\n        owner {\n          id\n          fullName\n        }\n        vendors(first: 50) {\n          edges {\n            node {\n              id\n              name\n              websiteUrl\n            }\n          }\n        }\n        createdAt\n      }\n    }\n  }\n}\n"
+    "text": "mutation AssetGraphCreateMutation(\n  $input: CreateAssetInput!\n) {\n  createAsset(input: $input) {\n    assetEdge {\n      node {\n        id\n        snapshotId\n        name\n        amount\n        assetType\n        dataTypesStored\n        owner {\n          id\n          fullName\n        }\n        vendors(first: 50) {\n          edges {\n            node {\n              id\n              name\n              websiteUrl\n            }\n          }\n        }\n        createdAt\n        canUpdate: permission(action: \"core:asset:update\")\n        canDelete: permission(action: \"core:asset:delete\")\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "92fca40d88a9ea68f013e9953d46388e";
+(node as any).hash = "f337be2dfc0f146f33e1b94f65cfc199";
 
 export default node;

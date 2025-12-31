@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<794ba3ed2ccc75355a8c69c83d143587>>
+ * @generated SignedSource<<a18d99b6e4ee0b256a7391f30ea1dc4f>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -340,6 +340,32 @@ return {
                             "name": "createdAt",
                             "storageKey": null
                           },
+                          {
+                            "alias": "canUpdate",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:asset:update"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:asset:update\")"
+                          },
+                          {
+                            "alias": "canDelete",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:asset:delete"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:asset:delete\")"
+                          },
                           (v14/*: any*/)
                         ],
                         "storageKey": null
@@ -429,16 +455,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "71aa6b89d4eba225262e326fdfe04cf7",
+    "cacheID": "350938b31ac1c7f7a28849123995da3a",
     "id": null,
     "metadata": {},
     "name": "AssetsListQuery",
     "operationKind": "query",
-    "text": "query AssetsListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 10\n  $last: Int = null\n  $orderBy: AssetOrder = null\n  $snapshotId: ID = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...AssetsPageFragment_38J9tm\n    id\n  }\n}\n\nfragment AssetsPageFragment_38J9tm on Organization {\n  assets(first: $first, after: $after, last: $last, before: $before, orderBy: $orderBy, filter: {snapshotId: $snapshotId}) {\n    edges {\n      node {\n        id\n        snapshotId\n        name\n        amount\n        assetType\n        dataTypesStored\n        owner {\n          id\n          fullName\n        }\n        vendors(first: 50) {\n          edges {\n            node {\n              id\n              name\n              websiteUrl\n            }\n          }\n        }\n        createdAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
+    "text": "query AssetsListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 10\n  $last: Int = null\n  $orderBy: AssetOrder = null\n  $snapshotId: ID = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...AssetsPageFragment_38J9tm\n    id\n  }\n}\n\nfragment AssetsPageFragment_38J9tm on Organization {\n  assets(first: $first, after: $after, last: $last, before: $before, orderBy: $orderBy, filter: {snapshotId: $snapshotId}) {\n    edges {\n      node {\n        id\n        snapshotId\n        name\n        amount\n        assetType\n        dataTypesStored\n        owner {\n          id\n          fullName\n        }\n        vendors(first: 50) {\n          edges {\n            node {\n              id\n              name\n              websiteUrl\n            }\n          }\n        }\n        createdAt\n        canUpdate: permission(action: \"core:asset:update\")\n        canDelete: permission(action: \"core:asset:delete\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
   }
 };
 })();
 
-(node as any).hash = "a230182c928f189b50fdc39950602ffd";
+(node as any).hash = "4e870b93c801e9f0b6e26ab6069863fe";
 
 export default node;
