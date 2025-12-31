@@ -29,8 +29,6 @@ import { promisifyMutation } from "@probo/helpers";
 import type { FrameworkGraphControlNodeQuery } from "/__generated__/core/FrameworkGraphControlNodeQuery.graphql";
 import { frameworkControlNodeQuery } from "/hooks/graph/FrameworkGraph";
 import type { FrameworkDetailPageFragment$data } from "/__generated__/core/FrameworkDetailPageFragment.graphql";
-import { use } from "react";
-import { PermissionsContext } from "/providers/PermissionsContext";
 
 const attachStateOfApplicabilityMutation = graphql`
     mutation FrameworkControlPageAttachStateOfApplicabilityMutation(
@@ -227,11 +225,6 @@ export default function FrameworkControlPage({ queryRef }: Props) {
     const organizationId = useOrganizationId();
     const confirm = useConfirm();
     const navigate = useNavigate();
-    const { isAuthorized } = use(PermissionsContext);
-    const [detachStateOfApplicability, isDetachingStateOfApplicability] =
-        useMutation(detachStateOfApplicabilityMutation);
-    const [attachStateOfApplicability, isAttachingStateOfApplicability] =
-        useMutation(attachStateOfApplicabilityMutation);
     const [detachMeasure, isDetachingMeasure] = useMutation(
         detachMeasureMutation,
     );
@@ -253,6 +246,11 @@ export default function FrameworkControlPage({ queryRef }: Props) {
         attachSnapshotMutation,
     );
     const [deleteControl] = useMutation(deleteControlMutation);
+
+    const [attachStateOfApplicability, isAttachingStateOfApplicability] =
+        useMutation(attachStateOfApplicabilityMutation);
+    const [detachStateOfApplicability, isDetachingStateOfApplicability] =
+        useMutation(detachStateOfApplicabilityMutation);
     const [attachObligation, isAttachingObligation] = useMutation(
         attachObligationMutation,
     );
@@ -260,60 +258,32 @@ export default function FrameworkControlPage({ queryRef }: Props) {
         detachObligationMutation,
     );
 
-    const canLinkStateOfApplicability = isAuthorized(
-        "Control",
-        "createStateOfApplicabilityControlMapping",
-    );
-    const canUnlinkStateOfApplicability = isAuthorized(
-        "Control",
-        "deleteStateOfApplicabilityControlMapping",
-    );
+    const canLinkStateOfApplicability =
+        control.canCreateStateOfApplicabilityMapping;
+    const canUnlinkStateOfApplicability =
+        control.canDeleteStateOfApplicabilityMapping;
     const statesOfApplicabilityReadOnly =
         !canLinkStateOfApplicability && !canUnlinkStateOfApplicability;
 
-    const canLinkMeasure = isAuthorized(
-        "Control",
-        "createControlMeasureMapping",
-    );
-    const canUnlinkMeasure = isAuthorized(
-        "Control",
-        "deleteControlMeasureMapping",
-    );
+    const canLinkMeasure = control.canCreateMeasureMapping;
+    const canUnlinkMeasure = control.canDeleteMeasureMapping;
     const measuresReadOnly = !canLinkMeasure && !canUnlinkMeasure;
 
-    const canLinkDocument = isAuthorized(
-        "Control",
-        "createControlDocumentMapping",
-    );
-    const canUnlinkDocument = isAuthorized(
-        "Control",
-        "deleteControlDocumentMapping",
-    );
+    const canLinkDocument = control.canCreateDocumentMapping;
+    const canUnlinkDocument = control.canDeleteDocumentMapping;
     const documentsReadOnly = !canLinkDocument && !canUnlinkDocument;
 
-    const canLinkAudit = isAuthorized("Control", "createControlAuditMapping");
-    const canUnlinkAudit = isAuthorized("Control", "deleteControlAuditMapping");
+    const canLinkAudit = control.canCreateAuditMapping;
+    const canUnlinkAudit = control.canDeleteAuditMapping;
     const auditsReadOnly = !canLinkAudit && !canUnlinkAudit;
 
-    const canLinkObligation = isAuthorized(
-        "Control",
-        "createControlObligationMapping",
-    );
-    const canUnlinkObligation = isAuthorized(
-        "Control",
-        "deleteControlObligationMapping",
-    );
-    const obligationsReadOnly = !canLinkObligation && !canUnlinkObligation;
-
-    const canLinkSnapshot = isAuthorized(
-        "Control",
-        "createControlSnapshotMapping",
-    );
-    const canUnlinkSnapshot = isAuthorized(
-        "Control",
-        "deleteControlSnapshotMapping",
-    );
+    const canLinkSnapshot = control.canCreateSnapshotMapping;
+    const canUnlinkSnapshot = control.canDeleteSnapshotMapping;
     const snapshotsReadOnly = !canLinkSnapshot && !canUnlinkSnapshot;
+
+    const canLinkObligation = control.canCreateObligationMapping;
+    const canUnlinkObligation = control.canDeleteObligationMapping;
+    const obligationsReadOnly = !canLinkObligation && !canUnlinkObligation;
 
     const withErrorHandling =
         <T extends MutationParameters>(
@@ -382,7 +352,7 @@ export default function FrameworkControlPage({ queryRef }: Props) {
                     </div>
                 </div>
                 <div className="flex gap-2">
-                    {isAuthorized("Control", "updateControl") && (
+                    {control.canUpdate && (
                         <FrameworkControlDialog
                             frameworkId={framework.id}
                             connectionId={connectionId}
@@ -393,7 +363,7 @@ export default function FrameworkControlPage({ queryRef }: Props) {
                             </Button>
                         </FrameworkControlDialog>
                     )}
-                    {isAuthorized("Control", "deleteControl") && (
+                    {control.canDelete && (
                         <ActionDropdown variant="secondary">
                             <DropdownItem
                                 icon={IconTrashCan}

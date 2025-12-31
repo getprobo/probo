@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<43528dc19e67fdeca407f5081e6252b9>>
+ * @generated SignedSource<<bbc7e1cc0c5c3f72d0297ff14a1dff77>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -138,6 +138,58 @@ return {
                 "storageKey": null
               },
               {
+                "alias": "canExport",
+                "args": [
+                  {
+                    "kind": "Literal",
+                    "name": "action",
+                    "value": "core:franework:export"
+                  }
+                ],
+                "kind": "ScalarField",
+                "name": "permission",
+                "storageKey": "permission(action:\"core:franework:export\")"
+              },
+              {
+                "alias": "canUpdate",
+                "args": [
+                  {
+                    "kind": "Literal",
+                    "name": "action",
+                    "value": "core:framework:update"
+                  }
+                ],
+                "kind": "ScalarField",
+                "name": "permission",
+                "storageKey": "permission(action:\"core:framework:update\")"
+              },
+              {
+                "alias": "canDelete",
+                "args": [
+                  {
+                    "kind": "Literal",
+                    "name": "action",
+                    "value": "core:framework:delete"
+                  }
+                ],
+                "kind": "ScalarField",
+                "name": "permission",
+                "storageKey": "permission(action:\"core:framework:delete\")"
+              },
+              {
+                "alias": "canCreateControl",
+                "args": [
+                  {
+                    "kind": "Literal",
+                    "name": "action",
+                    "value": "core:control:create"
+                  }
+                ],
+                "kind": "ScalarField",
+                "name": "permission",
+                "storageKey": "permission(action:\"core:control:create\")"
+              },
+              {
                 "alias": null,
                 "args": null,
                 "concreteType": "Organization",
@@ -249,12 +301,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "5af3d5c9f8d466c5d6a78d7bd5da70d1",
+    "cacheID": "2a82ae6447b93b0fa6b570571694052b",
     "id": null,
     "metadata": {},
     "name": "FrameworkGraphNodeQuery",
     "operationKind": "query",
-    "text": "query FrameworkGraphNodeQuery(\n  $frameworkId: ID!\n) {\n  node(id: $frameworkId) {\n    __typename\n    ... on Framework {\n      id\n      name\n      ...FrameworkDetailPageFragment\n    }\n    id\n  }\n}\n\nfragment FrameworkDetailPageFragment on Framework {\n  id\n  name\n  description\n  lightLogoURL\n  darkLogoURL\n  organization {\n    name\n    id\n  }\n  controls(first: 250, orderBy: {field: SECTION_TITLE, direction: ASC}) {\n    edges {\n      node {\n        id\n        sectionTitle\n        name\n        status\n        exclusionJustification\n        bestPractice\n      }\n    }\n  }\n}\n"
+    "text": "query FrameworkGraphNodeQuery(\n  $frameworkId: ID!\n) {\n  node(id: $frameworkId) {\n    __typename\n    ... on Framework {\n      id\n      name\n      ...FrameworkDetailPageFragment\n    }\n    id\n  }\n}\n\nfragment FrameworkDetailPageFragment on Framework {\n  id\n  name\n  description\n  lightLogoURL\n  darkLogoURL\n  canExport: permission(action: \"core:franework:export\")\n  canUpdate: permission(action: \"core:framework:update\")\n  canDelete: permission(action: \"core:framework:delete\")\n  canCreateControl: permission(action: \"core:control:create\")\n  organization {\n    name\n    id\n  }\n  controls(first: 250, orderBy: {field: SECTION_TITLE, direction: ASC}) {\n    edges {\n      node {\n        id\n        sectionTitle\n        name\n        status\n        exclusionJustification\n        bestPractice\n      }\n    }\n  }\n}\n"
   }
 };
 })();

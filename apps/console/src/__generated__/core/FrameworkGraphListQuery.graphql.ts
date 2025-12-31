@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<7aaf0b32e40fe8c723a28ab9590b62b5>>
+ * @generated SignedSource<<063d92802621a02aff6b40a9cb2266c2>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -15,10 +15,13 @@ export type FrameworkGraphListQuery$variables = {
 };
 export type FrameworkGraphListQuery$data = {
   readonly organization: {
+    readonly canCreateFramework?: boolean;
     readonly frameworks?: {
       readonly __id: string;
       readonly edges: ReadonlyArray<{
         readonly node: {
+          readonly canDelete: boolean;
+          readonly canUpdate: boolean;
           readonly id: string;
           readonly " $fragmentSpreads": FragmentRefs<"FrameworksPageCardFragment">;
         };
@@ -55,20 +58,59 @@ v2 = {
   "storageKey": null
 },
 v3 = {
+  "alias": "canCreateFramework",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "core:framework:create"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"core:framework:create\")"
+},
+v4 = {
+  "alias": "canUpdate",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "core:framework:update"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"core:framework:update\")"
+},
+v5 = {
+  "alias": "canDelete",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "core:framework:delete"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"core:framework:delete\")"
+},
+v6 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "__typename",
   "storageKey": null
 },
-v4 = {
+v7 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "cursor",
   "storageKey": null
 },
-v5 = {
+v8 = {
   "alias": null,
   "args": null,
   "concreteType": "PageInfo",
@@ -93,7 +135,7 @@ v5 = {
   ],
   "storageKey": null
 },
-v6 = {
+v9 = {
   "kind": "ClientExtension",
   "selections": [
     {
@@ -105,7 +147,7 @@ v6 = {
     }
   ]
 },
-v7 = [
+v10 = [
   {
     "kind": "Literal",
     "name": "first",
@@ -131,6 +173,7 @@ return {
             "kind": "InlineFragment",
             "selections": [
               (v2/*: any*/),
+              (v3/*: any*/),
               {
                 "alias": "frameworks",
                 "args": null,
@@ -156,21 +199,23 @@ return {
                         "plural": false,
                         "selections": [
                           (v2/*: any*/),
+                          (v4/*: any*/),
+                          (v5/*: any*/),
                           {
                             "args": null,
                             "kind": "FragmentSpread",
                             "name": "FrameworksPageCardFragment"
                           },
-                          (v3/*: any*/)
+                          (v6/*: any*/)
                         ],
                         "storageKey": null
                       },
-                      (v4/*: any*/)
+                      (v7/*: any*/)
                     ],
                     "storageKey": null
                   },
-                  (v5/*: any*/),
-                  (v6/*: any*/)
+                  (v8/*: any*/),
+                  (v9/*: any*/)
                 ],
                 "storageKey": null
               }
@@ -199,14 +244,15 @@ return {
         "name": "node",
         "plural": false,
         "selections": [
-          (v3/*: any*/),
+          (v6/*: any*/),
           (v2/*: any*/),
           {
             "kind": "InlineFragment",
             "selections": [
+              (v3/*: any*/),
               {
                 "alias": null,
-                "args": (v7/*: any*/),
+                "args": (v10/*: any*/),
                 "concreteType": "FrameworkConnection",
                 "kind": "LinkedField",
                 "name": "frameworks",
@@ -229,6 +275,8 @@ return {
                         "plural": false,
                         "selections": [
                           (v2/*: any*/),
+                          (v4/*: any*/),
+                          (v5/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -257,22 +305,22 @@ return {
                             "name": "darkLogoURL",
                             "storageKey": null
                           },
-                          (v3/*: any*/)
+                          (v6/*: any*/)
                         ],
                         "storageKey": null
                       },
-                      (v4/*: any*/)
+                      (v7/*: any*/)
                     ],
                     "storageKey": null
                   },
-                  (v5/*: any*/),
-                  (v6/*: any*/)
+                  (v8/*: any*/),
+                  (v9/*: any*/)
                 ],
                 "storageKey": "frameworks(first:100)"
               },
               {
                 "alias": null,
-                "args": (v7/*: any*/),
+                "args": (v10/*: any*/),
                 "filters": null,
                 "handle": "connection",
                 "key": "FrameworksListQuery_frameworks",
@@ -289,7 +337,7 @@ return {
     ]
   },
   "params": {
-    "cacheID": "90e970007a500be89809ac0f2a77bccd",
+    "cacheID": "2d16147e68885223a69b3597e96d694b",
     "id": null,
     "metadata": {
       "connection": [
@@ -306,11 +354,11 @@ return {
     },
     "name": "FrameworkGraphListQuery",
     "operationKind": "query",
-    "text": "query FrameworkGraphListQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      frameworks(first: 100) {\n        edges {\n          node {\n            id\n            ...FrameworksPageCardFragment\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n    }\n    id\n  }\n}\n\nfragment FrameworksPageCardFragment on Framework {\n  id\n  name\n  description\n  lightLogoURL\n  darkLogoURL\n}\n"
+    "text": "query FrameworkGraphListQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      canCreateFramework: permission(action: \"core:framework:create\")\n      frameworks(first: 100) {\n        edges {\n          node {\n            id\n            canUpdate: permission(action: \"core:framework:update\")\n            canDelete: permission(action: \"core:framework:delete\")\n            ...FrameworksPageCardFragment\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n    }\n    id\n  }\n}\n\nfragment FrameworksPageCardFragment on Framework {\n  id\n  name\n  description\n  lightLogoURL\n  darkLogoURL\n  canUpdate: permission(action: \"core:framework:update\")\n  canDelete: permission(action: \"core:framework:delete\")\n}\n"
   }
 };
 })();
 
-(node as any).hash = "4aaead183328e669aba942992db6f89c";
+(node as any).hash = "f8d3a38faddf4285b8f495f54f3d988e";
 
 export default node;

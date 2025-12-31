@@ -12,12 +12,15 @@ export const frameworksQuery = graphql`
     organization: node(id: $organizationId) {
       ... on Organization {
         id
+        canCreateFramework: permission(action: "core:framework:create")
         frameworks(first: 100)
           @connection(key: "FrameworksListQuery_frameworks") {
           __id
           edges {
             node {
               id
+              canUpdate: permission(action: "core:framework:update")
+              canDelete: permission(action: "core:framework:delete")
               ...FrameworksPageCardFragment
             }
           }
@@ -40,7 +43,7 @@ const deleteFrameworkMutation = graphql`
 
 export const useDeleteFrameworkMutation = (
   framework: { id: string; name: string },
-  connectionId: string
+  connectionId: string,
 ) => {
   const [commitDelete] = useMutationWithToasts(deleteFrameworkMutation, {
     errorMessage: "Failed to delete framework",
@@ -66,14 +69,14 @@ export const useDeleteFrameworkMutation = (
         {
           message: sprintf(
             __(
-              'This will permanently delete framework "%s". This action cannot be undone.'
+              'This will permanently delete framework "%s". This action cannot be undone.',
             ),
-            framework.name
+            framework.name,
           ),
-        }
+        },
       );
     },
-    [framework, connectionId, commitDelete, confirm, __]
+    [framework, connectionId, commitDelete, confirm, __],
   );
 };
 
@@ -99,6 +102,44 @@ export const frameworkControlNodeQuery = graphql`
         description
         status
         exclusionJustification
+        canUpdate: permission(action: "core:control:update")
+        canDelete: permission(action: "core:control:delete")
+        canCreateMeasureMapping: permission(
+          action: "core:control:create-measure-mapping"
+        )
+        canDeleteMeasureMapping: permission(
+          action: "core:control:delete-measure-mapping"
+        )
+        canCreateDocumentMapping: permission(
+          action: "core:control:create-document-mapping"
+        )
+        canDeleteDocumentMapping: permission(
+          action: "core:control:delete-document-mapping"
+        )
+        canCreateAuditMapping: permission(
+          action: "core:control:create-audit-mapping"
+        )
+        canDeleteAuditMapping: permission(
+          action: "core:control:delete-audit-mapping"
+        )
+        canCreateSnapshotMapping: permission(
+          action: "core:control:create-snapshot-mapping"
+        )
+        canDeleteSnapshotMapping: permission(
+          action: "core:control:delete-snapshot-mapping"
+        )
+        canCreateStateOfApplicabilityMapping: permission(
+          action: "core:control:state-of-applicability-control-mapping:create"
+        )
+        canDeleteStateOfApplicabilityMapping: permission(
+          action: "core:control:state-of-applicability-control-mapping:delete"
+        )
+        canCreateObligationMapping: permission(
+          action: "core:control:obligation-control-mapping:create"
+        )
+        canDeleteObligationMapping: permission(
+          action: "core:control:obligation-control-mapping:delete"
+        )
         ...FrameworkControlDialogFragment
         stateOfApplicabilityControls(first: 100)
           @connection(key: "FrameworkGraphControl_stateOfApplicabilityControls") {
@@ -130,8 +171,7 @@ export const frameworkControlNodeQuery = graphql`
             }
           }
         }
-        audits(first: 100)
-          @connection(key: "FrameworkGraphControl_audits") {
+        audits(first: 100) @connection(key: "FrameworkGraphControl_audits") {
           __id
           edges {
             node {

@@ -31,8 +31,6 @@ import type { FrameworkDetailPageExportFrameworkMutation } from "/__generated__/
 import { FrameworkFormDialog } from "./dialogs/FrameworkFormDialog";
 import { FrameworkControlDialog } from "./dialogs/FrameworkControlDialog";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
-import { use } from "react";
-import { PermissionsContext } from "/providers/PermissionsContext";
 
 const frameworkDetailFragment = graphql`
     fragment FrameworkDetailPageFragment on Framework {
@@ -41,6 +39,10 @@ const frameworkDetailFragment = graphql`
         description
         lightLogoURL
         darkLogoURL
+        canExport: permission(action: "core:franework:export")
+        canUpdate: permission(action: "core:framework:update")
+        canDelete: permission(action: "core:framework:delete")
+        canCreateControl: permission(action: "core:control:create")
         organization {
             name
         }
@@ -88,10 +90,15 @@ type Props = {
 };
 
 export default function FrameworkDetailPage(props: Props) {
+    const { queryRef } = props;
+
     const { __ } = useTranslate();
     const { controlId } = useParams<{ controlId?: string }>();
     const organizationId = useOrganizationId();
-    const data = usePreloadedQuery(frameworkNodeQuery, props.queryRef);
+    const data = usePreloadedQuery<FrameworkGraphNodeQuery>(
+        frameworkNodeQuery,
+        queryRef,
+    );
     const framework = useFragment<FrameworkDetailPageFragment$key>(
         frameworkDetailFragment,
         data.node,
@@ -106,7 +113,6 @@ export default function FrameworkDetailPage(props: Props) {
         framework,
         ConnectionHandler.getConnectionID(organizationId, connectionListKey)!,
     );
-    const { isAuthorized } = use(PermissionsContext);
     const [generateFrameworkStateOfApplicability] =
         useMutationWithToasts<FrameworkDetailPageGenerateFrameworkStateOfApplicabilityMutation>(
             generateFrameworkStateOfApplicabilityMutation,
@@ -155,7 +161,7 @@ export default function FrameworkDetailPage(props: Props) {
                     </>
                 }
             >
-                {isAuthorized("Framework", "updateFramework") && (
+                {framework.canUpdate && (
                     <FrameworkFormDialog
                         organizationId={organizationId}
                         framework={framework}
@@ -202,7 +208,7 @@ export default function FrameworkDetailPage(props: Props) {
                     >
                         {__("Export Framework")}
                     </DropdownItem>
-                    {isAuthorized("Framework", "deleteFramework") && (
+                    {framework.canDelete && (
                         <DropdownItem
                             icon={IconTrashCan}
                             variant="danger"
@@ -231,7 +237,7 @@ export default function FrameworkDetailPage(props: Props) {
                             active={selectedControl?.id === control.id}
                         />
                     ))}
-                    {isAuthorized("Organization", "createControl") && (
+                    {framework.canCreateControl && (
                         <FrameworkControlDialog
                             frameworkId={framework.id}
                             connectionId={connectionId}
