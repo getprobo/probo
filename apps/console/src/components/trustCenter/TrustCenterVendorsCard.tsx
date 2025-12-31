@@ -14,11 +14,10 @@ import {
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { useFragment } from "react-relay";
-import { useMemo, useState, use } from "react";
+import { useMemo, useState } from "react";
 import { sprintf } from "@probo/helpers";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import type { TrustCenterVendorsCardFragment$key } from "/__generated__/core/TrustCenterVendorsCardFragment.graphql";
-import { PermissionsContext } from "/providers/PermissionsContext";
 
 const trustCenterVendorFragment = graphql`
   fragment TrustCenterVendorsCardFragment on Vendor {
@@ -28,6 +27,7 @@ const trustCenterVendorFragment = graphql`
     description
     showOnTrustCenter
     createdAt
+    canUpdate: permission(action: "core:vendor:update")
   }
 `;
 
@@ -50,8 +50,6 @@ type Props<Params> = {
 export function TrustCenterVendorsCard<Params>(props: Props<Params>) {
   const { __ } = useTranslate();
   const [limit, setLimit] = useState<number | null>(100);
-  const { isAuthorized } = use(PermissionsContext);
-  const canUpdate = isAuthorized("Vendor", "updateVendor");
   const vendors = useMemo(() => {
     return limit ? props.vendors.slice(0, limit) : props.vendors;
   }, [props.vendors, limit]);
@@ -77,16 +75,13 @@ export function TrustCenterVendorsCard<Params>(props: Props<Params>) {
             <Th>{__("Name")}</Th>
             <Th>{__("Category")}</Th>
             <Th>{__("Visibility")}</Th>
-            {canUpdate && <Th></Th>}
+            <Th></Th>
           </Tr>
         </Thead>
         <Tbody>
           {vendors.length === 0 && (
             <Tr>
-              <Td
-                colSpan={canUpdate ? 4 : 3}
-                className="text-center text-txt-secondary"
-              >
+              <Td colSpan={4} className="text-center text-txt-secondary">
                 {__("No vendors available")}
               </Td>
             </Tr>
@@ -97,7 +92,6 @@ export function TrustCenterVendorsCard<Params>(props: Props<Params>) {
               vendor={vendor}
               onToggleVisibility={onToggleVisibility}
               disabled={props.disabled}
-              canUpdate={canUpdate}
             />
           ))}
         </Tbody>
@@ -120,7 +114,6 @@ function VendorRow(props: {
   vendor: TrustCenterVendorsCardFragment$key;
   onToggleVisibility: (vendorId: string, showOnTrustCenter: boolean) => void;
   disabled?: boolean;
-  canUpdate: boolean;
 }) {
   const vendor = useFragment(trustCenterVendorFragment, props.vendor);
   const organizationId = useOrganizationId();
@@ -139,8 +132,8 @@ function VendorRow(props: {
           {vendor.showOnTrustCenter ? __("Visible") : __("None")}
         </Badge>
       </Td>
-      {props.canUpdate && (
-        <Td noLink width={100} className="text-end">
+      <Td noLink width={100} className="text-end">
+        {vendor.canUpdate && (
           <Button
             variant="secondary"
             onClick={() =>
@@ -151,8 +144,8 @@ function VendorRow(props: {
           >
             {vendor.showOnTrustCenter ? __("Hide") : __("Show")}
           </Button>
-        </Td>
-      )}
+        )}
+      </Td>
     </Tr>
   );
 }

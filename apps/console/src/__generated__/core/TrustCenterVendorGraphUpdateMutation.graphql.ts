@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<567e11259c74ac403d44cad1a86c887d>>
+ * @generated SignedSource<<c0dfdaac2c2c1c873c8104a45b6077ac>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -172,6 +172,19 @@ return {
                 "kind": "ScalarField",
                 "name": "createdAt",
                 "storageKey": null
+              },
+              {
+                "alias": "canUpdate",
+                "args": [
+                  {
+                    "kind": "Literal",
+                    "name": "action",
+                    "value": "core:vendor:update"
+                  }
+                ],
+                "kind": "ScalarField",
+                "name": "permission",
+                "storageKey": "permission(action:\"core:vendor:update\")"
               }
             ],
             "storageKey": null
@@ -182,12 +195,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "92823eef2e21ea731d8f37dbf9cd5da3",
+    "cacheID": "b2d05d661624daec04a081aebf2dd4e2",
     "id": null,
     "metadata": {},
     "name": "TrustCenterVendorGraphUpdateMutation",
     "operationKind": "mutation",
-    "text": "mutation TrustCenterVendorGraphUpdateMutation(\n  $input: UpdateVendorInput!\n) {\n  updateVendor(input: $input) {\n    vendor {\n      id\n      showOnTrustCenter\n      ...TrustCenterVendorsCardFragment\n    }\n  }\n}\n\nfragment TrustCenterVendorsCardFragment on Vendor {\n  id\n  name\n  category\n  description\n  showOnTrustCenter\n  createdAt\n}\n"
+    "text": "mutation TrustCenterVendorGraphUpdateMutation(\n  $input: UpdateVendorInput!\n) {\n  updateVendor(input: $input) {\n    vendor {\n      id\n      showOnTrustCenter\n      ...TrustCenterVendorsCardFragment\n    }\n  }\n}\n\nfragment TrustCenterVendorsCardFragment on Vendor {\n  id\n  name\n  category\n  description\n  showOnTrustCenter\n  createdAt\n  canUpdate: permission(action: \"core:vendor:update\")\n}\n"
   }
 };
 })();
