@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<42c3f270cfade27e94b4d0895a0641f5>>
+ * @generated SignedSource<<8982230c048c28cb211d5368b1ab43a0>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -15,6 +15,7 @@ export type DocumentGraphListQuery$variables = {
 };
 export type DocumentGraphListQuery$data = {
   readonly organization: {
+    readonly canCreateDocument?: boolean;
     readonly id: string;
     readonly " $fragmentSpreads": FragmentRefs<"DocumentsPageListFragment">;
   };
@@ -47,13 +48,26 @@ v2 = {
   "storageKey": null
 },
 v3 = {
+  "alias": "canCreateDocument",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "core:document:create"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"core:document:create\")"
+},
+v4 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "__typename",
   "storageKey": null
 },
-v4 = [
+v5 = [
   {
     "kind": "Literal",
     "name": "first",
@@ -85,9 +99,17 @@ return {
         "selections": [
           (v2/*: any*/),
           {
-            "args": null,
-            "kind": "FragmentSpread",
-            "name": "DocumentsPageListFragment"
+            "kind": "InlineFragment",
+            "selections": [
+              (v3/*: any*/),
+              {
+                "args": null,
+                "kind": "FragmentSpread",
+                "name": "DocumentsPageListFragment"
+              }
+            ],
+            "type": "Organization",
+            "abstractKey": null
           }
         ],
         "storageKey": null
@@ -110,14 +132,15 @@ return {
         "name": "node",
         "plural": false,
         "selections": [
-          (v3/*: any*/),
+          (v4/*: any*/),
           (v2/*: any*/),
           {
             "kind": "InlineFragment",
             "selections": [
+              (v3/*: any*/),
               {
                 "alias": null,
-                "args": (v4/*: any*/),
+                "args": (v5/*: any*/),
                 "concreteType": "DocumentConnection",
                 "kind": "LinkedField",
                 "name": "documents",
@@ -140,6 +163,58 @@ return {
                         "plural": false,
                         "selections": [
                           (v2/*: any*/),
+                          {
+                            "alias": "canUpdate",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:document:update"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:document:update\")"
+                          },
+                          {
+                            "alias": "canDelete",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:document:delete"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:document:delete\")"
+                          },
+                          {
+                            "alias": "canSendSigningNotifications",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:document:send-signing-notifications"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:document:send-signing-notifications\")"
+                          },
+                          {
+                            "alias": "canRequestSignatures",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:document-version:request-signature"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:document-version:request-signature\")"
+                          },
                           {
                             "alias": null,
                             "args": null,
@@ -295,7 +370,7 @@ return {
                             ],
                             "storageKey": "versions(first:1)"
                           },
-                          (v3/*: any*/)
+                          (v4/*: any*/)
                         ],
                         "storageKey": null
                       },
@@ -365,7 +440,7 @@ return {
               },
               {
                 "alias": null,
-                "args": (v4/*: any*/),
+                "args": (v5/*: any*/),
                 "filters": [
                   "orderBy"
                 ],
@@ -384,16 +459,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "74570a2b122efea617c7e2559fb51053",
+    "cacheID": "7c027bc02697b43718813a5bd024985a",
     "id": null,
     "metadata": {},
     "name": "DocumentGraphListQuery",
     "operationKind": "query",
-    "text": "query DocumentGraphListQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    id\n    ...DocumentsPageListFragment\n  }\n}\n\nfragment DocumentsPageListFragment on Organization {\n  documents(first: 50, orderBy: {field: TITLE, direction: ASC}) {\n    edges {\n      node {\n        id\n        ...DocumentsPageRowFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment DocumentsPageRowFragment on Document {\n  id\n  title\n  description\n  documentType\n  classification\n  updatedAt\n  owner {\n    id\n    fullName\n  }\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n        version\n        signatures(first: 1000) {\n          edges {\n            node {\n              id\n              state\n            }\n          }\n        }\n      }\n    }\n  }\n}\n"
+    "text": "query DocumentGraphListQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    id\n    ... on Organization {\n      canCreateDocument: permission(action: \"core:document:create\")\n      ...DocumentsPageListFragment\n    }\n  }\n}\n\nfragment DocumentsPageListFragment on Organization {\n  documents(first: 50, orderBy: {field: TITLE, direction: ASC}) {\n    edges {\n      node {\n        id\n        canUpdate: permission(action: \"core:document:update\")\n        canDelete: permission(action: \"core:document:delete\")\n        canSendSigningNotifications: permission(action: \"core:document:send-signing-notifications\")\n        canRequestSignatures: permission(action: \"core:document-version:request-signature\")\n        ...DocumentsPageRowFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment DocumentsPageRowFragment on Document {\n  id\n  title\n  description\n  documentType\n  classification\n  updatedAt\n  canDelete: permission(action: \"core:document:delete\")\n  owner {\n    id\n    fullName\n  }\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n        version\n        signatures(first: 1000) {\n          edges {\n            node {\n              id\n              state\n            }\n          }\n        }\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "63de39eb2c87fc45b83eeee047ddd36c";
+(node as any).hash = "26c7d375cb354649741ce4794612b3e1";
 
 export default node;

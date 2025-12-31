@@ -10,7 +10,10 @@ export const documentsQuery = graphql`
   query DocumentGraphListQuery($organizationId: ID!) {
     organization: node(id: $organizationId) {
       id
-      ...DocumentsPageListFragment
+      ... on Organization {
+        canCreateDocument: permission(action: "core:document:create")
+        ...DocumentsPageListFragment
+      }
     }
   }
 `;

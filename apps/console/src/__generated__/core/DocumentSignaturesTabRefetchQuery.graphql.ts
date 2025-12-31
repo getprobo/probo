@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<daaba0a12d115e8691984612356d4234>>
+ * @generated SignedSource<<b7fddd28abbffd86c8de3f8ecd3d794b>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -73,6 +73,13 @@ v6 = {
   "storageKey": null
 },
 v7 = [
+  {
+    "kind": "Literal",
+    "name": "action",
+    "value": "core:document-version:request-signature"
+  }
+],
+v8 = [
   {
     "kind": "Variable",
     "name": "after",
@@ -169,8 +176,15 @@ return {
                 "storageKey": null
               },
               {
-                "alias": null,
+                "alias": "canRequestSignature",
                 "args": (v7/*: any*/),
+                "kind": "ScalarField",
+                "name": "permission",
+                "storageKey": "permission(action:\"core:document-version:request-signature\")"
+              },
+              {
+                "alias": null,
+                "args": (v8/*: any*/),
                 "concreteType": "DocumentVersionSignatureConnection",
                 "kind": "LinkedField",
                 "name": "signatures",
@@ -240,6 +254,13 @@ return {
                             "name": "requestedAt",
                             "storageKey": null
                           },
+                          {
+                            "alias": "canCancel",
+                            "args": (v7/*: any*/),
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:document-version:request-signature\")"
+                          },
                           (v5/*: any*/)
                         ],
                         "storageKey": null
@@ -296,7 +317,7 @@ return {
               },
               {
                 "alias": null,
-                "args": (v7/*: any*/),
+                "args": (v8/*: any*/),
                 "filters": [
                   "filter"
                 ],
@@ -315,16 +336,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "d7b2a5ca29001eca591507471d4178cc",
+    "cacheID": "5f4d3d9043d744d2e35c7c5b3e209a37",
     "id": null,
     "metadata": {},
     "name": "DocumentSignaturesTabRefetchQuery",
     "operationKind": "query",
-    "text": "query DocumentSignaturesTabRefetchQuery(\n  $count: Int = 1000\n  $cursor: CursorKey\n  $signatureFilter: DocumentVersionSignatureFilter\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...DocumentSignaturesTab_version_1vp7QE\n    id\n  }\n}\n\nfragment DocumentSignaturesTab_signature on DocumentVersionSignature {\n  id\n  state\n  signedAt\n  requestedAt\n  signedBy {\n    fullName\n    primaryEmailAddress\n    id\n  }\n}\n\nfragment DocumentSignaturesTab_version_1vp7QE on DocumentVersion {\n  id\n  status\n  signatures(first: $count, after: $cursor, filter: $signatureFilter) {\n    edges {\n      node {\n        id\n        state\n        signedBy {\n          id\n          fullName\n          primaryEmailAddress\n        }\n        ...DocumentSignaturesTab_signature\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n"
+    "text": "query DocumentSignaturesTabRefetchQuery(\n  $count: Int = 1000\n  $cursor: CursorKey\n  $signatureFilter: DocumentVersionSignatureFilter\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...DocumentSignaturesTab_version_1vp7QE\n    id\n  }\n}\n\nfragment DocumentSignaturesTab_signature on DocumentVersionSignature {\n  id\n  state\n  signedAt\n  requestedAt\n  signedBy {\n    fullName\n    primaryEmailAddress\n    id\n  }\n  canCancel: permission(action: \"core:document-version:request-signature\")\n}\n\nfragment DocumentSignaturesTab_version_1vp7QE on DocumentVersion {\n  id\n  status\n  canRequestSignature: permission(action: \"core:document-version:request-signature\")\n  signatures(first: $count, after: $cursor, filter: $signatureFilter) {\n    edges {\n      node {\n        id\n        state\n        signedBy {\n          id\n          fullName\n          primaryEmailAddress\n        }\n        ...DocumentSignaturesTab_signature\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "497571b827200e09a848436820668d10";
+(node as any).hash = "9282fd9e9a1aa10a36535863b896283c";
 
 export default node;
