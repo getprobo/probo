@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<af136d6db1a014d6241ad2c9c6dd5f55>>
+ * @generated SignedSource<<3e99dde71cf9c37ef1ec401a9e76bb6c>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -173,6 +173,32 @@ return {
                     "kind": "ScalarField",
                     "name": "darkLogoURL",
                     "storageKey": null
+                  },
+                  {
+                    "alias": "canUpdate",
+                    "args": [
+                      {
+                        "kind": "Literal",
+                        "name": "action",
+                        "value": "core:framework:update"
+                      }
+                    ],
+                    "kind": "ScalarField",
+                    "name": "permission",
+                    "storageKey": "permission(action:\"core:framework:update\")"
+                  },
+                  {
+                    "alias": "canDelete",
+                    "args": [
+                      {
+                        "kind": "Literal",
+                        "name": "action",
+                        "value": "core:framework:delete"
+                      }
+                    ],
+                    "kind": "ScalarField",
+                    "name": "permission",
+                    "storageKey": "permission(action:\"core:framework:delete\")"
                   }
                 ],
                 "storageKey": null
@@ -202,12 +228,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "c66177d87b59d87fdf7cbc9268af431a",
+    "cacheID": "a26c4f5b9c310055da331176905fc712",
     "id": null,
     "metadata": {},
     "name": "FrameworkFormDialogMutation",
     "operationKind": "mutation",
-    "text": "mutation FrameworkFormDialogMutation(\n  $input: CreateFrameworkInput!\n) {\n  createFramework(input: $input) {\n    frameworkEdge {\n      node {\n        id\n        ...FrameworksPageCardFragment\n      }\n    }\n  }\n}\n\nfragment FrameworksPageCardFragment on Framework {\n  id\n  name\n  description\n  lightLogoURL\n  darkLogoURL\n}\n"
+    "text": "mutation FrameworkFormDialogMutation(\n  $input: CreateFrameworkInput!\n) {\n  createFramework(input: $input) {\n    frameworkEdge {\n      node {\n        id\n        ...FrameworksPageCardFragment\n      }\n    }\n  }\n}\n\nfragment FrameworksPageCardFragment on Framework {\n  id\n  name\n  description\n  lightLogoURL\n  darkLogoURL\n  canUpdate: permission(action: \"core:framework:update\")\n  canDelete: permission(action: \"core:framework:delete\")\n}\n"
   }
 };
 })();

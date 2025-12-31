@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<2256362d89b6b5c2f5c707acb44d283e>>
+ * @generated SignedSource<<b24323b7c04c927d73fb16ffe3c86532>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -172,6 +172,32 @@ return {
                     "kind": "ScalarField",
                     "name": "darkLogoURL",
                     "storageKey": null
+                  },
+                  {
+                    "alias": "canUpdate",
+                    "args": [
+                      {
+                        "kind": "Literal",
+                        "name": "action",
+                        "value": "core:framework:update"
+                      }
+                    ],
+                    "kind": "ScalarField",
+                    "name": "permission",
+                    "storageKey": "permission(action:\"core:framework:update\")"
+                  },
+                  {
+                    "alias": "canDelete",
+                    "args": [
+                      {
+                        "kind": "Literal",
+                        "name": "action",
+                        "value": "core:framework:delete"
+                      }
+                    ],
+                    "kind": "ScalarField",
+                    "name": "permission",
+                    "storageKey": "permission(action:\"core:framework:delete\")"
                   }
                 ],
                 "storageKey": null
@@ -201,12 +227,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "5584472f1e68fac3d766662c6d5dab90",
+    "cacheID": "6521d91ba0bd6d9d59567cd2a05d0f35",
     "id": null,
     "metadata": {},
     "name": "FrameworksPageImportMutation",
     "operationKind": "mutation",
-    "text": "mutation FrameworksPageImportMutation(\n  $input: ImportFrameworkInput!\n) {\n  importFramework(input: $input) {\n    frameworkEdge {\n      node {\n        id\n        ...FrameworksPageCardFragment\n      }\n    }\n  }\n}\n\nfragment FrameworksPageCardFragment on Framework {\n  id\n  name\n  description\n  lightLogoURL\n  darkLogoURL\n}\n"
+    "text": "mutation FrameworksPageImportMutation(\n  $input: ImportFrameworkInput!\n) {\n  importFramework(input: $input) {\n    frameworkEdge {\n      node {\n        id\n        ...FrameworksPageCardFragment\n      }\n    }\n  }\n}\n\nfragment FrameworksPageCardFragment on Framework {\n  id\n  name\n  description\n  lightLogoURL\n  darkLogoURL\n  canUpdate: permission(action: \"core:framework:update\")\n  canDelete: permission(action: \"core:framework:delete\")\n}\n"
   }
 };
 })();

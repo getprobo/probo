@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<1da75e11f49e841800329ded9f67a1d4>>
+ * @generated SignedSource<<add1f7208389397ed7bbb3eccee5e2a1>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,6 +12,10 @@ import { ReaderFragment } from 'relay-runtime';
 export type ControlStatus = "EXCLUDED" | "INCLUDED";
 import { FragmentRefs } from "relay-runtime";
 export type FrameworkDetailPageFragment$data = {
+  readonly canCreateControl: boolean;
+  readonly canDelete: boolean;
+  readonly canExport: boolean;
+  readonly canUpdate: boolean;
   readonly controls: {
     readonly __id: string;
     readonly edges: ReadonlyArray<{
@@ -82,6 +86,58 @@ return {
       "kind": "ScalarField",
       "name": "darkLogoURL",
       "storageKey": null
+    },
+    {
+      "alias": "canExport",
+      "args": [
+        {
+          "kind": "Literal",
+          "name": "action",
+          "value": "core:franework:export"
+        }
+      ],
+      "kind": "ScalarField",
+      "name": "permission",
+      "storageKey": "permission(action:\"core:franework:export\")"
+    },
+    {
+      "alias": "canUpdate",
+      "args": [
+        {
+          "kind": "Literal",
+          "name": "action",
+          "value": "core:framework:update"
+        }
+      ],
+      "kind": "ScalarField",
+      "name": "permission",
+      "storageKey": "permission(action:\"core:framework:update\")"
+    },
+    {
+      "alias": "canDelete",
+      "args": [
+        {
+          "kind": "Literal",
+          "name": "action",
+          "value": "core:framework:delete"
+        }
+      ],
+      "kind": "ScalarField",
+      "name": "permission",
+      "storageKey": "permission(action:\"core:framework:delete\")"
+    },
+    {
+      "alias": "canCreateControl",
+      "args": [
+        {
+          "kind": "Literal",
+          "name": "action",
+          "value": "core:control:create"
+        }
+      ],
+      "kind": "ScalarField",
+      "name": "permission",
+      "storageKey": "permission(action:\"core:control:create\")"
     },
     {
       "alias": null,
@@ -183,6 +239,6 @@ return {
 };
 })();
 
-(node as any).hash = "34a82531b8812ee16e75eb035bc739e8";
+(node as any).hash = "2ba900a84b270f9255d67c02f7bdb2ab";
 
 export default node;

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<54b072cf5a78b17f86e5fc810cac517a>>
+ * @generated SignedSource<<4392a07d0f6c54c2f495ce98924468e0>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -25,6 +25,16 @@ export type FrameworkGraphControlNodeQuery$data = {
         };
       }>;
     };
+    readonly canCreateAuditMapping?: boolean;
+    readonly canCreateDocumentMapping?: boolean;
+    readonly canCreateMeasureMapping?: boolean;
+    readonly canCreateSnapshotMapping?: boolean;
+    readonly canDelete?: boolean;
+    readonly canDeleteAuditMapping?: boolean;
+    readonly canDeleteDocumentMapping?: boolean;
+    readonly canDeleteMeasureMapping?: boolean;
+    readonly canDeleteSnapshotMapping?: boolean;
+    readonly canUpdate?: boolean;
     readonly description?: string | null | undefined;
     readonly documents?: {
       readonly __id: string;
@@ -124,20 +134,150 @@ v7 = {
   "storageKey": null
 },
 v8 = {
+  "alias": "canUpdate",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "core:control:update"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"core:control:update\")"
+},
+v9 = {
+  "alias": "canDelete",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "core:control:delete"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"core:control:delete\")"
+},
+v10 = {
+  "alias": "canCreateMeasureMapping",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "core:control:create-measure-mapping"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"core:control:create-measure-mapping\")"
+},
+v11 = {
+  "alias": "canDeleteMeasureMapping",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "core:control:delete-measure-mapping"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"core:control:delete-measure-mapping\")"
+},
+v12 = {
+  "alias": "canCreateDocumentMapping",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "core:control:create-document-mapping"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"core:control:create-document-mapping\")"
+},
+v13 = {
+  "alias": "canDeleteDocumentMapping",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "core:control:delete-document-mapping"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"core:control:delete-document-mapping\")"
+},
+v14 = {
+  "alias": "canCreateAuditMapping",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "core:control:create-audit-mapping"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"core:control:create-audit-mapping\")"
+},
+v15 = {
+  "alias": "canDeleteAuditMapping",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "core:control:delete-audit-mapping"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"core:control:delete-audit-mapping\")"
+},
+v16 = {
+  "alias": "canCreateSnapshotMapping",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "core:control:create-snapshot-mapping"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"core:control:create-snapshot-mapping\")"
+},
+v17 = {
+  "alias": "canDeleteSnapshotMapping",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "core:control:delete-snapshot-mapping"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"core:control:delete-snapshot-mapping\")"
+},
+v18 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "__typename",
   "storageKey": null
 },
-v9 = {
+v19 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "cursor",
   "storageKey": null
 },
-v10 = {
+v20 = {
   "alias": null,
   "args": null,
   "concreteType": "PageInfo",
@@ -162,7 +302,7 @@ v10 = {
   ],
   "storageKey": null
 },
-v11 = {
+v21 = {
   "kind": "ClientExtension",
   "selections": [
     {
@@ -174,21 +314,21 @@ v11 = {
     }
   ]
 },
-v12 = [
+v22 = [
   {
     "kind": "Literal",
     "name": "first",
     "value": 100
   }
 ],
-v13 = {
+v23 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "state",
   "storageKey": null
 },
-v14 = {
+v24 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
@@ -219,6 +359,16 @@ return {
               (v5/*: any*/),
               (v6/*: any*/),
               (v7/*: any*/),
+              (v8/*: any*/),
+              (v9/*: any*/),
+              (v10/*: any*/),
+              (v11/*: any*/),
+              (v12/*: any*/),
+              (v13/*: any*/),
+              (v14/*: any*/),
+              (v15/*: any*/),
+              (v16/*: any*/),
+              (v17/*: any*/),
               {
                 "args": null,
                 "kind": "FragmentSpread",
@@ -254,16 +404,16 @@ return {
                             "kind": "FragmentSpread",
                             "name": "LinkedMeasuresCardFragment"
                           },
-                          (v8/*: any*/)
+                          (v18/*: any*/)
                         ],
                         "storageKey": null
                       },
-                      (v9/*: any*/)
+                      (v19/*: any*/)
                     ],
                     "storageKey": null
                   },
-                  (v10/*: any*/),
-                  (v11/*: any*/)
+                  (v20/*: any*/),
+                  (v21/*: any*/)
                 ],
                 "storageKey": null
               },
@@ -297,16 +447,16 @@ return {
                             "kind": "FragmentSpread",
                             "name": "LinkedDocumentsCardFragment"
                           },
-                          (v8/*: any*/)
+                          (v18/*: any*/)
                         ],
                         "storageKey": null
                       },
-                      (v9/*: any*/)
+                      (v19/*: any*/)
                     ],
                     "storageKey": null
                   },
-                  (v10/*: any*/),
-                  (v11/*: any*/)
+                  (v20/*: any*/),
+                  (v21/*: any*/)
                 ],
                 "storageKey": null
               },
@@ -340,16 +490,16 @@ return {
                             "kind": "FragmentSpread",
                             "name": "LinkedAuditsCardFragment"
                           },
-                          (v8/*: any*/)
+                          (v18/*: any*/)
                         ],
                         "storageKey": null
                       },
-                      (v9/*: any*/)
+                      (v19/*: any*/)
                     ],
                     "storageKey": null
                   },
-                  (v10/*: any*/),
-                  (v11/*: any*/)
+                  (v20/*: any*/),
+                  (v21/*: any*/)
                 ],
                 "storageKey": null
               },
@@ -383,16 +533,16 @@ return {
                             "kind": "FragmentSpread",
                             "name": "LinkedSnapshotsCardFragment"
                           },
-                          (v8/*: any*/)
+                          (v18/*: any*/)
                         ],
                         "storageKey": null
                       },
-                      (v9/*: any*/)
+                      (v19/*: any*/)
                     ],
                     "storageKey": null
                   },
-                  (v10/*: any*/),
-                  (v11/*: any*/)
+                  (v20/*: any*/),
+                  (v21/*: any*/)
                 ],
                 "storageKey": null
               }
@@ -421,7 +571,7 @@ return {
         "name": "node",
         "plural": false,
         "selections": [
-          (v8/*: any*/),
+          (v18/*: any*/),
           (v2/*: any*/),
           {
             "kind": "InlineFragment",
@@ -431,9 +581,19 @@ return {
               (v5/*: any*/),
               (v6/*: any*/),
               (v7/*: any*/),
+              (v8/*: any*/),
+              (v9/*: any*/),
+              (v10/*: any*/),
+              (v11/*: any*/),
+              (v12/*: any*/),
+              (v13/*: any*/),
+              (v14/*: any*/),
+              (v15/*: any*/),
+              (v16/*: any*/),
+              (v17/*: any*/),
               {
                 "alias": null,
-                "args": (v12/*: any*/),
+                "args": (v22/*: any*/),
                 "concreteType": "MeasureConnection",
                 "kind": "LinkedField",
                 "name": "measures",
@@ -457,23 +617,23 @@ return {
                         "selections": [
                           (v2/*: any*/),
                           (v3/*: any*/),
-                          (v13/*: any*/),
-                          (v8/*: any*/)
+                          (v23/*: any*/),
+                          (v18/*: any*/)
                         ],
                         "storageKey": null
                       },
-                      (v9/*: any*/)
+                      (v19/*: any*/)
                     ],
                     "storageKey": null
                   },
-                  (v10/*: any*/),
-                  (v11/*: any*/)
+                  (v20/*: any*/),
+                  (v21/*: any*/)
                 ],
                 "storageKey": "measures(first:100)"
               },
               {
                 "alias": null,
-                "args": (v12/*: any*/),
+                "args": (v22/*: any*/),
                 "filters": null,
                 "handle": "connection",
                 "key": "FrameworkGraphControl_measures",
@@ -482,7 +642,7 @@ return {
               },
               {
                 "alias": null,
-                "args": (v12/*: any*/),
+                "args": (v22/*: any*/),
                 "concreteType": "DocumentConnection",
                 "kind": "LinkedField",
                 "name": "documents",
@@ -512,7 +672,7 @@ return {
                             "name": "title",
                             "storageKey": null
                           },
-                          (v14/*: any*/),
+                          (v24/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -561,22 +721,22 @@ return {
                             ],
                             "storageKey": "versions(first:1)"
                           },
-                          (v8/*: any*/)
+                          (v18/*: any*/)
                         ],
                         "storageKey": null
                       },
-                      (v9/*: any*/)
+                      (v19/*: any*/)
                     ],
                     "storageKey": null
                   },
-                  (v10/*: any*/),
-                  (v11/*: any*/)
+                  (v20/*: any*/),
+                  (v21/*: any*/)
                 ],
                 "storageKey": "documents(first:100)"
               },
               {
                 "alias": null,
-                "args": (v12/*: any*/),
+                "args": (v22/*: any*/),
                 "filters": null,
                 "handle": "connection",
                 "key": "FrameworkGraphControl_documents",
@@ -585,7 +745,7 @@ return {
               },
               {
                 "alias": null,
-                "args": (v12/*: any*/),
+                "args": (v22/*: any*/),
                 "concreteType": "AuditConnection",
                 "kind": "LinkedField",
                 "name": "audits",
@@ -609,8 +769,8 @@ return {
                         "selections": [
                           (v2/*: any*/),
                           (v3/*: any*/),
-                          (v14/*: any*/),
-                          (v13/*: any*/),
+                          (v24/*: any*/),
+                          (v23/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -638,22 +798,22 @@ return {
                             ],
                             "storageKey": null
                           },
-                          (v8/*: any*/)
+                          (v18/*: any*/)
                         ],
                         "storageKey": null
                       },
-                      (v9/*: any*/)
+                      (v19/*: any*/)
                     ],
                     "storageKey": null
                   },
-                  (v10/*: any*/),
-                  (v11/*: any*/)
+                  (v20/*: any*/),
+                  (v21/*: any*/)
                 ],
                 "storageKey": "audits(first:100)"
               },
               {
                 "alias": null,
-                "args": (v12/*: any*/),
+                "args": (v22/*: any*/),
                 "filters": null,
                 "handle": "connection",
                 "key": "FrameworkGraphControl_audits",
@@ -662,7 +822,7 @@ return {
               },
               {
                 "alias": null,
-                "args": (v12/*: any*/),
+                "args": (v22/*: any*/),
                 "concreteType": "SnapshotConnection",
                 "kind": "LinkedField",
                 "name": "snapshots",
@@ -694,23 +854,23 @@ return {
                             "name": "type",
                             "storageKey": null
                           },
-                          (v14/*: any*/),
-                          (v8/*: any*/)
+                          (v24/*: any*/),
+                          (v18/*: any*/)
                         ],
                         "storageKey": null
                       },
-                      (v9/*: any*/)
+                      (v19/*: any*/)
                     ],
                     "storageKey": null
                   },
-                  (v10/*: any*/),
-                  (v11/*: any*/)
+                  (v20/*: any*/),
+                  (v21/*: any*/)
                 ],
                 "storageKey": "snapshots(first:100)"
               },
               {
                 "alias": null,
-                "args": (v12/*: any*/),
+                "args": (v22/*: any*/),
                 "filters": null,
                 "handle": "connection",
                 "key": "FrameworkGraphControl_snapshots",
@@ -727,7 +887,7 @@ return {
     ]
   },
   "params": {
-    "cacheID": "2ce9eb2cbe052019e86b2d0baecfb6f0",
+    "cacheID": "79965ee46bdc73159448df54fddc10c3",
     "id": null,
     "metadata": {
       "connection": [
@@ -771,11 +931,11 @@ return {
     },
     "name": "FrameworkGraphControlNodeQuery",
     "operationKind": "query",
-    "text": "query FrameworkGraphControlNodeQuery(\n  $controlId: ID!\n) {\n  node(id: $controlId) {\n    __typename\n    ... on Control {\n      id\n      name\n      sectionTitle\n      description\n      status\n      exclusionJustification\n      ...FrameworkControlDialogFragment\n      measures(first: 100) {\n        edges {\n          node {\n            id\n            ...LinkedMeasuresCardFragment\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n      documents(first: 100) {\n        edges {\n          node {\n            id\n            ...LinkedDocumentsCardFragment\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n      audits(first: 100) {\n        edges {\n          node {\n            id\n            ...LinkedAuditsCardFragment\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n      snapshots(first: 100) {\n        edges {\n          node {\n            id\n            ...LinkedSnapshotsCardFragment\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n    }\n    id\n  }\n}\n\nfragment FrameworkControlDialogFragment on Control {\n  id\n  name\n  description\n  sectionTitle\n  status\n  exclusionJustification\n}\n\nfragment LinkedAuditsCardFragment on Audit {\n  id\n  name\n  createdAt\n  state\n  validFrom\n  validUntil\n  framework {\n    id\n    name\n  }\n}\n\nfragment LinkedDocumentsCardFragment on Document {\n  id\n  title\n  createdAt\n  documentType\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n      }\n    }\n  }\n}\n\nfragment LinkedMeasuresCardFragment on Measure {\n  id\n  name\n  state\n}\n\nfragment LinkedSnapshotsCardFragment on Snapshot {\n  id\n  name\n  description\n  type\n  createdAt\n}\n"
+    "text": "query FrameworkGraphControlNodeQuery(\n  $controlId: ID!\n) {\n  node(id: $controlId) {\n    __typename\n    ... on Control {\n      id\n      name\n      sectionTitle\n      description\n      status\n      exclusionJustification\n      canUpdate: permission(action: \"core:control:update\")\n      canDelete: permission(action: \"core:control:delete\")\n      canCreateMeasureMapping: permission(action: \"core:control:create-measure-mapping\")\n      canDeleteMeasureMapping: permission(action: \"core:control:delete-measure-mapping\")\n      canCreateDocumentMapping: permission(action: \"core:control:create-document-mapping\")\n      canDeleteDocumentMapping: permission(action: \"core:control:delete-document-mapping\")\n      canCreateAuditMapping: permission(action: \"core:control:create-audit-mapping\")\n      canDeleteAuditMapping: permission(action: \"core:control:delete-audit-mapping\")\n      canCreateSnapshotMapping: permission(action: \"core:control:create-snapshot-mapping\")\n      canDeleteSnapshotMapping: permission(action: \"core:control:delete-snapshot-mapping\")\n      ...FrameworkControlDialogFragment\n      measures(first: 100) {\n        edges {\n          node {\n            id\n            ...LinkedMeasuresCardFragment\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n      documents(first: 100) {\n        edges {\n          node {\n            id\n            ...LinkedDocumentsCardFragment\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n      audits(first: 100) {\n        edges {\n          node {\n            id\n            ...LinkedAuditsCardFragment\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n      snapshots(first: 100) {\n        edges {\n          node {\n            id\n            ...LinkedSnapshotsCardFragment\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n    }\n    id\n  }\n}\n\nfragment FrameworkControlDialogFragment on Control {\n  id\n  name\n  description\n  sectionTitle\n  status\n  exclusionJustification\n}\n\nfragment LinkedAuditsCardFragment on Audit {\n  id\n  name\n  createdAt\n  state\n  validFrom\n  validUntil\n  framework {\n    id\n    name\n  }\n}\n\nfragment LinkedDocumentsCardFragment on Document {\n  id\n  title\n  createdAt\n  documentType\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n      }\n    }\n  }\n}\n\nfragment LinkedMeasuresCardFragment on Measure {\n  id\n  name\n  state\n}\n\nfragment LinkedSnapshotsCardFragment on Snapshot {\n  id\n  name\n  description\n  type\n  createdAt\n}\n"
   }
 };
 })();
 
-(node as any).hash = "afc4bbbce8d8b3cd57ac2bf77db58e55";
+(node as any).hash = "7125afea13ea3f3a1b74b6d9037f42eb";
 
 export default node;
