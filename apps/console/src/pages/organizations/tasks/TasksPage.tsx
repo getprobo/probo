@@ -10,10 +10,8 @@ import { useTranslate } from "@probo/i18n";
 import type { TasksPageFragment$key } from "/__generated__/core/TasksPageFragment.graphql";
 import { tasksQuery } from "/hooks/graph/TaskGraph";
 import { usePageTitle } from "@probo/hooks";
-import TasksCard from "/components/tasks/TasksCard";
+import { TasksCard } from "/components/tasks/TasksCard";
 import TaskFormDialog from "/components/tasks/TaskFormDialog";
-import { PermissionsContext } from "/providers/PermissionsContext";
-import { use } from "react";
 
 const tasksFragment = graphql`
   fragment TasksPageFragment on Organization
@@ -25,31 +23,21 @@ const tasksFragment = graphql`
     before: { type: "CursorKey", defaultValue: null }
     last: { type: "Int", defaultValue: null }
   ) {
+    canCreateTask: permission(action: "core:task:create")
     tasks(
       first: $first
       after: $after
       last: $last
       before: $before
       orderBy: $order
-    ) @connection(key: "TasksPageFragment_tasks") {
+    ) @connection(key: "TasksPageFragment_tasks") @required(action: THROW) {
       __id
-      edges {
+      edges @required(action: THROW) {
         node {
           id
-          name
           state
-          description
-          timeEstimate
-          deadline
           ...TaskFormDialogFragment
-          measure {
-            id
-            name
-          }
-          assignedTo {
-            id
-            fullName
-          }
+          ...TasksCard_TaskRowFragment
         }
       }
     }
@@ -67,9 +55,7 @@ export default function TasksPage({ queryRef }: Props) {
     tasksFragment,
     query.organization as TasksPageFragment$key,
   );
-  const tasks = data.tasks?.edges.map((edge) => edge.node);
   const connectionId = data.tasks.__id;
-  const { isAuthorized } = use(PermissionsContext);
   usePageTitle(__("Tasks"));
 
   return (
@@ -80,13 +66,13 @@ export default function TasksPage({ queryRef }: Props) {
           "Track your assigned compliance tasks and keep progress on track.",
         )}
       >
-        {isAuthorized("Organization", "createTask") && (
+        {data.canCreateTask && (
           <TaskFormDialog connection={connectionId}>
             <Button icon={IconPlusLarge}>{__("New task")}</Button>
           </TaskFormDialog>
         )}
       </PageHeader>
-      <TasksCard connectionId={connectionId} tasks={tasks ?? []} />
+      <TasksCard connectionId={connectionId} tasks={data.tasks.edges} />
     </div>
   );
 }

@@ -2,31 +2,27 @@ import { graphql } from "relay-runtime";
 import type { MeasureTasksTabQuery } from "/__generated__/core/MeasureTasksTabQuery.graphql";
 import { useOutletContext } from "react-router";
 import { useLazyLoadQuery } from "react-relay";
-import TasksCard from "/components/tasks/TasksCard";
+import { TasksCard } from "/components/tasks/TasksCard";
 import { Button, IconPlusLarge } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import TaskFormDialog from "/components/tasks/TaskFormDialog";
 
 const tasksQuery = graphql`
   query MeasureTasksTabQuery($measureId: ID!) {
-    node(id: $measureId) {
+    node(id: $measureId) @required(action: THROW) {
+      __typename
       ... on Measure {
         id
-        tasks(first: 100) @connection(key: "Measure__tasks") {
+        tasks(first: 100)
+          @connection(key: "Measure__tasks")
+          @required(action: THROW) {
           __id
-          edges {
+          edges @required(action: THROW) {
             node {
               id
-              name
               state
-              description
-              timeEstimate
-              deadline
               ...TaskFormDialogFragment
-              assignedTo {
-                id
-                fullName
-              }
+              ...TasksCard_TaskRowFragment
             }
           }
         }
@@ -40,19 +36,17 @@ export default function MeasureTasksTab() {
   const { measure } = useOutletContext<{
     measure: { id: string };
   }>();
-  const data = useLazyLoadQuery<MeasureTasksTabQuery>(tasksQuery, {
+  const { node } = useLazyLoadQuery<MeasureTasksTabQuery>(tasksQuery, {
     measureId: measure.id,
   });
-  const node = data.node;
-  if (!node || !node.tasks) {
-    return null;
+  if (node.__typename !== "Measure") {
+    throw new Error("invalid node type");
   }
   const connectionId = node.tasks.__id;
-  const tasks = node.tasks.edges?.map((edge) => edge.node) ?? [];
 
   return (
     <div className="relative">
-      <TasksCard connectionId={connectionId} tasks={tasks} />
+      <TasksCard connectionId={connectionId} tasks={node.tasks.edges} />
       <TaskFormDialog connection={connectionId} measureId={measure.id}>
         <Button
           variant="secondary"

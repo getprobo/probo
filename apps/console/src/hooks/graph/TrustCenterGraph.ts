@@ -19,6 +19,7 @@ export const trustCenterQuery = graphql`
           ndaFileUrl
           createdAt
           updatedAt
+          canUpdate: permission(action: "core:trust-center:update")
           references(
             first: 100
             orderBy: { field: CREATED_AT, direction: DESC }

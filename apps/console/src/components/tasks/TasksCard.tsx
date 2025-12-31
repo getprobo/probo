@@ -18,38 +18,35 @@ import {
   useDialogRef,
 } from "@probo/ui";
 import { Fragment, use } from "react";
-import { graphql, useMutation, useRelayEnvironment } from "react-relay";
+import {
+  graphql,
+  useFragment,
+  useMutation,
+  useRelayEnvironment,
+} from "react-relay";
 import { Link, useLocation, useParams } from "react-router";
-import type { TaskFormDialogFragment$key } from "/__generated__/core/TaskFormDialogFragment.graphql";
 import TaskFormDialog, {
   taskUpdateMutation,
 } from "/components/tasks/TaskFormDialog";
 import { updateStoreCounter } from "/hooks/useMutationWithIncrement";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { PermissionsContext } from "/providers/PermissionsContext";
-import type { ItemOf } from "/types";
+import type { TasksCard_TaskRowFragment$key } from "/__generated__/core/TasksCard_TaskRowFragment.graphql";
+import type { TasksPageFragment$data } from "/__generated__/core/TasksPageFragment.graphql";
+import type { MeasureTasksTabQuery$data } from "/__generated__/core/MeasureTasksTabQuery.graphql";
+import type { TaskFormDialogFragment$key } from "/__generated__/core/TaskFormDialogFragment.graphql";
 
 type Props = {
-  tasks: ({
-    assignedTo?: {
-      id: string;
-      fullName: string;
-    } | null;
-    id: string;
-    name: string;
-    state: "TODO" | "DONE";
-    description?: string | null;
-    timeEstimate?: string | null;
-    deadline?: string | null;
-    measure?: {
-      id: string;
-      name: string;
-    } | null;
-  } & TaskFormDialogFragment$key)[];
+  tasks:
+    | TasksPageFragment$data["tasks"]["edges"]
+    | Extract<
+        MeasureTasksTabQuery$data["node"],
+        { __typename: "Measure" }
+      >["tasks"]["edges"];
   connectionId: string;
 };
 
-export default function TasksCard({ tasks, connectionId }: Props) {
+export function TasksCard({ tasks, connectionId }: Props) {
   const { __ } = useTranslate();
   const hash = useLocation().hash.replace("#", "");
 
@@ -60,8 +57,8 @@ export default function TasksCard({ tasks, connectionId }: Props) {
   ] as const;
 
   const tasksPerHash = new Map([
-    ["", tasks?.filter((t) => t.state === "TODO")],
-    ["done", tasks?.filter((t) => t.state === "DONE")],
+    ["", tasks?.filter(({ node }) => node.state === "TODO")],
+    ["done", tasks?.filter(({ node }) => node.state === "DONE")],
     ["all", tasks],
   ]);
 
@@ -69,14 +66,9 @@ export default function TasksCard({ tasks, connectionId }: Props) {
 
   usePageTitle(__("Tasks"));
 
-  const { isAuthorized } = use(PermissionsContext);
-
-  const hasAnyAction =
-    isAuthorized("Task", "updateTask") || isAuthorized("Task", "deleteTask");
-
   return (
     <div className="space-y-6">
-      {tasks?.length === 0 ? (
+      {tasks.length === 0 ? (
         <p className="text-center py-6 text-txt-secondary">{__("No tasks")}</p>
       ) : (
         <Card>
@@ -102,23 +94,21 @@ export default function TasksCard({ tasks, connectionId }: Props) {
                         <TaskStateIcon state={h.state!} />
                         {h.label}
                       </h2>
-                      {tasksPerHash.get(h.hash)?.map((task) => (
+                      {tasksPerHash.get(h.hash)?.map(({ node: task }) => (
                         <TaskRow
                           key={task.id}
-                          task={task}
+                          fKey={task}
                           connectionId={connectionId}
-                          hasAnyAction={hasAnyAction}
                         />
                       ))}
                     </Fragment>
                   ))
               : // Todo and Done tab simply list todos
-                filteredTasks?.map((task) => (
+                filteredTasks?.map(({ node: task }) => (
                   <TaskRow
                     key={task.id}
-                    task={task}
+                    fKey={task}
                     connectionId={connectionId}
-                    hasAnyAction={hasAnyAction}
                   />
                 ))}
           </div>
@@ -129,10 +119,30 @@ export default function TasksCard({ tasks, connectionId }: Props) {
 }
 
 type TaskRowProps = {
-  task: ItemOf<Props["tasks"]>;
+  fKey: TasksCard_TaskRowFragment$key | TaskFormDialogFragment$key;
   connectionId: string;
-  hasAnyAction: boolean;
 };
+
+const fragment = graphql`
+  fragment TasksCard_TaskRowFragment on Task {
+    id
+    name
+    state
+    description
+    timeEstimate
+    deadline
+    canUpdate: permission(action: "core:task:update")
+    canDelete: permission(action: "core:task:delete")
+    assignedTo {
+      id
+      fullName
+    }
+    measure {
+      id
+      name
+    }
+  }
+`;
 
 const deleteMutation = graphql`
   mutation TasksCardDeleteMutation(
@@ -155,14 +165,19 @@ function TaskRow(props: TaskRowProps) {
   const { isAuthorized } = use(PermissionsContext);
 
   const relayEnv = useRelayEnvironment();
+  const { canUpdate, canDelete, ...task } =
+    useFragment<TasksCard_TaskRowFragment$key>(
+      fragment,
+      props.fKey as TasksCard_TaskRowFragment$key,
+    );
   const [updateTask, isUpdating] = useMutation(taskUpdateMutation);
 
   const onToggle = () => {
     promisifyMutation(updateTask)({
       variables: {
         input: {
-          taskId: props.task.id,
-          state: props.task.state === "TODO" ? "DONE" : "TODO",
+          taskId: task.id,
+          state: task.state === "TODO" ? "DONE" : "TODO",
         },
       },
     });
@@ -173,7 +188,7 @@ function TaskRow(props: TaskRowProps) {
       () =>
         promisifyMutation(deleteTask)({
           variables: {
-            input: { taskId: props.task.id },
+            input: { taskId: task.id },
             connections: [props.connectionId],
           },
           onCompleted: (_response, errors) => {
@@ -195,7 +210,10 @@ function TaskRow(props: TaskRowProps) {
 
   return (
     <>
-      <TaskFormDialog task={props.task} ref={dialogRef} />
+      <TaskFormDialog
+        task={props.fKey as TaskFormDialogFragment$key}
+        ref={dialogRef}
+      />
       <div className="flex items-center justify-between py-3 px-6">
         <div className="flex gap-2 items-start">
           <div className="flex items-center gap-2 pt-[2px]">
@@ -205,52 +223,53 @@ function TaskRow(props: TaskRowProps) {
               className="cursor-pointer -m-1 p-1 disabled:opacity-60"
               disabled={isUpdating}
             >
-              <TaskStateIcon state={props.task.state} />
+              <TaskStateIcon state={task.state} />
             </button>
           </div>
           <div className="text-sm space-y-1 flex-1">
-            <h2 className="font-medium">{props.task.name}</h2>
-            {props.task.description && (
+            <h2 className="font-medium">{task.name}</h2>
+            {task.description && (
               <p className="text-txt-secondary whitespace-pre-wrap break-words">
-                {props.task.description}
+                {task.description}
               </p>
             )}
+
             <div className="flex flex-wrap items-center gap-3 text-txt-secondary text-xs">
-              {props.task.measure && (
+              {task.measure && (
                 <span className="flex items-center gap-1">
                   <IconArrowCornerDownLeft className="scale-x-[-1]" size={14} />
                   <Link
                     className="hover:underline"
-                    to={`/organizations/${organizationId}/measures/${props.task.measure?.id}`}
+                    to={`/organizations/${organizationId}/measures/${task.measure?.id}`}
                   >
-                    {props.task.measure?.name}
+                    {task.measure?.name}
                   </Link>
                 </span>
               )}
-              {props.task.timeEstimate && (
-                <span>{formatDuration(props.task.timeEstimate, __)}</span>
+              {task.timeEstimate && (
+                <span>{formatDuration(task.timeEstimate, __)}</span>
               )}
-              {props.task.deadline && (
-                <time dateTime={props.task.deadline}>
-                  {formatDate(props.task.deadline)}
+              {task.deadline && (
+                <time dateTime={task.deadline}>
+                  {formatDate(task.deadline)}
                 </time>
               )}
             </div>
           </div>
         </div>
-        {props.task.assignedTo?.fullName && (
+        {task.assignedTo?.fullName && (
           <div className="text-sm text-txt-secondary ml-auto mr-8">
             <Link
               className="hover:underline"
-              to={`/organizations/${organizationId}/people/${props.task.assignedTo.id}`}
+              to={`/organizations/${organizationId}/people/${task.assignedTo.id}`}
             >
-              {props.task.assignedTo.fullName}
+              {task.assignedTo.fullName}
             </Link>
           </div>
         )}
         <div className="flex gap-2 items-center">
           {isUpdating && <Spinner size={16} />}
-          {props.hasAnyAction && (
+          {(canUpdate || canDelete) && (
             <ActionDropdown>
               {isAuthorized("Task", "updateTask") && (
                 <DropdownItem
