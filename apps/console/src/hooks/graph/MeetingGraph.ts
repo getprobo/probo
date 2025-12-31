@@ -8,6 +8,9 @@ export const meetingsQuery = graphql`
   query MeetingGraphListQuery($organizationId: ID!) {
     organization: node(id: $organizationId) {
       id
+      ... on Organization {
+        canCreateMeeting: permission(action: "core:meeting:create")
+      }
       ...MeetingsPageListFragment
     }
   }
