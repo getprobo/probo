@@ -17,10 +17,9 @@ import {
 import { useTranslate } from "@probo/i18n";
 import type { TrustCenterDocumentsCardFragment$key } from "/__generated__/core/TrustCenterDocumentsCardFragment.graphql";
 import { useFragment } from "react-relay";
-import { useMemo, useState, useCallback, useEffect, use } from "react";
+import { useMemo, useState, useCallback, useEffect } from "react";
 import { sprintf, getTrustCenterVisibilityOptions } from "@probo/helpers";
 import { useOrganizationId } from "/hooks/useOrganizationId";
-import { PermissionsContext } from "/providers/PermissionsContext";
 
 const trustCenterDocumentFragment = graphql`
   fragment TrustCenterDocumentsCardFragment on Document {
@@ -54,6 +53,7 @@ type Props<Params> = {
   params: Params;
   disabled?: boolean;
   onChangeVisibility: Mutation<Params>;
+  canUpdate: boolean;
 };
 
 export function TrustCenterDocumentsCard<Params>(props: Props<Params>) {
@@ -104,6 +104,7 @@ export function TrustCenterDocumentsCard<Params>(props: Props<Params>) {
               documentFragmentRef={document}
               onChangeVisibility={onChangeVisibility}
               disabled={props.disabled}
+              canUpdate={props.canUpdate}
             />
           ))}
         </Tbody>
@@ -129,8 +130,10 @@ function DocumentRow(props: {
     trustCenterVisibility: "NONE" | "PRIVATE" | "PUBLIC",
   ) => void;
   disabled?: boolean;
+  canUpdate: boolean;
 }) {
-  const { documentFragmentRef, onChangeVisibility, disabled } = props;
+  const { documentFragmentRef, onChangeVisibility, disabled, canUpdate } =
+    props;
   const document = useFragment(
     trustCenterDocumentFragment,
     documentFragmentRef,
@@ -138,8 +141,6 @@ function DocumentRow(props: {
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
   const [optimisticValue, setOptimisticValue] = useState<string | null>(null);
-  const { isAuthorized } = use(PermissionsContext);
-  const canUpdate = isAuthorized("TrustCenter", "updateTrustCenter");
 
   const handleValueChange = useCallback(
     (value: string) => {

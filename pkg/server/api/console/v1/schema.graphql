@@ -2543,7 +2543,7 @@ type TrustCenterReferenceEdge {
   node: TrustCenterReference!
 }
 
-type TrustCenterFile {
+type TrustCenterFile implements Node {
   id: ID!
   name: String!
   category: String!
@@ -2552,6 +2552,8 @@ type TrustCenterFile {
   createdAt: Datetime!
   updatedAt: Datetime!
   organization: Organization! @goField(forceResolver: true)
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type TrustCenterFileConnection

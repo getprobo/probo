@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<0defaaf1ce3544420e8fbd9c9f3af139>>
+ * @generated SignedSource<<d98ea0f9e8ca507260465079e6073838>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,6 +12,8 @@ import { ReaderFragment } from 'relay-runtime';
 export type TrustCenterVisibility = "NONE" | "PRIVATE" | "PUBLIC";
 import { FragmentRefs } from "relay-runtime";
 export type TrustCenterFilesCardFragment$data = {
+  readonly canDelete: boolean;
+  readonly canUpdate: boolean;
   readonly category: string;
   readonly createdAt: any;
   readonly fileUrl: string;
@@ -80,12 +82,38 @@ const node: ReaderFragment = {
       "kind": "ScalarField",
       "name": "updatedAt",
       "storageKey": null
+    },
+    {
+      "alias": "canUpdate",
+      "args": [
+        {
+          "kind": "Literal",
+          "name": "action",
+          "value": "core:trust-center-file:update"
+        }
+      ],
+      "kind": "ScalarField",
+      "name": "permission",
+      "storageKey": "permission(action:\"core:trust-center-file:update\")"
+    },
+    {
+      "alias": "canDelete",
+      "args": [
+        {
+          "kind": "Literal",
+          "name": "action",
+          "value": "core:trust-center-file:delete"
+        }
+      ],
+      "kind": "ScalarField",
+      "name": "permission",
+      "storageKey": "permission(action:\"core:trust-center-file:delete\")"
     }
   ],
   "type": "TrustCenterFile",
   "abstractKey": null
 };
 
-(node as any).hash = "33cb01782ca37fc776cd8e5dfde20f76";
+(node as any).hash = "7b9e482868fc5d815923fbefdbafc8bb";
 
 export default node;

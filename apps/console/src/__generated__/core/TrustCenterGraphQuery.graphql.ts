@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<f52778bf4020037a3a76f29c2a7c6b39>>
+ * @generated SignedSource<<e67073eb7045d7e1b44337df273de6e0>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -23,6 +23,7 @@ export type TrustCenterGraphQuery$data = {
         };
       }>;
     };
+    readonly canCreateTrustCenterFile?: boolean;
     readonly customDomain?: {
       readonly domain: string;
       readonly id: string;
@@ -50,7 +51,10 @@ export type TrustCenterGraphQuery$data = {
     };
     readonly trustCenter?: {
       readonly active: boolean;
+      readonly canDeleteNDA: boolean;
+      readonly canGetNDA: boolean;
       readonly canUpdate: boolean;
+      readonly canUploadNDA: boolean;
       readonly createdAt: any;
       readonly id: string;
       readonly ndaFileName: string | null | undefined;
@@ -124,6 +128,19 @@ v3 = {
   "storageKey": null
 },
 v4 = {
+  "alias": "canCreateTrustCenterFile",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "core:trust-center-file:create"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"core:trust-center-file:create\")"
+},
+v5 = {
   "alias": null,
   "args": null,
   "concreteType": "CustomDomain",
@@ -142,33 +159,33 @@ v4 = {
   ],
   "storageKey": null
 },
-v5 = {
+v6 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "createdAt",
   "storageKey": null
 },
-v6 = {
+v7 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "updatedAt",
   "storageKey": null
 },
-v7 = {
+v8 = {
   "kind": "Literal",
   "name": "first",
   "value": 100
 },
-v8 = {
+v9 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "description",
   "storageKey": null
 },
-v9 = {
+v10 = {
   "alias": null,
   "args": null,
   "concreteType": "TrustCenter",
@@ -198,8 +215,8 @@ v9 = {
       "name": "ndaFileUrl",
       "storageKey": null
     },
-    (v5/*: any*/),
     (v6/*: any*/),
+    (v7/*: any*/),
     {
       "alias": "canUpdate",
       "args": [
@@ -214,9 +231,48 @@ v9 = {
       "storageKey": "permission(action:\"core:trust-center:update\")"
     },
     {
+      "alias": "canGetNDA",
+      "args": [
+        {
+          "kind": "Literal",
+          "name": "action",
+          "value": "core:trust-center:get-nda"
+        }
+      ],
+      "kind": "ScalarField",
+      "name": "permission",
+      "storageKey": "permission(action:\"core:trust-center:get-nda\")"
+    },
+    {
+      "alias": "canUploadNDA",
+      "args": [
+        {
+          "kind": "Literal",
+          "name": "action",
+          "value": "core:trust-center:upload-nda"
+        }
+      ],
+      "kind": "ScalarField",
+      "name": "permission",
+      "storageKey": "permission(action:\"core:trust-center:upload-nda\")"
+    },
+    {
+      "alias": "canDeleteNDA",
+      "args": [
+        {
+          "kind": "Literal",
+          "name": "action",
+          "value": "core:trust-center:delete-nda"
+        }
+      ],
+      "kind": "ScalarField",
+      "name": "permission",
+      "storageKey": "permission(action:\"core:trust-center:delete-nda\")"
+    },
+    {
       "alias": null,
       "args": [
-        (v7/*: any*/),
+        (v8/*: any*/),
         {
           "kind": "Literal",
           "name": "orderBy",
@@ -249,7 +305,7 @@ v9 = {
               "selections": [
                 (v2/*: any*/),
                 (v3/*: any*/),
-                (v8/*: any*/),
+                (v9/*: any*/),
                 {
                   "alias": null,
                   "args": null,
@@ -264,8 +320,8 @@ v9 = {
                   "name": "logoUrl",
                   "storageKey": null
                 },
-                (v5/*: any*/),
-                (v6/*: any*/)
+                (v6/*: any*/),
+                (v7/*: any*/)
               ],
               "storageKey": null
             }
@@ -278,24 +334,24 @@ v9 = {
   ],
   "storageKey": null
 },
-v10 = [
-  (v7/*: any*/)
+v11 = [
+  (v8/*: any*/)
 ],
-v11 = {
+v12 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "__typename",
   "storageKey": null
 },
-v12 = {
+v13 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "cursor",
   "storageKey": null
 },
-v13 = {
+v14 = {
   "alias": null,
   "args": null,
   "concreteType": "PageInfo",
@@ -320,7 +376,7 @@ v13 = {
   ],
   "storageKey": null
 },
-v14 = {
+v15 = {
   "kind": "ClientExtension",
   "selections": [
     {
@@ -332,9 +388,9 @@ v14 = {
     }
   ]
 },
-v15 = {
+v16 = {
   "alias": null,
-  "args": (v10/*: any*/),
+  "args": (v11/*: any*/),
   "concreteType": "SlackConnectionConnection",
   "kind": "LinkedField",
   "name": "slackConnections",
@@ -371,8 +427,8 @@ v15 = {
               "name": "channelId",
               "storageKey": null
             },
-            (v5/*: any*/),
-            (v6/*: any*/)
+            (v6/*: any*/),
+            (v7/*: any*/)
           ],
           "storageKey": null
         }
@@ -382,14 +438,14 @@ v15 = {
   ],
   "storageKey": "slackConnections(first:100)"
 },
-v16 = {
+v17 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "trustCenterVisibility",
   "storageKey": null
 },
-v17 = {
+v18 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
@@ -417,10 +473,11 @@ return {
               (v2/*: any*/),
               (v3/*: any*/),
               (v4/*: any*/),
-              (v9/*: any*/),
+              (v5/*: any*/),
+              (v10/*: any*/),
               {
                 "alias": null,
-                "args": (v10/*: any*/),
+                "args": (v11/*: any*/),
                 "concreteType": "DocumentConnection",
                 "kind": "LinkedField",
                 "name": "documents",
@@ -459,7 +516,7 @@ return {
               },
               {
                 "alias": null,
-                "args": (v10/*: any*/),
+                "args": (v11/*: any*/),
                 "concreteType": "AuditConnection",
                 "kind": "LinkedField",
                 "name": "audits",
@@ -498,7 +555,7 @@ return {
               },
               {
                 "alias": null,
-                "args": (v10/*: any*/),
+                "args": (v11/*: any*/),
                 "concreteType": "VendorConnection",
                 "kind": "LinkedField",
                 "name": "vendors",
@@ -565,20 +622,20 @@ return {
                             "kind": "FragmentSpread",
                             "name": "TrustCenterFilesCardFragment"
                           },
-                          (v11/*: any*/)
+                          (v12/*: any*/)
                         ],
                         "storageKey": null
                       },
-                      (v12/*: any*/)
+                      (v13/*: any*/)
                     ],
                     "storageKey": null
                   },
-                  (v13/*: any*/),
-                  (v14/*: any*/)
+                  (v14/*: any*/),
+                  (v15/*: any*/)
                 ],
                 "storageKey": null
               },
-              (v15/*: any*/)
+              (v16/*: any*/)
             ],
             "type": "Organization",
             "abstractKey": null
@@ -604,17 +661,18 @@ return {
         "name": "node",
         "plural": false,
         "selections": [
-          (v11/*: any*/),
+          (v12/*: any*/),
           (v2/*: any*/),
           {
             "kind": "InlineFragment",
             "selections": [
               (v3/*: any*/),
               (v4/*: any*/),
-              (v9/*: any*/),
+              (v5/*: any*/),
+              (v10/*: any*/),
               {
                 "alias": null,
-                "args": (v10/*: any*/),
+                "args": (v11/*: any*/),
                 "concreteType": "DocumentConnection",
                 "kind": "LinkedField",
                 "name": "documents",
@@ -644,7 +702,7 @@ return {
                             "name": "title",
                             "storageKey": null
                           },
-                          (v5/*: any*/),
+                          (v6/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -652,7 +710,7 @@ return {
                             "name": "documentType",
                             "storageKey": null
                           },
-                          (v16/*: any*/),
+                          (v17/*: any*/),
                           {
                             "alias": null,
                             "args": [
@@ -711,7 +769,7 @@ return {
               },
               {
                 "alias": null,
-                "args": (v10/*: any*/),
+                "args": (v11/*: any*/),
                 "concreteType": "AuditConnection",
                 "kind": "LinkedField",
                 "name": "audits",
@@ -769,8 +827,8 @@ return {
                             "name": "state",
                             "storageKey": null
                           },
-                          (v16/*: any*/),
-                          (v5/*: any*/)
+                          (v17/*: any*/),
+                          (v6/*: any*/)
                         ],
                         "storageKey": null
                       }
@@ -782,7 +840,7 @@ return {
               },
               {
                 "alias": null,
-                "args": (v10/*: any*/),
+                "args": (v11/*: any*/),
                 "concreteType": "VendorConnection",
                 "kind": "LinkedField",
                 "name": "vendors",
@@ -806,8 +864,8 @@ return {
                         "selections": [
                           (v2/*: any*/),
                           (v3/*: any*/),
-                          (v17/*: any*/),
-                          (v8/*: any*/),
+                          (v18/*: any*/),
+                          (v9/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -815,7 +873,7 @@ return {
                             "name": "showOnTrustCenter",
                             "storageKey": null
                           },
-                          (v5/*: any*/)
+                          (v6/*: any*/)
                         ],
                         "storageKey": null
                       }
@@ -827,7 +885,7 @@ return {
               },
               {
                 "alias": null,
-                "args": (v10/*: any*/),
+                "args": (v11/*: any*/),
                 "concreteType": "TrustCenterFileConnection",
                 "kind": "LinkedField",
                 "name": "trustCenterFiles",
@@ -851,7 +909,7 @@ return {
                         "selections": [
                           (v2/*: any*/),
                           (v3/*: any*/),
-                          (v17/*: any*/),
+                          (v18/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -859,32 +917,58 @@ return {
                             "name": "fileUrl",
                             "storageKey": null
                           },
-                          (v16/*: any*/),
-                          (v5/*: any*/),
+                          (v17/*: any*/),
                           (v6/*: any*/),
-                          (v11/*: any*/)
+                          (v7/*: any*/),
+                          {
+                            "alias": "canUpdate",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:trust-center-file:update"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:trust-center-file:update\")"
+                          },
+                          {
+                            "alias": "canDelete",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:trust-center-file:delete"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:trust-center-file:delete\")"
+                          },
+                          (v12/*: any*/)
                         ],
                         "storageKey": null
                       },
-                      (v12/*: any*/)
+                      (v13/*: any*/)
                     ],
                     "storageKey": null
                   },
-                  (v13/*: any*/),
-                  (v14/*: any*/)
+                  (v14/*: any*/),
+                  (v15/*: any*/)
                 ],
                 "storageKey": "trustCenterFiles(first:100)"
               },
               {
                 "alias": null,
-                "args": (v10/*: any*/),
+                "args": (v11/*: any*/),
                 "filters": null,
                 "handle": "connection",
                 "key": "TrustCenterPage_trustCenterFiles",
                 "kind": "LinkedHandle",
                 "name": "trustCenterFiles"
               },
-              (v15/*: any*/)
+              (v16/*: any*/)
             ],
             "type": "Organization",
             "abstractKey": null
@@ -895,7 +979,7 @@ return {
     ]
   },
   "params": {
-    "cacheID": "77cfcb8a51459702b07cd2295688ad07",
+    "cacheID": "0fbd1275d4051e236a6f9711cf21c23b",
     "id": null,
     "metadata": {
       "connection": [
@@ -912,11 +996,11 @@ return {
     },
     "name": "TrustCenterGraphQuery",
     "operationKind": "query",
-    "text": "query TrustCenterGraphQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      name\n      customDomain {\n        id\n        domain\n      }\n      trustCenter {\n        id\n        active\n        ndaFileName\n        ndaFileUrl\n        createdAt\n        updatedAt\n        canUpdate: permission(action: \"core:trust-center:update\")\n        references(first: 100, orderBy: {field: CREATED_AT, direction: DESC}) {\n          edges {\n            node {\n              id\n              name\n              description\n              websiteUrl\n              logoUrl\n              createdAt\n              updatedAt\n            }\n          }\n        }\n      }\n      documents(first: 100) {\n        edges {\n          node {\n            id\n            ...TrustCenterDocumentsCardFragment\n          }\n        }\n      }\n      audits(first: 100) {\n        edges {\n          node {\n            id\n            ...TrustCenterAuditsCardFragment\n          }\n        }\n      }\n      vendors(first: 100) {\n        edges {\n          node {\n            id\n            ...TrustCenterVendorsCardFragment\n          }\n        }\n      }\n      trustCenterFiles(first: 100) {\n        edges {\n          node {\n            id\n            ...TrustCenterFilesCardFragment\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n      slackConnections(first: 100) {\n        edges {\n          node {\n            id\n            channel\n            channelId\n            createdAt\n            updatedAt\n          }\n        }\n      }\n    }\n    id\n  }\n}\n\nfragment TrustCenterAuditsCardFragment on Audit {\n  id\n  name\n  framework {\n    name\n    id\n  }\n  validFrom\n  validUntil\n  state\n  trustCenterVisibility\n  createdAt\n}\n\nfragment TrustCenterDocumentsCardFragment on Document {\n  id\n  title\n  createdAt\n  documentType\n  trustCenterVisibility\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n      }\n    }\n  }\n}\n\nfragment TrustCenterFilesCardFragment on TrustCenterFile {\n  id\n  name\n  category\n  fileUrl\n  trustCenterVisibility\n  createdAt\n  updatedAt\n}\n\nfragment TrustCenterVendorsCardFragment on Vendor {\n  id\n  name\n  category\n  description\n  showOnTrustCenter\n  createdAt\n}\n"
+    "text": "query TrustCenterGraphQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      name\n      canCreateTrustCenterFile: permission(action: \"core:trust-center-file:create\")\n      customDomain {\n        id\n        domain\n      }\n      trustCenter {\n        id\n        active\n        ndaFileName\n        ndaFileUrl\n        createdAt\n        updatedAt\n        canUpdate: permission(action: \"core:trust-center:update\")\n        canGetNDA: permission(action: \"core:trust-center:get-nda\")\n        canUploadNDA: permission(action: \"core:trust-center:upload-nda\")\n        canDeleteNDA: permission(action: \"core:trust-center:delete-nda\")\n        references(first: 100, orderBy: {field: CREATED_AT, direction: DESC}) {\n          edges {\n            node {\n              id\n              name\n              description\n              websiteUrl\n              logoUrl\n              createdAt\n              updatedAt\n            }\n          }\n        }\n      }\n      documents(first: 100) {\n        edges {\n          node {\n            id\n            ...TrustCenterDocumentsCardFragment\n          }\n        }\n      }\n      audits(first: 100) {\n        edges {\n          node {\n            id\n            ...TrustCenterAuditsCardFragment\n          }\n        }\n      }\n      vendors(first: 100) {\n        edges {\n          node {\n            id\n            ...TrustCenterVendorsCardFragment\n          }\n        }\n      }\n      trustCenterFiles(first: 100) {\n        edges {\n          node {\n            id\n            ...TrustCenterFilesCardFragment\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n      slackConnections(first: 100) {\n        edges {\n          node {\n            id\n            channel\n            channelId\n            createdAt\n            updatedAt\n          }\n        }\n      }\n    }\n    id\n  }\n}\n\nfragment TrustCenterAuditsCardFragment on Audit {\n  id\n  name\n  framework {\n    name\n    id\n  }\n  validFrom\n  validUntil\n  state\n  trustCenterVisibility\n  createdAt\n}\n\nfragment TrustCenterDocumentsCardFragment on Document {\n  id\n  title\n  createdAt\n  documentType\n  trustCenterVisibility\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n      }\n    }\n  }\n}\n\nfragment TrustCenterFilesCardFragment on TrustCenterFile {\n  id\n  name\n  category\n  fileUrl\n  trustCenterVisibility\n  createdAt\n  updatedAt\n  canUpdate: permission(action: \"core:trust-center-file:update\")\n  canDelete: permission(action: \"core:trust-center-file:delete\")\n}\n\nfragment TrustCenterVendorsCardFragment on Vendor {\n  id\n  name\n  category\n  description\n  showOnTrustCenter\n  createdAt\n}\n"
   }
 };
 })();
 
-(node as any).hash = "8c59eb08a0ec74662a01a3b8bb8ab56f";
+(node as any).hash = "2c169dd5176d4dedd98ff82210335a86";
 
 export default node;

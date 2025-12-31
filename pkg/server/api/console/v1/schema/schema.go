@@ -1590,6 +1590,7 @@ type ComplexityRoot struct {
 		ID                    func(childComplexity int) int
 		Name                  func(childComplexity int) int
 		Organization          func(childComplexity int) int
+		Permission            func(childComplexity int, action string) int
 		TrustCenterVisibility func(childComplexity int) int
 		UpdatedAt             func(childComplexity int) int
 	}
@@ -2394,6 +2395,7 @@ type TrustCenterFileResolver interface {
 	FileURL(ctx context.Context, obj *types.TrustCenterFile) (string, error)
 
 	Organization(ctx context.Context, obj *types.TrustCenterFile) (*types.Organization, error)
+	Permission(ctx context.Context, obj *types.TrustCenterFile, action string) (bool, error)
 }
 type TrustCenterFileConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.TrustCenterFileConnection) (int, error)
@@ -8896,6 +8898,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.TrustCenterFile.Organization(childComplexity), true
+	case "TrustCenterFile.permission":
+		if e.complexity.TrustCenterFile.Permission == nil {
+			break
+		}
+
+		args, err := ec.field_TrustCenterFile_permission_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.TrustCenterFile.Permission(childComplexity, args["action"].(string)), true
 	case "TrustCenterFile.trustCenterVisibility":
 		if e.complexity.TrustCenterFile.TrustCenterVisibility == nil {
 			break
@@ -12872,7 +12885,7 @@ type TrustCenterReferenceEdge {
   node: TrustCenterReference!
 }
 
-type TrustCenterFile {
+type TrustCenterFile implements Node {
   id: ID!
   name: String!
   category: String!
@@ -12881,6 +12894,8 @@ type TrustCenterFile {
   createdAt: Datetime!
   updatedAt: Datetime!
   organization: Organization! @goField(forceResolver: true)
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type TrustCenterFileConnection
@@ -19026,6 +19041,17 @@ func (ec *executionContext) field_TrustCenterAccess_availableDocumentAccesses_ar
 }
 
 func (ec *executionContext) field_TrustCenterAccess_permission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "action", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["action"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_TrustCenterFile_permission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "action", ec.unmarshalNString2string)
@@ -31802,6 +31828,8 @@ func (ec *executionContext) fieldContext_GetTrustCenterFilePayload_trustCenterFi
 				return ec.fieldContext_TrustCenterFile_updatedAt(ctx, field)
 			case "organization":
 				return ec.fieldContext_TrustCenterFile_organization(ctx, field)
+			case "permission":
+				return ec.fieldContext_TrustCenterFile_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type TrustCenterFile", field.Name)
 		},
@@ -51785,6 +51813,8 @@ func (ec *executionContext) fieldContext_TrustCenterDocumentAccess_trustCenterFi
 				return ec.fieldContext_TrustCenterFile_updatedAt(ctx, field)
 			case "organization":
 				return ec.fieldContext_TrustCenterFile_organization(ctx, field)
+			case "permission":
+				return ec.fieldContext_TrustCenterFile_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type TrustCenterFile", field.Name)
 		},
@@ -52353,6 +52383,47 @@ func (ec *executionContext) fieldContext_TrustCenterFile_organization(_ context.
 	return fc, nil
 }
 
+func (ec *executionContext) _TrustCenterFile_permission(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenterFile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_TrustCenterFile_permission,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.TrustCenterFile().Permission(ctx, obj, fc.Args["action"].(string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_TrustCenterFile_permission(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TrustCenterFile",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_TrustCenterFile_permission_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _TrustCenterFileConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenterFileConnection) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -52525,6 +52596,8 @@ func (ec *executionContext) fieldContext_TrustCenterFileEdge_node(_ context.Cont
 				return ec.fieldContext_TrustCenterFile_updatedAt(ctx, field)
 			case "organization":
 				return ec.fieldContext_TrustCenterFile_organization(ctx, field)
+			case "permission":
+				return ec.fieldContext_TrustCenterFile_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type TrustCenterFile", field.Name)
 		},
@@ -54290,6 +54363,8 @@ func (ec *executionContext) fieldContext_UpdateTrustCenterFilePayload_trustCente
 				return ec.fieldContext_TrustCenterFile_updatedAt(ctx, field)
 			case "organization":
 				return ec.fieldContext_TrustCenterFile_organization(ctx, field)
+			case "permission":
+				return ec.fieldContext_TrustCenterFile_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type TrustCenterFile", field.Name)
 		},
@@ -69052,6 +69127,13 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._TrustCenterReference(ctx, sel, obj)
+	case types.TrustCenterFile:
+		return ec._TrustCenterFile(ctx, sel, &obj)
+	case *types.TrustCenterFile:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._TrustCenterFile(ctx, sel, obj)
 	case types.TrustCenterAccess:
 		return ec._TrustCenterAccess(ctx, sel, &obj)
 	case *types.TrustCenterAccess:
@@ -85535,7 +85617,7 @@ func (ec *executionContext) _TrustCenterEdge(ctx context.Context, sel ast.Select
 	return out
 }
 
-var trustCenterFileImplementors = []string{"TrustCenterFile"}
+var trustCenterFileImplementors = []string{"TrustCenterFile", "Node"}
 
 func (ec *executionContext) _TrustCenterFile(ctx context.Context, sel ast.SelectionSet, obj *types.TrustCenterFile) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, trustCenterFileImplementors)
@@ -85622,6 +85704,42 @@ func (ec *executionContext) _TrustCenterFile(ctx context.Context, sel ast.Select
 					}
 				}()
 				res = ec._TrustCenterFile_organization(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "permission":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._TrustCenterFile_permission(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}

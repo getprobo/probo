@@ -6917,7 +6917,18 @@ func (r *transferImpactAssessmentConnectionResolver) TotalCount(ctx context.Cont
 
 // NdaFileURL is the resolver for the ndaFileUrl field.
 func (r *trustCenterResolver) NdaFileURL(ctx context.Context, obj *types.TrustCenter) (*string, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionTrustCenterGetNda)
+	if err := r.iam.Authorizer.Authorize(ctx, iam.AuthorizeParams{
+		Principal: connect_v1.IdentityFromContext(ctx).ID,
+		Resource:  obj.ID,
+		Action:    "core:trust-center:get-nda-file-url",
+	}); err != nil {
+		var errInsufficientPermissions *iam.ErrInsufficientPermissions
+		if errors.As(err, &errInsufficientPermissions) {
+			return nil, nil
+		}
+
+		panic(fmt.Errorf("cannot authorize: %w", err))
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -7177,6 +7188,11 @@ func (r *trustCenterFileResolver) Organization(ctx context.Context, obj *types.T
 	}
 
 	return types.NewOrganization(organization), nil
+}
+
+// Permission is the resolver for the permission field.
+func (r *trustCenterFileResolver) Permission(ctx context.Context, obj *types.TrustCenterFile, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
 }
 
 // TotalCount is the resolver for the totalCount field.

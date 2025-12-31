@@ -8,6 +8,9 @@ export const trustCenterQuery = graphql`
       ... on Organization {
         id
         name
+        canCreateTrustCenterFile: permission(
+          action: "core:trust-center-file:create"
+        )
         customDomain {
           id
           domain
@@ -20,6 +23,9 @@ export const trustCenterQuery = graphql`
           createdAt
           updatedAt
           canUpdate: permission(action: "core:trust-center:update")
+          canGetNDA: permission(action: "core:trust-center:get-nda")
+          canUploadNDA: permission(action: "core:trust-center:upload-nda")
+          canDeleteNDA: permission(action: "core:trust-center:delete-nda")
           references(
             first: 100
             orderBy: { field: CREATED_AT, direction: DESC }
