@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<7b9dd98afd5bdc994e7d2e422dec2cf2>>
+ * @generated SignedSource<<125407dec78c8db89ee91aa12a097cf0>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -16,6 +16,7 @@ export type GeneralSettingsPageQuery$variables = {
 export type GeneralSettingsPageQuery$data = {
   readonly organization: {
     readonly __typename: "Organization";
+    readonly canDelete: boolean;
     readonly id: string;
     readonly name: string;
     readonly " $fragmentSpreads": FragmentRefs<"OrganizationFormFragment">;
@@ -65,6 +66,19 @@ v4 = {
   "kind": "ScalarField",
   "name": "name",
   "storageKey": null
+},
+v5 = {
+  "alias": "canDelete",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "iam:organization:delete"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"iam:organization:delete\")"
 };
 return {
   "fragment": {
@@ -93,6 +107,7 @@ return {
                   "field": (v4/*: any*/),
                   "action": "THROW"
                 },
+                (v5/*: any*/),
                 {
                   "args": null,
                   "kind": "FragmentSpread",
@@ -131,6 +146,7 @@ return {
             "kind": "InlineFragment",
             "selections": [
               (v4/*: any*/),
+              (v5/*: any*/),
               {
                 "alias": null,
                 "args": null,
@@ -172,6 +188,19 @@ return {
                 "kind": "ScalarField",
                 "name": "headquarterAddress",
                 "storageKey": null
+              },
+              {
+                "alias": "canUpdate",
+                "args": [
+                  {
+                    "kind": "Literal",
+                    "name": "action",
+                    "value": "iam:organization:update"
+                  }
+                ],
+                "kind": "ScalarField",
+                "name": "permission",
+                "storageKey": "permission(action:\"iam:organization:update\")"
               }
             ],
             "type": "Organization",
@@ -183,16 +212,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "11f654f40301ba539b6d78ead3029308",
+    "cacheID": "0d8f14524ef2e72d138e5bb5a42a8f8d",
     "id": null,
     "metadata": {},
     "name": "GeneralSettingsPageQuery",
     "operationKind": "query",
-    "text": "query GeneralSettingsPageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      name\n      ...OrganizationFormFragment\n    }\n    id\n  }\n}\n\nfragment OrganizationFormFragment on Organization {\n  id\n  name\n  logoUrl\n  horizontalLogoUrl\n  description\n  websiteUrl\n  email\n  headquarterAddress\n}\n"
+    "text": "query GeneralSettingsPageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      name\n      canDelete: permission(action: \"iam:organization:delete\")\n      ...OrganizationFormFragment\n    }\n    id\n  }\n}\n\nfragment OrganizationFormFragment on Organization {\n  id\n  name\n  logoUrl\n  horizontalLogoUrl\n  description\n  websiteUrl\n  email\n  headquarterAddress\n  canUpdate: permission(action: \"iam:organization:update\")\n}\n"
   }
 };
 })();
 
-(node as any).hash = "a83e24379e0772bbaf19bad92d60c6d4";
+(node as any).hash = "307473752dd5dc91caaa7536b7b3e69a";
 
 export default node;

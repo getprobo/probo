@@ -13,8 +13,7 @@ import {
   Textarea,
   useDialogRef,
 } from "@probo/ui";
-import { use, useState, type ChangeEventHandler } from "react";
-import { PermissionsContext } from "/providers/PermissionsContext";
+import { useState, type ChangeEventHandler } from "react";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { graphql } from "relay-runtime";
@@ -33,6 +32,7 @@ const fragment = graphql`
     websiteUrl
     email
     headquarterAddress
+    canUpdate: permission(action: "iam:organization:update")
   }
 `;
 
@@ -83,18 +83,13 @@ export function OrganizationForm(props: {
   const { __ } = useTranslate();
   const deleteDialogRef = useDialogRef();
 
-  const { isAuthorized } = use(PermissionsContext);
-  const canUpdate = isAuthorized("Organization", "updateOrganization");
-
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [horizontalLogoPreview, setHorizontalLogoPreview] = useState<
     string | null
   >(null);
 
-  const organization = useFragment<OrganizationFormFragment$key>(
-    fragment,
-    fKey,
-  );
+  const { canUpdate, ...organization } =
+    useFragment<OrganizationFormFragment$key>(fragment, fKey);
 
   const [updateOrganization, isUpdatingOrganization] = useMutationWithToasts(
     updateOrganizationMutation,

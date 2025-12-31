@@ -44,6 +44,7 @@ const inviteMutation = graphql`
           expiresAt
           acceptedAt
           createdAt
+          canDelete: permission(action: "iam:invitation:delete")
         }
       }
     }
