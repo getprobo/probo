@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<9619ee8f74aea67be931f8c40a8815c8>>
+ * @generated SignedSource<<213dd4c7bd0e87ba0e64fa6ce8d2c37b>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -16,6 +16,8 @@ export type DataPageFragment$data = {
     readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly node: {
+        readonly canDelete: boolean;
+        readonly canUpdate: boolean;
         readonly createdAt: any;
         readonly dataClassification: DataClassification;
         readonly id: string;
@@ -249,6 +251,32 @@ return {
                   "storageKey": null
                 },
                 {
+                  "alias": "canUpdate",
+                  "args": [
+                    {
+                      "kind": "Literal",
+                      "name": "action",
+                      "value": "core:datum:update"
+                    }
+                  ],
+                  "kind": "ScalarField",
+                  "name": "permission",
+                  "storageKey": "permission(action:\"core:datum:update\")"
+                },
+                {
+                  "alias": "canDelete",
+                  "args": [
+                    {
+                      "kind": "Literal",
+                      "name": "action",
+                      "value": "core:datum:delete"
+                    }
+                  ],
+                  "kind": "ScalarField",
+                  "name": "permission",
+                  "storageKey": "permission(action:\"core:datum:delete\")"
+                },
+                {
                   "alias": null,
                   "args": null,
                   "kind": "ScalarField",
@@ -329,6 +357,6 @@ return {
 };
 })();
 
-(node as any).hash = "5d3069a0d856613ccb854033b5b1f14e";
+(node as any).hash = "9a4453365a733d298ab9f5237fc4153b";
 
 export default node;

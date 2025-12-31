@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<2000fd2ccfcf4b832c51ff71b0326fef>>
+ * @generated SignedSource<<bfe5e85608cbcd0fd0db44ad909ac493>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -322,6 +322,32 @@ return {
                             "name": "createdAt",
                             "storageKey": null
                           },
+                          {
+                            "alias": "canUpdate",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:datum:update"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:datum:update\")"
+                          },
+                          {
+                            "alias": "canDelete",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:datum:delete"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:datum:delete\")"
+                          },
                           (v13/*: any*/)
                         ],
                         "storageKey": null
@@ -411,16 +437,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "dbca2ff147e8b1e367a266fcf016b184",
+    "cacheID": "c022cb17d3ede74899755b606ce95ba9",
     "id": null,
     "metadata": {},
     "name": "DataListQuery",
     "operationKind": "query",
-    "text": "query DataListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 10\n  $last: Int = null\n  $order: DatumOrder = null\n  $snapshotId: ID = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...DataPageFragment_25MC8O\n    id\n  }\n}\n\nfragment DataPageFragment_25MC8O on Organization {\n  data(first: $first, after: $after, last: $last, before: $before, orderBy: $order, filter: {snapshotId: $snapshotId}) {\n    edges {\n      node {\n        id\n        name\n        dataClassification\n        owner {\n          fullName\n          id\n        }\n        vendors(first: 50) {\n          edges {\n            node {\n              id\n              name\n              websiteUrl\n            }\n          }\n        }\n        createdAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
+    "text": "query DataListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 10\n  $last: Int = null\n  $order: DatumOrder = null\n  $snapshotId: ID = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...DataPageFragment_25MC8O\n    id\n  }\n}\n\nfragment DataPageFragment_25MC8O on Organization {\n  data(first: $first, after: $after, last: $last, before: $before, orderBy: $order, filter: {snapshotId: $snapshotId}) {\n    edges {\n      node {\n        id\n        name\n        dataClassification\n        owner {\n          fullName\n          id\n        }\n        vendors(first: 50) {\n          edges {\n            node {\n              id\n              name\n              websiteUrl\n            }\n          }\n        }\n        createdAt\n        canUpdate: permission(action: \"core:datum:update\")\n        canDelete: permission(action: \"core:datum:delete\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
   }
 };
 })();
 
-(node as any).hash = "5d3069a0d856613ccb854033b5b1f14e";
+(node as any).hash = "9a4453365a733d298ab9f5237fc4153b";
 
 export default node;
