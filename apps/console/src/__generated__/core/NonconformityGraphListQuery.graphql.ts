@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<8cce006e13ed2bf7b80b12faab4034c0>>
+ * @generated SignedSource<<0da0e157ba973f1ae3e2a60d750b8c0d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -16,6 +16,7 @@ export type NonconformityGraphListQuery$variables = {
 };
 export type NonconformityGraphListQuery$data = {
   readonly node: {
+    readonly canCreateNonconformity?: boolean;
     readonly " $fragmentSpreads": FragmentRefs<"NonconformitiesPageFragment">;
   };
 };
@@ -44,30 +45,43 @@ v1 = [
     "variableName": "organizationId"
   }
 ],
-v2 = [
+v2 = {
+  "alias": "canCreateNonconformity",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "core:nonconformity:create"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"core:nonconformity:create\")"
+},
+v3 = [
   {
     "kind": "Variable",
     "name": "snapshotId",
     "variableName": "snapshotId"
   }
 ],
-v3 = {
+v4 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "__typename",
   "storageKey": null
 },
-v4 = {
+v5 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "id",
   "storageKey": null
 },
-v5 = [
+v6 = [
   {
-    "fields": (v2/*: any*/),
+    "fields": (v3/*: any*/),
     "kind": "ObjectValue",
     "name": "filter"
   },
@@ -77,7 +91,7 @@ v5 = [
     "value": 10
   }
 ],
-v6 = {
+v7 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
@@ -102,8 +116,9 @@ return {
           {
             "kind": "InlineFragment",
             "selections": [
+              (v2/*: any*/),
               {
-                "args": (v2/*: any*/),
+                "args": (v3/*: any*/),
                 "kind": "FragmentSpread",
                 "name": "NonconformitiesPageFragment"
               }
@@ -132,14 +147,15 @@ return {
         "name": "node",
         "plural": false,
         "selections": [
-          (v3/*: any*/),
           (v4/*: any*/),
+          (v5/*: any*/),
           {
             "kind": "InlineFragment",
             "selections": [
+              (v2/*: any*/),
               {
                 "alias": null,
-                "args": (v5/*: any*/),
+                "args": (v6/*: any*/),
                 "concreteType": "NonconformityConnection",
                 "kind": "LinkedField",
                 "name": "nonconformities",
@@ -168,7 +184,7 @@ return {
                         "name": "node",
                         "plural": false,
                         "selections": [
-                          (v4/*: any*/),
+                          (v5/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -240,8 +256,8 @@ return {
                             "name": "audit",
                             "plural": false,
                             "selections": [
-                              (v4/*: any*/),
-                              (v6/*: any*/),
+                              (v5/*: any*/),
+                              (v7/*: any*/),
                               {
                                 "alias": null,
                                 "args": null,
@@ -250,8 +266,8 @@ return {
                                 "name": "framework",
                                 "plural": false,
                                 "selections": [
-                                  (v4/*: any*/),
-                                  (v6/*: any*/)
+                                  (v5/*: any*/),
+                                  (v7/*: any*/)
                                 ],
                                 "storageKey": null
                               }
@@ -266,7 +282,7 @@ return {
                             "name": "owner",
                             "plural": false,
                             "selections": [
-                              (v4/*: any*/),
+                              (v5/*: any*/),
                               {
                                 "alias": null,
                                 "args": null,
@@ -291,7 +307,33 @@ return {
                             "name": "updatedAt",
                             "storageKey": null
                           },
-                          (v3/*: any*/)
+                          {
+                            "alias": "canUpdate",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:nonconformity:update"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:nonconformity:update\")"
+                          },
+                          {
+                            "alias": "canDelete",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:nonconformity:delete"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:nonconformity:delete\")"
+                          },
+                          (v4/*: any*/)
                         ],
                         "storageKey": null
                       },
@@ -347,7 +389,7 @@ return {
               },
               {
                 "alias": null,
-                "args": (v5/*: any*/),
+                "args": (v6/*: any*/),
                 "filters": [
                   "filter"
                 ],
@@ -366,16 +408,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "59c8bf68d04fd47f3d5e3e7d452e2e5e",
+    "cacheID": "96b967c48f7366ffeab39d39fa7221b2",
     "id": null,
     "metadata": {},
     "name": "NonconformityGraphListQuery",
     "operationKind": "query",
-    "text": "query NonconformityGraphListQuery(\n  $organizationId: ID!\n  $snapshotId: ID\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      ...NonconformitiesPageFragment_3iomuz\n    }\n    id\n  }\n}\n\nfragment NonconformitiesPageFragment_3iomuz on Organization {\n  id\n  nonconformities(first: 10, filter: {snapshotId: $snapshotId}) {\n    totalCount\n    edges {\n      node {\n        id\n        referenceId\n        snapshotId\n        description\n        status\n        dateIdentified\n        dueDate\n        rootCause\n        correctiveAction\n        effectivenessCheck\n        audit {\n          id\n          name\n          framework {\n            id\n            name\n          }\n        }\n        owner {\n          id\n          fullName\n        }\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
+    "text": "query NonconformityGraphListQuery(\n  $organizationId: ID!\n  $snapshotId: ID\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      canCreateNonconformity: permission(action: \"core:nonconformity:create\")\n      ...NonconformitiesPageFragment_3iomuz\n    }\n    id\n  }\n}\n\nfragment NonconformitiesPageFragment_3iomuz on Organization {\n  id\n  nonconformities(first: 10, filter: {snapshotId: $snapshotId}) {\n    totalCount\n    edges {\n      node {\n        id\n        referenceId\n        snapshotId\n        description\n        status\n        dateIdentified\n        dueDate\n        rootCause\n        correctiveAction\n        effectivenessCheck\n        audit {\n          id\n          name\n          framework {\n            id\n            name\n          }\n        }\n        owner {\n          id\n          fullName\n        }\n        createdAt\n        updatedAt\n        canUpdate: permission(action: \"core:nonconformity:update\")\n        canDelete: permission(action: \"core:nonconformity:delete\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "4b416f25dfb07189adceb1cdec2df4e3";
+(node as any).hash = "535dfc28b086e0f5a0ffb2f40cac2d89";
 
 export default node;
