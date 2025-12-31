@@ -44,8 +44,6 @@ import {
   type GraphQLError,
 } from "@probo/helpers";
 import type { AuditGraphNodeQuery } from "/__generated__/core/AuditGraphNodeQuery.graphql";
-import { use } from "react";
-import { PermissionsContext } from "/providers/PermissionsContext";
 import { useNavigate } from "react-router";
 
 const updateAuditSchema = z.object({
@@ -73,7 +71,6 @@ export default function AuditDetailsPage(props: Props) {
   const auditEntry = audit.node;
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
-  const { isAuthorized } = use(PermissionsContext);
   const navigate = useNavigate();
 
   const deleteAudit = useDeleteAudit(
@@ -178,7 +175,7 @@ export default function AuditDetailsPage(props: Props) {
           </Badge>
         </div>
         <ActionDropdown variant="secondary">
-          {isAuthorized("Audit", "deleteAudit") && (
+          {auditEntry.canDelete && (
             <DropdownItem
               variant="danger"
               icon={IconTrashCan}
@@ -218,7 +215,7 @@ export default function AuditDetailsPage(props: Props) {
           </Field>
 
           <div className="flex justify-end">
-            {formState.isDirty && isAuthorized("Audit", "updateAudit") && (
+            {formState.isDirty && auditEntry.canUpdate && (
               <Button type="submit" disabled={formState.isSubmitting}>
                 {formState.isSubmitting ? __("Updating...") : __("Update")}
               </Button>

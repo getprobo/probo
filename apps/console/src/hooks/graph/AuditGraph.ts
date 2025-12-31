@@ -9,6 +9,7 @@ export const auditsQuery = graphql`
   query AuditGraphListQuery($organizationId: ID!) {
     node(id: $organizationId) {
       ... on Organization {
+        canCreateAudit: permission(action: "core:audit:create")
         ...AuditsPageFragment
       }
     }
@@ -45,6 +46,8 @@ export const auditNodeQuery = graphql`
         }
         createdAt
         updatedAt
+        canUpdate: permission(action: "core:audit:update")
+        canDelete: permission(action: "core:audit:delete")
       }
     }
   }
@@ -72,6 +75,8 @@ export const createAuditMutation = graphql`
             name
           }
           createdAt
+          canUpdate: permission(action: "core:audit:update")
+          canDelete: permission(action: "core:audit:delete")
         }
       }
     }
@@ -115,7 +120,7 @@ export const deleteAuditMutation = graphql`
 export const useDeleteAudit = (
   audit: { id: string; framework: { name: string } },
   connectionId: string,
-  onSuccess?: () => void
+  onSuccess?: () => void,
 ) => {
   const { __ } = useTranslate();
   const [mutate] = useMutationWithToasts(deleteAuditMutation, {
@@ -140,11 +145,11 @@ export const useDeleteAudit = (
       {
         message: sprintf(
           __(
-            "This will permanently delete the audit for %s. This action cannot be undone."
+            "This will permanently delete the audit for %s. This action cannot be undone.",
           ),
-          audit.framework.name
+          audit.framework.name,
         ),
-      }
+      },
     );
   };
 };

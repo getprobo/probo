@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<145565eb150c67f2f1b3c70fe6f6e748>>
+ * @generated SignedSource<<a866ac360421f2cca952ab1305c3de0b>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -15,6 +15,7 @@ export type AuditGraphListQuery$variables = {
 };
 export type AuditGraphListQuery$data = {
   readonly node: {
+    readonly canCreateAudit?: boolean;
     readonly " $fragmentSpreads": FragmentRefs<"AuditsPageFragment">;
   };
 };
@@ -39,27 +40,40 @@ v1 = [
   }
 ],
 v2 = {
+  "alias": "canCreateAudit",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "core:audit:create"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"core:audit:create\")"
+},
+v3 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "__typename",
   "storageKey": null
 },
-v3 = {
+v4 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "id",
   "storageKey": null
 },
-v4 = [
+v5 = [
   {
     "kind": "Literal",
     "name": "first",
     "value": 10
   }
 ],
-v5 = {
+v6 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
@@ -84,6 +98,7 @@ return {
           {
             "kind": "InlineFragment",
             "selections": [
+              (v2/*: any*/),
               {
                 "args": null,
                 "kind": "FragmentSpread",
@@ -114,14 +129,15 @@ return {
         "name": "node",
         "plural": false,
         "selections": [
-          (v2/*: any*/),
           (v3/*: any*/),
+          (v4/*: any*/),
           {
             "kind": "InlineFragment",
             "selections": [
+              (v2/*: any*/),
               {
                 "alias": null,
-                "args": (v4/*: any*/),
+                "args": (v5/*: any*/),
                 "concreteType": "AuditConnection",
                 "kind": "LinkedField",
                 "name": "audits",
@@ -143,8 +159,8 @@ return {
                         "name": "node",
                         "plural": false,
                         "selections": [
-                          (v3/*: any*/),
-                          (v5/*: any*/),
+                          (v4/*: any*/),
+                          (v6/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -167,7 +183,7 @@ return {
                             "name": "report",
                             "plural": false,
                             "selections": [
-                              (v3/*: any*/),
+                              (v4/*: any*/),
                               {
                                 "alias": null,
                                 "args": null,
@@ -193,8 +209,8 @@ return {
                             "name": "framework",
                             "plural": false,
                             "selections": [
-                              (v3/*: any*/),
-                              (v5/*: any*/)
+                              (v4/*: any*/),
+                              (v6/*: any*/)
                             ],
                             "storageKey": null
                           },
@@ -205,7 +221,33 @@ return {
                             "name": "createdAt",
                             "storageKey": null
                           },
-                          (v2/*: any*/)
+                          {
+                            "alias": "canUpdate",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:audit:update"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:audit:update\")"
+                          },
+                          {
+                            "alias": "canDelete",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:audit:delete"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:audit:delete\")"
+                          },
+                          (v3/*: any*/)
                         ],
                         "storageKey": null
                       },
@@ -275,7 +317,7 @@ return {
               },
               {
                 "alias": null,
-                "args": (v4/*: any*/),
+                "args": (v5/*: any*/),
                 "filters": [
                   "orderBy"
                 ],
@@ -294,16 +336,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "d96d2332efb5f43e2dcb09669173ad7e",
+    "cacheID": "441524ada7aa614fb611f3d64812314f",
     "id": null,
     "metadata": {},
     "name": "AuditGraphListQuery",
     "operationKind": "query",
-    "text": "query AuditGraphListQuery(\n  $organizationId: ID!\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      ...AuditsPageFragment\n    }\n    id\n  }\n}\n\nfragment AuditsPageFragment on Organization {\n  audits(first: 10) {\n    edges {\n      node {\n        id\n        name\n        validFrom\n        validUntil\n        report {\n          id\n          filename\n        }\n        state\n        framework {\n          id\n          name\n        }\n        createdAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
+    "text": "query AuditGraphListQuery(\n  $organizationId: ID!\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      canCreateAudit: permission(action: \"core:audit:create\")\n      ...AuditsPageFragment\n    }\n    id\n  }\n}\n\nfragment AuditsPageFragment on Organization {\n  audits(first: 10) {\n    edges {\n      node {\n        id\n        name\n        validFrom\n        validUntil\n        report {\n          id\n          filename\n        }\n        state\n        framework {\n          id\n          name\n        }\n        createdAt\n        canUpdate: permission(action: \"core:audit:update\")\n        canDelete: permission(action: \"core:audit:delete\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
   }
 };
 })();
 
-(node as any).hash = "3a082303ae15c8982a08c3bae8312846";
+(node as any).hash = "fc989e08b0d6411aac7ca6b1a0125edc";
 
 export default node;

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<0010416e8a5bda346d415bd80fd70dc8>>
+ * @generated SignedSource<<36758d66ccb0304442a2a59898fe95a0>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -266,6 +266,32 @@ return {
                             "name": "createdAt",
                             "storageKey": null
                           },
+                          {
+                            "alias": "canUpdate",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:audit:update"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:audit:update\")"
+                          },
+                          {
+                            "alias": "canDelete",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:audit:delete"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:audit:delete\")"
+                          },
                           (v8/*: any*/)
                         ],
                         "storageKey": null
@@ -355,16 +381,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "9d185e504f8c34d5c3fd7211d4e8a2a2",
+    "cacheID": "7804de168f5c2484d6beb2f4d19287b0",
     "id": null,
     "metadata": {},
     "name": "AuditsListQuery",
     "operationKind": "query",
-    "text": "query AuditsListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 10\n  $last: Int = null\n  $orderBy: AuditOrder = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...AuditsPageFragment_sdb03\n    id\n  }\n}\n\nfragment AuditsPageFragment_sdb03 on Organization {\n  audits(first: $first, after: $after, last: $last, before: $before, orderBy: $orderBy) {\n    edges {\n      node {\n        id\n        name\n        validFrom\n        validUntil\n        report {\n          id\n          filename\n        }\n        state\n        framework {\n          id\n          name\n        }\n        createdAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
+    "text": "query AuditsListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 10\n  $last: Int = null\n  $orderBy: AuditOrder = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...AuditsPageFragment_sdb03\n    id\n  }\n}\n\nfragment AuditsPageFragment_sdb03 on Organization {\n  audits(first: $first, after: $after, last: $last, before: $before, orderBy: $orderBy) {\n    edges {\n      node {\n        id\n        name\n        validFrom\n        validUntil\n        report {\n          id\n          filename\n        }\n        state\n        framework {\n          id\n          name\n        }\n        createdAt\n        canUpdate: permission(action: \"core:audit:update\")\n        canDelete: permission(action: \"core:audit:delete\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
   }
 };
 })();
 
-(node as any).hash = "be8d1f1d8015c16539886bc79c8026f7";
+(node as any).hash = "4013ec4e657ef7fb9d13afbd572ea9e5";
 
 export default node;
