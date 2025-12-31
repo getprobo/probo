@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<46a3b0baa64ec5a6a1c6d289a3737ade>>
+ * @generated SignedSource<<5a251730864aae1031cb2012f76a1412>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -195,6 +195,19 @@ return {
             "kind": "InlineFragment",
             "selections": [
               {
+                "alias": "canCreateTask",
+                "args": [
+                  {
+                    "kind": "Literal",
+                    "name": "action",
+                    "value": "core:task:create"
+                  }
+                ],
+                "kind": "ScalarField",
+                "name": "permission",
+                "storageKey": "permission(action:\"core:task:create\")"
+              },
+              {
                 "alias": null,
                 "args": (v13/*: any*/),
                 "concreteType": "TaskConnection",
@@ -219,7 +232,6 @@ return {
                         "plural": false,
                         "selections": [
                           (v12/*: any*/),
-                          (v14/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -234,6 +246,7 @@ return {
                             "name": "description",
                             "storageKey": null
                           },
+                          (v14/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -279,6 +292,32 @@ return {
                               (v14/*: any*/)
                             ],
                             "storageKey": null
+                          },
+                          {
+                            "alias": "canUpdate",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:task:update"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:task:update\")"
+                          },
+                          {
+                            "alias": "canDelete",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:task:delete"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:task:delete\")"
                           },
                           (v11/*: any*/)
                         ],
@@ -369,16 +408,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "58db4c11a870b12c21eef1c6f24271b0",
+    "cacheID": "533f5ce872c46a971391829b9efac54c",
     "id": null,
     "metadata": {},
     "name": "TasksPageFragment_query",
     "operationKind": "query",
-    "text": "query TasksPageFragment_query(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 500\n  $last: Int = null\n  $order: TaskOrder = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...TasksPageFragment_16fISc\n    id\n  }\n}\n\nfragment TaskFormDialogFragment on Task {\n  id\n  description\n  name\n  state\n  timeEstimate\n  deadline\n  assignedTo {\n    id\n  }\n  measure {\n    id\n  }\n}\n\nfragment TasksPageFragment_16fISc on Organization {\n  tasks(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    edges {\n      node {\n        id\n        name\n        state\n        description\n        ...TaskFormDialogFragment\n        measure {\n          id\n          name\n        }\n        assignedTo {\n          id\n          fullName\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
+    "text": "query TasksPageFragment_query(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 500\n  $last: Int = null\n  $order: TaskOrder = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...TasksPageFragment_16fISc\n    id\n  }\n}\n\nfragment TaskFormDialogFragment on Task {\n  id\n  description\n  name\n  state\n  timeEstimate\n  deadline\n  assignedTo {\n    id\n  }\n  measure {\n    id\n  }\n}\n\nfragment TasksCard_TaskRowFragment on Task {\n  id\n  name\n  state\n  canUpdate: permission(action: \"core:task:update\")\n  canDelete: permission(action: \"core:task:delete\")\n  assignedTo {\n    id\n    fullName\n  }\n  measure {\n    id\n    name\n  }\n}\n\nfragment TasksPageFragment_16fISc on Organization {\n  canCreateTask: permission(action: \"core:task:create\")\n  tasks(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    edges {\n      node {\n        id\n        state\n        ...TaskFormDialogFragment\n        ...TasksCard_TaskRowFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
   }
 };
 })();
 
-(node as any).hash = "84864638db9ddf53e9ae7da7952803af";
+(node as any).hash = "6c9522af3e0782b9f919b76572ba6225";
 
 export default node;

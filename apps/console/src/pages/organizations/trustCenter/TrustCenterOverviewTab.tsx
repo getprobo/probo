@@ -277,6 +277,7 @@ export default function TrustCenterOverviewTab() {
         <h2 className="text-base font-medium">{__("Integrations")}</h2>
         <Card padded>
           <SlackConnections
+            canUpdate={!!organization.trustCenter?.canUpdate}
             organizationId={organization.id!}
             slackConnections={
               organization.slackConnections?.edges?.map((edge) => edge.node) ??
