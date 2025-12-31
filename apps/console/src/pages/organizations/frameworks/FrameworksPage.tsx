@@ -27,9 +27,8 @@ import {
 import { Link } from "react-router";
 import type { FrameworksPageCardFragment$key } from "/__generated__/core/FrameworksPageCardFragment.graphql";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
-import { useState, type ChangeEventHandler, use } from "react";
+import { useState, type ChangeEventHandler } from "react";
 import { FrameworkFormDialog } from "./dialogs/FrameworkFormDialog";
-import { PermissionsContext } from "/providers/PermissionsContext";
 
 type Props = {
   queryRef: PreloadedQuery<FrameworkGraphListQuery>;
@@ -53,7 +52,6 @@ const importFrameworkMutation = graphql`
 
 export default function FrameworksPage(props: Props) {
   const { __ } = useTranslate();
-  const { isAuthorized } = use(PermissionsContext);
   usePageTitle(__("Frameworks"));
   const data = usePreloadedQuery(frameworksQuery, props.queryRef);
   const connectionId = data.organization.frameworks!.__id;
@@ -120,9 +118,9 @@ export default function FrameworksPage(props: Props) {
 
   const isLoading = isUploading || isImporting;
 
-  const hasAnyAction =
-    isAuthorized("Framework", "updateFramework") ||
-    isAuthorized("Framework", "deleteFramework");
+  const hasAnyAction = frameworks.some(
+    ({ canUpdate, canDelete }) => canUpdate || canDelete,
+  );
 
   return (
     <div className="space-y-6">
@@ -135,7 +133,7 @@ export default function FrameworksPage(props: Props) {
         title={__("Frameworks")}
         description={__("Manage your compliance frameworks")}
       >
-        {isAuthorized("Organization", "createFramework") && (
+        {data.organization.canCreateFramework && (
           <>
             <FileButton
               variant="secondary"
@@ -175,6 +173,8 @@ const frameworkCardFragment = graphql`
     description
     lightLogoURL
     darkLogoURL
+    canUpdate: permission(action: "core:framework:update")
+    canDelete: permission(action: "core:framework:delete")
   }
 `;
 
@@ -187,7 +187,6 @@ type FrameworkCardProps = {
 
 function FrameworkCard(props: FrameworkCardProps) {
   const framework = useFragment(frameworkCardFragment, props.framework);
-  const { isAuthorized } = use(PermissionsContext);
   const deleteFramework = useDeleteFrameworkMutation(
     framework,
     props.connectionId,
@@ -210,7 +209,7 @@ function FrameworkCard(props: FrameworkCardProps) {
         />
         {props.hasAnyAction && (
           <ActionDropdown className="z-10 relative">
-            {isAuthorized("Framework", "updateFramework") && (
+            {framework.canUpdate && (
               <DropdownItem
                 icon={IconPencil}
                 onClick={() => {
@@ -220,7 +219,7 @@ function FrameworkCard(props: FrameworkCardProps) {
                 {__("Edit")}
               </DropdownItem>
             )}
-            {isAuthorized("Framework", "deleteFramework") && (
+            {framework.canDelete && (
               <DropdownItem
                 icon={IconTrashCan}
                 onClick={() => deleteFramework()}
