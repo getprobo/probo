@@ -2,10 +2,9 @@ import { Badge, Button, Card } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { sprintf } from "@probo/helpers";
 import type { TrustCenterGraphQuery$data } from "/__generated__/core/TrustCenterGraphQuery.graphql";
-import { use } from "react";
-import { PermissionsContext } from "/providers/PermissionsContext";
 
 type Props = {
+  canUpdate: boolean;
   organizationId: string;
   slackConnections: NonNullable<
     TrustCenterGraphQuery$data["organization"]["slackConnections"]
@@ -13,11 +12,11 @@ type Props = {
 };
 
 export function SlackConnections({
+  canUpdate,
   organizationId,
   slackConnections: connectedSlackConnections,
 }: Props) {
   const { __, dateTimeFormat } = useTranslate();
-  const { isAuthorized } = use(PermissionsContext);
   const slackConnectionDefinitions = [
     {
       id: "SLACK",
@@ -87,7 +86,7 @@ export function SlackConnections({
               </Badge>
             </div>
           ) : (
-            isAuthorized("TrustCenter", "updateTrustCenter") && (
+            canUpdate && (
               <Button variant="secondary" asChild>
                 <a href={getUrl(slackConnection.id)}>{__("Connect")}</a>
               </Button>

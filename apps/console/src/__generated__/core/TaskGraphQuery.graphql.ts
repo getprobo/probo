@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<40ebf241dc89f4b4b1705e4a2fabb935>>
+ * @generated SignedSource<<d646f8c938435fdb9e65ff696121ff3c>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -122,6 +122,19 @@ return {
             "kind": "InlineFragment",
             "selections": [
               {
+                "alias": "canCreateTask",
+                "args": [
+                  {
+                    "kind": "Literal",
+                    "name": "action",
+                    "value": "core:task:create"
+                  }
+                ],
+                "kind": "ScalarField",
+                "name": "permission",
+                "storageKey": "permission(action:\"core:task:create\")"
+              },
+              {
                 "alias": null,
                 "args": (v4/*: any*/),
                 "concreteType": "TaskConnection",
@@ -146,7 +159,6 @@ return {
                         "plural": false,
                         "selections": [
                           (v2/*: any*/),
-                          (v5/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -161,6 +173,7 @@ return {
                             "name": "description",
                             "storageKey": null
                           },
+                          (v5/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -206,6 +219,32 @@ return {
                               (v5/*: any*/)
                             ],
                             "storageKey": null
+                          },
+                          {
+                            "alias": "canUpdate",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:task:update"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:task:update\")"
+                          },
+                          {
+                            "alias": "canDelete",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:task:delete"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:task:delete\")"
                           },
                           (v3/*: any*/)
                         ],
@@ -296,12 +335,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "72cbeaa7667c477f85e5c3ecb09b7bf4",
+    "cacheID": "9932d2887bfde054e02b14404a5ec7f8",
     "id": null,
     "metadata": {},
     "name": "TaskGraphQuery",
     "operationKind": "query",
-    "text": "query TaskGraphQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      ...TasksPageFragment\n    }\n    id\n  }\n}\n\nfragment TaskFormDialogFragment on Task {\n  id\n  description\n  name\n  state\n  timeEstimate\n  deadline\n  assignedTo {\n    id\n  }\n  measure {\n    id\n  }\n}\n\nfragment TasksPageFragment on Organization {\n  tasks(first: 500) {\n    edges {\n      node {\n        id\n        name\n        state\n        description\n        timeEstimate\n        deadline\n        ...TaskFormDialogFragment\n        measure {\n          id\n          name\n        }\n        assignedTo {\n          id\n          fullName\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
+    "text": "query TaskGraphQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      ...TasksPageFragment\n    }\n    id\n  }\n}\n\nfragment TaskFormDialogFragment on Task {\n  id\n  description\n  name\n  state\n  timeEstimate\n  deadline\n  assignedTo {\n    id\n  }\n  measure {\n    id\n  }\n}\n\nfragment TasksCard_TaskRowFragment on Task {\n  id\n  name\n  state\n  description\n  timeEstimate\n  deadline\n  canUpdate: permission(action: \"core:task:update\")\n  canDelete: permission(action: \"core:task:delete\")\n  assignedTo {\n    id\n    fullName\n  }\n  measure {\n    id\n    name\n  }\n}\n\nfragment TasksPageFragment on Organization {\n  canCreateTask: permission(action: \"core:task:create\")\n  tasks(first: 500) {\n    edges {\n      node {\n        id\n        state\n        ...TaskFormDialogFragment\n        ...TasksCard_TaskRowFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
   }
 };
 })();
