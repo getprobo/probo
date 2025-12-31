@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<de274a51c1b339789540a969b0ebe507>>
+ * @generated SignedSource<<2988f1319b1ad6110c328a00f644f26d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -210,6 +210,19 @@ return {
                     "kind": "ScalarField",
                     "name": "requestedAt",
                     "storageKey": null
+                  },
+                  {
+                    "alias": "canCancel",
+                    "args": [
+                      {
+                        "kind": "Literal",
+                        "name": "action",
+                        "value": "core:document-version:request-signature"
+                      }
+                    ],
+                    "kind": "ScalarField",
+                    "name": "permission",
+                    "storageKey": "permission(action:\"core:document-version:request-signature\")"
                   }
                 ],
                 "storageKey": null
@@ -239,12 +252,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "e582b90bdad831d64741b45de17f45b5",
+    "cacheID": "5a9c28a2a8a3234f953f7a609da7d02e",
     "id": null,
     "metadata": {},
     "name": "DocumentSignaturesTab_requestSignatureMutation",
     "operationKind": "mutation",
-    "text": "mutation DocumentSignaturesTab_requestSignatureMutation(\n  $input: RequestSignatureInput!\n) {\n  requestSignature(input: $input) {\n    documentVersionSignatureEdge {\n      node {\n        id\n        state\n        signedBy {\n          id\n        }\n        ...DocumentSignaturesTab_signature\n      }\n    }\n  }\n}\n\nfragment DocumentSignaturesTab_signature on DocumentVersionSignature {\n  id\n  state\n  signedAt\n  requestedAt\n  signedBy {\n    fullName\n    primaryEmailAddress\n    id\n  }\n}\n"
+    "text": "mutation DocumentSignaturesTab_requestSignatureMutation(\n  $input: RequestSignatureInput!\n) {\n  requestSignature(input: $input) {\n    documentVersionSignatureEdge {\n      node {\n        id\n        state\n        signedBy {\n          id\n        }\n        ...DocumentSignaturesTab_signature\n      }\n    }\n  }\n}\n\nfragment DocumentSignaturesTab_signature on DocumentVersionSignature {\n  id\n  state\n  signedAt\n  requestedAt\n  signedBy {\n    fullName\n    primaryEmailAddress\n    id\n  }\n  canCancel: permission(action: \"core:document-version:request-signature\")\n}\n"
   }
 };
 })();

@@ -28,7 +28,7 @@ import {
   usePreloadedQuery,
   type PreloadedQuery,
 } from "react-relay";
-import { use, useRef } from "react";
+import { useRef } from "react";
 import { graphql } from "relay-runtime";
 import type { DocumentGraphListQuery } from "/__generated__/core/DocumentGraphListQuery.graphql";
 import {
@@ -55,7 +55,6 @@ import {
   BulkExportDialog,
   type BulkExportDialogRef,
 } from "/components/documents/BulkExportDialog";
-import { PermissionsContext } from "/providers/PermissionsContext";
 
 const documentsFragment = graphql`
   fragment DocumentsPageListFragment on Organization
@@ -81,6 +80,14 @@ const documentsFragment = graphql`
       edges {
         node {
           id
+          canUpdate: permission(action: "core:document:update")
+          canDelete: permission(action: "core:document:delete")
+          canSendSigningNotifications: permission(
+            action: "core:document:send-signing-notifications"
+          )
+          canRequestSignatures: permission(
+            action: "core:document-version:request-signature"
+          )
           ...DocumentsPageRowFragment
         }
       }
@@ -104,13 +111,13 @@ type Props = {
 
 export default function DocumentsPage(props: Props) {
   const { __ } = useTranslate();
-  const { isAuthorized } = use(PermissionsContext);
 
   const organization = usePreloadedQuery(
     documentsQuery,
     props.queryRef,
   ).organization;
 
+  // FIXME
   // const userEmailData = useLazyLoadQuery<DocumentsPageUserEmailQuery>(
   //   UserEmailQuery,
   //   {}
@@ -135,9 +142,15 @@ export default function DocumentsPage(props: Props) {
 
   usePageTitle(__("Documents"));
 
-  const hasAnyAction =
-    isAuthorized("Document", "updateDocument") ||
-    isAuthorized("Document", "deleteDocument");
+  const canDeleteAny = documents.some(({ canDelete }) => canDelete);
+  const canUpdateAny = documents.some(({ canUpdate }) => canUpdate);
+  const canSendAnySignatureNotifications = documents.some(
+    ({ canSendSigningNotifications }) => canSendSigningNotifications,
+  );
+  const canRequestAnySignatures = documents.some(
+    ({ canRequestSignatures }) => canRequestSignatures,
+  );
+  const hasAnyAction = canDeleteAny || canUpdateAny;
 
   const handleSendSigningNotifications = () => {
     sendSigningNotifications({
@@ -197,7 +210,7 @@ export default function DocumentsPage(props: Props) {
         description={__("Manage your organization's documents")}
       >
         <div className="flex gap-2">
-          {isAuthorized("Document", "sendSigningNotifications") && (
+          {canSendAnySignatureNotifications && (
             <Button
               icon={IconBell2}
               variant="secondary"
@@ -206,7 +219,7 @@ export default function DocumentsPage(props: Props) {
               {__("Send signing notifications")}
             </Button>
           )}
-          {isAuthorized("Organization", "createDocument") && (
+          {organization.canCreateDocument && (
             <CreateDocumentDialog
               connection={connectionId}
               trigger={
@@ -259,7 +272,7 @@ export default function DocumentsPage(props: Props) {
                       </button>
                     </div>
                     <div className="flex gap-2 items-center">
-                      {isAuthorized("Document", "updateDocument") && (
+                      {canUpdateAny && (
                         <PublishDocumentsDialog
                           documentIds={selection}
                           onSave={clear}
@@ -272,7 +285,7 @@ export default function DocumentsPage(props: Props) {
                           </Button>
                         </PublishDocumentsDialog>
                       )}
-                      {isAuthorized("Document", "bulkRequestSignatures") && (
+                      {canRequestAnySignatures && (
                         <SignatureDocumentsDialog
                           documentIds={selection}
                           onSave={clear}
@@ -301,7 +314,7 @@ export default function DocumentsPage(props: Props) {
                           {__("Export")}
                         </Button>
                       </BulkExportDialog>
-                      {isAuthorized("Document", "deleteDocument") && (
+                      {canDeleteAny && (
                         <Button
                           variant="danger"
                           icon={IconTrashCan}
@@ -355,6 +368,7 @@ const rowFragment = graphql`
     documentType
     classification
     updatedAt
+    canDelete: permission(action: "core:document:delete")
     owner {
       id
       fullName
@@ -393,7 +407,6 @@ function DocumentRow({
   onCheck: () => void;
   hasAnyAction: boolean;
 }) {
-  const { isAuthorized } = use(PermissionsContext);
   const document = useFragment<DocumentsPageRowFragment$key>(
     rowFragment,
     documentKey,
@@ -469,7 +482,7 @@ function DocumentRow({
       {hasAnyAction && (
         <Td noLink width={50} className="text-end w-18">
           <ActionDropdown>
-            {isAuthorized("Document", "deleteDocument") && (
+            {document.canDelete && (
               <DropdownItem
                 variant="danger"
                 icon={IconTrashCan}

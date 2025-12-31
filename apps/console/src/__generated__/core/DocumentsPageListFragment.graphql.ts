@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<0abee66a5b3a949907293acd4981f05e>>
+ * @generated SignedSource<<4531c90194c8da0c1cbd00e5e169ff00>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -15,6 +15,10 @@ export type DocumentsPageListFragment$data = {
     readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly node: {
+        readonly canDelete: boolean;
+        readonly canRequestSignatures: boolean;
+        readonly canSendSigningNotifications: boolean;
+        readonly canUpdate: boolean;
         readonly id: string;
         readonly " $fragmentSpreads": FragmentRefs<"DocumentsPageRowFragment">;
       };
@@ -138,6 +142,58 @@ return {
               "selections": [
                 (v1/*: any*/),
                 {
+                  "alias": "canUpdate",
+                  "args": [
+                    {
+                      "kind": "Literal",
+                      "name": "action",
+                      "value": "core:document:update"
+                    }
+                  ],
+                  "kind": "ScalarField",
+                  "name": "permission",
+                  "storageKey": "permission(action:\"core:document:update\")"
+                },
+                {
+                  "alias": "canDelete",
+                  "args": [
+                    {
+                      "kind": "Literal",
+                      "name": "action",
+                      "value": "core:document:delete"
+                    }
+                  ],
+                  "kind": "ScalarField",
+                  "name": "permission",
+                  "storageKey": "permission(action:\"core:document:delete\")"
+                },
+                {
+                  "alias": "canSendSigningNotifications",
+                  "args": [
+                    {
+                      "kind": "Literal",
+                      "name": "action",
+                      "value": "core:document:send-signing-notifications"
+                    }
+                  ],
+                  "kind": "ScalarField",
+                  "name": "permission",
+                  "storageKey": "permission(action:\"core:document:send-signing-notifications\")"
+                },
+                {
+                  "alias": "canRequestSignatures",
+                  "args": [
+                    {
+                      "kind": "Literal",
+                      "name": "action",
+                      "value": "core:document-version:request-signature"
+                    }
+                  ],
+                  "kind": "ScalarField",
+                  "name": "permission",
+                  "storageKey": "permission(action:\"core:document-version:request-signature\")"
+                },
+                {
                   "args": null,
                   "kind": "FragmentSpread",
                   "name": "DocumentsPageRowFragment"
@@ -223,6 +279,6 @@ return {
 };
 })();
 
-(node as any).hash = "8cda24b1d10caa3f4b83dbb82035365b";
+(node as any).hash = "0f00d125fc711db9e65d54dcc884a72e";
 
 export default node;

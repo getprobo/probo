@@ -65,7 +65,7 @@ import {
   PdfDownloadDialog,
   type PdfDownloadDialogRef,
 } from "/components/documents/PdfDownloadDialog";
-import { use, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import type { NodeOf } from "/types.ts";
 import clsx from "clsx";
 import { PeopleSelectField } from "/components/form/PeopleSelectField";
@@ -74,7 +74,6 @@ import { DocumentTypeOptions } from "/components/form/DocumentTypeOptions";
 import { DocumentClassificationOptions } from "/components/form/DocumentClassificationOptions";
 import { z } from "zod";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
-import { PermissionsContext } from "/providers/PermissionsContext";
 
 type Props = {
   queryRef: PreloadedQuery<DocumentGraphNodeQuery>;
@@ -90,6 +89,15 @@ const documentFragment = graphql`
       id
       fullName
     }
+    canUpdate: permission(action: "core:document:update")
+    canDelete: permission(action: "core:document:delete")
+    canPublish: permission(action: "core:document-version:publish")
+    # canSendSigningNotifications: permission(
+    #   action: "core:document:send-signing-notifications"
+    # )
+    # canRequestSignatures: permission(
+    #   action: "core:document-version:request-signature"
+    # )
     ...DocumentControlsTabFragment
     controlsInfo: controls(first: 0) {
       totalCount
@@ -109,6 +117,9 @@ const documentFragment = graphql`
             id
             fullName
           }
+          canDeleteDraft: permission(
+            action: "core:document-version:delete-draft"
+          )
           ...DocumentSignaturesTab_version
           signatures(first: 1000)
             @connection(key: "DocumentDetailPage_signatures", filters: []) {
@@ -176,6 +187,7 @@ const documentUpdateSchema = z.object({
   classification: z.enum(documentClassifications),
 });
 
+// FIXME
 // const UserEmailQuery = graphql`
 //   query DocumentDetailPageUserEmailQuery {
 //     viewer {
@@ -194,7 +206,6 @@ export default function DocumentDetailPage(props: Props) {
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
   const navigate = useNavigate();
-  const { isAuthorized } = use(PermissionsContext);
 
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [isEditingOwner, setIsEditingOwner] = useState(false);
@@ -461,7 +472,7 @@ export default function DocumentDetailPage(props: Props) {
             ]}
           />
           <div className="flex gap-2">
-            {isDraft && isAuthorized("Document", "publishDocumentVersion") && (
+            {isDraft && document.canPublish && (
               <Button
                 onClick={handlePublish}
                 icon={IconCheckmark1}
@@ -491,7 +502,7 @@ export default function DocumentDetailPage(props: Props) {
             </Dropdown>
 
             <ActionDropdown variant="secondary">
-              {isAuthorized("Document", "updateDocument") && (
+              {document.canUpdate && (
                 <DropdownItem
                   onClick={() => updateDialogRef.current?.open()}
                   icon={IconPencil}
@@ -501,7 +512,7 @@ export default function DocumentDetailPage(props: Props) {
               )}
               {isDraft &&
                 versions.length > 1 &&
-                isAuthorized("Document", "deleteDraftDocumentVersion") && (
+                currentVersion.canDeleteDraft && (
                   <DropdownItem
                     onClick={handleDeleteDraft}
                     icon={IconTrashCan}
@@ -517,7 +528,7 @@ export default function DocumentDetailPage(props: Props) {
               >
                 {__("Download PDF")}
               </DropdownItem>
-              {isAuthorized("Document", "deleteDocument") && (
+              {document.canDelete && (
                 <DropdownItem
                   variant="danger"
                   icon={IconTrashCan}
@@ -567,7 +578,7 @@ export default function DocumentDetailPage(props: Props) {
             ) : (
               <div className="flex items-center gap-2">
                 <span>{document.title}</span>
-                {isAuthorized("Document", "updateDocument") && (
+                {document.canUpdate && (
                   <Button
                     variant="quaternary"
                     icon={IconPencil}
@@ -620,7 +631,7 @@ export default function DocumentDetailPage(props: Props) {
           ) : (
             <ReadOnlyPropertyContent
               onEdit={() => setIsEditingOwner(true)}
-              canEdit={isAuthorized("Document", "updateDocument")}
+              canEdit={document.canUpdate}
             >
               <Badge variant="highlight" size="md" className="gap-2">
                 <Avatar name={currentVersion.owner?.fullName ?? ""} />
@@ -650,7 +661,7 @@ export default function DocumentDetailPage(props: Props) {
           ) : (
             <ReadOnlyPropertyContent
               onEdit={() => setIsEditingType(true)}
-              canEdit={isAuthorized("Document", "updateDocument")}
+              canEdit={document.canUpdate}
             >
               <div className="text-sm text-txt-secondary">
                 {getDocumentTypeLabel(__, document.documentType)}
@@ -679,7 +690,7 @@ export default function DocumentDetailPage(props: Props) {
           ) : (
             <ReadOnlyPropertyContent
               onEdit={() => setIsEditingClassification(true)}
-              canEdit={isAuthorized("Document", "updateDocument")}
+              canEdit={document.canUpdate}
             >
               <div className="text-sm text-txt-secondary">
                 {getDocumentClassificationLabel(
@@ -792,7 +803,7 @@ function VersionItem({
       <div className="flex gap-3 w-full overflow-hidden">
         <div
           className={clsx(
-            "flex-shrink-0 flex items-center justify-center size-10",
+            "shrink-0 flex items-center justify-center size-10",
             active && "bg-active rounded",
           )}
         >

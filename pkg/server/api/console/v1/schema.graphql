@@ -4681,6 +4681,8 @@ type DocumentVersion implements Node
   publishedAt: Datetime
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type DocumentVersionSignatureConnection {

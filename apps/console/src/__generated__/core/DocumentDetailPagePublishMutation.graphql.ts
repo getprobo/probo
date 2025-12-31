@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<cbecbaa326b9bff1adb82a94123a2ee2>>
+ * @generated SignedSource<<e3ebdf9d0caacde97761e1e28ac09105>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -135,11 +135,18 @@ v12 = {
 v13 = [
   {
     "kind": "Literal",
+    "name": "action",
+    "value": "core:document-version:request-signature"
+  }
+],
+v14 = [
+  {
+    "kind": "Literal",
     "name": "first",
     "value": 1000
   }
 ],
-v14 = {
+v15 = {
   "alias": null,
   "args": null,
   "concreteType": "PageInfo",
@@ -229,6 +236,45 @@ return {
               },
               (v3/*: any*/),
               (v5/*: any*/),
+              {
+                "alias": "canUpdate",
+                "args": [
+                  {
+                    "kind": "Literal",
+                    "name": "action",
+                    "value": "core:document:update"
+                  }
+                ],
+                "kind": "ScalarField",
+                "name": "permission",
+                "storageKey": "permission(action:\"core:document:update\")"
+              },
+              {
+                "alias": "canDelete",
+                "args": [
+                  {
+                    "kind": "Literal",
+                    "name": "action",
+                    "value": "core:document:delete"
+                  }
+                ],
+                "kind": "ScalarField",
+                "name": "permission",
+                "storageKey": "permission(action:\"core:document:delete\")"
+              },
+              {
+                "alias": "canPublish",
+                "args": [
+                  {
+                    "kind": "Literal",
+                    "name": "action",
+                    "value": "core:document-version:publish"
+                  }
+                ],
+                "kind": "ScalarField",
+                "name": "permission",
+                "storageKey": "permission(action:\"core:document-version:publish\")"
+              },
               {
                 "alias": null,
                 "args": (v6/*: any*/),
@@ -413,8 +459,28 @@ return {
                           (v3/*: any*/),
                           (v5/*: any*/),
                           {
-                            "alias": null,
+                            "alias": "canDeleteDraft",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:document-version:delete-draft"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:document-version:delete-draft\")"
+                          },
+                          {
+                            "alias": "canRequestSignature",
                             "args": (v13/*: any*/),
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:document-version:request-signature\")"
+                          },
+                          {
+                            "alias": null,
+                            "args": (v14/*: any*/),
                             "concreteType": "DocumentVersionSignatureConnection",
                             "kind": "LinkedField",
                             "name": "signatures",
@@ -478,6 +544,13 @@ return {
                                         "name": "requestedAt",
                                         "storageKey": null
                                       },
+                                      {
+                                        "alias": "canCancel",
+                                        "args": (v13/*: any*/),
+                                        "kind": "ScalarField",
+                                        "name": "permission",
+                                        "storageKey": "permission(action:\"core:document-version:request-signature\")"
+                                      },
                                       (v8/*: any*/)
                                     ],
                                     "storageKey": null
@@ -486,14 +559,14 @@ return {
                                 ],
                                 "storageKey": null
                               },
-                              (v14/*: any*/),
+                              (v15/*: any*/),
                               (v12/*: any*/)
                             ],
                             "storageKey": "signatures(first:1000)"
                           },
                           {
                             "alias": null,
-                            "args": (v13/*: any*/),
+                            "args": (v14/*: any*/),
                             "filters": [
                               "filter"
                             ],
@@ -504,7 +577,7 @@ return {
                           },
                           {
                             "alias": null,
-                            "args": (v13/*: any*/),
+                            "args": (v14/*: any*/),
                             "filters": [],
                             "handle": "connection",
                             "key": "DocumentDetailPage_signatures",
@@ -519,7 +592,7 @@ return {
                     ],
                     "storageKey": null
                   },
-                  (v14/*: any*/),
+                  (v15/*: any*/),
                   (v12/*: any*/)
                 ],
                 "storageKey": "versions(first:20)"
@@ -542,12 +615,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "b9140949eb57389fe8c50588c695973b",
+    "cacheID": "91d0c14af00c2a67732d781e41770a81",
     "id": null,
     "metadata": {},
     "name": "DocumentDetailPagePublishMutation",
     "operationKind": "mutation",
-    "text": "mutation DocumentDetailPagePublishMutation(\n  $input: PublishDocumentVersionInput!\n) {\n  publishDocumentVersion(input: $input) {\n    document {\n      ...DocumentDetailPageDocumentFragment\n      id\n    }\n  }\n}\n\nfragment DocumentControlsTabFragment on Document {\n  id\n  controls(first: 20) {\n    edges {\n      node {\n        id\n        ...LinkedControlsCardFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n}\n\nfragment DocumentDetailPageDocumentFragment on Document {\n  id\n  title\n  documentType\n  classification\n  owner {\n    id\n    fullName\n  }\n  ...DocumentControlsTabFragment\n  controlsInfo: controls(first: 0) {\n    totalCount\n  }\n  versions(first: 20) {\n    edges {\n      node {\n        id\n        content\n        status\n        publishedAt\n        version\n        updatedAt\n        classification\n        owner {\n          id\n          fullName\n        }\n        ...DocumentSignaturesTab_version\n        signatures(first: 1000) {\n          edges {\n            node {\n              id\n              state\n              signedBy {\n                id\n              }\n              ...DocumentSignaturesTab_signature\n              __typename\n            }\n            cursor\n          }\n          pageInfo {\n            endCursor\n            hasNextPage\n          }\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n\nfragment DocumentSignaturesTab_signature on DocumentVersionSignature {\n  id\n  state\n  signedAt\n  requestedAt\n  signedBy {\n    fullName\n    primaryEmailAddress\n    id\n  }\n}\n\nfragment DocumentSignaturesTab_version on DocumentVersion {\n  id\n  status\n  signatures(first: 1000) {\n    edges {\n      node {\n        id\n        state\n        signedBy {\n          id\n          fullName\n          primaryEmailAddress\n        }\n        ...DocumentSignaturesTab_signature\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n\nfragment LinkedControlsCardFragment on Control {\n  id\n  name\n  sectionTitle\n  framework {\n    id\n    name\n  }\n}\n"
+    "text": "mutation DocumentDetailPagePublishMutation(\n  $input: PublishDocumentVersionInput!\n) {\n  publishDocumentVersion(input: $input) {\n    document {\n      ...DocumentDetailPageDocumentFragment\n      id\n    }\n  }\n}\n\nfragment DocumentControlsTabFragment on Document {\n  id\n  controls(first: 20) {\n    edges {\n      node {\n        id\n        ...LinkedControlsCardFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n}\n\nfragment DocumentDetailPageDocumentFragment on Document {\n  id\n  title\n  documentType\n  classification\n  owner {\n    id\n    fullName\n  }\n  canUpdate: permission(action: \"core:document:update\")\n  canDelete: permission(action: \"core:document:delete\")\n  canPublish: permission(action: \"core:document-version:publish\")\n  ...DocumentControlsTabFragment\n  controlsInfo: controls(first: 0) {\n    totalCount\n  }\n  versions(first: 20) {\n    edges {\n      node {\n        id\n        content\n        status\n        publishedAt\n        version\n        updatedAt\n        classification\n        owner {\n          id\n          fullName\n        }\n        canDeleteDraft: permission(action: \"core:document-version:delete-draft\")\n        ...DocumentSignaturesTab_version\n        signatures(first: 1000) {\n          edges {\n            node {\n              id\n              state\n              signedBy {\n                id\n              }\n              ...DocumentSignaturesTab_signature\n              __typename\n            }\n            cursor\n          }\n          pageInfo {\n            endCursor\n            hasNextPage\n          }\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n\nfragment DocumentSignaturesTab_signature on DocumentVersionSignature {\n  id\n  state\n  signedAt\n  requestedAt\n  signedBy {\n    fullName\n    primaryEmailAddress\n    id\n  }\n  canCancel: permission(action: \"core:document-version:request-signature\")\n}\n\nfragment DocumentSignaturesTab_version on DocumentVersion {\n  id\n  status\n  canRequestSignature: permission(action: \"core:document-version:request-signature\")\n  signatures(first: 1000) {\n    edges {\n      node {\n        id\n        state\n        signedBy {\n          id\n          fullName\n          primaryEmailAddress\n        }\n        ...DocumentSignaturesTab_signature\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n\nfragment LinkedControlsCardFragment on Control {\n  id\n  name\n  sectionTitle\n  framework {\n    id\n    name\n  }\n}\n"
   }
 };
 })();

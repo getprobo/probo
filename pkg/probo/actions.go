@@ -164,21 +164,21 @@ const (
 	ActionDocumentSendSigningNotifications = "core:document:send-signing-notifications"
 
 	// DocumentVersion actions
-	ActionDocumentVersionGet              = "core:document-version:get"
-	ActionDocumentVersionList             = "core:document-version:list"
-	ActionDocumentVersionExportPDF        = "core:document-version:export-pdf"
-	ActionDocumentVersionExportSignable   = "core:document-version:export-signable-pdf"
-	ActionDocumentVersionSign             = "core:document-version:sign"
-	ActionDocumentVersionUpdate           = "core:document-version:update"
-	ActionDocumentVersionSignatureRequest = "core:document-version:request-signature"
-	ActionDocumentVersionDeleteDraft      = "core:document-version:delete-draft"
-	ActionDocumentVersionPublish          = "core:document-version:publish"
-	ActionDocumentVersionCancelSignature  = "core:document-version:cancel-signature"
-	ActionDocumentVersionExport           = "core:document-version:export"
+	ActionDocumentVersionGet            = "core:document-version:get"
+	ActionDocumentVersionList           = "core:document-version:list"
+	ActionDocumentVersionExportPDF      = "core:document-version:export-pdf"
+	ActionDocumentVersionExportSignable = "core:document-version:export-signable-pdf"
+	ActionDocumentVersionSign           = "core:document-version:sign"
+	ActionDocumentVersionUpdate         = "core:document-version:update"
+	ActionDocumentVersionDeleteDraft    = "core:document-version:delete-draft"
+	ActionDocumentVersionPublish        = "core:document-version:publish"
+	ActionDocumentVersionExport         = "core:document-version:export"
 
 	// DocumentVersionSignature actions
-	ActionDocumentVersionSignatureGet  = "core:document-version-signature:get"
-	ActionDocumentVersionSignatureList = "core:document-version-signature:list"
+	ActionDocumentVersionSignatureRequest = "core:document-version-signature:request"
+	ActionDocumentVersionCancelSignature  = "core:document-version-signature:cancel"
+	ActionDocumentVersionSignatureGet     = "core:document-version-signature:get"
+	ActionDocumentVersionSignatureList    = "core:document-version-signature:list"
 
 	// Risk actions
 	ActionRiskGet                     = "core:risk:get"

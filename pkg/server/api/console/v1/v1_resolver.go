@@ -961,6 +961,11 @@ func (r *documentVersionResolver) Signed(ctx context.Context, obj *types.Documen
 	return signed, nil
 }
 
+// Permission is the resolver for the permission field.
+func (r *documentVersionResolver) Permission(ctx context.Context, obj *types.DocumentVersion, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
+}
+
 // DocumentVersion is the resolver for the documentVersion field.
 func (r *documentVersionSignatureResolver) DocumentVersion(ctx context.Context, obj *types.DocumentVersionSignature) (*types.DocumentVersion, error) {
 	r.MustAuthorize(ctx, obj.ID, probo.ActionDocumentVersionGet)

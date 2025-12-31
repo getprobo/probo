@@ -729,6 +729,7 @@ type ComplexityRoot struct {
 		Document       func(childComplexity int) int
 		ID             func(childComplexity int) int
 		Owner          func(childComplexity int) int
+		Permission     func(childComplexity int, action string) int
 		PublishedAt    func(childComplexity int) int
 		Signatures     func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentVersionSignatureOrder, filter *types.DocumentVersionSignatureFilter) int
 		Signed         func(childComplexity int) int
@@ -2029,6 +2030,8 @@ type DocumentVersionResolver interface {
 	Owner(ctx context.Context, obj *types.DocumentVersion) (*types.People, error)
 	Signatures(ctx context.Context, obj *types.DocumentVersion, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentVersionSignatureOrder, filter *types.DocumentVersionSignatureFilter) (*types.DocumentVersionSignatureConnection, error)
 	Signed(ctx context.Context, obj *types.DocumentVersion) (bool, error)
+
+	Permission(ctx context.Context, obj *types.DocumentVersion, action string) (bool, error)
 }
 type DocumentVersionSignatureResolver interface {
 	DocumentVersion(ctx context.Context, obj *types.DocumentVersionSignature) (*types.DocumentVersion, error)
@@ -4314,6 +4317,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.DocumentVersion.Owner(childComplexity), true
+	case "DocumentVersion.permission":
+		if e.complexity.DocumentVersion.Permission == nil {
+			break
+		}
+
+		args, err := ec.field_DocumentVersion_permission_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.DocumentVersion.Permission(childComplexity, args["action"].(string)), true
 	case "DocumentVersion.publishedAt":
 		if e.complexity.DocumentVersion.PublishedAt == nil {
 			break
@@ -15037,6 +15051,8 @@ type DocumentVersion implements Node
   publishedAt: Datetime
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type DocumentVersionSignatureConnection {
@@ -15935,6 +15951,17 @@ func (ec *executionContext) field_Datum_vendors_args(ctx context.Context, rawArg
 }
 
 func (ec *executionContext) field_DocumentVersionSignature_permission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "action", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["action"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_DocumentVersion_permission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "action", ec.unmarshalNString2string)
@@ -29520,6 +29547,47 @@ func (ec *executionContext) fieldContext_DocumentVersion_updatedAt(_ context.Con
 	return fc, nil
 }
 
+func (ec *executionContext) _DocumentVersion_permission(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_DocumentVersion_permission,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.DocumentVersion().Permission(ctx, obj, fc.Args["action"].(string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_DocumentVersion_permission(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DocumentVersion",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_DocumentVersion_permission_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _DocumentVersionConnection_edges(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersionConnection) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -29675,6 +29743,8 @@ func (ec *executionContext) fieldContext_DocumentVersionEdge_node(_ context.Cont
 				return ec.fieldContext_DocumentVersion_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_DocumentVersion_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_DocumentVersion_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type DocumentVersion", field.Name)
 		},
@@ -29763,6 +29833,8 @@ func (ec *executionContext) fieldContext_DocumentVersionSignature_documentVersio
 				return ec.fieldContext_DocumentVersion_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_DocumentVersion_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_DocumentVersion_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type DocumentVersion", field.Name)
 		},
@@ -44633,6 +44705,8 @@ func (ec *executionContext) fieldContext_PublishDocumentVersionPayload_documentV
 				return ec.fieldContext_DocumentVersion_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_DocumentVersion_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_DocumentVersion_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type DocumentVersion", field.Name)
 		},
@@ -53584,6 +53658,8 @@ func (ec *executionContext) fieldContext_UpdateDocumentVersionPayload_documentVe
 				return ec.fieldContext_DocumentVersion_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_DocumentVersion_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_DocumentVersion_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type DocumentVersion", field.Name)
 		},
@@ -75960,6 +76036,42 @@ func (ec *executionContext) _DocumentVersion(ctx context.Context, sel ast.Select
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "permission":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._DocumentVersion_permission(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

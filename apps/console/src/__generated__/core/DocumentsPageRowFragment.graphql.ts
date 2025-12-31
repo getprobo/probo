@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<f772c53b0007859aecc59a9484b5b791>>
+ * @generated SignedSource<<6aa146f2bf0d89cd8140da220a2c33d8>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -15,6 +15,7 @@ export type DocumentType = "ISMS" | "OTHER" | "POLICY" | "PROCEDURE";
 export type DocumentVersionSignatureState = "REQUESTED" | "SIGNED";
 import { FragmentRefs } from "relay-runtime";
 export type DocumentsPageRowFragment$data = {
+  readonly canDelete: boolean;
   readonly classification: DocumentClassification;
   readonly description: string | null | undefined;
   readonly documentType: DocumentType;
@@ -98,6 +99,19 @@ return {
       "kind": "ScalarField",
       "name": "updatedAt",
       "storageKey": null
+    },
+    {
+      "alias": "canDelete",
+      "args": [
+        {
+          "kind": "Literal",
+          "name": "action",
+          "value": "core:document:delete"
+        }
+      ],
+      "kind": "ScalarField",
+      "name": "permission",
+      "storageKey": "permission(action:\"core:document:delete\")"
     },
     {
       "alias": null,
@@ -225,6 +239,6 @@ return {
 };
 })();
 
-(node as any).hash = "cd6d6bebffb9ed17a251aeef4b86f753";
+(node as any).hash = "4164f76edc42d40eef1efc54194116ec";
 
 export default node;

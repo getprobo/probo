@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<3ba79250c6ba07fa44aca6eff28b3d9d>>
+ * @generated SignedSource<<66ab14196c29af984b08f90039037dee>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -15,6 +15,9 @@ export type DocumentType = "ISMS" | "OTHER" | "POLICY" | "PROCEDURE";
 export type DocumentVersionSignatureState = "REQUESTED" | "SIGNED";
 import { FragmentRefs } from "relay-runtime";
 export type DocumentDetailPageDocumentFragment$data = {
+  readonly canDelete: boolean;
+  readonly canPublish: boolean;
+  readonly canUpdate: boolean;
   readonly classification: DocumentClassification;
   readonly controlsInfo: {
     readonly totalCount: number;
@@ -30,6 +33,7 @@ export type DocumentDetailPageDocumentFragment$data = {
     readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly node: {
+        readonly canDeleteDraft: boolean;
         readonly classification: DocumentClassification;
         readonly content: string;
         readonly id: string;
@@ -192,6 +196,45 @@ return {
     (v1/*: any*/),
     (v2/*: any*/),
     {
+      "alias": "canUpdate",
+      "args": [
+        {
+          "kind": "Literal",
+          "name": "action",
+          "value": "core:document:update"
+        }
+      ],
+      "kind": "ScalarField",
+      "name": "permission",
+      "storageKey": "permission(action:\"core:document:update\")"
+    },
+    {
+      "alias": "canDelete",
+      "args": [
+        {
+          "kind": "Literal",
+          "name": "action",
+          "value": "core:document:delete"
+        }
+      ],
+      "kind": "ScalarField",
+      "name": "permission",
+      "storageKey": "permission(action:\"core:document:delete\")"
+    },
+    {
+      "alias": "canPublish",
+      "args": [
+        {
+          "kind": "Literal",
+          "name": "action",
+          "value": "core:document-version:publish"
+        }
+      ],
+      "kind": "ScalarField",
+      "name": "permission",
+      "storageKey": "permission(action:\"core:document-version:publish\")"
+    },
+    {
       "args": null,
       "kind": "FragmentSpread",
       "name": "DocumentControlsTabFragment"
@@ -283,6 +326,19 @@ return {
                 (v1/*: any*/),
                 (v2/*: any*/),
                 {
+                  "alias": "canDeleteDraft",
+                  "args": [
+                    {
+                      "kind": "Literal",
+                      "name": "action",
+                      "value": "core:document-version:delete-draft"
+                    }
+                  ],
+                  "kind": "ScalarField",
+                  "name": "permission",
+                  "storageKey": "permission(action:\"core:document-version:delete-draft\")"
+                },
+                {
                   "args": null,
                   "kind": "FragmentSpread",
                   "name": "DocumentSignaturesTab_version"
@@ -368,6 +424,6 @@ return {
 };
 })();
 
-(node as any).hash = "e1418d5efeade64db32e9939132c03de";
+(node as any).hash = "5ed2f764b1587dd945b0a10c33cee729";
 
 export default node;
