@@ -34,6 +34,7 @@ const createMeetingMutation = graphql`
             id
             fullName
           }
+          canDelete: permission(action: "core:meeting:delete")
         }
       }
     }

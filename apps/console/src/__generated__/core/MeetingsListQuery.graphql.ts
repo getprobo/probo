@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<829d26690dc2a6f09541f02ef8981395>>
+ * @generated SignedSource<<c50d9a4ec082e190a0f0b3a9e1a7f5c2>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -266,6 +266,19 @@ return {
                             ],
                             "storageKey": null
                           },
+                          {
+                            "alias": "canDelete",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:meeting:delete"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:meeting:delete\")"
+                          },
                           (v11/*: any*/)
                         ],
                         "storageKey": null
@@ -355,12 +368,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "e5e74555d8a277638d2278c5b71b930b",
+    "cacheID": "f4135654e654bbaa31192269ff567752",
     "id": null,
     "metadata": {},
     "name": "MeetingsListQuery",
     "operationKind": "query",
-    "text": "query MeetingsListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 50\n  $last: Int = null\n  $order: MeetingOrder = {field: DATE, direction: DESC}\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...MeetingsPageListFragment_16fISc\n    id\n  }\n}\n\nfragment MeetingsPageListFragment_16fISc on Organization {\n  id\n  context {\n    summary\n  }\n  meetings(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    edges {\n      node {\n        id\n        ...MeetingsPageRowFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n}\n\nfragment MeetingsPageRowFragment on Meeting {\n  id\n  name\n  date\n  attendees {\n    id\n    fullName\n  }\n}\n"
+    "text": "query MeetingsListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 50\n  $last: Int = null\n  $order: MeetingOrder = {field: DATE, direction: DESC}\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...MeetingsPageListFragment_16fISc\n    id\n  }\n}\n\nfragment MeetingsPageListFragment_16fISc on Organization {\n  id\n  context {\n    summary\n  }\n  meetings(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    edges {\n      node {\n        id\n        ...MeetingsPageRowFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n}\n\nfragment MeetingsPageRowFragment on Meeting {\n  id\n  name\n  date\n  attendees {\n    id\n    fullName\n  }\n  canDelete: permission(action: \"core:meeting:delete\")\n}\n"
   }
 };
 })();

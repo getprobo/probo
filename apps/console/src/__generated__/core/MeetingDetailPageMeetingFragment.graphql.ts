@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<3684f6d6c3a9746dcfcb8bb0156d2201>>
+ * @generated SignedSource<<dfda77f468e3df0f5b1f0c4501739cca>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -15,6 +15,8 @@ export type MeetingDetailPageMeetingFragment$data = {
     readonly fullName: string;
     readonly id: string;
   }>;
+  readonly canDelete: boolean;
+  readonly canUpdate: boolean;
   readonly date: any;
   readonly id: string;
   readonly minutes: string | null | undefined;
@@ -63,6 +65,32 @@ return {
       "storageKey": null
     },
     {
+      "alias": "canUpdate",
+      "args": [
+        {
+          "kind": "Literal",
+          "name": "action",
+          "value": "core:meeting:update"
+        }
+      ],
+      "kind": "ScalarField",
+      "name": "permission",
+      "storageKey": "permission(action:\"core:meeting:update\")"
+    },
+    {
+      "alias": "canDelete",
+      "args": [
+        {
+          "kind": "Literal",
+          "name": "action",
+          "value": "core:meeting:delete"
+        }
+      ],
+      "kind": "ScalarField",
+      "name": "permission",
+      "storageKey": "permission(action:\"core:meeting:delete\")"
+    },
+    {
       "alias": null,
       "args": null,
       "concreteType": "People",
@@ -87,6 +115,6 @@ return {
 };
 })();
 
-(node as any).hash = "ae1564a2e5115bfffe20359c5288d4eb";
+(node as any).hash = "16fcd4d8cc7dbe80bc7fd37ac5e824e8";
 
 export default node;

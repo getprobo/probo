@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<ab4ee2b9dc7e4e5443dea3bd188d6dac>>
+ * @generated SignedSource<<7ac900885cf356d87efb7496bd37bbad>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -15,6 +15,7 @@ export type MeetingGraphListQuery$variables = {
 };
 export type MeetingGraphListQuery$data = {
   readonly organization: {
+    readonly canCreateMeeting?: boolean;
     readonly id: string;
     readonly " $fragmentSpreads": FragmentRefs<"MeetingsPageListFragment">;
   };
@@ -47,13 +48,26 @@ v2 = {
   "storageKey": null
 },
 v3 = {
+  "alias": "canCreateMeeting",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "core:meeting:create"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"core:meeting:create\")"
+},
+v4 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "__typename",
   "storageKey": null
 },
-v4 = [
+v5 = [
   {
     "kind": "Literal",
     "name": "first",
@@ -85,6 +99,14 @@ return {
         "selections": [
           (v2/*: any*/),
           {
+            "kind": "InlineFragment",
+            "selections": [
+              (v3/*: any*/)
+            ],
+            "type": "Organization",
+            "abstractKey": null
+          },
+          {
             "args": null,
             "kind": "FragmentSpread",
             "name": "MeetingsPageListFragment"
@@ -110,11 +132,12 @@ return {
         "name": "node",
         "plural": false,
         "selections": [
-          (v3/*: any*/),
+          (v4/*: any*/),
           (v2/*: any*/),
           {
             "kind": "InlineFragment",
             "selections": [
+              (v3/*: any*/),
               {
                 "alias": null,
                 "args": null,
@@ -135,7 +158,7 @@ return {
               },
               {
                 "alias": null,
-                "args": (v4/*: any*/),
+                "args": (v5/*: any*/),
                 "concreteType": "MeetingConnection",
                 "kind": "LinkedField",
                 "name": "meetings",
@@ -191,7 +214,20 @@ return {
                             ],
                             "storageKey": null
                           },
-                          (v3/*: any*/)
+                          {
+                            "alias": "canDelete",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:meeting:delete"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:meeting:delete\")"
+                          },
+                          (v4/*: any*/)
                         ],
                         "storageKey": null
                       },
@@ -261,7 +297,7 @@ return {
               },
               {
                 "alias": null,
-                "args": (v4/*: any*/),
+                "args": (v5/*: any*/),
                 "filters": [
                   "orderBy"
                 ],
@@ -280,16 +316,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "e320d73109abe57bb9fa89ade5fa0892",
+    "cacheID": "68a020e412baf691d3ce96eff5817190",
     "id": null,
     "metadata": {},
     "name": "MeetingGraphListQuery",
     "operationKind": "query",
-    "text": "query MeetingGraphListQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    id\n    ...MeetingsPageListFragment\n  }\n}\n\nfragment MeetingsPageListFragment on Organization {\n  id\n  context {\n    summary\n  }\n  meetings(first: 50, orderBy: {field: DATE, direction: DESC}) {\n    edges {\n      node {\n        id\n        ...MeetingsPageRowFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n}\n\nfragment MeetingsPageRowFragment on Meeting {\n  id\n  name\n  date\n  attendees {\n    id\n    fullName\n  }\n}\n"
+    "text": "query MeetingGraphListQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    id\n    ... on Organization {\n      canCreateMeeting: permission(action: \"core:meeting:create\")\n    }\n    ...MeetingsPageListFragment\n  }\n}\n\nfragment MeetingsPageListFragment on Organization {\n  id\n  context {\n    summary\n  }\n  meetings(first: 50, orderBy: {field: DATE, direction: DESC}) {\n    edges {\n      node {\n        id\n        ...MeetingsPageRowFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n}\n\nfragment MeetingsPageRowFragment on Meeting {\n  id\n  name\n  date\n  attendees {\n    id\n    fullName\n  }\n  canDelete: permission(action: \"core:meeting:delete\")\n}\n"
   }
 };
 })();
 
-(node as any).hash = "be13ec2953f71c4955a5f46b93f0131f";
+(node as any).hash = "3ec4cedaa00b3109b79df0425db7f094";
 
 export default node;

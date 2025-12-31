@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<7efb971ec8052cecbd96f86ea6d3af4c>>
+ * @generated SignedSource<<2ca6c35e54eafa06ad04d91bfc555eed>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -15,6 +15,7 @@ export type MeetingsPageRowFragment$data = {
     readonly fullName: string;
     readonly id: string;
   }>;
+  readonly canDelete: boolean;
   readonly date: any;
   readonly id: string;
   readonly name: string;
@@ -72,6 +73,19 @@ return {
         }
       ],
       "storageKey": null
+    },
+    {
+      "alias": "canDelete",
+      "args": [
+        {
+          "kind": "Literal",
+          "name": "action",
+          "value": "core:meeting:delete"
+        }
+      ],
+      "kind": "ScalarField",
+      "name": "permission",
+      "storageKey": "permission(action:\"core:meeting:delete\")"
     }
   ],
   "type": "Meeting",
@@ -79,6 +93,6 @@ return {
 };
 })();
 
-(node as any).hash = "91ba43abb559bed5acdda60b8f61bda9";
+(node as any).hash = "22a8c7132716408a17d39ea5ff36a38d";
 
 export default node;

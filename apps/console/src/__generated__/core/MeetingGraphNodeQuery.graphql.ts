@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<c19b786d81cd6f7adc4da4a4c3ad9346>>
+ * @generated SignedSource<<75a92b14ee7a1d73c9dde3d9d8d76de6>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -119,6 +119,32 @@ return {
                 "storageKey": null
               },
               {
+                "alias": "canUpdate",
+                "args": [
+                  {
+                    "kind": "Literal",
+                    "name": "action",
+                    "value": "core:meeting:update"
+                  }
+                ],
+                "kind": "ScalarField",
+                "name": "permission",
+                "storageKey": "permission(action:\"core:meeting:update\")"
+              },
+              {
+                "alias": "canDelete",
+                "args": [
+                  {
+                    "kind": "Literal",
+                    "name": "action",
+                    "value": "core:meeting:delete"
+                  }
+                ],
+                "kind": "ScalarField",
+                "name": "permission",
+                "storageKey": "permission(action:\"core:meeting:delete\")"
+              },
+              {
                 "alias": null,
                 "args": null,
                 "concreteType": "People",
@@ -147,12 +173,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "a4df3c8c55dc1bf379bba19af16448d7",
+    "cacheID": "efaa301fdd6d05385d7858d182d4b2ec",
     "id": null,
     "metadata": {},
     "name": "MeetingGraphNodeQuery",
     "operationKind": "query",
-    "text": "query MeetingGraphNodeQuery(\n  $meetingId: ID!\n) {\n  node(id: $meetingId) {\n    __typename\n    ...MeetingDetailPageMeetingFragment\n    id\n  }\n}\n\nfragment MeetingDetailPageMeetingFragment on Meeting {\n  id\n  name\n  date\n  minutes\n  attendees {\n    id\n    fullName\n  }\n}\n"
+    "text": "query MeetingGraphNodeQuery(\n  $meetingId: ID!\n) {\n  node(id: $meetingId) {\n    __typename\n    ...MeetingDetailPageMeetingFragment\n    id\n  }\n}\n\nfragment MeetingDetailPageMeetingFragment on Meeting {\n  id\n  name\n  date\n  minutes\n  canUpdate: permission(action: \"core:meeting:update\")\n  canDelete: permission(action: \"core:meeting:delete\")\n  attendees {\n    id\n    fullName\n  }\n}\n"
   }
 };
 })();

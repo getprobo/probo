@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<fb3a05b463e9f6065118d1b4441ce398>>
+ * @generated SignedSource<<6ed3e434ef2a7f39c1ccddb4c3ddd8b2>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -28,6 +28,7 @@ export type CreateMeetingDialogCreateMutation$data = {
           readonly fullName: string;
           readonly id: string;
         }>;
+        readonly canDelete: boolean;
         readonly date: any;
         readonly id: string;
         readonly minutes: string | null | undefined;
@@ -122,6 +123,19 @@ v4 = {
             }
           ],
           "storageKey": null
+        },
+        {
+          "alias": "canDelete",
+          "args": [
+            {
+              "kind": "Literal",
+              "name": "action",
+              "value": "core:meeting:delete"
+            }
+          ],
+          "kind": "ScalarField",
+          "name": "permission",
+          "storageKey": "permission(action:\"core:meeting:delete\")"
         }
       ],
       "storageKey": null
@@ -195,16 +209,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "cf37e45c7e8cffd8b44cdc85488209e8",
+    "cacheID": "6b9dce0e1a88fdf272b516cf59bb4137",
     "id": null,
     "metadata": {},
     "name": "CreateMeetingDialogCreateMutation",
     "operationKind": "mutation",
-    "text": "mutation CreateMeetingDialogCreateMutation(\n  $input: CreateMeetingInput!\n) {\n  createMeeting(input: $input) {\n    meetingEdge {\n      node {\n        id\n        name\n        date\n        minutes\n        attendees {\n          id\n          fullName\n        }\n      }\n    }\n  }\n}\n"
+    "text": "mutation CreateMeetingDialogCreateMutation(\n  $input: CreateMeetingInput!\n) {\n  createMeeting(input: $input) {\n    meetingEdge {\n      node {\n        id\n        name\n        date\n        minutes\n        attendees {\n          id\n          fullName\n        }\n        canDelete: permission(action: \"core:meeting:delete\")\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "5ba1bb7a0344e0ea19b383af6d75534f";
+(node as any).hash = "b69925d4ec72b17467f8f50158d02f6f";
 
 export default node;
