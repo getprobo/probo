@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<2b51f7fdbc055d912be03031b258c042>>
+ * @generated SignedSource<<20900a908dde87c301e15c5af24f849d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -23,6 +23,8 @@ export type TrustCenterReferenceGraphUpdateMutation$variables = {
 export type TrustCenterReferenceGraphUpdateMutation$data = {
   readonly updateTrustCenterReference: {
     readonly trustCenterReference: {
+      readonly canDelete: boolean;
+      readonly canUpdate: boolean;
       readonly createdAt: any;
       readonly description: string | null | undefined;
       readonly id: string;
@@ -125,6 +127,32 @@ v1 = [
             "kind": "ScalarField",
             "name": "updatedAt",
             "storageKey": null
+          },
+          {
+            "alias": "canUpdate",
+            "args": [
+              {
+                "kind": "Literal",
+                "name": "action",
+                "value": "core:trust-center-reference:update"
+              }
+            ],
+            "kind": "ScalarField",
+            "name": "permission",
+            "storageKey": "permission(action:\"core:trust-center-reference:update\")"
+          },
+          {
+            "alias": "canDelete",
+            "args": [
+              {
+                "kind": "Literal",
+                "name": "action",
+                "value": "core:trust-center-reference:delete"
+              }
+            ],
+            "kind": "ScalarField",
+            "name": "permission",
+            "storageKey": "permission(action:\"core:trust-center-reference:delete\")"
           }
         ],
         "storageKey": null
@@ -151,16 +179,16 @@ return {
     "selections": (v1/*: any*/)
   },
   "params": {
-    "cacheID": "f55510d6d1e0a686d4733f5bd82a605a",
+    "cacheID": "7c0e441a6e51c68b72f3dc0b74079da1",
     "id": null,
     "metadata": {},
     "name": "TrustCenterReferenceGraphUpdateMutation",
     "operationKind": "mutation",
-    "text": "mutation TrustCenterReferenceGraphUpdateMutation(\n  $input: UpdateTrustCenterReferenceInput!\n) {\n  updateTrustCenterReference(input: $input) {\n    trustCenterReference {\n      id\n      name\n      description\n      websiteUrl\n      logoUrl\n      rank\n      createdAt\n      updatedAt\n    }\n  }\n}\n"
+    "text": "mutation TrustCenterReferenceGraphUpdateMutation(\n  $input: UpdateTrustCenterReferenceInput!\n) {\n  updateTrustCenterReference(input: $input) {\n    trustCenterReference {\n      id\n      name\n      description\n      websiteUrl\n      logoUrl\n      rank\n      createdAt\n      updatedAt\n      canUpdate: permission(action: \"core:trust-center-reference:update\")\n      canDelete: permission(action: \"core:trust-center-reference:delete\")\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "bed2a3190570cd85d85dd38f20f375da";
+(node as any).hash = "f6add85271c2b048654bf586745252fc";
 
 export default node;
