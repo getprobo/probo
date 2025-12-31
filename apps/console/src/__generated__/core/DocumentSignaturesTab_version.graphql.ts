@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<807a8f8c5c320dadd6b9672ef48583f2>>
+ * @generated SignedSource<<ccb4ac21f5e94f16c4fa5ccff5898f99>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -13,6 +13,7 @@ export type DocumentStatus = "DRAFT" | "PUBLISHED";
 export type DocumentVersionSignatureState = "REQUESTED" | "SIGNED";
 import { FragmentRefs } from "relay-runtime";
 export type DocumentSignaturesTab_version$data = {
+  readonly canRequestSignature: boolean;
   readonly id: string;
   readonly signatures: {
     readonly __id: string;
@@ -106,6 +107,19 @@ return {
       "kind": "ScalarField",
       "name": "status",
       "storageKey": null
+    },
+    {
+      "alias": "canRequestSignature",
+      "args": [
+        {
+          "kind": "Literal",
+          "name": "action",
+          "value": "core:document-version:request-signature"
+        }
+      ],
+      "kind": "ScalarField",
+      "name": "permission",
+      "storageKey": "permission(action:\"core:document-version:request-signature\")"
     },
     {
       "alias": "signatures",
@@ -242,6 +256,6 @@ return {
 };
 })();
 
-(node as any).hash = "497571b827200e09a848436820668d10";
+(node as any).hash = "9282fd9e9a1aa10a36535863b896283c";
 
 export default node;
