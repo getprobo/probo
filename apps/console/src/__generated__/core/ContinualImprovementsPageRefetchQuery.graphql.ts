@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<908fcf894c6d8a46a122991d388a4cb7>>
+ * @generated SignedSource<<7c33b43cf4643af5c173b4cabd2047a8>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -275,6 +275,32 @@ return {
                             "name": "updatedAt",
                             "storageKey": null
                           },
+                          {
+                            "alias": "canUpdate",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:continual-improvement:update"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:continual-improvement:update\")"
+                          },
+                          {
+                            "alias": "canDelete",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:continual-improvement:delete"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:continual-improvement:delete\")"
+                          },
                           (v8/*: any*/)
                         ],
                         "storageKey": null
@@ -350,16 +376,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "277ed3aedb8b99e9ec291997ba0d0943",
+    "cacheID": "a0a9ad9d08da13436195a49ac3fce89c",
     "id": null,
     "metadata": {},
     "name": "ContinualImprovementsPageRefetchQuery",
     "operationKind": "query",
-    "text": "query ContinualImprovementsPageRefetchQuery(\n  $after: CursorKey\n  $first: Int = 10\n  $snapshotId: ID = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...ContinualImprovementsPageFragment_35e0S5\n    id\n  }\n}\n\nfragment ContinualImprovementsPageFragment_35e0S5 on Organization {\n  id\n  continualImprovements(first: $first, after: $after, filter: {snapshotId: $snapshotId}) {\n    totalCount\n    edges {\n      node {\n        id\n        snapshotId\n        sourceId\n        referenceId\n        description\n        source\n        targetDate\n        status\n        priority\n        owner {\n          id\n          fullName\n        }\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
+    "text": "query ContinualImprovementsPageRefetchQuery(\n  $after: CursorKey\n  $first: Int = 10\n  $snapshotId: ID = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...ContinualImprovementsPageFragment_35e0S5\n    id\n  }\n}\n\nfragment ContinualImprovementsPageFragment_35e0S5 on Organization {\n  id\n  continualImprovements(first: $first, after: $after, filter: {snapshotId: $snapshotId}) {\n    totalCount\n    edges {\n      node {\n        id\n        snapshotId\n        sourceId\n        referenceId\n        description\n        source\n        targetDate\n        status\n        priority\n        owner {\n          id\n          fullName\n        }\n        createdAt\n        updatedAt\n        canUpdate: permission(action: \"core:continual-improvement:update\")\n        canDelete: permission(action: \"core:continual-improvement:delete\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "44e30d3febc79c6df7236567d85e9ca8";
+(node as any).hash = "ec045ffacd206a4854cb864eadf3ef50";
 
 export default node;

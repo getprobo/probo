@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<05cc2f7b3bf513e9a1f1e192950c011e>>
+ * @generated SignedSource<<a63771cb94fb0efc99bb250d7cd8a052>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -29,6 +29,8 @@ export type ContinualImprovementGraphCreateMutation$data = {
   readonly createContinualImprovement: {
     readonly continualImprovementEdge: {
       readonly node: {
+        readonly canDelete: boolean;
+        readonly canUpdate: boolean;
         readonly createdAt: any;
         readonly description: string | null | undefined;
         readonly id: string;
@@ -159,6 +161,32 @@ v4 = {
           "kind": "ScalarField",
           "name": "createdAt",
           "storageKey": null
+        },
+        {
+          "alias": "canUpdate",
+          "args": [
+            {
+              "kind": "Literal",
+              "name": "action",
+              "value": "core:continual-improvement:update"
+            }
+          ],
+          "kind": "ScalarField",
+          "name": "permission",
+          "storageKey": "permission(action:\"core:continual-improvement:update\")"
+        },
+        {
+          "alias": "canDelete",
+          "args": [
+            {
+              "kind": "Literal",
+              "name": "action",
+              "value": "core:continual-improvement:delete"
+            }
+          ],
+          "kind": "ScalarField",
+          "name": "permission",
+          "storageKey": "permission(action:\"core:continual-improvement:delete\")"
         }
       ],
       "storageKey": null
@@ -232,16 +260,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "8789a6fab51997d85cbc98481c047b9c",
+    "cacheID": "5894da3b2ddc1c4a16c030770fae53bb",
     "id": null,
     "metadata": {},
     "name": "ContinualImprovementGraphCreateMutation",
     "operationKind": "mutation",
-    "text": "mutation ContinualImprovementGraphCreateMutation(\n  $input: CreateContinualImprovementInput!\n) {\n  createContinualImprovement(input: $input) {\n    continualImprovementEdge {\n      node {\n        id\n        referenceId\n        description\n        source\n        targetDate\n        status\n        priority\n        owner {\n          id\n          fullName\n        }\n        createdAt\n      }\n    }\n  }\n}\n"
+    "text": "mutation ContinualImprovementGraphCreateMutation(\n  $input: CreateContinualImprovementInput!\n) {\n  createContinualImprovement(input: $input) {\n    continualImprovementEdge {\n      node {\n        id\n        referenceId\n        description\n        source\n        targetDate\n        status\n        priority\n        owner {\n          id\n          fullName\n        }\n        createdAt\n        canUpdate: permission(action: \"core:continual-improvement:update\")\n        canDelete: permission(action: \"core:continual-improvement:delete\")\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "6c6ed7efdb1ebe213fd9e43111f06c7e";
+(node as any).hash = "bcf5a1e0b02b6530c327741d4d744917";
 
 export default node;
