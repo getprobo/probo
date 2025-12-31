@@ -13,6 +13,7 @@ const tasksQuery = graphql`
       __typename
       ... on Measure {
         id
+        canCreateTask: permission(action: "core:task:create")
         tasks(first: 100)
           @connection(key: "Measure__tasks")
           @required(action: THROW) {
@@ -47,15 +48,17 @@ export default function MeasureTasksTab() {
   return (
     <div className="relative">
       <TasksCard connectionId={connectionId} tasks={node.tasks.edges} />
-      <TaskFormDialog connection={connectionId} measureId={measure.id}>
-        <Button
-          variant="secondary"
-          icon={IconPlusLarge}
-          className="absolute top-3 right-6"
-        >
-          {__("New task")}
-        </Button>
-      </TaskFormDialog>
+      {node.canCreateTask && (
+        <TaskFormDialog connection={connectionId} measureId={measure.id}>
+          <Button
+            variant="secondary"
+            icon={IconPlusLarge}
+            className="absolute top-3 right-6"
+          >
+            {__("New task")}
+          </Button>
+        </TaskFormDialog>
+      )}
     </div>
   );
 }

@@ -18,7 +18,7 @@ import {
   useConfirm,
   useDialogRef,
 } from "@probo/ui";
-import { Fragment, use } from "react";
+import { Fragment } from "react";
 import {
   graphql,
   useFragment,
@@ -31,7 +31,6 @@ import TaskFormDialog, {
 } from "/components/tasks/TaskFormDialog";
 import { updateStoreCounter } from "/hooks/useMutationWithIncrement";
 import { useOrganizationId } from "/hooks/useOrganizationId";
-import { PermissionsContext } from "/providers/PermissionsContext";
 import type { TasksCard_TaskRowFragment$key } from "/__generated__/core/TasksCard_TaskRowFragment.graphql";
 import type { TasksPageFragment$data } from "/__generated__/core/TasksPageFragment.graphql";
 import type { MeasureTasksTabQuery$data } from "/__generated__/core/MeasureTasksTabQuery.graphql";
@@ -160,7 +159,6 @@ function TaskRow(props: TaskRowProps) {
   const confirm = useConfirm();
   const [deleteTask] = useMutation(deleteMutation);
   const params = useParams<{ measureId?: string }>();
-  const { isAuthorized } = use(PermissionsContext);
 
   const relayEnv = useRelayEnvironment();
   const { canUpdate, canDelete, ...task } =
@@ -250,7 +248,7 @@ function TaskRow(props: TaskRowProps) {
           )}
           {(canUpdate || canDelete) && (
             <ActionDropdown>
-              {isAuthorized("Task", "updateTask") && (
+              {canUpdate && (
                 <DropdownItem
                   icon={IconPencil}
                   onClick={() => dialogRef.current?.open()}
@@ -258,7 +256,7 @@ function TaskRow(props: TaskRowProps) {
                   {__("Edit")}
                 </DropdownItem>
               )}
-              {isAuthorized("Task", "deleteTask") && (
+              {canDelete && (
                 <DropdownItem
                   variant="danger"
                   icon={IconTrashCan}
