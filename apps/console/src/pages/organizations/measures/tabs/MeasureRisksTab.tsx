@@ -3,8 +3,6 @@ import type { MeasureRisksTabFragment$key } from "/__generated__/core/MeasureRis
 import { useOutletContext } from "react-router";
 import { LinkedRisksCard } from "/components/risks/LinkedRisksCard";
 import { useMutationWithIncrement } from "/hooks/useMutationWithIncrement";
-import { use } from "react";
-import { PermissionsContext } from "/providers/PermissionsContext";
 
 export const risksFragment = graphql`
   fragment MeasureRisksTabFragment on Measure {
@@ -14,6 +12,12 @@ export const risksFragment = graphql`
       edges {
         node {
           id
+          canCreateMeasureMapping: permission(
+            action: "core:risk:create-measure-mapping"
+          )
+          canDeleteMeasureMapping: permission(
+            action: "core:risk:delete-measure-mapping"
+          )
           ...LinkedRisksCardFragment
         }
       }
@@ -55,10 +59,13 @@ export default function MeasureRisksTab() {
   const data = useFragment(risksFragment, measure);
   const connectionId = data.risks.__id;
   const risks = data.risks?.edges?.map((edge) => edge.node) ?? [];
-  const { isAuthorized } = use(PermissionsContext);
 
-  const canLinkRisk = isAuthorized("Risk", "createRiskMeasureMapping");
-  const canUnlinkRisk = isAuthorized("Risk", "deleteRiskMeasureMapping");
+  const canLinkRisk = risks.some(
+    ({ canCreateMeasureMapping }) => canCreateMeasureMapping,
+  );
+  const canUnlinkRisk = risks.some(
+    ({ canDeleteMeasureMapping }) => canDeleteMeasureMapping,
+  );
   const readOnly = !canLinkRisk && !canUnlinkRisk;
 
   const incrementOptions = {

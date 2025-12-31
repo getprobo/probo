@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<7d62dd9f271d13ca9220c8e54b79fa06>>
+ * @generated SignedSource<<3afe17784c8b08b2dd0db14b26d0058f>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -237,6 +237,32 @@ return {
                         "plural": false,
                         "selections": [
                           (v14/*: any*/),
+                          {
+                            "alias": "canCreateMeasureMapping",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:control:create-measure-mapping"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:control:create-measure-mapping\")"
+                          },
+                          {
+                            "alias": "canDeleteMeasureMapping",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:control:delete-measure-mapping"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:control:delete-measure-mapping\")"
+                          },
                           (v16/*: any*/),
                           {
                             "alias": null,
@@ -348,16 +374,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "a7984d29c1f4c4274e71f939d6a313fe",
+    "cacheID": "61b16a84cb9903560d86e0b5ee031abe",
     "id": null,
     "metadata": {},
     "name": "MeasureControlsTabControlsQuery",
     "operationKind": "query",
-    "text": "query MeasureControlsTabControlsQuery(\n  $after: CursorKey\n  $before: CursorKey = null\n  $filter: ControlFilter = null\n  $first: Int = 20\n  $last: Int = null\n  $order: ControlOrder = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...MeasureControlsTabFragment_4cFWzS\n    id\n  }\n}\n\nfragment LinkedControlsCardFragment on Control {\n  id\n  name\n  sectionTitle\n  framework {\n    id\n    name\n  }\n}\n\nfragment MeasureControlsTabFragment_4cFWzS on Measure {\n  id\n  controls(first: $first, after: $after, last: $last, before: $before, orderBy: $order, filter: $filter) {\n    edges {\n      node {\n        id\n        ...LinkedControlsCardFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n}\n"
+    "text": "query MeasureControlsTabControlsQuery(\n  $after: CursorKey\n  $before: CursorKey = null\n  $filter: ControlFilter = null\n  $first: Int = 20\n  $last: Int = null\n  $order: ControlOrder = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...MeasureControlsTabFragment_4cFWzS\n    id\n  }\n}\n\nfragment LinkedControlsCardFragment on Control {\n  id\n  name\n  sectionTitle\n  framework {\n    id\n    name\n  }\n}\n\nfragment MeasureControlsTabFragment_4cFWzS on Measure {\n  id\n  controls(first: $first, after: $after, last: $last, before: $before, orderBy: $order, filter: $filter) {\n    edges {\n      node {\n        id\n        canCreateMeasureMapping: permission(action: \"core:control:create-measure-mapping\")\n        canDeleteMeasureMapping: permission(action: \"core:control:delete-measure-mapping\")\n        ...LinkedControlsCardFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "a9a268e40cc503e7e11fca8464f3e62c";
+(node as any).hash = "6cd1d286921188abc2a9fdc1c1e0ed08";
 
 export default node;

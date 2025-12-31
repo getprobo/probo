@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<68d7a7680b2d8573d9f05e2c33e2e516>>
+ * @generated SignedSource<<bf973ac1452f812480abe7160f4529e8>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -378,6 +378,32 @@ return {
                         "plural": false,
                         "selections": [
                           (v2/*: any*/),
+                          {
+                            "alias": "canCreateMeasureMapping",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:risk:create-measure-mapping"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:risk:create-measure-mapping\")"
+                          },
+                          {
+                            "alias": "canDeleteMeasureMapping",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:risk:delete-measure-mapping"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:risk:delete-measure-mapping\")"
+                          },
                           (v3/*: any*/),
                           {
                             "alias": null,
@@ -452,6 +478,32 @@ return {
                         "plural": false,
                         "selections": [
                           (v2/*: any*/),
+                          {
+                            "alias": "canCreateMeasureMapping",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:control:create-measure-mapping"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:control:create-measure-mapping\")"
+                          },
+                          {
+                            "alias": "canDeleteMeasureMapping",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:control:delete-measure-mapping"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:control:delete-measure-mapping\")"
+                          },
                           (v3/*: any*/),
                           {
                             "alias": null,
@@ -497,6 +549,19 @@ return {
                 "key": "MeasureControlsTab_controls",
                 "kind": "LinkedHandle",
                 "name": "controls"
+              },
+              {
+                "alias": "canUploadEvidence",
+                "args": [
+                  {
+                    "kind": "Literal",
+                    "name": "action",
+                    "value": "core:measure:upload-evidence"
+                  }
+                ],
+                "kind": "ScalarField",
+                "name": "permission",
+                "storageKey": "permission(action:\"core:measure:upload-evidence\")"
               },
               {
                 "alias": null,
@@ -570,6 +635,19 @@ return {
                             "name": "createdAt",
                             "storageKey": null
                           },
+                          {
+                            "alias": "canDelete",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:evidence:delete"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:evidence:delete\")"
+                          },
                           (v15/*: any*/)
                         ],
                         "storageKey": null
@@ -604,12 +682,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "e168532dd6888e5d7ddfaca1dc5f188e",
+    "cacheID": "d8ac1210636ffd91eacb1bfe3452e26c",
     "id": null,
     "metadata": {},
     "name": "MeasureGraphNodeQuery",
     "operationKind": "query",
-    "text": "query MeasureGraphNodeQuery(\n  $measureId: ID!\n) {\n  node(id: $measureId) {\n    __typename\n    ... on Measure {\n      id\n      name\n      description\n      state\n      category\n      canUpdate: permission(action: \"core:measure:update\")\n      canDelete: permission(action: \"core:measure:delete\")\n      canListTasks: permission(action: \"core:task:list\")\n      evidencesInfos: evidences(first: 0) {\n        totalCount\n      }\n      risksInfos: risks(first: 0) {\n        totalCount\n      }\n      controlsInfos: controls(first: 0) {\n        totalCount\n      }\n      ...MeasureRisksTabFragment\n      ...MeasureControlsTabFragment\n      ...MeasureFormDialogMeasureFragment\n      ...MeasureEvidencesTabFragment\n    }\n    id\n  }\n}\n\nfragment LinkedControlsCardFragment on Control {\n  id\n  name\n  sectionTitle\n  framework {\n    id\n    name\n  }\n}\n\nfragment LinkedRisksCardFragment on Risk {\n  id\n  name\n  inherentRiskScore\n  residualRiskScore\n}\n\nfragment MeasureControlsTabFragment on Measure {\n  id\n  controls(first: 20) {\n    edges {\n      node {\n        id\n        ...LinkedControlsCardFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n}\n\nfragment MeasureEvidencesTabFragment on Measure {\n  id\n  evidences(first: 50) {\n    edges {\n      node {\n        id\n        file {\n          fileName\n          mimeType\n          size\n          id\n        }\n        ...MeasureEvidencesTabFragment_evidence\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n}\n\nfragment MeasureEvidencesTabFragment_evidence on Evidence {\n  id\n  file {\n    fileName\n    mimeType\n    size\n    id\n  }\n  type\n  createdAt\n}\n\nfragment MeasureFormDialogMeasureFragment on Measure {\n  id\n  description\n  name\n  category\n  state\n}\n\nfragment MeasureRisksTabFragment on Measure {\n  id\n  risks(first: 100) {\n    edges {\n      node {\n        id\n        ...LinkedRisksCardFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n"
+    "text": "query MeasureGraphNodeQuery(\n  $measureId: ID!\n) {\n  node(id: $measureId) {\n    __typename\n    ... on Measure {\n      id\n      name\n      description\n      state\n      category\n      canUpdate: permission(action: \"core:measure:update\")\n      canDelete: permission(action: \"core:measure:delete\")\n      canListTasks: permission(action: \"core:task:list\")\n      evidencesInfos: evidences(first: 0) {\n        totalCount\n      }\n      risksInfos: risks(first: 0) {\n        totalCount\n      }\n      controlsInfos: controls(first: 0) {\n        totalCount\n      }\n      ...MeasureRisksTabFragment\n      ...MeasureControlsTabFragment\n      ...MeasureFormDialogMeasureFragment\n      ...MeasureEvidencesTabFragment\n    }\n    id\n  }\n}\n\nfragment LinkedControlsCardFragment on Control {\n  id\n  name\n  sectionTitle\n  framework {\n    id\n    name\n  }\n}\n\nfragment LinkedRisksCardFragment on Risk {\n  id\n  name\n  inherentRiskScore\n  residualRiskScore\n}\n\nfragment MeasureControlsTabFragment on Measure {\n  id\n  controls(first: 20) {\n    edges {\n      node {\n        id\n        canCreateMeasureMapping: permission(action: \"core:control:create-measure-mapping\")\n        canDeleteMeasureMapping: permission(action: \"core:control:delete-measure-mapping\")\n        ...LinkedControlsCardFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n}\n\nfragment MeasureEvidencesTabFragment on Measure {\n  id\n  canUploadEvidence: permission(action: \"core:measure:upload-evidence\")\n  evidences(first: 50) {\n    edges {\n      node {\n        id\n        file {\n          fileName\n          mimeType\n          size\n          id\n        }\n        ...MeasureEvidencesTabFragment_evidence\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n}\n\nfragment MeasureEvidencesTabFragment_evidence on Evidence {\n  id\n  file {\n    fileName\n    mimeType\n    size\n    id\n  }\n  type\n  createdAt\n  canDelete: permission(action: \"core:evidence:delete\")\n}\n\nfragment MeasureFormDialogMeasureFragment on Measure {\n  id\n  description\n  name\n  category\n  state\n}\n\nfragment MeasureRisksTabFragment on Measure {\n  id\n  risks(first: 100) {\n    edges {\n      node {\n        id\n        canCreateMeasureMapping: permission(action: \"core:risk:create-measure-mapping\")\n        canDeleteMeasureMapping: permission(action: \"core:risk:delete-measure-mapping\")\n        ...LinkedRisksCardFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n"
   }
 };
 })();

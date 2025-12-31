@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<08d4e9940fe4265f66568c81985cb591>>
+ * @generated SignedSource<<414658fc55873606e711cc4571e9fd9b>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -15,6 +15,8 @@ export type MeasureControlsTabFragment$data = {
     readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly node: {
+        readonly canCreateMeasureMapping: boolean;
+        readonly canDeleteMeasureMapping: boolean;
         readonly id: string;
         readonly " $fragmentSpreads": FragmentRefs<"LinkedControlsCardFragment">;
       };
@@ -146,6 +148,32 @@ return {
               "selections": [
                 (v1/*: any*/),
                 {
+                  "alias": "canCreateMeasureMapping",
+                  "args": [
+                    {
+                      "kind": "Literal",
+                      "name": "action",
+                      "value": "core:control:create-measure-mapping"
+                    }
+                  ],
+                  "kind": "ScalarField",
+                  "name": "permission",
+                  "storageKey": "permission(action:\"core:control:create-measure-mapping\")"
+                },
+                {
+                  "alias": "canDeleteMeasureMapping",
+                  "args": [
+                    {
+                      "kind": "Literal",
+                      "name": "action",
+                      "value": "core:control:delete-measure-mapping"
+                    }
+                  ],
+                  "kind": "ScalarField",
+                  "name": "permission",
+                  "storageKey": "permission(action:\"core:control:delete-measure-mapping\")"
+                },
+                {
                   "args": null,
                   "kind": "FragmentSpread",
                   "name": "LinkedControlsCardFragment"
@@ -230,6 +258,6 @@ return {
 };
 })();
 
-(node as any).hash = "a9a268e40cc503e7e11fca8464f3e62c";
+(node as any).hash = "6cd1d286921188abc2a9fdc1c1e0ed08";
 
 export default node;
