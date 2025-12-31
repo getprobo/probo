@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<3ed9b93b29f7a5117adbb33ad359f34e>>
+ * @generated SignedSource<<e94787d44108bcbebaaa3ad6bbdab13b>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -191,6 +191,19 @@ return {
                     "kind": "ScalarField",
                     "name": "createdAt",
                     "storageKey": null
+                  },
+                  {
+                    "alias": "canDelete",
+                    "args": [
+                      {
+                        "kind": "Literal",
+                        "name": "action",
+                        "value": "core:evidence:delete"
+                      }
+                    ],
+                    "kind": "ScalarField",
+                    "name": "permission",
+                    "storageKey": "permission(action:\"core:evidence:delete\")"
                   }
                 ],
                 "storageKey": null
@@ -220,12 +233,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "4224b79c60bb9be5f4768da436659656",
+    "cacheID": "2fb329c16bcc54a40b95c0204469975c",
     "id": null,
     "metadata": {},
     "name": "CreateEvidenceDialogUploadMutation",
     "operationKind": "mutation",
-    "text": "mutation CreateEvidenceDialogUploadMutation(\n  $input: UploadMeasureEvidenceInput!\n) {\n  uploadMeasureEvidence(input: $input) {\n    evidenceEdge {\n      node {\n        id\n        ...MeasureEvidencesTabFragment_evidence\n      }\n    }\n  }\n}\n\nfragment MeasureEvidencesTabFragment_evidence on Evidence {\n  id\n  file {\n    fileName\n    mimeType\n    size\n    id\n  }\n  type\n  createdAt\n}\n"
+    "text": "mutation CreateEvidenceDialogUploadMutation(\n  $input: UploadMeasureEvidenceInput!\n) {\n  uploadMeasureEvidence(input: $input) {\n    evidenceEdge {\n      node {\n        id\n        ...MeasureEvidencesTabFragment_evidence\n      }\n    }\n  }\n}\n\nfragment MeasureEvidencesTabFragment_evidence on Evidence {\n  id\n  file {\n    fileName\n    mimeType\n    size\n    id\n  }\n  type\n  createdAt\n  canDelete: permission(action: \"core:evidence:delete\")\n}\n"
   }
 };
 })();

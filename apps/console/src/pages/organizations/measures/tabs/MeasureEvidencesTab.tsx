@@ -29,11 +29,10 @@ import { fileSize, fileType, sprintf, formatDate } from "@probo/helpers";
 import { EvidencePreviewDialog } from "../dialog/EvidencePreviewDialog";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { CreateEvidenceDialog } from "../dialog/CreateEvidenceDialog";
-import { use, useState } from "react";
+import { useState } from "react";
 import { EvidenceDownloadDialog } from "../dialog/EvidenceDownloadDialog";
 import { updateStoreCounter } from "/hooks/useMutationWithIncrement";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
-import { PermissionsContext } from "/providers/PermissionsContext";
 
 export const evidencesFragment = graphql`
   fragment MeasureEvidencesTabFragment on Measure
@@ -46,6 +45,7 @@ export const evidencesFragment = graphql`
     last: { type: "Int", defaultValue: null }
   ) {
     id
+    canUploadEvidence: permission(action: "core:measure:upload-evidence")
     evidences(
       first: $first
       after: $after
@@ -79,6 +79,7 @@ export const evidenceFragment = graphql`
     }
     type
     createdAt
+    canDelete: permission(action: "core:evidence:delete")
   }
 `;
 
@@ -111,10 +112,6 @@ export default function MeasureEvidencesTab() {
   const organizationId = useOrganizationId();
   const dialogRef = useDialogRef();
   const isSnapshotMode = Boolean(snapshotId);
-  const { isAuthorized } = use(PermissionsContext);
-
-  const canAddEvidence = isAuthorized("Measure", "uploadMeasureEvidence");
-  const canDeleteEvidence = isAuthorized("Evidence", "deleteEvidence");
 
   usePageTitle(measure.name + " - " + __("Evidences"));
 
@@ -139,11 +136,10 @@ export default function MeasureEvidencesTab() {
               organizationId={organizationId}
               connectionId={connectionId}
               hideActions={isSnapshotMode}
-              canDelete={canDeleteEvidence}
               snapshotId={snapshotId}
             />
           ))}
-          {!isSnapshotMode && canAddEvidence && (
+          {!isSnapshotMode && pagination.data.canUploadEvidence && (
             <TrButton
               colspan={5}
               onClick={() => dialogRef.current?.open()}
@@ -167,7 +163,7 @@ export default function MeasureEvidencesTab() {
           filename={evidence.file?.fileName || ""}
         />
       )}
-      {!isSnapshotMode && canAddEvidence && (
+      {!isSnapshotMode && pagination.data.canUploadEvidence && (
         <CreateEvidenceDialog
           ref={dialogRef}
           measureId={measure.id}
@@ -184,7 +180,6 @@ function EvidenceRow(props: {
   organizationId: string;
   connectionId: string;
   hideActions?: boolean;
-  canDelete?: boolean;
   snapshotId?: string;
 }) {
   const evidence = useFragment(evidenceFragment, props.evidenceKey);
@@ -267,7 +262,7 @@ function EvidenceRow(props: {
                   <IconArrowInbox size={16} />
                   {__("Download")}
                 </DropdownItem>
-                {props.canDelete && (
+                {evidence.canDelete && (
                   <DropdownItem
                     variant="danger"
                     icon={IconTrashCan}

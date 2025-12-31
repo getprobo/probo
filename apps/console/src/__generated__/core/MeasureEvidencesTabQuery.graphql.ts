@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<b182b11e656579608aba8fb03faa0ef6>>
+ * @generated SignedSource<<3f6cce4a7258adac62eab83f233b1a80>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -188,6 +188,19 @@ return {
             "kind": "InlineFragment",
             "selections": [
               {
+                "alias": "canUploadEvidence",
+                "args": [
+                  {
+                    "kind": "Literal",
+                    "name": "action",
+                    "value": "core:measure:upload-evidence"
+                  }
+                ],
+                "kind": "ScalarField",
+                "name": "permission",
+                "storageKey": "permission(action:\"core:measure:upload-evidence\")"
+              },
+              {
                 "alias": null,
                 "args": (v13/*: any*/),
                 "concreteType": "EvidenceConnection",
@@ -258,6 +271,19 @@ return {
                             "kind": "ScalarField",
                             "name": "createdAt",
                             "storageKey": null
+                          },
+                          {
+                            "alias": "canDelete",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:evidence:delete"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:evidence:delete\")"
                           },
                           (v11/*: any*/)
                         ],
@@ -348,16 +374,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "45ba257dabcf1cc7dd4aa05b699c280e",
+    "cacheID": "61235868d1100317d143c9510c047558",
     "id": null,
     "metadata": {},
     "name": "MeasureEvidencesTabQuery",
     "operationKind": "query",
-    "text": "query MeasureEvidencesTabQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 50\n  $last: Int = null\n  $order: EvidenceOrder = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...MeasureEvidencesTabFragment_16fISc\n    id\n  }\n}\n\nfragment MeasureEvidencesTabFragment_16fISc on Measure {\n  id\n  evidences(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    edges {\n      node {\n        id\n        file {\n          fileName\n          mimeType\n          size\n          id\n        }\n        ...MeasureEvidencesTabFragment_evidence\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n}\n\nfragment MeasureEvidencesTabFragment_evidence on Evidence {\n  id\n  file {\n    fileName\n    mimeType\n    size\n    id\n  }\n  type\n  createdAt\n}\n"
+    "text": "query MeasureEvidencesTabQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 50\n  $last: Int = null\n  $order: EvidenceOrder = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...MeasureEvidencesTabFragment_16fISc\n    id\n  }\n}\n\nfragment MeasureEvidencesTabFragment_16fISc on Measure {\n  id\n  canUploadEvidence: permission(action: \"core:measure:upload-evidence\")\n  evidences(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    edges {\n      node {\n        id\n        file {\n          fileName\n          mimeType\n          size\n          id\n        }\n        ...MeasureEvidencesTabFragment_evidence\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n}\n\nfragment MeasureEvidencesTabFragment_evidence on Evidence {\n  id\n  file {\n    fileName\n    mimeType\n    size\n    id\n  }\n  type\n  createdAt\n  canDelete: permission(action: \"core:evidence:delete\")\n}\n"
   }
 };
 })();
 
-(node as any).hash = "c80a159cbb4ac8b8855875eff00d1255";
+(node as any).hash = "b281a36db45b03e86ec56097b6b9b296";
 
 export default node;

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<95a549108a1a26ccfaf2d8aae42cea73>>
+ * @generated SignedSource<<d189402d5d6f47a0b2a3e303436e8a74>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,6 +11,7 @@
 import { ReaderFragment } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type MeasureEvidencesTabFragment$data = {
+  readonly canUploadEvidence: boolean;
   readonly evidences: {
     readonly __id: string;
     readonly edges: ReadonlyArray<{
@@ -109,6 +110,19 @@ return {
   "name": "MeasureEvidencesTabFragment",
   "selections": [
     (v1/*: any*/),
+    {
+      "alias": "canUploadEvidence",
+      "args": [
+        {
+          "kind": "Literal",
+          "name": "action",
+          "value": "core:measure:upload-evidence"
+        }
+      ],
+      "kind": "ScalarField",
+      "name": "permission",
+      "storageKey": "permission(action:\"core:measure:upload-evidence\")"
+    },
     {
       "alias": "evidences",
       "args": [
@@ -257,6 +271,6 @@ return {
 };
 })();
 
-(node as any).hash = "c80a159cbb4ac8b8855875eff00d1255";
+(node as any).hash = "b281a36db45b03e86ec56097b6b9b296";
 
 export default node;

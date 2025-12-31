@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<0fb98c755d9aacac0ef1d508af9e7edc>>
+ * @generated SignedSource<<e4f324b614d93555afbc7055f63c534a>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,6 +12,7 @@ import { ReaderFragment } from 'relay-runtime';
 export type EvidenceType = "FILE" | "LINK";
 import { FragmentRefs } from "relay-runtime";
 export type MeasureEvidencesTabFragment_evidence$data = {
+  readonly canDelete: boolean;
   readonly createdAt: any;
   readonly file: {
     readonly fileName: string;
@@ -85,12 +86,25 @@ const node: ReaderFragment = {
       "kind": "ScalarField",
       "name": "createdAt",
       "storageKey": null
+    },
+    {
+      "alias": "canDelete",
+      "args": [
+        {
+          "kind": "Literal",
+          "name": "action",
+          "value": "core:evidence:delete"
+        }
+      ],
+      "kind": "ScalarField",
+      "name": "permission",
+      "storageKey": "permission(action:\"core:evidence:delete\")"
     }
   ],
   "type": "Evidence",
   "abstractKey": null
 };
 
-(node as any).hash = "441ff1dd2dd62fea27050c5f550b27ea";
+(node as any).hash = "af214cdfe077ad77326c65f33ce3ca1f";
 
 export default node;

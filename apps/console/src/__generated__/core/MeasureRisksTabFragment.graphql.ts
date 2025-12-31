@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<caa6c09d5f08c92e9e1083e0e6691713>>
+ * @generated SignedSource<<4f367882dc2cd7bb8a8605d9192cd7f5>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -16,6 +16,8 @@ export type MeasureRisksTabFragment$data = {
     readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly node: {
+        readonly canCreateMeasureMapping: boolean;
+        readonly canDeleteMeasureMapping: boolean;
         readonly id: string;
         readonly " $fragmentSpreads": FragmentRefs<"LinkedRisksCardFragment">;
       };
@@ -79,6 +81,32 @@ return {
               "plural": false,
               "selections": [
                 (v0/*: any*/),
+                {
+                  "alias": "canCreateMeasureMapping",
+                  "args": [
+                    {
+                      "kind": "Literal",
+                      "name": "action",
+                      "value": "core:risk:create-measure-mapping"
+                    }
+                  ],
+                  "kind": "ScalarField",
+                  "name": "permission",
+                  "storageKey": "permission(action:\"core:risk:create-measure-mapping\")"
+                },
+                {
+                  "alias": "canDeleteMeasureMapping",
+                  "args": [
+                    {
+                      "kind": "Literal",
+                      "name": "action",
+                      "value": "core:risk:delete-measure-mapping"
+                    }
+                  ],
+                  "kind": "ScalarField",
+                  "name": "permission",
+                  "storageKey": "permission(action:\"core:risk:delete-measure-mapping\")"
+                },
                 {
                   "args": null,
                   "kind": "FragmentSpread",
@@ -150,6 +178,6 @@ return {
 };
 })();
 
-(node as any).hash = "1d73bd64b1a01fed76eac68d83d4d4c1";
+(node as any).hash = "a837a187026f5c75c67efcb4831d0b76";
 
 export default node;
