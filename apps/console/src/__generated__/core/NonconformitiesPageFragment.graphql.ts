@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<310dfd9974ac15af86b8e8ecf21d2b5c>>
+ * @generated SignedSource<<8137b73b0ad40930966c6feb6370420b>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -25,6 +25,8 @@ export type NonconformitiesPageFragment$data = {
           readonly id: string;
           readonly name: string | null | undefined;
         } | null | undefined;
+        readonly canDelete: boolean;
+        readonly canUpdate: boolean;
         readonly correctiveAction: string | null | undefined;
         readonly createdAt: any;
         readonly dateIdentified: any | null | undefined;
@@ -293,6 +295,32 @@ return {
                   "storageKey": null
                 },
                 {
+                  "alias": "canUpdate",
+                  "args": [
+                    {
+                      "kind": "Literal",
+                      "name": "action",
+                      "value": "core:nonconformity:update"
+                    }
+                  ],
+                  "kind": "ScalarField",
+                  "name": "permission",
+                  "storageKey": "permission(action:\"core:nonconformity:update\")"
+                },
+                {
+                  "alias": "canDelete",
+                  "args": [
+                    {
+                      "kind": "Literal",
+                      "name": "action",
+                      "value": "core:nonconformity:delete"
+                    }
+                  ],
+                  "kind": "ScalarField",
+                  "name": "permission",
+                  "storageKey": "permission(action:\"core:nonconformity:delete\")"
+                },
+                {
                   "alias": null,
                   "args": null,
                   "kind": "ScalarField",
@@ -358,6 +386,6 @@ return {
 };
 })();
 
-(node as any).hash = "0043855d2410d9ab1fd8fceda53f7c5a";
+(node as any).hash = "57f7e0fb2efff357af936edf90e14876";
 
 export default node;
