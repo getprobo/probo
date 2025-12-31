@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<b3d65d827fc901aa002b24df72f79ee2>>
+ * @generated SignedSource<<0584af25ba02b2b7138cc14ba4efc1b6>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,6 +12,7 @@ import { ReaderFragment } from 'relay-runtime';
 export type VendorCategory = "ANALYTICS" | "CLOUD_MONITORING" | "CLOUD_PROVIDER" | "COLLABORATION" | "CUSTOMER_SUPPORT" | "DATA_STORAGE_AND_PROCESSING" | "DOCUMENT_MANAGEMENT" | "EMPLOYEE_MANAGEMENT" | "ENGINEERING" | "FINANCE" | "IDENTITY_PROVIDER" | "IT" | "MARKETING" | "OFFICE_OPERATIONS" | "OTHER" | "PASSWORD_MANAGEMENT" | "PRODUCT_AND_DESIGN" | "PROFESSIONAL_SERVICES" | "RECRUITING" | "SALES" | "SECURITY" | "VERSION_CONTROL";
 import { FragmentRefs } from "relay-runtime";
 export type TrustCenterVendorsCardFragment$data = {
+  readonly canUpdate: boolean;
   readonly category: VendorCategory;
   readonly createdAt: any;
   readonly description: string | null | undefined;
@@ -72,12 +73,25 @@ const node: ReaderFragment = {
       "kind": "ScalarField",
       "name": "createdAt",
       "storageKey": null
+    },
+    {
+      "alias": "canUpdate",
+      "args": [
+        {
+          "kind": "Literal",
+          "name": "action",
+          "value": "core:vendor:update"
+        }
+      ],
+      "kind": "ScalarField",
+      "name": "permission",
+      "storageKey": "permission(action:\"core:vendor:update\")"
     }
   ],
   "type": "Vendor",
   "abstractKey": null
 };
 
-(node as any).hash = "72b637589fd9299b5e982450fccbfd12";
+(node as any).hash = "bac8046182ce2402a5a20ce27a25f7e6";
 
 export default node;
