@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<5dfe8149e11942df0913ea8ba61e7ee5>>
+ * @generated SignedSource<<587b1edc25e82b42dd300f9fe7424bc3>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -15,8 +15,14 @@ export type MeasureGraphListQuery$variables = {
 };
 export type MeasureGraphListQuery$data = {
   readonly organization: {
+    readonly __typename: "Organization";
+    readonly canCreateMeasure: boolean;
     readonly id: string;
     readonly " $fragmentSpreads": FragmentRefs<"MeasuresPageFragment">;
+  } | {
+    // This will never be '%other', but we need some
+    // value in case none of the concrete values match.
+    readonly __typename: "%other";
   };
 };
 export type MeasureGraphListQuery = {
@@ -43,17 +49,30 @@ v2 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "id",
+  "name": "__typename",
   "storageKey": null
 },
 v3 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "__typename",
+  "name": "id",
   "storageKey": null
 },
-v4 = [
+v4 = {
+  "alias": "canCreateMeasure",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "core:measure:create"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"core:measure:create\")"
+},
+v5 = [
   {
     "kind": "Literal",
     "name": "first",
@@ -68,21 +87,34 @@ return {
     "name": "MeasureGraphListQuery",
     "selections": [
       {
-        "alias": "organization",
-        "args": (v1/*: any*/),
-        "concreteType": null,
-        "kind": "LinkedField",
-        "name": "node",
-        "plural": false,
-        "selections": [
-          (v2/*: any*/),
-          {
-            "args": null,
-            "kind": "FragmentSpread",
-            "name": "MeasuresPageFragment"
-          }
-        ],
-        "storageKey": null
+        "kind": "RequiredField",
+        "field": {
+          "alias": "organization",
+          "args": (v1/*: any*/),
+          "concreteType": null,
+          "kind": "LinkedField",
+          "name": "node",
+          "plural": false,
+          "selections": [
+            (v2/*: any*/),
+            {
+              "kind": "InlineFragment",
+              "selections": [
+                (v3/*: any*/),
+                (v4/*: any*/),
+                {
+                  "args": null,
+                  "kind": "FragmentSpread",
+                  "name": "MeasuresPageFragment"
+                }
+              ],
+              "type": "Organization",
+              "abstractKey": null
+            }
+          ],
+          "storageKey": null
+        },
+        "action": "THROW"
       }
     ],
     "type": "Query",
@@ -102,14 +134,15 @@ return {
         "name": "node",
         "plural": false,
         "selections": [
-          (v3/*: any*/),
           (v2/*: any*/),
+          (v3/*: any*/),
           {
             "kind": "InlineFragment",
             "selections": [
+              (v4/*: any*/),
               {
                 "alias": null,
-                "args": (v4/*: any*/),
+                "args": (v5/*: any*/),
                 "concreteType": "MeasureConnection",
                 "kind": "LinkedField",
                 "name": "measures",
@@ -131,7 +164,7 @@ return {
                         "name": "node",
                         "plural": false,
                         "selections": [
-                          (v2/*: any*/),
+                          (v3/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -154,13 +187,39 @@ return {
                             "storageKey": null
                           },
                           {
+                            "alias": "canUpdate",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:measure:update"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:measure:update\")"
+                          },
+                          {
+                            "alias": "canDelete",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:measure:delete"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:measure:delete\")"
+                          },
+                          {
                             "alias": null,
                             "args": null,
                             "kind": "ScalarField",
                             "name": "description",
                             "storageKey": null
                           },
-                          (v3/*: any*/)
+                          (v2/*: any*/)
                         ],
                         "storageKey": null
                       },
@@ -216,7 +275,7 @@ return {
               },
               {
                 "alias": null,
-                "args": (v4/*: any*/),
+                "args": (v5/*: any*/),
                 "filters": null,
                 "handle": "connection",
                 "key": "MeasuresGraphListQuery__measures",
@@ -233,16 +292,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "644632c32801939ffc06c8258b3060f3",
+    "cacheID": "28d1efc46af83ac0b77b4bbf254ead9f",
     "id": null,
     "metadata": {},
     "name": "MeasureGraphListQuery",
     "operationKind": "query",
-    "text": "query MeasureGraphListQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    id\n    ...MeasuresPageFragment\n  }\n}\n\nfragment MeasureFormDialogMeasureFragment on Measure {\n  id\n  description\n  name\n  category\n  state\n}\n\nfragment MeasuresPageFragment on Organization {\n  measures(first: 500) {\n    edges {\n      node {\n        id\n        name\n        category\n        state\n        ...MeasureFormDialogMeasureFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n"
+    "text": "query MeasureGraphListQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      canCreateMeasure: permission(action: \"core:measure:create\")\n      ...MeasuresPageFragment\n    }\n    id\n  }\n}\n\nfragment MeasureFormDialogMeasureFragment on Measure {\n  id\n  description\n  name\n  category\n  state\n}\n\nfragment MeasuresPageFragment on Organization {\n  measures(first: 500) {\n    edges {\n      node {\n        id\n        name\n        category\n        state\n        canUpdate: permission(action: \"core:measure:update\")\n        canDelete: permission(action: \"core:measure:delete\")\n        ...MeasureFormDialogMeasureFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "3014f5724257c0819ba6ef15d2b72d07";
+(node as any).hash = "291184a9b739da290f087db35714ba6b";
 
 export default node;

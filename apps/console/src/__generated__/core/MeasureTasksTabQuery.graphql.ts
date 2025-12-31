@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<1ee2176710f8c100a3d16e65be7a5f74>>
+ * @generated SignedSource<<07e722a4da8a25668cd0e49cc07598f9>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -17,6 +17,7 @@ export type MeasureTasksTabQuery$variables = {
 export type MeasureTasksTabQuery$data = {
   readonly node: {
     readonly __typename: "Measure";
+    readonly canCreateTask: boolean;
     readonly id: string;
     readonly tasks: {
       readonly __id: string;
@@ -69,20 +70,33 @@ v3 = {
   "storageKey": null
 },
 v4 = {
+  "alias": "canCreateTask",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "core:task:create"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"core:task:create\")"
+},
+v5 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "state",
   "storageKey": null
 },
-v5 = {
+v6 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "cursor",
   "storageKey": null
 },
-v6 = {
+v7 = {
   "alias": null,
   "args": null,
   "concreteType": "PageInfo",
@@ -107,7 +121,7 @@ v6 = {
   ],
   "storageKey": null
 },
-v7 = {
+v8 = {
   "kind": "ClientExtension",
   "selections": [
     {
@@ -119,14 +133,14 @@ v7 = {
     }
   ]
 },
-v8 = [
+v9 = [
   {
     "kind": "Literal",
     "name": "first",
     "value": 100
   }
 ],
-v9 = {
+v10 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
@@ -155,6 +169,7 @@ return {
               "kind": "InlineFragment",
               "selections": [
                 (v3/*: any*/),
+                (v4/*: any*/),
                 {
                   "kind": "RequiredField",
                   "field": {
@@ -184,7 +199,7 @@ return {
                               "plural": false,
                               "selections": [
                                 (v3/*: any*/),
-                                (v4/*: any*/),
+                                (v5/*: any*/),
                                 {
                                   "args": null,
                                   "kind": "FragmentSpread",
@@ -199,14 +214,14 @@ return {
                               ],
                               "storageKey": null
                             },
-                            (v5/*: any*/)
+                            (v6/*: any*/)
                           ],
                           "storageKey": null
                         },
                         "action": "THROW"
                       },
-                      (v6/*: any*/),
-                      (v7/*: any*/)
+                      (v7/*: any*/),
+                      (v8/*: any*/)
                     ],
                     "storageKey": null
                   },
@@ -244,9 +259,10 @@ return {
           {
             "kind": "InlineFragment",
             "selections": [
+              (v4/*: any*/),
               {
                 "alias": null,
-                "args": (v8/*: any*/),
+                "args": (v9/*: any*/),
                 "concreteType": "TaskConnection",
                 "kind": "LinkedField",
                 "name": "tasks",
@@ -269,7 +285,7 @@ return {
                         "plural": false,
                         "selections": [
                           (v3/*: any*/),
-                          (v4/*: any*/),
+                          (v5/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -277,7 +293,7 @@ return {
                             "name": "description",
                             "storageKey": null
                           },
-                          (v9/*: any*/),
+                          (v10/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -320,7 +336,7 @@ return {
                             "plural": false,
                             "selections": [
                               (v3/*: any*/),
-                              (v9/*: any*/)
+                              (v10/*: any*/)
                             ],
                             "storageKey": null
                           },
@@ -354,18 +370,18 @@ return {
                         ],
                         "storageKey": null
                       },
-                      (v5/*: any*/)
+                      (v6/*: any*/)
                     ],
                     "storageKey": null
                   },
-                  (v6/*: any*/),
-                  (v7/*: any*/)
+                  (v7/*: any*/),
+                  (v8/*: any*/)
                 ],
                 "storageKey": "tasks(first:100)"
               },
               {
                 "alias": null,
-                "args": (v8/*: any*/),
+                "args": (v9/*: any*/),
                 "filters": null,
                 "handle": "connection",
                 "key": "Measure__tasks",
@@ -382,7 +398,7 @@ return {
     ]
   },
   "params": {
-    "cacheID": "81a89b0ac44d316e2e580dd536be2812",
+    "cacheID": "45dadcc414507aa7ccaab436cd5081c7",
     "id": null,
     "metadata": {
       "connection": [
@@ -399,11 +415,11 @@ return {
     },
     "name": "MeasureTasksTabQuery",
     "operationKind": "query",
-    "text": "query MeasureTasksTabQuery(\n  $measureId: ID!\n) {\n  node(id: $measureId) {\n    __typename\n    ... on Measure {\n      id\n      tasks(first: 100) {\n        edges {\n          node {\n            id\n            state\n            ...TaskFormDialogFragment\n            ...TasksCard_TaskRowFragment\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n    }\n    id\n  }\n}\n\nfragment TaskFormDialogFragment on Task {\n  id\n  description\n  name\n  state\n  timeEstimate\n  deadline\n  assignedTo {\n    id\n  }\n  measure {\n    id\n  }\n}\n\nfragment TasksCard_TaskRowFragment on Task {\n  id\n  name\n  state\n  description\n  timeEstimate\n  deadline\n  canUpdate: permission(action: \"core:task:update\")\n  canDelete: permission(action: \"core:task:delete\")\n  assignedTo {\n    id\n    fullName\n  }\n  measure {\n    id\n    name\n  }\n}\n"
+    "text": "query MeasureTasksTabQuery(\n  $measureId: ID!\n) {\n  node(id: $measureId) {\n    __typename\n    ... on Measure {\n      id\n      canCreateTask: permission(action: \"core:task:create\")\n      tasks(first: 100) {\n        edges {\n          node {\n            id\n            state\n            ...TaskFormDialogFragment\n            ...TasksCard_TaskRowFragment\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n    }\n    id\n  }\n}\n\nfragment TaskFormDialogFragment on Task {\n  id\n  description\n  name\n  state\n  timeEstimate\n  deadline\n  assignedTo {\n    id\n  }\n  measure {\n    id\n  }\n}\n\nfragment TasksCard_TaskRowFragment on Task {\n  id\n  name\n  state\n  description\n  timeEstimate\n  deadline\n  canUpdate: permission(action: \"core:task:update\")\n  canDelete: permission(action: \"core:task:delete\")\n  assignedTo {\n    id\n    fullName\n  }\n  measure {\n    id\n    name\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "0e886bdfa0bcba6ec98758098e1ec0b5";
+(node as any).hash = "a2dcb46b0d6a1a26b4e23db5c44c5d65";
 
 export default node;
