@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<526115183274c5c81a5a70c16012591e>>
+ * @generated SignedSource<<97f85a5e54306b3b401a123c1d0fc41c>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -22,6 +22,8 @@ export type NonconformityGraphNodeQuery$data = {
       };
       readonly id: string;
     } | null | undefined;
+    readonly canDelete?: boolean;
+    readonly canUpdate?: boolean;
     readonly correctiveAction?: string | null | undefined;
     readonly createdAt?: any;
     readonly dateIdentified?: any | null | undefined;
@@ -208,6 +210,32 @@ v17 = {
   "kind": "ScalarField",
   "name": "updatedAt",
   "storageKey": null
+},
+v18 = {
+  "alias": "canUpdate",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "core:nonconformity:update"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"core:nonconformity:update\")"
+},
+v19 = {
+  "alias": "canDelete",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "core:nonconformity:delete"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"core:nonconformity:delete\")"
 };
 return {
   "fragment": {
@@ -241,7 +269,9 @@ return {
               (v14/*: any*/),
               (v15/*: any*/),
               (v16/*: any*/),
-              (v17/*: any*/)
+              (v17/*: any*/),
+              (v18/*: any*/),
+              (v19/*: any*/)
             ],
             "type": "Nonconformity",
             "abstractKey": null
@@ -291,7 +321,9 @@ return {
               (v14/*: any*/),
               (v15/*: any*/),
               (v16/*: any*/),
-              (v17/*: any*/)
+              (v17/*: any*/),
+              (v18/*: any*/),
+              (v19/*: any*/)
             ],
             "type": "Nonconformity",
             "abstractKey": null
@@ -302,16 +334,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "e394317a8e7661c374224c08c6fd5b0b",
+    "cacheID": "f917aa1ad5d7628a6193743a18c9aab9",
     "id": null,
     "metadata": {},
     "name": "NonconformityGraphNodeQuery",
     "operationKind": "query",
-    "text": "query NonconformityGraphNodeQuery(\n  $nonconformityId: ID!\n) {\n  node(id: $nonconformityId) {\n    __typename\n    ... on Nonconformity {\n      id\n      snapshotId\n      referenceId\n      description\n      dateIdentified\n      rootCause\n      correctiveAction\n      dueDate\n      status\n      effectivenessCheck\n      audit {\n        id\n        framework {\n          id\n          name\n        }\n      }\n      owner {\n        id\n        fullName\n      }\n      organization {\n        id\n        name\n      }\n      createdAt\n      updatedAt\n    }\n    id\n  }\n}\n"
+    "text": "query NonconformityGraphNodeQuery(\n  $nonconformityId: ID!\n) {\n  node(id: $nonconformityId) {\n    __typename\n    ... on Nonconformity {\n      id\n      snapshotId\n      referenceId\n      description\n      dateIdentified\n      rootCause\n      correctiveAction\n      dueDate\n      status\n      effectivenessCheck\n      audit {\n        id\n        framework {\n          id\n          name\n        }\n      }\n      owner {\n        id\n        fullName\n      }\n      organization {\n        id\n        name\n      }\n      createdAt\n      updatedAt\n      canUpdate: permission(action: \"core:nonconformity:update\")\n      canDelete: permission(action: \"core:nonconformity:delete\")\n    }\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "e57a600fda9f0f5a0178818df75b0436";
+(node as any).hash = "6d1ecfb7df432a591c7e16461842796d";
 
 export default node;

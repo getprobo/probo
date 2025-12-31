@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<5e8c575bf254c267b0694d9c7dd20a82>>
+ * @generated SignedSource<<c51c49b6699276336c3e5a4cc9a43998>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -315,6 +315,32 @@ return {
                             "name": "updatedAt",
                             "storageKey": null
                           },
+                          {
+                            "alias": "canUpdate",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:nonconformity:update"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:nonconformity:update\")"
+                          },
+                          {
+                            "alias": "canDelete",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:nonconformity:delete"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:nonconformity:delete\")"
+                          },
                           (v8/*: any*/)
                         ],
                         "storageKey": null
@@ -390,16 +416,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "d0fe732fcd104cafd8dec7748d5f3971",
+    "cacheID": "3876389521eec8e9737e5939cff3d95a",
     "id": null,
     "metadata": {},
     "name": "NonconformitiesPageRefetchQuery",
     "operationKind": "query",
-    "text": "query NonconformitiesPageRefetchQuery(\n  $after: CursorKey\n  $first: Int = 10\n  $snapshotId: ID = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...NonconformitiesPageFragment_35e0S5\n    id\n  }\n}\n\nfragment NonconformitiesPageFragment_35e0S5 on Organization {\n  id\n  nonconformities(first: $first, after: $after, filter: {snapshotId: $snapshotId}) {\n    totalCount\n    edges {\n      node {\n        id\n        referenceId\n        snapshotId\n        description\n        status\n        dateIdentified\n        dueDate\n        rootCause\n        correctiveAction\n        effectivenessCheck\n        audit {\n          id\n          name\n          framework {\n            id\n            name\n          }\n        }\n        owner {\n          id\n          fullName\n        }\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
+    "text": "query NonconformitiesPageRefetchQuery(\n  $after: CursorKey\n  $first: Int = 10\n  $snapshotId: ID = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...NonconformitiesPageFragment_35e0S5\n    id\n  }\n}\n\nfragment NonconformitiesPageFragment_35e0S5 on Organization {\n  id\n  nonconformities(first: $first, after: $after, filter: {snapshotId: $snapshotId}) {\n    totalCount\n    edges {\n      node {\n        id\n        referenceId\n        snapshotId\n        description\n        status\n        dateIdentified\n        dueDate\n        rootCause\n        correctiveAction\n        effectivenessCheck\n        audit {\n          id\n          name\n          framework {\n            id\n            name\n          }\n        }\n        owner {\n          id\n          fullName\n        }\n        createdAt\n        updatedAt\n        canUpdate: permission(action: \"core:nonconformity:update\")\n        canDelete: permission(action: \"core:nonconformity:delete\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "0043855d2410d9ab1fd8fceda53f7c5a";
+(node as any).hash = "57f7e0fb2efff357af936edf90e14876";
 
 export default node;

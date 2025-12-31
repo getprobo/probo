@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<db7fca9f154989ebab9e5c9b0f5bfd85>>
+ * @generated SignedSource<<77c22921ec67a1fb75f743dba1685698>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -37,6 +37,8 @@ export type NonconformityGraphCreateMutation$data = {
           };
           readonly id: string;
         } | null | undefined;
+        readonly canDelete: boolean;
+        readonly canUpdate: boolean;
         readonly createdAt: any;
         readonly dateIdentified: any | null | undefined;
         readonly description: string | null | undefined;
@@ -157,6 +159,32 @@ v12 = {
   "kind": "ScalarField",
   "name": "createdAt",
   "storageKey": null
+},
+v13 = {
+  "alias": "canUpdate",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "core:nonconformity:update"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"core:nonconformity:update\")"
+},
+v14 = {
+  "alias": "canDelete",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "core:nonconformity:delete"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"core:nonconformity:delete\")"
 };
 return {
   "fragment": {
@@ -224,7 +252,9 @@ return {
                     "storageKey": null
                   },
                   (v11/*: any*/),
-                  (v12/*: any*/)
+                  (v12/*: any*/),
+                  (v13/*: any*/),
+                  (v14/*: any*/)
                 ],
                 "storageKey": null
               }
@@ -304,7 +334,9 @@ return {
                     "storageKey": null
                   },
                   (v11/*: any*/),
-                  (v12/*: any*/)
+                  (v12/*: any*/),
+                  (v13/*: any*/),
+                  (v14/*: any*/)
                 ],
                 "storageKey": null
               }
@@ -333,16 +365,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "ad0967f3684a882d198eaa853a691d34",
+    "cacheID": "a6643ead6aba7ef0e9e25dcf889c51e5",
     "id": null,
     "metadata": {},
     "name": "NonconformityGraphCreateMutation",
     "operationKind": "mutation",
-    "text": "mutation NonconformityGraphCreateMutation(\n  $input: CreateNonconformityInput!\n) {\n  createNonconformity(input: $input) {\n    nonconformityEdge {\n      node {\n        id\n        referenceId\n        description\n        status\n        dateIdentified\n        dueDate\n        rootCause\n        audit {\n          id\n          framework {\n            name\n            id\n          }\n        }\n        owner {\n          id\n          fullName\n        }\n        createdAt\n      }\n    }\n  }\n}\n"
+    "text": "mutation NonconformityGraphCreateMutation(\n  $input: CreateNonconformityInput!\n) {\n  createNonconformity(input: $input) {\n    nonconformityEdge {\n      node {\n        id\n        referenceId\n        description\n        status\n        dateIdentified\n        dueDate\n        rootCause\n        audit {\n          id\n          framework {\n            name\n            id\n          }\n        }\n        owner {\n          id\n          fullName\n        }\n        createdAt\n        canUpdate: permission(action: \"core:nonconformity:update\")\n        canDelete: permission(action: \"core:nonconformity:delete\")\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "2a62fc6f16eb6677eecd1cd35de01a16";
+(node as any).hash = "198593806928185e34490d5c656e70ca";
 
 export default node;

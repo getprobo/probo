@@ -42,8 +42,6 @@ import {
   type GraphQLError,
 } from "@probo/helpers";
 import type { NonconformityGraphNodeQuery } from "/__generated__/core/NonconformityGraphNodeQuery.graphql";
-import { PermissionsContext } from "/providers/PermissionsContext";
-import { use } from "react";
 
 const updateNonconformitySchema = z.object({
   referenceId: z.string().min(1, "Reference ID is required"),
@@ -63,16 +61,15 @@ type Props = {
 };
 
 export default function NonconformityDetailsPage(props: Props) {
-  const data = usePreloadedQuery<NonconformityGraphNodeQuery>(
-    nonconformityNodeQuery,
-    props.queryRef,
-  );
-  const nonconformity = data.node;
+  const { node: nonconformity } =
+    usePreloadedQuery<NonconformityGraphNodeQuery>(
+      nonconformityNodeQuery,
+      props.queryRef,
+    );
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
   const { snapshotId } = useParams<{ snapshotId?: string }>();
   const isSnapshotMode = Boolean(snapshotId);
-  const { isAuthorized } = use(PermissionsContext);
 
   validateSnapshotConsistency(nonconformity, snapshotId);
 
@@ -171,7 +168,7 @@ export default function NonconformityDetailsPage(props: Props) {
         </div>
         {!isSnapshotMode && (
           <ActionDropdown variant="secondary">
-            {isAuthorized("Nonconformity", "deleteNonconformity") && (
+            {nonconformity.canDelete && (
               <DropdownItem
                 variant="danger"
                 icon={IconTrashCan}
@@ -296,7 +293,7 @@ export default function NonconformityDetailsPage(props: Props) {
             <div className="flex justify-end">
               {formState.isDirty &&
                 !isSnapshotMode &&
-                isAuthorized("Nonconformity", "updateNonconformity") && (
+                nonconformity.canUpdate && (
                   <Button type="submit" disabled={formState.isSubmitting}>
                     {formState.isSubmitting ? __("Updating...") : __("Update")}
                   </Button>

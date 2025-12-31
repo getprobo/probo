@@ -45,8 +45,6 @@ import type {
   NonconformitiesPageFragment$key,
   NonconformitiesPageFragment$data,
 } from "/__generated__/core/NonconformitiesPageFragment.graphql";
-import { use } from "react";
-import { PermissionsContext } from "/providers/PermissionsContext";
 import type { NonconformityGraphListQuery } from "/__generated__/core/NonconformityGraphListQuery.graphql";
 
 type Nonconformity =
@@ -102,6 +100,8 @@ const nonconformitiesPageFragment = graphql`
           }
           createdAt
           updatedAt
+          canUpdate: permission(action: "core:nonconformity:update")
+          canDelete: permission(action: "core:nonconformity:delete")
         }
       }
       pageInfo {
@@ -119,7 +119,6 @@ export default function NonconformitiesPage({
   const organizationId = useOrganizationId();
   const { snapshotId } = useParams<{ snapshotId?: string }>();
   const isSnapshotMode = Boolean(snapshotId);
-  const { isAuthorized } = use(PermissionsContext);
 
   usePageTitle(__("Nonconformities"));
 
@@ -144,8 +143,7 @@ export default function NonconformitiesPage({
 
   const hasAnyAction =
     !isSnapshotMode &&
-    (isAuthorized("Nonconformity", "updateNonconformity") ||
-      isAuthorized("Nonconformity", "deleteNonconformity"));
+    nonconformities.some(({ canDelete, canUpdate }) => canDelete || canUpdate);
 
   return (
     <div className="space-y-6">
@@ -154,15 +152,14 @@ export default function NonconformitiesPage({
         title={__("Nonconformities")}
         description={__("Manage your organization's non conformities.")}
       >
-        {!isSnapshotMode &&
-          isAuthorized("Organization", "createNonconformity") && (
-            <CreateNonconformityDialog
-              organizationId={organizationId}
-              connection={connectionId}
-            >
-              <Button icon={IconPlusLarge}>{__("Add nonconformity")}</Button>
-            </CreateNonconformityDialog>
-          )}
+        {!isSnapshotMode && organization.node.canCreateNonconformity && (
+          <CreateNonconformityDialog
+            organizationId={organizationId}
+            connection={connectionId}
+          >
+            <Button icon={IconPlusLarge}>{__("Add nonconformity")}</Button>
+          </CreateNonconformityDialog>
+        )}
       </PageHeader>
 
       {nonconformities.length === 0 ? (
@@ -238,7 +235,6 @@ function NonconformityRow({
   const { __ } = useTranslate();
   const confirm = useConfirm();
   const [deleteNonconformity] = useMutation(deleteNonconformityMutation);
-  const { isAuthorized } = use(PermissionsContext);
 
   const nonconformityDetailUrl = isSnapshotMode
     ? `/organizations/${organizationId}/snapshots/${snapshotId}/nonconformities/${nonconformity.id}`
@@ -310,7 +306,7 @@ function NonconformityRow({
       {hasAnyAction && (
         <Td noLink width={50} className="text-end">
           <ActionDropdown>
-            {isAuthorized("Nonconformity", "deleteNonconformity") && (
+            {nonconformity.canDelete && (
               <DropdownItem
                 icon={IconTrashCan}
                 variant="danger"
