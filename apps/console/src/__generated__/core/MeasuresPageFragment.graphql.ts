@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<7b45de7513dda2166217b9bd76716ece>>
+ * @generated SignedSource<<2332fd6939942a5ee3d32511feffa42e>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -16,6 +16,8 @@ export type MeasuresPageFragment$data = {
     readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly node: {
+        readonly canDelete: boolean;
+        readonly canUpdate: boolean;
         readonly category: string;
         readonly id: string;
         readonly name: string;
@@ -101,6 +103,32 @@ const node: ReaderFragment = {
                   "storageKey": null
                 },
                 {
+                  "alias": "canUpdate",
+                  "args": [
+                    {
+                      "kind": "Literal",
+                      "name": "action",
+                      "value": "core:measure:update"
+                    }
+                  ],
+                  "kind": "ScalarField",
+                  "name": "permission",
+                  "storageKey": "permission(action:\"core:measure:update\")"
+                },
+                {
+                  "alias": "canDelete",
+                  "args": [
+                    {
+                      "kind": "Literal",
+                      "name": "action",
+                      "value": "core:measure:delete"
+                    }
+                  ],
+                  "kind": "ScalarField",
+                  "name": "permission",
+                  "storageKey": "permission(action:\"core:measure:delete\")"
+                },
+                {
                   "args": null,
                   "kind": "FragmentSpread",
                   "name": "MeasureFormDialogMeasureFragment"
@@ -170,6 +198,6 @@ const node: ReaderFragment = {
   "abstractKey": null
 };
 
-(node as any).hash = "31e13504f5bd52607fa81ac300e7303d";
+(node as any).hash = "e9d543c6f68f5c205ba55f6d77206091";
 
 export default node;
