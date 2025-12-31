@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<5cfbdbc980894977800a18064306f2c1>>
+ * @generated SignedSource<<e2ff7cc39a32a043a4d4c2ad4dac8411>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -16,6 +16,8 @@ export type DatumGraphNodeQuery$variables = {
 };
 export type DatumGraphNodeQuery$data = {
   readonly node: {
+    readonly canDelete?: boolean;
+    readonly canUpdate?: boolean;
     readonly createdAt?: any;
     readonly dataClassification?: DataClassification;
     readonly id?: string;
@@ -188,6 +190,32 @@ v10 = {
   "kind": "ScalarField",
   "name": "updatedAt",
   "storageKey": null
+},
+v11 = {
+  "alias": "canUpdate",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "core:datum:update"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"core:datum:update\")"
+},
+v12 = {
+  "alias": "canDelete",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "core:datum:delete"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"core:datum:delete\")"
 };
 return {
   "fragment": {
@@ -215,7 +243,9 @@ return {
               (v7/*: any*/),
               (v8/*: any*/),
               (v9/*: any*/),
-              (v10/*: any*/)
+              (v10/*: any*/),
+              (v11/*: any*/),
+              (v12/*: any*/)
             ],
             "type": "Datum",
             "abstractKey": null
@@ -259,7 +289,9 @@ return {
               (v7/*: any*/),
               (v8/*: any*/),
               (v9/*: any*/),
-              (v10/*: any*/)
+              (v10/*: any*/),
+              (v11/*: any*/),
+              (v12/*: any*/)
             ],
             "type": "Datum",
             "abstractKey": null
@@ -270,16 +302,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "6ed49a3413c0214dc95da9a422e484b4",
+    "cacheID": "036588bb9b3daffb20c9d01a708976ac",
     "id": null,
     "metadata": {},
     "name": "DatumGraphNodeQuery",
     "operationKind": "query",
-    "text": "query DatumGraphNodeQuery(\n  $dataId: ID!\n) {\n  node(id: $dataId) {\n    __typename\n    ... on Datum {\n      id\n      snapshotId\n      name\n      dataClassification\n      owner {\n        id\n        fullName\n      }\n      vendors(first: 50) {\n        edges {\n          node {\n            id\n            name\n            websiteUrl\n            category\n          }\n        }\n      }\n      organization {\n        id\n      }\n      createdAt\n      updatedAt\n    }\n    id\n  }\n}\n"
+    "text": "query DatumGraphNodeQuery(\n  $dataId: ID!\n) {\n  node(id: $dataId) {\n    __typename\n    ... on Datum {\n      id\n      snapshotId\n      name\n      dataClassification\n      owner {\n        id\n        fullName\n      }\n      vendors(first: 50) {\n        edges {\n          node {\n            id\n            name\n            websiteUrl\n            category\n          }\n        }\n      }\n      organization {\n        id\n      }\n      createdAt\n      updatedAt\n      canUpdate: permission(action: \"core:datum:update\")\n      canDelete: permission(action: \"core:datum:delete\")\n    }\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "2f4df20b67f8b21eda5f510f250abda1";
+(node as any).hash = "2b2e220e0bdd98bbee7ea72a00db7a61";
 
 export default node;
