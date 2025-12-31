@@ -1,7 +1,5 @@
 import { useTranslate } from "@probo/i18n";
 import { Button, Card, IconTrashCan } from "@probo/ui";
-import { use } from "react";
-import { PermissionsContext } from "/providers/PermissionsContext";
 import { useNavigate } from "react-router";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { graphql } from "relay-runtime";
@@ -18,6 +16,7 @@ export const generalSettingsPageQuery = graphql`
       ... on Organization {
         id
         name @required(action: THROW)
+        canDelete: permission(action: "iam:organization:delete")
         ...OrganizationFormFragment
       }
     }
@@ -41,9 +40,6 @@ export function GeneralSettingsPage(props: {
   const { queryRef } = props;
   const { __ } = useTranslate();
   const navigate = useNavigate();
-
-  const { isAuthorized } = use(PermissionsContext);
-  const canDelete = isAuthorized("Organization", "deleteOrganization");
 
   const { organization } = usePreloadedQuery<GeneralSettingsPageQuery>(
     generalSettingsPageQuery,
@@ -80,7 +76,7 @@ export function GeneralSettingsPage(props: {
     <div className="space-y-6">
       <OrganizationForm fKey={organization} />
 
-      {canDelete && (
+      {organization.canDelete && (
         <div className="space-y-4 mt-12">
           <h2 className="text-base font-medium text-red-600">
             {__("Danger Zone")}

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<12fade1fd1f7f3ae53595970b6c2c47e>>
+ * @generated SignedSource<<6b22aeaed6a8da4374bb98a36e236cd2>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -15,6 +15,8 @@ export type SAMLConfigurationListFragment$data = {
   readonly samlConfigurations: {
     readonly edges: ReadonlyArray<{
       readonly node: {
+        readonly canDelete: boolean;
+        readonly canUpdate: boolean;
         readonly domainVerificationToken: string | null | undefined;
         readonly domainVerifiedAt: any | null | undefined;
         readonly emailDomain: string;
@@ -119,6 +121,32 @@ const node: ReaderFragment = {
                       "storageKey": null
                     },
                     {
+                      "alias": "canUpdate",
+                      "args": [
+                        {
+                          "kind": "Literal",
+                          "name": "action",
+                          "value": "iam:saml-configuration:update"
+                        }
+                      ],
+                      "kind": "ScalarField",
+                      "name": "permission",
+                      "storageKey": "permission(action:\"iam:saml-configuration:update\")"
+                    },
+                    {
+                      "alias": "canDelete",
+                      "args": [
+                        {
+                          "kind": "Literal",
+                          "name": "action",
+                          "value": "iam:saml-configuration:delete"
+                        }
+                      ],
+                      "kind": "ScalarField",
+                      "name": "permission",
+                      "storageKey": "permission(action:\"iam:saml-configuration:delete\")"
+                    },
+                    {
                       "alias": null,
                       "args": null,
                       "kind": "ScalarField",
@@ -175,6 +203,6 @@ const node: ReaderFragment = {
   "abstractKey": null
 };
 
-(node as any).hash = "79203ccae6f8e3a1967b463f0f3f3c76";
+(node as any).hash = "3adfb13b2a908c93602b219ef1d0cf50";
 
 export default node;

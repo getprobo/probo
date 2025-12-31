@@ -1,6 +1,4 @@
 import { useTranslate } from "@probo/i18n";
-import { use } from "react";
-import { PermissionsContext } from "/providers/PermissionsContext";
 import {
   Button,
   Card,
@@ -37,6 +35,8 @@ const fragment = graphql`
           domainVerificationToken
           domainVerifiedAt
           testLoginUrl
+          canUpdate: permission(action: "iam:saml-configuration:update")
+          canDelete: permission(action: "iam:saml-configuration:delete")
         }
       }
     }
@@ -63,7 +63,6 @@ export function SAMLConfigurationList(props: {
 
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
-  const { isAuthorized } = use(PermissionsContext);
 
   const confirm = useConfirm();
   const [isCopied, copy] = useCopy();
@@ -197,10 +196,7 @@ export function SAMLConfigurationList(props: {
               <div className="flex gap-2 justify-end">
                 {config.domainVerifiedAt ? (
                   <>
-                    {isAuthorized(
-                      "SAMLConfiguration",
-                      "updateSAMLConfiguration",
-                    ) && (
+                    {config.canUpdate && (
                       <Button
                         variant="secondary"
                         onClick={() => onEdit(config.id)}
@@ -208,7 +204,7 @@ export function SAMLConfigurationList(props: {
                         {__("Edit")}
                       </Button>
                     )}
-                    {isAuthorized("Organization", "deleteOrganization") && (
+                    {config.canDelete && (
                       <Button
                         variant="danger"
                         onClick={() => handleDelete(config)}
@@ -219,18 +215,17 @@ export function SAMLConfigurationList(props: {
                   </>
                 ) : (
                   <>
-                    {isAuthorized("Organization", "verifyDomain") &&
-                      !!config.domainVerificationToken && (
-                        <Button
-                          variant="primary"
-                          onClick={() =>
-                            onVerifyDomain(config.domainVerificationToken!)
-                          }
-                        >
-                          {__("Verify Domain")}
-                        </Button>
-                      )}
-                    {isAuthorized("Organization", "deleteOrganization") && (
+                    {config.canUpdate && !!config.domainVerificationToken && (
+                      <Button
+                        variant="primary"
+                        onClick={() =>
+                          onVerifyDomain(config.domainVerificationToken!)
+                        }
+                      >
+                        {__("Verify Domain")}
+                      </Button>
+                    )}
+                    {config.canDelete && (
                       <Button
                         variant="danger"
                         onClick={() => handleDelete(config)}

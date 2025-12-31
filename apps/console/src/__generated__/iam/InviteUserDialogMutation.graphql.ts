@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<84f3f3da89ad2bdfecd79b479bf74814>>
+ * @generated SignedSource<<4516a7a0c95bb6634bbe7d1b097cc5de>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -26,6 +26,7 @@ export type InviteUserDialogMutation$data = {
     readonly invitationEdge: {
       readonly node: {
         readonly acceptedAt: any | null | undefined;
+        readonly canDelete: boolean;
         readonly createdAt: any;
         readonly email: any;
         readonly expiresAt: any;
@@ -123,6 +124,19 @@ v3 = {
           "kind": "ScalarField",
           "name": "createdAt",
           "storageKey": null
+        },
+        {
+          "alias": "canDelete",
+          "args": [
+            {
+              "kind": "Literal",
+              "name": "action",
+              "value": "iam:invitation:delete"
+            }
+          ],
+          "kind": "ScalarField",
+          "name": "permission",
+          "storageKey": "permission(action:\"iam:invitation:delete\")"
         }
       ],
       "storageKey": null
@@ -196,16 +210,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "43ea730d742b7d259b50b50d3684147c",
+    "cacheID": "8d9e447c08739bef2460474225fb77bf",
     "id": null,
     "metadata": {},
     "name": "InviteUserDialogMutation",
     "operationKind": "mutation",
-    "text": "mutation InviteUserDialogMutation(\n  $input: InviteMemberInput!\n) {\n  inviteMember(input: $input) {\n    invitationEdge {\n      node {\n        id\n        email\n        fullName\n        role\n        expiresAt\n        acceptedAt\n        createdAt\n      }\n    }\n  }\n}\n"
+    "text": "mutation InviteUserDialogMutation(\n  $input: InviteMemberInput!\n) {\n  inviteMember(input: $input) {\n    invitationEdge {\n      node {\n        id\n        email\n        fullName\n        role\n        expiresAt\n        acceptedAt\n        createdAt\n        canDelete: permission(action: \"iam:invitation:delete\")\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "b45737075b750b79b3a90748cb2565f3";
+(node as any).hash = "dc2446f51b33dbab3a348e1250a25049";
 
 export default node;

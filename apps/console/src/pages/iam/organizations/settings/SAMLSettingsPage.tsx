@@ -5,8 +5,7 @@ import {
   type PreloadedQuery,
 } from "react-relay";
 import type { SAMLSettingsPageQuery } from "/__generated__/iam/SAMLSettingsPageQuery.graphql";
-import { Suspense, use, useState } from "react";
-import { PermissionsContext } from "/providers/PermissionsContext";
+import { Suspense, useState } from "react";
 import { Breadcrumb, Button, Dialog, useDialogRef } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { SAMLConfigurationList } from "./_components/SAMLConfigurationList";
@@ -21,7 +20,13 @@ import { SAMLDomainVerifyDialog } from "./_components/SAMLDomainVerifyDialog";
 export const samlSettingsPageQuery = graphql`
   query SAMLSettingsPageQuery($organizationId: ID!) {
     organization: node(id: $organizationId) @required(action: THROW) {
-      ...SAMLConfigurationListFragment
+      __typename
+      ... on Organization {
+        canCreateSAMLConfiguration: permission(
+          action: "iam:saml-configuration:create"
+        )
+        ...SAMLConfigurationListFragment
+      }
     }
   }
 `;
@@ -38,9 +43,11 @@ export function SAMLSettingsPage(props: {
     useState<string>();
 
   const { __ } = useTranslate();
-  const { isAuthorized } = use(PermissionsContext);
 
   const { organization } = usePreloadedQuery(samlSettingsPageQuery, queryRef);
+  if (organization.__typename !== "Organization") {
+    throw new Error("invalid node type");
+  }
   const [formQueryRef, loadFormQuery] =
     useQueryLoader<EditSAMLConfigurationFormQuery>(samlConfigurationFormQuery);
 
@@ -70,7 +77,7 @@ export function SAMLSettingsPage(props: {
       <div className="space-y-4">
         <div className="flex justify-between items-center">
           <h2 className="text-base font-medium">{__("SAML Single Sign-On")}</h2>
-          {isAuthorized("Organization", "createSAMLConfiguration") && (
+          {organization.canCreateSAMLConfiguration && (
             <Button onClick={() => handleOpenFormDialog()}>
               {__("Add Configuration")}
             </Button>

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<57eb2489b4c62cb4b1df1a61bc135313>>
+ * @generated SignedSource<<b786c501cc6f8f4da479b138e36888d2>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -15,7 +15,13 @@ export type SAMLSettingsPageQuery$variables = {
 };
 export type SAMLSettingsPageQuery$data = {
   readonly organization: {
+    readonly __typename: "Organization";
+    readonly canCreateSAMLConfiguration: boolean;
     readonly " $fragmentSpreads": FragmentRefs<"SAMLConfigurationListFragment">;
+  } | {
+    // This will never be '%other', but we need some
+    // value in case none of the concrete values match.
+    readonly __typename: "%other";
   };
 };
 export type SAMLSettingsPageQuery = {
@@ -45,14 +51,27 @@ v2 = {
   "name": "__typename",
   "storageKey": null
 },
-v3 = [
+v3 = {
+  "alias": "canCreateSAMLConfiguration",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "iam:saml-configuration:create"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"iam:saml-configuration:create\")"
+},
+v4 = [
   {
     "kind": "Literal",
     "name": "first",
     "value": 1000
   }
 ],
-v4 = {
+v5 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
@@ -76,10 +95,19 @@ return {
           "name": "node",
           "plural": false,
           "selections": [
+            (v2/*: any*/),
             {
-              "args": null,
-              "kind": "FragmentSpread",
-              "name": "SAMLConfigurationListFragment"
+              "kind": "InlineFragment",
+              "selections": [
+                (v3/*: any*/),
+                {
+                  "args": null,
+                  "kind": "FragmentSpread",
+                  "name": "SAMLConfigurationListFragment"
+                }
+              ],
+              "type": "Organization",
+              "abstractKey": null
             }
           ],
           "storageKey": null
@@ -108,9 +136,10 @@ return {
           {
             "kind": "InlineFragment",
             "selections": [
+              (v3/*: any*/),
               {
                 "alias": null,
-                "args": (v3/*: any*/),
+                "args": (v4/*: any*/),
                 "concreteType": "SAMLConfigurationConnection",
                 "kind": "LinkedField",
                 "name": "samlConfigurations",
@@ -132,7 +161,7 @@ return {
                         "name": "node",
                         "plural": false,
                         "selections": [
-                          (v4/*: any*/),
+                          (v5/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -167,6 +196,32 @@ return {
                             "kind": "ScalarField",
                             "name": "testLoginUrl",
                             "storageKey": null
+                          },
+                          {
+                            "alias": "canUpdate",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "iam:saml-configuration:update"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"iam:saml-configuration:update\")"
+                          },
+                          {
+                            "alias": "canDelete",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "iam:saml-configuration:delete"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"iam:saml-configuration:delete\")"
                           },
                           (v2/*: any*/)
                         ],
@@ -212,7 +267,7 @@ return {
               },
               {
                 "alias": null,
-                "args": (v3/*: any*/),
+                "args": (v4/*: any*/),
                 "filters": null,
                 "handle": "connection",
                 "key": "SAMLConfigurationListFragment_samlConfigurations",
@@ -223,23 +278,23 @@ return {
             "type": "Organization",
             "abstractKey": null
           },
-          (v4/*: any*/)
+          (v5/*: any*/)
         ],
         "storageKey": null
       }
     ]
   },
   "params": {
-    "cacheID": "45740d8e7e6fba1ec2576fd62487e41e",
+    "cacheID": "1a2bfe52dd42459b83e7f99e9b790218",
     "id": null,
     "metadata": {},
     "name": "SAMLSettingsPageQuery",
     "operationKind": "query",
-    "text": "query SAMLSettingsPageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ...SAMLConfigurationListFragment\n    id\n  }\n}\n\nfragment SAMLConfigurationListFragment on Organization {\n  samlConfigurations(first: 1000) {\n    edges {\n      node {\n        id\n        emailDomain\n        enforcementPolicy\n        domainVerificationToken\n        domainVerifiedAt\n        testLoginUrl\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n"
+    "text": "query SAMLSettingsPageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      canCreateSAMLConfiguration: permission(action: \"iam:saml-configuration:create\")\n      ...SAMLConfigurationListFragment\n    }\n    id\n  }\n}\n\nfragment SAMLConfigurationListFragment on Organization {\n  samlConfigurations(first: 1000) {\n    edges {\n      node {\n        id\n        emailDomain\n        enforcementPolicy\n        domainVerificationToken\n        domainVerifiedAt\n        testLoginUrl\n        canUpdate: permission(action: \"iam:saml-configuration:update\")\n        canDelete: permission(action: \"iam:saml-configuration:delete\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "d2d6ef2a90f81a75df7ab0dd83ef52cf";
+(node as any).hash = "d0fd8fe9afb6ff650cce48c89eb83c46";
 
 export default node;
