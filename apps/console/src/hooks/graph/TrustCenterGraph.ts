@@ -26,22 +26,9 @@ export const trustCenterQuery = graphql`
           canGetNDA: permission(action: "core:trust-center:get-nda")
           canUploadNDA: permission(action: "core:trust-center:upload-nda")
           canDeleteNDA: permission(action: "core:trust-center:delete-nda")
-          references(
-            first: 100
-            orderBy: { field: CREATED_AT, direction: DESC }
-          ) {
-            edges {
-              node {
-                id
-                name
-                description
-                websiteUrl
-                logoUrl
-                createdAt
-                updatedAt
-              }
-            }
-          }
+          canCreateReference: permission(
+            action: "core:trust-center-reference:create"
+          )
         }
         documents(first: 100) {
           edges {

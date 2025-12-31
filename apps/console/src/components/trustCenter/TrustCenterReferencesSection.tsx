@@ -14,43 +14,54 @@ import {
   IconPencil,
   IconArrowLink,
 } from "@probo/ui";
-import { type ReactNode, useRef, useState, use } from "react";
+import { useRef, useState } from "react";
 import {
-  useTrustCenterReferences,
+  trustCenterReferencesQuery,
   useUpdateTrustCenterReferenceRankMutation,
 } from "/hooks/graph/TrustCenterReferenceGraph";
-import { TrustCenterReferenceDialog, type TrustCenterReferenceDialogRef } from "./TrustCenterReferenceDialog";
+import {
+  TrustCenterReferenceDialog,
+  type TrustCenterReferenceDialogRef,
+} from "./TrustCenterReferenceDialog";
 import { DeleteTrustCenterReferenceDialog } from "./DeleteTrustCenterReferenceDialog";
-import { PermissionsContext } from "/providers/PermissionsContext";
+import type {
+  TrustCenterReferenceGraphQuery,
+  TrustCenterReferenceGraphQuery$data,
+} from "/__generated__/core/TrustCenterReferenceGraphQuery.graphql";
+import { useLazyLoadQuery } from "react-relay";
 
 type Props = {
   trustCenterId: string;
-  children?: ReactNode;
+  canCreateReference: boolean;
 };
 
-type Reference = {
-  id: string;
-  name: string;
-  description?: string | null;
-  websiteUrl: string;
-  logoUrl: string;
-  rank: number;
-  createdAt: string;
-  updatedAt: string;
-};
+export type Reference = Extract<
+  TrustCenterReferenceGraphQuery$data["node"],
+  { __typename: "TrustCenter" }
+>["references"]["edges"][number]["node"];
 
-export function TrustCenterReferencesSection({ trustCenterId }: Props) {
+export function TrustCenterReferencesSection({
+  canCreateReference,
+  trustCenterId,
+}: Props) {
   const { __ } = useTranslate();
-  const { isAuthorized } = use(PermissionsContext);
   const dialogRef = useRef<TrustCenterReferenceDialogRef>(null);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [refetchKey, setRefetchKey] = useState(0);
-  const data = useTrustCenterReferences(trustCenterId, refetchKey);
+  const { node: trustCenterNode } =
+    useLazyLoadQuery<TrustCenterReferenceGraphQuery>(
+      trustCenterReferencesQuery,
+      { trustCenterId: trustCenterId || "" },
+      { fetchPolicy: "network-only", fetchKey: refetchKey },
+    );
+  if (trustCenterNode.__typename !== "TrustCenter") {
+    throw new Error("invalid node type");
+  }
   const [updateRank] = useUpdateTrustCenterReferenceRankMutation();
 
-  const trustCenterNode = data?.node;
-  const references = trustCenterNode?.references?.edges?.map((edge) => edge.node) || [];
+  const references =
+    trustCenterNode?.references?.edges?.map((edge) => edge.node) || [];
   const referencesConnectionId = trustCenterNode?.references?.__id || "";
 
   const handleCreate = () => {
@@ -113,11 +124,8 @@ export function TrustCenterReferencesSection({ trustCenterId }: Props) {
             {__("Showcase your customers and partners on your trust center")}
           </p>
         </div>
-        {isAuthorized("TrustCenter", "createTrustCenterReference") && (
-          <Button
-            icon={IconPlusLarge}
-            onClick={handleCreate}
-          >
+        {canCreateReference && (
+          <Button icon={IconPlusLarge} onClick={handleCreate}>
             {__("Add Reference")}
           </Button>
         )}
@@ -191,14 +199,15 @@ function ReferenceRow({
   onDrop,
 }: ReferenceRowProps) {
   const [isMouseDown, setIsMouseDown] = useState(false);
-  const { isAuthorized } = use(PermissionsContext);
 
   const className = [
     isDragging && "opacity-50 cursor-grabbing",
     !isDragging && !isMouseDown && "cursor-grab",
     !isDragging && isMouseDown && "cursor-grabbing",
     isDropTarget && "!bg-primary-50 border-y-2 border-primary-500",
-  ].filter(Boolean).join(" ");
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <Tr
@@ -213,11 +222,7 @@ function ReferenceRow({
     >
       <Td>
         <div className="flex items-center gap-3">
-          <Avatar
-            src={reference.logoUrl}
-            name={reference.name}
-            size="m"
-          />
+          <Avatar src={reference.logoUrl} name={reference.name} size="m" />
           <span className="font-medium">{reference.name}</span>
         </div>
       </Td>
@@ -233,23 +238,16 @@ function ReferenceRow({
             icon={IconArrowLink}
             onClick={onVisitWebsite}
           />
-          {isAuthorized("TrustCenterReference", "updateTrustCenterReference") && (
-            <Button
-              variant="secondary"
-              icon={IconPencil}
-              onClick={onEdit}
-            />
+          {reference.canUpdate && (
+            <Button variant="secondary" icon={IconPencil} onClick={onEdit} />
           )}
-          {isAuthorized("TrustCenterReference", "deleteTrustCenterReference") && (
+          {reference.canDelete && (
             <DeleteTrustCenterReferenceDialog
               referenceId={reference.id}
               referenceName={reference.name}
               connectionId={connectionId}
             >
-              <Button
-                variant="danger"
-                icon={IconTrashCan}
-              />
+              <Button variant="danger" icon={IconTrashCan} />
             </DeleteTrustCenterReferenceDialog>
           )}
         </div>

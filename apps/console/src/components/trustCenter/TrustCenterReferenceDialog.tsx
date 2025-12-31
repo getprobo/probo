@@ -29,13 +29,7 @@ type ReferenceFormData = z.infer<typeof referenceSchema>;
 
 export type TrustCenterReferenceDialogRef = {
   openCreate: (trustCenterId: string, connectionId: string) => void;
-  openEdit: (reference: {
-    id: string;
-    name: string;
-    description?: string | null;
-    websiteUrl: string;
-    rank: number;
-  }) => void;
+  openEdit: (reference: Reference) => void;
 };
 
 type Reference = {

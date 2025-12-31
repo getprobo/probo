@@ -32,18 +32,18 @@ const (
 	ActionTrustCenterGetNda                       = "core:trust-center:get-nda"
 	ActionTrustCenterNonDisclosureAgreementUpload = "core:trust-center:upload-nda"
 	ActionTrustCenterNonDisclosureAgreementDelete = "core:trust-center:delete-nda"
-	ActionTrustCenterAccessCreate                 = "core:trust-center:create-access"
-	ActionTrustCenterReferenceCreate              = "core:trust-center:create-reference"
 
 	// TrustCenterAccess actions
 	ActionTrustCenterAccessGet    = "core:trust-center-access:get"
 	ActionTrustCenterAccessList   = "core:trust-center-access:list"
+	ActionTrustCenterAccessCreate = "core:trust-center-access:create"
 	ActionTrustCenterAccessUpdate = "core:trust-center-access:update"
 	ActionTrustCenterAccessDelete = "core:trust-center-access:delete"
 
 	// TrustCenterReference actions
 	ActionTrustCenterReferenceList       = "core:trust-center-reference:list"
 	ActionTrustCenterReferenceGetLogoUrl = "core:trust-center-reference:get-logo-url"
+	ActionTrustCenterReferenceCreate     = "core:trust-center-reference:create"
 	ActionTrustCenterReferenceUpdate     = "core:trust-center-reference:update"
 	ActionTrustCenterReferenceDelete     = "core:trust-center-reference:delete"
 

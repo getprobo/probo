@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<566b652d24d80b551827cb5d3bf5518c>>
+ * @generated SignedSource<<461baa03d93bbfde6ad39536a695caa7>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -25,6 +25,8 @@ export type TrustCenterReferenceGraphCreateMutation$data = {
     readonly trustCenterReferenceEdge: {
       readonly cursor: any;
       readonly node: {
+        readonly canDelete: boolean;
+        readonly canUpdate: boolean;
         readonly createdAt: any;
         readonly description: string | null | undefined;
         readonly id: string;
@@ -138,6 +140,32 @@ v3 = {
           "kind": "ScalarField",
           "name": "updatedAt",
           "storageKey": null
+        },
+        {
+          "alias": "canUpdate",
+          "args": [
+            {
+              "kind": "Literal",
+              "name": "action",
+              "value": "core:trust-center-reference:update"
+            }
+          ],
+          "kind": "ScalarField",
+          "name": "permission",
+          "storageKey": "permission(action:\"core:trust-center-reference:update\")"
+        },
+        {
+          "alias": "canDelete",
+          "args": [
+            {
+              "kind": "Literal",
+              "name": "action",
+              "value": "core:trust-center-reference:delete"
+            }
+          ],
+          "kind": "ScalarField",
+          "name": "permission",
+          "storageKey": "permission(action:\"core:trust-center-reference:delete\")"
         }
       ],
       "storageKey": null
@@ -211,16 +239,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "623c9df0fba82887a878addd1ddaf706",
+    "cacheID": "4cffbce769a3af5a0b95188c5fdb1ab1",
     "id": null,
     "metadata": {},
     "name": "TrustCenterReferenceGraphCreateMutation",
     "operationKind": "mutation",
-    "text": "mutation TrustCenterReferenceGraphCreateMutation(\n  $input: CreateTrustCenterReferenceInput!\n) {\n  createTrustCenterReference(input: $input) {\n    trustCenterReferenceEdge {\n      cursor\n      node {\n        id\n        name\n        description\n        websiteUrl\n        logoUrl\n        rank\n        createdAt\n        updatedAt\n      }\n    }\n  }\n}\n"
+    "text": "mutation TrustCenterReferenceGraphCreateMutation(\n  $input: CreateTrustCenterReferenceInput!\n) {\n  createTrustCenterReference(input: $input) {\n    trustCenterReferenceEdge {\n      cursor\n      node {\n        id\n        name\n        description\n        websiteUrl\n        logoUrl\n        rank\n        createdAt\n        updatedAt\n        canUpdate: permission(action: \"core:trust-center-reference:update\")\n        canDelete: permission(action: \"core:trust-center-reference:delete\")\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "ee754e6c9bc3aa992e1a40e828b0d07e";
+(node as any).hash = "2235fdf1f63c55b4a6670eaa0f32fe20";
 
 export default node;
