@@ -40,8 +40,6 @@ import {
 } from "@probo/helpers";
 import { SnapshotBanner } from "/components/SnapshotBanner";
 import type { ContinualImprovementGraphNodeQuery } from "/__generated__/core/ContinualImprovementGraphNodeQuery.graphql";
-import { use } from "react";
-import { PermissionsContext } from "/providers/PermissionsContext";
 
 const updateImprovementSchema = z.object({
   referenceId: z.string().min(1, "Reference ID is required"),
@@ -58,17 +56,16 @@ type Props = {
 };
 
 export default function ContinualImprovementDetailsPage(props: Props) {
-  const data = usePreloadedQuery<ContinualImprovementGraphNodeQuery>(
-    continualImprovementNodeQuery,
-    props.queryRef,
-  );
-  const improvement = data.node;
+  const { node: improvement } =
+    usePreloadedQuery<ContinualImprovementGraphNodeQuery>(
+      continualImprovementNodeQuery,
+      props.queryRef,
+    );
   const { __ } = useTranslate();
   const { toast } = useToast();
   const organizationId = useOrganizationId();
   const { snapshotId } = useParams<{ snapshotId?: string }>();
   const isSnapshotMode = Boolean(snapshotId);
-  const { isAuthorized } = use(PermissionsContext);
 
   validateSnapshotConsistency(improvement, snapshotId);
 
@@ -163,17 +160,13 @@ export default function ContinualImprovementDetailsPage(props: Props) {
             { label: improvement.referenceId! },
           ]}
         />
-        {!isSnapshotMode &&
-          isAuthorized(
-            "ContinualImprovement",
-            "deleteContinualImprovement",
-          ) && (
-            <ActionDropdown>
-              <DropdownItem onClick={deleteImprovement} variant="danger">
-                {__("Delete")}
-              </DropdownItem>
-            </ActionDropdown>
-          )}
+        {!isSnapshotMode && improvement.canDelete && (
+          <ActionDropdown>
+            <DropdownItem onClick={deleteImprovement} variant="danger">
+              {__("Delete")}
+            </DropdownItem>
+          </ActionDropdown>
+        )}
       </div>
 
       <Card>
@@ -315,10 +308,7 @@ export default function ContinualImprovementDetailsPage(props: Props) {
 
             {!isSnapshotMode && (
               <div className="flex justify-end pt-4">
-                {isAuthorized(
-                  "ContinualImprovement",
-                  "updateContinualImprovement",
-                ) && (
+                {improvement.canUpdate && (
                   <Button
                     type="submit"
                     variant="primary"

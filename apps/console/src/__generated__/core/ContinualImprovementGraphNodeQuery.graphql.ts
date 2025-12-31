@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<69ae0bb47f8fefd6ded7233a78427acc>>
+ * @generated SignedSource<<eb936356e9504b1cd4eefb80b699987f>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -16,6 +16,8 @@ export type ContinualImprovementGraphNodeQuery$variables = {
 };
 export type ContinualImprovementGraphNodeQuery$data = {
   readonly node: {
+    readonly canDelete?: boolean;
+    readonly canUpdate?: boolean;
     readonly createdAt?: any;
     readonly description?: string | null | undefined;
     readonly id?: string;
@@ -171,6 +173,32 @@ v14 = {
   "kind": "ScalarField",
   "name": "updatedAt",
   "storageKey": null
+},
+v15 = {
+  "alias": "canUpdate",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "core:continual-improvement:update"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"core:continual-improvement:update\")"
+},
+v16 = {
+  "alias": "canDelete",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "core:continual-improvement:delete"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"core:continual-improvement:delete\")"
 };
 return {
   "fragment": {
@@ -202,7 +230,9 @@ return {
               (v11/*: any*/),
               (v12/*: any*/),
               (v13/*: any*/),
-              (v14/*: any*/)
+              (v14/*: any*/),
+              (v15/*: any*/),
+              (v16/*: any*/)
             ],
             "type": "ContinualImprovement",
             "abstractKey": null
@@ -250,7 +280,9 @@ return {
               (v11/*: any*/),
               (v12/*: any*/),
               (v13/*: any*/),
-              (v14/*: any*/)
+              (v14/*: any*/),
+              (v15/*: any*/),
+              (v16/*: any*/)
             ],
             "type": "ContinualImprovement",
             "abstractKey": null
@@ -261,16 +293,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "51e532cd66309a275af46ecaca65f0a6",
+    "cacheID": "c5fa96253fe8c3e8e8307936ca76704d",
     "id": null,
     "metadata": {},
     "name": "ContinualImprovementGraphNodeQuery",
     "operationKind": "query",
-    "text": "query ContinualImprovementGraphNodeQuery(\n  $continualImprovementId: ID!\n) {\n  node(id: $continualImprovementId) {\n    __typename\n    ... on ContinualImprovement {\n      id\n      snapshotId\n      sourceId\n      referenceId\n      description\n      source\n      targetDate\n      status\n      priority\n      owner {\n        id\n        fullName\n      }\n      organization {\n        id\n        name\n      }\n      createdAt\n      updatedAt\n    }\n    id\n  }\n}\n"
+    "text": "query ContinualImprovementGraphNodeQuery(\n  $continualImprovementId: ID!\n) {\n  node(id: $continualImprovementId) {\n    __typename\n    ... on ContinualImprovement {\n      id\n      snapshotId\n      sourceId\n      referenceId\n      description\n      source\n      targetDate\n      status\n      priority\n      owner {\n        id\n        fullName\n      }\n      organization {\n        id\n        name\n      }\n      createdAt\n      updatedAt\n      canUpdate: permission(action: \"core:continual-improvement:update\")\n      canDelete: permission(action: \"core:continual-improvement:delete\")\n    }\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "f5ce017ad11fcee598ae3116b668f4b2";
+(node as any).hash = "66511af35ced4978629980d5339fc850";
 
 export default node;

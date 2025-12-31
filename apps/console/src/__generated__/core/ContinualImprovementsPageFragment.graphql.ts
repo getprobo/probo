@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<3065b6b41135aa2dcbb45cdafae94503>>
+ * @generated SignedSource<<0ddcefe367b8dfd3bb64b1891afc7e2e>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -17,6 +17,8 @@ export type ContinualImprovementsPageFragment$data = {
     readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly node: {
+        readonly canDelete: boolean;
+        readonly canUpdate: boolean;
         readonly createdAt: any;
         readonly description: string | null | undefined;
         readonly id: string;
@@ -245,6 +247,32 @@ return {
                   "storageKey": null
                 },
                 {
+                  "alias": "canUpdate",
+                  "args": [
+                    {
+                      "kind": "Literal",
+                      "name": "action",
+                      "value": "core:continual-improvement:update"
+                    }
+                  ],
+                  "kind": "ScalarField",
+                  "name": "permission",
+                  "storageKey": "permission(action:\"core:continual-improvement:update\")"
+                },
+                {
+                  "alias": "canDelete",
+                  "args": [
+                    {
+                      "kind": "Literal",
+                      "name": "action",
+                      "value": "core:continual-improvement:delete"
+                    }
+                  ],
+                  "kind": "ScalarField",
+                  "name": "permission",
+                  "storageKey": "permission(action:\"core:continual-improvement:delete\")"
+                },
+                {
                   "alias": null,
                   "args": null,
                   "kind": "ScalarField",
@@ -310,6 +338,6 @@ return {
 };
 })();
 
-(node as any).hash = "44e30d3febc79c6df7236567d85e9ca8";
+(node as any).hash = "ec045ffacd206a4854cb864eadf3ef50";
 
 export default node;

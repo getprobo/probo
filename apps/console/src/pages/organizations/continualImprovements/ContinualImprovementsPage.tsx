@@ -46,8 +46,6 @@ import type {
   ContinualImprovementsPageFragment$key,
   ContinualImprovementsPageFragment$data,
 } from "/__generated__/core/ContinualImprovementsPageFragment.graphql";
-import { use } from "react";
-import { PermissionsContext } from "/providers/PermissionsContext";
 import type { ContinualImprovementGraphListQuery } from "/__generated__/core/ContinualImprovementGraphListQuery.graphql";
 
 interface ContinualImprovementsPageProps {
@@ -91,6 +89,8 @@ const continualImprovementsPageFragment = graphql`
           }
           createdAt
           updatedAt
+          canUpdate: permission(action: "core:continual-improvement:update")
+          canDelete: permission(action: "core:continual-improvement:delete")
         }
       }
       pageInfo {
@@ -108,7 +108,6 @@ export default function ContinualImprovementsPage({
   const organizationId = useOrganizationId();
   const { snapshotId } = useParams<{ snapshotId?: string }>();
   const isSnapshotMode = Boolean(snapshotId);
-  const { isAuthorized } = use(PermissionsContext);
 
   usePageTitle(__("Continual Improvements"));
 
@@ -129,8 +128,7 @@ export default function ContinualImprovementsPage({
 
   const hasAnyAction =
     !isSnapshotMode &&
-    (isAuthorized("ContinualImprovement", "updateContinualImprovement") ||
-      isAuthorized("ContinualImprovement", "deleteContinualImprovement"));
+    improvements.some(({ canUpdate, canDelete }) => canUpdate || canDelete);
 
   return (
     <div className="space-y-6">
@@ -141,17 +139,16 @@ export default function ContinualImprovementsPage({
         title={__("Continual Improvements")}
         description={__("Manage your continual improvements.")}
       >
-        {!isSnapshotMode &&
-          isAuthorized("Organization", "createContinualImprovement") && (
-            <CreateContinualImprovementDialog
-              organizationId={organizationId}
-              connectionId={connectionId}
-            >
-              <Button icon={IconPlusLarge}>
-                {__("Add continual improvement")}
-              </Button>
-            </CreateContinualImprovementDialog>
-          )}
+        {!isSnapshotMode && organization.node.canCreateContinualImprovement && (
+          <CreateContinualImprovementDialog
+            organizationId={organizationId}
+            connectionId={connectionId}
+          >
+            <Button icon={IconPlusLarge}>
+              {__("Add continual improvement")}
+            </Button>
+          </CreateContinualImprovementDialog>
+        )}
       </PageHeader>
 
       {improvements.length > 0 ? (
@@ -227,7 +224,6 @@ function ImprovementRow({
   const [deleteImprovement] = useMutation(deleteContinualImprovementMutation);
   const confirm = useConfirm();
   const isSnapshotMode = Boolean(snapshotId);
-  const { isAuthorized } = use(PermissionsContext);
 
   const handleDelete = () => {
     confirm(
@@ -296,10 +292,7 @@ function ImprovementRow({
       {hasAnyAction && (
         <Td noLink width={50} className="text-end">
           <ActionDropdown>
-            {isAuthorized(
-              "ContinualImprovement",
-              "deleteContinualImprovement",
-            ) && (
+            {improvement.canDelete && (
               <DropdownItem
                 icon={IconTrashCan}
                 variant="danger"
