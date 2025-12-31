@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<c8cbb4eb1df9d733a86642b8f27d6df6>>
+ * @generated SignedSource<<37dc142d4245fcbf81a63926cd6c1c0e>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -18,6 +18,8 @@ export type AssetGraphNodeQuery$data = {
   readonly node: {
     readonly amount?: number;
     readonly assetType?: AssetType;
+    readonly canDelete?: boolean;
+    readonly canUpdate?: boolean;
     readonly createdAt?: any;
     readonly dataTypesStored?: string;
     readonly id?: string;
@@ -189,6 +191,32 @@ v11 = {
   "kind": "ScalarField",
   "name": "updatedAt",
   "storageKey": null
+},
+v12 = {
+  "alias": "canUpdate",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "core:asset:update"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"core:asset:update\")"
+},
+v13 = {
+  "alias": "canDelete",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "core:asset:delete"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"core:asset:delete\")"
 };
 return {
   "fragment": {
@@ -217,7 +245,9 @@ return {
               (v8/*: any*/),
               (v9/*: any*/),
               (v10/*: any*/),
-              (v11/*: any*/)
+              (v11/*: any*/),
+              (v12/*: any*/),
+              (v13/*: any*/)
             ],
             "type": "Asset",
             "abstractKey": null
@@ -262,7 +292,9 @@ return {
               (v8/*: any*/),
               (v9/*: any*/),
               (v10/*: any*/),
-              (v11/*: any*/)
+              (v11/*: any*/),
+              (v12/*: any*/),
+              (v13/*: any*/)
             ],
             "type": "Asset",
             "abstractKey": null
@@ -273,16 +305,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "f0aebb3dbefaf776a518bb72892d8983",
+    "cacheID": "6cc4f590468366f12144c88b15704bac",
     "id": null,
     "metadata": {},
     "name": "AssetGraphNodeQuery",
     "operationKind": "query",
-    "text": "query AssetGraphNodeQuery(\n  $assetId: ID!\n) {\n  node(id: $assetId) {\n    __typename\n    ... on Asset {\n      id\n      snapshotId\n      name\n      amount\n      assetType\n      dataTypesStored\n      owner {\n        id\n        fullName\n      }\n      vendors(first: 50) {\n        edges {\n          node {\n            id\n            name\n            websiteUrl\n            category\n          }\n        }\n      }\n      createdAt\n      updatedAt\n    }\n    id\n  }\n}\n"
+    "text": "query AssetGraphNodeQuery(\n  $assetId: ID!\n) {\n  node(id: $assetId) {\n    __typename\n    ... on Asset {\n      id\n      snapshotId\n      name\n      amount\n      assetType\n      dataTypesStored\n      owner {\n        id\n        fullName\n      }\n      vendors(first: 50) {\n        edges {\n          node {\n            id\n            name\n            websiteUrl\n            category\n          }\n        }\n      }\n      createdAt\n      updatedAt\n      canUpdate: permission(action: \"core:asset:update\")\n      canDelete: permission(action: \"core:asset:delete\")\n    }\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "08e11e09bc4462efdbebc36aec347c4c";
+(node as any).hash = "61e648da526c4b332ded50ba1daa3fbf";
 
 export default node;
