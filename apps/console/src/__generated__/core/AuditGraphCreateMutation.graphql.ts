@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<b6236fab1ef470add01b9d9cc7527caa>>
+ * @generated SignedSource<<5cef509d4e44e0e0064c79fc7c3bf2e3>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -28,6 +28,8 @@ export type AuditGraphCreateMutation$data = {
   readonly createAudit: {
     readonly auditEdge: {
       readonly node: {
+        readonly canDelete: boolean;
+        readonly canUpdate: boolean;
         readonly createdAt: any;
         readonly framework: {
           readonly id: string;
@@ -160,6 +162,32 @@ v5 = {
           "kind": "ScalarField",
           "name": "createdAt",
           "storageKey": null
+        },
+        {
+          "alias": "canUpdate",
+          "args": [
+            {
+              "kind": "Literal",
+              "name": "action",
+              "value": "core:audit:update"
+            }
+          ],
+          "kind": "ScalarField",
+          "name": "permission",
+          "storageKey": "permission(action:\"core:audit:update\")"
+        },
+        {
+          "alias": "canDelete",
+          "args": [
+            {
+              "kind": "Literal",
+              "name": "action",
+              "value": "core:audit:delete"
+            }
+          ],
+          "kind": "ScalarField",
+          "name": "permission",
+          "storageKey": "permission(action:\"core:audit:delete\")"
         }
       ],
       "storageKey": null
@@ -233,16 +261,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "04d44dfd419c2cde11b0138ca175203f",
+    "cacheID": "d5155df01b8fe2fb74b49b953d49aed7",
     "id": null,
     "metadata": {},
     "name": "AuditGraphCreateMutation",
     "operationKind": "mutation",
-    "text": "mutation AuditGraphCreateMutation(\n  $input: CreateAuditInput!\n) {\n  createAudit(input: $input) {\n    auditEdge {\n      node {\n        id\n        name\n        validFrom\n        validUntil\n        report {\n          id\n          filename\n        }\n        state\n        framework {\n          id\n          name\n        }\n        createdAt\n      }\n    }\n  }\n}\n"
+    "text": "mutation AuditGraphCreateMutation(\n  $input: CreateAuditInput!\n) {\n  createAudit(input: $input) {\n    auditEdge {\n      node {\n        id\n        name\n        validFrom\n        validUntil\n        report {\n          id\n          filename\n        }\n        state\n        framework {\n          id\n          name\n        }\n        createdAt\n        canUpdate: permission(action: \"core:audit:update\")\n        canDelete: permission(action: \"core:audit:delete\")\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "4d014b16e02353df354085a151ccfe06";
+(node as any).hash = "dcca4ebf33522ad6ef45456612fad03f";
 
 export default node;

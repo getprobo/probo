@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<8c09163f7cf7b3953aed77791b0d3dd1>>
+ * @generated SignedSource<<075733c8694be657990e9fb8399c1ae6>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -16,6 +16,8 @@ export type AuditsPageFragment$data = {
     readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly node: {
+        readonly canDelete: boolean;
+        readonly canUpdate: boolean;
         readonly createdAt: any;
         readonly framework: {
           readonly id: string;
@@ -216,6 +218,32 @@ return {
                   "storageKey": null
                 },
                 {
+                  "alias": "canUpdate",
+                  "args": [
+                    {
+                      "kind": "Literal",
+                      "name": "action",
+                      "value": "core:audit:update"
+                    }
+                  ],
+                  "kind": "ScalarField",
+                  "name": "permission",
+                  "storageKey": "permission(action:\"core:audit:update\")"
+                },
+                {
+                  "alias": "canDelete",
+                  "args": [
+                    {
+                      "kind": "Literal",
+                      "name": "action",
+                      "value": "core:audit:delete"
+                    }
+                  ],
+                  "kind": "ScalarField",
+                  "name": "permission",
+                  "storageKey": "permission(action:\"core:audit:delete\")"
+                },
+                {
                   "alias": null,
                   "args": null,
                   "kind": "ScalarField",
@@ -296,6 +324,6 @@ return {
 };
 })();
 
-(node as any).hash = "be8d1f1d8015c16539886bc79c8026f7";
+(node as any).hash = "4013ec4e657ef7fb9d13afbd572ea9e5";
 
 export default node;
