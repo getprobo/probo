@@ -79,6 +79,9 @@ func NewDatum(d *coredata.Datum) *Datum {
 		Organization: &Organization{
 			ID: d.OrganizationID,
 		},
+		Owner: &People{
+			ID: d.OwnerID,
+		},
 		OrganizationID:     d.OrganizationID,
 		Name:               d.Name,
 		SnapshotID:         d.SnapshotID,

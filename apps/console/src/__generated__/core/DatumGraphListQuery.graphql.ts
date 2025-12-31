@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<7e67f2a3d41fbea46b7b8447595302a5>>
+ * @generated SignedSource<<034a68d54259fb22cf2d563699ad4257>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -16,6 +16,7 @@ export type DatumGraphListQuery$variables = {
 };
 export type DatumGraphListQuery$data = {
   readonly node: {
+    readonly canCreateDatum?: boolean;
     readonly " $fragmentSpreads": FragmentRefs<"DataPageFragment">;
   };
 };
@@ -44,30 +45,43 @@ v1 = [
     "variableName": "organizationId"
   }
 ],
-v2 = [
+v2 = {
+  "alias": "canCreateDatum",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "core:datum:create"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"core:datum:create\")"
+},
+v3 = [
   {
     "kind": "Variable",
     "name": "snapshotId",
     "variableName": "snapshotId"
   }
 ],
-v3 = {
+v4 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "__typename",
   "storageKey": null
 },
-v4 = {
+v5 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "id",
   "storageKey": null
 },
-v5 = [
+v6 = [
   {
-    "fields": (v2/*: any*/),
+    "fields": (v3/*: any*/),
     "kind": "ObjectValue",
     "name": "filter"
   },
@@ -77,7 +91,7 @@ v5 = [
     "value": 10
   }
 ],
-v6 = {
+v7 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
@@ -102,8 +116,9 @@ return {
           {
             "kind": "InlineFragment",
             "selections": [
+              (v2/*: any*/),
               {
-                "args": (v2/*: any*/),
+                "args": (v3/*: any*/),
                 "kind": "FragmentSpread",
                 "name": "DataPageFragment"
               }
@@ -132,14 +147,15 @@ return {
         "name": "node",
         "plural": false,
         "selections": [
-          (v3/*: any*/),
           (v4/*: any*/),
+          (v5/*: any*/),
           {
             "kind": "InlineFragment",
             "selections": [
+              (v2/*: any*/),
               {
                 "alias": null,
-                "args": (v5/*: any*/),
+                "args": (v6/*: any*/),
                 "concreteType": "DatumConnection",
                 "kind": "LinkedField",
                 "name": "data",
@@ -161,8 +177,8 @@ return {
                         "name": "node",
                         "plural": false,
                         "selections": [
-                          (v4/*: any*/),
-                          (v6/*: any*/),
+                          (v5/*: any*/),
+                          (v7/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -185,7 +201,7 @@ return {
                                 "name": "fullName",
                                 "storageKey": null
                               },
-                              (v4/*: any*/)
+                              (v5/*: any*/)
                             ],
                             "storageKey": null
                           },
@@ -219,8 +235,8 @@ return {
                                     "name": "node",
                                     "plural": false,
                                     "selections": [
-                                      (v4/*: any*/),
-                                      (v6/*: any*/),
+                                      (v5/*: any*/),
+                                      (v7/*: any*/),
                                       {
                                         "alias": null,
                                         "args": null,
@@ -244,7 +260,33 @@ return {
                             "name": "createdAt",
                             "storageKey": null
                           },
-                          (v3/*: any*/)
+                          {
+                            "alias": "canUpdate",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:datum:update"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:datum:update\")"
+                          },
+                          {
+                            "alias": "canDelete",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:datum:delete"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:datum:delete\")"
+                          },
+                          (v4/*: any*/)
                         ],
                         "storageKey": null
                       },
@@ -314,7 +356,7 @@ return {
               },
               {
                 "alias": null,
-                "args": (v5/*: any*/),
+                "args": (v6/*: any*/),
                 "filters": [
                   "filter"
                 ],
@@ -333,16 +375,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "7200b7cf37859346d740de3f96f1d443",
+    "cacheID": "203f6661d76c730336cffaa96b631ab8",
     "id": null,
     "metadata": {},
     "name": "DatumGraphListQuery",
     "operationKind": "query",
-    "text": "query DatumGraphListQuery(\n  $organizationId: ID!\n  $snapshotId: ID = null\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      ...DataPageFragment_3iomuz\n    }\n    id\n  }\n}\n\nfragment DataPageFragment_3iomuz on Organization {\n  data(first: 10, filter: {snapshotId: $snapshotId}) {\n    edges {\n      node {\n        id\n        name\n        dataClassification\n        owner {\n          fullName\n          id\n        }\n        vendors(first: 50) {\n          edges {\n            node {\n              id\n              name\n              websiteUrl\n            }\n          }\n        }\n        createdAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
+    "text": "query DatumGraphListQuery(\n  $organizationId: ID!\n  $snapshotId: ID = null\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      canCreateDatum: permission(action: \"core:datum:create\")\n      ...DataPageFragment_3iomuz\n    }\n    id\n  }\n}\n\nfragment DataPageFragment_3iomuz on Organization {\n  data(first: 10, filter: {snapshotId: $snapshotId}) {\n    edges {\n      node {\n        id\n        name\n        dataClassification\n        owner {\n          fullName\n          id\n        }\n        vendors(first: 50) {\n          edges {\n            node {\n              id\n              name\n              websiteUrl\n            }\n          }\n        }\n        createdAt\n        canUpdate: permission(action: \"core:datum:update\")\n        canDelete: permission(action: \"core:datum:delete\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
   }
 };
 })();
 
-(node as any).hash = "e0782332e7e82bd1a5e7f5e40ada2dae";
+(node as any).hash = "e071e19eda0d4c105668ffd9671399bd";
 
 export default node;

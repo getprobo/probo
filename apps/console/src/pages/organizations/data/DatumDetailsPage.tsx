@@ -29,8 +29,6 @@ import z from "zod";
 import { SnapshotBanner } from "/components/SnapshotBanner";
 import { validateSnapshotConsistency } from "@probo/helpers";
 import type { DatumGraphNodeQuery } from "/__generated__/core/DatumGraphNodeQuery.graphql";
-import { use } from "react";
-import { PermissionsContext } from "/providers/PermissionsContext";
 
 const updateDatumSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -58,7 +56,6 @@ export default function DatumDetailsPage(props: Props) {
 
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
-  const { isAuthorized } = use(PermissionsContext);
 
   const deleteDatum = useDeleteDatum(
     datumEntry,
@@ -112,6 +109,8 @@ export default function DatumDetailsPage(props: Props) {
     },
   ];
 
+  const disabled = !isSnapshotMode && datumEntry.canUpdate;
+
   return (
     <div className="space-y-6">
       {isSnapshotMode && snapshotId && (
@@ -124,7 +123,7 @@ export default function DatumDetailsPage(props: Props) {
           <div className="text-2xl">{datumEntry?.name}</div>
           <Badge variant="info">{datumEntry?.dataClassification}</Badge>
         </div>
-        {!isSnapshotMode && isAuthorized("Datum", "deleteDatum") && (
+        {!isSnapshotMode && datumEntry.canDelete && (
           <ActionDropdown variant="secondary">
             <DropdownItem
               variant="danger"
@@ -142,7 +141,7 @@ export default function DatumDetailsPage(props: Props) {
           label={__("Name")}
           {...register("name")}
           type="text"
-          disabled={isSnapshotMode}
+          disabled={!disabled}
         />
 
         <ControlledField
@@ -150,7 +149,7 @@ export default function DatumDetailsPage(props: Props) {
           name="dataClassification"
           type="select"
           label={__("Classification")}
-          disabled={isSnapshotMode}
+          disabled={!disabled}
         >
           <Option value="PUBLIC">{__("Public")}</Option>
           <Option value="INTERNAL">{__("Internal")}</Option>
@@ -163,7 +162,7 @@ export default function DatumDetailsPage(props: Props) {
           control={control}
           name="ownerId"
           label={__("Owner")}
-          disabled={isSnapshotMode}
+          disabled={!disabled}
         />
 
         <VendorsMultiSelectField
@@ -171,13 +170,13 @@ export default function DatumDetailsPage(props: Props) {
           control={control}
           name="vendorIds"
           label={__("Vendors")}
-          disabled={isSnapshotMode}
+          disabled={!disabled}
           selectedVendors={vendors}
         />
 
         {!isSnapshotMode && (
           <div className="flex justify-end">
-            {formState.isDirty && isAuthorized("Datum", "updateDatum") && (
+            {formState.isDirty && datumEntry.canUpdate && (
               <Button type="submit" disabled={formState.isSubmitting}>
                 {formState.isSubmitting ? __("Updating...") : __("Update")}
               </Button>

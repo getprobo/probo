@@ -494,6 +494,7 @@ type ComplexityRoot struct {
 		Name               func(childComplexity int) int
 		Organization       func(childComplexity int) int
 		Owner              func(childComplexity int) int
+		Permission         func(childComplexity int, action string) int
 		SnapshotID         func(childComplexity int) int
 		UpdatedAt          func(childComplexity int) int
 		Vendors            func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorOrderBy) int
@@ -2005,6 +2006,8 @@ type DatumResolver interface {
 	Owner(ctx context.Context, obj *types.Datum) (*types.People, error)
 	Vendors(ctx context.Context, obj *types.Datum, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorOrderBy) (*types.VendorConnection, error)
 	Organization(ctx context.Context, obj *types.Datum) (*types.Organization, error)
+
+	Permission(ctx context.Context, obj *types.Datum, action string) (bool, error)
 }
 type DatumConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.DatumConnection) (int, error)
@@ -3709,6 +3712,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Datum.Owner(childComplexity), true
+	case "Datum.permission":
+		if e.complexity.Datum.Permission == nil {
+			break
+		}
+
+		args, err := ec.field_Datum_permission_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Datum.Permission(childComplexity, args["action"].(string)), true
 	case "Datum.snapshotId":
 		if e.complexity.Datum.SnapshotID == nil {
 			break
@@ -15314,6 +15328,8 @@ type Datum implements Node
   organization: Organization! @goField(forceResolver: true)
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 input DatumOrder
@@ -15866,6 +15882,17 @@ func (ec *executionContext) field_CustomDomain_permission_args(ctx context.Conte
 }
 
 func (ec *executionContext) field_DataProtectionImpactAssessment_permission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "action", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["action"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Datum_permission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "action", ec.unmarshalNString2string)
@@ -26455,6 +26482,47 @@ func (ec *executionContext) fieldContext_Datum_updatedAt(_ context.Context, fiel
 	return fc, nil
 }
 
+func (ec *executionContext) _Datum_permission(ctx context.Context, field graphql.CollectedField, obj *types.Datum) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Datum_permission,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Datum().Permission(ctx, obj, fc.Args["action"].(string))
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Datum_permission(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Datum",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Datum_permission_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _DatumConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *types.DatumConnection) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -26629,6 +26697,8 @@ func (ec *executionContext) fieldContext_DatumEdge_node(_ context.Context, field
 				return ec.fieldContext_Datum_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Datum_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Datum_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Datum", field.Name)
 		},
@@ -53394,6 +53464,8 @@ func (ec *executionContext) fieldContext_UpdateDatumPayload_datum(_ context.Cont
 				return ec.fieldContext_Datum_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Datum_updatedAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_Datum_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Datum", field.Name)
 		},
@@ -73399,6 +73471,42 @@ func (ec *executionContext) _Datum(ctx context.Context, sel ast.SelectionSet, ob
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "permission":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Datum_permission(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

@@ -702,6 +702,11 @@ func (r *datumResolver) Organization(ctx context.Context, obj *types.Datum) (*ty
 	return types.NewOrganization(org), nil
 }
 
+// Permission is the resolver for the permission field.
+func (r *datumResolver) Permission(ctx context.Context, obj *types.Datum, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
+}
+
 // TotalCount is the resolver for the totalCount field.
 func (r *datumConnectionResolver) TotalCount(ctx context.Context, obj *types.DatumConnection) (int, error) {
 	r.MustAuthorize(ctx, obj.ParentID, probo.ActionDatumList)

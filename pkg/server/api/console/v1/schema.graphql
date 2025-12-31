@@ -4972,6 +4972,8 @@ type Datum implements Node
   organization: Organization! @goField(forceResolver: true)
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 input DatumOrder

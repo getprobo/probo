@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<43b67fe6155860e492f2a36543727d49>>
+ * @generated SignedSource<<8106bb4a10940caebf1f523fb6136350>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -25,6 +25,8 @@ export type DatumGraphCreateMutation$data = {
   readonly createDatum: {
     readonly datumEdge: {
       readonly node: {
+        readonly canDelete: boolean;
+        readonly canUpdate: boolean;
         readonly createdAt: any;
         readonly dataClassification: DataClassification;
         readonly id: string;
@@ -181,6 +183,32 @@ v5 = {
           "kind": "ScalarField",
           "name": "createdAt",
           "storageKey": null
+        },
+        {
+          "alias": "canUpdate",
+          "args": [
+            {
+              "kind": "Literal",
+              "name": "action",
+              "value": "core:datum:update"
+            }
+          ],
+          "kind": "ScalarField",
+          "name": "permission",
+          "storageKey": "permission(action:\"core:datum:update\")"
+        },
+        {
+          "alias": "canDelete",
+          "args": [
+            {
+              "kind": "Literal",
+              "name": "action",
+              "value": "core:datum:delete"
+            }
+          ],
+          "kind": "ScalarField",
+          "name": "permission",
+          "storageKey": "permission(action:\"core:datum:delete\")"
         }
       ],
       "storageKey": null
@@ -254,16 +282,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "23ff315b0cc090bcaca7739d945d8d1b",
+    "cacheID": "37d345acfe37d5edf653d021f8aad43c",
     "id": null,
     "metadata": {},
     "name": "DatumGraphCreateMutation",
     "operationKind": "mutation",
-    "text": "mutation DatumGraphCreateMutation(\n  $input: CreateDatumInput!\n) {\n  createDatum(input: $input) {\n    datumEdge {\n      node {\n        id\n        name\n        dataClassification\n        owner {\n          id\n          fullName\n        }\n        vendors(first: 50) {\n          edges {\n            node {\n              id\n              name\n              websiteUrl\n            }\n          }\n        }\n        createdAt\n      }\n    }\n  }\n}\n"
+    "text": "mutation DatumGraphCreateMutation(\n  $input: CreateDatumInput!\n) {\n  createDatum(input: $input) {\n    datumEdge {\n      node {\n        id\n        name\n        dataClassification\n        owner {\n          id\n          fullName\n        }\n        vendors(first: 50) {\n          edges {\n            node {\n              id\n              name\n              websiteUrl\n            }\n          }\n        }\n        createdAt\n        canUpdate: permission(action: \"core:datum:update\")\n        canDelete: permission(action: \"core:datum:delete\")\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "b148ef55d18d3a45c04b5072581f2285";
+(node as any).hash = "db4781176e1b58224619f8237af92716";
 
 export default node;

@@ -8,6 +8,7 @@ export const dataQuery = graphql`
   query DatumGraphListQuery($organizationId: ID!, $snapshotId: ID = null) {
     node(id: $organizationId) {
       ... on Organization {
+        canCreateDatum: permission(action: "core:datum:create")
         ...DataPageFragment @arguments(snapshotId: $snapshotId)
       }
     }
@@ -41,6 +42,8 @@ export const datumNodeQuery = graphql`
         }
         createdAt
         updatedAt
+        canUpdate: permission(action: "core:datum:update")
+        canDelete: permission(action: "core:datum:delete")
       }
     }
   }
@@ -71,6 +74,8 @@ export const createDatumMutation = graphql`
             }
           }
           createdAt
+          canUpdate: permission(action: "core:datum:update")
+          canDelete: permission(action: "core:datum:delete")
         }
       }
     }
@@ -116,7 +121,7 @@ export const deleteDatumMutation = graphql`
 
 export const useDeleteDatum = (
   datum: { id?: string; name?: string },
-  connectionId: string
+  connectionId: string,
 ) => {
   const [mutate] = useMutation(deleteDatumMutation);
   const confirm = useConfirm();
@@ -139,11 +144,11 @@ export const useDeleteDatum = (
       {
         message: sprintf(
           __(
-            'This will permanently delete "%s". This action cannot be undone.'
+            'This will permanently delete "%s". This action cannot be undone.',
           ),
-          datum.name
+          datum.name,
         ),
-      }
+      },
     );
   };
 };
