@@ -15,7 +15,7 @@ import { PeopleSelectField } from "/components/form/PeopleSelectField";
 import { ControlledField } from "/components/form/ControlledField";
 import { CountriesField } from "/components/form/CountriesField";
 import { useOrganizationId } from "/hooks/useOrganizationId";
-import { use, useMemo } from "react";
+import { useMemo } from "react";
 import { usePageTitle } from "@probo/hooks";
 import { downloadFile, formatDate } from "@probo/helpers";
 import { useFragment, graphql } from "react-relay";
@@ -25,11 +25,10 @@ import { EditBusinessAssociateAgreementDialog } from "../dialogs/EditBusinessAss
 import { UploadDataPrivacyAgreementDialog } from "../dialogs/UploadDataPrivacyAgreementDialog";
 import { DeleteDataPrivacyAgreementDialog } from "../dialogs/DeleteDataPrivacyAgreementDialog";
 import { EditDataPrivacyAgreementDialog } from "../dialogs/EditDataPrivacyAgreementDialog";
-import type { useVendorFormFragment$key } from "/__generated__/core/useVendorFormFragment.graphql";
 import type { VendorOverviewTabBusinessAssociateAgreementFragment$key } from "/__generated__/core/VendorOverviewTabBusinessAssociateAgreementFragment.graphql";
 import type { VendorOverviewTabDataPrivacyAgreementFragment$key } from "/__generated__/core/VendorOverviewTabDataPrivacyAgreementFragment.graphql";
 import type { VendorCategory } from "@probo/vendors";
-import { PermissionsContext } from "/providers/PermissionsContext";
+import type { VendorGraphNodeQuery$data } from "/__generated__/core/VendorGraphNodeQuery.graphql";
 
 const vendorBusinessAssociateAgreementFragment = graphql`
   fragment VendorOverviewTabBusinessAssociateAgreementFragment on Vendor {
@@ -40,6 +39,12 @@ const vendorBusinessAssociateAgreementFragment = graphql`
       validFrom
       validUntil
       createdAt
+      canUpdate: permission(
+        action: "core:vendor-business-associate-agreement:update"
+      )
+      canDelete: permission(
+        action: "core:vendor-business-associate-agreement:delete"
+      )
     }
   }
 `;
@@ -53,47 +58,18 @@ const vendorDataPrivacyAgreementFragment = graphql`
       validFrom
       validUntil
       createdAt
+      canUpdate: permission(action: "core:vendor-data-privacy-agreement:update")
+      canDelete: permission(action: "core:vendor-data-privacy-agreement:delete")
     }
   }
 `;
 
 export default function VendorOverviewTab() {
   const { vendor } = useOutletContext<{
-    vendor: useVendorFormFragment$key & { id: string; name: string };
-  }>();
-
-  const { vendor: vendorForBAA } = useOutletContext<{
-    vendor: VendorOverviewTabBusinessAssociateAgreementFragment$key &
-      VendorOverviewTabDataPrivacyAgreementFragment$key;
+    vendor: VendorGraphNodeQuery$data["node"];
   }>();
 
   const { __ } = useTranslate();
-  const { isAuthorized } = use(PermissionsContext);
-  const canUpdateVendor = isAuthorized("Vendor", "updateVendor");
-  const canUploadBAA = isAuthorized(
-    "Vendor",
-    "uploadVendorBusinessAssociateAgreement",
-  );
-  const canUpdateBAA = isAuthorized(
-    "Vendor",
-    "updateVendorBusinessAssociateAgreement",
-  );
-  const canDeleteBAA = isAuthorized(
-    "Vendor",
-    "deleteVendorBusinessAssociateAgreement",
-  );
-  const canUploadDPA = isAuthorized(
-    "Vendor",
-    "uploadVendorDataPrivacyAgreement",
-  );
-  const canUpdateDPA = isAuthorized(
-    "Vendor",
-    "updateVendorDataPrivacyAgreement",
-  );
-  const canDeleteDPA = isAuthorized(
-    "Vendor",
-    "deleteVendorDataPrivacyAgreement",
-  );
   const vendorCategories: { value: VendorCategory; label: string }[] = [
     { value: "ANALYTICS", label: __("Analytics") },
     { value: "CLOUD_MONITORING", label: __("Cloud Monitoring") },
@@ -135,14 +111,14 @@ export default function VendorOverviewTab() {
   const vendorWithBAA =
     useFragment<VendorOverviewTabBusinessAssociateAgreementFragment$key>(
       vendorBusinessAssociateAgreementFragment,
-      vendorForBAA,
+      vendor,
     );
   const businessAssociateAgreement = vendorWithBAA.businessAssociateAgreement;
 
   const vendorWithDPA =
     useFragment<VendorOverviewTabDataPrivacyAgreementFragment$key>(
       vendorDataPrivacyAgreementFragment,
-      vendorForBAA,
+      vendor,
     );
   const dataPrivacyAgreement = vendorWithDPA.dataPrivacyAgreement;
 
@@ -168,11 +144,11 @@ export default function VendorOverviewTab() {
 
   usePageTitle(vendor.name + " - " + __("Overview"));
 
-  const isFormDisabled = isSubmitting || isSnapshotMode || !canUpdateVendor;
+  const isFormDisabled = isSubmitting || isSnapshotMode || !vendor.canUpdate;
 
   return (
     <form
-      onSubmit={isSnapshotMode || !canUpdateVendor ? undefined : handleSubmit}
+      onSubmit={isSnapshotMode || !vendor.canUpdate ? undefined : handleSubmit}
       className="space-y-12"
     >
       {/* Vendor Details */}
@@ -338,7 +314,7 @@ export default function VendorOverviewTab() {
                   >
                     {__("Download PDF")}
                   </Button>
-                  {!isSnapshotMode && canUpdateBAA && (
+                  {!isSnapshotMode && businessAssociateAgreement.canUpdate && (
                     <EditBusinessAssociateAgreementDialog
                       vendorId={vendor.id}
                       agreement={{
@@ -350,7 +326,7 @@ export default function VendorOverviewTab() {
                       <Button variant="quaternary" icon={IconPencil} />
                     </EditBusinessAssociateAgreementDialog>
                   )}
-                  {!isSnapshotMode && canDeleteBAA && (
+                  {!isSnapshotMode && businessAssociateAgreement.canDelete && (
                     <DeleteBusinessAssociateAgreementDialog
                       vendorId={vendor.id}
                       fileName={businessAssociateAgreement.fileName}
@@ -362,7 +338,7 @@ export default function VendorOverviewTab() {
                 </>
               ) : (
                 !isSnapshotMode &&
-                canUploadBAA && (
+                vendor.canUploadBAA && (
                   <UploadBusinessAssociateAgreementDialog
                     vendorId={vendor.id}
                     onSuccess={() => window.location.reload()}
@@ -412,7 +388,7 @@ export default function VendorOverviewTab() {
                   >
                     {__("Download PDF")}
                   </Button>
-                  {!isSnapshotMode && canUpdateDPA && (
+                  {!isSnapshotMode && dataPrivacyAgreement.canUpdate && (
                     <EditDataPrivacyAgreementDialog
                       vendorId={vendor.id}
                       agreement={{
@@ -424,7 +400,7 @@ export default function VendorOverviewTab() {
                       <Button variant="quaternary" icon={IconPencil} />
                     </EditDataPrivacyAgreementDialog>
                   )}
-                  {!isSnapshotMode && canDeleteDPA && (
+                  {!isSnapshotMode && dataPrivacyAgreement.canDelete && (
                     <DeleteDataPrivacyAgreementDialog
                       vendorId={vendor.id}
                       fileName={dataPrivacyAgreement.fileName}
@@ -436,7 +412,7 @@ export default function VendorOverviewTab() {
                 </>
               ) : (
                 !isSnapshotMode &&
-                canUploadDPA && (
+                vendor.canUploadDPA && (
                   <UploadDataPrivacyAgreementDialog
                     vendorId={vendor.id}
                     onSuccess={() => window.location.reload()}
@@ -455,7 +431,7 @@ export default function VendorOverviewTab() {
       {/* Submit */}
       {!isSnapshotMode && (
         <div className="flex justify-end">
-          {isAuthorized("Vendor", "updateVendor") && (
+          {vendor.canUpdate && (
             <Button type="submit" disabled={isSubmitting}>
               {__("Update vendor")}
             </Button>

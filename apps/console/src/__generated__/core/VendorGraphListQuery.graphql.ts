@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<554f3a594f825db3f7f7da0c5c1d8b1f>>
+ * @generated SignedSource<<2fb0056a5c2b8df4604284949b579bff>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -16,6 +16,7 @@ export type VendorGraphListQuery$variables = {
 };
 export type VendorGraphListQuery$data = {
   readonly node: {
+    readonly canCreateVendor?: boolean;
     readonly id?: string;
     readonly " $fragmentSpreads": FragmentRefs<"VendorGraphPaginatedFragment">;
   };
@@ -52,23 +53,36 @@ v2 = {
   "name": "id",
   "storageKey": null
 },
-v3 = [
+v3 = {
+  "alias": "canCreateVendor",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "core:vendor:create"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"core:vendor:create\")"
+},
+v4 = [
   {
     "kind": "Variable",
     "name": "snapshotId",
     "variableName": "snapshotId"
   }
 ],
-v4 = {
+v5 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "__typename",
   "storageKey": null
 },
-v5 = [
+v6 = [
   {
-    "fields": (v3/*: any*/),
+    "fields": (v4/*: any*/),
     "kind": "ObjectValue",
     "name": "filter"
   },
@@ -97,8 +111,9 @@ return {
             "kind": "InlineFragment",
             "selections": [
               (v2/*: any*/),
+              (v3/*: any*/),
               {
-                "args": (v3/*: any*/),
+                "args": (v4/*: any*/),
                 "kind": "FragmentSpread",
                 "name": "VendorGraphPaginatedFragment"
               }
@@ -127,14 +142,15 @@ return {
         "name": "node",
         "plural": false,
         "selections": [
-          (v4/*: any*/),
+          (v5/*: any*/),
           (v2/*: any*/),
           {
             "kind": "InlineFragment",
             "selections": [
+              (v3/*: any*/),
               {
                 "alias": null,
-                "args": (v5/*: any*/),
+                "args": (v6/*: any*/),
                 "concreteType": "VendorConnection",
                 "kind": "LinkedField",
                 "name": "vendors",
@@ -261,7 +277,33 @@ return {
                             ],
                             "storageKey": "riskAssessments(first:1,orderBy:{\"direction\":\"DESC\",\"field\":\"CREATED_AT\"})"
                           },
-                          (v4/*: any*/)
+                          {
+                            "alias": "canUpdate",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:vendor:update"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:vendor:update\")"
+                          },
+                          {
+                            "alias": "canDelete",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:vendor:delete"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:vendor:delete\")"
+                          },
+                          (v5/*: any*/)
                         ],
                         "storageKey": null
                       },
@@ -331,7 +373,7 @@ return {
               },
               {
                 "alias": null,
-                "args": (v5/*: any*/),
+                "args": (v6/*: any*/),
                 "filters": [
                   "filter"
                 ],
@@ -350,16 +392,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "998ad60d132157090312ac11e318b2e5",
+    "cacheID": "c2264340742570acaecb4b0b7b53723c",
     "id": null,
     "metadata": {},
     "name": "VendorGraphListQuery",
     "operationKind": "query",
-    "text": "query VendorGraphListQuery(\n  $organizationId: ID!\n  $snapshotId: ID\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      ...VendorGraphPaginatedFragment_3iomuz\n    }\n    id\n  }\n}\n\nfragment VendorGraphPaginatedFragment_3iomuz on Organization {\n  vendors(first: 50, filter: {snapshotId: $snapshotId}) {\n    edges {\n      node {\n        id\n        snapshotId\n        name\n        websiteUrl\n        updatedAt\n        riskAssessments(first: 1, orderBy: {direction: DESC, field: CREATED_AT}) {\n          edges {\n            node {\n              id\n              createdAt\n              expiresAt\n              dataSensitivity\n              businessImpact\n            }\n          }\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
+    "text": "query VendorGraphListQuery(\n  $organizationId: ID!\n  $snapshotId: ID\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      canCreateVendor: permission(action: \"core:vendor:create\")\n      ...VendorGraphPaginatedFragment_3iomuz\n    }\n    id\n  }\n}\n\nfragment VendorGraphPaginatedFragment_3iomuz on Organization {\n  vendors(first: 50, filter: {snapshotId: $snapshotId}) {\n    edges {\n      node {\n        id\n        snapshotId\n        name\n        websiteUrl\n        updatedAt\n        riskAssessments(first: 1, orderBy: {direction: DESC, field: CREATED_AT}) {\n          edges {\n            node {\n              id\n              createdAt\n              expiresAt\n              dataSensitivity\n              businessImpact\n            }\n          }\n        }\n        canUpdate: permission(action: \"core:vendor:update\")\n        canDelete: permission(action: \"core:vendor:delete\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
   }
 };
 })();
 
-(node as any).hash = "3034ee812f89d0596f3f6d3094c1dfc8";
+(node as any).hash = "725a4385cbde48d0f8895d1a35ca2135";
 
 export default node;

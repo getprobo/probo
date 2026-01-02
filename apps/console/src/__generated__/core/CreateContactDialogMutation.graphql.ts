@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<843a80b3503ff276081e69b558dcce81>>
+ * @generated SignedSource<<ab083cd47dc11eb4e2960a244cd4a9b4>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -25,6 +25,8 @@ export type CreateContactDialogMutation$data = {
   readonly createVendorContact: {
     readonly vendorContactEdge: {
       readonly node: {
+        readonly canDelete: boolean;
+        readonly canUpdate: boolean;
         readonly " $fragmentSpreads": FragmentRefs<"VendorContactsTabFragment_contact">;
       };
     };
@@ -52,7 +54,33 @@ v2 = [
     "name": "input",
     "variableName": "input"
   }
-];
+],
+v3 = {
+  "alias": "canUpdate",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "core:vendor-contact:update"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"core:vendor-contact:update\")"
+},
+v4 = {
+  "alias": "canDelete",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "core:vendor-contact:delete"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"core:vendor-contact:delete\")"
+};
 return {
   "fragment": {
     "argumentDefinitions": [
@@ -87,6 +115,8 @@ return {
                 "name": "node",
                 "plural": false,
                 "selections": [
+                  (v3/*: any*/),
+                  (v4/*: any*/),
                   {
                     "args": null,
                     "kind": "FragmentSpread",
@@ -138,6 +168,8 @@ return {
                 "name": "node",
                 "plural": false,
                 "selections": [
+                  (v3/*: any*/),
+                  (v4/*: any*/),
                   {
                     "alias": null,
                     "args": null,
@@ -215,16 +247,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "dac4774aa797162239a60596464811d8",
+    "cacheID": "ec71338bbc4d5591606e752bdcc0eeaf",
     "id": null,
     "metadata": {},
     "name": "CreateContactDialogMutation",
     "operationKind": "mutation",
-    "text": "mutation CreateContactDialogMutation(\n  $input: CreateVendorContactInput!\n) {\n  createVendorContact(input: $input) {\n    vendorContactEdge {\n      node {\n        ...VendorContactsTabFragment_contact\n        id\n      }\n    }\n  }\n}\n\nfragment VendorContactsTabFragment_contact on VendorContact {\n  id\n  fullName\n  email\n  phone\n  role\n  createdAt\n  updatedAt\n}\n"
+    "text": "mutation CreateContactDialogMutation(\n  $input: CreateVendorContactInput!\n) {\n  createVendorContact(input: $input) {\n    vendorContactEdge {\n      node {\n        canUpdate: permission(action: \"core:vendor-contact:update\")\n        canDelete: permission(action: \"core:vendor-contact:delete\")\n        ...VendorContactsTabFragment_contact\n        id\n      }\n    }\n  }\n}\n\nfragment VendorContactsTabFragment_contact on VendorContact {\n  id\n  fullName\n  email\n  phone\n  role\n  createdAt\n  updatedAt\n  canUpdate: permission(action: \"core:vendor-contact:update\")\n  canDelete: permission(action: \"core:vendor-contact:delete\")\n}\n"
   }
 };
 })();
 
-(node as any).hash = "f44f76bce42470683c55db50426d3f7b";
+(node as any).hash = "5e50a35ba78497790a49461f684d0541";
 
 export default node;

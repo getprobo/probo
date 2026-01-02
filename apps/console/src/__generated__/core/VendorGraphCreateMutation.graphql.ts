@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<048cece5b3ce6165cab071d0b86de6fa>>
+ * @generated SignedSource<<dc9115d5a6b814a7c3b4a95077afe694>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -41,6 +41,8 @@ export type VendorGraphCreateMutation$data = {
   readonly createVendor: {
     readonly vendorEdge: {
       readonly node: {
+        readonly canDelete: boolean;
+        readonly canUpdate: boolean;
         readonly createdAt: string;
         readonly description: string | null | undefined;
         readonly id: string;
@@ -131,6 +133,32 @@ v3 = {
           "kind": "ScalarField",
           "name": "updatedAt",
           "storageKey": null
+        },
+        {
+          "alias": "canUpdate",
+          "args": [
+            {
+              "kind": "Literal",
+              "name": "action",
+              "value": "core:vendor:update"
+            }
+          ],
+          "kind": "ScalarField",
+          "name": "permission",
+          "storageKey": "permission(action:\"core:vendor:update\")"
+        },
+        {
+          "alias": "canDelete",
+          "args": [
+            {
+              "kind": "Literal",
+              "name": "action",
+              "value": "core:vendor:delete"
+            }
+          ],
+          "kind": "ScalarField",
+          "name": "permission",
+          "storageKey": "permission(action:\"core:vendor:delete\")"
         }
       ],
       "storageKey": null
@@ -204,16 +232,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "b6e686d8c3e4add7f11f09fd0d1e1de3",
+    "cacheID": "94b1c06e8575dd431ade59add9fdcb8a",
     "id": null,
     "metadata": {},
     "name": "VendorGraphCreateMutation",
     "operationKind": "mutation",
-    "text": "mutation VendorGraphCreateMutation(\n  $input: CreateVendorInput!\n) {\n  createVendor(input: $input) {\n    vendorEdge {\n      node {\n        id\n        name\n        description\n        websiteUrl\n        createdAt\n        updatedAt\n      }\n    }\n  }\n}\n"
+    "text": "mutation VendorGraphCreateMutation(\n  $input: CreateVendorInput!\n) {\n  createVendor(input: $input) {\n    vendorEdge {\n      node {\n        id\n        name\n        description\n        websiteUrl\n        createdAt\n        updatedAt\n        canUpdate: permission(action: \"core:vendor:update\")\n        canDelete: permission(action: \"core:vendor:delete\")\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "ae71994587599f61caf6b79d9159ad44";
+(node as any).hash = "d4fbc819ee92c20d31400395a924eb7c";
 
 export default node;

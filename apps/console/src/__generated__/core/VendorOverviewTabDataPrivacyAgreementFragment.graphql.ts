@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<1fa31b2eb4941ffb82b51248dd11711c>>
+ * @generated SignedSource<<3cf0d5be883754321b4278ac59d77a54>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,6 +12,8 @@ import { ReaderFragment } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type VendorOverviewTabDataPrivacyAgreementFragment$data = {
   readonly dataPrivacyAgreement: {
+    readonly canDelete: boolean;
+    readonly canUpdate: boolean;
     readonly createdAt: string;
     readonly fileName: string;
     readonly fileUrl: string;
@@ -81,6 +83,32 @@ const node: ReaderFragment = {
           "kind": "ScalarField",
           "name": "createdAt",
           "storageKey": null
+        },
+        {
+          "alias": "canUpdate",
+          "args": [
+            {
+              "kind": "Literal",
+              "name": "action",
+              "value": "core:vendor-data-privacy-agreement:update"
+            }
+          ],
+          "kind": "ScalarField",
+          "name": "permission",
+          "storageKey": "permission(action:\"core:vendor-data-privacy-agreement:update\")"
+        },
+        {
+          "alias": "canDelete",
+          "args": [
+            {
+              "kind": "Literal",
+              "name": "action",
+              "value": "core:vendor-data-privacy-agreement:delete"
+            }
+          ],
+          "kind": "ScalarField",
+          "name": "permission",
+          "storageKey": "permission(action:\"core:vendor-data-privacy-agreement:delete\")"
         }
       ],
       "storageKey": null
@@ -90,6 +118,6 @@ const node: ReaderFragment = {
   "abstractKey": null
 };
 
-(node as any).hash = "9a3e19e369a57ce4c1dd08760d244b74";
+(node as any).hash = "c07606a63a9dc76f5cfad938c9d54268";
 
 export default node;

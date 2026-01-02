@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<dc7aecc55aa17f43d9a601e60eea165a>>
+ * @generated SignedSource<<ecb2f1b1e2f7614af9a86484fa5940bf>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,6 +11,7 @@
 import { ReaderFragment } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type VendorComplianceTabFragment_report$data = {
+  readonly canDelete: boolean;
   readonly file: {
     readonly fileName: string;
     readonly mimeType: string;
@@ -92,12 +93,25 @@ const node: ReaderFragment = {
         }
       ],
       "storageKey": null
+    },
+    {
+      "alias": "canDelete",
+      "args": [
+        {
+          "kind": "Literal",
+          "name": "action",
+          "value": "core:vendor-compliance-report:delete"
+        }
+      ],
+      "kind": "ScalarField",
+      "name": "permission",
+      "storageKey": "permission(action:\"core:vendor-compliance-report:delete\")"
     }
   ],
   "type": "VendorComplianceReport",
   "abstractKey": null
 };
 
-(node as any).hash = "18f52de61577c8b1c61784d2404c24ae";
+(node as any).hash = "7676d7b6379940339458e259707c222e";
 
 export default node;

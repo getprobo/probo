@@ -37,8 +37,6 @@ import type {
 } from "/__generated__/core/VendorGraphPaginatedFragment.graphql";
 import { SortableTable, SortableTh } from "/components/SortableTable";
 import { SnapshotBanner } from "/components/SnapshotBanner";
-import { use } from "react";
-import { PermissionsContext } from "/providers/PermissionsContext";
 
 type Vendor = NodeOf<VendorGraphPaginatedFragment$data["vendors"]>;
 
@@ -51,7 +49,6 @@ export default function VendorsPage(props: Props) {
   const organizationId = useOrganizationId();
   const { snapshotId } = useParams<{ snapshotId?: string }>();
   const isSnapshotMode = Boolean(snapshotId);
-  const { isAuthorized } = use(PermissionsContext);
 
   const data = usePreloadedQuery(vendorsQuery, props.queryRef);
   const pagination = usePaginationFragment(
@@ -66,8 +63,7 @@ export default function VendorsPage(props: Props) {
 
   const hasAnyAction =
     !isSnapshotMode &&
-    (isAuthorized("Vendor", "updateVendor") ||
-      isAuthorized("Vendor", "deleteVendor"));
+    vendors.some(({ canUpdate, canDelete }) => canUpdate || canDelete);
 
   return (
     <div className="space-y-6">
@@ -78,7 +74,7 @@ export default function VendorsPage(props: Props) {
           "Vendors are third-party services that your company uses. Add them to keep track of their risk and compliance status.",
         )}
       >
-        {!isSnapshotMode && isAuthorized("Organization", "createVendor") && (
+        {!isSnapshotMode && data.node.canCreateVendor && (
           <CreateVendorDialog
             connection={connectionId}
             organizationId={organizationId}
@@ -128,7 +124,6 @@ function VendorRow({
   const isSnapshotMode = Boolean(snapshotId);
   const { __ } = useTranslate();
   const latestAssessment = vendor.riskAssessments?.edges[0]?.node;
-  const { isAuthorized } = use(PermissionsContext);
   const deleteVendor = useDeleteVendor(vendor, connectionId);
 
   const vendorUrl =
@@ -159,7 +154,7 @@ function VendorRow({
         {hasAnyAction && (
           <Td noLink width={50} className="text-end">
             <ActionDropdown>
-              {isAuthorized("Vendor", "deleteVendor") && (
+              {vendor.canDelete && (
                 <DropdownItem
                   onClick={deleteVendor}
                   variant="danger"

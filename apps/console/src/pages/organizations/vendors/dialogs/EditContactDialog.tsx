@@ -14,15 +14,11 @@ import { graphql } from "relay-runtime";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { z } from "zod";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
+import type { VendorContactsTabFragment_contact$data } from "/__generated__/core/VendorContactsTabFragment_contact.graphql";
 
 type Props = {
   contactId: string;
-  contact: {
-    fullName?: string | null;
-    email?: string | null;
-    phone?: string | null;
-    role?: string | null;
-  };
+  contact: VendorContactsTabFragment_contact$data;
   onClose: () => void;
 };
 
@@ -43,29 +39,39 @@ export function EditContactDialog({ contactId, contact, onClose }: Props) {
 
   const schema = z.object({
     fullName: z.string().optional(),
-    email: z.union([z.string().email(__("Please enter a valid email address")), z.literal("")]),
-    phone: z.union([z.string().regex(phoneRegex, __("Phone number must be in international format (e.g., +1234567890)")), z.literal("")]),
+    email: z.union([
+      z.string().email(__("Please enter a valid email address")),
+      z.literal(""),
+    ]),
+    phone: z.union([
+      z
+        .string()
+        .regex(
+          phoneRegex,
+          __(
+            "Phone number must be in international format (e.g., +1234567890)",
+          ),
+        ),
+      z.literal(""),
+    ]),
     role: z.string().optional(),
   });
 
-  const { register, handleSubmit, formState } = useFormWithSchema(
-    schema,
-    {
-      defaultValues: {
-        fullName: contact.fullName || "",
-        email: contact.email || "",
-        phone: contact.phone || "",
-        role: contact.role || "",
-      },
-    }
-  );
+  const { register, handleSubmit, formState } = useFormWithSchema(schema, {
+    defaultValues: {
+      fullName: contact.fullName || "",
+      email: contact.email || "",
+      phone: contact.phone || "",
+      role: contact.role || "",
+    },
+  });
 
   const [updateContact, isLoading] = useMutationWithToasts(
     updateContactMutation,
     {
       successMessage: __("Contact updated successfully."),
       errorMessage: __("Failed to update contact"),
-    }
+    },
   );
 
   const onSubmit = handleSubmit((data) => {
@@ -95,9 +101,7 @@ export function EditContactDialog({ contactId, contact, onClose }: Props) {
       className="max-w-lg"
       ref={dialogRef}
       onClose={onClose}
-      title={
-        <Breadcrumb items={[__("Contacts"), __("Edit Contact")]} />
-      }
+      title={<Breadcrumb items={[__("Contacts"), __("Edit Contact")]} />}
     >
       <form onSubmit={onSubmit}>
         <DialogContent padded className="space-y-4">

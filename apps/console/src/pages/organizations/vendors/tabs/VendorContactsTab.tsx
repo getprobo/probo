@@ -19,14 +19,18 @@ import {
   useConfirm,
 } from "@probo/ui";
 import { useFragment, useRefetchableFragment } from "react-relay";
-import type { VendorContactsTabFragment_contact$key } from "/__generated__/core/VendorContactsTabFragment_contact.graphql";
+import type {
+  VendorContactsTabFragment_contact$data,
+  VendorContactsTabFragment_contact$key,
+} from "/__generated__/core/VendorContactsTabFragment_contact.graphql";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { sprintf } from "@probo/helpers";
 import { SortableTable, SortableTh } from "/components/SortableTable";
 import { CreateContactDialog } from "../dialogs/CreateContactDialog";
 import { EditContactDialog } from "../dialogs/EditContactDialog";
-import { use, useState } from "react";
-import { PermissionsContext } from "/providers/PermissionsContext";
+import { useState, type ComponentProps } from "react";
+import type { VendorGraphNodeQuery$data } from "/__generated__/core/VendorGraphNodeQuery.graphql";
+import type { VendorContactsListQuery } from "/__generated__/core/VendorContactsListQuery.graphql";
 
 export const vendorContactsFragment = graphql`
   fragment VendorContactsTabFragment on Vendor
@@ -49,6 +53,8 @@ export const vendorContactsFragment = graphql`
       edges {
         node {
           id
+          canUpdate: permission(action: "core:vendor-contact:update")
+          canDelete: permission(action: "core:vendor-contact:delete")
           ...VendorContactsTabFragment_contact
         }
       }
@@ -65,6 +71,8 @@ const contactFragment = graphql`
     role
     createdAt
     updatedAt
+    canUpdate: permission(action: "core:vendor-contact:update")
+    canDelete: permission(action: "core:vendor-contact:delete")
   }
 `;
 
@@ -81,29 +89,22 @@ const deleteContactMutation = graphql`
 
 export default function VendorContactsTab() {
   const { vendor } = useOutletContext<{
-    vendor: VendorContactsTabFragment$key & { name: string; id: string };
+    vendor: VendorGraphNodeQuery$data["node"];
   }>();
-  const [data, refetch] = useRefetchableFragment(
-    vendorContactsFragment,
-    vendor,
-  );
+  const [data, refetch] = useRefetchableFragment<
+    VendorContactsListQuery,
+    VendorContactsTabFragment$key
+  >(vendorContactsFragment, vendor);
   const connectionId = data.contacts.__id;
   const contacts = data.contacts.edges.map((edge) => edge.node);
   const { __ } = useTranslate();
   const { snapshotId } = useParams<{ snapshotId?: string }>();
   const isSnapshotMode = Boolean(snapshotId);
-  const [editingContact, setEditingContact] = useState<{
-    id: string;
-    fullName?: string | null;
-    email?: string | null;
-    phone?: string | null;
-    role?: string | null;
-  } | null>(null);
-  const { isAuthorized } = use(PermissionsContext);
-  const canCreateContact = isAuthorized("Vendor", "createVendorContact");
-  const canUpdateContact = isAuthorized("VendorContact", "updateVendorContact");
-  const canDeleteContact = isAuthorized("VendorContact", "deleteVendorContact");
-  const hasAnyAction = canUpdateContact || canDeleteContact;
+  const [editingContact, setEditingContact] =
+    useState<VendorContactsTabFragment_contact$data | null>(null);
+  const hasAnyAction = contacts.some(
+    ({ canUpdate, canDelete }) => canUpdate || canDelete,
+  );
 
   usePageTitle(vendor.name + " - " + __("Contacts"));
 
@@ -113,14 +114,16 @@ export default function VendorContactsTab() {
         title={__("Contacts")}
         description={__("Manage vendor contacts and their information.")}
       >
-        {!isSnapshotMode && canCreateContact && (
+        {!isSnapshotMode && vendor.canCreateContact && (
           <CreateContactDialog vendorId={vendor.id} connectionId={connectionId}>
             <Button icon={IconPlusLarge}>{__("Add contact")}</Button>
           </CreateContactDialog>
         )}
       </PageHeader>
 
-      <SortableTable refetch={refetch}>
+      <SortableTable
+        refetch={refetch as ComponentProps<typeof SortableTable>["refetch"]}
+      >
         <Thead>
           <Tr>
             <SortableTh field="FULL_NAME">{__("Name")}</SortableTh>
@@ -138,14 +141,12 @@ export default function VendorContactsTab() {
               connectionId={connectionId}
               onEdit={setEditingContact}
               isSnapshotMode={isSnapshotMode}
-              canUpdate={canUpdateContact}
-              canDelete={canDeleteContact}
             />
           ))}
         </Tbody>
       </SortableTable>
 
-      {editingContact && !isSnapshotMode && canUpdateContact && (
+      {editingContact && !isSnapshotMode && editingContact.canUpdate && (
         <EditContactDialog
           contactId={editingContact.id}
           contact={editingContact}
@@ -159,16 +160,8 @@ export default function VendorContactsTab() {
 type ContactRowProps = {
   contactKey: VendorContactsTabFragment_contact$key;
   connectionId: string;
-  onEdit: (contact: {
-    id: string;
-    fullName?: string | null;
-    email?: string | null;
-    phone?: string | null;
-    role?: string | null;
-  }) => void;
+  onEdit: (contact: VendorContactsTabFragment_contact$data) => void;
   isSnapshotMode: boolean;
-  canUpdate?: boolean;
-  canDelete?: boolean;
 };
 
 function ContactRow(props: ContactRowProps) {
@@ -182,7 +175,7 @@ function ContactRow(props: ContactRowProps) {
     successMessage: __("Contact deleted successfully"),
     errorMessage: __("Failed to delete contact"),
   });
-  const hasAnyAction = props.canUpdate || props.canDelete;
+  const hasAnyAction = contact.canUpdate || contact.canDelete;
 
   const handleDelete = () => {
     confirm(
@@ -237,23 +230,15 @@ function ContactRow(props: ContactRowProps) {
       {!props.isSnapshotMode && hasAnyAction && (
         <Td width={50} className="text-end">
           <ActionDropdown>
-            {props.canUpdate && (
+            {contact.canUpdate && (
               <DropdownItem
                 icon={IconPencil}
-                onClick={() =>
-                  props.onEdit({
-                    id: contact.id,
-                    fullName: contact.fullName,
-                    email: contact.email,
-                    phone: contact.phone,
-                    role: contact.role,
-                  })
-                }
+                onClick={() => props.onEdit(contact)}
               >
                 {__("Edit")}
               </DropdownItem>
             )}
-            {props.canDelete && (
+            {contact.canDelete && (
               <DropdownItem
                 icon={IconTrashCan}
                 onClick={handleDelete}

@@ -10,35 +10,32 @@ import {
 } from "@probo/ui";
 import { Controller } from "react-hook-form";
 import { useVendorForm } from "/hooks/forms/useVendorForm";
-import type { useVendorFormFragment$key } from "/__generated__/core/useVendorFormFragment.graphql";
 import { useOutletContext, useParams } from "react-router";
 import {
   certificationCategoryLabel,
   certifications,
   objectEntries,
 } from "@probo/helpers";
-import { use, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import clsx from "clsx";
-import { PermissionsContext } from "/providers/PermissionsContext";
+import type { VendorGraphNodeQuery$data } from "/__generated__/core/VendorGraphNodeQuery.graphql";
 
 /**
  * Vendor certifications tab
  */
 export default function VendorCertificationsTab() {
   const { vendor } = useOutletContext<{
-    vendor: useVendorFormFragment$key & { name: string };
+    vendor: VendorGraphNodeQuery$data["node"];
   }>();
   const { __ } = useTranslate();
   const { control, handleSubmit } = useVendorForm(vendor);
   const { snapshotId } = useParams<{ snapshotId?: string }>();
   const isSnapshotMode = Boolean(snapshotId);
-  const { isAuthorized } = use(PermissionsContext);
-  const canUpdateVendor = isAuthorized("Vendor", "updateVendor");
 
   return (
     <form
       className="space-y-4"
-      onSubmit={!isSnapshotMode && canUpdateVendor ? handleSubmit : undefined}
+      onSubmit={!isSnapshotMode && vendor.canUpdate ? handleSubmit : undefined}
     >
       <Card padded>
         <Controller
@@ -48,12 +45,12 @@ export default function VendorCertificationsTab() {
             <Certifications
               onValueChange={field.onChange}
               value={field.value ?? []}
-              readOnly={isSnapshotMode || !canUpdateVendor}
+              readOnly={isSnapshotMode || !vendor.canUpdate}
             />
           )}
         />
       </Card>
-      {!isSnapshotMode && canUpdateVendor && (
+      {!isSnapshotMode && vendor.canUpdate && (
         <div className="flex justify-end">
           <Button type="submit">{__("Update vendor")}</Button>
         </div>
