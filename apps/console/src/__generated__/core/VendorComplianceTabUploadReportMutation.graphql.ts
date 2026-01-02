@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<34551b84e130ebf112182e8926a526ad>>
+ * @generated SignedSource<<7234ce37ee1c29a4b4546b9f9de471c8>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -201,6 +201,19 @@ return {
                       (v3/*: any*/)
                     ],
                     "storageKey": null
+                  },
+                  {
+                    "alias": "canDelete",
+                    "args": [
+                      {
+                        "kind": "Literal",
+                        "name": "action",
+                        "value": "core:vendor-compliance-report:delete"
+                      }
+                    ],
+                    "kind": "ScalarField",
+                    "name": "permission",
+                    "storageKey": "permission(action:\"core:vendor-compliance-report:delete\")"
                   }
                 ],
                 "storageKey": null
@@ -230,12 +243,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "193fdb014a3493e0b0d56a96309afae3",
+    "cacheID": "404f46e6eabb0fbe406f06ca861414fe",
     "id": null,
     "metadata": {},
     "name": "VendorComplianceTabUploadReportMutation",
     "operationKind": "mutation",
-    "text": "mutation VendorComplianceTabUploadReportMutation(\n  $input: UploadVendorComplianceReportInput!\n) {\n  uploadVendorComplianceReport(input: $input) {\n    vendorComplianceReportEdge {\n      node {\n        id\n        ...VendorComplianceTabFragment_report\n      }\n    }\n  }\n}\n\nfragment VendorComplianceTabFragment_report on VendorComplianceReport {\n  id\n  reportDate\n  validUntil\n  reportName\n  file {\n    fileName\n    mimeType\n    size\n    id\n  }\n}\n"
+    "text": "mutation VendorComplianceTabUploadReportMutation(\n  $input: UploadVendorComplianceReportInput!\n) {\n  uploadVendorComplianceReport(input: $input) {\n    vendorComplianceReportEdge {\n      node {\n        id\n        ...VendorComplianceTabFragment_report\n      }\n    }\n  }\n}\n\nfragment VendorComplianceTabFragment_report on VendorComplianceReport {\n  id\n  reportDate\n  validUntil\n  reportName\n  file {\n    fileName\n    mimeType\n    size\n    id\n  }\n  canDelete: permission(action: \"core:vendor-compliance-report:delete\")\n}\n"
   }
 };
 })();

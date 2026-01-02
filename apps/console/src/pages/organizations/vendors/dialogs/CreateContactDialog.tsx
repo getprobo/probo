@@ -29,6 +29,8 @@ const createContactMutation = graphql`
     createVendorContact(input: $input) {
       vendorContactEdge @prependEdge(connections: $connections) {
         node {
+          canUpdate: permission(action: "core:vendor-contact:update")
+          canDelete: permission(action: "core:vendor-contact:delete")
           ...VendorContactsTabFragment_contact
         }
       }
@@ -47,8 +49,21 @@ export function CreateContactDialog({
 
   const schema = z.object({
     fullName: z.string().optional(),
-    email: z.union([z.string().email(__("Please enter a valid email address")), z.literal("")]),
-    phone: z.union([z.string().regex(phoneRegex, __("Phone number must be in international format (e.g., +1234567890)")), z.literal("")]),
+    email: z.union([
+      z.string().email(__("Please enter a valid email address")),
+      z.literal(""),
+    ]),
+    phone: z.union([
+      z
+        .string()
+        .regex(
+          phoneRegex,
+          __(
+            "Phone number must be in international format (e.g., +1234567890)",
+          ),
+        ),
+      z.literal(""),
+    ]),
     role: z.string().optional(),
   });
 
@@ -61,14 +76,14 @@ export function CreateContactDialog({
         phone: "",
         role: "",
       },
-    }
+    },
   );
   const [createContact, isLoading] = useMutationWithToasts(
     createContactMutation,
     {
       successMessage: __("Contact created successfully."),
       errorMessage: __("Failed to create contact"),
-    }
+    },
   );
 
   const onSubmit = handleSubmit((data) => {
@@ -96,9 +111,7 @@ export function CreateContactDialog({
       className="max-w-lg"
       ref={dialogRef}
       trigger={children}
-      title={
-        <Breadcrumb items={[__("Contacts"), __("New Contact")]} />
-      }
+      title={<Breadcrumb items={[__("Contacts"), __("New Contact")]} />}
     >
       <form onSubmit={onSubmit}>
         <DialogContent padded className="space-y-4">

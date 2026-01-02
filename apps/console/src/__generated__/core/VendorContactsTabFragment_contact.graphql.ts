@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<ea6290653015d098eabae99bb4ff4061>>
+ * @generated SignedSource<<2e0270bf6c8a8f1849c2e05463ece19b>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,6 +11,8 @@
 import { ReaderFragment } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type VendorContactsTabFragment_contact$data = {
+  readonly canDelete: boolean;
+  readonly canUpdate: boolean;
   readonly createdAt: string;
   readonly email: string | null | undefined;
   readonly fullName: string | null | undefined;
@@ -79,12 +81,38 @@ const node: ReaderFragment = {
       "kind": "ScalarField",
       "name": "updatedAt",
       "storageKey": null
+    },
+    {
+      "alias": "canUpdate",
+      "args": [
+        {
+          "kind": "Literal",
+          "name": "action",
+          "value": "core:vendor-contact:update"
+        }
+      ],
+      "kind": "ScalarField",
+      "name": "permission",
+      "storageKey": "permission(action:\"core:vendor-contact:update\")"
+    },
+    {
+      "alias": "canDelete",
+      "args": [
+        {
+          "kind": "Literal",
+          "name": "action",
+          "value": "core:vendor-contact:delete"
+        }
+      ],
+      "kind": "ScalarField",
+      "name": "permission",
+      "storageKey": "permission(action:\"core:vendor-contact:delete\")"
     }
   ],
   "type": "VendorContact",
   "abstractKey": null
 };
 
-(node as any).hash = "9c3e5b8b262263249160f5fd3708162a";
+(node as any).hash = "fbcc45db4e2f857e3208ed8dc35e912d";
 
 export default node;

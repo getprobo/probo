@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<4beefb4b0cb6b5258b3761151c8f722d>>
+ * @generated SignedSource<<5e319c5022f751db916ef2ba18d368e2>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -18,6 +18,8 @@ export type VendorGraphPaginatedFragment$data = {
     readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly node: {
+        readonly canDelete: boolean;
+        readonly canUpdate: boolean;
         readonly id: string;
         readonly name: string;
         readonly riskAssessments: {
@@ -266,6 +268,32 @@ return {
                   "storageKey": "riskAssessments(first:1,orderBy:{\"direction\":\"DESC\",\"field\":\"CREATED_AT\"})"
                 },
                 {
+                  "alias": "canUpdate",
+                  "args": [
+                    {
+                      "kind": "Literal",
+                      "name": "action",
+                      "value": "core:vendor:update"
+                    }
+                  ],
+                  "kind": "ScalarField",
+                  "name": "permission",
+                  "storageKey": "permission(action:\"core:vendor:update\")"
+                },
+                {
+                  "alias": "canDelete",
+                  "args": [
+                    {
+                      "kind": "Literal",
+                      "name": "action",
+                      "value": "core:vendor:delete"
+                    }
+                  ],
+                  "kind": "ScalarField",
+                  "name": "permission",
+                  "storageKey": "permission(action:\"core:vendor:delete\")"
+                },
+                {
                   "alias": null,
                   "args": null,
                   "kind": "ScalarField",
@@ -346,6 +374,6 @@ return {
 };
 })();
 
-(node as any).hash = "bf222e31d20ebe7c9dfdedff7d5a9c68";
+(node as any).hash = "023558795ed2a60c50d2c39edbe3db36";
 
 export default node;

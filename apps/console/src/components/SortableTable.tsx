@@ -19,7 +19,7 @@ import type { LoadMoreFn } from "react-relay";
 import type { OperationType } from "relay-runtime";
 
 type Order = {
-  direction: string;
+  direction: "ASC" | "DESC";
   field: string;
 };
 
