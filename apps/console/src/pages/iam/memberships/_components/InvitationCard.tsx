@@ -1,9 +1,10 @@
 import { formatDate } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
-import { Card } from "@probo/ui";
+import { Button, Card } from "@probo/ui";
 import { graphql } from "relay-runtime";
-import { useFragment } from "react-relay";
+import { useFragment, useMutation } from "react-relay";
 import type { InvitationCardFragment$key } from "/__generated__/iam/InvitationCardFragment.graphql";
+import { useNavigate } from "react-router";
 
 const fragment = graphql`
   fragment InvitationCardFragment on Invitation {
@@ -17,18 +18,48 @@ const fragment = graphql`
   }
 `;
 
+const acceptMutation = graphql`
+  mutation InvitationCardMutation($input: AcceptInvitationInput!) {
+    acceptInvitation(input: $input) {
+      membershipEdge {
+        node {
+          id
+        }
+      }
+    }
+  }
+`;
+
 interface InvitationCardProps {
   fKey: InvitationCardFragment$key;
-  // onAccept: (invitationId: string, organizationId: string) => void;
-  // isAccepting: boolean;
 }
 
 export function InvitationCard(props: InvitationCardProps) {
   const { fKey } = props;
 
+  const navigate = useNavigate();
   const { __ } = useTranslate();
 
   const invitation = useFragment<InvitationCardFragment$key>(fragment, fKey);
+
+  const [acceptInvitation, isAccepting] = useMutation(acceptMutation);
+
+  const handleAccept = () => {
+    acceptInvitation({
+      variables: {
+        input: {
+          invitationId: invitation.id,
+        },
+      },
+      onCompleted: () => {
+        navigate(`/organizations/${invitation.organization.id}`);
+      },
+      onError: (err) => {
+        console.error("Failed to accept invitation:", err);
+        alert(__("Failed to accept invitation"));
+      },
+    });
+  };
 
   return (
     <Card padded className="w-full">
@@ -44,12 +75,9 @@ export function InvitationCard(props: InvitationCardProps) {
             {__("Invited on")} {formatDate(invitation.createdAt)}
           </p>
         </div>
-        {/* <Button
-          onClick={() => onAccept(invitation.id, invitation.organization.id)}
-          disabled={isAccepting}
-        >
+        <Button onClick={handleAccept} disabled={isAccepting}>
           {isAccepting ? __("Accepting...") : __("Accept invitation")}
-        </Button> */}
+        </Button>
       </div>
     </Card>
   );

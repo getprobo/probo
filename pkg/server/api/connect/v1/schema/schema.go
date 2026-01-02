@@ -2455,6 +2455,7 @@ input SignUpInput {
 input SignUpFromInvitationInput {
   token: String!
   password: String!
+  fullName: String!
 }
 
 input ForgotPasswordInput {
@@ -12877,7 +12878,7 @@ func (ec *executionContext) unmarshalInputSignUpFromInvitationInput(ctx context.
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"token", "password"}
+	fieldsInOrder := [...]string{"token", "password", "fullName"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -12898,6 +12899,13 @@ func (ec *executionContext) unmarshalInputSignUpFromInvitationInput(ctx context.
 				return it, err
 			}
 			it.Password = data
+		case "fullName":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fullName"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.FullName = data
 		}
 	}
 

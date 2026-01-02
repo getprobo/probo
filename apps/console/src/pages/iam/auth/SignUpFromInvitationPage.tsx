@@ -1,45 +1,51 @@
-import { Link, useNavigate, useSearchParams } from "react-router";
-import { Button, Field, useToast } from "@probo/ui";
-import { useTranslate } from "@probo/i18n";
-import { z } from "zod";
-import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { usePageTitle } from "@probo/hooks";
-import { useEffect } from "react";
+import { useTranslate } from "@probo/i18n";
+import { Button, Field, useToast } from "@probo/ui";
+import { Link, useNavigate, useSearchParams } from "react-router";
+import z from "zod";
+import { useFormWithSchema } from "/hooks/useFormWithSchema";
+import { graphql } from "relay-runtime";
+import { useMutation } from "react-relay";
+
+const signUpFromIvitationMutation = graphql`
+  mutation SignUpFromInvitationPageMutation(
+    $input: SignUpFromInvitationInput!
+  ) {
+    signUpFromInvitation(input: $input) {
+      identity {
+        id
+      }
+    }
+  }
+`;
 
 const schema = z.object({
-  fullName: z.string().min(2),
   password: z.string().min(8),
+  fullName: z.string().min(2),
 });
 
-export default function SignupFromInvitationPage() {
+type FormData = z.infer<typeof schema>;
+
+export default function SignUpFromInvitationPage() {
   const { __ } = useTranslate();
-  const navigate = useNavigate();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const fullNameFromParams = searchParams.get("fullName") || "";
 
-  const { register, handleSubmit, formState, reset } = useFormWithSchema(
-    schema,
-    {
-      defaultValues: {
-        fullName: "",
-        password: "",
-      },
-    }
-  );
+  usePageTitle(__("Sign up"));
 
-  useEffect(() => {
-    const fullNameFromParams = searchParams.get("fullName") || "";
-    if (fullNameFromParams) {
-      reset({
-        fullName: fullNameFromParams,
-        password: "",
-      });
-    }
-  }, [searchParams, reset]);
+  const { register, handleSubmit, formState } = useFormWithSchema(schema, {
+    defaultValues: {
+      password: "",
+      fullName: fullNameFromParams,
+    },
+  });
 
-  const onSubmit = handleSubmit(async (data) => {
+  const [signUpFromInvitation] = useMutation(signUpFromIvitationMutation);
+
+  const onSubmit = (data: FormData) => {
     const token = searchParams.get("token");
-
     if (!token) {
       toast({
         title: __("Signup failed"),
@@ -49,40 +55,33 @@ export default function SignupFromInvitationPage() {
       return;
     }
 
-    const response = await fetch("/connect/signup-from-invitation", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
+    signUpFromInvitation({
+      variables: {
+        input: {
+          token,
+          password: data.password,
+          fullName: data.fullName,
+        },
       },
-      credentials: "include",
-      body: JSON.stringify({
-        token: token,
-        password: data.password,
-        fullName: data.fullName,
-      }),
+      onCompleted: () => {
+        toast({
+          title: __("Success"),
+          description: __(
+            "Account created successfully. Please accept your invitation to join the organization.",
+          ),
+          variant: "success",
+        });
+        navigate("/", { replace: true });
+      },
+      onError: (errorData) => {
+        toast({
+          title: __("Signup failed"),
+          description: errorData.message || __("Signup failed"),
+          variant: "error",
+        });
+      },
     });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      toast({
-        title: __("Signup failed"),
-        description: errorData.message || __("Signup failed"),
-        variant: "error",
-      });
-      return;
-    }
-
-    toast({
-      title: __("Success"),
-      description: __(
-        "Account created successfully. Please accept your invitation to join the organization."
-      ),
-      variant: "success",
-    });
-    navigate("/", { replace: true });
-  });
-
-  usePageTitle(__("Create your account"));
+  };
 
   return (
     <div className="space-y-6 w-full max-w-md mx-auto">
@@ -93,7 +92,7 @@ export default function SignupFromInvitationPage() {
         </p>
       </div>
 
-      <form onSubmit={onSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <Field
           label={__("Full Name")}
           type="text"

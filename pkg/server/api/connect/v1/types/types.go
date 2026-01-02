@@ -410,6 +410,7 @@ type SignOutPayload struct {
 type SignUpFromInvitationInput struct {
 	Token    string `json:"token"`
 	Password string `json:"password"`
+	FullName string `json:"fullName"`
 }
 
 type SignUpFromInvitationPayload struct {
