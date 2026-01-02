@@ -1,9 +1,21 @@
-import { Link, useNavigate } from "react-router";
-import { Button, Field, useToast } from "@probo/ui";
-import { useTranslate } from "@probo/i18n";
-import { z } from "zod";
-import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { usePageTitle } from "@probo/hooks";
+import { useTranslate } from "@probo/i18n";
+import { Button, Field, useToast } from "@probo/ui";
+import { Link, useNavigate } from "react-router";
+import z from "zod";
+import { useFormWithSchema } from "/hooks/useFormWithSchema";
+import { graphql } from "relay-runtime";
+import { useMutation } from "react-relay";
+
+const signUpMutation = graphql`
+  mutation SignUpPageMutation($input: SignUpInput!) {
+    signUp(input: $input) {
+      identity {
+        id
+      }
+    }
+  }
+`;
 
 const schema = z.object({
   email: z.string().email(),
@@ -11,10 +23,15 @@ const schema = z.object({
   fullName: z.string().min(2),
 });
 
-export default function RegisterPage() {
+type FormData = z.infer<typeof schema>;
+
+export default function SignUpPage() {
   const { __ } = useTranslate();
-  const navigate = useNavigate();
   const { toast } = useToast();
+  const navigate = useNavigate();
+
+  usePageTitle(__("Sign up"));
+
   const { register, handleSubmit, formState } = useFormWithSchema(schema, {
     defaultValues: {
       email: "",
@@ -23,36 +40,32 @@ export default function RegisterPage() {
     },
   });
 
-  const onSubmit = handleSubmit(async (data) => {
-    const response = await fetch("/connect/register", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
+  const [signUp] = useMutation(signUpMutation);
+
+  const onSubmit = (data: FormData) => {
+    signUp({
+      variables: {
+        email: data.email,
+        password: data.password,
+        fullName: data.fullName,
       },
-      credentials: "include",
-      body: JSON.stringify(data),
+      onCompleted: () => {
+        toast({
+          title: __("Success"),
+          description: __("Account created successfully"),
+          variant: "success",
+        });
+        navigate("/", { replace: true });
+      },
+      onError: (errorData) => {
+        toast({
+          title: __("Registration failed"),
+          description: errorData.message || __("Registration failed"),
+          variant: "error",
+        });
+      },
     });
-
-    // Registration failed
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      toast({
-        title: __("Registration failed"),
-        description: errorData.message || __("Registration failed"),
-        variant: "error",
-      });
-      return;
-    }
-
-    toast({
-      title: __("Success"),
-      description: __("Account created successfully"),
-      variant: "success",
-    });
-    navigate("/", { replace: true });
-  });
-
-  usePageTitle(__("Sign up"));
+  };
 
   return (
     <div className="space-y-6 w-full max-w-md mx-auto">
@@ -63,7 +76,7 @@ export default function RegisterPage() {
         </p>
       </div>
 
-      <form onSubmit={onSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <Field
           label={__("Full Name")}
           type="text"

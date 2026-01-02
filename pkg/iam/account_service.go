@@ -257,6 +257,19 @@ func (s *AccountService) AcceptInvitation(
 				return fmt.Errorf("cannot create membership: %w", err)
 			}
 
+			profile := &coredata.MembershipProfile{
+				ID:           gid.New(tenantID, coredata.MembershipProfileEntityType),
+				MembershipID: membership.ID,
+				FullName:     identity.FullName,
+				CreatedAt:    now,
+				UpdatedAt:    now,
+			}
+
+			err = profile.Insert(ctx, tx)
+			if err != nil {
+				return fmt.Errorf("cannot insert profile: %w", err)
+			}
+
 			invitation.AcceptedAt = &now
 			err = invitation.Update(ctx, tx, scope)
 			if err != nil {

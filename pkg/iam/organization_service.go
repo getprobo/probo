@@ -425,7 +425,10 @@ func (s *OrganizationService) InviteMember(
 				return fmt.Errorf("cannot parse base URL: %w", err)
 			}
 
-			invitationURL := baseurl.WithPath("/auth/signup-from-invitation").WithQuery("token", invitationToken).MustString()
+			invitationURL := baseurl.WithPath("/auth/signup-from-invitation").
+				WithQuery("token", invitationToken).
+				WithQuery("fullName", invitation.FullName).
+				MustString()
 
 			subject, textBody, htmlBody, err := emails.RenderInvitation(
 				s.baseURL,

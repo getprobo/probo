@@ -491,6 +491,7 @@ input SignUpInput {
 input SignUpFromInvitationInput {
   token: String!
   password: String!
+  fullName: String!
 }
 
 input ForgotPasswordInput {
