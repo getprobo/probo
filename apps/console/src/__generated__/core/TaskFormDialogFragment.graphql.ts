@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<1778d9b73cc75e2097e9c24fdfe83631>>
+ * @generated SignedSource<<2d84132b898531d9d125296a8cbcfb99>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -15,7 +15,7 @@ export type TaskFormDialogFragment$data = {
   readonly assignedTo: {
     readonly id: string;
   } | null | undefined;
-  readonly deadline: any | null | undefined;
+  readonly deadline: string | null | undefined;
   readonly description: string | null | undefined;
   readonly id: string;
   readonly measure: {
@@ -23,7 +23,7 @@ export type TaskFormDialogFragment$data = {
   } | null | undefined;
   readonly name: string;
   readonly state: TaskState;
-  readonly timeEstimate: any | null | undefined;
+  readonly timeEstimate: string | null | undefined;
   readonly " $fragmentType": "TaskFormDialogFragment";
 };
 export type TaskFormDialogFragment$key = {

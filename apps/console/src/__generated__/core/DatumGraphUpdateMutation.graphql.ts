@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<2fd708bf07a7c93afe66bd9d3e8031cc>>
+ * @generated SignedSource<<34155e0367247c7503956fc623839d7f>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -30,7 +30,7 @@ export type DatumGraphUpdateMutation$data = {
         readonly fullName: string;
         readonly id: string;
       };
-      readonly updatedAt: any;
+      readonly updatedAt: string;
       readonly vendors: {
         readonly edges: ReadonlyArray<{
           readonly node: {

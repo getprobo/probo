@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<68f2a5a67287a554c3f45ddfc856b6ea>>
+ * @generated SignedSource<<34551b84e130ebf112182e8926a526ad>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,9 +12,9 @@ import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type UploadVendorComplianceReportInput = {
   file: any;
-  reportDate: any;
+  reportDate: string;
   reportName: string;
-  validUntil?: any | null | undefined;
+  validUntil?: string | null | undefined;
   vendorId: string;
 };
 export type VendorComplianceTabUploadReportMutation$variables = {

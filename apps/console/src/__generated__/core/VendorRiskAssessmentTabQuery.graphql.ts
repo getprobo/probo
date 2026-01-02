@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<121b4497478f4b5ff67fb8a9daab3774>>
+ * @generated SignedSource<<6303a33c70cf6072bad533f5362a8944>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -17,8 +17,8 @@ export type VendorRiskAssessmentOrder = {
   field: VendorRiskAssessmentOrderField;
 };
 export type VendorRiskAssessmentTabQuery$variables = {
-  after?: any | null | undefined;
-  before?: any | null | undefined;
+  after?: string | null | undefined;
+  before?: string | null | undefined;
   first?: number | null | undefined;
   id: string;
   last?: number | null | undefined;

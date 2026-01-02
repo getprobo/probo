@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<18ad235cee2891b222acb016b8986050>>
+ * @generated SignedSource<<659b07d2d3bf4c7527c44c7d1e830138>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,7 +12,7 @@ import { ReaderFragment } from 'relay-runtime';
 export type SnapshotsType = "ASSETS" | "CONTINUAL_IMPROVEMENTS" | "DATA" | "NONCONFORMITIES" | "OBLIGATIONS" | "PROCESSING_ACTIVITIES" | "RISKS" | "STATES_OF_APPLICABILITY" | "VENDORS";
 import { FragmentRefs } from "relay-runtime";
 export type LinkedSnapshotsCardFragment$data = {
-  readonly createdAt: any;
+  readonly createdAt: string;
   readonly description: string | null | undefined;
   readonly id: string;
   readonly name: string;

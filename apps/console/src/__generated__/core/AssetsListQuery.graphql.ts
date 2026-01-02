@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<a18d99b6e4ee0b256a7391f30ea1dc4f>>
+ * @generated SignedSource<<c063f17d5bc1815246a5e498700bfec9>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -17,8 +17,8 @@ export type AssetOrder = {
   field: AssetOrderField;
 };
 export type AssetsListQuery$variables = {
-  after?: any | null | undefined;
-  before?: any | null | undefined;
+  after?: string | null | undefined;
+  before?: string | null | undefined;
   first?: number | null | undefined;
   id: string;
   last?: number | null | undefined;

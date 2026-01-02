@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<5b0e12ba40232dd4328c0fd766513fb2>>
+ * @generated SignedSource<<f93ee7f1b0f384bafe3a11df6a514c0c>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -14,24 +14,24 @@ export type TrustCenterAccessGraph_accesses$data = {
   readonly accesses: {
     readonly __id: string;
     readonly edges: ReadonlyArray<{
-      readonly cursor: any;
+      readonly cursor: string;
       readonly node: {
         readonly active: boolean;
         readonly activeCount: number;
-        readonly createdAt: any;
-        readonly email: any;
+        readonly createdAt: string;
+        readonly email: string;
         readonly hasAcceptedNonDisclosureAgreement: boolean;
         readonly id: string;
-        readonly lastTokenExpiresAt: any | null | undefined;
+        readonly lastTokenExpiresAt: string | null | undefined;
         readonly name: string;
         readonly pendingRequestCount: number;
       };
     }>;
     readonly pageInfo: {
-      readonly endCursor: any | null | undefined;
+      readonly endCursor: string | null | undefined;
       readonly hasNextPage: boolean;
       readonly hasPreviousPage: boolean;
-      readonly startCursor: any | null | undefined;
+      readonly startCursor: string | null | undefined;
     };
   };
   readonly id: string;

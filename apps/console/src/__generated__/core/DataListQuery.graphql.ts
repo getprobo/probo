@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<bfe5e85608cbcd0fd0db44ad909ac493>>
+ * @generated SignedSource<<d7c683ae93252e6615c66851edf88d62>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -17,8 +17,8 @@ export type DatumOrder = {
   field: DatumOrderField;
 };
 export type DataListQuery$variables = {
-  after?: any | null | undefined;
-  before?: any | null | undefined;
+  after?: string | null | undefined;
+  before?: string | null | undefined;
   first?: number | null | undefined;
   id: string;
   last?: number | null | undefined;

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<a62993ad367f0d977f346e507dd6b572>>
+ * @generated SignedSource<<2b49935877fd64d39d0cfd649f3f01a5>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -15,7 +15,7 @@ export type SnapshotBannerQuery$variables = {
 };
 export type SnapshotBannerQuery$data = {
   readonly node: {
-    readonly createdAt?: any;
+    readonly createdAt?: string;
     readonly id?: string;
     readonly name?: string;
     readonly type?: SnapshotsType;

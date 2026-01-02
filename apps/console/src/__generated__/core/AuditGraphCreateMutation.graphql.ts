@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<5cef509d4e44e0e0064c79fc7c3bf2e3>>
+ * @generated SignedSource<<5da72785f4532d069a59c8bb5f12101d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -17,8 +17,8 @@ export type CreateAuditInput = {
   organizationId: string;
   state?: AuditState | null | undefined;
   trustCenterVisibility?: TrustCenterVisibility | null | undefined;
-  validFrom?: any | null | undefined;
-  validUntil?: any | null | undefined;
+  validFrom?: string | null | undefined;
+  validUntil?: string | null | undefined;
 };
 export type AuditGraphCreateMutation$variables = {
   connections: ReadonlyArray<string>;
@@ -30,7 +30,7 @@ export type AuditGraphCreateMutation$data = {
       readonly node: {
         readonly canDelete: boolean;
         readonly canUpdate: boolean;
-        readonly createdAt: any;
+        readonly createdAt: string;
         readonly framework: {
           readonly id: string;
           readonly name: string;
@@ -42,8 +42,8 @@ export type AuditGraphCreateMutation$data = {
           readonly id: string;
         } | null | undefined;
         readonly state: AuditState;
-        readonly validFrom: any | null | undefined;
-        readonly validUntil: any | null | undefined;
+        readonly validFrom: string | null | undefined;
+        readonly validUntil: string | null | undefined;
       };
     };
   };

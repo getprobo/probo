@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<1bb16039861951cb1726b506ce33f0ff>>
+ * @generated SignedSource<<4beefb4b0cb6b5258b3761151c8f722d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -24,15 +24,15 @@ export type VendorGraphPaginatedFragment$data = {
           readonly edges: ReadonlyArray<{
             readonly node: {
               readonly businessImpact: BusinessImpact;
-              readonly createdAt: any;
+              readonly createdAt: string;
               readonly dataSensitivity: DataSensitivity;
-              readonly expiresAt: any;
+              readonly expiresAt: string;
               readonly id: string;
             };
           }>;
         };
         readonly snapshotId: string | null | undefined;
-        readonly updatedAt: any;
+        readonly updatedAt: string;
         readonly websiteUrl: string | null | undefined;
       };
     }>;

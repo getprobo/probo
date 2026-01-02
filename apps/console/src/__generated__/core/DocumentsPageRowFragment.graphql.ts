@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<6aa146f2bf0d89cd8140da220a2c33d8>>
+ * @generated SignedSource<<9d93eb8b8aedef57b8a20e267b61bc08>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -25,7 +25,7 @@ export type DocumentsPageRowFragment$data = {
     readonly id: string;
   };
   readonly title: string;
-  readonly updatedAt: any;
+  readonly updatedAt: string;
   readonly versions: {
     readonly edges: ReadonlyArray<{
       readonly node: {

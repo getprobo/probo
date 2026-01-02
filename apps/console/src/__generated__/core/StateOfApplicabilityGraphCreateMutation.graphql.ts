@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<3a91be997803d4a28d0db40aebe53f25>>
+ * @generated SignedSource<<4c20f255a28d7869f69f484e0e4e2321>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -22,12 +22,12 @@ export type StateOfApplicabilityGraphCreateMutation$data = {
   readonly createStateOfApplicability: {
     readonly stateOfApplicabilityEdge: {
       readonly node: {
-        readonly createdAt: any;
+        readonly createdAt: string;
         readonly id: string;
         readonly name: string;
         readonly snapshotId: string | null | undefined;
         readonly sourceId: string | null | undefined;
-        readonly updatedAt: any;
+        readonly updatedAt: string;
       };
     };
   };

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<29125e9f2562c96a6076ed8b0504a4b1>>
+ * @generated SignedSource<<8c69925ff6e0312b590896229c9bc688>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -17,8 +17,8 @@ export type RiskOrder = {
   field: RiskOrderField;
 };
 export type RisksListQuery$variables = {
-  after?: any | null | undefined;
-  before?: any | null | undefined;
+  after?: string | null | undefined;
+  before?: string | null | undefined;
   first?: number | null | undefined;
   id: string;
   last?: number | null | undefined;

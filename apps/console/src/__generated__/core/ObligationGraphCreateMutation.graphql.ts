@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<e1a92b055990a5c1e76e9750d51f0eb4>>
+ * @generated SignedSource<<1f23de4809b353b4b807c3fa85146bf4>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -14,8 +14,8 @@ export type ObligationType = "CONTRACTUAL" | "LEGAL";
 export type CreateObligationInput = {
   actionsToBeImplemented?: string | null | undefined;
   area?: string | null | undefined;
-  dueDate?: any | null | undefined;
-  lastReviewDate?: any | null | undefined;
+  dueDate?: string | null | undefined;
+  lastReviewDate?: string | null | undefined;
   organizationId: string;
   ownerId: string;
   regulator?: string | null | undefined;
@@ -36,10 +36,10 @@ export type ObligationGraphCreateMutation$data = {
         readonly area: string | null | undefined;
         readonly canDelete: boolean;
         readonly canUpdate: boolean;
-        readonly createdAt: any;
-        readonly dueDate: any | null | undefined;
+        readonly createdAt: string;
+        readonly dueDate: string | null | undefined;
         readonly id: string;
-        readonly lastReviewDate: any | null | undefined;
+        readonly lastReviewDate: string | null | undefined;
         readonly owner: {
           readonly fullName: string;
           readonly id: string;

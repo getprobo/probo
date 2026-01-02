@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<d3c71290624f4f1394422723aba9d130>>
+ * @generated SignedSource<<540f500784ebd0386ced3eb31a6afa49>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -23,14 +23,14 @@ export type ProcessingActivityGraphCreateTIAMutation$variables = {
 export type ProcessingActivityGraphCreateTIAMutation$data = {
   readonly createTransferImpactAssessment: {
     readonly transferImpactAssessment: {
-      readonly createdAt: any;
+      readonly createdAt: string;
       readonly dataSubjects: string | null | undefined;
       readonly id: string;
       readonly legalMechanism: string | null | undefined;
       readonly localLawRisk: string | null | undefined;
       readonly supplementaryMeasures: string | null | undefined;
       readonly transfer: string | null | undefined;
-      readonly updatedAt: any;
+      readonly updatedAt: string;
     };
   };
 };

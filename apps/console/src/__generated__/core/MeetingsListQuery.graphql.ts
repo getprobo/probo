@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<c50d9a4ec082e190a0f0b3a9e1a7f5c2>>
+ * @generated SignedSource<<6d71d2d88b695492ef93e2b213fc14d3>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -17,8 +17,8 @@ export type MeetingOrder = {
   field: MeetingOrderField;
 };
 export type MeetingsListQuery$variables = {
-  after?: any | null | undefined;
-  before?: any | null | undefined;
+  after?: string | null | undefined;
+  before?: string | null | undefined;
   first?: number | null | undefined;
   id: string;
   last?: number | null | undefined;

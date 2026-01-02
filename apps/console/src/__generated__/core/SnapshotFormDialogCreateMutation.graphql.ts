@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<d0a4f2beac754ba3a7865f227b9d6aae>>
+ * @generated SignedSource<<7d676ad166c7c858dc8dbc909ed500ea>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -24,7 +24,7 @@ export type SnapshotFormDialogCreateMutation$data = {
   readonly createSnapshot: {
     readonly snapshotEdge: {
       readonly node: {
-        readonly createdAt: any;
+        readonly createdAt: string;
         readonly description: string | null | undefined;
         readonly id: string;
         readonly name: string;

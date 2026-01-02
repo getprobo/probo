@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<a6c5ecf296ecfda1ac7b2ec2f315af26>>
+ * @generated SignedSource<<af15e0a3ab99f57152fbb4e9d23eca6b>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -21,11 +21,11 @@ export type CreateProcessingActivityInput = {
   dataProtectionOfficerId?: string | null | undefined;
   dataSubjectCategory?: string | null | undefined;
   internationalTransfers: boolean;
-  lastReviewDate?: any | null | undefined;
+  lastReviewDate?: string | null | undefined;
   lawfulBasis: ProcessingActivityLawfulBasis;
   location?: string | null | undefined;
   name: string;
-  nextReviewDate?: any | null | undefined;
+  nextReviewDate?: string | null | undefined;
   organizationId: string;
   personalDataCategory?: string | null | undefined;
   purpose?: string | null | undefined;
@@ -47,7 +47,7 @@ export type ProcessingActivityGraphCreateMutation$data = {
     readonly processingActivityEdge: {
       readonly node: {
         readonly consentEvidenceLink: string | null | undefined;
-        readonly createdAt: any;
+        readonly createdAt: string;
         readonly dataProtectionImpactAssessmentNeeded: ProcessingActivityDataProtectionImpactAssessment;
         readonly dataProtectionOfficer: {
           readonly fullName: string;
@@ -56,11 +56,11 @@ export type ProcessingActivityGraphCreateMutation$data = {
         readonly dataSubjectCategory: string | null | undefined;
         readonly id: string;
         readonly internationalTransfers: boolean;
-        readonly lastReviewDate: any | null | undefined;
+        readonly lastReviewDate: string | null | undefined;
         readonly lawfulBasis: ProcessingActivityLawfulBasis;
         readonly location: string | null | undefined;
         readonly name: string;
-        readonly nextReviewDate: any | null | undefined;
+        readonly nextReviewDate: string | null | undefined;
         readonly personalDataCategory: string | null | undefined;
         readonly purpose: string | null | undefined;
         readonly recipients: string | null | undefined;

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<03e78d5a57f41471ed7099febe61e666>>
+ * @generated SignedSource<<1fa31b2eb4941ffb82b51248dd11711c>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,12 +12,12 @@ import { ReaderFragment } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type VendorOverviewTabDataPrivacyAgreementFragment$data = {
   readonly dataPrivacyAgreement: {
-    readonly createdAt: any;
+    readonly createdAt: string;
     readonly fileName: string;
     readonly fileUrl: string;
     readonly id: string;
-    readonly validFrom: any | null | undefined;
-    readonly validUntil: any | null | undefined;
+    readonly validFrom: string | null | undefined;
+    readonly validUntil: string | null | undefined;
   } | null | undefined;
   readonly " $fragmentType": "VendorOverviewTabDataPrivacyAgreementFragment";
 };

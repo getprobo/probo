@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<e9e261236245bcf1724038c76fe9918c>>
+ * @generated SignedSource<<8aa2e602e0b579ac6a320207afa7c558>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -16,7 +16,7 @@ export type SnapshotsPageFragment$data = {
     readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly node: {
-        readonly createdAt: any;
+        readonly createdAt: string;
         readonly description: string | null | undefined;
         readonly id: string;
         readonly name: string;

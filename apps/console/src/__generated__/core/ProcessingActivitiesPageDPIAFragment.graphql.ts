@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<5f8b1950dc00b28dac0ae08df590924e>>
+ * @generated SignedSource<<f671b035c79f039c03362a0e6b8d485b>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -16,7 +16,7 @@ export type ProcessingActivitiesPageDPIAFragment$data = {
     readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly node: {
-        readonly createdAt: any;
+        readonly createdAt: string;
         readonly description: string | null | undefined;
         readonly id: string;
         readonly potentialRisk: string | null | undefined;
@@ -25,11 +25,11 @@ export type ProcessingActivitiesPageDPIAFragment$data = {
           readonly name: string;
         };
         readonly residualRisk: DataProtectionImpactAssessmentResidualRisk | null | undefined;
-        readonly updatedAt: any;
+        readonly updatedAt: string;
       };
     }>;
     readonly pageInfo: {
-      readonly endCursor: any | null | undefined;
+      readonly endCursor: string | null | undefined;
       readonly hasNextPage: boolean;
     };
     readonly totalCount: number;

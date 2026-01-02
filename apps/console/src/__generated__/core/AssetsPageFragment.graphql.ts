@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<f9b0ae27afd022a27fc3e8860ff72729>>
+ * @generated SignedSource<<764aed3f20dfa64736dc42751e17de65>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -20,7 +20,7 @@ export type AssetsPageFragment$data = {
         readonly assetType: AssetType;
         readonly canDelete: boolean;
         readonly canUpdate: boolean;
-        readonly createdAt: any;
+        readonly createdAt: string;
         readonly dataTypesStored: string;
         readonly id: string;
         readonly name: string;

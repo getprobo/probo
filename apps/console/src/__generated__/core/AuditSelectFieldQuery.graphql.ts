@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<21026731cd2ebaf80c8c2e251b9a57f8>>
+ * @generated SignedSource<<b1303e995857ee0207b8a09f76e2ed2a>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -25,8 +25,8 @@ export type AuditSelectFieldQuery$data = {
           readonly id: string;
           readonly name: string | null | undefined;
           readonly state: AuditState;
-          readonly validFrom: any | null | undefined;
-          readonly validUntil: any | null | undefined;
+          readonly validFrom: string | null | undefined;
+          readonly validUntil: string | null | undefined;
         };
       }>;
     };

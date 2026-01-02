@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<0584af25ba02b2b7138cc14ba4efc1b6>>
+ * @generated SignedSource<<0138987bbb69846be5f1792b314854e4>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -14,7 +14,7 @@ import { FragmentRefs } from "relay-runtime";
 export type TrustCenterVendorsCardFragment$data = {
   readonly canUpdate: boolean;
   readonly category: VendorCategory;
-  readonly createdAt: any;
+  readonly createdAt: string;
   readonly description: string | null | undefined;
   readonly id: string;
   readonly name: string;

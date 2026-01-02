@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<e70731a64db78c30ad662330d2ec2099>>
+ * @generated SignedSource<<d2fbf38ca892f7eda55510d3fa35f15f>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -26,12 +26,12 @@ export type TrustCenterFileGraphCreateMutation$data = {
     readonly trustCenterFileEdge: {
       readonly node: {
         readonly category: string;
-        readonly createdAt: any;
+        readonly createdAt: string;
         readonly fileUrl: string;
         readonly id: string;
         readonly name: string;
         readonly trustCenterVisibility: TrustCenterVisibility;
-        readonly updatedAt: any;
+        readonly updatedAt: string;
       };
     };
   };

@@ -7,7 +7,15 @@
       "eagerEsModules": true,
       "noFutureProofEnums": true,
       "output": "apps/console/src/__generated__/iam",
-      "relativizeJsModulePaths": false
+      "relativizeJsModulePaths": false,
+      "customScalarTypes": {
+        "Datetime": "string",
+        "GID": "string",
+        "CursorKey": "string",
+        "Duration": "string",
+        "BigInt": "string",
+        "EmailAddr": "string"
+      }
     },
     "core": {
       "schema": "pkg/server/api/console/v1/schema.graphql",
@@ -15,7 +23,15 @@
       "eagerEsModules": true,
       "noFutureProofEnums": true,
       "output": "apps/console/src/__generated__/core",
-      "relativizeJsModulePaths": false
+      "relativizeJsModulePaths": false,
+      "customScalarTypes": {
+        "Datetime": "string",
+        "GID": "string",
+        "CursorKey": "string",
+        "Duration": "string",
+        "BigInt": "string",
+        "EmailAddr": "string"
+      }
     }
   },
   "sources": {

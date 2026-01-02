@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<2d64b7b84c435d26d97748081e1bb38e>>
+ * @generated SignedSource<<ba35b8d51574d7e6b61987743636f5bb>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -17,8 +17,8 @@ export type DocumentOrder = {
   field: DocumentOrderField;
 };
 export type DocumentsListQuery$variables = {
-  after?: any | null | undefined;
-  before?: any | null | undefined;
+  after?: string | null | undefined;
+  before?: string | null | undefined;
   first?: number | null | undefined;
   id: string;
   last?: number | null | undefined;

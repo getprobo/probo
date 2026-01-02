@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<a828bfcd067f92e4dc3a1adcd4fe786d>>
+ * @generated SignedSource<<6c195e6a85a33dea6ae254caa60b79df>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -17,8 +17,8 @@ export type MembershipOrder = {
   field: MembershipOrderField;
 };
 export type MemberListFragment_RefetchQuery$variables = {
-  after?: any | null | undefined;
-  before?: any | null | undefined;
+  after?: string | null | undefined;
+  before?: string | null | undefined;
   first?: number | null | undefined;
   id: string;
   last?: number | null | undefined;

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<2307fb5807f0d42458650cfaf8ebdbba>>
+ * @generated SignedSource<<1d5ff0e0f9c52ef9b340d17be0f9895f>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -24,7 +24,7 @@ export type SnapshotGraphCreateMutation$data = {
   readonly createSnapshot: {
     readonly snapshotEdge: {
       readonly node: {
-        readonly createdAt: any;
+        readonly createdAt: string;
         readonly description: string | null | undefined;
         readonly id: string;
         readonly name: string;

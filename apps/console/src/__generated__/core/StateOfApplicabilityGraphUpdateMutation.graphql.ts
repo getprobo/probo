@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<fe37fa58e9c374383c4f59dac08aed39>>
+ * @generated SignedSource<<eb7a62904f0c39bab4289b137c4b8e9b>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -20,7 +20,7 @@ export type StateOfApplicabilityGraphUpdateMutation$variables = {
 export type StateOfApplicabilityGraphUpdateMutation$data = {
   readonly updateStateOfApplicability: {
     readonly stateOfApplicability: {
-      readonly createdAt: any;
+      readonly createdAt: string;
       readonly id: string;
       readonly name: string;
       readonly owner: {
@@ -29,7 +29,7 @@ export type StateOfApplicabilityGraphUpdateMutation$data = {
       };
       readonly snapshotId: string | null | undefined;
       readonly sourceId: string | null | undefined;
-      readonly updatedAt: any;
+      readonly updatedAt: string;
     };
   };
 };

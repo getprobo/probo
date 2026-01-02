@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<353905ded51be0954c17254a66a133d5>>
+ * @generated SignedSource<<e907a3f8c0610d5deed37b1a47500377>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -13,7 +13,7 @@ import { FragmentRefs } from "relay-runtime";
 export type MembershipsDropdownMenuItemFragment$data = {
   readonly id: string;
   readonly lastSession: {
-    readonly expiresAt: any;
+    readonly expiresAt: string;
     readonly id: string;
   } | null | undefined;
   readonly organization: {

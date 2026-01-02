@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<e0d47d3fdb15b30f904396b7bcd1328f>>
+ * @generated SignedSource<<9026caada1e636b7db342b11e6d324c0>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -20,8 +20,8 @@ export type StateOfApplicabilityOrder = {
   field: StateOfApplicabilityOrderField;
 };
 export type StateOfApplicabilityListQuery$variables = {
-  after?: any | null | undefined;
-  before?: any | null | undefined;
+  after?: string | null | undefined;
+  before?: string | null | undefined;
   filter?: StateOfApplicabilityFilter | null | undefined;
   first?: number | null | undefined;
   id: string;

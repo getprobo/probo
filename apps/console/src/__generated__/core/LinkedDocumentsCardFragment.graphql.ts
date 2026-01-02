@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<0f8cdaa2d7380a1128e7c42004b7d506>>
+ * @generated SignedSource<<9fd60ce5ad80ada10eafed963ea0adb3>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -13,7 +13,7 @@ export type DocumentStatus = "DRAFT" | "PUBLISHED";
 export type DocumentType = "ISMS" | "OTHER" | "POLICY" | "PROCEDURE";
 import { FragmentRefs } from "relay-runtime";
 export type LinkedDocumentsCardFragment$data = {
-  readonly createdAt: any;
+  readonly createdAt: string;
   readonly documentType: DocumentType;
   readonly id: string;
   readonly title: string;

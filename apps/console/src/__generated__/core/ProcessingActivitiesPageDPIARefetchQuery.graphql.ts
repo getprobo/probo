@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<9bde8f385a0f31b1738122ca97cb02e9>>
+ * @generated SignedSource<<f0bac674d8b20eb24762feabbfb4dc2e>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,7 +11,7 @@
 import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type ProcessingActivitiesPageDPIARefetchQuery$variables = {
-  after?: any | null | undefined;
+  after?: string | null | undefined;
   first?: number | null | undefined;
   id: string;
   snapshotId?: string | null | undefined;

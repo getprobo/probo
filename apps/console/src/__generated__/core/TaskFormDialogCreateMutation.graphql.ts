@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<c196829e8365168f07614d741242296c>>
+ * @generated SignedSource<<ab0bd594132e6b39ac6a258a23c2dc96>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,12 +12,12 @@ import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type CreateTaskInput = {
   assignedToId?: string | null | undefined;
-  deadline?: any | null | undefined;
+  deadline?: string | null | undefined;
   description?: string | null | undefined;
   measureId?: string | null | undefined;
   name: string;
   organizationId: string;
-  timeEstimate?: any | null | undefined;
+  timeEstimate?: string | null | undefined;
 };
 export type TaskFormDialogCreateMutation$variables = {
   connections: ReadonlyArray<string>;

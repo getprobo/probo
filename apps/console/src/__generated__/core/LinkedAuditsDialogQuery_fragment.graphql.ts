@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<64f01ce9caaee3040df3df201bb608f8>>
+ * @generated SignedSource<<87ff7faae25faa23e9832a7457605a2e>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -17,8 +17,8 @@ export type AuditOrder = {
   field: AuditOrderField;
 };
 export type LinkedAuditsDialogQuery_fragment$variables = {
-  after?: any | null | undefined;
-  before?: any | null | undefined;
+  after?: string | null | undefined;
+  before?: string | null | undefined;
   first?: number | null | undefined;
   id: string;
   last?: number | null | undefined;

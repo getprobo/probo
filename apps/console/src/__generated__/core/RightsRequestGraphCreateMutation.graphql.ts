@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<630d2ddf409889a6c1632063d18a2545>>
+ * @generated SignedSource<<77e3b75def25c670d0c069140d111507>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -15,7 +15,7 @@ export type CreateRightsRequestInput = {
   actionTaken?: string | null | undefined;
   contact?: string | null | undefined;
   dataSubject?: string | null | undefined;
-  deadline?: any | null | undefined;
+  deadline?: string | null | undefined;
   details?: string | null | undefined;
   organizationId: string;
   requestState: RightsRequestState;
@@ -31,9 +31,9 @@ export type RightsRequestGraphCreateMutation$data = {
       readonly node: {
         readonly actionTaken: string | null | undefined;
         readonly contact: string | null | undefined;
-        readonly createdAt: any;
+        readonly createdAt: string;
         readonly dataSubject: string | null | undefined;
-        readonly deadline: any | null | undefined;
+        readonly deadline: string | null | undefined;
         readonly details: string | null | undefined;
         readonly id: string;
         readonly requestState: RightsRequestState;

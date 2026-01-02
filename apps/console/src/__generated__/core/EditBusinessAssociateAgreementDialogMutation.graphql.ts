@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<8d5961820ccfa705a899582a9a8ca953>>
+ * @generated SignedSource<<803ae28abdfda756e8e4cdfba1e580c0>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,8 +10,8 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 export type UpdateVendorBusinessAssociateAgreementInput = {
-  validFrom?: any | null | undefined;
-  validUntil?: any | null | undefined;
+  validFrom?: string | null | undefined;
+  validUntil?: string | null | undefined;
   vendorId: string;
 };
 export type EditBusinessAssociateAgreementDialogMutation$variables = {
@@ -20,11 +20,11 @@ export type EditBusinessAssociateAgreementDialogMutation$variables = {
 export type EditBusinessAssociateAgreementDialogMutation$data = {
   readonly updateVendorBusinessAssociateAgreement: {
     readonly vendorBusinessAssociateAgreement: {
-      readonly createdAt: any;
+      readonly createdAt: string;
       readonly fileUrl: string;
       readonly id: string;
-      readonly validFrom: any | null | undefined;
-      readonly validUntil: any | null | undefined;
+      readonly validFrom: string | null | undefined;
+      readonly validUntil: string | null | undefined;
     };
   };
 };

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<2f6dc5bf85b9ad81fe6c9af7955e4217>>
+ * @generated SignedSource<<6e7ee5d7dad966afab1e9ddbf60e14f3>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,11 +11,11 @@
 import { ReaderFragment } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type VendorServicesTabFragment_service$data = {
-  readonly createdAt: any;
+  readonly createdAt: string;
   readonly description: string | null | undefined;
   readonly id: string;
   readonly name: string;
-  readonly updatedAt: any;
+  readonly updatedAt: string;
   readonly " $fragmentType": "VendorServicesTabFragment_service";
 };
 export type VendorServicesTabFragment_service$key = {

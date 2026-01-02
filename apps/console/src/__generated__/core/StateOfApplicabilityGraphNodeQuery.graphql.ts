@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<d96c71d40860ec6fc2e2ac8a5ab992f8>>
+ * @generated SignedSource<<bf2f70e0ed1c6bd3352d100db4cae660>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -15,7 +15,7 @@ export type StateOfApplicabilityGraphNodeQuery$variables = {
 };
 export type StateOfApplicabilityGraphNodeQuery$data = {
   readonly node: {
-    readonly createdAt?: any;
+    readonly createdAt?: string;
     readonly id?: string;
     readonly name?: string;
     readonly organization?: {
@@ -27,7 +27,7 @@ export type StateOfApplicabilityGraphNodeQuery$data = {
     };
     readonly snapshotId?: string | null | undefined;
     readonly sourceId?: string | null | undefined;
-    readonly updatedAt?: any;
+    readonly updatedAt?: string;
     readonly " $fragmentSpreads": FragmentRefs<"StateOfApplicabilityControlsTabFragment">;
   };
 };

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<28b9e5609f5d7c082c209bf839533d45>>
+ * @generated SignedSource<<c56844aad03997c31a20815ce775fc24>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -19,12 +19,12 @@ export type StateOfApplicabilityGraphPaginatedFragment$data = {
         readonly controlsInfo: {
           readonly totalCount: number;
         };
-        readonly createdAt: any;
+        readonly createdAt: string;
         readonly id: string;
         readonly name: string;
         readonly snapshotId: string | null | undefined;
         readonly sourceId: string | null | undefined;
-        readonly updatedAt: any;
+        readonly updatedAt: string;
       };
     }>;
   };

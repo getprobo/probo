@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<c8e8bf84dd8523199ec6e0d1eed7eb01>>
+ * @generated SignedSource<<8ce0dfdad4c98f5fa9fbbd2162a28778>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -17,7 +17,7 @@ export type AuditGraphNodeQuery$data = {
   readonly node: {
     readonly canDelete?: boolean;
     readonly canUpdate?: boolean;
-    readonly createdAt?: any;
+    readonly createdAt?: string;
     readonly framework?: {
       readonly darkLogoURL: string | null | undefined;
       readonly id: string;
@@ -31,7 +31,7 @@ export type AuditGraphNodeQuery$data = {
       readonly name: string;
     };
     readonly report?: {
-      readonly createdAt: any;
+      readonly createdAt: string;
       readonly downloadUrl: string | null | undefined;
       readonly filename: string;
       readonly id: string;
@@ -40,9 +40,9 @@ export type AuditGraphNodeQuery$data = {
     } | null | undefined;
     readonly reportUrl?: string | null | undefined;
     readonly state?: AuditState;
-    readonly updatedAt?: any;
-    readonly validFrom?: any | null | undefined;
-    readonly validUntil?: any | null | undefined;
+    readonly updatedAt?: string;
+    readonly validFrom?: string | null | undefined;
+    readonly validUntil?: string | null | undefined;
   };
 };
 export type AuditGraphNodeQuery = {

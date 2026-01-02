@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<36758d66ccb0304442a2a59898fe95a0>>
+ * @generated SignedSource<<4cd493e5c45c274b8d7aabdac8c62f95>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -17,8 +17,8 @@ export type AuditOrder = {
   field: AuditOrderField;
 };
 export type AuditsListQuery$variables = {
-  after?: any | null | undefined;
-  before?: any | null | undefined;
+  after?: string | null | undefined;
+  before?: string | null | undefined;
   first?: number | null | undefined;
   id: string;
   last?: number | null | undefined;

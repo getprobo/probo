@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<4b94130573ce20c5879e717c00128fbb>>
+ * @generated SignedSource<<10add82cf941c1776c712d87451b6da1>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -20,18 +20,18 @@ export type RightsRequestsPageFragment$data = {
       readonly node: {
         readonly actionTaken: string | null | undefined;
         readonly contact: string | null | undefined;
-        readonly createdAt: any;
+        readonly createdAt: string;
         readonly dataSubject: string | null | undefined;
-        readonly deadline: any | null | undefined;
+        readonly deadline: string | null | undefined;
         readonly details: string | null | undefined;
         readonly id: string;
         readonly requestState: RightsRequestState;
         readonly requestType: RightsRequestType;
-        readonly updatedAt: any;
+        readonly updatedAt: string;
       };
     }>;
     readonly pageInfo: {
-      readonly endCursor: any | null | undefined;
+      readonly endCursor: string | null | undefined;
       readonly hasNextPage: boolean;
     };
     readonly totalCount: number;

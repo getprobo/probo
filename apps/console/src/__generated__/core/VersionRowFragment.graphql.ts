@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<9cf1f475999548049b019e29f83411dd>>
+ * @generated SignedSource<<9e7dea0ad7cddb603d16a2fbbe71e4dc>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,7 +12,7 @@ import { ReaderFragment } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type VersionRowFragment$data = {
   readonly id: string;
-  readonly publishedAt: any | null | undefined;
+  readonly publishedAt: string | null | undefined;
   readonly signed: boolean;
   readonly version: number;
   readonly " $fragmentType": "VersionRowFragment";

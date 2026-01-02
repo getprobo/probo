@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<e4f324b614d93555afbc7055f63c534a>>
+ * @generated SignedSource<<da6add401e8c1c2e8f049bcda4ad31aa>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -13,11 +13,11 @@ export type EvidenceType = "FILE" | "LINK";
 import { FragmentRefs } from "relay-runtime";
 export type MeasureEvidencesTabFragment_evidence$data = {
   readonly canDelete: boolean;
-  readonly createdAt: any;
+  readonly createdAt: string;
   readonly file: {
     readonly fileName: string;
     readonly mimeType: string;
-    readonly size: any;
+    readonly size: string;
   } | null | undefined;
   readonly id: string;
   readonly type: EvidenceType;

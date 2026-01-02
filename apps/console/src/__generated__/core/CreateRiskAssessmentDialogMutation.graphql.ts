@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<2cd3f372cc571cec881b9762e381f1d5>>
+ * @generated SignedSource<<2271889b21f5a1f41c2e285a7a9ee1ca>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -15,7 +15,7 @@ export type DataSensitivity = "CRITICAL" | "HIGH" | "LOW" | "MEDIUM" | "NONE";
 export type CreateVendorRiskAssessmentInput = {
   businessImpact: BusinessImpact;
   dataSensitivity: DataSensitivity;
-  expiresAt: any;
+  expiresAt: string;
   notes?: string | null | undefined;
   vendorId: string;
 };

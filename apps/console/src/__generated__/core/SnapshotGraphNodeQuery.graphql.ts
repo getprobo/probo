@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<0b5ef79fa213c96a316a4e0a94afade8>>
+ * @generated SignedSource<<d68903a7185b71cd8d8502331b084043>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -15,7 +15,7 @@ export type SnapshotGraphNodeQuery$variables = {
 };
 export type SnapshotGraphNodeQuery$data = {
   readonly node: {
-    readonly createdAt?: any;
+    readonly createdAt?: string;
     readonly description?: string | null | undefined;
     readonly id?: string;
     readonly name?: string;

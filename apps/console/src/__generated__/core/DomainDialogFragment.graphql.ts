@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<1ee5bd8001e3d48b51c2869cd1ff5771>>
+ * @generated SignedSource<<1d007308b8b70962ddfe217cf3534dab>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,7 +12,7 @@ import { ReaderFragment } from 'relay-runtime';
 export type SSLStatus = "ACTIVE" | "EXPIRED" | "FAILED" | "PENDING" | "PROVISIONING" | "RENEWING";
 import { FragmentRefs } from "relay-runtime";
 export type DomainDialogFragment$data = {
-  readonly createdAt: any;
+  readonly createdAt: string;
   readonly dnsRecords: ReadonlyArray<{
     readonly name: string;
     readonly purpose: string;
@@ -21,9 +21,9 @@ export type DomainDialogFragment$data = {
     readonly value: string;
   }>;
   readonly domain: string;
-  readonly sslExpiresAt: any | null | undefined;
+  readonly sslExpiresAt: string | null | undefined;
   readonly sslStatus: SSLStatus;
-  readonly updatedAt: any;
+  readonly updatedAt: string;
   readonly " $fragmentType": "DomainDialogFragment";
 };
 export type DomainDialogFragment$key = {

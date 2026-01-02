@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<5f98eb8ecc8ffe85c0725b013849518b>>
+ * @generated SignedSource<<048cece5b3ce6165cab071d0b86de6fa>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -41,11 +41,11 @@ export type VendorGraphCreateMutation$data = {
   readonly createVendor: {
     readonly vendorEdge: {
       readonly node: {
-        readonly createdAt: any;
+        readonly createdAt: string;
         readonly description: string | null | undefined;
         readonly id: string;
         readonly name: string;
-        readonly updatedAt: any;
+        readonly updatedAt: string;
         readonly websiteUrl: string | null | undefined;
       };
     };

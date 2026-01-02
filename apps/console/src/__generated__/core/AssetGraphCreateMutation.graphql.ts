@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<ea7d06a1fdefd4e76c3f7ee3ef27f8ec>>
+ * @generated SignedSource<<9e2e93809320c103f393c0e1e0ae3e27>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -31,7 +31,7 @@ export type AssetGraphCreateMutation$data = {
         readonly assetType: AssetType;
         readonly canDelete: boolean;
         readonly canUpdate: boolean;
-        readonly createdAt: any;
+        readonly createdAt: string;
         readonly dataTypesStored: string;
         readonly id: string;
         readonly name: string;

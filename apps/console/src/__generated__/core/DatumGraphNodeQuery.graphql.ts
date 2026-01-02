@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<e2ff7cc39a32a043a4d4c2ad4dac8411>>
+ * @generated SignedSource<<8d632b2e4ce8734fd47c3b2251cd61b9>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -18,7 +18,7 @@ export type DatumGraphNodeQuery$data = {
   readonly node: {
     readonly canDelete?: boolean;
     readonly canUpdate?: boolean;
-    readonly createdAt?: any;
+    readonly createdAt?: string;
     readonly dataClassification?: DataClassification;
     readonly id?: string;
     readonly name?: string;
@@ -30,7 +30,7 @@ export type DatumGraphNodeQuery$data = {
       readonly id: string;
     };
     readonly snapshotId?: string | null | undefined;
-    readonly updatedAt?: any;
+    readonly updatedAt?: string;
     readonly vendors?: {
       readonly edges: ReadonlyArray<{
         readonly node: {

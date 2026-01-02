@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<6d5f65677b0f86e7042fd5f7c58d6f08>>
+ * @generated SignedSource<<0e9455daba78b038455718505f53a4d7>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,8 +12,8 @@ import { ConcreteRequest } from 'relay-runtime';
 export type UploadVendorDataPrivacyAgreementInput = {
   file: any;
   fileName: string;
-  validFrom?: any | null | undefined;
-  validUntil?: any | null | undefined;
+  validFrom?: string | null | undefined;
+  validUntil?: string | null | undefined;
   vendorId: string;
 };
 export type UploadDataPrivacyAgreementDialogMutation$variables = {
@@ -22,12 +22,12 @@ export type UploadDataPrivacyAgreementDialogMutation$variables = {
 export type UploadDataPrivacyAgreementDialogMutation$data = {
   readonly uploadVendorDataPrivacyAgreement: {
     readonly vendorDataPrivacyAgreement: {
-      readonly createdAt: any;
+      readonly createdAt: string;
       readonly fileName: string;
       readonly fileUrl: string;
       readonly id: string;
-      readonly validFrom: any | null | undefined;
-      readonly validUntil: any | null | undefined;
+      readonly validFrom: string | null | undefined;
+      readonly validUntil: string | null | undefined;
     };
   };
 };

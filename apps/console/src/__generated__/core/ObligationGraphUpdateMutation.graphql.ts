@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<879c7bec9540c7d9e46eecb2fd5243d7>>
+ * @generated SignedSource<<a66add339f1e2e2d4b26b8c963ccd849>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -14,9 +14,9 @@ export type ObligationType = "CONTRACTUAL" | "LEGAL";
 export type UpdateObligationInput = {
   actionsToBeImplemented?: string | null | undefined;
   area?: string | null | undefined;
-  dueDate?: any | null | undefined;
+  dueDate?: string | null | undefined;
   id: string;
-  lastReviewDate?: any | null | undefined;
+  lastReviewDate?: string | null | undefined;
   ownerId?: string | null | undefined;
   regulator?: string | null | undefined;
   requirement?: string | null | undefined;
@@ -32,9 +32,9 @@ export type ObligationGraphUpdateMutation$data = {
     readonly obligation: {
       readonly actionsToBeImplemented: string | null | undefined;
       readonly area: string | null | undefined;
-      readonly dueDate: any | null | undefined;
+      readonly dueDate: string | null | undefined;
       readonly id: string;
-      readonly lastReviewDate: any | null | undefined;
+      readonly lastReviewDate: string | null | undefined;
       readonly owner: {
         readonly fullName: string;
         readonly id: string;
@@ -44,7 +44,7 @@ export type ObligationGraphUpdateMutation$data = {
       readonly source: string | null | undefined;
       readonly status: ObligationStatus;
       readonly type: ObligationType;
-      readonly updatedAt: any;
+      readonly updatedAt: string;
     };
   };
 };

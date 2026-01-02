@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<2ca6c35e54eafa06ad04d91bfc555eed>>
+ * @generated SignedSource<<e8de023c889edc6ca714311bf3249ddf>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -16,7 +16,7 @@ export type MeetingsPageRowFragment$data = {
     readonly id: string;
   }>;
   readonly canDelete: boolean;
-  readonly date: any;
+  readonly date: string;
   readonly id: string;
   readonly name: string;
   readonly " $fragmentType": "MeetingsPageRowFragment";

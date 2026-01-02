@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<b2b983078a872e428c314667e49f1ec5>>
+ * @generated SignedSource<<48a58e84cc3d767baf9ac8e346864db8>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -21,7 +21,7 @@ export type VendorRiskAssessmentTabFragment$data = {
       };
     }>;
     readonly pageInfo: {
-      readonly endCursor: any | null | undefined;
+      readonly endCursor: string | null | undefined;
       readonly hasNextPage: boolean;
     };
   };

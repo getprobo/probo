@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<da66b640f5bf710bb086e806a82b03e6>>
+ * @generated SignedSource<<23f3f100c0665c79a15c78ddbe5284af>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -17,8 +17,8 @@ export type SnapshotOrder = {
   field: SnapshotOrderField;
 };
 export type LinkedSnapshotsDialogQuery_fragment$variables = {
-  after?: any | null | undefined;
-  before?: any | null | undefined;
+  after?: string | null | undefined;
+  before?: string | null | undefined;
   first?: number | null | undefined;
   id: string;
   last?: number | null | undefined;

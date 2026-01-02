@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<2f4ca0549a2e01d68d9fb752298beb4c>>
+ * @generated SignedSource<<b167add8ba44f61fd813e211d2d29c05>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -13,9 +13,9 @@ export type NonconformityStatus = "CLOSED" | "IN_PROGRESS" | "OPEN";
 export type UpdateNonconformityInput = {
   auditId?: string | null | undefined;
   correctiveAction?: string | null | undefined;
-  dateIdentified?: any | null | undefined;
+  dateIdentified?: string | null | undefined;
   description?: string | null | undefined;
-  dueDate?: any | null | undefined;
+  dueDate?: string | null | undefined;
   effectivenessCheck?: string | null | undefined;
   id: string;
   ownerId?: string | null | undefined;
@@ -37,9 +37,9 @@ export type NonconformityGraphUpdateMutation$data = {
         readonly id: string;
       } | null | undefined;
       readonly correctiveAction: string | null | undefined;
-      readonly dateIdentified: any | null | undefined;
+      readonly dateIdentified: string | null | undefined;
       readonly description: string | null | undefined;
-      readonly dueDate: any | null | undefined;
+      readonly dueDate: string | null | undefined;
       readonly effectivenessCheck: string | null | undefined;
       readonly id: string;
       readonly owner: {
@@ -49,7 +49,7 @@ export type NonconformityGraphUpdateMutation$data = {
       readonly referenceId: string;
       readonly rootCause: string;
       readonly status: NonconformityStatus;
-      readonly updatedAt: any;
+      readonly updatedAt: string;
     };
   };
 };

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<14b4821bc7eec6b85029d0aae3a3a271>>
+ * @generated SignedSource<<39afab5f5f832b28f00e6bd7469fa4f3>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -20,12 +20,12 @@ export type AuditGraphDeleteReportMutation$data = {
     readonly audit: {
       readonly id: string;
       readonly report: {
-        readonly createdAt: any;
+        readonly createdAt: string;
         readonly downloadUrl: string | null | undefined;
         readonly filename: string;
         readonly id: string;
       } | null | undefined;
-      readonly updatedAt: any;
+      readonly updatedAt: string;
     };
   };
 };

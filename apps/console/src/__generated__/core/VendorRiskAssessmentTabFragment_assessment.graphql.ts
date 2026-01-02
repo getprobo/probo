@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<b6963cdf0e4c8a5c6bb293cb53f8d404>>
+ * @generated SignedSource<<a857bf1e1c4cc9c8666e512acfdb4b60>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -14,9 +14,9 @@ export type DataSensitivity = "CRITICAL" | "HIGH" | "LOW" | "MEDIUM" | "NONE";
 import { FragmentRefs } from "relay-runtime";
 export type VendorRiskAssessmentTabFragment_assessment$data = {
   readonly businessImpact: BusinessImpact;
-  readonly createdAt: any;
+  readonly createdAt: string;
   readonly dataSensitivity: DataSensitivity;
-  readonly expiresAt: any;
+  readonly expiresAt: string;
   readonly id: string;
   readonly notes: string | null | undefined;
   readonly " $fragmentType": "VendorRiskAssessmentTabFragment_assessment";

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<2c57cb9a331fb7fedf72b0113bf7cb66>>
+ * @generated SignedSource<<73d5a0059348fd0c5950ae3a873cc383>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -14,7 +14,7 @@ export type SessionDropdownFragment$data = {
   readonly canDelete: boolean;
   readonly viewerMembership: {
     readonly identity: {
-      readonly email: any;
+      readonly email: string;
     };
     readonly profile: {
       readonly fullName: string;

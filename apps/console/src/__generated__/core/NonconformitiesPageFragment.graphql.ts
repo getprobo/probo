@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<8137b73b0ad40930966c6feb6370420b>>
+ * @generated SignedSource<<995f84eb7ea5dddf0b3166230a9a969e>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -28,10 +28,10 @@ export type NonconformitiesPageFragment$data = {
         readonly canDelete: boolean;
         readonly canUpdate: boolean;
         readonly correctiveAction: string | null | undefined;
-        readonly createdAt: any;
-        readonly dateIdentified: any | null | undefined;
+        readonly createdAt: string;
+        readonly dateIdentified: string | null | undefined;
         readonly description: string | null | undefined;
-        readonly dueDate: any | null | undefined;
+        readonly dueDate: string | null | undefined;
         readonly effectivenessCheck: string | null | undefined;
         readonly id: string;
         readonly owner: {
@@ -42,11 +42,11 @@ export type NonconformitiesPageFragment$data = {
         readonly rootCause: string;
         readonly snapshotId: string | null | undefined;
         readonly status: NonconformityStatus;
-        readonly updatedAt: any;
+        readonly updatedAt: string;
       };
     }>;
     readonly pageInfo: {
-      readonly endCursor: any | null | undefined;
+      readonly endCursor: string | null | undefined;
       readonly hasNextPage: boolean;
     };
     readonly totalCount: number;

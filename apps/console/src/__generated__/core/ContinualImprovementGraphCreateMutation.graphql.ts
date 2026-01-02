@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<a63771cb94fb0efc99bb250d7cd8a052>>
+ * @generated SignedSource<<26fe2860690fb0293c685dbc139eed04>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -19,7 +19,7 @@ export type CreateContinualImprovementInput = {
   referenceId: string;
   source?: string | null | undefined;
   status: ContinualImprovementStatus;
-  targetDate?: any | null | undefined;
+  targetDate?: string | null | undefined;
 };
 export type ContinualImprovementGraphCreateMutation$variables = {
   connections: ReadonlyArray<string>;
@@ -31,7 +31,7 @@ export type ContinualImprovementGraphCreateMutation$data = {
       readonly node: {
         readonly canDelete: boolean;
         readonly canUpdate: boolean;
-        readonly createdAt: any;
+        readonly createdAt: string;
         readonly description: string | null | undefined;
         readonly id: string;
         readonly owner: {
@@ -42,7 +42,7 @@ export type ContinualImprovementGraphCreateMutation$data = {
         readonly referenceId: string;
         readonly source: string | null | undefined;
         readonly status: ContinualImprovementStatus;
-        readonly targetDate: any | null | undefined;
+        readonly targetDate: string | null | undefined;
       };
     };
   };

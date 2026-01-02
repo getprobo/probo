@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<cf12e9f66e77db986c29774df1519063>>
+ * @generated SignedSource<<6f67465a1bac4f3cac9c891b9c4cc9a1>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -16,7 +16,7 @@ export type ProcessingActivitiesPageTIAFragment$data = {
     readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly node: {
-        readonly createdAt: any;
+        readonly createdAt: string;
         readonly dataSubjects: string | null | undefined;
         readonly id: string;
         readonly localLawRisk: string | null | undefined;
@@ -25,11 +25,11 @@ export type ProcessingActivitiesPageTIAFragment$data = {
           readonly name: string;
         };
         readonly transfer: string | null | undefined;
-        readonly updatedAt: any;
+        readonly updatedAt: string;
       };
     }>;
     readonly pageInfo: {
-      readonly endCursor: any | null | undefined;
+      readonly endCursor: string | null | undefined;
       readonly hasNextPage: boolean;
     };
     readonly totalCount: number;

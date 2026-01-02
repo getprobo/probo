@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<93963be550c1cf4d590c0e7186b5d10f>>
+ * @generated SignedSource<<d993bbef933d660af5aaac0a88d3c7f7>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -24,14 +24,14 @@ export type ProcessingActivityGraphCreateDPIAMutation$variables = {
 export type ProcessingActivityGraphCreateDPIAMutation$data = {
   readonly createDataProtectionImpactAssessment: {
     readonly dataProtectionImpactAssessment: {
-      readonly createdAt: any;
+      readonly createdAt: string;
       readonly description: string | null | undefined;
       readonly id: string;
       readonly mitigations: string | null | undefined;
       readonly necessityAndProportionality: string | null | undefined;
       readonly potentialRisk: string | null | undefined;
       readonly residualRisk: DataProtectionImpactAssessmentResidualRisk | null | undefined;
-      readonly updatedAt: any;
+      readonly updatedAt: string;
     };
   };
 };

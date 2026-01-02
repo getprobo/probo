@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<df8070312cba4b83a8f30231ac7b7fde>>
+ * @generated SignedSource<<be978f367e58cceaa6d2d3d581dadd53>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -15,7 +15,7 @@ export type UpdateRightsRequestInput = {
   actionTaken?: string | null | undefined;
   contact?: string | null | undefined;
   dataSubject?: string | null | undefined;
-  deadline?: any | null | undefined;
+  deadline?: string | null | undefined;
   details?: string | null | undefined;
   id: string;
   requestState?: RightsRequestState | null | undefined;
@@ -30,12 +30,12 @@ export type RightsRequestGraphUpdateMutation$data = {
       readonly actionTaken: string | null | undefined;
       readonly contact: string | null | undefined;
       readonly dataSubject: string | null | undefined;
-      readonly deadline: any | null | undefined;
+      readonly deadline: string | null | undefined;
       readonly details: string | null | undefined;
       readonly id: string;
       readonly requestState: RightsRequestState;
       readonly requestType: RightsRequestType;
-      readonly updatedAt: any;
+      readonly updatedAt: string;
     };
   };
 };

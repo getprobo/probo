@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<ee5765584398e50a4997f7cd1e75759d>>
+ * @generated SignedSource<<8f25fa0f640847e45cf45de0028f51fe>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -19,7 +19,7 @@ export type UpdateContinualImprovementInput = {
   referenceId?: string | null | undefined;
   source?: string | null | undefined;
   status?: ContinualImprovementStatus | null | undefined;
-  targetDate?: any | null | undefined;
+  targetDate?: string | null | undefined;
 };
 export type ContinualImprovementGraphUpdateMutation$variables = {
   input: UpdateContinualImprovementInput;
@@ -37,8 +37,8 @@ export type ContinualImprovementGraphUpdateMutation$data = {
       readonly referenceId: string;
       readonly source: string | null | undefined;
       readonly status: ContinualImprovementStatus;
-      readonly targetDate: any | null | undefined;
-      readonly updatedAt: any;
+      readonly targetDate: string | null | undefined;
+      readonly updatedAt: string;
     };
   };
 };

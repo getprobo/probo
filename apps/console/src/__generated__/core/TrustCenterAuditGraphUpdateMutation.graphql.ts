@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<0d25ae690e5016a27d889ed1c4a1667f>>
+ * @generated SignedSource<<1f16f6e36a9d4a8de63d4e6f8e3d4c88>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -17,8 +17,8 @@ export type UpdateAuditInput = {
   name?: string | null | undefined;
   state?: AuditState | null | undefined;
   trustCenterVisibility?: TrustCenterVisibility | null | undefined;
-  validFrom?: any | null | undefined;
-  validUntil?: any | null | undefined;
+  validFrom?: string | null | undefined;
+  validUntil?: string | null | undefined;
 };
 export type TrustCenterAuditGraphUpdateMutation$variables = {
   input: UpdateAuditInput;

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<3da2840acb86d86a80715539be18fba0>>
+ * @generated SignedSource<<9f5f726789193f7af37d789c8b324a1e>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -24,7 +24,7 @@ export type EditSAMLConfigurationFormQuery$data = {
     };
     readonly autoSignupEnabled: boolean;
     readonly domainVerificationToken: string | null | undefined;
-    readonly domainVerifiedAt: any | null | undefined;
+    readonly domainVerifiedAt: string | null | undefined;
     readonly emailDomain: string;
     readonly enforcementPolicy: SAMLEnforcementPolicy;
     readonly id: string;

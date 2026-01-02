@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<33cdb4d30c06225b656ba2b3f27830eb>>
+ * @generated SignedSource<<9e0e298dd1e700d70d3f054b62b43d87>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -33,7 +33,7 @@ export type EditSAMLConfigurationForm_updateMutation$data = {
   readonly updateSAMLConfiguration: {
     readonly samlConfiguration: {
       readonly domainVerificationToken: string | null | undefined;
-      readonly domainVerifiedAt: any | null | undefined;
+      readonly domainVerifiedAt: string | null | undefined;
       readonly emailDomain: string;
       readonly enforcementPolicy: SAMLEnforcementPolicy;
       readonly id: string;

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<72efdb68c08c793ff724c9a16d91d29a>>
+ * @generated SignedSource<<0ba30b05b62bf6a4b76a17fb1a6db467>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -22,8 +22,8 @@ export type LinkedAuditsDialogFragment$data = {
         readonly id: string;
         readonly name: string | null | undefined;
         readonly state: AuditState;
-        readonly validFrom: any | null | undefined;
-        readonly validUntil: any | null | undefined;
+        readonly validFrom: string | null | undefined;
+        readonly validUntil: string | null | undefined;
       };
     }>;
   };

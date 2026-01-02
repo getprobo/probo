@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<2f4336da58b8ec9db40d3b90a75a750f>>
+ * @generated SignedSource<<59393bd95d26b50bb20f933e548497cb>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -18,16 +18,16 @@ export type PeopleGraphPaginatedFragment$data = {
     readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly node: {
-        readonly additionalEmailAddresses: ReadonlyArray<any>;
+        readonly additionalEmailAddresses: ReadonlyArray<string>;
         readonly canDelete: boolean;
         readonly canUpdate: boolean;
-        readonly contractEndDate: any | null | undefined;
-        readonly contractStartDate: any | null | undefined;
+        readonly contractEndDate: string | null | undefined;
+        readonly contractStartDate: string | null | undefined;
         readonly fullName: string;
         readonly id: string;
         readonly kind: PeopleKind;
         readonly position: string | null | undefined;
-        readonly primaryEmailAddress: any;
+        readonly primaryEmailAddress: string;
       };
     }>;
   };
