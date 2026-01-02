@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<ed36cb7e20499e431a51f06e456cc91e>>
+ * @generated SignedSource<<b757ab583beb7a2556cabaa900b5b9de>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -18,7 +18,7 @@ export type EvidenceGraphFileQuery$data = {
       readonly downloadUrl: string;
       readonly fileName: string;
       readonly mimeType: string;
-      readonly size: string;
+      readonly size: number;
     } | null | undefined;
     readonly id?: string;
   };

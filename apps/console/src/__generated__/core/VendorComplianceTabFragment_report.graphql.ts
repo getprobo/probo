@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<3ba7c692eb07865e7e283e861a7cabdf>>
+ * @generated SignedSource<<dc7aecc55aa17f43d9a601e60eea165a>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -14,7 +14,7 @@ export type VendorComplianceTabFragment_report$data = {
   readonly file: {
     readonly fileName: string;
     readonly mimeType: string;
-    readonly size: string;
+    readonly size: number;
   } | null | undefined;
   readonly id: string;
   readonly reportDate: string;

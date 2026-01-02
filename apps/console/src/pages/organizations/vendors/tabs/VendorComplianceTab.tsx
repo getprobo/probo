@@ -224,7 +224,7 @@ function ReportRow(props: ReportRowProps) {
       <Td>{report.reportName}</Td>
       <Td>{formatDate(report.reportDate)}</Td>
       <Td>{formatDate(report.validUntil)}</Td>
-      <Td>{fileSize(__, report.file?.size)}</Td>
+      <Td>{fileSize(__, report.file?.size ?? 0)}</Td>
       {!props.isSnapshotMode && props.canDelete && (
         <Td width={50} className="text-end">
           <ActionDropdown>
