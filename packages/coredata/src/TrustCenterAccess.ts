@@ -7,8 +7,8 @@ export interface TrustCenterAccess {
   active: boolean;
   hasAcceptedNonDisclosureAgreement: boolean;
   createdAt: string;
-  lastTokenExpiresAt: string | null;
+  lastTokenExpiresAt?: string | null;
   pendingRequestCount: number;
   activeCount: number;
   documentAccesses?: TrustCenterDocumentAccess[];
-};
+}

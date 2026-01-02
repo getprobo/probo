@@ -13,7 +13,7 @@
         "GID": "string",
         "CursorKey": "string",
         "Duration": "string",
-        "BigInt": "string",
+        "BigInt": "number",
         "EmailAddr": "string"
       }
     },
@@ -29,7 +29,7 @@
         "GID": "string",
         "CursorKey": "string",
         "Duration": "string",
-        "BigInt": "string",
+        "BigInt": "number",
         "EmailAddr": "string"
       }
     }

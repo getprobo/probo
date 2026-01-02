@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<b07c2f8f2454f080854744ddcc60face>>
+ * @generated SignedSource<<ea635dd1a341c798d9f410ae862901f2>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -19,7 +19,7 @@ export type MeasureEvidencesTabFragment$data = {
         readonly file: {
           readonly fileName: string;
           readonly mimeType: string;
-          readonly size: string;
+          readonly size: number;
         } | null | undefined;
         readonly id: string;
         readonly " $fragmentSpreads": FragmentRefs<"MeasureEvidencesTabFragment_evidence">;
