@@ -15,17 +15,22 @@ package types
 
 import (
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
 )
 
 func NewPeople(p *coredata.People) *People {
+	additionalEmails := p.AdditionalEmailAddresses
+	if additionalEmails == nil {
+		additionalEmails = []mail.Addr{}
+	}
 	return &People{
 		FullName:                 p.FullName,
 		ID:                       p.ID,
 		OrganizationID:           p.OrganizationID,
 		Kind:                     p.Kind,
 		PrimaryEmailAddress:      p.PrimaryEmailAddress,
-		AdditionalEmailAddresses: p.AdditionalEmailAddresses,
+		AdditionalEmailAddresses: additionalEmails,
 		Position:                 p.Position,
 		ContractStartDate:        p.ContractStartDate,
 		ContractEndDate:          p.ContractEndDate,
