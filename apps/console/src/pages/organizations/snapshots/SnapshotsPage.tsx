@@ -35,8 +35,6 @@ import type { NodeOf } from "/types";
 import SnapshotFormDialog from "./dialog/SnapshotFormDialog";
 import { usePageTitle } from "@probo/hooks";
 import { useOrganizationId } from "/hooks/useOrganizationId";
-import { PermissionsContext } from "/providers/PermissionsContext";
-import { use } from "react";
 
 type Props = {
   queryRef: PreloadedQuery<SnapshotGraphListQuery>;
@@ -54,6 +52,7 @@ const snapshotsFragment = graphql`
           description
           type
           createdAt
+          canDelete: permission(action: "core:snapshot:delete")
         }
       }
     }
@@ -73,10 +72,9 @@ export default function SnapshotsPage(props: Props) {
   );
   const connectionId = data.snapshots.__id;
   const snapshots = data.snapshots.edges.map((edge) => edge.node);
-  const { isAuthorized } = use(PermissionsContext);
   usePageTitle(__("Snapshots"));
 
-  const hasAnyAction = isAuthorized("Snapshot", "deleteSnapshot");
+  const hasAnyAction = snapshots.some(({ canDelete }) => canDelete);
 
   return (
     <div className="space-y-6">
@@ -86,7 +84,7 @@ export default function SnapshotsPage(props: Props) {
           "Snapshots capture point-in-time views of your organization's compliance state. Create snapshots to track progress over time.",
         )}
       >
-        {isAuthorized("Organization", "createSnapshot") && (
+        {organization.canCreateSnapshot && (
           <SnapshotFormDialog connection={connectionId}>
             <Button variant="primary" icon={IconPlusLarge}>
               {__("New snapshot")}
@@ -142,7 +140,6 @@ type SnapshotRowProps = {
 function SnapshotRow(props: SnapshotRowProps) {
   const { __ } = useTranslate();
   const deleteSnapshot = useDeleteSnapshot(props.snapshot, props.connectionId);
-  const { isAuthorized } = use(PermissionsContext);
   const typePath = getSnapshotTypeUrlPath(props.snapshot.type);
 
   return (
@@ -164,7 +161,7 @@ function SnapshotRow(props: SnapshotRowProps) {
       {props.hasAnyAction && (
         <Td noLink width={50} className="text-end">
           <ActionDropdown>
-            {isAuthorized("Snapshot", "deleteSnapshot") && (
+            {props.snapshot.canDelete && (
               <DropdownItem
                 onClick={deleteSnapshot}
                 variant="danger"

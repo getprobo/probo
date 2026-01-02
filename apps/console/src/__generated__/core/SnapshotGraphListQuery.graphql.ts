@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<f4a719bca36d682b094afe419b9129e8>>
+ * @generated SignedSource<<55bde95f500bc2496ce224e275e49984>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -15,6 +15,7 @@ export type SnapshotGraphListQuery$variables = {
 };
 export type SnapshotGraphListQuery$data = {
   readonly organization: {
+    readonly canCreateSnapshot?: boolean;
     readonly " $fragmentSpreads": FragmentRefs<"SnapshotsPageFragment">;
   };
 };
@@ -39,20 +40,33 @@ v1 = [
   }
 ],
 v2 = {
+  "alias": "canCreateSnapshot",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "core:snapshot:create"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"core:snapshot:create\")"
+},
+v3 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "__typename",
   "storageKey": null
 },
-v3 = [
+v4 = [
   {
     "kind": "Literal",
     "name": "first",
     "value": 100
   }
 ],
-v4 = {
+v5 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
@@ -77,6 +91,7 @@ return {
           {
             "kind": "InlineFragment",
             "selections": [
+              (v2/*: any*/),
               {
                 "args": null,
                 "kind": "FragmentSpread",
@@ -107,13 +122,14 @@ return {
         "name": "node",
         "plural": false,
         "selections": [
-          (v2/*: any*/),
+          (v3/*: any*/),
           {
             "kind": "InlineFragment",
             "selections": [
+              (v2/*: any*/),
               {
                 "alias": null,
-                "args": (v3/*: any*/),
+                "args": (v4/*: any*/),
                 "concreteType": "SnapshotConnection",
                 "kind": "LinkedField",
                 "name": "snapshots",
@@ -135,7 +151,7 @@ return {
                         "name": "node",
                         "plural": false,
                         "selections": [
-                          (v4/*: any*/),
+                          (v5/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -164,7 +180,20 @@ return {
                             "name": "createdAt",
                             "storageKey": null
                           },
-                          (v2/*: any*/)
+                          {
+                            "alias": "canDelete",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:snapshot:delete"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:snapshot:delete\")"
+                          },
+                          (v3/*: any*/)
                         ],
                         "storageKey": null
                       },
@@ -220,7 +249,7 @@ return {
               },
               {
                 "alias": null,
-                "args": (v3/*: any*/),
+                "args": (v4/*: any*/),
                 "filters": null,
                 "handle": "connection",
                 "key": "SnapshotsGraphListQuery__snapshots",
@@ -231,23 +260,23 @@ return {
             "type": "Organization",
             "abstractKey": null
           },
-          (v4/*: any*/)
+          (v5/*: any*/)
         ],
         "storageKey": null
       }
     ]
   },
   "params": {
-    "cacheID": "eda538d8a5e4e94551012bbb6b8da92f",
+    "cacheID": "5925e1c6f87d598008baeef50bf620c7",
     "id": null,
     "metadata": {},
     "name": "SnapshotGraphListQuery",
     "operationKind": "query",
-    "text": "query SnapshotGraphListQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      ...SnapshotsPageFragment\n    }\n    id\n  }\n}\n\nfragment SnapshotsPageFragment on Organization {\n  snapshots(first: 100) {\n    edges {\n      node {\n        id\n        name\n        description\n        type\n        createdAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n"
+    "text": "query SnapshotGraphListQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      canCreateSnapshot: permission(action: \"core:snapshot:create\")\n      ...SnapshotsPageFragment\n    }\n    id\n  }\n}\n\nfragment SnapshotsPageFragment on Organization {\n  snapshots(first: 100) {\n    edges {\n      node {\n        id\n        name\n        description\n        type\n        createdAt\n        canDelete: permission(action: \"core:snapshot:delete\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "0f264bca502a59b7f8b8ec729d0ce1ff";
+(node as any).hash = "18d12720fafef47af62376e8461fd19f";
 
 export default node;
