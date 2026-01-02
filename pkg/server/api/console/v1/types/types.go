@@ -366,19 +366,6 @@ type CreateDraftDocumentVersionPayload struct {
 	DocumentVersionEdge *DocumentVersionEdge `json:"documentVersionEdge"`
 }
 
-type CreateEvidenceInput struct {
-	TaskID      gid.GID               `json:"taskId"`
-	Name        string                `json:"name"`
-	Type        coredata.EvidenceType `json:"type"`
-	URL         *string               `json:"url,omitempty"`
-	File        *graphql.Upload       `json:"file,omitempty"`
-	Description *string               `json:"description,omitempty"`
-}
-
-type CreateEvidencePayload struct {
-	EvidenceEdge *EvidenceEdge `json:"evidenceEdge"`
-}
-
 type CreateFrameworkInput struct {
 	OrganizationID gid.GID `json:"organizationId"`
 	Name           string  `json:"name"`
@@ -1325,17 +1312,6 @@ type FrameworkEdge struct {
 	Node   *Framework     `json:"node"`
 }
 
-type FulfillEvidenceInput struct {
-	EvidenceID gid.GID         `json:"evidenceId"`
-	Name       *string         `json:"name,omitempty"`
-	File       *graphql.Upload `json:"file,omitempty"`
-	URL        *string         `json:"url,omitempty"`
-}
-
-type FulfillEvidencePayload struct {
-	EvidenceEdge *EvidenceEdge `json:"evidenceEdge"`
-}
-
 type GenerateDocumentChangelogInput struct {
 	DocumentID gid.GID `json:"documentId"`
 }
@@ -1540,11 +1516,6 @@ type OrganizationContext struct {
 	Summary        *string `json:"summary,omitempty"`
 }
 
-type OrganizationOrder struct {
-	Direction page.OrderDirection             `json:"direction"`
-	Field     coredata.OrganizationOrderField `json:"field"`
-}
-
 type PageInfo struct {
 	HasNextPage     bool            `json:"hasNextPage"`
 	HasPreviousPage bool            `json:"hasPreviousPage"`
@@ -1651,17 +1622,6 @@ type Report struct {
 func (Report) IsNode()             {}
 func (this Report) GetID() gid.GID { return this.ID }
 
-type RequestEvidenceInput struct {
-	TaskID      gid.GID               `json:"taskId"`
-	Name        string                `json:"name"`
-	Type        coredata.EvidenceType `json:"type"`
-	Description *string               `json:"description,omitempty"`
-}
-
-type RequestEvidencePayload struct {
-	EvidenceEdge *EvidenceEdge `json:"evidenceEdge"`
-}
-
 type RequestSignatureInput struct {
 	DocumentVersionID gid.GID `json:"documentVersionId"`
 	SignatoryID       gid.GID `json:"signatoryId"`
@@ -1738,11 +1698,6 @@ type SendSigningNotificationsInput struct {
 
 type SendSigningNotificationsPayload struct {
 	Success bool `json:"success"`
-}
-
-type Session struct {
-	ID        gid.GID   `json:"id"`
-	ExpiresAt time.Time `json:"expiresAt"`
 }
 
 type SignDocumentInput struct {

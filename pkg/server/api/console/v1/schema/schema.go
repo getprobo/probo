@@ -339,10 +339,6 @@ type ComplexityRoot struct {
 		DocumentVersionEdge func(childComplexity int) int
 	}
 
-	CreateEvidencePayload struct {
-		EvidenceEdge func(childComplexity int) int
-	}
-
 	CreateFrameworkPayload struct {
 		FrameworkEdge func(childComplexity int) int
 	}
@@ -859,10 +855,6 @@ type ComplexityRoot struct {
 		Node   func(childComplexity int) int
 	}
 
-	FulfillEvidencePayload struct {
-		EvidenceEdge func(childComplexity int) int
-	}
-
 	GenerateDocumentChangelogPayload struct {
 		Changelog func(childComplexity int) int
 	}
@@ -1278,10 +1270,6 @@ type ComplexityRoot struct {
 		UpdatedAt   func(childComplexity int) int
 	}
 
-	RequestEvidencePayload struct {
-		EvidenceEdge func(childComplexity int) int
-	}
-
 	RequestSignaturePayload struct {
 		DocumentVersionSignatureEdge func(childComplexity int) int
 	}
@@ -1350,11 +1338,6 @@ type ComplexityRoot struct {
 
 	SendSigningNotificationsPayload struct {
 		Success func(childComplexity int) int
-	}
-
-	Session struct {
-		ExpiresAt func(childComplexity int) int
-		ID        func(childComplexity int) int
 	}
 
 	SignDocumentPayload struct {
@@ -3296,13 +3279,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.CreateDraftDocumentVersionPayload.DocumentVersionEdge(childComplexity), true
 
-	case "CreateEvidencePayload.evidenceEdge":
-		if e.complexity.CreateEvidencePayload.EvidenceEdge == nil {
-			break
-		}
-
-		return e.complexity.CreateEvidencePayload.EvidenceEdge(childComplexity), true
-
 	case "CreateFrameworkPayload.frameworkEdge":
 		if e.complexity.CreateFrameworkPayload.FrameworkEdge == nil {
 			break
@@ -4797,13 +4773,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.FrameworkEdge.Node(childComplexity), true
-
-	case "FulfillEvidencePayload.evidenceEdge":
-		if e.complexity.FulfillEvidencePayload.EvidenceEdge == nil {
-			break
-		}
-
-		return e.complexity.FulfillEvidencePayload.EvidenceEdge(childComplexity), true
 
 	case "GenerateDocumentChangelogPayload.changelog":
 		if e.complexity.GenerateDocumentChangelogPayload.Changelog == nil {
@@ -7665,13 +7634,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Report.UpdatedAt(childComplexity), true
 
-	case "RequestEvidencePayload.evidenceEdge":
-		if e.complexity.RequestEvidencePayload.EvidenceEdge == nil {
-			break
-		}
-
-		return e.complexity.RequestEvidencePayload.EvidenceEdge(childComplexity), true
-
 	case "RequestSignaturePayload.documentVersionSignatureEdge":
 		if e.complexity.RequestSignaturePayload.DocumentVersionSignatureEdge == nil {
 			break
@@ -7985,19 +7947,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.SendSigningNotificationsPayload.Success(childComplexity), true
-
-	case "Session.expiresAt":
-		if e.complexity.Session.ExpiresAt == nil {
-			break
-		}
-
-		return e.complexity.Session.ExpiresAt(childComplexity), true
-	case "Session.id":
-		if e.complexity.Session.ID == nil {
-			break
-		}
-
-		return e.complexity.Session.ID(childComplexity), true
 
 	case "SignDocumentPayload.documentVersionSignature":
 		if e.complexity.SignDocumentPayload.DocumentVersionSignature == nil {
@@ -10131,7 +10080,6 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputCreateDatumInput,
 		ec.unmarshalInputCreateDocumentInput,
 		ec.unmarshalInputCreateDraftDocumentVersionInput,
-		ec.unmarshalInputCreateEvidenceInput,
 		ec.unmarshalInputCreateFrameworkInput,
 		ec.unmarshalInputCreateMeasureInput,
 		ec.unmarshalInputCreateMeetingInput,
@@ -10218,7 +10166,6 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputExportStateOfApplicabilityPDFInput,
 		ec.unmarshalInputExportTransferImpactAssessmentsPDFInput,
 		ec.unmarshalInputFrameworkOrder,
-		ec.unmarshalInputFulfillEvidenceInput,
 		ec.unmarshalInputGenerateDocumentChangelogInput,
 		ec.unmarshalInputGenerateFrameworkStateOfApplicabilityInput,
 		ec.unmarshalInputGetTrustCenterFileInput,
@@ -10231,13 +10178,11 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputNonconformityOrder,
 		ec.unmarshalInputObligationFilter,
 		ec.unmarshalInputObligationOrder,
-		ec.unmarshalInputOrganizationOrder,
 		ec.unmarshalInputPeopleFilter,
 		ec.unmarshalInputPeopleOrder,
 		ec.unmarshalInputProcessingActivityFilter,
 		ec.unmarshalInputProcessingActivityOrder,
 		ec.unmarshalInputPublishDocumentVersionInput,
-		ec.unmarshalInputRequestEvidenceInput,
 		ec.unmarshalInputRequestSignatureInput,
 		ec.unmarshalInputRightsRequestOrder,
 		ec.unmarshalInputRiskFilter,
@@ -10411,7 +10356,6 @@ directive @goEnum(value: String) on ENUM_VALUE
 
 # Scalars
 scalar CursorKey
-scalar Void
 scalar Datetime
 scalar Upload
 scalar Duration
@@ -10961,22 +10905,6 @@ enum VendorServiceOrderField
     NAME
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.VendorServiceOrderFieldName"
-        )
-}
-
-enum OrganizationOrderField
-    @goModel(model: "go.probo.inc/probo/pkg/coredata.OrganizationOrderField") {
-    NAME
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.OrganizationOrderFieldName"
-        )
-    CREATED_AT
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.OrganizationOrderFieldCreatedAt"
-        )
-    UPDATED_AT
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.OrganizationOrderFieldUpdatedAt"
         )
 }
 
@@ -11871,11 +11799,6 @@ input VendorServiceOrder
     ) {
     direction: OrderDirection!
     field: VendorServiceOrderField!
-}
-
-input OrganizationOrder {
-    direction: OrderDirection!
-    field: OrganizationOrderField!
 }
 
 input DocumentVersionOrder
@@ -12924,11 +12847,6 @@ type Report implements Node {
     audit: Audit @goField(forceResolver: true)
 
     permission(action: String!): Boolean! @goField(forceResolver: true)
-}
-
-type Session {
-    id: ID!
-    expiresAt: Datetime!
 }
 
 type Viewer {
@@ -14205,29 +14123,6 @@ input DeleteRiskObligationMappingInput {
     obligationId: ID!
 }
 
-input RequestEvidenceInput {
-    taskId: ID!
-    name: String!
-    type: EvidenceType!
-    description: String
-}
-
-input FulfillEvidenceInput {
-    evidenceId: ID!
-    name: String
-    file: Upload
-    url: String
-}
-
-input CreateEvidenceInput {
-    taskId: ID!
-    name: String!
-    type: EvidenceType!
-    url: String
-    file: Upload
-    description: String
-}
-
 input DeleteEvidenceInput {
     evidenceId: ID!
 }
@@ -14992,18 +14887,6 @@ type CreateRiskObligationMappingPayload {
 type DeleteRiskObligationMappingPayload {
     deletedRiskId: ID!
     deletedObligationId: ID!
-}
-
-type RequestEvidencePayload {
-    evidenceEdge: EvidenceEdge!
-}
-
-type FulfillEvidencePayload {
-    evidenceEdge: EvidenceEdge!
-}
-
-type CreateEvidencePayload {
-    evidenceEdge: EvidenceEdge!
 }
 
 type DeleteEvidencePayload {
@@ -24124,41 +24007,6 @@ func (ec *executionContext) fieldContext_CreateDraftDocumentVersionPayload_docum
 	return fc, nil
 }
 
-func (ec *executionContext) _CreateEvidencePayload_evidenceEdge(ctx context.Context, field graphql.CollectedField, obj *types.CreateEvidencePayload) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_CreateEvidencePayload_evidenceEdge,
-		func(ctx context.Context) (any, error) {
-			return obj.EvidenceEdge, nil
-		},
-		nil,
-		ec.marshalNEvidenceEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐEvidenceEdge,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_CreateEvidencePayload_evidenceEdge(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "CreateEvidencePayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "cursor":
-				return ec.fieldContext_EvidenceEdge_cursor(ctx, field)
-			case "node":
-				return ec.fieldContext_EvidenceEdge_node(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type EvidenceEdge", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _CreateFrameworkPayload_frameworkEdge(ctx context.Context, field graphql.CollectedField, obj *types.CreateFrameworkPayload) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -31984,41 +31832,6 @@ func (ec *executionContext) fieldContext_FrameworkEdge_node(_ context.Context, f
 				return ec.fieldContext_Framework_permission(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Framework", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _FulfillEvidencePayload_evidenceEdge(ctx context.Context, field graphql.CollectedField, obj *types.FulfillEvidencePayload) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_FulfillEvidencePayload_evidenceEdge,
-		func(ctx context.Context) (any, error) {
-			return obj.EvidenceEdge, nil
-		},
-		nil,
-		ec.marshalNEvidenceEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐEvidenceEdge,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_FulfillEvidencePayload_evidenceEdge(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "FulfillEvidencePayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "cursor":
-				return ec.fieldContext_EvidenceEdge_cursor(ctx, field)
-			case "node":
-				return ec.fieldContext_EvidenceEdge_node(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type EvidenceEdge", field.Name)
 		},
 	}
 	return fc, nil
@@ -45443,41 +45256,6 @@ func (ec *executionContext) fieldContext_Report_permission(ctx context.Context, 
 	return fc, nil
 }
 
-func (ec *executionContext) _RequestEvidencePayload_evidenceEdge(ctx context.Context, field graphql.CollectedField, obj *types.RequestEvidencePayload) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_RequestEvidencePayload_evidenceEdge,
-		func(ctx context.Context) (any, error) {
-			return obj.EvidenceEdge, nil
-		},
-		nil,
-		ec.marshalNEvidenceEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐEvidenceEdge,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_RequestEvidencePayload_evidenceEdge(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "RequestEvidencePayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "cursor":
-				return ec.fieldContext_EvidenceEdge_cursor(ctx, field)
-			case "node":
-				return ec.fieldContext_EvidenceEdge_node(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type EvidenceEdge", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _RequestSignaturePayload_documentVersionSignatureEdge(ctx context.Context, field graphql.CollectedField, obj *types.RequestSignaturePayload) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -47197,64 +46975,6 @@ func (ec *executionContext) fieldContext_SendSigningNotificationsPayload_success
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Session_id(ctx context.Context, field graphql.CollectedField, obj *types.Session) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Session_id,
-		func(ctx context.Context) (any, error) {
-			return obj.ID, nil
-		},
-		nil,
-		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Session_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Session",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Session_expiresAt(ctx context.Context, field graphql.CollectedField, obj *types.Session) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Session_expiresAt,
-		func(ctx context.Context) (any, error) {
-			return obj.ExpiresAt, nil
-		},
-		nil,
-		ec.marshalNDatetime2timeᚐTime,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Session_expiresAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Session",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Datetime does not have child fields")
 		},
 	}
 	return fc, nil
@@ -62202,68 +61922,6 @@ func (ec *executionContext) unmarshalInputCreateDraftDocumentVersionInput(ctx co
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputCreateEvidenceInput(ctx context.Context, obj any) (types.CreateEvidenceInput, error) {
-	var it types.CreateEvidenceInput
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"taskId", "name", "type", "url", "file", "description"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "taskId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("taskId"))
-			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.TaskID = data
-		case "name":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Name = data
-		case "type":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
-			data, err := ec.unmarshalNEvidenceType2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐEvidenceType(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Type = data
-		case "url":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("url"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.URL = data
-		case "file":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("file"))
-			data, err := ec.unmarshalOUpload2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.File = data
-		case "description":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Description = data
-		}
-	}
-
-	return it, nil
-}
-
 func (ec *executionContext) unmarshalInputCreateFrameworkInput(ctx context.Context, obj any) (types.CreateFrameworkInput, error) {
 	var it types.CreateFrameworkInput
 	asMap := map[string]any{}
@@ -65699,54 +65357,6 @@ func (ec *executionContext) unmarshalInputFrameworkOrder(ctx context.Context, ob
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputFulfillEvidenceInput(ctx context.Context, obj any) (types.FulfillEvidenceInput, error) {
-	var it types.FulfillEvidenceInput
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"evidenceId", "name", "file", "url"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "evidenceId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("evidenceId"))
-			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.EvidenceID = data
-		case "name":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Name = data
-		case "file":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("file"))
-			data, err := ec.unmarshalOUpload2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.File = data
-		case "url":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("url"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.URL = data
-		}
-	}
-
-	return it, nil
-}
-
 func (ec *executionContext) unmarshalInputGenerateDocumentChangelogInput(ctx context.Context, obj any) (types.GenerateDocumentChangelogInput, error) {
 	var it types.GenerateDocumentChangelogInput
 	asMap := map[string]any{}
@@ -66120,40 +65730,6 @@ func (ec *executionContext) unmarshalInputObligationOrder(ctx context.Context, o
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputOrganizationOrder(ctx context.Context, obj any) (types.OrganizationOrder, error) {
-	var it types.OrganizationOrder
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"direction", "field"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "direction":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("direction"))
-			data, err := ec.unmarshalNOrderDirection2goᚗproboᚗincᚋproboᚋpkgᚋpageᚐOrderDirection(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Direction = data
-		case "field":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
-			data, err := ec.unmarshalNOrganizationOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐOrganizationOrderField(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Field = data
-		}
-	}
-
-	return it, nil
-}
-
 func (ec *executionContext) unmarshalInputPeopleFilter(ctx context.Context, obj any) (types.PeopleFilter, error) {
 	var it types.PeopleFilter
 	asMap := map[string]any{}
@@ -66304,54 +65880,6 @@ func (ec *executionContext) unmarshalInputPublishDocumentVersionInput(ctx contex
 				return it, err
 			}
 			it.Changelog = data
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputRequestEvidenceInput(ctx context.Context, obj any) (types.RequestEvidenceInput, error) {
-	var it types.RequestEvidenceInput
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"taskId", "name", "type", "description"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "taskId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("taskId"))
-			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.TaskID = data
-		case "name":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Name = data
-		case "type":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
-			data, err := ec.unmarshalNEvidenceType2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐEvidenceType(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Type = data
-		case "description":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Description = data
 		}
 	}
 
@@ -72198,45 +71726,6 @@ func (ec *executionContext) _CreateDraftDocumentVersionPayload(ctx context.Conte
 	return out
 }
 
-var createEvidencePayloadImplementors = []string{"CreateEvidencePayload"}
-
-func (ec *executionContext) _CreateEvidencePayload(ctx context.Context, sel ast.SelectionSet, obj *types.CreateEvidencePayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, createEvidencePayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("CreateEvidencePayload")
-		case "evidenceEdge":
-			out.Values[i] = ec._CreateEvidencePayload_evidenceEdge(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
 var createFrameworkPayloadImplementors = []string{"CreateFrameworkPayload"}
 
 func (ec *executionContext) _CreateFrameworkPayload(ctx context.Context, sel ast.SelectionSet, obj *types.CreateFrameworkPayload) graphql.Marshaler {
@@ -77741,45 +77230,6 @@ func (ec *executionContext) _FrameworkEdge(ctx context.Context, sel ast.Selectio
 	return out
 }
 
-var fulfillEvidencePayloadImplementors = []string{"FulfillEvidencePayload"}
-
-func (ec *executionContext) _FulfillEvidencePayload(ctx context.Context, sel ast.SelectionSet, obj *types.FulfillEvidencePayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, fulfillEvidencePayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("FulfillEvidencePayload")
-		case "evidenceEdge":
-			out.Values[i] = ec._FulfillEvidencePayload_evidenceEdge(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
 var generateDocumentChangelogPayloadImplementors = []string{"GenerateDocumentChangelogPayload"}
 
 func (ec *executionContext) _GenerateDocumentChangelogPayload(ctx context.Context, sel ast.SelectionSet, obj *types.GenerateDocumentChangelogPayload) graphql.Marshaler {
@@ -82468,45 +81918,6 @@ func (ec *executionContext) _Report(ctx context.Context, sel ast.SelectionSet, o
 	return out
 }
 
-var requestEvidencePayloadImplementors = []string{"RequestEvidencePayload"}
-
-func (ec *executionContext) _RequestEvidencePayload(ctx context.Context, sel ast.SelectionSet, obj *types.RequestEvidencePayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, requestEvidencePayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("RequestEvidencePayload")
-		case "evidenceEdge":
-			out.Values[i] = ec._RequestEvidencePayload_evidenceEdge(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
 var requestSignaturePayloadImplementors = []string{"RequestSignaturePayload"}
 
 func (ec *executionContext) _RequestSignaturePayload(ctx context.Context, sel ast.SelectionSet, obj *types.RequestSignaturePayload) graphql.Marshaler {
@@ -83300,50 +82711,6 @@ func (ec *executionContext) _SendSigningNotificationsPayload(ctx context.Context
 			out.Values[i] = graphql.MarshalString("SendSigningNotificationsPayload")
 		case "success":
 			out.Values[i] = ec._SendSigningNotificationsPayload_success(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var sessionImplementors = []string{"Session"}
-
-func (ec *executionContext) _Session(ctx context.Context, sel ast.SelectionSet, obj *types.Session) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, sessionImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("Session")
-		case "id":
-			out.Values[i] = ec._Session_id(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "expiresAt":
-			out.Values[i] = ec._Session_expiresAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -95359,36 +94726,6 @@ func (ec *executionContext) marshalNOrganizationContext2ᚖgoᚗproboᚗincᚋpr
 	}
 	return ec._OrganizationContext(ctx, sel, v)
 }
-
-func (ec *executionContext) unmarshalNOrganizationOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐOrganizationOrderField(ctx context.Context, v any) (coredata.OrganizationOrderField, error) {
-	tmp, err := graphql.UnmarshalString(v)
-	res := unmarshalNOrganizationOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐOrganizationOrderField[tmp]
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNOrganizationOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐOrganizationOrderField(ctx context.Context, sel ast.SelectionSet, v coredata.OrganizationOrderField) graphql.Marshaler {
-	_ = sel
-	res := graphql.MarshalString(marshalNOrganizationOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐOrganizationOrderField[v])
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-	}
-	return res
-}
-
-var (
-	unmarshalNOrganizationOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐOrganizationOrderField = map[string]coredata.OrganizationOrderField{
-		"NAME":       coredata.OrganizationOrderFieldName,
-		"CREATED_AT": coredata.OrganizationOrderFieldCreatedAt,
-		"UPDATED_AT": coredata.OrganizationOrderFieldUpdatedAt,
-	}
-	marshalNOrganizationOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐOrganizationOrderField = map[coredata.OrganizationOrderField]string{
-		coredata.OrganizationOrderFieldName:      "NAME",
-		coredata.OrganizationOrderFieldCreatedAt: "CREATED_AT",
-		coredata.OrganizationOrderFieldUpdatedAt: "UPDATED_AT",
-	}
-)
 
 func (ec *executionContext) marshalNPageInfo2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPageInfo(ctx context.Context, sel ast.SelectionSet, v types.PageInfo) graphql.Marshaler {
 	return ec._PageInfo(ctx, sel, &v)

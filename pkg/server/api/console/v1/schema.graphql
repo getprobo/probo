@@ -14,7 +14,6 @@ directive @goEnum(value: String) on ENUM_VALUE
 
 # Scalars
 scalar CursorKey
-scalar Void
 scalar Datetime
 scalar Upload
 scalar Duration
@@ -564,22 +563,6 @@ enum VendorServiceOrderField
     NAME
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.VendorServiceOrderFieldName"
-        )
-}
-
-enum OrganizationOrderField
-    @goModel(model: "go.probo.inc/probo/pkg/coredata.OrganizationOrderField") {
-    NAME
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.OrganizationOrderFieldName"
-        )
-    CREATED_AT
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.OrganizationOrderFieldCreatedAt"
-        )
-    UPDATED_AT
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.OrganizationOrderFieldUpdatedAt"
         )
 }
 
@@ -1474,11 +1457,6 @@ input VendorServiceOrder
     ) {
     direction: OrderDirection!
     field: VendorServiceOrderField!
-}
-
-input OrganizationOrder {
-    direction: OrderDirection!
-    field: OrganizationOrderField!
 }
 
 input DocumentVersionOrder
@@ -2527,11 +2505,6 @@ type Report implements Node {
     audit: Audit @goField(forceResolver: true)
 
     permission(action: String!): Boolean! @goField(forceResolver: true)
-}
-
-type Session {
-    id: ID!
-    expiresAt: Datetime!
 }
 
 type Viewer {
@@ -3808,29 +3781,6 @@ input DeleteRiskObligationMappingInput {
     obligationId: ID!
 }
 
-input RequestEvidenceInput {
-    taskId: ID!
-    name: String!
-    type: EvidenceType!
-    description: String
-}
-
-input FulfillEvidenceInput {
-    evidenceId: ID!
-    name: String
-    file: Upload
-    url: String
-}
-
-input CreateEvidenceInput {
-    taskId: ID!
-    name: String!
-    type: EvidenceType!
-    url: String
-    file: Upload
-    description: String
-}
-
 input DeleteEvidenceInput {
     evidenceId: ID!
 }
@@ -4595,18 +4545,6 @@ type CreateRiskObligationMappingPayload {
 type DeleteRiskObligationMappingPayload {
     deletedRiskId: ID!
     deletedObligationId: ID!
-}
-
-type RequestEvidencePayload {
-    evidenceEdge: EvidenceEdge!
-}
-
-type FulfillEvidencePayload {
-    evidenceEdge: EvidenceEdge!
-}
-
-type CreateEvidencePayload {
-    evidenceEdge: EvidenceEdge!
 }
 
 type DeleteEvidencePayload {
