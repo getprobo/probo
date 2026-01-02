@@ -26,7 +26,7 @@ const fragment = graphql`
       before: $before
       orderBy: $order
     )
-      @connection(key: "InvitationListFragment_invitations")
+      @connection(key: "InvitationListFragment_invitations", filters: [])
       @required(action: THROW) {
       __id
       totalCount

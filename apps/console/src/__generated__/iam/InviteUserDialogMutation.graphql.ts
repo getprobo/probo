@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<438f2d019c7a08242f35c048016a97e1>>
+ * @generated SignedSource<<14b3e1990be5f8333046dffcada56516>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,7 +11,6 @@
 import { ConcreteRequest } from 'relay-runtime';
 export type MembershipRole = "ADMIN" | "AUDITOR" | "EMPLOYEE" | "OWNER" | "VIEWER";
 export type InviteMemberInput = {
-  createPeople: boolean;
   email: string;
   fullName: string;
   organizationId: string;

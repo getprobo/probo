@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<6067ce11fa959cba895d2b10862592de>>
+ * @generated SignedSource<<37b59716fa1aba5ed805ce03278ce01d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -111,13 +111,7 @@ return {
       "kind": "RequiredField",
       "field": {
         "alias": "invitations",
-        "args": [
-          {
-            "kind": "Variable",
-            "name": "orderBy",
-            "variableName": "order"
-          }
-        ],
+        "args": null,
         "concreteType": "InvitationConnection",
         "kind": "LinkedField",
         "name": "__InvitationListFragment_invitations_connection",
@@ -239,6 +233,6 @@ return {
 };
 })();
 
-(node as any).hash = "837e567be489574a7f0350e26a8e5454";
+(node as any).hash = "6a1b77bc8b0e5f345de9865ec78ef7e9";
 
 export default node;
