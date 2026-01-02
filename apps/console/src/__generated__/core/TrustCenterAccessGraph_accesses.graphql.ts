@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<f93ee7f1b0f384bafe3a11df6a514c0c>>
+ * @generated SignedSource<<6cbc57ab24be22cdb76257d73f3a47d5>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -18,6 +18,8 @@ export type TrustCenterAccessGraph_accesses$data = {
       readonly node: {
         readonly active: boolean;
         readonly activeCount: number;
+        readonly canDelete: boolean;
+        readonly canUpdate: boolean;
         readonly createdAt: string;
         readonly email: string;
         readonly hasAcceptedNonDisclosureAgreement: boolean;
@@ -234,6 +236,32 @@ return {
                   "storageKey": null
                 },
                 {
+                  "alias": "canUpdate",
+                  "args": [
+                    {
+                      "kind": "Literal",
+                      "name": "action",
+                      "value": "core:trust-center-access:update"
+                    }
+                  ],
+                  "kind": "ScalarField",
+                  "name": "permission",
+                  "storageKey": "permission(action:\"core:trust-center-access:update\")"
+                },
+                {
+                  "alias": "canDelete",
+                  "args": [
+                    {
+                      "kind": "Literal",
+                      "name": "action",
+                      "value": "core:trust-center-access:delete"
+                    }
+                  ],
+                  "kind": "ScalarField",
+                  "name": "permission",
+                  "storageKey": "permission(action:\"core:trust-center-access:delete\")"
+                },
+                {
                   "alias": null,
                   "args": null,
                   "kind": "ScalarField",
@@ -268,6 +296,6 @@ return {
 };
 })();
 
-(node as any).hash = "10bb084980182a1e2334be77c29cf1ec";
+(node as any).hash = "41517deef6af7eec916f3a4bbfc217b7";
 
 export default node;

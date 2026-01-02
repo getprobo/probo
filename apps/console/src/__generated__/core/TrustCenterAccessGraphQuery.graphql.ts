@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<4b12d9aad859607c861537fbdf5ea292>>
+ * @generated SignedSource<<4f1a16e8b28a887285c9bc578e201f75>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -272,6 +272,32 @@ return {
                             "name": "activeCount",
                             "storageKey": null
                           },
+                          {
+                            "alias": "canUpdate",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:trust-center-access:update"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:trust-center-access:update\")"
+                          },
+                          {
+                            "alias": "canDelete",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:trust-center-access:delete"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:trust-center-access:delete\")"
+                          },
                           (v5/*: any*/)
                         ],
                         "storageKey": null
@@ -315,12 +341,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "703f94692a1696b15e0c92b282866673",
+    "cacheID": "a8ee8e139d510095436df64e84d7a5ba",
     "id": null,
     "metadata": {},
     "name": "TrustCenterAccessGraphQuery",
     "operationKind": "query",
-    "text": "query TrustCenterAccessGraphQuery(\n  $trustCenterId: ID!\n  $count: Int!\n  $cursor: CursorKey\n) {\n  node(id: $trustCenterId) {\n    __typename\n    ... on TrustCenter {\n      id\n      ...TrustCenterAccessGraph_accesses\n    }\n    id\n  }\n}\n\nfragment TrustCenterAccessGraph_accesses on TrustCenter {\n  accesses(first: $count, after: $cursor, orderBy: {field: CREATED_AT, direction: DESC}) {\n    pageInfo {\n      hasNextPage\n      hasPreviousPage\n      startCursor\n      endCursor\n    }\n    edges {\n      cursor\n      node {\n        id\n        email\n        name\n        active\n        hasAcceptedNonDisclosureAgreement\n        createdAt\n        lastTokenExpiresAt\n        pendingRequestCount\n        activeCount\n        __typename\n      }\n    }\n  }\n  id\n}\n"
+    "text": "query TrustCenterAccessGraphQuery(\n  $trustCenterId: ID!\n  $count: Int!\n  $cursor: CursorKey\n) {\n  node(id: $trustCenterId) {\n    __typename\n    ... on TrustCenter {\n      id\n      ...TrustCenterAccessGraph_accesses\n    }\n    id\n  }\n}\n\nfragment TrustCenterAccessGraph_accesses on TrustCenter {\n  accesses(first: $count, after: $cursor, orderBy: {field: CREATED_AT, direction: DESC}) {\n    pageInfo {\n      hasNextPage\n      hasPreviousPage\n      startCursor\n      endCursor\n    }\n    edges {\n      cursor\n      node {\n        id\n        email\n        name\n        active\n        hasAcceptedNonDisclosureAgreement\n        createdAt\n        lastTokenExpiresAt\n        pendingRequestCount\n        activeCount\n        canUpdate: permission(action: \"core:trust-center-access:update\")\n        canDelete: permission(action: \"core:trust-center-access:delete\")\n        __typename\n      }\n    }\n  }\n  id\n}\n"
   }
 };
 })();

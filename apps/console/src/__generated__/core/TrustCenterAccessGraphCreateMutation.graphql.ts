@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<5b13ffbac04cd7b7bdfa68d47f6ad6ee>>
+ * @generated SignedSource<<7a9c0c1a8292affc2ed9584fca098c64>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -26,6 +26,8 @@ export type TrustCenterAccessGraphCreateMutation$data = {
       readonly node: {
         readonly active: boolean;
         readonly activeCount: number;
+        readonly canDelete: boolean;
+        readonly canUpdate: boolean;
         readonly createdAt: string;
         readonly email: string;
         readonly hasAcceptedNonDisclosureAgreement: boolean;
@@ -145,6 +147,32 @@ v3 = {
           "kind": "ScalarField",
           "name": "activeCount",
           "storageKey": null
+        },
+        {
+          "alias": "canUpdate",
+          "args": [
+            {
+              "kind": "Literal",
+              "name": "action",
+              "value": "core:trust-center-access:update"
+            }
+          ],
+          "kind": "ScalarField",
+          "name": "permission",
+          "storageKey": "permission(action:\"core:trust-center-access:update\")"
+        },
+        {
+          "alias": "canDelete",
+          "args": [
+            {
+              "kind": "Literal",
+              "name": "action",
+              "value": "core:trust-center-access:delete"
+            }
+          ],
+          "kind": "ScalarField",
+          "name": "permission",
+          "storageKey": "permission(action:\"core:trust-center-access:delete\")"
         }
       ],
       "storageKey": null
@@ -218,16 +246,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "501c3c38f8d44e41a178514443803ce2",
+    "cacheID": "b080e2a38e706bea45f06507675582a4",
     "id": null,
     "metadata": {},
     "name": "TrustCenterAccessGraphCreateMutation",
     "operationKind": "mutation",
-    "text": "mutation TrustCenterAccessGraphCreateMutation(\n  $input: CreateTrustCenterAccessInput!\n) {\n  createTrustCenterAccess(input: $input) {\n    trustCenterAccessEdge {\n      cursor\n      node {\n        id\n        email\n        name\n        active\n        hasAcceptedNonDisclosureAgreement\n        createdAt\n        lastTokenExpiresAt\n        pendingRequestCount\n        activeCount\n      }\n    }\n  }\n}\n"
+    "text": "mutation TrustCenterAccessGraphCreateMutation(\n  $input: CreateTrustCenterAccessInput!\n) {\n  createTrustCenterAccess(input: $input) {\n    trustCenterAccessEdge {\n      cursor\n      node {\n        id\n        email\n        name\n        active\n        hasAcceptedNonDisclosureAgreement\n        createdAt\n        lastTokenExpiresAt\n        pendingRequestCount\n        activeCount\n        canUpdate: permission(action: \"core:trust-center-access:update\")\n        canDelete: permission(action: \"core:trust-center-access:delete\")\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "bfe1841f269ba04a77e9b3ecf73665d2";
+(node as any).hash = "c33af388ca0957f16ee36e06339d61d3";
 
 export default node;

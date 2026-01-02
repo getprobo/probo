@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<ee0e02d6ca32ed5047c1aa0040c6f74e>>
+ * @generated SignedSource<<103e4c33c37a708bdc24fe74767725b9>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -257,6 +257,32 @@ return {
                             "name": "activeCount",
                             "storageKey": null
                           },
+                          {
+                            "alias": "canUpdate",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:trust-center-access:update"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:trust-center-access:update\")"
+                          },
+                          {
+                            "alias": "canDelete",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:trust-center-access:delete"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:trust-center-access:delete\")"
+                          },
                           (v2/*: any*/)
                         ],
                         "storageKey": null
@@ -300,16 +326,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "98a87a363a8a26e30506346db052e11a",
+    "cacheID": "6b9515ca548d21d6ba53ac5d830010f5",
     "id": null,
     "metadata": {},
     "name": "TrustCenterAccessGraphPaginationQuery",
     "operationKind": "query",
-    "text": "query TrustCenterAccessGraphPaginationQuery(\n  $count: Int\n  $cursor: CursorKey\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...TrustCenterAccessGraph_accesses\n    id\n  }\n}\n\nfragment TrustCenterAccessGraph_accesses on TrustCenter {\n  accesses(first: $count, after: $cursor, orderBy: {field: CREATED_AT, direction: DESC}) {\n    pageInfo {\n      hasNextPage\n      hasPreviousPage\n      startCursor\n      endCursor\n    }\n    edges {\n      cursor\n      node {\n        id\n        email\n        name\n        active\n        hasAcceptedNonDisclosureAgreement\n        createdAt\n        lastTokenExpiresAt\n        pendingRequestCount\n        activeCount\n        __typename\n      }\n    }\n  }\n  id\n}\n"
+    "text": "query TrustCenterAccessGraphPaginationQuery(\n  $count: Int\n  $cursor: CursorKey\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...TrustCenterAccessGraph_accesses\n    id\n  }\n}\n\nfragment TrustCenterAccessGraph_accesses on TrustCenter {\n  accesses(first: $count, after: $cursor, orderBy: {field: CREATED_AT, direction: DESC}) {\n    pageInfo {\n      hasNextPage\n      hasPreviousPage\n      startCursor\n      endCursor\n    }\n    edges {\n      cursor\n      node {\n        id\n        email\n        name\n        active\n        hasAcceptedNonDisclosureAgreement\n        createdAt\n        lastTokenExpiresAt\n        pendingRequestCount\n        activeCount\n        canUpdate: permission(action: \"core:trust-center-access:update\")\n        canDelete: permission(action: \"core:trust-center-access:delete\")\n        __typename\n      }\n    }\n  }\n  id\n}\n"
   }
 };
 })();
 
-(node as any).hash = "10bb084980182a1e2334be77c29cf1ec";
+(node as any).hash = "41517deef6af7eec916f3a4bbfc217b7";
 
 export default node;
