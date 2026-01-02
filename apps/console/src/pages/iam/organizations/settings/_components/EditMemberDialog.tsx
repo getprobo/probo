@@ -1,4 +1,4 @@
-import { getAssignableRoles, Role, sprintf } from "@probo/helpers";
+import { getAssignableRoles, sprintf } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
   DialogContent,
@@ -10,11 +10,12 @@ import {
   Spinner,
   Dialog,
 } from "@probo/ui";
-import { useState } from "react";
+import { use, useState } from "react";
 import { graphql } from "relay-runtime";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import type { MemberListItemFragment$data } from "/__generated__/iam/MemberListItemFragment.graphql";
+import { CurrentUser } from "/providers/CurrentUser";
 
 const updateMembershipMutation = graphql`
   mutation EditMemberDialog_updateMutation($input: UpdateMembershipInput!) {
@@ -28,16 +29,16 @@ const updateMembershipMutation = graphql`
 `;
 
 export function EditMemberDialog(props: {
-  currentRole: Role;
   membership: MemberListItemFragment$data;
   onClose: () => void;
 }) {
-  const { currentRole, membership, onClose } = props;
+  const { membership, onClose } = props;
 
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
 
-  const availableRoles = getAssignableRoles(currentRole);
+  const { role } = use(CurrentUser);
+  const availableRoles = getAssignableRoles(role);
 
   const [selectedRole, setSelectedRole] = useState<string>(membership.role);
 

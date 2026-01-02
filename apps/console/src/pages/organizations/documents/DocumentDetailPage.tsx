@@ -65,7 +65,7 @@ import {
   PdfDownloadDialog,
   type PdfDownloadDialogRef,
 } from "/components/documents/PdfDownloadDialog";
-import { useRef, useState } from "react";
+import { use, useRef, useState } from "react";
 import type { NodeOf } from "/types.ts";
 import clsx from "clsx";
 import { PeopleSelectField } from "/components/form/PeopleSelectField";
@@ -74,6 +74,7 @@ import { DocumentTypeOptions } from "/components/form/DocumentTypeOptions";
 import { DocumentClassificationOptions } from "/components/form/DocumentClassificationOptions";
 import { z } from "zod";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
+import { CurrentUser } from "/providers/CurrentUser";
 
 type Props = {
   queryRef: PreloadedQuery<DocumentGraphNodeQuery>;
@@ -92,12 +93,6 @@ const documentFragment = graphql`
     canUpdate: permission(action: "core:document:update")
     canDelete: permission(action: "core:document:delete")
     canPublish: permission(action: "core:document-version:publish")
-    # canSendSigningNotifications: permission(
-    #   action: "core:document:send-signing-notifications"
-    # )
-    # canRequestSignatures: permission(
-    #   action: "core:document-version:request-signature"
-    # )
     ...DocumentControlsTabFragment
     controlsInfo: controls(first: 0) {
       totalCount
@@ -187,15 +182,6 @@ const documentUpdateSchema = z.object({
   classification: z.enum(documentClassifications),
 });
 
-// FIXME
-// const UserEmailQuery = graphql`
-//   query DocumentDetailPageUserEmailQuery {
-//     viewer {
-//       email
-//     }
-//   }
-// `;
-
 export default function DocumentDetailPage(props: Props) {
   const { versionId } = useParams<{ versionId?: string }>();
   const node = usePreloadedQuery(documentNodeQuery, props.queryRef).node;
@@ -237,11 +223,7 @@ export default function DocumentDetailPage(props: Props) {
       },
     );
 
-  // const userEmailData = useLazyLoadQuery<DocumentDetailPageUserEmailQuery>(
-  //   UserEmailQuery,
-  //   {}
-  // );
-  // const defaultEmail = userEmailData.viewer.user.email;
+  const { email: defaultEmail } = use(CurrentUser);
   const [updateDocument, isUpdatingDocument] =
     useMutationWithToasts<DocumentDetailPageUpdateMutation>(
       updateDocumentMutation,
@@ -454,7 +436,7 @@ export default function DocumentDetailPage(props: Props) {
         ref={pdfDownloadDialogRef}
         onDownload={handleDownloadPdf}
         isLoading={isExporting}
-        // defaultEmail={defaultEmail}
+        defaultEmail={defaultEmail}
       >
         {null}
       </PdfDownloadDialog>
