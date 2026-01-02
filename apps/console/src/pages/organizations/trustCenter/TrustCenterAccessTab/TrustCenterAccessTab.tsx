@@ -17,7 +17,7 @@ import {
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { useOutletContext } from "react-router";
-import { useState, useEffect, use, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import z from "zod";
 import {
   useTrustCenterAccesses,
@@ -25,77 +25,53 @@ import {
 } from "/hooks/graph/TrustCenterAccessGraph";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
-import { PermissionsContext } from "/providers/PermissionsContext";
 import { TrustCenterAccessItem } from "./TrustCenterAccessItem";
-import type { TrustCenterAccess } from "@probo/coredata";
-
-type ContextType = {
-  organization: {
-    id: string;
-    trustCenter?: {
-      id: string;
-    };
-    documents?: {
-      edges: Array<{
-        node: {
-          id: string;
-          title: string;
-          documentType: string;
-          trustCenterVisibility: string;
-        };
-      }>;
-    };
-    audits?: {
-      edges: Array<{
-        node: {
-          id: string;
-          filename: string;
-          trustCenterVisibility: string;
-          framework: {
-            name: string;
-          };
-        };
-      }>;
-    };
-    trustCenterFiles?: {
-      edges: Array<{
-        node: {
-          id: string;
-          name: string;
-          category: string;
-          trustCenterVisibility: string;
-        };
-      }>;
-    };
-  };
-};
+import type { TrustCenterGraphQuery$data } from "/__generated__/core/TrustCenterGraphQuery.graphql";
+import type { NodeOf } from "/types";
+import type { TrustCenterAccessGraph_accesses$data } from "/__generated__/core/TrustCenterAccessGraph_accesses.graphql";
 
 export default function TrustCenterAccessTab() {
   const { __ } = useTranslate();
-  const { organization } = useOutletContext<ContextType>();
-  const { isAuthorized } = use(PermissionsContext);
+  const { organization } = useOutletContext<TrustCenterGraphQuery$data>();
   const inviteSchema = z.object({
-    name: z.string().min(1, __("Name is required")).min(2, __("Name must be at least 2 characters long")),
-    email: z.string().min(1, __("Email is required")).email(__("Please enter a valid email address")),
+    name: z
+      .string()
+      .min(1, __("Name is required"))
+      .min(2, __("Name must be at least 2 characters long")),
+    email: z
+      .string()
+      .min(1, __("Email is required"))
+      .email(__("Please enter a valid email address")),
   });
 
-  const [createInvitation, isCreating] = useMutationWithToasts(createTrustCenterAccessMutation, {
-    successMessage: __("Access created successfully"),
-    errorMessage: __("Failed to create access"),
-  });
+  const [createInvitation, isCreating] = useMutationWithToasts(
+    createTrustCenterAccessMutation,
+    {
+      successMessage: __("Access created successfully"),
+      errorMessage: __("Failed to create access"),
+    },
+  );
 
   const dialogRef = useDialogRef();
-  const [editingAccess, setEditingAccess] = useState<TrustCenterAccess | null>(null);
+  const [editingAccess, setEditingAccess] = useState<NodeOf<
+    TrustCenterAccessGraph_accesses$data["accesses"]
+  > | null>(null);
   const [pendingEditEmail, setPendingEditEmail] = useState<string | null>(null);
 
   const inviteForm = useFormWithSchema(inviteSchema, {
     defaultValues: { name: "", email: "" },
   });
 
-  const { data: trustCenterData, loadMore, hasNext, isLoadingNext } = useTrustCenterAccesses(organization.trustCenter?.id || "");
+  const {
+    data: trustCenterData,
+    loadMore,
+    hasNext,
+    isLoadingNext,
+  } = useTrustCenterAccesses(organization.trustCenter?.id || "");
 
-  const accesses: TrustCenterAccess[] = useMemo(
-    () => trustCenterData?.accesses?.edges.map((edge) => edge.node) ?? [], [trustCenterData?.accesses?.edges]
+  const accesses = useMemo(
+    () => trustCenterData?.accesses?.edges.map((edge) => edge.node) ?? [],
+    [trustCenterData?.accesses?.edges],
   );
 
   const handleInvite = inviteForm.handleSubmit(async (data) => {
@@ -124,7 +100,9 @@ export default function TrustCenterAccessTab() {
 
   useEffect(() => {
     if (pendingEditEmail && accesses.length > 0) {
-      const newAccess = accesses.find(access => access.email === pendingEditEmail);
+      const newAccess = accesses.find(
+        (access) => access.email === pendingEditEmail,
+      );
       if (newAccess) {
         setPendingEditEmail(null);
         setEditingAccess(newAccess);
@@ -144,19 +122,23 @@ export default function TrustCenterAccessTab() {
         <div>
           <h3 className="text-base font-medium">{__("External Access")}</h3>
           <p className="text-sm text-txt-tertiary">
-            {__("Manage who can access your trust center with time-limited tokens")}
+            {__(
+              "Manage who can access your trust center with time-limited tokens",
+            )}
           </p>
         </div>
-        {organization.trustCenter?.id && (
-          isAuthorized("TrustCenter", "createTrustCenterAccess") && (
-            <Button icon={IconPlusLarge} onClick={() => {
-              inviteForm.reset();
-              dialogRef.current?.open();
-            }}>
+        {organization.trustCenter?.id &&
+          organization.trustCenter.canCreateAccess && (
+            <Button
+              icon={IconPlusLarge}
+              onClick={() => {
+                inviteForm.reset();
+                dialogRef.current?.open();
+              }}
+            >
               {__("Add Access")}
             </Button>
-          )
-        )}
+          )}
       </div>
 
       {!organization.trustCenter?.id ? (
@@ -221,15 +203,14 @@ export default function TrustCenterAccessTab() {
         </>
       )}
 
-      <Dialog
-        ref={dialogRef}
-        title={__("Invite External Access")}
-      >
+      <Dialog ref={dialogRef} title={__("Invite External Access")}>
         <form onSubmit={handleInvite}>
           <DialogContent padded className="space-y-6">
             <div>
               <p className="text-txt-secondary text-sm mb-4">
-                {__("Send a 30-day access token to an external person to view your trust center")}
+                {__(
+                  "Send a 30-day access token to an external person to view your trust center",
+                )}
               </p>
 
               <Field

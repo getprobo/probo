@@ -29,6 +29,7 @@ export const trustCenterQuery = graphql`
           canCreateReference: permission(
             action: "core:trust-center-reference:create"
           )
+          canCreateAccess: permission(action: "core:trust-center-access:create")
         }
         documents(first: 100) {
           edges {
