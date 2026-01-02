@@ -10,6 +10,7 @@ import {
     IconGroup1,
     IconInboxEmpty,
     IconListStack,
+    IconLock,
     IconMedal,
     IconPageCheck,
     IconPageTextLine,
@@ -47,12 +48,13 @@ const fragment = graphql`
         canListProcessingActivities: permission(
             action: "core:processing-activity:list"
         )
-        canListStatesOfApplicability: permission(
-            action: "core:state-of-applicability:list"
-        )
+        canListRightsRequests: permission(action: "core:rights-request:list")
         canListSnapshots: permission(action: "core:snapshot:list")
         canGetTrustCenter: permission(action: "core:trust-center:get")
         canUpdateOrganization: permission(action: "iam:organization:update")
+        canListStatesOfApplicability: permission(
+            action: "core:state-of-applicability:list"
+        )
     }
 `;
 
@@ -178,6 +180,13 @@ export function Sidebar(props: { fKey: SidebarFragment$key }) {
                     label={__("States of Applicability")}
                     icon={IconPageCheck}
                     to={`${prefix}/states-of-applicability`}
+                />
+            )}
+            {organization.canListRightsRequests && (
+                <SidebarItem
+                    label={__("Rights Requests")}
+                    icon={IconLock}
+                    to={`${prefix}/rights-requests`}
                 />
             )}
             {organization.canListSnapshots && (

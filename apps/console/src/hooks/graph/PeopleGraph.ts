@@ -65,8 +65,8 @@ export function usePeople(
 export const paginatedPeopleQuery = graphql`
   query PeopleGraphPaginatedQuery($organizationId: ID!) {
     organization: node(id: $organizationId) {
+      id
       ... on Organization {
-        id
         ...PeopleGraphPaginatedFragment
       }
     }
@@ -87,6 +87,7 @@ export const paginatedPeopleFragment = graphql`
     before: { type: "CursorKey", defaultValue: null }
     last: { type: "Int", defaultValue: null }
   ) {
+    canCreatePeople: permission(action: "core:people:create")
     peoples(
       first: $first
       after: $after
@@ -106,6 +107,8 @@ export const paginatedPeopleFragment = graphql`
           additionalEmailAddresses
           contractStartDate
           contractEndDate
+          canDelete: permission(action: "core:people:delete")
+          canUpdate: permission(action: "core:people:update")
         }
       }
     }
@@ -197,6 +200,8 @@ export const peopleNodeQuery = graphql`
         additionalEmailAddresses
         contractStartDate
         contractEndDate
+        canUpdate: permission(action: "core:people:update")
+        canDelete: permission(action: "core:people:delete")
       }
     }
   }

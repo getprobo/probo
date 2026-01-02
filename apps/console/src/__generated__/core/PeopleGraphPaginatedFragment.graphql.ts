@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<336b3e8036d321c95981b2d15c0b41b9>>
+ * @generated SignedSource<<2f4336da58b8ec9db40d3b90a75a750f>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,12 +12,15 @@ import { ReaderFragment } from 'relay-runtime';
 export type PeopleKind = "CONTRACTOR" | "EMPLOYEE" | "SERVICE_ACCOUNT";
 import { FragmentRefs } from "relay-runtime";
 export type PeopleGraphPaginatedFragment$data = {
+  readonly canCreatePeople: boolean;
   readonly id: string;
   readonly peoples: {
     readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly node: {
         readonly additionalEmailAddresses: ReadonlyArray<any>;
+        readonly canDelete: boolean;
+        readonly canUpdate: boolean;
         readonly contractEndDate: any | null | undefined;
         readonly contractStartDate: any | null | undefined;
         readonly fullName: string;
@@ -119,6 +122,19 @@ return {
   "name": "PeopleGraphPaginatedFragment",
   "selections": [
     {
+      "alias": "canCreatePeople",
+      "args": [
+        {
+          "kind": "Literal",
+          "name": "action",
+          "value": "core:people:create"
+        }
+      ],
+      "kind": "ScalarField",
+      "name": "permission",
+      "storageKey": "permission(action:\"core:people:create\")"
+    },
+    {
       "alias": "peoples",
       "args": [
         {
@@ -204,6 +220,32 @@ return {
                   "storageKey": null
                 },
                 {
+                  "alias": "canDelete",
+                  "args": [
+                    {
+                      "kind": "Literal",
+                      "name": "action",
+                      "value": "core:people:delete"
+                    }
+                  ],
+                  "kind": "ScalarField",
+                  "name": "permission",
+                  "storageKey": "permission(action:\"core:people:delete\")"
+                },
+                {
+                  "alias": "canUpdate",
+                  "args": [
+                    {
+                      "kind": "Literal",
+                      "name": "action",
+                      "value": "core:people:update"
+                    }
+                  ],
+                  "kind": "ScalarField",
+                  "name": "permission",
+                  "storageKey": "permission(action:\"core:people:update\")"
+                },
+                {
                   "alias": null,
                   "args": null,
                   "kind": "ScalarField",
@@ -284,6 +326,6 @@ return {
 };
 })();
 
-(node as any).hash = "c658d1fc05ce8d1c12e6ba4fd3cf8c52";
+(node as any).hash = "199e1751362979bcc7e86e1a90a449d4";
 
 export default node;

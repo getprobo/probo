@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<5175c19e84ee71ec4a3e9e35e515991e>>
+ * @generated SignedSource<<547fca558bc3b4667355cef5d830c9ca>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -16,6 +16,8 @@ export type PeopleGraphNodeQuery$variables = {
 export type PeopleGraphNodeQuery$data = {
   readonly node: {
     readonly additionalEmailAddresses?: ReadonlyArray<any>;
+    readonly canDelete?: boolean;
+    readonly canUpdate?: boolean;
     readonly contractEndDate?: any | null | undefined;
     readonly contractStartDate?: any | null | undefined;
     readonly fullName?: string;
@@ -100,6 +102,32 @@ v9 = {
   "kind": "ScalarField",
   "name": "contractEndDate",
   "storageKey": null
+},
+v10 = {
+  "alias": "canUpdate",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "core:people:update"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"core:people:update\")"
+},
+v11 = {
+  "alias": "canDelete",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "core:people:delete"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"core:people:delete\")"
 };
 return {
   "fragment": {
@@ -126,7 +154,9 @@ return {
               (v6/*: any*/),
               (v7/*: any*/),
               (v8/*: any*/),
-              (v9/*: any*/)
+              (v9/*: any*/),
+              (v10/*: any*/),
+              (v11/*: any*/)
             ],
             "type": "People",
             "abstractKey": null
@@ -169,7 +199,9 @@ return {
               (v6/*: any*/),
               (v7/*: any*/),
               (v8/*: any*/),
-              (v9/*: any*/)
+              (v9/*: any*/),
+              (v10/*: any*/),
+              (v11/*: any*/)
             ],
             "type": "People",
             "abstractKey": null
@@ -180,16 +212,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "096d011a1e9a7374a13d037738b46fc6",
+    "cacheID": "b770515fd005b877138eaddfa7c1bd2f",
     "id": null,
     "metadata": {},
     "name": "PeopleGraphNodeQuery",
     "operationKind": "query",
-    "text": "query PeopleGraphNodeQuery(\n  $peopleId: ID!\n) {\n  node(id: $peopleId) {\n    __typename\n    ... on People {\n      id\n      fullName\n      primaryEmailAddress\n      position\n      kind\n      additionalEmailAddresses\n      contractStartDate\n      contractEndDate\n    }\n    id\n  }\n}\n"
+    "text": "query PeopleGraphNodeQuery(\n  $peopleId: ID!\n) {\n  node(id: $peopleId) {\n    __typename\n    ... on People {\n      id\n      fullName\n      primaryEmailAddress\n      position\n      kind\n      additionalEmailAddresses\n      contractStartDate\n      contractEndDate\n      canUpdate: permission(action: \"core:people:update\")\n      canDelete: permission(action: \"core:people:delete\")\n    }\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "af18ca63be219f85baa39bf99294b4f6";
+(node as any).hash = "a2bbe9f5064287c6a6e193c948a2c0cc";
 
 export default node;

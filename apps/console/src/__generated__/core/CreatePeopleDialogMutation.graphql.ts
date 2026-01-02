@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<9acf6a96c0398ea5ae6fec887e8d01b1>>
+ * @generated SignedSource<<c70fdb86a6f2cb61e35c8231c79db02a>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -29,6 +29,8 @@ export type CreatePeopleDialogMutation$data = {
     readonly peopleEdge: {
       readonly node: {
         readonly additionalEmailAddresses: ReadonlyArray<any>;
+        readonly canDelete: boolean;
+        readonly canUpdate: boolean;
         readonly fullName: string;
         readonly id: string;
         readonly kind: PeopleKind;
@@ -118,6 +120,32 @@ v3 = {
           "kind": "ScalarField",
           "name": "additionalEmailAddresses",
           "storageKey": null
+        },
+        {
+          "alias": "canDelete",
+          "args": [
+            {
+              "kind": "Literal",
+              "name": "action",
+              "value": "core:people:delete"
+            }
+          ],
+          "kind": "ScalarField",
+          "name": "permission",
+          "storageKey": "permission(action:\"core:people:delete\")"
+        },
+        {
+          "alias": "canUpdate",
+          "args": [
+            {
+              "kind": "Literal",
+              "name": "action",
+              "value": "core:people:update"
+            }
+          ],
+          "kind": "ScalarField",
+          "name": "permission",
+          "storageKey": "permission(action:\"core:people:update\")"
         }
       ],
       "storageKey": null
@@ -191,16 +219,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "4065779551f13f5555fa8a0f1b1ae54c",
+    "cacheID": "a37ebdda62d99a7583f4082b1fe19c96",
     "id": null,
     "metadata": {},
     "name": "CreatePeopleDialogMutation",
     "operationKind": "mutation",
-    "text": "mutation CreatePeopleDialogMutation(\n  $input: CreatePeopleInput!\n) {\n  createPeople(input: $input) {\n    peopleEdge {\n      node {\n        id\n        fullName\n        primaryEmailAddress\n        position\n        kind\n        additionalEmailAddresses\n      }\n    }\n  }\n}\n"
+    "text": "mutation CreatePeopleDialogMutation(\n  $input: CreatePeopleInput!\n) {\n  createPeople(input: $input) {\n    peopleEdge {\n      node {\n        id\n        fullName\n        primaryEmailAddress\n        position\n        kind\n        additionalEmailAddresses\n        canDelete: permission(action: \"core:people:delete\")\n        canUpdate: permission(action: \"core:people:update\")\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "1fbca12cb827104dc700c70a677f92aa";
+(node as any).hash = "d0ba45c21175b69c272a4bf9ff3c4039";
 
 export default node;

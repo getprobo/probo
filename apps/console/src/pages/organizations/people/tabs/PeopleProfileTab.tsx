@@ -9,8 +9,6 @@ import type { PeopleGraphUpdateMutation } from "/__generated__/core/PeopleGraphU
 import { updatePeopleMutation } from "/hooks/graph/PeopleGraph";
 import { Button, Card, Field, Input } from "@probo/ui";
 import { EmailsField } from "/components/form/EmailsField";
-import { PermissionsContext } from "/providers/PermissionsContext";
-import { use } from "react";
 
 const schema = z.object({
   fullName: z.string().min(1),
@@ -50,7 +48,6 @@ export default function PeopleProfileTab() {
       errorMessage: __("Failed to update member"),
     },
   );
-  const { isAuthorized } = use(PermissionsContext);
   const onSubmit = handleSubmit((data) => {
     const input = {
       id: people.id!,
@@ -80,22 +77,32 @@ export default function PeopleProfileTab() {
           {...register("position")}
           type="text"
           placeholder={__("e.g. CEO, CFO, etc.")}
+          disabled={!people.canUpdate}
         />
         <Field
           label={__("Primary email")}
           {...register("primaryEmailAddress")}
           type="email"
+          disabled={!people.canUpdate}
         />
         <EmailsField control={control} register={register} />
         <Field label={__("Contract start date")}>
-          <Input {...register("contractStartDate")} type="date" />
+          <Input
+            {...register("contractStartDate")}
+            type="date"
+            disabled={!people.canUpdate}
+          />
         </Field>
         <Field label={__("Contract end date")}>
-          <Input {...register("contractEndDate")} type="date" />
+          <Input
+            {...register("contractEndDate")}
+            type="date"
+            disabled={!people.canUpdate}
+          />
         </Field>
       </Card>
       <div className="flex justify-end">
-        {formState.isDirty && isAuthorized("People", "updatePeople") && (
+        {formState.isDirty && people.canUpdate && (
           <Button type="submit" disabled={isMutating}>
             {__("Update")}
           </Button>

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<e98eac6c530fd62defd06d5978d9724b>>
+ * @generated SignedSource<<c1333ad749a9c6aaf8f6f671bc578c04>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -24,6 +24,7 @@ export type SidebarFragment$data = {
   readonly canListObligations: boolean;
   readonly canListPeople: boolean;
   readonly canListProcessingActivities: boolean;
+  readonly canListRightsRequests: boolean;
   readonly canListRisks: boolean;
   readonly canListSnapshots: boolean;
   readonly canListStatesOfApplicability: boolean;
@@ -239,17 +240,17 @@ const node: ReaderFragment = {
       "storageKey": "permission(action:\"core:processing-activity:list\")"
     },
     {
-      "alias": "canListStatesOfApplicability",
+      "alias": "canListRightsRequests",
       "args": [
         {
           "kind": "Literal",
           "name": "action",
-          "value": "core:state-of-applicability:list"
+          "value": "core:rights-request:list"
         }
       ],
       "kind": "ScalarField",
       "name": "permission",
-      "storageKey": "permission(action:\"core:state-of-applicability:list\")"
+      "storageKey": "permission(action:\"core:rights-request:list\")"
     },
     {
       "alias": "canListSnapshots",
@@ -289,12 +290,25 @@ const node: ReaderFragment = {
       "kind": "ScalarField",
       "name": "permission",
       "storageKey": "permission(action:\"iam:organization:update\")"
+    },
+    {
+      "alias": "canListStatesOfApplicability",
+      "args": [
+        {
+          "kind": "Literal",
+          "name": "action",
+          "value": "core:state-of-applicability:list"
+        }
+      ],
+      "kind": "ScalarField",
+      "name": "permission",
+      "storageKey": "permission(action:\"core:state-of-applicability:list\")"
     }
   ],
   "type": "Organization",
   "abstractKey": null
 };
 
-(node as any).hash = "2baad6a78a98c3e9458cdb1ada294d76";
+(node as any).hash = "3a7071a1d9ed4ffc115f5bc22e283a50";
 
 export default node;

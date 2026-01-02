@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<c6717878cc2ffa24d0d56aab35c431c7>>
+ * @generated SignedSource<<91fb3430f209ed2c0c83b111ca7b3d86>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -15,7 +15,7 @@ export type PeopleGraphPaginatedQuery$variables = {
 };
 export type PeopleGraphPaginatedQuery$data = {
   readonly organization: {
-    readonly id?: string;
+    readonly id: string;
     readonly " $fragmentSpreads": FragmentRefs<"PeopleGraphPaginatedFragment">;
   };
 };
@@ -83,10 +83,10 @@ return {
         "name": "node",
         "plural": false,
         "selections": [
+          (v2/*: any*/),
           {
             "kind": "InlineFragment",
             "selections": [
-              (v2/*: any*/),
               {
                 "args": null,
                 "kind": "FragmentSpread",
@@ -122,6 +122,19 @@ return {
           {
             "kind": "InlineFragment",
             "selections": [
+              {
+                "alias": "canCreatePeople",
+                "args": [
+                  {
+                    "kind": "Literal",
+                    "name": "action",
+                    "value": "core:people:create"
+                  }
+                ],
+                "kind": "ScalarField",
+                "name": "permission",
+                "storageKey": "permission(action:\"core:people:create\")"
+              },
               {
                 "alias": null,
                 "args": (v4/*: any*/),
@@ -195,6 +208,32 @@ return {
                             "kind": "ScalarField",
                             "name": "contractEndDate",
                             "storageKey": null
+                          },
+                          {
+                            "alias": "canDelete",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:people:delete"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:people:delete\")"
+                          },
+                          {
+                            "alias": "canUpdate",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:people:update"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:people:update\")"
                           },
                           (v3/*: any*/)
                         ],
@@ -286,16 +325,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "dca6a1202b168afd54cac8484cf6fadd",
+    "cacheID": "caa828b21b4d035ff5543e6d08355aad",
     "id": null,
     "metadata": {},
     "name": "PeopleGraphPaginatedQuery",
     "operationKind": "query",
-    "text": "query PeopleGraphPaginatedQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      ...PeopleGraphPaginatedFragment\n    }\n    id\n  }\n}\n\nfragment PeopleGraphPaginatedFragment on Organization {\n  peoples(first: 50, orderBy: {direction: ASC, field: FULL_NAME}) {\n    edges {\n      node {\n        id\n        fullName\n        primaryEmailAddress\n        kind\n        position\n        additionalEmailAddresses\n        contractStartDate\n        contractEndDate\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
+    "text": "query PeopleGraphPaginatedQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    id\n    ... on Organization {\n      ...PeopleGraphPaginatedFragment\n    }\n  }\n}\n\nfragment PeopleGraphPaginatedFragment on Organization {\n  canCreatePeople: permission(action: \"core:people:create\")\n  peoples(first: 50, orderBy: {direction: ASC, field: FULL_NAME}) {\n    edges {\n      node {\n        id\n        fullName\n        primaryEmailAddress\n        kind\n        position\n        additionalEmailAddresses\n        contractStartDate\n        contractEndDate\n        canDelete: permission(action: \"core:people:delete\")\n        canUpdate: permission(action: \"core:people:update\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
   }
 };
 })();
 
-(node as any).hash = "2d5f8ae64618a57eeb623b0ade941486";
+(node as any).hash = "b041fe4775cf12f965d81f243549cab0";
 
 export default node;

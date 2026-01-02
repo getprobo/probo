@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<e4afda2e1cb4e3fcfccfca64b086ad35>>
+ * @generated SignedSource<<9f37a0466d956646c36ab3afe67a4664>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -209,6 +209,19 @@ return {
             "kind": "InlineFragment",
             "selections": [
               {
+                "alias": "canCreatePeople",
+                "args": [
+                  {
+                    "kind": "Literal",
+                    "name": "action",
+                    "value": "core:people:create"
+                  }
+                ],
+                "kind": "ScalarField",
+                "name": "permission",
+                "storageKey": "permission(action:\"core:people:create\")"
+              },
+              {
                 "alias": null,
                 "args": (v15/*: any*/),
                 "concreteType": "PeopleConnection",
@@ -281,6 +294,32 @@ return {
                             "kind": "ScalarField",
                             "name": "contractEndDate",
                             "storageKey": null
+                          },
+                          {
+                            "alias": "canDelete",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:people:delete"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:people:delete\")"
+                          },
+                          {
+                            "alias": "canUpdate",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:people:update"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:people:update\")"
                           },
                           (v13/*: any*/)
                         ],
@@ -372,16 +411,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "7df8a360f24224a73dc98c9b8f6da287",
+    "cacheID": "0ebad3a1b3f8943f1fdc170021089dc8",
     "id": null,
     "metadata": {},
     "name": "PeopleListQuery",
     "operationKind": "query",
-    "text": "query PeopleListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $filter: PeopleFilter = null\n  $first: Int = 50\n  $last: Int = null\n  $order: PeopleOrder = {direction: ASC, field: FULL_NAME}\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...PeopleGraphPaginatedFragment_4cFWzS\n    id\n  }\n}\n\nfragment PeopleGraphPaginatedFragment_4cFWzS on Organization {\n  peoples(first: $first, after: $after, last: $last, before: $before, orderBy: $order, filter: $filter) {\n    edges {\n      node {\n        id\n        fullName\n        primaryEmailAddress\n        kind\n        position\n        additionalEmailAddresses\n        contractStartDate\n        contractEndDate\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
+    "text": "query PeopleListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $filter: PeopleFilter = null\n  $first: Int = 50\n  $last: Int = null\n  $order: PeopleOrder = {direction: ASC, field: FULL_NAME}\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...PeopleGraphPaginatedFragment_4cFWzS\n    id\n  }\n}\n\nfragment PeopleGraphPaginatedFragment_4cFWzS on Organization {\n  canCreatePeople: permission(action: \"core:people:create\")\n  peoples(first: $first, after: $after, last: $last, before: $before, orderBy: $order, filter: $filter) {\n    edges {\n      node {\n        id\n        fullName\n        primaryEmailAddress\n        kind\n        position\n        additionalEmailAddresses\n        contractStartDate\n        contractEndDate\n        canDelete: permission(action: \"core:people:delete\")\n        canUpdate: permission(action: \"core:people:update\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
   }
 };
 })();
 
-(node as any).hash = "c658d1fc05ce8d1c12e6ba4fd3cf8c52";
+(node as any).hash = "199e1751362979bcc7e86e1a90a449d4";
 
 export default node;

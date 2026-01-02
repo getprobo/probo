@@ -31,7 +31,7 @@ const schema = z.object({
   additionalEmailAddresses: z.preprocess(
     // Empty additional emails are skipped
     (v) => (v as string[]).filter((v) => !!v),
-    z.array(z.string().email())
+    z.array(z.string().email()),
   ),
   kind: z.enum(peopleRoles),
 });
@@ -50,6 +50,8 @@ export const createPeopleMutation = graphql`
           position
           kind
           additionalEmailAddresses
+          canDelete: permission(action: "core:people:delete")
+          canUpdate: permission(action: "core:people:update")
         }
       }
     }

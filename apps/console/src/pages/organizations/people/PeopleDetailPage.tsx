@@ -21,8 +21,6 @@ import {
 import { useTranslate } from "@probo/i18n";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { Outlet } from "react-router";
-import { use } from "react";
-import { PermissionsContext } from "/providers/PermissionsContext";
 
 type Props = {
   queryRef: PreloadedQuery<PeopleGraphNodeQuery>;
@@ -33,7 +31,6 @@ export default function PeopleDetailPage(props: Props) {
   const people = data.node;
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
-  const { isAuthorized } = use(PermissionsContext);
   const deletePeople = useDeletePeople(
     people,
     ConnectionHandler.getConnectionID(organizationId, PeopleConnectionKey),
@@ -57,7 +54,7 @@ export default function PeopleDetailPage(props: Props) {
           <Avatar name={people.fullName ?? ""} size="xl" />
           <div className="text-2xl">{people.fullName}</div>
         </div>
-        {isAuthorized("People", "deletePeople") && (
+        {data.node.canDelete && (
           <ActionDropdown variant="secondary">
             <DropdownItem
               variant="danger"
