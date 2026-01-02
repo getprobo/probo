@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<ae81a1ead15cdd5a41e897bcd60cd38b>>
+ * @generated SignedSource<<02e8a94b4b1fde8cf24235afcfd5731a>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -16,6 +16,7 @@ export type ObligationGraphListQuery$variables = {
 };
 export type ObligationGraphListQuery$data = {
   readonly node: {
+    readonly canCreateObligation?: boolean;
     readonly " $fragmentSpreads": FragmentRefs<"ObligationsPageFragment">;
   };
 };
@@ -44,30 +45,43 @@ v1 = [
     "variableName": "organizationId"
   }
 ],
-v2 = [
+v2 = {
+  "alias": "canCreateObligation",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "core:obligation:create"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"core:obligation:create\")"
+},
+v3 = [
   {
     "kind": "Variable",
     "name": "snapshotId",
     "variableName": "snapshotId"
   }
 ],
-v3 = {
+v4 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "__typename",
   "storageKey": null
 },
-v4 = {
+v5 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "id",
   "storageKey": null
 },
-v5 = [
+v6 = [
   {
-    "fields": (v2/*: any*/),
+    "fields": (v3/*: any*/),
     "kind": "ObjectValue",
     "name": "filter"
   },
@@ -95,8 +109,9 @@ return {
           {
             "kind": "InlineFragment",
             "selections": [
+              (v2/*: any*/),
               {
-                "args": (v2/*: any*/),
+                "args": (v3/*: any*/),
                 "kind": "FragmentSpread",
                 "name": "ObligationsPageFragment"
               }
@@ -125,14 +140,15 @@ return {
         "name": "node",
         "plural": false,
         "selections": [
-          (v3/*: any*/),
           (v4/*: any*/),
+          (v5/*: any*/),
           {
             "kind": "InlineFragment",
             "selections": [
+              (v2/*: any*/),
               {
                 "alias": null,
-                "args": (v5/*: any*/),
+                "args": (v6/*: any*/),
                 "concreteType": "ObligationConnection",
                 "kind": "LinkedField",
                 "name": "obligations",
@@ -161,7 +177,7 @@ return {
                         "name": "node",
                         "plural": false,
                         "selections": [
-                          (v4/*: any*/),
+                          (v5/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -240,7 +256,7 @@ return {
                             "name": "owner",
                             "plural": false,
                             "selections": [
-                              (v4/*: any*/),
+                              (v5/*: any*/),
                               {
                                 "alias": null,
                                 "args": null,
@@ -265,7 +281,33 @@ return {
                             "name": "updatedAt",
                             "storageKey": null
                           },
-                          (v3/*: any*/)
+                          {
+                            "alias": "canUpdate",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:obligation:update"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:obligation:update\")"
+                          },
+                          {
+                            "alias": "canDelete",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:obligation:delete"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:obligation:delete\")"
+                          },
+                          (v4/*: any*/)
                         ],
                         "storageKey": null
                       },
@@ -321,7 +363,7 @@ return {
               },
               {
                 "alias": null,
-                "args": (v5/*: any*/),
+                "args": (v6/*: any*/),
                 "filters": [
                   "filter"
                 ],
@@ -340,16 +382,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "761aab4336741b33cc256ec5527011e4",
+    "cacheID": "09f360edd84c4db5cf2bc3d01b207d46",
     "id": null,
     "metadata": {},
     "name": "ObligationGraphListQuery",
     "operationKind": "query",
-    "text": "query ObligationGraphListQuery(\n  $organizationId: ID!\n  $snapshotId: ID\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      ...ObligationsPageFragment_3iomuz\n    }\n    id\n  }\n}\n\nfragment ObligationsPageFragment_3iomuz on Organization {\n  id\n  obligations(first: 10, filter: {snapshotId: $snapshotId}) {\n    totalCount\n    edges {\n      node {\n        id\n        snapshotId\n        sourceId\n        area\n        source\n        requirement\n        status\n        lastReviewDate\n        dueDate\n        actionsToBeImplemented\n        regulator\n        owner {\n          id\n          fullName\n        }\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
+    "text": "query ObligationGraphListQuery(\n  $organizationId: ID!\n  $snapshotId: ID\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      canCreateObligation: permission(action: \"core:obligation:create\")\n      ...ObligationsPageFragment_3iomuz\n    }\n    id\n  }\n}\n\nfragment ObligationsPageFragment_3iomuz on Organization {\n  id\n  obligations(first: 10, filter: {snapshotId: $snapshotId}) {\n    totalCount\n    edges {\n      node {\n        id\n        snapshotId\n        sourceId\n        area\n        source\n        requirement\n        status\n        lastReviewDate\n        dueDate\n        actionsToBeImplemented\n        regulator\n        owner {\n          id\n          fullName\n        }\n        createdAt\n        updatedAt\n        canUpdate: permission(action: \"core:obligation:update\")\n        canDelete: permission(action: \"core:obligation:delete\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "f86996b031e65cde72543c222caf243f";
+(node as any).hash = "a17041086fd110cccb96aab8026d2b4b";
 
 export default node;

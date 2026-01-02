@@ -41,8 +41,6 @@ import {
 } from "@probo/helpers";
 import { SnapshotBanner } from "/components/SnapshotBanner";
 import type { ObligationGraphNodeQuery } from "/__generated__/core/ObligationGraphNodeQuery.graphql";
-import { use } from "react";
-import { PermissionsContext } from "/providers/PermissionsContext";
 
 const updateObligationSchema = z.object({
   area: z.string().optional(),
@@ -61,17 +59,16 @@ type Props = {
 };
 
 export default function ObligationDetailsPage(props: Props) {
-  const data = usePreloadedQuery<ObligationGraphNodeQuery>(
+  const { node: obligation } = usePreloadedQuery<ObligationGraphNodeQuery>(
     obligationNodeQuery,
     props.queryRef,
   );
-  const obligation = data.node;
   const { __ } = useTranslate();
   const { toast } = useToast();
   const organizationId = useOrganizationId();
   const { snapshotId } = useParams<{ snapshotId?: string }>();
   const isSnapshotMode = Boolean(snapshotId);
-  const { isAuthorized } = use(PermissionsContext);
+  const disabled = isSnapshotMode || !obligation.canUpdate;
 
   validateSnapshotConsistency(obligation, snapshotId);
 
@@ -170,7 +167,7 @@ export default function ObligationDetailsPage(props: Props) {
           </div>
         </div>
 
-        {!isSnapshotMode && isAuthorized("Obligation", "deleteObligation") && (
+        {!isSnapshotMode && obligation.canDelete && (
           <ActionDropdown>
             <DropdownItem icon={IconTrashCan} onClick={deleteObligation}>
               {__("Delete")}
@@ -186,7 +183,7 @@ export default function ObligationDetailsPage(props: Props) {
               <Input
                 {...register("area")}
                 placeholder={__("Enter area")}
-                disabled={isSnapshotMode}
+                disabled={disabled}
               />
             </Field>
 
@@ -197,7 +194,7 @@ export default function ObligationDetailsPage(props: Props) {
               <Input
                 {...register("source")}
                 placeholder={__("Enter source")}
-                disabled={isSnapshotMode}
+                disabled={disabled}
               />
             </Field>
           </div>
@@ -214,7 +211,7 @@ export default function ObligationDetailsPage(props: Props) {
                     onValueChange={field.onChange}
                     value={field.value}
                     className="w-full"
-                    disabled={isSnapshotMode}
+                    disabled={disabled}
                   >
                     {statusOptions.map((option) => (
                       <Option key={option.value} value={option.value}>
@@ -242,7 +239,7 @@ export default function ObligationDetailsPage(props: Props) {
                   label={__("Owner")}
                   error={formState.errors.ownerId?.message}
                   required
-                  disabled={isSnapshotMode}
+                  disabled={disabled}
                 />
               )}
             />
@@ -256,7 +253,7 @@ export default function ObligationDetailsPage(props: Props) {
               <Input
                 {...register("regulator")}
                 placeholder={__("Enter regulator")}
-                disabled={isSnapshotMode}
+                disabled={disabled}
               />
             </Field>
           </div>
@@ -269,7 +266,7 @@ export default function ObligationDetailsPage(props: Props) {
               <Input
                 {...register("lastReviewDate")}
                 type="date"
-                disabled={isSnapshotMode}
+                disabled={disabled}
               />
             </Field>
 
@@ -277,11 +274,7 @@ export default function ObligationDetailsPage(props: Props) {
               label={__("Due Date")}
               error={formState.errors.dueDate?.message}
             >
-              <Input
-                {...register("dueDate")}
-                type="date"
-                disabled={isSnapshotMode}
-              />
+              <Input {...register("dueDate")} type="date" disabled={disabled} />
             </Field>
           </div>
 
@@ -293,7 +286,7 @@ export default function ObligationDetailsPage(props: Props) {
               {...register("requirement")}
               placeholder={__("Enter requirement")}
               rows={4}
-              disabled={isSnapshotMode}
+              disabled={disabled}
             />
           </Field>
 
@@ -305,13 +298,13 @@ export default function ObligationDetailsPage(props: Props) {
               {...register("actionsToBeImplemented")}
               placeholder={__("Enter actions to be implemented")}
               rows={4}
-              disabled={isSnapshotMode}
+              disabled={disabled}
             />
           </Field>
 
           {!isSnapshotMode && (
             <div className="flex justify-end">
-              {isAuthorized("Obligation", "updateObligation") && (
+              {obligation.canUpdate && (
                 <Button type="submit" disabled={formState.isSubmitting}>
                   {formState.isSubmitting
                     ? __("Saving...")
