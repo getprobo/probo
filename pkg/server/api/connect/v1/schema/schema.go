@@ -73,13 +73,6 @@ type ComplexityRoot struct {
 		MembershipEdge func(childComplexity int) int
 	}
 
-	Application struct {
-		AvailableAccessLevels func(childComplexity int) int
-		Description           func(childComplexity int) int
-		ID                    func(childComplexity int) int
-		Name                  func(childComplexity int) int
-	}
-
 	AssumeOrganizationSessionPayload struct {
 		Result func(childComplexity int) int
 	}
@@ -104,10 +97,6 @@ type ComplexityRoot struct {
 
 	CreateSAMLConfigurationPayload struct {
 		SamlConfigurationEdge func(childComplexity int) int
-	}
-
-	DeactivateAccountPayload struct {
-		Success func(childComplexity int) int
 	}
 
 	DeleteInvitationPayload struct {
@@ -534,31 +523,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.AcceptInvitationPayload.MembershipEdge(childComplexity), true
 
-	case "Application.availableAccessLevels":
-		if e.complexity.Application.AvailableAccessLevels == nil {
-			break
-		}
-
-		return e.complexity.Application.AvailableAccessLevels(childComplexity), true
-	case "Application.description":
-		if e.complexity.Application.Description == nil {
-			break
-		}
-
-		return e.complexity.Application.Description(childComplexity), true
-	case "Application.id":
-		if e.complexity.Application.ID == nil {
-			break
-		}
-
-		return e.complexity.Application.ID(childComplexity), true
-	case "Application.name":
-		if e.complexity.Application.Name == nil {
-			break
-		}
-
-		return e.complexity.Application.Name(childComplexity), true
-
 	case "AssumeOrganizationSessionPayload.result":
 		if e.complexity.AssumeOrganizationSessionPayload.Result == nil {
 			break
@@ -612,13 +576,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.CreateSAMLConfigurationPayload.SamlConfigurationEdge(childComplexity), true
-
-	case "DeactivateAccountPayload.success":
-		if e.complexity.DeactivateAccountPayload.Success == nil {
-			break
-		}
-
-		return e.complexity.DeactivateAccountPayload.Success(childComplexity), true
 
 	case "DeleteInvitationPayload.deletedInvitationId":
 		if e.complexity.DeleteInvitationPayload.DeletedInvitationID == nil {
@@ -2299,13 +2256,6 @@ type PersonalAPIKey implements Node {
     @session(required: PRESENT)
 }
 
-type Application {
-  id: ApplicationId!
-  name: String!
-  description: String!
-  availableAccessLevels: [AccessLevel!]!
-}
-
 type SAMLConfiguration implements Node {
   id: ID!
   emailDomain: String!
@@ -2339,28 +2289,6 @@ type SSOAvailability {
   organizationId: ID
 }
 
-enum ApplicationId {
-  CONSOLE
-  COMPLIANCE
-  RISK
-  VENDOR
-  DOCUMENTS
-  TRUST_CENTER
-  SETTINGS
-  API
-}
-
-enum AccessLevel {
-  READ
-  WRITE
-  ADMIN
-}
-
-enum PrincipalType {
-  IDENTITY
-  SERVICE_ACCOUNT
-}
-
 enum InvitationStatus
   @goModel(model: "go.probo.inc/probo/pkg/coredata.InvitationStatus") {
   PENDING
@@ -2382,22 +2310,6 @@ enum SAMLEnforcementPolicy
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.SAMLEnforcementPolicyRequired"
     )
-}
-
-enum TokenScope {
-  READ_ORGANIZATION
-  WRITE_ORGANIZATION
-  READ_COMPLIANCE
-  WRITE_COMPLIANCE
-  READ_RISK
-  WRITE_RISK
-  READ_VENDOR
-  WRITE_VENDOR
-  READ_DOCUMENTS
-  WRITE_DOCUMENTS
-  READ_TRUST_CENTER
-  WRITE_TRUST_CENTER
-  ADMIN
 }
 
 enum ReauthenticationReason {
@@ -2728,10 +2640,6 @@ type SAMLAuthenticationRequired {
 
 type AssumeOrganizationSessionPayload {
   result: AssumeOrganizationSessionResult!
-}
-
-type DeactivateAccountPayload {
-  success: Boolean!
 }
 
 type RevokeSessionPayload {
@@ -3502,122 +3410,6 @@ func (ec *executionContext) fieldContext_AcceptInvitationPayload_membershipEdge(
 	return fc, nil
 }
 
-func (ec *executionContext) _Application_id(ctx context.Context, field graphql.CollectedField, obj *types.Application) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Application_id,
-		func(ctx context.Context) (any, error) {
-			return obj.ID, nil
-		},
-		nil,
-		ec.marshalNApplicationId2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐApplicationID,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Application_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Application",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ApplicationId does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Application_name(ctx context.Context, field graphql.CollectedField, obj *types.Application) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Application_name,
-		func(ctx context.Context) (any, error) {
-			return obj.Name, nil
-		},
-		nil,
-		ec.marshalNString2string,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Application_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Application",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Application_description(ctx context.Context, field graphql.CollectedField, obj *types.Application) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Application_description,
-		func(ctx context.Context) (any, error) {
-			return obj.Description, nil
-		},
-		nil,
-		ec.marshalNString2string,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Application_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Application",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Application_availableAccessLevels(ctx context.Context, field graphql.CollectedField, obj *types.Application) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Application_availableAccessLevels,
-		func(ctx context.Context) (any, error) {
-			return obj.AvailableAccessLevels, nil
-		},
-		nil,
-		ec.marshalNAccessLevel2ᚕgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐAccessLevelᚄ,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Application_availableAccessLevels(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Application",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type AccessLevel does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _AssumeOrganizationSessionPayload_result(ctx context.Context, field graphql.CollectedField, obj *types.AssumeOrganizationSessionPayload) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -3895,35 +3687,6 @@ func (ec *executionContext) fieldContext_CreateSAMLConfigurationPayload_samlConf
 				return ec.fieldContext_SAMLConfigurationEdge_cursor(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type SAMLConfigurationEdge", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _DeactivateAccountPayload_success(ctx context.Context, field graphql.CollectedField, obj *types.DeactivateAccountPayload) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_DeactivateAccountPayload_success,
-		func(ctx context.Context) (any, error) {
-			return obj.Success, nil
-		},
-		nil,
-		ec.marshalNBoolean2bool,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_DeactivateAccountPayload_success(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "DeactivateAccountPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	return fc, nil
@@ -13544,60 +13307,6 @@ func (ec *executionContext) _AcceptInvitationPayload(ctx context.Context, sel as
 	return out
 }
 
-var applicationImplementors = []string{"Application"}
-
-func (ec *executionContext) _Application(ctx context.Context, sel ast.SelectionSet, obj *types.Application) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, applicationImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("Application")
-		case "id":
-			out.Values[i] = ec._Application_id(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "name":
-			out.Values[i] = ec._Application_name(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "description":
-			out.Values[i] = ec._Application_description(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "availableAccessLevels":
-			out.Values[i] = ec._Application_availableAccessLevels(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
 var assumeOrganizationSessionPayloadImplementors = []string{"AssumeOrganizationSessionPayload"}
 
 func (ec *executionContext) _AssumeOrganizationSessionPayload(ctx context.Context, sel ast.SelectionSet, obj *types.AssumeOrganizationSessionPayload) graphql.Marshaler {
@@ -13813,45 +13522,6 @@ func (ec *executionContext) _CreateSAMLConfigurationPayload(ctx context.Context,
 			out.Values[i] = graphql.MarshalString("CreateSAMLConfigurationPayload")
 		case "samlConfigurationEdge":
 			out.Values[i] = ec._CreateSAMLConfigurationPayload_samlConfigurationEdge(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var deactivateAccountPayloadImplementors = []string{"DeactivateAccountPayload"}
-
-func (ec *executionContext) _DeactivateAccountPayload(ctx context.Context, sel ast.SelectionSet, obj *types.DeactivateAccountPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, deactivateAccountPayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("DeactivateAccountPayload")
-		case "success":
-			out.Values[i] = ec._DeactivateAccountPayload_success(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -17474,85 +17144,6 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 func (ec *executionContext) unmarshalNAcceptInvitationInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐAcceptInvitationInput(ctx context.Context, v any) (types.AcceptInvitationInput, error) {
 	res, err := ec.unmarshalInputAcceptInvitationInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) unmarshalNAccessLevel2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐAccessLevel(ctx context.Context, v any) (types.AccessLevel, error) {
-	var res types.AccessLevel
-	err := res.UnmarshalGQL(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNAccessLevel2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐAccessLevel(ctx context.Context, sel ast.SelectionSet, v types.AccessLevel) graphql.Marshaler {
-	return v
-}
-
-func (ec *executionContext) unmarshalNAccessLevel2ᚕgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐAccessLevelᚄ(ctx context.Context, v any) ([]types.AccessLevel, error) {
-	var vSlice []any
-	vSlice = graphql.CoerceList(v)
-	var err error
-	res := make([]types.AccessLevel, len(vSlice))
-	for i := range vSlice {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNAccessLevel2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐAccessLevel(ctx, vSlice[i])
-		if err != nil {
-			return nil, err
-		}
-	}
-	return res, nil
-}
-
-func (ec *executionContext) marshalNAccessLevel2ᚕgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐAccessLevelᚄ(ctx context.Context, sel ast.SelectionSet, v []types.AccessLevel) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNAccessLevel2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐAccessLevel(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
-func (ec *executionContext) unmarshalNApplicationId2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐApplicationID(ctx context.Context, v any) (types.ApplicationID, error) {
-	var res types.ApplicationID
-	err := res.UnmarshalGQL(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNApplicationId2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐApplicationID(ctx context.Context, sel ast.SelectionSet, v types.ApplicationID) graphql.Marshaler {
-	return v
 }
 
 func (ec *executionContext) unmarshalNAssumeOrganizationSessionInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐAssumeOrganizationSessionInput(ctx context.Context, v any) (types.AssumeOrganizationSessionInput, error) {

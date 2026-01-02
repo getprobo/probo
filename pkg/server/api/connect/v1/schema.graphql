@@ -292,13 +292,6 @@ type PersonalAPIKey implements Node {
     @session(required: PRESENT)
 }
 
-type Application {
-  id: ApplicationId!
-  name: String!
-  description: String!
-  availableAccessLevels: [AccessLevel!]!
-}
-
 type SAMLConfiguration implements Node {
   id: ID!
   emailDomain: String!
@@ -332,28 +325,6 @@ type SSOAvailability {
   organizationId: ID
 }
 
-enum ApplicationId {
-  CONSOLE
-  COMPLIANCE
-  RISK
-  VENDOR
-  DOCUMENTS
-  TRUST_CENTER
-  SETTINGS
-  API
-}
-
-enum AccessLevel {
-  READ
-  WRITE
-  ADMIN
-}
-
-enum PrincipalType {
-  IDENTITY
-  SERVICE_ACCOUNT
-}
-
 enum InvitationStatus
   @goModel(model: "go.probo.inc/probo/pkg/coredata.InvitationStatus") {
   PENDING
@@ -375,22 +346,6 @@ enum SAMLEnforcementPolicy
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.SAMLEnforcementPolicyRequired"
     )
-}
-
-enum TokenScope {
-  READ_ORGANIZATION
-  WRITE_ORGANIZATION
-  READ_COMPLIANCE
-  WRITE_COMPLIANCE
-  READ_RISK
-  WRITE_RISK
-  READ_VENDOR
-  WRITE_VENDOR
-  READ_DOCUMENTS
-  WRITE_DOCUMENTS
-  READ_TRUST_CENTER
-  WRITE_TRUST_CENTER
-  ADMIN
 }
 
 enum ReauthenticationReason {
@@ -721,10 +676,6 @@ type SAMLAuthenticationRequired {
 
 type AssumeOrganizationSessionPayload {
   result: AssumeOrganizationSessionResult!
-}
-
-type DeactivateAccountPayload {
-  success: Boolean!
 }
 
 type RevokeSessionPayload {
