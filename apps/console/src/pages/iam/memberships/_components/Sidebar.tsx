@@ -10,6 +10,7 @@ import {
   IconGroup1,
   IconInboxEmpty,
   IconListStack,
+  IconLock,
   IconMedal,
   IconPageTextLine,
   IconRotateCw,
@@ -46,6 +47,7 @@ const fragment = graphql`
     canListProcessingActivities: permission(
       action: "core:processing-activity:list"
     )
+    canListRightsRequests: permission(action: "core:rights-request:list")
     canListSnapshots: permission(action: "core:snapshot:list")
     canGetTrustCenter: permission(action: "core:trust-center:get")
     canUpdateOrganization: permission(action: "iam:organization:update")
@@ -167,6 +169,13 @@ export function Sidebar(props: { fKey: SidebarFragment$key }) {
           label={__("Processing Activities")}
           icon={IconCircleProgress}
           to={`${prefix}/processing-activities`}
+        />
+      )}
+      {organization.canListRightsRequests && (
+        <SidebarItem
+          label={__("Rights Requests")}
+          icon={IconLock}
+          to={`${prefix}/rights-requests`}
         />
       )}
       {organization.canListSnapshots && (

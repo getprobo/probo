@@ -23,10 +23,12 @@ import type { NodeOf } from "/types";
 import { usePageTitle } from "@probo/hooks";
 import { getRole } from "@probo/helpers";
 import { CreatePeopleDialog } from "./dialogs/CreatePeopleDialog";
-import { SetEndOfContractDialog, type SetEndOfContractDialogRef } from "./dialogs/SetEndOfContractDialog";
+import {
+  SetEndOfContractDialog,
+  type SetEndOfContractDialogRef,
+} from "./dialogs/SetEndOfContractDialog";
 import { useOrganizationId } from "/hooks/useOrganizationId";
-import { PermissionsContext } from "/providers/PermissionsContext";
-import { use, useRef } from "react";
+import { useRef } from "react";
 
 type People = NodeOf<PeopleGraphPaginatedFragment$data["peoples"]>;
 
@@ -44,25 +46,31 @@ export default function PeopleListPage({
   queryRef: PreloadedQuery<PeopleGraphPaginatedQuery>;
 }) {
   const { __ } = useTranslate();
-  const { isAuthorized } = use(PermissionsContext);
-  const { people, refetch, connectionId, hasNext, loadNext, isLoadingNext } =
-    usePeopleQuery(queryRef);
+  const {
+    data,
+    people,
+    refetch,
+    connectionId,
+    hasNext,
+    loadNext,
+    isLoadingNext,
+  } = usePeopleQuery(queryRef);
 
   usePageTitle(__("Members"));
 
-  const hasAnyAction =
-    isAuthorized("People", "updatePeople") ||
-    isAuthorized("People", "deletePeople");
+  const hasAnyAction = people.some(
+    ({ canDelete, canUpdate }) => canDelete || canUpdate
+  );
 
   return (
     <div className="space-y-6">
       <PageHeader
         title={__("Members")}
         description={__(
-          "Keep track of your company's workforce and their progress towards completing tasks assigned to them.",
+          "Keep track of your company's workforce and their progress towards completing tasks assigned to them."
         )}
       >
-        {isAuthorized("Organization", "createPeople") && (
+        {data.canCreatePeople && (
           <CreatePeopleDialog connectionId={connectionId}>
             <Button icon={IconPlusLarge}>{__("Add member")}</Button>
           </CreatePeopleDialog>
@@ -110,7 +118,6 @@ function PeopleRow({
   const { __ } = useTranslate();
   const deletePeople = useDeletePeople(people, connectionId);
   const contractEnded = isContractEnded(people);
-  const { isAuthorized } = use(PermissionsContext);
   const dialogRef = useRef<SetEndOfContractDialogRef>(null);
 
   return (
@@ -140,7 +147,7 @@ function PeopleRow({
         {hasAnyAction && (
           <Td noLink width={50} className="text-end">
             <ActionDropdown>
-              {isAuthorized("People", "updatePeople") && (
+              {people.canUpdate && (
                 <DropdownItem
                   icon={IconCalendar2}
                   onClick={() => dialogRef.current?.open()}
@@ -148,7 +155,7 @@ function PeopleRow({
                   {__("Set end of contract")}
                 </DropdownItem>
               )}
-              {isAuthorized("People", "deletePeople") && (
+              {people.canDelete && (
                 <DropdownItem
                   icon={IconTrashCan}
                   variant="danger"
