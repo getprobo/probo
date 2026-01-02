@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<b7fddd28abbffd86c8de3f8ecd3d794b>>
+ * @generated SignedSource<<568018897f0db254b4d8c43c05abb7c6>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -16,7 +16,7 @@ export type DocumentVersionSignatureFilter = {
 };
 export type DocumentSignaturesTabRefetchQuery$variables = {
   count?: number | null | undefined;
-  cursor?: any | null | undefined;
+  cursor?: string | null | undefined;
   id: string;
   signatureFilter?: DocumentVersionSignatureFilter | null | undefined;
 };

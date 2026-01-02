@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<3c70b46fb46bf10a48eb06a5e76c1d75>>
+ * @generated SignedSource<<9f1d003a890186ec86cfd58e7eb3bf28>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -30,14 +30,14 @@ export type TrustCenterAccessGraphUpdateMutation$data = {
     readonly trustCenterAccess: {
       readonly active: boolean;
       readonly activeCount: number;
-      readonly createdAt: any;
-      readonly email: any;
+      readonly createdAt: string;
+      readonly email: string;
       readonly hasAcceptedNonDisclosureAgreement: boolean;
       readonly id: string;
-      readonly lastTokenExpiresAt: any | null | undefined;
+      readonly lastTokenExpiresAt: string | null | undefined;
       readonly name: string;
       readonly pendingRequestCount: number;
-      readonly updatedAt: any;
+      readonly updatedAt: string;
     };
   };
 };

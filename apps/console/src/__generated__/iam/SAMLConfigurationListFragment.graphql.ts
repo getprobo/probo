@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<6b22aeaed6a8da4374bb98a36e236cd2>>
+ * @generated SignedSource<<a9a22d22795f9c09c986748fe19dcccf>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -18,7 +18,7 @@ export type SAMLConfigurationListFragment$data = {
         readonly canDelete: boolean;
         readonly canUpdate: boolean;
         readonly domainVerificationToken: string | null | undefined;
-        readonly domainVerifiedAt: any | null | undefined;
+        readonly domainVerifiedAt: string | null | undefined;
         readonly emailDomain: string;
         readonly enforcementPolicy: SAMLEnforcementPolicy;
         readonly id: string;

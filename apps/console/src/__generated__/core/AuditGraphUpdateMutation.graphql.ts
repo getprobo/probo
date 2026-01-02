@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<014a8f33bc7d6674a2a93e8b3dde8edf>>
+ * @generated SignedSource<<1b9fd2fad98545d0e1ca4440a6a8936a>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -16,8 +16,8 @@ export type UpdateAuditInput = {
   name?: string | null | undefined;
   state?: AuditState | null | undefined;
   trustCenterVisibility?: TrustCenterVisibility | null | undefined;
-  validFrom?: any | null | undefined;
-  validUntil?: any | null | undefined;
+  validFrom?: string | null | undefined;
+  validUntil?: string | null | undefined;
 };
 export type AuditGraphUpdateMutation$variables = {
   input: UpdateAuditInput;
@@ -36,9 +36,9 @@ export type AuditGraphUpdateMutation$data = {
         readonly id: string;
       } | null | undefined;
       readonly state: AuditState;
-      readonly updatedAt: any;
-      readonly validFrom: any | null | undefined;
-      readonly validUntil: any | null | undefined;
+      readonly updatedAt: string;
+      readonly validFrom: string | null | undefined;
+      readonly validUntil: string | null | undefined;
     };
   };
 };

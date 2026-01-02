@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<e47b433cc9fb58392ff933788bbe3deb>>
+ * @generated SignedSource<<098714fcfe212fae40bdad19b10f8a00>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -20,7 +20,7 @@ export type NewDomainDialogMutation$variables = {
 export type NewDomainDialogMutation$data = {
   readonly createCustomDomain: {
     readonly customDomain: {
-      readonly createdAt: any;
+      readonly createdAt: string;
       readonly dnsRecords: ReadonlyArray<{
         readonly name: string;
         readonly purpose: string;
@@ -30,9 +30,9 @@ export type NewDomainDialogMutation$data = {
       }>;
       readonly domain: string;
       readonly id: string;
-      readonly sslExpiresAt: any | null | undefined;
+      readonly sslExpiresAt: string | null | undefined;
       readonly sslStatus: SSLStatus;
-      readonly updatedAt: any;
+      readonly updatedAt: string;
     };
   };
 };

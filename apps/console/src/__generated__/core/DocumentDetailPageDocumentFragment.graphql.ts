@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<66ab14196c29af984b08f90039037dee>>
+ * @generated SignedSource<<c37076bc09bec4e39571f14fe8aa6d74>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -41,7 +41,7 @@ export type DocumentDetailPageDocumentFragment$data = {
           readonly fullName: string;
           readonly id: string;
         };
-        readonly publishedAt: any | null | undefined;
+        readonly publishedAt: string | null | undefined;
         readonly signatures: {
           readonly __id: string;
           readonly edges: ReadonlyArray<{
@@ -56,7 +56,7 @@ export type DocumentDetailPageDocumentFragment$data = {
           }>;
         };
         readonly status: DocumentStatus;
-        readonly updatedAt: any;
+        readonly updatedAt: string;
         readonly version: number;
         readonly " $fragmentSpreads": FragmentRefs<"DocumentSignaturesTab_version">;
       };

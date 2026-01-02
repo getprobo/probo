@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<213dd4c7bd0e87ba0e64fa6ce8d2c37b>>
+ * @generated SignedSource<<f35cab66f0cb7f4cc802c4f74db09164>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -18,7 +18,7 @@ export type DataPageFragment$data = {
       readonly node: {
         readonly canDelete: boolean;
         readonly canUpdate: boolean;
-        readonly createdAt: any;
+        readonly createdAt: string;
         readonly dataClassification: DataClassification;
         readonly id: string;
         readonly name: string;

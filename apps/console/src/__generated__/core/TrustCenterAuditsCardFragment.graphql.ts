@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<155c0b8eda88507e66eb65e060ded192>>
+ * @generated SignedSource<<28248f2dbdad48cc6cfec3b35ce4c22f>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -13,7 +13,7 @@ export type AuditState = "COMPLETED" | "IN_PROGRESS" | "NOT_STARTED" | "OUTDATED
 export type TrustCenterVisibility = "NONE" | "PRIVATE" | "PUBLIC";
 import { FragmentRefs } from "relay-runtime";
 export type TrustCenterAuditsCardFragment$data = {
-  readonly createdAt: any;
+  readonly createdAt: string;
   readonly framework: {
     readonly name: string;
   };
@@ -21,8 +21,8 @@ export type TrustCenterAuditsCardFragment$data = {
   readonly name: string | null | undefined;
   readonly state: AuditState;
   readonly trustCenterVisibility: TrustCenterVisibility;
-  readonly validFrom: any | null | undefined;
-  readonly validUntil: any | null | undefined;
+  readonly validFrom: string | null | undefined;
+  readonly validUntil: string | null | undefined;
   readonly " $fragmentType": "TrustCenterAuditsCardFragment";
 };
 export type TrustCenterAuditsCardFragment$key = {

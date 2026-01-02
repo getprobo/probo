@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<8106bb4a10940caebf1f523fb6136350>>
+ * @generated SignedSource<<1ca264e989f4edf7a41ac69c09e014d6>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -27,7 +27,7 @@ export type DatumGraphCreateMutation$data = {
       readonly node: {
         readonly canDelete: boolean;
         readonly canUpdate: boolean;
-        readonly createdAt: any;
+        readonly createdAt: string;
         readonly dataClassification: DataClassification;
         readonly id: string;
         readonly name: string;

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<ccb4ac21f5e94f16c4fa5ccff5898f99>>
+ * @generated SignedSource<<51a0ef23951497b2d074fafbda0ea04b>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -23,7 +23,7 @@ export type DocumentSignaturesTab_version$data = {
         readonly signedBy: {
           readonly fullName: string;
           readonly id: string;
-          readonly primaryEmailAddress: any;
+          readonly primaryEmailAddress: string;
         };
         readonly state: DocumentVersionSignatureState;
         readonly " $fragmentSpreads": FragmentRefs<"DocumentSignaturesTab_signature">;

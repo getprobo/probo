@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<0d663dac1f9d0086e52882297fbc8944>>
+ * @generated SignedSource<<383e1cf1a7ebdac22de46fbc694566fe>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -35,7 +35,7 @@ export type AssetGraphUpdateMutation$data = {
         readonly id: string;
       };
       readonly snapshotId: string | null | undefined;
-      readonly updatedAt: any;
+      readonly updatedAt: string;
       readonly vendors: {
         readonly edges: ReadonlyArray<{
           readonly node: {

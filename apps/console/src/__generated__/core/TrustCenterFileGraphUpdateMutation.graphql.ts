@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<b78cfbea93f3bccdba56cd29900ab724>>
+ * @generated SignedSource<<981cc2a2716995f5e1f22d2554598992>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -26,7 +26,7 @@ export type TrustCenterFileGraphUpdateMutation$data = {
       readonly id: string;
       readonly name: string;
       readonly trustCenterVisibility: TrustCenterVisibility;
-      readonly updatedAt: any;
+      readonly updatedAt: string;
     };
   };
 };

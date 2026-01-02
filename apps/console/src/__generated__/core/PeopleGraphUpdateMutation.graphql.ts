@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<904f3388abab4e5e84dddf0528530a46>>
+ * @generated SignedSource<<2118560efee5903bb0199e651ac49e2e>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,14 +11,14 @@
 import { ConcreteRequest } from 'relay-runtime';
 export type PeopleKind = "CONTRACTOR" | "EMPLOYEE" | "SERVICE_ACCOUNT";
 export type UpdatePeopleInput = {
-  additionalEmailAddresses?: ReadonlyArray<any> | null | undefined;
-  contractEndDate?: any | null | undefined;
-  contractStartDate?: any | null | undefined;
+  additionalEmailAddresses?: ReadonlyArray<string> | null | undefined;
+  contractEndDate?: string | null | undefined;
+  contractStartDate?: string | null | undefined;
   fullName?: string | null | undefined;
   id: string;
   kind?: PeopleKind | null | undefined;
   position?: string | null | undefined;
-  primaryEmailAddress?: any | null | undefined;
+  primaryEmailAddress?: string | null | undefined;
 };
 export type PeopleGraphUpdateMutation$variables = {
   input: UpdatePeopleInput;
@@ -26,14 +26,14 @@ export type PeopleGraphUpdateMutation$variables = {
 export type PeopleGraphUpdateMutation$data = {
   readonly updatePeople: {
     readonly people: {
-      readonly additionalEmailAddresses: ReadonlyArray<any>;
-      readonly contractEndDate: any | null | undefined;
-      readonly contractStartDate: any | null | undefined;
+      readonly additionalEmailAddresses: ReadonlyArray<string>;
+      readonly contractEndDate: string | null | undefined;
+      readonly contractStartDate: string | null | undefined;
       readonly fullName: string;
       readonly id: string;
       readonly kind: PeopleKind;
       readonly position: string | null | undefined;
-      readonly primaryEmailAddress: any;
+      readonly primaryEmailAddress: string;
     };
   };
 };

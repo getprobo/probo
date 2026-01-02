@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<f55e24dc95c48a67d7908bdd7f037272>>
+ * @generated SignedSource<<5f9ff983582bf49d588a9d0d986653d7>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -17,8 +17,8 @@ export type VendorOrder = {
   field: VendorOrderField;
 };
 export type VendorsListQuery$variables = {
-  after?: any | null | undefined;
-  before?: any | null | undefined;
+  after?: string | null | undefined;
+  before?: string | null | undefined;
   first?: number | null | undefined;
   id: string;
   last?: number | null | undefined;

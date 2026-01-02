@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<966d4aa638042469c717ddc96e5c5d78>>
+ * @generated SignedSource<<4bc817c960234139f5aeedfed5b2fe8b>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -22,7 +22,7 @@ export type TrustCenterGraphUploadNDAMutation$data = {
     readonly trustCenter: {
       readonly id: string;
       readonly ndaFileName: string | null | undefined;
-      readonly updatedAt: any;
+      readonly updatedAt: string;
     };
   };
 };

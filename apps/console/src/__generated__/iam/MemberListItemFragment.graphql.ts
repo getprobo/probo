@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<2a646771572f86908a4000fae533c4d8>>
+ * @generated SignedSource<<a6bd5e4c2270a79d2e4ab1a56c0f9e12>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -14,10 +14,10 @@ import { FragmentRefs } from "relay-runtime";
 export type MemberListItemFragment$data = {
   readonly canDelete: boolean;
   readonly canUpdate: boolean;
-  readonly createdAt: any;
+  readonly createdAt: string;
   readonly id: string;
   readonly identity: {
-    readonly email: any;
+    readonly email: string;
   };
   readonly profile: {
     readonly fullName: string;

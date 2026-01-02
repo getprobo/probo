@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<1ff88dc8e6cbfc1d0db4f6d041cd7e51>>
+ * @generated SignedSource<<5b60de19e893c841d45ecd555eecf65a>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -13,11 +13,11 @@ export type InvitationStatus = "ACCEPTED" | "EXPIRED" | "PENDING";
 export type MembershipRole = "ADMIN" | "AUDITOR" | "EMPLOYEE" | "OWNER" | "VIEWER";
 import { FragmentRefs } from "relay-runtime";
 export type InvitationListItemFragment$data = {
-  readonly acceptedAt: any | null | undefined;
+  readonly acceptedAt: string | null | undefined;
   readonly canDelete: boolean;
-  readonly createdAt: any;
-  readonly email: any;
-  readonly expiresAt: any;
+  readonly createdAt: string;
+  readonly email: string;
+  readonly expiresAt: string;
   readonly fullName: string;
   readonly id: string;
   readonly role: MembershipRole;

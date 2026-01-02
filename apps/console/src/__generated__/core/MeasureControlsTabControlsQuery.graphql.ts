@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<3afe17784c8b08b2dd0db14b26d0058f>>
+ * @generated SignedSource<<dfac9f61dc942eb4d9fa426b09f98b10>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -20,8 +20,8 @@ export type ControlOrder = {
   field: ControlOrderField;
 };
 export type MeasureControlsTabControlsQuery$variables = {
-  after?: any | null | undefined;
-  before?: any | null | undefined;
+  after?: string | null | undefined;
+  before?: string | null | undefined;
   filter?: ControlFilter | null | undefined;
   first?: number | null | undefined;
   id: string;

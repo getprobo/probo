@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<21edb2424074940efad82c63929642c8>>
+ * @generated SignedSource<<cb5d01d32660a82ae4cb7a480ee5e808>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -16,7 +16,7 @@ export type LinkedSnapshotsDialogFragment$data = {
   readonly snapshots: {
     readonly edges: ReadonlyArray<{
       readonly node: {
-        readonly createdAt: any;
+        readonly createdAt: string;
         readonly description: string | null | undefined;
         readonly id: string;
         readonly name: string;

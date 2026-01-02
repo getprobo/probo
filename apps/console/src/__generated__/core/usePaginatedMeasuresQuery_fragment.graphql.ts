@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<d80ecca972bcfbb40f578e64b6fbf4f3>>
+ * @generated SignedSource<<6c86702e8005adfb32ab18b122d37fba>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -17,8 +17,8 @@ export type MeasureOrder = {
   field: MeasureOrderField;
 };
 export type usePaginatedMeasuresQuery_fragment$variables = {
-  after?: any | null | undefined;
-  before?: any | null | undefined;
+  after?: string | null | undefined;
+  before?: string | null | undefined;
   first?: number | null | undefined;
   id: string;
   last?: number | null | undefined;

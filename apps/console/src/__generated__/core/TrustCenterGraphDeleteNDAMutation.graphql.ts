@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<43a8665719f251c1bae028ff7821b14a>>
+ * @generated SignedSource<<3220ac89d535b383bbb99661dc296183>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -20,7 +20,7 @@ export type TrustCenterGraphDeleteNDAMutation$data = {
     readonly trustCenter: {
       readonly id: string;
       readonly ndaFileName: string | null | undefined;
-      readonly updatedAt: any;
+      readonly updatedAt: string;
     };
   };
 };

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<fedd4f94d88d48ba3152491a5c0101f4>>
+ * @generated SignedSource<<ee0e02d6ca32ed5047c1aa0040c6f74e>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,7 +12,7 @@ import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type TrustCenterAccessGraphPaginationQuery$variables = {
   count?: number | null | undefined;
-  cursor?: any | null | undefined;
+  cursor?: string | null | undefined;
   id: string;
 };
 export type TrustCenterAccessGraphPaginationQuery$data = {

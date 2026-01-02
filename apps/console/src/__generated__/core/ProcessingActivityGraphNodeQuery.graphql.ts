@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<b7fdcb56199f74956910a6f14dbc6340>>
+ * @generated SignedSource<<cf8cd15a7885212668ac995140192f12>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -23,16 +23,16 @@ export type ProcessingActivityGraphNodeQuery$variables = {
 export type ProcessingActivityGraphNodeQuery$data = {
   readonly node: {
     readonly consentEvidenceLink?: string | null | undefined;
-    readonly createdAt?: any;
+    readonly createdAt?: string;
     readonly dataProtectionImpactAssessment?: {
-      readonly createdAt: any;
+      readonly createdAt: string;
       readonly description: string | null | undefined;
       readonly id: string;
       readonly mitigations: string | null | undefined;
       readonly necessityAndProportionality: string | null | undefined;
       readonly potentialRisk: string | null | undefined;
       readonly residualRisk: DataProtectionImpactAssessmentResidualRisk | null | undefined;
-      readonly updatedAt: any;
+      readonly updatedAt: string;
     } | null | undefined;
     readonly dataProtectionImpactAssessmentNeeded?: ProcessingActivityDataProtectionImpactAssessment;
     readonly dataProtectionOfficer?: {
@@ -42,11 +42,11 @@ export type ProcessingActivityGraphNodeQuery$data = {
     readonly dataSubjectCategory?: string | null | undefined;
     readonly id?: string;
     readonly internationalTransfers?: boolean;
-    readonly lastReviewDate?: any | null | undefined;
+    readonly lastReviewDate?: string | null | undefined;
     readonly lawfulBasis?: ProcessingActivityLawfulBasis;
     readonly location?: string | null | undefined;
     readonly name?: string;
-    readonly nextReviewDate?: any | null | undefined;
+    readonly nextReviewDate?: string | null | undefined;
     readonly organization?: {
       readonly id: string;
       readonly name: string;
@@ -60,18 +60,18 @@ export type ProcessingActivityGraphNodeQuery$data = {
     readonly snapshotId?: string | null | undefined;
     readonly specialOrCriminalData?: ProcessingActivitySpecialOrCriminalDatum;
     readonly transferImpactAssessment?: {
-      readonly createdAt: any;
+      readonly createdAt: string;
       readonly dataSubjects: string | null | undefined;
       readonly id: string;
       readonly legalMechanism: string | null | undefined;
       readonly localLawRisk: string | null | undefined;
       readonly supplementaryMeasures: string | null | undefined;
       readonly transfer: string | null | undefined;
-      readonly updatedAt: any;
+      readonly updatedAt: string;
     } | null | undefined;
     readonly transferImpactAssessmentNeeded?: ProcessingActivityTransferImpactAssessment;
     readonly transferSafeguards?: ProcessingActivityTransferSafeguard | null | undefined;
-    readonly updatedAt?: any;
+    readonly updatedAt?: string;
     readonly vendors?: {
       readonly edges: ReadonlyArray<{
         readonly node: {

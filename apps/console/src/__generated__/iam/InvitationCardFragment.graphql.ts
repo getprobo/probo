@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<acb8bfd444063a884a8a3a35eed8971f>>
+ * @generated SignedSource<<d4c36c6798ea000539ef714721fd514f>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,7 +12,7 @@ import { ReaderFragment } from 'relay-runtime';
 export type MembershipRole = "ADMIN" | "AUDITOR" | "EMPLOYEE" | "OWNER" | "VIEWER";
 import { FragmentRefs } from "relay-runtime";
 export type InvitationCardFragment$data = {
-  readonly createdAt: any;
+  readonly createdAt: string;
   readonly id: string;
   readonly organization: {
     readonly id: string;

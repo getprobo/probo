@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<12b46e529db9caa863dc6f97eaee0c26>>
+ * @generated SignedSource<<d603ca6d1736b916a464f3371df7024d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -21,10 +21,10 @@ export type ObligationsPageFragment$data = {
         readonly area: string | null | undefined;
         readonly canDelete: boolean;
         readonly canUpdate: boolean;
-        readonly createdAt: any;
-        readonly dueDate: any | null | undefined;
+        readonly createdAt: string;
+        readonly dueDate: string | null | undefined;
         readonly id: string;
-        readonly lastReviewDate: any | null | undefined;
+        readonly lastReviewDate: string | null | undefined;
         readonly owner: {
           readonly fullName: string;
           readonly id: string;
@@ -35,11 +35,11 @@ export type ObligationsPageFragment$data = {
         readonly source: string | null | undefined;
         readonly sourceId: string | null | undefined;
         readonly status: ObligationStatus;
-        readonly updatedAt: any;
+        readonly updatedAt: string;
       };
     }>;
     readonly pageInfo: {
-      readonly endCursor: any | null | undefined;
+      readonly endCursor: string | null | undefined;
       readonly hasNextPage: boolean;
     };
     readonly totalCount: number;

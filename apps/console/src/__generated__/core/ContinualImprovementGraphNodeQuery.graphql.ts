@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<eb936356e9504b1cd4eefb80b699987f>>
+ * @generated SignedSource<<7b00b5b2a993258ddb345ad0ee9bbe35>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -18,7 +18,7 @@ export type ContinualImprovementGraphNodeQuery$data = {
   readonly node: {
     readonly canDelete?: boolean;
     readonly canUpdate?: boolean;
-    readonly createdAt?: any;
+    readonly createdAt?: string;
     readonly description?: string | null | undefined;
     readonly id?: string;
     readonly organization?: {
@@ -35,8 +35,8 @@ export type ContinualImprovementGraphNodeQuery$data = {
     readonly source?: string | null | undefined;
     readonly sourceId?: string | null | undefined;
     readonly status?: ContinualImprovementStatus;
-    readonly targetDate?: any | null | undefined;
-    readonly updatedAt?: any;
+    readonly targetDate?: string | null | undefined;
+    readonly updatedAt?: string;
   };
 };
 export type ContinualImprovementGraphNodeQuery = {

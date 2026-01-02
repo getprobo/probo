@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<082144ec3a6a9a4afe38398cdc3e84ed>>
+ * @generated SignedSource<<d20219178e2a97048e01cc7bedc206a0>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -20,8 +20,8 @@ export type ControlOrder = {
   field: ControlOrderField;
 };
 export type RiskControlsTabControlsQuery$variables = {
-  after?: any | null | undefined;
-  before?: any | null | undefined;
+  after?: string | null | undefined;
+  before?: string | null | undefined;
   filter?: ControlFilter | null | undefined;
   first?: number | null | undefined;
   id: string;

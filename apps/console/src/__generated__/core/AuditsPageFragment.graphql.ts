@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<075733c8694be657990e9fb8399c1ae6>>
+ * @generated SignedSource<<eb5012ba560d977fd2d9c44a5e567c7c>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -18,7 +18,7 @@ export type AuditsPageFragment$data = {
       readonly node: {
         readonly canDelete: boolean;
         readonly canUpdate: boolean;
-        readonly createdAt: any;
+        readonly createdAt: string;
         readonly framework: {
           readonly id: string;
           readonly name: string;
@@ -30,8 +30,8 @@ export type AuditsPageFragment$data = {
           readonly id: string;
         } | null | undefined;
         readonly state: AuditState;
-        readonly validFrom: any | null | undefined;
-        readonly validUntil: any | null | undefined;
+        readonly validFrom: string | null | undefined;
+        readonly validUntil: string | null | undefined;
       };
     }>;
   };

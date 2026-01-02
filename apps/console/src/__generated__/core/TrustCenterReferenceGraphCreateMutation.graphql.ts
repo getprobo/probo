@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<461baa03d93bbfde6ad39536a695caa7>>
+ * @generated SignedSource<<9d8cd7c4e9e9c2217dce89750390f2d7>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -23,17 +23,17 @@ export type TrustCenterReferenceGraphCreateMutation$variables = {
 export type TrustCenterReferenceGraphCreateMutation$data = {
   readonly createTrustCenterReference: {
     readonly trustCenterReferenceEdge: {
-      readonly cursor: any;
+      readonly cursor: string;
       readonly node: {
         readonly canDelete: boolean;
         readonly canUpdate: boolean;
-        readonly createdAt: any;
+        readonly createdAt: string;
         readonly description: string | null | undefined;
         readonly id: string;
         readonly logoUrl: string;
         readonly name: string;
         readonly rank: number;
-        readonly updatedAt: any;
+        readonly updatedAt: string;
         readonly websiteUrl: string;
       };
     };

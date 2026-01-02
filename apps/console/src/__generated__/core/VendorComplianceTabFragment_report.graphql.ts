@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<8cf7478142bb658e6c8d189652bbdfea>>
+ * @generated SignedSource<<3ba7c692eb07865e7e283e861a7cabdf>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -14,12 +14,12 @@ export type VendorComplianceTabFragment_report$data = {
   readonly file: {
     readonly fileName: string;
     readonly mimeType: string;
-    readonly size: any;
+    readonly size: string;
   } | null | undefined;
   readonly id: string;
-  readonly reportDate: any;
+  readonly reportDate: string;
   readonly reportName: string;
-  readonly validUntil: any | null | undefined;
+  readonly validUntil: string | null | undefined;
   readonly " $fragmentType": "VendorComplianceTabFragment_report";
 };
 export type VendorComplianceTabFragment_report$key = {

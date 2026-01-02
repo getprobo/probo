@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<25880ab79f8b6ae18f3ead4431a90329>>
+ * @generated SignedSource<<54810545432d02fdcd0b3b02f47bf489>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -17,8 +17,8 @@ export type DocumentOrder = {
   field: DocumentOrderField;
 };
 export type LinkedDocumentsDialogQuery_fragment$variables = {
-  after?: any | null | undefined;
-  before?: any | null | undefined;
+  after?: string | null | undefined;
+  before?: string | null | undefined;
   first?: number | null | undefined;
   id: string;
   last?: number | null | undefined;

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<c51c49b6699276336c3e5a4cc9a43998>>
+ * @generated SignedSource<<464a73547f605ed418f7e4e87b65032b>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,7 +11,7 @@
 import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type NonconformitiesPageRefetchQuery$variables = {
-  after?: any | null | undefined;
+  after?: string | null | undefined;
   first?: number | null | undefined;
   id: string;
   snapshotId?: string | null | undefined;

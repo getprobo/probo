@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<4516a7a0c95bb6634bbe7d1b097cc5de>>
+ * @generated SignedSource<<438f2d019c7a08242f35c048016a97e1>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,7 +12,7 @@ import { ConcreteRequest } from 'relay-runtime';
 export type MembershipRole = "ADMIN" | "AUDITOR" | "EMPLOYEE" | "OWNER" | "VIEWER";
 export type InviteMemberInput = {
   createPeople: boolean;
-  email: any;
+  email: string;
   fullName: string;
   organizationId: string;
   role: MembershipRole;
@@ -25,11 +25,11 @@ export type InviteUserDialogMutation$data = {
   readonly inviteMember: {
     readonly invitationEdge: {
       readonly node: {
-        readonly acceptedAt: any | null | undefined;
+        readonly acceptedAt: string | null | undefined;
         readonly canDelete: boolean;
-        readonly createdAt: any;
-        readonly email: any;
-        readonly expiresAt: any;
+        readonly createdAt: string;
+        readonly email: string;
+        readonly expiresAt: string;
         readonly fullName: string;
         readonly id: string;
         readonly role: MembershipRole;

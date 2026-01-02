@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<4660f07fbf06d0125ce01cd54019f389>>
+ * @generated SignedSource<<b545f1a231e042bd94c84430f3015112>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,7 +12,7 @@ import { ReaderFragment } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type MembershipCardFragment$data = {
   readonly lastSession: {
-    readonly expiresAt: any;
+    readonly expiresAt: string;
     readonly id: string;
   } | null | undefined;
   readonly organization: {
