@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<4f7512912c29e784f2cd2a52fd5f81b4>>
+ * @generated SignedSource<<14e03b23c216da916e36cecb49aefa6d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -16,6 +16,7 @@ export type ProcessingActivityGraphListQuery$variables = {
 };
 export type ProcessingActivityGraphListQuery$data = {
   readonly node: {
+    readonly canCreateProcessingActivity?: boolean;
     readonly " $fragmentSpreads": FragmentRefs<"ProcessingActivitiesPageDPIAFragment" | "ProcessingActivitiesPageFragment" | "ProcessingActivitiesPageTIAFragment">;
   };
 };
@@ -44,30 +45,43 @@ v1 = [
     "variableName": "organizationId"
   }
 ],
-v2 = [
+v2 = {
+  "alias": "canCreateProcessingActivity",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "core:processing-activity:create"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"core:processing-activity:create\")"
+},
+v3 = [
   {
     "kind": "Variable",
     "name": "snapshotId",
     "variableName": "snapshotId"
   }
 ],
-v3 = {
+v4 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "__typename",
   "storageKey": null
 },
-v4 = {
+v5 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "id",
   "storageKey": null
 },
-v5 = [
+v6 = [
   {
-    "fields": (v2/*: any*/),
+    "fields": (v3/*: any*/),
     "kind": "ObjectValue",
     "name": "filter"
   },
@@ -77,42 +91,42 @@ v5 = [
     "value": 10
   }
 ],
-v6 = {
+v7 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "totalCount",
   "storageKey": null
 },
-v7 = {
+v8 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "name",
   "storageKey": null
 },
-v8 = {
+v9 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "createdAt",
   "storageKey": null
 },
-v9 = {
+v10 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "updatedAt",
   "storageKey": null
 },
-v10 = {
+v11 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "cursor",
   "storageKey": null
 },
-v11 = {
+v12 = {
   "alias": null,
   "args": null,
   "concreteType": "PageInfo",
@@ -137,7 +151,7 @@ v11 = {
   ],
   "storageKey": null
 },
-v12 = {
+v13 = {
   "kind": "ClientExtension",
   "selections": [
     {
@@ -149,10 +163,10 @@ v12 = {
     }
   ]
 },
-v13 = [
+v14 = [
   "filter"
 ],
-v14 = {
+v15 = {
   "alias": null,
   "args": null,
   "concreteType": "ProcessingActivity",
@@ -160,8 +174,8 @@ v14 = {
   "name": "processingActivity",
   "plural": false,
   "selections": [
-    (v4/*: any*/),
-    (v7/*: any*/)
+    (v5/*: any*/),
+    (v8/*: any*/)
   ],
   "storageKey": null
 };
@@ -183,18 +197,19 @@ return {
           {
             "kind": "InlineFragment",
             "selections": [
+              (v2/*: any*/),
               {
-                "args": (v2/*: any*/),
+                "args": (v3/*: any*/),
                 "kind": "FragmentSpread",
                 "name": "ProcessingActivitiesPageFragment"
               },
               {
-                "args": (v2/*: any*/),
+                "args": (v3/*: any*/),
                 "kind": "FragmentSpread",
                 "name": "ProcessingActivitiesPageDPIAFragment"
               },
               {
-                "args": (v2/*: any*/),
+                "args": (v3/*: any*/),
                 "kind": "FragmentSpread",
                 "name": "ProcessingActivitiesPageTIAFragment"
               }
@@ -223,20 +238,21 @@ return {
         "name": "node",
         "plural": false,
         "selections": [
-          (v3/*: any*/),
           (v4/*: any*/),
+          (v5/*: any*/),
           {
             "kind": "InlineFragment",
             "selections": [
+              (v2/*: any*/),
               {
                 "alias": null,
-                "args": (v5/*: any*/),
+                "args": (v6/*: any*/),
                 "concreteType": "ProcessingActivityConnection",
                 "kind": "LinkedField",
                 "name": "processingActivities",
                 "plural": false,
                 "selections": [
-                  (v6/*: any*/),
+                  (v7/*: any*/),
                   {
                     "alias": null,
                     "args": null,
@@ -253,7 +269,7 @@ return {
                         "name": "node",
                         "plural": false,
                         "selections": [
-                          (v4/*: any*/),
+                          (v5/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -268,7 +284,7 @@ return {
                             "name": "sourceId",
                             "storageKey": null
                           },
-                          (v7/*: any*/),
+                          (v8/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -311,25 +327,51 @@ return {
                             "name": "internationalTransfers",
                             "storageKey": null
                           },
-                          (v8/*: any*/),
                           (v9/*: any*/),
-                          (v3/*: any*/)
+                          (v10/*: any*/),
+                          {
+                            "alias": "canUpdate",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:processing-activity:update"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:processing-activity:update\")"
+                          },
+                          {
+                            "alias": "canDelete",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:processing-activity:delete"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:processing-activity:delete\")"
+                          },
+                          (v4/*: any*/)
                         ],
                         "storageKey": null
                       },
-                      (v10/*: any*/)
+                      (v11/*: any*/)
                     ],
                     "storageKey": null
                   },
-                  (v11/*: any*/),
-                  (v12/*: any*/)
+                  (v12/*: any*/),
+                  (v13/*: any*/)
                 ],
                 "storageKey": null
               },
               {
                 "alias": null,
-                "args": (v5/*: any*/),
-                "filters": (v13/*: any*/),
+                "args": (v6/*: any*/),
+                "filters": (v14/*: any*/),
                 "handle": "connection",
                 "key": "ProcessingActivitiesPage_processingActivities",
                 "kind": "LinkedHandle",
@@ -337,13 +379,13 @@ return {
               },
               {
                 "alias": null,
-                "args": (v5/*: any*/),
+                "args": (v6/*: any*/),
                 "concreteType": "DataProtectionImpactAssessmentConnection",
                 "kind": "LinkedField",
                 "name": "dataProtectionImpactAssessments",
                 "plural": false,
                 "selections": [
-                  (v6/*: any*/),
+                  (v7/*: any*/),
                   {
                     "alias": null,
                     "args": null,
@@ -360,7 +402,7 @@ return {
                         "name": "node",
                         "plural": false,
                         "selections": [
-                          (v4/*: any*/),
+                          (v5/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -382,26 +424,26 @@ return {
                             "name": "residualRisk",
                             "storageKey": null
                           },
-                          (v14/*: any*/),
-                          (v8/*: any*/),
+                          (v15/*: any*/),
                           (v9/*: any*/),
-                          (v3/*: any*/)
+                          (v10/*: any*/),
+                          (v4/*: any*/)
                         ],
                         "storageKey": null
                       },
-                      (v10/*: any*/)
+                      (v11/*: any*/)
                     ],
                     "storageKey": null
                   },
-                  (v11/*: any*/),
-                  (v12/*: any*/)
+                  (v12/*: any*/),
+                  (v13/*: any*/)
                 ],
                 "storageKey": null
               },
               {
                 "alias": null,
-                "args": (v5/*: any*/),
-                "filters": (v13/*: any*/),
+                "args": (v6/*: any*/),
+                "filters": (v14/*: any*/),
                 "handle": "connection",
                 "key": "ProcessingActivitiesPage_dataProtectionImpactAssessments",
                 "kind": "LinkedHandle",
@@ -409,13 +451,13 @@ return {
               },
               {
                 "alias": null,
-                "args": (v5/*: any*/),
+                "args": (v6/*: any*/),
                 "concreteType": "TransferImpactAssessmentConnection",
                 "kind": "LinkedField",
                 "name": "transferImpactAssessments",
                 "plural": false,
                 "selections": [
-                  (v6/*: any*/),
+                  (v7/*: any*/),
                   {
                     "alias": null,
                     "args": null,
@@ -432,7 +474,7 @@ return {
                         "name": "node",
                         "plural": false,
                         "selections": [
-                          (v4/*: any*/),
+                          (v5/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -454,26 +496,26 @@ return {
                             "name": "localLawRisk",
                             "storageKey": null
                           },
-                          (v14/*: any*/),
-                          (v8/*: any*/),
+                          (v15/*: any*/),
                           (v9/*: any*/),
-                          (v3/*: any*/)
+                          (v10/*: any*/),
+                          (v4/*: any*/)
                         ],
                         "storageKey": null
                       },
-                      (v10/*: any*/)
+                      (v11/*: any*/)
                     ],
                     "storageKey": null
                   },
-                  (v11/*: any*/),
-                  (v12/*: any*/)
+                  (v12/*: any*/),
+                  (v13/*: any*/)
                 ],
                 "storageKey": null
               },
               {
                 "alias": null,
-                "args": (v5/*: any*/),
-                "filters": (v13/*: any*/),
+                "args": (v6/*: any*/),
+                "filters": (v14/*: any*/),
                 "handle": "connection",
                 "key": "ProcessingActivitiesPage_transferImpactAssessments",
                 "kind": "LinkedHandle",
@@ -489,16 +531,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "5901fa4af27b039bd50a1c97cdcb54d4",
+    "cacheID": "1d48f2badad2cfdbc1d36a06756a9ec7",
     "id": null,
     "metadata": {},
     "name": "ProcessingActivityGraphListQuery",
     "operationKind": "query",
-    "text": "query ProcessingActivityGraphListQuery(\n  $organizationId: ID!\n  $snapshotId: ID\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      ...ProcessingActivitiesPageFragment_3iomuz\n      ...ProcessingActivitiesPageDPIAFragment_3iomuz\n      ...ProcessingActivitiesPageTIAFragment_3iomuz\n    }\n    id\n  }\n}\n\nfragment ProcessingActivitiesPageDPIAFragment_3iomuz on Organization {\n  id\n  dataProtectionImpactAssessments(first: 10, filter: {snapshotId: $snapshotId}) {\n    totalCount\n    edges {\n      node {\n        id\n        description\n        potentialRisk\n        residualRisk\n        processingActivity {\n          id\n          name\n        }\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n\nfragment ProcessingActivitiesPageFragment_3iomuz on Organization {\n  id\n  processingActivities(first: 10, filter: {snapshotId: $snapshotId}) {\n    totalCount\n    edges {\n      node {\n        id\n        snapshotId\n        sourceId\n        name\n        purpose\n        dataSubjectCategory\n        personalDataCategory\n        lawfulBasis\n        location\n        internationalTransfers\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n\nfragment ProcessingActivitiesPageTIAFragment_3iomuz on Organization {\n  id\n  transferImpactAssessments(first: 10, filter: {snapshotId: $snapshotId}) {\n    totalCount\n    edges {\n      node {\n        id\n        dataSubjects\n        transfer\n        localLawRisk\n        processingActivity {\n          id\n          name\n        }\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
+    "text": "query ProcessingActivityGraphListQuery(\n  $organizationId: ID!\n  $snapshotId: ID\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      canCreateProcessingActivity: permission(action: \"core:processing-activity:create\")\n      ...ProcessingActivitiesPageFragment_3iomuz\n      ...ProcessingActivitiesPageDPIAFragment_3iomuz\n      ...ProcessingActivitiesPageTIAFragment_3iomuz\n    }\n    id\n  }\n}\n\nfragment ProcessingActivitiesPageDPIAFragment_3iomuz on Organization {\n  id\n  dataProtectionImpactAssessments(first: 10, filter: {snapshotId: $snapshotId}) {\n    totalCount\n    edges {\n      node {\n        id\n        description\n        potentialRisk\n        residualRisk\n        processingActivity {\n          id\n          name\n        }\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n\nfragment ProcessingActivitiesPageFragment_3iomuz on Organization {\n  id\n  processingActivities(first: 10, filter: {snapshotId: $snapshotId}) {\n    totalCount\n    edges {\n      node {\n        id\n        snapshotId\n        sourceId\n        name\n        purpose\n        dataSubjectCategory\n        personalDataCategory\n        lawfulBasis\n        location\n        internationalTransfers\n        createdAt\n        updatedAt\n        canUpdate: permission(action: \"core:processing-activity:update\")\n        canDelete: permission(action: \"core:processing-activity:delete\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n\nfragment ProcessingActivitiesPageTIAFragment_3iomuz on Organization {\n  id\n  transferImpactAssessments(first: 10, filter: {snapshotId: $snapshotId}) {\n    totalCount\n    edges {\n      node {\n        id\n        dataSubjects\n        transfer\n        localLawRisk\n        processingActivity {\n          id\n          name\n        }\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "b92a7dc2b38a5ae25c9a47a975fb718b";
+(node as any).hash = "7a0d589abac7bbd3710a0caad37d6273";
 
 export default node;

@@ -29,8 +29,6 @@ import type { RiskGraphListQuery } from "/__generated__/core/RiskGraphListQuery.
 import type { RiskGraphFragment$data } from "/__generated__/core/RiskGraphFragment.graphql";
 import { useParams } from "react-router";
 import { SnapshotBanner } from "/components/SnapshotBanner";
-import { use } from "react";
-import { PermissionsContext } from "/providers/PermissionsContext";
 
 type Props = {
   queryRef: PreloadedQuery<RiskGraphListQuery>;
@@ -41,9 +39,13 @@ export default function RisksPage(props: Props) {
   const organizationId = useOrganizationId();
   const { snapshotId } = useParams<{ snapshotId?: string }>();
   const isSnapshotMode = Boolean(snapshotId);
-  const { isAuthorized } = use(PermissionsContext);
 
-  const { connectionId, risks, ...pagination } = useRisksQuery(props.queryRef);
+  const {
+    data: { canCreateRisk },
+    connectionId,
+    risks,
+    ...pagination
+  } = useRisksQuery(props.queryRef);
 
   const refetch = ({
     order,
@@ -73,7 +75,7 @@ export default function RisksPage(props: Props) {
 
   const hasAnyAction =
     !isSnapshotMode &&
-    (isAuthorized("Risk", "updateRisk") || isAuthorized("Risk", "deleteRisk"));
+    risks.some(({ canDelete, canUpdate }) => canUpdate || canDelete);
 
   return (
     <div className="space-y-6">
@@ -84,7 +86,7 @@ export default function RisksPage(props: Props) {
           "Risks are potential threats to your organization. Manage them by identifying, assessing, and implementing mitigation measures.",
         )}
       >
-        {!isSnapshotMode && isAuthorized("Organization", "createRisk") && (
+        {!isSnapshotMode && canCreateRisk && (
           <FormRiskDialog
             connection={connectionId}
             onSuccess={() => {
@@ -153,7 +155,6 @@ function RiskRow(props: RowProps) {
   const isSnapshotMode = Boolean(snapshotId);
   const [deleteRisk] = useDeleteRiskMutation();
   const confirm = useConfirm();
-  const { isAuthorized } = use(PermissionsContext);
   const onDelete = () => {
     confirm(
       () =>
@@ -206,7 +207,7 @@ function RiskRow(props: RowProps) {
         {props.hasAnyAction && (
           <Td noLink className="text-end">
             <ActionDropdown>
-              {isAuthorized("Risk", "updateRisk") && (
+              {risk.canUpdate && (
                 <DropdownItem
                   icon={IconPencil}
                   onClick={() => formDialogRef.current?.open()}
@@ -215,7 +216,7 @@ function RiskRow(props: RowProps) {
                 </DropdownItem>
               )}
 
-              {isAuthorized("Risk", "deleteRisk") && (
+              {risk.canDelete && (
                 <DropdownItem
                   variant="danger"
                   icon={IconTrashCan}

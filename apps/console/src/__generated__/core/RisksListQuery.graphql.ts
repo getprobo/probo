@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<8c69925ff6e0312b590896229c9bc688>>
+ * @generated SignedSource<<173bd86c9660b900d34ccd42228adae5>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -212,6 +212,19 @@ return {
             "kind": "InlineFragment",
             "selections": [
               {
+                "alias": "canCreateRisk",
+                "args": [
+                  {
+                    "kind": "Literal",
+                    "name": "action",
+                    "value": "core:risk:create"
+                  }
+                ],
+                "kind": "ScalarField",
+                "name": "permission",
+                "storageKey": "permission(action:\"core:risk:create\")"
+              },
+              {
                 "alias": null,
                 "args": (v15/*: any*/),
                 "concreteType": "RiskConnection",
@@ -326,6 +339,32 @@ return {
                             "storageKey": null
                           },
                           {
+                            "alias": "canUpdate",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:risk:update"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:risk:update\")"
+                          },
+                          {
+                            "alias": "canDelete",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:risk:delete"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:risk:delete\")"
+                          },
+                          {
                             "alias": null,
                             "args": null,
                             "kind": "ScalarField",
@@ -428,16 +467,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "34a33dde7e4e7868a885b6b6317f506b",
+    "cacheID": "92be64a69721c7097dcc87a525d7d706",
     "id": null,
     "metadata": {},
     "name": "RisksListQuery",
     "operationKind": "query",
-    "text": "query RisksListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 50\n  $last: Int = null\n  $order: RiskOrder = {direction: DESC, field: CREATED_AT}\n  $snapshotId: ID = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...RiskGraphFragment_25MC8O\n    id\n  }\n}\n\nfragment RiskGraphFragment_25MC8O on Organization {\n  risks(first: $first, after: $after, last: $last, before: $before, orderBy: $order, filter: {snapshotId: $snapshotId}) {\n    edges {\n      node {\n        id\n        snapshotId\n        name\n        category\n        treatment\n        owner {\n          id\n          fullName\n        }\n        inherentLikelihood\n        inherentImpact\n        residualLikelihood\n        residualImpact\n        inherentRiskScore\n        residualRiskScore\n        ...useRiskFormFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment useRiskFormFragment on Risk {\n  id\n  name\n  category\n  description\n  treatment\n  inherentLikelihood\n  inherentImpact\n  residualLikelihood\n  residualImpact\n  inherentRiskScore\n  residualRiskScore\n  note\n  owner {\n    id\n  }\n}\n"
+    "text": "query RisksListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 50\n  $last: Int = null\n  $order: RiskOrder = {direction: DESC, field: CREATED_AT}\n  $snapshotId: ID = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...RiskGraphFragment_25MC8O\n    id\n  }\n}\n\nfragment RiskGraphFragment_25MC8O on Organization {\n  canCreateRisk: permission(action: \"core:risk:create\")\n  risks(first: $first, after: $after, last: $last, before: $before, orderBy: $order, filter: {snapshotId: $snapshotId}) {\n    edges {\n      node {\n        id\n        snapshotId\n        name\n        category\n        treatment\n        owner {\n          id\n          fullName\n        }\n        inherentLikelihood\n        inherentImpact\n        residualLikelihood\n        residualImpact\n        inherentRiskScore\n        residualRiskScore\n        canUpdate: permission(action: \"core:risk:update\")\n        canDelete: permission(action: \"core:risk:delete\")\n        ...useRiskFormFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment useRiskFormFragment on Risk {\n  id\n  name\n  category\n  description\n  treatment\n  inherentLikelihood\n  inherentImpact\n  residualLikelihood\n  residualImpact\n  inherentRiskScore\n  residualRiskScore\n  note\n  owner {\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "d8048ddb0ff8d4b08b7b9676d9b98f1a";
+(node as any).hash = "41dc9e3adc5d7d9b2126a49afef685c7";
 
 export default node;

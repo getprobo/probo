@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<0408262bc53f870212c3a87156f861f4>>
+ * @generated SignedSource<<504b0d0e997eb43eb8d370a21cb3e0fb>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -263,6 +263,32 @@ return {
                             "name": "updatedAt",
                             "storageKey": null
                           },
+                          {
+                            "alias": "canUpdate",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:processing-activity:update"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:processing-activity:update\")"
+                          },
+                          {
+                            "alias": "canDelete",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:processing-activity:delete"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:processing-activity:delete\")"
+                          },
                           (v8/*: any*/)
                         ],
                         "storageKey": null
@@ -338,16 +364,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "bf2fb9a8eb709e64268710ca36f86a72",
+    "cacheID": "71c255d719fe0ffafda13169e925b4b8",
     "id": null,
     "metadata": {},
     "name": "ProcessingActivitiesPageRefetchQuery",
     "operationKind": "query",
-    "text": "query ProcessingActivitiesPageRefetchQuery(\n  $after: CursorKey\n  $first: Int = 10\n  $snapshotId: ID = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...ProcessingActivitiesPageFragment_35e0S5\n    id\n  }\n}\n\nfragment ProcessingActivitiesPageFragment_35e0S5 on Organization {\n  id\n  processingActivities(first: $first, after: $after, filter: {snapshotId: $snapshotId}) {\n    totalCount\n    edges {\n      node {\n        id\n        snapshotId\n        sourceId\n        name\n        purpose\n        dataSubjectCategory\n        personalDataCategory\n        lawfulBasis\n        location\n        internationalTransfers\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
+    "text": "query ProcessingActivitiesPageRefetchQuery(\n  $after: CursorKey\n  $first: Int = 10\n  $snapshotId: ID = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...ProcessingActivitiesPageFragment_35e0S5\n    id\n  }\n}\n\nfragment ProcessingActivitiesPageFragment_35e0S5 on Organization {\n  id\n  processingActivities(first: $first, after: $after, filter: {snapshotId: $snapshotId}) {\n    totalCount\n    edges {\n      node {\n        id\n        snapshotId\n        sourceId\n        name\n        purpose\n        dataSubjectCategory\n        personalDataCategory\n        lawfulBasis\n        location\n        internationalTransfers\n        createdAt\n        updatedAt\n        canUpdate: permission(action: \"core:processing-activity:update\")\n        canDelete: permission(action: \"core:processing-activity:delete\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "e60b3eb3cf3d172625c2873cb05039bd";
+(node as any).hash = "df348ac63bc56da06da97e484fb2c0e5";
 
 export default node;

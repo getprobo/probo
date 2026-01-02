@@ -5,16 +5,25 @@ import { useTranslate } from "@probo/i18n";
 import { promisifyMutation, sprintf } from "@probo/helpers";
 import { useMutationWithToasts } from "../useMutationWithToasts";
 
-export const ProcessingActivitiesConnectionKey = "ProcessingActivitiesPage_processingActivities";
+export const ProcessingActivitiesConnectionKey =
+  "ProcessingActivitiesPage_processingActivities";
 export type ProcessingActivityDPIAResidualRisk = "LOW" | "MEDIUM" | "HIGH";
 
 export const processingActivitiesQuery = graphql`
-  query ProcessingActivityGraphListQuery($organizationId: ID!, $snapshotId: ID) {
+  query ProcessingActivityGraphListQuery(
+    $organizationId: ID!
+    $snapshotId: ID
+  ) {
     node(id: $organizationId) {
       ... on Organization {
+        canCreateProcessingActivity: permission(
+          action: "core:processing-activity:create"
+        )
         ...ProcessingActivitiesPageFragment @arguments(snapshotId: $snapshotId)
-        ...ProcessingActivitiesPageDPIAFragment @arguments(snapshotId: $snapshotId)
-        ...ProcessingActivitiesPageTIAFragment @arguments(snapshotId: $snapshotId)
+        ...ProcessingActivitiesPageDPIAFragment
+          @arguments(snapshotId: $snapshotId)
+        ...ProcessingActivitiesPageTIAFragment
+          @arguments(snapshotId: $snapshotId)
       }
     }
   }
@@ -67,6 +76,12 @@ export const processingActivityNodeQuery = graphql`
           residualRisk
           createdAt
           updatedAt
+          canUpdate: permission(
+            action: "core:data-protection-impact-assessment:update"
+          )
+          canDelete: permission(
+            action: "core:data-protection-impact-assessment:delete"
+          )
         }
         transferImpactAssessment {
           id
@@ -77,6 +92,12 @@ export const processingActivityNodeQuery = graphql`
           supplementaryMeasures
           createdAt
           updatedAt
+          canUpdate: permission(
+            action: "core:transfer-impact-assessment:update"
+          )
+          canDelete: permission(
+            action: "core:transfer-impact-assessment:delete"
+          )
         }
         organization {
           id
@@ -84,6 +105,14 @@ export const processingActivityNodeQuery = graphql`
         }
         createdAt
         updatedAt
+        canCreateDPIA: permission(
+          action: "core:data-protection-impact-assessment:create"
+        )
+        canCreateTIA: permission(
+          action: "core:transfer-impact-assessment:create"
+        )
+        canUpdate: permission(action: "core:processing-activity:update")
+        canDelete: permission(action: "core:processing-activity:delete")
       }
     }
   }
@@ -130,6 +159,8 @@ export const createProcessingActivityMutation = graphql`
             }
           }
           createdAt
+          canUpdate: permission(action: "core:processing-activity:update")
+          canDelete: permission(action: "core:processing-activity:delete")
         }
       }
     }
@@ -137,7 +168,9 @@ export const createProcessingActivityMutation = graphql`
 `;
 
 export const updateProcessingActivityMutation = graphql`
-  mutation ProcessingActivityGraphUpdateMutation($input: UpdateProcessingActivityInput!) {
+  mutation ProcessingActivityGraphUpdateMutation(
+    $input: UpdateProcessingActivityInput!
+  ) {
     updateProcessingActivity(input: $input) {
       processingActivity {
         id
@@ -191,7 +224,7 @@ export const deleteProcessingActivityMutation = graphql`
 
 export const useDeleteProcessingActivity = (
   processingActivity: { id: string; name: string },
-  connectionId: string
+  connectionId: string,
 ) => {
   const { __ } = useTranslate();
   const [mutate] = useMutationWithToasts(deleteProcessingActivityMutation, {
@@ -214,11 +247,11 @@ export const useDeleteProcessingActivity = (
       {
         message: sprintf(
           __(
-            "This will permanently delete the processing activity %s. This action cannot be undone."
+            "This will permanently delete the processing activity %s. This action cannot be undone.",
           ),
-          processingActivity.name
+          processingActivity.name,
         ),
-      }
+      },
     );
   };
 };
@@ -251,10 +284,14 @@ export const useCreateProcessingActivity = (connectionId?: string) => {
     vendorIds?: string[];
   }) => {
     if (!input.organizationId) {
-      return alert(__("Failed to create processing activity: organization is required"));
+      return alert(
+        __("Failed to create processing activity: organization is required"),
+      );
     }
     if (!input.name) {
-      return alert(__("Failed to create processing activity: name is required"));
+      return alert(
+        __("Failed to create processing activity: name is required"),
+      );
     }
 
     return promisifyMutation(mutate)({
@@ -274,7 +311,8 @@ export const useCreateProcessingActivity = (connectionId?: string) => {
           transferSafeguards: input.transferSafeguards,
           retentionPeriod: input.retentionPeriod,
           securityMeasures: input.securityMeasures,
-          dataProtectionImpactAssessmentNeeded: input.dataProtectionImpactAssessmentNeeded,
+          dataProtectionImpactAssessmentNeeded:
+            input.dataProtectionImpactAssessmentNeeded,
           transferImpactAssessmentNeeded: input.transferImpactAssessmentNeeded,
           lastReviewDate: input.lastReviewDate,
           nextReviewDate: input.nextReviewDate,
@@ -388,7 +426,9 @@ export const useCreateDataProtectionImpactAssessment = () => {
     residualRisk?: ProcessingActivityDPIAResidualRisk;
   }) => {
     if (!input.processingActivityId) {
-      return alert(__("Failed to create DPIA: Processing Activity ID is required"));
+      return alert(
+        __("Failed to create DPIA: Processing Activity ID is required"),
+      );
     }
 
     return promisifyMutation(mutate)({
@@ -425,13 +465,16 @@ export const useUpdateDataProtectionImpactAssessment = () => {
 
 export const useDeleteDataProtectionImpactAssessment = (
   dpia: { id: string },
-  options?: { onSuccess?: () => void }
+  options?: { onSuccess?: () => void },
 ) => {
   const { __ } = useTranslate();
-  const [mutate] = useMutationWithToasts(deleteDataProtectionImpactAssessmentMutation, {
-    successMessage: __("DPIA deleted successfully"),
-    errorMessage: __("Failed to delete DPIA"),
-  });
+  const [mutate] = useMutationWithToasts(
+    deleteDataProtectionImpactAssessmentMutation,
+    {
+      successMessage: __("DPIA deleted successfully"),
+      errorMessage: __("Failed to delete DPIA"),
+    },
+  );
   const confirm = useConfirm();
 
   return () => {
@@ -447,9 +490,9 @@ export const useDeleteDataProtectionImpactAssessment = (
         }),
       {
         message: __(
-          "This will permanently delete this Data Protection Impact Assessment. This action cannot be undone."
+          "This will permanently delete this Data Protection Impact Assessment. This action cannot be undone.",
         ),
-      }
+      },
     );
   };
 };
@@ -515,7 +558,9 @@ export const useCreateTransferImpactAssessment = () => {
     supplementaryMeasures?: string;
   }) => {
     if (!input.processingActivityId) {
-      return alert(__("Failed to create TIA: Processing Activity ID is required"));
+      return alert(
+        __("Failed to create TIA: Processing Activity ID is required"),
+      );
     }
 
     return promisifyMutation(mutate)({
@@ -552,13 +597,16 @@ export const useUpdateTransferImpactAssessment = () => {
 
 export const useDeleteTransferImpactAssessment = (
   tia: { id: string },
-  options?: { onSuccess?: () => void }
+  options?: { onSuccess?: () => void },
 ) => {
   const { __ } = useTranslate();
-  const [mutate] = useMutationWithToasts(deleteTransferImpactAssessmentMutation, {
-    successMessage: __("TIA deleted successfully"),
-    errorMessage: __("Failed to delete TIA"),
-  });
+  const [mutate] = useMutationWithToasts(
+    deleteTransferImpactAssessmentMutation,
+    {
+      successMessage: __("TIA deleted successfully"),
+      errorMessage: __("Failed to delete TIA"),
+    },
+  );
   const confirm = useConfirm();
 
   return () => {
@@ -574,9 +622,9 @@ export const useDeleteTransferImpactAssessment = (
         }),
       {
         message: __(
-          "This will permanently delete this Transfer Impact Assessment. This action cannot be undone."
+          "This will permanently delete this Transfer Impact Assessment. This action cannot be undone.",
         ),
-      }
+      },
     );
   };
 };

@@ -64,8 +64,7 @@ import type {
   ProcessingActivitiesPageTIAFragment$key,
   ProcessingActivitiesPageTIAFragment$data,
 } from "/__generated__/core/ProcessingActivitiesPageTIAFragment.graphql";
-import { PermissionsContext } from "/providers/PermissionsContext";
-import { use, useState } from "react";
+import { useState } from "react";
 import type { ProcessingActivityGraphListQuery } from "/__generated__/core/ProcessingActivityGraphListQuery.graphql";
 
 interface ProcessingActivitiesPageProps {
@@ -106,6 +105,8 @@ const processingActivitiesPageFragment = graphql`
           internationalTransfers
           createdAt
           updatedAt
+          canUpdate: permission(action: "core:processing-activity:update")
+          canDelete: permission(action: "core:processing-activity:delete")
         }
       }
       pageInfo {
@@ -237,7 +238,6 @@ export default function ProcessingActivitiesPage({
   const organizationId = useOrganizationId();
   const { snapshotId } = useParams<{ snapshotId?: string }>();
   const isSnapshotMode = Boolean(snapshotId);
-  const { isAuthorized } = use(PermissionsContext);
   const [activeTab, setActiveTab] = useState<"activities" | "dpia" | "tia">(
     "activities",
   );
@@ -292,8 +292,7 @@ export default function ProcessingActivitiesPage({
 
   const hasAnyAction =
     !isSnapshotMode &&
-    (isAuthorized("ProcessingActivity", "updateProcessingActivity") ||
-      isAuthorized("ProcessingActivity", "deleteProcessingActivity"));
+    activities.some(({ canUpdate, canDelete }) => canUpdate || canDelete);
 
   const canExportPDF = isAuthorized(
     "ProcessingActivity",
@@ -467,7 +466,7 @@ export default function ProcessingActivitiesPage({
         )}
         {!isSnapshotMode &&
           activeTab === "activities" &&
-          isAuthorized("Organization", "createProcessingActivity") && (
+          organization.node.canCreateProcessingActivity && (
             <CreateProcessingActivityDialog
               organizationId={organizationId}
               connectionId={connectionId}
@@ -677,7 +676,6 @@ function ActivityRow({
   const isSnapshotMode = Boolean(snapshotId);
   const [deleteActivity] = useMutation(deleteProcessingActivityMutation);
   const confirm = useConfirm();
-  const { isAuthorized } = use(PermissionsContext);
 
   const handleDelete = () => {
     confirm(
@@ -729,7 +727,7 @@ function ActivityRow({
       {hasAnyAction && (
         <Td noLink width={50} className="text-end">
           <ActionDropdown>
-            {isAuthorized("ProcessingActivity", "deleteProcessingActivity") && (
+            {activity.canDelete && (
               <DropdownItem
                 icon={IconTrashCan}
                 variant="danger"

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<af15e0a3ab99f57152fbb4e9d23eca6b>>
+ * @generated SignedSource<<238d486ca746aa2d13f6e87ddab1c8e3>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -46,6 +46,8 @@ export type ProcessingActivityGraphCreateMutation$data = {
   readonly createProcessingActivity: {
     readonly processingActivityEdge: {
       readonly node: {
+        readonly canDelete: boolean;
+        readonly canUpdate: boolean;
         readonly consentEvidenceLink: string | null | undefined;
         readonly createdAt: string;
         readonly dataProtectionImpactAssessmentNeeded: ProcessingActivityDataProtectionImpactAssessment;
@@ -330,6 +332,32 @@ v5 = {
           "kind": "ScalarField",
           "name": "createdAt",
           "storageKey": null
+        },
+        {
+          "alias": "canUpdate",
+          "args": [
+            {
+              "kind": "Literal",
+              "name": "action",
+              "value": "core:processing-activity:update"
+            }
+          ],
+          "kind": "ScalarField",
+          "name": "permission",
+          "storageKey": "permission(action:\"core:processing-activity:update\")"
+        },
+        {
+          "alias": "canDelete",
+          "args": [
+            {
+              "kind": "Literal",
+              "name": "action",
+              "value": "core:processing-activity:delete"
+            }
+          ],
+          "kind": "ScalarField",
+          "name": "permission",
+          "storageKey": "permission(action:\"core:processing-activity:delete\")"
         }
       ],
       "storageKey": null
@@ -403,16 +431,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "00d5d2374c8b6933fd01544e67518c14",
+    "cacheID": "534bd7c442063267f6556101350e0d74",
     "id": null,
     "metadata": {},
     "name": "ProcessingActivityGraphCreateMutation",
     "operationKind": "mutation",
-    "text": "mutation ProcessingActivityGraphCreateMutation(\n  $input: CreateProcessingActivityInput!\n) {\n  createProcessingActivity(input: $input) {\n    processingActivityEdge {\n      node {\n        id\n        name\n        purpose\n        dataSubjectCategory\n        personalDataCategory\n        specialOrCriminalData\n        consentEvidenceLink\n        lawfulBasis\n        recipients\n        location\n        internationalTransfers\n        transferSafeguards\n        retentionPeriod\n        securityMeasures\n        dataProtectionImpactAssessmentNeeded\n        transferImpactAssessmentNeeded\n        lastReviewDate\n        nextReviewDate\n        role\n        dataProtectionOfficer {\n          id\n          fullName\n        }\n        vendors(first: 50) {\n          edges {\n            node {\n              id\n              name\n              websiteUrl\n            }\n          }\n        }\n        createdAt\n      }\n    }\n  }\n}\n"
+    "text": "mutation ProcessingActivityGraphCreateMutation(\n  $input: CreateProcessingActivityInput!\n) {\n  createProcessingActivity(input: $input) {\n    processingActivityEdge {\n      node {\n        id\n        name\n        purpose\n        dataSubjectCategory\n        personalDataCategory\n        specialOrCriminalData\n        consentEvidenceLink\n        lawfulBasis\n        recipients\n        location\n        internationalTransfers\n        transferSafeguards\n        retentionPeriod\n        securityMeasures\n        dataProtectionImpactAssessmentNeeded\n        transferImpactAssessmentNeeded\n        lastReviewDate\n        nextReviewDate\n        role\n        dataProtectionOfficer {\n          id\n          fullName\n        }\n        vendors(first: 50) {\n          edges {\n            node {\n              id\n              name\n              websiteUrl\n            }\n          }\n        }\n        createdAt\n        canUpdate: permission(action: \"core:processing-activity:update\")\n        canDelete: permission(action: \"core:processing-activity:delete\")\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "63271cfac482a18f5754df0af220e45d";
+(node as any).hash = "69c155bfe5b8a028d1d72c3b57d8de98";
 
 export default node;

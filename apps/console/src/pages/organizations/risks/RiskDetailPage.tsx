@@ -34,8 +34,6 @@ import {
 } from "/hooks/graph/RiskGraph";
 import type { RiskGraphNodeQuery } from "/__generated__/core/RiskGraphNodeQuery.graphql";
 import { SnapshotBanner } from "/components/SnapshotBanner";
-import { use } from "react";
-import { PermissionsContext } from "/providers/PermissionsContext";
 
 type Props = {
   queryRef: PreloadedQuery<RiskGraphNodeQuery>;
@@ -49,18 +47,16 @@ export default function RiskDetailPage(props: Props) {
   const organizationId = useOrganizationId();
   const navigate = useNavigate();
   const isSnapshotMode = Boolean(snapshotId);
-  const { isAuthorized } = use(PermissionsContext);
 
   if (!riskId) {
     throw new Error("Cannot load risk detail page without riskId parameter");
   }
 
   const { __ } = useTranslate();
-  const data = usePreloadedQuery<RiskGraphNodeQuery>(
+  const { node: risk } = usePreloadedQuery<RiskGraphNodeQuery>(
     riskNodeQuery,
     props.queryRef,
   );
-  const risk = data.node;
 
   validateSnapshotConsistency(risk, snapshotId);
   const [deleteRisk] = useDeleteRiskMutation();
@@ -136,7 +132,7 @@ export default function RiskDetailPage(props: Props) {
         />
         {!isSnapshotMode && (
           <div className="flex gap-2">
-            {isAuthorized("Risk", "updateRisk") && (
+            {risk.canUpdate && (
               <FormRiskDialog
                 trigger={
                   <Button icon={IconPencil} variant="secondary">
@@ -146,7 +142,7 @@ export default function RiskDetailPage(props: Props) {
                 risk={{ id: riskId, ...risk }}
               />
             )}
-            {isAuthorized("Risk", "deleteRisk") && (
+            {risk.canDelete && (
               <ActionDropdown variant="secondary">
                 <DropdownItem
                   variant="danger"

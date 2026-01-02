@@ -53,6 +53,7 @@ const risksFragment = graphql`
     last: { type: "Int", defaultValue: null }
     snapshotId: { type: "ID", defaultValue: null }
   ) {
+    canCreateRisk: permission(action: "core:risk:create")
     risks(
       first: $first
       after: $after
@@ -79,6 +80,8 @@ const risksFragment = graphql`
           residualImpact
           inherentRiskScore
           residualRiskScore
+          canUpdate: permission(action: "core:risk:update")
+          canDelete: permission(action: "core:risk:delete")
           ...useRiskFormFragment
         }
       }
@@ -131,6 +134,8 @@ export const riskNodeQuery = graphql`
         obligationsInfo: obligations(first: 0) {
           totalCount
         }
+        canUpdate: permission(action: "core:risk:update")
+        canDelete: permission(action: "core:risk:delete")
         ...useRiskFormFragment
         ...RiskOverviewTabFragment
         ...RiskMeasuresTabFragment
