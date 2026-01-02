@@ -159,6 +159,8 @@ export async function execute(
 	};
 	if (additionalFields.additionalEmailAddresses) {
 		input.additionalEmailAddresses = additionalFields.additionalEmailAddresses.split(',').map((e) => e.trim()).filter(Boolean);
+	} else {
+		input.additionalEmailAddresses = [];
 	}
 	if (additionalFields.position) input.position = additionalFields.position;
 	if (additionalFields.contractStartDate) input.contractStartDate = new Date(additionalFields.contractStartDate).toISOString();

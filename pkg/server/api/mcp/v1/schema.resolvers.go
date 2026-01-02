@@ -11,6 +11,7 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"go.probo.inc/probo/pkg/authz"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/mcp/v1/types"
@@ -171,13 +172,18 @@ func (r *Resolver) AddPeopleTool(ctx context.Context, req *mcp.CallToolRequest, 
 
 	svc := r.ProboService(ctx, input.OrganizationID)
 
+	additionalEmails := []mail.Addr{}
+	if input.AdditionalEmailAddresses != nil {
+		additionalEmails = input.AdditionalEmailAddresses
+	}
+
 	people, err := svc.Peoples.Create(
 		ctx,
 		probo.CreatePeopleRequest{
 			OrganizationID:           input.OrganizationID,
 			FullName:                 input.FullName,
 			PrimaryEmailAddress:      input.PrimaryEmailAddress,
-			AdditionalEmailAddresses: input.AdditionalEmailAddresses,
+			AdditionalEmailAddresses: additionalEmails,
 			Kind:                     input.Kind,
 			Position:                 input.Position,
 			ContractStartDate:        input.ContractStartDate,
