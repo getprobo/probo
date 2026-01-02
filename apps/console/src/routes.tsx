@@ -2,7 +2,6 @@ import {
   createBrowserRouter,
   Navigate,
   redirect,
-  useOutletContext,
   useRouteError,
 } from "react-router";
 import { CenteredLayout, CenteredLayoutSkeleton } from "@probo/ui";
@@ -34,6 +33,8 @@ import {
   UnAuthenticatedError,
   UnauthorizedError,
 } from "@probo/relay";
+import { CurrentUser } from "./providers/CurrentUser.tsx";
+import { use } from "react";
 
 /**
  * Top level error boundary
@@ -151,7 +152,7 @@ const routes = [
       {
         path: "",
         Component: () => {
-          const role = useOutletContext<Role>();
+          const { role } = use(CurrentUser);
           switch (role) {
             case Role.EMPLOYEE:
               return <Navigate to="employee" />;
