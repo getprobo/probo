@@ -31,6 +31,13 @@ jobs:
       - uses: "docker/setup-qemu-action@v3"
       - uses: "docker/setup-buildx-action@v3"
       - uses: "sigstore/cosign-installer@v3"
+      - name: Cache Trivy database
+        uses: "actions/cache@v4"
+        with:
+          path: ~/.cache/trivy
+          key: trivy-db-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: |
+            trivy-db-${{ runner.os }}-
       - uses: "anchore/sbom-action/download-syft@da167eac915b4e86f08b264dbdbc867b61be6f0c" # v0.20.5
       - uses: "goreleaser/goreleaser-action@v6"
         with:
@@ -50,6 +57,7 @@ jobs:
           ignore-unfixed: true
           vuln-type: "os,library"
           severity: "CRITICAL,HIGH"
+          cache-dir: ~/.cache/trivy
       - name: Scan Docker image with Trivy
         if: github.ref != 'refs/heads/main'
         uses: "aquasecurity/trivy-action@0.28.0"
@@ -60,6 +68,7 @@ jobs:
           ignore-unfixed: true
           vuln-type: "os,library"
           severity: "CRITICAL,HIGH"
+          cache-dir: ~/.cache/trivy
       - name: Upload Trivy scan results to GitHub Security tab
         if: github.ref == 'refs/heads/main'
         uses: github/codeql-action/upload-sarif@v4
