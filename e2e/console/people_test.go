@@ -58,11 +58,12 @@ func TestPeople_Create(t *testing.T) {
 
 		err := owner.Execute(query, map[string]any{
 			"input": map[string]any{
-				"organizationId":      owner.GetOrganizationID().String(),
-				"fullName":            "John Doe",
-				"primaryEmailAddress": "john.doe@example.com",
-				"kind":                "EMPLOYEE",
-				"position":            "Software Engineer",
+				"organizationId":          owner.GetOrganizationID().String(),
+				"fullName":                "John Doe",
+				"primaryEmailAddress":     "john.doe@example.com",
+				"additionalEmailAddresses": []string{},
+				"kind":                    "EMPLOYEE",
+				"position":                "Software Engineer",
 			},
 		}, &result)
 		require.NoError(t, err)
@@ -253,9 +254,10 @@ func TestPeople_RequiredFields(t *testing.T) {
 		{
 			name: "missing organizationId",
 			input: map[string]any{
-				"fullName":            "Test Person",
-				"primaryEmailAddress": "test@example.com",
-				"kind":                "EMPLOYEE",
+				"fullName":                "Test Person",
+				"primaryEmailAddress":     "test@example.com",
+				"additionalEmailAddresses": []string{},
+				"kind":                    "EMPLOYEE",
 			},
 			skipOrganization:  true,
 			wantErrorContains: "organizationId",
@@ -263,42 +265,47 @@ func TestPeople_RequiredFields(t *testing.T) {
 		{
 			name: "missing fullName",
 			input: map[string]any{
-				"primaryEmailAddress": "test@example.com",
-				"kind":                "EMPLOYEE",
+				"primaryEmailAddress":     "test@example.com",
+				"additionalEmailAddresses": []string{},
+				"kind":                    "EMPLOYEE",
 			},
 			wantErrorContains: "fullName",
 		},
 		{
 			name: "missing primaryEmailAddress",
 			input: map[string]any{
-				"fullName": "Test Person",
-				"kind":     "EMPLOYEE",
+				"fullName":                "Test Person",
+				"additionalEmailAddresses": []string{},
+				"kind":                    "EMPLOYEE",
 			},
 			wantErrorContains: "primaryEmailAddress",
 		},
 		{
 			name: "missing kind",
 			input: map[string]any{
-				"fullName":            "Test Person",
-				"primaryEmailAddress": "test@example.com",
+				"fullName":                "Test Person",
+				"primaryEmailAddress":     "test@example.com",
+				"additionalEmailAddresses": []string{},
 			},
 			wantErrorContains: "kind",
 		},
 		{
 			name: "empty fullName",
 			input: map[string]any{
-				"fullName":            "",
-				"primaryEmailAddress": "test@example.com",
-				"kind":                "EMPLOYEE",
+				"fullName":                "",
+				"primaryEmailAddress":     "test@example.com",
+				"additionalEmailAddresses": []string{},
+				"kind":                    "EMPLOYEE",
 			},
 			wantErrorContains: "full_name",
 		},
 		{
 			name: "invalid kind enum",
 			input: map[string]any{
-				"fullName":            "Test Person",
-				"primaryEmailAddress": "test@example.com",
-				"kind":                "INVALID_KIND",
+				"fullName":                "Test Person",
+				"primaryEmailAddress":     "test@example.com",
+				"additionalEmailAddresses": []string{},
+				"kind":                    "INVALID_KIND",
 			},
 			wantErrorContains: "kind",
 		},

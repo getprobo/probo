@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<22054346a606e1ce4a26b02218f87af9>>
+ * @generated SignedSource<<9acf6a96c0398ea5ae6fec887e8d01b1>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,7 +11,7 @@
 import { ConcreteRequest } from 'relay-runtime';
 export type PeopleKind = "CONTRACTOR" | "EMPLOYEE" | "SERVICE_ACCOUNT";
 export type CreatePeopleInput = {
-  additionalEmailAddresses?: ReadonlyArray<any> | null | undefined;
+  additionalEmailAddresses: ReadonlyArray<any>;
   contractEndDate?: any | null | undefined;
   contractStartDate?: any | null | undefined;
   fullName: string;
