@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<22e08aea59fb3427d7770d89a44d6e9e>>
+ * @generated SignedSource<<5eff506b761b5790caf4b18a51cf2a88>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -15,6 +15,7 @@ export type RightsRequestGraphListQuery$variables = {
 };
 export type RightsRequestGraphListQuery$data = {
   readonly node: {
+    readonly canCreateRightsRequest?: boolean;
     readonly " $fragmentSpreads": FragmentRefs<"RightsRequestsPageFragment">;
   };
 };
@@ -39,20 +40,33 @@ v1 = [
   }
 ],
 v2 = {
+  "alias": "canCreateRightsRequest",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "core:rights-request:create"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"core:rights-request:create\")"
+},
+v3 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "__typename",
   "storageKey": null
 },
-v3 = {
+v4 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "id",
   "storageKey": null
 },
-v4 = [
+v5 = [
   {
     "kind": "Literal",
     "name": "first",
@@ -77,6 +91,7 @@ return {
           {
             "kind": "InlineFragment",
             "selections": [
+              (v2/*: any*/),
               {
                 "args": null,
                 "kind": "FragmentSpread",
@@ -107,14 +122,15 @@ return {
         "name": "node",
         "plural": false,
         "selections": [
-          (v2/*: any*/),
           (v3/*: any*/),
+          (v4/*: any*/),
           {
             "kind": "InlineFragment",
             "selections": [
+              (v2/*: any*/),
               {
                 "alias": null,
-                "args": (v4/*: any*/),
+                "args": (v5/*: any*/),
                 "concreteType": "RightsRequestConnection",
                 "kind": "LinkedField",
                 "name": "rightsRequests",
@@ -143,7 +159,7 @@ return {
                         "name": "node",
                         "plural": false,
                         "selections": [
-                          (v3/*: any*/),
+                          (v4/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -207,7 +223,33 @@ return {
                             "name": "updatedAt",
                             "storageKey": null
                           },
-                          (v2/*: any*/)
+                          {
+                            "alias": "canDelete",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:rights-request:delete"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:rights-request:delete\")"
+                          },
+                          {
+                            "alias": "canUpdate",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:rights-request:update"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:rights-request:update\")"
+                          },
+                          (v3/*: any*/)
                         ],
                         "storageKey": null
                       },
@@ -263,7 +305,7 @@ return {
               },
               {
                 "alias": null,
-                "args": (v4/*: any*/),
+                "args": (v5/*: any*/),
                 "filters": null,
                 "handle": "connection",
                 "key": "RightsRequestsPage_rightsRequests",
@@ -280,16 +322,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "77f124136a2da2eb84fb134e5d10396b",
+    "cacheID": "6bc485c10a9531beeb67aa6ff28a7ddc",
     "id": null,
     "metadata": {},
     "name": "RightsRequestGraphListQuery",
     "operationKind": "query",
-    "text": "query RightsRequestGraphListQuery(\n  $organizationId: ID!\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      ...RightsRequestsPageFragment\n    }\n    id\n  }\n}\n\nfragment RightsRequestsPageFragment on Organization {\n  id\n  rightsRequests(first: 10) {\n    totalCount\n    edges {\n      node {\n        id\n        requestType\n        requestState\n        dataSubject\n        contact\n        details\n        deadline\n        actionTaken\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
+    "text": "query RightsRequestGraphListQuery(\n  $organizationId: ID!\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      canCreateRightsRequest: permission(action: \"core:rights-request:create\")\n      ...RightsRequestsPageFragment\n    }\n    id\n  }\n}\n\nfragment RightsRequestsPageFragment on Organization {\n  id\n  rightsRequests(first: 10) {\n    totalCount\n    edges {\n      node {\n        id\n        requestType\n        requestState\n        dataSubject\n        contact\n        details\n        deadline\n        actionTaken\n        createdAt\n        updatedAt\n        canDelete: permission(action: \"core:rights-request:delete\")\n        canUpdate: permission(action: \"core:rights-request:update\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "6ff83d9e0017a4fb245ad9f13106a439";
+(node as any).hash = "0ec5bfd82df0184daee8f615b55f9b5b";
 
 export default node;

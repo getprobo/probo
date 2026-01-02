@@ -29,8 +29,7 @@ import {
     useDeleteStateOfApplicability,
     updateStateOfApplicabilityMutation,
 } from "/hooks/graph/StateOfApplicabilityGraph";
-import { use, useState, Suspense } from "react";
-import { PermissionsContext } from "/providers/PermissionsContext";
+import { useState, Suspense } from "react";
 import { usePageTitle } from "@probo/hooks";
 import { formatDate, validateSnapshotConsistency } from "@probo/helpers";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
@@ -67,7 +66,6 @@ export default function StateOfApplicabilityDetailPage(props: Props) {
     const stateOfApplicability = data.node;
     const { __ } = useTranslate();
     const navigate = useNavigate();
-    const { isAuthorized } = use(PermissionsContext);
     const isSnapshotMode = Boolean(snapshotId);
 
     if (!stateOfApplicabilityId || !stateOfApplicability) {
@@ -104,12 +102,8 @@ export default function StateOfApplicabilityDetailPage(props: Props) {
         },
     );
 
-    const canUpdate =
-        !isSnapshotMode &&
-        isAuthorized("StateOfApplicability", "updateStateOfApplicability");
-    const canDelete =
-        !isSnapshotMode &&
-        isAuthorized("StateOfApplicability", "deleteStateOfApplicability");
+    const canUpdate = !isSnapshotMode && stateOfApplicability.canUpdate;
+    const canDelete = !isSnapshotMode && stateOfApplicability.canDelete;
 
     const [exportStateOfApplicabilityPDF, isExporting] =
         useMutationWithToasts<StateOfApplicabilityDetailPageExportMutation>(

@@ -20,8 +20,10 @@ import { useTranslate } from "@probo/i18n";
 export const paginatedStateOfApplicabilityQuery = graphql`
   query StateOfApplicabilityGraphPaginatedQuery($organizationId: ID!) {
     organization: node(id: $organizationId) {
+      __typename
       ... on Organization {
         id
+        canCreateStateOfApplicability: permission(action: "core:state-of-applicability:create")
         ...StateOfApplicabilityGraphPaginatedFragment
       }
     }
@@ -59,6 +61,9 @@ export const paginatedStateOfApplicabilityFragment = graphql`
           snapshotId
           createdAt
           updatedAt
+
+          canDelete: permission(action: "core:state-of-applicability:delete")
+
           controlsInfo: controls(first: 0) {
             totalCount
           }
@@ -197,6 +202,8 @@ export const stateOfApplicabilityNodeQuery = graphql`
         snapshotId
         createdAt
         updatedAt
+        canUpdate: permission(action: "core:state-of-applicability:update")
+        canDelete: permission(action: "core:state-of-applicability:delete")
         organization {
           id
         }

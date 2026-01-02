@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<23949230cfdefa0c2a321d4fa38e3ace>>
+ * @generated SignedSource<<a97e020f188d100e7c82076b6d82f1ec>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -17,6 +17,8 @@ export type RightsRequestGraphNodeQuery$variables = {
 export type RightsRequestGraphNodeQuery$data = {
   readonly node: {
     readonly actionTaken?: string | null | undefined;
+    readonly canDelete?: boolean;
+    readonly canUpdate?: boolean;
     readonly contact?: string | null | undefined;
     readonly createdAt?: string;
     readonly dataSubject?: string | null | undefined;
@@ -109,6 +111,32 @@ v9 = {
   "storageKey": null
 },
 v10 = {
+  "alias": "canUpdate",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "core:rights-request:update"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"core:rights-request:update\")"
+},
+v11 = {
+  "alias": "canDelete",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "core:rights-request:delete"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"core:rights-request:delete\")"
+},
+v12 = {
   "alias": null,
   "args": null,
   "concreteType": "Organization",
@@ -127,14 +155,14 @@ v10 = {
   ],
   "storageKey": null
 },
-v11 = {
+v13 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "createdAt",
   "storageKey": null
 },
-v12 = {
+v14 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
@@ -169,7 +197,9 @@ return {
               (v9/*: any*/),
               (v10/*: any*/),
               (v11/*: any*/),
-              (v12/*: any*/)
+              (v12/*: any*/),
+              (v13/*: any*/),
+              (v14/*: any*/)
             ],
             "type": "RightsRequest",
             "abstractKey": null
@@ -215,7 +245,9 @@ return {
               (v9/*: any*/),
               (v10/*: any*/),
               (v11/*: any*/),
-              (v12/*: any*/)
+              (v12/*: any*/),
+              (v13/*: any*/),
+              (v14/*: any*/)
             ],
             "type": "RightsRequest",
             "abstractKey": null
@@ -226,16 +258,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "93aa5fb44159c0ae2709c34f493bc69f",
+    "cacheID": "ee78ca5ffa5a944254f733bfefdfbfab",
     "id": null,
     "metadata": {},
     "name": "RightsRequestGraphNodeQuery",
     "operationKind": "query",
-    "text": "query RightsRequestGraphNodeQuery(\n  $rightsRequestId: ID!\n) {\n  node(id: $rightsRequestId) {\n    __typename\n    ... on RightsRequest {\n      id\n      requestType\n      requestState\n      dataSubject\n      contact\n      details\n      deadline\n      actionTaken\n      organization {\n        id\n        name\n      }\n      createdAt\n      updatedAt\n    }\n    id\n  }\n}\n"
+    "text": "query RightsRequestGraphNodeQuery(\n  $rightsRequestId: ID!\n) {\n  node(id: $rightsRequestId) {\n    __typename\n    ... on RightsRequest {\n      id\n      requestType\n      requestState\n      dataSubject\n      contact\n      details\n      deadline\n      actionTaken\n      canUpdate: permission(action: \"core:rights-request:update\")\n      canDelete: permission(action: \"core:rights-request:delete\")\n      organization {\n        id\n        name\n      }\n      createdAt\n      updatedAt\n    }\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "9f7d09c59f937a8de6cfbc0354b42d1b";
+(node as any).hash = "77cc11eb6270df9b753572cf3a14689d";
 
 export default node;

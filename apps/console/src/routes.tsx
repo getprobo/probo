@@ -2,6 +2,7 @@ import {
   createBrowserRouter,
   Navigate,
   redirect,
+  useOutletContext,
   useRouteError,
 } from "react-router";
 import { CenteredLayout, CenteredLayoutSkeleton } from "@probo/ui";
@@ -29,8 +30,6 @@ import { statesOfApplicabilityRoutes } from "./routes/statesOfApplicabilityRoute
 import { lazy } from "@probo/react-lazy";
 import { routeFromAppRoute, type AppRoute } from "@probo/routes";
 import { Role } from "@probo/helpers";
-import { PermissionsContext } from "./providers/PermissionsContext";
-import { use } from "react";
 import {
   ForbiddenError,
   UnAuthenticatedError,
@@ -98,13 +97,13 @@ const routes = [
       {
         index: true,
         Component: lazy(
-          () => import("./pages/iam/memberships/MembershipsPageLoader")
+          () => import("./pages/iam/memberships/MembershipsPageLoader"),
         ),
       },
       {
         path: "organizations/new",
         Component: lazy(
-          () => import("./pages/iam/organizations/NewOrganizationPage")
+          () => import("./pages/iam/organizations/NewOrganizationPage"),
         ),
       },
       {
@@ -121,7 +120,7 @@ const routes = [
     path: "/organizations/:organizationId/employee",
     Fallback: () => "fallback employee...",
     Component: lazy(
-      () => import("./pages/iam/memberships/MembershipLayoutLoader")
+      () => import("./pages/iam/memberships/MembershipLayoutLoader"),
     ),
     ErrorBoundary: ErrorBoundary,
     children: [
@@ -130,7 +129,7 @@ const routes = [
         // Component: () => "hello world",
         Component: lazy(
           () =>
-            import("./pages/organizations/employee/EmployeeDocumentsPageLoader")
+            import("./pages/organizations/employee/EmployeeDocumentsPageLoader"),
         ),
       },
       {
@@ -138,7 +137,7 @@ const routes = [
         ErrorBoundary: ErrorBoundary,
         Component: lazy(
           () =>
-            import("./pages/organizations/employee/EmployeeDocumentSignaturePageLoader")
+            import("./pages/organizations/employee/EmployeeDocumentSignaturePageLoader"),
         ),
       },
     ],
@@ -146,14 +145,14 @@ const routes = [
   {
     path: "/organizations/:organizationId",
     Component: lazy(
-      () => import("./pages/iam/memberships/MembershipLayoutLoader")
+      () => import("./pages/iam/memberships/MembershipLayoutLoader"),
     ),
     ErrorBoundary: ErrorBoundary,
     children: [
       {
         path: "",
         Component: () => {
-          const { role } = use(PermissionsContext);
+          const role = useOutletContext<Role>();
           switch (role) {
             case Role.EMPLOYEE:
               return <Navigate to="employee" />;
@@ -168,7 +167,7 @@ const routes = [
         path: "settings",
         Fallback: PageSkeleton,
         Component: lazy(
-          () => import("./pages/iam/organizations/settings/SettingsLayout")
+          () => import("./pages/iam/organizations/settings/SettingsLayout"),
         ),
         children: [
           {
@@ -181,28 +180,28 @@ const routes = [
             path: "general",
             Component: lazy(
               () =>
-                import("./pages/iam/organizations/settings/GeneralSettingsPageLoader")
+                import("./pages/iam/organizations/settings/GeneralSettingsPageLoader"),
             ),
           },
           {
             path: "members",
             Component: lazy(
               () =>
-                import("./pages/iam/organizations/settings/MembersPageLoader")
+                import("./pages/iam/organizations/settings/MembersPageLoader"),
             ),
           },
           {
             path: "domain",
             Component: lazy(
               () =>
-                import("./pages/organizations/settings/DomainSettingsPageLoader")
+                import("./pages/organizations/settings/DomainSettingsPageLoader"),
             ),
           },
           {
             path: "saml-sso",
             Component: lazy(
               () =>
-                import("./pages/iam/organizations/settings/SAMLSettingsPageLoader")
+                import("./pages/iam/organizations/settings/SAMLSettingsPageLoader"),
             ),
           },
         ],

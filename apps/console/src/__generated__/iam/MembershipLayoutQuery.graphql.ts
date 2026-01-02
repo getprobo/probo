@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<57b1d454985b710fd8d5ccecfa90f97d>>
+ * @generated SignedSource<<698ad015edeb94e58ec661b6118dca4b>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,12 +10,21 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
+export type MembershipRole = "ADMIN" | "AUDITOR" | "EMPLOYEE" | "OWNER" | "VIEWER";
 export type MembershipLayoutQuery$variables = {
   organizationId: string;
 };
 export type MembershipLayoutQuery$data = {
   readonly organization: {
+    readonly __typename: "Organization";
+    readonly viewerMembership: {
+      readonly role: MembershipRole;
+    };
     readonly " $fragmentSpreads": FragmentRefs<"MembershipsDropdown_organizationFragment" | "SessionDropdownFragment" | "SidebarFragment">;
+  } | {
+    // This will never be '%other', but we need some
+    // value in case none of the concrete values match.
+    readonly __typename: "%other";
   };
   readonly viewer: {
     readonly pendingInvitations: {
@@ -48,10 +57,24 @@ v2 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "totalCount",
+  "name": "__typename",
   "storageKey": null
 },
 v3 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "role",
+  "storageKey": null
+},
+v4 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "totalCount",
+  "storageKey": null
+},
+v5 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
@@ -75,6 +98,7 @@ return {
           "name": "node",
           "plural": false,
           "selections": [
+            (v2/*: any*/),
             {
               "kind": "InlineFragment",
               "selections": [
@@ -92,6 +116,22 @@ return {
                   "args": null,
                   "kind": "FragmentSpread",
                   "name": "SidebarFragment"
+                },
+                {
+                  "kind": "RequiredField",
+                  "field": {
+                    "alias": null,
+                    "args": null,
+                    "concreteType": "Membership",
+                    "kind": "LinkedField",
+                    "name": "viewerMembership",
+                    "plural": false,
+                    "selections": [
+                      (v3/*: any*/)
+                    ],
+                    "storageKey": null
+                  },
+                  "action": "THROW"
                 }
               ],
               "type": "Organization",
@@ -129,7 +169,7 @@ return {
                 "selections": [
                   {
                     "kind": "RequiredField",
-                    "field": (v2/*: any*/),
+                    "field": (v4/*: any*/),
                     "action": "THROW"
                   }
                 ],
@@ -160,13 +200,7 @@ return {
         "name": "node",
         "plural": false,
         "selections": [
-          {
-            "alias": null,
-            "args": null,
-            "kind": "ScalarField",
-            "name": "__typename",
-            "storageKey": null
-          },
+          (v2/*: any*/),
           {
             "kind": "InlineFragment",
             "selections": [
@@ -213,7 +247,7 @@ return {
                         "name": "email",
                         "storageKey": null
                       },
-                      (v3/*: any*/)
+                      (v5/*: any*/)
                     ],
                     "storageKey": null
                   },
@@ -232,10 +266,11 @@ return {
                         "name": "fullName",
                         "storageKey": null
                       },
-                      (v3/*: any*/)
+                      (v5/*: any*/)
                     ],
                     "storageKey": null
                   },
+                  (v5/*: any*/),
                   (v3/*: any*/)
                 ],
                 "storageKey": null
@@ -504,7 +539,7 @@ return {
             "type": "Organization",
             "abstractKey": null
           },
-          (v3/*: any*/)
+          (v5/*: any*/)
         ],
         "storageKey": null
       },
@@ -524,27 +559,27 @@ return {
             "name": "pendingInvitations",
             "plural": false,
             "selections": [
-              (v2/*: any*/)
+              (v4/*: any*/)
             ],
             "storageKey": null
           },
-          (v3/*: any*/)
+          (v5/*: any*/)
         ],
         "storageKey": null
       }
     ]
   },
   "params": {
-    "cacheID": "7a430121b08c549781c5340bacd630c9",
+    "cacheID": "f39bc9faafcfb9d3e6482e088a3cae1e",
     "id": null,
     "metadata": {},
     "name": "MembershipLayoutQuery",
     "operationKind": "query",
-    "text": "query MembershipLayoutQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      ...MembershipsDropdown_organizationFragment\n      ...SessionDropdownFragment\n      ...SidebarFragment\n    }\n    id\n  }\n  viewer {\n    ...MembershipsDropdown_viewerFragment\n    pendingInvitations {\n      totalCount\n    }\n    id\n  }\n}\n\nfragment MembershipsDropdown_organizationFragment on Organization {\n  name\n}\n\nfragment MembershipsDropdown_viewerFragment on Identity {\n  pendingInvitations {\n    totalCount\n  }\n}\n\nfragment SessionDropdownFragment on Organization {\n  canDelete: permission(action: \"iam:organization:delete\")\n  viewerMembership {\n    identity {\n      email\n      id\n    }\n    profile {\n      fullName\n      id\n    }\n    id\n  }\n}\n\nfragment SidebarFragment on Organization {\n  canListMeetings: permission(action: \"core:meeting:list\")\n  canListTasks: permission(action: \"core:task:list\")\n  canListMeasures: permission(action: \"core:measures:list\")\n  canListRisks: permission(action: \"core:risk:list\")\n  canListFrameworks: permission(action: \"core:frameworks:list\")\n  canListPeople: permission(action: \"core:people:list\")\n  canListVendors: permission(action: \"core:vendor:list\")\n  canListDocuments: permission(action: \"core:document:list\")\n  canListAssets: permission(action: \"core:asset:list\")\n  canListData: permission(action: \"core:datum:list\")\n  canListAudits: permission(action: \"core:audit:list\")\n  canListNonconformities: permission(action: \"core:nonconformity:list\")\n  canListObligations: permission(action: \"core:obligation:list\")\n  canListContinualImprovements: permission(action: \"core:continual-improvement:list\")\n  canListProcessingActivities: permission(action: \"core:processing-activity:list\")\n  canListRightsRequests: permission(action: \"core:rights-request:list\")\n  canListSnapshots: permission(action: \"core:snapshot:list\")\n  canGetTrustCenter: permission(action: \"core:trust-center:get\")\n  canUpdateOrganization: permission(action: \"iam:organization:update\")\n  canListStatesOfApplicability: permission(action: \"core:state-of-applicability:list\")\n}\n"
+    "text": "query MembershipLayoutQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      ...MembershipsDropdown_organizationFragment\n      ...SessionDropdownFragment\n      ...SidebarFragment\n      viewerMembership {\n        role\n        id\n      }\n    }\n    id\n  }\n  viewer {\n    ...MembershipsDropdown_viewerFragment\n    pendingInvitations {\n      totalCount\n    }\n    id\n  }\n}\n\nfragment MembershipsDropdown_organizationFragment on Organization {\n  name\n}\n\nfragment MembershipsDropdown_viewerFragment on Identity {\n  pendingInvitations {\n    totalCount\n  }\n}\n\nfragment SessionDropdownFragment on Organization {\n  canDelete: permission(action: \"iam:organization:delete\")\n  viewerMembership {\n    identity {\n      email\n      id\n    }\n    profile {\n      fullName\n      id\n    }\n    id\n  }\n}\n\nfragment SidebarFragment on Organization {\n  canListMeetings: permission(action: \"core:meeting:list\")\n  canListTasks: permission(action: \"core:task:list\")\n  canListMeasures: permission(action: \"core:measures:list\")\n  canListRisks: permission(action: \"core:risk:list\")\n  canListFrameworks: permission(action: \"core:frameworks:list\")\n  canListPeople: permission(action: \"core:people:list\")\n  canListVendors: permission(action: \"core:vendor:list\")\n  canListDocuments: permission(action: \"core:document:list\")\n  canListAssets: permission(action: \"core:asset:list\")\n  canListData: permission(action: \"core:datum:list\")\n  canListAudits: permission(action: \"core:audit:list\")\n  canListNonconformities: permission(action: \"core:nonconformity:list\")\n  canListObligations: permission(action: \"core:obligation:list\")\n  canListContinualImprovements: permission(action: \"core:continual-improvement:list\")\n  canListProcessingActivities: permission(action: \"core:processing-activity:list\")\n  canListRightsRequests: permission(action: \"core:rights-request:list\")\n  canListSnapshots: permission(action: \"core:snapshot:list\")\n  canGetTrustCenter: permission(action: \"core:trust-center:get\")\n  canUpdateOrganization: permission(action: \"iam:organization:update\")\n  canListStatesOfApplicability: permission(action: \"core:state-of-applicability:list\")\n}\n"
   }
 };
 })();
 
-(node as any).hash = "9a87ccbe2aa86cca7845e0145b133921";
+(node as any).hash = "6e16255ebbb75840ce8ec057a453bbf0";
 
 export default node;

@@ -15,21 +15,29 @@ import {
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import type { StateOfApplicabilityGraphPaginatedQuery } from "/__generated__/core/StateOfApplicabilityGraphPaginatedQuery.graphql";
-import { type PreloadedQuery } from "react-relay";
 import {
-    useStateOfApplicabilityQuery,
+    usePreloadedQuery,
+    type PreloadedQuery,
+    usePaginationFragment,
+} from "react-relay";
+import {
     useDeleteStateOfApplicability,
+    paginatedStateOfApplicabilityFragment,
+    paginatedStateOfApplicabilityQuery,
 } from "/hooks/graph/StateOfApplicabilityGraph";
-import type { StateOfApplicabilityGraphPaginatedFragment$data } from "/__generated__/core/StateOfApplicabilityGraphPaginatedFragment.graphql";
+import type {
+    StateOfApplicabilityGraphPaginatedFragment$data,
+    StateOfApplicabilityGraphPaginatedFragment$key,
+} from "/__generated__/core/StateOfApplicabilityGraphPaginatedFragment.graphql";
 import type { NodeOf } from "/types";
 import { usePageTitle } from "@probo/hooks";
 import { CreateStateOfApplicabilityDialog } from "./dialogs/CreateStateOfApplicabilityDialog";
-import { PermissionsContext } from "/providers/PermissionsContext";
-import { use, useEffect } from "react";
+import { useEffect } from "react";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { formatDate } from "@probo/helpers";
 import { useParams } from "react-router";
 import { SnapshotBanner } from "/components/SnapshotBanner";
+import type { StateOfApplicabilityListQuery } from "/__generated__/core/StateOfApplicabilityListQuery.graphql";
 
 type StateOfApplicability = NodeOf<
     StateOfApplicabilityGraphPaginatedFragment$data["statesOfApplicability"]
@@ -41,19 +49,31 @@ export default function StatesOfApplicabilityPage({
     queryRef: PreloadedQuery<StateOfApplicabilityGraphPaginatedQuery>;
 }) {
     const { __ } = useTranslate();
-    const { isAuthorized } = use(PermissionsContext);
     const { snapshotId } = useParams<{ snapshotId?: string }>();
     const isSnapshotMode = Boolean(snapshotId);
-    const {
-        statesOfApplicability,
-        connectionId,
-        hasNext,
-        loadNext,
-        isLoadingNext,
-        refetch,
-    } = useStateOfApplicabilityQuery(queryRef);
 
     usePageTitle(__("States of Applicability"));
+
+    const { organization } =
+        usePreloadedQuery<StateOfApplicabilityGraphPaginatedQuery>(
+            paginatedStateOfApplicabilityQuery,
+            queryRef,
+        );
+
+    if (organization.__typename !== "Organization") {
+        throw new Error("Organization not found");
+    }
+
+    const {
+        data: { statesOfApplicability },
+        loadNext,
+        hasNext,
+        refetch,
+        isLoadingNext,
+    } = usePaginationFragment<
+        StateOfApplicabilityListQuery,
+        StateOfApplicabilityGraphPaginatedFragment$key
+    >(paginatedStateOfApplicabilityFragment, organization);
 
     // Refetch with snapshot filter when in snapshot mode
     useEffect(() => {
@@ -67,7 +87,9 @@ export default function StatesOfApplicabilityPage({
 
     const hasAnyAction =
         !isSnapshotMode &&
-        isAuthorized("StateOfApplicability", "deleteStateOfApplicability");
+        statesOfApplicability.edges
+            .map((edge) => edge.node)
+            .some(({ canDelete }) => canDelete);
 
     return (
         <div className="space-y-6">
@@ -79,12 +101,9 @@ export default function StatesOfApplicabilityPage({
                 )}
             >
                 {!isSnapshotMode &&
-                    isAuthorized(
-                        "Organization",
-                        "createStateOfApplicability",
-                    ) && (
+                    organization.canCreateStateOfApplicability && (
                         <CreateStateOfApplicabilityDialog
-                            connectionId={connectionId}
+                            connectionId={statesOfApplicability.__id}
                         >
                             <Button icon={IconPlusLarge}>
                                 {__("Add state of applicability")}
@@ -93,7 +112,7 @@ export default function StatesOfApplicabilityPage({
                     )}
             </PageHeader>
 
-            {statesOfApplicability && statesOfApplicability.length > 0 ? (
+            {statesOfApplicability && statesOfApplicability.edges.length > 0 ? (
                 <Card>
                     <Table>
                         <Thead>
@@ -105,11 +124,11 @@ export default function StatesOfApplicabilityPage({
                             </Tr>
                         </Thead>
                         <Tbody>
-                            {statesOfApplicability.map((soa) => (
+                            {statesOfApplicability.edges.map((edge) => (
                                 <StateOfApplicabilityRow
-                                    key={soa.id}
-                                    stateOfApplicability={soa}
-                                    connectionId={connectionId}
+                                    key={edge.node.id}
+                                    stateOfApplicability={edge.node}
+                                    connectionId={statesOfApplicability.__id}
                                     hasAnyAction={hasAnyAction}
                                 />
                             ))}
@@ -164,7 +183,6 @@ function StateOfApplicabilityRow({
         stateOfApplicability,
         connectionId,
     );
-    const { isAuthorized } = use(PermissionsContext);
 
     const detailUrl = snapshotId
         ? `/organizations/${organizationId}/snapshots/${snapshotId}/states-of-applicability/${stateOfApplicability.id}`
@@ -182,10 +200,7 @@ function StateOfApplicabilityRow({
             {hasAnyAction && (
                 <Td noLink width={50} className="text-end">
                     <ActionDropdown>
-                        {isAuthorized(
-                            "StateOfApplicability",
-                            "deleteStateOfApplicability",
-                        ) && (
+                        {stateOfApplicability.canDelete && (
                             <DropdownItem
                                 icon={IconTrashCan}
                                 variant="danger"

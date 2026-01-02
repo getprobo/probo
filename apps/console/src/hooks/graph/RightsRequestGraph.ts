@@ -11,6 +11,7 @@ export const rightsRequestsQuery = graphql`
   query RightsRequestGraphListQuery($organizationId: ID!) {
     node(id: $organizationId) {
       ... on Organization {
+        canCreateRightsRequest: permission(action: "core:rights-request:create")
         ...RightsRequestsPageFragment
       }
     }
@@ -29,6 +30,8 @@ export const rightsRequestNodeQuery = graphql`
         details
         deadline
         actionTaken
+        canUpdate: permission(action: "core:rights-request:update")
+        canDelete: permission(action: "core:rights-request:delete")
         organization {
           id
           name

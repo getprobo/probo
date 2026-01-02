@@ -314,7 +314,20 @@ func (r *continualImprovementConnectionResolver) TotalCount(ctx context.Context,
 
 // Organization is the resolver for the organization field.
 func (r *controlResolver) Organization(ctx context.Context, obj *types.Control) (*types.Organization, error) {
-	panic(fmt.Errorf("not implemented: Organization - organization"))
+	r.MustAuthorize(ctx, obj.ID, probo.ActionOrganizationGet)
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	organization, err := prb.Organizations.Get(ctx, obj.Organization.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(err)
+		}
+
+		// TODO no panic use gqlutils.InternalError
+		panic(fmt.Errorf("cannot get organization: %w", err))
+	}
+	return types.NewOrganization(organization), nil
 }
 
 // Framework is the resolver for the framework field.
@@ -6275,6 +6288,11 @@ func (r *rightsRequestResolver) Organization(ctx context.Context, obj *types.Rig
 	return types.NewOrganization(organization), nil
 }
 
+// Permission is the resolver for the permission field.
+func (r *rightsRequestResolver) Permission(ctx context.Context, obj *types.RightsRequest, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
+}
+
 // TotalCount is the resolver for the totalCount field.
 func (r *rightsRequestConnectionResolver) TotalCount(ctx context.Context, obj *types.RightsRequestConnection) (int, error) {
 	r.MustAuthorize(ctx, obj.ParentID, probo.ActionRightsRequesList)
@@ -6656,6 +6674,11 @@ func (r *stateOfApplicabilityResolver) Owner(ctx context.Context, obj *types.Sta
 	}
 
 	return types.NewPeople(people), nil
+}
+
+// Permission is the resolver for the permission field.
+func (r *stateOfApplicabilityResolver) Permission(ctx context.Context, obj *types.StateOfApplicability, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
 }
 
 // Controls is the resolver for the controls field.

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<10add82cf941c1776c712d87451b6da1>>
+ * @generated SignedSource<<109da5292cbd22b553279fefd5c41c03>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -19,6 +19,8 @@ export type RightsRequestsPageFragment$data = {
     readonly edges: ReadonlyArray<{
       readonly node: {
         readonly actionTaken: string | null | undefined;
+        readonly canDelete: boolean;
+        readonly canUpdate: boolean;
         readonly contact: string | null | undefined;
         readonly createdAt: string;
         readonly dataSubject: string | null | undefined;
@@ -197,6 +199,32 @@ return {
                   "storageKey": null
                 },
                 {
+                  "alias": "canDelete",
+                  "args": [
+                    {
+                      "kind": "Literal",
+                      "name": "action",
+                      "value": "core:rights-request:delete"
+                    }
+                  ],
+                  "kind": "ScalarField",
+                  "name": "permission",
+                  "storageKey": "permission(action:\"core:rights-request:delete\")"
+                },
+                {
+                  "alias": "canUpdate",
+                  "args": [
+                    {
+                      "kind": "Literal",
+                      "name": "action",
+                      "value": "core:rights-request:update"
+                    }
+                  ],
+                  "kind": "ScalarField",
+                  "name": "permission",
+                  "storageKey": "permission(action:\"core:rights-request:update\")"
+                },
+                {
                   "alias": null,
                   "args": null,
                   "kind": "ScalarField",
@@ -262,6 +290,6 @@ return {
 };
 })();
 
-(node as any).hash = "3476c393dc97ae3d730ed5715922e987";
+(node as any).hash = "cfb8b464e37afac281c1722b9daf1783";
 
 export default node;

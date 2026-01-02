@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<1c22107bf5691e7764aa30352d99631e>>
+ * @generated SignedSource<<a1b6d40084a5ddfad764dd1f6fa32607>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -15,8 +15,14 @@ export type StateOfApplicabilityGraphPaginatedQuery$variables = {
 };
 export type StateOfApplicabilityGraphPaginatedQuery$data = {
   readonly organization: {
-    readonly id?: string;
+    readonly __typename: "Organization";
+    readonly canCreateStateOfApplicability: boolean;
+    readonly id: string;
     readonly " $fragmentSpreads": FragmentRefs<"StateOfApplicabilityGraphPaginatedFragment">;
+  } | {
+    // This will never be '%other', but we need some
+    // value in case none of the concrete values match.
+    readonly __typename: "%other";
   };
 };
 export type StateOfApplicabilityGraphPaginatedQuery = {
@@ -43,17 +49,30 @@ v2 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "id",
+  "name": "__typename",
   "storageKey": null
 },
 v3 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "__typename",
+  "name": "id",
   "storageKey": null
 },
-v4 = [
+v4 = {
+  "alias": "canCreateStateOfApplicability",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "core:state-of-applicability:create"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"core:state-of-applicability:create\")"
+},
+v5 = [
   {
     "kind": "Literal",
     "name": "filter",
@@ -90,10 +109,12 @@ return {
         "name": "node",
         "plural": false,
         "selections": [
+          (v2/*: any*/),
           {
             "kind": "InlineFragment",
             "selections": [
-              (v2/*: any*/),
+              (v3/*: any*/),
+              (v4/*: any*/),
               {
                 "args": null,
                 "kind": "FragmentSpread",
@@ -124,14 +145,15 @@ return {
         "name": "node",
         "plural": false,
         "selections": [
-          (v3/*: any*/),
           (v2/*: any*/),
+          (v3/*: any*/),
           {
             "kind": "InlineFragment",
             "selections": [
+              (v4/*: any*/),
               {
                 "alias": null,
-                "args": (v4/*: any*/),
+                "args": (v5/*: any*/),
                 "concreteType": "StateOfApplicabilityConnection",
                 "kind": "LinkedField",
                 "name": "statesOfApplicability",
@@ -153,7 +175,7 @@ return {
                         "name": "node",
                         "plural": false,
                         "selections": [
-                          (v2/*: any*/),
+                          (v3/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -190,6 +212,19 @@ return {
                             "storageKey": null
                           },
                           {
+                            "alias": "canDelete",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:state-of-applicability:delete"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:state-of-applicability:delete\")"
+                          },
+                          {
                             "alias": "controlsInfo",
                             "args": [
                               {
@@ -213,7 +248,7 @@ return {
                             ],
                             "storageKey": "controls(first:0)"
                           },
-                          (v3/*: any*/)
+                          (v2/*: any*/)
                         ],
                         "storageKey": null
                       },
@@ -283,7 +318,7 @@ return {
               },
               {
                 "alias": null,
-                "args": (v4/*: any*/),
+                "args": (v5/*: any*/),
                 "filters": [
                   "orderBy",
                   "filter"
@@ -303,16 +338,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "c5f5cb61622ba5e4309521002c23a530",
+    "cacheID": "3d53dfeb5366c889e790a88116dd3a4a",
     "id": null,
     "metadata": {},
     "name": "StateOfApplicabilityGraphPaginatedQuery",
     "operationKind": "query",
-    "text": "query StateOfApplicabilityGraphPaginatedQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      ...StateOfApplicabilityGraphPaginatedFragment\n    }\n    id\n  }\n}\n\nfragment StateOfApplicabilityGraphPaginatedFragment on Organization {\n  statesOfApplicability(first: 50, orderBy: {direction: DESC, field: CREATED_AT}, filter: {snapshotId: null}) {\n    edges {\n      node {\n        id\n        name\n        sourceId\n        snapshotId\n        createdAt\n        updatedAt\n        controlsInfo: controls(first: 0) {\n          totalCount\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
+    "text": "query StateOfApplicabilityGraphPaginatedQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      canCreateStateOfApplicability: permission(action: \"core:state-of-applicability:create\")\n      ...StateOfApplicabilityGraphPaginatedFragment\n    }\n    id\n  }\n}\n\nfragment StateOfApplicabilityGraphPaginatedFragment on Organization {\n  statesOfApplicability(first: 50, orderBy: {direction: DESC, field: CREATED_AT}, filter: {snapshotId: null}) {\n    edges {\n      node {\n        id\n        name\n        sourceId\n        snapshotId\n        createdAt\n        updatedAt\n        canDelete: permission(action: \"core:state-of-applicability:delete\")\n        controlsInfo: controls(first: 0) {\n          totalCount\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
   }
 };
 })();
 
-(node as any).hash = "e5eb3f251055f7dd34f7af30251226ca";
+(node as any).hash = "2182e7aea21c8eba8b2cfda1e614b6e5";
 
 export default node;

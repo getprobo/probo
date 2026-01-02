@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<47e719a83abc9c6cb5f5e1140f70cf70>>
+ * @generated SignedSource<<e8285c8dc81c3789af43fe68e8ef4c98>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -217,6 +217,32 @@ return {
                             "name": "updatedAt",
                             "storageKey": null
                           },
+                          {
+                            "alias": "canDelete",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:rights-request:delete"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:rights-request:delete\")"
+                          },
+                          {
+                            "alias": "canUpdate",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:rights-request:update"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:rights-request:update\")"
+                          },
                           (v3/*: any*/)
                         ],
                         "storageKey": null
@@ -290,16 +316,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "10c7e9a6f7813d150e34282befd799ff",
+    "cacheID": "a63c4d960c8f375acceeedd2f1b9a188",
     "id": null,
     "metadata": {},
     "name": "RightsRequestsPageRefetchQuery",
     "operationKind": "query",
-    "text": "query RightsRequestsPageRefetchQuery(\n  $after: CursorKey\n  $first: Int = 10\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...RightsRequestsPageFragment_2HEEH6\n    id\n  }\n}\n\nfragment RightsRequestsPageFragment_2HEEH6 on Organization {\n  id\n  rightsRequests(first: $first, after: $after) {\n    totalCount\n    edges {\n      node {\n        id\n        requestType\n        requestState\n        dataSubject\n        contact\n        details\n        deadline\n        actionTaken\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
+    "text": "query RightsRequestsPageRefetchQuery(\n  $after: CursorKey\n  $first: Int = 10\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...RightsRequestsPageFragment_2HEEH6\n    id\n  }\n}\n\nfragment RightsRequestsPageFragment_2HEEH6 on Organization {\n  id\n  rightsRequests(first: $first, after: $after) {\n    totalCount\n    edges {\n      node {\n        id\n        requestType\n        requestState\n        dataSubject\n        contact\n        details\n        deadline\n        actionTaken\n        createdAt\n        updatedAt\n        canDelete: permission(action: \"core:rights-request:delete\")\n        canUpdate: permission(action: \"core:rights-request:update\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "3476c393dc97ae3d730ed5715922e987";
+(node as any).hash = "cfb8b464e37afac281c1722b9daf1783";
 
 export default node;

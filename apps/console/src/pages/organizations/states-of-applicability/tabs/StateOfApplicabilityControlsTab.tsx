@@ -27,8 +27,6 @@ import {
     type EditControlDialogRef,
 } from "../dialogs/EditControlDialog";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
-import { use } from "react";
-import { PermissionsContext } from "/providers/PermissionsContext";
 
 export const controlsFragment = graphql`
     fragment StateOfApplicabilityControlsTabFragment on StateOfApplicability
@@ -37,6 +35,14 @@ export const controlsFragment = graphql`
         controlsInfo: controls(first: 0) {
             totalCount
         }
+
+        canCreateStateOfApplicabilityControlMapping: permission(
+            action: "core:state-of-applicability:control-mapping:create"
+        )
+        canDeleteStateOfApplicabilityControlMapping: permission(
+            action: "core:state-of-applicability:control-mapping:delete"
+        )
+
         availableControls {
             controlId
             sectionTitle
@@ -84,7 +90,6 @@ export default function StateOfApplicabilityControlsTab({
     const organizationId = useOrganizationId();
     const manageDialogRef = useRef<LinkControlDialogRef>(null);
     const editDialogRef = useRef<EditControlDialogRef>(null);
-    const { isAuthorized } = use(PermissionsContext);
 
     const linkedControls = useMemo(
         () =>
@@ -103,11 +108,9 @@ export default function StateOfApplicabilityControlsTab({
     );
 
     const canLink =
-        !isSnapshotMode &&
-        isAuthorized("StateOfApplicability", "updateStateOfApplicability");
+        !isSnapshotMode && data.canCreateStateOfApplicabilityControlMapping;
     const canUnlink =
-        !isSnapshotMode &&
-        isAuthorized("StateOfApplicability", "updateStateOfApplicability");
+        !isSnapshotMode && data.canDeleteStateOfApplicabilityControlMapping;
 
     const handleOpenManageDialog = () => {
         manageDialogRef.current?.open(data.id, () => {

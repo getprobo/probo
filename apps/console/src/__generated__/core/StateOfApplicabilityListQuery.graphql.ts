@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<9026caada1e636b7db342b11e6d324c0>>
+ * @generated SignedSource<<8bdd74dfae1b656006a07b2f89fe525d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -271,6 +271,19 @@ return {
                             "storageKey": null
                           },
                           {
+                            "alias": "canDelete",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:state-of-applicability:delete"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:state-of-applicability:delete\")"
+                          },
+                          {
                             "alias": "controlsInfo",
                             "args": [
                               {
@@ -384,16 +397,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "d3227559321509a2a525848a0e26e20b",
+    "cacheID": "68d8b8bc491e464ea692b6d37952bcbf",
     "id": null,
     "metadata": {},
     "name": "StateOfApplicabilityListQuery",
     "operationKind": "query",
-    "text": "query StateOfApplicabilityListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $filter: StateOfApplicabilityFilter = {snapshotId: null}\n  $first: Int = 50\n  $last: Int = null\n  $order: StateOfApplicabilityOrder = {direction: DESC, field: CREATED_AT}\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...StateOfApplicabilityGraphPaginatedFragment_4cFWzS\n    id\n  }\n}\n\nfragment StateOfApplicabilityGraphPaginatedFragment_4cFWzS on Organization {\n  statesOfApplicability(first: $first, after: $after, last: $last, before: $before, orderBy: $order, filter: $filter) {\n    edges {\n      node {\n        id\n        name\n        sourceId\n        snapshotId\n        createdAt\n        updatedAt\n        controlsInfo: controls(first: 0) {\n          totalCount\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
+    "text": "query StateOfApplicabilityListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $filter: StateOfApplicabilityFilter = {snapshotId: null}\n  $first: Int = 50\n  $last: Int = null\n  $order: StateOfApplicabilityOrder = {direction: DESC, field: CREATED_AT}\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...StateOfApplicabilityGraphPaginatedFragment_4cFWzS\n    id\n  }\n}\n\nfragment StateOfApplicabilityGraphPaginatedFragment_4cFWzS on Organization {\n  statesOfApplicability(first: $first, after: $after, last: $last, before: $before, orderBy: $order, filter: $filter) {\n    edges {\n      node {\n        id\n        name\n        sourceId\n        snapshotId\n        createdAt\n        updatedAt\n        canDelete: permission(action: \"core:state-of-applicability:delete\")\n        controlsInfo: controls(first: 0) {\n          totalCount\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
   }
 };
 })();
 
-(node as any).hash = "895fc79e61b95bf83997e3d5bcc7f367";
+(node as any).hash = "82cf2a5ce701c34a41f8166371dd75c3";
 
 export default node;

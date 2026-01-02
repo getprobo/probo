@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<c56844aad03997c31a20815ce775fc24>>
+ * @generated SignedSource<<3472918fdff6205597f39a6310f2ee08>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -16,6 +16,7 @@ export type StateOfApplicabilityGraphPaginatedFragment$data = {
     readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly node: {
+        readonly canDelete: boolean;
         readonly controlsInfo: {
           readonly totalCount: number;
         };
@@ -192,6 +193,19 @@ return {
                   "storageKey": null
                 },
                 {
+                  "alias": "canDelete",
+                  "args": [
+                    {
+                      "kind": "Literal",
+                      "name": "action",
+                      "value": "core:state-of-applicability:delete"
+                    }
+                  ],
+                  "kind": "ScalarField",
+                  "name": "permission",
+                  "storageKey": "permission(action:\"core:state-of-applicability:delete\")"
+                },
+                {
                   "alias": "controlsInfo",
                   "args": [
                     {
@@ -296,6 +310,6 @@ return {
 };
 })();
 
-(node as any).hash = "895fc79e61b95bf83997e3d5bcc7f367";
+(node as any).hash = "82cf2a5ce701c34a41f8166371dd75c3";
 
 export default node;

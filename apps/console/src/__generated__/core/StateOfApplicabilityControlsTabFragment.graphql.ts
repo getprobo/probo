@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<306449631752d4277aa96b77601e2d8f>>
+ * @generated SignedSource<<d0252e79888e84b37fc216198d60dd5b>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -26,6 +26,8 @@ export type StateOfApplicabilityControlsTabFragment$data = {
     readonly sectionTitle: string;
     readonly stateOfApplicabilityId: string | null | undefined;
   }>;
+  readonly canCreateStateOfApplicabilityControlMapping: boolean;
+  readonly canDeleteStateOfApplicabilityControlMapping: boolean;
   readonly controlsInfo: {
     readonly totalCount: number;
   };
@@ -87,6 +89,32 @@ const node: ReaderFragment = {
         }
       ],
       "storageKey": "controls(first:0)"
+    },
+    {
+      "alias": "canCreateStateOfApplicabilityControlMapping",
+      "args": [
+        {
+          "kind": "Literal",
+          "name": "action",
+          "value": "core:state-of-applicability:control-mapping:create"
+        }
+      ],
+      "kind": "ScalarField",
+      "name": "permission",
+      "storageKey": "permission(action:\"core:state-of-applicability:control-mapping:create\")"
+    },
+    {
+      "alias": "canDeleteStateOfApplicabilityControlMapping",
+      "args": [
+        {
+          "kind": "Literal",
+          "name": "action",
+          "value": "core:state-of-applicability:control-mapping:delete"
+        }
+      ],
+      "kind": "ScalarField",
+      "name": "permission",
+      "storageKey": "permission(action:\"core:state-of-applicability:control-mapping:delete\")"
     },
     {
       "alias": null,
@@ -195,6 +223,6 @@ const node: ReaderFragment = {
   "abstractKey": null
 };
 
-(node as any).hash = "e72695289b29d1a4b60e3f7c18ba1165";
+(node as any).hash = "70183a65cc3c55a9ffddb4c2824bf5a7";
 
 export default node;

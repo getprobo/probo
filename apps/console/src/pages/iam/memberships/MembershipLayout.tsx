@@ -12,10 +12,14 @@ import { CoreRelayProvider } from "/providers/CoreRelayProvider";
 export const membershipLayoutQuery = graphql`
   query MembershipLayoutQuery($organizationId: ID!) {
     organization: node(id: $organizationId) @required(action: THROW) {
+      __typename
       ... on Organization {
         ...MembershipsDropdown_organizationFragment
         ...SessionDropdownFragment
         ...SidebarFragment
+        viewerMembership @required(action: THROW) {
+          role
+        }
       }
     }
     viewer @required(action: THROW) {
@@ -38,6 +42,9 @@ export function MembershipLayout(props: {
     membershipLayoutQuery,
     queryRef,
   );
+  if (organization.__typename !== "Organization") {
+    throw new Error("invalid type for organization node");
+  }
 
   return (
     <Layout
@@ -69,7 +76,7 @@ export function MembershipLayout(props: {
       sidebar={<Sidebar fKey={organization} />}
     >
       <CoreRelayProvider>
-        <Outlet />
+        <Outlet context={organization.viewerMembership.role} />
       </CoreRelayProvider>
     </Layout>
   );

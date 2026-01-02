@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<06d34888ed5b3e0d66f2159e1a916196>>
+ * @generated SignedSource<<e559b5ed1fa680ba3fa253c258d92315>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -121,6 +121,32 @@ return {
                 "storageKey": "controls(first:0)"
               },
               {
+                "alias": "canCreateStateOfApplicabilityControlMapping",
+                "args": [
+                  {
+                    "kind": "Literal",
+                    "name": "action",
+                    "value": "core:state-of-applicability:control-mapping:create"
+                  }
+                ],
+                "kind": "ScalarField",
+                "name": "permission",
+                "storageKey": "permission(action:\"core:state-of-applicability:control-mapping:create\")"
+              },
+              {
+                "alias": "canDeleteStateOfApplicabilityControlMapping",
+                "args": [
+                  {
+                    "kind": "Literal",
+                    "name": "action",
+                    "value": "core:state-of-applicability:control-mapping:delete"
+                  }
+                ],
+                "kind": "ScalarField",
+                "name": "permission",
+                "storageKey": "permission(action:\"core:state-of-applicability:control-mapping:delete\")"
+              },
+              {
                 "alias": null,
                 "args": null,
                 "concreteType": "AvailableStateOfApplicabilityControl",
@@ -232,16 +258,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "50874b763d9f2cfc01d097ec9b68ec82",
+    "cacheID": "7faadf001782b3aae9b9af0ce5ffa7a5",
     "id": null,
     "metadata": {},
     "name": "StateOfApplicabilityControlsTabRefetchQuery",
     "operationKind": "query",
-    "text": "query StateOfApplicabilityControlsTabRefetchQuery(\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...StateOfApplicabilityControlsTabFragment\n    id\n  }\n}\n\nfragment StateOfApplicabilityControlsTabFragment on StateOfApplicability {\n  id\n  controlsInfo: controls(first: 0) {\n    totalCount\n  }\n  availableControls {\n    controlId\n    sectionTitle\n    name\n    frameworkId\n    frameworkName\n    organizationId\n    stateOfApplicabilityId\n    applicability\n    justification\n    bestPractice\n    regulatory\n    contractual\n    riskAssessment\n  }\n}\n"
+    "text": "query StateOfApplicabilityControlsTabRefetchQuery(\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...StateOfApplicabilityControlsTabFragment\n    id\n  }\n}\n\nfragment StateOfApplicabilityControlsTabFragment on StateOfApplicability {\n  id\n  controlsInfo: controls(first: 0) {\n    totalCount\n  }\n  canCreateStateOfApplicabilityControlMapping: permission(action: \"core:state-of-applicability:control-mapping:create\")\n  canDeleteStateOfApplicabilityControlMapping: permission(action: \"core:state-of-applicability:control-mapping:delete\")\n  availableControls {\n    controlId\n    sectionTitle\n    name\n    frameworkId\n    frameworkName\n    organizationId\n    stateOfApplicabilityId\n    applicability\n    justification\n    bestPractice\n    regulatory\n    contractual\n    riskAssessment\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "e72695289b29d1a4b60e3f7c18ba1165";
+(node as any).hash = "70183a65cc3c55a9ffddb4c2824bf5a7";
 
 export default node;

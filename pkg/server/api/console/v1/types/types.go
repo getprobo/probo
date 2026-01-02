@@ -1683,6 +1683,7 @@ type RightsRequest struct {
 	ActionTaken  *string                     `json:"actionTaken,omitempty"`
 	CreatedAt    time.Time                   `json:"createdAt"`
 	UpdatedAt    time.Time                   `json:"updatedAt"`
+	Permission   bool                        `json:"permission"`
 }
 
 func (RightsRequest) IsNode()             {}
@@ -1796,6 +1797,7 @@ type StateOfApplicability struct {
 	SnapshotID        *gid.GID                                `json:"snapshotId,omitempty"`
 	Organization      *Organization                           `json:"organization,omitempty"`
 	Owner             *People                                 `json:"owner"`
+	Permission        bool                                    `json:"permission"`
 	Controls          *ControlConnection                      `json:"controls"`
 	AvailableControls []*AvailableStateOfApplicabilityControl `json:"availableControls"`
 	CreatedAt         time.Time                               `json:"createdAt"`
