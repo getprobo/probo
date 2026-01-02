@@ -164,6 +164,35 @@ WHERE
 	return nil
 }
 
+// AuthorizationAttributes loads the minimal authorization attributes for policy condition evaluation.
+// It is intentionally lightweight and does not populate the Invitation struct.
+func (i *Invitation) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+	q := `
+SELECT
+    email
+    , organization_id
+FROM
+    iam_invitations
+WHERE
+    id = $1
+LIMIT 1;
+`
+
+	var email string
+	var organizationID gid.GID
+	if err := conn.QueryRow(ctx, q, i.ID).Scan(&email, &organizationID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrResourceNotFound
+		}
+		return nil, fmt.Errorf("cannot query invitation iam attributes: %w", err)
+	}
+
+	return map[string]string{
+		"email":           email,
+		"organization_id": organizationID.String(),
+	}, nil
+}
+
 func (i *Invitation) Update(ctx context.Context, conn pg.Conn, scope Scoper) error {
 	query := `
 UPDATE

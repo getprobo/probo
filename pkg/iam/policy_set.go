@@ -16,21 +16,21 @@ package iam
 
 import "go.probo.inc/probo/pkg/iam/policy"
 
-// PolicySet holds role-based and self-management policies.
+// PolicySet holds organization-scoped (role) policies and identity-scoped policies.
 // Services create their own PolicySet and combine them when creating the Authorizer.
 type PolicySet struct {
 	// RolePolicies maps role names to policies.
 	RolePolicies map[string][]*policy.Policy
 
-	// SelfManagePolicies are applied to all authenticated users.
-	SelfManagePolicies []*policy.Policy
+	// IdentityScopedPolicies are applied to all authenticated users, independent of organization membership.
+	IdentityScopedPolicies []*policy.Policy
 }
 
 // NewPolicySet creates an empty PolicySet.
 func NewPolicySet() *PolicySet {
 	return &PolicySet{
-		RolePolicies:       make(map[string][]*policy.Policy),
-		SelfManagePolicies: make([]*policy.Policy, 0),
+		RolePolicies:           make(map[string][]*policy.Policy),
+		IdentityScopedPolicies: make([]*policy.Policy, 0),
 	}
 }
 
@@ -40,9 +40,9 @@ func (ps *PolicySet) AddRolePolicy(role string, policies ...*policy.Policy) *Pol
 	return ps
 }
 
-// AddSelfManagePolicy adds policies applied to all authenticated users.
-func (ps *PolicySet) AddSelfManagePolicy(policies ...*policy.Policy) *PolicySet {
-	ps.SelfManagePolicies = append(ps.SelfManagePolicies, policies...)
+// AddIdentityScopedPolicy adds policies applied to all authenticated users (identity-scoped).
+func (ps *PolicySet) AddIdentityScopedPolicy(policies ...*policy.Policy) *PolicySet {
+	ps.IdentityScopedPolicies = append(ps.IdentityScopedPolicies, policies...)
 	return ps
 }
 
@@ -51,7 +51,7 @@ func (ps *PolicySet) Merge(other *PolicySet) *PolicySet {
 	for role, policies := range other.RolePolicies {
 		ps.RolePolicies[role] = append(ps.RolePolicies[role], policies...)
 	}
-	ps.SelfManagePolicies = append(ps.SelfManagePolicies, other.SelfManagePolicies...)
+	ps.IdentityScopedPolicies = append(ps.IdentityScopedPolicies, other.IdentityScopedPolicies...)
 	return ps
 }
 
@@ -62,7 +62,7 @@ func IAMPolicySet() *PolicySet {
 		AddRolePolicy("VIEWER", IAMViewerPolicy).
 		AddRolePolicy("EMPLOYEE", IAMViewerPolicy).
 		AddRolePolicy("AUDITOR", IAMViewerPolicy).
-		AddSelfManagePolicy(
+		AddIdentityScopedPolicy(
 			IAMSelfManageIdentityPolicy,
 			IAMSelfManageSessionPolicy,
 			IAMSelfManageInvitationPolicy,

@@ -7,7 +7,6 @@ import {
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { useCopy } from "@probo/hooks";
-import { useEffect } from "react";
 
 export function PersonalAPIKeyTokenDialog(props: {
   dialogRef: React.RefObject<{ open: () => void; close: () => void } | null>;
@@ -17,8 +16,6 @@ export function PersonalAPIKeyTokenDialog(props: {
   const { dialogRef, token, onDone } = props;
   const { __ } = useTranslate();
   const [isCopied, copy] = useCopy();
-
-  useEffect(() => {}, [token]);
 
   return (
     <Dialog

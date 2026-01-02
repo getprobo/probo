@@ -86,9 +86,6 @@ type Mutation {
   createPersonalAPIKey(
     input: CreatePersonalAPIKeyInput!
   ): CreatePersonalAPIKeyPayload @session(required: PRESENT)
-  revealPersonalAPIKeyToken(
-    input: RevealPersonalAPIKeyTokenInput!
-  ): RevealPersonalAPIKeyTokenPayload @session(required: PRESENT)
   revokePersonalAPIKey(
     input: RevokePersonalAPIKeyInput!
   ): RevokePersonalAPIKeyPayload @session(required: PRESENT)
@@ -285,11 +282,10 @@ type Session implements Node {
 type PersonalAPIKey implements Node {
   id: ID!
   name: String!
-  lastUsedAt: Datetime
   expiresAt: Datetime!
   createdAt: Datetime!
-  scopes: [TokenScope!]!
-  organizations: [Organization!]!
+
+  token: String @goField(forceResolver: true)
 
   permission(action: String!): Boolean!
     @goField(forceResolver: true)
@@ -576,15 +572,10 @@ input RevokeSessionInput {
 input CreatePersonalAPIKeyInput {
   name: String!
   expiresAt: Datetime!
-  organizationIds: [ID!]!
 }
 
 input RevokePersonalAPIKeyInput {
-  tokenId: ID!
-}
-
-input RevealPersonalAPIKeyTokenInput {
-  tokenId: ID!
+  personalAPIKeyId: ID!
 }
 
 input CreateOrganizationInput {
@@ -751,11 +742,7 @@ type CreatePersonalAPIKeyPayload {
 }
 
 type RevokePersonalAPIKeyPayload {
-  success: Boolean!
-}
-
-type RevealPersonalAPIKeyTokenPayload {
-  token: String!
+  personalAPIKeyId: ID!
 }
 
 type CreateOrganizationPayload {

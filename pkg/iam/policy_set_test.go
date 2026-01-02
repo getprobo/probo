@@ -28,13 +28,13 @@ func TestPolicySet_AddAndMerge(t *testing.T) {
 	iamPolicies := NewPolicySet().
 		AddRolePolicy("OWNER", policy.NewPolicy("iam-owner", "IAM Owner", policy.Allow("iam:*"))).
 		AddRolePolicy("ADMIN", policy.NewPolicy("iam-admin", "IAM Admin", policy.Allow("iam:read:*"))).
-		AddSelfManagePolicy(policy.NewPolicy("iam-self", "IAM Self", policy.Allow("iam:identity:get")))
+		AddIdentityScopedPolicy(policy.NewPolicy("iam-self", "IAM Self", policy.Allow("iam:identity:get")))
 
 	// Create second policy set (simulating Documents service)
 	docsPolicies := NewPolicySet().
 		AddRolePolicy("OWNER", policy.NewPolicy("docs-owner", "Docs Owner", policy.Allow("docs:*"))).
 		AddRolePolicy("VIEWER", policy.NewPolicy("docs-viewer", "Docs Viewer", policy.Allow("docs:read:*"))).
-		AddSelfManagePolicy(policy.NewPolicy("docs-self", "Docs Self", policy.Allow("docs:own:*")))
+		AddIdentityScopedPolicy(policy.NewPolicy("docs-self", "Docs Self", policy.Allow("docs:own:*")))
 
 	// Merge them
 	combined := iamPolicies.Merge(docsPolicies)
@@ -53,8 +53,8 @@ func TestPolicySet_AddAndMerge(t *testing.T) {
 	require.Len(t, viewerPolicies, 1, "should have 1 VIEWER policy")
 
 	// Test self-manage policies from both services
-	selfPolicies := combined.SelfManagePolicies
-	require.Len(t, selfPolicies, 2, "should have 2 self-manage policies")
+	identityPolicies := combined.IdentityScopedPolicies
+	require.Len(t, identityPolicies, 2, "should have 2 identity-scoped policies")
 }
 
 func TestIAMPolicySet(t *testing.T) {
@@ -69,5 +69,5 @@ func TestIAMPolicySet(t *testing.T) {
 	}
 
 	// Should have self-manage policies
-	assert.NotEmpty(t, policySet.SelfManagePolicies, "expected self-manage policies")
+	assert.NotEmpty(t, policySet.IdentityScopedPolicies, "expected identity-scoped policies")
 }

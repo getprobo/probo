@@ -56,6 +56,20 @@ func (v VendorDataPrivacyAgreement) CursorKey(orderBy VendorDataPrivacyAgreement
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
+func (vdpa *VendorDataPrivacyAgreement) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+	q := `SELECT organization_id FROM vendor_data_privacy_agreements WHERE id = $1 LIMIT 1;`
+
+	var organizationID gid.GID
+	if err := conn.QueryRow(ctx, q, vdpa.ID).Scan(&organizationID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrResourceNotFound
+		}
+		return nil, fmt.Errorf("cannot query vendor data privacy agreement authorization attributes: %w", err)
+	}
+
+	return map[string]string{"organization_id": organizationID.String()}, nil
+}
+
 func (vdpa *VendorDataPrivacyAgreement) LoadByVendorID(
 	ctx context.Context,
 	conn pg.Conn,

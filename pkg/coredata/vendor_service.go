@@ -54,6 +54,20 @@ func (vs VendorService) CursorKey(orderBy VendorServiceOrderField) page.CursorKe
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
+func (vs *VendorService) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+	q := `SELECT organization_id FROM vendor_services WHERE id = $1 LIMIT 1;`
+
+	var organizationID gid.GID
+	if err := conn.QueryRow(ctx, q, vs.ID).Scan(&organizationID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrResourceNotFound
+		}
+		return nil, fmt.Errorf("cannot query vendor service authorization attributes: %w", err)
+	}
+
+	return map[string]string{"organization_id": organizationID.String()}, nil
+}
+
 func (vs *VendorService) LoadByID(
 	ctx context.Context,
 	conn pg.Conn,

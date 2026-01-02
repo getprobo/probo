@@ -29,19 +29,19 @@ import (
 
 type (
 	SlackMessage struct {
-		ID                    gid.GID                    `db:"id"`
-		OrganizationID        gid.GID                    `db:"organization_id"`
-		Type                  SlackMessageType           `db:"type"`
-		Body                  map[string]any             `db:"body"`
-		MessageTS             *string                    `db:"message_ts"`
-		ChannelID             *string                    `db:"channel_id"`
-		RequesterEmail        *mail.Addr `db:"requester_email"`
-		Metadata              map[string]any             `db:"metadata"`
-		InitialSlackMessageID gid.GID                    `db:"initial_slack_message_id"`
-		CreatedAt             time.Time                  `db:"created_at"`
-		UpdatedAt             time.Time                  `db:"updated_at"`
-		SentAt                *time.Time                 `db:"sent_at"`
-		Error                 *string                    `db:"error"`
+		ID                    gid.GID          `db:"id"`
+		OrganizationID        gid.GID          `db:"organization_id"`
+		Type                  SlackMessageType `db:"type"`
+		Body                  map[string]any   `db:"body"`
+		MessageTS             *string          `db:"message_ts"`
+		ChannelID             *string          `db:"channel_id"`
+		RequesterEmail        *mail.Addr       `db:"requester_email"`
+		Metadata              map[string]any   `db:"metadata"`
+		InitialSlackMessageID gid.GID          `db:"initial_slack_message_id"`
+		CreatedAt             time.Time        `db:"created_at"`
+		UpdatedAt             time.Time        `db:"updated_at"`
+		SentAt                *time.Time       `db:"sent_at"`
+		Error                 *string          `db:"error"`
 	}
 
 	ErrNoUnsentSlackMessage struct{}
@@ -55,6 +55,20 @@ func (e ErrNoUnsentSlackMessage) Error() string {
 
 func (e ErrSlackMessageNotFound) Error() string {
 	return "slack message not found"
+}
+
+func (sm *SlackMessage) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+	q := `SELECT organization_id FROM slack_messages WHERE id = $1 LIMIT 1;`
+
+	var organizationID gid.GID
+	if err := conn.QueryRow(ctx, q, sm.ID).Scan(&organizationID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrResourceNotFound
+		}
+		return nil, fmt.Errorf("cannot query slack message authorization attributes: %w", err)
+	}
+
+	return map[string]string{"organization_id": organizationID.String()}, nil
 }
 
 func NewSlackMessage(

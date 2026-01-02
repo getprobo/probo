@@ -131,4 +131,3 @@ func ForEntityType(entityType uint16) ResourcePattern {
 		EntityType: &entityType,
 	}
 }
-

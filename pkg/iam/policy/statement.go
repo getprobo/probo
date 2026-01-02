@@ -15,6 +15,8 @@
 package policy
 
 import (
+	"strings"
+
 	"go.probo.inc/probo/pkg/gid"
 )
 
@@ -139,7 +141,22 @@ func (c Condition) Evaluate(ctx ConditionContext) bool {
 	case ConditionIn:
 		for _, v := range c.Values {
 			resolved, ok := resolveValue(v, ctx)
-			if ok && value == resolved {
+			if !ok {
+				continue
+			}
+
+			// Support a comma-separated "set" value, e.g.
+			// principal.organization_ids = "org_1,org_2"
+			if strings.Contains(resolved, ",") {
+				for _, item := range strings.Split(resolved, ",") {
+					if value == strings.TrimSpace(item) {
+						return true
+					}
+				}
+				continue
+			}
+
+			if value == resolved {
 				return true
 			}
 		}
@@ -148,7 +165,20 @@ func (c Condition) Evaluate(ctx ConditionContext) bool {
 	case ConditionNotIn:
 		for _, v := range c.Values {
 			resolved, ok := resolveValue(v, ctx)
-			if ok && value == resolved {
+			if !ok {
+				continue
+			}
+
+			if strings.Contains(resolved, ",") {
+				for _, item := range strings.Split(resolved, ",") {
+					if value == strings.TrimSpace(item) {
+						return false
+					}
+				}
+				continue
+			}
+
+			if value == resolved {
 				return false
 			}
 		}

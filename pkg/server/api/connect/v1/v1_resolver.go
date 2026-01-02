@@ -677,30 +677,17 @@ func (r *mutationResolver) CreatePersonalAPIKey(ctx context.Context, input types
 	}, nil
 }
 
-// RevealPersonalAPIKeyToken is the resolver for the revealPersonalAPIKeyToken field.
-func (r *mutationResolver) RevealPersonalAPIKeyToken(ctx context.Context, input types.RevealPersonalAPIKeyTokenInput) (*types.RevealPersonalAPIKeyTokenPayload, error) {
-	identity := IdentityFromContext(ctx)
-
-	token, err := r.iam.AccountService.RevealPersonalAPIKeyToken(ctx, identity.ID, input.TokenID)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot reveal personal api key token", log.Error(err))
-		return nil, gqlutils.InternalServerError(ctx)
-	}
-
-	return &types.RevealPersonalAPIKeyTokenPayload{Token: token}, nil
-}
-
 // RevokePersonalAPIKey is the resolver for the revokePersonalAPIKey field.
 func (r *mutationResolver) RevokePersonalAPIKey(ctx context.Context, input types.RevokePersonalAPIKeyInput) (*types.RevokePersonalAPIKeyPayload, error) {
 	identity := IdentityFromContext(ctx)
 
-	err := r.iam.AccountService.DeletePersonalAPIKey(ctx, identity.ID, input.TokenID)
+	err := r.iam.AccountService.DeletePersonalAPIKey(ctx, identity.ID, input.PersonalAPIKeyID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete personal api key", log.Error(err))
 		return nil, gqlutils.InternalServerError(ctx)
 	}
 
-	return &types.RevokePersonalAPIKeyPayload{Success: true}, nil
+	return &types.RevokePersonalAPIKeyPayload{PersonalAPIKeyID: input.PersonalAPIKeyID}, nil
 }
 
 // CreateOrganization is the resolver for the createOrganization field.
@@ -1012,6 +999,15 @@ func (r *organizationResolver) HorizontalLogoURL(ctx context.Context, obj *types
 
 // Members is the resolver for the members field.
 func (r *organizationResolver) Members(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MembershipOrderBy) (*types.MembershipConnection, error) {
+	if err := r.iam.Authorizer.Authorize(ctx, iam.AuthorizeParams{
+		Principal:          IdentityFromContext(ctx).ID,
+		Resource:           obj.ID,
+		Action:             iam.ActionIAMOrganizationListMembers,
+		ResourceAttributes: map[string]string{},
+	}); err != nil {
+		return nil, gqlutils.Forbidden(err)
+	}
+
 	if gqlutils.OnlyTotalCountSelected(ctx) {
 		return &types.MembershipConnection{
 			Resolver: r,
@@ -1112,6 +1108,19 @@ func (r *organizationResolver) Permission(ctx context.Context, obj *types.Organi
 	return r.Resolver.Permission(ctx, obj, action)
 }
 
+// Token is the resolver for the token field.
+func (r *personalAPIKeyResolver) Token(ctx context.Context, obj *types.PersonalAPIKey) (*string, error) {
+	identity := IdentityFromContext(ctx)
+
+	token, err := r.iam.AccountService.RevealPersonalAPIKeyToken(ctx, identity.ID, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot reveal personal api key token", log.Error(err))
+		return nil, gqlutils.InternalServerError(ctx)
+	}
+
+	return &token, nil
+}
+
 // Permission is the resolver for the permission field.
 func (r *personalAPIKeyResolver) Permission(ctx context.Context, obj *types.PersonalAPIKey, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)
@@ -1201,6 +1210,15 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			}
 
 			return types.NewSAMLConfiguration(samlConfiguration), nil
+		}
+	case coredata.PersonalAPIKeyEntityType:
+		action = iam.ActionIAMPersonalAPIKeyGet
+		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
+			personalAPIKey, err := r.iam.GetPersonalAPIKey(ctx, id)
+			if err != nil {
+				return nil, err
+			}
+			return types.NewPersonalAPIKey(personalAPIKey), nil
 		}
 	default:
 		return nil, fmt.Errorf("unsupported entity type: %d", id.EntityType())
