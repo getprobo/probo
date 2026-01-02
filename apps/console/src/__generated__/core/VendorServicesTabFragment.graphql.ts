@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<4dfc017ac50d12a09ddac0cf37061c06>>
+ * @generated SignedSource<<63a5d7d63f436c96a8f7d9b66a4f708d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -16,6 +16,8 @@ export type VendorServicesTabFragment$data = {
     readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly node: {
+        readonly canDelete: boolean;
+        readonly canUpdate: boolean;
         readonly id: string;
         readonly " $fragmentSpreads": FragmentRefs<"VendorServicesTabFragment_service">;
       };
@@ -135,6 +137,32 @@ return {
               "selections": [
                 (v1/*: any*/),
                 {
+                  "alias": "canUpdate",
+                  "args": [
+                    {
+                      "kind": "Literal",
+                      "name": "action",
+                      "value": "core:vendor-service:update"
+                    }
+                  ],
+                  "kind": "ScalarField",
+                  "name": "permission",
+                  "storageKey": "permission(action:\"core:vendor-service:update\")"
+                },
+                {
+                  "alias": "canDelete",
+                  "args": [
+                    {
+                      "kind": "Literal",
+                      "name": "action",
+                      "value": "core:vendor-service:delete"
+                    }
+                  ],
+                  "kind": "ScalarField",
+                  "name": "permission",
+                  "storageKey": "permission(action:\"core:vendor-service:delete\")"
+                },
+                {
                   "args": null,
                   "kind": "FragmentSpread",
                   "name": "VendorServicesTabFragment_service"
@@ -220,6 +248,6 @@ return {
 };
 })();
 
-(node as any).hash = "fd0c58f2929f925fb47e5df22f6a84f7";
+(node as any).hash = "9ef8673eefe25a94bb6e02b564c2f1aa";
 
 export default node;

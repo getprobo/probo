@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<5f9ff983582bf49d588a9d0d986653d7>>
+ * @generated SignedSource<<32bbeab909437ba96ded84710a198413>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -337,6 +337,32 @@ return {
                             ],
                             "storageKey": "riskAssessments(first:1,orderBy:{\"direction\":\"DESC\",\"field\":\"CREATED_AT\"})"
                           },
+                          {
+                            "alias": "canUpdate",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:vendor:update"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:vendor:update\")"
+                          },
+                          {
+                            "alias": "canDelete",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:vendor:delete"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:vendor:delete\")"
+                          },
                           (v13/*: any*/)
                         ],
                         "storageKey": null
@@ -426,16 +452,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "bf14bba14dba4fb544d431600ea31317",
+    "cacheID": "04d4f2010cbc972eea3c0b464a7d2ad8",
     "id": null,
     "metadata": {},
     "name": "VendorsListQuery",
     "operationKind": "query",
-    "text": "query VendorsListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 50\n  $last: Int = null\n  $order: VendorOrder = null\n  $snapshotId: ID = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...VendorGraphPaginatedFragment_25MC8O\n    id\n  }\n}\n\nfragment VendorGraphPaginatedFragment_25MC8O on Organization {\n  vendors(first: $first, after: $after, last: $last, before: $before, orderBy: $order, filter: {snapshotId: $snapshotId}) {\n    edges {\n      node {\n        id\n        snapshotId\n        name\n        websiteUrl\n        updatedAt\n        riskAssessments(first: 1, orderBy: {direction: DESC, field: CREATED_AT}) {\n          edges {\n            node {\n              id\n              createdAt\n              expiresAt\n              dataSensitivity\n              businessImpact\n            }\n          }\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
+    "text": "query VendorsListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 50\n  $last: Int = null\n  $order: VendorOrder = null\n  $snapshotId: ID = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...VendorGraphPaginatedFragment_25MC8O\n    id\n  }\n}\n\nfragment VendorGraphPaginatedFragment_25MC8O on Organization {\n  vendors(first: $first, after: $after, last: $last, before: $before, orderBy: $order, filter: {snapshotId: $snapshotId}) {\n    edges {\n      node {\n        id\n        snapshotId\n        name\n        websiteUrl\n        updatedAt\n        riskAssessments(first: 1, orderBy: {direction: DESC, field: CREATED_AT}) {\n          edges {\n            node {\n              id\n              createdAt\n              expiresAt\n              dataSensitivity\n              businessImpact\n            }\n          }\n        }\n        canUpdate: permission(action: \"core:vendor:update\")\n        canDelete: permission(action: \"core:vendor:delete\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
   }
 };
 })();
 
-(node as any).hash = "bf222e31d20ebe7c9dfdedff7d5a9c68";
+(node as any).hash = "023558795ed2a60c50d2c39edbe3db36";
 
 export default node;

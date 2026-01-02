@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<6aea0078adcf4d7180d89dbf964eaceb>>
+ * @generated SignedSource<<67ebbddf5fa502880ebc8aa6b5f9810c>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -15,6 +15,8 @@ export type VendorContactsTabFragment$data = {
     readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly node: {
+        readonly canDelete: boolean;
+        readonly canUpdate: boolean;
         readonly id: string;
         readonly " $fragmentSpreads": FragmentRefs<"VendorContactsTabFragment_contact">;
       };
@@ -135,6 +137,32 @@ return {
               "selections": [
                 (v1/*: any*/),
                 {
+                  "alias": "canUpdate",
+                  "args": [
+                    {
+                      "kind": "Literal",
+                      "name": "action",
+                      "value": "core:vendor-contact:update"
+                    }
+                  ],
+                  "kind": "ScalarField",
+                  "name": "permission",
+                  "storageKey": "permission(action:\"core:vendor-contact:update\")"
+                },
+                {
+                  "alias": "canDelete",
+                  "args": [
+                    {
+                      "kind": "Literal",
+                      "name": "action",
+                      "value": "core:vendor-contact:delete"
+                    }
+                  ],
+                  "kind": "ScalarField",
+                  "name": "permission",
+                  "storageKey": "permission(action:\"core:vendor-contact:delete\")"
+                },
+                {
                   "args": null,
                   "kind": "FragmentSpread",
                   "name": "VendorContactsTabFragment_contact"
@@ -220,6 +248,6 @@ return {
 };
 })();
 
-(node as any).hash = "aa8ba87386ba04dd624566661fe0a524";
+(node as any).hash = "b0516167cf827553fe6c6617b2025967";
 
 export default node;

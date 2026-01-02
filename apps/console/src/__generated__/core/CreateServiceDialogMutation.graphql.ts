@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<57cf7bb390b9d8d00ce0368cf782205c>>
+ * @generated SignedSource<<aacbb3c4646610f327cc7cea8f944158>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -172,6 +172,32 @@ return {
                     "kind": "ScalarField",
                     "name": "updatedAt",
                     "storageKey": null
+                  },
+                  {
+                    "alias": "canUpdate",
+                    "args": [
+                      {
+                        "kind": "Literal",
+                        "name": "action",
+                        "value": "core:vendor-service:update"
+                      }
+                    ],
+                    "kind": "ScalarField",
+                    "name": "permission",
+                    "storageKey": "permission(action:\"core:vendor-service:update\")"
+                  },
+                  {
+                    "alias": "canDelete",
+                    "args": [
+                      {
+                        "kind": "Literal",
+                        "name": "action",
+                        "value": "core:vendor-service:delete"
+                      }
+                    ],
+                    "kind": "ScalarField",
+                    "name": "permission",
+                    "storageKey": "permission(action:\"core:vendor-service:delete\")"
                   }
                 ],
                 "storageKey": null
@@ -201,12 +227,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "c4c687377eb1a18eb15abbfa1bf86bfa",
+    "cacheID": "05250ac44a987544335a9e97eed9d66b",
     "id": null,
     "metadata": {},
     "name": "CreateServiceDialogMutation",
     "operationKind": "mutation",
-    "text": "mutation CreateServiceDialogMutation(\n  $input: CreateVendorServiceInput!\n) {\n  createVendorService(input: $input) {\n    vendorServiceEdge {\n      node {\n        ...VendorServicesTabFragment_service\n        id\n      }\n    }\n  }\n}\n\nfragment VendorServicesTabFragment_service on VendorService {\n  id\n  name\n  description\n  createdAt\n  updatedAt\n}\n"
+    "text": "mutation CreateServiceDialogMutation(\n  $input: CreateVendorServiceInput!\n) {\n  createVendorService(input: $input) {\n    vendorServiceEdge {\n      node {\n        ...VendorServicesTabFragment_service\n        id\n      }\n    }\n  }\n}\n\nfragment VendorServicesTabFragment_service on VendorService {\n  id\n  name\n  description\n  createdAt\n  updatedAt\n  canUpdate: permission(action: \"core:vendor-service:update\")\n  canDelete: permission(action: \"core:vendor-service:delete\")\n}\n"
   }
 };
 })();

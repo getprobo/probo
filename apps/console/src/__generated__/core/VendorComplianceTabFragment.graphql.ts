@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<e5f0f2600db655bd96ca2c7ea52f8b44>>
+ * @generated SignedSource<<08a3ccf322eccf9d7c86b2f383526687>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -15,6 +15,7 @@ export type VendorComplianceTabFragment$data = {
     readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly node: {
+        readonly canDelete: boolean;
         readonly id: string;
         readonly " $fragmentSpreads": FragmentRefs<"VendorComplianceTabFragment_report">;
       };
@@ -135,6 +136,19 @@ return {
               "selections": [
                 (v1/*: any*/),
                 {
+                  "alias": "canDelete",
+                  "args": [
+                    {
+                      "kind": "Literal",
+                      "name": "action",
+                      "value": "core:vendor-compliance-report:delete"
+                    }
+                  ],
+                  "kind": "ScalarField",
+                  "name": "permission",
+                  "storageKey": "permission(action:\"core:vendor-compliance-report:delete\")"
+                },
+                {
                   "args": null,
                   "kind": "FragmentSpread",
                   "name": "VendorComplianceTabFragment_report"
@@ -220,6 +234,6 @@ return {
 };
 })();
 
-(node as any).hash = "1fe4e0b1f9fb781c3b01e539145d610a";
+(node as any).hash = "078c14e9b989c435abf83ec5b4396f6c";
 
 export default node;

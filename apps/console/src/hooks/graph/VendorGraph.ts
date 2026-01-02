@@ -23,6 +23,8 @@ const createVendorMutation = graphql`
           websiteUrl
           createdAt
           updatedAt
+          canUpdate: permission(action: "core:vendor:update")
+          canDelete: permission(action: "core:vendor:delete")
         }
       }
     }
@@ -93,6 +95,7 @@ export const vendorsQuery = graphql`
     node(id: $organizationId) {
       ... on Organization {
         id
+        canCreateVendor: permission(action: "core:vendor:create")
         ...VendorGraphPaginatedFragment @arguments(snapshotId: $snapshotId)
       }
     }
@@ -140,6 +143,8 @@ export const paginatedVendorsFragment = graphql`
               }
             }
           }
+          canUpdate: permission(action: "core:vendor:update")
+          canDelete: permission(action: "core:vendor:delete")
         }
       }
     }
@@ -149,11 +154,28 @@ export const paginatedVendorsFragment = graphql`
 export const vendorNodeQuery = graphql`
   query VendorGraphNodeQuery($vendorId: ID!) {
     node(id: $vendorId) {
+      id
       ... on Vendor {
-        id
         snapshotId
         name
         websiteUrl
+        canAssess: permission(action: "core:vendor:assess")
+        canUpdate: permission(action: "core:vendor:update")
+        canDelete: permission(action: "core:vendor:delete")
+        canUploadComplianceReport: permission(
+          action: "core:vendor-compliance-report:upload"
+        )
+        canCreateRiskAssessment: permission(
+          action: "core:vendor-risk-assessment:create"
+        )
+        canCreateContact: permission(action: "core:vendor-contact:create")
+        canCreateService: permission(action: "core:vendor-service:create")
+        canUploadBAA: permission(
+          action: "core:vendor-business-associate-agreement:upload"
+        )
+        canUploadDPA: permission(
+          action: "core:vendor-data-privacy-agreement:upload"
+        )
         ...useVendorFormFragment
         ...VendorComplianceTabFragment
         ...VendorContactsTabFragment

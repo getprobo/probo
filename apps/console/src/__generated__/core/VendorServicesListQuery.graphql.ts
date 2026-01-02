@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<eb8e9cc9e50d48176edcd507b42a7dd7>>
+ * @generated SignedSource<<5eb43de8b9e005e9d6a505932b1e2bfd>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -213,6 +213,32 @@ return {
                         "selections": [
                           (v12/*: any*/),
                           {
+                            "alias": "canUpdate",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:vendor-service:update"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:vendor-service:update\")"
+                          },
+                          {
+                            "alias": "canDelete",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:vendor-service:delete"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:vendor-service:delete\")"
+                          },
+                          {
                             "alias": null,
                             "args": null,
                             "kind": "ScalarField",
@@ -329,16 +355,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "102f3aac3e2c7ef5115d73246f1bb241",
+    "cacheID": "94e552f4d7ee637234214d9277109b51",
     "id": null,
     "metadata": {},
     "name": "VendorServicesListQuery",
     "operationKind": "query",
-    "text": "query VendorServicesListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 50\n  $last: Int = null\n  $order: VendorServiceOrder = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...VendorServicesTabFragment_16fISc\n    id\n  }\n}\n\nfragment VendorServicesTabFragment_16fISc on Vendor {\n  services(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    edges {\n      node {\n        id\n        ...VendorServicesTabFragment_service\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment VendorServicesTabFragment_service on VendorService {\n  id\n  name\n  description\n  createdAt\n  updatedAt\n}\n"
+    "text": "query VendorServicesListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 50\n  $last: Int = null\n  $order: VendorServiceOrder = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...VendorServicesTabFragment_16fISc\n    id\n  }\n}\n\nfragment VendorServicesTabFragment_16fISc on Vendor {\n  services(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    edges {\n      node {\n        id\n        canUpdate: permission(action: \"core:vendor-service:update\")\n        canDelete: permission(action: \"core:vendor-service:delete\")\n        ...VendorServicesTabFragment_service\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment VendorServicesTabFragment_service on VendorService {\n  id\n  name\n  description\n  createdAt\n  updatedAt\n  canUpdate: permission(action: \"core:vendor-service:update\")\n  canDelete: permission(action: \"core:vendor-service:delete\")\n}\n"
   }
 };
 })();
 
-(node as any).hash = "fd0c58f2929f925fb47e5df22f6a84f7";
+(node as any).hash = "9ef8673eefe25a94bb6e02b564c2f1aa";
 
 export default node;

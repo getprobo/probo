@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<5c8614e9d015da9e6d79c806b556de1d>>
+ * @generated SignedSource<<8f9e37a76c35d572a81006be1c54b685>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -213,6 +213,19 @@ return {
                         "selections": [
                           (v12/*: any*/),
                           {
+                            "alias": "canDelete",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:vendor-compliance-report:delete"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:vendor-compliance-report:delete\")"
+                          },
+                          {
                             "alias": null,
                             "args": null,
                             "kind": "ScalarField",
@@ -355,16 +368,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "594e7edf24b110430566c9a21d1b5d29",
+    "cacheID": "0301f89298e5a1d39beac8f822095c6d",
     "id": null,
     "metadata": {},
     "name": "ComplianceReportListQuery",
     "operationKind": "query",
-    "text": "query ComplianceReportListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 50\n  $last: Int = null\n  $order: VendorComplianceReportOrder = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...VendorComplianceTabFragment_16fISc\n    id\n  }\n}\n\nfragment VendorComplianceTabFragment_16fISc on Vendor {\n  complianceReports(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    edges {\n      node {\n        id\n        ...VendorComplianceTabFragment_report\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment VendorComplianceTabFragment_report on VendorComplianceReport {\n  id\n  reportDate\n  validUntil\n  reportName\n  file {\n    fileName\n    mimeType\n    size\n    id\n  }\n}\n"
+    "text": "query ComplianceReportListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 50\n  $last: Int = null\n  $order: VendorComplianceReportOrder = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...VendorComplianceTabFragment_16fISc\n    id\n  }\n}\n\nfragment VendorComplianceTabFragment_16fISc on Vendor {\n  complianceReports(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    edges {\n      node {\n        id\n        canDelete: permission(action: \"core:vendor-compliance-report:delete\")\n        ...VendorComplianceTabFragment_report\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment VendorComplianceTabFragment_report on VendorComplianceReport {\n  id\n  reportDate\n  validUntil\n  reportName\n  file {\n    fileName\n    mimeType\n    size\n    id\n  }\n  canDelete: permission(action: \"core:vendor-compliance-report:delete\")\n}\n"
   }
 };
 })();
 
-(node as any).hash = "1fe4e0b1f9fb781c3b01e539145d610a";
+(node as any).hash = "078c14e9b989c435abf83ec5b4396f6c";
 
 export default node;

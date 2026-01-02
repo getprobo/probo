@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<4d2c61f9790a63656dde7d5199ea6a25>>
+ * @generated SignedSource<<72e8dfdd3ad86ac69f4e631191d994ad>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -213,6 +213,32 @@ return {
                         "selections": [
                           (v12/*: any*/),
                           {
+                            "alias": "canUpdate",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:vendor-contact:update"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:vendor-contact:update\")"
+                          },
+                          {
+                            "alias": "canDelete",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:vendor-contact:delete"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:vendor-contact:delete\")"
+                          },
+                          {
                             "alias": null,
                             "args": null,
                             "kind": "ScalarField",
@@ -343,16 +369,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "bc07b88571f6a7fbb20595cbf442d3b8",
+    "cacheID": "99175ca46dc5865d6d7a5f6c55fd8c8d",
     "id": null,
     "metadata": {},
     "name": "VendorContactsListQuery",
     "operationKind": "query",
-    "text": "query VendorContactsListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 50\n  $last: Int = null\n  $order: VendorContactOrder = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...VendorContactsTabFragment_16fISc\n    id\n  }\n}\n\nfragment VendorContactsTabFragment_16fISc on Vendor {\n  contacts(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    edges {\n      node {\n        id\n        ...VendorContactsTabFragment_contact\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment VendorContactsTabFragment_contact on VendorContact {\n  id\n  fullName\n  email\n  phone\n  role\n  createdAt\n  updatedAt\n}\n"
+    "text": "query VendorContactsListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 50\n  $last: Int = null\n  $order: VendorContactOrder = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...VendorContactsTabFragment_16fISc\n    id\n  }\n}\n\nfragment VendorContactsTabFragment_16fISc on Vendor {\n  contacts(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    edges {\n      node {\n        id\n        canUpdate: permission(action: \"core:vendor-contact:update\")\n        canDelete: permission(action: \"core:vendor-contact:delete\")\n        ...VendorContactsTabFragment_contact\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment VendorContactsTabFragment_contact on VendorContact {\n  id\n  fullName\n  email\n  phone\n  role\n  createdAt\n  updatedAt\n  canUpdate: permission(action: \"core:vendor-contact:update\")\n  canDelete: permission(action: \"core:vendor-contact:delete\")\n}\n"
   }
 };
 })();
 
-(node as any).hash = "aa8ba87386ba04dd624566661fe0a524";
+(node as any).hash = "b0516167cf827553fe6c6617b2025967";
 
 export default node;

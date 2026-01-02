@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<97f0c6ed319e3fba440079ef085a55eb>>
+ * @generated SignedSource<<e83a53e6de1bb7926c99b70425582ede>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -141,6 +141,32 @@ return {
                 "kind": "ScalarField",
                 "name": "updatedAt",
                 "storageKey": null
+              },
+              {
+                "alias": "canUpdate",
+                "args": [
+                  {
+                    "kind": "Literal",
+                    "name": "action",
+                    "value": "core:vendor-service:update"
+                  }
+                ],
+                "kind": "ScalarField",
+                "name": "permission",
+                "storageKey": "permission(action:\"core:vendor-service:update\")"
+              },
+              {
+                "alias": "canDelete",
+                "args": [
+                  {
+                    "kind": "Literal",
+                    "name": "action",
+                    "value": "core:vendor-service:delete"
+                  }
+                ],
+                "kind": "ScalarField",
+                "name": "permission",
+                "storageKey": "permission(action:\"core:vendor-service:delete\")"
               }
             ],
             "storageKey": null
@@ -151,12 +177,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "f2c37fa9a0b7f0ed043a4529d1f50c65",
+    "cacheID": "5944b8aa370dff2ef78b2690dd4b3f35",
     "id": null,
     "metadata": {},
     "name": "EditServiceDialogUpdateMutation",
     "operationKind": "mutation",
-    "text": "mutation EditServiceDialogUpdateMutation(\n  $input: UpdateVendorServiceInput!\n) {\n  updateVendorService(input: $input) {\n    vendorService {\n      ...VendorServicesTabFragment_service\n      id\n    }\n  }\n}\n\nfragment VendorServicesTabFragment_service on VendorService {\n  id\n  name\n  description\n  createdAt\n  updatedAt\n}\n"
+    "text": "mutation EditServiceDialogUpdateMutation(\n  $input: UpdateVendorServiceInput!\n) {\n  updateVendorService(input: $input) {\n    vendorService {\n      ...VendorServicesTabFragment_service\n      id\n    }\n  }\n}\n\nfragment VendorServicesTabFragment_service on VendorService {\n  id\n  name\n  description\n  createdAt\n  updatedAt\n  canUpdate: permission(action: \"core:vendor-service:update\")\n  canDelete: permission(action: \"core:vendor-service:delete\")\n}\n"
   }
 };
 })();
