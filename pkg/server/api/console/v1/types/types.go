@@ -97,6 +97,18 @@ type AuditEdge struct {
 	Node   *Audit         `json:"node"`
 }
 
+type AvailableControlForStateOfApplicability struct {
+	ControlID              gid.GID                           `json:"controlId"`
+	SectionTitle           string                            `json:"sectionTitle"`
+	Name                   string                            `json:"name"`
+	FrameworkID            gid.GID                           `json:"frameworkId"`
+	FrameworkName          string                            `json:"frameworkName"`
+	OrganizationID         gid.GID                           `json:"organizationId"`
+	StateOfApplicabilityID *gid.GID                          `json:"stateOfApplicabilityId,omitempty"`
+	State                  *StateOfApplicabilityControlState `json:"state,omitempty"`
+	ExclusionJustification *string                           `json:"exclusionJustification,omitempty"`
+}
+
 type BulkDeleteDocumentsInput struct {
 	DocumentIds []gid.GID `json:"documentIds"`
 }
@@ -554,6 +566,16 @@ type CreateSnapshotPayload struct {
 	SnapshotEdge *SnapshotEdge `json:"snapshotEdge"`
 }
 
+type CreateStateOfApplicabilityInput struct {
+	OrganizationID gid.GID `json:"organizationId"`
+	Name           string  `json:"name"`
+	Description    *string `json:"description,omitempty"`
+}
+
+type CreateStateOfApplicabilityPayload struct {
+	StateOfApplicabilityEdge *StateOfApplicabilityEdge `json:"stateOfApplicabilityEdge"`
+}
+
 type CreateTaskInput struct {
 	OrganizationID gid.GID        `json:"organizationId"`
 	MeasureID      *gid.GID       `json:"measureId,omitempty"`
@@ -997,6 +1019,14 @@ type DeleteSnapshotPayload struct {
 	DeletedSnapshotID gid.GID `json:"deletedSnapshotId"`
 }
 
+type DeleteStateOfApplicabilityInput struct {
+	StateOfApplicabilityID gid.GID `json:"stateOfApplicabilityId"`
+}
+
+type DeleteStateOfApplicabilityPayload struct {
+	DeletedStateOfApplicabilityID gid.GID `json:"deletedStateOfApplicabilityId"`
+}
+
 type DeleteTaskInput struct {
 	TaskID gid.GID `json:"taskId"`
 }
@@ -1233,6 +1263,14 @@ type ExportSignableDocumentVersionPDFPayload struct {
 	Data string `json:"data"`
 }
 
+type ExportStateOfApplicabilityPDFInput struct {
+	StateOfApplicabilityID gid.GID `json:"stateOfApplicabilityId"`
+}
+
+type ExportStateOfApplicabilityPDFPayload struct {
+	Data string `json:"data"`
+}
+
 type File struct {
 	ID          gid.GID   `json:"id"`
 	MimeType    string    `json:"mimeType"`
@@ -1365,6 +1403,17 @@ type InviteUserInput struct {
 
 type InviteUserPayload struct {
 	InvitationEdge *InvitationEdge `json:"invitationEdge"`
+}
+
+type LinkStateOfApplicabilityControlInput struct {
+	StateOfApplicabilityID gid.GID                          `json:"stateOfApplicabilityId"`
+	ControlID              gid.GID                          `json:"controlId"`
+	State                  StateOfApplicabilityControlState `json:"state"`
+	ExclusionJustification *string                          `json:"exclusionJustification,omitempty"`
+}
+
+type LinkStateOfApplicabilityControlPayload struct {
+	StateOfApplicabilityControl *StateOfApplicabilityControl `json:"stateOfApplicabilityControl"`
 }
 
 type Measure struct {
@@ -1515,6 +1564,7 @@ type Organization struct {
 	Peoples                         *PeopleConnection                         `json:"peoples"`
 	Documents                       *DocumentConnection                       `json:"documents"`
 	Meetings                        *MeetingConnection                        `json:"meetings"`
+	StateOfApplicabilities          *StateOfApplicabilityConnection           `json:"stateOfApplicabilities"`
 	Measures                        *MeasureConnection                        `json:"measures"`
 	Risks                           *RiskConnection                           `json:"risks"`
 	Tasks                           *TaskConnection                           `json:"tasks"`
@@ -1814,6 +1864,44 @@ type SnapshotEdge struct {
 	Node   *Snapshot      `json:"node"`
 }
 
+type StateOfApplicability struct {
+	ID                gid.GID                                    `json:"id"`
+	Name              string                                     `json:"name"`
+	Description       *string                                    `json:"description,omitempty"`
+	SourceID          *gid.GID                                   `json:"sourceId,omitempty"`
+	SnapshotID        *gid.GID                                   `json:"snapshotId,omitempty"`
+	Organization      *Organization                              `json:"organization,omitempty"`
+	Controls          *ControlConnection                         `json:"controls"`
+	AvailableControls []*AvailableControlForStateOfApplicability `json:"availableControls"`
+	CreatedAt         time.Time                                  `json:"createdAt"`
+	UpdatedAt         time.Time                                  `json:"updatedAt"`
+}
+
+func (StateOfApplicability) IsNode()             {}
+func (this StateOfApplicability) GetID() gid.GID { return this.ID }
+
+type StateOfApplicabilityControl struct {
+	StateOfApplicabilityID gid.GID                          `json:"stateOfApplicabilityId"`
+	ControlID              gid.GID                          `json:"controlId"`
+	State                  StateOfApplicabilityControlState `json:"state"`
+	ExclusionJustification *string                          `json:"exclusionJustification,omitempty"`
+}
+
+type StateOfApplicabilityControlInput struct {
+	ControlID              gid.GID                          `json:"controlId"`
+	State                  StateOfApplicabilityControlState `json:"state"`
+	ExclusionJustification *string                          `json:"exclusionJustification,omitempty"`
+}
+
+type StateOfApplicabilityEdge struct {
+	Cursor page.CursorKey        `json:"cursor"`
+	Node   *StateOfApplicability `json:"node"`
+}
+
+type StateOfApplicabilityFilter struct {
+	SnapshotID *gid.GID `json:"snapshotId,omitempty"`
+}
+
 type Task struct {
 	ID           gid.GID             `json:"id"`
 	Name         string              `json:"name"`
@@ -1965,6 +2053,15 @@ type UnassignTaskInput struct {
 
 type UnassignTaskPayload struct {
 	Task *Task `json:"task"`
+}
+
+type UnlinkStateOfApplicabilityControlInput struct {
+	StateOfApplicabilityID gid.GID `json:"stateOfApplicabilityId"`
+	ControlID              gid.GID `json:"controlId"`
+}
+
+type UnlinkStateOfApplicabilityControlPayload struct {
+	DeletedControlID gid.GID `json:"deletedControlId"`
 }
 
 type UpdateAssetInput struct {
@@ -2253,6 +2350,16 @@ type UpdateSAMLConfigurationInput struct {
 
 type UpdateSAMLConfigurationPayload struct {
 	SamlConfiguration *SAMLConfiguration `json:"samlConfiguration"`
+}
+
+type UpdateStateOfApplicabilityInput struct {
+	ID          gid.GID `json:"id"`
+	Name        *string `json:"name,omitempty"`
+	Description *string `json:"description,omitempty"`
+}
+
+type UpdateStateOfApplicabilityPayload struct {
+	StateOfApplicability *StateOfApplicability `json:"stateOfApplicability"`
 }
 
 type UpdateTaskInput struct {
@@ -2727,6 +2834,63 @@ func (e *Role) UnmarshalJSON(b []byte) error {
 }
 
 func (e Role) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type StateOfApplicabilityControlState string
+
+const (
+	StateOfApplicabilityControlStateExcluded       StateOfApplicabilityControlState = "EXCLUDED"
+	StateOfApplicabilityControlStateImplemented    StateOfApplicabilityControlState = "IMPLEMENTED"
+	StateOfApplicabilityControlStateNotImplemented StateOfApplicabilityControlState = "NOT_IMPLEMENTED"
+)
+
+var AllStateOfApplicabilityControlState = []StateOfApplicabilityControlState{
+	StateOfApplicabilityControlStateExcluded,
+	StateOfApplicabilityControlStateImplemented,
+	StateOfApplicabilityControlStateNotImplemented,
+}
+
+func (e StateOfApplicabilityControlState) IsValid() bool {
+	switch e {
+	case StateOfApplicabilityControlStateExcluded, StateOfApplicabilityControlStateImplemented, StateOfApplicabilityControlStateNotImplemented:
+		return true
+	}
+	return false
+}
+
+func (e StateOfApplicabilityControlState) String() string {
+	return string(e)
+}
+
+func (e *StateOfApplicabilityControlState) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = StateOfApplicabilityControlState(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid StateOfApplicabilityControlState", str)
+	}
+	return nil
+}
+
+func (e StateOfApplicabilityControlState) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *StateOfApplicabilityControlState) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e StateOfApplicabilityControlState) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil

@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}}</title>
+    <style>
+        /* A4 Page Setup for printing */
+        @page {
+            size: A4;
+            margin: 2.5cm;
+            @bottom-right {
+                content: "Page " counter(page) " of " counter(pages);
+                font-family: Arial, sans-serif;
+                font-size: 9pt;
+                color: #666;
+            }
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 11pt;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 20px 0;
+            background: #f5f5f5;
+        }
+
+        /* Document container that simulates A4 pages */
+        .document-container {
+            width: 21cm;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        /* Individual page sections */
+        .page-section {
+            padding: 2.5cm;
+            position: relative;
+            min-height: 24.7cm; /* A4 height minus padding */
+            border-bottom: 2px dashed #ddd;
+            page-break-after: always;
+        }
+
+        .page-section:last-child {
+            border-bottom: none;
+            page-break-after: auto;
+        }
+
+        .document-header {
+            padding-bottom: 0;
+            margin-bottom: 25px;
+            page-break-after: avoid;
+        }
+
+        .company-header {
+            margin-bottom: 25px;
+            page-break-after: avoid;
+        }
+
+        .company-logo {
+            max-height: 50px;
+            max-width: 250px;
+            object-fit: contain;
+            display: block;
+        }
+
+        .document-title {
+            font-size: 22pt;
+            font-weight: normal;
+            color: #1a1a1a;
+            margin: 0 0 15px 0;
+            text-align: left;
+        }
+
+        .company-header + .document-title {
+            margin-top: 30px;
+        }
+
+        .document-subtitle {
+            font-size: 18pt;
+            font-weight: normal;
+            color: #1a1a1a;
+            margin: 0 0 20px 0;
+            text-align: left;
+        }
+
+        .document-description {
+            font-size: 9pt;
+            color: #666;
+            line-height: 1.5;
+            margin: 0 0 25px 0;
+            text-align: justify;
+        }
+
+        .document-meta {
+            margin: 25px 0 0 0;
+            font-size: 9pt;
+        }
+
+        .meta-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid #333;
+        }
+
+        .meta-table td {
+            padding: 6px 8px;
+            border: 1px solid #333;
+            vertical-align: middle;
+        }
+
+        .meta-table td:first-child {
+            font-weight: 600;
+            width: 25%;
+            background: #f8f8f8;
+            color: #333;
+        }
+
+        .description-text {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .classification {
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        /* Controls section */
+        .controls-section {
+            margin-top: 30px;
+            page-break-inside: avoid;
+        }
+
+        .framework-group {
+            margin-bottom: 30px;
+            page-break-inside: avoid;
+        }
+
+        .framework-title {
+            font-size: 15pt;
+            font-weight: bold;
+            color: #000;
+            margin: 0 0 15px 0;
+            page-break-after: avoid;
+        }
+
+        .controls-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 9pt;
+            margin-top: 10px;
+            page-break-inside: avoid;
+        }
+
+        .controls-table th,
+        .controls-table td {
+            padding: 6px 8px;
+            text-align: left;
+            border: 1px solid #ddd;
+            vertical-align: top;
+        }
+
+        .controls-table th {
+            background: #f5f5f5;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .controls-table tr {
+            page-break-inside: avoid;
+        }
+
+        .control-name {
+            font-weight: 600;
+        }
+
+        .state-implemented {
+            color: #2e7d32;
+            font-weight: bold;
+        }
+
+        .state-not-implemented {
+            color: #d32f2f;
+            font-weight: bold;
+        }
+
+        .state-excluded {
+            color: #f57c00;
+            font-weight: bold;
+        }
+
+        /* Prevent bad page breaks */
+        h1, h2, h3, h4, h5, h6 {
+            page-break-after: avoid;
+            page-break-inside: avoid;
+        }
+
+        p, li {
+            page-break-inside: avoid;
+        }
+
+        table, .controls-section {
+            page-break-inside: avoid;
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+
+            .document-container {
+                box-shadow: none;
+                width: auto;
+            }
+
+            .page-section {
+                box-shadow: none;
+                border-bottom: none;
+                padding: 0;
+                min-height: auto;
+            }
+        }
+
+        @media screen and (max-width: 21cm) {
+            .document-container {
+                width: 95%;
+                margin: 0 auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="document-container">
+        <div class="page-section">
+            <div class="document-header">
+                {{- if .CompanyHorizontalLogoBase64}}
+                <div class="company-header">
+                    {{imgTag .CompanyHorizontalLogoBase64 "Company Logo" "company-logo"}}
+                </div>
+                {{- end}}
+                <h1 class="document-title">State of Applicability</h1>
+                <h2 class="document-subtitle">{{.Title}}</h2>
+
+                {{- if .Description}}
+                <div class="document-description">{{.Description}}</div>
+                {{- end}}
+
+                <div class="document-meta">
+                    <table class="meta-table">
+                        <tr>
+                            <td>Classification</td>
+                            <td>
+                                <span class="classification">CONFIDENTIAL</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Version</td>
+                            <td>{{.Version}}</td>
+                        </tr>
+                        <tr>
+                            <td>Published</td>
+                            <td>{{.PublishedAt.Format "January 2, 2006"}}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            {{- if .FrameworkGroups}}
+            <div class="controls-section">
+                {{- range $index, $group := .FrameworkGroups}}
+                <div class="framework-group">
+                    <h2 class="framework-title">{{add $index 1}}. {{$group.FrameworkName}}</h2>
+                    <table class="controls-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 25%;">Section</th>
+                                <th style="width: 30%;">Control</th>
+                                <th style="width: 15%;">State</th>
+                                <th style="width: 30%;">Exclusion Justification</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{- range $group.Controls}}
+                            <tr>
+                                <td>{{.SectionTitle}}</td>
+                                <td><span class="control-name">{{.Name}}</span></td>
+                                <td>
+                                    {{- if eq .State "IMPLEMENTED"}}
+                                    <span class="state-implemented">{{.State}}</span>
+                                    {{- else if eq .State "NOT_IMPLEMENTED"}}
+                                    <span class="state-not-implemented">{{.State}}</span>
+                                    {{- else if eq .State "EXCLUDED"}}
+                                    <span class="state-excluded">{{.State}}</span>
+                                    {{- else}}
+                                    {{.State}}
+                                    {{- end}}
+                                </td>
+                                <td>
+                                    {{- if .ExclusionJustification}}
+                                    {{.ExclusionJustification}}
+                                    {{- else}}
+                                    -
+                                    {{- end}}
+                                </td>
+                            </tr>
+                            {{- end}}
+                        </tbody>
+                    </table>
+                </div>
+                {{- end}}
+            </div>
+            {{- end}}
+        </div>
+    </div>
+</body>
+</html>

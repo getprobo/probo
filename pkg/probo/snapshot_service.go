@@ -192,7 +192,8 @@ func (s *SnapshotService) CountForOrganizationID(
 		ctx,
 		func(conn pg.Conn) (err error) {
 			snapshots := coredata.Snapshots{}
-			count, err = snapshots.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID)
+			filter := coredata.NewSnapshotFilter(nil)
+			count, err = snapshots.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID, filter)
 			if err != nil {
 				return fmt.Errorf("cannot count snapshots: %w", err)
 			}

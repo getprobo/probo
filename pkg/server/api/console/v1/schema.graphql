@@ -1177,6 +1177,10 @@ enum SnapshotsType
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.SnapshotsTypeProcessingActivities"
     )
+  STATES_OF_APPLICABILITY
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.SnapshotsTypeStatesOfApplicability"
+    )
 }
 
 enum SnapshotOrderField
@@ -1501,6 +1505,10 @@ input DatumFilter {
   snapshotId: ID
 }
 
+input StateOfApplicabilityFilter {
+  snapshotId: ID
+}
+
 input NonconformityFilter {
   snapshotId: ID
 }
@@ -1647,6 +1655,15 @@ type Organization implements Node {
     before: CursorKey
     orderBy: MeetingOrder
   ): MeetingConnection! @goField(forceResolver: true)
+
+  stateOfApplicabilities(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: StateOfApplicabilityOrder
+    filter: StateOfApplicabilityFilter = { snapshotId: null }
+  ): StateOfApplicabilityConnection! @goField(forceResolver: true)
 
   measures(
     first: Int
@@ -2187,6 +2204,26 @@ type Meeting implements Node {
   minutes: String
   attendees: [People!]! @goField(forceResolver: true)
   organization: Organization! @goField(forceResolver: true)
+  createdAt: Datetime!
+  updatedAt: Datetime!
+}
+
+type StateOfApplicability implements Node {
+  id: ID!
+  name: String!
+  description: String
+  sourceId: ID
+  snapshotId: ID
+  organization: Organization @goField(forceResolver: true)
+  controls(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: ControlOrder
+    filter: ControlFilter
+  ): ControlConnection! @goField(forceResolver: true)
+  availableControls: [AvailableControlForStateOfApplicability!]! @goField(forceResolver: true)
   createdAt: Datetime!
   updatedAt: Datetime!
 }
@@ -2746,6 +2783,20 @@ type MeetingEdge {
   node: Meeting!
 }
 
+type StateOfApplicabilityConnection
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.StateOfApplicabilityConnection"
+  ) {
+  totalCount: Int! @goField(forceResolver: true)
+  edges: [StateOfApplicabilityEdge!]!
+  pageInfo: PageInfo!
+}
+
+type StateOfApplicabilityEdge {
+  cursor: CursorKey!
+  node: StateOfApplicability!
+}
+
 type RiskConnection
   @goModel(
     model: "go.probo.inc/probo/pkg/server/api/console/v1/types.RiskConnection"
@@ -3168,6 +3219,25 @@ type Mutation {
   createMeeting(input: CreateMeetingInput!): CreateMeetingPayload!
   updateMeeting(input: UpdateMeetingInput!): UpdateMeetingPayload!
   deleteMeeting(input: DeleteMeetingInput!): DeleteMeetingPayload!
+  # StateOfApplicability mutations
+  createStateOfApplicability(
+    input: CreateStateOfApplicabilityInput!
+  ): CreateStateOfApplicabilityPayload!
+  updateStateOfApplicability(
+    input: UpdateStateOfApplicabilityInput!
+  ): UpdateStateOfApplicabilityPayload!
+  deleteStateOfApplicability(
+    input: DeleteStateOfApplicabilityInput!
+  ): DeleteStateOfApplicabilityPayload!
+  linkStateOfApplicabilityControl(
+    input: LinkStateOfApplicabilityControlInput!
+  ): LinkStateOfApplicabilityControlPayload!
+  unlinkStateOfApplicabilityControl(
+    input: UnlinkStateOfApplicabilityControlInput!
+  ): UnlinkStateOfApplicabilityControlPayload!
+  exportStateOfApplicabilityPDF(
+    input: ExportStateOfApplicabilityPDFInput!
+  ): ExportStateOfApplicabilityPDFPayload!
   publishDocumentVersion(
     input: PublishDocumentVersionInput!
   ): PublishDocumentVersionPayload!
@@ -3856,6 +3926,103 @@ input DeleteMeetingInput {
   meetingId: ID!
 }
 
+input CreateStateOfApplicabilityInput {
+  organizationId: ID!
+  name: String!
+  description: String
+}
+
+input UpdateStateOfApplicabilityInput {
+  id: ID!
+  name: String
+  description: String
+}
+
+input StateOfApplicabilityControlInput {
+  controlId: ID!
+  state: StateOfApplicabilityControlState!
+  exclusionJustification: String
+}
+
+enum StateOfApplicabilityControlState {
+  EXCLUDED
+  IMPLEMENTED
+  NOT_IMPLEMENTED
+}
+
+type AvailableControlForStateOfApplicability {
+  controlId: ID!
+  sectionTitle: String!
+  name: String!
+  frameworkId: ID!
+  frameworkName: String!
+  organizationId: ID!
+  stateOfApplicabilityId: ID
+  state: StateOfApplicabilityControlState
+  exclusionJustification: String
+}
+
+input DeleteStateOfApplicabilityInput {
+  stateOfApplicabilityId: ID!
+}
+
+input LinkStateOfApplicabilityControlInput {
+  stateOfApplicabilityId: ID!
+  controlId: ID!
+  state: StateOfApplicabilityControlState!
+  exclusionJustification: String
+}
+
+input UnlinkStateOfApplicabilityControlInput {
+  stateOfApplicabilityId: ID!
+  controlId: ID!
+}
+
+type LinkStateOfApplicabilityControlPayload {
+  stateOfApplicabilityControl: StateOfApplicabilityControl!
+}
+
+type UnlinkStateOfApplicabilityControlPayload {
+  deletedControlId: ID!
+}
+
+type StateOfApplicabilityControl {
+  stateOfApplicabilityId: ID!
+  controlId: ID!
+  state: StateOfApplicabilityControlState!
+  exclusionJustification: String
+}
+
+input ExportStateOfApplicabilityPDFInput {
+  stateOfApplicabilityId: ID!
+}
+
+type ExportStateOfApplicabilityPDFPayload {
+  data: String!
+}
+
+input StateOfApplicabilityOrder
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.StateOfApplicabilityOrderBy"
+  ) {
+  direction: OrderDirection!
+  field: StateOfApplicabilityOrderField!
+}
+
+enum StateOfApplicabilityOrderField
+  @goModel(
+    model: "go.probo.inc/probo/pkg/coredata.StateOfApplicabilityOrderField"
+  ) {
+  NAME
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.StateOfApplicabilityOrderFieldName"
+    )
+  CREATED_AT
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.StateOfApplicabilityOrderFieldCreatedAt"
+    )
+}
+
 input ConfirmEmailInput {
   token: String!
 }
@@ -4490,6 +4657,18 @@ type UpdateMeetingPayload {
 
 type DeleteMeetingPayload {
   deletedMeetingId: ID!
+}
+
+type CreateStateOfApplicabilityPayload {
+  stateOfApplicabilityEdge: StateOfApplicabilityEdge!
+}
+
+type UpdateStateOfApplicabilityPayload {
+  stateOfApplicability: StateOfApplicability!
+}
+
+type DeleteStateOfApplicabilityPayload {
+  deletedStateOfApplicabilityId: ID!
 }
 
 type ConfirmEmailPayload {

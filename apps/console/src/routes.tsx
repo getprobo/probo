@@ -34,6 +34,7 @@ import { obligationRoutes } from "./routes/obligationRoutes.ts";
 import { snapshotsRoutes } from "./routes/snapshotsRoutes.ts";
 import { continualImprovementRoutes } from "./routes/continualImprovementRoutes.ts";
 import { processingActivityRoutes } from "./routes/processingActivityRoutes.ts";
+import { stateOfApplicabilityRoutes } from "./routes/stateOfApplicabilityRoutes.ts";
 import { lazy } from "@probo/react-lazy";
 import { loaderFromQueryLoader, routeFromAppRoute, withQueryRef, type AppRoute } from "@probo/routes";
 import { employeeDocumentsQuery } from "./pages/organizations/employee/EmployeeDocumentsPage";
@@ -225,8 +226,9 @@ const routes = [
       ...obligationRoutes,
       ...continualImprovementRoutes,
       ...processingActivityRoutes,
-      ...snapshotsRoutes,
+      ...stateOfApplicabilityRoutes,
       ...trustCenterRoutes,
+      ...snapshotsRoutes,
       {
         path: "*",
         Component: PageError,

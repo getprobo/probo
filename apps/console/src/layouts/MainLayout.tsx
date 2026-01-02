@@ -22,6 +22,7 @@ import {
   IconInboxEmpty,
   IconKey,
   IconListStack,
+  IconPageCheck,
   IconLock,
   IconMagnifyingGlass,
   IconMedal,
@@ -222,6 +223,13 @@ function MainLayoutContent({
               label={__("Processing Activities")}
               icon={IconCircleProgress}
               to={`${prefix}/processing-activities`}
+            />
+          )}
+          {isAuthorized("Organization", "listStateOfApplicabilities") && (
+            <SidebarItem
+              label={__("States of Applicability")}
+              icon={IconPageCheck}
+              to={`${prefix}/states-of-applicability`}
             />
           )}
           {isAuthorized("Organization", "listSnapshots") && (

@@ -23,19 +23,23 @@ import (
 	"strings"
 	"time"
 
-	"go.probo.inc/probo/pkg/coredata"
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
 	gmhtml "github.com/yuin/goldmark/renderer/html"
+	"go.probo.inc/probo/pkg/coredata"
 )
 
 var (
 	//go:embed template.html
 	htmlTemplateContent string
 
+	//go:embed soa_template.html
+	soaTemplateContent string
+
 	templateFuncs = template.FuncMap{
 		"now":                  func() time.Time { return time.Now() },
 		"eq":                   func(a, b string) bool { return a == b },
+		"add":                  func(a, b int) int { return a + b },
 		"string":               func(v fmt.Stringer) string { return v.String() },
 		"lower":                func(s string) string { return strings.ToLower(s) },
 		"classificationString": func(c Classification) string { return string(c) },
@@ -58,7 +62,8 @@ var (
 		},
 	}
 
-	documentTemplate = template.Must(template.New("document").Funcs(templateFuncs).Parse(htmlTemplateContent))
+	documentTemplate             = template.Must(template.New("document").Funcs(templateFuncs).Parse(htmlTemplateContent))
+	stateOfApplicabilityTemplate = template.Must(template.New("state-of-applicability").Funcs(templateFuncs).Parse(soaTemplateContent))
 )
 
 type (
@@ -82,6 +87,31 @@ type (
 		State       coredata.DocumentVersionSignatureState
 		RequestedAt time.Time
 	}
+
+	StateOfApplicabilityData struct {
+		Title                       string
+		OrganizationName            string
+		Description                 string
+		CreatedAt                   time.Time
+		TotalControls               int
+		FrameworkGroups             []FrameworkControlGroup
+		CompanyHorizontalLogoBase64 string
+		Version                     int
+		PublishedAt                 time.Time
+	}
+
+	FrameworkControlGroup struct {
+		FrameworkName string
+		Controls      []ControlData
+	}
+
+	ControlData struct {
+		FrameworkName          string
+		SectionTitle           string
+		Name                   string
+		State                  string
+		ExclusionJustification string
+	}
 )
 
 const (
@@ -95,6 +125,15 @@ func RenderHTML(data DocumentData) ([]byte, error) {
 	var buf bytes.Buffer
 	if err := documentTemplate.Execute(&buf, data); err != nil {
 		return nil, fmt.Errorf("cannot execute template: %w", err)
+	}
+
+	return buf.Bytes(), nil
+}
+
+func RenderStateOfApplicabilityHTML(data StateOfApplicabilityData) ([]byte, error) {
+	var buf bytes.Buffer
+	if err := stateOfApplicabilityTemplate.Execute(&buf, data); err != nil {
+		return nil, fmt.Errorf("cannot execute SOA template: %w", err)
 	}
 
 	return buf.Bytes(), nil

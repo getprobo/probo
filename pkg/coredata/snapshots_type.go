@@ -32,6 +32,7 @@ const (
 	SnapshotsTypeObligations           SnapshotsType = "OBLIGATIONS"
 	SnapshotsTypeContinualImprovements SnapshotsType = "CONTINUAL_IMPROVEMENTS"
 	SnapshotsTypeProcessingActivities  SnapshotsType = "PROCESSING_ACTIVITIES"
+	SnapshotsTypeStatesOfApplicability SnapshotsType = "STATES_OF_APPLICABILITY"
 )
 
 func SnapshotsTypes() []SnapshotsType {
@@ -41,6 +42,10 @@ func SnapshotsTypes() []SnapshotsType {
 		SnapshotsTypeAssets,
 		SnapshotsTypeData,
 		SnapshotsTypeNonconformities,
+		SnapshotsTypeObligations,
+		SnapshotsTypeContinualImprovements,
+		SnapshotsTypeProcessingActivities,
+		SnapshotsTypeStatesOfApplicability,
 	}
 }
 
@@ -76,6 +81,8 @@ func (st *SnapshotsType) Scan(value any) error {
 		*st = SnapshotsTypeContinualImprovements
 	case SnapshotsTypeProcessingActivities.String():
 		*st = SnapshotsTypeProcessingActivities
+	case SnapshotsTypeStatesOfApplicability.String():
+		*st = SnapshotsTypeStatesOfApplicability
 	default:
 		return fmt.Errorf("invalid SnapshotsType value: %q", s)
 	}
