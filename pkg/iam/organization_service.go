@@ -90,6 +90,12 @@ type (
 		AttributeRole      *string
 		AutoSignupEnabled  *bool
 	}
+
+	CreateInvitationRequest struct {
+		Email    mail.Addr
+		FullName string
+		Role     coredata.MembershipRole
+	}
 )
 
 const (
@@ -350,9 +356,7 @@ func (s *OrganizationService) CountInvitations(
 func (s *OrganizationService) InviteMember(
 	ctx context.Context,
 	organizationID gid.GID,
-	emailAddress mail.Addr,
-	fullName string,
-	role coredata.MembershipRole,
+	req *CreateInvitationRequest,
 ) (*coredata.Invitation, error) {
 	var (
 		scope      = coredata.NewScopeFromObjectID(organizationID)
@@ -360,9 +364,9 @@ func (s *OrganizationService) InviteMember(
 		invitation = &coredata.Invitation{
 			ID:             gid.New(organizationID.TenantID(), coredata.InvitationEntityType),
 			OrganizationID: organizationID,
-			Email:          emailAddress,
-			FullName:       fullName,
-			Role:           role,
+			Email:          req.Email,
+			FullName:       req.FullName,
+			Role:           req.Role,
 			Status:         coredata.InvitationStatusPending,
 			ExpiresAt:      now.Add(s.invitationTokenValidity),
 			CreatedAt:      now,
@@ -383,7 +387,7 @@ func (s *OrganizationService) InviteMember(
 			}
 
 			identity := &coredata.Identity{}
-			err = identity.LoadByEmail(ctx, tx, emailAddress)
+			err = identity.LoadByEmail(ctx, tx, invitation.Email)
 			if err != nil && err != coredata.ErrResourceNotFound {
 				return fmt.Errorf("cannot load identity: %w", err)
 			}

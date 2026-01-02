@@ -608,7 +608,6 @@ input InviteMemberInput {
   email: EmailAddr!
   fullName: String!
   role: MembershipRole!
-  createPeople: Boolean!
 }
 
 input UpdateMembershipInput {

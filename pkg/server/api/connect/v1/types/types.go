@@ -190,7 +190,6 @@ type InviteMemberInput struct {
 	Email          mail.Addr               `json:"email"`
 	FullName       string                  `json:"fullName"`
 	Role           coredata.MembershipRole `json:"role"`
-	CreatePeople   bool                    `json:"createPeople"`
 }
 
 type InviteMemberPayload struct {

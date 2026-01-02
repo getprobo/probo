@@ -884,9 +884,11 @@ func (r *mutationResolver) InviteMember(ctx context.Context, input types.InviteM
 	invitation, err := r.iam.OrganizationService.InviteMember(
 		ctx,
 		input.OrganizationID,
-		input.Email,
-		input.FullName,
-		coredata.MembershipRoleViewer,
+		&iam.CreateInvitationRequest{
+			Email:    input.Email,
+			FullName: input.FullName,
+			Role:     input.Role,
+		},
 	)
 	if err != nil {
 		var errOrganizationNotFound *iam.ErrOrganizationNotFound
