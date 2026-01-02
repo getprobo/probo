@@ -225,27 +225,38 @@ LIMIT 1;
 func (i *Identity) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
 	q := `
 SELECT
-	id,
-    email_address
+    ident.id,
+    ident.email_address,
+    COALESCE(string_agg(inv.organization_id::text, ','), '') AS pending_invitation_organization_ids
 FROM
-    identities
+    identities ident
+LEFT JOIN
+    iam_invitations inv ON inv.email = ident.email_address
+        AND inv.accepted_at IS NULL
+        AND inv.expires_at > NOW()
 WHERE
-    id = $1
-LIMIT 1;
+    ident.id = $1
+GROUP BY
+    ident.id, ident.email_address
 `
 
 	var (
-		id           gid.GID
-		emailAddress string
+		id                      gid.GID
+		emailAddress            string
+		pendingInvitationOrgIDs string
 	)
-	if err := conn.QueryRow(ctx, q, i.ID).Scan(&id, &emailAddress); err != nil {
+	if err := conn.QueryRow(ctx, q, i.ID).Scan(&id, &emailAddress, &pendingInvitationOrgIDs); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
 		return nil, fmt.Errorf("cannot query identity iam attributes: %w", err)
 	}
 
-	return map[string]string{"identity_id": id.String(), "email": emailAddress}, nil
+	return map[string]string{
+		"identity_id":                         id.String(),
+		"email":                               emailAddress,
+		"pending_invitation_organization_ids": pendingInvitationOrgIDs,
+	}, nil
 }
 
 func (i *Identity) Insert(
