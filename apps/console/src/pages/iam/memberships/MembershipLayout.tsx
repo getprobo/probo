@@ -10,13 +10,13 @@ import { useTranslate } from "@probo/i18n";
 import { CoreRelayProvider } from "/providers/CoreRelayProvider";
 
 export const membershipLayoutQuery = graphql`
-  query MembershipLayoutQuery($organizationId: ID!) {
+  query MembershipLayoutQuery($organizationId: ID!, $hideSidebar: Boolean!) {
     organization: node(id: $organizationId) @required(action: THROW) {
       __typename
       ... on Organization {
         ...MembershipsDropdown_organizationFragment
         ...SessionDropdownFragment
-        ...SidebarFragment
+        ...SidebarFragment @skip(if: $hideSidebar)
         viewerMembership @required(action: THROW) {
           role
         }
@@ -32,9 +32,10 @@ export const membershipLayoutQuery = graphql`
 `;
 
 export function MembershipLayout(props: {
+  hideSidebar?: boolean;
   queryRef: PreloadedQuery<MembershipLayoutQuery>;
 }) {
-  const { queryRef } = props;
+  const { hideSidebar = false, queryRef } = props;
 
   const { __ } = useTranslate();
 
@@ -73,7 +74,7 @@ export function MembershipLayout(props: {
           </Suspense>
         </>
       }
-      sidebar={<Sidebar fKey={organization} />}
+      sidebar={!hideSidebar && <Sidebar fKey={organization} />}
     >
       <CoreRelayProvider>
         <Outlet context={organization.viewerMembership.role} />
