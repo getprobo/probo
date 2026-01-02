@@ -3523,7 +3523,7 @@ input CreatePeopleInput {
   organizationId: ID!
   fullName: String!
   primaryEmailAddress: EmailAddr!
-  additionalEmailAddresses: [EmailAddr!]
+  additionalEmailAddresses: [EmailAddr!]!
   kind: PeopleKind!
   position: String
   contractStartDate: Datetime

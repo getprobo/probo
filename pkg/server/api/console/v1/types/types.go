@@ -425,7 +425,7 @@ type CreatePeopleInput struct {
 	OrganizationID           gid.GID             `json:"organizationId"`
 	FullName                 string              `json:"fullName"`
 	PrimaryEmailAddress      mail.Addr           `json:"primaryEmailAddress"`
-	AdditionalEmailAddresses []mail.Addr         `json:"additionalEmailAddresses,omitempty"`
+	AdditionalEmailAddresses []mail.Addr         `json:"additionalEmailAddresses"`
 	Kind                     coredata.PeopleKind `json:"kind"`
 	Position                 *string             `json:"position,omitempty"`
 	ContractStartDate        *time.Time          `json:"contractStartDate,omitempty"`

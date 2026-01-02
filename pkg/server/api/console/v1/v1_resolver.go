@@ -2073,7 +2073,7 @@ func (r *mutationResolver) CreatePeople(ctx context.Context, input types.CreateP
 		OrganizationID:           input.OrganizationID,
 		FullName:                 input.FullName,
 		PrimaryEmailAddress:      input.PrimaryEmailAddress,
-		AdditionalEmailAddresses: []mail.Addr{},
+		AdditionalEmailAddresses: input.AdditionalEmailAddresses,
 		Kind:                     input.Kind,
 		Position:                 input.Position,
 		ContractStartDate:        input.ContractStartDate,

@@ -908,7 +908,7 @@ func TestRBAC(t *testing.T) {
 			client: owner,
 			query:  createPeopleMutation,
 			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "fullName": factory.SafeName("Person"), "primaryEmailAddress": factory.SafeEmail(), "kind": "EMPLOYEE"}}
+				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "fullName": factory.SafeName("Person"), "primaryEmailAddress": factory.SafeEmail(), "additionalEmailAddresses": []string{}, "kind": "EMPLOYEE"}}
 			},
 			shouldAllow: true,
 		},
@@ -918,7 +918,7 @@ func TestRBAC(t *testing.T) {
 			client: admin,
 			query:  createPeopleMutation,
 			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "fullName": factory.SafeName("Person"), "primaryEmailAddress": factory.SafeEmail(), "kind": "EMPLOYEE"}}
+				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "fullName": factory.SafeName("Person"), "primaryEmailAddress": factory.SafeEmail(), "additionalEmailAddresses": []string{}, "kind": "EMPLOYEE"}}
 			},
 			shouldAllow: true,
 		},
@@ -928,7 +928,7 @@ func TestRBAC(t *testing.T) {
 			client: viewer,
 			query:  createPeopleMutation,
 			variables: func() map[string]any {
-				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "fullName": factory.SafeName("Person"), "primaryEmailAddress": factory.SafeEmail(), "kind": "EMPLOYEE"}}
+				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "fullName": factory.SafeName("Person"), "primaryEmailAddress": factory.SafeEmail(), "additionalEmailAddresses": []string{}, "kind": "EMPLOYEE"}}
 			},
 			shouldAllow: false,
 		},
@@ -1259,4 +1259,3 @@ func TestRBAC(t *testing.T) {
 		)
 	}
 }
-

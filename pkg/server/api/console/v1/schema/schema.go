@@ -13522,7 +13522,7 @@ input CreatePeopleInput {
   organizationId: ID!
   fullName: String!
   primaryEmailAddress: EmailAddr!
-  additionalEmailAddresses: [EmailAddr!]
+  additionalEmailAddresses: [EmailAddr!]!
   kind: PeopleKind!
   position: String
   contractStartDate: Datetime
@@ -60752,7 +60752,7 @@ func (ec *executionContext) unmarshalInputCreatePeopleInput(ctx context.Context,
 			it.PrimaryEmailAddress = data
 		case "additionalEmailAddresses":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("additionalEmailAddresses"))
-			data, err := ec.unmarshalOEmailAddr2ᚕgoᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddrᚄ(ctx, v)
+			data, err := ec.unmarshalNEmailAddr2ᚕgoᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddrᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
