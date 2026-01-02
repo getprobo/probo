@@ -1,841 +1,871 @@
 import {
-  Button,
-  IconPlusLarge,
-  PageHeader,
-  Card,
-  Thead,
-  Tbody,
-  Tr,
-  Th,
-  Td,
-  Badge,
-  ActionDropdown,
-  DropdownItem,
-  IconTrashCan,
-  Table,
-  useConfirm,
-  Tabs,
-  TabItem,
-  IconArrowDown,
-  IconChevronDown,
-  Spinner,
-  Dropdown,
+    Button,
+    IconPlusLarge,
+    PageHeader,
+    Card,
+    Thead,
+    Tbody,
+    Tr,
+    Th,
+    Td,
+    Badge,
+    ActionDropdown,
+    DropdownItem,
+    IconTrashCan,
+    Table,
+    useConfirm,
+    Tabs,
+    TabItem,
+    IconArrowDown,
+    IconChevronDown,
+    Spinner,
+    Dropdown,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { usePageTitle } from "@probo/hooks";
 import {
-  getLawfulBasisLabel,
-  getResidualRiskLabel,
+    getLawfulBasisLabel,
+    getResidualRiskLabel,
 } from "../../../components/form/ProcessingActivityEnumOptions";
 import {
-  ConnectionHandler,
-  graphql,
-  usePaginationFragment,
-  usePreloadedQuery,
-  useMutation,
-  type PreloadedQuery,
+    ConnectionHandler,
+    graphql,
+    usePaginationFragment,
+    usePreloadedQuery,
+    useMutation,
+    type PreloadedQuery,
 } from "react-relay";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { useParams } from "react-router";
 import { CreateProcessingActivityDialog } from "./dialogs/CreateProcessingActivityDialog";
 import {
-  deleteProcessingActivityMutation,
-  ProcessingActivitiesConnectionKey,
-  processingActivitiesQuery,
+    deleteProcessingActivityMutation,
+    ProcessingActivitiesConnectionKey,
+    processingActivitiesQuery,
 } from "../../../hooks/graph/ProcessingActivityGraph";
 import {
-  sprintf,
-  promisifyMutation,
-  downloadFile,
-  toDateInput,
+    sprintf,
+    promisifyMutation,
+    downloadFile,
+    toDateInput,
 } from "@probo/helpers";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { SnapshotBanner } from "/components/SnapshotBanner";
 import type { NodeOf } from "/types";
 import type {
-  ProcessingActivitiesPageFragment$key,
-  ProcessingActivitiesPageFragment$data,
+    ProcessingActivitiesPageFragment$key,
+    ProcessingActivitiesPageFragment$data,
 } from "/__generated__/core/ProcessingActivitiesPageFragment.graphql";
 import type {
-  ProcessingActivitiesPageDPIAFragment$key,
-  ProcessingActivitiesPageDPIAFragment$data,
+    ProcessingActivitiesPageDPIAFragment$key,
+    ProcessingActivitiesPageDPIAFragment$data,
 } from "/__generated__/core/ProcessingActivitiesPageDPIAFragment.graphql";
 import type {
-  ProcessingActivitiesPageTIAFragment$key,
-  ProcessingActivitiesPageTIAFragment$data,
+    ProcessingActivitiesPageTIAFragment$key,
+    ProcessingActivitiesPageTIAFragment$data,
 } from "/__generated__/core/ProcessingActivitiesPageTIAFragment.graphql";
 import { useState } from "react";
 import type { ProcessingActivityGraphListQuery } from "/__generated__/core/ProcessingActivityGraphListQuery.graphql";
 
 interface ProcessingActivitiesPageProps {
-  queryRef: PreloadedQuery<ProcessingActivityGraphListQuery>;
+    queryRef: PreloadedQuery<ProcessingActivityGraphListQuery>;
 }
 
 const processingActivitiesPageFragment = graphql`
-  fragment ProcessingActivitiesPageFragment on Organization
-  @refetchable(queryName: "ProcessingActivitiesPageRefetchQuery")
-  @argumentDefinitions(
-    first: { type: "Int", defaultValue: 10 }
-    after: { type: "CursorKey" }
-    snapshotId: { type: "ID", defaultValue: null }
-  ) {
-    id
-    processingActivities(
-      first: $first
-      after: $after
-      filter: { snapshotId: $snapshotId }
-    )
-      @connection(
-        key: "ProcessingActivitiesPage_processingActivities"
-        filters: ["filter"]
-      ) {
-      __id
-      totalCount
-      edges {
-        node {
-          id
-          snapshotId
-          sourceId
-          name
-          purpose
-          dataSubjectCategory
-          personalDataCategory
-          lawfulBasis
-          location
-          internationalTransfers
-          createdAt
-          updatedAt
-          canUpdate: permission(action: "core:processing-activity:update")
-          canDelete: permission(action: "core:processing-activity:delete")
+    fragment ProcessingActivitiesPageFragment on Organization
+    @refetchable(queryName: "ProcessingActivitiesPageRefetchQuery")
+    @argumentDefinitions(
+        first: { type: "Int", defaultValue: 10 }
+        after: { type: "CursorKey" }
+        snapshotId: { type: "ID", defaultValue: null }
+    ) {
+        id
+        processingActivities(
+            first: $first
+            after: $after
+            filter: { snapshotId: $snapshotId }
+        )
+            @connection(
+                key: "ProcessingActivitiesPage_processingActivities"
+                filters: ["filter"]
+            ) {
+            __id
+            totalCount
+            edges {
+                node {
+                    id
+                    snapshotId
+                    sourceId
+                    name
+                    purpose
+                    dataSubjectCategory
+                    personalDataCategory
+                    lawfulBasis
+                    location
+                    internationalTransfers
+                    createdAt
+                    updatedAt
+                    canUpdate: permission(
+                        action: "core:processing-activity:update"
+                    )
+                    canDelete: permission(
+                        action: "core:processing-activity:delete"
+                    )
+                }
+            }
+            pageInfo {
+                hasNextPage
+                endCursor
+            }
         }
-      }
-      pageInfo {
-        hasNextPage
-        endCursor
-      }
     }
-  }
 `;
 
 const dpiaListPageFragment = graphql`
-  fragment ProcessingActivitiesPageDPIAFragment on Organization
-  @refetchable(queryName: "ProcessingActivitiesPageDPIARefetchQuery")
-  @argumentDefinitions(
-    first: { type: "Int", defaultValue: 10 }
-    after: { type: "CursorKey" }
-    snapshotId: { type: "ID", defaultValue: null }
-  ) {
-    id
-    dataProtectionImpactAssessments(
-      first: $first
-      after: $after
-      filter: { snapshotId: $snapshotId }
-    )
-      @connection(
-        key: "ProcessingActivitiesPage_dataProtectionImpactAssessments"
-        filters: ["filter"]
-      ) {
-      __id
-      totalCount
-      edges {
-        node {
-          id
-          description
-          potentialRisk
-          residualRisk
-          processingActivity {
-            id
-            name
-          }
-          createdAt
-          updatedAt
+    fragment ProcessingActivitiesPageDPIAFragment on Organization
+    @refetchable(queryName: "ProcessingActivitiesPageDPIARefetchQuery")
+    @argumentDefinitions(
+        first: { type: "Int", defaultValue: 10 }
+        after: { type: "CursorKey" }
+        snapshotId: { type: "ID", defaultValue: null }
+    ) {
+        id
+        dataProtectionImpactAssessments(
+            first: $first
+            after: $after
+            filter: { snapshotId: $snapshotId }
+        )
+            @connection(
+                key: "ProcessingActivitiesPage_dataProtectionImpactAssessments"
+                filters: ["filter"]
+            ) {
+            __id
+            totalCount
+            edges {
+                node {
+                    id
+                    description
+                    potentialRisk
+                    residualRisk
+                    processingActivity {
+                        id
+                        name
+                    }
+                    createdAt
+                    updatedAt
+                }
+            }
+            pageInfo {
+                hasNextPage
+                endCursor
+            }
         }
-      }
-      pageInfo {
-        hasNextPage
-        endCursor
-      }
     }
-  }
 `;
 
 const tiaListPageFragment = graphql`
-  fragment ProcessingActivitiesPageTIAFragment on Organization
-  @refetchable(queryName: "ProcessingActivitiesPageTIARefetchQuery")
-  @argumentDefinitions(
-    first: { type: "Int", defaultValue: 10 }
-    after: { type: "CursorKey" }
-    snapshotId: { type: "ID", defaultValue: null }
-  ) {
-    id
-    transferImpactAssessments(
-      first: $first
-      after: $after
-      filter: { snapshotId: $snapshotId }
-    )
-      @connection(
-        key: "ProcessingActivitiesPage_transferImpactAssessments"
-        filters: ["filter"]
-      ) {
-      __id
-      totalCount
-      edges {
-        node {
-          id
-          dataSubjects
-          transfer
-          localLawRisk
-          processingActivity {
-            id
-            name
-          }
-          createdAt
-          updatedAt
+    fragment ProcessingActivitiesPageTIAFragment on Organization
+    @refetchable(queryName: "ProcessingActivitiesPageTIARefetchQuery")
+    @argumentDefinitions(
+        first: { type: "Int", defaultValue: 10 }
+        after: { type: "CursorKey" }
+        snapshotId: { type: "ID", defaultValue: null }
+    ) {
+        id
+        transferImpactAssessments(
+            first: $first
+            after: $after
+            filter: { snapshotId: $snapshotId }
+        )
+            @connection(
+                key: "ProcessingActivitiesPage_transferImpactAssessments"
+                filters: ["filter"]
+            ) {
+            __id
+            totalCount
+            edges {
+                node {
+                    id
+                    dataSubjects
+                    transfer
+                    localLawRisk
+                    processingActivity {
+                        id
+                        name
+                    }
+                    createdAt
+                    updatedAt
+                }
+            }
+            pageInfo {
+                hasNextPage
+                endCursor
+            }
         }
-      }
-      pageInfo {
-        hasNextPage
-        endCursor
-      }
     }
-  }
 `;
 
 const exportProcessingActivitiesPDFMutation = graphql`
-  mutation ProcessingActivitiesPageExportPDFMutation(
-    $input: ExportProcessingActivitiesPDFInput!
-  ) {
-    exportProcessingActivitiesPDF(input: $input) {
-      data
+    mutation ProcessingActivitiesPageExportPDFMutation(
+        $input: ExportProcessingActivitiesPDFInput!
+    ) {
+        exportProcessingActivitiesPDF(input: $input) {
+            data
+        }
     }
-  }
 `;
 
 const exportDataProtectionImpactAssessmentsPDFMutation = graphql`
-  mutation ProcessingActivitiesPageExportDPIAPDFMutation(
-    $input: ExportDataProtectionImpactAssessmentsPDFInput!
-  ) {
-    exportDataProtectionImpactAssessmentsPDF(input: $input) {
-      data
+    mutation ProcessingActivitiesPageExportDPIAPDFMutation(
+        $input: ExportDataProtectionImpactAssessmentsPDFInput!
+    ) {
+        exportDataProtectionImpactAssessmentsPDF(input: $input) {
+            data
+        }
     }
-  }
 `;
 
 const exportTransferImpactAssessmentsPDFMutation = graphql`
-  mutation ProcessingActivitiesPageExportTIAPDFMutation(
-    $input: ExportTransferImpactAssessmentsPDFInput!
-  ) {
-    exportTransferImpactAssessmentsPDF(input: $input) {
-      data
+    mutation ProcessingActivitiesPageExportTIAPDFMutation(
+        $input: ExportTransferImpactAssessmentsPDFInput!
+    ) {
+        exportTransferImpactAssessmentsPDF(input: $input) {
+            data
+        }
     }
-  }
 `;
 
 export default function ProcessingActivitiesPage({
-  queryRef,
+    queryRef,
 }: ProcessingActivitiesPageProps) {
-  const { __ } = useTranslate();
-  const organizationId = useOrganizationId();
-  const { snapshotId } = useParams<{ snapshotId?: string }>();
-  const isSnapshotMode = Boolean(snapshotId);
-  const [activeTab, setActiveTab] = useState<"activities" | "dpia" | "tia">(
-    "activities",
-  );
+    const { __ } = useTranslate();
+    const organizationId = useOrganizationId();
+    const { snapshotId } = useParams<{ snapshotId?: string }>();
+    const isSnapshotMode = Boolean(snapshotId);
+    const [activeTab, setActiveTab] = useState<"activities" | "dpia" | "tia">(
+        "activities",
+    );
 
-  usePageTitle(__("Processing Activities"));
+    usePageTitle(__("Processing Activities"));
 
-  const organization = usePreloadedQuery(processingActivitiesQuery, queryRef);
+    const organization = usePreloadedQuery(processingActivitiesQuery, queryRef);
 
-  const {
-    data: activitiesData,
-    loadNext: loadNextActivities,
-    hasNext: hasNextActivities,
-    isLoadingNext: isLoadingNextActivities,
-  } = usePaginationFragment<
-    ProcessingActivityGraphListQuery,
-    ProcessingActivitiesPageFragment$key
-  >(processingActivitiesPageFragment, organization.node);
+    const {
+        data: activitiesData,
+        loadNext: loadNextActivities,
+        hasNext: hasNextActivities,
+        isLoadingNext: isLoadingNextActivities,
+    } = usePaginationFragment<
+        ProcessingActivityGraphListQuery,
+        ProcessingActivitiesPageFragment$key
+    >(processingActivitiesPageFragment, organization.node);
 
-  const {
-    data: dpiaData,
-    loadNext: loadNextDPIAs,
-    hasNext: hasNextDPIAs,
-    isLoadingNext: isLoadingNextDPIAs,
-  } = usePaginationFragment<
-    ProcessingActivityGraphListQuery,
-    ProcessingActivitiesPageDPIAFragment$key
-  >(dpiaListPageFragment, organization.node);
+    const {
+        data: dpiaData,
+        loadNext: loadNextDPIAs,
+        hasNext: hasNextDPIAs,
+        isLoadingNext: isLoadingNextDPIAs,
+    } = usePaginationFragment<
+        ProcessingActivityGraphListQuery,
+        ProcessingActivitiesPageDPIAFragment$key
+    >(dpiaListPageFragment, organization.node);
 
-  const {
-    data: tiaData,
-    loadNext: loadNextTIAs,
-    hasNext: hasNextTIAs,
-    isLoadingNext: isLoadingNextTIAs,
-  } = usePaginationFragment<
-    ProcessingActivityGraphListQuery,
-    ProcessingActivitiesPageTIAFragment$key
-  >(tiaListPageFragment, organization.node);
+    const {
+        data: tiaData,
+        loadNext: loadNextTIAs,
+        hasNext: hasNextTIAs,
+        isLoadingNext: isLoadingNextTIAs,
+    } = usePaginationFragment<
+        ProcessingActivityGraphListQuery,
+        ProcessingActivitiesPageTIAFragment$key
+    >(tiaListPageFragment, organization.node);
 
-  const connectionId = ConnectionHandler.getConnectionID(
-    organizationId,
-    ProcessingActivitiesConnectionKey,
-    { filter: { snapshotId: snapshotId || null } },
-  );
-  const activities =
-    activitiesData?.processingActivities?.edges?.map((edge) => edge.node) ?? [];
-  const dpias =
-    dpiaData?.dataProtectionImpactAssessments?.edges?.map(
-      (edge) => edge.node,
-    ) ?? [];
-  const tias =
-    tiaData?.transferImpactAssessments?.edges?.map((edge) => edge.node) ?? [];
+    const connectionId = ConnectionHandler.getConnectionID(
+        organizationId,
+        ProcessingActivitiesConnectionKey,
+        { filter: { snapshotId: snapshotId || null } },
+    );
+    const activities =
+        activitiesData?.processingActivities?.edges?.map((edge) => edge.node) ??
+        [];
+    const dpias =
+        dpiaData?.dataProtectionImpactAssessments?.edges?.map(
+            (edge) => edge.node,
+        ) ?? [];
+    const tias =
+        tiaData?.transferImpactAssessments?.edges?.map((edge) => edge.node) ??
+        [];
 
-  const hasAnyAction =
-    !isSnapshotMode &&
-    activities.some(({ canUpdate, canDelete }) => canUpdate || canDelete);
+    const hasAnyAction =
+        !isSnapshotMode &&
+        activities.some(({ canUpdate, canDelete }) => canUpdate || canDelete);
 
-  const canExportPDF = isAuthorized(
-    "ProcessingActivity",
-    "exportProcessingActivitiesPDF",
-  );
-  const [exportPDF, isExportingPDF] = useMutationWithToasts<{
-    response: {
-      exportProcessingActivitiesPDF?: {
-        data: string;
-      };
-    };
-    variables: {
-      input: {
-        organizationId: string;
-        filter: { snapshotId: string } | null;
-      };
-    };
-  }>(exportProcessingActivitiesPDFMutation, {
-    successMessage: __("PDF download started."),
-    errorMessage: __("Failed to generate PDF"),
-  });
+    const canExportPDF = organization.node.canExportProcessingActivities;
 
-  const handleExportPDF = () => {
-    exportPDF({
-      variables: {
-        input: {
-          organizationId: organizationId,
-          filter: snapshotId ? { snapshotId } : null,
-        },
-      },
-      onCompleted: (data) => {
-        if (data.exportProcessingActivitiesPDF?.data) {
-          downloadFile(
-            data.exportProcessingActivitiesPDF.data,
-            `processing-activities-${toDateInput(new Date().toISOString())}.pdf`,
-          );
-        }
-      },
+    const [exportPDF, isExportingPDF] = useMutationWithToasts<{
+        response: {
+            exportProcessingActivitiesPDF?: {
+                data: string;
+            };
+        };
+        variables: {
+            input: {
+                organizationId: string;
+                filter: { snapshotId: string } | null;
+            };
+        };
+    }>(exportProcessingActivitiesPDFMutation, {
+        successMessage: __("PDF download started."),
+        errorMessage: __("Failed to generate PDF"),
     });
-  };
 
-  const canExportDPIAPDF = isAuthorized(
-    "Organization",
-    "exportDataProtectionImpactAssessmentsPDF",
-  );
-  const [exportDPIAPDF, isExportingDPIAPDF] = useMutationWithToasts<{
-    response: {
-      exportDataProtectionImpactAssessmentsPDF?: {
-        data: string;
-      };
+    const handleExportPDF = () => {
+        exportPDF({
+            variables: {
+                input: {
+                    organizationId: organizationId,
+                    filter: snapshotId ? { snapshotId } : null,
+                },
+            },
+            onCompleted: (data) => {
+                if (data.exportProcessingActivitiesPDF?.data) {
+                    downloadFile(
+                        data.exportProcessingActivitiesPDF.data,
+                        `processing-activities-${toDateInput(new Date().toISOString())}.pdf`,
+                    );
+                }
+            },
+        });
     };
-    variables: {
-      input: {
-        organizationId: string;
-        filter: { snapshotId: string } | null;
-      };
-    };
-  }>(exportDataProtectionImpactAssessmentsPDFMutation, {
-    successMessage: __("PDF download started."),
-    errorMessage: __("Failed to generate PDF"),
-  });
 
-  const handleExportDPIAPDF = () => {
-    exportDPIAPDF({
-      variables: {
-        input: {
-          organizationId: organizationId,
-          filter: snapshotId ? { snapshotId } : null,
-        },
-      },
-      onCompleted: (data) => {
-        if (data.exportDataProtectionImpactAssessmentsPDF?.data) {
-          downloadFile(
-            data.exportDataProtectionImpactAssessmentsPDF.data,
-            `data-protection-impact-assessments-${toDateInput(new Date().toISOString())}.pdf`,
-          );
-        }
-      },
+    const canExportDPIAPDF =
+        organization.node.canExportDataProtectionImpactAssessments;
+
+    const [exportDPIAPDF, isExportingDPIAPDF] = useMutationWithToasts<{
+        response: {
+            exportDataProtectionImpactAssessmentsPDF?: {
+                data: string;
+            };
+        };
+        variables: {
+            input: {
+                organizationId: string;
+                filter: { snapshotId: string } | null;
+            };
+        };
+    }>(exportDataProtectionImpactAssessmentsPDFMutation, {
+        successMessage: __("PDF download started."),
+        errorMessage: __("Failed to generate PDF"),
     });
-  };
 
-  const canExportTIAPDF = isAuthorized(
-    "Organization",
-    "exportTransferImpactAssessmentsPDF",
-  );
-  const [exportTIAPDF, isExportingTIAPDF] = useMutationWithToasts<{
-    response: {
-      exportTransferImpactAssessmentsPDF?: {
-        data: string;
-      };
+    const handleExportDPIAPDF = () => {
+        exportDPIAPDF({
+            variables: {
+                input: {
+                    organizationId: organizationId,
+                    filter: snapshotId ? { snapshotId } : null,
+                },
+            },
+            onCompleted: (data) => {
+                if (data.exportDataProtectionImpactAssessmentsPDF?.data) {
+                    downloadFile(
+                        data.exportDataProtectionImpactAssessmentsPDF.data,
+                        `data-protection-impact-assessments-${toDateInput(new Date().toISOString())}.pdf`,
+                    );
+                }
+            },
+        });
     };
-    variables: {
-      input: {
-        organizationId: string;
-        filter: { snapshotId: string } | null;
-      };
-    };
-  }>(exportTransferImpactAssessmentsPDFMutation, {
-    successMessage: __("PDF download started."),
-    errorMessage: __("Failed to generate PDF"),
-  });
 
-  const handleExportTIAPDF = () => {
-    exportTIAPDF({
-      variables: {
-        input: {
-          organizationId: organizationId,
-          filter: snapshotId ? { snapshotId } : null,
-        },
-      },
-      onCompleted: (data) => {
-        if (data.exportTransferImpactAssessmentsPDF?.data) {
-          downloadFile(
-            data.exportTransferImpactAssessmentsPDF.data,
-            `transfer-impact-assessments-${toDateInput(new Date().toISOString())}.pdf`,
-          );
-        }
-      },
+    const canExportTIAPDF =
+        organization.node.canExportTransferImpactAssessments;
+
+    const [exportTIAPDF, isExportingTIAPDF] = useMutationWithToasts<{
+        response: {
+            exportTransferImpactAssessmentsPDF?: {
+                data: string;
+            };
+        };
+        variables: {
+            input: {
+                organizationId: string;
+                filter: { snapshotId: string } | null;
+            };
+        };
+    }>(exportTransferImpactAssessmentsPDFMutation, {
+        successMessage: __("PDF download started."),
+        errorMessage: __("Failed to generate PDF"),
     });
-  };
 
-  return (
-    <div className="space-y-6">
-      {isSnapshotMode && snapshotId && (
-        <SnapshotBanner snapshotId={snapshotId} />
-      )}
-      <PageHeader
-        title={__("Processing Activities")}
-        description={__("Manage your processing activities under GDPR")}
-      >
-        {(canExportPDF || canExportDPIAPDF || canExportTIAPDF) && (
-          <Dropdown
-            toggle={
-              <Button
-                variant="secondary"
-                icon={IconArrowDown}
-                iconAfter={IconChevronDown}
-              >
-                {__("Export")}
-              </Button>
-            }
-          >
-            {canExportPDF && (
-              <DropdownItem
-                onClick={handleExportPDF}
-                disabled={isExportingPDF}
-                icon={isExportingPDF ? Spinner : undefined}
-              >
-                {__("Processing Activities")}
-              </DropdownItem>
+    const handleExportTIAPDF = () => {
+        exportTIAPDF({
+            variables: {
+                input: {
+                    organizationId: organizationId,
+                    filter: snapshotId ? { snapshotId } : null,
+                },
+            },
+            onCompleted: (data) => {
+                if (data.exportTransferImpactAssessmentsPDF?.data) {
+                    downloadFile(
+                        data.exportTransferImpactAssessmentsPDF.data,
+                        `transfer-impact-assessments-${toDateInput(new Date().toISOString())}.pdf`,
+                    );
+                }
+            },
+        });
+    };
+
+    return (
+        <div className="space-y-6">
+            {isSnapshotMode && snapshotId && (
+                <SnapshotBanner snapshotId={snapshotId} />
             )}
-            {canExportDPIAPDF && (
-              <DropdownItem
-                onClick={handleExportDPIAPDF}
-                disabled={isExportingDPIAPDF}
-                icon={isExportingDPIAPDF ? Spinner : undefined}
-              >
-                {__("Data Protection Impact Assessments")}
-              </DropdownItem>
-            )}
-            {canExportTIAPDF && (
-              <DropdownItem
-                onClick={handleExportTIAPDF}
-                disabled={isExportingTIAPDF}
-                icon={isExportingTIAPDF ? Spinner : undefined}
-              >
-                {__("Transfer Impact Assessments")}
-              </DropdownItem>
-            )}
-          </Dropdown>
-        )}
-        {!isSnapshotMode &&
-          activeTab === "activities" &&
-          organization.node.canCreateProcessingActivity && (
-            <CreateProcessingActivityDialog
-              organizationId={organizationId}
-              connectionId={connectionId}
+            <PageHeader
+                title={__("Processing Activities")}
+                description={__("Manage your processing activities under GDPR")}
             >
-              <Button icon={IconPlusLarge}>
-                {__("Add processing activity")}
-              </Button>
-            </CreateProcessingActivityDialog>
-          )}
-      </PageHeader>
+                {(canExportPDF || canExportDPIAPDF || canExportTIAPDF) && (
+                    <Dropdown
+                        toggle={
+                            <Button
+                                variant="secondary"
+                                icon={IconArrowDown}
+                                iconAfter={IconChevronDown}
+                            >
+                                {__("Export")}
+                            </Button>
+                        }
+                    >
+                        {canExportPDF && (
+                            <DropdownItem
+                                onClick={handleExportPDF}
+                                disabled={isExportingPDF}
+                                icon={isExportingPDF ? Spinner : undefined}
+                            >
+                                {__("Processing Activities")}
+                            </DropdownItem>
+                        )}
+                        {canExportDPIAPDF && (
+                            <DropdownItem
+                                onClick={handleExportDPIAPDF}
+                                disabled={isExportingDPIAPDF}
+                                icon={isExportingDPIAPDF ? Spinner : undefined}
+                            >
+                                {__("Data Protection Impact Assessments")}
+                            </DropdownItem>
+                        )}
+                        {canExportTIAPDF && (
+                            <DropdownItem
+                                onClick={handleExportTIAPDF}
+                                disabled={isExportingTIAPDF}
+                                icon={isExportingTIAPDF ? Spinner : undefined}
+                            >
+                                {__("Transfer Impact Assessments")}
+                            </DropdownItem>
+                        )}
+                    </Dropdown>
+                )}
+                {!isSnapshotMode &&
+                    activeTab === "activities" &&
+                    organization.node.canCreateProcessingActivity && (
+                        <CreateProcessingActivityDialog
+                            organizationId={organizationId}
+                            connectionId={connectionId}
+                        >
+                            <Button icon={IconPlusLarge}>
+                                {__("Add processing activity")}
+                            </Button>
+                        </CreateProcessingActivityDialog>
+                    )}
+            </PageHeader>
 
-      <Tabs>
-        <TabItem
-          active={activeTab === "activities"}
-          onClick={() => setActiveTab("activities")}
-        >
-          {__("Processing Activities")}
-        </TabItem>
-        <TabItem
-          active={activeTab === "dpia"}
-          onClick={() => setActiveTab("dpia")}
-        >
-          {__("Data Protection Impact Assessments")}
-        </TabItem>
-        <TabItem
-          active={activeTab === "tia"}
-          onClick={() => setActiveTab("tia")}
-        >
-          {__("Transfer Impact Assessments")}
-        </TabItem>
-      </Tabs>
+            <Tabs>
+                <TabItem
+                    active={activeTab === "activities"}
+                    onClick={() => setActiveTab("activities")}
+                >
+                    {__("Processing Activities")}
+                </TabItem>
+                <TabItem
+                    active={activeTab === "dpia"}
+                    onClick={() => setActiveTab("dpia")}
+                >
+                    {__("Data Protection Impact Assessments")}
+                </TabItem>
+                <TabItem
+                    active={activeTab === "tia"}
+                    onClick={() => setActiveTab("tia")}
+                >
+                    {__("Transfer Impact Assessments")}
+                </TabItem>
+            </Tabs>
 
-      {activeTab === "activities" && (
-        <>
-          {activities.length > 0 ? (
-            <Card>
-              <Table>
-                <Thead>
-                  <Tr>
-                    <Th className="px-3">{__("Name")}</Th>
-                    <Th className="px-3">{__("Purpose")}</Th>
-                    <Th className="px-3">{__("Data Subject")}</Th>
-                    <Th className="px-3">{__("Lawful Basis")}</Th>
-                    <Th className="px-3">{__("Location")}</Th>
-                    <Th className="px-3">{__("International Transfers")}</Th>
-                    {hasAnyAction && <Th className="px-3">{__("Actions")}</Th>}
-                  </Tr>
-                </Thead>
-                <Tbody>
-                  {activities.map((activity) => (
-                    <ActivityRow
-                      key={activity.id}
-                      activity={activity}
-                      connectionId={connectionId}
-                      hasAnyAction={hasAnyAction}
-                    />
-                  ))}
-                </Tbody>
-              </Table>
+            {activeTab === "activities" && (
+                <>
+                    {activities.length > 0 ? (
+                        <Card>
+                            <Table>
+                                <Thead>
+                                    <Tr>
+                                        <Th className="px-3">{__("Name")}</Th>
+                                        <Th className="px-3">
+                                            {__("Purpose")}
+                                        </Th>
+                                        <Th className="px-3">
+                                            {__("Data Subject")}
+                                        </Th>
+                                        <Th className="px-3">
+                                            {__("Lawful Basis")}
+                                        </Th>
+                                        <Th className="px-3">
+                                            {__("Location")}
+                                        </Th>
+                                        <Th className="px-3">
+                                            {__("International Transfers")}
+                                        </Th>
+                                        {hasAnyAction && (
+                                            <Th className="px-3">
+                                                {__("Actions")}
+                                            </Th>
+                                        )}
+                                    </Tr>
+                                </Thead>
+                                <Tbody>
+                                    {activities.map((activity) => (
+                                        <ActivityRow
+                                            key={activity.id}
+                                            activity={activity}
+                                            connectionId={connectionId}
+                                            hasAnyAction={hasAnyAction}
+                                        />
+                                    ))}
+                                </Tbody>
+                            </Table>
 
-              {hasNextActivities && (
-                <div className="p-4 border-t">
-                  <Button
-                    variant="secondary"
-                    onClick={() => loadNextActivities(10)}
-                    disabled={isLoadingNextActivities}
-                  >
-                    {isLoadingNextActivities
-                      ? __("Loading...")
-                      : __("Load more")}
-                  </Button>
-                </div>
-              )}
-            </Card>
-          ) : (
-            <Card padded>
-              <div className="text-center py-12">
-                <h3 className="text-lg font-semibold mb-2">
-                  {__("No processing activities yet")}
-                </h3>
-                <p className="text-txt-tertiary mb-4">
-                  {__(
-                    "Create your first processing activity to get started with GDPR compliance.",
-                  )}
-                </p>
-              </div>
-            </Card>
-          )}
-        </>
-      )}
+                            {hasNextActivities && (
+                                <div className="p-4 border-t">
+                                    <Button
+                                        variant="secondary"
+                                        onClick={() => loadNextActivities(10)}
+                                        disabled={isLoadingNextActivities}
+                                    >
+                                        {isLoadingNextActivities
+                                            ? __("Loading...")
+                                            : __("Load more")}
+                                    </Button>
+                                </div>
+                            )}
+                        </Card>
+                    ) : (
+                        <Card padded>
+                            <div className="text-center py-12">
+                                <h3 className="text-lg font-semibold mb-2">
+                                    {__("No processing activities yet")}
+                                </h3>
+                                <p className="text-txt-tertiary mb-4">
+                                    {__(
+                                        "Create your first processing activity to get started with GDPR compliance.",
+                                    )}
+                                </p>
+                            </div>
+                        </Card>
+                    )}
+                </>
+            )}
 
-      {activeTab === "dpia" && (
-        <>
-          {dpias.length > 0 ? (
-            <Card>
-              <Table>
-                <Thead>
-                  <Tr>
-                    <Th>{__("Processing Activity")}</Th>
-                    <Th>{__("Description")}</Th>
-                    <Th>{__("Potential Risk")}</Th>
-                    <Th>{__("Residual Risk")}</Th>
-                  </Tr>
-                </Thead>
-                <Tbody>
-                  {dpias.map((dpia) => (
-                    <DPIARow key={dpia.id} dpia={dpia} />
-                  ))}
-                </Tbody>
-              </Table>
+            {activeTab === "dpia" && (
+                <>
+                    {dpias.length > 0 ? (
+                        <Card>
+                            <Table>
+                                <Thead>
+                                    <Tr>
+                                        <Th>{__("Processing Activity")}</Th>
+                                        <Th>{__("Description")}</Th>
+                                        <Th>{__("Potential Risk")}</Th>
+                                        <Th>{__("Residual Risk")}</Th>
+                                    </Tr>
+                                </Thead>
+                                <Tbody>
+                                    {dpias.map((dpia) => (
+                                        <DPIARow key={dpia.id} dpia={dpia} />
+                                    ))}
+                                </Tbody>
+                            </Table>
 
-              {hasNextDPIAs && (
-                <div className="p-4 border-t">
-                  <Button
-                    variant="secondary"
-                    onClick={() => loadNextDPIAs(10)}
-                    disabled={isLoadingNextDPIAs}
-                  >
-                    {isLoadingNextDPIAs ? __("Loading...") : __("Load more")}
-                  </Button>
-                </div>
-              )}
-            </Card>
-          ) : (
-            <Card padded>
-              <div className="text-center py-12">
-                <h3 className="text-lg font-semibold mb-2">
-                  {__("No Data Protection Impact Assessments yet")}
-                </h3>
-                <p className="text-txt-tertiary mb-4">
-                  {__(
-                    "DPIAs are created from within individual processing activities.",
-                  )}
-                </p>
-              </div>
-            </Card>
-          )}
-        </>
-      )}
+                            {hasNextDPIAs && (
+                                <div className="p-4 border-t">
+                                    <Button
+                                        variant="secondary"
+                                        onClick={() => loadNextDPIAs(10)}
+                                        disabled={isLoadingNextDPIAs}
+                                    >
+                                        {isLoadingNextDPIAs
+                                            ? __("Loading...")
+                                            : __("Load more")}
+                                    </Button>
+                                </div>
+                            )}
+                        </Card>
+                    ) : (
+                        <Card padded>
+                            <div className="text-center py-12">
+                                <h3 className="text-lg font-semibold mb-2">
+                                    {__(
+                                        "No Data Protection Impact Assessments yet",
+                                    )}
+                                </h3>
+                                <p className="text-txt-tertiary mb-4">
+                                    {__(
+                                        "DPIAs are created from within individual processing activities.",
+                                    )}
+                                </p>
+                            </div>
+                        </Card>
+                    )}
+                </>
+            )}
 
-      {activeTab === "tia" && (
-        <>
-          {tias.length > 0 ? (
-            <Card>
-              <Table>
-                <Thead>
-                  <Tr>
-                    <Th>{__("Processing Activity")}</Th>
-                    <Th>{__("Data Subjects")}</Th>
-                    <Th>{__("Transfer")}</Th>
-                    <Th>{__("Local Law Risk")}</Th>
-                  </Tr>
-                </Thead>
-                <Tbody>
-                  {tias.map((tia) => (
-                    <TIARow key={tia.id} tia={tia} />
-                  ))}
-                </Tbody>
-              </Table>
+            {activeTab === "tia" && (
+                <>
+                    {tias.length > 0 ? (
+                        <Card>
+                            <Table>
+                                <Thead>
+                                    <Tr>
+                                        <Th>{__("Processing Activity")}</Th>
+                                        <Th>{__("Data Subjects")}</Th>
+                                        <Th>{__("Transfer")}</Th>
+                                        <Th>{__("Local Law Risk")}</Th>
+                                    </Tr>
+                                </Thead>
+                                <Tbody>
+                                    {tias.map((tia) => (
+                                        <TIARow key={tia.id} tia={tia} />
+                                    ))}
+                                </Tbody>
+                            </Table>
 
-              {hasNextTIAs && (
-                <div className="p-4 border-t">
-                  <Button
-                    variant="secondary"
-                    onClick={() => loadNextTIAs(10)}
-                    disabled={isLoadingNextTIAs}
-                  >
-                    {isLoadingNextTIAs ? __("Loading...") : __("Load more")}
-                  </Button>
-                </div>
-              )}
-            </Card>
-          ) : (
-            <Card padded>
-              <div className="text-center py-12">
-                <h3 className="text-lg font-semibold mb-2">
-                  {__("No Transfer Impact Assessments yet")}
-                </h3>
-                <p className="text-txt-tertiary mb-4">
-                  {__(
-                    "TIAs are created from within individual processing activities.",
-                  )}
-                </p>
-              </div>
-            </Card>
-          )}
-        </>
-      )}
-    </div>
-  );
+                            {hasNextTIAs && (
+                                <div className="p-4 border-t">
+                                    <Button
+                                        variant="secondary"
+                                        onClick={() => loadNextTIAs(10)}
+                                        disabled={isLoadingNextTIAs}
+                                    >
+                                        {isLoadingNextTIAs
+                                            ? __("Loading...")
+                                            : __("Load more")}
+                                    </Button>
+                                </div>
+                            )}
+                        </Card>
+                    ) : (
+                        <Card padded>
+                            <div className="text-center py-12">
+                                <h3 className="text-lg font-semibold mb-2">
+                                    {__("No Transfer Impact Assessments yet")}
+                                </h3>
+                                <p className="text-txt-tertiary mb-4">
+                                    {__(
+                                        "TIAs are created from within individual processing activities.",
+                                    )}
+                                </p>
+                            </div>
+                        </Card>
+                    )}
+                </>
+            )}
+        </div>
+    );
 }
 
 function ActivityRow({
-  activity,
-  connectionId,
-  hasAnyAction,
+    activity,
+    connectionId,
+    hasAnyAction,
 }: {
-  activity: NodeOf<
-    NonNullable<ProcessingActivitiesPageFragment$data["processingActivities"]>
-  >;
-  connectionId: string;
-  hasAnyAction: boolean;
-}) {
-  const organizationId = useOrganizationId();
-  const { __ } = useTranslate();
-  const { snapshotId } = useParams<{ snapshotId?: string }>();
-  const isSnapshotMode = Boolean(snapshotId);
-  const [deleteActivity] = useMutation(deleteProcessingActivityMutation);
-  const confirm = useConfirm();
-
-  const handleDelete = () => {
-    confirm(
-      () =>
-        promisifyMutation(deleteActivity)({
-          variables: {
-            input: {
-              processingActivityId: activity.id,
-            },
-            connections: [connectionId],
-          },
-        }),
-      {
-        message: sprintf(
-          __(
-            "This will permanently delete the processing activity %s. This action cannot be undone.",
-          ),
-          activity.name,
-        ),
-      },
-    );
-  };
-
-  const activityUrl =
-    isSnapshotMode && snapshotId
-      ? `/organizations/${organizationId}/snapshots/${snapshotId}/processing-activities/${activity.id}`
-      : `/organizations/${organizationId}/processing-activities/${activity.id}`;
-
-  return (
-    <Tr to={activityUrl}>
-      <Td>
-        <span className="font-semibold">{activity.name}</span>
-      </Td>
-      <Td>
-        <span className="text-sm text-txt-secondary">
-          {activity.purpose || "-"}
-        </span>
-      </Td>
-      <Td>{activity.dataSubjectCategory || "-"}</Td>
-      <Td>{getLawfulBasisLabel(activity.lawfulBasis, __)}</Td>
-      <Td>{activity.location || "-"}</Td>
-      <Td>
-        <Badge
-          variant={activity.internationalTransfers ? "warning" : "success"}
+    activity: NodeOf<
+        NonNullable<
+            ProcessingActivitiesPageFragment$data["processingActivities"]
         >
-          {activity.internationalTransfers ? __("Yes") : __("No")}
-        </Badge>
-      </Td>
-      {hasAnyAction && (
-        <Td noLink width={50} className="text-end">
-          <ActionDropdown>
-            {activity.canDelete && (
-              <DropdownItem
-                icon={IconTrashCan}
-                variant="danger"
-                onSelect={handleDelete}
-              >
-                {__("Delete")}
-              </DropdownItem>
+    >;
+    connectionId: string;
+    hasAnyAction: boolean;
+}) {
+    const organizationId = useOrganizationId();
+    const { __ } = useTranslate();
+    const { snapshotId } = useParams<{ snapshotId?: string }>();
+    const isSnapshotMode = Boolean(snapshotId);
+    const [deleteActivity] = useMutation(deleteProcessingActivityMutation);
+    const confirm = useConfirm();
+
+    const handleDelete = () => {
+        confirm(
+            () =>
+                promisifyMutation(deleteActivity)({
+                    variables: {
+                        input: {
+                            processingActivityId: activity.id,
+                        },
+                        connections: [connectionId],
+                    },
+                }),
+            {
+                message: sprintf(
+                    __(
+                        "This will permanently delete the processing activity %s. This action cannot be undone.",
+                    ),
+                    activity.name,
+                ),
+            },
+        );
+    };
+
+    const activityUrl =
+        isSnapshotMode && snapshotId
+            ? `/organizations/${organizationId}/snapshots/${snapshotId}/processing-activities/${activity.id}`
+            : `/organizations/${organizationId}/processing-activities/${activity.id}`;
+
+    return (
+        <Tr to={activityUrl}>
+            <Td>
+                <span className="font-semibold">{activity.name}</span>
+            </Td>
+            <Td>
+                <span className="text-sm text-txt-secondary">
+                    {activity.purpose || "-"}
+                </span>
+            </Td>
+            <Td>{activity.dataSubjectCategory || "-"}</Td>
+            <Td>{getLawfulBasisLabel(activity.lawfulBasis, __)}</Td>
+            <Td>{activity.location || "-"}</Td>
+            <Td>
+                <Badge
+                    variant={
+                        activity.internationalTransfers ? "warning" : "success"
+                    }
+                >
+                    {activity.internationalTransfers ? __("Yes") : __("No")}
+                </Badge>
+            </Td>
+            {hasAnyAction && (
+                <Td noLink width={50} className="text-end">
+                    <ActionDropdown>
+                        {activity.canDelete && (
+                            <DropdownItem
+                                icon={IconTrashCan}
+                                variant="danger"
+                                onSelect={handleDelete}
+                            >
+                                {__("Delete")}
+                            </DropdownItem>
+                        )}
+                    </ActionDropdown>
+                </Td>
             )}
-          </ActionDropdown>
-        </Td>
-      )}
-    </Tr>
-  );
+        </Tr>
+    );
 }
 
 function DPIARow({
-  dpia,
+    dpia,
 }: {
-  dpia: NodeOf<
-    NonNullable<
-      ProcessingActivitiesPageDPIAFragment$data["dataProtectionImpactAssessments"]
-    >
-  >;
+    dpia: NodeOf<
+        NonNullable<
+            ProcessingActivitiesPageDPIAFragment$data["dataProtectionImpactAssessments"]
+        >
+    >;
 }) {
-  const organizationId = useOrganizationId();
-  const { __ } = useTranslate();
-  const { snapshotId } = useParams<{ snapshotId?: string }>();
-  const isSnapshotMode = Boolean(snapshotId);
+    const organizationId = useOrganizationId();
+    const { __ } = useTranslate();
+    const { snapshotId } = useParams<{ snapshotId?: string }>();
+    const isSnapshotMode = Boolean(snapshotId);
 
-  const activityUrl =
-    isSnapshotMode && snapshotId
-      ? `/organizations/${organizationId}/snapshots/${snapshotId}/processing-activities/${dpia.processingActivity.id}#dpia`
-      : `/organizations/${organizationId}/processing-activities/${dpia.processingActivity.id}#dpia`;
+    const activityUrl =
+        isSnapshotMode && snapshotId
+            ? `/organizations/${organizationId}/snapshots/${snapshotId}/processing-activities/${dpia.processingActivity.id}#dpia`
+            : `/organizations/${organizationId}/processing-activities/${dpia.processingActivity.id}#dpia`;
 
-  return (
-    <Tr to={activityUrl}>
-      <Td>
-        <span className="font-semibold">{dpia.processingActivity.name}</span>
-      </Td>
-      <Td>
-        <span className="text-sm text-txt-secondary line-clamp-2">
-          {dpia.description || "-"}
-        </span>
-      </Td>
-      <Td>
-        <span className="text-sm text-txt-secondary line-clamp-2">
-          {dpia.potentialRisk || "-"}
-        </span>
-      </Td>
-      <Td>
-        {dpia.residualRisk ? (
-          <Badge
-            variant={
-              dpia.residualRisk === "LOW"
-                ? "success"
-                : dpia.residualRisk === "MEDIUM"
-                  ? "warning"
-                  : "danger"
-            }
-          >
-            {getResidualRiskLabel(dpia.residualRisk, __)}
-          </Badge>
-        ) : (
-          "-"
-        )}
-      </Td>
-    </Tr>
-  );
+    return (
+        <Tr to={activityUrl}>
+            <Td>
+                <span className="font-semibold">
+                    {dpia.processingActivity.name}
+                </span>
+            </Td>
+            <Td>
+                <span className="text-sm text-txt-secondary line-clamp-2">
+                    {dpia.description || "-"}
+                </span>
+            </Td>
+            <Td>
+                <span className="text-sm text-txt-secondary line-clamp-2">
+                    {dpia.potentialRisk || "-"}
+                </span>
+            </Td>
+            <Td>
+                {dpia.residualRisk ? (
+                    <Badge
+                        variant={
+                            dpia.residualRisk === "LOW"
+                                ? "success"
+                                : dpia.residualRisk === "MEDIUM"
+                                  ? "warning"
+                                  : "danger"
+                        }
+                    >
+                        {getResidualRiskLabel(dpia.residualRisk, __)}
+                    </Badge>
+                ) : (
+                    "-"
+                )}
+            </Td>
+        </Tr>
+    );
 }
 
 function TIARow({
-  tia,
+    tia,
 }: {
-  tia: NodeOf<
-    NonNullable<
-      ProcessingActivitiesPageTIAFragment$data["transferImpactAssessments"]
-    >
-  >;
+    tia: NodeOf<
+        NonNullable<
+            ProcessingActivitiesPageTIAFragment$data["transferImpactAssessments"]
+        >
+    >;
 }) {
-  const organizationId = useOrganizationId();
-  const { snapshotId } = useParams<{ snapshotId?: string }>();
-  const isSnapshotMode = Boolean(snapshotId);
+    const organizationId = useOrganizationId();
+    const { snapshotId } = useParams<{ snapshotId?: string }>();
+    const isSnapshotMode = Boolean(snapshotId);
 
-  const activityUrl =
-    isSnapshotMode && snapshotId
-      ? `/organizations/${organizationId}/snapshots/${snapshotId}/processing-activities/${tia.processingActivity.id}#tia`
-      : `/organizations/${organizationId}/processing-activities/${tia.processingActivity.id}#tia`;
+    const activityUrl =
+        isSnapshotMode && snapshotId
+            ? `/organizations/${organizationId}/snapshots/${snapshotId}/processing-activities/${tia.processingActivity.id}#tia`
+            : `/organizations/${organizationId}/processing-activities/${tia.processingActivity.id}#tia`;
 
-  return (
-    <Tr to={activityUrl}>
-      <Td>
-        <span className="font-semibold">{tia.processingActivity.name}</span>
-      </Td>
-      <Td>
-        <span className="text-sm text-txt-secondary line-clamp-2">
-          {tia.dataSubjects || "-"}
-        </span>
-      </Td>
-      <Td>
-        <span className="text-sm text-txt-secondary line-clamp-2">
-          {tia.transfer || "-"}
-        </span>
-      </Td>
-      <Td>
-        <span className="text-sm text-txt-secondary line-clamp-2">
-          {tia.localLawRisk || "-"}
-        </span>
-      </Td>
-    </Tr>
-  );
+    return (
+        <Tr to={activityUrl}>
+            <Td>
+                <span className="font-semibold">
+                    {tia.processingActivity.name}
+                </span>
+            </Td>
+            <Td>
+                <span className="text-sm text-txt-secondary line-clamp-2">
+                    {tia.dataSubjects || "-"}
+                </span>
+            </Td>
+            <Td>
+                <span className="text-sm text-txt-secondary line-clamp-2">
+                    {tia.transfer || "-"}
+                </span>
+            </Td>
+            <Td>
+                <span className="text-sm text-txt-secondary line-clamp-2">
+                    {tia.localLawRisk || "-"}
+                </span>
+            </Td>
+        </Tr>
+    );
 }

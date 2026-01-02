@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<8aa2e602e0b579ac6a320207afa7c558>>
+ * @generated SignedSource<<a4f24e8f6dd08074e60067f638eacfd9>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -16,6 +16,7 @@ export type SnapshotsPageFragment$data = {
     readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly node: {
+        readonly canDelete: boolean;
         readonly createdAt: string;
         readonly description: string | null | undefined;
         readonly id: string;
@@ -108,6 +109,19 @@ const node: ReaderFragment = {
                   "storageKey": null
                 },
                 {
+                  "alias": "canDelete",
+                  "args": [
+                    {
+                      "kind": "Literal",
+                      "name": "action",
+                      "value": "core:snapshot:delete"
+                    }
+                  ],
+                  "kind": "ScalarField",
+                  "name": "permission",
+                  "storageKey": "permission(action:\"core:snapshot:delete\")"
+                },
+                {
                   "alias": null,
                   "args": null,
                   "kind": "ScalarField",
@@ -172,6 +186,6 @@ const node: ReaderFragment = {
   "abstractKey": null
 };
 
-(node as any).hash = "700dede55fd00f2b57dbbb6ed2e2613d";
+(node as any).hash = "d924051b479e33aa7fb627e7ad8ad664";
 
 export default node;

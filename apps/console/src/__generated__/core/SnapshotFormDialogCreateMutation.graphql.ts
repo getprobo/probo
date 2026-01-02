@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<7d676ad166c7c858dc8dbc909ed500ea>>
+ * @generated SignedSource<<8fe6c01dea59b2ae2d04050e3cb959d1>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -24,6 +24,7 @@ export type SnapshotFormDialogCreateMutation$data = {
   readonly createSnapshot: {
     readonly snapshotEdge: {
       readonly node: {
+        readonly canDelete: boolean;
         readonly createdAt: string;
         readonly description: string | null | undefined;
         readonly id: string;
@@ -106,6 +107,19 @@ v3 = {
           "kind": "ScalarField",
           "name": "createdAt",
           "storageKey": null
+        },
+        {
+          "alias": "canDelete",
+          "args": [
+            {
+              "kind": "Literal",
+              "name": "action",
+              "value": "core:snapshot:delete"
+            }
+          ],
+          "kind": "ScalarField",
+          "name": "permission",
+          "storageKey": "permission(action:\"core:snapshot:delete\")"
         }
       ],
       "storageKey": null
@@ -179,16 +193,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "e60d598bc7f5c4958168405725664334",
+    "cacheID": "5165891e3f49f2b9e3d1a0b29a0f8bf6",
     "id": null,
     "metadata": {},
     "name": "SnapshotFormDialogCreateMutation",
     "operationKind": "mutation",
-    "text": "mutation SnapshotFormDialogCreateMutation(\n  $input: CreateSnapshotInput!\n) {\n  createSnapshot(input: $input) {\n    snapshotEdge {\n      node {\n        id\n        name\n        description\n        type\n        createdAt\n      }\n    }\n  }\n}\n"
+    "text": "mutation SnapshotFormDialogCreateMutation(\n  $input: CreateSnapshotInput!\n) {\n  createSnapshot(input: $input) {\n    snapshotEdge {\n      node {\n        id\n        name\n        description\n        type\n        createdAt\n        canDelete: permission(action: \"core:snapshot:delete\")\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "b03087e1699a90953aad7cdedaeee1a4";
+(node as any).hash = "1a844eb9af4ea94b194deaf65ba068a0";
 
 export default node;

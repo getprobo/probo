@@ -34,6 +34,7 @@ const snapshotCreateMutation = graphql`
           description
           type
           createdAt
+          canDelete: permission(action: "core:snapshot:delete")
         }
       }
     }
@@ -60,14 +61,19 @@ export default function SnapshotFormDialog(props: Props) {
     errorMessage: __("Failed to create snapshot"),
   });
 
-  const { handleSubmit, register, reset, control, formState: { errors } } =
-    useFormWithSchema(snapshotSchema, {
-      defaultValues: {
-        name: "",
-        description: "",
-        type: "DATA",
-      },
-    });
+  const {
+    handleSubmit,
+    register,
+    reset,
+    control,
+    formState: { errors },
+  } = useFormWithSchema(snapshotSchema, {
+    defaultValues: {
+      name: "",
+      description: "",
+      type: "DATA",
+    },
+  });
 
   const onSubmit = handleSubmit(async (data) => {
     await mutate({
@@ -89,14 +95,7 @@ export default function SnapshotFormDialog(props: Props) {
     <Dialog
       ref={dialogRef}
       trigger={props.children}
-      title={
-        <Breadcrumb
-          items={[
-            __("Snapshots"),
-            __("New Snapshot"),
-          ]}
-        />
-      }
+      title={<Breadcrumb items={[__("Snapshots"), __("New Snapshot")]} />}
     >
       <form onSubmit={onSubmit}>
         <DialogContent className="grid grid-cols-[1fr_420px]">
@@ -125,20 +124,14 @@ export default function SnapshotFormDialog(props: Props) {
               label={__("Type")}
               error={errors.type?.message}
             >
-              <ControlledField
-                control={control}
-                name="type"
-                type="select"
-              >
+              <ControlledField control={control} name="type" type="select">
                 <SnapshotTypeOptions />
               </ControlledField>
             </PropertyRow>
           </div>
         </DialogContent>
         <DialogFooter>
-          <Button type="submit">
-            {__("Create snapshot")}
-          </Button>
+          <Button type="submit">{__("Create snapshot")}</Button>
         </DialogFooter>
       </form>
     </Dialog>

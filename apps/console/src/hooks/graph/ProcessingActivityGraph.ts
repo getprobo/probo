@@ -19,6 +19,15 @@ export const processingActivitiesQuery = graphql`
         canCreateProcessingActivity: permission(
           action: "core:processing-activity:create"
         )
+        canExportProcessingActivities: permission(
+          action: "core:processing-activity:export"
+        )
+        canExportDataProtectionImpactAssessments: permission(
+          action: "core:data-protection-impact-assessment:export"
+        )
+        canExportTransferImpactAssessments: permission(
+          action: "core:transfer-impact-assessment:export"
+        )
         ...ProcessingActivitiesPageFragment @arguments(snapshotId: $snapshotId)
         ...ProcessingActivitiesPageDPIAFragment
           @arguments(snapshotId: $snapshotId)
