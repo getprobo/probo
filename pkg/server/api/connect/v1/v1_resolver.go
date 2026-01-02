@@ -26,6 +26,10 @@ import (
 
 // Memberships is the resolver for the memberships field.
 func (r *identityResolver) Memberships(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MembershipOrderBy) (*types.MembershipConnection, error) {
+	if ok := r.Authorize(ctx, obj.ID, iam.ActionMembershipList); !ok {
+		return nil, nil
+	}
+
 	if gqlutils.OnlyTotalCountSelected(ctx) {
 		return &types.MembershipConnection{
 			Resolver: r,
@@ -57,6 +61,10 @@ func (r *identityResolver) Memberships(ctx context.Context, obj *types.Identity,
 
 // PendingInvitations is the resolver for the pendingInvitations field.
 func (r *identityResolver) PendingInvitations(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.InvitationOrderBy) (*types.InvitationConnection, error) {
+	if ok := r.Authorize(ctx, obj.ID, iam.ActionInvitationList); !ok {
+		return nil, nil
+	}
+
 	if gqlutils.OnlyTotalCountSelected(ctx) {
 		return &types.InvitationConnection{
 			Resolver: r,
@@ -82,6 +90,10 @@ func (r *identityResolver) PendingInvitations(ctx context.Context, obj *types.Id
 
 // Sessions is the resolver for the sessions field.
 func (r *identityResolver) Sessions(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.SessionOrder) (*types.SessionConnection, error) {
+	if ok := r.Authorize(ctx, obj.ID, iam.ActionSessionList); !ok {
+		return nil, nil
+	}
+
 	if gqlutils.OnlyTotalCountSelected(ctx) {
 		return &types.SessionConnection{
 			Resolver: r,
@@ -113,6 +125,10 @@ func (r *identityResolver) Sessions(ctx context.Context, obj *types.Identity, fi
 
 // PersonalAPIKeys is the resolver for the personalAPIKeys field.
 func (r *identityResolver) PersonalAPIKeys(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.PersonalAPIKeyConnection, error) {
+	if ok := r.Authorize(ctx, obj.ID, iam.ActionPersonalAPIKeyList); !ok {
+		return nil, nil
+	}
+
 	if gqlutils.OnlyTotalCountSelected(ctx) {
 		return &types.PersonalAPIKeyConnection{
 			Resolver: r,
@@ -143,6 +159,10 @@ func (r *identityResolver) Permission(ctx context.Context, obj *types.Identity, 
 
 // Organization is the resolver for the organization field.
 func (r *invitationResolver) Organization(ctx context.Context, obj *types.Invitation) (*types.Organization, error) {
+	if ok := r.Authorize(ctx, obj.Organization.ID, iam.ActionOrganizationGet); !ok {
+		return nil, nil
+	}
+
 	if gqlutils.OnlyIDSelected(ctx) {
 		return &types.Organization{
 			ID: obj.Organization.ID,
@@ -167,6 +187,10 @@ func (r *invitationResolver) Permission(ctx context.Context, obj *types.Invitati
 func (r *invitationConnectionResolver) TotalCount(ctx context.Context, obj *types.InvitationConnection) (*int, error) {
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
+		if ok := r.Authorize(ctx, obj.ParentID, iam.ActionInvitationList); !ok {
+			return nil, nil
+		}
+
 		count, err := r.iam.OrganizationService.CountInvitations(ctx, obj.ParentID, obj.Filters)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count invitations", log.Error(err))
@@ -174,6 +198,10 @@ func (r *invitationConnectionResolver) TotalCount(ctx context.Context, obj *type
 		}
 		return &count, nil
 	case *identityResolver:
+		if ok := r.Authorize(ctx, obj.ParentID, iam.ActionInvitationList); !ok {
+			return nil, nil
+		}
+
 		count, err := r.iam.AccountService.CountPendingInvitations(ctx, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count invitations", log.Error(err))
@@ -189,6 +217,10 @@ func (r *invitationConnectionResolver) TotalCount(ctx context.Context, obj *type
 
 // Identity is the resolver for the identity field.
 func (r *membershipResolver) Identity(ctx context.Context, obj *types.Membership) (*types.Identity, error) {
+	if ok := r.Authorize(ctx, obj.Identity.ID, iam.ActionIdentityGet); !ok {
+		return nil, nil
+	}
+
 	if gqlutils.OnlyIDSelected(ctx) {
 		return &types.Identity{
 			ID: obj.Identity.ID,
@@ -206,6 +238,10 @@ func (r *membershipResolver) Identity(ctx context.Context, obj *types.Membership
 
 // Profile is the resolver for the profile field.
 func (r *membershipResolver) Profile(ctx context.Context, obj *types.Membership) (*types.MembershipProfile, error) {
+	if ok := r.Authorize(ctx, obj.Profile.ID, iam.ActionMembershipProfileGet); !ok {
+		return nil, nil
+	}
+
 	if gqlutils.OnlyIDSelected(ctx) {
 		return &types.MembershipProfile{
 			ID: obj.Profile.ID,
@@ -228,6 +264,10 @@ func (r *membershipResolver) Profile(ctx context.Context, obj *types.Membership)
 
 // Organization is the resolver for the organization field.
 func (r *membershipResolver) Organization(ctx context.Context, obj *types.Membership) (*types.Organization, error) {
+	if ok := r.Authorize(ctx, obj.Organization.ID, iam.ActionOrganizationGet); !ok {
+		return nil, nil
+	}
+
 	if gqlutils.OnlyIDSelected(ctx) {
 		return &types.Organization{
 			ID: obj.Organization.ID,
@@ -245,6 +285,10 @@ func (r *membershipResolver) Organization(ctx context.Context, obj *types.Member
 
 // LastSession is the resolver for the lastSession field.
 func (r *membershipResolver) LastSession(ctx context.Context, obj *types.Membership) (*types.Session, error) {
+	if ok := r.Authorize(ctx, obj.ID, iam.ActionMembershipGet); !ok {
+		return nil, nil
+	}
+
 	session := SessionFromContext(ctx)
 	if session == nil {
 		return nil, nil
@@ -271,6 +315,10 @@ func (r *membershipResolver) Permission(ctx context.Context, obj *types.Membersh
 
 // TotalCount is the resolver for the totalCount field.
 func (r *membershipConnectionResolver) TotalCount(ctx context.Context, obj *types.MembershipConnection) (*int, error) {
+	if ok := r.Authorize(ctx, obj.ParentID, iam.ActionMembershipList); !ok {
+		return nil, nil
+	}
+
 	switch obj.Resolver.(type) {
 	case *identityResolver:
 		count, err := r.iam.AccountService.CountMemberships(ctx, obj.ParentID)
@@ -627,6 +675,10 @@ func (r *mutationResolver) AssumeOrganizationSession(ctx context.Context, input 
 
 // RevokeSession is the resolver for the revokeSession field.
 func (r *mutationResolver) RevokeSession(ctx context.Context, input types.RevokeSessionInput) (*types.RevokeSessionPayload, error) {
+	if ok := r.Authorize(ctx, input.SessionID, iam.ActionSessionRevoke); !ok {
+		return nil, nil
+	}
+
 	identity := IdentityFromContext(ctx)
 
 	err := r.iam.SessionService.RevokeSession(ctx, identity.ID, input.SessionID)
@@ -645,6 +697,10 @@ func (r *mutationResolver) RevokeSession(ctx context.Context, input types.Revoke
 
 // RevokeAllSessions is the resolver for the revokeAllSessions field.
 func (r *mutationResolver) RevokeAllSessions(ctx context.Context) (*types.RevokeAllSessionsPayload, error) {
+	if ok := r.Authorize(ctx, SessionFromContext(ctx).ID, iam.ActionSessionRevokeAll); !ok {
+		return nil, nil
+	}
+
 	session := SessionFromContext(ctx)
 
 	revokedCount, err := r.iam.SessionService.RevokeAllSessions(ctx, session.ID)
@@ -659,6 +715,10 @@ func (r *mutationResolver) RevokeAllSessions(ctx context.Context) (*types.Revoke
 // CreatePersonalAPIKey is the resolver for the createPersonalAPIKey field.
 func (r *mutationResolver) CreatePersonalAPIKey(ctx context.Context, input types.CreatePersonalAPIKeyInput) (*types.CreatePersonalAPIKeyPayload, error) {
 	identity := IdentityFromContext(ctx)
+
+	if ok := r.Authorize(ctx, identity.ID, iam.ActionPersonalAPIKeyCreate); !ok {
+		return nil, nil
+	}
 
 	userAPIKey, token, err := r.iam.AccountService.CreatePersonalAPIKey(
 		ctx,
@@ -679,6 +739,10 @@ func (r *mutationResolver) CreatePersonalAPIKey(ctx context.Context, input types
 
 // RevokePersonalAPIKey is the resolver for the revokePersonalAPIKey field.
 func (r *mutationResolver) RevokePersonalAPIKey(ctx context.Context, input types.RevokePersonalAPIKeyInput) (*types.RevokePersonalAPIKeyPayload, error) {
+	if ok := r.Authorize(ctx, input.PersonalAPIKeyID, iam.ActionPersonalAPIKeyDelete); !ok {
+		return nil, nil
+	}
+
 	identity := IdentityFromContext(ctx)
 
 	err := r.iam.AccountService.DeletePersonalAPIKey(ctx, identity.ID, input.PersonalAPIKeyID)
@@ -693,6 +757,10 @@ func (r *mutationResolver) RevokePersonalAPIKey(ctx context.Context, input types
 // CreateOrganization is the resolver for the createOrganization field.
 func (r *mutationResolver) CreateOrganization(ctx context.Context, input types.CreateOrganizationInput) (*types.CreateOrganizationPayload, error) {
 	identity := IdentityFromContext(ctx)
+
+	if ok := r.Authorize(ctx, identity.ID, iam.ActionOrganizationCreate); !ok {
+		return nil, nil
+	}
 
 	var (
 		logoFile           *iam.UploadedFile
@@ -737,6 +805,10 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input types.C
 
 // UpdateOrganization is the resolver for the updateOrganization field.
 func (r *mutationResolver) UpdateOrganization(ctx context.Context, input types.UpdateOrganizationInput) (*types.UpdateOrganizationPayload, error) {
+	if ok := r.Authorize(ctx, input.OrganizationID, iam.ActionOrganizationUpdate); !ok {
+		return nil, nil
+	}
+
 	req := &iam.UpdateOrganizationRequest{
 		Name:               input.Name,
 		Description:        gqlutils.UnwrapOmittable(input.Description),
@@ -785,6 +857,10 @@ func (r *mutationResolver) UpdateOrganization(ctx context.Context, input types.U
 
 // DeleteOrganization is the resolver for the deleteOrganization field.
 func (r *mutationResolver) DeleteOrganization(ctx context.Context, input types.DeleteOrganizationInput) (*types.DeleteOrganizationPayload, error) {
+	if ok := r.Authorize(ctx, input.OrganizationID, iam.ActionOrganizationDelete); !ok {
+		return nil, nil
+	}
+
 	err := r.iam.OrganizationService.DeleteOrganization(ctx, input.OrganizationID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete organization", log.Error(err))
@@ -801,6 +877,10 @@ func (r *mutationResolver) DeleteOrganizationHorizontalLogo(ctx context.Context,
 
 // InviteMember is the resolver for the inviteMember field.
 func (r *mutationResolver) InviteMember(ctx context.Context, input types.InviteMemberInput) (*types.InviteMemberPayload, error) {
+	if ok := r.Authorize(ctx, input.OrganizationID, iam.ActionInvitationCreate); !ok {
+		return nil, nil
+	}
+
 	invitation, err := r.iam.OrganizationService.InviteMember(
 		ctx,
 		input.OrganizationID,
@@ -831,6 +911,10 @@ func (r *mutationResolver) InviteMember(ctx context.Context, input types.InviteM
 
 // DeleteInvitation is the resolver for the deleteInvitation field.
 func (r *mutationResolver) DeleteInvitation(ctx context.Context, input types.DeleteInvitationInput) (*types.DeleteInvitationPayload, error) {
+	if ok := r.Authorize(ctx, input.OrganizationID, iam.ActionInvitationDelete); !ok {
+		return nil, nil
+	}
+
 	err := r.iam.OrganizationService.DeleteInvitation(ctx, input.OrganizationID, input.InvitationID)
 	if err != nil {
 		var errInvitationNotFound *iam.ErrInvitationNotFound
@@ -853,6 +937,10 @@ func (r *mutationResolver) DeleteInvitation(ctx context.Context, input types.Del
 
 // UpdateMembership is the resolver for the updateMembership field.
 func (r *mutationResolver) UpdateMembership(ctx context.Context, input types.UpdateMembershipInput) (*types.UpdateMembershipPayload, error) {
+	if ok := r.Authorize(ctx, input.MembershipID, iam.ActionMembershipUpdate); !ok {
+		return nil, nil
+	}
+
 	membership, err := r.iam.OrganizationService.UpdateMempership(ctx, input.OrganizationID, input.MembershipID, input.Role)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot update membership", log.Error(err))
@@ -866,6 +954,10 @@ func (r *mutationResolver) UpdateMembership(ctx context.Context, input types.Upd
 
 // RemoveMember is the resolver for the removeMember field.
 func (r *mutationResolver) RemoveMember(ctx context.Context, input types.RemoveMemberInput) (*types.RemoveMemberPayload, error) {
+	if ok := r.Authorize(ctx, input.MembershipID, iam.ActionMembershipDelete); !ok {
+		return nil, nil
+	}
+
 	err := r.iam.OrganizationService.RemoveMember(ctx, input.OrganizationID, input.MembershipID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot remove member from organization", log.Error(err))
@@ -877,6 +969,10 @@ func (r *mutationResolver) RemoveMember(ctx context.Context, input types.RemoveM
 
 // AcceptInvitation is the resolver for the acceptInvitation field.
 func (r *mutationResolver) AcceptInvitation(ctx context.Context, input types.AcceptInvitationInput) (*types.AcceptInvitationPayload, error) {
+	if ok := r.Authorize(ctx, input.InvitationID, iam.ActionInvitationAccept); !ok {
+		return nil, nil
+	}
+
 	identity := IdentityFromContext(ctx)
 
 	membership, err := r.iam.AccountService.AcceptInvitation(ctx, identity.ID, input.InvitationID)
@@ -892,6 +988,10 @@ func (r *mutationResolver) AcceptInvitation(ctx context.Context, input types.Acc
 
 // CreateSAMLConfiguration is the resolver for the createSAMLConfiguration field.
 func (r *mutationResolver) CreateSAMLConfiguration(ctx context.Context, input types.CreateSAMLConfigurationInput) (*types.CreateSAMLConfigurationPayload, error) {
+	if ok := r.Authorize(ctx, input.OrganizationID, iam.ActionSAMLConfigurationCreate); !ok {
+		return nil, nil
+	}
+
 	req := &iam.CreateSAMLConfigurationRequest{
 		EmailDomain:       input.EmailDomain,
 		IdPEntityID:       input.IdpEntityID,
@@ -933,6 +1033,10 @@ func (r *mutationResolver) CreateSAMLConfiguration(ctx context.Context, input ty
 
 // UpdateSAMLConfiguration is the resolver for the updateSAMLConfiguration field.
 func (r *mutationResolver) UpdateSAMLConfiguration(ctx context.Context, input types.UpdateSAMLConfigurationInput) (*types.UpdateSAMLConfigurationPayload, error) {
+	if ok := r.Authorize(ctx, input.SamlConfigurationID, iam.ActionSAMLConfigurationUpdate); !ok {
+		return nil, nil
+	}
+
 	req := &iam.UpdateSAMLConfigurationRequest{
 		IdPEntityID:       input.IdpEntityID,
 		IdPSsoURL:         input.IdpSsoURL,
@@ -966,6 +1070,10 @@ func (r *mutationResolver) UpdateSAMLConfiguration(ctx context.Context, input ty
 
 // DeleteSAMLConfiguration is the resolver for the deleteSAMLConfiguration field.
 func (r *mutationResolver) DeleteSAMLConfiguration(ctx context.Context, input types.DeleteSAMLConfigurationInput) (*types.DeleteSAMLConfigurationPayload, error) {
+	if ok := r.Authorize(ctx, input.OrganizationID, iam.ActionSAMLConfigurationDelete); !ok {
+		return nil, nil
+	}
+
 	err := r.iam.OrganizationService.DeleteSAMLConfiguration(ctx, input.OrganizationID, input.SamlConfigurationID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete saml configuration", log.Error(err))
@@ -977,6 +1085,10 @@ func (r *mutationResolver) DeleteSAMLConfiguration(ctx context.Context, input ty
 
 // LogoURL is the resolver for the logoUrl field.
 func (r *organizationResolver) LogoURL(ctx context.Context, obj *types.Organization) (*string, error) {
+	if ok := r.Authorize(ctx, obj.ID, iam.ActionOrganizationGet); !ok {
+		return nil, nil
+	}
+
 	presignedURL, err := r.iam.OrganizationService.GenerateLogoURL(ctx, obj.ID, 1*time.Hour)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot generate logo URL", log.Error(err))
@@ -988,6 +1100,10 @@ func (r *organizationResolver) LogoURL(ctx context.Context, obj *types.Organizat
 
 // HorizontalLogoURL is the resolver for the horizontalLogoUrl field.
 func (r *organizationResolver) HorizontalLogoURL(ctx context.Context, obj *types.Organization) (*string, error) {
+	if ok := r.Authorize(ctx, obj.ID, iam.ActionOrganizationGet); !ok {
+		return nil, nil
+	}
+
 	presignedURL, err := r.iam.OrganizationService.GenerateHorizontalLogoURL(ctx, obj.ID, 1*time.Hour)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot generate horizontal logo URL", log.Error(err))
@@ -999,13 +1115,8 @@ func (r *organizationResolver) HorizontalLogoURL(ctx context.Context, obj *types
 
 // Members is the resolver for the members field.
 func (r *organizationResolver) Members(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MembershipOrderBy) (*types.MembershipConnection, error) {
-	if err := r.iam.Authorizer.Authorize(ctx, iam.AuthorizeParams{
-		Principal:          IdentityFromContext(ctx).ID,
-		Resource:           obj.ID,
-		Action:             iam.ActionIAMOrganizationListMembers,
-		ResourceAttributes: map[string]string{},
-	}); err != nil {
-		return nil, gqlutils.Forbidden(err)
+	if ok := r.Authorize(ctx, obj.ID, iam.ActionMembershipList); !ok {
+		return nil, nil
 	}
 
 	if gqlutils.OnlyTotalCountSelected(ctx) {
@@ -1037,6 +1148,10 @@ func (r *organizationResolver) Members(ctx context.Context, obj *types.Organizat
 
 // Invitations is the resolver for the invitations field.
 func (r *organizationResolver) Invitations(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, status *coredata.InvitationStatus, orderBy *types.InvitationOrderBy) (*types.InvitationConnection, error) {
+	if ok := r.Authorize(ctx, obj.ID, iam.ActionInvitationList); !ok {
+		return nil, nil
+	}
+
 	if gqlutils.OnlyTotalCountSelected(ctx) {
 		return &types.InvitationConnection{
 			Resolver: r,
@@ -1067,6 +1182,10 @@ func (r *organizationResolver) Invitations(ctx context.Context, obj *types.Organ
 
 // SamlConfigurations is the resolver for the samlConfigurations field.
 func (r *organizationResolver) SamlConfigurations(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.SAMLConfigurationConnection, error) {
+	if ok := r.Authorize(ctx, obj.ID, iam.ActionSAMLConfigurationList); !ok {
+		return nil, nil
+	}
+
 	if gqlutils.OnlyTotalCountSelected(ctx) {
 		return &types.SAMLConfigurationConnection{
 			Resolver: r,
@@ -1092,6 +1211,10 @@ func (r *organizationResolver) SamlConfigurations(ctx context.Context, obj *type
 
 // ViewerMembership is the resolver for the viewerMembership field.
 func (r *organizationResolver) ViewerMembership(ctx context.Context, obj *types.Organization) (*types.Membership, error) {
+	if ok := r.Authorize(ctx, obj.ID, iam.ActionMembershipList); !ok {
+		return nil, nil
+	}
+
 	identity := IdentityFromContext(ctx)
 
 	membership, err := r.iam.AccountService.GetMembershipForOrganization(ctx, identity.ID, obj.ID)
@@ -1110,6 +1233,10 @@ func (r *organizationResolver) Permission(ctx context.Context, obj *types.Organi
 
 // Token is the resolver for the token field.
 func (r *personalAPIKeyResolver) Token(ctx context.Context, obj *types.PersonalAPIKey) (*string, error) {
+	if ok := r.Authorize(ctx, obj.ID, iam.ActionPersonalAPIKeyGet); !ok {
+		return nil, nil
+	}
+
 	identity := IdentityFromContext(ctx)
 
 	token, err := r.iam.AccountService.RevealPersonalAPIKeyToken(ctx, identity.ID, obj.ID)
@@ -1130,6 +1257,10 @@ func (r *personalAPIKeyResolver) Permission(ctx context.Context, obj *types.Pers
 func (r *personalAPIKeyConnectionResolver) TotalCount(ctx context.Context, obj *types.PersonalAPIKeyConnection) (*int, error) {
 	switch obj.Resolver.(type) {
 	case *identityResolver:
+		if ok := r.Authorize(ctx, obj.ParentID, iam.ActionPersonalAPIKeyList); !ok {
+			return nil, nil
+		}
+
 		count, err := r.iam.AccountService.CountPersonalAPIKeys(ctx, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count personal api keys", log.Error(err))
@@ -1153,7 +1284,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 	switch id.EntityType() {
 	case coredata.OrganizationEntityType:
-		action = iam.ActionIAMOrganizationGet
+		action = iam.ActionOrganizationGet
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
 			organization, err := r.iam.OrganizationService.GetOrganization(ctx, id)
 			if err != nil {
@@ -1162,7 +1293,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			return types.NewOrganization(organization), nil
 		}
 	case coredata.IdentityEntityType:
-		action = iam.ActionIAMIdentityGet
+		action = iam.ActionIdentityGet
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
 			identity, err := r.iam.AccountService.GetIdentity(ctx, id)
 			if err != nil {
@@ -1172,7 +1303,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			return types.NewIdentity(identity), nil
 		}
 	case coredata.SessionEntityType:
-		action = iam.ActionIAMSessionGet
+		action = iam.ActionSessionGet
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
 			session, err := r.iam.GetSession(ctx, id)
 			if err != nil {
@@ -1182,7 +1313,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			return types.NewSession(session), nil
 		}
 	case coredata.MembershipEntityType:
-		action = iam.ActionIAMMembershipGet
+		action = iam.ActionMembershipGet
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
 			membership, err := r.iam.GetMembership(ctx, id)
 			if err != nil {
@@ -1192,7 +1323,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			return types.NewMembership(membership), nil
 		}
 	case coredata.InvitationEntityType:
-		action = iam.ActionIAMInvitationGet
+		action = iam.ActionInvitationGet
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
 			invitation, err := r.iam.GetInvitation(ctx, id)
 			if err != nil {
@@ -1202,7 +1333,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			return types.NewInvitation(invitation), nil
 		}
 	case coredata.SAMLConfigurationEntityType:
-		action = iam.ActionIAMSAMLConfigurationGet
+		action = iam.ActionSAMLConfigurationGet
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
 			samlConfiguration, err := r.iam.GetSAMLconfiguration(ctx, id)
 			if err != nil {
@@ -1212,7 +1343,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			return types.NewSAMLConfiguration(samlConfiguration), nil
 		}
 	case coredata.PersonalAPIKeyEntityType:
-		action = iam.ActionIAMPersonalAPIKeyGet
+		action = iam.ActionPersonalAPIKeyGet
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
 			personalAPIKey, err := r.iam.GetPersonalAPIKey(ctx, id)
 			if err != nil {

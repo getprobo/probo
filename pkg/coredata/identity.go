@@ -245,7 +245,7 @@ LIMIT 1;
 		return nil, fmt.Errorf("cannot query identity iam attributes: %w", err)
 	}
 
-	return map[string]string{"id": id.String(), "email": emailAddress}, nil
+	return map[string]string{"identity_id": id.String(), "email": emailAddress}, nil
 }
 
 func (i *Identity) Insert(

@@ -18,53 +18,50 @@ type Action = string
 
 const (
 	// Organization actions
-	ActionIAMOrganizationCreate          = "iam:organization:create"
-	ActionIAMOrganizationGet             = "iam:organization:get"
-	ActionIAMOrganizationUpdate          = "iam:organization:update"
-	ActionIAMOrganizationDelete          = "iam:organization:delete"
-	ActionIAMOrganizationList            = "iam:organization:list"
-	ActionIAMOrganizationInviteMember    = "iam:organization:invite-member"
-	ActionIAMOrganizationRemoveMember    = "iam:organization:remove-member"
-	ActionIAMOrganizationListMembers     = "iam:organization:list-members"
-	ActionIAMOrganizationListInvitations = "iam:organization:list-invitations"
+	ActionOrganizationCreate = "iam:organization:create"
+	ActionOrganizationGet    = "iam:organization:get"
+	ActionOrganizationUpdate = "iam:organization:update"
+	ActionOrganizationDelete = "iam:organization:delete"
+	ActionOrganizationList   = "iam:organization:list"
 
 	// Identity actions
-	ActionIAMIdentityGet                 = "iam:identity:get"
-	ActionIAMIdentityUpdate              = "iam:identity:update"
-	ActionIAMIdentityDelete              = "iam:identity:delete"
-	ActionIAMIdentityListMemberships     = "iam:identity:list-memberships"
-	ActionIAMIdentityListInvitations     = "iam:identity:list-invitations"
-	ActionIAMIdentityListSessions        = "iam:identity:list-sessions"
-	ActionIAMIdentityListPersonalAPIKeys = "iam:identity:list-personal-api-keys"
+	ActionIdentityGet    = "iam:identity:get"
+	ActionIdentityUpdate = "iam:identity:update"
+	ActionIdentityDelete = "iam:identity:delete"
 
 	// Session actions
-	ActionIAMSessionGet       = "iam:session:get"
-	ActionIAMSessionRevoke    = "iam:session:revoke"
-	ActionIAMSessionRevokeAll = "iam:session:revoke-all"
+	ActionSessionList      = "iam:session:list"
+	ActionSessionGet       = "iam:session:get"
+	ActionSessionRevoke    = "iam:session:revoke"
+	ActionSessionRevokeAll = "iam:session:revoke-all"
 
 	// Invitation actions
-	ActionIAMInvitationCreate = "iam:invitation:create"
-	ActionIAMInvitationGet    = "iam:invitation:get"
-	ActionIAMInvitationAccept = "iam:invitation:accept"
-	ActionIAMInvitationDelete = "iam:invitation:delete"
+	ActionInvitationList   = "iam:invitation:list"
+	ActionInvitationCreate = "iam:invitation:create"
+	ActionInvitationGet    = "iam:invitation:get"
+	ActionInvitationAccept = "iam:invitation:accept"
+	ActionInvitationDelete = "iam:invitation:delete"
 
 	// Membership actions
-	ActionIAMMembershipGet    = "iam:membership:get"
-	ActionIAMMembershipLit    = "iam:membership:list"
-	ActionIAMMembershipUpdate = "iam:membership:update"
-	ActionIAMMembershipDelete = "iam:membership:delete"
+	ActionMembershipGet    = "iam:membership:get"
+	ActionMembershipList   = "iam:membership:list"
+	ActionMembershipUpdate = "iam:membership:update"
+	ActionMembershipDelete = "iam:membership:delete"
+
+	// Membership Profile actions
+	ActionMembershipProfileGet = "iam:membership-profile:get"
 
 	// Personal API Key actions
-	ActionIAMPersonalAPIKeyCreate = "iam:personal-api-key:create"
-	ActionIAMPersonalAPIKeyGet    = "iam:personal-api-key:get"
-	ActionIAMPersonalAPIKeyList   = "iam:personal-api-key:list"
-	ActionIAMPersonalAPIKeyUpdate = "iam:personal-api-key:update"
-	ActionIAMPersonalAPIKeyDelete = "iam:personal-api-key:delete"
+	ActionPersonalAPIKeyCreate = "iam:personal-api-key:create"
+	ActionPersonalAPIKeyGet    = "iam:personal-api-key:get"
+	ActionPersonalAPIKeyList   = "iam:personal-api-key:list"
+	ActionPersonalAPIKeyUpdate = "iam:personal-api-key:update"
+	ActionPersonalAPIKeyDelete = "iam:personal-api-key:delete"
 
 	// SAML Configuration actions
-	ActionIAMSAMLConfigurationCreate = "iam:saml-configuration:create"
-	ActionIAMSAMLConfigurationGet    = "iam:saml-configuration:get"
-	ActionIAMSAMLConfigurationUpdate = "iam:saml-configuration:update"
-	ActionIAMSAMLConfigurationDelete = "iam:saml-configuration:delete"
-	ActionIAMSAMLConfigurationList   = "iam:saml-configuration:list"
+	ActionSAMLConfigurationCreate = "iam:saml-configuration:create"
+	ActionSAMLConfigurationGet    = "iam:saml-configuration:get"
+	ActionSAMLConfigurationUpdate = "iam:saml-configuration:update"
+	ActionSAMLConfigurationDelete = "iam:saml-configuration:delete"
+	ActionSAMLConfigurationList   = "iam:saml-configuration:list"
 )

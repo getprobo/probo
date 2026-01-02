@@ -21,9 +21,11 @@ import (
 	"errors"
 	"time"
 
+	"github.com/99designs/gqlgen/graphql"
 	"github.com/go-chi/chi/v5"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/baseurl"
+	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/types"
@@ -95,4 +97,31 @@ func (r *Resolver) Permission(ctx context.Context, obj types.Node, action string
 	}
 
 	return true, nil
+}
+
+func (r *Resolver) Authorize(ctx context.Context, objectID gid.GID, action string) bool {
+	identity := IdentityFromContext(ctx)
+
+	err := r.iam.Authorizer.Authorize(
+		ctx,
+		iam.AuthorizeParams{
+			Principal: identity.ID,
+			Resource:  objectID,
+			Action:    action,
+		},
+	)
+
+	if err != nil {
+		var errInsufficientPermissions *iam.ErrInsufficientPermissions
+		if errors.As(err, &errInsufficientPermissions) {
+			graphql.AddError(ctx, err)
+			return false
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot authorize", log.Error(err))
+		graphql.AddError(ctx, gqlutils.InternalServerError(ctx))
+		return false
+	}
+
+	return true
 }

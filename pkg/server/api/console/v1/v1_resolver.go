@@ -5915,7 +5915,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 	switch id.EntityType() {
 	case coredata.OrganizationEntityType:
-		action = iam.ActionIAMOrganizationGet
+		action = iam.ActionOrganizationGet
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
 			organization, err := prb.Organizations.Get(ctx, id)
 			if err != nil {
