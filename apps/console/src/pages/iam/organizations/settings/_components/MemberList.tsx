@@ -19,7 +19,6 @@ const fragment = graphql`
     before: { type: "CursorKey", defaultValue: null }
     last: { type: "Int", defaultValue: null }
   ) {
-    ...MemberListItem_currentRoleFragment
     members(
       first: $first
       after: $after
@@ -94,7 +93,6 @@ export function MemberList(props: { fKey: MemberListFragment$key }) {
               key={membership.id}
               fKey={membership}
               onRefetch={refetchMemberships}
-              viewerFKey={membersPagination.data}
             />
           ))
         )}

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<30bea11238a554ed69a88c9f07d33d9e>>
+ * @generated SignedSource<<d0098f8499fc70b98d7264cb756b2c6b>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -22,7 +22,6 @@ export type MemberListFragment$data = {
     }>;
     readonly totalCount: number | null | undefined;
   };
-  readonly " $fragmentSpreads": FragmentRefs<"MemberListItem_currentRoleFragment">;
   readonly " $fragmentType": "MemberListFragment";
 };
 export type MemberListFragment$key = {
@@ -108,11 +107,6 @@ return {
   },
   "name": "MemberListFragment",
   "selections": [
-    {
-      "args": null,
-      "kind": "FragmentSpread",
-      "name": "MemberListItem_currentRoleFragment"
-    },
     {
       "kind": "RequiredField",
       "field": {
@@ -245,6 +239,6 @@ return {
 };
 })();
 
-(node as any).hash = "909f6c9ed0fcaf7b0d170bded8c97562";
+(node as any).hash = "763331f25e735e2645b0c6949ecad362";
 
 export default node;
