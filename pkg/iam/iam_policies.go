@@ -133,6 +133,11 @@ var IAMOwnerPolicy = policy.NewPolicy(
 		WithSID("full-membership-profile-access").
 		When(policy.Equals("principal.organization_id", "resource.organization_id")),
 
+	// Can view identities of members in the same organization
+	policy.Allow(ActionIdentityGet).
+		WithSID("view-member-identity").
+		When(policy.Equals("principal.organization_id", "resource.organization_id")),
+
 	// Can manage invitations (scoped to own organization)
 	policy.Allow(
 		ActionInvitationList,
@@ -178,6 +183,11 @@ var IAMAdminPolicy = policy.NewPolicy(
 	// Can view membership profiles (scoped to own organization)
 	policy.Allow(ActionMembershipProfileGet).
 		WithSID("membership-profile-admin-access").
+		When(policy.Equals("principal.organization_id", "resource.organization_id")),
+
+	// Can view identities of members in the same organization
+	policy.Allow(ActionIdentityGet).
+		WithSID("view-member-identity").
 		When(policy.Equals("principal.organization_id", "resource.organization_id")),
 
 	// Can manage invitations (scoped to own organization)
@@ -232,6 +242,11 @@ var IAMViewerPolicy = policy.NewPolicy(
 	// Can view membership profiles (scoped to own organization)
 	policy.Allow(ActionMembershipProfileGet).
 		WithSID("membership-profile-viewer-access").
+		When(policy.Equals("principal.organization_id", "resource.organization_id")),
+
+	// Can view identities of members in the same organization
+	policy.Allow(ActionIdentityGet).
+		WithSID("view-member-identity").
 		When(policy.Equals("principal.organization_id", "resource.organization_id")),
 ).
 	WithDescription("Read-only IAM access for organization viewers")
