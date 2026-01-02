@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<d8293252572dc69148a45b6ce2fabafa>>
+ * @generated SignedSource<<7cb2759bd509c11cb25bb1af2a6105cd>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -17,6 +17,8 @@ export type ProcessingActivitiesPageFragment$data = {
     readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly node: {
+        readonly canDelete: boolean;
+        readonly canUpdate: boolean;
         readonly createdAt: string;
         readonly dataSubjectCategory: string | null | undefined;
         readonly id: string;
@@ -229,6 +231,32 @@ return {
                   "storageKey": null
                 },
                 {
+                  "alias": "canUpdate",
+                  "args": [
+                    {
+                      "kind": "Literal",
+                      "name": "action",
+                      "value": "core:processing-activity:update"
+                    }
+                  ],
+                  "kind": "ScalarField",
+                  "name": "permission",
+                  "storageKey": "permission(action:\"core:processing-activity:update\")"
+                },
+                {
+                  "alias": "canDelete",
+                  "args": [
+                    {
+                      "kind": "Literal",
+                      "name": "action",
+                      "value": "core:processing-activity:delete"
+                    }
+                  ],
+                  "kind": "ScalarField",
+                  "name": "permission",
+                  "storageKey": "permission(action:\"core:processing-activity:delete\")"
+                },
+                {
                   "alias": null,
                   "args": null,
                   "kind": "ScalarField",
@@ -294,6 +322,6 @@ return {
 };
 })();
 
-(node as any).hash = "e60b3eb3cf3d172625c2873cb05039bd";
+(node as any).hash = "df348ac63bc56da06da97e484fb2c0e5";
 
 export default node;

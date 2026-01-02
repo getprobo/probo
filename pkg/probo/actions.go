@@ -278,11 +278,17 @@ const (
 	ActionSlackConnectionList = "core:slack-connection:list"
 
 	// DataProtectionImpactAssessment actions
-	ActionDataProtectionImpactAssessmentGet = "core:data-protection-impact-assessment:get"
+	ActionDataProtectionImpactAssessmentGet    = "core:data-protection-impact-assessment:get"
+	ActionDataProtectionImpactAssessmentCreate = "core:data-protection-impact-assessment:create"
+	ActionDataProtectionImpactAssessmentUpdate = "core:data-protection-impact-assessment:update"
+	ActionDataProtectionImpactAssessmentDelete = "core:data-protection-impact-assessment:delete"
 
 	// TransferImpactAssessment actions
-	ActionTransferImpactAssessmentGet  = "core:transfer-impact-assessment:get"
-	ActionTransferImpactAssessmentList = "core:transfer-impact-assessment:list"
+	ActionTransferImpactAssessmentGet    = "core:transfer-impact-assessment:get"
+	ActionTransferImpactAssessmentList   = "core:transfer-impact-assessment:list"
+	ActionTransferImpactAssessmentCreate = "core:transfer-impact-assessment:create"
+	ActionTransferImpactAssessmentUpdate = "core:transfer-impact-assessment:update"
+	ActionTransferImpactAssessmentDelete = "core:transfer-impact-assessment:delete"
 
 	// TrustCenterDocumentAccess actions
 	ActionTrustCenterDocumentAccessList = "core:trust-center-document-access:list"

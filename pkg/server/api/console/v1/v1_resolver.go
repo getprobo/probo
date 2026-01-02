@@ -4186,7 +4186,7 @@ func (r *mutationResolver) DeleteProcessingActivity(ctx context.Context, input t
 
 // CreateDataProtectionImpactAssessment is the resolver for the createDataProtectionImpactAssessment field.
 func (r *mutationResolver) CreateDataProtectionImpactAssessment(ctx context.Context, input types.CreateDataProtectionImpactAssessmentInput) (*types.CreateDataProtectionImpactAssessmentPayload, error) {
-	r.MustAuthorize(ctx, input.ProcessingActivityID, probo.ActionProcessingActivityUpdate)
+	r.MustAuthorize(ctx, input.ProcessingActivityID, probo.ActionDataProtectionImpactAssessmentCreate)
 
 	prb := r.ProboService(ctx, input.ProcessingActivityID.TenantID())
 
@@ -4236,7 +4236,7 @@ func (r *mutationResolver) UpdateDataProtectionImpactAssessment(ctx context.Cont
 
 // DeleteDataProtectionImpactAssessment is the resolver for the deleteDataProtectionImpactAssessment field.
 func (r *mutationResolver) DeleteDataProtectionImpactAssessment(ctx context.Context, input types.DeleteDataProtectionImpactAssessmentInput) (*types.DeleteDataProtectionImpactAssessmentPayload, error) {
-	r.MustAuthorize(ctx, input.DataProtectionImpactAssessmentID, probo.ActionProcessingActivityUpdate)
+	r.MustAuthorize(ctx, input.DataProtectionImpactAssessmentID, probo.ActionDataProtectionImpactAssessmentUpdate)
 
 	prb := r.ProboService(ctx, input.DataProtectionImpactAssessmentID.TenantID())
 
@@ -4252,7 +4252,7 @@ func (r *mutationResolver) DeleteDataProtectionImpactAssessment(ctx context.Cont
 
 // CreateTransferImpactAssessment is the resolver for the createTransferImpactAssessment field.
 func (r *mutationResolver) CreateTransferImpactAssessment(ctx context.Context, input types.CreateTransferImpactAssessmentInput) (*types.CreateTransferImpactAssessmentPayload, error) {
-	r.MustAuthorize(ctx, input.ProcessingActivityID, probo.ActionProcessingActivityUpdate)
+	r.MustAuthorize(ctx, input.ProcessingActivityID, probo.ActionTransferImpactAssessmentCreate)
 
 	prb := r.ProboService(ctx, input.ProcessingActivityID.TenantID())
 
@@ -4277,7 +4277,7 @@ func (r *mutationResolver) CreateTransferImpactAssessment(ctx context.Context, i
 
 // UpdateTransferImpactAssessment is the resolver for the updateTransferImpactAssessment field.
 func (r *mutationResolver) UpdateTransferImpactAssessment(ctx context.Context, input types.UpdateTransferImpactAssessmentInput) (*types.UpdateTransferImpactAssessmentPayload, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionProcessingActivityUpdate)
+	r.MustAuthorize(ctx, input.ID, probo.ActionTransferImpactAssessmentUpdate)
 
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
@@ -4302,7 +4302,7 @@ func (r *mutationResolver) UpdateTransferImpactAssessment(ctx context.Context, i
 
 // DeleteTransferImpactAssessment is the resolver for the deleteTransferImpactAssessment field.
 func (r *mutationResolver) DeleteTransferImpactAssessment(ctx context.Context, input types.DeleteTransferImpactAssessmentInput) (*types.DeleteTransferImpactAssessmentPayload, error) {
-	r.MustAuthorize(ctx, input.TransferImpactAssessmentID, probo.ActionProcessingActivityUpdate)
+	r.MustAuthorize(ctx, input.TransferImpactAssessmentID, probo.ActionTransferImpactAssessmentDelete)
 
 	prb := r.ProboService(ctx, input.TransferImpactAssessmentID.TenantID())
 

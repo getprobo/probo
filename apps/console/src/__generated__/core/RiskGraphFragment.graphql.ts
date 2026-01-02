@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<c579c68998b3ded3e8833a7911f01a19>>
+ * @generated SignedSource<<cac11a0f78a2e3980e953f77d040c52a>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,11 +12,14 @@ import { ReaderFragment } from 'relay-runtime';
 export type RiskTreatment = "ACCEPTED" | "AVOIDED" | "MITIGATED" | "TRANSFERRED";
 import { FragmentRefs } from "relay-runtime";
 export type RiskGraphFragment$data = {
+  readonly canCreateRisk: boolean;
   readonly id: string;
   readonly risks: {
     readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly node: {
+        readonly canDelete: boolean;
+        readonly canUpdate: boolean;
         readonly category: string;
         readonly id: string;
         readonly inherentImpact: number;
@@ -126,6 +129,19 @@ return {
   },
   "name": "RiskGraphFragment",
   "selections": [
+    {
+      "alias": "canCreateRisk",
+      "args": [
+        {
+          "kind": "Literal",
+          "name": "action",
+          "value": "core:risk:create"
+        }
+      ],
+      "kind": "ScalarField",
+      "name": "permission",
+      "storageKey": "permission(action:\"core:risk:create\")"
+    },
     {
       "alias": "risks",
       "args": [
@@ -253,6 +269,32 @@ return {
                   "storageKey": null
                 },
                 {
+                  "alias": "canUpdate",
+                  "args": [
+                    {
+                      "kind": "Literal",
+                      "name": "action",
+                      "value": "core:risk:update"
+                    }
+                  ],
+                  "kind": "ScalarField",
+                  "name": "permission",
+                  "storageKey": "permission(action:\"core:risk:update\")"
+                },
+                {
+                  "alias": "canDelete",
+                  "args": [
+                    {
+                      "kind": "Literal",
+                      "name": "action",
+                      "value": "core:risk:delete"
+                    }
+                  ],
+                  "kind": "ScalarField",
+                  "name": "permission",
+                  "storageKey": "permission(action:\"core:risk:delete\")"
+                },
+                {
                   "args": null,
                   "kind": "FragmentSpread",
                   "name": "useRiskFormFragment"
@@ -338,6 +380,6 @@ return {
 };
 })();
 
-(node as any).hash = "d8048ddb0ff8d4b08b7b9676d9b98f1a";
+(node as any).hash = "41dc9e3adc5d7d9b2126a49afef685c7";
 
 export default node;

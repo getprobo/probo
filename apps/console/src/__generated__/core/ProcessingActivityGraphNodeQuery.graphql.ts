@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<cf8cd15a7885212668ac995140192f12>>
+ * @generated SignedSource<<ddc684800753eec2ae70df06e304dbde>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -22,9 +22,15 @@ export type ProcessingActivityGraphNodeQuery$variables = {
 };
 export type ProcessingActivityGraphNodeQuery$data = {
   readonly node: {
+    readonly canCreateDPIA?: boolean;
+    readonly canCreateTIA?: boolean;
+    readonly canDelete?: boolean;
+    readonly canUpdate?: boolean;
     readonly consentEvidenceLink?: string | null | undefined;
     readonly createdAt?: string;
     readonly dataProtectionImpactAssessment?: {
+      readonly canDelete: boolean;
+      readonly canUpdate: boolean;
       readonly createdAt: string;
       readonly description: string | null | undefined;
       readonly id: string;
@@ -60,6 +66,8 @@ export type ProcessingActivityGraphNodeQuery$data = {
     readonly snapshotId?: string | null | undefined;
     readonly specialOrCriminalData?: ProcessingActivitySpecialOrCriminalDatum;
     readonly transferImpactAssessment?: {
+      readonly canDelete: boolean;
+      readonly canUpdate: boolean;
       readonly createdAt: string;
       readonly dataSubjects: string | null | undefined;
       readonly id: string;
@@ -377,7 +385,33 @@ v26 = {
       "storageKey": null
     },
     (v24/*: any*/),
-    (v25/*: any*/)
+    (v25/*: any*/),
+    {
+      "alias": "canUpdate",
+      "args": [
+        {
+          "kind": "Literal",
+          "name": "action",
+          "value": "core:data-protection-impact-assessment:update"
+        }
+      ],
+      "kind": "ScalarField",
+      "name": "permission",
+      "storageKey": "permission(action:\"core:data-protection-impact-assessment:update\")"
+    },
+    {
+      "alias": "canDelete",
+      "args": [
+        {
+          "kind": "Literal",
+          "name": "action",
+          "value": "core:data-protection-impact-assessment:delete"
+        }
+      ],
+      "kind": "ScalarField",
+      "name": "permission",
+      "storageKey": "permission(action:\"core:data-protection-impact-assessment:delete\")"
+    }
   ],
   "storageKey": null
 },
@@ -426,7 +460,33 @@ v27 = {
       "storageKey": null
     },
     (v24/*: any*/),
-    (v25/*: any*/)
+    (v25/*: any*/),
+    {
+      "alias": "canUpdate",
+      "args": [
+        {
+          "kind": "Literal",
+          "name": "action",
+          "value": "core:transfer-impact-assessment:update"
+        }
+      ],
+      "kind": "ScalarField",
+      "name": "permission",
+      "storageKey": "permission(action:\"core:transfer-impact-assessment:update\")"
+    },
+    {
+      "alias": "canDelete",
+      "args": [
+        {
+          "kind": "Literal",
+          "name": "action",
+          "value": "core:transfer-impact-assessment:delete"
+        }
+      ],
+      "kind": "ScalarField",
+      "name": "permission",
+      "storageKey": "permission(action:\"core:transfer-impact-assessment:delete\")"
+    }
   ],
   "storageKey": null
 },
@@ -442,6 +502,58 @@ v28 = {
     (v4/*: any*/)
   ],
   "storageKey": null
+},
+v29 = {
+  "alias": "canCreateDPIA",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "core:data-protection-impact-assessment:create"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"core:data-protection-impact-assessment:create\")"
+},
+v30 = {
+  "alias": "canCreateTIA",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "core:transfer-impact-assessment:create"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"core:transfer-impact-assessment:create\")"
+},
+v31 = {
+  "alias": "canUpdate",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "core:processing-activity:update"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"core:processing-activity:update\")"
+},
+v32 = {
+  "alias": "canDelete",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "core:processing-activity:delete"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"core:processing-activity:delete\")"
 };
 return {
   "fragment": {
@@ -487,7 +599,11 @@ return {
               (v27/*: any*/),
               (v28/*: any*/),
               (v24/*: any*/),
-              (v25/*: any*/)
+              (v25/*: any*/),
+              (v29/*: any*/),
+              (v30/*: any*/),
+              (v31/*: any*/),
+              (v32/*: any*/)
             ],
             "type": "ProcessingActivity",
             "abstractKey": null
@@ -549,7 +665,11 @@ return {
               (v27/*: any*/),
               (v28/*: any*/),
               (v24/*: any*/),
-              (v25/*: any*/)
+              (v25/*: any*/),
+              (v29/*: any*/),
+              (v30/*: any*/),
+              (v31/*: any*/),
+              (v32/*: any*/)
             ],
             "type": "ProcessingActivity",
             "abstractKey": null
@@ -560,16 +680,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "8a92ed21a8b24d93c81ceba4b62a0911",
+    "cacheID": "29bddd12b9399a78fb24420f11b6d56d",
     "id": null,
     "metadata": {},
     "name": "ProcessingActivityGraphNodeQuery",
     "operationKind": "query",
-    "text": "query ProcessingActivityGraphNodeQuery(\n  $processingActivityId: ID!\n) {\n  node(id: $processingActivityId) {\n    __typename\n    ... on ProcessingActivity {\n      id\n      snapshotId\n      name\n      purpose\n      dataSubjectCategory\n      personalDataCategory\n      specialOrCriminalData\n      consentEvidenceLink\n      lawfulBasis\n      recipients\n      location\n      internationalTransfers\n      transferSafeguards\n      retentionPeriod\n      securityMeasures\n      dataProtectionImpactAssessmentNeeded\n      transferImpactAssessmentNeeded\n      lastReviewDate\n      nextReviewDate\n      role\n      dataProtectionOfficer {\n        id\n        fullName\n      }\n      vendors(first: 50) {\n        edges {\n          node {\n            id\n            name\n            websiteUrl\n            category\n          }\n        }\n      }\n      dataProtectionImpactAssessment {\n        id\n        description\n        necessityAndProportionality\n        potentialRisk\n        mitigations\n        residualRisk\n        createdAt\n        updatedAt\n      }\n      transferImpactAssessment {\n        id\n        dataSubjects\n        legalMechanism\n        transfer\n        localLawRisk\n        supplementaryMeasures\n        createdAt\n        updatedAt\n      }\n      organization {\n        id\n        name\n      }\n      createdAt\n      updatedAt\n    }\n    id\n  }\n}\n"
+    "text": "query ProcessingActivityGraphNodeQuery(\n  $processingActivityId: ID!\n) {\n  node(id: $processingActivityId) {\n    __typename\n    ... on ProcessingActivity {\n      id\n      snapshotId\n      name\n      purpose\n      dataSubjectCategory\n      personalDataCategory\n      specialOrCriminalData\n      consentEvidenceLink\n      lawfulBasis\n      recipients\n      location\n      internationalTransfers\n      transferSafeguards\n      retentionPeriod\n      securityMeasures\n      dataProtectionImpactAssessmentNeeded\n      transferImpactAssessmentNeeded\n      lastReviewDate\n      nextReviewDate\n      role\n      dataProtectionOfficer {\n        id\n        fullName\n      }\n      vendors(first: 50) {\n        edges {\n          node {\n            id\n            name\n            websiteUrl\n            category\n          }\n        }\n      }\n      dataProtectionImpactAssessment {\n        id\n        description\n        necessityAndProportionality\n        potentialRisk\n        mitigations\n        residualRisk\n        createdAt\n        updatedAt\n        canUpdate: permission(action: \"core:data-protection-impact-assessment:update\")\n        canDelete: permission(action: \"core:data-protection-impact-assessment:delete\")\n      }\n      transferImpactAssessment {\n        id\n        dataSubjects\n        legalMechanism\n        transfer\n        localLawRisk\n        supplementaryMeasures\n        createdAt\n        updatedAt\n        canUpdate: permission(action: \"core:transfer-impact-assessment:update\")\n        canDelete: permission(action: \"core:transfer-impact-assessment:delete\")\n      }\n      organization {\n        id\n        name\n      }\n      createdAt\n      updatedAt\n      canCreateDPIA: permission(action: \"core:data-protection-impact-assessment:create\")\n      canCreateTIA: permission(action: \"core:transfer-impact-assessment:create\")\n      canUpdate: permission(action: \"core:processing-activity:update\")\n      canDelete: permission(action: \"core:processing-activity:delete\")\n    }\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "3fe20997f675ea566fe083e672bc82a3";
+(node as any).hash = "d670e7ec4d612b19532332247c8c1f8f";
 
 export default node;
