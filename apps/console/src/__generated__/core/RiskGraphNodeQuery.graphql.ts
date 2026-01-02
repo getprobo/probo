@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<a5c63cf999a2fe7127e12498399bb307>>
+ * @generated SignedSource<<f0137f6782d41b9fc869e8c1139db167>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -16,7 +16,13 @@ export type RiskGraphNodeQuery$variables = {
 };
 export type RiskGraphNodeQuery$data = {
   readonly node: {
+    readonly canCreateDocumentMapping?: boolean;
+    readonly canCreateMeasureMapping?: boolean;
+    readonly canCreateObligationMapping?: boolean;
     readonly canDelete?: boolean;
+    readonly canDeleteDocumentMapping?: boolean;
+    readonly canDeleteMeasureMapping?: boolean;
+    readonly canDeleteObligationMapping?: boolean;
     readonly canUpdate?: boolean;
     readonly controlsInfo?: {
       readonly totalCount: number;
@@ -224,41 +230,119 @@ v19 = {
   "storageKey": "permission(action:\"core:risk:delete\")"
 },
 v20 = {
+  "alias": "canCreateDocumentMapping",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "core:risk:create-document-mapping"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"core:risk:create-document-mapping\")"
+},
+v21 = {
+  "alias": "canDeleteDocumentMapping",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "core:risk:delete-document-mapping"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"core:risk:delete-document-mapping\")"
+},
+v22 = {
+  "alias": "canCreateMeasureMapping",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "core:risk:create-measure-mapping"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"core:risk:create-measure-mapping\")"
+},
+v23 = {
+  "alias": "canDeleteMeasureMapping",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "core:risk:delete-measure-mapping"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"core:risk:delete-measure-mapping\")"
+},
+v24 = {
+  "alias": "canCreateObligationMapping",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "core:risk:create-obligation-mapping"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"core:risk:create-obligation-mapping\")"
+},
+v25 = {
+  "alias": "canDeleteObligationMapping",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "core:risk:delete-obligation-mapping"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"core:risk:delete-obligation-mapping\")"
+},
+v26 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "__typename",
   "storageKey": null
 },
-v21 = [
+v27 = [
   {
     "kind": "Literal",
     "name": "first",
     "value": 100
   }
 ],
-v22 = {
+v28 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "cursor",
   "storageKey": null
 },
-v23 = {
+v29 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "endCursor",
   "storageKey": null
 },
-v24 = {
+v30 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "hasNextPage",
   "storageKey": null
 },
-v25 = {
+v31 = {
   "alias": null,
   "args": null,
   "concreteType": "PageInfo",
@@ -266,12 +350,12 @@ v25 = {
   "name": "pageInfo",
   "plural": false,
   "selections": [
-    (v23/*: any*/),
-    (v24/*: any*/)
+    (v29/*: any*/),
+    (v30/*: any*/)
   ],
   "storageKey": null
 },
-v26 = {
+v32 = {
   "kind": "ClientExtension",
   "selections": [
     {
@@ -283,14 +367,14 @@ v26 = {
     }
   ]
 },
-v27 = {
+v33 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "status",
   "storageKey": null
 },
-v28 = [
+v34 = [
   {
     "kind": "Literal",
     "name": "first",
@@ -330,6 +414,12 @@ return {
               (v17/*: any*/),
               (v18/*: any*/),
               (v19/*: any*/),
+              (v20/*: any*/),
+              (v21/*: any*/),
+              (v22/*: any*/),
+              (v23/*: any*/),
+              (v24/*: any*/),
+              (v25/*: any*/),
               {
                 "args": null,
                 "kind": "FragmentSpread",
@@ -385,7 +475,7 @@ return {
         "name": "node",
         "plural": false,
         "selections": [
-          (v20/*: any*/),
+          (v26/*: any*/),
           (v2/*: any*/),
           {
             "kind": "InlineFragment",
@@ -404,6 +494,12 @@ return {
               (v17/*: any*/),
               (v18/*: any*/),
               (v19/*: any*/),
+              (v20/*: any*/),
+              (v21/*: any*/),
+              (v22/*: any*/),
+              (v23/*: any*/),
+              (v24/*: any*/),
+              (v25/*: any*/),
               {
                 "alias": null,
                 "args": null,
@@ -441,7 +537,7 @@ return {
               },
               {
                 "alias": null,
-                "args": (v21/*: any*/),
+                "args": (v27/*: any*/),
                 "concreteType": "MeasureConnection",
                 "kind": "LinkedField",
                 "name": "measures",
@@ -472,22 +568,22 @@ return {
                             "name": "state",
                             "storageKey": null
                           },
-                          (v20/*: any*/)
+                          (v26/*: any*/)
                         ],
                         "storageKey": null
                       },
-                      (v22/*: any*/)
+                      (v28/*: any*/)
                     ],
                     "storageKey": null
                   },
-                  (v25/*: any*/),
-                  (v26/*: any*/)
+                  (v31/*: any*/),
+                  (v32/*: any*/)
                 ],
                 "storageKey": "measures(first:100)"
               },
               {
                 "alias": null,
-                "args": (v21/*: any*/),
+                "args": (v27/*: any*/),
                 "filters": null,
                 "handle": "connection",
                 "key": "Risk__measures",
@@ -496,7 +592,7 @@ return {
               },
               {
                 "alias": null,
-                "args": (v21/*: any*/),
+                "args": (v27/*: any*/),
                 "concreteType": "DocumentConnection",
                 "kind": "LinkedField",
                 "name": "documents",
@@ -571,7 +667,7 @@ return {
                                     "plural": false,
                                     "selections": [
                                       (v2/*: any*/),
-                                      (v27/*: any*/)
+                                      (v33/*: any*/)
                                     ],
                                     "storageKey": null
                                   }
@@ -581,22 +677,22 @@ return {
                             ],
                             "storageKey": "versions(first:1)"
                           },
-                          (v20/*: any*/)
+                          (v26/*: any*/)
                         ],
                         "storageKey": null
                       },
-                      (v22/*: any*/)
+                      (v28/*: any*/)
                     ],
                     "storageKey": null
                   },
-                  (v25/*: any*/),
-                  (v26/*: any*/)
+                  (v31/*: any*/),
+                  (v32/*: any*/)
                 ],
                 "storageKey": "documents(first:100)"
               },
               {
                 "alias": null,
-                "args": (v21/*: any*/),
+                "args": (v27/*: any*/),
                 "filters": null,
                 "handle": "connection",
                 "key": "Risk__documents",
@@ -605,7 +701,7 @@ return {
               },
               {
                 "alias": null,
-                "args": (v28/*: any*/),
+                "args": (v34/*: any*/),
                 "concreteType": "ControlConnection",
                 "kind": "LinkedField",
                 "name": "controls",
@@ -649,11 +745,11 @@ return {
                             ],
                             "storageKey": null
                           },
-                          (v20/*: any*/)
+                          (v26/*: any*/)
                         ],
                         "storageKey": null
                       },
-                      (v22/*: any*/)
+                      (v28/*: any*/)
                     ],
                     "storageKey": null
                   },
@@ -665,8 +761,8 @@ return {
                     "name": "pageInfo",
                     "plural": false,
                     "selections": [
-                      (v23/*: any*/),
-                      (v24/*: any*/),
+                      (v29/*: any*/),
+                      (v30/*: any*/),
                       {
                         "alias": null,
                         "args": null,
@@ -689,7 +785,7 @@ return {
               },
               {
                 "alias": null,
-                "args": (v28/*: any*/),
+                "args": (v34/*: any*/),
                 "filters": [
                   "orderBy",
                   "filter"
@@ -701,7 +797,7 @@ return {
               },
               {
                 "alias": null,
-                "args": (v21/*: any*/),
+                "args": (v27/*: any*/),
                 "concreteType": "ObligationConnection",
                 "kind": "LinkedField",
                 "name": "obligations",
@@ -745,7 +841,7 @@ return {
                             "name": "source",
                             "storageKey": null
                           },
-                          (v27/*: any*/),
+                          (v33/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -759,22 +855,22 @@ return {
                             ],
                             "storageKey": null
                           },
-                          (v20/*: any*/)
+                          (v26/*: any*/)
                         ],
                         "storageKey": null
                       },
-                      (v22/*: any*/)
+                      (v28/*: any*/)
                     ],
                     "storageKey": null
                   },
-                  (v25/*: any*/),
-                  (v26/*: any*/)
+                  (v31/*: any*/),
+                  (v32/*: any*/)
                 ],
                 "storageKey": "obligations(first:100)"
               },
               {
                 "alias": null,
-                "args": (v21/*: any*/),
+                "args": (v27/*: any*/),
                 "filters": null,
                 "handle": "connection",
                 "key": "Risk__obligations",
@@ -791,16 +887,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "0445299e60879ca00110fb07c5c1a3d9",
+    "cacheID": "81ab255e9f6f1e3f666f5dd77920689b",
     "id": null,
     "metadata": {},
     "name": "RiskGraphNodeQuery",
     "operationKind": "query",
-    "text": "query RiskGraphNodeQuery(\n  $riskId: ID!\n) {\n  node(id: $riskId) {\n    __typename\n    ... on Risk {\n      id\n      snapshotId\n      name\n      description\n      treatment\n      owner {\n        id\n        fullName\n      }\n      note\n      inherentRiskScore\n      residualRiskScore\n      measuresInfo: measures(first: 0) {\n        totalCount\n      }\n      documentsInfo: documents(first: 0) {\n        totalCount\n      }\n      controlsInfo: controls(first: 0) {\n        totalCount\n      }\n      obligationsInfo: obligations(first: 0) {\n        totalCount\n      }\n      canUpdate: permission(action: \"core:risk:update\")\n      canDelete: permission(action: \"core:risk:delete\")\n      ...useRiskFormFragment\n      ...RiskOverviewTabFragment\n      ...RiskMeasuresTabFragment\n      ...RiskDocumentsTabFragment\n      ...RiskControlsTabFragment\n      ...RiskObligationsTabFragment\n    }\n    id\n  }\n}\n\nfragment LinkedDocumentsCardFragment on Document {\n  id\n  title\n  createdAt\n  documentType\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n      }\n    }\n  }\n}\n\nfragment LinkedMeasuresCardFragment on Measure {\n  id\n  name\n  state\n}\n\nfragment LinkedObligationsCardFragment on Obligation {\n  id\n  requirement\n  area\n  source\n  status\n  owner {\n    fullName\n    id\n  }\n}\n\nfragment RiskControlsTabFragment on Risk {\n  id\n  controls(first: 20) {\n    edges {\n      node {\n        id\n        sectionTitle\n        name\n        framework {\n          id\n          name\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n}\n\nfragment RiskDocumentsTabFragment on Risk {\n  id\n  documents(first: 100) {\n    edges {\n      node {\n        id\n        ...LinkedDocumentsCardFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n\nfragment RiskMeasuresTabFragment on Risk {\n  id\n  measures(first: 100) {\n    edges {\n      node {\n        id\n        ...LinkedMeasuresCardFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n\nfragment RiskObligationsTabFragment on Risk {\n  id\n  obligations(first: 100) {\n    edges {\n      node {\n        id\n        ...LinkedObligationsCardFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n\nfragment RiskOverviewTabFragment on Risk {\n  inherentLikelihood\n  inherentImpact\n  residualLikelihood\n  residualImpact\n  inherentRiskScore\n  residualRiskScore\n}\n\nfragment useRiskFormFragment on Risk {\n  id\n  name\n  category\n  description\n  treatment\n  inherentLikelihood\n  inherentImpact\n  residualLikelihood\n  residualImpact\n  inherentRiskScore\n  residualRiskScore\n  note\n  owner {\n    id\n  }\n}\n"
+    "text": "query RiskGraphNodeQuery(\n  $riskId: ID!\n) {\n  node(id: $riskId) {\n    __typename\n    ... on Risk {\n      id\n      snapshotId\n      name\n      description\n      treatment\n      owner {\n        id\n        fullName\n      }\n      note\n      inherentRiskScore\n      residualRiskScore\n      measuresInfo: measures(first: 0) {\n        totalCount\n      }\n      documentsInfo: documents(first: 0) {\n        totalCount\n      }\n      controlsInfo: controls(first: 0) {\n        totalCount\n      }\n      obligationsInfo: obligations(first: 0) {\n        totalCount\n      }\n      canUpdate: permission(action: \"core:risk:update\")\n      canDelete: permission(action: \"core:risk:delete\")\n      canCreateDocumentMapping: permission(action: \"core:risk:create-document-mapping\")\n      canDeleteDocumentMapping: permission(action: \"core:risk:delete-document-mapping\")\n      canCreateMeasureMapping: permission(action: \"core:risk:create-measure-mapping\")\n      canDeleteMeasureMapping: permission(action: \"core:risk:delete-measure-mapping\")\n      canCreateObligationMapping: permission(action: \"core:risk:create-obligation-mapping\")\n      canDeleteObligationMapping: permission(action: \"core:risk:delete-obligation-mapping\")\n      ...useRiskFormFragment\n      ...RiskOverviewTabFragment\n      ...RiskMeasuresTabFragment\n      ...RiskDocumentsTabFragment\n      ...RiskControlsTabFragment\n      ...RiskObligationsTabFragment\n    }\n    id\n  }\n}\n\nfragment LinkedDocumentsCardFragment on Document {\n  id\n  title\n  createdAt\n  documentType\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n      }\n    }\n  }\n}\n\nfragment LinkedMeasuresCardFragment on Measure {\n  id\n  name\n  state\n}\n\nfragment LinkedObligationsCardFragment on Obligation {\n  id\n  requirement\n  area\n  source\n  status\n  owner {\n    fullName\n    id\n  }\n}\n\nfragment RiskControlsTabFragment on Risk {\n  id\n  controls(first: 20) {\n    edges {\n      node {\n        id\n        sectionTitle\n        name\n        framework {\n          id\n          name\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n}\n\nfragment RiskDocumentsTabFragment on Risk {\n  id\n  documents(first: 100) {\n    edges {\n      node {\n        id\n        ...LinkedDocumentsCardFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n\nfragment RiskMeasuresTabFragment on Risk {\n  id\n  measures(first: 100) {\n    edges {\n      node {\n        id\n        ...LinkedMeasuresCardFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n\nfragment RiskObligationsTabFragment on Risk {\n  id\n  obligations(first: 100) {\n    edges {\n      node {\n        id\n        ...LinkedObligationsCardFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n\nfragment RiskOverviewTabFragment on Risk {\n  inherentLikelihood\n  inherentImpact\n  residualLikelihood\n  residualImpact\n  inherentRiskScore\n  residualRiskScore\n}\n\nfragment useRiskFormFragment on Risk {\n  id\n  name\n  category\n  description\n  treatment\n  inherentLikelihood\n  inherentImpact\n  residualLikelihood\n  residualImpact\n  inherentRiskScore\n  residualRiskScore\n  note\n  owner {\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "3e80bcaa15ae8b722471a1c802767c29";
+(node as any).hash = "3ea74f7158cc3634d47af761c18dbadf";
 
 export default node;

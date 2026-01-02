@@ -3,8 +3,7 @@ import type { RiskObligationsTabFragment$key } from "/__generated__/core/RiskObl
 import { useOutletContext } from "react-router";
 import { LinkedObligationsCard } from "/components/obligations/LinkedObligationsCard";
 import { useMutationWithIncrement } from "/hooks/useMutationWithIncrement";
-import { use } from "react";
-import { PermissionsContext } from "/providers/PermissionsContext";
+import type { RiskGraphNodeQuery$data } from "/__generated__/core/RiskGraphNodeQuery.graphql";
 
 export const obligationsFragment = graphql`
   fragment RiskObligationsTabFragment on Risk {
@@ -50,18 +49,17 @@ export const detachObligationMutation = graphql`
 
 export default function RiskObligationsTab() {
   const { risk } = useOutletContext<{
-    risk: RiskObligationsTabFragment$key & { id: string };
+    risk: RiskGraphNodeQuery$data["node"];
   }>();
-  const data = useFragment(obligationsFragment, risk);
+  const data = useFragment<RiskObligationsTabFragment$key>(
+    obligationsFragment,
+    risk,
+  );
   const connectionId = data.obligations.__id;
   const obligations = data.obligations?.edges?.map((edge) => edge.node) ?? [];
-  const { isAuthorized } = use(PermissionsContext);
 
-  const canLinkObligation = isAuthorized("Risk", "createRiskObligationMapping");
-  const canUnlinkObligation = isAuthorized(
-    "Risk",
-    "deleteRiskObligationMapping",
-  );
+  const canLinkObligation = risk.canCreateObligationMapping;
+  const canUnlinkObligation = risk.canDeleteObligationMapping;
   const readOnly = !canLinkObligation && !canUnlinkObligation;
 
   const incrementOptions = {
