@@ -758,9 +758,10 @@ func (r *mutationResolver) RevokePersonalAPIKey(ctx context.Context, input types
 func (r *mutationResolver) CreateOrganization(ctx context.Context, input types.CreateOrganizationInput) (*types.CreateOrganizationPayload, error) {
 	identity := IdentityFromContext(ctx)
 
-	if ok := r.Authorize(ctx, identity.ID, iam.ActionOrganizationCreate); !ok {
-		return nil, nil
-	}
+	// FIXME check email domain and related IDP config
+	// if ok := r.Authorize(ctx, identity.ID, iam.ActionOrganizationCreate); !ok {
+	// 	return nil, nil
+	// }
 
 	var (
 		logoFile           *iam.UploadedFile
