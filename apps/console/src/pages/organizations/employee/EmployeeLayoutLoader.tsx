@@ -2,11 +2,14 @@ import { useQueryLoader } from "react-relay";
 import { Suspense, useEffect } from "react";
 import { Skeleton } from "@probo/ui";
 import { useOrganizationId } from "/hooks/useOrganizationId";
-import type { MembershipLayoutQuery } from "/__generated__/iam/MembershipLayoutQuery.graphql";
-import { MembershipLayout, membershipLayoutQuery } from "./MembershipLayout";
 import { IAMRelayProvider } from "/providers/IAMRelayProvider";
+import {
+  MembershipLayout,
+  membershipLayoutQuery,
+} from "/pages/iam/memberships/MembershipLayout";
+import type { MembershipLayoutQuery } from "/__generated__/iam/MembershipLayoutQuery.graphql";
 
-function MembershipLayoutLoader() {
+function EmployeeLayoutLoader() {
   const organizationId = useOrganizationId();
   const [queryRef, loadQuery] = useQueryLoader<MembershipLayoutQuery>(
     membershipLayoutQuery,
@@ -15,7 +18,7 @@ function MembershipLayoutLoader() {
   useEffect(() => {
     loadQuery({
       organizationId,
-      hideSidebar: false,
+      hideSidebar: true,
     });
   }, [loadQuery, organizationId]);
 
@@ -25,7 +28,7 @@ function MembershipLayoutLoader() {
 
   return (
     <Suspense fallback={<Skeleton className="w-full h-screen" />}>
-      <MembershipLayout queryRef={queryRef} />
+      <MembershipLayout queryRef={queryRef} hideSidebar />
     </Suspense>
   );
 }
@@ -33,7 +36,7 @@ function MembershipLayoutLoader() {
 export default function () {
   return (
     <IAMRelayProvider>
-      <MembershipLayoutLoader />
+      <EmployeeLayoutLoader />
     </IAMRelayProvider>
   );
 }

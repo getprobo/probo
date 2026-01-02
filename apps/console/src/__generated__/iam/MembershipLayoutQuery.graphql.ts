@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<698ad015edeb94e58ec661b6118dca4b>>
+ * @generated SignedSource<<5020a4587a487d695572eb77c5e9a959>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,6 +12,7 @@ import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type MembershipRole = "ADMIN" | "AUDITOR" | "EMPLOYEE" | "OWNER" | "VIEWER";
 export type MembershipLayoutQuery$variables = {
+  hideSidebar: boolean;
   organizationId: string;
 };
 export type MembershipLayoutQuery$data = {
@@ -39,42 +40,45 @@ export type MembershipLayoutQuery = {
 };
 
 const node: ConcreteRequest = (function(){
-var v0 = [
-  {
-    "defaultValue": null,
-    "kind": "LocalArgument",
-    "name": "organizationId"
-  }
-],
-v1 = [
+var v0 = {
+  "defaultValue": null,
+  "kind": "LocalArgument",
+  "name": "hideSidebar"
+},
+v1 = {
+  "defaultValue": null,
+  "kind": "LocalArgument",
+  "name": "organizationId"
+},
+v2 = [
   {
     "kind": "Variable",
     "name": "id",
     "variableName": "organizationId"
   }
 ],
-v2 = {
+v3 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "__typename",
   "storageKey": null
 },
-v3 = {
+v4 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "role",
   "storageKey": null
 },
-v4 = {
+v5 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "totalCount",
   "storageKey": null
 },
-v5 = {
+v6 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
@@ -83,7 +87,10 @@ v5 = {
 };
 return {
   "fragment": {
-    "argumentDefinitions": (v0/*: any*/),
+    "argumentDefinitions": [
+      (v0/*: any*/),
+      (v1/*: any*/)
+    ],
     "kind": "Fragment",
     "metadata": null,
     "name": "MembershipLayoutQuery",
@@ -92,13 +99,13 @@ return {
         "kind": "RequiredField",
         "field": {
           "alias": "organization",
-          "args": (v1/*: any*/),
+          "args": (v2/*: any*/),
           "concreteType": null,
           "kind": "LinkedField",
           "name": "node",
           "plural": false,
           "selections": [
-            (v2/*: any*/),
+            (v3/*: any*/),
             {
               "kind": "InlineFragment",
               "selections": [
@@ -113,9 +120,16 @@ return {
                   "name": "SessionDropdownFragment"
                 },
                 {
-                  "args": null,
-                  "kind": "FragmentSpread",
-                  "name": "SidebarFragment"
+                  "condition": "hideSidebar",
+                  "kind": "Condition",
+                  "passingValue": false,
+                  "selections": [
+                    {
+                      "args": null,
+                      "kind": "FragmentSpread",
+                      "name": "SidebarFragment"
+                    }
+                  ]
                 },
                 {
                   "kind": "RequiredField",
@@ -127,7 +141,7 @@ return {
                     "name": "viewerMembership",
                     "plural": false,
                     "selections": [
-                      (v3/*: any*/)
+                      (v4/*: any*/)
                     ],
                     "storageKey": null
                   },
@@ -169,7 +183,7 @@ return {
                 "selections": [
                   {
                     "kind": "RequiredField",
-                    "field": (v4/*: any*/),
+                    "field": (v5/*: any*/),
                     "action": "THROW"
                   }
                 ],
@@ -188,19 +202,22 @@ return {
   },
   "kind": "Request",
   "operation": {
-    "argumentDefinitions": (v0/*: any*/),
+    "argumentDefinitions": [
+      (v1/*: any*/),
+      (v0/*: any*/)
+    ],
     "kind": "Operation",
     "name": "MembershipLayoutQuery",
     "selections": [
       {
         "alias": "organization",
-        "args": (v1/*: any*/),
+        "args": (v2/*: any*/),
         "concreteType": null,
         "kind": "LinkedField",
         "name": "node",
         "plural": false,
         "selections": [
-          (v2/*: any*/),
+          (v3/*: any*/),
           {
             "kind": "InlineFragment",
             "selections": [
@@ -247,7 +264,7 @@ return {
                         "name": "email",
                         "storageKey": null
                       },
-                      (v5/*: any*/)
+                      (v6/*: any*/)
                     ],
                     "storageKey": null
                   },
@@ -266,280 +283,287 @@ return {
                         "name": "fullName",
                         "storageKey": null
                       },
-                      (v5/*: any*/)
+                      (v6/*: any*/)
                     ],
                     "storageKey": null
                   },
-                  (v5/*: any*/),
-                  (v3/*: any*/)
+                  (v6/*: any*/),
+                  (v4/*: any*/)
                 ],
                 "storageKey": null
               },
               {
-                "alias": "canListMeetings",
-                "args": [
+                "condition": "hideSidebar",
+                "kind": "Condition",
+                "passingValue": false,
+                "selections": [
                   {
-                    "kind": "Literal",
-                    "name": "action",
-                    "value": "core:meeting:list"
-                  }
-                ],
-                "kind": "ScalarField",
-                "name": "permission",
-                "storageKey": "permission(action:\"core:meeting:list\")"
-              },
-              {
-                "alias": "canListTasks",
-                "args": [
+                    "alias": "canListMeetings",
+                    "args": [
+                      {
+                        "kind": "Literal",
+                        "name": "action",
+                        "value": "core:meeting:list"
+                      }
+                    ],
+                    "kind": "ScalarField",
+                    "name": "permission",
+                    "storageKey": "permission(action:\"core:meeting:list\")"
+                  },
                   {
-                    "kind": "Literal",
-                    "name": "action",
-                    "value": "core:task:list"
-                  }
-                ],
-                "kind": "ScalarField",
-                "name": "permission",
-                "storageKey": "permission(action:\"core:task:list\")"
-              },
-              {
-                "alias": "canListMeasures",
-                "args": [
+                    "alias": "canListTasks",
+                    "args": [
+                      {
+                        "kind": "Literal",
+                        "name": "action",
+                        "value": "core:task:list"
+                      }
+                    ],
+                    "kind": "ScalarField",
+                    "name": "permission",
+                    "storageKey": "permission(action:\"core:task:list\")"
+                  },
                   {
-                    "kind": "Literal",
-                    "name": "action",
-                    "value": "core:measures:list"
-                  }
-                ],
-                "kind": "ScalarField",
-                "name": "permission",
-                "storageKey": "permission(action:\"core:measures:list\")"
-              },
-              {
-                "alias": "canListRisks",
-                "args": [
+                    "alias": "canListMeasures",
+                    "args": [
+                      {
+                        "kind": "Literal",
+                        "name": "action",
+                        "value": "core:measures:list"
+                      }
+                    ],
+                    "kind": "ScalarField",
+                    "name": "permission",
+                    "storageKey": "permission(action:\"core:measures:list\")"
+                  },
                   {
-                    "kind": "Literal",
-                    "name": "action",
-                    "value": "core:risk:list"
-                  }
-                ],
-                "kind": "ScalarField",
-                "name": "permission",
-                "storageKey": "permission(action:\"core:risk:list\")"
-              },
-              {
-                "alias": "canListFrameworks",
-                "args": [
+                    "alias": "canListRisks",
+                    "args": [
+                      {
+                        "kind": "Literal",
+                        "name": "action",
+                        "value": "core:risk:list"
+                      }
+                    ],
+                    "kind": "ScalarField",
+                    "name": "permission",
+                    "storageKey": "permission(action:\"core:risk:list\")"
+                  },
                   {
-                    "kind": "Literal",
-                    "name": "action",
-                    "value": "core:frameworks:list"
-                  }
-                ],
-                "kind": "ScalarField",
-                "name": "permission",
-                "storageKey": "permission(action:\"core:frameworks:list\")"
-              },
-              {
-                "alias": "canListPeople",
-                "args": [
+                    "alias": "canListFrameworks",
+                    "args": [
+                      {
+                        "kind": "Literal",
+                        "name": "action",
+                        "value": "core:frameworks:list"
+                      }
+                    ],
+                    "kind": "ScalarField",
+                    "name": "permission",
+                    "storageKey": "permission(action:\"core:frameworks:list\")"
+                  },
                   {
-                    "kind": "Literal",
-                    "name": "action",
-                    "value": "core:people:list"
-                  }
-                ],
-                "kind": "ScalarField",
-                "name": "permission",
-                "storageKey": "permission(action:\"core:people:list\")"
-              },
-              {
-                "alias": "canListVendors",
-                "args": [
+                    "alias": "canListPeople",
+                    "args": [
+                      {
+                        "kind": "Literal",
+                        "name": "action",
+                        "value": "core:people:list"
+                      }
+                    ],
+                    "kind": "ScalarField",
+                    "name": "permission",
+                    "storageKey": "permission(action:\"core:people:list\")"
+                  },
                   {
-                    "kind": "Literal",
-                    "name": "action",
-                    "value": "core:vendor:list"
-                  }
-                ],
-                "kind": "ScalarField",
-                "name": "permission",
-                "storageKey": "permission(action:\"core:vendor:list\")"
-              },
-              {
-                "alias": "canListDocuments",
-                "args": [
+                    "alias": "canListVendors",
+                    "args": [
+                      {
+                        "kind": "Literal",
+                        "name": "action",
+                        "value": "core:vendor:list"
+                      }
+                    ],
+                    "kind": "ScalarField",
+                    "name": "permission",
+                    "storageKey": "permission(action:\"core:vendor:list\")"
+                  },
                   {
-                    "kind": "Literal",
-                    "name": "action",
-                    "value": "core:document:list"
-                  }
-                ],
-                "kind": "ScalarField",
-                "name": "permission",
-                "storageKey": "permission(action:\"core:document:list\")"
-              },
-              {
-                "alias": "canListAssets",
-                "args": [
+                    "alias": "canListDocuments",
+                    "args": [
+                      {
+                        "kind": "Literal",
+                        "name": "action",
+                        "value": "core:document:list"
+                      }
+                    ],
+                    "kind": "ScalarField",
+                    "name": "permission",
+                    "storageKey": "permission(action:\"core:document:list\")"
+                  },
                   {
-                    "kind": "Literal",
-                    "name": "action",
-                    "value": "core:asset:list"
-                  }
-                ],
-                "kind": "ScalarField",
-                "name": "permission",
-                "storageKey": "permission(action:\"core:asset:list\")"
-              },
-              {
-                "alias": "canListData",
-                "args": [
+                    "alias": "canListAssets",
+                    "args": [
+                      {
+                        "kind": "Literal",
+                        "name": "action",
+                        "value": "core:asset:list"
+                      }
+                    ],
+                    "kind": "ScalarField",
+                    "name": "permission",
+                    "storageKey": "permission(action:\"core:asset:list\")"
+                  },
                   {
-                    "kind": "Literal",
-                    "name": "action",
-                    "value": "core:datum:list"
-                  }
-                ],
-                "kind": "ScalarField",
-                "name": "permission",
-                "storageKey": "permission(action:\"core:datum:list\")"
-              },
-              {
-                "alias": "canListAudits",
-                "args": [
+                    "alias": "canListData",
+                    "args": [
+                      {
+                        "kind": "Literal",
+                        "name": "action",
+                        "value": "core:datum:list"
+                      }
+                    ],
+                    "kind": "ScalarField",
+                    "name": "permission",
+                    "storageKey": "permission(action:\"core:datum:list\")"
+                  },
                   {
-                    "kind": "Literal",
-                    "name": "action",
-                    "value": "core:audit:list"
-                  }
-                ],
-                "kind": "ScalarField",
-                "name": "permission",
-                "storageKey": "permission(action:\"core:audit:list\")"
-              },
-              {
-                "alias": "canListNonconformities",
-                "args": [
+                    "alias": "canListAudits",
+                    "args": [
+                      {
+                        "kind": "Literal",
+                        "name": "action",
+                        "value": "core:audit:list"
+                      }
+                    ],
+                    "kind": "ScalarField",
+                    "name": "permission",
+                    "storageKey": "permission(action:\"core:audit:list\")"
+                  },
                   {
-                    "kind": "Literal",
-                    "name": "action",
-                    "value": "core:nonconformity:list"
-                  }
-                ],
-                "kind": "ScalarField",
-                "name": "permission",
-                "storageKey": "permission(action:\"core:nonconformity:list\")"
-              },
-              {
-                "alias": "canListObligations",
-                "args": [
+                    "alias": "canListNonconformities",
+                    "args": [
+                      {
+                        "kind": "Literal",
+                        "name": "action",
+                        "value": "core:nonconformity:list"
+                      }
+                    ],
+                    "kind": "ScalarField",
+                    "name": "permission",
+                    "storageKey": "permission(action:\"core:nonconformity:list\")"
+                  },
                   {
-                    "kind": "Literal",
-                    "name": "action",
-                    "value": "core:obligation:list"
-                  }
-                ],
-                "kind": "ScalarField",
-                "name": "permission",
-                "storageKey": "permission(action:\"core:obligation:list\")"
-              },
-              {
-                "alias": "canListContinualImprovements",
-                "args": [
+                    "alias": "canListObligations",
+                    "args": [
+                      {
+                        "kind": "Literal",
+                        "name": "action",
+                        "value": "core:obligation:list"
+                      }
+                    ],
+                    "kind": "ScalarField",
+                    "name": "permission",
+                    "storageKey": "permission(action:\"core:obligation:list\")"
+                  },
                   {
-                    "kind": "Literal",
-                    "name": "action",
-                    "value": "core:continual-improvement:list"
-                  }
-                ],
-                "kind": "ScalarField",
-                "name": "permission",
-                "storageKey": "permission(action:\"core:continual-improvement:list\")"
-              },
-              {
-                "alias": "canListProcessingActivities",
-                "args": [
+                    "alias": "canListContinualImprovements",
+                    "args": [
+                      {
+                        "kind": "Literal",
+                        "name": "action",
+                        "value": "core:continual-improvement:list"
+                      }
+                    ],
+                    "kind": "ScalarField",
+                    "name": "permission",
+                    "storageKey": "permission(action:\"core:continual-improvement:list\")"
+                  },
                   {
-                    "kind": "Literal",
-                    "name": "action",
-                    "value": "core:processing-activity:list"
-                  }
-                ],
-                "kind": "ScalarField",
-                "name": "permission",
-                "storageKey": "permission(action:\"core:processing-activity:list\")"
-              },
-              {
-                "alias": "canListRightsRequests",
-                "args": [
+                    "alias": "canListProcessingActivities",
+                    "args": [
+                      {
+                        "kind": "Literal",
+                        "name": "action",
+                        "value": "core:processing-activity:list"
+                      }
+                    ],
+                    "kind": "ScalarField",
+                    "name": "permission",
+                    "storageKey": "permission(action:\"core:processing-activity:list\")"
+                  },
                   {
-                    "kind": "Literal",
-                    "name": "action",
-                    "value": "core:rights-request:list"
-                  }
-                ],
-                "kind": "ScalarField",
-                "name": "permission",
-                "storageKey": "permission(action:\"core:rights-request:list\")"
-              },
-              {
-                "alias": "canListSnapshots",
-                "args": [
+                    "alias": "canListRightsRequests",
+                    "args": [
+                      {
+                        "kind": "Literal",
+                        "name": "action",
+                        "value": "core:rights-request:list"
+                      }
+                    ],
+                    "kind": "ScalarField",
+                    "name": "permission",
+                    "storageKey": "permission(action:\"core:rights-request:list\")"
+                  },
                   {
-                    "kind": "Literal",
-                    "name": "action",
-                    "value": "core:snapshot:list"
-                  }
-                ],
-                "kind": "ScalarField",
-                "name": "permission",
-                "storageKey": "permission(action:\"core:snapshot:list\")"
-              },
-              {
-                "alias": "canGetTrustCenter",
-                "args": [
+                    "alias": "canListSnapshots",
+                    "args": [
+                      {
+                        "kind": "Literal",
+                        "name": "action",
+                        "value": "core:snapshot:list"
+                      }
+                    ],
+                    "kind": "ScalarField",
+                    "name": "permission",
+                    "storageKey": "permission(action:\"core:snapshot:list\")"
+                  },
                   {
-                    "kind": "Literal",
-                    "name": "action",
-                    "value": "core:trust-center:get"
-                  }
-                ],
-                "kind": "ScalarField",
-                "name": "permission",
-                "storageKey": "permission(action:\"core:trust-center:get\")"
-              },
-              {
-                "alias": "canUpdateOrganization",
-                "args": [
+                    "alias": "canGetTrustCenter",
+                    "args": [
+                      {
+                        "kind": "Literal",
+                        "name": "action",
+                        "value": "core:trust-center:get"
+                      }
+                    ],
+                    "kind": "ScalarField",
+                    "name": "permission",
+                    "storageKey": "permission(action:\"core:trust-center:get\")"
+                  },
                   {
-                    "kind": "Literal",
-                    "name": "action",
-                    "value": "iam:organization:update"
-                  }
-                ],
-                "kind": "ScalarField",
-                "name": "permission",
-                "storageKey": "permission(action:\"iam:organization:update\")"
-              },
-              {
-                "alias": "canListStatesOfApplicability",
-                "args": [
+                    "alias": "canUpdateOrganization",
+                    "args": [
+                      {
+                        "kind": "Literal",
+                        "name": "action",
+                        "value": "iam:organization:update"
+                      }
+                    ],
+                    "kind": "ScalarField",
+                    "name": "permission",
+                    "storageKey": "permission(action:\"iam:organization:update\")"
+                  },
                   {
-                    "kind": "Literal",
-                    "name": "action",
-                    "value": "core:state-of-applicability:list"
+                    "alias": "canListStatesOfApplicability",
+                    "args": [
+                      {
+                        "kind": "Literal",
+                        "name": "action",
+                        "value": "core:state-of-applicability:list"
+                      }
+                    ],
+                    "kind": "ScalarField",
+                    "name": "permission",
+                    "storageKey": "permission(action:\"core:state-of-applicability:list\")"
                   }
-                ],
-                "kind": "ScalarField",
-                "name": "permission",
-                "storageKey": "permission(action:\"core:state-of-applicability:list\")"
+                ]
               }
             ],
             "type": "Organization",
             "abstractKey": null
           },
-          (v5/*: any*/)
+          (v6/*: any*/)
         ],
         "storageKey": null
       },
@@ -559,27 +583,27 @@ return {
             "name": "pendingInvitations",
             "plural": false,
             "selections": [
-              (v4/*: any*/)
+              (v5/*: any*/)
             ],
             "storageKey": null
           },
-          (v5/*: any*/)
+          (v6/*: any*/)
         ],
         "storageKey": null
       }
     ]
   },
   "params": {
-    "cacheID": "f39bc9faafcfb9d3e6482e088a3cae1e",
+    "cacheID": "6b0b3a64c02e1c0ff744e57b395d14c8",
     "id": null,
     "metadata": {},
     "name": "MembershipLayoutQuery",
     "operationKind": "query",
-    "text": "query MembershipLayoutQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      ...MembershipsDropdown_organizationFragment\n      ...SessionDropdownFragment\n      ...SidebarFragment\n      viewerMembership {\n        role\n        id\n      }\n    }\n    id\n  }\n  viewer {\n    ...MembershipsDropdown_viewerFragment\n    pendingInvitations {\n      totalCount\n    }\n    id\n  }\n}\n\nfragment MembershipsDropdown_organizationFragment on Organization {\n  name\n}\n\nfragment MembershipsDropdown_viewerFragment on Identity {\n  pendingInvitations {\n    totalCount\n  }\n}\n\nfragment SessionDropdownFragment on Organization {\n  canDelete: permission(action: \"iam:organization:delete\")\n  viewerMembership {\n    identity {\n      email\n      id\n    }\n    profile {\n      fullName\n      id\n    }\n    id\n  }\n}\n\nfragment SidebarFragment on Organization {\n  canListMeetings: permission(action: \"core:meeting:list\")\n  canListTasks: permission(action: \"core:task:list\")\n  canListMeasures: permission(action: \"core:measures:list\")\n  canListRisks: permission(action: \"core:risk:list\")\n  canListFrameworks: permission(action: \"core:frameworks:list\")\n  canListPeople: permission(action: \"core:people:list\")\n  canListVendors: permission(action: \"core:vendor:list\")\n  canListDocuments: permission(action: \"core:document:list\")\n  canListAssets: permission(action: \"core:asset:list\")\n  canListData: permission(action: \"core:datum:list\")\n  canListAudits: permission(action: \"core:audit:list\")\n  canListNonconformities: permission(action: \"core:nonconformity:list\")\n  canListObligations: permission(action: \"core:obligation:list\")\n  canListContinualImprovements: permission(action: \"core:continual-improvement:list\")\n  canListProcessingActivities: permission(action: \"core:processing-activity:list\")\n  canListRightsRequests: permission(action: \"core:rights-request:list\")\n  canListSnapshots: permission(action: \"core:snapshot:list\")\n  canGetTrustCenter: permission(action: \"core:trust-center:get\")\n  canUpdateOrganization: permission(action: \"iam:organization:update\")\n  canListStatesOfApplicability: permission(action: \"core:state-of-applicability:list\")\n}\n"
+    "text": "query MembershipLayoutQuery(\n  $organizationId: ID!\n  $hideSidebar: Boolean!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      ...MembershipsDropdown_organizationFragment\n      ...SessionDropdownFragment\n      ...SidebarFragment @skip(if: $hideSidebar)\n      viewerMembership {\n        role\n        id\n      }\n    }\n    id\n  }\n  viewer {\n    ...MembershipsDropdown_viewerFragment\n    pendingInvitations {\n      totalCount\n    }\n    id\n  }\n}\n\nfragment MembershipsDropdown_organizationFragment on Organization {\n  name\n}\n\nfragment MembershipsDropdown_viewerFragment on Identity {\n  pendingInvitations {\n    totalCount\n  }\n}\n\nfragment SessionDropdownFragment on Organization {\n  canDelete: permission(action: \"iam:organization:delete\")\n  viewerMembership {\n    identity {\n      email\n      id\n    }\n    profile {\n      fullName\n      id\n    }\n    id\n  }\n}\n\nfragment SidebarFragment on Organization {\n  canListMeetings: permission(action: \"core:meeting:list\")\n  canListTasks: permission(action: \"core:task:list\")\n  canListMeasures: permission(action: \"core:measures:list\")\n  canListRisks: permission(action: \"core:risk:list\")\n  canListFrameworks: permission(action: \"core:frameworks:list\")\n  canListPeople: permission(action: \"core:people:list\")\n  canListVendors: permission(action: \"core:vendor:list\")\n  canListDocuments: permission(action: \"core:document:list\")\n  canListAssets: permission(action: \"core:asset:list\")\n  canListData: permission(action: \"core:datum:list\")\n  canListAudits: permission(action: \"core:audit:list\")\n  canListNonconformities: permission(action: \"core:nonconformity:list\")\n  canListObligations: permission(action: \"core:obligation:list\")\n  canListContinualImprovements: permission(action: \"core:continual-improvement:list\")\n  canListProcessingActivities: permission(action: \"core:processing-activity:list\")\n  canListRightsRequests: permission(action: \"core:rights-request:list\")\n  canListSnapshots: permission(action: \"core:snapshot:list\")\n  canGetTrustCenter: permission(action: \"core:trust-center:get\")\n  canUpdateOrganization: permission(action: \"iam:organization:update\")\n  canListStatesOfApplicability: permission(action: \"core:state-of-applicability:list\")\n}\n"
   }
 };
 })();
 
-(node as any).hash = "6e16255ebbb75840ce8ec057a453bbf0";
+(node as any).hash = "2d75823d6ae9eee901e54b71d4c397cf";
 
 export default node;
