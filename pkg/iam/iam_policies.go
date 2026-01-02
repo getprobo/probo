@@ -76,6 +76,11 @@ var IAMSelfManageInvitationPolicy = policy.NewPolicy(
 	).
 		WithSID("manage-own-invitations").
 		When(policy.Equals("principal.email", "resource.email")),
+
+	// Users can view organization details for organizations they have pending invitations to
+	policy.Allow(ActionOrganizationGet).
+		WithSID("view-org-for-pending-invitation").
+		When(policy.In("resource.organization_id", "principal.pending_invitation_organization_ids")),
 ).
 	WithDescription("Allows users to view and accept invitations sent to them")
 
