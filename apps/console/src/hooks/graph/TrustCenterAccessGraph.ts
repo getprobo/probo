@@ -33,6 +33,8 @@ export const trustCenterAccessesPaginationFragment = graphql`
           lastTokenExpiresAt
           pendingRequestCount
           activeCount
+          canUpdate: permission(action: "core:trust-center-access:update")
+          canDelete: permission(action: "core:trust-center-access:delete")
         }
       }
     }
@@ -72,6 +74,8 @@ export const createTrustCenterAccessMutation = graphql`
           lastTokenExpiresAt
           pendingRequestCount
           activeCount
+          canUpdate: permission(action: "core:trust-center-access:update")
+          canDelete: permission(action: "core:trust-center-access:delete")
         }
       }
     }

@@ -1,7 +1,4 @@
-import type {
-  TrustCenterAccess,
-  TrustCenterDocumentAccessStatus,
-} from "@probo/coredata";
+import type { TrustCenterDocumentAccessStatus } from "@probo/coredata";
 import {
   getTrustCenterDocumentAccessInfo,
   type TrustCenterDocumentAccessInfo,
@@ -31,9 +28,11 @@ import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { TrustCenterDocumentAccessList } from "./TrustCenterDocumentAccessList";
+import type { TrustCenterAccessGraph_accesses$data } from "/__generated__/core/TrustCenterAccessGraph_accesses.graphql";
+import type { NodeOf } from "/types";
 
 interface TrustCenterAccessEditDialogProps {
-  access: TrustCenterAccess;
+  access: NodeOf<TrustCenterAccessGraph_accesses$data["accesses"]>;
   onClose: () => void;
 }
 
@@ -76,7 +75,7 @@ export function TrustCenterAccessEditDialog(
 }
 
 interface TrustCenterAccessEditFormProps {
-  access: TrustCenterAccess;
+  access: NodeOf<TrustCenterAccessGraph_accesses$data["accesses"]>;
   onSubmit: () => void;
   queryRef: PreloadedQuery<TrustCenterAccessGraphLoadDocumentAccessesQuery>;
 }

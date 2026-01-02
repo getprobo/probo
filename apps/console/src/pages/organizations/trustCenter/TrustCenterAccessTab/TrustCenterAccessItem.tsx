@@ -1,56 +1,71 @@
-import type { TrustCenterAccess } from "@probo/coredata";
-import { Button, IconCheckmark1, IconCrossLargeX, IconPencil, IconTrashCan, Td, Tr } from "@probo/ui";
+import {
+  Button,
+  IconCheckmark1,
+  IconCrossLargeX,
+  IconPencil,
+  IconTrashCan,
+  Td,
+  Tr,
+} from "@probo/ui";
 import { formatDate } from "@probo/helpers";
-import { use, useCallback, useState } from "react";
-import { PermissionsContext } from "/providers/PermissionsContext";
+import { useCallback, useState } from "react";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { deleteTrustCenterAccessMutation } from "/hooks/graph/TrustCenterAccessGraph";
 import { useTranslate } from "@probo/i18n";
 import { TrustCenterAccessEditDialog } from "./TrustCenterAccessEditDialog";
+import type { TrustCenterAccessGraph_accesses$data } from "/__generated__/core/TrustCenterAccessGraph_accesses.graphql";
+import type { NodeOf } from "/types";
 
 interface TrustCenterAccessItemProps {
-  access: TrustCenterAccess
+  access: NodeOf<TrustCenterAccessGraph_accesses$data["accesses"]>;
   connectionId?: string;
-  dialogOpen: boolean,
+  dialogOpen: boolean;
 }
 
 export function TrustCenterAccessItem(props: TrustCenterAccessItemProps) {
   const { access, connectionId, dialogOpen: initialDialogOpen } = props;
 
   const { __ } = useTranslate();
-  const { isAuthorized } = use(PermissionsContext);
-  const [dialogOpen, setDialogOpen] = useState<boolean>(initialDialogOpen)
+  const [dialogOpen, setDialogOpen] = useState<boolean>(initialDialogOpen);
 
-  const [deleteInvitation, isDeleting] = useMutationWithToasts(deleteTrustCenterAccessMutation, {
-    successMessage: __("Access deleted successfully"),
-    errorMessage: __("Failed to delete access"),
-  });
+  const [deleteInvitation, isDeleting] = useMutationWithToasts(
+    deleteTrustCenterAccessMutation,
+    {
+      successMessage: __("Access deleted successfully"),
+      errorMessage: __("Failed to delete access"),
+    },
+  );
 
-  const handleDelete = useCallback(async (id: string) => {
-    await deleteInvitation({
-      variables: {
-        input: { id },
-        connections: connectionId ? [connectionId] : [],
-      },
-    });
-  }, [deleteInvitation, connectionId]);
+  const handleDelete = useCallback(
+    async (id: string) => {
+      await deleteInvitation({
+        variables: {
+          input: { id },
+          connections: connectionId ? [connectionId] : [],
+        },
+      });
+    },
+    [deleteInvitation, connectionId],
+  );
 
-  const isExpired = access.lastTokenExpiresAt ? new Date(access.lastTokenExpiresAt) < new Date() : false;
+  const isExpired = access.lastTokenExpiresAt
+    ? new Date(access.lastTokenExpiresAt) < new Date()
+    : false;
 
   return (
     <>
       <Tr
         key={access.id}
-        onClick={() => setDialogOpen(true)}
+        onClick={() => access.canUpdate && setDialogOpen(true)}
         className="cursor-pointer hover:bg-bg-secondary transition-colors"
       >
         <Td className="font-medium">{access.name}</Td>
         <Td>{access.email}</Td>
-        <Td>
-          {formatDate(access.createdAt)}
-        </Td>
+        <Td>{formatDate(access.createdAt)}</Td>
         <Td className={isExpired ? "text-txt-danger" : ""}>
-          {access.lastTokenExpiresAt ? formatDate(access.lastTokenExpiresAt) : "-"}
+          {access.lastTokenExpiresAt
+            ? formatDate(access.lastTokenExpiresAt)
+            : "-"}
         </Td>
         <Td>
           <div className="flex justify-center">
@@ -61,9 +76,7 @@ export function TrustCenterAccessItem(props: TrustCenterAccessItemProps) {
             )}
           </div>
         </Td>
-        <Td className="text-center">
-          {access.activeCount}
-        </Td>
+        <Td className="text-center">{access.activeCount}</Td>
         <Td className="text-center">
           {access.pendingRequestCount > 0 ? access.pendingRequestCount : ""}
         </Td>
@@ -79,14 +92,14 @@ export function TrustCenterAccessItem(props: TrustCenterAccessItemProps) {
             className="flex gap-2 justify-end"
             onClick={(e) => e.stopPropagation()}
           >
-            {isAuthorized("TrustCenterAccess", "updateTrustCenterAccess") && (
+            {access.canUpdate && (
               <Button
                 variant="secondary"
                 onClick={() => setDialogOpen(true)}
                 icon={IconPencil}
               />
             )}
-            {isAuthorized("TrustCenterAccess", "deleteTrustCenterAccess") && (
+            {access.canDelete && (
               <Button
                 variant="danger"
                 onClick={() => handleDelete(access.id)}
@@ -98,7 +111,12 @@ export function TrustCenterAccessItem(props: TrustCenterAccessItemProps) {
         </Td>
       </Tr>
 
-      {dialogOpen && <TrustCenterAccessEditDialog access={access} onClose={() => setDialogOpen(false)} />}
+      {access.canUpdate && dialogOpen && (
+        <TrustCenterAccessEditDialog
+          access={access}
+          onClose={() => setDialogOpen(false)}
+        />
+      )}
     </>
   );
 }
