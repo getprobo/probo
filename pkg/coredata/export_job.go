@@ -16,18 +16,18 @@ import (
 
 type (
 	ExportJob struct {
-		ID             gid.GID                   `db:"id"`
-		OrganizationID gid.GID                   `db:"organization_id"`
-		Type           ExportJobType             `db:"type"`
-		Arguments      json.RawMessage           `db:"arguments"`
-		Error          *string                   `db:"error"`
-		Status         ExportJobStatus           `db:"status"`
-		FileID         *gid.GID                  `db:"file_id"`
-		RecipientEmail mail.Addr `db:"recipient_email"`
-		RecipientName  string                    `db:"recipient_name"`
-		CreatedAt      time.Time                 `db:"created_at"`
-		StartedAt      *time.Time                `db:"started_at"`
-		CompletedAt    *time.Time                `db:"completed_at"`
+		ID             gid.GID         `db:"id"`
+		OrganizationID gid.GID         `db:"organization_id"`
+		Type           ExportJobType   `db:"type"`
+		Arguments      json.RawMessage `db:"arguments"`
+		Error          *string         `db:"error"`
+		Status         ExportJobStatus `db:"status"`
+		FileID         *gid.GID        `db:"file_id"`
+		RecipientEmail mail.Addr       `db:"recipient_email"`
+		RecipientName  string          `db:"recipient_name"`
+		CreatedAt      time.Time       `db:"created_at"`
+		StartedAt      *time.Time      `db:"started_at"`
+		CompletedAt    *time.Time      `db:"completed_at"`
 	}
 
 	ExportJobs []*ExportJob
@@ -47,6 +47,21 @@ type (
 var (
 	ErrNoExportJobAvailable = errors.New("no export job available")
 )
+
+// AuthorizationAttributes returns the authorization attributes for policy evaluation.
+func (ej *ExportJob) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+	q := `SELECT organization_id FROM export_jobs WHERE id = $1 LIMIT 1;`
+
+	var organizationID gid.GID
+	if err := conn.QueryRow(ctx, q, ej.ID).Scan(&organizationID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrResourceNotFound
+		}
+		return nil, fmt.Errorf("cannot query export job authorization attributes: %w", err)
+	}
+
+	return map[string]string{"organization_id": organizationID.String()}, nil
+}
 
 func (ej *ExportJob) Insert(
 	ctx context.Context,

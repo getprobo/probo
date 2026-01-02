@@ -62,6 +62,21 @@ func (pvs DocumentVersionSignature) CursorKey(orderBy DocumentVersionSignatureOr
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
+// AuthorizationAttributes returns the authorization attributes for policy evaluation.
+func (dvs *DocumentVersionSignature) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+	q := `SELECT organization_id FROM document_version_signatures WHERE id = $1 LIMIT 1;`
+
+	var organizationID gid.GID
+	if err := conn.QueryRow(ctx, q, dvs.ID).Scan(&organizationID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrResourceNotFound
+		}
+		return nil, fmt.Errorf("cannot query document version signature authorization attributes: %w", err)
+	}
+
+	return map[string]string{"organization_id": organizationID.String()}, nil
+}
+
 func (pvs *DocumentVersionSignature) LoadByDocumentVersionIDAndSignatory(
 	ctx context.Context,
 	conn pg.Conn,

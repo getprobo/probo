@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<e518a98137eb07e37499d945991b15ed>>
+ * @generated SignedSource<<bdb7bb502fae96e1eb5b8ae644f8bebf>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -15,11 +15,8 @@ export type PersonalAPIKeyListFragment$data = {
   readonly personalAPIKeys: {
     readonly edges: ReadonlyArray<{
       readonly node: {
-        readonly createdAt: any;
-        readonly expiresAt: any;
         readonly id: string;
-        readonly lastUsedAt: any | null | undefined;
-        readonly name: string;
+        readonly " $fragmentSpreads": FragmentRefs<"PersonalAPIKeyRowFragment">;
       };
     }>;
   };
@@ -86,32 +83,9 @@ return {
                   "selections": [
                     (v0/*: any*/),
                     {
-                      "alias": null,
                       "args": null,
-                      "kind": "ScalarField",
-                      "name": "name",
-                      "storageKey": null
-                    },
-                    {
-                      "alias": null,
-                      "args": null,
-                      "kind": "ScalarField",
-                      "name": "createdAt",
-                      "storageKey": null
-                    },
-                    {
-                      "alias": null,
-                      "args": null,
-                      "kind": "ScalarField",
-                      "name": "expiresAt",
-                      "storageKey": null
-                    },
-                    {
-                      "alias": null,
-                      "args": null,
-                      "kind": "ScalarField",
-                      "name": "lastUsedAt",
-                      "storageKey": null
+                      "kind": "FragmentSpread",
+                      "name": "PersonalAPIKeyRowFragment"
                     },
                     {
                       "alias": null,
@@ -171,6 +145,6 @@ return {
 };
 })();
 
-(node as any).hash = "70fa6b4e568fc1598b8dc23a030428b5";
+(node as any).hash = "eac59db5cdb5d77813236a90e7fb4d94";
 
 export default node;

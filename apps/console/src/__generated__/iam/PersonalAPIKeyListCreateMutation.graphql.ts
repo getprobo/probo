@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<875eae6f5455a17a1bb8e0590c7acdb0>>
+ * @generated SignedSource<<faeeb8835f77a5251a0311dbac21bfde>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,7 +12,6 @@ import { ConcreteRequest } from 'relay-runtime';
 export type CreatePersonalAPIKeyInput = {
   expiresAt: any;
   name: string;
-  organizationIds: ReadonlyArray<string>;
 };
 export type PersonalAPIKeyListCreateMutation$variables = {
   connections: ReadonlyArray<string>;
@@ -25,7 +24,6 @@ export type PersonalAPIKeyListCreateMutation$data = {
         readonly createdAt: any;
         readonly expiresAt: any;
         readonly id: string;
-        readonly lastUsedAt: any | null | undefined;
         readonly name: string;
       };
     };
@@ -97,13 +95,6 @@ v3 = {
           "args": null,
           "kind": "ScalarField",
           "name": "expiresAt",
-          "storageKey": null
-        },
-        {
-          "alias": null,
-          "args": null,
-          "kind": "ScalarField",
-          "name": "lastUsedAt",
           "storageKey": null
         }
       ],
@@ -187,16 +178,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "5b1f6109730bd9f261afd6635d568b59",
+    "cacheID": "1ec09abe9f3a61e13ba2deacf1a273fb",
     "id": null,
     "metadata": {},
     "name": "PersonalAPIKeyListCreateMutation",
     "operationKind": "mutation",
-    "text": "mutation PersonalAPIKeyListCreateMutation(\n  $input: CreatePersonalAPIKeyInput!\n) {\n  createPersonalAPIKey(input: $input) {\n    personalAPIKeyEdge {\n      node {\n        id\n        name\n        createdAt\n        expiresAt\n        lastUsedAt\n      }\n    }\n    token\n  }\n}\n"
+    "text": "mutation PersonalAPIKeyListCreateMutation(\n  $input: CreatePersonalAPIKeyInput!\n) {\n  createPersonalAPIKey(input: $input) {\n    personalAPIKeyEdge {\n      node {\n        id\n        name\n        createdAt\n        expiresAt\n      }\n    }\n    token\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "c7e932ad41ff2740e8687b7edb904431";
+(node as any).hash = "86df62e5e5f2d9f347f41648d7af9c32";
 
 export default node;

@@ -63,6 +63,20 @@ func (s *SAMLConfiguration) CursorKey(orderBy SAMLConfigurationOrderField) page.
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
+func (s *SAMLConfiguration) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+	q := `SELECT organization_id FROM iam_saml_configurations WHERE id = $1 LIMIT 1;`
+
+	var organizationID gid.GID
+	if err := conn.QueryRow(ctx, q, s.ID).Scan(&organizationID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrResourceNotFound
+		}
+		return nil, fmt.Errorf("cannot query saml configuration authorization attributes: %w", err)
+	}
+
+	return map[string]string{"organization_id": organizationID.String()}, nil
+}
+
 func (s *SAMLConfiguration) GetIdPCertificate() (*x509.Certificate, error) {
 	block, _ := pem.Decode([]byte(s.IdPCertificate))
 	if block == nil {

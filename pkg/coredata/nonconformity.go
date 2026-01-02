@@ -16,14 +16,15 @@ package coredata
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"maps"
 	"time"
 
-	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/page"
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 )
 
 type (
@@ -64,6 +65,20 @@ func (nc *Nonconformity) CursorKey(field NonconformityOrderField) page.CursorKey
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", field))
+}
+
+func (nc *Nonconformity) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+	q := `SELECT organization_id FROM nonconformities WHERE id = $1 LIMIT 1;`
+
+	var organizationID gid.GID
+	if err := conn.QueryRow(ctx, q, nc.ID).Scan(&organizationID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrResourceNotFound
+		}
+		return nil, fmt.Errorf("cannot query nonconformity authorization attributes: %w", err)
+	}
+
+	return map[string]string{"organization_id": organizationID.String()}, nil
 }
 
 func (nc *Nonconformity) LoadByID(
@@ -399,9 +414,9 @@ WHERE %s AND nc.organization_id = @organization_id AND nc.snapshot_id IS NULL
 	query = fmt.Sprintf(query, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"tenant_id":                scope.GetTenantID(),
-		"snapshot_id":              snapshotID,
-		"organization_id":          organizationID,
+		"tenant_id":                 scope.GetTenantID(),
+		"snapshot_id":               snapshotID,
+		"organization_id":           organizationID,
 		"nonconformity_entity_type": NonconformityEntityType,
 	}
 	maps.Copy(args, scope.SQLArguments())

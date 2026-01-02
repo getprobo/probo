@@ -91,6 +91,20 @@ LIMIT 1;
 	return nil
 }
 
+func (a *PersonalAPIKey) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+	q := "SELECT identity_id FROM iam_personal_api_keys WHERE id = $1 LIMIT 1;"
+
+	var identityID gid.GID
+	if err := conn.QueryRow(ctx, q, a.ID).Scan(&identityID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrResourceNotFound
+		}
+		return nil, fmt.Errorf("cannot query personal api key iam attributes: %w", err)
+	}
+
+	return map[string]string{"identity_id": identityID.String()}, nil
+}
+
 func (a *PersonalAPIKeys) LoadByIdentityID(
 	ctx context.Context,
 	conn pg.Conn,

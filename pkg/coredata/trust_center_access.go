@@ -32,19 +32,19 @@ import (
 
 type (
 	TrustCenterAccess struct {
-		ID                                        gid.GID                   `db:"id"`
-		OrganizationID                            gid.GID                   `db:"organization_id"`
-		TenantID                                  gid.TenantID              `db:"tenant_id"`
-		TrustCenterID                             gid.GID                   `db:"trust_center_id"`
-		Email                                     mail.Addr `db:"email"`
-		Name                                      string                    `db:"name"`
-		Active                                    bool                      `db:"active"`
-		HasAcceptedNonDisclosureAgreement         bool                      `db:"has_accepted_non_disclosure_agreement"`
-		HasAcceptedNonDisclosureAgreementMetadata json.RawMessage           `db:"has_accepted_non_disclosure_agreement_metadata"`
-		NDAFileID                                 *gid.GID                  `db:"nda_file_id"`
-		CreatedAt                                 time.Time                 `db:"created_at"`
-		UpdatedAt                                 time.Time                 `db:"updated_at"`
-		LastTokenExpiresAt                        *time.Time                `db:"last_token_expires_at"`
+		ID                                        gid.GID         `db:"id"`
+		OrganizationID                            gid.GID         `db:"organization_id"`
+		TenantID                                  gid.TenantID    `db:"tenant_id"`
+		TrustCenterID                             gid.GID         `db:"trust_center_id"`
+		Email                                     mail.Addr       `db:"email"`
+		Name                                      string          `db:"name"`
+		Active                                    bool            `db:"active"`
+		HasAcceptedNonDisclosureAgreement         bool            `db:"has_accepted_non_disclosure_agreement"`
+		HasAcceptedNonDisclosureAgreementMetadata json.RawMessage `db:"has_accepted_non_disclosure_agreement_metadata"`
+		NDAFileID                                 *gid.GID        `db:"nda_file_id"`
+		CreatedAt                                 time.Time       `db:"created_at"`
+		UpdatedAt                                 time.Time       `db:"updated_at"`
+		LastTokenExpiresAt                        *time.Time      `db:"last_token_expires_at"`
 	}
 
 	TrustCenterAccesses []*TrustCenterAccess
@@ -57,6 +57,20 @@ func (tca *TrustCenterAccess) CursorKey(orderBy TrustCenterAccessOrderField) pag
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
+}
+
+func (tca *TrustCenterAccess) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+	q := `SELECT organization_id FROM trust_center_accesses WHERE id = $1 LIMIT 1;`
+
+	var organizationID gid.GID
+	if err := conn.QueryRow(ctx, q, tca.ID).Scan(&organizationID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrResourceNotFound
+		}
+		return nil, fmt.Errorf("cannot query trust center access authorization attributes: %w", err)
+	}
+
+	return map[string]string{"organization_id": organizationID.String()}, nil
 }
 
 func (tca *TrustCenterAccess) LoadByID(

@@ -140,6 +140,30 @@ LIMIT 1;
 	return nil
 }
 
+// AuthorizationAttributes loads the minimal authorization attributes for policy condition evaluation.
+// It is intentionally lightweight and does not populate the Session struct.
+func (s *Session) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+	q := `
+SELECT
+    identity_id
+FROM
+    iam_sessions
+WHERE
+    id = $1
+LIMIT 1;
+`
+
+	var identityID gid.GID
+	if err := conn.QueryRow(ctx, q, s.ID).Scan(&identityID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrResourceNotFound
+		}
+		return nil, fmt.Errorf("cannot query session iam attributes: %w", err)
+	}
+
+	return map[string]string{"identity_id": identityID.String()}, nil
+}
+
 func (s *Session) Insert(
 	ctx context.Context,
 	conn pg.Conn,

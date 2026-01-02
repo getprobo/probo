@@ -69,6 +69,20 @@ func (tia *TransferImpactAssessment) CursorKey(field TransferImpactAssessmentOrd
 	panic(fmt.Sprintf("unsupported order by: %s", field))
 }
 
+func (tia *TransferImpactAssessment) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+	q := `SELECT organization_id FROM processing_activity_transfer_impact_assessments WHERE id = $1 LIMIT 1;`
+
+	var organizationID gid.GID
+	if err := conn.QueryRow(ctx, q, tia.ID).Scan(&organizationID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrResourceNotFound
+		}
+		return nil, fmt.Errorf("cannot query transfer impact assessment authorization attributes: %w", err)
+	}
+
+	return map[string]string{"organization_id": organizationID.String()}, nil
+}
+
 func (tias *TransferImpactAssessments) CountByOrganizationID(
 	ctx context.Context,
 	conn pg.Conn,

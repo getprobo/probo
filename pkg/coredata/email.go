@@ -44,6 +44,12 @@ var (
 	ErrNoUnsentEmail = errors.New("no unsent email found")
 )
 
+// AuthorizationAttributes returns the authorization attributes for policy evaluation.
+// Email is identity-scoped (not org-scoped), so it returns an empty map.
+func (e *Email) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+	return map[string]string{}, nil
+}
+
 func NewEmail(
 	recipientName string,
 	recipientEmail mail.Addr,

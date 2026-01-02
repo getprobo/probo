@@ -46,6 +46,20 @@ type (
 	Organizations []*Organization
 )
 
+func (o *Organization) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+	q := `SELECT id FROM organizations WHERE id = $1 LIMIT 1;`
+
+	var id gid.GID
+	if err := conn.QueryRow(ctx, q, o.ID).Scan(&id); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrResourceNotFound
+		}
+		return nil, fmt.Errorf("cannot query organization authorization attributes: %w", err)
+	}
+
+	return map[string]string{"organization_id": o.ID.String()}, nil
+}
+
 func (o Organization) CursorKey(orderBy OrganizationOrderField) page.CursorKey {
 	switch orderBy {
 	case OrganizationOrderFieldName:

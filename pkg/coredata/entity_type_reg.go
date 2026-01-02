@@ -14,6 +14,8 @@
 
 package coredata
 
+import "go.probo.inc/probo/pkg/gid"
+
 type ctxKey struct{ name string }
 
 var (
@@ -74,6 +76,109 @@ const (
 	StateOfApplicabilityControlEntityType      uint16 = 50
 	MembershipProfileEntityType                uint16 = 51
 )
+
+func NewEntityFromID(id gid.GID) (any, bool) {
+	switch id.EntityType() {
+	case OrganizationEntityType:
+		return &Organization{ID: id}, true
+	case FrameworkEntityType:
+		return &Framework{ID: id}, true
+	case MeasureEntityType:
+		return &Measure{ID: id}, true
+	case TaskEntityType:
+		return &Task{ID: id}, true
+	case EvidenceEntityType:
+		return &Evidence{ID: id}, true
+	case ConnectorEntityType:
+		return &Connector{ID: id}, true
+	case VendorRiskAssessmentEntityType:
+		return &VendorRiskAssessment{ID: id}, true
+	case VendorEntityType:
+		return &Vendor{ID: id}, true
+	case PeopleEntityType:
+		return &People{ID: id}, true
+	case VendorComplianceReportEntityType:
+		return &VendorComplianceReport{ID: id}, true
+	case DocumentEntityType:
+		return &Document{ID: id}, true
+	case IdentityEntityType:
+		return &Identity{ID: id}, true
+	case SessionEntityType:
+		return &Session{ID: id}, true
+	case EmailEntityType:
+		return &Email{ID: id}, true
+	case ControlEntityType:
+		return &Control{ID: id}, true
+	case RiskEntityType:
+		return &Risk{ID: id}, true
+	case DocumentVersionEntityType:
+		return &DocumentVersion{ID: id}, true
+	case DocumentVersionSignatureEntityType:
+		return &DocumentVersionSignature{ID: id}, true
+	case AssetEntityType:
+		return &Asset{ID: id}, true
+	case DatumEntityType:
+		return &Datum{ID: id}, true
+	case AuditEntityType:
+		return &Audit{ID: id}, true
+	case ReportEntityType:
+		return &Report{ID: id}, true
+	case TrustCenterEntityType:
+		return &TrustCenter{ID: id}, true
+	case TrustCenterAccessEntityType:
+		return &TrustCenterAccess{ID: id}, true
+	case VendorBusinessAssociateAgreementEntityType:
+		return &VendorBusinessAssociateAgreement{ID: id}, true
+	case FileEntityType:
+		return &File{ID: id}, true
+	case VendorContactEntityType:
+		return &VendorContact{ID: id}, true
+	case VendorDataPrivacyAgreementEntityType:
+		return &VendorDataPrivacyAgreement{ID: id}, true
+	case NonconformityEntityType:
+		return &Nonconformity{ID: id}, true
+	case ObligationEntityType:
+		return &Obligation{ID: id}, true
+	case VendorServiceEntityType:
+		return &VendorService{ID: id}, true
+	case SnapshotEntityType:
+		return &Snapshot{ID: id}, true
+	case ContinualImprovementEntityType:
+		return &ContinualImprovement{ID: id}, true
+	case ProcessingActivityEntityType:
+		return &ProcessingActivity{ID: id}, true
+	case ExportJobEntityType:
+		return &ExportJob{ID: id}, true
+	case TrustCenterReferenceEntityType:
+		return &TrustCenterReference{ID: id}, true
+	case TrustCenterDocumentAccessEntityType:
+		return &TrustCenterDocumentAccess{ID: id}, true
+	case CustomDomainEntityType:
+		return &CustomDomain{ID: id}, true
+	case InvitationEntityType:
+		return &Invitation{ID: id}, true
+	case MembershipEntityType:
+		return &Membership{ID: id}, true
+	case SlackMessageEntityType:
+		return &SlackMessage{ID: id}, true
+	case TrustCenterFileEntityType:
+		return &TrustCenterFile{ID: id}, true
+	case SAMLConfigurationEntityType:
+		return &SAMLConfiguration{ID: id}, true
+	case PersonalAPIKeyEntityType:
+		return &PersonalAPIKey{ID: id}, true
+	case MeetingEntityType:
+		return &Meeting{ID: id}, true
+	case DataProtectionImpactAssessmentEntityType:
+		return &DataProtectionImpactAssessment{ID: id}, true
+	case TransferImpactAssessmentEntityType:
+		return &TransferImpactAssessment{ID: id}, true
+	case MembershipProfileEntityType:
+		return &MembershipProfile{ID: id}, true
+	default:
+		return nil, false
+	}
+}
 
 type EntityInfo struct {
 	Model string

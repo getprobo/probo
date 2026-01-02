@@ -218,7 +218,6 @@ type ComplexityRoot struct {
 		InviteMember                     func(childComplexity int, input types.InviteMemberInput) int
 		RemoveMember                     func(childComplexity int, input types.RemoveMemberInput) int
 		ResetPassword                    func(childComplexity int, input types.ResetPasswordInput) int
-		RevealPersonalAPIKeyToken        func(childComplexity int, input types.RevealPersonalAPIKeyTokenInput) int
 		RevokeAllSessions                func(childComplexity int) int
 		RevokePersonalAPIKey             func(childComplexity int, input types.RevokePersonalAPIKeyInput) int
 		RevokeSession                    func(childComplexity int, input types.RevokeSessionInput) int
@@ -267,14 +266,12 @@ type ComplexityRoot struct {
 	}
 
 	PersonalAPIKey struct {
-		CreatedAt     func(childComplexity int) int
-		ExpiresAt     func(childComplexity int) int
-		ID            func(childComplexity int) int
-		LastUsedAt    func(childComplexity int) int
-		Name          func(childComplexity int) int
-		Organizations func(childComplexity int) int
-		Permission    func(childComplexity int, action string) int
-		Scopes        func(childComplexity int) int
+		CreatedAt  func(childComplexity int) int
+		ExpiresAt  func(childComplexity int) int
+		ID         func(childComplexity int) int
+		Name       func(childComplexity int) int
+		Permission func(childComplexity int, action string) int
+		Token      func(childComplexity int) int
 	}
 
 	PersonalAPIKeyConnection struct {
@@ -302,16 +299,12 @@ type ComplexityRoot struct {
 		Success func(childComplexity int) int
 	}
 
-	RevealPersonalAPIKeyTokenPayload struct {
-		Token func(childComplexity int) int
-	}
-
 	RevokeAllSessionsPayload struct {
 		RevokedCount func(childComplexity int) int
 	}
 
 	RevokePersonalAPIKeyPayload struct {
-		Success func(childComplexity int) int
+		PersonalAPIKeyID func(childComplexity int) int
 	}
 
 	RevokeSessionPayload struct {
@@ -462,7 +455,6 @@ type MutationResolver interface {
 	RevokeSession(ctx context.Context, input types.RevokeSessionInput) (*types.RevokeSessionPayload, error)
 	RevokeAllSessions(ctx context.Context) (*types.RevokeAllSessionsPayload, error)
 	CreatePersonalAPIKey(ctx context.Context, input types.CreatePersonalAPIKeyInput) (*types.CreatePersonalAPIKeyPayload, error)
-	RevealPersonalAPIKeyToken(ctx context.Context, input types.RevealPersonalAPIKeyTokenInput) (*types.RevealPersonalAPIKeyTokenPayload, error)
 	RevokePersonalAPIKey(ctx context.Context, input types.RevokePersonalAPIKeyInput) (*types.RevokePersonalAPIKeyPayload, error)
 	CreateOrganization(ctx context.Context, input types.CreateOrganizationInput) (*types.CreateOrganizationPayload, error)
 	UpdateOrganization(ctx context.Context, input types.UpdateOrganizationInput) (*types.UpdateOrganizationPayload, error)
@@ -488,6 +480,7 @@ type OrganizationResolver interface {
 	Permission(ctx context.Context, obj *types.Organization, action string) (bool, error)
 }
 type PersonalAPIKeyResolver interface {
+	Token(ctx context.Context, obj *types.PersonalAPIKey) (*string, error)
 	Permission(ctx context.Context, obj *types.PersonalAPIKey, action string) (bool, error)
 }
 type PersonalAPIKeyConnectionResolver interface {
@@ -1146,17 +1139,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.ResetPassword(childComplexity, args["input"].(types.ResetPasswordInput)), true
-	case "Mutation.revealPersonalAPIKeyToken":
-		if e.complexity.Mutation.RevealPersonalAPIKeyToken == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_revealPersonalAPIKeyToken_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.RevealPersonalAPIKeyToken(childComplexity, args["input"].(types.RevealPersonalAPIKeyTokenInput)), true
 	case "Mutation.revokeAllSessions":
 		if e.complexity.Mutation.RevokeAllSessions == nil {
 			break
@@ -1443,24 +1425,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.PersonalAPIKey.ID(childComplexity), true
-	case "PersonalAPIKey.lastUsedAt":
-		if e.complexity.PersonalAPIKey.LastUsedAt == nil {
-			break
-		}
-
-		return e.complexity.PersonalAPIKey.LastUsedAt(childComplexity), true
 	case "PersonalAPIKey.name":
 		if e.complexity.PersonalAPIKey.Name == nil {
 			break
 		}
 
 		return e.complexity.PersonalAPIKey.Name(childComplexity), true
-	case "PersonalAPIKey.organizations":
-		if e.complexity.PersonalAPIKey.Organizations == nil {
-			break
-		}
-
-		return e.complexity.PersonalAPIKey.Organizations(childComplexity), true
 	case "PersonalAPIKey.permission":
 		if e.complexity.PersonalAPIKey.Permission == nil {
 			break
@@ -1472,12 +1442,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.PersonalAPIKey.Permission(childComplexity, args["action"].(string)), true
-	case "PersonalAPIKey.scopes":
-		if e.complexity.PersonalAPIKey.Scopes == nil {
+	case "PersonalAPIKey.token":
+		if e.complexity.PersonalAPIKey.Token == nil {
 			break
 		}
 
-		return e.complexity.PersonalAPIKey.Scopes(childComplexity), true
+		return e.complexity.PersonalAPIKey.Token(childComplexity), true
 
 	case "PersonalAPIKeyConnection.edges":
 		if e.complexity.PersonalAPIKeyConnection.Edges == nil {
@@ -1554,13 +1524,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.ResetPasswordPayload.Success(childComplexity), true
 
-	case "RevealPersonalAPIKeyTokenPayload.token":
-		if e.complexity.RevealPersonalAPIKeyTokenPayload.Token == nil {
-			break
-		}
-
-		return e.complexity.RevealPersonalAPIKeyTokenPayload.Token(childComplexity), true
-
 	case "RevokeAllSessionsPayload.revokedCount":
 		if e.complexity.RevokeAllSessionsPayload.RevokedCount == nil {
 			break
@@ -1568,12 +1531,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.RevokeAllSessionsPayload.RevokedCount(childComplexity), true
 
-	case "RevokePersonalAPIKeyPayload.success":
-		if e.complexity.RevokePersonalAPIKeyPayload.Success == nil {
+	case "RevokePersonalAPIKeyPayload.personalAPIKeyId":
+		if e.complexity.RevokePersonalAPIKeyPayload.PersonalAPIKeyID == nil {
 			break
 		}
 
-		return e.complexity.RevokePersonalAPIKeyPayload.Success(childComplexity), true
+		return e.complexity.RevokePersonalAPIKeyPayload.PersonalAPIKeyID(childComplexity), true
 
 	case "RevokeSessionPayload.success":
 		if e.complexity.RevokeSessionPayload.Success == nil {
@@ -1934,7 +1897,6 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputMembershipOrder,
 		ec.unmarshalInputRemoveMemberInput,
 		ec.unmarshalInputResetPasswordInput,
-		ec.unmarshalInputRevealPersonalAPIKeyTokenInput,
 		ec.unmarshalInputRevokePersonalAPIKeyInput,
 		ec.unmarshalInputRevokeSessionInput,
 		ec.unmarshalInputSAMLAttributeMappingsInput,
@@ -2131,9 +2093,6 @@ type Mutation {
   createPersonalAPIKey(
     input: CreatePersonalAPIKeyInput!
   ): CreatePersonalAPIKeyPayload @session(required: PRESENT)
-  revealPersonalAPIKeyToken(
-    input: RevealPersonalAPIKeyTokenInput!
-  ): RevealPersonalAPIKeyTokenPayload @session(required: PRESENT)
   revokePersonalAPIKey(
     input: RevokePersonalAPIKeyInput!
   ): RevokePersonalAPIKeyPayload @session(required: PRESENT)
@@ -2330,11 +2289,10 @@ type Session implements Node {
 type PersonalAPIKey implements Node {
   id: ID!
   name: String!
-  lastUsedAt: Datetime
   expiresAt: Datetime!
   createdAt: Datetime!
-  scopes: [TokenScope!]!
-  organizations: [Organization!]!
+
+  token: String @goField(forceResolver: true)
 
   permission(action: String!): Boolean!
     @goField(forceResolver: true)
@@ -2621,15 +2579,10 @@ input RevokeSessionInput {
 input CreatePersonalAPIKeyInput {
   name: String!
   expiresAt: Datetime!
-  organizationIds: [ID!]!
 }
 
 input RevokePersonalAPIKeyInput {
-  tokenId: ID!
-}
-
-input RevealPersonalAPIKeyTokenInput {
-  tokenId: ID!
+  personalAPIKeyId: ID!
 }
 
 input CreateOrganizationInput {
@@ -2796,11 +2749,7 @@ type CreatePersonalAPIKeyPayload {
 }
 
 type RevokePersonalAPIKeyPayload {
-  success: Boolean!
-}
-
-type RevealPersonalAPIKeyTokenPayload {
-  token: String!
+  personalAPIKeyId: ID!
 }
 
 type CreateOrganizationPayload {
@@ -3191,17 +3140,6 @@ func (ec *executionContext) field_Mutation_resetPassword_args(ctx context.Contex
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNResetPasswordInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐResetPasswordInput)
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_revealPersonalAPIKeyToken_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNRevealPersonalAPIKeyTokenInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐRevealPersonalAPIKeyTokenInput)
 	if err != nil {
 		return nil, err
 	}
@@ -6734,69 +6672,6 @@ func (ec *executionContext) fieldContext_Mutation_createPersonalAPIKey(ctx conte
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_revealPersonalAPIKeyToken(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Mutation_revealPersonalAPIKeyToken,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().RevealPersonalAPIKeyToken(ctx, fc.Args["input"].(types.RevealPersonalAPIKeyTokenInput))
-		},
-		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
-			directive0 := next
-
-			directive1 := func(ctx context.Context) (any, error) {
-				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSessionRequirement(ctx, "PRESENT")
-				if err != nil {
-					var zeroVal *types.RevealPersonalAPIKeyTokenPayload
-					return zeroVal, err
-				}
-				if ec.directives.Session == nil {
-					var zeroVal *types.RevealPersonalAPIKeyTokenPayload
-					return zeroVal, errors.New("directive session is not implemented")
-				}
-				return ec.directives.Session(ctx, nil, directive0, required)
-			}
-
-			next = directive1
-			return next
-		},
-		ec.marshalORevealPersonalAPIKeyTokenPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐRevealPersonalAPIKeyTokenPayload,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_Mutation_revealPersonalAPIKeyToken(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "token":
-				return ec.fieldContext_RevealPersonalAPIKeyTokenPayload_token(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type RevealPersonalAPIKeyTokenPayload", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_revealPersonalAPIKeyToken_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Mutation_revokePersonalAPIKey(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -6840,8 +6715,8 @@ func (ec *executionContext) fieldContext_Mutation_revokePersonalAPIKey(ctx conte
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "success":
-				return ec.fieldContext_RevokePersonalAPIKeyPayload_success(ctx, field)
+			case "personalAPIKeyId":
+				return ec.fieldContext_RevokePersonalAPIKeyPayload_personalAPIKeyId(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type RevokePersonalAPIKeyPayload", field.Name)
 		},
@@ -8440,35 +8315,6 @@ func (ec *executionContext) fieldContext_PersonalAPIKey_name(_ context.Context, 
 	return fc, nil
 }
 
-func (ec *executionContext) _PersonalAPIKey_lastUsedAt(ctx context.Context, field graphql.CollectedField, obj *types.PersonalAPIKey) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_PersonalAPIKey_lastUsedAt,
-		func(ctx context.Context) (any, error) {
-			return obj.LastUsedAt, nil
-		},
-		nil,
-		ec.marshalODatetime2ᚖtimeᚐTime,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_PersonalAPIKey_lastUsedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "PersonalAPIKey",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Datetime does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _PersonalAPIKey_expiresAt(ctx context.Context, field graphql.CollectedField, obj *types.PersonalAPIKey) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -8527,91 +8373,30 @@ func (ec *executionContext) fieldContext_PersonalAPIKey_createdAt(_ context.Cont
 	return fc, nil
 }
 
-func (ec *executionContext) _PersonalAPIKey_scopes(ctx context.Context, field graphql.CollectedField, obj *types.PersonalAPIKey) (ret graphql.Marshaler) {
+func (ec *executionContext) _PersonalAPIKey_token(ctx context.Context, field graphql.CollectedField, obj *types.PersonalAPIKey) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_PersonalAPIKey_scopes,
+		ec.fieldContext_PersonalAPIKey_token,
 		func(ctx context.Context) (any, error) {
-			return obj.Scopes, nil
+			return ec.resolvers.PersonalAPIKey().Token(ctx, obj)
 		},
 		nil,
-		ec.marshalNTokenScope2ᚕgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐTokenScopeᚄ,
+		ec.marshalOString2ᚖstring,
 		true,
-		true,
+		false,
 	)
 }
 
-func (ec *executionContext) fieldContext_PersonalAPIKey_scopes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_PersonalAPIKey_token(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "PersonalAPIKey",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type TokenScope does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _PersonalAPIKey_organizations(ctx context.Context, field graphql.CollectedField, obj *types.PersonalAPIKey) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_PersonalAPIKey_organizations,
-		func(ctx context.Context) (any, error) {
-			return obj.Organizations, nil
-		},
-		nil,
-		ec.marshalNOrganization2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐOrganizationᚄ,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_PersonalAPIKey_organizations(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "PersonalAPIKey",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Organization_id(ctx, field)
-			case "name":
-				return ec.fieldContext_Organization_name(ctx, field)
-			case "logoUrl":
-				return ec.fieldContext_Organization_logoUrl(ctx, field)
-			case "horizontalLogoUrl":
-				return ec.fieldContext_Organization_horizontalLogoUrl(ctx, field)
-			case "email":
-				return ec.fieldContext_Organization_email(ctx, field)
-			case "description":
-				return ec.fieldContext_Organization_description(ctx, field)
-			case "websiteUrl":
-				return ec.fieldContext_Organization_websiteUrl(ctx, field)
-			case "headquarterAddress":
-				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Organization_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_Organization_updatedAt(ctx, field)
-			case "members":
-				return ec.fieldContext_Organization_members(ctx, field)
-			case "invitations":
-				return ec.fieldContext_Organization_invitations(ctx, field)
-			case "samlConfigurations":
-				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
-			case "viewerMembership":
-				return ec.fieldContext_Organization_viewerMembership(ctx, field)
-			case "permission":
-				return ec.fieldContext_Organization_permission(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -8807,16 +8592,12 @@ func (ec *executionContext) fieldContext_PersonalAPIKeyEdge_node(_ context.Conte
 				return ec.fieldContext_PersonalAPIKey_id(ctx, field)
 			case "name":
 				return ec.fieldContext_PersonalAPIKey_name(ctx, field)
-			case "lastUsedAt":
-				return ec.fieldContext_PersonalAPIKey_lastUsedAt(ctx, field)
 			case "expiresAt":
 				return ec.fieldContext_PersonalAPIKey_expiresAt(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_PersonalAPIKey_createdAt(ctx, field)
-			case "scopes":
-				return ec.fieldContext_PersonalAPIKey_scopes(ctx, field)
-			case "organizations":
-				return ec.fieldContext_PersonalAPIKey_organizations(ctx, field)
+			case "token":
+				return ec.fieldContext_PersonalAPIKey_token(ctx, field)
 			case "permission":
 				return ec.fieldContext_PersonalAPIKey_permission(ctx, field)
 			}
@@ -9218,35 +8999,6 @@ func (ec *executionContext) fieldContext_ResetPasswordPayload_success(_ context.
 	return fc, nil
 }
 
-func (ec *executionContext) _RevealPersonalAPIKeyTokenPayload_token(ctx context.Context, field graphql.CollectedField, obj *types.RevealPersonalAPIKeyTokenPayload) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_RevealPersonalAPIKeyTokenPayload_token,
-		func(ctx context.Context) (any, error) {
-			return obj.Token, nil
-		},
-		nil,
-		ec.marshalNString2string,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_RevealPersonalAPIKeyTokenPayload_token(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "RevealPersonalAPIKeyTokenPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _RevokeAllSessionsPayload_revokedCount(ctx context.Context, field graphql.CollectedField, obj *types.RevokeAllSessionsPayload) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -9276,30 +9028,30 @@ func (ec *executionContext) fieldContext_RevokeAllSessionsPayload_revokedCount(_
 	return fc, nil
 }
 
-func (ec *executionContext) _RevokePersonalAPIKeyPayload_success(ctx context.Context, field graphql.CollectedField, obj *types.RevokePersonalAPIKeyPayload) (ret graphql.Marshaler) {
+func (ec *executionContext) _RevokePersonalAPIKeyPayload_personalAPIKeyId(ctx context.Context, field graphql.CollectedField, obj *types.RevokePersonalAPIKeyPayload) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_RevokePersonalAPIKeyPayload_success,
+		ec.fieldContext_RevokePersonalAPIKeyPayload_personalAPIKeyId,
 		func(ctx context.Context) (any, error) {
-			return obj.Success, nil
+			return obj.PersonalAPIKeyID, nil
 		},
 		nil,
-		ec.marshalNBoolean2bool,
+		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
 		true,
 		true,
 	)
 }
 
-func (ec *executionContext) fieldContext_RevokePersonalAPIKeyPayload_success(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_RevokePersonalAPIKeyPayload_personalAPIKeyId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "RevokePersonalAPIKeyPayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
+			return nil, errors.New("field of type ID does not have child fields")
 		},
 	}
 	return fc, nil
@@ -12757,7 +12509,7 @@ func (ec *executionContext) unmarshalInputCreatePersonalAPIKeyInput(ctx context.
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "expiresAt", "organizationIds"}
+	fieldsInOrder := [...]string{"name", "expiresAt"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -12778,13 +12530,6 @@ func (ec *executionContext) unmarshalInputCreatePersonalAPIKeyInput(ctx context.
 				return it, err
 			}
 			it.ExpiresAt = data
-		case "organizationIds":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("organizationIds"))
-			data, err := ec.unmarshalNID2ᚕgoᚗproboᚗincᚋproboᚋpkgᚋgidᚐGIDᚄ(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.OrganizationIds = data
 		}
 	}
 
@@ -13200,33 +12945,6 @@ func (ec *executionContext) unmarshalInputResetPasswordInput(ctx context.Context
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputRevealPersonalAPIKeyTokenInput(ctx context.Context, obj any) (types.RevealPersonalAPIKeyTokenInput, error) {
-	var it types.RevealPersonalAPIKeyTokenInput
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"tokenId"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "tokenId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tokenId"))
-			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.TokenID = data
-		}
-	}
-
-	return it, nil
-}
-
 func (ec *executionContext) unmarshalInputRevokePersonalAPIKeyInput(ctx context.Context, obj any) (types.RevokePersonalAPIKeyInput, error) {
 	var it types.RevokePersonalAPIKeyInput
 	asMap := map[string]any{}
@@ -13234,20 +12952,20 @@ func (ec *executionContext) unmarshalInputRevokePersonalAPIKeyInput(ctx context.
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"tokenId"}
+	fieldsInOrder := [...]string{"personalAPIKeyId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "tokenId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tokenId"))
+		case "personalAPIKeyId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("personalAPIKeyId"))
 			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.TokenID = data
+			it.PersonalAPIKeyID = data
 		}
 	}
 
@@ -15397,10 +15115,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_createPersonalAPIKey(ctx, field)
 			})
-		case "revealPersonalAPIKeyToken":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_revealPersonalAPIKeyToken(ctx, field)
-			})
 		case "revokePersonalAPIKey":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_revokePersonalAPIKey(ctx, field)
@@ -15927,8 +15641,6 @@ func (ec *executionContext) _PersonalAPIKey(ctx context.Context, sel ast.Selecti
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
-		case "lastUsedAt":
-			out.Values[i] = ec._PersonalAPIKey_lastUsedAt(ctx, field, obj)
 		case "expiresAt":
 			out.Values[i] = ec._PersonalAPIKey_expiresAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -15939,16 +15651,39 @@ func (ec *executionContext) _PersonalAPIKey(ctx context.Context, sel ast.Selecti
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
-		case "scopes":
-			out.Values[i] = ec._PersonalAPIKey_scopes(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+		case "token":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._PersonalAPIKey_token(ctx, field, obj)
+				return res
 			}
-		case "organizations":
-			out.Values[i] = ec._PersonalAPIKey_organizations(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
 			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "permission":
 			field := field
 
@@ -16317,45 +16052,6 @@ func (ec *executionContext) _ResetPasswordPayload(ctx context.Context, sel ast.S
 	return out
 }
 
-var revealPersonalAPIKeyTokenPayloadImplementors = []string{"RevealPersonalAPIKeyTokenPayload"}
-
-func (ec *executionContext) _RevealPersonalAPIKeyTokenPayload(ctx context.Context, sel ast.SelectionSet, obj *types.RevealPersonalAPIKeyTokenPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, revealPersonalAPIKeyTokenPayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("RevealPersonalAPIKeyTokenPayload")
-		case "token":
-			out.Values[i] = ec._RevealPersonalAPIKeyTokenPayload_token(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
 var revokeAllSessionsPayloadImplementors = []string{"RevokeAllSessionsPayload"}
 
 func (ec *executionContext) _RevokeAllSessionsPayload(ctx context.Context, sel ast.SelectionSet, obj *types.RevokeAllSessionsPayload) graphql.Marshaler {
@@ -16406,8 +16102,8 @@ func (ec *executionContext) _RevokePersonalAPIKeyPayload(ctx context.Context, se
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("RevokePersonalAPIKeyPayload")
-		case "success":
-			out.Values[i] = ec._RevokePersonalAPIKeyPayload_success(ctx, field, obj)
+		case "personalAPIKeyId":
+			out.Values[i] = ec._RevokePersonalAPIKeyPayload_personalAPIKeyId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -18012,36 +17708,6 @@ func (ec *executionContext) marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGI
 	return res
 }
 
-func (ec *executionContext) unmarshalNID2ᚕgoᚗproboᚗincᚋproboᚋpkgᚋgidᚐGIDᚄ(ctx context.Context, v any) ([]gid.GID, error) {
-	var vSlice []any
-	vSlice = graphql.CoerceList(v)
-	var err error
-	res := make([]gid.GID, len(vSlice))
-	for i := range vSlice {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, vSlice[i])
-		if err != nil {
-			return nil, err
-		}
-	}
-	return res, nil
-}
-
-func (ec *executionContext) marshalNID2ᚕgoᚗproboᚗincᚋproboᚋpkgᚋgidᚐGIDᚄ(ctx context.Context, sel ast.SelectionSet, v []gid.GID) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	for i := range v {
-		ret[i] = ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, sel, v[i])
-	}
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
 func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v any) (int, error) {
 	res, err := graphql.UnmarshalInt(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -18345,50 +18011,6 @@ var (
 	}
 )
 
-func (ec *executionContext) marshalNOrganization2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐOrganizationᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.Organization) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNOrganization2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐOrganization(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
 func (ec *executionContext) marshalNOrganization2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐOrganization(ctx context.Context, sel ast.SelectionSet, v *types.Organization) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -18484,11 +18106,6 @@ func (ec *executionContext) unmarshalNRemoveMemberInput2goᚗproboᚗincᚋprobo
 
 func (ec *executionContext) unmarshalNResetPasswordInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐResetPasswordInput(ctx context.Context, v any) (types.ResetPasswordInput, error) {
 	res, err := ec.unmarshalInputResetPasswordInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) unmarshalNRevealPersonalAPIKeyTokenInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐRevealPersonalAPIKeyTokenInput(ctx context.Context, v any) (types.RevealPersonalAPIKeyTokenInput, error) {
-	res, err := ec.unmarshalInputRevealPersonalAPIKeyTokenInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -18767,75 +18384,6 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 		}
 	}
 	return res
-}
-
-func (ec *executionContext) unmarshalNTokenScope2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐTokenScope(ctx context.Context, v any) (types.TokenScope, error) {
-	var res types.TokenScope
-	err := res.UnmarshalGQL(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNTokenScope2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐTokenScope(ctx context.Context, sel ast.SelectionSet, v types.TokenScope) graphql.Marshaler {
-	return v
-}
-
-func (ec *executionContext) unmarshalNTokenScope2ᚕgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐTokenScopeᚄ(ctx context.Context, v any) ([]types.TokenScope, error) {
-	var vSlice []any
-	vSlice = graphql.CoerceList(v)
-	var err error
-	res := make([]types.TokenScope, len(vSlice))
-	for i := range vSlice {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNTokenScope2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐTokenScope(ctx, vSlice[i])
-		if err != nil {
-			return nil, err
-		}
-	}
-	return res, nil
-}
-
-func (ec *executionContext) marshalNTokenScope2ᚕgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐTokenScopeᚄ(ctx context.Context, sel ast.SelectionSet, v []types.TokenScope) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNTokenScope2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐTokenScope(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
 }
 
 func (ec *executionContext) unmarshalNUpdateMembershipInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐUpdateMembershipInput(ctx context.Context, v any) (types.UpdateMembershipInput, error) {
@@ -19434,13 +18982,6 @@ func (ec *executionContext) marshalOResetPasswordPayload2ᚖgoᚗproboᚗincᚋp
 		return graphql.Null
 	}
 	return ec._ResetPasswordPayload(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalORevealPersonalAPIKeyTokenPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐRevealPersonalAPIKeyTokenPayload(ctx context.Context, sel ast.SelectionSet, v *types.RevealPersonalAPIKeyTokenPayload) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._RevealPersonalAPIKeyTokenPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalORevokeAllSessionsPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐRevokeAllSessionsPayload(ctx context.Context, sel ast.SelectionSet, v *types.RevokeAllSessionsPayload) graphql.Marshaler {

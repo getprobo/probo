@@ -226,6 +226,33 @@ LEFT JOIN
 	return nil
 }
 
+func (m *Membership) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+	q := `
+SELECT
+    identity_id
+    , organization_id
+FROM
+    iam_memberships
+WHERE
+    id = $1
+LIMIT 1;
+`
+
+	var identityID gid.GID
+	var organizationID gid.GID
+	if err := conn.QueryRow(ctx, q, m.ID).Scan(&identityID, &organizationID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrResourceNotFound
+		}
+		return nil, fmt.Errorf("cannot query membership iam attributes: %w", err)
+	}
+
+	return map[string]string{
+		"identity_id":     identityID.String(),
+		"organization_id": organizationID.String(),
+	}, nil
+}
+
 func LoadRoleByIdentityAndEntityIDOnly(
 	ctx context.Context,
 	conn pg.Conn,
@@ -235,7 +262,6 @@ func LoadRoleByIdentityAndEntityIDOnly(
 ) (MembershipRole, error) {
 	entityType := entityID.EntityType()
 
-	// For organization, the entity ID is the organization ID - optimized path
 	if entityType == OrganizationEntityType {
 		query := `
 SELECT role
@@ -594,4 +620,40 @@ WHERE
 	}
 
 	return count, nil
+}
+
+func (m *Memberships) LoadAllByIdentityID(
+	ctx context.Context,
+	conn pg.Conn,
+	identityID gid.GID,
+) error {
+	q := `
+SELECT
+    id,
+    identity_id,
+    organization_id,
+    role,
+    '' as full_name,
+    NULL as email_address,
+    created_at,
+    updated_at
+FROM
+    iam_memberships
+WHERE
+    identity_id = $1
+;
+`
+
+	rows, err := conn.Query(ctx, q, identityID)
+	if err != nil {
+		return fmt.Errorf("cannot query memberships: %w", err)
+	}
+
+	memberships, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Membership])
+	if err != nil {
+		return fmt.Errorf("cannot collect memberships: %w", err)
+	}
+
+	*m = memberships
+	return nil
 }

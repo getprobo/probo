@@ -78,9 +78,8 @@ type CreateOrganizationPayload struct {
 }
 
 type CreatePersonalAPIKeyInput struct {
-	Name            string    `json:"name"`
-	ExpiresAt       time.Time `json:"expiresAt"`
-	OrganizationIds []gid.GID `json:"organizationIds"`
+	Name      string    `json:"name"`
+	ExpiresAt time.Time `json:"expiresAt"`
 }
 
 type CreatePersonalAPIKeyPayload struct {
@@ -273,14 +272,12 @@ type PasswordRequired struct {
 func (PasswordRequired) IsAssumeOrganizationSessionResult() {}
 
 type PersonalAPIKey struct {
-	ID            gid.GID         `json:"id"`
-	Name          string          `json:"name"`
-	LastUsedAt    *time.Time      `json:"lastUsedAt,omitempty"`
-	ExpiresAt     time.Time       `json:"expiresAt"`
-	CreatedAt     time.Time       `json:"createdAt"`
-	Scopes        []TokenScope    `json:"scopes"`
-	Organizations []*Organization `json:"organizations"`
-	Permission    bool            `json:"permission"`
+	ID         gid.GID   `json:"id"`
+	Name       string    `json:"name"`
+	ExpiresAt  time.Time `json:"expiresAt"`
+	CreatedAt  time.Time `json:"createdAt"`
+	Token      *string   `json:"token,omitempty"`
+	Permission bool      `json:"permission"`
 }
 
 func (PersonalAPIKey) IsNode()             {}
@@ -312,24 +309,16 @@ type ResetPasswordPayload struct {
 	Success bool `json:"success"`
 }
 
-type RevealPersonalAPIKeyTokenInput struct {
-	TokenID gid.GID `json:"tokenId"`
-}
-
-type RevealPersonalAPIKeyTokenPayload struct {
-	Token string `json:"token"`
-}
-
 type RevokeAllSessionsPayload struct {
 	RevokedCount int `json:"revokedCount"`
 }
 
 type RevokePersonalAPIKeyInput struct {
-	TokenID gid.GID `json:"tokenId"`
+	PersonalAPIKeyID gid.GID `json:"personalAPIKeyId"`
 }
 
 type RevokePersonalAPIKeyPayload struct {
-	Success bool `json:"success"`
+	PersonalAPIKeyID gid.GID `json:"personalAPIKeyId"`
 }
 
 type RevokeSessionInput struct {
