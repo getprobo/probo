@@ -21,7 +21,9 @@ import { useNavigate, useOutletContext } from "react-router";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { LinkedDocumentsCard } from "/components/documents/LinkedDocumentsCard";
 import { LinkedAuditsCard } from "/components/audits/LinkedAuditsCard";
+import { LinkedObligationsCard } from "/components/obligations/LinkedObligationsCard";
 import { LinkedSnapshotsCard } from "/components/snapshots/LinkedSnapshotsCard";
+import { LinkedStatesOfApplicabilityCard } from "/components/states-of-applicability/LinkedStatesOfApplicabilityCard";
 import { FrameworkControlDialog } from "./dialogs/FrameworkControlDialog";
 import { promisifyMutation } from "@probo/helpers";
 import type { FrameworkGraphControlNodeQuery } from "/hooks/graph/__generated__/FrameworkGraphControlNodeQuery.graphql";
@@ -29,6 +31,35 @@ import { frameworkControlNodeQuery } from "/hooks/graph/FrameworkGraph";
 import type { FrameworkDetailPageFragment$data } from "./__generated__/FrameworkDetailPageFragment.graphql";
 import { use } from "react";
 import { PermissionsContext } from "/providers/PermissionsContext";
+
+const attachStateOfApplicabilityMutation = graphql`
+  mutation FrameworkControlPageAttachStateOfApplicabilityMutation(
+    $input: CreateStateOfApplicabilityControlMappingInput!
+    $connections: [ID!]!
+  ) {
+    createStateOfApplicabilityControlMapping(input: $input) {
+      stateOfApplicabilityControlEdge @prependEdge(connections: $connections) {
+        node {
+          id
+          ...LinkedStatesOfApplicabilityCardFragment
+        }
+      }
+    }
+  }
+`;
+
+const detachStateOfApplicabilityMutation = graphql`
+  mutation FrameworkControlPageDetachStateOfApplicabilityMutation(
+    $input: DeleteStateOfApplicabilityControlMappingInput!
+    $connections: [ID!]!
+  ) {
+    deleteStateOfApplicabilityControlMapping(input: $input) {
+      deletedStateOfApplicabilityId
+      deletedControlId
+      deletedStateOfApplicabilityControlId @deleteEdge(connections: $connections)
+    }
+  }
+`;
 
 const attachMeasureMutation = graphql`
   mutation FrameworkControlPageAttachMutation(
@@ -111,6 +142,33 @@ const detachAuditMutation = graphql`
   }
 `;
 
+const attachObligationMutation = graphql`
+  mutation FrameworkControlPageAttachObligationMutation(
+    $input: CreateControlObligationMappingInput!
+    $connections: [ID!]!
+  ) {
+    createControlObligationMapping(input: $input) {
+      obligationEdge @prependEdge(connections: $connections) {
+        node {
+          id
+          ...LinkedObligationsCardFragment
+        }
+      }
+    }
+  }
+`;
+
+const detachObligationMutation = graphql`
+  mutation FrameworkControlPageDetachObligationMutation(
+    $input: DeleteControlObligationMappingInput!
+    $connections: [ID!]!
+  ) {
+    deleteControlObligationMapping(input: $input) {
+      deletedObligationId @deleteEdge(connections: $connections)
+    }
+  }
+`;
+
 const attachSnapshotMutation = graphql`
   mutation FrameworkControlPageAttachSnapshotMutation(
     $input: CreateControlSnapshotMappingInput!
@@ -168,15 +226,23 @@ export default function FrameworkControlPage({ queryRef }: Props) {
   const confirm = useConfirm();
   const navigate = useNavigate();
   const { isAuthorized } = use(PermissionsContext);
+  const [detachStateOfApplicability, isDetachingStateOfApplicability] = useMutation(detachStateOfApplicabilityMutation);
+  const [attachStateOfApplicability, isAttachingStateOfApplicability] = useMutation(attachStateOfApplicabilityMutation);
   const [detachMeasure, isDetachingMeasure] = useMutation(detachMeasureMutation);
   const [attachMeasure, isAttachingMeasure] = useMutation(attachMeasureMutation);
   const [detachDocument, isDetachingDocument] = useMutation(detachDocumentMutation);
   const [attachDocument, isAttachingDocument] = useMutation(attachDocumentMutation);
   const [detachAudit, isDetachingAudit] = useMutation(detachAuditMutation);
   const [attachAudit, isAttachingAudit] = useMutation(attachAuditMutation);
+  const [detachObligation, isDetachingObligation] = useMutation(detachObligationMutation);
+  const [attachObligation, isAttachingObligation] = useMutation(attachObligationMutation);
   const [detachSnapshot, isDetachingSnapshot] = useMutation(detachSnapshotMutation);
   const [attachSnapshot, isAttachingSnapshot] = useMutation(attachSnapshotMutation);
   const [deleteControl] = useMutation(deleteControlMutation);
+
+  const canLinkStateOfApplicability = isAuthorized("Control", "createStateOfApplicabilityControlMapping");
+  const canUnlinkStateOfApplicability = isAuthorized("Control", "deleteStateOfApplicabilityControlMapping");
+  const statesOfApplicabilityReadOnly = !canLinkStateOfApplicability && !canUnlinkStateOfApplicability;
 
   const canLinkMeasure = isAuthorized("Control", "createControlMeasureMapping");
   const canUnlinkMeasure = isAuthorized("Control", "deleteControlMeasureMapping");
@@ -189,6 +255,10 @@ export default function FrameworkControlPage({ queryRef }: Props) {
   const canLinkAudit = isAuthorized("Control", "createControlAuditMapping");
   const canUnlinkAudit = isAuthorized("Control", "deleteControlAuditMapping");
   const auditsReadOnly = !canLinkAudit && !canUnlinkAudit;
+
+  const canLinkObligation = isAuthorized("Control", "createControlObligationMapping");
+  const canUnlinkObligation = isAuthorized("Control", "deleteControlObligationMapping");
+  const obligationsReadOnly = !canLinkObligation && !canUnlinkObligation;
 
   const canLinkSnapshot = isAuthorized("Control", "createControlSnapshotMapping");
   const canUnlinkSnapshot = isAuthorized("Control", "deleteControlSnapshotMapping");
@@ -278,20 +348,20 @@ export default function FrameworkControlPage({ queryRef }: Props) {
         </div>
       </div>
 
-      {control.status === "EXCLUDED" && (
-        <div className="bg-danger border border-border-danger rounded-lg p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="font-medium text-txt-danger">
-              {__("This control is excluded")}
-            </div>
-          </div>
-          <div className="text-sm">
-            <strong>{__("Justification:")}</strong> {control.exclusionJustification || __("No justification provided")}
-          </div>
-        </div>
-      )}
       <div className={control.status === "EXCLUDED" ? "opacity-60" : ""}>
         <div className="text-base mb-4">{control.name}</div>
+        <div className="mb-4">
+          <LinkedStatesOfApplicabilityCard
+            variant="card"
+            statesOfApplicability={control.stateOfApplicabilityControls?.edges.map((edge) => edge.node) ?? []}
+            params={{ controlId: control.id }}
+            connectionId={control.stateOfApplicabilityControls?.__id ?? ""}
+            onAttach={withErrorHandling(attachStateOfApplicability, __("Failed to link state of applicability"))}
+            onDetach={withErrorHandling(detachStateOfApplicability, __("Failed to unlink state of applicability"))}
+            disabled={isAttachingStateOfApplicability || isDetachingStateOfApplicability}
+            readOnly={statesOfApplicabilityReadOnly}
+          />
+        </div>
         <div className="mb-4">
           <LinkedMeasuresCard
             variant="card"
@@ -326,6 +396,18 @@ export default function FrameworkControlPage({ queryRef }: Props) {
             onDetach={withErrorHandling(detachAudit, __("Failed to unlink audit"))}
             disabled={isAttachingAudit || isDetachingAudit}
             readOnly={auditsReadOnly}
+          />
+        </div>
+        <div className="mb-4">
+          <LinkedObligationsCard
+            variant="card"
+            obligations={control.obligations?.edges.map((edge) => edge.node) ?? []}
+            params={{ controlId: control.id }}
+            connectionId={control.obligations?.__id ?? ""}
+            onAttach={withErrorHandling(attachObligation, __("Failed to link obligation"))}
+            onDetach={withErrorHandling(detachObligation, __("Failed to unlink obligation"))}
+            disabled={isAttachingObligation || isDetachingObligation}
+            readOnly={obligationsReadOnly}
           />
         </div>
         <div className="mb-4">

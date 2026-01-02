@@ -72,9 +72,10 @@ type (
 				Dark  string `json:"dark"`
 			} `json:"logo,omitempty"`
 			Controls []struct {
-				ID          string `json:"id"`
-				Name        string `json:"name"`
-				Description string `json:"description"`
+				ID           string `json:"id"`
+				Name         string `json:"name"`
+				Description  string `json:"description"`
+				BestPractice *bool  `json:"best_practice,omitempty"`
 			} `json:"controls"`
 		}
 	}
@@ -572,6 +573,10 @@ func (s FrameworkService) Import(
 
 			now := time.Now()
 			description := control.Description
+			bestPractice := true
+			if control.BestPractice != nil {
+				bestPractice = *control.BestPractice
+			}
 			control := &coredata.Control{
 				ID:             controlID,
 				FrameworkID:    frameworkID,
@@ -580,6 +585,7 @@ func (s FrameworkService) Import(
 				Name:           control.Name,
 				Description:    &description,
 				Status:         coredata.ControlStatusIncluded,
+				BestPractice:   bestPractice,
 				CreatedAt:      now,
 				UpdatedAt:      now,
 			}

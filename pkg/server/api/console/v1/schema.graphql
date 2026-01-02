@@ -224,6 +224,14 @@ enum ObligationStatus
     @goEnum(value: "go.probo.inc/probo/pkg/coredata.ObligationStatusCompliant")
 }
 
+enum ObligationType
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.ObligationType") {
+  LEGAL
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.ObligationTypeLegal")
+  CONTRACTUAL
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.ObligationTypeContractual")
+}
+
 enum ContinualImprovementStatus
   @goModel(
     model: "go.probo.inc/probo/pkg/coredata.ContinualImprovementStatus"
@@ -1235,6 +1243,10 @@ enum SnapshotsType
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.SnapshotsTypeProcessingActivities"
     )
+  STATES_OF_APPLICABILITY
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.SnapshotsTypeStatesOfApplicability"
+    )
 }
 
 enum SnapshotOrderField
@@ -1567,6 +1579,10 @@ input DatumFilter {
   snapshotId: ID
 }
 
+input StateOfApplicabilityFilter {
+  snapshotId: ID
+}
+
 input NonconformityFilter {
   snapshotId: ID
 }
@@ -1714,6 +1730,15 @@ type Organization implements Node {
     before: CursorKey
     orderBy: MeetingOrder
   ): MeetingConnection! @goField(forceResolver: true)
+
+  statesOfApplicability(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: StateOfApplicabilityOrder
+    filter: StateOfApplicabilityFilter = { snapshotId: null }
+  ): StateOfApplicabilityConnection! @goField(forceResolver: true)
 
   measures(
     first: Int
@@ -2072,6 +2097,7 @@ type Control implements Node
   description: String
   status: ControlStatus!
   exclusionJustification: String
+  bestPractice: Boolean!
 
   framework: Framework! @goField(forceResolver: true)
 
@@ -2101,6 +2127,15 @@ type Control implements Node
     orderBy: AuditOrder
   ): AuditConnection! @goField(forceResolver: true)
 
+  obligations(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: ObligationOrder
+    filter: ObligationFilter
+  ): ObligationConnection! @goField(forceResolver: true)
+
   snapshots(
     first: Int
     after: CursorKey
@@ -2108,6 +2143,14 @@ type Control implements Node
     before: CursorKey
     orderBy: SnapshotOrder
   ): SnapshotConnection! @goField(forceResolver: true)
+
+  stateOfApplicabilityControls(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: StateOfApplicabilityOrder
+  ): StateOfApplicabilityControlConnection! @goField(forceResolver: true)
 
   createdAt: Datetime!
   updatedAt: Datetime!
@@ -2266,6 +2309,26 @@ type Meeting implements Node {
   updatedAt: Datetime!
 }
 
+type StateOfApplicability implements Node {
+  id: ID!
+  name: String!
+  sourceId: ID
+  snapshotId: ID
+  organization: Organization @goField(forceResolver: true)
+  owner: People! @goField(forceResolver: true)
+  controls(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: ControlOrder
+    filter: ControlFilter
+  ): ControlConnection! @goField(forceResolver: true)
+  availableControls: [AvailableStateOfApplicabilityControl!]! @goField(forceResolver: true)
+  createdAt: Datetime!
+  updatedAt: Datetime!
+}
+
 type Risk implements Node {
   id: ID!
   snapshotId: ID
@@ -2381,6 +2444,7 @@ type Obligation implements Node {
   lastReviewDate: Datetime
   dueDate: Datetime
   status: ObligationStatus!
+  type: ObligationType!
   createdAt: Datetime!
   updatedAt: Datetime!
 }
@@ -2835,6 +2899,20 @@ type MeetingEdge {
   node: Meeting!
 }
 
+type StateOfApplicabilityConnection
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.StateOfApplicabilityConnection"
+  ) {
+  totalCount: Int! @goField(forceResolver: true)
+  edges: [StateOfApplicabilityEdge!]!
+  pageInfo: PageInfo!
+}
+
+type StateOfApplicabilityEdge {
+  cursor: CursorKey!
+  node: StateOfApplicability!
+}
+
 type RiskConnection
   @goModel(
     model: "go.probo.inc/probo/pkg/server/api/console/v1/types.RiskConnection"
@@ -3191,12 +3269,24 @@ type Mutation {
   deleteControlDocumentMapping(
     input: DeleteControlDocumentMappingInput!
   ): DeleteControlDocumentMappingPayload!
+  createStateOfApplicabilityControlMapping(
+    input: CreateStateOfApplicabilityControlMappingInput!
+  ): CreateStateOfApplicabilityControlMappingPayload!
+  deleteStateOfApplicabilityControlMapping(
+    input: DeleteStateOfApplicabilityControlMappingInput!
+  ): DeleteStateOfApplicabilityControlMappingPayload!
   createControlAuditMapping(
     input: CreateControlAuditMappingInput!
   ): CreateControlAuditMappingPayload!
   deleteControlAuditMapping(
     input: DeleteControlAuditMappingInput!
   ): DeleteControlAuditMappingPayload!
+  createControlObligationMapping(
+    input: CreateControlObligationMappingInput!
+  ): CreateControlObligationMappingPayload!
+  deleteControlObligationMapping(
+    input: DeleteControlObligationMappingInput!
+  ): DeleteControlObligationMappingPayload!
   createControlSnapshotMapping(
     input: CreateControlSnapshotMappingInput!
   ): CreateControlSnapshotMappingPayload!
@@ -3269,6 +3359,19 @@ type Mutation {
   createMeeting(input: CreateMeetingInput!): CreateMeetingPayload!
   updateMeeting(input: UpdateMeetingInput!): UpdateMeetingPayload!
   deleteMeeting(input: DeleteMeetingInput!): DeleteMeetingPayload!
+  # StateOfApplicability mutations
+  createStateOfApplicability(
+    input: CreateStateOfApplicabilityInput!
+  ): CreateStateOfApplicabilityPayload!
+  updateStateOfApplicability(
+    input: UpdateStateOfApplicabilityInput!
+  ): UpdateStateOfApplicabilityPayload!
+  deleteStateOfApplicability(
+    input: DeleteStateOfApplicabilityInput!
+  ): DeleteStateOfApplicabilityPayload!
+  exportStateOfApplicabilityPDF(
+    input: ExportStateOfApplicabilityPDFInput!
+  ): ExportStateOfApplicabilityPDFPayload!
   publishDocumentVersion(
     input: PublishDocumentVersionInput!
   ): PublishDocumentVersionPayload!
@@ -3762,6 +3865,18 @@ input DeleteControlDocumentMappingInput {
   documentId: ID!
 }
 
+input CreateStateOfApplicabilityControlMappingInput {
+  stateOfApplicabilityId: ID!
+  controlId: ID!
+  applicability: Boolean!
+  justification: String
+}
+
+input DeleteStateOfApplicabilityControlMappingInput {
+  stateOfApplicabilityId: ID!
+  controlId: ID!
+}
+
 input CreateControlAuditMappingInput {
   controlId: ID!
   auditId: ID!
@@ -3770,6 +3885,16 @@ input CreateControlAuditMappingInput {
 input DeleteControlAuditMappingInput {
   controlId: ID!
   auditId: ID!
+}
+
+input CreateControlObligationMappingInput {
+  controlId: ID!
+  obligationId: ID!
+}
+
+input DeleteControlObligationMappingInput {
+  controlId: ID!
+  obligationId: ID!
 }
 
 input CreateControlSnapshotMappingInput {
@@ -3989,6 +4114,95 @@ input DeleteMeetingInput {
   meetingId: ID!
 }
 
+input CreateStateOfApplicabilityInput {
+  organizationId: ID!
+  name: String!
+  ownerId: ID!
+}
+
+input UpdateStateOfApplicabilityInput {
+  id: ID!
+  name: String
+  ownerId: ID
+}
+
+input StateOfApplicabilityControlInput {
+  controlId: ID!
+  applicability: Boolean!
+  justification: String
+}
+
+type AvailableStateOfApplicabilityControl {
+  controlId: ID!
+  sectionTitle: String!
+  name: String!
+  frameworkId: ID!
+  frameworkName: String!
+  organizationId: ID!
+  stateOfApplicabilityId: ID
+  applicability: Boolean
+  justification: String
+  bestPractice: Boolean!
+  regulatory: Boolean!
+  contractual: Boolean!
+  riskAssessment: Boolean!
+}
+
+input DeleteStateOfApplicabilityInput {
+  stateOfApplicabilityId: ID!
+}
+
+
+type StateOfApplicabilityControl {
+  id: ID!
+  stateOfApplicabilityId: ID!
+  controlId: ID!
+  stateOfApplicability: StateOfApplicability! @goField(forceResolver: true)
+  applicability: Boolean!
+  justification: String
+}
+
+type StateOfApplicabilityControlConnection @goModel(model: "go.probo.inc/probo/pkg/server/api/console/v1/types.StateOfApplicabilityControlConnection") {
+  totalCount: Int!
+  edges: [StateOfApplicabilityControlEdge!]!
+  pageInfo: PageInfo!
+}
+
+type StateOfApplicabilityControlEdge @goModel(model: "go.probo.inc/probo/pkg/server/api/console/v1/types.StateOfApplicabilityControlEdge") {
+  cursor: CursorKey!
+  node: StateOfApplicabilityControl!
+}
+
+input ExportStateOfApplicabilityPDFInput {
+  stateOfApplicabilityId: ID!
+}
+
+type ExportStateOfApplicabilityPDFPayload {
+  data: String!
+}
+
+input StateOfApplicabilityOrder
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.StateOfApplicabilityOrderBy"
+  ) {
+  direction: OrderDirection!
+  field: StateOfApplicabilityOrderField!
+}
+
+enum StateOfApplicabilityOrderField
+  @goModel(
+    model: "go.probo.inc/probo/pkg/coredata.StateOfApplicabilityOrderField"
+  ) {
+  NAME
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.StateOfApplicabilityOrderFieldName"
+    )
+  CREATED_AT
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.StateOfApplicabilityOrderFieldCreatedAt"
+    )
+}
+
 input ConfirmEmailInput {
   token: String!
 }
@@ -4027,6 +4241,7 @@ input CreateControlInput {
   description: String
   status: ControlStatus!
   exclusionJustification: String
+  bestPractice: Boolean!
 }
 
 input UpdateControlInput {
@@ -4036,6 +4251,7 @@ input UpdateControlInput {
   description: String @goField(omittable: true)
   status: ControlStatus
   exclusionJustification: String
+  bestPractice: Boolean
 }
 
 input DeleteControlInput {
@@ -4119,6 +4335,7 @@ input CreateObligationInput {
   lastReviewDate: Datetime
   dueDate: Datetime
   status: ObligationStatus!
+  type: ObligationType!
 }
 
 input UpdateObligationInput {
@@ -4132,6 +4349,7 @@ input UpdateObligationInput {
   lastReviewDate: Datetime @goField(omittable: true)
   dueDate: Datetime @goField(omittable: true)
   status: ObligationStatus
+  type: ObligationType
 }
 
 input DeleteObligationInput {
@@ -4501,6 +4719,16 @@ type DeleteControlDocumentMappingPayload {
   deletedDocumentId: ID!
 }
 
+type CreateStateOfApplicabilityControlMappingPayload {
+  stateOfApplicabilityControlEdge: StateOfApplicabilityControlEdge!
+}
+
+type DeleteStateOfApplicabilityControlMappingPayload {
+  deletedStateOfApplicabilityId: ID!
+  deletedControlId: ID!
+  deletedStateOfApplicabilityControlId: ID!
+}
+
 type CreateControlAuditMappingPayload {
   controlEdge: ControlEdge!
   auditEdge: AuditEdge!
@@ -4509,6 +4737,16 @@ type CreateControlAuditMappingPayload {
 type DeleteControlAuditMappingPayload {
   deletedControlId: ID!
   deletedAuditId: ID!
+}
+
+type CreateControlObligationMappingPayload {
+  controlEdge: ControlEdge!
+  obligationEdge: ObligationEdge!
+}
+
+type DeleteControlObligationMappingPayload {
+  deletedControlId: ID!
+  deletedObligationId: ID!
 }
 
 type CreateControlSnapshotMappingPayload {
@@ -4654,6 +4892,18 @@ type UpdateMeetingPayload {
 
 type DeleteMeetingPayload {
   deletedMeetingId: ID!
+}
+
+type CreateStateOfApplicabilityPayload {
+  stateOfApplicabilityEdge: StateOfApplicabilityEdge!
+}
+
+type UpdateStateOfApplicabilityPayload {
+  stateOfApplicability: StateOfApplicability!
+}
+
+type DeleteStateOfApplicabilityPayload {
+  deletedStateOfApplicabilityId: ID!
 }
 
 type ConfirmEmailPayload {

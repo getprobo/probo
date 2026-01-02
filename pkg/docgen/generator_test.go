@@ -20,9 +20,9 @@ import (
 	"testing"
 	"time"
 
-	"go.probo.inc/probo/pkg/coredata"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/pkg/coredata"
 )
 
 func TestRenderHTML(t *testing.T) {
@@ -198,6 +198,8 @@ func TestTemplateFunctions(t *testing.T) {
 		eqFunc := templateFuncs["eq"].(func(any, any) bool)
 		assert.True(t, eqFunc("test", "test"))
 		assert.False(t, eqFunc("test", "other"))
+		assert.True(t, eqFunc(0, 0))
+		assert.False(t, eqFunc(0, 1))
 	})
 
 	t.Run("lower function", func(t *testing.T) {

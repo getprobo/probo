@@ -32,7 +32,7 @@ import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { Controller } from "react-hook-form";
 import { formatError, type GraphQLError } from "@probo/helpers";
 import z from "zod";
-import { getObligationStatusVariant, getObligationStatusLabel, formatDatetime, getObligationStatusOptions, validateSnapshotConsistency } from "@probo/helpers";
+import { getObligationStatusVariant, getObligationStatusLabel, formatDatetime, getObligationStatusOptions, getObligationTypeOptions, validateSnapshotConsistency } from "@probo/helpers";
 import { SnapshotBanner } from "/components/SnapshotBanner";
 import type { ObligationGraphNodeQuery } from "/hooks/graph/__generated__/ObligationGraphNodeQuery.graphql";
 import { use } from "react";
@@ -44,6 +44,7 @@ const updateObligationSchema = z.object({
   requirement: z.string().optional(),
   actionsToBeImplemented: z.string().optional(),
   regulator: z.string().optional(),
+  type: z.enum(["LEGAL", "CONTRACTUAL"]),
   lastReviewDate: z.string().optional(),
   dueDate: z.string().optional(),
   status: z.enum(["NON_COMPLIANT", "PARTIALLY_COMPLIANT", "COMPLIANT"]),
@@ -68,6 +69,7 @@ export default function ObligationDetailsPage(props: Props) {
 
   const updateObligation = useUpdateObligation();
   const statusOptions = getObligationStatusOptions(__);
+  const typeOptions = getObligationTypeOptions(__);
 
   const connectionId = ConnectionHandler.getConnectionID(
     organizationId,
@@ -88,6 +90,7 @@ export default function ObligationDetailsPage(props: Props) {
         requirement: obligation?.requirement || "",
         actionsToBeImplemented: obligation?.actionsToBeImplemented || "",
         regulator: obligation?.regulator || "",
+        type: obligation?.type ?? "LEGAL",
         lastReviewDate: obligation?.lastReviewDate
           ? new Date(obligation.lastReviewDate).toISOString().split("T")[0]
           : "",
@@ -109,6 +112,7 @@ export default function ObligationDetailsPage(props: Props) {
         requirement: formData.requirement || undefined,
         actionsToBeImplemented: formData.actionsToBeImplemented || undefined,
         regulator: formData.regulator || undefined,
+        type: formData.type,
         lastReviewDate: formatDatetime(formData.lastReviewDate) ?? null,
         dueDate: formatDatetime(formData.dueDate) ?? null,
         status: formData.status,
@@ -245,6 +249,29 @@ export default function ObligationDetailsPage(props: Props) {
                 {...register("regulator")}
                 placeholder={__("Enter regulator")}
                 disabled={isSnapshotMode}
+              />
+            </Field>
+
+            <Field label={__("Type")} error={formState.errors.type?.message}>
+              <Controller
+                control={control}
+                name="type"
+                render={({ field }) => (
+                  <Select
+                    variant="editor"
+                    placeholder={__("Select type")}
+                    onValueChange={field.onChange}
+                    value={field.value}
+                    className="w-full"
+                    disabled={isSnapshotMode}
+                  >
+                    {typeOptions.map((option) => (
+                      <Option key={option.value} value={option.value}>
+                        {option.label}
+                      </Option>
+                    ))}
+                  </Select>
+                )}
               />
             </Field>
           </div>

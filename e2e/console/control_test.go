@@ -66,6 +66,7 @@ func TestControl_Create(t *testing.T) {
 				"name":         "Information Security Policies",
 				"description":  "Policies for information security",
 				"status":       "INCLUDED",
+				"bestPractice": true,
 			},
 		}, &result)
 		require.NoError(t, err)
@@ -112,6 +113,7 @@ func TestControl_Create(t *testing.T) {
 				"description":            "Cryptography controls",
 				"status":                 "EXCLUDED",
 				"exclusionJustification": "Not applicable - no cryptographic data processing",
+				"bestPractice":           false,
 			},
 		}, &result)
 		require.NoError(t, err)
@@ -356,6 +358,7 @@ func TestControl_RequiredFields(t *testing.T) {
 					"description":  "Test",
 					"sectionTitle": "Section 1",
 					"status":       "INCLUDED",
+					"bestPractice": true,
 				},
 			},
 			wantError: true,
@@ -368,6 +371,7 @@ func TestControl_RequiredFields(t *testing.T) {
 					"description":  "Test",
 					"sectionTitle": "Section 1",
 					"status":       "INCLUDED",
+					"bestPractice": true,
 				},
 			},
 			wantError: true,
@@ -376,10 +380,11 @@ func TestControl_RequiredFields(t *testing.T) {
 			name: "Missing sectionTitle should fail",
 			variables: map[string]any{
 				"input": map[string]any{
-					"frameworkId": frameworkID,
-					"name":        "Test Control",
-					"description": "Test",
-					"status":      "INCLUDED",
+					"frameworkId":  frameworkID,
+					"name":         "Test Control",
+					"description":  "Test",
+					"status":       "INCLUDED",
+					"bestPractice": true,
 				},
 			},
 			wantError: true,
@@ -392,6 +397,7 @@ func TestControl_RequiredFields(t *testing.T) {
 					"name":         "Test Control",
 					"description":  "Test",
 					"sectionTitle": "Section 1",
+					"bestPractice": true,
 				},
 			},
 			wantError: true,
@@ -402,6 +408,20 @@ func TestControl_RequiredFields(t *testing.T) {
 				"input": map[string]any{
 					"frameworkId":  frameworkID,
 					"name":         "Test Control",
+					"sectionTitle": "Section 1",
+					"status":       "INCLUDED",
+					"bestPractice": true,
+				},
+			},
+			wantError: true,
+		},
+		{
+			name: "Missing bestPractice should fail",
+			variables: map[string]any{
+				"input": map[string]any{
+					"frameworkId":  frameworkID,
+					"name":         "Test Control",
+					"description":  "Test",
 					"sectionTitle": "Section 1",
 					"status":       "INCLUDED",
 				},
@@ -417,6 +437,7 @@ func TestControl_RequiredFields(t *testing.T) {
 					"description":  "Test",
 					"sectionTitle": "Section 1",
 					"status":       "INVALID_STATUS",
+					"bestPractice": true,
 				},
 			},
 			wantError: true,
@@ -504,6 +525,7 @@ func TestControl_OmittableDescription(t *testing.T) {
 			"description":  "Initial description",
 			"sectionTitle": "Section 1",
 			"status":       "INCLUDED",
+			"bestPractice": true,
 		},
 	}, &createResult)
 	require.NoError(t, err)
@@ -668,6 +690,7 @@ func TestControl_SubResolvers(t *testing.T) {
 			"description":  "Test description",
 			"sectionTitle": "Section 1",
 			"status":       "INCLUDED",
+			"bestPractice": true,
 		},
 	}, &controlResult)
 	require.NoError(t, err)
@@ -881,6 +904,7 @@ func TestControl_ExclusionJustification(t *testing.T) {
 				"sectionTitle":           "Section 1",
 				"status":                 "EXCLUDED",
 				"exclusionJustification": "Not applicable to our business",
+				"bestPractice":           false,
 			},
 		}, &result)
 		require.NoError(t, err)
@@ -919,6 +943,7 @@ func TestControl_ExclusionJustification(t *testing.T) {
 				"description":  "Test",
 				"sectionTitle": "Section 2",
 				"status":       "INCLUDED",
+				"bestPractice": true,
 			},
 		}, &createResult)
 		require.NoError(t, err)

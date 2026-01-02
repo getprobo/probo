@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<54b072cf5a78b17f86e5fc810cac517a>>
+ * @generated SignedSource<<ec1b843d1afb3a82c747b8580b528fda>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -47,6 +47,15 @@ export type FrameworkGraphControlNodeQuery$data = {
       }>;
     };
     readonly name?: string;
+    readonly obligations?: {
+      readonly __id: string;
+      readonly edges: ReadonlyArray<{
+        readonly node: {
+          readonly id: string;
+          readonly " $fragmentSpreads": FragmentRefs<"LinkedObligationsCardFragment">;
+        };
+      }>;
+    };
     readonly sectionTitle?: string;
     readonly snapshots?: {
       readonly __id: string;
@@ -54,6 +63,15 @@ export type FrameworkGraphControlNodeQuery$data = {
         readonly node: {
           readonly id: string;
           readonly " $fragmentSpreads": FragmentRefs<"LinkedSnapshotsCardFragment">;
+        };
+      }>;
+    };
+    readonly stateOfApplicabilityControls?: {
+      readonly __id: string;
+      readonly edges: ReadonlyArray<{
+        readonly node: {
+          readonly id: string;
+          readonly " $fragmentSpreads": FragmentRefs<"LinkedStatesOfApplicabilityCardFragment">;
         };
       }>;
     };
@@ -181,14 +199,18 @@ v12 = [
     "value": 100
   }
 ],
-v13 = {
+v13 = [
+  (v2/*: any*/),
+  (v3/*: any*/)
+],
+v14 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "state",
   "storageKey": null
 },
-v14 = {
+v15 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
@@ -223,6 +245,49 @@ return {
                 "args": null,
                 "kind": "FragmentSpread",
                 "name": "FrameworkControlDialogFragment"
+              },
+              {
+                "alias": "stateOfApplicabilityControls",
+                "args": null,
+                "concreteType": "StateOfApplicabilityControlConnection",
+                "kind": "LinkedField",
+                "name": "__FrameworkGraphControl_stateOfApplicabilityControls_connection",
+                "plural": false,
+                "selections": [
+                  {
+                    "alias": null,
+                    "args": null,
+                    "concreteType": "StateOfApplicabilityControlEdge",
+                    "kind": "LinkedField",
+                    "name": "edges",
+                    "plural": true,
+                    "selections": [
+                      {
+                        "alias": null,
+                        "args": null,
+                        "concreteType": "StateOfApplicabilityControl",
+                        "kind": "LinkedField",
+                        "name": "node",
+                        "plural": false,
+                        "selections": [
+                          (v2/*: any*/),
+                          {
+                            "args": null,
+                            "kind": "FragmentSpread",
+                            "name": "LinkedStatesOfApplicabilityCardFragment"
+                          },
+                          (v8/*: any*/)
+                        ],
+                        "storageKey": null
+                      },
+                      (v9/*: any*/)
+                    ],
+                    "storageKey": null
+                  },
+                  (v10/*: any*/),
+                  (v11/*: any*/)
+                ],
+                "storageKey": null
               },
               {
                 "alias": "measures",
@@ -354,6 +419,49 @@ return {
                 "storageKey": null
               },
               {
+                "alias": "obligations",
+                "args": null,
+                "concreteType": "ObligationConnection",
+                "kind": "LinkedField",
+                "name": "__FrameworkGraphControl_obligations_connection",
+                "plural": false,
+                "selections": [
+                  {
+                    "alias": null,
+                    "args": null,
+                    "concreteType": "ObligationEdge",
+                    "kind": "LinkedField",
+                    "name": "edges",
+                    "plural": true,
+                    "selections": [
+                      {
+                        "alias": null,
+                        "args": null,
+                        "concreteType": "Obligation",
+                        "kind": "LinkedField",
+                        "name": "node",
+                        "plural": false,
+                        "selections": [
+                          (v2/*: any*/),
+                          {
+                            "args": null,
+                            "kind": "FragmentSpread",
+                            "name": "LinkedObligationsCardFragment"
+                          },
+                          (v8/*: any*/)
+                        ],
+                        "storageKey": null
+                      },
+                      (v9/*: any*/)
+                    ],
+                    "storageKey": null
+                  },
+                  (v10/*: any*/),
+                  (v11/*: any*/)
+                ],
+                "storageKey": null
+              },
+              {
                 "alias": "snapshots",
                 "args": null,
                 "concreteType": "SnapshotConnection",
@@ -433,6 +541,98 @@ return {
               (v7/*: any*/),
               {
                 "alias": null,
+                "args": null,
+                "kind": "ScalarField",
+                "name": "bestPractice",
+                "storageKey": null
+              },
+              {
+                "alias": null,
+                "args": (v12/*: any*/),
+                "concreteType": "StateOfApplicabilityControlConnection",
+                "kind": "LinkedField",
+                "name": "stateOfApplicabilityControls",
+                "plural": false,
+                "selections": [
+                  {
+                    "alias": null,
+                    "args": null,
+                    "concreteType": "StateOfApplicabilityControlEdge",
+                    "kind": "LinkedField",
+                    "name": "edges",
+                    "plural": true,
+                    "selections": [
+                      {
+                        "alias": null,
+                        "args": null,
+                        "concreteType": "StateOfApplicabilityControl",
+                        "kind": "LinkedField",
+                        "name": "node",
+                        "plural": false,
+                        "selections": [
+                          (v2/*: any*/),
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "stateOfApplicabilityId",
+                            "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "controlId",
+                            "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
+                            "concreteType": "StateOfApplicability",
+                            "kind": "LinkedField",
+                            "name": "stateOfApplicability",
+                            "plural": false,
+                            "selections": (v13/*: any*/),
+                            "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "applicability",
+                            "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "justification",
+                            "storageKey": null
+                          },
+                          (v8/*: any*/)
+                        ],
+                        "storageKey": null
+                      },
+                      (v9/*: any*/)
+                    ],
+                    "storageKey": null
+                  },
+                  (v10/*: any*/),
+                  (v11/*: any*/)
+                ],
+                "storageKey": "stateOfApplicabilityControls(first:100)"
+              },
+              {
+                "alias": null,
+                "args": (v12/*: any*/),
+                "filters": null,
+                "handle": "connection",
+                "key": "FrameworkGraphControl_stateOfApplicabilityControls",
+                "kind": "LinkedHandle",
+                "name": "stateOfApplicabilityControls"
+              },
+              {
+                "alias": null,
                 "args": (v12/*: any*/),
                 "concreteType": "MeasureConnection",
                 "kind": "LinkedField",
@@ -457,7 +657,7 @@ return {
                         "selections": [
                           (v2/*: any*/),
                           (v3/*: any*/),
-                          (v13/*: any*/),
+                          (v14/*: any*/),
                           (v8/*: any*/)
                         ],
                         "storageKey": null
@@ -512,7 +712,7 @@ return {
                             "name": "title",
                             "storageKey": null
                           },
-                          (v14/*: any*/),
+                          (v15/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -609,8 +809,8 @@ return {
                         "selections": [
                           (v2/*: any*/),
                           (v3/*: any*/),
+                          (v15/*: any*/),
                           (v14/*: any*/),
-                          (v13/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -632,10 +832,7 @@ return {
                             "kind": "LinkedField",
                             "name": "framework",
                             "plural": false,
-                            "selections": [
-                              (v2/*: any*/),
-                              (v3/*: any*/)
-                            ],
+                            "selections": (v13/*: any*/),
                             "storageKey": null
                           },
                           (v8/*: any*/)
@@ -659,6 +856,94 @@ return {
                 "key": "FrameworkGraphControl_audits",
                 "kind": "LinkedHandle",
                 "name": "audits"
+              },
+              {
+                "alias": null,
+                "args": (v12/*: any*/),
+                "concreteType": "ObligationConnection",
+                "kind": "LinkedField",
+                "name": "obligations",
+                "plural": false,
+                "selections": [
+                  {
+                    "alias": null,
+                    "args": null,
+                    "concreteType": "ObligationEdge",
+                    "kind": "LinkedField",
+                    "name": "edges",
+                    "plural": true,
+                    "selections": [
+                      {
+                        "alias": null,
+                        "args": null,
+                        "concreteType": "Obligation",
+                        "kind": "LinkedField",
+                        "name": "node",
+                        "plural": false,
+                        "selections": [
+                          (v2/*: any*/),
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "requirement",
+                            "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "area",
+                            "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "source",
+                            "storageKey": null
+                          },
+                          (v6/*: any*/),
+                          {
+                            "alias": null,
+                            "args": null,
+                            "concreteType": "People",
+                            "kind": "LinkedField",
+                            "name": "owner",
+                            "plural": false,
+                            "selections": [
+                              {
+                                "alias": null,
+                                "args": null,
+                                "kind": "ScalarField",
+                                "name": "fullName",
+                                "storageKey": null
+                              },
+                              (v2/*: any*/)
+                            ],
+                            "storageKey": null
+                          },
+                          (v8/*: any*/)
+                        ],
+                        "storageKey": null
+                      },
+                      (v9/*: any*/)
+                    ],
+                    "storageKey": null
+                  },
+                  (v10/*: any*/),
+                  (v11/*: any*/)
+                ],
+                "storageKey": "obligations(first:100)"
+              },
+              {
+                "alias": null,
+                "args": (v12/*: any*/),
+                "filters": null,
+                "handle": "connection",
+                "key": "FrameworkGraphControl_obligations",
+                "kind": "LinkedHandle",
+                "name": "obligations"
               },
               {
                 "alias": null,
@@ -694,7 +979,7 @@ return {
                             "name": "type",
                             "storageKey": null
                           },
-                          (v14/*: any*/),
+                          (v15/*: any*/),
                           (v8/*: any*/)
                         ],
                         "storageKey": null
@@ -727,10 +1012,19 @@ return {
     ]
   },
   "params": {
-    "cacheID": "2ce9eb2cbe052019e86b2d0baecfb6f0",
+    "cacheID": "f7773b474bf5f22e9a7075c685839001",
     "id": null,
     "metadata": {
       "connection": [
+        {
+          "count": null,
+          "cursor": null,
+          "direction": "forward",
+          "path": [
+            "node",
+            "stateOfApplicabilityControls"
+          ]
+        },
         {
           "count": null,
           "cursor": null,
@@ -764,6 +1058,15 @@ return {
           "direction": "forward",
           "path": [
             "node",
+            "obligations"
+          ]
+        },
+        {
+          "count": null,
+          "cursor": null,
+          "direction": "forward",
+          "path": [
+            "node",
             "snapshots"
           ]
         }
@@ -771,11 +1074,11 @@ return {
     },
     "name": "FrameworkGraphControlNodeQuery",
     "operationKind": "query",
-    "text": "query FrameworkGraphControlNodeQuery(\n  $controlId: ID!\n) {\n  node(id: $controlId) {\n    __typename\n    ... on Control {\n      id\n      name\n      sectionTitle\n      description\n      status\n      exclusionJustification\n      ...FrameworkControlDialogFragment\n      measures(first: 100) {\n        edges {\n          node {\n            id\n            ...LinkedMeasuresCardFragment\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n      documents(first: 100) {\n        edges {\n          node {\n            id\n            ...LinkedDocumentsCardFragment\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n      audits(first: 100) {\n        edges {\n          node {\n            id\n            ...LinkedAuditsCardFragment\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n      snapshots(first: 100) {\n        edges {\n          node {\n            id\n            ...LinkedSnapshotsCardFragment\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n    }\n    id\n  }\n}\n\nfragment FrameworkControlDialogFragment on Control {\n  id\n  name\n  description\n  sectionTitle\n  status\n  exclusionJustification\n}\n\nfragment LinkedAuditsCardFragment on Audit {\n  id\n  name\n  createdAt\n  state\n  validFrom\n  validUntil\n  framework {\n    id\n    name\n  }\n}\n\nfragment LinkedDocumentsCardFragment on Document {\n  id\n  title\n  createdAt\n  documentType\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n      }\n    }\n  }\n}\n\nfragment LinkedMeasuresCardFragment on Measure {\n  id\n  name\n  state\n}\n\nfragment LinkedSnapshotsCardFragment on Snapshot {\n  id\n  name\n  description\n  type\n  createdAt\n}\n"
+    "text": "query FrameworkGraphControlNodeQuery(\n  $controlId: ID!\n) {\n  node(id: $controlId) {\n    __typename\n    ... on Control {\n      id\n      name\n      sectionTitle\n      description\n      status\n      exclusionJustification\n      ...FrameworkControlDialogFragment\n      stateOfApplicabilityControls(first: 100) {\n        edges {\n          node {\n            id\n            ...LinkedStatesOfApplicabilityCardFragment\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n      measures(first: 100) {\n        edges {\n          node {\n            id\n            ...LinkedMeasuresCardFragment\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n      documents(first: 100) {\n        edges {\n          node {\n            id\n            ...LinkedDocumentsCardFragment\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n      audits(first: 100) {\n        edges {\n          node {\n            id\n            ...LinkedAuditsCardFragment\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n      obligations(first: 100) {\n        edges {\n          node {\n            id\n            ...LinkedObligationsCardFragment\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n      snapshots(first: 100) {\n        edges {\n          node {\n            id\n            ...LinkedSnapshotsCardFragment\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n    }\n    id\n  }\n}\n\nfragment FrameworkControlDialogFragment on Control {\n  id\n  name\n  description\n  sectionTitle\n  status\n  exclusionJustification\n  bestPractice\n}\n\nfragment LinkedAuditsCardFragment on Audit {\n  id\n  name\n  createdAt\n  state\n  validFrom\n  validUntil\n  framework {\n    id\n    name\n  }\n}\n\nfragment LinkedDocumentsCardFragment on Document {\n  id\n  title\n  createdAt\n  documentType\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n      }\n    }\n  }\n}\n\nfragment LinkedMeasuresCardFragment on Measure {\n  id\n  name\n  state\n}\n\nfragment LinkedObligationsCardFragment on Obligation {\n  id\n  requirement\n  area\n  source\n  status\n  owner {\n    fullName\n    id\n  }\n}\n\nfragment LinkedSnapshotsCardFragment on Snapshot {\n  id\n  name\n  description\n  type\n  createdAt\n}\n\nfragment LinkedStatesOfApplicabilityCardFragment on StateOfApplicabilityControl {\n  id\n  stateOfApplicabilityId\n  controlId\n  stateOfApplicability {\n    id\n    name\n  }\n  applicability\n  justification\n}\n"
   }
 };
 })();
 
-(node as any).hash = "afc4bbbce8d8b3cd57ac2bf77db58e55";
+(node as any).hash = "b28838e3c3c4cdd68906247d129799c8";
 
 export default node;

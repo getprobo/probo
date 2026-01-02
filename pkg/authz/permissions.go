@@ -103,6 +103,7 @@ const (
 	ActionListMeetings                Action = "listMeetings"
 	ActionListMembers                 Action = "listMembers"
 	ActionListNonconformities         Action = "listNonconformities"
+	ActionListStatesOfApplicability   Action = "listStatesOfApplicability"
 	ActionListObligations             Action = "listObligations"
 	ActionListPeople                  Action = "listPeople"
 	ActionListProcessingActivities    Action = "listProcessingActivities"
@@ -120,43 +121,46 @@ const (
 	ActionListSignableDocuments       Action = "listSignableDocuments"
 	ActionListSignableDocumentVersion Action = "listSignableDocumentVersion"
 
-	ActionCreateAsset                          Action = "createAsset"
-	ActionCreateAudit                          Action = "createAudit"
-	ActionCreateContinualImprovement           Action = "createContinualImprovement"
-	ActionCreateRightsRequest                  Action = "createRightsRequest"
-	ActionCreateControl                        Action = "createControl"
-	ActionCreateControlAuditMapping            Action = "createControlAuditMapping"
-	ActionCreateControlDocumentMapping         Action = "createControlDocumentMapping"
-	ActionCreateControlMeasureMapping          Action = "createControlMeasureMapping"
-	ActionCreateControlSnapshotMapping         Action = "createControlSnapshotMapping"
-	ActionCreateCustomDomain                   Action = "createCustomDomain"
-	ActionCreateDatum                          Action = "createDatum"
-	ActionCreateDocument                       Action = "createDocument"
-	ActionCreateDraftDocumentVersion           Action = "createDraftDocumentVersion"
-	ActionCreateFramework                      Action = "createFramework"
-	ActionCreateMeasure                        Action = "createMeasure"
-	ActionCreateMeeting                        Action = "createMeeting"
-	ActionCreateNonconformity                  Action = "createNonconformity"
-	ActionCreateObligation                     Action = "createObligation"
-	ActionCreatePeople                         Action = "createPeople"
-	ActionCreateProcessingActivity             Action = "createProcessingActivity"
-	ActionCreateDataProtectionImpactAssessment Action = "createDataProtectionImpactAssessment"
-	ActionCreateTransferImpactAssessment       Action = "createTransferImpactAssessment"
-	ActionCreateRisk                           Action = "createRisk"
-	ActionCreateRiskDocumentMapping            Action = "createRiskDocumentMapping"
-	ActionCreateRiskMeasureMapping             Action = "createRiskMeasureMapping"
-	ActionCreateRiskObligationMapping          Action = "createRiskObligationMapping"
-	ActionCreateSAMLConfiguration              Action = "createSAMLConfiguration"
-	ActionCreateSnapshot                       Action = "createSnapshot"
-	ActionCreateTask                           Action = "createTask"
-	ActionCreateTrustCenter                    Action = "createTrustCenter"
-	ActionCreateTrustCenterAccess              Action = "createTrustCenterAccess"
-	ActionCreateTrustCenterFile                Action = "createTrustCenterFile"
-	ActionCreateTrustCenterReference           Action = "createTrustCenterReference"
-	ActionCreateVendor                         Action = "createVendor"
-	ActionCreateVendorContact                  Action = "createVendorContact"
-	ActionCreateVendorRiskAssessment           Action = "createVendorRiskAssessment"
-	ActionCreateVendorService                  Action = "createVendorService"
+	ActionCreateAsset                              Action = "createAsset"
+	ActionCreateAudit                              Action = "createAudit"
+	ActionCreateContinualImprovement               Action = "createContinualImprovement"
+	ActionCreateRightsRequest                      Action = "createRightsRequest"
+	ActionCreateControl                            Action = "createControl"
+	ActionCreateControlAuditMapping                Action = "createControlAuditMapping"
+	ActionCreateControlObligationMapping           Action = "createControlObligationMapping"
+	ActionCreateControlDocumentMapping             Action = "createControlDocumentMapping"
+	ActionCreateControlMeasureMapping              Action = "createControlMeasureMapping"
+	ActionCreateControlSnapshotMapping             Action = "createControlSnapshotMapping"
+	ActionCreateStateOfApplicabilityControlMapping Action = "createStateOfApplicabilityControlMapping"
+	ActionCreateCustomDomain                       Action = "createCustomDomain"
+	ActionCreateDatum                              Action = "createDatum"
+	ActionCreateDocument                           Action = "createDocument"
+	ActionCreateDraftDocumentVersion               Action = "createDraftDocumentVersion"
+	ActionCreateFramework                          Action = "createFramework"
+	ActionCreateMeasure                            Action = "createMeasure"
+	ActionCreateMeeting                            Action = "createMeeting"
+	ActionCreateNonconformity                      Action = "createNonconformity"
+	ActionCreateObligation                         Action = "createObligation"
+	ActionCreatePeople                             Action = "createPeople"
+	ActionCreateProcessingActivity                 Action = "createProcessingActivity"
+	ActionCreateStateOfApplicability               Action = "createStateOfApplicability"
+	ActionCreateDataProtectionImpactAssessment     Action = "createDataProtectionImpactAssessment"
+	ActionCreateTransferImpactAssessment           Action = "createTransferImpactAssessment"
+	ActionCreateRisk                               Action = "createRisk"
+	ActionCreateRiskDocumentMapping                Action = "createRiskDocumentMapping"
+	ActionCreateRiskMeasureMapping                 Action = "createRiskMeasureMapping"
+	ActionCreateRiskObligationMapping              Action = "createRiskObligationMapping"
+	ActionCreateSAMLConfiguration                  Action = "createSAMLConfiguration"
+	ActionCreateSnapshot                           Action = "createSnapshot"
+	ActionCreateTask                               Action = "createTask"
+	ActionCreateTrustCenter                        Action = "createTrustCenter"
+	ActionCreateTrustCenterAccess                  Action = "createTrustCenterAccess"
+	ActionCreateTrustCenterFile                    Action = "createTrustCenterFile"
+	ActionCreateTrustCenterReference               Action = "createTrustCenterReference"
+	ActionCreateVendor                             Action = "createVendor"
+	ActionCreateVendorContact                      Action = "createVendorContact"
+	ActionCreateVendorRiskAssessment               Action = "createVendorRiskAssessment"
+	ActionCreateVendorService                      Action = "createVendorService"
 
 	ActionUpdateAsset                            Action = "updateAsset"
 	ActionUpdateAudit                            Action = "updateAudit"
@@ -175,6 +179,7 @@ const (
 	ActionUpdateOrganization                     Action = "updateOrganization"
 	ActionUpdatePeople                           Action = "updatePeople"
 	ActionUpdateProcessingActivity               Action = "updateProcessingActivity"
+	ActionUpdateStateOfApplicability             Action = "updateStateOfApplicability"
 	ActionUpdateDataProtectionImpactAssessment   Action = "updateDataProtectionImpactAssessment"
 	ActionUpdateTransferImpactAssessment         Action = "updateTransferImpactAssessment"
 	ActionUpdateRisk                             Action = "updateRisk"
@@ -190,50 +195,53 @@ const (
 	ActionUpdateVendorDataPrivacyAgreement       Action = "updateVendorDataPrivacyAgreement"
 	ActionUpdateVendorService                    Action = "updateVendorService"
 
-	ActionDeleteAsset                            Action = "deleteAsset"
-	ActionDeleteAudit                            Action = "deleteAudit"
-	ActionDeleteAuditReport                      Action = "deleteAuditReport"
-	ActionDeleteContinualImprovement             Action = "deleteContinualImprovement"
-	ActionDeleteRightsRequest                    Action = "deleteRightsRequest"
-	ActionDeleteControl                          Action = "deleteControl"
-	ActionDeleteControlAuditMapping              Action = "deleteControlAuditMapping"
-	ActionDeleteControlDocumentMapping           Action = "deleteControlDocumentMapping"
-	ActionDeleteControlMeasureMapping            Action = "deleteControlMeasureMapping"
-	ActionDeleteControlSnapshotMapping           Action = "deleteControlSnapshotMapping"
-	ActionDeleteCustomDomain                     Action = "deleteCustomDomain"
-	ActionDeleteDatum                            Action = "deleteDatum"
-	ActionDeleteDocument                         Action = "deleteDocument"
-	ActionDeleteDraftDocumentVersion             Action = "deleteDraftDocumentVersion"
-	ActionDeleteEvidence                         Action = "deleteEvidence"
-	ActionDeleteFramework                        Action = "deleteFramework"
-	ActionDeleteInvitation                       Action = "deleteInvitation"
-	ActionDeleteMeasure                          Action = "deleteMeasure"
-	ActionDeleteMeeting                          Action = "deleteMeeting"
-	ActionDeleteNonconformity                    Action = "deleteNonconformity"
-	ActionDeleteObligation                       Action = "deleteObligation"
-	ActionDeleteOrganization                     Action = "deleteOrganization"
-	ActionDeleteOrganizationHorizontalLogo       Action = "deleteOrganizationHorizontalLogo"
-	ActionDeletePeople                           Action = "deletePeople"
-	ActionDeleteProcessingActivity               Action = "deleteProcessingActivity"
-	ActionDeleteDataProtectionImpactAssessment   Action = "deleteDataProtectionImpactAssessment"
-	ActionDeleteTransferImpactAssessment         Action = "deleteTransferImpactAssessment"
-	ActionDeleteRisk                             Action = "deleteRisk"
-	ActionDeleteRiskDocumentMapping              Action = "deleteRiskDocumentMapping"
-	ActionDeleteRiskMeasureMapping               Action = "deleteRiskMeasureMapping"
-	ActionDeleteRiskObligationMapping            Action = "deleteRiskObligationMapping"
-	ActionDeleteSAMLConfiguration                Action = "deleteSAMLConfiguration"
-	ActionDeleteSnapshot                         Action = "deleteSnapshot"
-	ActionDeleteTask                             Action = "deleteTask"
-	ActionDeleteTrustCenterAccess                Action = "deleteTrustCenterAccess"
-	ActionDeleteTrustCenterFile                  Action = "deleteTrustCenterFile"
-	ActionDeleteTrustCenterNDA                   Action = "deleteTrustCenterNDA"
-	ActionDeleteTrustCenterReference             Action = "deleteTrustCenterReference"
-	ActionDeleteVendor                           Action = "deleteVendor"
-	ActionDeleteVendorBusinessAssociateAgreement Action = "deleteVendorBusinessAssociateAgreement"
-	ActionDeleteVendorComplianceReport           Action = "deleteVendorComplianceReport"
-	ActionDeleteVendorContact                    Action = "deleteVendorContact"
-	ActionDeleteVendorDataPrivacyAgreement       Action = "deleteVendorDataPrivacyAgreement"
-	ActionDeleteVendorService                    Action = "deleteVendorService"
+	ActionDeleteAsset                              Action = "deleteAsset"
+	ActionDeleteAudit                              Action = "deleteAudit"
+	ActionDeleteAuditReport                        Action = "deleteAuditReport"
+	ActionDeleteContinualImprovement               Action = "deleteContinualImprovement"
+	ActionDeleteRightsRequest                      Action = "deleteRightsRequest"
+	ActionDeleteControl                            Action = "deleteControl"
+	ActionDeleteControlAuditMapping                Action = "deleteControlAuditMapping"
+	ActionDeleteControlObligationMapping           Action = "deleteControlObligationMapping"
+	ActionDeleteControlDocumentMapping             Action = "deleteControlDocumentMapping"
+	ActionDeleteControlMeasureMapping              Action = "deleteControlMeasureMapping"
+	ActionDeleteControlSnapshotMapping             Action = "deleteControlSnapshotMapping"
+	ActionDeleteStateOfApplicabilityControlMapping Action = "deleteStateOfApplicabilityControlMapping"
+	ActionDeleteCustomDomain                       Action = "deleteCustomDomain"
+	ActionDeleteDatum                              Action = "deleteDatum"
+	ActionDeleteDocument                           Action = "deleteDocument"
+	ActionDeleteDraftDocumentVersion               Action = "deleteDraftDocumentVersion"
+	ActionDeleteEvidence                           Action = "deleteEvidence"
+	ActionDeleteFramework                          Action = "deleteFramework"
+	ActionDeleteInvitation                         Action = "deleteInvitation"
+	ActionDeleteMeasure                            Action = "deleteMeasure"
+	ActionDeleteMeeting                            Action = "deleteMeeting"
+	ActionDeleteNonconformity                      Action = "deleteNonconformity"
+	ActionDeleteObligation                         Action = "deleteObligation"
+	ActionDeleteOrganization                       Action = "deleteOrganization"
+	ActionDeleteOrganizationHorizontalLogo         Action = "deleteOrganizationHorizontalLogo"
+	ActionDeletePeople                             Action = "deletePeople"
+	ActionDeleteProcessingActivity                 Action = "deleteProcessingActivity"
+	ActionDeleteStateOfApplicability               Action = "deleteStateOfApplicability"
+	ActionDeleteDataProtectionImpactAssessment     Action = "deleteDataProtectionImpactAssessment"
+	ActionDeleteTransferImpactAssessment           Action = "deleteTransferImpactAssessment"
+	ActionDeleteRisk                               Action = "deleteRisk"
+	ActionDeleteRiskDocumentMapping                Action = "deleteRiskDocumentMapping"
+	ActionDeleteRiskMeasureMapping                 Action = "deleteRiskMeasureMapping"
+	ActionDeleteRiskObligationMapping              Action = "deleteRiskObligationMapping"
+	ActionDeleteSAMLConfiguration                  Action = "deleteSAMLConfiguration"
+	ActionDeleteSnapshot                           Action = "deleteSnapshot"
+	ActionDeleteTask                               Action = "deleteTask"
+	ActionDeleteTrustCenterAccess                  Action = "deleteTrustCenterAccess"
+	ActionDeleteTrustCenterFile                    Action = "deleteTrustCenterFile"
+	ActionDeleteTrustCenterNDA                     Action = "deleteTrustCenterNDA"
+	ActionDeleteTrustCenterReference               Action = "deleteTrustCenterReference"
+	ActionDeleteVendor                             Action = "deleteVendor"
+	ActionDeleteVendorBusinessAssociateAgreement   Action = "deleteVendorBusinessAssociateAgreement"
+	ActionDeleteVendorComplianceReport             Action = "deleteVendorComplianceReport"
+	ActionDeleteVendorContact                      Action = "deleteVendorContact"
+	ActionDeleteVendorDataPrivacyAgreement         Action = "deleteVendorDataPrivacyAgreement"
+	ActionDeleteVendorService                      Action = "deleteVendorService"
 
 	ActionAcceptInvitation                         Action = "acceptInvitation"
 	ActionAssessVendor                             Action = "assessVendor"
@@ -315,16 +323,17 @@ var Permissions = map[uint16]map[Action][]Role{
 		ActionConfirmEmail:                             NonEmployeeRoles,
 		ActionAcceptInvitation:                         NonEmployeeRoles,
 
-		ActionListTrustCenterFiles:   CoreRoles,
-		ActionGetTrustCenter:         CoreRoles,
-		ActionMemberships:            CoreRoles,
-		ActionListMembers:            CoreRoles,
-		ActionListInvitations:        CoreRoles,
-		ActionListSlackConnections:   CoreRoles,
-		ActionGetCustomDomain:        CoreRoles,
-		ActionListSAMLConfigurations: CoreRoles,
-		ActionListMeetings:           CoreRoles,
-		ActionListTasks:              CoreRoles,
+		ActionListTrustCenterFiles:      CoreRoles,
+		ActionGetTrustCenter:            CoreRoles,
+		ActionMemberships:               CoreRoles,
+		ActionListMembers:               CoreRoles,
+		ActionListInvitations:           CoreRoles,
+		ActionListSlackConnections:      CoreRoles,
+		ActionGetCustomDomain:           CoreRoles,
+		ActionListSAMLConfigurations:    CoreRoles,
+		ActionListMeetings:              CoreRoles,
+		ActionListStatesOfApplicability: NonEmployeeRoles,
+		ActionListTasks:                 CoreRoles,
 
 		ActionUpdateOrganization:               EditRoles,
 		ActionDeleteOrganizationHorizontalLogo: EditRoles,
@@ -339,6 +348,7 @@ var Permissions = map[uint16]map[Action][]Role{
 		ActionCreateMeasure:                    EditRoles,
 		ActionImportMeasure:                    EditRoles,
 		ActionCreateMeeting:                    EditRoles,
+		ActionCreateStateOfApplicability:       EditRoles,
 		ActionCreateTask:                       EditRoles,
 		ActionCreateRisk:                       EditRoles,
 		ActionCreateDocument:                   EditRoles,
@@ -498,23 +508,32 @@ var Permissions = map[uint16]map[Action][]Role{
 		ActionExportFramework:                       EditRoles,
 	},
 	coredata.ControlEntityType: {
-		ActionGet:           NonEmployeeRoles,
-		ActionGetFramework:  NonEmployeeRoles,
-		ActionListMeasures:  NonEmployeeRoles,
-		ActionListDocuments: NonEmployeeRoles,
-		ActionListAudits:    NonEmployeeRoles,
-		ActionListSnapshots: NonEmployeeRoles,
+		ActionGet:                       NonEmployeeRoles,
+		ActionGetFramework:              NonEmployeeRoles,
+		ActionListMeasures:              NonEmployeeRoles,
+		ActionListDocuments:             NonEmployeeRoles,
+		ActionListAudits:                NonEmployeeRoles,
+		ActionListObligations:           NonEmployeeRoles,
+		ActionListSnapshots:             NonEmployeeRoles,
+		ActionListStatesOfApplicability: NonEmployeeRoles,
 
-		ActionUpdateControl:                EditRoles,
-		ActionDeleteControl:                EditRoles,
-		ActionCreateControlMeasureMapping:  EditRoles,
-		ActionCreateControlDocumentMapping: EditRoles,
-		ActionDeleteControlMeasureMapping:  EditRoles,
-		ActionDeleteControlDocumentMapping: EditRoles,
-		ActionCreateControlAuditMapping:    EditRoles,
-		ActionDeleteControlAuditMapping:    EditRoles,
-		ActionCreateControlSnapshotMapping: EditRoles,
-		ActionDeleteControlSnapshotMapping: EditRoles,
+		ActionUpdateControl:                            EditRoles,
+		ActionDeleteControl:                            EditRoles,
+		ActionCreateControlMeasureMapping:              EditRoles,
+		ActionCreateControlDocumentMapping:             EditRoles,
+		ActionDeleteControlMeasureMapping:              EditRoles,
+		ActionDeleteControlDocumentMapping:             EditRoles,
+		ActionCreateControlAuditMapping:                EditRoles,
+		ActionDeleteControlAuditMapping:                EditRoles,
+		ActionCreateControlObligationMapping:           EditRoles,
+		ActionDeleteControlObligationMapping:           EditRoles,
+		ActionCreateControlSnapshotMapping:             EditRoles,
+		ActionCreateStateOfApplicabilityControlMapping: EditRoles,
+		ActionDeleteStateOfApplicabilityControlMapping: EditRoles,
+		ActionDeleteControlSnapshotMapping:             EditRoles,
+	},
+	coredata.StateOfApplicabilityControlEntityType: {
+		ActionDeleteStateOfApplicabilityControlMapping: EditRoles,
 	},
 	coredata.MeasureEntityType: {
 		ActionListTasks: CoreRoles,
@@ -689,6 +708,7 @@ var Permissions = map[uint16]map[Action][]Role{
 	coredata.RightsRequestEntityType: {
 		ActionGet:             NonEmployeeRoles,
 		ActionGetOrganization: NonEmployeeRoles,
+		ActionListControls:    NonEmployeeRoles,
 
 		ActionUpdateRightsRequest: EditRoles,
 		ActionDeleteRightsRequest: EditRoles,
@@ -762,6 +782,16 @@ var Permissions = map[uint16]map[Action][]Role{
 
 		ActionUpdateMeeting: EditRoles,
 		ActionDeleteMeeting: EditRoles,
+	},
+	coredata.StateOfApplicabilityEntityType: {
+		ActionGet:             NonEmployeeRoles,
+		ActionGetOrganization: NonEmployeeRoles,
+		ActionListControls:    NonEmployeeRoles,
+		ActionTotalCount:      NonEmployeeRoles,
+
+		ActionUpdateStateOfApplicability:               EditRoles,
+		ActionDeleteStateOfApplicability:               EditRoles,
+		ActionDeleteStateOfApplicabilityControlMapping: EditRoles,
 	},
 }
 

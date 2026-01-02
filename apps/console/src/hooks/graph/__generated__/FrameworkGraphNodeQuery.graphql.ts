@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<6fcc115e1ab6df38ede8756968ae7a6a>>
+ * @generated SignedSource<<43528dc19e67fdeca407f5081e6252b9>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -210,6 +210,13 @@ return {
                             "kind": "ScalarField",
                             "name": "exclusionJustification",
                             "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "bestPractice",
+                            "storageKey": null
                           }
                         ],
                         "storageKey": null
@@ -242,12 +249,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "68c09567aff1176075300c645f5d117d",
+    "cacheID": "5af3d5c9f8d466c5d6a78d7bd5da70d1",
     "id": null,
     "metadata": {},
     "name": "FrameworkGraphNodeQuery",
     "operationKind": "query",
-    "text": "query FrameworkGraphNodeQuery(\n  $frameworkId: ID!\n) {\n  node(id: $frameworkId) {\n    __typename\n    ... on Framework {\n      id\n      name\n      ...FrameworkDetailPageFragment\n    }\n    id\n  }\n}\n\nfragment FrameworkDetailPageFragment on Framework {\n  id\n  name\n  description\n  lightLogoURL\n  darkLogoURL\n  organization {\n    name\n    id\n  }\n  controls(first: 250, orderBy: {field: SECTION_TITLE, direction: ASC}) {\n    edges {\n      node {\n        id\n        sectionTitle\n        name\n        status\n        exclusionJustification\n      }\n    }\n  }\n}\n"
+    "text": "query FrameworkGraphNodeQuery(\n  $frameworkId: ID!\n) {\n  node(id: $frameworkId) {\n    __typename\n    ... on Framework {\n      id\n      name\n      ...FrameworkDetailPageFragment\n    }\n    id\n  }\n}\n\nfragment FrameworkDetailPageFragment on Framework {\n  id\n  name\n  description\n  lightLogoURL\n  darkLogoURL\n  organization {\n    name\n    id\n  }\n  controls(first: 250, orderBy: {field: SECTION_TITLE, direction: ASC}) {\n    edges {\n      node {\n        id\n        sectionTitle\n        name\n        status\n        exclusionJustification\n        bestPractice\n      }\n    }\n  }\n}\n"
   }
 };
 })();

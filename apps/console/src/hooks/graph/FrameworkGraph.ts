@@ -100,6 +100,16 @@ export const frameworkControlNodeQuery = graphql`
         status
         exclusionJustification
         ...FrameworkControlDialogFragment
+        stateOfApplicabilityControls(first: 100)
+          @connection(key: "FrameworkGraphControl_stateOfApplicabilityControls") {
+          __id
+          edges {
+            node {
+              id
+              ...LinkedStatesOfApplicabilityCardFragment
+            }
+          }
+        }
         measures(first: 100)
           @connection(key: "FrameworkGraphControl_measures") {
           __id
@@ -127,6 +137,16 @@ export const frameworkControlNodeQuery = graphql`
             node {
               id
               ...LinkedAuditsCardFragment
+            }
+          }
+        }
+        obligations(first: 100)
+          @connection(key: "FrameworkGraphControl_obligations") {
+          __id
+          edges {
+            node {
+              id
+              ...LinkedObligationsCardFragment
             }
           }
         }

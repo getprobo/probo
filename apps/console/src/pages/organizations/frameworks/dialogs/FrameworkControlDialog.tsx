@@ -6,8 +6,8 @@ import {
   DialogFooter,
   Input,
   Textarea,
-  Option,
   useDialogRef,
+  Checkbox,
 } from "@probo/ui";
 import type { ReactNode } from "react";
 import { useTranslate } from "@probo/i18n";
@@ -17,7 +17,6 @@ import type { FrameworkControlDialogFragment$key } from "./__generated__/Framewo
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { z } from "zod";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
-import { ControlledSelect } from "/components/form/ControlledField";
 import { useEffect, useMemo } from "react";
 
 type Props = {
@@ -35,6 +34,7 @@ const controlFragment = graphql`
     sectionTitle
     status
     exclusionJustification
+    bestPractice
   }
 `;
 
@@ -67,16 +67,7 @@ const schema = z.object({
   name: z.string(),
   description: z.string().optional().nullable(),
   sectionTitle: z.string(),
-  status: z.enum(["INCLUDED", "EXCLUDED"]),
-  exclusionJustification: z.string().optional(),
-}).refine((data) => {
-  if (data.status === "EXCLUDED") {
-    return data.exclusionJustification && data.exclusionJustification.trim().length > 0;
-  }
-  return true;
-}, {
-  message: "Exclusion justification is required when status is excluded",
-  path: ["exclusionJustification"],
+  bestPractice: z.boolean(),
 });
 
 export function FrameworkControlDialog(props: Props) {
@@ -92,11 +83,10 @@ export function FrameworkControlDialog(props: Props) {
     name: frameworkControl?.name ?? "",
     description: frameworkControl?.description ?? "",
     sectionTitle: frameworkControl?.sectionTitle ?? "",
-    status: frameworkControl?.status ?? "INCLUDED",
-    exclusionJustification: frameworkControl?.exclusionJustification ?? "",
+    bestPractice: frameworkControl?.bestPractice ?? true,
   }), [frameworkControl]);
 
-  const { control, handleSubmit, register, reset, watch } = useFormWithSchema(schema, {
+  const { handleSubmit, register, reset, watch, setValue } = useFormWithSchema(schema, {
     defaultValues,
   });
 
@@ -104,8 +94,7 @@ export function FrameworkControlDialog(props: Props) {
     reset(defaultValues);
   }, [defaultValues, reset]);
 
-  const statusValue = watch("status");
-  const showExclusionJustification = statusValue === "EXCLUDED";
+  const bestPracticeValue = watch("bestPractice");
 
   const onSubmit = handleSubmit(async (data) => {
     if (frameworkControl) {
@@ -117,8 +106,7 @@ export function FrameworkControlDialog(props: Props) {
             name: data.name,
             description: data.description || null,
             sectionTitle: data.sectionTitle,
-            status: data.status,
-            exclusionJustification: data.status === "EXCLUDED" ? data.exclusionJustification : null,
+            bestPractice: data.bestPractice,
           },
         },
       });
@@ -131,8 +119,7 @@ export function FrameworkControlDialog(props: Props) {
             name: data.name,
             description: data.description || null,
             sectionTitle: data.sectionTitle,
-            status: data.status,
-            exclusionJustification: data.status === "EXCLUDED" ? data.exclusionJustification : null,
+            bestPractice: data.bestPractice ?? true,
           },
           connections: [props.connectionId!],
         },
@@ -178,23 +165,13 @@ export function FrameworkControlDialog(props: Props) {
             placeholder={__("Add description")}
             {...register("description")}
           />
-          <ControlledSelect
-            control={control}
-            name="status"
-            placeholder={__("Select status")}
-          >
-            <Option value="INCLUDED">{__("Included")}</Option>
-            <Option value="EXCLUDED">{__("Excluded")}</Option>
-          </ControlledSelect>
-          {showExclusionJustification && (
-            <Textarea
-              required
-              id="exclusionJustification"
-              variant="bordered"
-              placeholder={__("Reason for exclusion")}
-              {...register("exclusionJustification")}
+          <label className="flex items-center gap-2 cursor-pointer">
+            <Checkbox
+              checked={bestPracticeValue}
+              onChange={(checked) => setValue("bestPractice", checked)}
             />
-          )}
+            <span className="text-sm">{__("Best Practice")}</span>
+          </label>
         </DialogContent>
         <DialogFooter>
           <Button type="submit" disabled={isMutating}>

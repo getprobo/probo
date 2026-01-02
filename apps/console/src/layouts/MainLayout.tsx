@@ -22,6 +22,7 @@ import {
   IconInboxEmpty,
   IconKey,
   IconListStack,
+  IconPageCheck,
   IconLock,
   IconMagnifyingGlass,
   IconMedal,
@@ -229,6 +230,13 @@ function MainLayoutContent({
               label={__("Rights Requests")}
               icon={IconLock}
               to={`${prefix}/rights-requests`}
+            />
+          )}
+          {isAuthorized("Organization", "listStatesOfApplicability") && (
+            <SidebarItem
+              label={__("States of Applicability")}
+              icon={IconPageCheck}
+              to={`${prefix}/states-of-applicability`}
             />
           )}
           {isAuthorized("Organization", "listSnapshots") && (

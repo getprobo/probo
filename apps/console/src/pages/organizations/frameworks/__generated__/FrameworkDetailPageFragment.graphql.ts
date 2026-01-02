@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<1da75e11f49e841800329ded9f67a1d4>>
+ * @generated SignedSource<<1c21fa202a0315a19517c79eb93932f3>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -16,6 +16,7 @@ export type FrameworkDetailPageFragment$data = {
     readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly node: {
+        readonly bestPractice: boolean;
         readonly exclusionJustification: string | null | undefined;
         readonly id: string;
         readonly name: string;
@@ -155,6 +156,13 @@ return {
                   "kind": "ScalarField",
                   "name": "exclusionJustification",
                   "storageKey": null
+                },
+                {
+                  "alias": null,
+                  "args": null,
+                  "kind": "ScalarField",
+                  "name": "bestPractice",
+                  "storageKey": null
                 }
               ],
               "storageKey": null
@@ -183,6 +191,6 @@ return {
 };
 })();
 
-(node as any).hash = "34a82531b8812ee16e75eb035bc739e8";
+(node as any).hash = "e7be231a4f5cbad12945d2ca627cc442";
 
 export default node;

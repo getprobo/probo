@@ -83,6 +83,7 @@ func TestControlMeasureMapping_CreateDelete(t *testing.T) {
 			"description":  "Test control for mapping",
 			"sectionTitle": "Section 1",
 			"status":       "INCLUDED",
+			"bestPractice": true,
 		},
 	}, &createControlResult)
 	require.NoError(t, err)
@@ -362,6 +363,7 @@ func TestControlDocumentMapping_CreateDelete(t *testing.T) {
 			"description":  "Test control",
 			"sectionTitle": "Section 1",
 			"status":       "INCLUDED",
+			"bestPractice": true,
 		},
 	}, &createControlResult)
 	require.NoError(t, err)
@@ -503,6 +505,7 @@ func TestControlAuditMapping_CreateDelete(t *testing.T) {
 			"description":  "Test control",
 			"sectionTitle": "Section 1",
 			"status":       "INCLUDED",
+			"bestPractice": true,
 		},
 	}, &createControlResult)
 	require.NoError(t, err)
@@ -640,6 +643,7 @@ func TestControlSnapshotMapping_CreateDelete(t *testing.T) {
 			"description":  "Test control",
 			"sectionTitle": "Section 1",
 			"status":       "INCLUDED",
+			"bestPractice": true,
 		},
 	}, &createControlResult)
 	require.NoError(t, err)
@@ -897,6 +901,7 @@ func TestRiskObligationMapping_CreateDelete(t *testing.T) {
 			"requirement":    "Obligation for Risk Mapping",
 			"ownerId":        peopleID,
 			"status":         "NON_COMPLIANT",
+			"type":           "LEGAL",
 		},
 	}, &createObligationResult)
 	require.NoError(t, err)

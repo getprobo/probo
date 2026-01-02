@@ -16,6 +16,7 @@ type Control struct {
 	Description            *string                `json:"description,omitempty"`
 	Status                 coredata.ControlStatus `json:"status"`
 	ExclusionJustification *string                `json:"exclusionJustification,omitempty"`
+	BestPractice           bool                   `json:"bestPractice"`
 	Framework              *Framework             `json:"framework"`
 	Measures               *MeasureConnection     `json:"measures"`
 	Documents              *DocumentConnection    `json:"documents"`
@@ -72,6 +73,7 @@ func NewControl(control *coredata.Control) *Control {
 		Description:            control.Description,
 		Status:                 control.Status,
 		ExclusionJustification: control.ExclusionJustification,
+		BestPractice:           control.BestPractice,
 		CreatedAt:              control.CreatedAt,
 		UpdatedAt:              control.UpdatedAt,
 	}

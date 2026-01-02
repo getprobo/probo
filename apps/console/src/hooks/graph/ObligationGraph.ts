@@ -29,6 +29,7 @@ export const obligationNodeQuery = graphql`
         requirement
         actionsToBeImplemented
         regulator
+        type
         lastReviewDate
         dueDate
         status
@@ -61,6 +62,7 @@ export const createObligationMutation = graphql`
           requirement
           actionsToBeImplemented
           regulator
+          type
           lastReviewDate
           dueDate
           status
@@ -85,6 +87,7 @@ export const updateObligationMutation = graphql`
         requirement
         actionsToBeImplemented
         regulator
+        type
         lastReviewDate
         dueDate
         status
@@ -151,6 +154,7 @@ export const useCreateObligation = (connectionId: string) => {
     requirement?: string;
     actionsToBeImplemented?: string;
     regulator?: string;
+    type: string;
     ownerId: string;
     lastReviewDate?: string;
     dueDate?: string;
@@ -172,6 +176,7 @@ export const useCreateObligation = (connectionId: string) => {
           requirement: input.requirement,
           actionsToBeImplemented: input.actionsToBeImplemented,
           regulator: input.regulator,
+          type: input.type,
           ownerId: input.ownerId,
           lastReviewDate: input.lastReviewDate,
           dueDate: input.dueDate,
@@ -194,6 +199,7 @@ export const useUpdateObligation = () => {
     requirement?: string;
     actionsToBeImplemented?: string;
     regulator?: string;
+    type?: string;
     ownerId?: string;
     lastReviewDate?: string | null;
     dueDate?: string | null;

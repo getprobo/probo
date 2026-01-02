@@ -88,6 +88,22 @@ type AuditEdge struct {
 	Node   *Audit         `json:"node"`
 }
 
+type AvailableStateOfApplicabilityControl struct {
+	ControlID              gid.GID  `json:"controlId"`
+	SectionTitle           string   `json:"sectionTitle"`
+	Name                   string   `json:"name"`
+	FrameworkID            gid.GID  `json:"frameworkId"`
+	FrameworkName          string   `json:"frameworkName"`
+	OrganizationID         gid.GID  `json:"organizationId"`
+	StateOfApplicabilityID *gid.GID `json:"stateOfApplicabilityId,omitempty"`
+	Applicability          *bool    `json:"applicability,omitempty"`
+	Justification          *string  `json:"justification,omitempty"`
+	BestPractice           bool     `json:"bestPractice"`
+	Regulatory             bool     `json:"regulatory"`
+	Contractual            bool     `json:"contractual"`
+	RiskAssessment         bool     `json:"riskAssessment"`
+}
+
 type BulkDeleteDocumentsInput struct {
 	DocumentIds []gid.GID `json:"documentIds"`
 }
@@ -249,6 +265,7 @@ type CreateControlInput struct {
 	Description            *string                `json:"description,omitempty"`
 	Status                 coredata.ControlStatus `json:"status"`
 	ExclusionJustification *string                `json:"exclusionJustification,omitempty"`
+	BestPractice           bool                   `json:"bestPractice"`
 }
 
 type CreateControlMeasureMappingInput struct {
@@ -259,6 +276,16 @@ type CreateControlMeasureMappingInput struct {
 type CreateControlMeasureMappingPayload struct {
 	ControlEdge *ControlEdge `json:"controlEdge"`
 	MeasureEdge *MeasureEdge `json:"measureEdge"`
+}
+
+type CreateControlObligationMappingInput struct {
+	ControlID    gid.GID `json:"controlId"`
+	ObligationID gid.GID `json:"obligationId"`
+}
+
+type CreateControlObligationMappingPayload struct {
+	ControlEdge    *ControlEdge    `json:"controlEdge"`
+	ObligationEdge *ObligationEdge `json:"obligationEdge"`
 }
 
 type CreateControlPayload struct {
@@ -407,6 +434,7 @@ type CreateObligationInput struct {
 	LastReviewDate         *time.Time                `json:"lastReviewDate,omitempty"`
 	DueDate                *time.Time                `json:"dueDate,omitempty"`
 	Status                 coredata.ObligationStatus `json:"status"`
+	Type                   coredata.ObligationType   `json:"type"`
 }
 
 type CreateObligationPayload struct {
@@ -558,6 +586,27 @@ type CreateSnapshotInput struct {
 
 type CreateSnapshotPayload struct {
 	SnapshotEdge *SnapshotEdge `json:"snapshotEdge"`
+}
+
+type CreateStateOfApplicabilityControlMappingInput struct {
+	StateOfApplicabilityID gid.GID `json:"stateOfApplicabilityId"`
+	ControlID              gid.GID `json:"controlId"`
+	Applicability          bool    `json:"applicability"`
+	Justification          *string `json:"justification,omitempty"`
+}
+
+type CreateStateOfApplicabilityControlMappingPayload struct {
+	StateOfApplicabilityControlEdge *StateOfApplicabilityControlEdge `json:"stateOfApplicabilityControlEdge"`
+}
+
+type CreateStateOfApplicabilityInput struct {
+	OrganizationID gid.GID `json:"organizationId"`
+	Name           string  `json:"name"`
+	OwnerID        gid.GID `json:"ownerId"`
+}
+
+type CreateStateOfApplicabilityPayload struct {
+	StateOfApplicabilityEdge *StateOfApplicabilityEdge `json:"stateOfApplicabilityEdge"`
 }
 
 type CreateTaskInput struct {
@@ -807,6 +856,16 @@ type DeleteControlMeasureMappingPayload struct {
 	DeletedMeasureID gid.GID `json:"deletedMeasureId"`
 }
 
+type DeleteControlObligationMappingInput struct {
+	ControlID    gid.GID `json:"controlId"`
+	ObligationID gid.GID `json:"obligationId"`
+}
+
+type DeleteControlObligationMappingPayload struct {
+	DeletedControlID    gid.GID `json:"deletedControlId"`
+	DeletedObligationID gid.GID `json:"deletedObligationId"`
+}
+
 type DeleteControlPayload struct {
 	DeletedControlID gid.GID `json:"deletedControlId"`
 }
@@ -1009,6 +1068,25 @@ type DeleteSnapshotInput struct {
 
 type DeleteSnapshotPayload struct {
 	DeletedSnapshotID gid.GID `json:"deletedSnapshotId"`
+}
+
+type DeleteStateOfApplicabilityControlMappingInput struct {
+	StateOfApplicabilityID gid.GID `json:"stateOfApplicabilityId"`
+	ControlID              gid.GID `json:"controlId"`
+}
+
+type DeleteStateOfApplicabilityControlMappingPayload struct {
+	DeletedStateOfApplicabilityID        gid.GID `json:"deletedStateOfApplicabilityId"`
+	DeletedControlID                     gid.GID `json:"deletedControlId"`
+	DeletedStateOfApplicabilityControlID gid.GID `json:"deletedStateOfApplicabilityControlId"`
+}
+
+type DeleteStateOfApplicabilityInput struct {
+	StateOfApplicabilityID gid.GID `json:"stateOfApplicabilityId"`
+}
+
+type DeleteStateOfApplicabilityPayload struct {
+	DeletedStateOfApplicabilityID gid.GID `json:"deletedStateOfApplicabilityId"`
 }
 
 type DeleteTaskInput struct {
@@ -1262,6 +1340,14 @@ type ExportSignableDocumentVersionPDFInput struct {
 }
 
 type ExportSignableDocumentVersionPDFPayload struct {
+	Data string `json:"data"`
+}
+
+type ExportStateOfApplicabilityPDFInput struct {
+	StateOfApplicabilityID gid.GID `json:"stateOfApplicabilityId"`
+}
+
+type ExportStateOfApplicabilityPDFPayload struct {
 	Data string `json:"data"`
 }
 
@@ -1521,6 +1607,7 @@ type Obligation struct {
 	LastReviewDate         *time.Time                `json:"lastReviewDate,omitempty"`
 	DueDate                *time.Time                `json:"dueDate,omitempty"`
 	Status                 coredata.ObligationStatus `json:"status"`
+	Type                   coredata.ObligationType   `json:"type"`
 	CreatedAt              time.Time                 `json:"createdAt"`
 	UpdatedAt              time.Time                 `json:"updatedAt"`
 }
@@ -1556,6 +1643,7 @@ type Organization struct {
 	Peoples                         *PeopleConnection                         `json:"peoples"`
 	Documents                       *DocumentConnection                       `json:"documents"`
 	Meetings                        *MeetingConnection                        `json:"meetings"`
+	StatesOfApplicability           *StateOfApplicabilityConnection           `json:"statesOfApplicability"`
 	Measures                        *MeasureConnection                        `json:"measures"`
 	Risks                           *RiskConnection                           `json:"risks"`
 	Tasks                           *TaskConnection                           `json:"tasks"`
@@ -1878,6 +1966,46 @@ type SnapshotEdge struct {
 	Node   *Snapshot      `json:"node"`
 }
 
+type StateOfApplicability struct {
+	ID                gid.GID                                 `json:"id"`
+	Name              string                                  `json:"name"`
+	SourceID          *gid.GID                                `json:"sourceId,omitempty"`
+	SnapshotID        *gid.GID                                `json:"snapshotId,omitempty"`
+	Organization      *Organization                           `json:"organization,omitempty"`
+	Owner             *People                                 `json:"owner"`
+	Controls          *ControlConnection                      `json:"controls"`
+	AvailableControls []*AvailableStateOfApplicabilityControl `json:"availableControls"`
+	CreatedAt         time.Time                               `json:"createdAt"`
+	UpdatedAt         time.Time                               `json:"updatedAt"`
+}
+
+func (StateOfApplicability) IsNode()             {}
+func (this StateOfApplicability) GetID() gid.GID { return this.ID }
+
+type StateOfApplicabilityControl struct {
+	ID                     gid.GID               `json:"id"`
+	StateOfApplicabilityID gid.GID               `json:"stateOfApplicabilityId"`
+	ControlID              gid.GID               `json:"controlId"`
+	StateOfApplicability   *StateOfApplicability `json:"stateOfApplicability"`
+	Applicability          bool                  `json:"applicability"`
+	Justification          *string               `json:"justification,omitempty"`
+}
+
+type StateOfApplicabilityControlInput struct {
+	ControlID     gid.GID `json:"controlId"`
+	Applicability bool    `json:"applicability"`
+	Justification *string `json:"justification,omitempty"`
+}
+
+type StateOfApplicabilityEdge struct {
+	Cursor page.CursorKey        `json:"cursor"`
+	Node   *StateOfApplicability `json:"node"`
+}
+
+type StateOfApplicabilityFilter struct {
+	SnapshotID *gid.GID `json:"snapshotId,omitempty"`
+}
+
 type Task struct {
 	ID           gid.GID             `json:"id"`
 	Name         string              `json:"name"`
@@ -2072,6 +2200,7 @@ type UpdateControlInput struct {
 	Description            graphql.Omittable[*string] `json:"description,omitempty"`
 	Status                 *coredata.ControlStatus    `json:"status,omitempty"`
 	ExclusionJustification *string                    `json:"exclusionJustification,omitempty"`
+	BestPractice           *bool                      `json:"bestPractice,omitempty"`
 }
 
 type UpdateControlPayload struct {
@@ -2199,6 +2328,7 @@ type UpdateObligationInput struct {
 	LastReviewDate         graphql.Omittable[*time.Time] `json:"lastReviewDate,omitempty"`
 	DueDate                graphql.Omittable[*time.Time] `json:"dueDate,omitempty"`
 	Status                 *coredata.ObligationStatus    `json:"status,omitempty"`
+	Type                   *coredata.ObligationType      `json:"type,omitempty"`
 }
 
 type UpdateObligationPayload struct {
@@ -2324,6 +2454,16 @@ type UpdateSAMLConfigurationInput struct {
 
 type UpdateSAMLConfigurationPayload struct {
 	SamlConfiguration *SAMLConfiguration `json:"samlConfiguration"`
+}
+
+type UpdateStateOfApplicabilityInput struct {
+	ID      gid.GID  `json:"id"`
+	Name    *string  `json:"name,omitempty"`
+	OwnerID *gid.GID `json:"ownerId,omitempty"`
+}
+
+type UpdateStateOfApplicabilityPayload struct {
+	StateOfApplicability *StateOfApplicability `json:"stateOfApplicability"`
 }
 
 type UpdateTaskInput struct {

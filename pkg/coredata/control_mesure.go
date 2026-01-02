@@ -136,3 +136,56 @@ WHERE
 	*cms = controlMeasures
 	return nil
 }
+
+type ControlWithRisk struct {
+	ControlID gid.GID `db:"control_id"`
+}
+
+type ControlsWithRisk []*ControlWithRisk
+
+func (cwrs *ControlsWithRisk) LoadByControlIDs(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	controlIDs []gid.GID,
+) error {
+	q := `
+WITH control_risks AS (
+	SELECT DISTINCT
+		cm.control_id,
+		rm.risk_id,
+		r.tenant_id
+	FROM
+		controls_measures cm
+	INNER JOIN
+		risks_measures rm ON cm.measure_id = rm.measure_id
+	INNER JOIN
+		risks r ON rm.risk_id = r.id
+	WHERE
+		cm.control_id = ANY(@control_ids)
+)
+SELECT DISTINCT
+	control_id
+FROM
+	control_risks
+WHERE
+	%s
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.NamedArgs{"control_ids": controlIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query control risks: %w", err)
+	}
+
+	controlsWithRisk, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[ControlWithRisk])
+	if err != nil {
+		return fmt.Errorf("cannot collect control risks: %w", err)
+	}
+
+	*cwrs = controlsWithRisk
+	return nil
+}

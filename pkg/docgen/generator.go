@@ -47,13 +47,34 @@ var (
 	//go:embed transfer_impact_assessments_template.html
 	transferImpactAssessmentsTemplateContent string
 
+	//go:embed soa_template.html
+	soaTemplateContent string
+
 	templateFuncs = template.FuncMap{
 		"now":                  func() time.Time { return time.Now() },
 		"eq":                   func(a, b any) bool { return a == b },
+		"add":                  func(a, b int) int { return a + b },
 		"string":               func(v fmt.Stringer) string { return v.String() },
 		"lower":                func(s string) string { return strings.ToLower(s) },
-		"add":                  func(a, b int) int { return a + b },
 		"classificationString": func(c Classification) string { return string(c) },
+		"boolToYesNo": func(b *bool) string {
+			if b == nil {
+				return ""
+			}
+			if *b {
+				return "yes"
+			}
+			return "no"
+		},
+		"boolToYesNoDash": func(b *bool) string {
+			if b == nil {
+				return "-"
+			}
+			if *b {
+				return "Yes"
+			}
+			return "No"
+		},
 		"formatContent": func(content string) template.HTML {
 			md := goldmark.New(
 				goldmark.WithExtensions(extension.Table),
@@ -176,6 +197,8 @@ var (
 	dataProtectionImpactAssessmentsTemplate = template.Must(template.New("dataProtectionImpactAssessments").Funcs(templateFuncs).Parse(dataProtectionImpactAssessmentsTemplateContent))
 
 	transferImpactAssessmentsTemplate = template.Must(template.New("transferImpactAssessments").Funcs(templateFuncs).Parse(transferImpactAssessmentsTemplateContent))
+
+	stateOfApplicabilityTemplate = template.Must(template.New("state-of-applicability").Funcs(templateFuncs).Parse(soaTemplateContent))
 )
 
 type (
@@ -264,6 +287,35 @@ type (
 		LocalLawRisk           *string
 		SupplementaryMeasures  *string
 	}
+
+	StateOfApplicabilityData struct {
+		Title                       string
+		OrganizationName            string
+		CreatedAt                   time.Time
+		TotalControls               int
+		FrameworkGroups             []FrameworkControlGroup
+		CompanyHorizontalLogoBase64 string
+		Version                     int
+		PublishedAt                 time.Time
+		Approver                    string
+	}
+
+	FrameworkControlGroup struct {
+		FrameworkName string
+		Controls      []ControlData
+	}
+
+	ControlData struct {
+		FrameworkName  string
+		SectionTitle   string
+		Name           string
+		Applicability  *bool
+		Justification  *string
+		BestPractice   bool
+		Regulatory     *bool
+		Contractual    *bool
+		RiskAssessment *bool
+	}
 )
 
 const (
@@ -304,6 +356,15 @@ func RenderTransferImpactAssessmentsTableHTML(data TransferImpactAssessmentTable
 	var buf bytes.Buffer
 	if err := transferImpactAssessmentsTemplate.Execute(&buf, data); err != nil {
 		return nil, fmt.Errorf("cannot execute transfer impact assessments template: %w", err)
+	}
+
+	return buf.Bytes(), nil
+}
+
+func RenderStateOfApplicabilityHTML(data StateOfApplicabilityData) ([]byte, error) {
+	var buf bytes.Buffer
+	if err := stateOfApplicabilityTemplate.Execute(&buf, data); err != nil {
+		return nil, fmt.Errorf("cannot execute SOA template: %w", err)
 	}
 
 	return buf.Bytes(), nil

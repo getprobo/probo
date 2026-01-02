@@ -53,6 +53,7 @@ const frameworkDetailFragment = graphql`
           name
           status
           exclusionJustification
+          bestPractice
         }
       }
     }

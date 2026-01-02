@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<d1b09bb9cf9c608b8b3ac1c2b55a109a>>
+ * @generated SignedSource<<3542cd7b93f38df062a93a1b9e325ff3>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,6 +10,7 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 export type ObligationStatus = "COMPLIANT" | "NON_COMPLIANT" | "PARTIALLY_COMPLIANT";
+export type ObligationType = "CONTRACTUAL" | "LEGAL";
 export type ObligationGraphNodeQuery$variables = {
   obligationId: string;
 };
@@ -35,6 +36,7 @@ export type ObligationGraphNodeQuery$data = {
     readonly source?: string | null | undefined;
     readonly sourceId?: string | null | undefined;
     readonly status?: ObligationStatus;
+    readonly type?: ObligationType;
     readonly updatedAt?: any;
   };
 };
@@ -118,24 +120,31 @@ v10 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "lastReviewDate",
+  "name": "type",
   "storageKey": null
 },
 v11 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "dueDate",
+  "name": "lastReviewDate",
   "storageKey": null
 },
 v12 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "status",
+  "name": "dueDate",
   "storageKey": null
 },
 v13 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "status",
+  "storageKey": null
+},
+v14 = {
   "alias": null,
   "args": null,
   "concreteType": "People",
@@ -154,7 +163,7 @@ v13 = {
   ],
   "storageKey": null
 },
-v14 = {
+v15 = {
   "alias": null,
   "args": null,
   "concreteType": "Organization",
@@ -173,14 +182,14 @@ v14 = {
   ],
   "storageKey": null
 },
-v15 = {
+v16 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "createdAt",
   "storageKey": null
 },
-v16 = {
+v17 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
@@ -219,7 +228,8 @@ return {
               (v13/*: any*/),
               (v14/*: any*/),
               (v15/*: any*/),
-              (v16/*: any*/)
+              (v16/*: any*/),
+              (v17/*: any*/)
             ],
             "type": "Obligation",
             "abstractKey": null
@@ -269,7 +279,8 @@ return {
               (v13/*: any*/),
               (v14/*: any*/),
               (v15/*: any*/),
-              (v16/*: any*/)
+              (v16/*: any*/),
+              (v17/*: any*/)
             ],
             "type": "Obligation",
             "abstractKey": null
@@ -280,16 +291,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "6fd1c9d6e9f9a5baa60e4d270fc16db7",
+    "cacheID": "049eff8ed7a7476c04d09b64c061c3a6",
     "id": null,
     "metadata": {},
     "name": "ObligationGraphNodeQuery",
     "operationKind": "query",
-    "text": "query ObligationGraphNodeQuery(\n  $obligationId: ID!\n) {\n  node(id: $obligationId) {\n    __typename\n    ... on Obligation {\n      id\n      snapshotId\n      sourceId\n      area\n      source\n      requirement\n      actionsToBeImplemented\n      regulator\n      lastReviewDate\n      dueDate\n      status\n      owner {\n        id\n        fullName\n      }\n      organization {\n        id\n        name\n      }\n      createdAt\n      updatedAt\n    }\n    id\n  }\n}\n"
+    "text": "query ObligationGraphNodeQuery(\n  $obligationId: ID!\n) {\n  node(id: $obligationId) {\n    __typename\n    ... on Obligation {\n      id\n      snapshotId\n      sourceId\n      area\n      source\n      requirement\n      actionsToBeImplemented\n      regulator\n      type\n      lastReviewDate\n      dueDate\n      status\n      owner {\n        id\n        fullName\n      }\n      organization {\n        id\n        name\n      }\n      createdAt\n      updatedAt\n    }\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "ddefa1f2514f429a8ff174646bccf254";
+(node as any).hash = "c50090bdd31fc24e0fdb067677999f77";
 
 export default node;

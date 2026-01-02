@@ -482,6 +482,38 @@ func (r *controlResolver) Audits(ctx context.Context, obj *types.Control, first 
 	return types.NewAuditConnection(page, r, obj.ID), nil
 }
 
+// Obligations is the resolver for the obligations field.
+func (r *controlResolver) Obligations(ctx context.Context, obj *types.Control, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ObligationOrderBy, filter *types.ObligationFilter) (*types.ObligationConnection, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListObligations)
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.ObligationOrderField]{
+		Field:     coredata.ObligationOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.ObligationOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	var snapshotID **gid.GID
+	if filter != nil {
+		snapshotID = &filter.SnapshotID
+	}
+	obligationFilter := coredata.NewObligationFilter(snapshotID)
+	page, err := prb.Obligations.ListForControlID(ctx, obj.ID, cursor, obligationFilter)
+	if err != nil {
+		panic(fmt.Errorf("cannot list control obligations: %w", err))
+	}
+
+	return types.NewObligationConnection(page, r, obj.ID, filter), nil
+}
+
 // Snapshots is the resolver for the snapshots field.
 func (r *controlResolver) Snapshots(ctx context.Context, obj *types.Control, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.SnapshotOrderBy) (*types.SnapshotConnection, error) {
 	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListSnapshots)
@@ -508,6 +540,33 @@ func (r *controlResolver) Snapshots(ctx context.Context, obj *types.Control, fir
 	}
 
 	return types.NewSnapshotConnection(page, r, obj.ID), nil
+}
+
+// StateOfApplicabilityControls is the resolver for the stateOfApplicabilityControls field.
+func (r *controlResolver) StateOfApplicabilityControls(ctx context.Context, obj *types.Control, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.StateOfApplicabilityOrderBy) (*types.StateOfApplicabilityControlConnection, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListStatesOfApplicability)
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.StateOfApplicabilityOrderField]{
+		Field:     coredata.StateOfApplicabilityOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.StateOfApplicabilityOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	p, err := prb.StatesOfApplicability.ListControlLinks(ctx, obj.ID, cursor)
+	if err != nil {
+		panic(fmt.Errorf("cannot list state of applicability controls: %w", err))
+	}
+
+	return types.NewStateOfApplicabilityControlConnection(p, r, obj.ID), nil
 }
 
 // TotalCount is the resolver for the totalCount field.
@@ -542,6 +601,12 @@ func (r *controlConnectionResolver) TotalCount(ctx context.Context, obj *types.C
 		return count, nil
 	case *riskResolver:
 		count, err := prb.Controls.CountForRiskID(ctx, obj.ParentID, obj.Filters)
+		if err != nil {
+			panic(fmt.Errorf("cannot count controls: %w", err))
+		}
+		return count, nil
+	case *stateOfApplicabilityResolver:
+		count, err := prb.Controls.CountForStateOfApplicabilityID(ctx, obj.ParentID, obj.Filters)
 		if err != nil {
 			panic(fmt.Errorf("cannot count controls: %w", err))
 		}
@@ -2502,6 +2567,7 @@ func (r *mutationResolver) CreateControl(ctx context.Context, input types.Create
 		SectionTitle:           input.SectionTitle,
 		Status:                 &input.Status,
 		ExclusionJustification: input.ExclusionJustification,
+		BestPractice:           input.BestPractice,
 	})
 	if err != nil {
 		var errAlreadyExists *coredata.ErrControlAlreadyExists
@@ -2529,6 +2595,7 @@ func (r *mutationResolver) UpdateControl(ctx context.Context, input types.Update
 		SectionTitle:           input.SectionTitle,
 		Status:                 input.Status,
 		ExclusionJustification: input.ExclusionJustification,
+		BestPractice:           input.BestPractice,
 	})
 
 	if err != nil {
@@ -2718,6 +2785,40 @@ func (r *mutationResolver) DeleteControlDocumentMapping(ctx context.Context, inp
 	}, nil
 }
 
+// CreateStateOfApplicabilityControlMapping is the resolver for the createStateOfApplicabilityControlMapping field.
+func (r *mutationResolver) CreateStateOfApplicabilityControlMapping(ctx context.Context, input types.CreateStateOfApplicabilityControlMappingInput) (*types.CreateStateOfApplicabilityControlMappingPayload, error) {
+	r.MustBeAuthorized(ctx, input.ControlID, authz.ActionCreateStateOfApplicabilityControlMapping)
+
+	prb := r.ProboService(ctx, input.StateOfApplicabilityID.TenantID())
+
+	control, err := prb.StatesOfApplicability.LinkControl(ctx, input.StateOfApplicabilityID, input.ControlID, input.Applicability, input.Justification)
+	if err != nil {
+		panic(fmt.Errorf("cannot create state of applicability control mapping: %w", err))
+	}
+
+	return &types.CreateStateOfApplicabilityControlMappingPayload{
+		StateOfApplicabilityControlEdge: types.NewStateOfApplicabilityControlEdge(control, coredata.StateOfApplicabilityOrderFieldCreatedAt),
+	}, nil
+}
+
+// DeleteStateOfApplicabilityControlMapping is the resolver for the deleteStateOfApplicabilityControlMapping field.
+func (r *mutationResolver) DeleteStateOfApplicabilityControlMapping(ctx context.Context, input types.DeleteStateOfApplicabilityControlMappingInput) (*types.DeleteStateOfApplicabilityControlMappingPayload, error) {
+	r.MustBeAuthorized(ctx, input.StateOfApplicabilityID, authz.ActionDeleteStateOfApplicabilityControlMapping)
+
+	prb := r.ProboService(ctx, input.StateOfApplicabilityID.TenantID())
+
+	deletedID, err := prb.StatesOfApplicability.DeleteControlLink(ctx, input.StateOfApplicabilityID, input.ControlID)
+	if err != nil {
+		panic(fmt.Errorf("cannot delete state of applicability control mapping: %w", err))
+	}
+
+	return &types.DeleteStateOfApplicabilityControlMappingPayload{
+		DeletedStateOfApplicabilityID:        input.StateOfApplicabilityID,
+		DeletedControlID:                     input.ControlID,
+		DeletedStateOfApplicabilityControlID: deletedID,
+	}, nil
+}
+
 // CreateControlAuditMapping is the resolver for the createControlAuditMapping field.
 func (r *mutationResolver) CreateControlAuditMapping(ctx context.Context, input types.CreateControlAuditMappingInput) (*types.CreateControlAuditMappingPayload, error) {
 	r.MustBeAuthorized(ctx, input.ControlID, authz.ActionCreateControlAuditMapping)
@@ -2749,6 +2850,40 @@ func (r *mutationResolver) DeleteControlAuditMapping(ctx context.Context, input 
 	return &types.DeleteControlAuditMappingPayload{
 		DeletedControlID: control.ID,
 		DeletedAuditID:   audit.ID,
+	}, nil
+}
+
+// CreateControlObligationMapping is the resolver for the createControlObligationMapping field.
+func (r *mutationResolver) CreateControlObligationMapping(ctx context.Context, input types.CreateControlObligationMappingInput) (*types.CreateControlObligationMappingPayload, error) {
+	r.MustBeAuthorized(ctx, input.ControlID, authz.ActionCreateControlObligationMapping)
+
+	prb := r.ProboService(ctx, input.ObligationID.TenantID())
+
+	control, obligation, err := prb.Controls.CreateObligationMapping(ctx, input.ControlID, input.ObligationID)
+	if err != nil {
+		panic(fmt.Errorf("cannot create control obligation mapping: %w", err))
+	}
+
+	return &types.CreateControlObligationMappingPayload{
+		ControlEdge:    types.NewControlEdge(control, coredata.ControlOrderFieldCreatedAt),
+		ObligationEdge: types.NewObligationEdge(obligation, coredata.ObligationOrderFieldCreatedAt),
+	}, nil
+}
+
+// DeleteControlObligationMapping is the resolver for the deleteControlObligationMapping field.
+func (r *mutationResolver) DeleteControlObligationMapping(ctx context.Context, input types.DeleteControlObligationMappingInput) (*types.DeleteControlObligationMappingPayload, error) {
+	r.MustBeAuthorized(ctx, input.ControlID, authz.ActionDeleteControlObligationMapping)
+
+	prb := r.ProboService(ctx, input.ObligationID.TenantID())
+
+	control, obligation, err := prb.Controls.DeleteObligationMapping(ctx, input.ControlID, input.ObligationID)
+	if err != nil {
+		panic(fmt.Errorf("cannot delete control obligation mapping: %w", err))
+	}
+
+	return &types.DeleteControlObligationMappingPayload{
+		DeletedControlID:    control.ID,
+		DeletedObligationID: obligation.ID,
 	}, nil
 }
 
@@ -3393,6 +3528,100 @@ func (r *mutationResolver) DeleteMeeting(ctx context.Context, input types.Delete
 
 	return &types.DeleteMeetingPayload{
 		DeletedMeetingID: input.MeetingID,
+	}, nil
+}
+
+// CreateStateOfApplicability is the resolver for the createStateOfApplicability field.
+func (r *mutationResolver) CreateStateOfApplicability(ctx context.Context, input types.CreateStateOfApplicabilityInput) (*types.CreateStateOfApplicabilityPayload, error) {
+	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionCreateStateOfApplicability)
+
+	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
+
+	stateOfApplicability, err := prb.StatesOfApplicability.Create(
+		ctx,
+		probo.CreateStateOfApplicabilityRequest{
+			OrganizationID: input.OrganizationID,
+			Name:           input.Name,
+			OwnerID:        input.OwnerID,
+		},
+	)
+	if err != nil {
+		var errAlreadyExists *coredata.ErrStateOfApplicabilityAlreadyExists
+		if errors.As(err, &errAlreadyExists) {
+			return nil, gqlutils.Conflict(errAlreadyExists)
+		}
+		panic(fmt.Errorf("cannot create state_of_applicability: %w", err))
+	}
+
+	return &types.CreateStateOfApplicabilityPayload{
+		StateOfApplicabilityEdge: types.NewStateOfApplicabilityEdge(stateOfApplicability, coredata.StateOfApplicabilityOrderFieldCreatedAt),
+	}, nil
+}
+
+// UpdateStateOfApplicability is the resolver for the updateStateOfApplicability field.
+func (r *mutationResolver) UpdateStateOfApplicability(ctx context.Context, input types.UpdateStateOfApplicabilityInput) (*types.UpdateStateOfApplicabilityPayload, error) {
+	r.MustBeAuthorized(ctx, input.ID, authz.ActionUpdateStateOfApplicability)
+
+	prb := r.ProboService(ctx, input.ID.TenantID())
+
+	var name *string
+	if input.Name != nil {
+		name = input.Name
+	}
+
+	stateOfApplicability, err := prb.StatesOfApplicability.Update(
+		ctx,
+		probo.UpdateStateOfApplicabilityRequest{
+			StateOfApplicabilityID: input.ID,
+			Name:                   name,
+			OwnerID:                input.OwnerID,
+		},
+	)
+	if err != nil {
+		var errAlreadyExists *coredata.ErrStateOfApplicabilityAlreadyExists
+		if errors.As(err, &errAlreadyExists) {
+			return nil, gqlutils.Conflict(errAlreadyExists)
+		}
+		panic(fmt.Errorf("cannot update state_of_applicability: %w", err))
+	}
+
+	return &types.UpdateStateOfApplicabilityPayload{
+		StateOfApplicability: types.NewStateOfApplicability(stateOfApplicability),
+	}, nil
+}
+
+// DeleteStateOfApplicability is the resolver for the deleteStateOfApplicability field.
+func (r *mutationResolver) DeleteStateOfApplicability(ctx context.Context, input types.DeleteStateOfApplicabilityInput) (*types.DeleteStateOfApplicabilityPayload, error) {
+	r.MustBeAuthorized(ctx, input.StateOfApplicabilityID, authz.ActionDeleteStateOfApplicability)
+
+	prb := r.ProboService(ctx, input.StateOfApplicabilityID.TenantID())
+
+	err := prb.StatesOfApplicability.Delete(ctx, input.StateOfApplicabilityID)
+	if err != nil {
+		panic(fmt.Errorf("cannot delete state_of_applicability: %w", err))
+	}
+
+	return &types.DeleteStateOfApplicabilityPayload{
+		DeletedStateOfApplicabilityID: input.StateOfApplicabilityID,
+	}, nil
+}
+
+// ExportStateOfApplicabilityPDF is the resolver for the exportStateOfApplicabilityPDF field.
+func (r *mutationResolver) ExportStateOfApplicabilityPDF(ctx context.Context, input types.ExportStateOfApplicabilityPDFInput) (*types.ExportStateOfApplicabilityPDFPayload, error) {
+	r.MustBeAuthorized(ctx, input.StateOfApplicabilityID, authz.ActionUpdateStateOfApplicability)
+
+	prb := r.ProboService(ctx, input.StateOfApplicabilityID.TenantID())
+
+	pdfData, err := prb.StatesOfApplicability.ExportPDF(ctx, input.StateOfApplicabilityID)
+	if err != nil {
+		panic(fmt.Errorf("cannot export state of applicability PDF: %w", err))
+	}
+
+	base64Data := base64.StdEncoding.EncodeToString(pdfData)
+	dataURI := fmt.Sprintf("data:application/pdf;base64,%s", base64Data)
+
+	return &types.ExportStateOfApplicabilityPDFPayload{
+		Data: dataURI,
 	}, nil
 }
 
@@ -4194,7 +4423,8 @@ func (r *mutationResolver) CreateObligation(ctx context.Context, input types.Cre
 		OwnerID:                input.OwnerID,
 		LastReviewDate:         input.LastReviewDate,
 		DueDate:                input.DueDate,
-		Status:                 &input.Status,
+		Status:                 input.Status,
+		Type:                   input.Type,
 	}
 
 	obligation, err := prb.Obligations.Create(ctx, &req)
@@ -4224,6 +4454,7 @@ func (r *mutationResolver) UpdateObligation(ctx context.Context, input types.Upd
 		LastReviewDate:         UnwrapOmittable(input.LastReviewDate),
 		DueDate:                UnwrapOmittable(input.DueDate),
 		Status:                 input.Status,
+		Type:                   input.Type,
 	}
 
 	obligation, err := prb.Obligations.Update(ctx, &req)
@@ -5403,6 +5634,38 @@ func (r *organizationResolver) Meetings(ctx context.Context, obj *types.Organiza
 	return types.NewMeetingConnection(page, r, obj.ID), nil
 }
 
+// StatesOfApplicability is the resolver for the statesOfApplicability field.
+func (r *organizationResolver) StatesOfApplicability(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.StateOfApplicabilityOrderBy, filter *types.StateOfApplicabilityFilter) (*types.StateOfApplicabilityConnection, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListStatesOfApplicability)
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.StateOfApplicabilityOrderField]{
+		Field:     coredata.StateOfApplicabilityOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.StateOfApplicabilityOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	var stateOfApplicabilityFilter = coredata.NewStateOfApplicabilityFilter(nil)
+	if filter != nil {
+		stateOfApplicabilityFilter = coredata.NewStateOfApplicabilityFilter(&filter.SnapshotID)
+	}
+
+	page, err := prb.StatesOfApplicability.ListForOrganizationID(ctx, obj.ID, cursor, stateOfApplicabilityFilter)
+	if err != nil {
+		panic(fmt.Errorf("cannot list organization states_of_applicability: %w", err))
+	}
+
+	return types.NewStateOfApplicabilityConnection(page, r, obj.ID, stateOfApplicabilityFilter), nil
+}
+
 // Measures is the resolver for the measures field.
 func (r *organizationResolver) Measures(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy, filter *types.MeasureFilter) (*types.MeasureConnection, error) {
 	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListMeasures)
@@ -6334,6 +6597,17 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 		}
 
 		return types.NewRightsRequest(rightsRequest), nil
+	case coredata.StateOfApplicabilityEntityType:
+		stateOfApplicability, err := prb.StatesOfApplicability.Get(ctx, id)
+		if err != nil {
+			var errNotFound *coredata.ErrStateOfApplicabilityNotFound
+			if errors.As(err, &errNotFound) {
+				return nil, gqlutils.NotFound(errNotFound)
+			}
+			panic(fmt.Errorf("cannot get state_of_applicability: %w", err))
+		}
+
+		return types.NewStateOfApplicability(stateOfApplicability), nil
 	default:
 	}
 
@@ -6802,6 +7076,151 @@ func (r *snapshotConnectionResolver) TotalCount(ctx context.Context, obj *types.
 	}
 
 	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
+}
+
+// Organization is the resolver for the organization field.
+func (r *stateOfApplicabilityResolver) Organization(ctx context.Context, obj *types.StateOfApplicability) (*types.Organization, error) {
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	stateOfApplicability, err := prb.StatesOfApplicability.Get(ctx, obj.ID)
+	if err != nil {
+		var errNotFound *coredata.ErrStateOfApplicabilityNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, gqlutils.NotFound(errNotFound)
+		}
+		panic(fmt.Errorf("cannot load state_of_applicability: %w", err))
+	}
+
+	organization, err := prb.Organizations.Get(ctx, stateOfApplicability.OrganizationID)
+	if err != nil {
+		var errNotFound *coredata.ErrOrganizationNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, gqlutils.NotFound(errNotFound)
+		}
+		panic(fmt.Errorf("cannot load organization: %w", err))
+	}
+
+	return types.NewOrganization(organization), nil
+}
+
+// Owner is the resolver for the owner field.
+func (r *stateOfApplicabilityResolver) Owner(ctx context.Context, obj *types.StateOfApplicability) (*types.People, error) {
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	stateOfApplicability, err := prb.StatesOfApplicability.Get(ctx, obj.ID)
+	if err != nil {
+		var errNotFound *coredata.ErrStateOfApplicabilityNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, gqlutils.NotFound(errNotFound)
+		}
+		panic(fmt.Errorf("cannot load state_of_applicability: %w", err))
+	}
+
+	people, err := prb.Peoples.Get(ctx, stateOfApplicability.OwnerID)
+	if err != nil {
+		var errNotFound *coredata.ErrPeopleNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, gqlutils.NotFound(errNotFound)
+		}
+		panic(fmt.Errorf("cannot load owner: %w", err))
+	}
+
+	return types.NewPeople(people), nil
+}
+
+// Controls is the resolver for the controls field.
+func (r *stateOfApplicabilityResolver) Controls(ctx context.Context, obj *types.StateOfApplicability, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) (*types.ControlConnection, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListControls)
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.ControlOrderField]{
+		Field:     coredata.ControlOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.ControlOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	var controlFilter = coredata.NewControlFilter(nil)
+	if filter != nil {
+		controlFilter = coredata.NewControlFilter(filter.Query)
+	}
+
+	page, err := prb.Controls.ListForStateOfApplicabilityID(ctx, obj.ID, cursor, controlFilter)
+	if err != nil {
+		panic(fmt.Errorf("cannot list state of applicability controls: %w", err))
+	}
+
+	return types.NewControlConnection(page, r, obj.ID, controlFilter), nil
+}
+
+// AvailableControls is the resolver for the availableControls field.
+func (r *stateOfApplicabilityResolver) AvailableControls(ctx context.Context, obj *types.StateOfApplicability) ([]*types.AvailableStateOfApplicabilityControl, error) {
+	r.MustBeAuthorized(ctx, obj.ID, authz.ActionListControls)
+
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	availableControls, err := prb.StatesOfApplicability.ListAvailableControls(ctx, obj.ID)
+	if err != nil {
+		panic(fmt.Errorf("cannot list available controls: %w", err))
+	}
+
+	result := make([]*types.AvailableStateOfApplicabilityControl, 0, len(availableControls))
+	for _, ac := range availableControls {
+		result = append(result, &types.AvailableStateOfApplicabilityControl{
+			ControlID:              ac.ControlID,
+			SectionTitle:           ac.SectionTitle,
+			Name:                   ac.Name,
+			FrameworkID:            ac.FrameworkID,
+			FrameworkName:          ac.FrameworkName,
+			OrganizationID:         ac.OrganizationID,
+			StateOfApplicabilityID: ac.StateOfApplicabilityID,
+			Applicability:          ac.Applicability,
+			Justification:          ac.Justification,
+			BestPractice:           ac.BestPractice,
+			Regulatory:             ac.Regulatory,
+			Contractual:            ac.Contractual,
+			RiskAssessment:         ac.RiskAssessment,
+		})
+	}
+
+	return result, nil
+}
+
+// TotalCount is the resolver for the totalCount field.
+func (r *stateOfApplicabilityConnectionResolver) TotalCount(ctx context.Context, obj *types.StateOfApplicabilityConnection) (int, error) {
+	prb := r.ProboService(ctx, obj.ParentID.TenantID())
+
+	switch obj.Resolver.(type) {
+	case *organizationResolver:
+		count, err := prb.StatesOfApplicability.CountForOrganizationID(ctx, obj.ParentID, obj.Filters)
+		if err != nil {
+			panic(fmt.Errorf("cannot count states_of_applicability: %w", err))
+		}
+		return count, nil
+	}
+
+	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
+}
+
+// StateOfApplicability is the resolver for the stateOfApplicability field.
+func (r *stateOfApplicabilityControlResolver) StateOfApplicability(ctx context.Context, obj *types.StateOfApplicabilityControl) (*types.StateOfApplicability, error) {
+	r.MustBeAuthorized(ctx, obj.StateOfApplicabilityID, authz.ActionGet)
+
+	prb := r.ProboService(ctx, obj.StateOfApplicabilityID.TenantID())
+
+	soa, err := prb.StatesOfApplicability.Get(ctx, obj.StateOfApplicabilityID)
+	if err != nil {
+		panic(fmt.Errorf("cannot get state of applicability: %w", err))
+	}
+
+	return types.NewStateOfApplicability(soa), nil
 }
 
 // AssignedTo is the resolver for the assignedTo field.
@@ -8055,6 +8474,21 @@ func (r *Resolver) SnapshotConnection() schema.SnapshotConnectionResolver {
 	return &snapshotConnectionResolver{r}
 }
 
+// StateOfApplicability returns schema.StateOfApplicabilityResolver implementation.
+func (r *Resolver) StateOfApplicability() schema.StateOfApplicabilityResolver {
+	return &stateOfApplicabilityResolver{r}
+}
+
+// StateOfApplicabilityConnection returns schema.StateOfApplicabilityConnectionResolver implementation.
+func (r *Resolver) StateOfApplicabilityConnection() schema.StateOfApplicabilityConnectionResolver {
+	return &stateOfApplicabilityConnectionResolver{r}
+}
+
+// StateOfApplicabilityControl returns schema.StateOfApplicabilityControlResolver implementation.
+func (r *Resolver) StateOfApplicabilityControl() schema.StateOfApplicabilityControlResolver {
+	return &stateOfApplicabilityControlResolver{r}
+}
+
 // Task returns schema.TaskResolver implementation.
 func (r *Resolver) Task() schema.TaskResolver { return &taskResolver{r} }
 
@@ -8197,6 +8631,9 @@ type sAMLConfigurationResolver struct{ *Resolver }
 type signableDocumentResolver struct{ *Resolver }
 type snapshotResolver struct{ *Resolver }
 type snapshotConnectionResolver struct{ *Resolver }
+type stateOfApplicabilityResolver struct{ *Resolver }
+type stateOfApplicabilityConnectionResolver struct{ *Resolver }
+type stateOfApplicabilityControlResolver struct{ *Resolver }
 type taskResolver struct{ *Resolver }
 type taskConnectionResolver struct{ *Resolver }
 type transferImpactAssessmentResolver struct{ *Resolver }

@@ -1640,9 +1640,7 @@ func exportDocumentPDF(
 	horizontalLogoBase64 := ""
 	if organization.HorizontalLogoFileID != nil {
 		fileRecord := &coredata.File{}
-		fileErr := svc.pg.WithConn(ctx, func(conn pg.Conn) error {
-			return fileRecord.LoadByID(ctx, conn, scope, *organization.HorizontalLogoFileID)
-		})
+		fileErr := fileRecord.LoadByID(ctx, conn, scope, *organization.HorizontalLogoFileID)
 		if fileErr == nil {
 			base64Data, mimeType, logoErr := svc.fileManager.GetFileBase64(ctx, fileRecord)
 			if logoErr == nil {

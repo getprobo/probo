@@ -21,7 +21,7 @@ import { useCreateObligation } from "../../../../hooks/graph/ObligationGraph";
 import { PeopleSelectField } from "/components/form/PeopleSelectField";
 import { Controller } from "react-hook-form";
 import { formatError, type GraphQLError } from "@probo/helpers";
-import { formatDatetime, getObligationStatusOptions } from "@probo/helpers";
+import { formatDatetime, getObligationStatusOptions, getObligationTypeOptions } from "@probo/helpers";
 
 const schema = z.object({
   area: z.string().optional(),
@@ -29,6 +29,7 @@ const schema = z.object({
   requirement: z.string().optional(),
   actionsToBeImplemented: z.string().optional(),
   regulator: z.string().optional(),
+  type: z.enum(["LEGAL", "CONTRACTUAL"]),
   ownerId: z.string().min(1, "Owner is required"),
   lastReviewDate: z.string().optional(),
   dueDate: z.string().optional(),
@@ -54,6 +55,7 @@ export function CreateObligationDialog({
 
   const createObligation = useCreateObligation(connection || "");
   const statusOptions = getObligationStatusOptions(__);
+  const typeOptions = getObligationTypeOptions(__);
 
   const { register, handleSubmit, formState, reset, control } = useFormWithSchema(schema, {
     defaultValues: {
@@ -62,6 +64,7 @@ export function CreateObligationDialog({
       requirement: "",
       actionsToBeImplemented: "",
       regulator: "",
+      type: "LEGAL" as const,
       ownerId: "",
       lastReviewDate: "",
       dueDate: "",
@@ -78,6 +81,7 @@ export function CreateObligationDialog({
         requirement: formData.requirement || undefined,
         actionsToBeImplemented: formData.actionsToBeImplemented || undefined,
         regulator: formData.regulator || undefined,
+        type: formData.type,
         ownerId: formData.ownerId,
         lastReviewDate: formatDatetime(formData.lastReviewDate),
         dueDate: formatDatetime(formData.dueDate),
@@ -169,6 +173,31 @@ export function CreateObligationDialog({
               placeholder={__("Enter regulator")}
               error={formState.errors.regulator?.message}
             />
+
+            <Field label={__("Type")}>
+              <Controller
+                control={control}
+                name="type"
+                render={({ field }) => (
+                  <Select
+                    variant="editor"
+                    placeholder={__("Select type")}
+                    onValueChange={field.onChange}
+                    value={field.value}
+                    className="w-full"
+                  >
+                    {typeOptions.map((option) => (
+                      <Option key={option.value} value={option.value}>
+                        {option.label}
+                      </Option>
+                    ))}
+                  </Select>
+                )}
+              />
+              {formState.errors.type && (
+                <p className="text-sm text-red-500 mt-1">{formState.errors.type.message}</p>
+              )}
+            </Field>
           </div>
 
           <div className="grid grid-cols-2 gap-4">

@@ -38,6 +38,7 @@ type (
 		Description            *string       `db:"description"`
 		Status                 ControlStatus `db:"status"`
 		ExclusionJustification *string       `db:"exclusion_justification"`
+		BestPractice           bool          `db:"best_practice"`
 		CreatedAt              time.Time     `db:"created_at"`
 		UpdatedAt              time.Time     `db:"updated_at"`
 	}
@@ -134,6 +135,7 @@ WITH ctrl AS (
 		c.description,
 		c.status,
 		c.exclusion_justification,
+		c.best_practice,
 		c.created_at,
 		c.updated_at,
 		c.search_vector
@@ -153,6 +155,7 @@ SELECT
 	description,
 	status,
 	exclusion_justification,
+	best_practice,
 	created_at,
 	updated_at
 FROM
@@ -245,6 +248,7 @@ WITH ctrl AS (
 		c.description,
 		c.status,
 		c.exclusion_justification,
+		c.best_practice,
 		c.created_at,
 		c.updated_at,
 		c.search_vector
@@ -264,6 +268,7 @@ SELECT
 	description,
 	status,
 	exclusion_justification,
+	best_practice,
 	created_at,
 	updated_at
 FROM
@@ -362,6 +367,7 @@ WITH ctrl AS (
 		c.description,
 		c.status,
 		c.exclusion_justification,
+		c.best_practice,
 		c.created_at,
 		c.updated_at,
 		c.search_vector
@@ -387,6 +393,7 @@ SELECT
 	description,
 	status,
 	exclusion_justification,
+	best_practice,
 	created_at,
 	updated_at
 FROM
@@ -467,6 +474,7 @@ SELECT
     description,
     status,
 	exclusion_justification,
+	best_practice,
     created_at,
     updated_at
 FROM
@@ -562,6 +570,7 @@ WITH ctrl AS (
 		c.description,
 		c.status,
 		c.exclusion_justification,
+		c.best_practice,
 		c.created_at,
 		c.updated_at,
 		c.search_vector
@@ -581,6 +590,7 @@ SELECT
 	description,
 	status,
 	exclusion_justification,
+	best_practice,
 	created_at,
 	updated_at
 FROM
@@ -628,6 +638,7 @@ SELECT
     description,
     status,
     exclusion_justification,
+    best_practice,
     created_at,
     updated_at
 FROM
@@ -677,6 +688,7 @@ SELECT
     description,
     status,
     exclusion_justification,
+    best_practice,
     created_at,
     updated_at
 FROM
@@ -726,6 +738,7 @@ INSERT INTO
         description,
         status,
         exclusion_justification,
+        best_practice,
         created_at,
         updated_at
     )
@@ -739,6 +752,7 @@ VALUES (
     @description,
 	@status,
 	@exclusion_justification,
+	@best_practice,
     @created_at,
     @updated_at
 );
@@ -754,6 +768,7 @@ VALUES (
 		"description":             c.Description,
 		"status":                  c.Status,
 		"exclusion_justification": c.ExclusionJustification,
+		"best_practice":           c.BestPractice,
 		"created_at":              c.CreatedAt,
 		"updated_at":              c.UpdatedAt,
 	}
@@ -808,6 +823,7 @@ UPDATE controls SET
     section_title = @section_title,
 	status = @status,
 	exclusion_justification = @exclusion_justification,
+	best_practice = @best_practice,
     updated_at = @updated_at
 WHERE %s
     AND id = @control_id
@@ -821,6 +837,7 @@ WHERE %s
 		"section_title":           c.SectionTitle,
 		"status":                  c.Status,
 		"exclusion_justification": c.ExclusionJustification,
+		"best_practice":           c.BestPractice,
 		"updated_at":              c.UpdatedAt,
 	}
 
@@ -905,6 +922,7 @@ WITH ctrl AS (
 		c.description,
 		c.status,
 		c.exclusion_justification,
+		c.best_practice,
 		c.created_at,
 		c.updated_at,
 		c.search_vector
@@ -924,6 +942,7 @@ SELECT
 	description,
 	status,
 	exclusion_justification,
+	best_practice,
 	created_at,
 	updated_at
 FROM
@@ -1017,6 +1036,7 @@ WITH ctrl AS (
 		c.description,
 		c.status,
 		c.exclusion_justification,
+		c.best_practice,
 		c.created_at,
 		c.updated_at,
 		c.search_vector
@@ -1036,6 +1056,7 @@ SELECT
 	description,
 	status,
 	exclusion_justification,
+	best_practice,
 	created_at,
 	updated_at
 FROM
@@ -1047,6 +1068,120 @@ WHERE %s
 	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.NamedArgs{"snapshot_id": snapshotID}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query controls: %w", err)
+	}
+
+	controls, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Control])
+	if err != nil {
+		return fmt.Errorf("cannot collect controls: %w", err)
+	}
+
+	*c = controls
+
+	return nil
+}
+
+func (c *Controls) CountByStateOfApplicabilityID(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	stateOfApplicabilityID gid.GID,
+	filter *ControlFilter,
+) (int, error) {
+	q := `
+WITH ctrl AS (
+	SELECT
+		c.id,
+		c.tenant_id,
+		c.search_vector
+	FROM
+		controls c
+	INNER JOIN
+		states_of_applicability_controls soac ON c.id = soac.control_id
+	WHERE
+		soac.state_of_applicability_id = @state_of_applicability_id
+)
+SELECT
+	COUNT(id)
+FROM
+	ctrl
+WHERE %s
+    AND %s
+`
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+
+	args := pgx.NamedArgs{"state_of_applicability_id": stateOfApplicabilityID}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
+
+	row := conn.QueryRow(ctx, q, args)
+
+	var count int
+	if err := row.Scan(&count); err != nil {
+		return 0, fmt.Errorf("cannot scan count: %w", err)
+	}
+
+	return count, nil
+}
+
+func (c *Controls) LoadByStateOfApplicabilityID(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	stateOfApplicabilityID gid.GID,
+	cursor *page.Cursor[ControlOrderField],
+	filter *ControlFilter,
+) error {
+	q := `
+WITH ctrl AS (
+	SELECT
+		c.id,
+		c.section_title,
+		c.framework_id,
+		c.organization_id,
+		c.tenant_id,
+		c.name,
+		c.description,
+		c.status,
+		c.exclusion_justification,
+		c.best_practice,
+		c.created_at,
+		c.updated_at,
+		c.search_vector
+	FROM
+		controls c
+	INNER JOIN
+		states_of_applicability_controls soac ON c.id = soac.control_id
+	WHERE
+		soac.state_of_applicability_id = @state_of_applicability_id
+)
+SELECT
+	id,
+	section_title,
+	framework_id,
+	organization_id,
+	name,
+	description,
+	status,
+	exclusion_justification,
+	best_practice,
+	created_at,
+	updated_at
+FROM
+	ctrl
+WHERE %s
+	AND %s
+	AND %s
+`
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
+
+	args := pgx.NamedArgs{"state_of_applicability_id": stateOfApplicabilityID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())

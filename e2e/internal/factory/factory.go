@@ -218,6 +218,7 @@ func CreateControl(c *testutil.Client, frameworkID string, attrs ...Attrs) strin
 		"description":  a.getString("description", "Test control description"),
 		"sectionTitle": a.getString("sectionTitle", fmt.Sprintf("Section %s", gofakeit.LetterN(3))),
 		"status":       a.getString("status", "INCLUDED"),
+		"bestPractice": a.getBool("bestPractice", true),
 	}
 
 	var result struct {
@@ -389,9 +390,9 @@ func CreatePeople(c *testutil.Client, attrs ...Attrs) string {
 	`
 
 	input := map[string]any{
-		"organizationId":          c.GetOrganizationID().String(),
+		"organizationId":           c.GetOrganizationID().String(),
 		"fullName":                 a.getString("fullName", SafeName("Person")),
-		"primaryEmailAddress":     a.getString("primaryEmailAddress", SafeEmail()),
+		"primaryEmailAddress":      a.getString("primaryEmailAddress", SafeEmail()),
 		"additionalEmailAddresses": a.getSlice("additionalEmailAddresses", []string{}),
 		"kind":                     a.getString("kind", "EMPLOYEE"),
 	}
@@ -495,6 +496,11 @@ func (b *ControlBuilder) WithSectionTitle(title string) *ControlBuilder {
 
 func (b *ControlBuilder) WithStatus(status string) *ControlBuilder {
 	b.attrs["status"] = status
+	return b
+}
+
+func (b *ControlBuilder) WithBestPractice(bestPractice bool) *ControlBuilder {
+	b.attrs["bestPractice"] = bestPractice
 	return b
 }
 

@@ -329,9 +329,7 @@ func (s *TransferImpactAssessmentService) ExportPDF(
 			horizontalLogoBase64 := ""
 			if organization.HorizontalLogoFileID != nil {
 				fileRecord := &coredata.File{}
-				fileErr := s.svc.pg.WithConn(ctx, func(conn pg.Conn) error {
-					return fileRecord.LoadByID(ctx, conn, s.svc.scope, *organization.HorizontalLogoFileID)
-				})
+				fileErr := fileRecord.LoadByID(ctx, conn, s.svc.scope, *organization.HorizontalLogoFileID)
 				if fileErr == nil {
 					base64Data, mimeType, logoErr := s.svc.fileManager.GetFileBase64(ctx, fileRecord)
 					if logoErr == nil {

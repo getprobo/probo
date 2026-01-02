@@ -1759,6 +1759,13 @@ components:
         - COMPLIANT
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ObligationStatus
 
+    ObligationType:
+      type: string
+      enum:
+        - LEGAL
+        - CONTRACTUAL
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ObligationType
+
     ObligationOrderField:
       type: string
       enum:
@@ -1921,6 +1928,7 @@ components:
         - organization_id
         - owner_id
         - status
+        - type
       properties:
         organization_id:
           $ref: "#/components/schemas/GID"
@@ -1958,6 +1966,13 @@ components:
             - type: "null"
               description: No status
           description: Status
+        type:
+          anyOf:
+            - $ref: "#/components/schemas/ObligationType"
+              description: Obligation type
+            - type: "null"
+              description: No type
+          description: Type
 
     AddObligationOutput:
       type: object
@@ -2018,6 +2033,13 @@ components:
             - type: "null"
               description: No status
           description: Status
+        type:
+          anyOf:
+            - $ref: "#/components/schemas/ObligationType"
+              description: Obligation type
+            - type: "null"
+              description: No type
+          description: Type
 
     UpdateObligationOutput:
       type: object
@@ -3150,6 +3172,7 @@ components:
         - OBLIGATIONS
         - CONTINUAL_IMPROVEMENTS
         - PROCESSING_ACTIVITIES
+        - STATES_OF_APPLICABILITY
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.SnapshotsType
 
     SnapshotOrderField:

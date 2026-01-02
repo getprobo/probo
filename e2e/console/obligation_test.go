@@ -69,6 +69,7 @@ func TestObligation_Create(t *testing.T) {
 			"regulator":      "ICO",
 			"ownerId":        peopleID,
 			"status":         "NON_COMPLIANT",
+			"type":           "LEGAL",
 		},
 	}, &result)
 	require.NoError(t, err)
@@ -115,6 +116,7 @@ func TestObligation_Update(t *testing.T) {
 			"area":           "Original Area",
 			"ownerId":        peopleID,
 			"status":         "NON_COMPLIANT",
+			"type":           "LEGAL",
 		},
 	}, &createResult)
 	require.NoError(t, err)
@@ -191,6 +193,7 @@ func TestObligation_Delete(t *testing.T) {
 			"area":           "Obligation to Delete",
 			"ownerId":        peopleID,
 			"status":         "NON_COMPLIANT",
+			"type":           "LEGAL",
 		},
 	}, &createResult)
 	require.NoError(t, err)
@@ -256,6 +259,7 @@ func TestObligation_List(t *testing.T) {
 				"area":           area,
 				"ownerId":        peopleID,
 				"status":         "NON_COMPLIANT",
+				"type":           "LEGAL",
 			},
 		}, &result)
 		require.NoError(t, err)
@@ -342,6 +346,7 @@ func TestObligation_StatusValues(t *testing.T) {
 					"area":           "Status Test " + status,
 					"ownerId":        peopleID,
 					"status":         status,
+					"type":           "LEGAL",
 				},
 			}, &result)
 			require.NoError(t, err)

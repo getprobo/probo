@@ -39,6 +39,7 @@ type (
 		SectionTitle           string
 		Status                 *coredata.ControlStatus
 		ExclusionJustification *string
+		BestPractice           bool
 	}
 
 	UpdateControlRequest struct {
@@ -48,6 +49,7 @@ type (
 		SectionTitle           *string
 		Status                 *coredata.ControlStatus
 		ExclusionJustification *string
+		BestPractice           *bool
 	}
 )
 
@@ -587,6 +589,81 @@ func (s ControlService) DeleteAuditMapping(
 	return control, audit, nil
 }
 
+func (s ControlService) CreateObligationMapping(
+	ctx context.Context,
+	controlID gid.GID,
+	obligationID gid.GID,
+) (*coredata.Control, *coredata.Obligation, error) {
+	control := &coredata.Control{}
+	obligation := &coredata.Obligation{}
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := control.LoadByID(ctx, conn, s.svc.scope, controlID); err != nil {
+				return fmt.Errorf("cannot load control: %w", err)
+			}
+
+			if err := obligation.LoadByID(ctx, conn, s.svc.scope, obligationID); err != nil {
+				return fmt.Errorf("cannot load obligation: %w", err)
+			}
+
+			controlObligation := &coredata.ControlObligation{
+				ControlID:    controlID,
+				ObligationID: obligationID,
+				CreatedAt:    time.Now(),
+			}
+
+			if err := controlObligation.Upsert(ctx, conn, s.svc.scope); err != nil {
+				return fmt.Errorf("cannot create control obligation mapping: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return control, obligation, nil
+}
+
+func (s ControlService) DeleteObligationMapping(
+	ctx context.Context,
+	controlID gid.GID,
+	obligationID gid.GID,
+) (*coredata.Control, *coredata.Obligation, error) {
+	control := &coredata.Control{}
+	obligation := &coredata.Obligation{}
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := control.LoadByID(ctx, conn, s.svc.scope, controlID); err != nil {
+				return fmt.Errorf("cannot load control: %w", err)
+			}
+
+			if err := obligation.LoadByID(ctx, conn, s.svc.scope, obligationID); err != nil {
+				return fmt.Errorf("cannot load obligation: %w", err)
+			}
+
+			controlObligation := &coredata.ControlObligation{}
+			if err := controlObligation.Delete(ctx, conn, s.svc.scope, control.ID, obligation.ID); err != nil {
+				return fmt.Errorf("cannot delete control obligation mapping: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, nil, fmt.Errorf("cannot delete control obligation mapping: %w", err)
+	}
+
+	return control, obligation, nil
+}
+
 func (s ControlService) ListForAuditID(
 	ctx context.Context,
 	auditID gid.GID,
@@ -723,6 +800,63 @@ func (s ControlService) ListForSnapshotID(
 	return page.NewPage([]*coredata.Control(controls), cursor), nil
 }
 
+func (s ControlService) CountForStateOfApplicabilityID(
+	ctx context.Context,
+	stateOfApplicabilityID gid.GID,
+	filter *coredata.ControlFilter,
+) (int, error) {
+	var count int
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) (err error) {
+			controls := &coredata.Controls{}
+			count, err = controls.CountByStateOfApplicabilityID(ctx, conn, s.svc.scope, stateOfApplicabilityID, filter)
+			if err != nil {
+				return fmt.Errorf("cannot count controls: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return 0, fmt.Errorf("cannot count controls: %w", err)
+	}
+
+	return count, nil
+}
+
+func (s ControlService) ListForStateOfApplicabilityID(
+	ctx context.Context,
+	stateOfApplicabilityID gid.GID,
+	cursor *page.Cursor[coredata.ControlOrderField],
+	filter *coredata.ControlFilter,
+) (*page.Page[*coredata.Control, coredata.ControlOrderField], error) {
+	var controls coredata.Controls
+	stateOfApplicability := &coredata.StateOfApplicability{}
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := stateOfApplicability.LoadByID(ctx, conn, s.svc.scope, stateOfApplicabilityID); err != nil {
+				return fmt.Errorf("cannot load state of applicability: %w", err)
+			}
+			if err := controls.LoadByStateOfApplicabilityID(ctx, conn, s.svc.scope, stateOfApplicabilityID, cursor, filter); err != nil {
+				return fmt.Errorf("cannot load controls: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return page.NewPage([]*coredata.Control(controls), cursor), nil
+}
+
 func (s ControlService) Create(
 	ctx context.Context,
 	req CreateControlRequest,
@@ -742,6 +876,7 @@ func (s ControlService) Create(
 		SectionTitle:           req.SectionTitle,
 		Status:                 *req.Status,
 		ExclusionJustification: req.ExclusionJustification,
+		BestPractice:           req.BestPractice,
 		CreatedAt:              now,
 		UpdatedAt:              now,
 	}
@@ -820,6 +955,10 @@ func (s ControlService) Update(
 
 		if req.ExclusionJustification != nil {
 			control.ExclusionJustification = req.ExclusionJustification
+		}
+
+		if req.BestPractice != nil {
+			control.BestPractice = *req.BestPractice
 		}
 
 		control.UpdatedAt = time.Now()

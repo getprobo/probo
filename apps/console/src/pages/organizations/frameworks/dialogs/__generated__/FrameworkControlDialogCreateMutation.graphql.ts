@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<7985268ac23df51ae6187b72c4f33d83>>
+ * @generated SignedSource<<35c2c66dca0c895c7abca2b0f4917a68>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,6 +12,7 @@ import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type ControlStatus = "EXCLUDED" | "INCLUDED";
 export type CreateControlInput = {
+  bestPractice: boolean;
   description?: string | null | undefined;
   exclusionJustification?: string | null | undefined;
   frameworkId: string;
@@ -181,6 +182,13 @@ return {
                     "kind": "ScalarField",
                     "name": "exclusionJustification",
                     "storageKey": null
+                  },
+                  {
+                    "alias": null,
+                    "args": null,
+                    "kind": "ScalarField",
+                    "name": "bestPractice",
+                    "storageKey": null
                   }
                 ],
                 "storageKey": null
@@ -210,12 +218,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "3df2d5a0a51c774ccf711423e947093d",
+    "cacheID": "81df1f9c65937d3e387edffc6e9a28ac",
     "id": null,
     "metadata": {},
     "name": "FrameworkControlDialogCreateMutation",
     "operationKind": "mutation",
-    "text": "mutation FrameworkControlDialogCreateMutation(\n  $input: CreateControlInput!\n) {\n  createControl(input: $input) {\n    controlEdge {\n      node {\n        ...FrameworkControlDialogFragment\n        id\n      }\n    }\n  }\n}\n\nfragment FrameworkControlDialogFragment on Control {\n  id\n  name\n  description\n  sectionTitle\n  status\n  exclusionJustification\n}\n"
+    "text": "mutation FrameworkControlDialogCreateMutation(\n  $input: CreateControlInput!\n) {\n  createControl(input: $input) {\n    controlEdge {\n      node {\n        ...FrameworkControlDialogFragment\n        id\n      }\n    }\n  }\n}\n\nfragment FrameworkControlDialogFragment on Control {\n  id\n  name\n  description\n  sectionTitle\n  status\n  exclusionJustification\n  bestPractice\n}\n"
   }
 };
 })();

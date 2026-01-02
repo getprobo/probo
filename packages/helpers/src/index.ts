@@ -53,6 +53,10 @@ export {
     getObligationStatusOptions,
 } from "./obligationStatus";
 export {
+    getObligationTypeLabel,
+    getObligationTypeOptions,
+} from "./obligationType";
+export {
     getTrustCenterVisibilityVariant,
     getTrustCenterVisibilityLabel,
     getTrustCenterVisibilityOptions,

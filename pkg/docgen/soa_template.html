@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>State of Applicability</title>
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 2.5cm;
+            @bottom-right {
+                content: "Page " counter(page) " of " counter(pages);
+                font-family: Arial, sans-serif;
+                font-size: 9pt;
+                color: #666;
+            }
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 7.5pt;
+            line-height: 1.4;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background: white;
+        }
+
+        /* Cover page */
+        .cover-page {
+            page-break-after: always;
+        }
+
+        .company-header {
+            margin-bottom: 30px;
+            page-break-after: avoid;
+        }
+
+        .company-logo {
+            max-height: 50px;
+            max-width: 250px;
+            object-fit: contain;
+            display: block;
+        }
+
+        .export-title {
+            font-size: 22pt;
+            font-weight: normal;
+            color: #1a1a1a;
+            margin: 0 0 25px 0;
+            text-align: left;
+        }
+
+        .export-subtitle {
+            font-size: 18pt;
+            font-weight: normal;
+            color: #1a1a1a;
+            margin: 0 0 25px 0;
+            text-align: left;
+        }
+
+        .document-meta {
+            margin: 0 0 30px 0;
+            font-size: 9pt;
+        }
+
+        .meta-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid #333;
+        }
+
+        .meta-table td {
+            padding: 6px 8px;
+            border: 1px solid #333;
+            vertical-align: middle;
+        }
+
+        .meta-table td:first-child {
+            font-weight: 600;
+            width: 25%;
+            background: #f8f8f8;
+            color: #333;
+        }
+
+        .classification {
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .purpose-section {
+            margin: 30px 0;
+            page-break-after: avoid;
+        }
+
+        .purpose-title {
+            font-size: 15pt;
+            font-weight: bold;
+            color: #000;
+            margin: 0 0 15px 0;
+            page-break-after: avoid;
+        }
+
+        .purpose-text {
+            font-size: 10pt;
+            color: #333;
+            line-height: 1.5;
+            text-align: justify;
+        }
+
+        /* Controls page */
+        .controls-page {
+            page-break-before: always;
+        }
+
+        .controls-title {
+            font-size: 15pt;
+            font-weight: bold;
+            color: #000;
+            margin: 0 0 15px 0;
+            page-break-after: avoid;
+        }
+
+        .controls-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 8pt;
+            margin-top: 10px;
+        }
+
+        .controls-table th,
+        .controls-table td {
+            padding: 5px 6px;
+            text-align: left;
+            border: 1px solid #ddd;
+            vertical-align: top;
+        }
+
+        .controls-table th {
+            background: #f5f5f5;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .controls-table tr {
+            page-break-inside: avoid;
+        }
+
+        .section-tag {
+            display: inline-block;
+            background: #e0e0e0;
+            color: #333;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-size: 7pt;
+            font-weight: 500;
+            margin-right: 5px;
+        }
+
+        .state-tag {
+            display: inline-block;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-size: 8pt;
+            font-weight: 500;
+        }
+
+        .state-tag-success {
+            background: #eefadc;
+            color: #5d770d;
+        }
+
+        .state-tag-warning {
+            background: #fff4d5;
+            color: #ad5700;
+        }
+
+        .state-tag-danger {
+            background: #ffefef;
+            color: #cd2b31;
+        }
+
+        /* Annex page */
+        .annex-page {
+            page-break-before: always;
+        }
+
+        .annex-title {
+            font-size: 15pt;
+            font-weight: bold;
+            color: #000;
+            margin: 0 0 15px 0;
+            page-break-after: avoid;
+        }
+
+        .annex-section {
+            margin-bottom: 20px;
+        }
+
+        .annex-section-title {
+            font-size: 13pt;
+            font-weight: bold;
+            color: #000;
+            margin: 15px 0 10px 0;
+        }
+
+        .annex-subsection-title {
+            font-size: 10pt;
+            font-weight: bold;
+            color: #333;
+            margin: 12px 0 8px 0;
+        }
+
+        .annex-enum-list {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+
+        .annex-enum-item {
+            margin-bottom: 8px;
+            font-size: 10pt;
+            line-height: 1.5;
+        }
+
+        .annex-enum-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .annex-enum-description {
+            color: #000;
+            margin-left: 5px;
+        }
+
+        /* Prevent bad page breaks */
+        h1, h2, h3, h4, h5, h6 {
+            page-break-after: avoid;
+            page-break-inside: avoid;
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="cover-page">
+        <div class="company-header">
+            {{- if .CompanyHorizontalLogoBase64}}
+            {{imgTag .CompanyHorizontalLogoBase64 "Company Logo" "company-logo"}}
+            {{- end}}
+        </div>
+
+        <h1 class="export-title">State of Applicability</h1>
+        <h2 class="export-subtitle">{{.Title}}</h2>
+
+        <div class="document-meta">
+            <table class="meta-table">
+                <tr>
+                    <td>Classification</td>
+                    <td>
+                        <span class="classification">CONFIDENTIAL</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Approver</td>
+                    <td>{{.Approver}}</td>
+                </tr>
+                <tr>
+                    <td>Version</td>
+                    <td>{{.Version}}</td>
+                </tr>
+                <tr>
+                    <td>Published</td>
+                    <td>{{.PublishedAt.Format "January 2, 2006"}}</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="purpose-section">
+            <div class="purpose-title">1. Purpose</div>
+            <div class="purpose-text">
+                This document provides a comprehensive overview of the state of applicability for controls within the organization.
+                It serves as a record of which controls are applicable or not applicable to the organization, along with their
+                relationships to regulatory requirements, contractual obligations, risk assessments, and best practices.
+            </div>
+        </div>
+    </div>
+
+    {{- if .FrameworkGroups}}
+    <div class="controls-page">
+        <h1 class="controls-title">2. Controls</h1>
+        <table class="controls-table">
+            <thead>
+                <tr>
+                    <th rowspan="2" style="width: 12%;">Framework</th>
+                    <th rowspan="2" style="width: 24%;">Control</th>
+                    <th rowspan="2" style="width: 9%;">Applicability</th>
+                    <th rowspan="2" style="width: 17%;">Justification</th>
+                    <th colspan="4" style="width: 38%; text-align: center;">Justification for inclusion</th>
+                </tr>
+                <tr>
+                    <th style="width: 8%;">Regulatory</th>
+                    <th style="width: 8%;">Contractual</th>
+                    <th style="width: 10%;">Best Practice</th>
+                    <th style="width: 12%;">Risk Assessment</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{- range $group := .FrameworkGroups}}
+                    {{- range $group.Controls}}
+                    <tr>
+                        <td>{{$group.FrameworkName}}</td>
+                        <td><span class="section-tag">{{.SectionTitle}}</span>{{.Name}}</td>
+                        <td>
+                            {{- $state := boolToYesNo .Applicability}}
+                            {{- if eq $state "yes"}}
+                            <span class="state-tag state-tag-success">Yes</span>
+                            {{- else if eq $state "no"}}
+                            <span class="state-tag state-tag-danger">No</span>
+                            {{- else}}
+                            <span class="state-tag">-</span>
+                            {{- end}}
+                        </td>
+                        <td>
+                            {{- if .Justification}}
+                            {{.Justification}}
+                            {{- else}}
+                            -
+                            {{- end}}
+                        </td>
+                        <td>{{boolToYesNoDash .Regulatory}}</td>
+                        <td>{{boolToYesNoDash .Contractual}}</td>
+                        <td>
+                            {{- if .Applicability}}
+                                {{- if and .Applicability .BestPractice}}
+                                Yes
+                                {{- else if .Applicability}}
+                                No
+                                {{- else}}
+                                -
+                                {{- end}}
+                            {{- else}}
+                            -
+                            {{- end}}
+                        </td>
+                        <td>{{boolToYesNoDash .RiskAssessment}}</td>
+                    </tr>
+                    {{- end}}
+                {{- end}}
+            </tbody>
+        </table>
+    </div>
+    {{- end}}
+
+    <div class="annex-page">
+        <h1 class="annex-title">3. Annexes</h1>
+
+        <div class="annex-section">
+            <div class="annex-section-title">3.1 Column Definitions</div>
+        </div>
+
+        <div class="annex-section">
+            <div class="annex-subsection-title">Framework</div>
+            <ul class="annex-enum-list">
+                <li class="annex-enum-item">
+                    <span class="annex-enum-description">The name of the compliance framework or standard to which the control belongs (e.g., ISO 27001, SOC 2, GDPR).</span>
+                </li>
+            </ul>
+        </div>
+
+        <div class="annex-section">
+            <div class="annex-subsection-title">Control</div>
+            <ul class="annex-enum-list">
+                <li class="annex-enum-item">
+                    <span class="annex-enum-description">The specific control identifier and name within the framework, including its section reference.</span>
+                </li>
+            </ul>
+        </div>
+
+        <div class="annex-section">
+            <div class="annex-subsection-title">Applicability</div>
+            <ul class="annex-enum-list">
+                <li class="annex-enum-item">
+                    <span class="annex-enum-name">Yes:</span>
+                    <span class="annex-enum-description">The control is applicable to the organization.</span>
+                </li>
+                <li class="annex-enum-item">
+                    <span class="annex-enum-name">No:</span>
+                    <span class="annex-enum-description">The control is not applicable to the organization (with justification provided).</span>
+                </li>
+            </ul>
+        </div>
+
+        <div class="annex-section">
+            <div class="annex-subsection-title">Justification</div>
+            <ul class="annex-enum-list">
+                <li class="annex-enum-item">
+                    <span class="annex-enum-description">Provides the rationale when a control is not applicable. This field is empty for applicable controls.</span>
+                </li>
+            </ul>
+        </div>
+
+        <div class="annex-section">
+            <div class="annex-subsection-title">Justification for inclusion</div>
+            <div class="annex-enum-description" style="margin-bottom: 12px;">
+                For applicable controls, this section provides additional context on why the control is included, based on regulatory requirements, contractual obligations, best practices, or risk assessments.
+            </div>
+
+            <div style="margin-left: 20px;">
+                <div class="annex-subsection-title" style="font-size: 9pt; margin-top: 10px;">Regulatory</div>
+                <ul class="annex-enum-list">
+                    <li class="annex-enum-item">
+                        <span class="annex-enum-name">Yes:</span>
+                        <span class="annex-enum-description">The control is linked to one or more legal or regulatory obligations.</span>
+                    </li>
+                    <li class="annex-enum-item">
+                        <span class="annex-enum-name">No:</span>
+                        <span class="annex-enum-description">The control is not associated with any legal or regulatory obligations.</span>
+                    </li>
+                    <li class="annex-enum-item">
+                        <span class="annex-enum-name">-:</span>
+                        <span class="annex-enum-description">Not applicable (control is not applicable).</span>
+                    </li>
+                </ul>
+
+                <div class="annex-subsection-title" style="font-size: 9pt; margin-top: 10px;">Contractual</div>
+                <ul class="annex-enum-list">
+                    <li class="annex-enum-item">
+                        <span class="annex-enum-name">Yes:</span>
+                        <span class="annex-enum-description">The control is linked to one or more contractual obligations.</span>
+                    </li>
+                    <li class="annex-enum-item">
+                        <span class="annex-enum-name">No:</span>
+                        <span class="annex-enum-description">The control is not associated with any contractual obligations.</span>
+                    </li>
+                    <li class="annex-enum-item">
+                        <span class="annex-enum-name">-:</span>
+                        <span class="annex-enum-description">Not applicable (control is not applicable).</span>
+                    </li>
+                </ul>
+
+                <div class="annex-subsection-title" style="font-size: 9pt; margin-top: 10px;">Best Practice</div>
+                <ul class="annex-enum-list">
+                    <li class="annex-enum-item">
+                        <span class="annex-enum-name">Yes:</span>
+                        <span class="annex-enum-description">The control is designated as a best practice recommendation.</span>
+                    </li>
+                    <li class="annex-enum-item">
+                        <span class="annex-enum-name">No:</span>
+                        <span class="annex-enum-description">The control is not designated as a best practice.</span>
+                    </li>
+                    <li class="annex-enum-item">
+                        <span class="annex-enum-name">-:</span>
+                        <span class="annex-enum-description">Not applicable (control is not applicable).</span>
+                    </li>
+                </ul>
+
+                <div class="annex-subsection-title" style="font-size: 9pt; margin-top: 10px;">Risk Assessment</div>
+                <ul class="annex-enum-list">
+                    <li class="annex-enum-item">
+                        <span class="annex-enum-name">Yes:</span>
+                        <span class="annex-enum-description">The control is associated with one or more identified risks through risk mitigation measures.</span>
+                    </li>
+                    <li class="annex-enum-item">
+                        <span class="annex-enum-name">No:</span>
+                        <span class="annex-enum-description">The control is not currently associated with any identified risks.</span>
+                    </li>
+                    <li class="annex-enum-item">
+                        <span class="annex-enum-name">-:</span>
+                        <span class="annex-enum-description">Not applicable (control is not applicable).</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

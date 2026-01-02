@@ -20,10 +20,10 @@ import (
 	"maps"
 	"time"
 
-	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/page"
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 )
 
 type (
@@ -39,6 +39,7 @@ type (
 		LastReviewDate         *time.Time       `db:"last_review_date"`
 		DueDate                *time.Time       `db:"due_date"`
 		Status                 ObligationStatus `db:"status"`
+		Type                   ObligationType   `db:"type"`
 		SnapshotID             *gid.GID         `db:"snapshot_id"`
 		SourceID               *gid.GID         `db:"source_id"`
 		CreatedAt              time.Time        `db:"created_at"`
@@ -84,6 +85,7 @@ SELECT
 	last_review_date,
 	due_date,
 	status,
+	type,
 	created_at,
 	updated_at
 FROM
@@ -216,6 +218,7 @@ SELECT
 	last_review_date,
 	due_date,
 	status,
+	type,
 	snapshot_id,
 	source_id,
 	created_at,
@@ -273,6 +276,7 @@ WITH obls AS (
 		o.last_review_date,
 		o.due_date,
 		o.status,
+		o.type,
 		o.snapshot_id,
 		o.source_id,
 		o.created_at,
@@ -298,6 +302,7 @@ SELECT
 	last_review_date,
 	due_date,
 	status,
+	type,
 	snapshot_id,
 	source_id,
 	created_at,
@@ -312,6 +317,131 @@ WHERE %s
 	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"risk_id": riskID}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query obligations: %w", err)
+	}
+
+	obligations, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Obligation])
+	if err != nil {
+		return fmt.Errorf("cannot collect obligations: %w", err)
+	}
+
+	*os = obligations
+
+	return nil
+}
+
+func (os *Obligations) CountByControlID(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	controlID gid.GID,
+	filter *ObligationFilter,
+) (int, error) {
+	q := `
+WITH obls AS (
+	SELECT
+		o.id,
+		o.tenant_id,
+		o.snapshot_id
+	FROM
+		obligations o
+	INNER JOIN
+		controls_obligations co ON o.id = co.obligation_id
+	WHERE
+		co.control_id = @control_id
+)
+SELECT
+	COUNT(id)
+FROM
+	obls
+WHERE %s
+	AND %s
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"control_id": controlID}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
+
+	row := conn.QueryRow(ctx, q, args)
+
+	var count int
+	err := row.Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("cannot count obligations: %w", err)
+	}
+
+	return count, nil
+}
+
+func (os *Obligations) LoadByControlID(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	controlID gid.GID,
+	cursor *page.Cursor[ObligationOrderField],
+	filter *ObligationFilter,
+) error {
+	q := `
+WITH obls AS (
+	SELECT
+		o.id,
+		o.organization_id,
+		o.area,
+		o.source,
+		o.requirement,
+		o.actions_to_be_implemented,
+		o.regulator,
+		o.owner_id,
+		o.last_review_date,
+		o.due_date,
+		o.status,
+		o.type,
+		o.snapshot_id,
+		o.source_id,
+		o.created_at,
+		o.updated_at,
+		o.tenant_id
+	FROM
+		obligations o
+	INNER JOIN
+		controls_obligations co ON o.id = co.obligation_id
+	WHERE
+		co.control_id = @control_id
+)
+SELECT
+	id,
+	organization_id,
+	area,
+	source,
+	requirement,
+	actions_to_be_implemented,
+	regulator,
+	owner_id,
+	last_review_date,
+	due_date,
+	status,
+	type,
+	snapshot_id,
+	source_id,
+	created_at,
+	updated_at
+FROM
+	obls
+WHERE %s
+	AND %s
+	AND %s
+`
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
+
+	args := pgx.NamedArgs{"control_id": controlID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
@@ -350,6 +480,7 @@ INSERT INTO obligations (
 	last_review_date,
 	due_date,
 	status,
+	type,
 	snapshot_id,
 	source_id,
 	created_at,
@@ -367,6 +498,7 @@ INSERT INTO obligations (
 	@last_review_date,
 	@due_date,
 	@status,
+	@type,
 	@snapshot_id,
 	@source_id,
 	@created_at,
@@ -387,6 +519,7 @@ INSERT INTO obligations (
 		"last_review_date":          o.LastReviewDate,
 		"due_date":                  o.DueDate,
 		"status":                    o.Status,
+		"type":                      o.Type,
 		"snapshot_id":               o.SnapshotID,
 		"source_id":                 o.SourceID,
 		"created_at":                o.CreatedAt,
@@ -417,6 +550,7 @@ UPDATE obligations SET
 	last_review_date = @last_review_date,
 	due_date = @due_date,
 	status = @status,
+	type = @type,
 	updated_at = @updated_at
 WHERE
 	%s
@@ -437,6 +571,7 @@ WHERE
 		"last_review_date":          o.LastReviewDate,
 		"due_date":                  o.DueDate,
 		"status":                    o.Status,
+		"type":                      o.Type,
 		"updated_at":                o.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
@@ -492,6 +627,7 @@ INSERT INTO obligations (
 	last_review_date,
 	due_date,
 	status,
+	type,
 	created_at,
 	updated_at
 )
@@ -510,6 +646,7 @@ SELECT
 	o.last_review_date,
 	o.due_date,
 	o.status,
+	o.type,
 	o.created_at,
 	o.updated_at
 FROM obligations o

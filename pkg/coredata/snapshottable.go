@@ -18,8 +18,8 @@ import (
 	"context"
 	"fmt"
 
-	"go.probo.inc/probo/pkg/gid"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/gid"
 )
 
 type Snapshottable interface {
@@ -44,6 +44,8 @@ func GetSnapshottable(snapshotType SnapshotsType) (Snapshottable, error) {
 		return ProcessingActivities{}, nil
 	case SnapshotsTypeVendors:
 		return Vendors{}, nil
+	case SnapshotsTypeStatesOfApplicability:
+		return StatesOfApplicability{}, nil
 	default:
 		return nil, fmt.Errorf("unsupported snapshot type: %s", snapshotType)
 	}

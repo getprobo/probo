@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<6c659dc34af3bc7107a55d45f49075b5>>
+ * @generated SignedSource<<46f875946badbe73d5c1ab10f442763d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,6 +10,7 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 export type ObligationStatus = "COMPLIANT" | "NON_COMPLIANT" | "PARTIALLY_COMPLIANT";
+export type ObligationType = "CONTRACTUAL" | "LEGAL";
 export type CreateObligationInput = {
   actionsToBeImplemented?: string | null | undefined;
   area?: string | null | undefined;
@@ -21,6 +22,7 @@ export type CreateObligationInput = {
   requirement?: string | null | undefined;
   source?: string | null | undefined;
   status: ObligationStatus;
+  type: ObligationType;
 };
 export type ObligationGraphCreateMutation$variables = {
   connections: ReadonlyArray<string>;
@@ -44,6 +46,7 @@ export type ObligationGraphCreateMutation$data = {
         readonly requirement: string | null | undefined;
         readonly source: string | null | undefined;
         readonly status: ObligationStatus;
+        readonly type: ObligationType;
       };
     };
   };
@@ -128,6 +131,13 @@ v4 = {
           "args": null,
           "kind": "ScalarField",
           "name": "regulator",
+          "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "type",
           "storageKey": null
         },
         {
@@ -249,16 +259,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "76eae037102523c7378b07856332c9ff",
+    "cacheID": "495da8600659a64f5d59ed86a56c8762",
     "id": null,
     "metadata": {},
     "name": "ObligationGraphCreateMutation",
     "operationKind": "mutation",
-    "text": "mutation ObligationGraphCreateMutation(\n  $input: CreateObligationInput!\n) {\n  createObligation(input: $input) {\n    obligationEdge {\n      node {\n        id\n        area\n        source\n        requirement\n        actionsToBeImplemented\n        regulator\n        lastReviewDate\n        dueDate\n        status\n        owner {\n          id\n          fullName\n        }\n        createdAt\n      }\n    }\n  }\n}\n"
+    "text": "mutation ObligationGraphCreateMutation(\n  $input: CreateObligationInput!\n) {\n  createObligation(input: $input) {\n    obligationEdge {\n      node {\n        id\n        area\n        source\n        requirement\n        actionsToBeImplemented\n        regulator\n        type\n        lastReviewDate\n        dueDate\n        status\n        owner {\n          id\n          fullName\n        }\n        createdAt\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "f3d8ddbef3566e26b3fe65543d93d07d";
+(node as any).hash = "e28cc6399325e7288ce7a71d3400acdb";
 
 export default node;

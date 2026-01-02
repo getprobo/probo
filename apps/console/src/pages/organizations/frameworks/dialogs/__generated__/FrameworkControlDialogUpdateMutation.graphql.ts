@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<7d04994d5cabbbfc12f82754e8da0d83>>
+ * @generated SignedSource<<7ee3c72e16fa86d6c006c004e4f93c95>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,6 +12,7 @@ import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type ControlStatus = "EXCLUDED" | "INCLUDED";
 export type UpdateControlInput = {
+  bestPractice?: boolean | null | undefined;
   description?: string | null | undefined;
   exclusionJustification?: string | null | undefined;
   id: string;
@@ -150,6 +151,13 @@ return {
                 "kind": "ScalarField",
                 "name": "exclusionJustification",
                 "storageKey": null
+              },
+              {
+                "alias": null,
+                "args": null,
+                "kind": "ScalarField",
+                "name": "bestPractice",
+                "storageKey": null
               }
             ],
             "storageKey": null
@@ -160,12 +168,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "cee79ce9185400bad478453c44930dd6",
+    "cacheID": "374c69b33dd6e94dec75829fe0777f58",
     "id": null,
     "metadata": {},
     "name": "FrameworkControlDialogUpdateMutation",
     "operationKind": "mutation",
-    "text": "mutation FrameworkControlDialogUpdateMutation(\n  $input: UpdateControlInput!\n) {\n  updateControl(input: $input) {\n    control {\n      ...FrameworkControlDialogFragment\n      id\n    }\n  }\n}\n\nfragment FrameworkControlDialogFragment on Control {\n  id\n  name\n  description\n  sectionTitle\n  status\n  exclusionJustification\n}\n"
+    "text": "mutation FrameworkControlDialogUpdateMutation(\n  $input: UpdateControlInput!\n) {\n  updateControl(input: $input) {\n    control {\n      ...FrameworkControlDialogFragment\n      id\n    }\n  }\n}\n\nfragment FrameworkControlDialogFragment on Control {\n  id\n  name\n  description\n  sectionTitle\n  status\n  exclusionJustification\n  bestPractice\n}\n"
   }
 };
 })();

@@ -41,7 +41,8 @@ type (
 		OwnerID                gid.GID
 		LastReviewDate         *time.Time
 		DueDate                *time.Time
-		Status                 *coredata.ObligationStatus
+		Status                 coredata.ObligationStatus
+		Type                   coredata.ObligationType
 	}
 
 	UpdateObligationRequest struct {
@@ -55,6 +56,7 @@ type (
 		LastReviewDate         **time.Time
 		DueDate                **time.Time
 		Status                 *coredata.ObligationStatus
+		Type                   *coredata.ObligationType
 	}
 )
 
@@ -69,6 +71,7 @@ func (cor *CreateObligationRequest) Validate() error {
 	v.Check(cor.Regulator, "regulator", validator.SafeText(TitleMaxLength))
 	v.Check(cor.OwnerID, "owner_id", validator.Required(), validator.GID(coredata.PeopleEntityType))
 	v.Check(cor.Status, "status", validator.OneOfSlice(coredata.ObligationStatuses()))
+	v.Check(cor.Type, "type", validator.OneOfSlice(coredata.ObligationTypes()))
 
 	return v.Error()
 }
@@ -84,6 +87,7 @@ func (uor *UpdateObligationRequest) Validate() error {
 	v.Check(uor.Regulator, "regulator", validator.SafeText(NameMaxLength))
 	v.Check(uor.OwnerID, "owner_id", validator.GID(coredata.PeopleEntityType))
 	v.Check(uor.Status, "status", validator.OneOfSlice(coredata.ObligationStatuses()))
+	v.Check(uor.Type, "type", validator.OneOfSlice(coredata.ObligationTypes()))
 
 	return v.Error()
 }
@@ -133,7 +137,8 @@ func (s *ObligationService) Create(
 		OwnerID:                req.OwnerID,
 		LastReviewDate:         req.LastReviewDate,
 		DueDate:                req.DueDate,
-		Status:                 *req.Status,
+		Status:                 req.Status,
+		Type:                   req.Type,
 		CreatedAt:              now,
 		UpdatedAt:              now,
 	}
@@ -223,6 +228,10 @@ func (s *ObligationService) Update(
 				obligation.Status = *req.Status
 			}
 
+			if req.Type != nil {
+				obligation.Type = *req.Type
+			}
+
 			obligation.UpdatedAt = time.Now()
 
 			if err := obligation.Update(ctx, conn, s.svc.scope); err != nil {
@@ -288,6 +297,38 @@ func (s ObligationService) CountForOrganizationID(
 	}
 
 	return count, nil
+}
+
+func (s ObligationService) ListForControlID(
+	ctx context.Context,
+	controlID gid.GID,
+	cursor *page.Cursor[coredata.ObligationOrderField],
+	filter *coredata.ObligationFilter,
+) (*page.Page[*coredata.Obligation, coredata.ObligationOrderField], error) {
+	var obligations coredata.Obligations
+	control := &coredata.Control{}
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := control.LoadByID(ctx, conn, s.svc.scope, controlID); err != nil {
+				return fmt.Errorf("cannot load control: %w", err)
+			}
+
+			err := obligations.LoadByControlID(ctx, conn, s.svc.scope, control.ID, cursor, filter)
+			if err != nil {
+				return fmt.Errorf("cannot load obligations: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return page.NewPage(obligations, cursor), nil
 }
 
 func (s ObligationService) ListForOrganizationID(

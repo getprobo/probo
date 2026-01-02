@@ -868,7 +868,8 @@ func (r *Resolver) AddObligationTool(ctx context.Context, req *mcp.CallToolReque
 			OwnerID:                input.OwnerID,
 			LastReviewDate:         input.LastReviewDate,
 			DueDate:                input.DueDate,
-			Status:                 input.Status,
+			Status:                 *input.Status,
+			Type:                   *input.Type,
 		},
 	)
 	if err != nil {
@@ -898,6 +899,7 @@ func (r *Resolver) UpdateObligationTool(ctx context.Context, req *mcp.CallToolRe
 			LastReviewDate:         UnwrapOmittable(input.LastReviewDate),
 			DueDate:                UnwrapOmittable(input.DueDate),
 			Status:                 input.Status,
+			Type:                   input.Type,
 		},
 	)
 	if err != nil {
