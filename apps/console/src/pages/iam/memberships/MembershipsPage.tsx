@@ -11,6 +11,7 @@ import { useMemo, useState } from "react";
 import { InvitationCard } from "./_components/InvitationCard";
 import { MembershipCard } from "./_components/MembershipCard";
 import type { MembershipsPageQuery } from "/__generated__/iam/MembershipsPageQuery.graphql";
+import { usePageTitle } from "@probo/hooks";
 
 export const membershipsPageQuery = graphql`
   query MembershipsPageQuery {
@@ -48,6 +49,8 @@ export function MembershipsPage(props: {
   const { __ } = useTranslate();
   const [search, setSearch] = useState("");
 
+  usePageTitle(__("Select an organization"));
+
   const { queryRef } = props;
   const {
     viewer: {
@@ -78,12 +81,7 @@ export function MembershipsPage(props: {
                 {__("Pending invitations")}
               </h2>
               {invitations.map(({ node }) => (
-                <InvitationCard
-                  key={node.id}
-                  fKey={node}
-                  // onAccept={handleAcceptInvitation}
-                  // isAccepting={isAccepting}
-                />
+                <InvitationCard key={node.id} fKey={node} />
               ))}
             </div>
           )}
