@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<5854e660d90c68e5ec01199e55c42a41>>
+ * @generated SignedSource<<70828342a675d5b198c87a4a00455155>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -197,10 +197,7 @@ v17 = {
       "storageKey": null
     }
   ]
-},
-v18 = [
-  "orderBy"
-];
+};
 return {
   "fragment": {
     "argumentDefinitions": (v0/*: any*/),
@@ -407,7 +404,9 @@ return {
               {
                 "alias": null,
                 "args": (v6/*: any*/),
-                "filters": (v18/*: any*/),
+                "filters": [
+                  "orderBy"
+                ],
                 "handle": "connection",
                 "key": "MemberListFragment_members",
                 "kind": "LinkedHandle",
@@ -493,7 +492,7 @@ return {
               {
                 "alias": null,
                 "args": (v6/*: any*/),
-                "filters": (v18/*: any*/),
+                "filters": [],
                 "handle": "connection",
                 "key": "InvitationListFragment_invitations",
                 "kind": "LinkedHandle",

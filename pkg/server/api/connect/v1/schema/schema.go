@@ -2615,7 +2615,6 @@ input InviteMemberInput {
   email: EmailAddr!
   fullName: String!
   role: MembershipRole!
-  createPeople: Boolean!
 }
 
 input UpdateMembershipInput {
@@ -12795,7 +12794,7 @@ func (ec *executionContext) unmarshalInputInviteMemberInput(ctx context.Context,
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"organizationId", "email", "fullName", "role", "createPeople"}
+	fieldsInOrder := [...]string{"organizationId", "email", "fullName", "role"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -12830,13 +12829,6 @@ func (ec *executionContext) unmarshalInputInviteMemberInput(ctx context.Context,
 				return it, err
 			}
 			it.Role = data
-		case "createPeople":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createPeople"))
-			data, err := ec.unmarshalNBoolean2bool(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.CreatePeople = data
 		}
 	}
 

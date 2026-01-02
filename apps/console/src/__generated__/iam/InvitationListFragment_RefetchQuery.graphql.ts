@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<6d84f6b0d10bbae09a14ecc5d84c2814>>
+ * @generated SignedSource<<26a05edf635e281469d5498e24879e00>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -355,9 +355,7 @@ return {
               {
                 "alias": null,
                 "args": (v13/*: any*/),
-                "filters": [
-                  "orderBy"
-                ],
+                "filters": [],
                 "handle": "connection",
                 "key": "InvitationListFragment_invitations",
                 "kind": "LinkedHandle",
@@ -383,6 +381,6 @@ return {
 };
 })();
 
-(node as any).hash = "837e567be489574a7f0350e26a8e5454";
+(node as any).hash = "6a1b77bc8b0e5f345de9865ec78ef7e9";
 
 export default node;

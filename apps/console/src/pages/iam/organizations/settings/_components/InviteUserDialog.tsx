@@ -8,7 +8,6 @@ import {
   Option,
   DialogFooter,
   Button,
-  Checkbox,
   useDialogRef,
 } from "@probo/ui";
 import { Controller } from "react-hook-form";
@@ -57,7 +56,6 @@ const schema = z.object({
   role: z
     .enum(["OWNER", "ADMIN", "FULL", "VIEWER", "AUDITOR", "EMPLOYEE"])
     .default("VIEWER"),
-  createPeople: z.boolean().default(false),
 });
 
 type InviteUserDialogProps = PropsWithChildren<{
@@ -85,13 +83,14 @@ export function InviteUserDialog(props: InviteUserDialogProps) {
 
   const { register, handleSubmit, formState, reset, control } =
     useFormWithSchema(schema, {
-      defaultValues: { role: "VIEWER", createPeople: false },
+      defaultValues: { role: "VIEWER" },
     });
 
   const onSubmit = handleSubmit((data) => {
     const connectionId = ConnectionHandler.getConnectionID(
       organizationId,
       "InvitationListFragment_invitations",
+      {},
     );
     inviteUser({
       variables: {
@@ -100,7 +99,6 @@ export function InviteUserDialog(props: InviteUserDialogProps) {
           email: data.email,
           fullName: data.fullName,
           role: data.role,
-          createPeople: data.createPeople,
         },
         connections: [connectionId],
       },
@@ -189,33 +187,6 @@ export function InviteUserDialog(props: InviteUserDialogProps) {
               )}
             />
           </Field>
-          <div className="space-y-2">
-            <div className="flex items-center space-x-3">
-              <Controller
-                name="createPeople"
-                control={control}
-                render={({ field }) => (
-                  <>
-                    <Checkbox
-                      checked={field.value ?? false}
-                      onChange={field.onChange}
-                    />
-                    <label
-                      className="text-sm font-medium cursor-pointer"
-                      onClick={() => field.onChange(!field.value)}
-                    >
-                      {__("Create people record")}
-                    </label>
-                  </>
-                )}
-              />
-            </div>
-            <p className="text-xs text-txt-secondary ml-7">
-              {__(
-                "Creates a people record for this user in addition to the user account",
-              )}
-            </p>
-          </div>
         </DialogContent>
         <DialogFooter>
           <Button type="submit" disabled={isInviting}>
