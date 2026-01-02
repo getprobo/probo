@@ -68,7 +68,7 @@ const routes = [
       },
       {
         path: "register",
-        Component: lazy(() => import("./pages/auth/RegisterPage")),
+        Component: lazy(() => import("./pages/iam/auth/SignUpPage")),
       },
       // {
       //   path: "confirm-email",
@@ -76,7 +76,9 @@ const routes = [
       // },
       {
         path: "signup-from-invitation",
-        Component: lazy(() => import("./pages/auth/SignupFromInvitationPage")),
+        Component: lazy(
+          () => import("./pages/iam/auth/SignUpFromInvitationPage"),
+        ),
       },
       {
         path: "forgot-password",

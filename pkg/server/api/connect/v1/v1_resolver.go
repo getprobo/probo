@@ -440,6 +440,7 @@ func (r *mutationResolver) SignUpFromInvitation(ctx context.Context, input types
 		&iam.CreateIdentityFromInvitationRequest{
 			InvitationToken: input.Token,
 			Password:        input.Password,
+			FullName:        input.FullName,
 		},
 	)
 	if err != nil {
