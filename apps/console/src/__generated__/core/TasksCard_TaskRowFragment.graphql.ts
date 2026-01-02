@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<8baf10554098b6b6a3084311dda31fb3>>
+ * @generated SignedSource<<49e625198e625fa4936d080e3c122c50>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -18,7 +18,7 @@ export type TasksCard_TaskRowFragment$data = {
   } | null | undefined;
   readonly canDelete: boolean;
   readonly canUpdate: boolean;
-  readonly deadline: any | null | undefined;
+  readonly deadline: string | null | undefined;
   readonly description: string | null | undefined;
   readonly id: string;
   readonly measure: {
@@ -27,7 +27,7 @@ export type TasksCard_TaskRowFragment$data = {
   } | null | undefined;
   readonly name: string;
   readonly state: TaskState;
-  readonly timeEstimate: any | null | undefined;
+  readonly timeEstimate: string | null | undefined;
   readonly " $fragmentType": "TasksCard_TaskRowFragment";
 };
 export type TasksCard_TaskRowFragment$key = {

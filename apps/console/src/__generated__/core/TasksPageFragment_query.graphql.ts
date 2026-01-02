@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<9c51ce30a6a5b894c53064c5e9248fd9>>
+ * @generated SignedSource<<81d11db9c3fc82ef3f0226332a6fe4f2>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -17,8 +17,8 @@ export type TaskOrder = {
   field: TaskOrderField;
 };
 export type TasksPageFragment_query$variables = {
-  after?: any | null | undefined;
-  before?: any | null | undefined;
+  after?: string | null | undefined;
+  before?: string | null | undefined;
   first?: number | null | undefined;
   id: string;
   last?: number | null | undefined;

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<eb9ce92b73884420f07e71096665149f>>
+ * @generated SignedSource<<903698144cc9c26d698f573b64544e17>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,7 +12,7 @@ import { ReaderFragment } from 'relay-runtime';
 export type AuditState = "COMPLETED" | "IN_PROGRESS" | "NOT_STARTED" | "OUTDATED" | "REJECTED";
 import { FragmentRefs } from "relay-runtime";
 export type LinkedAuditsCardFragment$data = {
-  readonly createdAt: any;
+  readonly createdAt: string;
   readonly framework: {
     readonly id: string;
     readonly name: string;
@@ -20,8 +20,8 @@ export type LinkedAuditsCardFragment$data = {
   readonly id: string;
   readonly name: string | null | undefined;
   readonly state: AuditState;
-  readonly validFrom: any | null | undefined;
-  readonly validUntil: any | null | undefined;
+  readonly validFrom: string | null | undefined;
+  readonly validUntil: string | null | undefined;
   readonly " $fragmentType": "LinkedAuditsCardFragment";
 };
 export type LinkedAuditsCardFragment$key = {

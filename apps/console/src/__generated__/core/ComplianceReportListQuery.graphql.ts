@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<5fd3a3293bd92112440eef3fd292fdc1>>
+ * @generated SignedSource<<5c8614e9d015da9e6d79c806b556de1d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -17,8 +17,8 @@ export type VendorComplianceReportOrder = {
   field: VendorComplianceReportOrderField;
 };
 export type ComplianceReportListQuery$variables = {
-  after?: any | null | undefined;
-  before?: any | null | undefined;
+  after?: string | null | undefined;
+  before?: string | null | undefined;
   first?: number | null | undefined;
   id: string;
   last?: number | null | undefined;

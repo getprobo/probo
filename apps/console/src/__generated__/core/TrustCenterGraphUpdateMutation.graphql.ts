@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<138afd21c62a2f7940b64b40c61e2014>>
+ * @generated SignedSource<<ed0bdb594d5d3c5324835d6d39f49a7e>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -21,7 +21,7 @@ export type TrustCenterGraphUpdateMutation$data = {
     readonly trustCenter: {
       readonly active: boolean;
       readonly id: string;
-      readonly updatedAt: any;
+      readonly updatedAt: string;
     };
   };
 };

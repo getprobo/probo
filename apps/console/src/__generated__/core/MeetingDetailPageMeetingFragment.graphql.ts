@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<dfda77f468e3df0f5b1f0c4501739cca>>
+ * @generated SignedSource<<02d4857a47adc2625d9cbdca077ea713>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -17,7 +17,7 @@ export type MeetingDetailPageMeetingFragment$data = {
   }>;
   readonly canDelete: boolean;
   readonly canUpdate: boolean;
-  readonly date: any;
+  readonly date: string;
   readonly id: string;
   readonly minutes: string | null | undefined;
   readonly name: string;

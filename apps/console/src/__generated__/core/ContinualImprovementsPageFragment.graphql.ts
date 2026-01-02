@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<0ddcefe367b8dfd3bb64b1891afc7e2e>>
+ * @generated SignedSource<<96a4e00e0e084578f763cf56aa89de2e>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -19,7 +19,7 @@ export type ContinualImprovementsPageFragment$data = {
       readonly node: {
         readonly canDelete: boolean;
         readonly canUpdate: boolean;
-        readonly createdAt: any;
+        readonly createdAt: string;
         readonly description: string | null | undefined;
         readonly id: string;
         readonly owner: {
@@ -32,12 +32,12 @@ export type ContinualImprovementsPageFragment$data = {
         readonly source: string | null | undefined;
         readonly sourceId: string | null | undefined;
         readonly status: ContinualImprovementStatus;
-        readonly targetDate: any | null | undefined;
-        readonly updatedAt: any;
+        readonly targetDate: string | null | undefined;
+        readonly updatedAt: string;
       };
     }>;
     readonly pageInfo: {
-      readonly endCursor: any | null | undefined;
+      readonly endCursor: string | null | undefined;
       readonly hasNextPage: boolean;
     };
     readonly totalCount: number;

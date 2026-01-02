@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<3d2709f51866093bcc78ec14501dae31>>
+ * @generated SignedSource<<18d4d04e3149486db39e2376613f845a>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -17,8 +17,8 @@ export type ObligationOrder = {
   field: ObligationOrderField;
 };
 export type LinkedObligationsDialogQuery_fragment$variables = {
-  after?: any | null | undefined;
-  before?: any | null | undefined;
+  after?: string | null | undefined;
+  before?: string | null | undefined;
   first?: number | null | undefined;
   id: string;
   last?: number | null | undefined;

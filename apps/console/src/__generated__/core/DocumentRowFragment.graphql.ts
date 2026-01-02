@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<74a0df62fb3bfbd741d69cc1b7c023bb>>
+ * @generated SignedSource<<c8b89765dcf362beef95c0f17902a77b>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -18,7 +18,7 @@ export type DocumentRowFragment$data = {
   readonly id: string;
   readonly signed: boolean;
   readonly title: string;
-  readonly updatedAt: any;
+  readonly updatedAt: string;
   readonly " $fragmentType": "DocumentRowFragment";
 };
 export type DocumentRowFragment$key = {

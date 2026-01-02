@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<fcbff663be406f4f85aef8bb7cb796d1>>
+ * @generated SignedSource<<a519c4a7c9b9c46e3f4b29a0025d1251>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -43,9 +43,9 @@ export type TrustCenterGraphQuery$data = {
         readonly node: {
           readonly channel: string | null | undefined;
           readonly channelId: string | null | undefined;
-          readonly createdAt: any;
+          readonly createdAt: string;
           readonly id: string;
-          readonly updatedAt: any;
+          readonly updatedAt: string;
         };
       }>;
     };
@@ -56,11 +56,11 @@ export type TrustCenterGraphQuery$data = {
       readonly canGetNDA: boolean;
       readonly canUpdate: boolean;
       readonly canUploadNDA: boolean;
-      readonly createdAt: any;
+      readonly createdAt: string;
       readonly id: string;
       readonly ndaFileName: string | null | undefined;
       readonly ndaFileUrl: string | null | undefined;
-      readonly updatedAt: any;
+      readonly updatedAt: string;
     } | null | undefined;
     readonly trustCenterFiles?: {
       readonly __id: string;

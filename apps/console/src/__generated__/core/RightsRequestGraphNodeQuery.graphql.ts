@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<7314c67aea13775f772b81880c524a60>>
+ * @generated SignedSource<<23949230cfdefa0c2a321d4fa38e3ace>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -18,9 +18,9 @@ export type RightsRequestGraphNodeQuery$data = {
   readonly node: {
     readonly actionTaken?: string | null | undefined;
     readonly contact?: string | null | undefined;
-    readonly createdAt?: any;
+    readonly createdAt?: string;
     readonly dataSubject?: string | null | undefined;
-    readonly deadline?: any | null | undefined;
+    readonly deadline?: string | null | undefined;
     readonly details?: string | null | undefined;
     readonly id?: string;
     readonly organization?: {
@@ -29,7 +29,7 @@ export type RightsRequestGraphNodeQuery$data = {
     };
     readonly requestState?: RightsRequestState;
     readonly requestType?: RightsRequestType;
-    readonly updatedAt?: any;
+    readonly updatedAt?: string;
   };
 };
 export type RightsRequestGraphNodeQuery = {

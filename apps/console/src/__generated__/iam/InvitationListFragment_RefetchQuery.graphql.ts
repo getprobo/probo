@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<0da865b38342a3574ae7dc7185a6071d>>
+ * @generated SignedSource<<6d84f6b0d10bbae09a14ecc5d84c2814>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -17,8 +17,8 @@ export type InvitationOrder = {
   field: InvitationOrderField;
 };
 export type InvitationListFragment_RefetchQuery$variables = {
-  after?: any | null | undefined;
-  before?: any | null | undefined;
+  after?: string | null | undefined;
+  before?: string | null | undefined;
   first?: number | null | undefined;
   id: string;
   last?: number | null | undefined;

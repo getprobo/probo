@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<6eabaaaf48f838135b6b55f35a591b60>>
+ * @generated SignedSource<<3c389bd21593ce8129cdfca360d3a89d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -22,11 +22,11 @@ export type UpdateProcessingActivityInput = {
   dataSubjectCategory?: string | null | undefined;
   id: string;
   internationalTransfers?: boolean | null | undefined;
-  lastReviewDate?: any | null | undefined;
+  lastReviewDate?: string | null | undefined;
   lawfulBasis?: ProcessingActivityLawfulBasis | null | undefined;
   location?: string | null | undefined;
   name?: string | null | undefined;
-  nextReviewDate?: any | null | undefined;
+  nextReviewDate?: string | null | undefined;
   personalDataCategory?: string | null | undefined;
   purpose?: string | null | undefined;
   recipients?: string | null | undefined;
@@ -53,11 +53,11 @@ export type ProcessingActivityGraphUpdateMutation$data = {
       readonly dataSubjectCategory: string | null | undefined;
       readonly id: string;
       readonly internationalTransfers: boolean;
-      readonly lastReviewDate: any | null | undefined;
+      readonly lastReviewDate: string | null | undefined;
       readonly lawfulBasis: ProcessingActivityLawfulBasis;
       readonly location: string | null | undefined;
       readonly name: string;
-      readonly nextReviewDate: any | null | undefined;
+      readonly nextReviewDate: string | null | undefined;
       readonly personalDataCategory: string | null | undefined;
       readonly purpose: string | null | undefined;
       readonly recipients: string | null | undefined;
@@ -67,7 +67,7 @@ export type ProcessingActivityGraphUpdateMutation$data = {
       readonly specialOrCriminalData: ProcessingActivitySpecialOrCriminalDatum;
       readonly transferImpactAssessmentNeeded: ProcessingActivityTransferImpactAssessment;
       readonly transferSafeguards: ProcessingActivityTransferSafeguard | null | undefined;
-      readonly updatedAt: any;
+      readonly updatedAt: string;
       readonly vendors: {
         readonly edges: ReadonlyArray<{
           readonly node: {

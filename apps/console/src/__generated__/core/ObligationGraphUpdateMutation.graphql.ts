@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<2fb713ad39d2976a25e4fee57edec2f3>>
+ * @generated SignedSource<<2dd4760fb599467e2687e35f9163b483>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -13,9 +13,9 @@ export type ObligationStatus = "COMPLIANT" | "NON_COMPLIANT" | "PARTIALLY_COMPLI
 export type UpdateObligationInput = {
   actionsToBeImplemented?: string | null | undefined;
   area?: string | null | undefined;
-  dueDate?: any | null | undefined;
+  dueDate?: string | null | undefined;
   id: string;
-  lastReviewDate?: any | null | undefined;
+  lastReviewDate?: string | null | undefined;
   ownerId?: string | null | undefined;
   regulator?: string | null | undefined;
   requirement?: string | null | undefined;
@@ -30,9 +30,9 @@ export type ObligationGraphUpdateMutation$data = {
     readonly obligation: {
       readonly actionsToBeImplemented: string | null | undefined;
       readonly area: string | null | undefined;
-      readonly dueDate: any | null | undefined;
+      readonly dueDate: string | null | undefined;
       readonly id: string;
-      readonly lastReviewDate: any | null | undefined;
+      readonly lastReviewDate: string | null | undefined;
       readonly owner: {
         readonly fullName: string;
         readonly id: string;
@@ -41,7 +41,7 @@ export type ObligationGraphUpdateMutation$data = {
       readonly requirement: string | null | undefined;
       readonly source: string | null | undefined;
       readonly status: ObligationStatus;
-      readonly updatedAt: any;
+      readonly updatedAt: string;
     };
   };
 };

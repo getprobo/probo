@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<8c2484ed8e582d28aab0aa0b4cf30ebe>>
+ * @generated SignedSource<<19fb3f18c8abfaf933f77514a1800538>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -24,7 +24,7 @@ export type UpdateVersionDialogCreateMutation$data = {
       readonly node: {
         readonly content: string;
         readonly id: string;
-        readonly publishedAt: any | null | undefined;
+        readonly publishedAt: string | null | undefined;
         readonly signatures: {
           readonly edges: ReadonlyArray<{
             readonly node: {
@@ -34,7 +34,7 @@ export type UpdateVersionDialogCreateMutation$data = {
           }>;
         };
         readonly status: DocumentStatus;
-        readonly updatedAt: any;
+        readonly updatedAt: string;
         readonly version: number;
       };
     };

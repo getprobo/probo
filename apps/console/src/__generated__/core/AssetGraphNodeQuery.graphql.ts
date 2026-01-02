@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<37dc142d4245fcbf81a63926cd6c1c0e>>
+ * @generated SignedSource<<6da31497d94651dbbe2bbaa4da7f541b>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -20,7 +20,7 @@ export type AssetGraphNodeQuery$data = {
     readonly assetType?: AssetType;
     readonly canDelete?: boolean;
     readonly canUpdate?: boolean;
-    readonly createdAt?: any;
+    readonly createdAt?: string;
     readonly dataTypesStored?: string;
     readonly id?: string;
     readonly name?: string;
@@ -29,7 +29,7 @@ export type AssetGraphNodeQuery$data = {
       readonly id: string;
     };
     readonly snapshotId?: string | null | undefined;
-    readonly updatedAt?: any;
+    readonly updatedAt?: string;
     readonly vendors?: {
       readonly edges: ReadonlyArray<{
         readonly node: {

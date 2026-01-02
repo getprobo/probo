@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<9f37a0466d956646c36ab3afe67a4664>>
+ * @generated SignedSource<<a784f382bb38ee97a08852676bdf78c5>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -20,8 +20,8 @@ export type PeopleOrder = {
   field: PeopleOrderField;
 };
 export type PeopleListQuery$variables = {
-  after?: any | null | undefined;
-  before?: any | null | undefined;
+  after?: string | null | undefined;
+  before?: string | null | undefined;
   filter?: PeopleFilter | null | undefined;
   first?: number | null | undefined;
   id: string;

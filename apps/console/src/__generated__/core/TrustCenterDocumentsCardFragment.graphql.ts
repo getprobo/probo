@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<40e45041dd8b72c58f1059d9cad3c15c>>
+ * @generated SignedSource<<ef7a2d6e28f14d4b48c27c6db864b876>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -14,7 +14,7 @@ export type DocumentType = "ISMS" | "OTHER" | "POLICY" | "PROCEDURE";
 export type TrustCenterVisibility = "NONE" | "PRIVATE" | "PUBLIC";
 import { FragmentRefs } from "relay-runtime";
 export type TrustCenterDocumentsCardFragment$data = {
-  readonly createdAt: any;
+  readonly createdAt: string;
   readonly documentType: DocumentType;
   readonly id: string;
   readonly title: string;

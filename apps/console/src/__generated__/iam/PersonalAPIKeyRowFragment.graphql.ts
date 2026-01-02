@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<ed51014f8f35d76faaa63c10998610be>>
+ * @generated SignedSource<<d4d4692688621656de57fda5884703dd>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,8 +11,8 @@
 import { ReaderFragment } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type PersonalAPIKeyRowFragment$data = {
-  readonly createdAt: any;
-  readonly expiresAt: any;
+  readonly createdAt: string;
+  readonly expiresAt: string;
   readonly id: string;
   readonly name: string;
   readonly token?: string | null | undefined;

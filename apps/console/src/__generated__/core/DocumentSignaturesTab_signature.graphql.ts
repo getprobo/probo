@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<02f9338b7a451ae446c87d09ea71a71d>>
+ * @generated SignedSource<<b5228fc83f8259e864b7af631cc1a0c2>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -14,11 +14,11 @@ import { FragmentRefs } from "relay-runtime";
 export type DocumentSignaturesTab_signature$data = {
   readonly canCancel: boolean;
   readonly id: string;
-  readonly requestedAt: any;
-  readonly signedAt: any | null | undefined;
+  readonly requestedAt: string;
+  readonly signedAt: string | null | undefined;
   readonly signedBy: {
     readonly fullName: string;
-    readonly primaryEmailAddress: any;
+    readonly primaryEmailAddress: string;
   };
   readonly state: DocumentVersionSignatureState;
   readonly " $fragmentType": "DocumentSignaturesTab_signature";

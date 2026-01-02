@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<c70fdb86a6f2cb61e35c8231c79db02a>>
+ * @generated SignedSource<<bcaedd6b49db8b0f1f39149e8c916c26>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,14 +11,14 @@
 import { ConcreteRequest } from 'relay-runtime';
 export type PeopleKind = "CONTRACTOR" | "EMPLOYEE" | "SERVICE_ACCOUNT";
 export type CreatePeopleInput = {
-  additionalEmailAddresses: ReadonlyArray<any>;
-  contractEndDate?: any | null | undefined;
-  contractStartDate?: any | null | undefined;
+  additionalEmailAddresses: ReadonlyArray<string>;
+  contractEndDate?: string | null | undefined;
+  contractStartDate?: string | null | undefined;
   fullName: string;
   kind: PeopleKind;
   organizationId: string;
   position?: string | null | undefined;
-  primaryEmailAddress: any;
+  primaryEmailAddress: string;
 };
 export type CreatePeopleDialogMutation$variables = {
   connections: ReadonlyArray<string>;
@@ -28,14 +28,14 @@ export type CreatePeopleDialogMutation$data = {
   readonly createPeople: {
     readonly peopleEdge: {
       readonly node: {
-        readonly additionalEmailAddresses: ReadonlyArray<any>;
+        readonly additionalEmailAddresses: ReadonlyArray<string>;
         readonly canDelete: boolean;
         readonly canUpdate: boolean;
         readonly fullName: string;
         readonly id: string;
         readonly kind: PeopleKind;
         readonly position: string | null | undefined;
-        readonly primaryEmailAddress: any;
+        readonly primaryEmailAddress: string;
       };
     };
   };

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<3f6cce4a7258adac62eab83f233b1a80>>
+ * @generated SignedSource<<b3796796f510af61420955a6fde12fe2>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -17,8 +17,8 @@ export type EvidenceOrder = {
   field: EvidenceOrderField;
 };
 export type MeasureEvidencesTabQuery$variables = {
-  after?: any | null | undefined;
-  before?: any | null | undefined;
+  after?: string | null | undefined;
+  before?: string | null | undefined;
   first?: number | null | undefined;
   id: string;
   last?: number | null | undefined;

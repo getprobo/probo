@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<faeeb8835f77a5251a0311dbac21bfde>>
+ * @generated SignedSource<<aa1a5069891de3be9e8ea2dc554747d4>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,7 +10,7 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 export type CreatePersonalAPIKeyInput = {
-  expiresAt: any;
+  expiresAt: string;
   name: string;
 };
 export type PersonalAPIKeyListCreateMutation$variables = {
@@ -21,8 +21,8 @@ export type PersonalAPIKeyListCreateMutation$data = {
   readonly createPersonalAPIKey: {
     readonly personalAPIKeyEdge: {
       readonly node: {
-        readonly createdAt: any;
-        readonly expiresAt: any;
+        readonly createdAt: string;
+        readonly expiresAt: string;
         readonly id: string;
         readonly name: string;
       };

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<c9838ad5438c1b9b94b83825a3d3f7bd>>
+ * @generated SignedSource<<1f53d3b00c04296c818f57eb5707b38f>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -13,8 +13,8 @@ export type ObligationStatus = "COMPLIANT" | "NON_COMPLIANT" | "PARTIALLY_COMPLI
 export type CreateObligationInput = {
   actionsToBeImplemented?: string | null | undefined;
   area?: string | null | undefined;
-  dueDate?: any | null | undefined;
-  lastReviewDate?: any | null | undefined;
+  dueDate?: string | null | undefined;
+  lastReviewDate?: string | null | undefined;
   organizationId: string;
   ownerId: string;
   regulator?: string | null | undefined;
@@ -34,10 +34,10 @@ export type ObligationGraphCreateMutation$data = {
         readonly area: string | null | undefined;
         readonly canDelete: boolean;
         readonly canUpdate: boolean;
-        readonly createdAt: any;
-        readonly dueDate: any | null | undefined;
+        readonly createdAt: string;
+        readonly dueDate: string | null | undefined;
         readonly id: string;
-        readonly lastReviewDate: any | null | undefined;
+        readonly lastReviewDate: string | null | undefined;
         readonly owner: {
           readonly fullName: string;
           readonly id: string;

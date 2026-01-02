@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<0d0fdbf079f1a72545fa363ce60cd2f7>>
+ * @generated SignedSource<<f88cc717a937f85bb376bd359d7ca722>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -34,7 +34,7 @@ export type NewSAMLConfigurationForm_createMutation$data = {
     readonly samlConfigurationEdge: {
       readonly node: {
         readonly domainVerificationToken: string | null | undefined;
-        readonly domainVerifiedAt: any | null | undefined;
+        readonly domainVerifiedAt: string | null | undefined;
         readonly emailDomain: string;
         readonly enforcementPolicy: SAMLEnforcementPolicy;
         readonly id: string;

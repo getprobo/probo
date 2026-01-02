@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<77c22921ec67a1fb75f743dba1685698>>
+ * @generated SignedSource<<38092f8f7826b528d94c597c1edfb150>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -13,9 +13,9 @@ export type NonconformityStatus = "CLOSED" | "IN_PROGRESS" | "OPEN";
 export type CreateNonconformityInput = {
   auditId?: string | null | undefined;
   correctiveAction?: string | null | undefined;
-  dateIdentified?: any | null | undefined;
+  dateIdentified?: string | null | undefined;
   description?: string | null | undefined;
-  dueDate?: any | null | undefined;
+  dueDate?: string | null | undefined;
   effectivenessCheck?: string | null | undefined;
   organizationId: string;
   ownerId: string;
@@ -39,10 +39,10 @@ export type NonconformityGraphCreateMutation$data = {
         } | null | undefined;
         readonly canDelete: boolean;
         readonly canUpdate: boolean;
-        readonly createdAt: any;
-        readonly dateIdentified: any | null | undefined;
+        readonly createdAt: string;
+        readonly dateIdentified: string | null | undefined;
         readonly description: string | null | undefined;
-        readonly dueDate: any | null | undefined;
+        readonly dueDate: string | null | undefined;
         readonly id: string;
         readonly owner: {
           readonly fullName: string;

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<d98ea0f9e8ca507260465079e6073838>>
+ * @generated SignedSource<<f9b0d1c5f1852bef8797dcf34920e519>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -15,12 +15,12 @@ export type TrustCenterFilesCardFragment$data = {
   readonly canDelete: boolean;
   readonly canUpdate: boolean;
   readonly category: string;
-  readonly createdAt: any;
+  readonly createdAt: string;
   readonly fileUrl: string;
   readonly id: string;
   readonly name: string;
   readonly trustCenterVisibility: TrustCenterVisibility;
-  readonly updatedAt: any;
+  readonly updatedAt: string;
   readonly " $fragmentType": "TrustCenterFilesCardFragment";
 };
 export type TrustCenterFilesCardFragment$key = {

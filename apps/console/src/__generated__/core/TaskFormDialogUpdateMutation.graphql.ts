@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<8efad26dafbead83a13b59703edc7493>>
+ * @generated SignedSource<<ea383b8b58c0c28b83fb96a2733b4501>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -13,13 +13,13 @@ import { FragmentRefs } from "relay-runtime";
 export type TaskState = "DONE" | "TODO";
 export type UpdateTaskInput = {
   assignedToId?: string | null | undefined;
-  deadline?: any | null | undefined;
+  deadline?: string | null | undefined;
   description?: string | null | undefined;
   measureId?: string | null | undefined;
   name?: string | null | undefined;
   state?: TaskState | null | undefined;
   taskId: string;
-  timeEstimate?: any | null | undefined;
+  timeEstimate?: string | null | undefined;
 };
 export type TaskFormDialogUpdateMutation$variables = {
   input: UpdateTaskInput;

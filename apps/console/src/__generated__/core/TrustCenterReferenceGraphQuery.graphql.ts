@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<08cc43ef600ae775505f8446d31ae058>>
+ * @generated SignedSource<<ca40d9ddba0f52570c2c9cece97e15dc>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -19,25 +19,25 @@ export type TrustCenterReferenceGraphQuery$data = {
     readonly references: {
       readonly __id: string;
       readonly edges: ReadonlyArray<{
-        readonly cursor: any;
+        readonly cursor: string;
         readonly node: {
           readonly canDelete: boolean;
           readonly canUpdate: boolean;
-          readonly createdAt: any;
+          readonly createdAt: string;
           readonly description: string | null | undefined;
           readonly id: string;
           readonly logoUrl: string;
           readonly name: string;
           readonly rank: number;
-          readonly updatedAt: any;
+          readonly updatedAt: string;
           readonly websiteUrl: string;
         };
       }>;
       readonly pageInfo: {
-        readonly endCursor: any | null | undefined;
+        readonly endCursor: string | null | undefined;
         readonly hasNextPage: boolean;
         readonly hasPreviousPage: boolean;
-        readonly startCursor: any | null | undefined;
+        readonly startCursor: string | null | undefined;
       };
     };
   } | {

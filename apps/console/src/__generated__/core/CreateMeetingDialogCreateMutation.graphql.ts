@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<6ed3e434ef2a7f39c1ccddb4c3ddd8b2>>
+ * @generated SignedSource<<69b7a1ed2ab1c03ffa4c42638851e3bd>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,7 +11,7 @@
 import { ConcreteRequest } from 'relay-runtime';
 export type CreateMeetingInput = {
   attendeeIds?: ReadonlyArray<string> | null | undefined;
-  date: any;
+  date: string;
   minutes?: string | null | undefined;
   name: string;
   organizationId: string;
@@ -29,7 +29,7 @@ export type CreateMeetingDialogCreateMutation$data = {
           readonly id: string;
         }>;
         readonly canDelete: boolean;
-        readonly date: any;
+        readonly date: string;
         readonly id: string;
         readonly minutes: string | null | undefined;
         readonly name: string;

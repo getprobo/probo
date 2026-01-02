@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<2a00ef6b2a236b34c85e34af79244b68>>
+ * @generated SignedSource<<e47251901b9eb259ce37eccf8cdb3794>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -19,10 +19,10 @@ export type ObligationGraphNodeQuery$data = {
     readonly area?: string | null | undefined;
     readonly canDelete?: boolean;
     readonly canUpdate?: boolean;
-    readonly createdAt?: any;
-    readonly dueDate?: any | null | undefined;
+    readonly createdAt?: string;
+    readonly dueDate?: string | null | undefined;
     readonly id?: string;
-    readonly lastReviewDate?: any | null | undefined;
+    readonly lastReviewDate?: string | null | undefined;
     readonly organization?: {
       readonly id: string;
       readonly name: string;
@@ -37,7 +37,7 @@ export type ObligationGraphNodeQuery$data = {
     readonly source?: string | null | undefined;
     readonly sourceId?: string | null | undefined;
     readonly status?: ObligationStatus;
-    readonly updatedAt?: any;
+    readonly updatedAt?: string;
   };
 };
 export type ObligationGraphNodeQuery = {

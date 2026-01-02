@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<dddf70832ae8eecef831e8832a782f20>>
+ * @generated SignedSource<<47e719a83abc9c6cb5f5e1140f70cf70>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,7 +11,7 @@
 import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type RightsRequestsPageRefetchQuery$variables = {
-  after?: any | null | undefined;
+  after?: string | null | undefined;
   first?: number | null | undefined;
   id: string;
 };
