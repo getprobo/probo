@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<3b2a48df3fdef9f91bc4520ed2448423>>
+ * @generated SignedSource<<70d87b06a0ba8d361312388f587e14a4>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -289,6 +289,32 @@ return {
                             "name": "updatedAt",
                             "storageKey": null
                           },
+                          {
+                            "alias": "canUpdate",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:obligation:update"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:obligation:update\")"
+                          },
+                          {
+                            "alias": "canDelete",
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "action",
+                                "value": "core:obligation:delete"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "permission",
+                            "storageKey": "permission(action:\"core:obligation:delete\")"
+                          },
                           (v8/*: any*/)
                         ],
                         "storageKey": null
@@ -364,16 +390,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "0500f4aee677d8d1ec53cd189e350395",
+    "cacheID": "df1ca965ec380e12537f713ce9786930",
     "id": null,
     "metadata": {},
     "name": "ObligationsPageRefetchQuery",
     "operationKind": "query",
-    "text": "query ObligationsPageRefetchQuery(\n  $after: CursorKey\n  $first: Int = 10\n  $snapshotId: ID = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...ObligationsPageFragment_35e0S5\n    id\n  }\n}\n\nfragment ObligationsPageFragment_35e0S5 on Organization {\n  id\n  obligations(first: $first, after: $after, filter: {snapshotId: $snapshotId}) {\n    totalCount\n    edges {\n      node {\n        id\n        snapshotId\n        sourceId\n        area\n        source\n        requirement\n        status\n        lastReviewDate\n        dueDate\n        actionsToBeImplemented\n        regulator\n        owner {\n          id\n          fullName\n        }\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
+    "text": "query ObligationsPageRefetchQuery(\n  $after: CursorKey\n  $first: Int = 10\n  $snapshotId: ID = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...ObligationsPageFragment_35e0S5\n    id\n  }\n}\n\nfragment ObligationsPageFragment_35e0S5 on Organization {\n  id\n  obligations(first: $first, after: $after, filter: {snapshotId: $snapshotId}) {\n    totalCount\n    edges {\n      node {\n        id\n        snapshotId\n        sourceId\n        area\n        source\n        requirement\n        status\n        lastReviewDate\n        dueDate\n        actionsToBeImplemented\n        regulator\n        owner {\n          id\n          fullName\n        }\n        createdAt\n        updatedAt\n        canUpdate: permission(action: \"core:obligation:update\")\n        canDelete: permission(action: \"core:obligation:delete\")\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "a5dda6d90c9205f7c7d6ea6d84d760f1";
+(node as any).hash = "b80f122b447b6a979b4774851ad11ee5";
 
 export default node;

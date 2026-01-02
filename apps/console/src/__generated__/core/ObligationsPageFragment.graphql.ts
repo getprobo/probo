@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<27cacc02131c03f5aeaaff764e3bb226>>
+ * @generated SignedSource<<12b46e529db9caa863dc6f97eaee0c26>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -19,6 +19,8 @@ export type ObligationsPageFragment$data = {
       readonly node: {
         readonly actionsToBeImplemented: string | null | undefined;
         readonly area: string | null | undefined;
+        readonly canDelete: boolean;
+        readonly canUpdate: boolean;
         readonly createdAt: any;
         readonly dueDate: any | null | undefined;
         readonly id: string;
@@ -260,6 +262,32 @@ return {
                   "storageKey": null
                 },
                 {
+                  "alias": "canUpdate",
+                  "args": [
+                    {
+                      "kind": "Literal",
+                      "name": "action",
+                      "value": "core:obligation:update"
+                    }
+                  ],
+                  "kind": "ScalarField",
+                  "name": "permission",
+                  "storageKey": "permission(action:\"core:obligation:update\")"
+                },
+                {
+                  "alias": "canDelete",
+                  "args": [
+                    {
+                      "kind": "Literal",
+                      "name": "action",
+                      "value": "core:obligation:delete"
+                    }
+                  ],
+                  "kind": "ScalarField",
+                  "name": "permission",
+                  "storageKey": "permission(action:\"core:obligation:delete\")"
+                },
+                {
                   "alias": null,
                   "args": null,
                   "kind": "ScalarField",
@@ -325,6 +353,6 @@ return {
 };
 })();
 
-(node as any).hash = "a5dda6d90c9205f7c7d6ea6d84d760f1";
+(node as any).hash = "b80f122b447b6a979b4774851ad11ee5";
 
 export default node;

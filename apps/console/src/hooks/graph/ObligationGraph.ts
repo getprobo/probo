@@ -11,6 +11,7 @@ export const obligationsQuery = graphql`
   query ObligationGraphListQuery($organizationId: ID!, $snapshotId: ID) {
     node(id: $organizationId) {
       ... on Organization {
+        canCreateObligation: permission(action: "core:obligation:create")
         ...ObligationsPageFragment @arguments(snapshotId: $snapshotId)
       }
     }
@@ -43,6 +44,8 @@ export const obligationNodeQuery = graphql`
         }
         createdAt
         updatedAt
+        canUpdate: permission(action: "core:obligation:update")
+        canDelete: permission(action: "core:obligation:delete")
       }
     }
   }
@@ -71,6 +74,8 @@ export const createObligationMutation = graphql`
             fullName
           }
           createdAt
+          canUpdate: permission(action: "core:obligation:update")
+          canDelete: permission(action: "core:obligation:delete")
         }
       }
     }
@@ -114,7 +119,7 @@ export const deleteObligationMutation = graphql`
 
 export const useDeleteObligation = (
   obligation: { id: string },
-  connectionId: string
+  connectionId: string,
 ) => {
   const { __ } = useTranslate();
   const [mutate] = useMutationWithToasts(deleteObligationMutation, {
@@ -136,9 +141,9 @@ export const useDeleteObligation = (
         }),
       {
         message: __(
-          "This will permanently delete this obligation. This action cannot be undone."
+          "This will permanently delete this obligation. This action cannot be undone.",
         ),
-      }
+      },
     );
   };
 };

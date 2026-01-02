@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<3542cd7b93f38df062a93a1b9e325ff3>>
+ * @generated SignedSource<<f3d356dcc5bfe10c9de6a79357ee8924>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -18,6 +18,8 @@ export type ObligationGraphNodeQuery$data = {
   readonly node: {
     readonly actionsToBeImplemented?: string | null | undefined;
     readonly area?: string | null | undefined;
+    readonly canDelete?: boolean;
+    readonly canUpdate?: boolean;
     readonly createdAt?: any;
     readonly dueDate?: any | null | undefined;
     readonly id?: string;
@@ -195,6 +197,32 @@ v17 = {
   "kind": "ScalarField",
   "name": "updatedAt",
   "storageKey": null
+},
+v18 = {
+  "alias": "canUpdate",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "core:obligation:update"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"core:obligation:update\")"
+},
+v19 = {
+  "alias": "canDelete",
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "action",
+      "value": "core:obligation:delete"
+    }
+  ],
+  "kind": "ScalarField",
+  "name": "permission",
+  "storageKey": "permission(action:\"core:obligation:delete\")"
 };
 return {
   "fragment": {
@@ -229,7 +257,9 @@ return {
               (v14/*: any*/),
               (v15/*: any*/),
               (v16/*: any*/),
-              (v17/*: any*/)
+              (v17/*: any*/),
+              (v18/*: any*/),
+              (v19/*: any*/)
             ],
             "type": "Obligation",
             "abstractKey": null
@@ -280,7 +310,9 @@ return {
               (v14/*: any*/),
               (v15/*: any*/),
               (v16/*: any*/),
-              (v17/*: any*/)
+              (v17/*: any*/),
+              (v18/*: any*/),
+              (v19/*: any*/)
             ],
             "type": "Obligation",
             "abstractKey": null
@@ -291,16 +323,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "049eff8ed7a7476c04d09b64c061c3a6",
+    "cacheID": "0be8ac1fa76f737698c91c6a8e6cf15b",
     "id": null,
     "metadata": {},
     "name": "ObligationGraphNodeQuery",
     "operationKind": "query",
-    "text": "query ObligationGraphNodeQuery(\n  $obligationId: ID!\n) {\n  node(id: $obligationId) {\n    __typename\n    ... on Obligation {\n      id\n      snapshotId\n      sourceId\n      area\n      source\n      requirement\n      actionsToBeImplemented\n      regulator\n      type\n      lastReviewDate\n      dueDate\n      status\n      owner {\n        id\n        fullName\n      }\n      organization {\n        id\n        name\n      }\n      createdAt\n      updatedAt\n    }\n    id\n  }\n}\n"
+    "text": "query ObligationGraphNodeQuery(\n  $obligationId: ID!\n) {\n  node(id: $obligationId) {\n    __typename\n    ... on Obligation {\n      id\n      snapshotId\n      sourceId\n      area\n      source\n      requirement\n      actionsToBeImplemented\n      regulator\n      type\n      lastReviewDate\n      dueDate\n      status\n      owner {\n        id\n        fullName\n      }\n      organization {\n        id\n        name\n      }\n      createdAt\n      updatedAt\n      canUpdate: permission(action: \"core:obligation:update\")\n      canDelete: permission(action: \"core:obligation:delete\")\n    }\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "c50090bdd31fc24e0fdb067677999f77";
+(node as any).hash = "6587fcee3deaaec8581e5f495b1edadc";
 
 export default node;

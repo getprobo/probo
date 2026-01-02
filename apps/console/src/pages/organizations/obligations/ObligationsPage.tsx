@@ -42,8 +42,6 @@ import type {
   ObligationsPageFragment$key,
   ObligationsPageFragment$data,
 } from "/__generated__/core/ObligationsPageFragment.graphql";
-import { use } from "react";
-import { PermissionsContext } from "/providers/PermissionsContext";
 import type { ObligationGraphListQuery } from "/__generated__/core/ObligationGraphListQuery.graphql";
 
 type Obligation =
@@ -88,6 +86,8 @@ const obligationsPageFragment = graphql`
           }
           createdAt
           updatedAt
+          canUpdate: permission(action: "core:obligation:update")
+          canDelete: permission(action: "core:obligation:delete")
         }
       }
       pageInfo {
@@ -103,7 +103,6 @@ export default function ObligationsPage({ queryRef }: ObligationsPageProps) {
   const organizationId = useOrganizationId();
   const { snapshotId } = useParams<{ snapshotId?: string }>();
   const isSnapshotMode = Boolean(snapshotId);
-  const { isAuthorized } = use(PermissionsContext);
 
   usePageTitle(__("Obligations"));
 
@@ -124,8 +123,7 @@ export default function ObligationsPage({ queryRef }: ObligationsPageProps) {
 
   const hasAnyAction =
     !isSnapshotMode &&
-    (isAuthorized("Obligation", "updateObligation") ||
-      isAuthorized("Obligation", "deleteObligation"));
+    obligations.some(({ canUpdate, canDelete }) => canDelete || canUpdate);
 
   return (
     <div className="space-y-6">
@@ -136,7 +134,7 @@ export default function ObligationsPage({ queryRef }: ObligationsPageProps) {
         title={__("Obligations")}
         description={__("Manage your organization's obligations.")}
       >
-        {!snapshotId && isAuthorized("Organization", "createObligation") && (
+        {!snapshotId && organization.node.canCreateObligation && (
           <CreateObligationDialog
             organizationId={organizationId}
             connection={connectionId}
@@ -216,7 +214,6 @@ function ObligationRow({
   const [deleteObligation] = useMutation(deleteObligationMutation);
   const confirm = useConfirm();
   const isSnapshotMode = Boolean(snapshotId);
-  const { isAuthorized } = use(PermissionsContext);
 
   const handleDelete = () => {
     confirm(
@@ -267,7 +264,7 @@ function ObligationRow({
       {hasAnyAction && (
         <Td noLink width={50} className="text-end">
           <ActionDropdown>
-            {isAuthorized("Obligation", "deleteObligation") && (
+            {obligation.canDelete && (
               <DropdownItem
                 icon={IconTrashCan}
                 variant="danger"
