@@ -247,3 +247,28 @@ func (s *Service) GetSAMLconfiguration(ctx context.Context, samlConfigurationID 
 
 	return samlConfiguration, nil
 }
+
+func (s *Service) GetPersonalAPIKey(ctx context.Context, personalAPIKeyID gid.GID) (*coredata.PersonalAPIKey, error) {
+	personalAPIKey := &coredata.PersonalAPIKey{}
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			err := personalAPIKey.LoadByID(ctx, conn, personalAPIKeyID)
+			if err != nil {
+				if err == coredata.ErrResourceNotFound {
+					return NewPersonalAPIKeyNotFoundError(personalAPIKeyID)
+				}
+
+				return fmt.Errorf("cannot load personal API key: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return personalAPIKey, nil
+}

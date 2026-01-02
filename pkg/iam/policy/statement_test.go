@@ -88,15 +88,28 @@ func TestCondition_Evaluate_Equals(t *testing.T) {
 			want: false,
 		},
 		{
-			name: "equals - match resource.user_id reference",
+			name: "equals - match resource.identity_id reference",
 			condition: Condition{
 				Operator: ConditionEquals,
 				Key:      "principal.id",
-				Values:   []string{"resource.user_id"},
+				Values:   []string{"resource.identity_id"},
 			},
 			ctx: ConditionContext{
 				Principal: map[string]string{"id": "user_123"},
-				Resource:  map[string]string{"user_id": "user_123"},
+				Resource:  map[string]string{"identity_id": "user_123"},
+			},
+			want: true,
+		},
+		{
+			name: "equals - match principal.email to resource.email reference",
+			condition: Condition{
+				Operator: ConditionEquals,
+				Key:      "principal.email",
+				Values:   []string{"resource.email"},
+			},
+			ctx: ConditionContext{
+				Principal: map[string]string{"email": "user@example.com"},
+				Resource:  map[string]string{"email": "user@example.com"},
 			},
 			want: true,
 		},

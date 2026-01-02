@@ -19,34 +19,32 @@ import (
 	"go.probo.inc/probo/pkg/iam/policy"
 )
 
+var organizationCondition = policy.Equals("principal.organization_id", "resource.organization_id")
+
 // OwnerPolicy defines permissions for organization owners.
 var OwnerPolicy = policy.NewPolicy(
 	"probo:owner",
 	"Probo Owner",
-	// Full access to all probo resources
-	policy.Allow("core:*").WithSID("full-core-access"),
+	policy.Allow("core:*").WithSID("full-core-access").When(organizationCondition),
 ).WithDescription("Full probo access for organization owners")
 
 // AdminPolicy defines permissions for organization admins.
 var AdminPolicy = policy.NewPolicy(
 	"probo:admin",
 	"Probo Admin",
-	// Full access to all probo resources (same as owner for core entities)
-	policy.Allow("core:*").WithSID("full-c	ore-access"),
+	policy.Allow("core:*").WithSID("full-core-access").When(organizationCondition),
 ).WithDescription("Probo admin access - can manage core entities")
 
 // ViewerPolicy defines read-only permissions for organization viewers.
 var ViewerPolicy = policy.NewPolicy(
 	"probo:viewer",
 	"Probo Viewer",
-	// Organization read actions
 	policy.Allow(
 		ActionOrganizationGet,
 		ActionOrganizationGetLogoUrl,
 		ActionOrganizationGetHorizontalLogoUrl,
-	).WithSID("org-read-access"),
+	).WithSID("org-read-access").When(organizationCondition),
 
-	// Entity read actions
 	policy.Allow(
 		ActionPeopleGet, ActionPeopleList,
 		ActionVendorGet, ActionVendorList,
@@ -79,42 +77,33 @@ var ViewerPolicy = policy.NewPolicy(
 		ActionMeetingGet, ActionMeetingList,
 		ActionFileGet, ActionFileDownloadUrl,
 		ActionSlackConnectionList,
-	).WithSID("entity-read-access"),
+	).WithSID("entity-read-access").When(organizationCondition),
 
-	// TrustCenter read actions
 	policy.Allow(
 		ActionTrustCenterGet,
 		ActionTrustCenterAccessGet, ActionTrustCenterAccessList,
 		ActionTrustCenterDocumentAccessList,
 		ActionTrustCenterFileGet, ActionTrustCenterFileList, ActionTrustCenterFileGetFileUrl,
 		ActionTrustCenterReferenceList, ActionTrustCenterReferenceGetLogoUrl,
-	).WithSID("trust-center-read-access"),
+	).WithSID("trust-center-read-access").When(organizationCondition),
 
-	// CustomDomain read actions
-	policy.Allow(ActionCustomDomainGet).WithSID("custom-domain-read"),
-
-	// OrganizationContext read actions
-	policy.Allow(ActionOrganizationContextGet).WithSID("organization-context-read"),
-
-	// Document signing actions
+	policy.Allow(ActionCustomDomainGet).WithSID("custom-domain-read").When(organizationCondition),
+	policy.Allow(ActionOrganizationContextGet).WithSID("organization-context-read").When(organizationCondition),
 	policy.Allow(
 		ActionDocumentVersionExportPDF, ActionDocumentVersionExportSignable, ActionDocumentVersionSign,
-	).WithSID("document-signing"),
+	).WithSID("document-signing").When(organizationCondition),
 ).WithDescription("Read-only probo access for organization viewers")
 
 // AuditorPolicy defines permissions for auditor role.
-// Auditors have read access to non-employee content plus some specific auditor features.
 var AuditorPolicy = policy.NewPolicy(
 	"probo:auditor",
 	"Probo Auditor",
-	// Same as viewer but without employee-specific content
 	policy.Allow(
 		ActionOrganizationGet,
 		ActionOrganizationGetLogoUrl,
 		ActionOrganizationGetHorizontalLogoUrl,
-	).WithSID("org-read-access"),
+	).WithSID("org-read-access").When(organizationCondition),
 
-	// Entity read access (same as viewer)
 	policy.Allow(
 		ActionPeopleGet, ActionPeopleList,
 		ActionVendorGet, ActionVendorList,
@@ -145,40 +134,34 @@ var AuditorPolicy = policy.NewPolicy(
 		ActionSnapshotGet, ActionSnapshotList,
 		ActionMeetingGet, ActionMeetingList,
 		ActionFileGet, ActionFileDownloadUrl,
-	).WithSID("entity-read-access"),
+	).WithSID("entity-read-access").When(organizationCondition),
 
-	// Document signing actions
 	policy.Allow(
 		ActionDocumentVersionExportPDF, ActionDocumentVersionExportSignable, ActionDocumentVersionSign,
-	).WithSID("document-signing"),
+	).WithSID("document-signing").When(organizationCondition),
 ).WithDescription("Read-only probo access for auditors (excludes internal/employee content)")
 
 // EmployeePolicy defines permissions for employee role.
-// Employees have access to internal documents and some limited read access.
 var EmployeePolicy = policy.NewPolicy(
 	"probo:employee",
 	"Probo Employee",
-	// Basic organization access
 	policy.Allow(
 		ActionOrganizationGet,
 		ActionOrganizationGetLogoUrl,
-	).WithSID("org-basic-access"),
+	).WithSID("org-basic-access").When(organizationCondition),
 
-	// Document signing access
 	policy.Allow(
 		ActionDocumentGet, ActionDocumentList,
-	).WithSID("document-signing-access"),
+	).WithSID("document-signing-access").When(organizationCondition),
 
-	// Document version signing
 	policy.Allow(
 		ActionDocumentVersionGet, ActionDocumentVersionList,
 		ActionDocumentVersionSign,
 		ActionDocumentVersionExportSignable,
-	).WithSID("document-version-signing"),
+	).WithSID("document-version-signing").When(organizationCondition),
 ).WithDescription("Employee access - can sign documents and view internal content")
 
 // ProboPolicySet returns the PolicySet for the probo service.
-// This is registered with the IAM Authorizer when probo.Service is created.
 func ProboPolicySet() *iam.PolicySet {
 	return iam.NewPolicySet().
 		AddRolePolicy("OWNER", OwnerPolicy).

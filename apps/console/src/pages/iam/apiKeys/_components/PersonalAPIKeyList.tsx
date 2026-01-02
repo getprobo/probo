@@ -6,10 +6,9 @@ import {
   useFragment,
   useMutation,
 } from "react-relay";
-import type { RecordSourceSelectorProxy } from "relay-runtime";
 import { z } from "zod";
 import { useTranslate } from "@probo/i18n";
-import { formatError, type GraphQLError } from "@probo/helpers";
+import { formatError } from "@probo/helpers";
 import {
   Breadcrumb,
   Button,
@@ -22,15 +21,12 @@ import {
   Label,
   Option,
   Select,
-  useConfirm,
   useDialogRef,
   useToast,
 } from "@probo/ui";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import type { PersonalAPIKeyListFragment$key } from "/__generated__/iam/PersonalAPIKeyListFragment.graphql";
 import type { PersonalAPIKeyListCreateMutation } from "/__generated__/iam/PersonalAPIKeyListCreateMutation.graphql";
-import type { PersonalAPIKeyListRevokeMutation } from "/__generated__/iam/PersonalAPIKeyListRevokeMutation.graphql";
-import type { PersonalAPIKeyListRevealTokenMutation } from "/__generated__/iam/PersonalAPIKeyListRevealTokenMutation.graphql";
 import { PersonalAPIKeysTable } from "./PersonalAPIKeysTable";
 import { PersonalAPIKeyTokenDialog } from "./PersonalAPIKeyTokenDialog";
 
@@ -44,10 +40,7 @@ const fragment = graphql`
       edges @required(action: THROW) {
         node {
           id
-          name
-          createdAt
-          expiresAt
-          lastUsedAt
+          ...PersonalAPIKeyRowFragment
         }
       }
     }
@@ -66,29 +59,8 @@ const createMutation = graphql`
           name
           createdAt
           expiresAt
-          lastUsedAt
         }
       }
-      token
-    }
-  }
-`;
-
-const revokeMutation = graphql`
-  mutation PersonalAPIKeyListRevokeMutation(
-    $input: RevokePersonalAPIKeyInput!
-  ) {
-    revokePersonalAPIKey(input: $input) {
-      success
-    }
-  }
-`;
-
-const revealTokenMutation = graphql`
-  mutation PersonalAPIKeyListRevealTokenMutation(
-    $input: RevealPersonalAPIKeyTokenInput!
-  ) {
-    revealPersonalAPIKeyToken(input: $input) {
       token
     }
   }
@@ -126,7 +98,6 @@ export function PersonalAPIKeyList(props: {
   const { fKey } = props;
   const { __ } = useTranslate();
   const { toast } = useToast();
-  const confirm = useConfirm();
   const createDialogRef = useDialogRef();
   const tokenDialogRef = useDialogRef();
 
@@ -134,9 +105,12 @@ export function PersonalAPIKeyList(props: {
 
   const viewer = useFragment(fragment, fKey);
 
-  const keys = viewer.personalAPIKeys.edges.map(({ node }) => node);
+  const connectionID = ConnectionHandler.getConnectionID(
+    viewer.id,
+    "PersonalAPIKeyListFragment_personalAPIKeys"
+  );
 
-  const { formState, handleSubmit, register, control, reset, watch } =
+  const { formState, handleSubmit, register, control, reset } =
     useFormWithSchema(createSchema, {
       defaultValues: {
         name: new Date().toISOString().split("T")[0],
@@ -144,20 +118,14 @@ export function PersonalAPIKeyList(props: {
       },
     });
 
-  watch();
-
   const [createCommit, isCreating] =
     useMutation<PersonalAPIKeyListCreateMutation>(createMutation);
-  const [revokeCommit] =
-    useMutation<PersonalAPIKeyListRevokeMutation>(revokeMutation);
-  const [revealTokenCommit, isRevealingToken] =
-    useMutation<PersonalAPIKeyListRevealTokenMutation>(revealTokenMutation);
 
   const handleCreate = (data: CreateFormData) => {
     const expiresAt = computeExpiresAt(data.expiresIn);
     const connectionID = ConnectionHandler.getConnectionID(
       viewer.id,
-      "PersonalAPIKeyListFragment_personalAPIKeys",
+      "PersonalAPIKeyListFragment_personalAPIKeys"
     );
 
     createCommit({
@@ -165,8 +133,6 @@ export function PersonalAPIKeyList(props: {
         input: {
           name: data.name,
           expiresAt: expiresAt.toISOString(),
-          // API keys are no longer linked to organizations; keep schema compatibility.
-          organizationIds: [],
         },
         connections: [connectionID],
       },
@@ -194,116 +160,6 @@ export function PersonalAPIKeyList(props: {
     });
   };
 
-  const handleRevoke = (key: { id: string; name: string }) => {
-    confirm(
-      async () => {
-        await new Promise<void>((resolve, reject) => {
-          revokeCommit({
-            variables: {
-              input: { tokenId: key.id },
-            },
-            updater: (store: RecordSourceSelectorProxy) => {
-              const viewerRecord = store.getRoot().getLinkedRecord("viewer");
-              if (!viewerRecord) return;
-              const connection = ConnectionHandler.getConnection(
-                viewerRecord,
-                "PersonalAPIKeyListFragment_personalAPIKeys",
-              );
-              if (connection) {
-                ConnectionHandler.deleteNode(connection, key.id);
-              }
-            },
-            onCompleted: (_response, errors) => {
-              if (errors?.length) {
-                toast({
-                  title: __("Error"),
-                  description: formatError(
-                    __("Failed to revoke API key."),
-                    errors as GraphQLError[],
-                  ),
-                  variant: "error",
-                });
-                reject(errors);
-                return;
-              }
-              toast({
-                title: __("Success"),
-                description: __("API key revoked successfully."),
-                variant: "success",
-              });
-              resolve();
-            },
-            onError: (error) => {
-              toast({
-                title: __("Error"),
-                description: formatError(
-                  __("Failed to revoke API key."),
-                  error,
-                ),
-                variant: "error",
-              });
-              reject(error);
-            },
-          });
-        });
-      },
-      {
-        title: __("Revoke API Key"),
-        message: __(
-          `Are you sure you want to revoke the API key "${key.name}"? This action cannot be undone.`,
-        ),
-        label: __("Revoke"),
-        variant: "danger",
-      },
-    );
-  };
-
-  const handleShowToken = (key: { id: string; name: string }) => {
-    revealTokenCommit({
-      variables: {
-        input: {
-          tokenId: key.id,
-        },
-      },
-      onCompleted: (response, errors) => {
-        if (errors?.length) {
-          toast({
-            title: __("Error"),
-            description: formatError(
-              __("Failed to reveal API key token."),
-              errors as any,
-            ),
-            variant: "error",
-          });
-          return;
-        }
-
-        const tokenValue = response.revealPersonalAPIKeyToken?.token;
-        if (!tokenValue) {
-          toast({
-            title: __("Error"),
-            description: __("No token returned."),
-            variant: "error",
-          });
-          return;
-        }
-
-        setToken(tokenValue);
-        tokenDialogRef.current?.open();
-      },
-      onError: (error: Error) => {
-        toast({
-          title: __("Error"),
-          description: formatError(
-            __("Failed to reveal API key token."),
-            error,
-          ),
-          variant: "error",
-        });
-      },
-    });
-  };
-
   return (
     <>
       <div className="space-y-4">
@@ -314,7 +170,7 @@ export function PersonalAPIKeyList(props: {
           </Button>
         </div>
 
-        {keys.length === 0 ? (
+        {viewer.personalAPIKeys.edges.length === 0 ? (
           <Card padded>
             <div className="text-center py-12">
               <h3 className="text-lg font-medium text-gray-900 mb-2">
@@ -328,10 +184,8 @@ export function PersonalAPIKeyList(props: {
         ) : (
           <Card padded>
             <PersonalAPIKeysTable
-              keys={keys}
-              onRevoke={handleRevoke}
-              onShowToken={handleShowToken}
-              isShowingToken={isRevealingToken}
+              edges={viewer.personalAPIKeys.edges}
+              connectionId={connectionID}
             />
           </Card>
         )}

@@ -220,6 +220,34 @@ LIMIT 1;
 	return nil
 }
 
+// AuthorizationAttributes loads the minimal authorization attributes for policy condition evaluation.
+// It is intentionally lightweight and does not populate the Identity struct.
+func (i *Identity) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+	q := `
+SELECT
+	id,
+    email_address
+FROM
+    identities
+WHERE
+    id = $1
+LIMIT 1;
+`
+
+	var (
+		id           gid.GID
+		emailAddress string
+	)
+	if err := conn.QueryRow(ctx, q, i.ID).Scan(&id, &emailAddress); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrResourceNotFound
+		}
+		return nil, fmt.Errorf("cannot query identity iam attributes: %w", err)
+	}
+
+	return map[string]string{"id": id.String(), "email": emailAddress}, nil
+}
+
 func (i *Identity) Insert(
 	ctx context.Context,
 	conn pg.Conn,
