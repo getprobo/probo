@@ -99,15 +99,16 @@ func (r *Resolver) Permission(ctx context.Context, obj types.Node, action string
 	return true, nil
 }
 
-func (r *Resolver) Authorize(ctx context.Context, objectID gid.GID, action string) bool {
+func (r *Resolver) Authorize(ctx context.Context, objectID gid.GID, action string, attrs map[string]string) bool {
 	identity := IdentityFromContext(ctx)
 
 	err := r.iam.Authorizer.Authorize(
 		ctx,
 		iam.AuthorizeParams{
-			Principal: identity.ID,
-			Resource:  objectID,
-			Action:    action,
+			Principal:          identity.ID,
+			Resource:           objectID,
+			Action:             action,
+			ResourceAttributes: attrs,
 		},
 	)
 

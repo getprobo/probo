@@ -26,7 +26,7 @@ import (
 
 // Memberships is the resolver for the memberships field.
 func (r *identityResolver) Memberships(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MembershipOrderBy) (*types.MembershipConnection, error) {
-	if ok := r.Authorize(ctx, obj.ID, iam.ActionMembershipList); !ok {
+	if ok := r.Authorize(ctx, obj.ID, iam.ActionMembershipList, nil); !ok {
 		return nil, nil
 	}
 
@@ -61,7 +61,7 @@ func (r *identityResolver) Memberships(ctx context.Context, obj *types.Identity,
 
 // PendingInvitations is the resolver for the pendingInvitations field.
 func (r *identityResolver) PendingInvitations(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.InvitationOrderBy) (*types.InvitationConnection, error) {
-	if ok := r.Authorize(ctx, obj.ID, iam.ActionInvitationList); !ok {
+	if ok := r.Authorize(ctx, obj.ID, iam.ActionInvitationList, nil); !ok {
 		return nil, nil
 	}
 
@@ -90,7 +90,7 @@ func (r *identityResolver) PendingInvitations(ctx context.Context, obj *types.Id
 
 // Sessions is the resolver for the sessions field.
 func (r *identityResolver) Sessions(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.SessionOrder) (*types.SessionConnection, error) {
-	if ok := r.Authorize(ctx, obj.ID, iam.ActionSessionList); !ok {
+	if ok := r.Authorize(ctx, obj.ID, iam.ActionSessionList, nil); !ok {
 		return nil, nil
 	}
 
@@ -125,7 +125,7 @@ func (r *identityResolver) Sessions(ctx context.Context, obj *types.Identity, fi
 
 // PersonalAPIKeys is the resolver for the personalAPIKeys field.
 func (r *identityResolver) PersonalAPIKeys(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.PersonalAPIKeyConnection, error) {
-	if ok := r.Authorize(ctx, obj.ID, iam.ActionPersonalAPIKeyList); !ok {
+	if ok := r.Authorize(ctx, obj.ID, iam.ActionPersonalAPIKeyList, nil); !ok {
 		return nil, nil
 	}
 
@@ -159,7 +159,7 @@ func (r *identityResolver) Permission(ctx context.Context, obj *types.Identity, 
 
 // Organization is the resolver for the organization field.
 func (r *invitationResolver) Organization(ctx context.Context, obj *types.Invitation) (*types.Organization, error) {
-	if ok := r.Authorize(ctx, obj.Organization.ID, iam.ActionOrganizationGet); !ok {
+	if ok := r.Authorize(ctx, obj.Organization.ID, iam.ActionOrganizationGet, nil); !ok {
 		return nil, nil
 	}
 
@@ -187,7 +187,7 @@ func (r *invitationResolver) Permission(ctx context.Context, obj *types.Invitati
 func (r *invitationConnectionResolver) TotalCount(ctx context.Context, obj *types.InvitationConnection) (*int, error) {
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
-		if ok := r.Authorize(ctx, obj.ParentID, iam.ActionInvitationList); !ok {
+		if ok := r.Authorize(ctx, obj.ParentID, iam.ActionInvitationList, nil); !ok {
 			return nil, nil
 		}
 
@@ -198,7 +198,7 @@ func (r *invitationConnectionResolver) TotalCount(ctx context.Context, obj *type
 		}
 		return &count, nil
 	case *identityResolver:
-		if ok := r.Authorize(ctx, obj.ParentID, iam.ActionInvitationList); !ok {
+		if ok := r.Authorize(ctx, obj.ParentID, iam.ActionInvitationList, nil); !ok {
 			return nil, nil
 		}
 
@@ -217,7 +217,10 @@ func (r *invitationConnectionResolver) TotalCount(ctx context.Context, obj *type
 
 // Identity is the resolver for the identity field.
 func (r *membershipResolver) Identity(ctx context.Context, obj *types.Membership) (*types.Identity, error) {
-	if ok := r.Authorize(ctx, obj.Identity.ID, iam.ActionIdentityGet); !ok {
+	resourceAttrs := map[string]string{
+		"organization_id": obj.Organization.ID.String(),
+	}
+	if ok := r.Authorize(ctx, obj.Identity.ID, iam.ActionIdentityGet, resourceAttrs); !ok {
 		return nil, nil
 	}
 
@@ -238,7 +241,7 @@ func (r *membershipResolver) Identity(ctx context.Context, obj *types.Membership
 
 // Profile is the resolver for the profile field.
 func (r *membershipResolver) Profile(ctx context.Context, obj *types.Membership) (*types.MembershipProfile, error) {
-	if ok := r.Authorize(ctx, obj.Profile.ID, iam.ActionMembershipProfileGet); !ok {
+	if ok := r.Authorize(ctx, obj.Profile.ID, iam.ActionMembershipProfileGet, nil); !ok {
 		return nil, nil
 	}
 
@@ -264,7 +267,7 @@ func (r *membershipResolver) Profile(ctx context.Context, obj *types.Membership)
 
 // Organization is the resolver for the organization field.
 func (r *membershipResolver) Organization(ctx context.Context, obj *types.Membership) (*types.Organization, error) {
-	if ok := r.Authorize(ctx, obj.Organization.ID, iam.ActionOrganizationGet); !ok {
+	if ok := r.Authorize(ctx, obj.Organization.ID, iam.ActionOrganizationGet, nil); !ok {
 		return nil, nil
 	}
 
@@ -285,7 +288,7 @@ func (r *membershipResolver) Organization(ctx context.Context, obj *types.Member
 
 // LastSession is the resolver for the lastSession field.
 func (r *membershipResolver) LastSession(ctx context.Context, obj *types.Membership) (*types.Session, error) {
-	if ok := r.Authorize(ctx, obj.ID, iam.ActionMembershipGet); !ok {
+	if ok := r.Authorize(ctx, obj.ID, iam.ActionMembershipGet, nil); !ok {
 		return nil, nil
 	}
 
@@ -315,7 +318,7 @@ func (r *membershipResolver) Permission(ctx context.Context, obj *types.Membersh
 
 // TotalCount is the resolver for the totalCount field.
 func (r *membershipConnectionResolver) TotalCount(ctx context.Context, obj *types.MembershipConnection) (*int, error) {
-	if ok := r.Authorize(ctx, obj.ParentID, iam.ActionMembershipList); !ok {
+	if ok := r.Authorize(ctx, obj.ParentID, iam.ActionMembershipList, nil); !ok {
 		return nil, nil
 	}
 
@@ -675,7 +678,7 @@ func (r *mutationResolver) AssumeOrganizationSession(ctx context.Context, input 
 
 // RevokeSession is the resolver for the revokeSession field.
 func (r *mutationResolver) RevokeSession(ctx context.Context, input types.RevokeSessionInput) (*types.RevokeSessionPayload, error) {
-	if ok := r.Authorize(ctx, input.SessionID, iam.ActionSessionRevoke); !ok {
+	if ok := r.Authorize(ctx, input.SessionID, iam.ActionSessionRevoke, nil); !ok {
 		return nil, nil
 	}
 
@@ -697,7 +700,7 @@ func (r *mutationResolver) RevokeSession(ctx context.Context, input types.Revoke
 
 // RevokeAllSessions is the resolver for the revokeAllSessions field.
 func (r *mutationResolver) RevokeAllSessions(ctx context.Context) (*types.RevokeAllSessionsPayload, error) {
-	if ok := r.Authorize(ctx, SessionFromContext(ctx).ID, iam.ActionSessionRevokeAll); !ok {
+	if ok := r.Authorize(ctx, SessionFromContext(ctx).ID, iam.ActionSessionRevokeAll, nil); !ok {
 		return nil, nil
 	}
 
@@ -716,7 +719,7 @@ func (r *mutationResolver) RevokeAllSessions(ctx context.Context) (*types.Revoke
 func (r *mutationResolver) CreatePersonalAPIKey(ctx context.Context, input types.CreatePersonalAPIKeyInput) (*types.CreatePersonalAPIKeyPayload, error) {
 	identity := IdentityFromContext(ctx)
 
-	if ok := r.Authorize(ctx, identity.ID, iam.ActionPersonalAPIKeyCreate); !ok {
+	if ok := r.Authorize(ctx, identity.ID, iam.ActionPersonalAPIKeyCreate, nil); !ok {
 		return nil, nil
 	}
 
@@ -739,7 +742,7 @@ func (r *mutationResolver) CreatePersonalAPIKey(ctx context.Context, input types
 
 // RevokePersonalAPIKey is the resolver for the revokePersonalAPIKey field.
 func (r *mutationResolver) RevokePersonalAPIKey(ctx context.Context, input types.RevokePersonalAPIKeyInput) (*types.RevokePersonalAPIKeyPayload, error) {
-	if ok := r.Authorize(ctx, input.PersonalAPIKeyID, iam.ActionPersonalAPIKeyDelete); !ok {
+	if ok := r.Authorize(ctx, input.PersonalAPIKeyID, iam.ActionPersonalAPIKeyDelete, nil); !ok {
 		return nil, nil
 	}
 
@@ -759,7 +762,7 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input types.C
 	identity := IdentityFromContext(ctx)
 
 	// FIXME check email domain and related IDP config
-	// if ok := r.Authorize(ctx, identity.ID, iam.ActionOrganizationCreate); !ok {
+	// if ok := r.Authorize(ctx, identity.ID, iam.ActionOrganizationCreate,nil); !ok {
 	// 	return nil, nil
 	// }
 
@@ -806,7 +809,7 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input types.C
 
 // UpdateOrganization is the resolver for the updateOrganization field.
 func (r *mutationResolver) UpdateOrganization(ctx context.Context, input types.UpdateOrganizationInput) (*types.UpdateOrganizationPayload, error) {
-	if ok := r.Authorize(ctx, input.OrganizationID, iam.ActionOrganizationUpdate); !ok {
+	if ok := r.Authorize(ctx, input.OrganizationID, iam.ActionOrganizationUpdate, nil); !ok {
 		return nil, nil
 	}
 
@@ -858,7 +861,7 @@ func (r *mutationResolver) UpdateOrganization(ctx context.Context, input types.U
 
 // DeleteOrganization is the resolver for the deleteOrganization field.
 func (r *mutationResolver) DeleteOrganization(ctx context.Context, input types.DeleteOrganizationInput) (*types.DeleteOrganizationPayload, error) {
-	if ok := r.Authorize(ctx, input.OrganizationID, iam.ActionOrganizationDelete); !ok {
+	if ok := r.Authorize(ctx, input.OrganizationID, iam.ActionOrganizationDelete, nil); !ok {
 		return nil, nil
 	}
 
@@ -878,7 +881,7 @@ func (r *mutationResolver) DeleteOrganizationHorizontalLogo(ctx context.Context,
 
 // InviteMember is the resolver for the inviteMember field.
 func (r *mutationResolver) InviteMember(ctx context.Context, input types.InviteMemberInput) (*types.InviteMemberPayload, error) {
-	if ok := r.Authorize(ctx, input.OrganizationID, iam.ActionInvitationCreate); !ok {
+	if ok := r.Authorize(ctx, input.OrganizationID, iam.ActionInvitationCreate, nil); !ok {
 		return nil, nil
 	}
 
@@ -914,7 +917,7 @@ func (r *mutationResolver) InviteMember(ctx context.Context, input types.InviteM
 
 // DeleteInvitation is the resolver for the deleteInvitation field.
 func (r *mutationResolver) DeleteInvitation(ctx context.Context, input types.DeleteInvitationInput) (*types.DeleteInvitationPayload, error) {
-	if ok := r.Authorize(ctx, input.OrganizationID, iam.ActionInvitationDelete); !ok {
+	if ok := r.Authorize(ctx, input.OrganizationID, iam.ActionInvitationDelete, nil); !ok {
 		return nil, nil
 	}
 
@@ -940,7 +943,7 @@ func (r *mutationResolver) DeleteInvitation(ctx context.Context, input types.Del
 
 // UpdateMembership is the resolver for the updateMembership field.
 func (r *mutationResolver) UpdateMembership(ctx context.Context, input types.UpdateMembershipInput) (*types.UpdateMembershipPayload, error) {
-	if ok := r.Authorize(ctx, input.MembershipID, iam.ActionMembershipUpdate); !ok {
+	if ok := r.Authorize(ctx, input.MembershipID, iam.ActionMembershipUpdate, nil); !ok {
 		return nil, nil
 	}
 
@@ -957,7 +960,7 @@ func (r *mutationResolver) UpdateMembership(ctx context.Context, input types.Upd
 
 // RemoveMember is the resolver for the removeMember field.
 func (r *mutationResolver) RemoveMember(ctx context.Context, input types.RemoveMemberInput) (*types.RemoveMemberPayload, error) {
-	if ok := r.Authorize(ctx, input.MembershipID, iam.ActionMembershipDelete); !ok {
+	if ok := r.Authorize(ctx, input.MembershipID, iam.ActionMembershipDelete, nil); !ok {
 		return nil, nil
 	}
 
@@ -972,7 +975,7 @@ func (r *mutationResolver) RemoveMember(ctx context.Context, input types.RemoveM
 
 // AcceptInvitation is the resolver for the acceptInvitation field.
 func (r *mutationResolver) AcceptInvitation(ctx context.Context, input types.AcceptInvitationInput) (*types.AcceptInvitationPayload, error) {
-	if ok := r.Authorize(ctx, input.InvitationID, iam.ActionInvitationAccept); !ok {
+	if ok := r.Authorize(ctx, input.InvitationID, iam.ActionInvitationAccept, nil); !ok {
 		return nil, nil
 	}
 
@@ -991,7 +994,7 @@ func (r *mutationResolver) AcceptInvitation(ctx context.Context, input types.Acc
 
 // CreateSAMLConfiguration is the resolver for the createSAMLConfiguration field.
 func (r *mutationResolver) CreateSAMLConfiguration(ctx context.Context, input types.CreateSAMLConfigurationInput) (*types.CreateSAMLConfigurationPayload, error) {
-	if ok := r.Authorize(ctx, input.OrganizationID, iam.ActionSAMLConfigurationCreate); !ok {
+	if ok := r.Authorize(ctx, input.OrganizationID, iam.ActionSAMLConfigurationCreate, nil); !ok {
 		return nil, nil
 	}
 
@@ -1036,7 +1039,7 @@ func (r *mutationResolver) CreateSAMLConfiguration(ctx context.Context, input ty
 
 // UpdateSAMLConfiguration is the resolver for the updateSAMLConfiguration field.
 func (r *mutationResolver) UpdateSAMLConfiguration(ctx context.Context, input types.UpdateSAMLConfigurationInput) (*types.UpdateSAMLConfigurationPayload, error) {
-	if ok := r.Authorize(ctx, input.SamlConfigurationID, iam.ActionSAMLConfigurationUpdate); !ok {
+	if ok := r.Authorize(ctx, input.SamlConfigurationID, iam.ActionSAMLConfigurationUpdate, nil); !ok {
 		return nil, nil
 	}
 
@@ -1073,7 +1076,7 @@ func (r *mutationResolver) UpdateSAMLConfiguration(ctx context.Context, input ty
 
 // DeleteSAMLConfiguration is the resolver for the deleteSAMLConfiguration field.
 func (r *mutationResolver) DeleteSAMLConfiguration(ctx context.Context, input types.DeleteSAMLConfigurationInput) (*types.DeleteSAMLConfigurationPayload, error) {
-	if ok := r.Authorize(ctx, input.OrganizationID, iam.ActionSAMLConfigurationDelete); !ok {
+	if ok := r.Authorize(ctx, input.OrganizationID, iam.ActionSAMLConfigurationDelete, nil); !ok {
 		return nil, nil
 	}
 
@@ -1088,7 +1091,7 @@ func (r *mutationResolver) DeleteSAMLConfiguration(ctx context.Context, input ty
 
 // LogoURL is the resolver for the logoUrl field.
 func (r *organizationResolver) LogoURL(ctx context.Context, obj *types.Organization) (*string, error) {
-	if ok := r.Authorize(ctx, obj.ID, iam.ActionOrganizationGet); !ok {
+	if ok := r.Authorize(ctx, obj.ID, iam.ActionOrganizationGet, nil); !ok {
 		return nil, nil
 	}
 
@@ -1103,7 +1106,7 @@ func (r *organizationResolver) LogoURL(ctx context.Context, obj *types.Organizat
 
 // HorizontalLogoURL is the resolver for the horizontalLogoUrl field.
 func (r *organizationResolver) HorizontalLogoURL(ctx context.Context, obj *types.Organization) (*string, error) {
-	if ok := r.Authorize(ctx, obj.ID, iam.ActionOrganizationGet); !ok {
+	if ok := r.Authorize(ctx, obj.ID, iam.ActionOrganizationGet, nil); !ok {
 		return nil, nil
 	}
 
@@ -1118,7 +1121,7 @@ func (r *organizationResolver) HorizontalLogoURL(ctx context.Context, obj *types
 
 // Members is the resolver for the members field.
 func (r *organizationResolver) Members(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MembershipOrderBy) (*types.MembershipConnection, error) {
-	if ok := r.Authorize(ctx, obj.ID, iam.ActionMembershipList); !ok {
+	if ok := r.Authorize(ctx, obj.ID, iam.ActionMembershipList, nil); !ok {
 		return nil, nil
 	}
 
@@ -1151,7 +1154,7 @@ func (r *organizationResolver) Members(ctx context.Context, obj *types.Organizat
 
 // Invitations is the resolver for the invitations field.
 func (r *organizationResolver) Invitations(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, status *coredata.InvitationStatus, orderBy *types.InvitationOrderBy) (*types.InvitationConnection, error) {
-	if ok := r.Authorize(ctx, obj.ID, iam.ActionInvitationList); !ok {
+	if ok := r.Authorize(ctx, obj.ID, iam.ActionInvitationList, nil); !ok {
 		return nil, nil
 	}
 
@@ -1185,7 +1188,7 @@ func (r *organizationResolver) Invitations(ctx context.Context, obj *types.Organ
 
 // SamlConfigurations is the resolver for the samlConfigurations field.
 func (r *organizationResolver) SamlConfigurations(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.SAMLConfigurationConnection, error) {
-	if ok := r.Authorize(ctx, obj.ID, iam.ActionSAMLConfigurationList); !ok {
+	if ok := r.Authorize(ctx, obj.ID, iam.ActionSAMLConfigurationList, nil); !ok {
 		return nil, nil
 	}
 
@@ -1214,7 +1217,7 @@ func (r *organizationResolver) SamlConfigurations(ctx context.Context, obj *type
 
 // ViewerMembership is the resolver for the viewerMembership field.
 func (r *organizationResolver) ViewerMembership(ctx context.Context, obj *types.Organization) (*types.Membership, error) {
-	if ok := r.Authorize(ctx, obj.ID, iam.ActionMembershipList); !ok {
+	if ok := r.Authorize(ctx, obj.ID, iam.ActionMembershipList, nil); !ok {
 		return nil, nil
 	}
 
@@ -1236,7 +1239,7 @@ func (r *organizationResolver) Permission(ctx context.Context, obj *types.Organi
 
 // Token is the resolver for the token field.
 func (r *personalAPIKeyResolver) Token(ctx context.Context, obj *types.PersonalAPIKey) (*string, error) {
-	if ok := r.Authorize(ctx, obj.ID, iam.ActionPersonalAPIKeyGet); !ok {
+	if ok := r.Authorize(ctx, obj.ID, iam.ActionPersonalAPIKeyGet, nil); !ok {
 		return nil, nil
 	}
 
@@ -1260,7 +1263,7 @@ func (r *personalAPIKeyResolver) Permission(ctx context.Context, obj *types.Pers
 func (r *personalAPIKeyConnectionResolver) TotalCount(ctx context.Context, obj *types.PersonalAPIKeyConnection) (*int, error) {
 	switch obj.Resolver.(type) {
 	case *identityResolver:
-		if ok := r.Authorize(ctx, obj.ParentID, iam.ActionPersonalAPIKeyList); !ok {
+		if ok := r.Authorize(ctx, obj.ParentID, iam.ActionPersonalAPIKeyList, nil); !ok {
 			return nil, nil
 		}
 
