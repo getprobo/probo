@@ -132,6 +132,7 @@ var IAMOwnerPolicy = policy.NewPolicy(
 	policy.Allow(
 		ActionInvitationCreate,
 		ActionInvitationGet,
+		ActionInvitationList,
 		ActionInvitationDelete,
 	).
 		WithSID("manage-invitations").
