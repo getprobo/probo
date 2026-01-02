@@ -130,6 +130,7 @@ var IAMOwnerPolicy = policy.NewPolicy(
 
 	// Can manage invitations (scoped to own organization)
 	policy.Allow(
+		ActionInvitationList,
 		ActionInvitationCreate,
 		ActionInvitationGet,
 		ActionInvitationList,
