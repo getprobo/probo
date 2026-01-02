@@ -136,6 +136,24 @@ export const riskNodeQuery = graphql`
         }
         canUpdate: permission(action: "core:risk:update")
         canDelete: permission(action: "core:risk:delete")
+        canCreateDocumentMapping: permission(
+          action: "core:risk:create-document-mapping"
+        )
+        canDeleteDocumentMapping: permission(
+          action: "core:risk:delete-document-mapping"
+        )
+        canCreateMeasureMapping: permission(
+          action: "core:risk:create-measure-mapping"
+        )
+        canDeleteMeasureMapping: permission(
+          action: "core:risk:delete-measure-mapping"
+        )
+        canCreateObligationMapping: permission(
+          action: "core:risk:create-obligation-mapping"
+        )
+        canDeleteObligationMapping: permission(
+          action: "core:risk:delete-obligation-mapping"
+        )
         ...useRiskFormFragment
         ...RiskOverviewTabFragment
         ...RiskMeasuresTabFragment
