@@ -8,6 +8,7 @@ import { SessionDropdown } from "./_components/SessionDropdown";
 import { Suspense } from "react";
 import { useTranslate } from "@probo/i18n";
 import { CoreRelayProvider } from "/providers/CoreRelayProvider";
+import { CurrentUser } from "/providers/CurrentUser";
 
 export const membershipLayoutQuery = graphql`
   query MembershipLayoutQuery($organizationId: ID!, $hideSidebar: Boolean!) {
@@ -19,10 +20,14 @@ export const membershipLayoutQuery = graphql`
         ...SidebarFragment @skip(if: $hideSidebar)
         viewerMembership @required(action: THROW) {
           role
+          profile @required(action: THROW) {
+            fullName
+          }
         }
       }
     }
     viewer @required(action: THROW) {
+      email
       ...MembershipsDropdown_viewerFragment
       pendingInvitations @required(action: THROW) {
         totalCount @required(action: THROW)
@@ -77,7 +82,15 @@ export function MembershipLayout(props: {
       sidebar={!hideSidebar && <Sidebar fKey={organization} />}
     >
       <CoreRelayProvider>
-        <Outlet context={organization.viewerMembership.role} />
+        <CurrentUser
+          value={{
+            email: viewer.email,
+            fullName: organization.viewerMembership.profile.fullName,
+            role: organization.viewerMembership.role,
+          }}
+        >
+          <Outlet context={organization.viewerMembership.role} />
+        </CurrentUser>
       </CoreRelayProvider>
     </Layout>
   );

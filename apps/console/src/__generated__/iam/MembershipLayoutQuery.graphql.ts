@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<5020a4587a487d695572eb77c5e9a959>>
+ * @generated SignedSource<<4268d9e187cf29b47f9438cf48cc3e73>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -19,6 +19,9 @@ export type MembershipLayoutQuery$data = {
   readonly organization: {
     readonly __typename: "Organization";
     readonly viewerMembership: {
+      readonly profile: {
+        readonly fullName: string;
+      };
       readonly role: MembershipRole;
     };
     readonly " $fragmentSpreads": FragmentRefs<"MembershipsDropdown_organizationFragment" | "SessionDropdownFragment" | "SidebarFragment">;
@@ -28,6 +31,7 @@ export type MembershipLayoutQuery$data = {
     readonly __typename: "%other";
   };
   readonly viewer: {
+    readonly email: string;
     readonly pendingInvitations: {
       readonly totalCount: number;
     };
@@ -75,10 +79,24 @@ v5 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "totalCount",
+  "name": "fullName",
   "storageKey": null
 },
 v6 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "email",
+  "storageKey": null
+},
+v7 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "totalCount",
+  "storageKey": null
+},
+v8 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
@@ -141,7 +159,23 @@ return {
                     "name": "viewerMembership",
                     "plural": false,
                     "selections": [
-                      (v4/*: any*/)
+                      (v4/*: any*/),
+                      {
+                        "kind": "RequiredField",
+                        "field": {
+                          "alias": null,
+                          "args": null,
+                          "concreteType": "MembershipProfile",
+                          "kind": "LinkedField",
+                          "name": "profile",
+                          "plural": false,
+                          "selections": [
+                            (v5/*: any*/)
+                          ],
+                          "storageKey": null
+                        },
+                        "action": "THROW"
+                      }
                     ],
                     "storageKey": null
                   },
@@ -166,6 +200,7 @@ return {
           "name": "viewer",
           "plural": false,
           "selections": [
+            (v6/*: any*/),
             {
               "args": null,
               "kind": "FragmentSpread",
@@ -183,7 +218,7 @@ return {
                 "selections": [
                   {
                     "kind": "RequiredField",
-                    "field": (v5/*: any*/),
+                    "field": (v7/*: any*/),
                     "action": "THROW"
                   }
                 ],
@@ -257,14 +292,8 @@ return {
                     "name": "identity",
                     "plural": false,
                     "selections": [
-                      {
-                        "alias": null,
-                        "args": null,
-                        "kind": "ScalarField",
-                        "name": "email",
-                        "storageKey": null
-                      },
-                      (v6/*: any*/)
+                      (v6/*: any*/),
+                      (v8/*: any*/)
                     ],
                     "storageKey": null
                   },
@@ -276,18 +305,12 @@ return {
                     "name": "profile",
                     "plural": false,
                     "selections": [
-                      {
-                        "alias": null,
-                        "args": null,
-                        "kind": "ScalarField",
-                        "name": "fullName",
-                        "storageKey": null
-                      },
-                      (v6/*: any*/)
+                      (v5/*: any*/),
+                      (v8/*: any*/)
                     ],
                     "storageKey": null
                   },
-                  (v6/*: any*/),
+                  (v8/*: any*/),
                   (v4/*: any*/)
                 ],
                 "storageKey": null
@@ -563,7 +586,7 @@ return {
             "type": "Organization",
             "abstractKey": null
           },
-          (v6/*: any*/)
+          (v8/*: any*/)
         ],
         "storageKey": null
       },
@@ -575,6 +598,7 @@ return {
         "name": "viewer",
         "plural": false,
         "selections": [
+          (v6/*: any*/),
           {
             "alias": null,
             "args": null,
@@ -583,27 +607,27 @@ return {
             "name": "pendingInvitations",
             "plural": false,
             "selections": [
-              (v5/*: any*/)
+              (v7/*: any*/)
             ],
             "storageKey": null
           },
-          (v6/*: any*/)
+          (v8/*: any*/)
         ],
         "storageKey": null
       }
     ]
   },
   "params": {
-    "cacheID": "6b0b3a64c02e1c0ff744e57b395d14c8",
+    "cacheID": "5f50873fa9c14115e307b43d7c1ae822",
     "id": null,
     "metadata": {},
     "name": "MembershipLayoutQuery",
     "operationKind": "query",
-    "text": "query MembershipLayoutQuery(\n  $organizationId: ID!\n  $hideSidebar: Boolean!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      ...MembershipsDropdown_organizationFragment\n      ...SessionDropdownFragment\n      ...SidebarFragment @skip(if: $hideSidebar)\n      viewerMembership {\n        role\n        id\n      }\n    }\n    id\n  }\n  viewer {\n    ...MembershipsDropdown_viewerFragment\n    pendingInvitations {\n      totalCount\n    }\n    id\n  }\n}\n\nfragment MembershipsDropdown_organizationFragment on Organization {\n  name\n}\n\nfragment MembershipsDropdown_viewerFragment on Identity {\n  pendingInvitations {\n    totalCount\n  }\n}\n\nfragment SessionDropdownFragment on Organization {\n  canDelete: permission(action: \"iam:organization:delete\")\n  viewerMembership {\n    identity {\n      email\n      id\n    }\n    profile {\n      fullName\n      id\n    }\n    id\n  }\n}\n\nfragment SidebarFragment on Organization {\n  canListMeetings: permission(action: \"core:meeting:list\")\n  canListTasks: permission(action: \"core:task:list\")\n  canListMeasures: permission(action: \"core:measures:list\")\n  canListRisks: permission(action: \"core:risk:list\")\n  canListFrameworks: permission(action: \"core:frameworks:list\")\n  canListPeople: permission(action: \"core:people:list\")\n  canListVendors: permission(action: \"core:vendor:list\")\n  canListDocuments: permission(action: \"core:document:list\")\n  canListAssets: permission(action: \"core:asset:list\")\n  canListData: permission(action: \"core:datum:list\")\n  canListAudits: permission(action: \"core:audit:list\")\n  canListNonconformities: permission(action: \"core:nonconformity:list\")\n  canListObligations: permission(action: \"core:obligation:list\")\n  canListContinualImprovements: permission(action: \"core:continual-improvement:list\")\n  canListProcessingActivities: permission(action: \"core:processing-activity:list\")\n  canListRightsRequests: permission(action: \"core:rights-request:list\")\n  canListSnapshots: permission(action: \"core:snapshot:list\")\n  canGetTrustCenter: permission(action: \"core:trust-center:get\")\n  canUpdateOrganization: permission(action: \"iam:organization:update\")\n  canListStatesOfApplicability: permission(action: \"core:state-of-applicability:list\")\n}\n"
+    "text": "query MembershipLayoutQuery(\n  $organizationId: ID!\n  $hideSidebar: Boolean!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      ...MembershipsDropdown_organizationFragment\n      ...SessionDropdownFragment\n      ...SidebarFragment @skip(if: $hideSidebar)\n      viewerMembership {\n        role\n        profile {\n          fullName\n          id\n        }\n        id\n      }\n    }\n    id\n  }\n  viewer {\n    email\n    ...MembershipsDropdown_viewerFragment\n    pendingInvitations {\n      totalCount\n    }\n    id\n  }\n}\n\nfragment MembershipsDropdown_organizationFragment on Organization {\n  name\n}\n\nfragment MembershipsDropdown_viewerFragment on Identity {\n  pendingInvitations {\n    totalCount\n  }\n}\n\nfragment SessionDropdownFragment on Organization {\n  canDelete: permission(action: \"iam:organization:delete\")\n  viewerMembership {\n    identity {\n      email\n      id\n    }\n    profile {\n      fullName\n      id\n    }\n    id\n  }\n}\n\nfragment SidebarFragment on Organization {\n  canListMeetings: permission(action: \"core:meeting:list\")\n  canListTasks: permission(action: \"core:task:list\")\n  canListMeasures: permission(action: \"core:measures:list\")\n  canListRisks: permission(action: \"core:risk:list\")\n  canListFrameworks: permission(action: \"core:frameworks:list\")\n  canListPeople: permission(action: \"core:people:list\")\n  canListVendors: permission(action: \"core:vendor:list\")\n  canListDocuments: permission(action: \"core:document:list\")\n  canListAssets: permission(action: \"core:asset:list\")\n  canListData: permission(action: \"core:datum:list\")\n  canListAudits: permission(action: \"core:audit:list\")\n  canListNonconformities: permission(action: \"core:nonconformity:list\")\n  canListObligations: permission(action: \"core:obligation:list\")\n  canListContinualImprovements: permission(action: \"core:continual-improvement:list\")\n  canListProcessingActivities: permission(action: \"core:processing-activity:list\")\n  canListRightsRequests: permission(action: \"core:rights-request:list\")\n  canListSnapshots: permission(action: \"core:snapshot:list\")\n  canGetTrustCenter: permission(action: \"core:trust-center:get\")\n  canUpdateOrganization: permission(action: \"iam:organization:update\")\n  canListStatesOfApplicability: permission(action: \"core:state-of-applicability:list\")\n}\n"
   }
 };
 })();
 
-(node as any).hash = "2d75823d6ae9eee901e54b71d4c397cf";
+(node as any).hash = "e52fc7540b2908e5b4f2c4cef33b5b81";
 
 export default node;

@@ -15,7 +15,11 @@ import { useFormWithSchema } from "/hooks/useFormWithSchema";
 
 const pdfDownloadSchema = z.object({
   withWatermark: z.boolean(),
-  watermarkEmail: z.string().email("Please enter a valid email address").optional().or(z.literal("")),
+  watermarkEmail: z
+    .string()
+    .email("Please enter a valid email address")
+    .optional()
+    .or(z.literal("")),
   withSignatures: z.boolean(),
 });
 
@@ -25,7 +29,7 @@ type Props = {
   children: ReactNode;
   onDownload: (options: PdfDownloadFormData) => void;
   isLoading?: boolean;
-  defaultEmail?: string;
+  defaultEmail: string;
 };
 
 export type PdfDownloadDialogRef = {
@@ -34,20 +38,18 @@ export type PdfDownloadDialogRef = {
 };
 
 export const PdfDownloadDialog = forwardRef<PdfDownloadDialogRef, Props>(
-  ({ children, onDownload, isLoading = false, defaultEmail = "" }, ref) => {
+  ({ children, onDownload, isLoading = false, defaultEmail }, ref) => {
     const { __ } = useTranslate();
     const dialogRef = useDialogRef();
 
-    const { register, handleSubmit, formState, watch, setValue } = useFormWithSchema(
-      pdfDownloadSchema,
-      {
+    const { register, handleSubmit, formState, watch, setValue } =
+      useFormWithSchema(pdfDownloadSchema, {
         defaultValues: {
           withWatermark: false,
           watermarkEmail: defaultEmail,
           withSignatures: true,
         },
-      }
-    );
+      });
 
     const watchWatermark = watch("withWatermark");
     const watchSignatures = watch("withSignatures");
@@ -69,7 +71,11 @@ export const PdfDownloadDialog = forwardRef<PdfDownloadDialogRef, Props>(
     return (
       <>
         <div onClick={() => dialogRef.current?.open()}>{children}</div>
-        <Dialog className="max-w-md" ref={dialogRef} title={__("Download PDF Options")}>
+        <Dialog
+          className="max-w-md"
+          ref={dialogRef}
+          title={__("Download PDF Options")}
+        >
           <form onSubmit={onSubmit}>
             <DialogContent className="space-y-4" padded>
               <div className="space-y-4">
@@ -83,7 +89,9 @@ export const PdfDownloadDialog = forwardRef<PdfDownloadDialogRef, Props>(
                       {__("Include signatures")}
                     </label>
                     <p className="text-xs text-txt-secondary mt-1">
-                      {__("Show signature information and approval details in the PDF")}
+                      {__(
+                        "Show signature information and approval details in the PDF",
+                      )}
                     </p>
                   </div>
                 </div>
@@ -98,7 +106,9 @@ export const PdfDownloadDialog = forwardRef<PdfDownloadDialogRef, Props>(
                       {__("Add watermark")}
                     </label>
                     <p className="text-xs text-txt-secondary mt-1">
-                      {__("Add confidential watermark with email and timestamp")}
+                      {__(
+                        "Add confidential watermark with email and timestamp",
+                      )}
                     </p>
                   </div>
                 </div>
@@ -119,10 +129,7 @@ export const PdfDownloadDialog = forwardRef<PdfDownloadDialogRef, Props>(
               </div>
             </DialogContent>
             <DialogFooter>
-              <Button
-                type="submit"
-                disabled={isLoading}
-              >
+              <Button type="submit" disabled={isLoading}>
                 {isLoading ? (
                   <>
                     <Spinner size={16} />
@@ -137,5 +144,5 @@ export const PdfDownloadDialog = forwardRef<PdfDownloadDialogRef, Props>(
         </Dialog>
       </>
     );
-  }
+  },
 );

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<6c195e6a85a33dea6ae254caa60b79df>>
+ * @generated SignedSource<<1a9ee1bf35493db9d5edbbd07f917ff5>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -109,14 +109,7 @@ v12 = {
   "name": "id",
   "storageKey": null
 },
-v13 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "role",
-  "storageKey": null
-},
-v14 = [
+v13 = [
   (v7/*: any*/),
   (v8/*: any*/),
   (v9/*: any*/),
@@ -199,20 +192,7 @@ return {
             "selections": [
               {
                 "alias": null,
-                "args": null,
-                "concreteType": "Membership",
-                "kind": "LinkedField",
-                "name": "viewerMembership",
-                "plural": false,
-                "selections": [
-                  (v13/*: any*/),
-                  (v12/*: any*/)
-                ],
-                "storageKey": null
-              },
-              {
-                "alias": null,
-                "args": (v14/*: any*/),
+                "args": (v13/*: any*/),
                 "concreteType": "MembershipConnection",
                 "kind": "LinkedField",
                 "name": "members",
@@ -242,7 +222,13 @@ return {
                         "plural": false,
                         "selections": [
                           (v12/*: any*/),
-                          (v13/*: any*/),
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "role",
+                            "storageKey": null
+                          },
                           {
                             "alias": null,
                             "args": null,
@@ -384,7 +370,7 @@ return {
               },
               {
                 "alias": null,
-                "args": (v14/*: any*/),
+                "args": (v13/*: any*/),
                 "filters": [
                   "orderBy"
                 ],
@@ -403,16 +389,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "a879076e1e75bea4d524852533db17b6",
+    "cacheID": "7d90790bce5773e286196cec19c376c9",
     "id": null,
     "metadata": {},
     "name": "MemberListFragment_RefetchQuery",
     "operationKind": "query",
-    "text": "query MemberListFragment_RefetchQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 20\n  $last: Int = null\n  $order: MembershipOrder = {direction: ASC, field: CREATED_AT}\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...MemberListFragment_16fISc\n    id\n  }\n}\n\nfragment MemberListFragment_16fISc on Organization {\n  ...MemberListItem_currentRoleFragment\n  members(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    totalCount\n    edges {\n      node {\n        id\n        ...MemberListItemFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment MemberListItemFragment on Membership {\n  id\n  role\n  profile {\n    fullName\n    id\n  }\n  identity {\n    email\n    id\n  }\n  createdAt\n  canUpdate: permission(action: \"iam:membership:update\")\n  canDelete: permission(action: \"iam:membership:delete\")\n}\n\nfragment MemberListItem_currentRoleFragment on Organization {\n  viewerMembership {\n    role\n    id\n  }\n}\n"
+    "text": "query MemberListFragment_RefetchQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 20\n  $last: Int = null\n  $order: MembershipOrder = {direction: ASC, field: CREATED_AT}\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...MemberListFragment_16fISc\n    id\n  }\n}\n\nfragment MemberListFragment_16fISc on Organization {\n  members(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    totalCount\n    edges {\n      node {\n        id\n        ...MemberListItemFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment MemberListItemFragment on Membership {\n  id\n  role\n  profile {\n    fullName\n    id\n  }\n  identity {\n    email\n    id\n  }\n  createdAt\n  canUpdate: permission(action: \"iam:membership:update\")\n  canDelete: permission(action: \"iam:membership:delete\")\n}\n"
   }
 };
 })();
 
-(node as any).hash = "909f6c9ed0fcaf7b0d170bded8c97562";
+(node as any).hash = "763331f25e735e2645b0c6949ecad362";
 
 export default node;

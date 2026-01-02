@@ -10,15 +10,15 @@ import {
   useConfirm,
 } from "@probo/ui";
 import clsx from "clsx";
-import { useState } from "react";
+import { use, useState } from "react";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 import type { MemberListItemFragment$key } from "/__generated__/iam/MemberListItemFragment.graphql";
-import type { MemberListItem_currentRoleFragment$key } from "/__generated__/iam/MemberListItem_currentRoleFragment.graphql";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { sprintf } from "@probo/helpers";
 import { EditMemberDialog } from "./EditMemberDialog";
+import { CurrentUser } from "/providers/CurrentUser";
 
 const fragment = graphql`
   fragment MemberListItemFragment on Membership {
@@ -36,14 +36,6 @@ const fragment = graphql`
   }
 `;
 
-const currentRoleFragment = graphql`
-  fragment MemberListItem_currentRoleFragment on Organization {
-    viewerMembership @required(action: THROW) {
-      role
-    }
-  }
-`;
-
 const removeMemberMutation = graphql`
   mutation MemberListItem_removeMutation(
     $input: RemoveMemberInput!
@@ -58,10 +50,9 @@ const removeMemberMutation = graphql`
 export function MemberListItem(props: {
   connectionId: string;
   fKey: MemberListItemFragment$key;
-  viewerFKey: MemberListItem_currentRoleFragment$key;
   onRefetch: () => void;
 }) {
-  const { fKey, connectionId, viewerFKey } = props;
+  const { fKey, connectionId } = props;
 
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
@@ -69,15 +60,10 @@ export function MemberListItem(props: {
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const membership = useFragment<MemberListItemFragment$key>(fragment, fKey);
-  const { viewerMembership } =
-    useFragment<MemberListItem_currentRoleFragment$key>(
-      currentRoleFragment,
-      viewerFKey,
-    );
+  const { role } = use(CurrentUser);
 
   // Only OWNER can edit OWNER members
-  const canEditThisRole =
-    membership.role === "OWNER" ? viewerMembership.role === "OWNER" : true;
+  const canEditThisRole = membership.role === "OWNER" ? role === "OWNER" : true;
 
   const [removeMembership, isRemoving] = useMutationWithToasts(
     removeMemberMutation,
@@ -162,7 +148,6 @@ export function MemberListItem(props: {
 
       {dialogOpen && (
         <EditMemberDialog
-          currentRole={viewerMembership.role}
           onClose={() => setDialogOpen(false)}
           membership={membership}
         />
