@@ -1090,6 +1090,57 @@ func (r *mutationResolver) DeleteSAMLConfiguration(ctx context.Context, input ty
 	return &types.DeleteSAMLConfigurationPayload{DeletedSamlConfigurationID: input.SamlConfigurationID}, nil
 }
 
+// CreateSCIMConfiguration is the resolver for the createSCIMConfiguration field.
+func (r *mutationResolver) CreateSCIMConfiguration(ctx context.Context, input types.CreateSCIMConfigurationInput) (*types.CreateSCIMConfigurationPayload, error) {
+	if ok := r.Authorize(ctx, input.OrganizationID, iam.ActionSCIMConfigurationCreate, nil); !ok {
+		return nil, nil
+	}
+
+	config, token, err := r.iam.OrganizationService.CreateSCIMConfiguration(ctx, input.OrganizationID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot create scim configuration", log.Error(err))
+		return nil, gqlutils.InternalServerError(ctx)
+	}
+
+	return &types.CreateSCIMConfigurationPayload{
+		ScimConfiguration: types.NewSCIMConfiguration(config),
+		Token:             token,
+	}, nil
+}
+
+// DeleteSCIMConfiguration is the resolver for the deleteSCIMConfiguration field.
+func (r *mutationResolver) DeleteSCIMConfiguration(ctx context.Context, input types.DeleteSCIMConfigurationInput) (*types.DeleteSCIMConfigurationPayload, error) {
+	if ok := r.Authorize(ctx, input.OrganizationID, iam.ActionSCIMConfigurationDelete, nil); !ok {
+		return nil, nil
+	}
+
+	err := r.iam.OrganizationService.DeleteSCIMConfiguration(ctx, input.OrganizationID, input.ScimConfigurationID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot delete scim configuration", log.Error(err))
+		return nil, gqlutils.InternalServerError(ctx)
+	}
+
+	return &types.DeleteSCIMConfigurationPayload{DeletedScimConfigurationID: input.ScimConfigurationID}, nil
+}
+
+// RegenerateSCIMToken is the resolver for the regenerateSCIMToken field.
+func (r *mutationResolver) RegenerateSCIMToken(ctx context.Context, input types.RegenerateSCIMTokenInput) (*types.RegenerateSCIMTokenPayload, error) {
+	if ok := r.Authorize(ctx, input.ScimConfigurationID, iam.ActionSCIMConfigurationUpdate, nil); !ok {
+		return nil, nil
+	}
+
+	config, token, err := r.iam.OrganizationService.RegenerateSCIMToken(ctx, input.OrganizationID, input.ScimConfigurationID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot regenerate scim token", log.Error(err))
+		return nil, gqlutils.InternalServerError(ctx)
+	}
+
+	return &types.RegenerateSCIMTokenPayload{
+		ScimConfiguration: types.NewSCIMConfiguration(config),
+		Token:             token,
+	}, nil
+}
+
 // LogoURL is the resolver for the logoUrl field.
 func (r *organizationResolver) LogoURL(ctx context.Context, obj *types.Organization) (*string, error) {
 	if ok := r.Authorize(ctx, obj.ID, iam.ActionOrganizationGet, nil); !ok {
@@ -1214,6 +1265,26 @@ func (r *organizationResolver) SamlConfigurations(ctx context.Context, obj *type
 	}
 
 	return types.NewSAMLConfigurationConnection(page, r, obj.ID), nil
+}
+
+// ScimConfiguration is the resolver for the scimConfiguration field.
+func (r *organizationResolver) ScimConfiguration(ctx context.Context, obj *types.Organization) (*types.SCIMConfiguration, error) {
+	if ok := r.Authorize(ctx, obj.ID, iam.ActionSCIMConfigurationGet, nil); !ok {
+		return nil, nil
+	}
+
+	config, err := r.iam.OrganizationService.GetSCIMConfiguration(ctx, obj.ID)
+	if err != nil {
+		var notFound *iam.ErrNoSCIMConfigurationFound
+		if errors.As(err, &notFound) {
+			return nil, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get scim configuration", log.Error(err))
+		return nil, gqlutils.InternalServerError(ctx)
+	}
+
+	return types.NewSCIMConfiguration(config), nil
 }
 
 // ViewerMembership is the resolver for the viewerMembership field.
@@ -1358,6 +1429,24 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			}
 			return types.NewPersonalAPIKey(personalAPIKey), nil
 		}
+	case coredata.SCIMConfigurationEntityType:
+		action = iam.ActionSCIMConfigurationGet
+		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
+			scimConfiguration, err := r.iam.GetSCIMConfiguration(ctx, id)
+			if err != nil {
+				return nil, err
+			}
+			return types.NewSCIMConfiguration(scimConfiguration), nil
+		}
+	case coredata.SCIMEventEntityType:
+		action = iam.ActionSCIMEventGet
+		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
+			scimEvent, err := r.iam.GetSCIMEvent(ctx, id)
+			if err != nil {
+				return nil, err
+			}
+			return types.NewSCIMEvent(scimEvent), nil
+		}
 	default:
 		return nil, fmt.Errorf("unsupported entity type: %d", id.EntityType())
 	}
@@ -1443,6 +1532,127 @@ func (r *sAMLConfigurationConnectionResolver) TotalCount(ctx context.Context, ob
 		count, err := r.iam.OrganizationService.CountSAMLConfigurations(ctx, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count saml configurations", log.Error(err))
+			return nil, gqlutils.InternalServerError(ctx)
+		}
+		return &count, nil
+	}
+
+	r.logger.ErrorCtx(ctx, "unsupported resolver", log.Any("resolver", obj.Resolver))
+	return nil, gqlutils.InternalServerError(ctx)
+}
+
+// EndpointURL is the resolver for the endpointUrl field.
+func (r *sCIMConfigurationResolver) EndpointURL(ctx context.Context, obj *types.SCIMConfiguration) (string, error) {
+	return r.baseURL.WithPath("/api/connect/v1/scim/2.0").MustString(), nil
+}
+
+// Organization is the resolver for the organization field.
+func (r *sCIMConfigurationResolver) Organization(ctx context.Context, obj *types.SCIMConfiguration) (*types.Organization, error) {
+	if ok := r.Authorize(ctx, obj.Organization.ID, iam.ActionOrganizationGet, nil); !ok {
+		return nil, nil
+	}
+
+	if obj.Organization == nil {
+		return nil, nil
+	}
+
+	if gqlutils.OnlyIDSelected(ctx) {
+		return &types.Organization{
+			ID: obj.Organization.ID,
+		}, nil
+	}
+
+	organization, err := r.iam.OrganizationService.GetOrganization(ctx, obj.Organization.ID)
+	if err != nil {
+		var errOrganizationNotFound *iam.ErrOrganizationNotFound
+		if errors.As(err, &errOrganizationNotFound) {
+			return nil, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get organization for scim configuration", log.Error(err))
+		return nil, gqlutils.InternalServerError(ctx)
+	}
+
+	return types.NewOrganization(organization), nil
+}
+
+// Events is the resolver for the events field.
+func (r *sCIMConfigurationResolver) Events(ctx context.Context, obj *types.SCIMConfiguration, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.SCIMEventOrderBy) (*types.SCIMEventConnection, error) {
+	if ok := r.Authorize(ctx, obj.ID, iam.ActionSCIMEventList, nil); !ok {
+		return nil, nil
+	}
+
+	pageOrderBy := page.OrderBy[coredata.SCIMEventOrderField]{
+		Field:     coredata.SCIMEventOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy.Field = coredata.SCIMEventOrderField(orderBy.Field)
+		pageOrderBy.Direction = page.OrderDirection(orderBy.Direction)
+	}
+
+	cursor := cursor.NewCursor(first, after, last, before, pageOrderBy)
+
+	events, err := r.iam.OrganizationService.ListSCIMEventsByConfigID(ctx, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list scim events", log.Error(err))
+		return nil, gqlutils.InternalServerError(ctx)
+	}
+
+	return types.NewSCIMEventConnection(events, r, obj.ID), nil
+}
+
+// Permission is the resolver for the permission field.
+func (r *sCIMConfigurationResolver) Permission(ctx context.Context, obj *types.SCIMConfiguration, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
+}
+
+// Membership is the resolver for the membership field.
+func (r *sCIMEventResolver) Membership(ctx context.Context, obj *types.SCIMEvent) (*types.Membership, error) {
+	if ok := r.Authorize(ctx, obj.Membership.ID, iam.ActionMembershipGet, nil); !ok {
+		return nil, nil
+	}
+
+	if obj.Membership == nil {
+		return nil, nil
+	}
+
+	if gqlutils.OnlyIDSelected(ctx) {
+		return &types.Membership{
+			ID: obj.Membership.ID,
+		}, nil
+	}
+
+	membership, err := r.iam.GetMembership(ctx, obj.Membership.ID)
+	if err != nil {
+		var errMembershipNotFound *iam.ErrMembershipNotFound
+		if errors.As(err, &errMembershipNotFound) {
+			return nil, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get membership for scim event", log.Error(err))
+		return nil, gqlutils.InternalServerError(ctx)
+	}
+
+	return types.NewMembership(membership), nil
+}
+
+// Permission is the resolver for the permission field.
+func (r *sCIMEventResolver) Permission(ctx context.Context, obj *types.SCIMEvent, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
+}
+
+// TotalCount is the resolver for the totalCount field.
+func (r *sCIMEventConnectionResolver) TotalCount(ctx context.Context, obj *types.SCIMEventConnection) (*int, error) {
+	if ok := r.Authorize(ctx, obj.ParentID, iam.ActionSCIMEventList, nil); !ok {
+		return nil, nil
+	}
+
+	switch obj.Resolver.(type) {
+	case *sCIMConfigurationResolver:
+		count, err := r.iam.OrganizationService.CountSCIMEvents(ctx, obj.ParentID)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot count scim events", log.Error(err))
 			return nil, gqlutils.InternalServerError(ctx)
 		}
 		return &count, nil
@@ -1542,6 +1752,19 @@ func (r *Resolver) SAMLConfigurationConnection() schema.SAMLConfigurationConnect
 	return &sAMLConfigurationConnectionResolver{r}
 }
 
+// SCIMConfiguration returns schema.SCIMConfigurationResolver implementation.
+func (r *Resolver) SCIMConfiguration() schema.SCIMConfigurationResolver {
+	return &sCIMConfigurationResolver{r}
+}
+
+// SCIMEvent returns schema.SCIMEventResolver implementation.
+func (r *Resolver) SCIMEvent() schema.SCIMEventResolver { return &sCIMEventResolver{r} }
+
+// SCIMEventConnection returns schema.SCIMEventConnectionResolver implementation.
+func (r *Resolver) SCIMEventConnection() schema.SCIMEventConnectionResolver {
+	return &sCIMEventConnectionResolver{r}
+}
+
 // Session returns schema.SessionResolver implementation.
 func (r *Resolver) Session() schema.SessionResolver { return &sessionResolver{r} }
 
@@ -1563,5 +1786,8 @@ type personalAPIKeyConnectionResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type sAMLConfigurationResolver struct{ *Resolver }
 type sAMLConfigurationConnectionResolver struct{ *Resolver }
+type sCIMConfigurationResolver struct{ *Resolver }
+type sCIMEventResolver struct{ *Resolver }
+type sCIMEventConnectionResolver struct{ *Resolver }
 type sessionResolver struct{ *Resolver }
 type sessionConnectionResolver struct{ *Resolver }

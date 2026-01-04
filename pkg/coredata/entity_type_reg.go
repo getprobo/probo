@@ -75,6 +75,8 @@ const (
 	StateOfApplicabilityEntityType             uint16 = 49
 	StateOfApplicabilityControlEntityType      uint16 = 50
 	MembershipProfileEntityType                uint16 = 51
+	SCIMConfigurationEntityType                uint16 = 52
+	SCIMEventEntityType                        uint16 = 53
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -173,8 +175,14 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &DataProtectionImpactAssessment{ID: id}, true
 	case TransferImpactAssessmentEntityType:
 		return &TransferImpactAssessment{ID: id}, true
+	case RightsRequestEntityType:
+		return &RightsRequest{ID: id}, true
 	case MembershipProfileEntityType:
 		return &MembershipProfile{ID: id}, true
+	case SCIMConfigurationEntityType:
+		return &SCIMConfiguration{ID: id}, true
+	case SCIMEventEntityType:
+		return &SCIMEvent{ID: id}, true
 	default:
 		return nil, false
 	}
@@ -389,6 +397,14 @@ var entityRegistry = map[uint16]EntityInfo{
 	MembershipProfileEntityType: {
 		Model: "MembershipProfile",
 		Table: "iam_membership_profiles",
+	},
+	SCIMConfigurationEntityType: {
+		Model: "SCIMConfiguration",
+		Table: "iam_scim_configurations",
+	},
+	SCIMEventEntityType: {
+		Model: "SCIMEvent",
+		Table: "iam_scim_events",
 	},
 }
 

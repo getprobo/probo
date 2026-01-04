@@ -318,6 +318,16 @@ func (e ErrSAMLConfigurationEmailDomainAlreadyExists) Error() string {
 	return fmt.Sprintf("SAML configuration email domain %q already exists", e.EmailDomain)
 }
 
+type ErrNoSCIMConfigurationFound struct{ OrganizationID gid.GID }
+
+func NewNoSCIMConfigurationFoundError(organizationID gid.GID) error {
+	return &ErrNoSCIMConfigurationFound{OrganizationID: organizationID}
+}
+
+func (e ErrNoSCIMConfigurationFound) Error() string {
+	return fmt.Sprintf("SCIM configuration not found for organization %q", e.OrganizationID)
+}
+
 // TenantAccessError is used by API recovery middleware to translate authorization/tenant failures
 // into a consistent client-facing error response.
 //

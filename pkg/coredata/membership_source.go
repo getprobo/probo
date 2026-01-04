@@ -24,6 +24,7 @@ type MembershipSource string
 const (
 	MembershipSourceManual MembershipSource = "MANUAL"
 	MembershipSourceSAML   MembershipSource = "SAML"
+	MembershipSourceSCIM   MembershipSource = "SCIM"
 )
 
 func (s MembershipSource) String() string {
@@ -46,6 +47,8 @@ func (s *MembershipSource) Scan(value any) error {
 		*s = MembershipSourceManual
 	case "SAML":
 		*s = MembershipSourceSAML
+	case "SCIM":
+		*s = MembershipSourceSCIM
 	default:
 		return fmt.Errorf("invalid MembershipSource value: %q", str)
 	}

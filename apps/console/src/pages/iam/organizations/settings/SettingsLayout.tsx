@@ -1,4 +1,5 @@
 import {
+  IconKey,
   IconLock,
   IconPeopleAdd,
   IconSettingsGear2,
@@ -35,6 +36,10 @@ export default function () {
         <TabLink to={`/organizations/${organizationId}/settings/saml-sso`}>
           <IconLock size={20} />
           {__("SAML SSO")}
+        </TabLink>
+        <TabLink to={`/organizations/${organizationId}/settings/scim`}>
+          <IconKey size={20} />
+          {__("SCIM")}
         </TabLink>
       </Tabs>
 

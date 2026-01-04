@@ -28,6 +28,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/filevalidation"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam/scim"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/statelesstoken"
@@ -1080,6 +1081,275 @@ func (s OrganizationService) CountSAMLConfigurations(
 			count, err = samlConfigurations.CountByOrganizationID(ctx, conn, scope, organizationID)
 			if err != nil {
 				return fmt.Errorf("cannot count saml configurations: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	return count, err
+}
+
+func (s OrganizationService) ListSCIMEvents(
+	ctx context.Context,
+	organizationID gid.GID,
+	cursor *page.Cursor[coredata.SCIMEventOrderField],
+) (*page.Page[*coredata.SCIMEvent, coredata.SCIMEventOrderField], error) {
+	var (
+		scope      = coredata.NewScopeFromObjectID(organizationID)
+		scimEvents = coredata.SCIMEvents{}
+	)
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			err := scimEvents.LoadByOrganizationID(ctx, conn, scope, organizationID, cursor)
+			if err != nil {
+				return fmt.Errorf("cannot load scim events: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return page.NewPage(scimEvents, cursor), nil
+}
+
+func (s OrganizationService) CountSCIMEvents(
+	ctx context.Context,
+	organizationID gid.GID,
+) (int, error) {
+	var (
+		scope = coredata.NewScopeFromObjectID(organizationID)
+		count int
+	)
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) (err error) {
+			scimEvents := coredata.SCIMEvents{}
+			count, err = scimEvents.CountByOrganizationID(ctx, conn, scope, organizationID)
+			if err != nil {
+				return fmt.Errorf("cannot count scim events: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	return count, err
+}
+
+func (s OrganizationService) GetSCIMConfiguration(
+	ctx context.Context,
+	organizationID gid.GID,
+) (*coredata.SCIMConfiguration, error) {
+	var (
+		scope  = coredata.NewScopeFromObjectID(organizationID)
+		config = &coredata.SCIMConfiguration{}
+	)
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			err := config.LoadByOrganizationID(ctx, conn, scope, organizationID)
+			if err != nil {
+				if err == coredata.ErrResourceNotFound {
+					return NewNoSCIMConfigurationFoundError(organizationID)
+				}
+
+				return fmt.Errorf("cannot load SCIM configuration: %w", err)
+			}
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return config, nil
+}
+
+func (s OrganizationService) CreateSCIMConfiguration(
+	ctx context.Context,
+	organizationID gid.GID,
+) (*coredata.SCIMConfiguration, string, error) {
+	token, err := scim.GenerateToken()
+	if err != nil {
+		return nil, "", err
+	}
+
+	hashedToken := scim.HashToken(token)
+	now := time.Now()
+
+	config := &coredata.SCIMConfiguration{
+		ID:             gid.New(organizationID.TenantID(), coredata.SCIMConfigurationEntityType),
+		OrganizationID: organizationID,
+		HashedToken:    hashedToken,
+		CreatedAt:      now,
+		UpdatedAt:      now,
+	}
+
+	scope := coredata.NewScopeFromObjectID(organizationID)
+
+	err = s.pg.WithTx(
+		ctx,
+		func(tx pg.Conn) error {
+			err := config.Insert(ctx, tx, scope)
+			if err != nil {
+				if err == coredata.ErrResourceAlreadyExists {
+					return scim.NewSCIMConfigurationAlreadyExistsError(organizationID)
+				}
+				return fmt.Errorf("cannot insert SCIM configuration: %w", err)
+			}
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, "", err
+	}
+
+	return config, token, nil
+}
+
+func (s OrganizationService) DeleteSCIMConfiguration(
+	ctx context.Context,
+	organizationID gid.GID,
+	configID gid.GID,
+) error {
+	scope := coredata.NewScopeFromObjectID(configID)
+
+	return s.pg.WithTx(
+		ctx,
+		func(tx pg.Conn) error {
+			config := &coredata.SCIMConfiguration{}
+			err := config.LoadByID(ctx, tx, scope, configID)
+			if err != nil {
+				if err == coredata.ErrResourceNotFound {
+					return scim.NewSCIMConfigurationNotFoundError(configID)
+				}
+
+				return fmt.Errorf("cannot load SCIM configuration: %w", err)
+			}
+
+			if config.OrganizationID != organizationID {
+				return scim.NewSCIMConfigurationNotFoundError(configID)
+			}
+
+			memberships := &coredata.Memberships{}
+			err = memberships.ResetSCIMSources(ctx, tx, scope, config.OrganizationID)
+			if err != nil {
+				return fmt.Errorf("cannot reset membership sources: %w", err)
+			}
+
+			err = config.Delete(ctx, tx, scope)
+			if err != nil {
+				return fmt.Errorf("cannot delete SCIM configuration: %w", err)
+			}
+
+			return nil
+		},
+	)
+}
+
+func (s OrganizationService) RegenerateSCIMToken(
+	ctx context.Context,
+	organizationID gid.GID,
+	configID gid.GID,
+) (*coredata.SCIMConfiguration, string, error) {
+	token, err := scim.GenerateToken()
+	if err != nil {
+		return nil, "", err
+	}
+
+	hashedToken := scim.HashToken(token)
+	config := &coredata.SCIMConfiguration{}
+	scope := coredata.NewScopeFromObjectID(configID)
+
+	err = s.pg.WithTx(
+		ctx,
+		func(tx pg.Conn) error {
+			err := config.LoadByID(ctx, tx, scope, configID)
+			if err != nil {
+				if err == coredata.ErrResourceNotFound {
+					return scim.NewSCIMConfigurationNotFoundError(configID)
+				}
+
+				return fmt.Errorf("cannot load SCIM configuration: %w", err)
+			}
+
+			if config.OrganizationID != organizationID {
+				return scim.NewSCIMConfigurationNotFoundError(configID)
+			}
+
+			config.HashedToken = hashedToken
+			config.UpdatedAt = time.Now()
+
+			err = config.Update(ctx, tx, scope)
+			if err != nil {
+				return fmt.Errorf("cannot update SCIM configuration: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, "", err
+	}
+
+	return config, token, nil
+}
+
+func (s OrganizationService) ListSCIMEventsByConfigID(
+	ctx context.Context,
+	scimConfigurationID gid.GID,
+	cursor *page.Cursor[coredata.SCIMEventOrderField],
+) (*page.Page[*coredata.SCIMEvent, coredata.SCIMEventOrderField], error) {
+	var (
+		scope      = coredata.NewScopeFromObjectID(scimConfigurationID)
+		scimEvents = coredata.SCIMEvents{}
+	)
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			err := scimEvents.LoadBySCIMConfigurationID(ctx, conn, scope, scimConfigurationID, cursor)
+			if err != nil {
+				return fmt.Errorf("cannot load scim events: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return page.NewPage(scimEvents, cursor), nil
+}
+
+func (s OrganizationService) CountSCIMEventsByConfigID(
+	ctx context.Context,
+	scimConfigurationID gid.GID,
+) (int, error) {
+	var (
+		scope = coredata.NewScopeFromObjectID(scimConfigurationID)
+		count int
+	)
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) (err error) {
+			scimEvents := coredata.SCIMEvents{}
+			count, err = scimEvents.CountBySCIMConfigurationID(ctx, conn, scope, scimConfigurationID)
+			if err != nil {
+				return fmt.Errorf("cannot count scim events: %w", err)
 			}
 
 			return nil
