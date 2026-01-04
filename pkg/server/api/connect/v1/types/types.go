@@ -186,14 +186,15 @@ type InviteMemberPayload struct {
 }
 
 type Membership struct {
-	ID           gid.GID                 `json:"id"`
-	CreatedAt    time.Time               `json:"createdAt"`
-	Identity     *Identity               `json:"identity,omitempty"`
-	Profile      *MembershipProfile      `json:"profile,omitempty"`
-	Organization *Organization           `json:"organization,omitempty"`
-	Role         coredata.MembershipRole `json:"role"`
-	LastSession  *Session                `json:"lastSession,omitempty"`
-	Permission   bool                    `json:"permission"`
+	ID           gid.GID                   `json:"id"`
+	CreatedAt    time.Time                 `json:"createdAt"`
+	Identity     *Identity                 `json:"identity,omitempty"`
+	Profile      *MembershipProfile        `json:"profile,omitempty"`
+	Organization *Organization             `json:"organization,omitempty"`
+	Role         coredata.MembershipRole   `json:"role"`
+	Source       coredata.MembershipSource `json:"source"`
+	LastSession  *Session                  `json:"lastSession,omitempty"`
+	Permission   bool                      `json:"permission"`
 }
 
 func (Membership) IsNode()             {}

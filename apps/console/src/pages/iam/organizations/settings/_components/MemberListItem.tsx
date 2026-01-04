@@ -24,6 +24,7 @@ const fragment = graphql`
   fragment MemberListItemFragment on Membership {
     id
     role
+    source
     profile @required(action: THROW) {
       fullName
     }
@@ -70,7 +71,7 @@ export function MemberListItem(props: {
     {
       successMessage: __("Member removed successfully"),
       errorMessage: __("Failed to remove member"),
-    },
+    }
   );
 
   const handleRemove = async () => {
@@ -89,9 +90,9 @@ export function MemberListItem(props: {
       {
         message: sprintf(
           __("Are you sure you want to remove %s?"),
-          membership.profile.fullName,
+          membership.profile.fullName
         ),
-      },
+      }
     );
   };
 
@@ -104,10 +105,7 @@ export function MemberListItem(props: {
         <Td>
           <div className="flex items-center gap-2">
             {membership.identity.email}
-            {/* FIXME: put back */}
-            {/* {membership.authMethod === "SAML" && (
-              <Badge variant="info">SAML</Badge>
-            )} */}
+            <Badge variant="info">{membership.source}</Badge>
           </div>
         </Td>
         <Td>

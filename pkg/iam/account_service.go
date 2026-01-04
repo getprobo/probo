@@ -248,6 +248,7 @@ func (s *AccountService) AcceptInvitation(
 				IdentityID:     identityID,
 				OrganizationID: invitation.OrganizationID,
 				Role:           invitation.Role,
+				Source:         coredata.MembershipSourceManual,
 				CreatedAt:      now,
 				UpdatedAt:      now,
 			}
