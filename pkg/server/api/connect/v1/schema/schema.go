@@ -170,6 +170,7 @@ type ComplexityRoot struct {
 		Permission   func(childComplexity int, action string) int
 		Profile      func(childComplexity int) int
 		Role         func(childComplexity int) int
+		Source       func(childComplexity int) int
 	}
 
 	MembershipConnection struct {
@@ -862,6 +863,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Membership.Role(childComplexity), true
+	case "Membership.source":
+		if e.complexity.Membership.Source == nil {
+			break
+		}
+
+		return e.complexity.Membership.Source(childComplexity), true
 
 	case "MembershipConnection.edges":
 		if e.complexity.MembershipConnection.Edges == nil {
@@ -2198,6 +2205,13 @@ enum MembershipRole
     @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleAuditor")
 }
 
+enum MembershipSource
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.MembershipSource") {
+  MANUAL
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipSourceManual")
+  SAML @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipSourceSAML")
+}
+
 type Membership implements Node {
   id: ID!
   createdAt: Datetime!
@@ -2205,6 +2219,7 @@ type Membership implements Node {
   profile: MembershipProfile @goField(forceResolver: true)
   organization: Organization @goField(forceResolver: true)
   role: MembershipRole!
+  source: MembershipSource!
 
   lastSession: Session @goField(forceResolver: true) @isViewer
 
@@ -5163,6 +5178,35 @@ func (ec *executionContext) fieldContext_Membership_role(_ context.Context, fiel
 	return fc, nil
 }
 
+func (ec *executionContext) _Membership_source(ctx context.Context, field graphql.CollectedField, obj *types.Membership) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Membership_source,
+		func(ctx context.Context) (any, error) {
+			return obj.Source, nil
+		},
+		nil,
+		ec.marshalNMembershipSource2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipSource,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Membership_source(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Membership",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type MembershipSource does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Membership_lastSession(ctx context.Context, field graphql.CollectedField, obj *types.Membership) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -5421,6 +5465,8 @@ func (ec *executionContext) fieldContext_MembershipEdge_node(_ context.Context, 
 				return ec.fieldContext_Membership_organization(ctx, field)
 			case "role":
 				return ec.fieldContext_Membership_role(ctx, field)
+			case "source":
+				return ec.fieldContext_Membership_source(ctx, field)
 			case "lastSession":
 				return ec.fieldContext_Membership_lastSession(ctx, field)
 			case "permission":
@@ -7711,6 +7757,8 @@ func (ec *executionContext) fieldContext_Organization_viewerMembership(_ context
 				return ec.fieldContext_Membership_organization(ctx, field)
 			case "role":
 				return ec.fieldContext_Membership_role(ctx, field)
+			case "source":
+				return ec.fieldContext_Membership_source(ctx, field)
 			case "lastSession":
 				return ec.fieldContext_Membership_lastSession(ctx, field)
 			case "permission":
@@ -7864,6 +7912,8 @@ func (ec *executionContext) fieldContext_OrganizationSessionCreated_membership(_
 				return ec.fieldContext_Membership_organization(ctx, field)
 			case "role":
 				return ec.fieldContext_Membership_role(ctx, field)
+			case "source":
+				return ec.fieldContext_Membership_source(ctx, field)
 			case "lastSession":
 				return ec.fieldContext_Membership_lastSession(ctx, field)
 			case "permission":
@@ -10496,6 +10546,8 @@ func (ec *executionContext) fieldContext_UpdateMembershipPayload_membership(_ co
 				return ec.fieldContext_Membership_organization(ctx, field)
 			case "role":
 				return ec.fieldContext_Membership_role(ctx, field)
+			case "source":
+				return ec.fieldContext_Membership_source(ctx, field)
 			case "lastSession":
 				return ec.fieldContext_Membership_lastSession(ctx, field)
 			case "permission":
@@ -14408,6 +14460,11 @@ func (ec *executionContext) _Membership(ctx context.Context, sel ast.SelectionSe
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "source":
+			out.Values[i] = ec._Membership_source(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "lastSession":
 			field := field
 
@@ -17571,6 +17628,34 @@ var (
 		coredata.MembershipRoleEmployee: "EMPLOYEE",
 		coredata.MembershipRoleViewer:   "VIEWER",
 		coredata.MembershipRoleAuditor:  "AUDITOR",
+	}
+)
+
+func (ec *executionContext) unmarshalNMembershipSource2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipSource(ctx context.Context, v any) (coredata.MembershipSource, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNMembershipSource2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipSource[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNMembershipSource2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipSource(ctx context.Context, sel ast.SelectionSet, v coredata.MembershipSource) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNMembershipSource2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipSource[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNMembershipSource2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipSource = map[string]coredata.MembershipSource{
+		"MANUAL": coredata.MembershipSourceManual,
+		"SAML":   coredata.MembershipSourceSAML,
+	}
+	marshalNMembershipSource2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipSource = map[coredata.MembershipSource]string{
+		coredata.MembershipSourceManual: "MANUAL",
+		coredata.MembershipSourceSAML:   "SAML",
 	}
 )
 
