@@ -234,6 +234,13 @@ enum MembershipRole
     @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleAuditor")
 }
 
+enum MembershipSource
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.MembershipSource") {
+  MANUAL
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipSourceManual")
+  SAML @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipSourceSAML")
+}
+
 type Membership implements Node {
   id: ID!
   createdAt: Datetime!
@@ -241,6 +248,7 @@ type Membership implements Node {
   profile: MembershipProfile @goField(forceResolver: true)
   organization: Organization @goField(forceResolver: true)
   role: MembershipRole!
+  source: MembershipSource!
 
   lastSession: Session @goField(forceResolver: true) @isViewer
 

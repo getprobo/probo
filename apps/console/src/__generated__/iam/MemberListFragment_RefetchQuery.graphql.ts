@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<1a9ee1bf35493db9d5edbbd07f917ff5>>
+ * @generated SignedSource<<d9ec1da794fdbe09fbffc7ed32d22707>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -232,6 +232,13 @@ return {
                           {
                             "alias": null,
                             "args": null,
+                            "kind": "ScalarField",
+                            "name": "source",
+                            "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
                             "concreteType": "MembershipProfile",
                             "kind": "LinkedField",
                             "name": "profile",
@@ -389,12 +396,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "7d90790bce5773e286196cec19c376c9",
+    "cacheID": "bdedd349fa3a3dec43d7cb6171d1cc6d",
     "id": null,
     "metadata": {},
     "name": "MemberListFragment_RefetchQuery",
     "operationKind": "query",
-    "text": "query MemberListFragment_RefetchQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 20\n  $last: Int = null\n  $order: MembershipOrder = {direction: ASC, field: CREATED_AT}\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...MemberListFragment_16fISc\n    id\n  }\n}\n\nfragment MemberListFragment_16fISc on Organization {\n  members(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    totalCount\n    edges {\n      node {\n        id\n        ...MemberListItemFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment MemberListItemFragment on Membership {\n  id\n  role\n  profile {\n    fullName\n    id\n  }\n  identity {\n    email\n    id\n  }\n  createdAt\n  canUpdate: permission(action: \"iam:membership:update\")\n  canDelete: permission(action: \"iam:membership:delete\")\n}\n"
+    "text": "query MemberListFragment_RefetchQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 20\n  $last: Int = null\n  $order: MembershipOrder = {direction: ASC, field: CREATED_AT}\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...MemberListFragment_16fISc\n    id\n  }\n}\n\nfragment MemberListFragment_16fISc on Organization {\n  members(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    totalCount\n    edges {\n      node {\n        id\n        ...MemberListItemFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment MemberListItemFragment on Membership {\n  id\n  role\n  source\n  profile {\n    fullName\n    id\n  }\n  identity {\n    email\n    id\n  }\n  createdAt\n  canUpdate: permission(action: \"iam:membership:update\")\n  canDelete: permission(action: \"iam:membership:delete\")\n}\n"
   }
 };
 })();

@@ -298,6 +298,7 @@ func (s *Service) HandleAssertion(
 					IdentityID:     identity.ID,
 					OrganizationID: config.OrganizationID,
 					Role:           coredata.MembershipRoleViewer,
+					Source:         coredata.MembershipSourceSAML,
 					CreatedAt:      now,
 					UpdatedAt:      now,
 				}

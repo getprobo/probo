@@ -31,14 +31,15 @@ import (
 
 type (
 	Membership struct {
-		ID             gid.GID        `db:"id"`
-		IdentityID     gid.GID        `db:"identity_id"`
-		OrganizationID gid.GID        `db:"organization_id"`
-		Role           MembershipRole `db:"role"`
-		FullName       string         `db:"full_name"`
-		EmailAddress   mail.Addr      `db:"email_address"`
-		CreatedAt      time.Time      `db:"created_at"`
-		UpdatedAt      time.Time      `db:"updated_at"`
+		ID             gid.GID          `db:"id"`
+		IdentityID     gid.GID          `db:"identity_id"`
+		OrganizationID gid.GID          `db:"organization_id"`
+		Role           MembershipRole   `db:"role"`
+		Source         MembershipSource `db:"source"`
+		FullName       string           `db:"full_name"`
+		EmailAddress   mail.Addr        `db:"email_address"`
+		CreatedAt      time.Time        `db:"created_at"`
+		UpdatedAt      time.Time        `db:"updated_at"`
 	}
 
 	Memberships []*Membership
@@ -67,6 +68,7 @@ WITH mbr AS (
         identity_id,
         organization_id,
         role,
+        source,
         created_at,
         updated_at
     FROM
@@ -80,6 +82,7 @@ SELECT
     mbr.identity_id,
     mbr.organization_id,
     mbr.role,
+    mbr.source,
     COALESCE(mp.full_name, i.full_name, '') as full_name,
     i.email_address,
     mbr.created_at,
@@ -122,6 +125,7 @@ INSERT INTO
         identity_id,
         organization_id,
         role,
+        source,
         created_at,
         updated_at
     )
@@ -131,6 +135,7 @@ VALUES (
     @identity_id,
     @organization_id,
     @role,
+    @source,
     @created_at,
     @updated_at
 );
@@ -142,6 +147,7 @@ VALUES (
 		"identity_id":     m.IdentityID,
 		"organization_id": m.OrganizationID,
 		"role":            m.Role,
+		"source":          m.Source,
 		"created_at":      m.CreatedAt,
 		"updated_at":      m.UpdatedAt,
 	}
@@ -176,6 +182,7 @@ WITH mbr AS (
         identity_id,
         organization_id,
         role,
+        source,
         created_at,
         updated_at
     FROM
@@ -189,6 +196,7 @@ SELECT
     mbr.identity_id,
     mbr.organization_id,
     mbr.role,
+    mbr.source,
     COALESCE(mp.full_name, i.full_name, '') as full_name,
     i.email_address,
     mbr.created_at,
@@ -325,6 +333,7 @@ WITH mbr AS (
         am.identity_id,
         am.organization_id,
         am.role,
+        am.source,
         am.created_at,
         am.updated_at
     FROM
@@ -339,6 +348,7 @@ SELECT
     mbr.identity_id,
     mbr.organization_id,
     mbr.role,
+    mbr.source,
     COALESCE(mp.full_name, i.full_name, '') as full_name,
     i.email_address,
     mbr.created_at,
@@ -452,6 +462,7 @@ WITH mbr AS (
         identity_id,
         organization_id,
         role,
+        source,
         created_at,
         updated_at
     FROM
@@ -467,6 +478,7 @@ SELECT
     mbr.identity_id,
     mbr.organization_id,
     mbr.role,
+    mbr.source,
     COALESCE(mp.full_name, i.full_name, '') as full_name,
     i.email_address,
     mbr.created_at,
@@ -517,6 +529,7 @@ WITH membership_with_profile AS (
         m.identity_id,
         m.organization_id,
         m.role,
+        m.source,
         COALESCE(mp.full_name, i.full_name, '') AS full_name,
         i.email_address,
         m.created_at,
@@ -536,6 +549,7 @@ SELECT
     identity_id,
     organization_id,
     role,
+    source,
     full_name,
     email_address,
     created_at,
@@ -633,6 +647,7 @@ SELECT
     identity_id,
     organization_id,
     role,
+    source,
     '' as full_name,
     NULL as email_address,
     created_at,

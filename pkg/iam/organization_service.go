@@ -489,6 +489,7 @@ func (s *OrganizationService) CreateOrganization(
 			IdentityID:     identityID,
 			OrganizationID: organizationID,
 			Role:           coredata.MembershipRoleOwner,
+			Source:         coredata.MembershipSourceManual,
 			CreatedAt:      now,
 			UpdatedAt:      now,
 		}
