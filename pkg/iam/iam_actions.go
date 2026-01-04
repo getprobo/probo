@@ -64,4 +64,14 @@ const (
 	ActionSAMLConfigurationUpdate = "iam:saml-configuration:update"
 	ActionSAMLConfigurationDelete = "iam:saml-configuration:delete"
 	ActionSAMLConfigurationList   = "iam:saml-configuration:list"
+
+	// SCIM Configuration actions
+	ActionSCIMConfigurationCreate = "iam:scim-configuration:create"
+	ActionSCIMConfigurationGet    = "iam:scim-configuration:get"
+	ActionSCIMConfigurationUpdate = "iam:scim-configuration:update"
+	ActionSCIMConfigurationDelete = "iam:scim-configuration:delete"
+
+	// SCIM Event actions
+	ActionSCIMEventList = "iam:scim-event:list"
+	ActionSCIMEventGet  = "iam:scim-event:get"
 )

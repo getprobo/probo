@@ -284,6 +284,7 @@ const (
 	ActionDataProtectionImpactAssessmentCreate = "core:data-protection-impact-assessment:create"
 	ActionDataProtectionImpactAssessmentUpdate = "core:data-protection-impact-assessment:update"
 	ActionDataProtectionImpactAssessmentDelete = "core:data-protection-impact-assessment:delete"
+	ActionDataProtectionImpactAssessmentExport = "core:data-protection-impact-assessment:export"
 
 	// TransferImpactAssessment actions
 	ActionTransferImpactAssessmentList   = "core:transfer-impact-assessment:list"

@@ -123,6 +123,16 @@ type Mutation {
   deleteSAMLConfiguration(
     input: DeleteSAMLConfigurationInput!
   ): DeleteSAMLConfigurationPayload @session(required: PRESENT)
+
+  createSCIMConfiguration(
+    input: CreateSCIMConfigurationInput!
+  ): CreateSCIMConfigurationPayload @session(required: PRESENT)
+  deleteSCIMConfiguration(
+    input: DeleteSCIMConfigurationInput!
+  ): DeleteSCIMConfigurationPayload @session(required: PRESENT)
+  regenerateSCIMToken(
+    input: RegenerateSCIMTokenInput!
+  ): RegenerateSCIMTokenPayload @session(required: PRESENT)
 }
 
 type Identity implements Node {
@@ -216,6 +226,8 @@ type Organization implements Node {
     before: CursorKey
   ): SAMLConfigurationConnection @goField(forceResolver: true)
 
+  scimConfiguration: SCIMConfiguration @goField(forceResolver: true)
+
   viewerMembership: Membership @goField(forceResolver: true)
 
   permission(action: String!): Boolean!
@@ -239,6 +251,7 @@ enum MembershipSource
   MANUAL
     @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipSourceManual")
   SAML @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipSourceSAML")
+  SCIM @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipSourceSCIM")
 }
 
 type Membership implements Node {
@@ -331,6 +344,43 @@ type SSOAvailability {
   available: Boolean!
   samlConfigId: ID
   organizationId: ID
+}
+
+type SCIMConfiguration implements Node {
+  id: ID!
+  endpointUrl: String! @goField(forceResolver: true)
+  createdAt: Datetime!
+  updatedAt: Datetime!
+  organization: Organization @goField(forceResolver: true)
+
+  events(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: SCIMEventOrder
+  ): SCIMEventConnection @goField(forceResolver: true)
+
+  permission(action: String!): Boolean!
+    @goField(forceResolver: true)
+    @session(required: PRESENT)
+}
+
+type SCIMEvent implements Node {
+  id: ID!
+  method: String!
+  path: String!
+  statusCode: Int!
+  requestBody: String
+  responseBody: String
+  errorMessage: String
+  membership: Membership @goField(forceResolver: true)
+  ipAddress: String!
+  createdAt: Datetime!
+
+  permission(action: String!): Boolean!
+    @goField(forceResolver: true)
+    @session(required: PRESENT)
 }
 
 enum InvitationStatus
@@ -475,6 +525,36 @@ type SAMLConfigurationConnection
 
 type SAMLConfigurationEdge {
   node: SAMLConfiguration!
+  cursor: CursorKey!
+}
+
+enum SCIMEventOrderField
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.SCIMEventOrderField") {
+  CREATED_AT
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.SCIMEventOrderFieldCreatedAt"
+    )
+}
+
+input SCIMEventOrder
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/connect/v1/types.SCIMEventOrderBy"
+  ) {
+  direction: OrderDirection!
+  field: SCIMEventOrderField!
+}
+
+type SCIMEventConnection
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/connect/v1/types.SCIMEventConnection"
+  ) {
+  edges: [SCIMEventEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int @goField(forceResolver: true)
+}
+
+type SCIMEventEdge {
+  node: SCIMEvent!
   cursor: CursorKey!
 }
 
@@ -751,4 +831,32 @@ type UpdateSAMLConfigurationPayload {
 
 type DeleteSAMLConfigurationPayload {
   deletedSamlConfigurationId: ID!
+}
+
+input CreateSCIMConfigurationInput {
+  organizationId: ID!
+}
+
+input DeleteSCIMConfigurationInput {
+  organizationId: ID!
+  scimConfigurationId: ID!
+}
+
+input RegenerateSCIMTokenInput {
+  organizationId: ID!
+  scimConfigurationId: ID!
+}
+
+type CreateSCIMConfigurationPayload {
+  scimConfiguration: SCIMConfiguration!
+  token: String!
+}
+
+type DeleteSCIMConfigurationPayload {
+  deletedScimConfigurationId: ID!
+}
+
+type RegenerateSCIMTokenPayload {
+  scimConfiguration: SCIMConfiguration!
+  token: String!
 }

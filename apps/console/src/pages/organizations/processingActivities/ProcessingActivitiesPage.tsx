@@ -80,6 +80,9 @@ const processingActivitiesPageFragment = graphql`
     snapshotId: { type: "ID", defaultValue: null }
   ) {
     id
+    canExportProcessingActivities: permission(
+      action: "core:processing-activity:export"
+    )
     processingActivities(
       first: $first
       after: $after
@@ -126,6 +129,9 @@ const dpiaListPageFragment = graphql`
     snapshotId: { type: "ID", defaultValue: null }
   ) {
     id
+    canExportDPIAs: permission(
+      action: "core:data-protection-impact-assessment:export"
+    )
     dataProtectionImpactAssessments(
       first: $first
       after: $after
@@ -168,6 +174,9 @@ const tiaListPageFragment = graphql`
     snapshotId: { type: "ID", defaultValue: null }
   ) {
     id
+    canExportTIAs: permission(
+      action: "core:data-protection-impact-assessment:export"
+    )
     transferImpactAssessments(
       first: $first
       after: $after
@@ -247,7 +256,7 @@ export default function ProcessingActivitiesPage({
   const organization = usePreloadedQuery(processingActivitiesQuery, queryRef);
 
   const {
-    data: activitiesData,
+    data: { canExportProcessingActivities, ...activitiesData },
     loadNext: loadNextActivities,
     hasNext: hasNextActivities,
     isLoadingNext: isLoadingNextActivities,
@@ -257,7 +266,7 @@ export default function ProcessingActivitiesPage({
   >(processingActivitiesPageFragment, organization.node);
 
   const {
-    data: dpiaData,
+    data: { canExportDPIAs, ...dpiaData },
     loadNext: loadNextDPIAs,
     hasNext: hasNextDPIAs,
     isLoadingNext: isLoadingNextDPIAs,
@@ -267,7 +276,7 @@ export default function ProcessingActivitiesPage({
   >(dpiaListPageFragment, organization.node);
 
   const {
-    data: tiaData,
+    data: { canExportTIAs, ...tiaData },
     loadNext: loadNextTIAs,
     hasNext: hasNextTIAs,
     isLoadingNext: isLoadingNextTIAs,
@@ -294,10 +303,6 @@ export default function ProcessingActivitiesPage({
     !isSnapshotMode &&
     activities.some(({ canUpdate, canDelete }) => canUpdate || canDelete);
 
-  const canExportPDF = isAuthorized(
-    "ProcessingActivity",
-    "exportProcessingActivitiesPDF",
-  );
   const [exportPDF, isExportingPDF] = useMutationWithToasts<{
     response: {
       exportProcessingActivitiesPDF?: {
@@ -334,10 +339,6 @@ export default function ProcessingActivitiesPage({
     });
   };
 
-  const canExportDPIAPDF = isAuthorized(
-    "Organization",
-    "exportDataProtectionImpactAssessmentsPDF",
-  );
   const [exportDPIAPDF, isExportingDPIAPDF] = useMutationWithToasts<{
     response: {
       exportDataProtectionImpactAssessmentsPDF?: {
@@ -374,10 +375,6 @@ export default function ProcessingActivitiesPage({
     });
   };
 
-  const canExportTIAPDF = isAuthorized(
-    "Organization",
-    "exportTransferImpactAssessmentsPDF",
-  );
   const [exportTIAPDF, isExportingTIAPDF] = useMutationWithToasts<{
     response: {
       exportTransferImpactAssessmentsPDF?: {
@@ -423,7 +420,7 @@ export default function ProcessingActivitiesPage({
         title={__("Processing Activities")}
         description={__("Manage your processing activities under GDPR")}
       >
-        {(canExportPDF || canExportDPIAPDF || canExportTIAPDF) && (
+        {(canExportProcessingActivities || canExportDPIAs || canExportTIAs) && (
           <Dropdown
             toggle={
               <Button
@@ -435,7 +432,7 @@ export default function ProcessingActivitiesPage({
               </Button>
             }
           >
-            {canExportPDF && (
+            {canExportProcessingActivities && (
               <DropdownItem
                 onClick={handleExportPDF}
                 disabled={isExportingPDF}
@@ -444,7 +441,7 @@ export default function ProcessingActivitiesPage({
                 {__("Processing Activities")}
               </DropdownItem>
             )}
-            {canExportDPIAPDF && (
+            {canExportDPIAs && (
               <DropdownItem
                 onClick={handleExportDPIAPDF}
                 disabled={isExportingDPIAPDF}
@@ -453,7 +450,7 @@ export default function ProcessingActivitiesPage({
                 {__("Data Protection Impact Assessments")}
               </DropdownItem>
             )}
-            {canExportTIAPDF && (
+            {canExportTIAs && (
               <DropdownItem
                 onClick={handleExportTIAPDF}
                 disabled={isExportingTIAPDF}

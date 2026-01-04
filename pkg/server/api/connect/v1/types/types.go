@@ -94,6 +94,15 @@ type CreateSAMLConfigurationPayload struct {
 	SamlConfigurationEdge *SAMLConfigurationEdge `json:"samlConfigurationEdge"`
 }
 
+type CreateSCIMConfigurationInput struct {
+	OrganizationID gid.GID `json:"organizationId"`
+}
+
+type CreateSCIMConfigurationPayload struct {
+	ScimConfiguration *SCIMConfiguration `json:"scimConfiguration"`
+	Token             string             `json:"token"`
+}
+
 type DeleteInvitationInput struct {
 	OrganizationID gid.GID `json:"organizationId"`
 	InvitationID   gid.GID `json:"invitationId"`
@@ -126,6 +135,15 @@ type DeleteSAMLConfigurationInput struct {
 
 type DeleteSAMLConfigurationPayload struct {
 	DeletedSamlConfigurationID gid.GID `json:"deletedSamlConfigurationId"`
+}
+
+type DeleteSCIMConfigurationInput struct {
+	OrganizationID      gid.GID `json:"organizationId"`
+	ScimConfigurationID gid.GID `json:"scimConfigurationId"`
+}
+
+type DeleteSCIMConfigurationPayload struct {
+	DeletedScimConfigurationID gid.GID `json:"deletedScimConfigurationId"`
 }
 
 type ForgotPasswordInput struct {
@@ -233,6 +251,7 @@ type Organization struct {
 	Members            *MembershipConnection        `json:"members,omitempty"`
 	Invitations        *InvitationConnection        `json:"invitations,omitempty"`
 	SamlConfigurations *SAMLConfigurationConnection `json:"samlConfigurations,omitempty"`
+	ScimConfiguration  *SCIMConfiguration           `json:"scimConfiguration,omitempty"`
 	ViewerMembership   *Membership                  `json:"viewerMembership,omitempty"`
 	Permission         bool                         `json:"permission"`
 }
@@ -278,6 +297,16 @@ type PersonalAPIKeyEdge struct {
 }
 
 type Query struct {
+}
+
+type RegenerateSCIMTokenInput struct {
+	OrganizationID      gid.GID `json:"organizationId"`
+	ScimConfigurationID gid.GID `json:"scimConfigurationId"`
+}
+
+type RegenerateSCIMTokenPayload struct {
+	ScimConfiguration *SCIMConfiguration `json:"scimConfiguration"`
+	Token             string             `json:"token"`
 }
 
 type RemoveMemberInput struct {
@@ -362,6 +391,41 @@ func (this SAMLConfiguration) GetID() gid.GID { return this.ID }
 type SAMLConfigurationEdge struct {
 	Node   *SAMLConfiguration `json:"node"`
 	Cursor page.CursorKey     `json:"cursor"`
+}
+
+type SCIMConfiguration struct {
+	ID           gid.GID              `json:"id"`
+	EndpointURL  string               `json:"endpointUrl"`
+	CreatedAt    time.Time            `json:"createdAt"`
+	UpdatedAt    time.Time            `json:"updatedAt"`
+	Organization *Organization        `json:"organization,omitempty"`
+	Events       *SCIMEventConnection `json:"events,omitempty"`
+	Permission   bool                 `json:"permission"`
+}
+
+func (SCIMConfiguration) IsNode()             {}
+func (this SCIMConfiguration) GetID() gid.GID { return this.ID }
+
+type SCIMEvent struct {
+	ID           gid.GID     `json:"id"`
+	Method       string      `json:"method"`
+	Path         string      `json:"path"`
+	StatusCode   int         `json:"statusCode"`
+	RequestBody  *string     `json:"requestBody,omitempty"`
+	ResponseBody *string     `json:"responseBody,omitempty"`
+	ErrorMessage *string     `json:"errorMessage,omitempty"`
+	Membership   *Membership `json:"membership,omitempty"`
+	IPAddress    string      `json:"ipAddress"`
+	CreatedAt    time.Time   `json:"createdAt"`
+	Permission   bool        `json:"permission"`
+}
+
+func (SCIMEvent) IsNode()             {}
+func (this SCIMEvent) GetID() gid.GID { return this.ID }
+
+type SCIMEventEdge struct {
+	Node   *SCIMEvent     `json:"node"`
+	Cursor page.CursorKey `json:"cursor"`
 }
 
 type SSOAvailability struct {

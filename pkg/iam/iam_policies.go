@@ -153,6 +153,16 @@ var IAMOwnerPolicy = policy.NewPolicy(
 	policy.Allow("iam:saml-configuration:*").
 		WithSID("full-saml-access").
 		When(policy.Equals("principal.organization_id", "resource.organization_id")),
+
+	// Full access to SCIM configuration management (scoped to own organization)
+	policy.Allow("iam:scim-configuration:*").
+		WithSID("full-scim-configuration-access").
+		When(policy.Equals("principal.organization_id", "resource.organization_id")),
+
+	// Full access to SCIM event viewing (scoped to own organization)
+	policy.Allow("iam:scim-event:*").
+		WithSID("full-scim-event-access").
+		When(policy.Equals("principal.organization_id", "resource.organization_id")),
 ).
 	WithDescription("Full IAM access for organization owners")
 
@@ -218,8 +228,25 @@ var IAMAdminPolicy = policy.NewPolicy(
 		ActionSAMLConfigurationDelete,
 	).
 		WithSID("deny-saml-management"),
+
+	// Can view SCIM configuration and events (scoped to own organization)
+	policy.Allow(
+		ActionSCIMConfigurationGet,
+		ActionSCIMEventList,
+		ActionSCIMEventGet,
+	).
+		WithSID("scim-admin-view-access").
+		When(policy.Equals("principal.organization_id", "resource.organization_id")),
+
+	// Cannot manage SCIM configurations (only owner can)
+	policy.Deny(
+		ActionSCIMConfigurationCreate,
+		ActionSCIMConfigurationUpdate,
+		ActionSCIMConfigurationDelete,
+	).
+		WithSID("deny-scim-management"),
 ).
-	WithDescription("IAM admin access - can manage members but cannot delete organization or manage SAML")
+	WithDescription("IAM admin access - can manage members but cannot delete organization or manage SAML/SCIM")
 
 // IAMViewerPolicy defines permissions for organization viewers.
 var IAMViewerPolicy = policy.NewPolicy(

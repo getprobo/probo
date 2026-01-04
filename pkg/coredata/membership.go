@@ -393,6 +393,7 @@ UPDATE
     iam_memberships
 SET
     role = @role,
+    source = @source,
     updated_at = @updated_at
 WHERE
     id = @id
@@ -404,6 +405,7 @@ WHERE
 	args := pgx.StrictNamedArgs{
 		"id":         m.ID,
 		"role":       m.Role,
+		"source":     m.Source,
 		"updated_at": m.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
@@ -670,5 +672,37 @@ WHERE
 	}
 
 	*m = memberships
+	return nil
+}
+
+func (m *Memberships) ResetSCIMSources(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	organizationID gid.GID,
+) error {
+	q := `
+UPDATE iam_memberships
+SET
+    source = 'MANUAL',
+    updated_at = @updated_at
+WHERE
+    %s
+    AND organization_id = @organization_id
+    AND source = 'SCIM'
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.NamedArgs{
+		"organization_id": organizationID,
+		"updated_at":      time.Now(),
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	_, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot reset SCIM membership sources: %w", err)
+	}
+
 	return nil
 }
