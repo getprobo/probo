@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<8ffe3696f618050456f80b7a7098a882>>
+ * @generated SignedSource<<13e173a42e2ea29b7960539683cea087>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,7 +10,7 @@
 
 import { ReaderFragment } from 'relay-runtime';
 export type MembershipRole = "ADMIN" | "AUDITOR" | "EMPLOYEE" | "OWNER" | "VIEWER";
-export type MembershipSource = "MANUAL" | "SAML";
+export type MembershipSource = "MANUAL" | "SAML" | "SCIM";
 import { FragmentRefs } from "relay-runtime";
 export type MemberListItemFragment$data = {
   readonly canDelete: boolean;

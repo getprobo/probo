@@ -272,3 +272,59 @@ func (s *Service) GetPersonalAPIKey(ctx context.Context, personalAPIKeyID gid.GI
 
 	return personalAPIKey, nil
 }
+
+func (s *Service) GetSCIMConfiguration(ctx context.Context, scimConfigurationID gid.GID) (*coredata.SCIMConfiguration, error) {
+	var (
+		scope             = coredata.NewScopeFromObjectID(scimConfigurationID)
+		scimConfiguration = &coredata.SCIMConfiguration{}
+	)
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			err := scimConfiguration.LoadByID(ctx, conn, scope, scimConfigurationID)
+			if err != nil {
+				if err == coredata.ErrResourceNotFound {
+					return scim.NewSCIMConfigurationNotFoundError(scimConfigurationID)
+				}
+
+				return fmt.Errorf("cannot load SCIM configuration: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return scimConfiguration, nil
+}
+
+func (s *Service) GetSCIMEvent(ctx context.Context, scimEventID gid.GID) (*coredata.SCIMEvent, error) {
+	var (
+		scope     = coredata.NewScopeFromObjectID(scimEventID)
+		scimEvent = &coredata.SCIMEvent{}
+	)
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			err := scimEvent.LoadByID(ctx, conn, scope, scimEventID)
+			if err != nil {
+				if err == coredata.ErrResourceNotFound {
+					return fmt.Errorf("SCIM event not found: %s", scimEventID)
+				}
+
+				return fmt.Errorf("cannot load SCIM event: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return scimEvent, nil
+}

@@ -72,6 +72,8 @@ const (
 	DataProtectionImpactAssessmentEntityType   uint16 = 46
 	TransferImpactAssessmentEntityType         uint16 = 47
 	MembershipProfileEntityType                uint16 = 48
+	SCIMConfigurationEntityType                uint16 = 49
+	SCIMEventEntityType                        uint16 = 50
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -172,6 +174,10 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &TransferImpactAssessment{ID: id}, true
 	case MembershipProfileEntityType:
 		return &MembershipProfile{ID: id}, true
+	case SCIMConfigurationEntityType:
+		return &SCIMConfiguration{ID: id}, true
+	case SCIMEventEntityType:
+		return &SCIMEvent{ID: id}, true
 	default:
 		return nil, false
 	}
@@ -374,6 +380,14 @@ var entityRegistry = map[uint16]EntityInfo{
 	MembershipProfileEntityType: {
 		Model: "MembershipProfile",
 		Table: "iam_membership_profiles",
+	},
+	SCIMConfigurationEntityType: {
+		Model: "SCIMConfiguration",
+		Table: "iam_scim_configurations",
+	},
+	SCIMEventEntityType: {
+		Model: "SCIMEvent",
+		Table: "iam_scim_events",
 	},
 }
 

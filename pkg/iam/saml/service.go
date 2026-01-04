@@ -322,27 +322,40 @@ func (s *Service) HandleAssertion(
 				}
 			}
 
-			if role != nil {
-				membership.Role = *role
-				membership.UpdatedAt = now
+			if membership.Source != coredata.MembershipSourceSCIM {
+				needsUpdate := false
 
-				err = membership.Update(ctx, tx, scope)
-				if err != nil {
-					return fmt.Errorf("cannot update membership: %w", err)
+				if role != nil {
+					membership.Role = *role
+					membership.UpdatedAt = now
+					needsUpdate = true
 				}
-			}
 
-			memberProfile := &coredata.MembershipProfile{}
-			err = memberProfile.LoadByMembershipID(ctx, tx, scope, membership.ID)
-			if err != nil {
-				return fmt.Errorf("cannot load membership profile: %w", err)
-			}
+				if membership.Source == coredata.MembershipSourceManual {
+					membership.Source = coredata.MembershipSourceSAML
+					membership.UpdatedAt = now
+					needsUpdate = true
+				}
 
-			memberProfile.FullName = fullname
-			memberProfile.UpdatedAt = now
-			err = memberProfile.Update(ctx, tx, scope)
-			if err != nil {
-				return fmt.Errorf("cannot update membership profile: %w", err)
+				if needsUpdate {
+					err = membership.Update(ctx, tx, scope)
+					if err != nil {
+						return fmt.Errorf("cannot update membership: %w", err)
+					}
+				}
+
+				memberProfile := &coredata.MembershipProfile{}
+				err = memberProfile.LoadByMembershipID(ctx, tx, scope, membership.ID)
+				if err != nil {
+					return fmt.Errorf("cannot load membership profile: %w", err)
+				}
+
+				memberProfile.FullName = fullname
+				memberProfile.UpdatedAt = now
+				err = memberProfile.Update(ctx, tx, scope)
+				if err != nil {
+					return fmt.Errorf("cannot update membership profile: %w", err)
+				}
 			}
 
 			return nil

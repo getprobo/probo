@@ -59,6 +59,9 @@ type ResolverRoot interface {
 	Query() QueryResolver
 	SAMLConfiguration() SAMLConfigurationResolver
 	SAMLConfigurationConnection() SAMLConfigurationConnectionResolver
+	SCIMConfiguration() SCIMConfigurationResolver
+	SCIMEvent() SCIMEventResolver
+	SCIMEventConnection() SCIMEventConnectionResolver
 	Session() SessionResolver
 	SessionConnection() SessionConnectionResolver
 }
@@ -99,6 +102,11 @@ type ComplexityRoot struct {
 		SamlConfigurationEdge func(childComplexity int) int
 	}
 
+	CreateSCIMConfigurationPayload struct {
+		ScimConfiguration func(childComplexity int) int
+		Token             func(childComplexity int) int
+	}
+
 	DeleteInvitationPayload struct {
 		DeletedInvitationID func(childComplexity int) int
 	}
@@ -113,6 +121,10 @@ type ComplexityRoot struct {
 
 	DeleteSAMLConfigurationPayload struct {
 		DeletedSamlConfigurationID func(childComplexity int) int
+	}
+
+	DeleteSCIMConfigurationPayload struct {
+		DeletedScimConfigurationID func(childComplexity int) int
 	}
 
 	ForgotPasswordPayload struct {
@@ -200,12 +212,15 @@ type ComplexityRoot struct {
 		CreateOrganization               func(childComplexity int, input types.CreateOrganizationInput) int
 		CreatePersonalAPIKey             func(childComplexity int, input types.CreatePersonalAPIKeyInput) int
 		CreateSAMLConfiguration          func(childComplexity int, input types.CreateSAMLConfigurationInput) int
+		CreateSCIMConfiguration          func(childComplexity int, input types.CreateSCIMConfigurationInput) int
 		DeleteInvitation                 func(childComplexity int, input types.DeleteInvitationInput) int
 		DeleteOrganization               func(childComplexity int, input types.DeleteOrganizationInput) int
 		DeleteOrganizationHorizontalLogo func(childComplexity int, input types.DeleteOrganizationHorizontalLogoInput) int
 		DeleteSAMLConfiguration          func(childComplexity int, input types.DeleteSAMLConfigurationInput) int
+		DeleteSCIMConfiguration          func(childComplexity int, input types.DeleteSCIMConfigurationInput) int
 		ForgotPassword                   func(childComplexity int, input types.ForgotPasswordInput) int
 		InviteMember                     func(childComplexity int, input types.InviteMemberInput) int
+		RegenerateSCIMToken              func(childComplexity int, input types.RegenerateSCIMTokenInput) int
 		RemoveMember                     func(childComplexity int, input types.RemoveMemberInput) int
 		ResetPassword                    func(childComplexity int, input types.ResetPasswordInput) int
 		RevokeAllSessions                func(childComplexity int) int
@@ -234,6 +249,7 @@ type ComplexityRoot struct {
 		Name               func(childComplexity int) int
 		Permission         func(childComplexity int, action string) int
 		SamlConfigurations func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
+		ScimConfiguration  func(childComplexity int) int
 		UpdatedAt          func(childComplexity int) int
 		ViewerMembership   func(childComplexity int) int
 		WebsiteURL         func(childComplexity int) int
@@ -279,6 +295,11 @@ type ComplexityRoot struct {
 		CheckSSOAvailability func(childComplexity int, email string) int
 		Node                 func(childComplexity int, id gid.GID) int
 		Viewer               func(childComplexity int) int
+	}
+
+	RegenerateSCIMTokenPayload struct {
+		ScimConfiguration func(childComplexity int) int
+		Token             func(childComplexity int) int
 	}
 
 	RemoveMemberPayload struct {
@@ -337,6 +358,41 @@ type ComplexityRoot struct {
 	}
 
 	SAMLConfigurationEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	SCIMConfiguration struct {
+		CreatedAt    func(childComplexity int) int
+		EndpointURL  func(childComplexity int) int
+		Events       func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.SCIMEventOrderBy) int
+		ID           func(childComplexity int) int
+		Organization func(childComplexity int) int
+		Permission   func(childComplexity int, action string) int
+		UpdatedAt    func(childComplexity int) int
+	}
+
+	SCIMEvent struct {
+		CreatedAt    func(childComplexity int) int
+		ErrorMessage func(childComplexity int) int
+		ID           func(childComplexity int) int
+		IPAddress    func(childComplexity int) int
+		Membership   func(childComplexity int) int
+		Method       func(childComplexity int) int
+		Path         func(childComplexity int) int
+		Permission   func(childComplexity int, action string) int
+		RequestBody  func(childComplexity int) int
+		ResponseBody func(childComplexity int) int
+		StatusCode   func(childComplexity int) int
+	}
+
+	SCIMEventConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	SCIMEventEdge struct {
 		Cursor func(childComplexity int) int
 		Node   func(childComplexity int) int
 	}
@@ -458,6 +514,9 @@ type MutationResolver interface {
 	CreateSAMLConfiguration(ctx context.Context, input types.CreateSAMLConfigurationInput) (*types.CreateSAMLConfigurationPayload, error)
 	UpdateSAMLConfiguration(ctx context.Context, input types.UpdateSAMLConfigurationInput) (*types.UpdateSAMLConfigurationPayload, error)
 	DeleteSAMLConfiguration(ctx context.Context, input types.DeleteSAMLConfigurationInput) (*types.DeleteSAMLConfigurationPayload, error)
+	CreateSCIMConfiguration(ctx context.Context, input types.CreateSCIMConfigurationInput) (*types.CreateSCIMConfigurationPayload, error)
+	DeleteSCIMConfiguration(ctx context.Context, input types.DeleteSCIMConfigurationInput) (*types.DeleteSCIMConfigurationPayload, error)
+	RegenerateSCIMToken(ctx context.Context, input types.RegenerateSCIMTokenInput) (*types.RegenerateSCIMTokenPayload, error)
 }
 type OrganizationResolver interface {
 	LogoURL(ctx context.Context, obj *types.Organization) (*string, error)
@@ -466,6 +525,7 @@ type OrganizationResolver interface {
 	Members(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MembershipOrderBy) (*types.MembershipConnection, error)
 	Invitations(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, status *coredata.InvitationStatus, orderBy *types.InvitationOrderBy) (*types.InvitationConnection, error)
 	SamlConfigurations(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.SAMLConfigurationConnection, error)
+	ScimConfiguration(ctx context.Context, obj *types.Organization) (*types.SCIMConfiguration, error)
 	ViewerMembership(ctx context.Context, obj *types.Organization) (*types.Membership, error)
 	Permission(ctx context.Context, obj *types.Organization, action string) (bool, error)
 }
@@ -488,6 +548,21 @@ type SAMLConfigurationResolver interface {
 }
 type SAMLConfigurationConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.SAMLConfigurationConnection) (*int, error)
+}
+type SCIMConfigurationResolver interface {
+	EndpointURL(ctx context.Context, obj *types.SCIMConfiguration) (string, error)
+
+	Organization(ctx context.Context, obj *types.SCIMConfiguration) (*types.Organization, error)
+	Events(ctx context.Context, obj *types.SCIMConfiguration, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.SCIMEventOrderBy) (*types.SCIMEventConnection, error)
+	Permission(ctx context.Context, obj *types.SCIMConfiguration, action string) (bool, error)
+}
+type SCIMEventResolver interface {
+	Membership(ctx context.Context, obj *types.SCIMEvent) (*types.Membership, error)
+
+	Permission(ctx context.Context, obj *types.SCIMEvent, action string) (bool, error)
+}
+type SCIMEventConnectionResolver interface {
+	TotalCount(ctx context.Context, obj *types.SCIMEventConnection) (*int, error)
 }
 type SessionResolver interface {
 	Identity(ctx context.Context, obj *types.Session) (*types.Identity, error)
@@ -578,6 +653,19 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.CreateSAMLConfigurationPayload.SamlConfigurationEdge(childComplexity), true
 
+	case "CreateSCIMConfigurationPayload.scimConfiguration":
+		if e.complexity.CreateSCIMConfigurationPayload.ScimConfiguration == nil {
+			break
+		}
+
+		return e.complexity.CreateSCIMConfigurationPayload.ScimConfiguration(childComplexity), true
+	case "CreateSCIMConfigurationPayload.token":
+		if e.complexity.CreateSCIMConfigurationPayload.Token == nil {
+			break
+		}
+
+		return e.complexity.CreateSCIMConfigurationPayload.Token(childComplexity), true
+
 	case "DeleteInvitationPayload.deletedInvitationId":
 		if e.complexity.DeleteInvitationPayload.DeletedInvitationID == nil {
 			break
@@ -605,6 +693,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.DeleteSAMLConfigurationPayload.DeletedSamlConfigurationID(childComplexity), true
+
+	case "DeleteSCIMConfigurationPayload.deletedScimConfigurationId":
+		if e.complexity.DeleteSCIMConfigurationPayload.DeletedScimConfigurationID == nil {
+			break
+		}
+
+		return e.complexity.DeleteSCIMConfigurationPayload.DeletedScimConfigurationID(childComplexity), true
 
 	case "ForgotPasswordPayload.success":
 		if e.complexity.ForgotPasswordPayload.Success == nil {
@@ -1015,6 +1110,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.CreateSAMLConfiguration(childComplexity, args["input"].(types.CreateSAMLConfigurationInput)), true
+	case "Mutation.createSCIMConfiguration":
+		if e.complexity.Mutation.CreateSCIMConfiguration == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createSCIMConfiguration_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateSCIMConfiguration(childComplexity, args["input"].(types.CreateSCIMConfigurationInput)), true
 	case "Mutation.deleteInvitation":
 		if e.complexity.Mutation.DeleteInvitation == nil {
 			break
@@ -1059,6 +1165,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.DeleteSAMLConfiguration(childComplexity, args["input"].(types.DeleteSAMLConfigurationInput)), true
+	case "Mutation.deleteSCIMConfiguration":
+		if e.complexity.Mutation.DeleteSCIMConfiguration == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteSCIMConfiguration_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteSCIMConfiguration(childComplexity, args["input"].(types.DeleteSCIMConfigurationInput)), true
 	case "Mutation.forgotPassword":
 		if e.complexity.Mutation.ForgotPassword == nil {
 			break
@@ -1081,6 +1198,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.InviteMember(childComplexity, args["input"].(types.InviteMemberInput)), true
+	case "Mutation.regenerateSCIMToken":
+		if e.complexity.Mutation.RegenerateSCIMToken == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_regenerateSCIMToken_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.RegenerateSCIMToken(childComplexity, args["input"].(types.RegenerateSCIMTokenInput)), true
 	case "Mutation.removeMember":
 		if e.complexity.Mutation.RemoveMember == nil {
 			break
@@ -1307,6 +1435,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Organization.SamlConfigurations(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey)), true
+	case "Organization.scimConfiguration":
+		if e.complexity.Organization.ScimConfiguration == nil {
+			break
+		}
+
+		return e.complexity.Organization.ScimConfiguration(childComplexity), true
 	case "Organization.updatedAt":
 		if e.complexity.Organization.UpdatedAt == nil {
 			break
@@ -1473,6 +1607,19 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.Viewer(childComplexity), true
+
+	case "RegenerateSCIMTokenPayload.scimConfiguration":
+		if e.complexity.RegenerateSCIMTokenPayload.ScimConfiguration == nil {
+			break
+		}
+
+		return e.complexity.RegenerateSCIMTokenPayload.ScimConfiguration(childComplexity), true
+	case "RegenerateSCIMTokenPayload.token":
+		if e.complexity.RegenerateSCIMTokenPayload.Token == nil {
+			break
+		}
+
+		return e.complexity.RegenerateSCIMTokenPayload.Token(childComplexity), true
 
 	case "RemoveMemberPayload.deletedMembershipId":
 		if e.complexity.RemoveMemberPayload.DeletedMembershipID == nil {
@@ -1669,6 +1816,163 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.SAMLConfigurationEdge.Node(childComplexity), true
 
+	case "SCIMConfiguration.createdAt":
+		if e.complexity.SCIMConfiguration.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.SCIMConfiguration.CreatedAt(childComplexity), true
+	case "SCIMConfiguration.endpointUrl":
+		if e.complexity.SCIMConfiguration.EndpointURL == nil {
+			break
+		}
+
+		return e.complexity.SCIMConfiguration.EndpointURL(childComplexity), true
+	case "SCIMConfiguration.events":
+		if e.complexity.SCIMConfiguration.Events == nil {
+			break
+		}
+
+		args, err := ec.field_SCIMConfiguration_events_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.SCIMConfiguration.Events(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.SCIMEventOrderBy)), true
+	case "SCIMConfiguration.id":
+		if e.complexity.SCIMConfiguration.ID == nil {
+			break
+		}
+
+		return e.complexity.SCIMConfiguration.ID(childComplexity), true
+	case "SCIMConfiguration.organization":
+		if e.complexity.SCIMConfiguration.Organization == nil {
+			break
+		}
+
+		return e.complexity.SCIMConfiguration.Organization(childComplexity), true
+	case "SCIMConfiguration.permission":
+		if e.complexity.SCIMConfiguration.Permission == nil {
+			break
+		}
+
+		args, err := ec.field_SCIMConfiguration_permission_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.SCIMConfiguration.Permission(childComplexity, args["action"].(string)), true
+	case "SCIMConfiguration.updatedAt":
+		if e.complexity.SCIMConfiguration.UpdatedAt == nil {
+			break
+		}
+
+		return e.complexity.SCIMConfiguration.UpdatedAt(childComplexity), true
+
+	case "SCIMEvent.createdAt":
+		if e.complexity.SCIMEvent.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.SCIMEvent.CreatedAt(childComplexity), true
+	case "SCIMEvent.errorMessage":
+		if e.complexity.SCIMEvent.ErrorMessage == nil {
+			break
+		}
+
+		return e.complexity.SCIMEvent.ErrorMessage(childComplexity), true
+	case "SCIMEvent.id":
+		if e.complexity.SCIMEvent.ID == nil {
+			break
+		}
+
+		return e.complexity.SCIMEvent.ID(childComplexity), true
+	case "SCIMEvent.ipAddress":
+		if e.complexity.SCIMEvent.IPAddress == nil {
+			break
+		}
+
+		return e.complexity.SCIMEvent.IPAddress(childComplexity), true
+	case "SCIMEvent.membership":
+		if e.complexity.SCIMEvent.Membership == nil {
+			break
+		}
+
+		return e.complexity.SCIMEvent.Membership(childComplexity), true
+	case "SCIMEvent.method":
+		if e.complexity.SCIMEvent.Method == nil {
+			break
+		}
+
+		return e.complexity.SCIMEvent.Method(childComplexity), true
+	case "SCIMEvent.path":
+		if e.complexity.SCIMEvent.Path == nil {
+			break
+		}
+
+		return e.complexity.SCIMEvent.Path(childComplexity), true
+	case "SCIMEvent.permission":
+		if e.complexity.SCIMEvent.Permission == nil {
+			break
+		}
+
+		args, err := ec.field_SCIMEvent_permission_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.SCIMEvent.Permission(childComplexity, args["action"].(string)), true
+	case "SCIMEvent.requestBody":
+		if e.complexity.SCIMEvent.RequestBody == nil {
+			break
+		}
+
+		return e.complexity.SCIMEvent.RequestBody(childComplexity), true
+	case "SCIMEvent.responseBody":
+		if e.complexity.SCIMEvent.ResponseBody == nil {
+			break
+		}
+
+		return e.complexity.SCIMEvent.ResponseBody(childComplexity), true
+	case "SCIMEvent.statusCode":
+		if e.complexity.SCIMEvent.StatusCode == nil {
+			break
+		}
+
+		return e.complexity.SCIMEvent.StatusCode(childComplexity), true
+
+	case "SCIMEventConnection.edges":
+		if e.complexity.SCIMEventConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.SCIMEventConnection.Edges(childComplexity), true
+	case "SCIMEventConnection.pageInfo":
+		if e.complexity.SCIMEventConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.SCIMEventConnection.PageInfo(childComplexity), true
+	case "SCIMEventConnection.totalCount":
+		if e.complexity.SCIMEventConnection.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.SCIMEventConnection.TotalCount(childComplexity), true
+
+	case "SCIMEventEdge.cursor":
+		if e.complexity.SCIMEventEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.SCIMEventEdge.Cursor(childComplexity), true
+	case "SCIMEventEdge.node":
+		if e.complexity.SCIMEventEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.SCIMEventEdge.Node(childComplexity), true
+
 	case "SSOAvailability.available":
 		if e.complexity.SSOAvailability.Available == nil {
 			break
@@ -1851,19 +2155,23 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputCreateOrganizationInput,
 		ec.unmarshalInputCreatePersonalAPIKeyInput,
 		ec.unmarshalInputCreateSAMLConfigurationInput,
+		ec.unmarshalInputCreateSCIMConfigurationInput,
 		ec.unmarshalInputDeleteInvitationInput,
 		ec.unmarshalInputDeleteOrganizationHorizontalLogoInput,
 		ec.unmarshalInputDeleteOrganizationInput,
 		ec.unmarshalInputDeleteSAMLConfigurationInput,
+		ec.unmarshalInputDeleteSCIMConfigurationInput,
 		ec.unmarshalInputForgotPasswordInput,
 		ec.unmarshalInputInvitationOrder,
 		ec.unmarshalInputInviteMemberInput,
 		ec.unmarshalInputMembershipOrder,
+		ec.unmarshalInputRegenerateSCIMTokenInput,
 		ec.unmarshalInputRemoveMemberInput,
 		ec.unmarshalInputResetPasswordInput,
 		ec.unmarshalInputRevokePersonalAPIKeyInput,
 		ec.unmarshalInputRevokeSessionInput,
 		ec.unmarshalInputSAMLAttributeMappingsInput,
+		ec.unmarshalInputSCIMEventOrder,
 		ec.unmarshalInputSessionOrder,
 		ec.unmarshalInputSignInInput,
 		ec.unmarshalInputSignUpFromInvitationInput,
@@ -2094,6 +2402,16 @@ type Mutation {
   deleteSAMLConfiguration(
     input: DeleteSAMLConfigurationInput!
   ): DeleteSAMLConfigurationPayload @session(required: PRESENT)
+
+  createSCIMConfiguration(
+    input: CreateSCIMConfigurationInput!
+  ): CreateSCIMConfigurationPayload @session(required: PRESENT)
+  deleteSCIMConfiguration(
+    input: DeleteSCIMConfigurationInput!
+  ): DeleteSCIMConfigurationPayload @session(required: PRESENT)
+  regenerateSCIMToken(
+    input: RegenerateSCIMTokenInput!
+  ): RegenerateSCIMTokenPayload @session(required: PRESENT)
 }
 
 type Identity implements Node {
@@ -2187,6 +2505,8 @@ type Organization implements Node {
     before: CursorKey
   ): SAMLConfigurationConnection @goField(forceResolver: true)
 
+  scimConfiguration: SCIMConfiguration @goField(forceResolver: true)
+
   viewerMembership: Membership @goField(forceResolver: true)
 
   permission(action: String!): Boolean!
@@ -2210,6 +2530,7 @@ enum MembershipSource
   MANUAL
     @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipSourceManual")
   SAML @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipSourceSAML")
+  SCIM @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipSourceSCIM")
 }
 
 type Membership implements Node {
@@ -2302,6 +2623,43 @@ type SSOAvailability {
   available: Boolean!
   samlConfigId: ID
   organizationId: ID
+}
+
+type SCIMConfiguration implements Node {
+  id: ID!
+  endpointUrl: String! @goField(forceResolver: true)
+  createdAt: Datetime!
+  updatedAt: Datetime!
+  organization: Organization @goField(forceResolver: true)
+
+  events(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: SCIMEventOrder
+  ): SCIMEventConnection @goField(forceResolver: true)
+
+  permission(action: String!): Boolean!
+    @goField(forceResolver: true)
+    @session(required: PRESENT)
+}
+
+type SCIMEvent implements Node {
+  id: ID!
+  method: String!
+  path: String!
+  statusCode: Int!
+  requestBody: String
+  responseBody: String
+  errorMessage: String
+  membership: Membership @goField(forceResolver: true)
+  ipAddress: String!
+  createdAt: Datetime!
+
+  permission(action: String!): Boolean!
+    @goField(forceResolver: true)
+    @session(required: PRESENT)
 }
 
 enum InvitationStatus
@@ -2446,6 +2804,36 @@ type SAMLConfigurationConnection
 
 type SAMLConfigurationEdge {
   node: SAMLConfiguration!
+  cursor: CursorKey!
+}
+
+enum SCIMEventOrderField
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.SCIMEventOrderField") {
+  CREATED_AT
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.SCIMEventOrderFieldCreatedAt"
+    )
+}
+
+input SCIMEventOrder
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/connect/v1/types.SCIMEventOrderBy"
+  ) {
+  direction: OrderDirection!
+  field: SCIMEventOrderField!
+}
+
+type SCIMEventConnection
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/connect/v1/types.SCIMEventConnection"
+  ) {
+  edges: [SCIMEventEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int @goField(forceResolver: true)
+}
+
+type SCIMEventEdge {
+  node: SCIMEvent!
   cursor: CursorKey!
 }
 
@@ -2723,6 +3111,34 @@ type UpdateSAMLConfigurationPayload {
 type DeleteSAMLConfigurationPayload {
   deletedSamlConfigurationId: ID!
 }
+
+input CreateSCIMConfigurationInput {
+  organizationId: ID!
+}
+
+input DeleteSCIMConfigurationInput {
+  organizationId: ID!
+  scimConfigurationId: ID!
+}
+
+input RegenerateSCIMTokenInput {
+  organizationId: ID!
+  scimConfigurationId: ID!
+}
+
+type CreateSCIMConfigurationPayload {
+  scimConfiguration: SCIMConfiguration!
+  token: String!
+}
+
+type DeleteSCIMConfigurationPayload {
+  deletedScimConfigurationId: ID!
+}
+
+type RegenerateSCIMTokenPayload {
+  scimConfiguration: SCIMConfiguration!
+  token: String!
+}
 `, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
@@ -2982,6 +3398,17 @@ func (ec *executionContext) field_Mutation_createSAMLConfiguration_args(ctx cont
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_createSCIMConfiguration_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateSCIMConfigurationInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐCreateSCIMConfigurationInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_deleteInvitation_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -3026,6 +3453,17 @@ func (ec *executionContext) field_Mutation_deleteSAMLConfiguration_args(ctx cont
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_deleteSCIMConfiguration_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNDeleteSCIMConfigurationInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐDeleteSCIMConfigurationInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_forgotPassword_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -3041,6 +3479,17 @@ func (ec *executionContext) field_Mutation_inviteMember_args(ctx context.Context
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNInviteMemberInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐInviteMemberInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_regenerateSCIMToken_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNRegenerateSCIMTokenInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐRegenerateSCIMTokenInput)
 	if err != nil {
 		return nil, err
 	}
@@ -3328,6 +3777,59 @@ func (ec *executionContext) field_SAMLConfiguration_permission_args(ctx context.
 	return args, nil
 }
 
+func (ec *executionContext) field_SCIMConfiguration_events_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "first", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "after", ec.unmarshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey)
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "last", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["last"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "before", ec.unmarshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey)
+	if err != nil {
+		return nil, err
+	}
+	args["before"] = arg3
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "orderBy", ec.unmarshalOSCIMEventOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSCIMEventOrderBy)
+	if err != nil {
+		return nil, err
+	}
+	args["orderBy"] = arg4
+	return args, nil
+}
+
+func (ec *executionContext) field_SCIMConfiguration_permission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "action", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["action"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_SCIMEvent_permission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "action", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["action"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Session_permission_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -3563,6 +4065,8 @@ func (ec *executionContext) fieldContext_CreateOrganizationPayload_organization(
 				return ec.fieldContext_Organization_invitations(ctx, field)
 			case "samlConfigurations":
 				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
+			case "scimConfiguration":
+				return ec.fieldContext_Organization_scimConfiguration(ctx, field)
 			case "viewerMembership":
 				return ec.fieldContext_Organization_viewerMembership(ctx, field)
 			case "permission":
@@ -3708,6 +4212,80 @@ func (ec *executionContext) fieldContext_CreateSAMLConfigurationPayload_samlConf
 	return fc, nil
 }
 
+func (ec *executionContext) _CreateSCIMConfigurationPayload_scimConfiguration(ctx context.Context, field graphql.CollectedField, obj *types.CreateSCIMConfigurationPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_CreateSCIMConfigurationPayload_scimConfiguration,
+		func(ctx context.Context) (any, error) {
+			return obj.ScimConfiguration, nil
+		},
+		nil,
+		ec.marshalNSCIMConfiguration2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSCIMConfiguration,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_CreateSCIMConfigurationPayload_scimConfiguration(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CreateSCIMConfigurationPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_SCIMConfiguration_id(ctx, field)
+			case "endpointUrl":
+				return ec.fieldContext_SCIMConfiguration_endpointUrl(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_SCIMConfiguration_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_SCIMConfiguration_updatedAt(ctx, field)
+			case "organization":
+				return ec.fieldContext_SCIMConfiguration_organization(ctx, field)
+			case "events":
+				return ec.fieldContext_SCIMConfiguration_events(ctx, field)
+			case "permission":
+				return ec.fieldContext_SCIMConfiguration_permission(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type SCIMConfiguration", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CreateSCIMConfigurationPayload_token(ctx context.Context, field graphql.CollectedField, obj *types.CreateSCIMConfigurationPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_CreateSCIMConfigurationPayload_token,
+		func(ctx context.Context) (any, error) {
+			return obj.Token, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_CreateSCIMConfigurationPayload_token(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CreateSCIMConfigurationPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _DeleteInvitationPayload_deletedInvitationId(ctx context.Context, field graphql.CollectedField, obj *types.DeleteInvitationPayload) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -3787,6 +4365,8 @@ func (ec *executionContext) fieldContext_DeleteOrganizationHorizontalLogoPayload
 				return ec.fieldContext_Organization_invitations(ctx, field)
 			case "samlConfigurations":
 				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
+			case "scimConfiguration":
+				return ec.fieldContext_Organization_scimConfiguration(ctx, field)
 			case "viewerMembership":
 				return ec.fieldContext_Organization_viewerMembership(ctx, field)
 			case "permission":
@@ -3846,6 +4426,35 @@ func (ec *executionContext) _DeleteSAMLConfigurationPayload_deletedSamlConfigura
 func (ec *executionContext) fieldContext_DeleteSAMLConfigurationPayload_deletedSamlConfigurationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "DeleteSAMLConfigurationPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DeleteSCIMConfigurationPayload_deletedScimConfigurationId(ctx context.Context, field graphql.CollectedField, obj *types.DeleteSCIMConfigurationPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_DeleteSCIMConfigurationPayload_deletedScimConfigurationId,
+		func(ctx context.Context) (any, error) {
+			return obj.DeletedScimConfigurationID, nil
+		},
+		nil,
+		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_DeleteSCIMConfigurationPayload_deletedScimConfigurationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DeleteSCIMConfigurationPayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -4648,6 +5257,8 @@ func (ec *executionContext) fieldContext_Invitation_organization(_ context.Conte
 				return ec.fieldContext_Organization_invitations(ctx, field)
 			case "samlConfigurations":
 				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
+			case "scimConfiguration":
+				return ec.fieldContext_Organization_scimConfiguration(ctx, field)
 			case "viewerMembership":
 				return ec.fieldContext_Organization_viewerMembership(ctx, field)
 			case "permission":
@@ -5138,6 +5749,8 @@ func (ec *executionContext) fieldContext_Membership_organization(_ context.Conte
 				return ec.fieldContext_Organization_invitations(ctx, field)
 			case "samlConfigurations":
 				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
+			case "scimConfiguration":
+				return ec.fieldContext_Organization_scimConfiguration(ctx, field)
 			case "viewerMembership":
 				return ec.fieldContext_Organization_viewerMembership(ctx, field)
 			case "permission":
@@ -7284,6 +7897,199 @@ func (ec *executionContext) fieldContext_Mutation_deleteSAMLConfiguration(ctx co
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_createSCIMConfiguration(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_createSCIMConfiguration,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().CreateSCIMConfiguration(ctx, fc.Args["input"].(types.CreateSCIMConfigurationInput))
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSessionRequirement(ctx, "PRESENT")
+				if err != nil {
+					var zeroVal *types.CreateSCIMConfigurationPayload
+					return zeroVal, err
+				}
+				if ec.directives.Session == nil {
+					var zeroVal *types.CreateSCIMConfigurationPayload
+					return zeroVal, errors.New("directive session is not implemented")
+				}
+				return ec.directives.Session(ctx, nil, directive0, required)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalOCreateSCIMConfigurationPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐCreateSCIMConfigurationPayload,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_createSCIMConfiguration(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "scimConfiguration":
+				return ec.fieldContext_CreateSCIMConfigurationPayload_scimConfiguration(ctx, field)
+			case "token":
+				return ec.fieldContext_CreateSCIMConfigurationPayload_token(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CreateSCIMConfigurationPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createSCIMConfiguration_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteSCIMConfiguration(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_deleteSCIMConfiguration,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().DeleteSCIMConfiguration(ctx, fc.Args["input"].(types.DeleteSCIMConfigurationInput))
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSessionRequirement(ctx, "PRESENT")
+				if err != nil {
+					var zeroVal *types.DeleteSCIMConfigurationPayload
+					return zeroVal, err
+				}
+				if ec.directives.Session == nil {
+					var zeroVal *types.DeleteSCIMConfigurationPayload
+					return zeroVal, errors.New("directive session is not implemented")
+				}
+				return ec.directives.Session(ctx, nil, directive0, required)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalODeleteSCIMConfigurationPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐDeleteSCIMConfigurationPayload,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteSCIMConfiguration(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "deletedScimConfigurationId":
+				return ec.fieldContext_DeleteSCIMConfigurationPayload_deletedScimConfigurationId(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DeleteSCIMConfigurationPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteSCIMConfiguration_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_regenerateSCIMToken(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_regenerateSCIMToken,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().RegenerateSCIMToken(ctx, fc.Args["input"].(types.RegenerateSCIMTokenInput))
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSessionRequirement(ctx, "PRESENT")
+				if err != nil {
+					var zeroVal *types.RegenerateSCIMTokenPayload
+					return zeroVal, err
+				}
+				if ec.directives.Session == nil {
+					var zeroVal *types.RegenerateSCIMTokenPayload
+					return zeroVal, errors.New("directive session is not implemented")
+				}
+				return ec.directives.Session(ctx, nil, directive0, required)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalORegenerateSCIMTokenPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐRegenerateSCIMTokenPayload,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_regenerateSCIMToken(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "scimConfiguration":
+				return ec.fieldContext_RegenerateSCIMTokenPayload_scimConfiguration(ctx, field)
+			case "token":
+				return ec.fieldContext_RegenerateSCIMTokenPayload_token(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type RegenerateSCIMTokenPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_regenerateSCIMToken_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Organization_id(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -7717,6 +8523,51 @@ func (ec *executionContext) fieldContext_Organization_samlConfigurations(ctx con
 	if fc.Args, err = ec.field_Organization_samlConfigurations_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Organization_scimConfiguration(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Organization_scimConfiguration,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.Organization().ScimConfiguration(ctx, obj)
+		},
+		nil,
+		ec.marshalOSCIMConfiguration2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSCIMConfiguration,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Organization_scimConfiguration(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Organization",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_SCIMConfiguration_id(ctx, field)
+			case "endpointUrl":
+				return ec.fieldContext_SCIMConfiguration_endpointUrl(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_SCIMConfiguration_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_SCIMConfiguration_updatedAt(ctx, field)
+			case "organization":
+				return ec.fieldContext_SCIMConfiguration_organization(ctx, field)
+			case "events":
+				return ec.fieldContext_SCIMConfiguration_events(ctx, field)
+			case "permission":
+				return ec.fieldContext_SCIMConfiguration_permission(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type SCIMConfiguration", field.Name)
+		},
 	}
 	return fc, nil
 }
@@ -8754,6 +9605,80 @@ func (ec *executionContext) fieldContext_Query___schema(_ context.Context, field
 	return fc, nil
 }
 
+func (ec *executionContext) _RegenerateSCIMTokenPayload_scimConfiguration(ctx context.Context, field graphql.CollectedField, obj *types.RegenerateSCIMTokenPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_RegenerateSCIMTokenPayload_scimConfiguration,
+		func(ctx context.Context) (any, error) {
+			return obj.ScimConfiguration, nil
+		},
+		nil,
+		ec.marshalNSCIMConfiguration2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSCIMConfiguration,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_RegenerateSCIMTokenPayload_scimConfiguration(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RegenerateSCIMTokenPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_SCIMConfiguration_id(ctx, field)
+			case "endpointUrl":
+				return ec.fieldContext_SCIMConfiguration_endpointUrl(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_SCIMConfiguration_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_SCIMConfiguration_updatedAt(ctx, field)
+			case "organization":
+				return ec.fieldContext_SCIMConfiguration_organization(ctx, field)
+			case "events":
+				return ec.fieldContext_SCIMConfiguration_events(ctx, field)
+			case "permission":
+				return ec.fieldContext_SCIMConfiguration_permission(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type SCIMConfiguration", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RegenerateSCIMTokenPayload_token(ctx context.Context, field graphql.CollectedField, obj *types.RegenerateSCIMTokenPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_RegenerateSCIMTokenPayload_token,
+		func(ctx context.Context) (any, error) {
+			return obj.Token, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_RegenerateSCIMTokenPayload_token(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RegenerateSCIMTokenPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _RemoveMemberPayload_deletedMembershipId(ctx context.Context, field graphql.CollectedField, obj *types.RemoveMemberPayload) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -9710,6 +10635,847 @@ func (ec *executionContext) fieldContext_SAMLConfigurationEdge_cursor(_ context.
 	return fc, nil
 }
 
+func (ec *executionContext) _SCIMConfiguration_id(ctx context.Context, field graphql.CollectedField, obj *types.SCIMConfiguration) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SCIMConfiguration_id,
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SCIMConfiguration_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SCIMConfiguration",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SCIMConfiguration_endpointUrl(ctx context.Context, field graphql.CollectedField, obj *types.SCIMConfiguration) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SCIMConfiguration_endpointUrl,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.SCIMConfiguration().EndpointURL(ctx, obj)
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SCIMConfiguration_endpointUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SCIMConfiguration",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SCIMConfiguration_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.SCIMConfiguration) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SCIMConfiguration_createdAt,
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		ec.marshalNDatetime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SCIMConfiguration_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SCIMConfiguration",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SCIMConfiguration_updatedAt(ctx context.Context, field graphql.CollectedField, obj *types.SCIMConfiguration) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SCIMConfiguration_updatedAt,
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		ec.marshalNDatetime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SCIMConfiguration_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SCIMConfiguration",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SCIMConfiguration_organization(ctx context.Context, field graphql.CollectedField, obj *types.SCIMConfiguration) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SCIMConfiguration_organization,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.SCIMConfiguration().Organization(ctx, obj)
+		},
+		nil,
+		ec.marshalOOrganization2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐOrganization,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_SCIMConfiguration_organization(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SCIMConfiguration",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Organization_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Organization_name(ctx, field)
+			case "logoUrl":
+				return ec.fieldContext_Organization_logoUrl(ctx, field)
+			case "horizontalLogoUrl":
+				return ec.fieldContext_Organization_horizontalLogoUrl(ctx, field)
+			case "email":
+				return ec.fieldContext_Organization_email(ctx, field)
+			case "description":
+				return ec.fieldContext_Organization_description(ctx, field)
+			case "websiteUrl":
+				return ec.fieldContext_Organization_websiteUrl(ctx, field)
+			case "headquarterAddress":
+				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Organization_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Organization_updatedAt(ctx, field)
+			case "members":
+				return ec.fieldContext_Organization_members(ctx, field)
+			case "invitations":
+				return ec.fieldContext_Organization_invitations(ctx, field)
+			case "samlConfigurations":
+				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
+			case "scimConfiguration":
+				return ec.fieldContext_Organization_scimConfiguration(ctx, field)
+			case "viewerMembership":
+				return ec.fieldContext_Organization_viewerMembership(ctx, field)
+			case "permission":
+				return ec.fieldContext_Organization_permission(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SCIMConfiguration_events(ctx context.Context, field graphql.CollectedField, obj *types.SCIMConfiguration) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SCIMConfiguration_events,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.SCIMConfiguration().Events(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.SCIMEventOrderBy))
+		},
+		nil,
+		ec.marshalOSCIMEventConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSCIMEventConnection,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_SCIMConfiguration_events(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SCIMConfiguration",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "edges":
+				return ec.fieldContext_SCIMEventConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_SCIMEventConnection_pageInfo(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_SCIMEventConnection_totalCount(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type SCIMEventConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_SCIMConfiguration_events_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SCIMConfiguration_permission(ctx context.Context, field graphql.CollectedField, obj *types.SCIMConfiguration) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SCIMConfiguration_permission,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.SCIMConfiguration().Permission(ctx, obj, fc.Args["action"].(string))
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSessionRequirement(ctx, "PRESENT")
+				if err != nil {
+					var zeroVal bool
+					return zeroVal, err
+				}
+				if ec.directives.Session == nil {
+					var zeroVal bool
+					return zeroVal, errors.New("directive session is not implemented")
+				}
+				return ec.directives.Session(ctx, obj, directive0, required)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SCIMConfiguration_permission(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SCIMConfiguration",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_SCIMConfiguration_permission_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SCIMEvent_id(ctx context.Context, field graphql.CollectedField, obj *types.SCIMEvent) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SCIMEvent_id,
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SCIMEvent_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SCIMEvent",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SCIMEvent_method(ctx context.Context, field graphql.CollectedField, obj *types.SCIMEvent) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SCIMEvent_method,
+		func(ctx context.Context) (any, error) {
+			return obj.Method, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SCIMEvent_method(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SCIMEvent",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SCIMEvent_path(ctx context.Context, field graphql.CollectedField, obj *types.SCIMEvent) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SCIMEvent_path,
+		func(ctx context.Context) (any, error) {
+			return obj.Path, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SCIMEvent_path(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SCIMEvent",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SCIMEvent_statusCode(ctx context.Context, field graphql.CollectedField, obj *types.SCIMEvent) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SCIMEvent_statusCode,
+		func(ctx context.Context) (any, error) {
+			return obj.StatusCode, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SCIMEvent_statusCode(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SCIMEvent",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SCIMEvent_requestBody(ctx context.Context, field graphql.CollectedField, obj *types.SCIMEvent) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SCIMEvent_requestBody,
+		func(ctx context.Context) (any, error) {
+			return obj.RequestBody, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_SCIMEvent_requestBody(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SCIMEvent",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SCIMEvent_responseBody(ctx context.Context, field graphql.CollectedField, obj *types.SCIMEvent) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SCIMEvent_responseBody,
+		func(ctx context.Context) (any, error) {
+			return obj.ResponseBody, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_SCIMEvent_responseBody(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SCIMEvent",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SCIMEvent_errorMessage(ctx context.Context, field graphql.CollectedField, obj *types.SCIMEvent) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SCIMEvent_errorMessage,
+		func(ctx context.Context) (any, error) {
+			return obj.ErrorMessage, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_SCIMEvent_errorMessage(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SCIMEvent",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SCIMEvent_membership(ctx context.Context, field graphql.CollectedField, obj *types.SCIMEvent) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SCIMEvent_membership,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.SCIMEvent().Membership(ctx, obj)
+		},
+		nil,
+		ec.marshalOMembership2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐMembership,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_SCIMEvent_membership(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SCIMEvent",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Membership_id(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Membership_createdAt(ctx, field)
+			case "identity":
+				return ec.fieldContext_Membership_identity(ctx, field)
+			case "profile":
+				return ec.fieldContext_Membership_profile(ctx, field)
+			case "organization":
+				return ec.fieldContext_Membership_organization(ctx, field)
+			case "role":
+				return ec.fieldContext_Membership_role(ctx, field)
+			case "source":
+				return ec.fieldContext_Membership_source(ctx, field)
+			case "lastSession":
+				return ec.fieldContext_Membership_lastSession(ctx, field)
+			case "permission":
+				return ec.fieldContext_Membership_permission(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Membership", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SCIMEvent_ipAddress(ctx context.Context, field graphql.CollectedField, obj *types.SCIMEvent) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SCIMEvent_ipAddress,
+		func(ctx context.Context) (any, error) {
+			return obj.IPAddress, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SCIMEvent_ipAddress(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SCIMEvent",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SCIMEvent_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.SCIMEvent) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SCIMEvent_createdAt,
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		ec.marshalNDatetime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SCIMEvent_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SCIMEvent",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SCIMEvent_permission(ctx context.Context, field graphql.CollectedField, obj *types.SCIMEvent) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SCIMEvent_permission,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.SCIMEvent().Permission(ctx, obj, fc.Args["action"].(string))
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSessionRequirement(ctx, "PRESENT")
+				if err != nil {
+					var zeroVal bool
+					return zeroVal, err
+				}
+				if ec.directives.Session == nil {
+					var zeroVal bool
+					return zeroVal, errors.New("directive session is not implemented")
+				}
+				return ec.directives.Session(ctx, obj, directive0, required)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SCIMEvent_permission(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SCIMEvent",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_SCIMEvent_permission_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SCIMEventConnection_edges(ctx context.Context, field graphql.CollectedField, obj *types.SCIMEventConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SCIMEventConnection_edges,
+		func(ctx context.Context) (any, error) {
+			return obj.Edges, nil
+		},
+		nil,
+		ec.marshalNSCIMEventEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSCIMEventEdgeᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SCIMEventConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SCIMEventConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "node":
+				return ec.fieldContext_SCIMEventEdge_node(ctx, field)
+			case "cursor":
+				return ec.fieldContext_SCIMEventEdge_cursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type SCIMEventEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SCIMEventConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *types.SCIMEventConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SCIMEventConnection_pageInfo,
+		func(ctx context.Context) (any, error) {
+			return obj.PageInfo, nil
+		},
+		nil,
+		ec.marshalNPageInfo2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐPageInfo,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SCIMEventConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SCIMEventConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SCIMEventConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *types.SCIMEventConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SCIMEventConnection_totalCount,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.SCIMEventConnection().TotalCount(ctx, obj)
+		},
+		nil,
+		ec.marshalOInt2ᚖint,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_SCIMEventConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SCIMEventConnection",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SCIMEventEdge_node(ctx context.Context, field graphql.CollectedField, obj *types.SCIMEventEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SCIMEventEdge_node,
+		func(ctx context.Context) (any, error) {
+			return obj.Node, nil
+		},
+		nil,
+		ec.marshalNSCIMEvent2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSCIMEvent,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SCIMEventEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SCIMEventEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_SCIMEvent_id(ctx, field)
+			case "method":
+				return ec.fieldContext_SCIMEvent_method(ctx, field)
+			case "path":
+				return ec.fieldContext_SCIMEvent_path(ctx, field)
+			case "statusCode":
+				return ec.fieldContext_SCIMEvent_statusCode(ctx, field)
+			case "requestBody":
+				return ec.fieldContext_SCIMEvent_requestBody(ctx, field)
+			case "responseBody":
+				return ec.fieldContext_SCIMEvent_responseBody(ctx, field)
+			case "errorMessage":
+				return ec.fieldContext_SCIMEvent_errorMessage(ctx, field)
+			case "membership":
+				return ec.fieldContext_SCIMEvent_membership(ctx, field)
+			case "ipAddress":
+				return ec.fieldContext_SCIMEvent_ipAddress(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_SCIMEvent_createdAt(ctx, field)
+			case "permission":
+				return ec.fieldContext_SCIMEvent_permission(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type SCIMEvent", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SCIMEventEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *types.SCIMEventEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SCIMEventEdge_cursor,
+		func(ctx context.Context) (any, error) {
+			return obj.Cursor, nil
+		},
+		nil,
+		ec.marshalNCursorKey2goᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SCIMEventEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SCIMEventEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type CursorKey does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _SSOAvailability_available(ctx context.Context, field graphql.CollectedField, obj *types.SSOAvailability) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -10609,6 +12375,8 @@ func (ec *executionContext) fieldContext_UpdateOrganizationPayload_organization(
 				return ec.fieldContext_Organization_invitations(ctx, field)
 			case "samlConfigurations":
 				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
+			case "scimConfiguration":
+				return ec.fieldContext_Organization_scimConfiguration(ctx, field)
 			case "viewerMembership":
 				return ec.fieldContext_Organization_viewerMembership(ctx, field)
 			case "permission":
@@ -12420,6 +14188,33 @@ func (ec *executionContext) unmarshalInputCreateSAMLConfigurationInput(ctx conte
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputCreateSCIMConfigurationInput(ctx context.Context, obj any) (types.CreateSCIMConfigurationInput, error) {
+	var it types.CreateSCIMConfigurationInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"organizationId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "organizationId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("organizationId"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OrganizationID = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputDeleteInvitationInput(ctx context.Context, obj any) (types.DeleteInvitationInput, error) {
 	var it types.DeleteInvitationInput
 	asMap := map[string]any{}
@@ -12536,6 +14331,40 @@ func (ec *executionContext) unmarshalInputDeleteSAMLConfigurationInput(ctx conte
 				return it, err
 			}
 			it.SamlConfigurationID = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputDeleteSCIMConfigurationInput(ctx context.Context, obj any) (types.DeleteSCIMConfigurationInput, error) {
+	var it types.DeleteSCIMConfigurationInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"organizationId", "scimConfigurationId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "organizationId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("organizationId"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OrganizationID = data
+		case "scimConfigurationId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("scimConfigurationId"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ScimConfigurationID = data
 		}
 	}
 
@@ -12679,6 +14508,40 @@ func (ec *executionContext) unmarshalInputMembershipOrder(ctx context.Context, o
 				return it, err
 			}
 			it.Field = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputRegenerateSCIMTokenInput(ctx context.Context, obj any) (types.RegenerateSCIMTokenInput, error) {
+	var it types.RegenerateSCIMTokenInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"organizationId", "scimConfigurationId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "organizationId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("organizationId"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OrganizationID = data
+		case "scimConfigurationId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("scimConfigurationId"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ScimConfigurationID = data
 		}
 	}
 
@@ -12849,6 +14712,40 @@ func (ec *executionContext) unmarshalInputSAMLAttributeMappingsInput(ctx context
 				return it, err
 			}
 			it.Role = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputSCIMEventOrder(ctx context.Context, obj any) (types.SCIMEventOrderBy, error) {
+	var it types.SCIMEventOrderBy
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"direction", "field"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "direction":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("direction"))
+			data, err := ec.unmarshalNOrderDirection2goᚗproboᚗincᚋproboᚋpkgᚋpageᚐOrderDirection(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Direction = data
+		case "field":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
+			data, err := ec.unmarshalNSCIMEventOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐSCIMEventOrderField(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Field = data
 		}
 	}
 
@@ -13270,6 +15167,20 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._Session(ctx, sel, obj)
+	case types.SCIMEvent:
+		return ec._SCIMEvent(ctx, sel, &obj)
+	case *types.SCIMEvent:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._SCIMEvent(ctx, sel, obj)
+	case types.SCIMConfiguration:
+		return ec._SCIMConfiguration(ctx, sel, &obj)
+	case *types.SCIMConfiguration:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._SCIMConfiguration(ctx, sel, obj)
 	case types.SAMLConfiguration:
 		return ec._SAMLConfiguration(ctx, sel, &obj)
 	case *types.SAMLConfiguration:
@@ -13608,6 +15519,50 @@ func (ec *executionContext) _CreateSAMLConfigurationPayload(ctx context.Context,
 	return out
 }
 
+var createSCIMConfigurationPayloadImplementors = []string{"CreateSCIMConfigurationPayload"}
+
+func (ec *executionContext) _CreateSCIMConfigurationPayload(ctx context.Context, sel ast.SelectionSet, obj *types.CreateSCIMConfigurationPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, createSCIMConfigurationPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CreateSCIMConfigurationPayload")
+		case "scimConfiguration":
+			out.Values[i] = ec._CreateSCIMConfigurationPayload_scimConfiguration(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "token":
+			out.Values[i] = ec._CreateSCIMConfigurationPayload_token(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var deleteInvitationPayloadImplementors = []string{"DeleteInvitationPayload"}
 
 func (ec *executionContext) _DeleteInvitationPayload(ctx context.Context, sel ast.SelectionSet, obj *types.DeleteInvitationPayload) graphql.Marshaler {
@@ -13738,6 +15693,45 @@ func (ec *executionContext) _DeleteSAMLConfigurationPayload(ctx context.Context,
 			out.Values[i] = graphql.MarshalString("DeleteSAMLConfigurationPayload")
 		case "deletedSamlConfigurationId":
 			out.Values[i] = ec._DeleteSAMLConfigurationPayload_deletedSamlConfigurationId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var deleteSCIMConfigurationPayloadImplementors = []string{"DeleteSCIMConfigurationPayload"}
+
+func (ec *executionContext) _DeleteSCIMConfigurationPayload(ctx context.Context, sel ast.SelectionSet, obj *types.DeleteSCIMConfigurationPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, deleteSCIMConfigurationPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DeleteSCIMConfigurationPayload")
+		case "deletedScimConfigurationId":
+			out.Values[i] = ec._DeleteSCIMConfigurationPayload_deletedScimConfigurationId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -14897,6 +16891,18 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_deleteSAMLConfiguration(ctx, field)
 			})
+		case "createSCIMConfiguration":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createSCIMConfiguration(ctx, field)
+			})
+		case "deleteSCIMConfiguration":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteSCIMConfiguration(ctx, field)
+			})
+		case "regenerateSCIMToken":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_regenerateSCIMToken(ctx, field)
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -15101,6 +17107,39 @@ func (ec *executionContext) _Organization(ctx context.Context, sel ast.Selection
 					}
 				}()
 				res = ec._Organization_samlConfigurations(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "scimConfiguration":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Organization_scimConfiguration(ctx, field, obj)
 				return res
 			}
 
@@ -15701,6 +17740,50 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 	return out
 }
 
+var regenerateSCIMTokenPayloadImplementors = []string{"RegenerateSCIMTokenPayload"}
+
+func (ec *executionContext) _RegenerateSCIMTokenPayload(ctx context.Context, sel ast.SelectionSet, obj *types.RegenerateSCIMTokenPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, regenerateSCIMTokenPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("RegenerateSCIMTokenPayload")
+		case "scimConfiguration":
+			out.Values[i] = ec._RegenerateSCIMTokenPayload_scimConfiguration(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "token":
+			out.Values[i] = ec._RegenerateSCIMTokenPayload_token(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var removeMemberPayloadImplementors = []string{"RemoveMemberPayload"}
 
 func (ec *executionContext) _RemoveMemberPayload(ctx context.Context, sel ast.SelectionSet, obj *types.RemoveMemberPayload) graphql.Marshaler {
@@ -16249,6 +18332,453 @@ func (ec *executionContext) _SAMLConfigurationEdge(ctx context.Context, sel ast.
 			}
 		case "cursor":
 			out.Values[i] = ec._SAMLConfigurationEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var sCIMConfigurationImplementors = []string{"SCIMConfiguration", "Node"}
+
+func (ec *executionContext) _SCIMConfiguration(ctx context.Context, sel ast.SelectionSet, obj *types.SCIMConfiguration) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, sCIMConfigurationImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SCIMConfiguration")
+		case "id":
+			out.Values[i] = ec._SCIMConfiguration_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "endpointUrl":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._SCIMConfiguration_endpointUrl(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "createdAt":
+			out.Values[i] = ec._SCIMConfiguration_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "updatedAt":
+			out.Values[i] = ec._SCIMConfiguration_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "organization":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._SCIMConfiguration_organization(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "events":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._SCIMConfiguration_events(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "permission":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._SCIMConfiguration_permission(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var sCIMEventImplementors = []string{"SCIMEvent", "Node"}
+
+func (ec *executionContext) _SCIMEvent(ctx context.Context, sel ast.SelectionSet, obj *types.SCIMEvent) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, sCIMEventImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SCIMEvent")
+		case "id":
+			out.Values[i] = ec._SCIMEvent_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "method":
+			out.Values[i] = ec._SCIMEvent_method(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "path":
+			out.Values[i] = ec._SCIMEvent_path(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "statusCode":
+			out.Values[i] = ec._SCIMEvent_statusCode(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "requestBody":
+			out.Values[i] = ec._SCIMEvent_requestBody(ctx, field, obj)
+		case "responseBody":
+			out.Values[i] = ec._SCIMEvent_responseBody(ctx, field, obj)
+		case "errorMessage":
+			out.Values[i] = ec._SCIMEvent_errorMessage(ctx, field, obj)
+		case "membership":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._SCIMEvent_membership(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "ipAddress":
+			out.Values[i] = ec._SCIMEvent_ipAddress(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "createdAt":
+			out.Values[i] = ec._SCIMEvent_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "permission":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._SCIMEvent_permission(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var sCIMEventConnectionImplementors = []string{"SCIMEventConnection"}
+
+func (ec *executionContext) _SCIMEventConnection(ctx context.Context, sel ast.SelectionSet, obj *types.SCIMEventConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, sCIMEventConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SCIMEventConnection")
+		case "edges":
+			out.Values[i] = ec._SCIMEventConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "pageInfo":
+			out.Values[i] = ec._SCIMEventConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "totalCount":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._SCIMEventConnection_totalCount(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var sCIMEventEdgeImplementors = []string{"SCIMEventEdge"}
+
+func (ec *executionContext) _SCIMEventEdge(ctx context.Context, sel ast.SelectionSet, obj *types.SCIMEventEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, sCIMEventEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SCIMEventEdge")
+		case "node":
+			out.Values[i] = ec._SCIMEventEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "cursor":
+			out.Values[i] = ec._SCIMEventEdge_cursor(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -17267,6 +19797,11 @@ func (ec *executionContext) unmarshalNCreateSAMLConfigurationInput2goᚗproboᚗ
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalNCreateSCIMConfigurationInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐCreateSCIMConfigurationInput(ctx context.Context, v any) (types.CreateSCIMConfigurationInput, error) {
+	res, err := ec.unmarshalInputCreateSCIMConfigurationInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalNCursorKey2goᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey(ctx context.Context, v any) (page.CursorKey, error) {
 	res, err := cursor.UnmarshalCursorKeyScalar(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -17316,6 +19851,11 @@ func (ec *executionContext) unmarshalNDeleteOrganizationInput2goᚗproboᚗinc�
 
 func (ec *executionContext) unmarshalNDeleteSAMLConfigurationInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐDeleteSAMLConfigurationInput(ctx context.Context, v any) (types.DeleteSAMLConfigurationInput, error) {
 	res, err := ec.unmarshalInputDeleteSAMLConfigurationInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNDeleteSCIMConfigurationInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐDeleteSCIMConfigurationInput(ctx context.Context, v any) (types.DeleteSCIMConfigurationInput, error) {
+	res, err := ec.unmarshalInputDeleteSCIMConfigurationInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -17652,10 +20192,12 @@ var (
 	unmarshalNMembershipSource2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipSource = map[string]coredata.MembershipSource{
 		"MANUAL": coredata.MembershipSourceManual,
 		"SAML":   coredata.MembershipSourceSAML,
+		"SCIM":   coredata.MembershipSourceSCIM,
 	}
 	marshalNMembershipSource2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipSource = map[coredata.MembershipSource]string{
 		coredata.MembershipSourceManual: "MANUAL",
 		coredata.MembershipSourceSAML:   "SAML",
+		coredata.MembershipSourceSCIM:   "SCIM",
 	}
 )
 
@@ -17773,6 +20315,11 @@ func (ec *executionContext) unmarshalNReauthenticationReason2goᚗproboᚗincᚋ
 
 func (ec *executionContext) marshalNReauthenticationReason2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐReauthenticationReason(ctx context.Context, sel ast.SelectionSet, v types.ReauthenticationReason) graphql.Marshaler {
 	return v
+}
+
+func (ec *executionContext) unmarshalNRegenerateSCIMTokenInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐRegenerateSCIMTokenInput(ctx context.Context, v any) (types.RegenerateSCIMTokenInput, error) {
+	res, err := ec.unmarshalInputRegenerateSCIMTokenInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalNRemoveMemberInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐRemoveMemberInput(ctx context.Context, v any) (types.RemoveMemberInput, error) {
@@ -17910,6 +20457,106 @@ var (
 		coredata.SAMLEnforcementPolicyOff:      "OFF",
 		coredata.SAMLEnforcementPolicyOptional: "OPTIONAL",
 		coredata.SAMLEnforcementPolicyRequired: "REQUIRED",
+	}
+)
+
+func (ec *executionContext) marshalNSCIMConfiguration2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSCIMConfiguration(ctx context.Context, sel ast.SelectionSet, v *types.SCIMConfiguration) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._SCIMConfiguration(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNSCIMEvent2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSCIMEvent(ctx context.Context, sel ast.SelectionSet, v *types.SCIMEvent) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._SCIMEvent(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNSCIMEventEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSCIMEventEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.SCIMEventEdge) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNSCIMEventEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSCIMEventEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNSCIMEventEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSCIMEventEdge(ctx context.Context, sel ast.SelectionSet, v *types.SCIMEventEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._SCIMEventEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNSCIMEventOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐSCIMEventOrderField(ctx context.Context, v any) (coredata.SCIMEventOrderField, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNSCIMEventOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐSCIMEventOrderField[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNSCIMEventOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐSCIMEventOrderField(ctx context.Context, sel ast.SelectionSet, v coredata.SCIMEventOrderField) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNSCIMEventOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐSCIMEventOrderField[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNSCIMEventOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐSCIMEventOrderField = map[string]coredata.SCIMEventOrderField{
+		"CREATED_AT": coredata.SCIMEventOrderFieldCreatedAt,
+	}
+	marshalNSCIMEventOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐSCIMEventOrderField = map[coredata.SCIMEventOrderField]string{
+		coredata.SCIMEventOrderFieldCreatedAt: "CREATED_AT",
 	}
 )
 
@@ -18428,6 +21075,13 @@ func (ec *executionContext) marshalOCreateSAMLConfigurationPayload2ᚖgoᚗprobo
 	return ec._CreateSAMLConfigurationPayload(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalOCreateSCIMConfigurationPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐCreateSCIMConfigurationPayload(ctx context.Context, sel ast.SelectionSet, v *types.CreateSCIMConfigurationPayload) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._CreateSCIMConfigurationPayload(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey(ctx context.Context, v any) (*page.CursorKey, error) {
 	if v == nil {
 		return nil, nil
@@ -18490,6 +21144,13 @@ func (ec *executionContext) marshalODeleteSAMLConfigurationPayload2ᚖgoᚗprobo
 		return graphql.Null
 	}
 	return ec._DeleteSAMLConfigurationPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalODeleteSCIMConfigurationPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐDeleteSCIMConfigurationPayload(ctx context.Context, sel ast.SelectionSet, v *types.DeleteSCIMConfigurationPayload) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._DeleteSCIMConfigurationPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOForgotPasswordPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐForgotPasswordPayload(ctx context.Context, sel ast.SelectionSet, v *types.ForgotPasswordPayload) graphql.Marshaler {
@@ -18646,6 +21307,13 @@ func (ec *executionContext) marshalOPersonalAPIKeyConnection2ᚖgoᚗproboᚗinc
 	return ec._PersonalAPIKeyConnection(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalORegenerateSCIMTokenPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐRegenerateSCIMTokenPayload(ctx context.Context, sel ast.SelectionSet, v *types.RegenerateSCIMTokenPayload) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._RegenerateSCIMTokenPayload(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalORemoveMemberPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐRemoveMemberPayload(ctx context.Context, sel ast.SelectionSet, v *types.RemoveMemberPayload) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -18694,6 +21362,28 @@ func (ec *executionContext) marshalOSAMLConfigurationConnection2ᚖgoᚗproboᚗ
 		return graphql.Null
 	}
 	return ec._SAMLConfigurationConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOSCIMConfiguration2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSCIMConfiguration(ctx context.Context, sel ast.SelectionSet, v *types.SCIMConfiguration) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._SCIMConfiguration(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOSCIMEventConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSCIMEventConnection(ctx context.Context, sel ast.SelectionSet, v *types.SCIMEventConnection) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._SCIMEventConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOSCIMEventOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSCIMEventOrderBy(ctx context.Context, v any) (*types.SCIMEventOrderBy, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputSCIMEventOrder(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalOSession2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSession(ctx context.Context, sel ast.SelectionSet, v *types.Session) graphql.Marshaler {
