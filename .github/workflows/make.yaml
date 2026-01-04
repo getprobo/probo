@@ -139,7 +139,7 @@ jobs:
         with:
           node-version-file: ".nvmrc"
       - run: "sudo apt-get install -y mkcert"
-      - run: "sudo mkcert -install"
+      - run: "sudo mkcert -install 2>&1 | grep -v 'no Firefox and/or Chrome/Chromium security databases found' || true"
       - uses: "docker/setup-qemu-action@v3"
       - uses: "docker/setup-buildx-action@v3"
       - uses: "docker/setup-compose-action@v1"
