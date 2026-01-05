@@ -68,7 +68,7 @@ func (e GraphQLErrors) Error() string {
 	return fmt.Sprintf("%s (and %d more errors)", e[0].Message, len(e)-1)
 }
 
-func (c *Client) Do(query string, variables map[string]any) (*GraphQLResponse, error) {
+func (c *Client) doWithEndpoint(endpoint string, query string, variables map[string]any) (*GraphQLResponse, error) {
 	reqBody := GraphQLRequest{
 		Query:     query,
 		Variables: variables,
@@ -79,7 +79,7 @@ func (c *Client) Do(query string, variables map[string]any) (*GraphQLResponse, e
 		return nil, fmt.Errorf("cannot marshal request: %w", err)
 	}
 
-	req, err := http.NewRequest("POST", c.baseURL+"/api/console/v1/query", bytes.NewReader(body))
+	req, err := http.NewRequest("POST", c.baseURL+endpoint, bytes.NewReader(body))
 	if err != nil {
 		return nil, fmt.Errorf("cannot create request: %w", err)
 	}
@@ -112,8 +112,31 @@ func (c *Client) Do(query string, variables map[string]any) (*GraphQLResponse, e
 	return &gqlResp, nil
 }
 
+func (c *Client) Do(query string, variables map[string]any) (*GraphQLResponse, error) {
+	return c.doWithEndpoint("/api/console/v1/graphql", query, variables)
+}
+
+func (c *Client) DoConnect(query string, variables map[string]any) (*GraphQLResponse, error) {
+	return c.doWithEndpoint("/api/connect/v1/graphql", query, variables)
+}
+
 func (c *Client) Execute(query string, variables map[string]any, result any) error {
 	resp, err := c.Do(query, variables)
+	if err != nil {
+		return err
+	}
+
+	if result != nil && resp.Data != nil {
+		if err := json.Unmarshal(resp.Data, result); err != nil {
+			return fmt.Errorf("cannot unmarshal data: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func (c *Client) ExecuteConnect(query string, variables map[string]any, result any) error {
+	resp, err := c.DoConnect(query, variables)
 	if err != nil {
 		return err
 	}
@@ -226,7 +249,7 @@ func (c *Client) executeMultipart(query string, variables map[string]any, files 
 	}
 
 	// Create request
-	req, err := http.NewRequest("POST", c.baseURL+"/api/console/v1/query", &buf)
+	req, err := http.NewRequest("POST", c.baseURL+"/api/console/v1/graphql", &buf)
 	if err != nil {
 		return fmt.Errorf("cannot create request: %w", err)
 	}

@@ -15,6 +15,7 @@
 package console_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -254,7 +255,7 @@ const (
 		query GetMembers($id: ID!) {
 			node(id: $id) {
 				... on Organization {
-					memberships(first: 10) { totalCount }
+					members(first: 10) { totalCount }
 				}
 			}
 		}`
@@ -283,6 +284,7 @@ func TestRBAC(t *testing.T) {
 		query       string
 		variables   func() map[string]any
 		shouldAllow bool
+		useConnect  bool // use connect API instead of console API
 	}{
 		{
 			name:   "owner can create framework",
@@ -1158,6 +1160,7 @@ func TestRBAC(t *testing.T) {
 				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "description": factory.SafeName("Updated Desc")}}
 			},
 			shouldAllow: true,
+			useConnect:  true,
 		},
 		{
 			name:   "admin can update organization",
@@ -1168,6 +1171,7 @@ func TestRBAC(t *testing.T) {
 				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "description": factory.SafeName("Updated Desc")}}
 			},
 			shouldAllow: true,
+			useConnect:  true,
 		},
 		{
 			name:   "viewer cannot update organization",
@@ -1178,6 +1182,7 @@ func TestRBAC(t *testing.T) {
 				return map[string]any{"input": map[string]any{"organizationId": owner.GetOrganizationID().String(), "description": factory.SafeName("Updated Desc")}}
 			},
 			shouldAllow: false,
+			useConnect:  true,
 		},
 		{
 			name:   "owner can get organization",
@@ -1188,6 +1193,7 @@ func TestRBAC(t *testing.T) {
 				return map[string]any{"id": owner.GetOrganizationID().String()}
 			},
 			shouldAllow: true,
+			useConnect:  true,
 		},
 		{
 			name:   "admin can get organization",
@@ -1198,6 +1204,7 @@ func TestRBAC(t *testing.T) {
 				return map[string]any{"id": owner.GetOrganizationID().String()}
 			},
 			shouldAllow: true,
+			useConnect:  true,
 		},
 		{
 			name:   "viewer can get organization",
@@ -1208,6 +1215,7 @@ func TestRBAC(t *testing.T) {
 				return map[string]any{"id": owner.GetOrganizationID().String()}
 			},
 			shouldAllow: true,
+			useConnect:  true,
 		},
 		{
 			name:   "owner can list members",
@@ -1218,6 +1226,7 @@ func TestRBAC(t *testing.T) {
 				return map[string]any{"id": owner.GetOrganizationID().String()}
 			},
 			shouldAllow: true,
+			useConnect:  true,
 		},
 		{
 			name:   "admin can list members",
@@ -1228,6 +1237,7 @@ func TestRBAC(t *testing.T) {
 				return map[string]any{"id": owner.GetOrganizationID().String()}
 			},
 			shouldAllow: true,
+			useConnect:  true,
 		},
 		{
 			name:   "viewer can list members",
@@ -1238,6 +1248,7 @@ func TestRBAC(t *testing.T) {
 				return map[string]any{"id": owner.GetOrganizationID().String()}
 			},
 			shouldAllow: true,
+			useConnect:  true,
 		},
 	}
 
@@ -1245,7 +1256,12 @@ func TestRBAC(t *testing.T) {
 		t.Run(
 			tt.name,
 			func(t *testing.T) {
-				_, err := tt.client.Do(tt.query, tt.variables())
+				var err error
+				if tt.useConnect {
+					_, err = tt.client.DoConnect(tt.query, tt.variables())
+				} else {
+					_, err = tt.client.Do(tt.query, tt.variables())
+				}
 
 				if tt.shouldAllow {
 					require.NoError(t, err, "expected request to be allowed")
@@ -1253,7 +1269,11 @@ func TestRBAC(t *testing.T) {
 					var gqlErrors testutil.GraphQLErrors
 					require.ErrorAs(t, err, &gqlErrors, "expected GraphQL error, got: %T", err)
 					require.Len(t, gqlErrors, 1, "expected exactly one GraphQL error, got %d errors: %v", len(gqlErrors), gqlErrors)
-					require.Equal(t, "FORBIDDEN", gqlErrors[0].Code(), "expected FORBIDDEN error code, got %q (message: %q)", gqlErrors[0].Code(), gqlErrors[0].Message)
+					// Connect API uses a different error format - check either code or message
+					code := gqlErrors[0].Code()
+					msg := gqlErrors[0].Message
+					isForbidden := code == "FORBIDDEN" || (code == "" && (strings.Contains(msg, "does not have sufficient permissions") || strings.Contains(msg, "insufficient permissions")))
+					require.True(t, isForbidden, "expected FORBIDDEN error, got code=%q message=%q", code, msg)
 				}
 			},
 		)

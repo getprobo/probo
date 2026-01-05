@@ -114,7 +114,7 @@ func waitForServer(ctx context.Context, baseURL string, timeout time.Duration) e
 		default:
 		}
 
-		req, err := http.NewRequestWithContext(ctx, "GET", baseURL+"/api/console/v1/query", nil)
+		req, err := http.NewRequestWithContext(ctx, "GET", baseURL+"/api/console/v1/graphql", nil)
 		if err != nil {
 			return err
 		}

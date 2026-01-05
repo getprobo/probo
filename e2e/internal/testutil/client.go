@@ -15,12 +15,9 @@
 package testutil
 
 import (
-	"bytes"
 	"crypto/rand"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"net/http/cookiejar"
 	"testing"
@@ -110,6 +107,9 @@ func (c *Client) setupTestUser() {
 	orgName := fmt.Sprintf("Test Org %s", uniqueID)
 	c.organizationID = c.createOrganization(orgName)
 
+	// Assume organization session to use console API
+	c.assumeOrganizationSession()
+
 	// If the role is not OWNER, we need to adjust the membership
 	if c.role != RoleOwner {
 		c.updateOwnMembershipRole(coredata.MembershipRole(c.role))
@@ -130,39 +130,38 @@ func (c *Client) setupTestUserInOrg(ownerClient *Client) {
 
 	// New user accepts invitation
 	c.acceptInvitation(invitationID)
+
+	// Assume organization session to use console API
+	c.assumeOrganizationSession()
 }
 
 func (c *Client) signUp(email, password, fullName string) gid.GID {
-	payload := map[string]string{
-		"email":    email,
-		"password": password,
-		"fullName": fullName,
-	}
-
-	body, err := json.Marshal(payload)
-	require.NoError(c.T, err, "cannot marshal sign-up payload")
-
-	req, err := http.NewRequest("POST", c.baseURL+"/connect/register", bytes.NewReader(body))
-	require.NoError(c.T, err, "cannot create sign-up request")
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := c.httpClient.Do(req)
-	require.NoError(c.T, err, "sign-up request failed")
-	defer resp.Body.Close()
-
-	respBody, _ := io.ReadAll(resp.Body)
-	require.Equal(c.T, http.StatusOK, resp.StatusCode, "sign-up failed: %s", string(respBody))
+	const query = `
+		mutation($input: SignUpInput!) {
+			signUp(input: $input) {
+				identity { id }
+			}
+		}
+	`
 
 	var result struct {
-		User struct {
-			ID string `json:"id"`
-		} `json:"user"`
+		SignUp struct {
+			Identity struct {
+				ID string `json:"id"`
+			} `json:"identity"`
+		} `json:"signUp"`
 	}
 
-	err = json.Unmarshal(respBody, &result)
-	require.NoError(c.T, err, "cannot decode sign-up response")
+	err := c.ExecuteConnect(query, map[string]any{
+		"input": map[string]any{
+			"email":    email,
+			"password": password,
+			"fullName": fullName,
+		},
+	}, &result)
+	require.NoError(c.T, err, "signUp mutation failed")
 
-	userID, err := gid.ParseGID(result.User.ID)
+	userID, err := gid.ParseGID(result.SignUp.Identity.ID)
 	require.NoError(c.T, err, "cannot parse user ID")
 
 	return userID
@@ -172,29 +171,25 @@ func (c *Client) createOrganization(name string) gid.GID {
 	const query = `
 		mutation($input: CreateOrganizationInput!) {
 			createOrganization(input: $input) {
-				organizationEdge {
-					node { id }
-				}
+				organization { id }
 			}
 		}
 	`
 
 	var result struct {
 		CreateOrganization struct {
-			OrganizationEdge struct {
-				Node struct {
-					ID string `json:"id"`
-				} `json:"node"`
-			} `json:"organizationEdge"`
+			Organization struct {
+				ID string `json:"id"`
+			} `json:"organization"`
 		} `json:"createOrganization"`
 	}
 
-	err := c.Execute(query, map[string]any{
+	err := c.ExecuteConnect(query, map[string]any{
 		"input": map[string]any{"name": name},
 	}, &result)
 	require.NoError(c.T, err, "createOrganization mutation failed")
 
-	orgID, err := gid.ParseGID(result.CreateOrganization.OrganizationEdge.Node.ID)
+	orgID, err := gid.ParseGID(result.CreateOrganization.Organization.ID)
 	require.NoError(c.T, err, "cannot parse organization ID")
 
 	return orgID
@@ -202,15 +197,17 @@ func (c *Client) createOrganization(name string) gid.GID {
 
 func (c *Client) updateOwnMembershipRole(role coredata.MembershipRole) {
 	// First get the membership ID
-	const queryMemberships = `
+	const queryMembers = `
 		query($id: ID!) {
-			organization(id: $id) {
-				memberships(first: 100) {
-					edges {
-						node {
-							id
-							userId
-							role
+			node(id: $id) {
+				... on Organization {
+					members(first: 100) {
+						edges {
+							node {
+								id
+								identity { id }
+								role
+							}
 						}
 					}
 				}
@@ -219,27 +216,29 @@ func (c *Client) updateOwnMembershipRole(role coredata.MembershipRole) {
 	`
 
 	var qResult struct {
-		Organization struct {
-			Memberships struct {
+		Node struct {
+			Members struct {
 				Edges []struct {
 					Node struct {
-						ID     string `json:"id"`
-						UserID string `json:"userId"`
-						Role   string `json:"role"`
+						ID       string `json:"id"`
+						Identity struct {
+							ID string `json:"id"`
+						} `json:"identity"`
+						Role string `json:"role"`
 					} `json:"node"`
 				} `json:"edges"`
-			} `json:"memberships"`
-		} `json:"organization"`
+			} `json:"members"`
+		} `json:"node"`
 	}
 
-	err := c.Execute(queryMemberships, map[string]any{
+	err := c.ExecuteConnect(queryMembers, map[string]any{
 		"id": c.organizationID.String(),
 	}, &qResult)
-	require.NoError(c.T, err, "cannot query organization memberships")
+	require.NoError(c.T, err, "cannot query organization members")
 
 	var membershipID string
-	for _, edge := range qResult.Organization.Memberships.Edges {
-		if edge.Node.UserID == c.userID.String() {
+	for _, edge := range qResult.Node.Members.Edges {
+		if edge.Node.Identity.ID == c.userID.String() {
 			membershipID = edge.Node.ID
 			break
 		}
@@ -258,10 +257,10 @@ func (c *Client) updateOwnMembershipRole(role coredata.MembershipRole) {
 		}
 	`
 
-	err = c.Execute(updateQuery, map[string]any{
+	err = c.ExecuteConnect(updateQuery, map[string]any{
 		"input": map[string]any{
 			"organizationId": c.organizationID.String(),
-			"memberId":       membershipID,
+			"membershipId":   membershipID,
 			"role":           string(role),
 		},
 	}, nil)
@@ -270,8 +269,8 @@ func (c *Client) updateOwnMembershipRole(role coredata.MembershipRole) {
 
 func (c *Client) inviteMember(email, fullName string, role coredata.MembershipRole) gid.GID {
 	const query = `
-		mutation($input: InviteUserInput!) {
-			inviteUser(input: $input) {
+		mutation($input: InviteMemberInput!) {
+			inviteMember(input: $input) {
 				invitationEdge {
 					node { id }
 				}
@@ -280,27 +279,26 @@ func (c *Client) inviteMember(email, fullName string, role coredata.MembershipRo
 	`
 
 	var result struct {
-		InviteUser struct {
+		InviteMember struct {
 			InvitationEdge struct {
 				Node struct {
 					ID string `json:"id"`
 				} `json:"node"`
 			} `json:"invitationEdge"`
-		} `json:"inviteUser"`
+		} `json:"inviteMember"`
 	}
 
-	err := c.Execute(query, map[string]any{
+	err := c.ExecuteConnect(query, map[string]any{
 		"input": map[string]any{
 			"organizationId": c.organizationID.String(),
 			"email":          email,
 			"fullName":       fullName,
 			"role":           string(role),
-			"createPeople":   false,
 		},
 	}, &result)
-	require.NoError(c.T, err, "inviteUser mutation failed")
+	require.NoError(c.T, err, "inviteMember mutation failed")
 
-	invitationID, err := gid.ParseGID(result.InviteUser.InvitationEdge.Node.ID)
+	invitationID, err := gid.ParseGID(result.InviteMember.InvitationEdge.Node.ID)
 	require.NoError(c.T, err, "cannot parse invitation ID")
 
 	return invitationID
@@ -310,20 +308,40 @@ func (c *Client) acceptInvitation(invitationID gid.GID) {
 	const query = `
 		mutation($input: AcceptInvitationInput!) {
 			acceptInvitation(input: $input) {
-				invitation {
-					id
-					status
+				membershipEdge {
+					node { id }
 				}
 			}
 		}
 	`
 
-	err := c.Execute(query, map[string]any{
+	err := c.ExecuteConnect(query, map[string]any{
 		"input": map[string]any{
 			"invitationId": invitationID.String(),
 		},
 	}, nil)
 	require.NoError(c.T, err, "acceptInvitation mutation failed")
+}
+
+func (c *Client) assumeOrganizationSession() {
+	const query = `
+		mutation($input: AssumeOrganizationSessionInput!) {
+			assumeOrganizationSession(input: $input) {
+				result {
+					... on OrganizationSessionCreated {
+						session { id }
+					}
+				}
+			}
+		}
+	`
+
+	err := c.ExecuteConnect(query, map[string]any{
+		"input": map[string]any{
+			"organizationId": c.organizationID.String(),
+		},
+	}, nil)
+	require.NoError(c.T, err, "assumeOrganizationSession mutation failed")
 }
 
 func (c *Client) GetUserID() gid.GID {
