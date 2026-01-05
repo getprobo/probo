@@ -28,7 +28,7 @@ import {
   usePreloadedQuery,
   type PreloadedQuery,
 } from "react-relay";
-import { useRef } from "react";
+import { use, useRef } from "react";
 import { graphql } from "relay-runtime";
 import type { DocumentGraphListQuery } from "/__generated__/core/DocumentGraphListQuery.graphql";
 import {
@@ -55,6 +55,7 @@ import {
   BulkExportDialog,
   type BulkExportDialogRef,
 } from "/components/documents/BulkExportDialog";
+import { CurrentUser } from "/providers/CurrentUser.tsx";
 
 const documentsFragment = graphql`
   fragment DocumentsPageListFragment on Organization
@@ -99,16 +100,6 @@ type Props = {
   queryRef: PreloadedQuery<DocumentGraphListQuery>;
 };
 
-// const UserEmailQuery = graphql`
-//   query DocumentsPageUserEmailQuery {
-//     viewer {
-//       user {
-//         email
-//       }
-//     }
-//   }
-// `;
-
 export default function DocumentsPage(props: Props) {
   const { __ } = useTranslate();
 
@@ -117,12 +108,7 @@ export default function DocumentsPage(props: Props) {
     props.queryRef,
   ).organization;
 
-  // FIXME
-  // const userEmailData = useLazyLoadQuery<DocumentsPageUserEmailQuery>(
-  //   UserEmailQuery,
-  //   {}
-  // );
-  // const defaultEmail = userEmailData.viewer.user.email;
+  const { email: defaultEmail } = use(CurrentUser)
   const pagination = usePaginationFragment(
     documentsFragment,
     organization as DocumentsPageListFragment$key,
@@ -303,7 +289,7 @@ export default function DocumentsPage(props: Props) {
                         ref={bulkExportDialogRef}
                         onExport={handleBulkExport}
                         isLoading={isBulkExporting}
-                        // defaultEmail={defaultEmail}
+                        defaultEmail={defaultEmail}
                         selectedCount={selection.length}
                       >
                         <Button
