@@ -97,7 +97,7 @@ func TestParseUserFilter(t *testing.T) {
 	})
 
 	t.Run("NOT expression returns error", func(t *testing.T) {
-		expr, err := scimfilter.ParseFilter([]byte(`not userName eq "test@example.com"`))
+		expr, err := scimfilter.ParseFilter([]byte(`not (userName eq "test@example.com")`))
 		require.NoError(t, err)
 
 		filter, err := ParseUserFilter(expr)
