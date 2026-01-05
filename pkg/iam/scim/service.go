@@ -27,6 +27,7 @@ import (
 	"github.com/elimity-com/scim"
 	scimerrors "github.com/elimity-com/scim/errors"
 	"github.com/elimity-com/scim/optional"
+	scimfilter "github.com/scim2/filter-parser/v2"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
@@ -245,44 +246,24 @@ func (s *Service) GetUser(
 func (s *Service) ListUsers(
 	ctx context.Context,
 	config *coredata.SCIMConfiguration,
-	filter *UserFilter,
+	filterExpr scimfilter.Expression,
 	startIndex int,
 	count int,
 	ipAddress net.IP,
 ) ([]scim.Resource, int, error) {
+	filter, err := ParseUserFilter(filterExpr)
+	if err != nil {
+		return nil, 0, err
+	}
+
 	scope := coredata.NewScopeFromObjectID(config.OrganizationID)
 
 	var memberships coredata.Memberships
 	var totalCount int
 
-	err := s.pg.WithConn(ctx, func(conn pg.Conn) error {
-		// If we have a userName filter, query by email directly
-		if filter != nil && filter.UserName != nil {
-			emailAddr, err := mail.ParseAddr(*filter.UserName)
-			if err != nil {
-				// Invalid email format - return empty result
-				totalCount = 0
-				return nil
-			}
-
-			membership := &coredata.Membership{}
-			err = membership.LoadByEmailAndOrganization(ctx, conn, scope, emailAddr, config.OrganizationID)
-			if err == coredata.ErrResourceNotFound {
-				totalCount = 0
-				return nil
-			}
-			if err != nil {
-				return fmt.Errorf("cannot load membership by email: %w", err)
-			}
-
-			memberships = append(memberships, membership)
-			totalCount = 1
-			return nil
-		}
-
-		// No filter - return all memberships with pagination
+	err = s.pg.WithConn(ctx, func(conn pg.Conn) error {
 		var err error
-		totalCount, err = memberships.CountByOrganizationID(ctx, conn, scope, config.OrganizationID)
+		totalCount, err = memberships.CountByOrganizationID(ctx, conn, scope, config.OrganizationID, filter)
 		if err != nil {
 			return fmt.Errorf("cannot count memberships: %w", err)
 		}
@@ -293,7 +274,7 @@ func (s *Service) ListUsers(
 		}
 		cursor := page.NewCursor(count, nil, page.Head, orderBy)
 
-		err = memberships.LoadByOrganizationID(ctx, conn, scope, config.OrganizationID, cursor)
+		err = memberships.LoadByOrganizationID(ctx, conn, scope, config.OrganizationID, cursor, filter)
 		if err != nil {
 			return fmt.Errorf("cannot load memberships: %w", err)
 		}

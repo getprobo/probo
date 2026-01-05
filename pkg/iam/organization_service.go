@@ -173,7 +173,7 @@ func (s *OrganizationService) CountMemberships(
 		ctx,
 		func(conn pg.Conn) (err error) {
 			memberships := coredata.Memberships{}
-			count, err = memberships.CountByOrganizationID(ctx, conn, scope, organizationID)
+			count, err = memberships.CountByOrganizationID(ctx, conn, scope, organizationID, coredata.NewMembershipFilter())
 			if err != nil {
 				return fmt.Errorf("cannot count memberships: %w", err)
 			}
@@ -824,7 +824,7 @@ func (s *OrganizationService) ListMembers(
 	err := s.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			err := memberships.LoadByOrganizationID(ctx, conn, scope, organizationID, cursor)
+			err := memberships.LoadByOrganizationID(ctx, conn, scope, organizationID, cursor, coredata.NewMembershipFilter())
 			if err != nil {
 				return fmt.Errorf("cannot load memberships: %w", err)
 			}
