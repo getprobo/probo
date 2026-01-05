@@ -641,6 +641,16 @@ func (s *OrganizationService) CreateOrganization(
 				return fmt.Errorf("cannot insert profile: %w", err)
 			}
 
+			organizationContext := &coredata.OrganizationContext{
+				OrganizationID: organizationID,
+				CreatedAt:      now,
+				UpdatedAt:      now,
+			}
+
+			if err := organizationContext.Insert(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot insert organization context: %w", err)
+			}
+
 			return nil
 		},
 	)
