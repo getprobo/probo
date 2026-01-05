@@ -32,19 +32,34 @@ import (
 	scimservice "go.probo.inc/probo/pkg/iam/scim"
 )
 
-type SCIMHandler struct {
-	iam    *iam.Service
-	logger *log.Logger
-}
+type (
+	SCIMHandler struct {
+		iam    *iam.Service
+		logger *log.Logger
+	}
+
+	scimResourceHandler struct {
+		handler *SCIMHandler
+	}
+
+	scimRequestContext struct {
+		ctx          context.Context
+		config       *coredata.SCIMConfiguration
+		ipAddress    net.IP
+		method       string
+		path         string
+		membershipID *gid.GID
+		handler      *scimResourceHandler
+	}
+)
+
+var (
+	scimConfigCtxKey = &ctxKey{name: "scim_config"}
+)
 
 func NewSCIMHandler(iam *iam.Service, logger *log.Logger) *SCIMHandler {
 	return &SCIMHandler{iam: iam, logger: logger}
 }
-
-// Context key for SCIM configuration
-type scimCtxKey struct{ name string }
-
-var scimConfigCtxKey = &scimCtxKey{name: "scim_config"}
 
 func scimConfigFromContext(ctx context.Context) *coredata.SCIMConfiguration {
 	config, _ := ctx.Value(scimConfigCtxKey).(*coredata.SCIMConfiguration)
@@ -122,68 +137,101 @@ func (h *SCIMHandler) BearerTokenMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-// scimResourceHandler implements the elimity-com/scim ResourceHandler interface
-type scimResourceHandler struct {
-	handler *SCIMHandler
+func (rc *scimRequestContext) logAndWrapError(err error, logMsg string) error {
+	var scimErr scimerrors.ScimError
+	if errors.As(err, &scimErr) {
+		errMsg := scimErr.Detail
+
+		// Don't reference membershipID for 404 errors - the resource doesn't exist
+		membershipID := rc.membershipID
+		if scimErr.Status == http.StatusNotFound {
+			membershipID = nil
+		}
+		rc.handler.handler.iam.SCIMService.LogEvent(rc.ctx, rc.config, rc.method, rc.path, membershipID, rc.ipAddress, scimErr.Status, &errMsg)
+		return err
+	}
+
+	rc.handler.handler.logger.ErrorCtx(rc.ctx, logMsg, log.Error(err))
+	errMsg := "internal server error"
+	rc.handler.handler.iam.SCIMService.LogEvent(rc.ctx, rc.config, rc.method, rc.path, rc.membershipID, rc.ipAddress, 500, &errMsg)
+	return scimerrors.ScimErrorInternal
+}
+
+func (rc *scimRequestContext) logSuccess(statusCode int) {
+	rc.handler.handler.iam.SCIMService.LogEvent(rc.ctx, rc.config, rc.method, rc.path, rc.membershipID, rc.ipAddress, statusCode, nil)
 }
 
 func (h *scimResourceHandler) Create(r *http.Request, attributes scim.ResourceAttributes) (scim.Resource, error) {
-	ctx := r.Context()
-	config := scimConfigFromContext(ctx)
-
-	resource, err := h.handler.iam.SCIMService.CreateUser(ctx, config, attributes, getIPAddress(r))
-	if err != nil {
-		var scimErr scimerrors.ScimError
-		if errors.As(err, &scimErr) {
-			return scim.Resource{}, err
-		}
-		h.handler.logger.ErrorCtx(ctx, "cannot create user", log.Error(err))
-		return scim.Resource{}, scimerrors.ScimErrorInternal
+	rc := &scimRequestContext{
+		ctx:       r.Context(),
+		config:    scimConfigFromContext(r.Context()),
+		ipAddress: getIPAddress(r),
+		method:    "POST",
+		path:      "/Users",
+		handler:   h,
 	}
 
+	resource, err := h.handler.iam.SCIMService.CreateUser(rc.ctx, rc.config, attributes)
+	if err != nil {
+		return scim.Resource{}, rc.logAndWrapError(err, "cannot create user")
+	}
+
+	membershipID, _ := gid.ParseGID(resource.ID)
+	rc.membershipID = &membershipID
+	rc.logSuccess(201)
 	return resource, nil
 }
 
 func (h *scimResourceHandler) Get(r *http.Request, id string) (scim.Resource, error) {
-	ctx := r.Context()
-	config := scimConfigFromContext(ctx)
+	rc := &scimRequestContext{
+		ctx:       r.Context(),
+		config:    scimConfigFromContext(r.Context()),
+		ipAddress: getIPAddress(r),
+		method:    "GET",
+		path:      "/Users/" + id,
+		handler:   h,
+	}
 
 	membershipID, err := gid.ParseGID(id)
 	if err != nil {
-		return scim.Resource{}, scimerrors.ScimErrorResourceNotFound(id)
+		return scim.Resource{}, rc.logAndWrapError(scimerrors.ScimErrorResourceNotFound(id), "invalid membership ID")
 	}
+	rc.membershipID = &membershipID
 
-	resource, err := h.handler.iam.SCIMService.GetUser(ctx, config, membershipID, getIPAddress(r))
+	resource, err := h.handler.iam.SCIMService.GetUser(rc.ctx, rc.config, membershipID)
 	if err != nil {
-		var scimErr scimerrors.ScimError
-		if errors.As(err, &scimErr) {
-			return scim.Resource{}, err
-		}
-		h.handler.logger.ErrorCtx(ctx, "cannot get user", log.Error(err))
-		return scim.Resource{}, scimerrors.ScimErrorInternal
+		return scim.Resource{}, rc.logAndWrapError(err, "cannot get user")
 	}
 
+	rc.logSuccess(200)
 	return resource, nil
 }
 
 func (h *scimResourceHandler) GetAll(r *http.Request, params scim.ListRequestParams) (scim.Page, error) {
-	ctx := r.Context()
-	config := scimConfigFromContext(ctx)
+	path := "/Users"
+	if r.URL.RawQuery != "" {
+		path += "?" + r.URL.RawQuery
+	}
+
+	rc := &scimRequestContext{
+		ctx:       r.Context(),
+		config:    scimConfigFromContext(r.Context()),
+		ipAddress: getIPAddress(r),
+		method:    "GET",
+		path:      path,
+		handler:   h,
+	}
 
 	if err := params.FilterValidator.Validate(); err != nil {
-		return scim.Page{}, scimerrors.ScimErrorBadRequest(err.Error())
+		return scim.Page{}, rc.logAndWrapError(scimerrors.ScimErrorBadRequest(err.Error()), "invalid filter")
 	}
 
-	resources, totalCount, err := h.handler.iam.SCIMService.ListUsers(ctx, config, params.FilterValidator.GetFilter(), params.StartIndex, params.Count, getIPAddress(r))
+	resources, totalCount, err := h.handler.iam.SCIMService.ListUsers(rc.ctx, rc.config, params.FilterValidator.GetFilter(), params.StartIndex, params.Count)
 	if err != nil {
-		var scimErr scimerrors.ScimError
-		if errors.As(err, &scimErr) {
-			return scim.Page{}, err
-		}
-		h.handler.logger.ErrorCtx(ctx, "cannot list users", log.Error(err))
-		return scim.Page{}, scimerrors.ScimErrorInternal
+		return scim.Page{}, rc.logAndWrapError(err, "cannot list users")
 	}
 
+	rc.logSuccess(200)
 	return scim.Page{
 		TotalResults: totalCount,
 		Resources:    resources,
@@ -191,68 +239,78 @@ func (h *scimResourceHandler) GetAll(r *http.Request, params scim.ListRequestPar
 }
 
 func (h *scimResourceHandler) Replace(r *http.Request, id string, attributes scim.ResourceAttributes) (scim.Resource, error) {
-	ctx := r.Context()
-	config := scimConfigFromContext(ctx)
+	rc := &scimRequestContext{
+		ctx:       r.Context(),
+		config:    scimConfigFromContext(r.Context()),
+		ipAddress: getIPAddress(r),
+		method:    "PUT",
+		path:      "/Users/" + id,
+		handler:   h,
+	}
 
 	membershipID, err := gid.ParseGID(id)
 	if err != nil {
-		return scim.Resource{}, scimerrors.ScimErrorResourceNotFound(id)
+		return scim.Resource{}, rc.logAndWrapError(scimerrors.ScimErrorResourceNotFound(id), "invalid membership ID")
 	}
+	rc.membershipID = &membershipID
 
-	resource, err := h.handler.iam.SCIMService.ReplaceUser(ctx, config, membershipID, attributes, getIPAddress(r))
+	resource, err := h.handler.iam.SCIMService.ReplaceUser(rc.ctx, rc.config, membershipID, attributes)
 	if err != nil {
-		var scimErr scimerrors.ScimError
-		if errors.As(err, &scimErr) {
-			return scim.Resource{}, err
-		}
-		h.handler.logger.ErrorCtx(ctx, "cannot update user", log.Error(err))
-		return scim.Resource{}, scimerrors.ScimErrorInternal
+		return scim.Resource{}, rc.logAndWrapError(err, "cannot update user")
 	}
 
+	rc.logSuccess(200)
 	return resource, nil
 }
 
 func (h *scimResourceHandler) Patch(r *http.Request, id string, operations []scim.PatchOperation) (scim.Resource, error) {
-	ctx := r.Context()
-	config := scimConfigFromContext(ctx)
+	rc := &scimRequestContext{
+		ctx:       r.Context(),
+		config:    scimConfigFromContext(r.Context()),
+		ipAddress: getIPAddress(r),
+		method:    "PATCH",
+		path:      "/Users/" + id,
+		handler:   h,
+	}
 
 	membershipID, err := gid.ParseGID(id)
 	if err != nil {
-		return scim.Resource{}, scimerrors.ScimErrorResourceNotFound(id)
+		return scim.Resource{}, rc.logAndWrapError(scimerrors.ScimErrorResourceNotFound(id), "invalid membership ID")
 	}
+	rc.membershipID = &membershipID
 
-	resource, err := h.handler.iam.SCIMService.PatchUser(ctx, config, membershipID, operations, getIPAddress(r))
+	resource, err := h.handler.iam.SCIMService.PatchUser(rc.ctx, rc.config, membershipID, operations)
 	if err != nil {
-		var scimErr scimerrors.ScimError
-		if errors.As(err, &scimErr) {
-			return scim.Resource{}, err
-		}
-		h.handler.logger.ErrorCtx(ctx, "cannot patch user", log.Error(err))
-		return scim.Resource{}, scimerrors.ScimErrorInternal
+		return scim.Resource{}, rc.logAndWrapError(err, "cannot patch user")
 	}
 
+	rc.logSuccess(200)
 	return resource, nil
 }
 
 func (h *scimResourceHandler) Delete(r *http.Request, id string) error {
-	ctx := r.Context()
-	config := scimConfigFromContext(ctx)
+	rc := &scimRequestContext{
+		ctx:       r.Context(),
+		config:    scimConfigFromContext(r.Context()),
+		ipAddress: getIPAddress(r),
+		method:    "DELETE",
+		path:      "/Users/" + id,
+		handler:   h,
+	}
 
 	membershipID, err := gid.ParseGID(id)
 	if err != nil {
-		return scimerrors.ScimErrorResourceNotFound(id)
+		return rc.logAndWrapError(scimerrors.ScimErrorResourceNotFound(id), "invalid membership ID")
 	}
+	rc.membershipID = &membershipID
 
-	err = h.handler.iam.SCIMService.DeleteUser(ctx, config, membershipID, getIPAddress(r))
+	err = h.handler.iam.SCIMService.DeleteUser(rc.ctx, rc.config, membershipID)
 	if err != nil {
-		var scimErr scimerrors.ScimError
-		if errors.As(err, &scimErr) {
-			return err
-		}
-		h.handler.logger.ErrorCtx(ctx, "cannot delete user", log.Error(err))
-		return scimerrors.ScimErrorInternal
+		return rc.logAndWrapError(err, "cannot delete user")
 	}
 
+	rc.membershipID = nil
+	rc.logSuccess(204)
 	return nil
 }
 
