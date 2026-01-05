@@ -12,7 +12,7 @@ import {
 } from "@probo/ui";
 import { Controller } from "react-hook-form";
 import { useFragment } from "react-relay";
-import { ConnectionHandler, graphql } from "relay-runtime";
+import { graphql } from "relay-runtime";
 import z from "zod";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
@@ -59,11 +59,12 @@ const schema = z.object({
 });
 
 type InviteUserDialogProps = PropsWithChildren<{
+  connectionId: string;
   viewerMembershipFKey: InviteUserDialog_currentRoleFragment$key;
 }>;
 
 export function InviteUserDialog(props: InviteUserDialogProps) {
-  const { children, viewerMembershipFKey } = props;
+  const { children, connectionId, viewerMembershipFKey } = props;
 
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
@@ -87,11 +88,6 @@ export function InviteUserDialog(props: InviteUserDialogProps) {
     });
 
   const onSubmit = handleSubmit((data) => {
-    const connectionId = ConnectionHandler.getConnectionID(
-      organizationId,
-      "InvitationListFragment_invitations",
-      {},
-    );
     inviteUser({
       variables: {
         input: {

@@ -1,5 +1,5 @@
 import { usePreloadedQuery, type PreloadedQuery } from "react-relay";
-import { graphql } from "relay-runtime";
+import { ConnectionHandler, graphql } from "relay-runtime";
 import { MemberList } from "./_components/MemberList";
 import type { MembersPageQuery } from "/__generated__/iam/MembersPageQuery.graphql";
 import { useTranslate } from "@probo/i18n";
@@ -7,6 +7,7 @@ import { Button, Card, TabBadge, TabItem, Tabs } from "@probo/ui";
 import { useState } from "react";
 import { InvitationList } from "./_components/InvitationList";
 import { InviteUserDialog } from "./_components/InviteUserDialog";
+import { useOrganizationId } from "/hooks/useOrganizationId";
 
 export const membersPageQuery = graphql`
   query MembersPageQuery($organizationId: ID!) {
@@ -37,6 +38,7 @@ export function MembersPage(props: {
 }) {
   const { queryRef } = props;
 
+  const organizationId = useOrganizationId();
   const { __ } = useTranslate();
 
   const [activeTab, setActiveTab] = useState<"memberships" | "invitations">(
@@ -51,12 +53,23 @@ export function MembersPage(props: {
     throw new Error("node is of invalid type");
   }
 
+  const [invitationListConnectionId, setInvitationListConnectionId] = useState(
+    ConnectionHandler.getConnectionID(
+      organizationId,
+      "InvitationListFragment_invitations",
+      { orderBy: { direction: "ASC", field: "CREATED_AT" } },
+    ),
+  );
+
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <h2 className="text-base font-medium">{__("Workspace members")}</h2>
         {organization.canInviteUser && (
-          <InviteUserDialog viewerMembershipFKey={organization}>
+          <InviteUserDialog
+            connectionId={invitationListConnectionId}
+            viewerMembershipFKey={organization}
+          >
             <Button variant="secondary">{__("Invite member")}</Button>
           </InviteUserDialog>
         )}
@@ -88,7 +101,10 @@ export function MembersPage(props: {
           {activeTab === "memberships" && <MemberList fKey={organization} />}
 
           {activeTab === "invitations" && (
-            <InvitationList fKey={organization} />
+            <InvitationList
+              fKey={organization}
+              onConnectionIdChange={setInvitationListConnectionId}
+            />
           )}
         </div>
       </Card>
