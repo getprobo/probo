@@ -14,7 +14,7 @@ export const membersPageQuery = graphql`
     organization: node(id: $organizationId) @required(action: THROW) {
       __typename
       ... on Organization {
-        ...InviteUserDialog_currentRoleFragment
+        canInviteUser: permission(action: "iam:invitation:create")
         ...MemberListFragment
           @arguments(first: 20, order: { direction: ASC, field: CREATED_AT })
         members(first: 20, orderBy: { direction: ASC, field: CREATED_AT })
@@ -26,10 +26,17 @@ export const membersPageQuery = graphql`
         invitations(first: 20, orderBy: { direction: ASC, field: CREATED_AT })
           @required(action: THROW) {
           totalCount
+          ...MembersPage_invitationsTotalCountFragment
         }
-        canInviteUser: permission(action: "iam:invitation:create")
       }
     }
+  }
+`;
+
+export const invitationCountFragment = graphql`
+  fragment MembersPage_invitationsTotalCountFragment on InvitationConnection
+  @updatable {
+    totalCount
   }
 `;
 
@@ -68,7 +75,7 @@ export function MembersPage(props: {
         {organization.canInviteUser && (
           <InviteUserDialog
             connectionId={invitationListConnectionId}
-            viewerMembershipFKey={organization}
+            fKey={organization.invitations}
           >
             <Button variant="secondary">{__("Invite member")}</Button>
           </InviteUserDialog>
@@ -103,6 +110,8 @@ export function MembersPage(props: {
           {activeTab === "invitations" && (
             <InvitationList
               fKey={organization}
+              totalCount={organization.invitations.totalCount ?? 0}
+              totalCountFKey={organization.invitations}
               onConnectionIdChange={setInvitationListConnectionId}
             />
           )}
