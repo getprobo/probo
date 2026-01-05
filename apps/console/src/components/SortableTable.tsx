@@ -18,7 +18,7 @@ import {
 import type { LoadMoreFn } from "react-relay";
 import type { OperationType } from "relay-runtime";
 
-type Order = {
+export type Order = {
   direction: "ASC" | "DESC";
   field: string;
 };
@@ -30,7 +30,7 @@ export const SortableContext = createContext({
     direction: "DESC",
     field: "CREATED_AT",
   },
-  onOrderChange: (() => {}) as (order: Order) => void,
+  changeOrder: (() => {}) as (order: Order) => void,
 });
 
 const defaultOrder = {
@@ -54,14 +54,14 @@ export function SortableTable({
 }) {
   const { __ } = useTranslate();
   const [order, setOrder] = useState(defaultOrder);
-  const onOrderChange = (o: Order) => {
+  const changeOrder = (o: Order) => {
     startTransition(() => {
       setOrder(o);
       refetch({ order: o });
     });
   };
   return (
-    <SortableContext value={{ order, onOrderChange }}>
+    <SortableContext value={{ order, changeOrder }}>
       <div className="space-y-4">
         <Table {...props} />
         {hasNext && loadNext && (
@@ -83,22 +83,29 @@ export function SortableTable({
 export function SortableTh({
   children,
   field,
+  onOrderChange,
   ...props
-}: ComponentProps<typeof Th> & { field: string }) {
-  const { order, onOrderChange } = useContext(SortableContext);
+}: ComponentProps<typeof Th> & {
+  field: string;
+  onOrderChange?: (order: { direction: "ASC" | "DESC"; field: string }) => void;
+}) {
+  const { order, changeOrder } = useContext(SortableContext);
   const isCurrentField = order.field === field;
   const isDesc = order.direction === "DESC";
-  const changeOrder = () => {
-    onOrderChange({
-      direction: isDesc && isCurrentField ? "ASC" : "DESC",
+  const handleChangeOrder = () => {
+    const newOrder = {
+      direction:
+        isDesc && isCurrentField ? ("ASC" as const) : ("DESC" as const),
       field,
-    });
+    };
+    changeOrder(newOrder);
+    onOrderChange?.(newOrder);
   };
   return (
     <Th {...props}>
       <button
         className="flex items-center cursor-pointer hover:text-txt-primary"
-        onClick={changeOrder}
+        onClick={handleChangeOrder}
       >
         {children}
         <IconChevronTriangleDownSmall
