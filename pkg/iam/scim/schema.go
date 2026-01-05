@@ -19,54 +19,80 @@ import (
 	"github.com/elimity-com/scim/schema"
 )
 
-// UserSchema returns the SCIM User schema definition
 func UserSchema() schema.Schema {
 	return schema.Schema{
 		ID:          schema.UserSchema,
 		Name:        optional.NewString("User"),
 		Description: optional.NewString("User Account"),
 		Attributes: []schema.CoreAttribute{
-			schema.SimpleCoreAttribute(schema.SimpleStringParams(schema.StringParams{
-				Name:       "userName",
-				Required:   true,
-				Uniqueness: schema.AttributeUniquenessServer(),
-			})),
-			schema.SimpleCoreAttribute(schema.SimpleStringParams(schema.StringParams{
-				Name: "displayName",
-			})),
-			schema.ComplexCoreAttribute(schema.ComplexParams{
-				Name: "name",
-				SubAttributes: []schema.SimpleParams{
-					schema.SimpleStringParams(schema.StringParams{
-						Name: "formatted",
-					}),
-					schema.SimpleStringParams(schema.StringParams{
-						Name: "familyName",
-					}),
-					schema.SimpleStringParams(schema.StringParams{
-						Name: "givenName",
-					}),
+			schema.SimpleCoreAttribute(
+				schema.SimpleStringParams(
+					schema.StringParams{
+						Name:       "userName",
+						Required:   true,
+						Uniqueness: schema.AttributeUniquenessServer(),
+					},
+				),
+			),
+			schema.SimpleCoreAttribute(
+				schema.SimpleStringParams(
+					schema.StringParams{
+						Name: "displayName",
+					},
+				),
+			),
+			schema.ComplexCoreAttribute(
+				schema.ComplexParams{
+					Name: "name",
+					SubAttributes: []schema.SimpleParams{
+						schema.SimpleStringParams(
+							schema.StringParams{
+								Name: "formatted",
+							},
+						),
+						schema.SimpleStringParams(
+							schema.StringParams{
+								Name: "familyName",
+							},
+						),
+						schema.SimpleStringParams(
+							schema.StringParams{
+								Name: "givenName",
+							},
+						),
+					},
 				},
-			}),
-			schema.SimpleCoreAttribute(schema.SimpleBooleanParams(schema.BooleanParams{
-				Name: "active",
-			})),
-			schema.ComplexCoreAttribute(schema.ComplexParams{
-				Name:        "emails",
-				MultiValued: true,
-				SubAttributes: []schema.SimpleParams{
-					schema.SimpleStringParams(schema.StringParams{
-						Name: "value",
-					}),
-					schema.SimpleStringParams(schema.StringParams{
-						Name: "type",
-					}),
-					schema.SimpleBooleanParams(schema.BooleanParams{
-						Name: "primary",
-					}),
+			),
+			schema.SimpleCoreAttribute(
+				schema.SimpleBooleanParams(
+					schema.BooleanParams{
+						Name: "active",
+					},
+				),
+			),
+			schema.ComplexCoreAttribute(
+				schema.ComplexParams{
+					Name:        "emails",
+					MultiValued: true,
+					SubAttributes: []schema.SimpleParams{
+						schema.SimpleStringParams(
+							schema.StringParams{
+								Name: "value",
+							},
+						),
+						schema.SimpleStringParams(
+							schema.StringParams{
+								Name: "type",
+							},
+						),
+						schema.SimpleBooleanParams(
+							schema.BooleanParams{
+								Name: "primary",
+							},
+						),
+					},
 				},
-			}),
+			),
 		},
 	}
 }
-
