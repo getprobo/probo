@@ -119,7 +119,8 @@ export function InvitationListItem(props: {
           {isDeleting ? (
             <Spinner size={16} />
           ) : (
-            invitation.canDelete && (
+            invitation.canDelete &&
+            invitation.status !== "ACCEPTED" && (
               <Button
                 variant="danger"
                 onClick={handleDelete}

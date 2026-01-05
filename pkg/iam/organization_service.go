@@ -283,8 +283,10 @@ func (s *OrganizationService) DeleteInvitation(
 				return fmt.Errorf("cannot load invitation: %w", err)
 			}
 
-			if invitation.Status != coredata.InvitationStatusPending {
-				return NewInvitationNotPendingError(invitationID)
+			switch invitation.Status {
+			case coredata.InvitationStatusAccepted:
+				return NewInvitationNotDeletedError(invitationID, invitation.Status.String())
+			case coredata.InvitationStatusPending, coredata.InvitationStatusExpired:
 			}
 
 			err = invitation.Delete(ctx, tx, scope, invitationID)
