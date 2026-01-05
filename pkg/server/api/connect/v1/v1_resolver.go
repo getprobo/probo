@@ -925,13 +925,13 @@ func (r *mutationResolver) DeleteInvitation(ctx context.Context, input types.Del
 	err := r.iam.OrganizationService.DeleteInvitation(ctx, input.OrganizationID, input.InvitationID)
 	if err != nil {
 		var errInvitationNotFound *iam.ErrInvitationNotFound
-		var errInvitationNotPending *iam.ErrInvitationNotPending
+		var errInvitationNotDeleted *iam.ErrInvitationNotDeleted
 
 		if errors.As(err, &errInvitationNotFound) {
 			return nil, gqlutils.NotFound(err)
 		}
 
-		if errors.As(err, &errInvitationNotPending) {
+		if errors.As(err, &errInvitationNotDeleted) {
 			return nil, gqlutils.Invalid(err, nil)
 		}
 

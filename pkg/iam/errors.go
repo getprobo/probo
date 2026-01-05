@@ -273,14 +273,17 @@ func (e ErrInvalidCredentials) Error() string {
 	return e.message
 }
 
-type ErrInvitationNotPending struct{ InvitationID gid.GID }
-
-func NewInvitationNotPendingError(invitationID gid.GID) error {
-	return &ErrInvitationNotPending{InvitationID: invitationID}
+type ErrInvitationNotDeleted struct {
+	InvitationID gid.GID
+	Status       string
 }
 
-func (e ErrInvitationNotPending) Error() string {
-	return fmt.Sprintf("invitation %q is not pending", e.InvitationID)
+func NewInvitationNotDeletedError(invitationID gid.GID, status string) error {
+	return &ErrInvitationNotDeleted{InvitationID: invitationID, Status: status}
+}
+
+func (e ErrInvitationNotDeleted) Error() string {
+	return fmt.Sprintf("cannot delete invitation %q in %q status", e.InvitationID, e.Status)
 }
 
 type ErrPasswordRequired struct {
