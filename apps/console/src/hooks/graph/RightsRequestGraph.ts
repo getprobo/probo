@@ -38,6 +38,8 @@ export const rightsRequestNodeQuery = graphql`
         }
         createdAt
         updatedAt
+        canUpdate: permission(action: "core:rights-request:update")
+        canDelete: permission(action: "core:rights-request:delete")
       }
     }
   }
@@ -97,7 +99,7 @@ export const deleteRightsRequestMutation = graphql`
 
 export const useDeleteRightsRequest = (
   request: { id: string },
-  connectionId: string
+  connectionId: string,
 ) => {
   const { __ } = useTranslate();
   const [mutate] = useMutationWithToasts(deleteRightsRequestMutation, {
@@ -120,10 +122,10 @@ export const useDeleteRightsRequest = (
       {
         message: sprintf(
           __(
-            "This will permanently delete the rights request. This action cannot be undone."
-          )
+            "This will permanently delete the rights request. This action cannot be undone.",
+          ),
         ),
-      }
+      },
     );
   };
 };
@@ -143,13 +145,19 @@ export const useCreateRightsRequest = (connectionId: string) => {
     actionTaken?: string;
   }) => {
     if (!input.organizationId) {
-      return alert(__("Failed to create rights request: organization is required"));
+      return alert(
+        __("Failed to create rights request: organization is required"),
+      );
     }
     if (!input.requestType) {
-      return alert(__("Failed to create rights request: request type is required"));
+      return alert(
+        __("Failed to create rights request: request type is required"),
+      );
     }
     if (!input.requestState) {
-      return alert(__("Failed to create rights request: request state is required"));
+      return alert(
+        __("Failed to create rights request: request state is required"),
+      );
     }
 
     return promisifyMutation(mutate)({
