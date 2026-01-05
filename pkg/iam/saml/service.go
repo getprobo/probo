@@ -291,6 +291,10 @@ func (s *Service) HandleAssertion(
 				return fmt.Errorf("cannot load membership: %w", err)
 			}
 
+			if membership.ID != gid.Nil && membership.State == coredata.MembershipStateInactive {
+				return NewMembershipInactiveError(membership.ID)
+			}
+
 			isMember := membership.ID != gid.Nil
 			if !isMember {
 				membership = &coredata.Membership{
@@ -299,6 +303,7 @@ func (s *Service) HandleAssertion(
 					OrganizationID: config.OrganizationID,
 					Role:           coredata.MembershipRoleViewer,
 					Source:         coredata.MembershipSourceSAML,
+					State:          coredata.MembershipStateActive,
 					CreatedAt:      now,
 					UpdatedAt:      now,
 				}

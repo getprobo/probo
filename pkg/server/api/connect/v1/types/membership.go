@@ -74,5 +74,6 @@ func NewMembership(membership *coredata.Membership) *Membership {
 		},
 		Role:   membership.Role,
 		Source: membership.Source,
+		State:  membership.State,
 	}
 }

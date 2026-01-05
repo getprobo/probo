@@ -190,7 +190,7 @@ func (a *Authorizer) buildPoliciesForRole(role string) []*policy.Policy {
 
 func findRoleForOrg(memberships coredata.Memberships, orgID string) string {
 	for _, m := range memberships {
-		if m.OrganizationID.String() == orgID {
+		if m.OrganizationID.String() == orgID && m.State == coredata.MembershipStateActive {
 			return string(m.Role)
 		}
 	}
