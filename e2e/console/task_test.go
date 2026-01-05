@@ -615,8 +615,8 @@ func TestTask_OmittableAssignee(t *testing.T) {
 
 	t.Run("set assignee", func(t *testing.T) {
 		query := `
-			mutation AssignTask($input: AssignTaskInput!) {
-				assignTask(input: $input) {
+			mutation UpdateTask($input: UpdateTaskInput!) {
+				updateTask(input: $input) {
 					task {
 						id
 						assignedTo {
@@ -629,7 +629,7 @@ func TestTask_OmittableAssignee(t *testing.T) {
 		`
 
 		var result struct {
-			AssignTask struct {
+			UpdateTask struct {
 				Task struct {
 					ID         string `json:"id"`
 					AssignedTo struct {
@@ -637,7 +637,7 @@ func TestTask_OmittableAssignee(t *testing.T) {
 						FullName string `json:"fullName"`
 					} `json:"assignedTo"`
 				} `json:"task"`
-			} `json:"assignTask"`
+			} `json:"updateTask"`
 		}
 
 		err := owner.Execute(query, map[string]any{
@@ -647,13 +647,13 @@ func TestTask_OmittableAssignee(t *testing.T) {
 			},
 		}, &result)
 		require.NoError(t, err)
-		assert.Equal(t, peopleID, result.AssignTask.Task.AssignedTo.ID)
+		assert.Equal(t, peopleID, result.UpdateTask.Task.AssignedTo.ID)
 	})
 
 	t.Run("clear assignee", func(t *testing.T) {
 		query := `
-			mutation UnassignTask($input: UnassignTaskInput!) {
-				unassignTask(input: $input) {
+			mutation UpdateTask($input: UpdateTaskInput!) {
+				updateTask(input: $input) {
 					task {
 						id
 						assignedTo {
@@ -665,23 +665,24 @@ func TestTask_OmittableAssignee(t *testing.T) {
 		`
 
 		var result struct {
-			UnassignTask struct {
+			UpdateTask struct {
 				Task struct {
 					ID         string `json:"id"`
 					AssignedTo *struct {
 						ID string `json:"id"`
 					} `json:"assignedTo"`
 				} `json:"task"`
-			} `json:"unassignTask"`
+			} `json:"updateTask"`
 		}
 
 		err := owner.Execute(query, map[string]any{
 			"input": map[string]any{
-				"taskId": taskID,
+				"taskId":       taskID,
+				"assignedToId": nil,
 			},
 		}, &result)
 		require.NoError(t, err)
-		assert.Nil(t, result.UnassignTask.Task.AssignedTo)
+		assert.Nil(t, result.UpdateTask.Task.AssignedTo)
 	})
 }
 

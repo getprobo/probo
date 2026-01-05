@@ -154,10 +154,6 @@ type ComplexityRoot struct {
 		Node   func(childComplexity int) int
 	}
 
-	AssignTaskPayload struct {
-		Task func(childComplexity int) int
-	}
-
 	Audit struct {
 		Controls              func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) int
 		CreatedAt             func(childComplexity int) int
@@ -947,7 +943,6 @@ type ComplexityRoot struct {
 	Mutation struct {
 		AcceptInvitation                       func(childComplexity int, input types.AcceptInvitationInput) int
 		AssessVendor                           func(childComplexity int, input types.AssessVendorInput) int
-		AssignTask                             func(childComplexity int, input types.AssignTaskInput) int
 		BulkDeleteDocuments                    func(childComplexity int, input types.BulkDeleteDocumentsInput) int
 		BulkExportDocuments                    func(childComplexity int, input types.BulkExportDocumentsInput) int
 		BulkPublishDocumentVersions            func(childComplexity int, input types.BulkPublishDocumentVersionsInput) int
@@ -1050,7 +1045,6 @@ type ComplexityRoot struct {
 		RequestSignature                       func(childComplexity int, input types.RequestSignatureInput) int
 		SendSigningNotifications               func(childComplexity int, input types.SendSigningNotificationsInput) int
 		SignDocument                           func(childComplexity int, input types.SignDocumentInput) int
-		UnassignTask                           func(childComplexity int, input types.UnassignTaskInput) int
 		UpdateAsset                            func(childComplexity int, input types.UpdateAssetInput) int
 		UpdateAudit                            func(childComplexity int, input types.UpdateAuditInput) int
 		UpdateContinualImprovement             func(childComplexity int, input types.UpdateContinualImprovementInput) int
@@ -1605,10 +1599,6 @@ type ComplexityRoot struct {
 		Node   func(childComplexity int) int
 	}
 
-	UnassignTaskPayload struct {
-		Task func(childComplexity int) int
-	}
-
 	UpdateAssetPayload struct {
 		Asset func(childComplexity int) int
 	}
@@ -2127,8 +2117,6 @@ type MutationResolver interface {
 	CreateTask(ctx context.Context, input types.CreateTaskInput) (*types.CreateTaskPayload, error)
 	UpdateTask(ctx context.Context, input types.UpdateTaskInput) (*types.UpdateTaskPayload, error)
 	DeleteTask(ctx context.Context, input types.DeleteTaskInput) (*types.DeleteTaskPayload, error)
-	AssignTask(ctx context.Context, input types.AssignTaskInput) (*types.AssignTaskPayload, error)
-	UnassignTask(ctx context.Context, input types.UnassignTaskInput) (*types.UnassignTaskPayload, error)
 	CreateRisk(ctx context.Context, input types.CreateRiskInput) (*types.CreateRiskPayload, error)
 	UpdateRisk(ctx context.Context, input types.UpdateRiskInput) (*types.UpdateRiskPayload, error)
 	DeleteRisk(ctx context.Context, input types.DeleteRiskInput) (*types.DeleteRiskPayload, error)
@@ -2548,13 +2536,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.AssetEdge.Node(childComplexity), true
-
-	case "AssignTaskPayload.task":
-		if e.complexity.AssignTaskPayload.Task == nil {
-			break
-		}
-
-		return e.complexity.AssignTaskPayload.Task(childComplexity), true
 
 	case "Audit.controls":
 		if e.complexity.Audit.Controls == nil {
@@ -4916,17 +4897,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.AssessVendor(childComplexity, args["input"].(types.AssessVendorInput)), true
-	case "Mutation.assignTask":
-		if e.complexity.Mutation.AssignTask == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_assignTask_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.AssignTask(childComplexity, args["input"].(types.AssignTaskInput)), true
 	case "Mutation.bulkDeleteDocuments":
 		if e.complexity.Mutation.BulkDeleteDocuments == nil {
 			break
@@ -6049,17 +6019,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.SignDocument(childComplexity, args["input"].(types.SignDocumentInput)), true
-	case "Mutation.unassignTask":
-		if e.complexity.Mutation.UnassignTask == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_unassignTask_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.UnassignTask(childComplexity, args["input"].(types.UnassignTaskInput)), true
 	case "Mutation.updateAsset":
 		if e.complexity.Mutation.UpdateAsset == nil {
 			break
@@ -8718,13 +8677,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.TrustCenterReferenceEdge.Node(childComplexity), true
 
-	case "UnassignTaskPayload.task":
-		if e.complexity.UnassignTaskPayload.Task == nil {
-			break
-		}
-
-		return e.complexity.UnassignTaskPayload.Task(childComplexity), true
-
 	case "UpdateAssetPayload.asset":
 		if e.complexity.UpdateAssetPayload.Asset == nil {
 			break
@@ -9755,7 +9707,6 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputAssessVendorInput,
 		ec.unmarshalInputAssetFilter,
 		ec.unmarshalInputAssetOrder,
-		ec.unmarshalInputAssignTaskInput,
 		ec.unmarshalInputAuditOrder,
 		ec.unmarshalInputBulkDeleteDocumentsInput,
 		ec.unmarshalInputBulkExportDocumentsInput,
@@ -9904,7 +9855,6 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputTrustCenterDocumentAccessOrder,
 		ec.unmarshalInputTrustCenterFileOrder,
 		ec.unmarshalInputTrustCenterReferenceOrder,
-		ec.unmarshalInputUnassignTaskInput,
 		ec.unmarshalInputUpdateAssetInput,
 		ec.unmarshalInputUpdateAuditInput,
 		ec.unmarshalInputUpdateContinualImprovementInput,
@@ -13153,8 +13103,6 @@ type Mutation {
   createTask(input: CreateTaskInput!): CreateTaskPayload!
   updateTask(input: UpdateTaskInput!): UpdateTaskPayload!
   deleteTask(input: DeleteTaskInput!): DeleteTaskPayload!
-  assignTask(input: AssignTaskInput!): AssignTaskPayload!
-  unassignTask(input: UnassignTaskInput!): UnassignTaskPayload!
   # Risk mutations
   createRisk(input: CreateRiskInput!): CreateRiskPayload!
   updateRisk(input: UpdateRiskInput!): UpdateRiskPayload!
@@ -13658,20 +13606,13 @@ input UpdateTaskInput {
   state: TaskState
   timeEstimate: Duration @goField(omittable: true)
   deadline: Datetime @goField(omittable: true)
+  assignedToId: ID @goField(omittable: true)
 }
 
 input DeleteTaskInput {
   taskId: ID!
 }
 
-input AssignTaskInput {
-  taskId: ID!
-  assignedToId: ID!
-}
-
-input UnassignTaskInput {
-  taskId: ID!
-}
 
 input CreateControlMeasureMappingInput {
   controlId: ID!
@@ -14370,13 +14311,6 @@ type DeleteTaskPayload {
   deletedTaskId: ID!
 }
 
-type AssignTaskPayload {
-  task: Task!
-}
-
-type UnassignTaskPayload {
-  task: Task!
-}
 
 type CreateControlMeasureMappingPayload {
   controlEdge: ControlEdge!
@@ -15835,17 +15769,6 @@ func (ec *executionContext) field_Mutation_assessVendor_args(ctx context.Context
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_assignTask_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNAssignTaskInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAssignTaskInput)
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
 func (ec *executionContext) field_Mutation_bulkDeleteDocuments_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -16961,17 +16884,6 @@ func (ec *executionContext) field_Mutation_signDocument_args(ctx context.Context
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNSignDocumentInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐSignDocumentInput)
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_unassignTask_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUnassignTaskInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUnassignTaskInput)
 	if err != nil {
 		return nil, err
 	}
@@ -19586,61 +19498,6 @@ func (ec *executionContext) fieldContext_AssetEdge_node(_ context.Context, field
 				return ec.fieldContext_Asset_updatedAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Asset", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _AssignTaskPayload_task(ctx context.Context, field graphql.CollectedField, obj *types.AssignTaskPayload) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_AssignTaskPayload_task,
-		func(ctx context.Context) (any, error) {
-			return obj.Task, nil
-		},
-		nil,
-		ec.marshalNTask2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐTask,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_AssignTaskPayload_task(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "AssignTaskPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Task_id(ctx, field)
-			case "name":
-				return ec.fieldContext_Task_name(ctx, field)
-			case "description":
-				return ec.fieldContext_Task_description(ctx, field)
-			case "state":
-				return ec.fieldContext_Task_state(ctx, field)
-			case "timeEstimate":
-				return ec.fieldContext_Task_timeEstimate(ctx, field)
-			case "deadline":
-				return ec.fieldContext_Task_deadline(ctx, field)
-			case "assignedTo":
-				return ec.fieldContext_Task_assignedTo(ctx, field)
-			case "organization":
-				return ec.fieldContext_Task_organization(ctx, field)
-			case "measure":
-				return ec.fieldContext_Task_measure(ctx, field)
-			case "evidences":
-				return ec.fieldContext_Task_evidences(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Task_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_Task_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Task", field.Name)
 		},
 	}
 	return fc, nil
@@ -35204,96 +35061,6 @@ func (ec *executionContext) fieldContext_Mutation_deleteTask(ctx context.Context
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_deleteTask_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_assignTask(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Mutation_assignTask,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().AssignTask(ctx, fc.Args["input"].(types.AssignTaskInput))
-		},
-		nil,
-		ec.marshalNAssignTaskPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAssignTaskPayload,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Mutation_assignTask(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "task":
-				return ec.fieldContext_AssignTaskPayload_task(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type AssignTaskPayload", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_assignTask_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_unassignTask(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Mutation_unassignTask,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().UnassignTask(ctx, fc.Args["input"].(types.UnassignTaskInput))
-		},
-		nil,
-		ec.marshalNUnassignTaskPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUnassignTaskPayload,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Mutation_unassignTask(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "task":
-				return ec.fieldContext_UnassignTaskPayload_task(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type UnassignTaskPayload", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_unassignTask_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -51510,61 +51277,6 @@ func (ec *executionContext) fieldContext_TrustCenterReferenceEdge_node(_ context
 	return fc, nil
 }
 
-func (ec *executionContext) _UnassignTaskPayload_task(ctx context.Context, field graphql.CollectedField, obj *types.UnassignTaskPayload) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_UnassignTaskPayload_task,
-		func(ctx context.Context) (any, error) {
-			return obj.Task, nil
-		},
-		nil,
-		ec.marshalNTask2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐTask,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_UnassignTaskPayload_task(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "UnassignTaskPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Task_id(ctx, field)
-			case "name":
-				return ec.fieldContext_Task_name(ctx, field)
-			case "description":
-				return ec.fieldContext_Task_description(ctx, field)
-			case "state":
-				return ec.fieldContext_Task_state(ctx, field)
-			case "timeEstimate":
-				return ec.fieldContext_Task_timeEstimate(ctx, field)
-			case "deadline":
-				return ec.fieldContext_Task_deadline(ctx, field)
-			case "assignedTo":
-				return ec.fieldContext_Task_assignedTo(ctx, field)
-			case "organization":
-				return ec.fieldContext_Task_organization(ctx, field)
-			case "measure":
-				return ec.fieldContext_Task_measure(ctx, field)
-			case "evidences":
-				return ec.fieldContext_Task_evidences(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Task_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_Task_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Task", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _UpdateAssetPayload_asset(ctx context.Context, field graphql.CollectedField, obj *types.UpdateAssetPayload) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -59571,40 +59283,6 @@ func (ec *executionContext) unmarshalInputAssetOrder(ctx context.Context, obj an
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputAssignTaskInput(ctx context.Context, obj any) (types.AssignTaskInput, error) {
-	var it types.AssignTaskInput
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"taskId", "assignedToId"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "taskId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("taskId"))
-			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.TaskID = data
-		case "assignedToId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("assignedToId"))
-			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.AssignedToID = data
-		}
-	}
-
-	return it, nil
-}
-
 func (ec *executionContext) unmarshalInputAuditOrder(ctx context.Context, obj any) (types.AuditOrderBy, error) {
 	var it types.AuditOrderBy
 	asMap := map[string]any{}
@@ -65337,33 +65015,6 @@ func (ec *executionContext) unmarshalInputTrustCenterReferenceOrder(ctx context.
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputUnassignTaskInput(ctx context.Context, obj any) (types.UnassignTaskInput, error) {
-	var it types.UnassignTaskInput
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"taskId"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "taskId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("taskId"))
-			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.TaskID = data
-		}
-	}
-
-	return it, nil
-}
-
 func (ec *executionContext) unmarshalInputUpdateAssetInput(ctx context.Context, obj any) (types.UpdateAssetInput, error) {
 	var it types.UpdateAssetInput
 	asMap := map[string]any{}
@@ -66807,7 +66458,7 @@ func (ec *executionContext) unmarshalInputUpdateTaskInput(ctx context.Context, o
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"taskId", "name", "description", "state", "timeEstimate", "deadline"}
+	fieldsInOrder := [...]string{"taskId", "name", "description", "state", "timeEstimate", "deadline", "assignedToId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -66856,6 +66507,13 @@ func (ec *executionContext) unmarshalInputUpdateTaskInput(ctx context.Context, o
 				return it, err
 			}
 			it.Deadline = graphql.OmittableOf(data)
+		case "assignedToId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("assignedToId"))
+			data, err := ec.unmarshalOID2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AssignedToID = graphql.OmittableOf(data)
 		}
 	}
 
@@ -68690,45 +68348,6 @@ func (ec *executionContext) _AssetEdge(ctx context.Context, sel ast.SelectionSet
 			}
 		case "node":
 			out.Values[i] = ec._AssetEdge_node(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var assignTaskPayloadImplementors = []string{"AssignTaskPayload"}
-
-func (ec *executionContext) _AssignTaskPayload(ctx context.Context, sel ast.SelectionSet, obj *types.AssignTaskPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, assignTaskPayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("AssignTaskPayload")
-		case "task":
-			out.Values[i] = ec._AssignTaskPayload_task(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -77466,20 +77085,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "assignTask":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_assignTask(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "unassignTask":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_unassignTask(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "createRisk":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_createRisk(ctx, field)
@@ -84213,45 +83818,6 @@ func (ec *executionContext) _TrustCenterReferenceEdge(ctx context.Context, sel a
 	return out
 }
 
-var unassignTaskPayloadImplementors = []string{"UnassignTaskPayload"}
-
-func (ec *executionContext) _UnassignTaskPayload(ctx context.Context, sel ast.SelectionSet, obj *types.UnassignTaskPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, unassignTaskPayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("UnassignTaskPayload")
-		case "task":
-			out.Values[i] = ec._UnassignTaskPayload_task(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
 var updateAssetPayloadImplementors = []string{"UpdateAssetPayload"}
 
 func (ec *executionContext) _UpdateAssetPayload(ctx context.Context, sel ast.SelectionSet, obj *types.UpdateAssetPayload) graphql.Marshaler {
@@ -88154,25 +87720,6 @@ var (
 		coredata.AssetTypeVirtual:  "VIRTUAL",
 	}
 )
-
-func (ec *executionContext) unmarshalNAssignTaskInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAssignTaskInput(ctx context.Context, v any) (types.AssignTaskInput, error) {
-	res, err := ec.unmarshalInputAssignTaskInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNAssignTaskPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAssignTaskPayload(ctx context.Context, sel ast.SelectionSet, v types.AssignTaskPayload) graphql.Marshaler {
-	return ec._AssignTaskPayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNAssignTaskPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAssignTaskPayload(ctx context.Context, sel ast.SelectionSet, v *types.AssignTaskPayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._AssignTaskPayload(ctx, sel, v)
-}
 
 func (ec *executionContext) marshalNAudit2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAudit(ctx context.Context, sel ast.SelectionSet, v *types.Audit) graphql.Marshaler {
 	if v == nil {
@@ -95237,25 +94784,6 @@ var (
 		coredata.TrustCenterVisibilityPublic:  "PUBLIC",
 	}
 )
-
-func (ec *executionContext) unmarshalNUnassignTaskInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUnassignTaskInput(ctx context.Context, v any) (types.UnassignTaskInput, error) {
-	res, err := ec.unmarshalInputUnassignTaskInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNUnassignTaskPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUnassignTaskPayload(ctx context.Context, sel ast.SelectionSet, v types.UnassignTaskPayload) graphql.Marshaler {
-	return ec._UnassignTaskPayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNUnassignTaskPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUnassignTaskPayload(ctx context.Context, sel ast.SelectionSet, v *types.UnassignTaskPayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._UnassignTaskPayload(ctx, sel, v)
-}
 
 func (ec *executionContext) unmarshalNUpdateAssetInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateAssetInput(ctx context.Context, v any) (types.UpdateAssetInput, error) {
 	res, err := ec.unmarshalInputUpdateAssetInput(ctx, v)

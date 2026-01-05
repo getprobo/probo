@@ -33,8 +33,8 @@ func TestTask_Assign(t *testing.T) {
 	peopleID := factory.NewPeople(owner).WithFullName("Task Assignee").Create()
 
 	query := `
-		mutation AssignTask($input: AssignTaskInput!) {
-			assignTask(input: $input) {
+		mutation UpdateTask($input: UpdateTaskInput!) {
+			updateTask(input: $input) {
 				task {
 					id
 					assignedTo {
@@ -47,7 +47,7 @@ func TestTask_Assign(t *testing.T) {
 	`
 
 	var result struct {
-		AssignTask struct {
+		UpdateTask struct {
 			Task struct {
 				ID         string `json:"id"`
 				AssignedTo struct {
@@ -55,7 +55,7 @@ func TestTask_Assign(t *testing.T) {
 					FullName string `json:"fullName"`
 				} `json:"assignedTo"`
 			} `json:"task"`
-		} `json:"assignTask"`
+		} `json:"updateTask"`
 	}
 
 	err := owner.Execute(query, map[string]any{
@@ -66,9 +66,9 @@ func TestTask_Assign(t *testing.T) {
 	}, &result)
 	require.NoError(t, err)
 
-	assert.Equal(t, taskID, result.AssignTask.Task.ID)
-	assert.Equal(t, peopleID, result.AssignTask.Task.AssignedTo.ID)
-	assert.Equal(t, "Task Assignee", result.AssignTask.Task.AssignedTo.FullName)
+	assert.Equal(t, taskID, result.UpdateTask.Task.ID)
+	assert.Equal(t, peopleID, result.UpdateTask.Task.AssignedTo.ID)
+	assert.Equal(t, "Task Assignee", result.UpdateTask.Task.AssignedTo.FullName)
 }
 
 func TestTask_Unassign(t *testing.T) {
@@ -82,8 +82,8 @@ func TestTask_Unassign(t *testing.T) {
 
 	// First assign the task
 	assignQuery := `
-		mutation AssignTask($input: AssignTaskInput!) {
-			assignTask(input: $input) {
+		mutation UpdateTask($input: UpdateTaskInput!) {
+			updateTask(input: $input) {
 				task {
 					id
 				}
@@ -100,8 +100,8 @@ func TestTask_Unassign(t *testing.T) {
 	require.NoError(t, err)
 
 	query := `
-		mutation UnassignTask($input: UnassignTaskInput!) {
-			unassignTask(input: $input) {
+		mutation UpdateTask($input: UpdateTaskInput!) {
+			updateTask(input: $input) {
 				task {
 					id
 					assignedTo {
@@ -113,23 +113,24 @@ func TestTask_Unassign(t *testing.T) {
 	`
 
 	var result struct {
-		UnassignTask struct {
+		UpdateTask struct {
 			Task struct {
 				ID         string `json:"id"`
 				AssignedTo *struct {
 					ID string `json:"id"`
 				} `json:"assignedTo"`
 			} `json:"task"`
-		} `json:"unassignTask"`
+		} `json:"updateTask"`
 	}
 
 	err = owner.Execute(query, map[string]any{
 		"input": map[string]any{
-			"taskId": taskID,
+			"taskId":       taskID,
+			"assignedToId": nil,
 		},
 	}, &result)
 	require.NoError(t, err)
 
-	assert.Equal(t, taskID, result.UnassignTask.Task.ID)
-	assert.Nil(t, result.UnassignTask.Task.AssignedTo)
+	assert.Equal(t, taskID, result.UpdateTask.Task.ID)
+	assert.Nil(t, result.UpdateTask.Task.AssignedTo)
 }

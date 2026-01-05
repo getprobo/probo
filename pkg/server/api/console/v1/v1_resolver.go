@@ -2798,6 +2798,7 @@ func (r *mutationResolver) CreateTask(ctx context.Context, input types.CreateTas
 		Name:           input.Name,
 		Description:    input.Description,
 		TimeEstimate:   input.TimeEstimate,
+		AssignedToID:   input.AssignedToID,
 		Deadline:       input.Deadline,
 	})
 	if err != nil {
@@ -2826,6 +2827,7 @@ func (r *mutationResolver) UpdateTask(ctx context.Context, input types.UpdateTas
 		State:        input.State,
 		TimeEstimate: UnwrapOmittable(input.TimeEstimate),
 		Deadline:     UnwrapOmittable(input.Deadline),
+		AssignedToID: UnwrapOmittable(input.AssignedToID),
 	})
 	if err != nil {
 		panic(fmt.Errorf("cannot update task: %w", err))
@@ -2849,34 +2851,6 @@ func (r *mutationResolver) DeleteTask(ctx context.Context, input types.DeleteTas
 
 	return &types.DeleteTaskPayload{
 		DeletedTaskID: input.TaskID,
-	}, nil
-}
-
-// AssignTask is the resolver for the assignTask field.
-func (r *mutationResolver) AssignTask(ctx context.Context, input types.AssignTaskInput) (*types.AssignTaskPayload, error) {
-	prb := r.ProboService(ctx, input.TaskID.TenantID())
-
-	task, err := prb.Tasks.Assign(ctx, input.TaskID, input.AssignedToID)
-	if err != nil {
-		panic(fmt.Errorf("cannot assign task: %w", err))
-	}
-
-	return &types.AssignTaskPayload{
-		Task: types.NewTask(task),
-	}, nil
-}
-
-// UnassignTask is the resolver for the unassignTask field.
-func (r *mutationResolver) UnassignTask(ctx context.Context, input types.UnassignTaskInput) (*types.UnassignTaskPayload, error) {
-	prb := r.ProboService(ctx, input.TaskID.TenantID())
-
-	task, err := prb.Tasks.Unassign(ctx, input.TaskID)
-	if err != nil {
-		panic(fmt.Errorf("cannot unassign task: %w", err))
-	}
-
-	return &types.UnassignTaskPayload{
-		Task: types.NewTask(task),
 	}, nil
 }
 

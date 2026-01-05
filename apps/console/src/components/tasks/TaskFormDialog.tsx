@@ -73,10 +73,7 @@ const createTaskSchema = z.object({
   name: z.string().min(1),
   description: z.string().optional().nullable(),
   timeEstimate: z.string().optional().nullable(),
-  assignedToId: z.preprocess(
-    (val) => (val === "" || val == null ? undefined : val),
-    z.string({ required_error: "Assigned to is required" }).min(1, "Assigned to is required")
-  ),
+  assignedToId: z.string().optional().nullable(),
   measureId: z.preprocess(
     (val) => (val === "" || val == null ? undefined : val),
     z.string({ required_error: "Measure is required" }).min(1, "Measure is required")
@@ -88,7 +85,7 @@ const updateTaskSchema = z.object({
   name: z.string().min(1),
   description: z.string().optional().nullable(),
   timeEstimate: z.string().optional().nullable(),
-  assignedToId: z.string().optional(),
+  assignedToId: z.string().optional().nullable(),
   measureId: z.string().optional(),
   deadline: z.string().optional().nullable(),
 });
@@ -137,6 +134,7 @@ export default function TaskFormDialog(props: Props) {
             description: data.description || null,
             timeEstimate: data.timeEstimate || null,
             deadline: formatDatetime(data.deadline) ?? null,
+            assignedToId: data.assignedToId ?? null,
           },
         },
       });
@@ -149,7 +147,7 @@ export default function TaskFormDialog(props: Props) {
             description: data.description || null,
             timeEstimate: data.timeEstimate || null,
             deadline: formatDatetime(data.deadline) ?? null,
-            assignedToId: data.assignedToId,
+            assignedToId: data.assignedToId || null,
             measureId: data.measureId,
           },
           connections: [props.connection!],
@@ -165,7 +163,6 @@ export default function TaskFormDialog(props: Props) {
     dialogRef.current?.close();
   });
   const showMeasure = !props.measureId && !isUpdating;
-  const isCreating = !isUpdating;
 
   return (
     <Dialog
@@ -198,18 +195,17 @@ export default function TaskFormDialog(props: Props) {
           {/* Properties form */}
           <div className="py-5 px-6 bg-subtle">
             <Label>{__("Properties")}</Label>
-            {isCreating && (
-              <PropertyRow
-                label={__("Assigned to")}
-                error={formState.errors.assignedToId?.message}
-              >
-                <PeopleSelectField
-                  name="assignedToId"
-                  control={control}
-                  organizationId={organizationId}
-                />
-              </PropertyRow>
-            )}
+            <PropertyRow
+              label={__("Assigned to")}
+              error={formState.errors.assignedToId?.message}
+            >
+              <PeopleSelectField
+                name="assignedToId"
+                control={control}
+                organizationId={organizationId}
+                optional={true}
+              />
+            </PropertyRow>
             {showMeasure && (
               <PropertyRow
                 label={__("Measure")}
