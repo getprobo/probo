@@ -179,11 +179,11 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	router.Use(cors.Handler(corsOpts))
 
-	router.Mount("/console/v1", s.consoleHandler)
-	router.Mount("/connect/v1", s.connectHandler)
-	router.Mount("/trust/v1", s.compliancePageHandler)
-	router.Mount("/mcp/v1", s.mcpHandler)
-	router.Mount("/slack/v1", s.slackHandler)
+	router.Mount("/console/v1", http.StripPrefix("/console/v1", s.consoleHandler))
+	router.Mount("/connect/v1", http.StripPrefix("/connect/v1", s.connectHandler))
+	router.Mount("/trust/v1", http.StripPrefix("/trust/v1", s.compliancePageHandler))
+	router.Mount("/mcp/v1", http.StripPrefix("/mcp/v1", s.mcpHandler))
+	router.Mount("/slack/v1", http.StripPrefix("/slack/v1", s.slackHandler))
 
 	router.ServeHTTP(w, r)
 }
