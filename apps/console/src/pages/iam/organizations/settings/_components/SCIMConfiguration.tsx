@@ -29,13 +29,14 @@ const createSCIMConfigurationMutation = graphql`
   ) {
     createSCIMConfiguration(input: $input) {
       scimConfiguration {
+        id
+        endpointUrl
+
         organization {
           id
           scimConfiguration {
             id
             endpointUrl
-            createdAt
-            updatedAt
           }
         }
       }
