@@ -28,6 +28,7 @@ export const personalAPIKeyRowFragment = graphql`
     name
     createdAt
     expiresAt
+    lastUsedAt
     token @include(if: $includeToken)
   }
 `;
@@ -109,6 +110,11 @@ export function PersonalAPIKeyRow(props: {
         <div className="text-xs text-txt-tertiary">
           {expired ? __("Expired") : __("Active")}
         </div>
+      </Td>
+      <Td>
+        <span className="text-sm text-txt-secondary">
+          {key.lastUsedAt ? formatDate(key.lastUsedAt) : __("Never")}
+        </span>
       </Td>
       <Td>
         <span className="text-sm text-txt-secondary">

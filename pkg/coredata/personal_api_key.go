@@ -33,6 +33,7 @@ type (
 		Name         string        `db:"name"`
 		ExpiresAt    time.Time     `db:"expires_at"`
 		ExpireReason *ExpireReason `db:"expire_reason"`
+		LastUsedAt   *time.Time    `db:"last_used_at"`
 		CreatedAt    time.Time     `db:"created_at"`
 		UpdatedAt    time.Time     `db:"updated_at"`
 	}
@@ -61,6 +62,7 @@ SELECT
     name,
     expires_at,
     expire_reason,
+    last_used_at,
     created_at,
     updated_at
 FROM
@@ -117,6 +119,7 @@ SELECT
     name,
     expires_at,
     expire_reason,
+    last_used_at,
     created_at,
     updated_at
 FROM
@@ -170,13 +173,14 @@ func (a *PersonalAPIKey) Insert(
 ) error {
 	q := `
 INSERT INTO
-    iam_personal_api_keys (id, identity_id, name, expires_at, expire_reason, created_at, updated_at)
+    iam_personal_api_keys (id, identity_id, name, expires_at, expire_reason, last_used_at, created_at, updated_at)
 VALUES (
     @api_key_id,
     @identity_id,
     @name,
     @expires_at,
     @expire_reason,
+    @last_used_at,
     @created_at,
     @updated_at
 )
@@ -188,6 +192,7 @@ VALUES (
 		"name":          a.Name,
 		"expires_at":    a.ExpiresAt,
 		"expire_reason": a.ExpireReason,
+		"last_used_at":  a.LastUsedAt,
 		"created_at":    a.CreatedAt,
 		"updated_at":    a.UpdatedAt,
 	}
@@ -211,6 +216,7 @@ SET
     name = @name,
     expires_at = @expires_at,
     expire_reason = @expire_reason,
+    last_used_at = @last_used_at,
     updated_at = @updated_at
 WHERE
     id = @api_key_id
@@ -221,6 +227,7 @@ WHERE
 		"name":          a.Name,
 		"expires_at":    a.ExpiresAt,
 		"expire_reason": a.ExpireReason,
+		"last_used_at":  a.LastUsedAt,
 		"updated_at":    a.UpdatedAt,
 	}
 

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<2d413d4e4cf2528a45ff243c0fa733bb>>
+ * @generated SignedSource<<3f5cf991e78b2be0165979f65ecf845d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -134,6 +134,13 @@ return {
                 "storageKey": null
               },
               {
+                "alias": null,
+                "args": null,
+                "kind": "ScalarField",
+                "name": "lastUsedAt",
+                "storageKey": null
+              },
+              {
                 "condition": "includeToken",
                 "kind": "Condition",
                 "passingValue": true,
@@ -157,16 +164,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "b4732244e28d5847baaa5520a95a4cfb",
+    "cacheID": "f9dbf41761006cde825eb68290509c75",
     "id": null,
     "metadata": {},
     "name": "PersonalAPIKeyRowRefetchQuery",
     "operationKind": "query",
-    "text": "query PersonalAPIKeyRowRefetchQuery(\n  $includeToken: Boolean = false\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...PersonalAPIKeyRowFragment_2T7Twf\n    id\n  }\n}\n\nfragment PersonalAPIKeyRowFragment_2T7Twf on PersonalAPIKey {\n  id\n  name\n  createdAt\n  expiresAt\n  token @include(if: $includeToken)\n}\n"
+    "text": "query PersonalAPIKeyRowRefetchQuery(\n  $includeToken: Boolean = false\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...PersonalAPIKeyRowFragment_2T7Twf\n    id\n  }\n}\n\nfragment PersonalAPIKeyRowFragment_2T7Twf on PersonalAPIKey {\n  id\n  name\n  createdAt\n  expiresAt\n  lastUsedAt\n  token @include(if: $includeToken)\n}\n"
   }
 };
 })();
 
-(node as any).hash = "d17db443fa203ee5f9c7d0f4576295f0";
+(node as any).hash = "919daef49b4889be6801516d93f803cf";
 
 export default node;

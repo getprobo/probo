@@ -312,6 +312,7 @@ type PersonalAPIKey implements Node {
   id: ID!
   name: String!
   expiresAt: Datetime!
+  lastUsedAt: Datetime
   createdAt: Datetime!
 
   token: String @goField(forceResolver: true)

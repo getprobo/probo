@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<d4d4692688621656de57fda5884703dd>>
+ * @generated SignedSource<<5899ebfb2c67ad34f132f53990b54136>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -14,6 +14,7 @@ export type PersonalAPIKeyRowFragment$data = {
   readonly createdAt: string;
   readonly expiresAt: string;
   readonly id: string;
+  readonly lastUsedAt: string | null | undefined;
   readonly name: string;
   readonly token?: string | null | undefined;
   readonly " $fragmentType": "PersonalAPIKeyRowFragment";
@@ -78,6 +79,13 @@ const node: ReaderFragment = {
       "storageKey": null
     },
     {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "lastUsedAt",
+      "storageKey": null
+    },
+    {
       "condition": "includeToken",
       "kind": "Condition",
       "passingValue": true,
@@ -96,6 +104,6 @@ const node: ReaderFragment = {
   "abstractKey": null
 };
 
-(node as any).hash = "d17db443fa203ee5f9c7d0f4576295f0";
+(node as any).hash = "919daef49b4889be6801516d93f803cf";
 
 export default node;
