@@ -16,6 +16,7 @@ import (
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam/saml"
+	"go.probo.inc/probo/pkg/iam/scim"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -41,6 +42,7 @@ type (
 		SessionService      *SessionService
 		AuthService         *AuthService
 		SAMLService         *saml.Service
+		SCIMService         *scim.Service
 		APIKeyService       *APIKeyService
 		Authorizer          *Authorizer
 
@@ -118,6 +120,8 @@ func NewService(
 		return nil, fmt.Errorf("cannot create SAML service: %w", err)
 	}
 	svc.SAMLService = samlService
+
+	svc.SCIMService = scim.NewService(svc.pg, cfg.Logger.Named("scim"))
 
 	svc.samlDomainVerifier = NewSAMLDomainVerifier(
 		pgClient,

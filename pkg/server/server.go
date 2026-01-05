@@ -112,7 +112,7 @@ func NewServer(cfg Config) (*Server, error) {
 }
 
 func (s *Server) setupRoutes() {
-	s.router.Mount("/api", s.apiServer)
+	s.router.Mount("/api", http.StripPrefix("/api", s.apiServer))
 
 	s.router.Route("/trust/{slugOrId}", func(r chi.Router) {
 		r.Use(s.loadTrustCenterBySlugOrID)
