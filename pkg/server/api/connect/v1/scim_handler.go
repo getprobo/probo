@@ -228,6 +228,7 @@ func (h *scimResourceHandler) GetAll(r *http.Request, params scim.ListRequestPar
 		if err := params.FilterValidator.Validate(); err != nil {
 			return scim.Page{}, rc.logAndWrapError(scimerrors.ScimErrorBadRequest(err.Error()), "invalid filter")
 		}
+
 		filterExpr = params.FilterValidator.GetFilter()
 	}
 
