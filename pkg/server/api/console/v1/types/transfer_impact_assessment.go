@@ -72,6 +72,11 @@ func NewTransferImpactAssessment(tia *coredata.TransferImpactAssessment) *Transf
 		SupplementaryMeasures: tia.SupplementaryMeasures,
 		CreatedAt:             tia.CreatedAt,
 		UpdatedAt:             tia.UpdatedAt,
+		ProcessingActivity: &ProcessingActivity{
+			ID: tia.ProcessingActivityID,
+		},
+		Organization: &Organization{
+			ID: tia.OrganizationID,
+		},
 	}
 }
-
