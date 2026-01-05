@@ -36,6 +36,7 @@ type (
 		OrganizationID gid.GID          `db:"organization_id"`
 		Role           MembershipRole   `db:"role"`
 		Source         MembershipSource `db:"source"`
+		State          MembershipState  `db:"state"`
 		FullName       string           `db:"full_name"`
 		EmailAddress   mail.Addr        `db:"email_address"`
 		CreatedAt      time.Time        `db:"created_at"`
@@ -69,6 +70,7 @@ WITH mbr AS (
         organization_id,
         role,
         source,
+        state,
         created_at,
         updated_at
     FROM
@@ -83,6 +85,7 @@ SELECT
     mbr.organization_id,
     mbr.role,
     mbr.source,
+    mbr.state,
     COALESCE(mp.full_name, i.full_name, '') as full_name,
     i.email_address,
     mbr.created_at,
@@ -126,6 +129,7 @@ INSERT INTO
         organization_id,
         role,
         source,
+        state,
         created_at,
         updated_at
     )
@@ -136,6 +140,7 @@ VALUES (
     @organization_id,
     @role,
     @source,
+    @state,
     @created_at,
     @updated_at
 );
@@ -148,6 +153,7 @@ VALUES (
 		"organization_id": m.OrganizationID,
 		"role":            m.Role,
 		"source":          m.Source,
+		"state":           m.State,
 		"created_at":      m.CreatedAt,
 		"updated_at":      m.UpdatedAt,
 	}
@@ -183,6 +189,7 @@ WITH mbr AS (
         organization_id,
         role,
         source,
+        state,
         created_at,
         updated_at
     FROM
@@ -197,6 +204,7 @@ SELECT
     mbr.organization_id,
     mbr.role,
     mbr.source,
+    mbr.state,
     COALESCE(mp.full_name, i.full_name, '') as full_name,
     i.email_address,
     mbr.created_at,
@@ -334,6 +342,7 @@ WITH mbr AS (
         am.organization_id,
         am.role,
         am.source,
+        am.state,
         am.created_at,
         am.updated_at
     FROM
@@ -349,6 +358,7 @@ SELECT
     mbr.organization_id,
     mbr.role,
     mbr.source,
+    mbr.state,
     COALESCE(mp.full_name, i.full_name, '') as full_name,
     i.email_address,
     mbr.created_at,
@@ -402,6 +412,7 @@ WITH mbr AS (
         am.organization_id,
         am.role,
         am.source,
+        am.state,
         am.created_at,
         am.updated_at
     FROM
@@ -419,6 +430,7 @@ SELECT
     mbr.organization_id,
     mbr.role,
     mbr.source,
+    mbr.state,
     COALESCE(mp.full_name, i.full_name, '') as full_name,
     i.email_address,
     mbr.created_at,
@@ -464,6 +476,7 @@ UPDATE
 SET
     role = @role,
     source = @source,
+    state = @state,
     updated_at = @updated_at
 WHERE
     id = @id
@@ -476,6 +489,7 @@ WHERE
 		"id":         m.ID,
 		"role":       m.Role,
 		"source":     m.Source,
+		"state":      m.State,
 		"updated_at": m.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
@@ -535,12 +549,14 @@ WITH mbr AS (
         organization_id,
         role,
         source,
+        state,
         created_at,
         updated_at
     FROM
         iam_memberships
     WHERE
         identity_id = @identity_id
+        AND state = 'ACTIVE'
         AND %s
     ORDER BY
         created_at DESC
@@ -551,6 +567,7 @@ SELECT
     mbr.organization_id,
     mbr.role,
     mbr.source,
+    mbr.state,
     COALESCE(mp.full_name, i.full_name, '') as full_name,
     i.email_address,
     mbr.created_at,
@@ -603,6 +620,7 @@ WITH membership_with_profile AS (
         m.organization_id,
         m.role,
         m.source,
+        m.state,
         COALESCE(mp.full_name, i.full_name, '') AS full_name,
         i.email_address,
         m.created_at,
@@ -624,6 +642,7 @@ SELECT
     organization_id,
     role,
     source,
+    state,
     full_name,
     email_address,
     created_at,
@@ -702,6 +721,7 @@ FROM
     iam_memberships
 WHERE
     identity_id = @identity_id
+    AND state = 'ACTIVE'
 `
 	args := pgx.StrictNamedArgs{
 		"identity_id": identityID,
@@ -728,6 +748,7 @@ SELECT
     organization_id,
     role,
     source,
+    state,
     '' as full_name,
     NULL as email_address,
     created_at,

@@ -88,3 +88,13 @@ func NewSAMLAutoSignupDisabledError(configID gid.GID) error {
 func (e ErrSAMLAutoSignupDisabled) Error() string {
 	return fmt.Sprintf("SAML auto-signup is disabled for configuration %q", e.ConfigID)
 }
+
+type ErrMembershipInactive struct{ MembershipID gid.GID }
+
+func NewMembershipInactiveError(membershipID gid.GID) error {
+	return &ErrMembershipInactive{MembershipID: membershipID}
+}
+
+func (e ErrMembershipInactive) Error() string {
+	return fmt.Sprintf("membership %q is inactive", e.MembershipID)
+}

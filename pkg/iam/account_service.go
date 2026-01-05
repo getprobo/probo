@@ -243,32 +243,52 @@ func (s *AccountService) AcceptInvitation(
 			tenantID := invitation.OrganizationID.TenantID()
 			scope := coredata.NewScope(invitation.OrganizationID.TenantID())
 
-			membership = &coredata.Membership{
-				ID:             gid.New(tenantID, coredata.MembershipEntityType),
-				IdentityID:     identityID,
-				OrganizationID: invitation.OrganizationID,
-				Role:           invitation.Role,
-				Source:         coredata.MembershipSourceManual,
-				CreatedAt:      now,
-				UpdatedAt:      now,
+			existingMembership := &coredata.Membership{}
+			err = existingMembership.LoadByIdentityAndOrg(ctx, tx, scope, identityID, invitation.OrganizationID)
+			if err != nil && err != coredata.ErrResourceNotFound {
+				return fmt.Errorf("cannot load existing membership: %w", err)
 			}
 
-			err = membership.Insert(ctx, tx, scope)
-			if err != nil {
-				return fmt.Errorf("cannot create membership: %w", err)
-			}
+			if existingMembership.ID != gid.Nil && existingMembership.State == coredata.MembershipStateInactive {
+				existingMembership.State = coredata.MembershipStateActive
+				existingMembership.Role = invitation.Role
+				existingMembership.UpdatedAt = now
 
-			profile := &coredata.MembershipProfile{
-				ID:           gid.New(tenantID, coredata.MembershipProfileEntityType),
-				MembershipID: membership.ID,
-				FullName:     identity.FullName,
-				CreatedAt:    now,
-				UpdatedAt:    now,
-			}
+				err = existingMembership.Update(ctx, tx, scope)
+				if err != nil {
+					return fmt.Errorf("cannot reactivate membership: %w", err)
+				}
 
-			err = profile.Insert(ctx, tx)
-			if err != nil {
-				return fmt.Errorf("cannot insert profile: %w", err)
+				membership = existingMembership
+			} else {
+				membership = &coredata.Membership{
+					ID:             gid.New(tenantID, coredata.MembershipEntityType),
+					IdentityID:     identityID,
+					OrganizationID: invitation.OrganizationID,
+					Role:           invitation.Role,
+					Source:         coredata.MembershipSourceManual,
+					State:          coredata.MembershipStateActive,
+					CreatedAt:      now,
+					UpdatedAt:      now,
+				}
+
+				err = membership.Insert(ctx, tx, scope)
+				if err != nil {
+					return fmt.Errorf("cannot create membership: %w", err)
+				}
+
+				profile := &coredata.MembershipProfile{
+					ID:           gid.New(tenantID, coredata.MembershipProfileEntityType),
+					MembershipID: membership.ID,
+					FullName:     identity.FullName,
+					CreatedAt:    now,
+					UpdatedAt:    now,
+				}
+
+				err = profile.Insert(ctx, tx)
+				if err != nil {
+					return fmt.Errorf("cannot insert profile: %w", err)
+				}
 			}
 
 			invitation.AcceptedAt = &now

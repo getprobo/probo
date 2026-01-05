@@ -211,6 +211,7 @@ type Membership struct {
 	Organization *Organization             `json:"organization,omitempty"`
 	Role         coredata.MembershipRole   `json:"role"`
 	Source       coredata.MembershipSource `json:"source"`
+	State        coredata.MembershipState  `json:"state"`
 	LastSession  *Session                  `json:"lastSession,omitempty"`
 	Permission   bool                      `json:"permission"`
 }

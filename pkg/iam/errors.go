@@ -123,6 +123,18 @@ func (e ErrMembershipNotFound) Error() string {
 	return fmt.Sprintf("membership %q not found", e.MembershipID)
 }
 
+type ErrMembershipInactive struct {
+	MembershipID gid.GID
+}
+
+func NewMembershipInactiveError(membershipID gid.GID) error {
+	return &ErrMembershipInactive{MembershipID: membershipID}
+}
+
+func (e ErrMembershipInactive) Error() string {
+	return fmt.Sprintf("membership %q is inactive", e.MembershipID)
+}
+
 type ErrOrganizationNotFound struct{ OrganizationID gid.GID }
 
 func NewOrganizationNotFoundError(organizationID gid.GID) error {
