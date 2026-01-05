@@ -276,19 +276,6 @@ func (e ErrUnsupportedPrincipalType) Error() string {
 	return fmt.Sprintf("unsupported principal type: %d", e.EntityType)
 }
 
-type ErrNoPermissionsDefined struct {
-	EntityModel string
-	Action      Action
-}
-
-func NewNoPermissionsDefinedError(entityModel string, action Action) error {
-	return &ErrNoPermissionsDefined{EntityModel: entityModel, Action: action}
-}
-
-func (e ErrNoPermissionsDefined) Error() string {
-	return fmt.Sprintf("no permissions defined for action %s on entity %s", e.Action, e.EntityModel)
-}
-
 type ErrSignupDisabled struct{}
 
 func NewErrSignupDisabled() error {

@@ -292,6 +292,7 @@ const (
 	ActionTransferImpactAssessmentCreate = "core:transfer-impact-assessment:create"
 	ActionTransferImpactAssessmentUpdate = "core:transfer-impact-assessment:update"
 	ActionTransferImpactAssessmentDelete = "core:transfer-impact-assessment:delete"
+	ActionTransferImpactAssessmentExport = "core:transfer-impact-assessment:export"
 
 	// TrustCenterDocumentAccess actions
 	ActionTrustCenterDocumentAccessList = "core:trust-center-document-access:list"
@@ -300,9 +301,13 @@ const (
 	ActionDataProtectionOfficerList = "core:data-protection-officer:list"
 
 	// RightsRequest actions
-	ActionRightsRequesList = "core:rights-request:list"
-	ActionRightsRequestGet = "core:rights-request:get"
+	ActionRightsRequestList   = "core:rights-request:list"
+	ActionRightsRequestGet    = "core:rights-request:get"
+	ActionRightsRequestCreate = "core:rights-request:create"
+	ActionRightsRequestUpdate = "core:rights-request:update"
+	ActionRightsRequestDelete = "core:rights-request:delete"
 
+	// StateOfApplicability actions
 	ActionStateOfApplicabilityList   = "core:state-of-applicability:list"
 	ActionStateOfApplicabilityGet    = "core:state-of-applicability:get"
 	ActionStateOfApplicabilityCreate = "core:state-of-applicability:create"

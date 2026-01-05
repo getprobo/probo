@@ -54,6 +54,20 @@ func (s StateOfApplicability) CursorKey(orderBy StateOfApplicabilityOrderField) 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
+func (s *StateOfApplicability) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+	q := `SELECT organization_id FROM states_of_applicability WHERE id = $1 LIMIT 1;`
+
+	var organizationID gid.GID
+	if err := conn.QueryRow(ctx, q, s.ID).Scan(&organizationID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrResourceNotFound
+		}
+		return nil, fmt.Errorf("cannot query state of applicability authorization attributes: %w", err)
+	}
+
+	return map[string]string{"organization_id": organizationID.String()}, nil
+}
+
 func (s *StateOfApplicability) LoadByID(
 	ctx context.Context,
 	conn pg.Conn,

@@ -60,25 +60,7 @@ type (
 	}
 
 	AvailableStateOfApplicabilityControls []*AvailableStateOfApplicabilityControl
-
-	ErrStateOfApplicabilityControlNotFound struct {
-		StateOfApplicabilityID gid.GID
-		ControlID              gid.GID
-	}
-
-	ErrStateOfApplicabilityControlAlreadyExists struct {
-		StateOfApplicabilityID gid.GID
-		ControlID              gid.GID
-	}
 )
-
-func (e ErrStateOfApplicabilityControlNotFound) Error() string {
-	return fmt.Sprintf("state of applicability control not found: state_of_applicability_id=%s, control_id=%s", e.StateOfApplicabilityID, e.ControlID)
-}
-
-func (e ErrStateOfApplicabilityControlAlreadyExists) Error() string {
-	return fmt.Sprintf("state of applicability control already exists: state_of_applicability_id=%s, control_id=%s", e.StateOfApplicabilityID, e.ControlID)
-}
 
 func (s StateOfApplicabilityControl) CursorKey(orderBy StateOfApplicabilityOrderField) page.CursorKey {
 	switch orderBy {
@@ -89,6 +71,20 @@ func (s StateOfApplicabilityControl) CursorKey(orderBy StateOfApplicabilityOrder
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
+}
+
+func (s *StateOfApplicabilityControl) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+	q := `SELECT organization_id FROM states_of_applicability_controls WHERE id = $1 LIMIT 1;`
+
+	var organizationID gid.GID
+	if err := conn.QueryRow(ctx, q, s.ID).Scan(&organizationID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrResourceNotFound
+		}
+		return nil, fmt.Errorf("cannot query state of applicability control authorization attributes: %w", err)
+	}
+
+	return map[string]string{"organization_id": organizationID.String()}, nil
 }
 
 func (sac *StateOfApplicabilityControl) LoadByStateOfApplicabilityIDAndControlID(
@@ -140,10 +136,7 @@ LIMIT 1;
 	control, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[StateOfApplicabilityControl])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrStateOfApplicabilityControlNotFound{
-				StateOfApplicabilityID: stateOfApplicabilityID,
-				ControlID:              controlID,
-			}
+			return ErrResourceNotFound
 		}
 		return fmt.Errorf("cannot collect state of applicability control: %w", err)
 	}
@@ -203,10 +196,7 @@ VALUES (
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
 			if pgErr.Code == "23505" {
-				return &ErrStateOfApplicabilityControlAlreadyExists{
-					StateOfApplicabilityID: sac.StateOfApplicabilityID,
-					ControlID:              sac.ControlID,
-				}
+				return ErrResourceAlreadyExists
 			}
 		}
 

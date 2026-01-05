@@ -3789,7 +3789,7 @@ func (r *mutationResolver) ExportProcessingActivitiesPDF(ctx context.Context, in
 
 // ExportDataProtectionImpactAssessmentsPDF is the resolver for the exportDataProtectionImpactAssessmentsPDF field.
 func (r *mutationResolver) ExportDataProtectionImpactAssessmentsPDF(ctx context.Context, input types.ExportDataProtectionImpactAssessmentsPDFInput) (*types.ExportDataProtectionImpactAssessmentsPDFPayload, error) {
-	r.MustAuthorize(ctx, input.OrganizationID, iam.ActionExportDataProtectionImpactAssessmentsPDF)
+	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionDataProtectionImpactAssessmentExport)
 
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
@@ -3804,7 +3804,6 @@ func (r *mutationResolver) ExportDataProtectionImpactAssessmentsPDF(ctx context.
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(err)
 		}
-
 		panic(fmt.Errorf("cannot export data protection impact assessments PDF: %w", err))
 	}
 
@@ -3815,7 +3814,7 @@ func (r *mutationResolver) ExportDataProtectionImpactAssessmentsPDF(ctx context.
 
 // ExportTransferImpactAssessmentsPDF is the resolver for the exportTransferImpactAssessmentsPDF field.
 func (r *mutationResolver) ExportTransferImpactAssessmentsPDF(ctx context.Context, input types.ExportTransferImpactAssessmentsPDFInput) (*types.ExportTransferImpactAssessmentsPDFPayload, error) {
-	r.MustAuthorize(ctx, input.OrganizationID, iam.ActionExportTransferImpactAssessmentsPDF)
+	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionTransferImpactAssessmentExport)
 
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
@@ -4378,7 +4377,7 @@ func (r *mutationResolver) DeleteContinualImprovement(ctx context.Context, input
 
 // CreateRightsRequest is the resolver for the createRightsRequest field.
 func (r *mutationResolver) CreateRightsRequest(ctx context.Context, input types.CreateRightsRequestInput) (*types.CreateRightsRequestPayload, error) {
-	r.MustAuthorize(ctx, input.OrganizationID, iam.ActionCreateRightsRequest)
+	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionRightsRequestCreate)
 
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
@@ -4405,7 +4404,7 @@ func (r *mutationResolver) CreateRightsRequest(ctx context.Context, input types.
 
 // UpdateRightsRequest is the resolver for the updateRightsRequest field.
 func (r *mutationResolver) UpdateRightsRequest(ctx context.Context, input types.UpdateRightsRequestInput) (*types.UpdateRightsRequestPayload, error) {
-	r.MustAuthorize(ctx, input.ID, iam.ActionUpdateRightsRequest)
+	r.MustAuthorize(ctx, input.ID, probo.ActionRightsRequestUpdate)
 
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
@@ -4432,7 +4431,7 @@ func (r *mutationResolver) UpdateRightsRequest(ctx context.Context, input types.
 
 // DeleteRightsRequest is the resolver for the deleteRightsRequest field.
 func (r *mutationResolver) DeleteRightsRequest(ctx context.Context, input types.DeleteRightsRequestInput) (*types.DeleteRightsRequestPayload, error) {
-	r.MustAuthorize(ctx, input.RightsRequestID, iam.ActionDeleteRightsRequest)
+	r.MustAuthorize(ctx, input.RightsRequestID, probo.ActionRightsRequestDelete)
 
 	prb := r.ProboService(ctx, input.RightsRequestID.TenantID())
 
@@ -5521,7 +5520,7 @@ func (r *organizationResolver) ContinualImprovements(ctx context.Context, obj *t
 
 // RightsRequests is the resolver for the rightsRequests field.
 func (r *organizationResolver) RightsRequests(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RightsRequestOrderBy) (*types.RightsRequestConnection, error) {
-	r.MustAuthorize(ctx, obj.ID, iam.ActionListRightsRequests)
+	r.MustAuthorize(ctx, obj.ID, probo.ActionRightsRequestList)
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -5849,7 +5848,6 @@ func (r *processingActivityResolver) DataProtectionImpactAssessment(ctx context.
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, nil
 		}
-
 		panic(fmt.Errorf("cannot get processing activity dpia: %w", err))
 	}
 
@@ -5867,7 +5865,6 @@ func (r *processingActivityResolver) TransferImpactAssessment(ctx context.Contex
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, nil
 		}
-
 		panic(fmt.Errorf("cannot get processing activity tia: %w", err))
 	}
 
@@ -6267,7 +6264,7 @@ func (r *reportResolver) Permission(ctx context.Context, obj *types.Report, acti
 
 // Organization is the resolver for the organization field.
 func (r *rightsRequestResolver) Organization(ctx context.Context, obj *types.RightsRequest) (*types.Organization, error) {
-	r.MustAuthorize(ctx, obj.ID, iam.ActionGetOrganization)
+	r.MustAuthorize(ctx, obj.ID, probo.ActionOrganizationGet)
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -6294,7 +6291,7 @@ func (r *rightsRequestResolver) Permission(ctx context.Context, obj *types.Right
 
 // TotalCount is the resolver for the totalCount field.
 func (r *rightsRequestConnectionResolver) TotalCount(ctx context.Context, obj *types.RightsRequestConnection) (int, error) {
-	r.MustAuthorize(ctx, obj.ParentID, probo.ActionRightsRequesList)
+	r.MustAuthorize(ctx, obj.ParentID, probo.ActionRightsRequestList)
 
 	prb := r.ProboService(ctx, obj.ParentID.TenantID())
 

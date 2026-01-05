@@ -269,64 +269,6 @@ LIMIT 1;
 	}, nil
 }
 
-func LoadRoleByIdentityAndEntityIDOnly(
-	ctx context.Context,
-	conn pg.Conn,
-	scope Scoper,
-	identityID gid.GID,
-	entityID gid.GID,
-) (MembershipRole, error) {
-	entityType := entityID.EntityType()
-
-	if entityType == OrganizationEntityType {
-		query := `
-SELECT role
-FROM iam_memberships
-WHERE
-    identity_id = $1
-    AND tenant_id = $2
-    AND organization_id = $3
-LIMIT 1;
-`
-		var role MembershipRole
-		err := conn.QueryRow(ctx, query, identityID, scope.GetTenantID(), entityID).Scan(&role)
-		if err != nil {
-			if errors.Is(err, pgx.ErrNoRows) {
-				return "", ErrResourceNotFound
-			}
-			return "", fmt.Errorf("cannot query role: %w", err)
-		}
-		return role, nil
-	}
-
-	tableName, ok := EntityTable(entityType)
-	if !ok {
-		return "", fmt.Errorf("unsupported entity type for role lookup: %d", entityType)
-	}
-
-	query := `
-SELECT m.role
-FROM iam_memberships m
-WHERE
-    m.identity_id = $1
-    AND tenant_id = $2
-    AND m.organization_id = (SELECT organization_id FROM ` + tableName + ` WHERE id = $3)
-LIMIT 1;
-`
-
-	var role MembershipRole
-	err := conn.QueryRow(ctx, query, identityID, scope.GetTenantID(), entityID).Scan(&role)
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return "", ErrResourceNotFound
-		}
-
-		return "", fmt.Errorf("cannot query role: %w", err)
-	}
-
-	return role, nil
-}
-
 func (m *Membership) LoadByIdentityAndOrg(
 	ctx context.Context,
 	conn pg.Conn,
