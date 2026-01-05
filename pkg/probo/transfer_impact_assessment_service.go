@@ -318,7 +318,7 @@ func (s *TransferImpactAssessmentService) ExportPDF(
 			}
 
 			if len(assessments) == 0 {
-				return &coredata.ErrNoTransferImpactAssessmentsFound{}
+				return coredata.ErrResourceNotFound
 			}
 
 			organization := &coredata.Organization{}

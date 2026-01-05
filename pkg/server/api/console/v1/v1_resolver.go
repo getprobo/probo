@@ -3801,10 +3801,10 @@ func (r *mutationResolver) ExportDataProtectionImpactAssessmentsPDF(ctx context.
 
 	pdf, err := prb.DataProtectionImpactAssessments.ExportPDF(ctx, input.OrganizationID, dpiaFilter)
 	if err != nil {
-		var errNotFound *coredata.ErrNoDataProtectionImpactAssessmentsFound
-		if errors.As(err, &errNotFound) {
-			return nil, gqlutils.NotFound(errNotFound)
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(err)
 		}
+
 		panic(fmt.Errorf("cannot export data protection impact assessments PDF: %w", err))
 	}
 
@@ -3827,9 +3827,8 @@ func (r *mutationResolver) ExportTransferImpactAssessmentsPDF(ctx context.Contex
 
 	pdf, err := prb.TransferImpactAssessments.ExportPDF(ctx, input.OrganizationID, tiaFilter)
 	if err != nil {
-		var errNotFound *coredata.ErrNoTransferImpactAssessmentsFound
-		if errors.As(err, &errNotFound) {
-			return nil, gqlutils.NotFound(errNotFound)
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(err)
 		}
 		panic(fmt.Errorf("cannot export transfer impact assessments PDF: %w", err))
 	}
@@ -5847,10 +5846,10 @@ func (r *processingActivityResolver) DataProtectionImpactAssessment(ctx context.
 
 	dpia, err := prb.DataProtectionImpactAssessments.GetByProcessingActivityID(ctx, obj.ID)
 	if err != nil {
-		var errNotFound *coredata.ErrDataProtectionImpactAssessmentNotFound
-		if errors.As(err, &errNotFound) {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, nil
 		}
+
 		panic(fmt.Errorf("cannot get processing activity dpia: %w", err))
 	}
 
@@ -5865,10 +5864,10 @@ func (r *processingActivityResolver) TransferImpactAssessment(ctx context.Contex
 
 	tia, err := prb.TransferImpactAssessments.GetByProcessingActivityID(ctx, obj.ID)
 	if err != nil {
-		var errNotFound *coredata.ErrTransferImpactAssessmentNotFound
-		if errors.As(err, &errNotFound) {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, nil
 		}
+
 		panic(fmt.Errorf("cannot get processing activity tia: %w", err))
 	}
 

@@ -318,7 +318,7 @@ func (s *DataProtectionImpactAssessmentService) ExportPDF(
 			}
 
 			if len(assessments) == 0 {
-				return &coredata.ErrNoDataProtectionImpactAssessmentsFound{}
+				return coredata.ErrResourceNotFound
 			}
 
 			organization := &coredata.Organization{}
