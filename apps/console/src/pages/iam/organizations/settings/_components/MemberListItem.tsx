@@ -142,7 +142,8 @@ export function MemberListItem(props: {
                 <Spinner size={16} />
               ) : (
                 membership.canDelete &&
-                canEditThisRole && (
+                canEditThisRole &&
+                membership.source !== "SCIM" && (
                   <Button
                     variant="danger"
                     onClick={handleRemove}

@@ -253,6 +253,10 @@ func (s *OrganizationService) RemoveMember(
 				return NewMembershipNotFoundError(membership.ID)
 			}
 
+			if membership.Source == coredata.MembershipSourceSCIM {
+				return NewMembershipManagedBySCIMError(membershipID)
+			}
+
 			err := membership.Delete(ctx, tx, scope, membershipID)
 			if err != nil {
 				return fmt.Errorf("cannot delete membership: %w", err)

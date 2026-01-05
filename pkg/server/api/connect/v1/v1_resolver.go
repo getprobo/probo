@@ -967,6 +967,11 @@ func (r *mutationResolver) RemoveMember(ctx context.Context, input types.RemoveM
 
 	err := r.iam.OrganizationService.RemoveMember(ctx, input.OrganizationID, input.MembershipID)
 	if err != nil {
+		var errManagedBySCIM *iam.ErrMembershipManagedBySCIM
+		if errors.As(err, &errManagedBySCIM) {
+			return nil, gqlutils.Conflict(err)
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot remove member from organization", log.Error(err))
 		return nil, gqlutils.InternalServerError(ctx)
 	}
