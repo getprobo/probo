@@ -387,6 +387,76 @@ LEFT JOIN
 	return nil
 }
 
+func (m *Membership) LoadByEmailAndOrganization(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	email mail.Addr,
+	organizationID gid.GID,
+) error {
+	q := `
+WITH mbr AS (
+    SELECT
+        am.id,
+        am.identity_id,
+        am.organization_id,
+        am.role,
+        am.source,
+        am.created_at,
+        am.updated_at
+    FROM
+        iam_memberships am
+    JOIN
+        identities i ON am.identity_id = i.id
+    WHERE
+        i.email_address = @email
+        AND am.organization_id = @organization_id
+        AND %s
+)
+SELECT
+    mbr.id,
+    mbr.identity_id,
+    mbr.organization_id,
+    mbr.role,
+    mbr.source,
+    COALESCE(mp.full_name, i.full_name, '') as full_name,
+    i.email_address,
+    mbr.created_at,
+    mbr.updated_at
+FROM
+    mbr
+JOIN
+    identities i ON mbr.identity_id = i.id
+LEFT JOIN
+    iam_membership_profiles mp ON mp.membership_id = mbr.id
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"email":           email,
+		"organization_id": organizationID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query membership by email: %w", err)
+	}
+
+	membership, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Membership])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect membership: %w", err)
+	}
+
+	*m = membership
+	return nil
+}
+
 func (m *Membership) Update(ctx context.Context, conn pg.Conn, scope Scoper) error {
 	query := `
 UPDATE

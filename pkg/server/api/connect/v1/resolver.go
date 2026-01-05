@@ -19,6 +19,7 @@ package connect_v1
 import (
 	"context"
 	"errors"
+	"net/http"
 	"time"
 
 	"github.com/99designs/gqlgen/graphql"
@@ -63,6 +64,7 @@ func NewMux(logger *log.Logger, svc *iam.Service, cookieConfig securecookie.Conf
 	apiKeyMiddleware := NewAPIKeyMiddleware(svc, tokenSecret)
 	graphqlHandler := NewGraphQLHandler(svc, logger, baseURL, cookieConfig)
 	samlHandler := NewSAMLHandler(svc, cookieConfig, baseURL, logger)
+	scimHandler := NewSCIMHandler(svc, logger.Named("scim"))
 
 	router := r.With(sessionMiddleware, apiKeyMiddleware)
 
@@ -70,6 +72,10 @@ func NewMux(logger *log.Logger, svc *iam.Service, cookieConfig securecookie.Conf
 	router.Get("/saml/2.0/metadata", samlHandler.MetadataHandler)
 	router.Post("/saml/2.0/consume", samlHandler.ConsumeHandler)
 	router.Get("/saml/2.0/{samlConfigID}", samlHandler.LoginHandler)
+
+	// SCIM 2.0 endpoints - these use their own bearer token authentication
+	scimServer := NewSCIMServer(scimHandler)
+	r.Mount("/scim/2.0", http.StripPrefix("/scim/2.0", scimHandler.BearerTokenMiddleware(scimServer)))
 
 	return r
 }
