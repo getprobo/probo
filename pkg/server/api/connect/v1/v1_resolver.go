@@ -1605,11 +1605,11 @@ func (r *sCIMConfigurationResolver) Permission(ctx context.Context, obj *types.S
 
 // Membership is the resolver for the membership field.
 func (r *sCIMEventResolver) Membership(ctx context.Context, obj *types.SCIMEvent) (*types.Membership, error) {
-	if ok := r.Authorize(ctx, obj.Membership.ID, iam.ActionMembershipGet, nil); !ok {
+	if obj.Membership == nil {
 		return nil, nil
 	}
 
-	if obj.Membership == nil {
+	if ok := r.Authorize(ctx, obj.Membership.ID, iam.ActionMembershipGet, nil); !ok {
 		return nil, nil
 	}
 
