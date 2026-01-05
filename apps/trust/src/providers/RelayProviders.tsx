@@ -162,6 +162,7 @@ const store = new Store(source, {
 });
 
 export const consoleEnvironment = new Environment({
+  configName: "trust",
   network: Network.create(fetchRelay),
   store,
 });
