@@ -147,7 +147,7 @@ func (s *Service) CreateUser(
 				ID:             gid.New(config.OrganizationID.TenantID(), coredata.MembershipEntityType),
 				IdentityID:     identity.ID,
 				OrganizationID: config.OrganizationID,
-				Role:           coredata.MembershipRoleViewer,
+				Role:           coredata.MembershipRoleEmployee,
 				Source:         coredata.MembershipSourceSCIM,
 				State:          coredata.MembershipStateActive,
 				CreatedAt:      now,
@@ -180,7 +180,7 @@ func (s *Service) CreateUser(
 			membership.Source = coredata.MembershipSourceSCIM
 			membership.State = coredata.MembershipStateActive
 			if wasInactive {
-				membership.Role = coredata.MembershipRoleViewer
+				membership.Role = coredata.MembershipRoleEmployee
 			}
 			membership.UpdatedAt = now
 
@@ -352,7 +352,7 @@ func (s *Service) updateUser(
 			if active != nil {
 				if *active && membership.State == coredata.MembershipStateInactive {
 					membership.State = coredata.MembershipStateActive
-					membership.Role = coredata.MembershipRoleViewer
+					membership.Role = coredata.MembershipRoleEmployee
 					needsUpdate = true
 				} else if !*active && membership.State == coredata.MembershipStateActive {
 					membership.State = coredata.MembershipStateInactive
