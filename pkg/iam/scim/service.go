@@ -176,8 +176,12 @@ func (s *Service) CreateUser(
 			return fmt.Errorf("cannot load membership: %w", err)
 		} else {
 			// Update existing membership - reactivate if inactive, update source to SCIM
+			wasInactive := membership.State == coredata.MembershipStateInactive
 			membership.Source = coredata.MembershipSourceSCIM
 			membership.State = coredata.MembershipStateActive
+			if wasInactive {
+				membership.Role = coredata.MembershipRoleViewer
+			}
 			membership.UpdatedAt = now
 
 			err = membership.Update(ctx, tx, scope)
@@ -232,7 +236,6 @@ func (s *Service) GetUser(
 	return membershipToResource(membership), nil
 }
 
-// ListUsers lists all users in an organization, with optional filter support
 func (s *Service) ListUsers(
 	ctx context.Context,
 	config *coredata.SCIMConfiguration,
@@ -297,6 +300,7 @@ func (s *Service) ReplaceUser(
 	if err != nil {
 		return scim.Resource{}, err
 	}
+
 	return membershipToResource(membership), nil
 }
 
@@ -311,6 +315,7 @@ func (s *Service) PatchUser(
 	if err != nil {
 		return scim.Resource{}, err
 	}
+
 	return membershipToResource(membership), nil
 }
 
@@ -326,61 +331,65 @@ func (s *Service) updateUser(
 
 	var membership *coredata.Membership
 
-	err := s.pg.WithTx(ctx, func(tx pg.Conn) error {
-		membership = &coredata.Membership{}
-		err := membership.LoadByID(ctx, tx, scope, membershipID)
-		if err != nil {
-			if err == coredata.ErrResourceNotFound {
+	err := s.pg.WithTx(
+		ctx,
+		func(tx pg.Conn) error {
+			membership = &coredata.Membership{}
+			err := membership.LoadByID(ctx, tx, scope, membershipID)
+			if err != nil {
+				if err == coredata.ErrResourceNotFound {
+					return scimerrors.ScimErrorResourceNotFound(membershipID.String())
+				}
+				return fmt.Errorf("cannot load membership: %w", err)
+			}
+
+			if membership.OrganizationID != config.OrganizationID {
 				return scimerrors.ScimErrorResourceNotFound(membershipID.String())
 			}
-			return fmt.Errorf("cannot load membership: %w", err)
-		}
 
-		if membership.OrganizationID != config.OrganizationID {
-			return scimerrors.ScimErrorResourceNotFound(membershipID.String())
-		}
+			needsUpdate := false
 
-		needsUpdate := false
-
-		if active != nil {
-			if *active && membership.State == coredata.MembershipStateInactive {
-				membership.State = coredata.MembershipStateActive
-				needsUpdate = true
-			} else if !*active && membership.State == coredata.MembershipStateActive {
-				membership.State = coredata.MembershipStateInactive
-				needsUpdate = true
-			}
-		}
-
-		if membership.Source != coredata.MembershipSourceSCIM {
-			membership.Source = coredata.MembershipSourceSCIM
-			needsUpdate = true
-		}
-
-		if needsUpdate {
-			membership.UpdatedAt = now
-			err = membership.Update(ctx, tx, scope)
-			if err != nil {
-				return fmt.Errorf("cannot update membership: %w", err)
-			}
-		}
-
-		profile := &coredata.MembershipProfile{}
-		err = profile.LoadByMembershipID(ctx, tx, scope, membershipID)
-		if err == nil {
-			if fullName != "" {
-				profile.FullName = fullName
-				profile.UpdatedAt = now
-
-				err = profile.Update(ctx, tx, scope)
-				if err != nil {
-					return fmt.Errorf("cannot update membership profile: %w", err)
+			if active != nil {
+				if *active && membership.State == coredata.MembershipStateInactive {
+					membership.State = coredata.MembershipStateActive
+					membership.Role = coredata.MembershipRoleViewer
+					needsUpdate = true
+				} else if !*active && membership.State == coredata.MembershipStateActive {
+					membership.State = coredata.MembershipStateInactive
+					needsUpdate = true
 				}
 			}
-		}
 
-		return nil
-	})
+			if membership.Source != coredata.MembershipSourceSCIM {
+				membership.Source = coredata.MembershipSourceSCIM
+				needsUpdate = true
+			}
+
+			if needsUpdate {
+				membership.UpdatedAt = now
+				err = membership.Update(ctx, tx, scope)
+				if err != nil {
+					return fmt.Errorf("cannot update membership: %w", err)
+				}
+			}
+
+			profile := &coredata.MembershipProfile{}
+			err = profile.LoadByMembershipID(ctx, tx, scope, membershipID)
+			if err == nil {
+				if fullName != "" {
+					profile.FullName = fullName
+					profile.UpdatedAt = now
+
+					err = profile.Update(ctx, tx, scope)
+					if err != nil {
+						return fmt.Errorf("cannot update membership profile: %w", err)
+					}
+				}
+			}
+
+			return nil
+		},
+	)
 
 	if err != nil {
 		return nil, err
