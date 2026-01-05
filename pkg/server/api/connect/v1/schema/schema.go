@@ -276,6 +276,7 @@ type ComplexityRoot struct {
 		CreatedAt  func(childComplexity int) int
 		ExpiresAt  func(childComplexity int) int
 		ID         func(childComplexity int) int
+		LastUsedAt func(childComplexity int) int
 		Name       func(childComplexity int) int
 		Permission func(childComplexity int, action string) int
 		Token      func(childComplexity int) int
@@ -1530,6 +1531,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.PersonalAPIKey.ID(childComplexity), true
+	case "PersonalAPIKey.lastUsedAt":
+		if e.complexity.PersonalAPIKey.LastUsedAt == nil {
+			break
+		}
+
+		return e.complexity.PersonalAPIKey.LastUsedAt(childComplexity), true
 	case "PersonalAPIKey.name":
 		if e.complexity.PersonalAPIKey.Name == nil {
 			break
@@ -2598,6 +2605,7 @@ type PersonalAPIKey implements Node {
   id: ID!
   name: String!
   expiresAt: Datetime!
+  lastUsedAt: Datetime
   createdAt: Datetime!
 
   token: String @goField(forceResolver: true)
@@ -9070,6 +9078,35 @@ func (ec *executionContext) fieldContext_PersonalAPIKey_expiresAt(_ context.Cont
 	return fc, nil
 }
 
+func (ec *executionContext) _PersonalAPIKey_lastUsedAt(ctx context.Context, field graphql.CollectedField, obj *types.PersonalAPIKey) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_PersonalAPIKey_lastUsedAt,
+		func(ctx context.Context) (any, error) {
+			return obj.LastUsedAt, nil
+		},
+		nil,
+		ec.marshalODatetime2ᚖtimeᚐTime,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_PersonalAPIKey_lastUsedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PersonalAPIKey",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _PersonalAPIKey_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.PersonalAPIKey) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -9320,6 +9357,8 @@ func (ec *executionContext) fieldContext_PersonalAPIKeyEdge_node(_ context.Conte
 				return ec.fieldContext_PersonalAPIKey_name(ctx, field)
 			case "expiresAt":
 				return ec.fieldContext_PersonalAPIKey_expiresAt(ctx, field)
+			case "lastUsedAt":
+				return ec.fieldContext_PersonalAPIKey_lastUsedAt(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_PersonalAPIKey_createdAt(ctx, field)
 			case "token":
@@ -17483,6 +17522,8 @@ func (ec *executionContext) _PersonalAPIKey(ctx context.Context, sel ast.Selecti
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "lastUsedAt":
+			out.Values[i] = ec._PersonalAPIKey_lastUsedAt(ctx, field, obj)
 		case "createdAt":
 			out.Values[i] = ec._PersonalAPIKey_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {

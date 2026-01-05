@@ -66,6 +66,13 @@ func (s *APIKeyService) GetAPIKey(ctx context.Context, keyID gid.GID) (*coredata
 				return NewPersonalAPIKeyExpiredError(keyID)
 			}
 
+			apiKey.LastUsedAt = &now
+			apiKey.UpdatedAt = now
+
+			if err := apiKey.Update(ctx, tx); err != nil {
+				return fmt.Errorf("cannot update personal api key last used at: %w", err)
+			}
+
 			return nil
 		},
 	)
