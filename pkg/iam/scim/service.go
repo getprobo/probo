@@ -96,8 +96,7 @@ func (s *Service) CreateUser(
 	attributes scim.ResourceAttributes,
 	ipAddress net.IP,
 ) (scim.Resource, error) {
-	user := ParseUserFromAttributes(attributes)
-	email := user.Email
+	email, fullName := ParseUserFromAttributes(attributes)
 	if email == "" {
 		return scim.Resource{}, scimerrors.ScimErrorBadRequest("userName or email is required")
 	}
@@ -106,8 +105,6 @@ func (s *Service) CreateUser(
 	if err != nil {
 		return scim.Resource{}, scimerrors.ScimErrorBadRequest("invalid email format")
 	}
-
-	fullName := user.FullName
 	now := time.Now()
 
 	var membership *coredata.Membership
@@ -302,8 +299,8 @@ func (s *Service) ReplaceUser(
 	attributes scim.ResourceAttributes,
 	ipAddress net.IP,
 ) (scim.Resource, error) {
-	user := ParseUserFromReplaceAttributes(attributes)
-	membership, deactivated, err := s.updateUser(ctx, config, membershipID, user, "PUT", ipAddress)
+	fullName, active := ParseUserFromReplaceAttributes(attributes)
+	membership, deactivated, err := s.updateUser(ctx, config, membershipID, fullName, active, "PUT", ipAddress)
 	if err != nil {
 		return scim.Resource{}, err
 	}
@@ -318,8 +315,8 @@ func (s *Service) PatchUser(
 	operations []scim.PatchOperation,
 	ipAddress net.IP,
 ) (scim.Resource, error) {
-	user := ParseUserFromPatchOperations(operations)
-	membership, deactivated, err := s.updateUser(ctx, config, membershipID, user, "PATCH", ipAddress)
+	fullName, active := ParseUserFromPatchOperations(operations)
+	membership, deactivated, err := s.updateUser(ctx, config, membershipID, fullName, active, "PATCH", ipAddress)
 	if err != nil {
 		return scim.Resource{}, err
 	}
@@ -330,7 +327,8 @@ func (s *Service) updateUser(
 	ctx context.Context,
 	config *coredata.SCIMConfiguration,
 	membershipID gid.GID,
-	user *User,
+	fullName string,
+	active *bool,
 	method string,
 	ipAddress net.IP,
 ) (*coredata.Membership, bool, error) {
@@ -356,7 +354,7 @@ func (s *Service) updateUser(
 		}
 
 		// Handle deactivation - Okta sends PATCH with active=false to deprovision users
-		if user.Active != nil && !*user.Active {
+		if active != nil && !*active {
 			err = membership.Delete(ctx, tx, scope, membershipID)
 			if err != nil {
 				return fmt.Errorf("cannot delete membership: %w", err)
@@ -389,7 +387,6 @@ func (s *Service) updateUser(
 		profile := &coredata.MembershipProfile{}
 		err = profile.LoadByMembershipID(ctx, tx, scope, membershipID)
 		if err == nil {
-			fullName := user.FullName
 			if fullName != "" {
 				profile.FullName = fullName
 				profile.UpdatedAt = now
@@ -515,9 +512,8 @@ func (s *Service) createEvent(
 	return event
 }
 
-// ParseUserFromAttributes extracts a User from SCIM resource attributes
 // ParseUserFromAttributes extracts user data from SCIM create attributes
-func ParseUserFromAttributes(attributes scim.ResourceAttributes) *User {
+func ParseUserFromAttributes(attributes scim.ResourceAttributes) (email string, fullName string) {
 	userName, _ := attributes["userName"].(string)
 	displayName, _ := attributes["displayName"].(string)
 
@@ -528,7 +524,7 @@ func ParseUserFromAttributes(attributes scim.ResourceAttributes) *User {
 	}
 
 	// Get email from emails array or use userName
-	email := userName
+	email = userName
 	if emails, ok := attributes["emails"].([]interface{}); ok && len(emails) > 0 {
 		for _, e := range emails {
 			if emailMap, ok := e.(map[string]interface{}); ok {
@@ -551,7 +547,7 @@ func ParseUserFromAttributes(attributes scim.ResourceAttributes) *User {
 	}
 
 	// Build full name: prefer displayName, then given+family, then userName
-	fullName := displayName
+	fullName = displayName
 	if fullName == "" {
 		fullName = strings.TrimSpace(givenName + " " + familyName)
 	}
@@ -559,14 +555,11 @@ func ParseUserFromAttributes(attributes scim.ResourceAttributes) *User {
 		fullName = userName
 	}
 
-	return &User{
-		Email:    email,
-		FullName: fullName,
-	}
+	return email, fullName
 }
 
 // ParseUserFromReplaceAttributes extracts user data from SCIM replace (PUT) attributes
-func ParseUserFromReplaceAttributes(attributes scim.ResourceAttributes) *User {
+func ParseUserFromReplaceAttributes(attributes scim.ResourceAttributes) (fullName string, active *bool) {
 	displayName, _ := attributes["displayName"].(string)
 
 	var givenName, familyName string
@@ -575,25 +568,21 @@ func ParseUserFromReplaceAttributes(attributes scim.ResourceAttributes) *User {
 		familyName, _ = name["familyName"].(string)
 	}
 
-	fullName := displayName
+	fullName = displayName
 	if fullName == "" {
 		fullName = strings.TrimSpace(givenName + " " + familyName)
 	}
 
-	active := true
+	activeVal := true
 	if a, ok := attributes["active"].(bool); ok {
-		active = a
+		activeVal = a
 	}
 
-	return &User{
-		FullName: fullName,
-		Active:   &active,
-	}
+	return fullName, &activeVal
 }
 
 // ParseUserFromPatchOperations extracts user data from SCIM patch operations
-func ParseUserFromPatchOperations(operations []scim.PatchOperation) *User {
-	user := &User{}
+func ParseUserFromPatchOperations(operations []scim.PatchOperation) (fullName string, active *bool) {
 	var givenName, familyName string
 
 	for _, op := range operations {
@@ -604,12 +593,12 @@ func ParseUserFromPatchOperations(operations []scim.PatchOperation) *User {
 			}
 			switch strings.ToLower(path) {
 			case "active":
-				if active, ok := op.Value.(bool); ok {
-					user.Active = &active
+				if a, ok := op.Value.(bool); ok {
+					active = &a
 				}
 			case "displayname":
 				if name, ok := op.Value.(string); ok {
-					user.FullName = name
+					fullName = name
 				}
 			case "name.givenname":
 				if name, ok := op.Value.(string); ok {
@@ -624,11 +613,11 @@ func ParseUserFromPatchOperations(operations []scim.PatchOperation) *User {
 	}
 
 	// If no displayName was set but we have name parts, build full name
-	if user.FullName == "" && (givenName != "" || familyName != "") {
-		user.FullName = strings.TrimSpace(givenName + " " + familyName)
+	if fullName == "" && (givenName != "" || familyName != "") {
+		fullName = strings.TrimSpace(givenName + " " + familyName)
 	}
 
-	return user
+	return fullName, active
 }
 
 func membershipToResource(m *coredata.Membership, active bool) scim.Resource {
@@ -639,10 +628,10 @@ func membershipToResource(m *coredata.Membership, active bool) scim.Resource {
 			"userName":    m.EmailAddress.String(),
 			"displayName": m.FullName,
 			"active":      active,
-			"name": map[string]interface{}{
+			"name": map[string]any{
 				"formatted": m.FullName,
 			},
-			"emails": []map[string]interface{}{
+			"emails": []map[string]any{
 				{
 					"value":   m.EmailAddress.String(),
 					"type":    "work",
