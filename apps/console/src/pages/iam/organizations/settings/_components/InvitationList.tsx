@@ -11,6 +11,7 @@ import type { InvitationListFragment$key } from "/__generated__/iam/InvitationLi
 import type { InvitationListFragment_RefetchQuery } from "/__generated__/iam/InvitationListFragment_RefetchQuery.graphql";
 import { type ComponentProps } from "react";
 import { useOrganizationId } from "/hooks/useOrganizationId";
+import type { MembersPage_invitationsTotalCountFragment$key } from "/__generated__/iam/MembersPage_invitationsTotalCountFragment.graphql";
 
 const fragment = graphql`
   fragment InvitationListFragment on Organization
@@ -38,7 +39,6 @@ const fragment = graphql`
       )
       @required(action: THROW) {
       __id
-      totalCount
       edges @required(action: THROW) {
         node {
           id
@@ -52,8 +52,10 @@ const fragment = graphql`
 export function InvitationList(props: {
   fKey: InvitationListFragment$key;
   onConnectionIdChange: (connectionId: string) => void;
+  totalCount: number;
+  totalCountFKey: MembersPage_invitationsTotalCountFragment$key;
 }) {
-  const { fKey, onConnectionIdChange } = props;
+  const { fKey, onConnectionIdChange, totalCount, totalCountFKey } = props;
 
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
@@ -109,7 +111,7 @@ export function InvitationList(props: {
         </Tr>
       </Thead>
       <Tbody>
-        {invitationsPagination.data.invitations.totalCount === 0 ? (
+        {totalCount === 0 ? (
           <Tr>
             <Td colSpan={7} className="text-center text-txt-secondary">
               {__("No invitations")}
@@ -123,6 +125,7 @@ export function InvitationList(props: {
                 key={invitation.id}
                 fKey={invitation}
                 onRefetch={refetchInvitations}
+                totalCountFKey={totalCountFKey}
               />
             ),
           )
