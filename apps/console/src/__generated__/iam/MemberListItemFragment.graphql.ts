@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<13e173a42e2ea29b7960539683cea087>>
+ * @generated SignedSource<<81a5acfba89528014adf0731f16b9a90>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,6 +11,7 @@
 import { ReaderFragment } from 'relay-runtime';
 export type MembershipRole = "ADMIN" | "AUDITOR" | "EMPLOYEE" | "OWNER" | "VIEWER";
 export type MembershipSource = "MANUAL" | "SAML" | "SCIM";
+export type MembershipState = "ACTIVE" | "INACTIVE";
 import { FragmentRefs } from "relay-runtime";
 export type MemberListItemFragment$data = {
   readonly canDelete: boolean;
@@ -25,6 +26,7 @@ export type MemberListItemFragment$data = {
   };
   readonly role: MembershipRole;
   readonly source: MembershipSource;
+  readonly state: MembershipState;
   readonly " $fragmentType": "MemberListItemFragment";
 };
 export type MemberListItemFragment$key = {
@@ -57,6 +59,13 @@ const node: ReaderFragment = {
       "args": null,
       "kind": "ScalarField",
       "name": "source",
+      "storageKey": null
+    },
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "state",
       "storageKey": null
     },
     {
@@ -141,6 +150,6 @@ const node: ReaderFragment = {
   "abstractKey": null
 };
 
-(node as any).hash = "573655b969ddacac10dc8beb4585a4a1";
+(node as any).hash = "ffa3431077faeeb5e5779975d68c82bb";
 
 export default node;

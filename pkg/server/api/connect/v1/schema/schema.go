@@ -183,6 +183,7 @@ type ComplexityRoot struct {
 		Profile      func(childComplexity int) int
 		Role         func(childComplexity int) int
 		Source       func(childComplexity int) int
+		State        func(childComplexity int) int
 	}
 
 	MembershipConnection struct {
@@ -964,6 +965,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Membership.Source(childComplexity), true
+	case "Membership.state":
+		if e.complexity.Membership.State == nil {
+			break
+		}
+
+		return e.complexity.Membership.State(childComplexity), true
 
 	case "MembershipConnection.edges":
 		if e.complexity.MembershipConnection.Edges == nil {
@@ -2533,6 +2540,13 @@ enum MembershipSource
   SCIM @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipSourceSCIM")
 }
 
+enum MembershipState
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.MembershipState") {
+  ACTIVE @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipStateActive")
+  INACTIVE
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipStateInactive")
+}
+
 type Membership implements Node {
   id: ID!
   createdAt: Datetime!
@@ -2541,6 +2555,7 @@ type Membership implements Node {
   organization: Organization @goField(forceResolver: true)
   role: MembershipRole!
   source: MembershipSource!
+  state: MembershipState!
 
   lastSession: Session @goField(forceResolver: true) @isViewer
 
@@ -5832,6 +5847,35 @@ func (ec *executionContext) fieldContext_Membership_source(_ context.Context, fi
 	return fc, nil
 }
 
+func (ec *executionContext) _Membership_state(ctx context.Context, field graphql.CollectedField, obj *types.Membership) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Membership_state,
+		func(ctx context.Context) (any, error) {
+			return obj.State, nil
+		},
+		nil,
+		ec.marshalNMembershipState2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipState,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Membership_state(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Membership",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type MembershipState does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Membership_lastSession(ctx context.Context, field graphql.CollectedField, obj *types.Membership) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -6092,6 +6136,8 @@ func (ec *executionContext) fieldContext_MembershipEdge_node(_ context.Context, 
 				return ec.fieldContext_Membership_role(ctx, field)
 			case "source":
 				return ec.fieldContext_Membership_source(ctx, field)
+			case "state":
+				return ec.fieldContext_Membership_state(ctx, field)
 			case "lastSession":
 				return ec.fieldContext_Membership_lastSession(ctx, field)
 			case "permission":
@@ -8622,6 +8668,8 @@ func (ec *executionContext) fieldContext_Organization_viewerMembership(_ context
 				return ec.fieldContext_Membership_role(ctx, field)
 			case "source":
 				return ec.fieldContext_Membership_source(ctx, field)
+			case "state":
+				return ec.fieldContext_Membership_state(ctx, field)
 			case "lastSession":
 				return ec.fieldContext_Membership_lastSession(ctx, field)
 			case "permission":
@@ -8777,6 +8825,8 @@ func (ec *executionContext) fieldContext_OrganizationSessionCreated_membership(_
 				return ec.fieldContext_Membership_role(ctx, field)
 			case "source":
 				return ec.fieldContext_Membership_source(ctx, field)
+			case "state":
+				return ec.fieldContext_Membership_state(ctx, field)
 			case "lastSession":
 				return ec.fieldContext_Membership_lastSession(ctx, field)
 			case "permission":
@@ -11175,6 +11225,8 @@ func (ec *executionContext) fieldContext_SCIMEvent_membership(_ context.Context,
 				return ec.fieldContext_Membership_role(ctx, field)
 			case "source":
 				return ec.fieldContext_Membership_source(ctx, field)
+			case "state":
+				return ec.fieldContext_Membership_state(ctx, field)
 			case "lastSession":
 				return ec.fieldContext_Membership_lastSession(ctx, field)
 			case "permission":
@@ -12326,6 +12378,8 @@ func (ec *executionContext) fieldContext_UpdateMembershipPayload_membership(_ co
 				return ec.fieldContext_Membership_role(ctx, field)
 			case "source":
 				return ec.fieldContext_Membership_source(ctx, field)
+			case "state":
+				return ec.fieldContext_Membership_state(ctx, field)
 			case "lastSession":
 				return ec.fieldContext_Membership_lastSession(ctx, field)
 			case "permission":
@@ -16471,6 +16525,11 @@ func (ec *executionContext) _Membership(ctx context.Context, sel ast.SelectionSe
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "state":
+			out.Values[i] = ec._Membership_state(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "lastSession":
 			field := field
 
@@ -20216,6 +20275,34 @@ var (
 		coredata.MembershipSourceManual: "MANUAL",
 		coredata.MembershipSourceSAML:   "SAML",
 		coredata.MembershipSourceSCIM:   "SCIM",
+	}
+)
+
+func (ec *executionContext) unmarshalNMembershipState2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipState(ctx context.Context, v any) (coredata.MembershipState, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNMembershipState2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipState[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNMembershipState2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipState(ctx context.Context, sel ast.SelectionSet, v coredata.MembershipState) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNMembershipState2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipState[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNMembershipState2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipState = map[string]coredata.MembershipState{
+		"ACTIVE":   coredata.MembershipStateActive,
+		"INACTIVE": coredata.MembershipStateInactive,
+	}
+	marshalNMembershipState2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipState = map[coredata.MembershipState]string{
+		coredata.MembershipStateActive:   "ACTIVE",
+		coredata.MembershipStateInactive: "INACTIVE",
 	}
 )
 

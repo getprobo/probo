@@ -25,6 +25,7 @@ const fragment = graphql`
     id
     role
     source
+    state
     profile @required(action: THROW) {
       fullName
     }
@@ -63,6 +64,8 @@ export function MemberListItem(props: {
   const membership = useFragment<MemberListItemFragment$key>(fragment, fKey);
   const { role } = use(CurrentUser);
 
+  const isInactive = membership.state === "INACTIVE";
+
   // Only OWNER can edit OWNER members
   const canEditThisRole = membership.role === "OWNER" ? role === "OWNER" : true;
 
@@ -98,9 +101,17 @@ export function MemberListItem(props: {
 
   return (
     <>
-      <Tr className={clsx(isRemoving && "opacity-60 pointer-events-none")}>
+      <Tr
+        className={clsx(
+          isRemoving && "opacity-60 pointer-events-none",
+          isInactive && "opacity-50"
+        )}
+      >
         <Td>
-          <div className="font-semibold">{membership.profile.fullName}</div>
+          <div className="flex items-center gap-2">
+            <span className="font-semibold">{membership.profile.fullName}</span>
+            {isInactive && <Badge variant="neutral">{__("Inactive")}</Badge>}
+          </div>
         </Td>
         <Td>
           <div className="flex items-center gap-2">
@@ -113,34 +124,36 @@ export function MemberListItem(props: {
         </Td>
         <Td>{new Date(membership.createdAt).toLocaleDateString()}</Td>
         <Td noLink width={160} className="text-end">
-          <div
-            className="flex gap-2 justify-end"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {membership.canUpdate && canEditThisRole && (
-              <Button
-                variant="secondary"
-                onClick={() => setDialogOpen(true)}
-                disabled={dialogOpen}
-                icon={IconPencil}
-                aria-label={__("Edit role")}
-              />
-            )}
-            {isRemoving ? (
-              <Spinner size={16} />
-            ) : (
-              membership.canDelete &&
-              canEditThisRole && (
+          {!isInactive && (
+            <div
+              className="flex gap-2 justify-end"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {membership.canUpdate && canEditThisRole && (
                 <Button
-                  variant="danger"
-                  onClick={handleRemove}
-                  disabled={isRemoving}
-                  icon={IconTrashCan}
-                  aria-label={__("Remove member")}
+                  variant="secondary"
+                  onClick={() => setDialogOpen(true)}
+                  disabled={dialogOpen}
+                  icon={IconPencil}
+                  aria-label={__("Edit role")}
                 />
-              )
-            )}
-          </div>
+              )}
+              {isRemoving ? (
+                <Spinner size={16} />
+              ) : (
+                membership.canDelete &&
+                canEditThisRole && (
+                  <Button
+                    variant="danger"
+                    onClick={handleRemove}
+                    disabled={isRemoving}
+                    icon={IconTrashCan}
+                    aria-label={__("Remove member")}
+                  />
+                )
+              )}
+            </div>
+          )}
         </Td>
       </Tr>
 

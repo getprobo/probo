@@ -367,6 +367,10 @@ func (s SessionService) OpenSAMLChildSessionForOrganization(
 				return fmt.Errorf("cannot load membership: %w", err)
 			}
 
+			if membership.State == coredata.MembershipStateInactive {
+				return NewMembershipInactiveError(membership.ID)
+			}
+
 			tenantID := scope.GetTenantID()
 			childSession = &coredata.Session{
 				ID:              gid.New(tenantID, coredata.SessionEntityType),
@@ -440,6 +444,10 @@ func (s SessionService) AssumeOrganizationSession(
 					return NewMembershipNotFoundError(organizationID)
 				}
 				return fmt.Errorf("cannot load membership: %w", err)
+			}
+
+			if membership.State == coredata.MembershipStateInactive {
+				return NewMembershipInactiveError(membership.ID)
 			}
 
 			samlConfig := &coredata.SAMLConfiguration{}

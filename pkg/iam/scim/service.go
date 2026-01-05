@@ -71,16 +71,19 @@ func (s *Service) ValidateToken(ctx context.Context, token string) (*coredata.SC
 	hashedToken := HashToken(token)
 	config := &coredata.SCIMConfiguration{}
 
-	err := s.pg.WithConn(ctx, func(conn pg.Conn) error {
-		err := config.LoadByHashedToken(ctx, conn, hashedToken)
-		if err != nil {
-			if err == coredata.ErrResourceNotFound {
-				return NewSCIMInvalidTokenError()
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			err := config.LoadByHashedToken(ctx, conn, hashedToken)
+			if err != nil {
+				if err == coredata.ErrResourceNotFound {
+					return NewSCIMInvalidTokenError()
+				}
+				return fmt.Errorf("cannot load SCIM configuration: %w", err)
 			}
-			return fmt.Errorf("cannot load SCIM configuration: %w", err)
-		}
-		return nil
-	})
+			return nil
+		},
+	)
 
 	if err != nil {
 		return nil, err
@@ -89,7 +92,6 @@ func (s *Service) ValidateToken(ctx context.Context, token string) (*coredata.SC
 	return config, nil
 }
 
-// CreateUser creates a new user via SCIM provisioning
 func (s *Service) CreateUser(
 	ctx context.Context,
 	config *coredata.SCIMConfiguration,
@@ -147,6 +149,7 @@ func (s *Service) CreateUser(
 				OrganizationID: config.OrganizationID,
 				Role:           coredata.MembershipRoleViewer,
 				Source:         coredata.MembershipSourceSCIM,
+				State:          coredata.MembershipStateActive,
 				CreatedAt:      now,
 				UpdatedAt:      now,
 			}
@@ -172,8 +175,9 @@ func (s *Service) CreateUser(
 		} else if err != nil {
 			return fmt.Errorf("cannot load membership: %w", err)
 		} else {
-			// Update existing membership source to SCIM
+			// Update existing membership - reactivate if inactive, update source to SCIM
 			membership.Source = coredata.MembershipSourceSCIM
+			membership.State = coredata.MembershipStateActive
 			membership.UpdatedAt = now
 
 			err = membership.Update(ctx, tx, scope)
@@ -189,10 +193,9 @@ func (s *Service) CreateUser(
 		return scim.Resource{}, err
 	}
 
-	return membershipToResource(membership, true), nil
+	return membershipToResource(membership), nil
 }
 
-// GetUser gets a user by membership ID
 func (s *Service) GetUser(
 	ctx context.Context,
 	config *coredata.SCIMConfiguration,
@@ -214,7 +217,6 @@ func (s *Service) GetUser(
 				return fmt.Errorf("cannot load membership: %w", err)
 			}
 
-			// Verify membership belongs to this organization
 			if membership.OrganizationID != config.OrganizationID {
 				return scimerrors.ScimErrorResourceNotFound(membershipID.String())
 			}
@@ -227,7 +229,7 @@ func (s *Service) GetUser(
 		return scim.Resource{}, err
 	}
 
-	return membershipToResource(membership, true), nil
+	return membershipToResource(membership), nil
 }
 
 // ListUsers lists all users in an organization, with optional filter support
@@ -248,26 +250,29 @@ func (s *Service) ListUsers(
 	var memberships coredata.Memberships
 	var totalCount int
 
-	err = s.pg.WithConn(ctx, func(conn pg.Conn) error {
-		var err error
-		totalCount, err = memberships.CountByOrganizationID(ctx, conn, scope, config.OrganizationID, filter)
-		if err != nil {
-			return fmt.Errorf("cannot count memberships: %w", err)
-		}
+	err = s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			var err error
+			totalCount, err = memberships.CountByOrganizationID(ctx, conn, scope, config.OrganizationID, filter)
+			if err != nil {
+				return fmt.Errorf("cannot count memberships: %w", err)
+			}
 
-		orderBy := page.OrderBy[coredata.MembershipOrderField]{
-			Field:     coredata.MembershipOrderFieldCreatedAt,
-			Direction: page.OrderDirectionDesc,
-		}
-		cursor := page.NewCursor(count, nil, page.Head, orderBy)
+			orderBy := page.OrderBy[coredata.MembershipOrderField]{
+				Field:     coredata.MembershipOrderFieldCreatedAt,
+				Direction: page.OrderDirectionDesc,
+			}
+			cursor := page.NewCursor(count, nil, page.Head, orderBy)
 
-		err = memberships.LoadByOrganizationID(ctx, conn, scope, config.OrganizationID, cursor, filter)
-		if err != nil {
-			return fmt.Errorf("cannot load memberships: %w", err)
-		}
+			err = memberships.LoadByOrganizationID(ctx, conn, scope, config.OrganizationID, cursor, filter)
+			if err != nil {
+				return fmt.Errorf("cannot load memberships: %w", err)
+			}
 
-		return nil
-	})
+			return nil
+		},
+	)
 
 	if err != nil {
 		return nil, 0, err
@@ -275,13 +280,12 @@ func (s *Service) ListUsers(
 
 	resources := make([]scim.Resource, 0, len(memberships))
 	for _, m := range memberships {
-		resources = append(resources, membershipToResource(m, true))
+		resources = append(resources, membershipToResource(m))
 	}
 
 	return resources, totalCount, nil
 }
 
-// ReplaceUser replaces a user via SCIM PUT
 func (s *Service) ReplaceUser(
 	ctx context.Context,
 	config *coredata.SCIMConfiguration,
@@ -289,14 +293,13 @@ func (s *Service) ReplaceUser(
 	attributes scim.ResourceAttributes,
 ) (scim.Resource, error) {
 	fullName, active := ParseUserFromReplaceAttributes(attributes)
-	membership, deactivated, err := s.updateUser(ctx, config, membershipID, fullName, active)
+	membership, err := s.updateUser(ctx, config, membershipID, fullName, active)
 	if err != nil {
 		return scim.Resource{}, err
 	}
-	return membershipToResource(membership, !deactivated), nil
+	return membershipToResource(membership), nil
 }
 
-// PatchUser patches a user via SCIM PATCH
 func (s *Service) PatchUser(
 	ctx context.Context,
 	config *coredata.SCIMConfiguration,
@@ -304,11 +307,11 @@ func (s *Service) PatchUser(
 	operations []scim.PatchOperation,
 ) (scim.Resource, error) {
 	fullName, active := ParseUserFromPatchOperations(operations)
-	membership, deactivated, err := s.updateUser(ctx, config, membershipID, fullName, active)
+	membership, err := s.updateUser(ctx, config, membershipID, fullName, active)
 	if err != nil {
 		return scim.Resource{}, err
 	}
-	return membershipToResource(membership, !deactivated), nil
+	return membershipToResource(membership), nil
 }
 
 func (s *Service) updateUser(
@@ -317,12 +320,11 @@ func (s *Service) updateUser(
 	membershipID gid.GID,
 	fullName string,
 	active *bool,
-) (*coredata.Membership, bool, error) {
+) (*coredata.Membership, error) {
 	scope := coredata.NewScopeFromObjectID(config.OrganizationID)
 	now := time.Now()
 
 	var membership *coredata.Membership
-	var deactivated bool
 
 	err := s.pg.WithTx(ctx, func(tx pg.Conn) error {
 		membership = &coredata.Membership{}
@@ -334,35 +336,35 @@ func (s *Service) updateUser(
 			return fmt.Errorf("cannot load membership: %w", err)
 		}
 
-		// Verify membership belongs to this organization
 		if membership.OrganizationID != config.OrganizationID {
 			return scimerrors.ScimErrorResourceNotFound(membershipID.String())
 		}
 
-		// Handle deactivation - Okta sends PATCH with active=false to deprovision users
-		if active != nil && !*active {
-			err = membership.Delete(ctx, tx, scope, membershipID)
-			if err != nil {
-				return fmt.Errorf("cannot delete membership: %w", err)
+		needsUpdate := false
+
+		if active != nil {
+			if *active && membership.State == coredata.MembershipStateInactive {
+				membership.State = coredata.MembershipStateActive
+				needsUpdate = true
+			} else if !*active && membership.State == coredata.MembershipStateActive {
+				membership.State = coredata.MembershipStateInactive
+				needsUpdate = true
 			}
-
-			deactivated = true
-
-			return nil
 		}
 
-		// Update membership source to SCIM if not already
 		if membership.Source != coredata.MembershipSourceSCIM {
 			membership.Source = coredata.MembershipSourceSCIM
-			membership.UpdatedAt = now
+			needsUpdate = true
+		}
 
+		if needsUpdate {
+			membership.UpdatedAt = now
 			err = membership.Update(ctx, tx, scope)
 			if err != nil {
 				return fmt.Errorf("cannot update membership: %w", err)
 			}
 		}
 
-		// Update membership profile
 		profile := &coredata.MembershipProfile{}
 		err = profile.LoadByMembershipID(ctx, tx, scope, membershipID)
 		if err == nil {
@@ -381,13 +383,12 @@ func (s *Service) updateUser(
 	})
 
 	if err != nil {
-		return nil, false, err
+		return nil, err
 	}
 
-	return membership, deactivated, nil
+	return membership, nil
 }
 
-// DeleteUser removes a user's membership from the organization
 func (s *Service) DeleteUser(
 	ctx context.Context,
 	config *coredata.SCIMConfiguration,
@@ -395,31 +396,32 @@ func (s *Service) DeleteUser(
 ) error {
 	scope := coredata.NewScopeFromObjectID(config.OrganizationID)
 
-	return s.pg.WithTx(ctx, func(tx pg.Conn) error {
-		membership := &coredata.Membership{}
-		err := membership.LoadByID(ctx, tx, scope, membershipID)
-		if err != nil {
-			if err == coredata.ErrResourceNotFound {
+	return s.pg.WithTx(
+		ctx,
+		func(tx pg.Conn) error {
+			membership := &coredata.Membership{}
+			err := membership.LoadByID(ctx, tx, scope, membershipID)
+			if err != nil {
+				if err == coredata.ErrResourceNotFound {
+					return scimerrors.ScimErrorResourceNotFound(membershipID.String())
+				}
+				return fmt.Errorf("cannot load membership: %w", err)
+			}
+
+			if membership.OrganizationID != config.OrganizationID {
 				return scimerrors.ScimErrorResourceNotFound(membershipID.String())
 			}
-			return fmt.Errorf("cannot load membership: %w", err)
-		}
 
-		// Verify membership belongs to this organization
-		if membership.OrganizationID != config.OrganizationID {
-			return scimerrors.ScimErrorResourceNotFound(membershipID.String())
-		}
+			err = membership.Delete(ctx, tx, scope, membershipID)
+			if err != nil {
+				return fmt.Errorf("cannot delete membership: %w", err)
+			}
 
-		err = membership.Delete(ctx, tx, scope, membershipID)
-		if err != nil {
-			return fmt.Errorf("cannot delete membership: %w", err)
-		}
-
-		return nil
-	})
+			return nil
+		},
+	)
 }
 
-// LogEvent logs a SCIM event
 func (s *Service) LogEvent(
 	ctx context.Context,
 	config *coredata.SCIMConfiguration,
@@ -439,9 +441,16 @@ func (s *Service) LogEvent(
 
 	event := s.createEvent(config, method, path, mID, ipAddress, statusCode, errorMessage)
 
-	err := s.pg.WithConn(ctx, func(conn pg.Conn) error {
-		return event.Insert(ctx, conn, scope)
-	})
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			err := event.Insert(ctx, conn, scope)
+			if err != nil {
+				return fmt.Errorf("cannot insert SCIM event: %w", err)
+			}
+			return nil
+		},
+	)
 
 	if err != nil {
 		s.logger.ErrorCtx(ctx, "cannot log SCIM event", log.Error(err))
@@ -476,22 +485,21 @@ func (s *Service) createEvent(
 	return event
 }
 
-// ParseUserFromAttributes extracts user data from SCIM create attributes
 func ParseUserFromAttributes(attributes scim.ResourceAttributes) (email string, fullName string) {
 	userName, _ := attributes["userName"].(string)
 	displayName, _ := attributes["displayName"].(string)
 
 	var givenName, familyName string
-	if name, ok := attributes["name"].(map[string]interface{}); ok {
+	if name, ok := attributes["name"].(map[string]any); ok {
 		givenName, _ = name["givenName"].(string)
 		familyName, _ = name["familyName"].(string)
 	}
 
 	// Get email from emails array or use userName
 	email = userName
-	if emails, ok := attributes["emails"].([]interface{}); ok && len(emails) > 0 {
+	if emails, ok := attributes["emails"].([]any); ok && len(emails) > 0 {
 		for _, e := range emails {
-			if emailMap, ok := e.(map[string]interface{}); ok {
+			if emailMap, ok := e.(map[string]any); ok {
 				if primary, _ := emailMap["primary"].(bool); primary {
 					if value, ok := emailMap["value"].(string); ok {
 						email = value
@@ -502,7 +510,7 @@ func ParseUserFromAttributes(attributes scim.ResourceAttributes) (email string, 
 		}
 		// If no primary email found, use the first one
 		if email == userName {
-			if emailMap, ok := emails[0].(map[string]interface{}); ok {
+			if emailMap, ok := emails[0].(map[string]any); ok {
 				if value, ok := emailMap["value"].(string); ok {
 					email = value
 				}
@@ -522,12 +530,11 @@ func ParseUserFromAttributes(attributes scim.ResourceAttributes) (email string, 
 	return email, fullName
 }
 
-// ParseUserFromReplaceAttributes extracts user data from SCIM replace (PUT) attributes
 func ParseUserFromReplaceAttributes(attributes scim.ResourceAttributes) (fullName string, active *bool) {
 	displayName, _ := attributes["displayName"].(string)
 
 	var givenName, familyName string
-	if name, ok := attributes["name"].(map[string]interface{}); ok {
+	if name, ok := attributes["name"].(map[string]any); ok {
 		givenName, _ = name["givenName"].(string)
 		familyName, _ = name["familyName"].(string)
 	}
@@ -545,7 +552,6 @@ func ParseUserFromReplaceAttributes(attributes scim.ResourceAttributes) (fullNam
 	return fullName, &activeVal
 }
 
-// ParseUserFromPatchOperations extracts user data from SCIM patch operations
 func ParseUserFromPatchOperations(operations []scim.PatchOperation) (fullName string, active *bool) {
 	var givenName, familyName string
 
@@ -555,6 +561,29 @@ func ParseUserFromPatchOperations(operations []scim.PatchOperation) (fullName st
 			if op.Path != nil {
 				path = op.Path.String()
 			}
+
+			// Handle empty path with value map (Okta style)
+			// e.g., { "op": "Replace", "value": { "active": false } }
+			if path == "" {
+				if valueMap, ok := op.Value.(map[string]any); ok {
+					if a, ok := valueMap["active"].(bool); ok {
+						active = &a
+					}
+					if name, ok := valueMap["displayName"].(string); ok {
+						fullName = name
+					}
+					if nameMap, ok := valueMap["name"].(map[string]any); ok {
+						if gn, ok := nameMap["givenName"].(string); ok {
+							givenName = gn
+						}
+						if fn, ok := nameMap["familyName"].(string); ok {
+							familyName = fn
+						}
+					}
+				}
+				continue
+			}
+
 			switch strings.ToLower(path) {
 			case "active":
 				if a, ok := op.Value.(bool); ok {
@@ -584,14 +613,14 @@ func ParseUserFromPatchOperations(operations []scim.PatchOperation) (fullName st
 	return fullName, active
 }
 
-func membershipToResource(m *coredata.Membership, active bool) scim.Resource {
+func membershipToResource(m *coredata.Membership) scim.Resource {
 	return scim.Resource{
 		ID:         m.ID.String(),
 		ExternalID: optional.NewString(m.ID.String()),
 		Attributes: scim.ResourceAttributes{
 			"userName":    m.EmailAddress.String(),
 			"displayName": m.FullName,
-			"active":      active,
+			"active":      m.State == coredata.MembershipStateActive,
 			"name": map[string]any{
 				"formatted": m.FullName,
 			},

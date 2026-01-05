@@ -403,7 +403,7 @@ func (s *OrganizationService) InviteMember(
 					return fmt.Errorf("cannot load membership: %w", err)
 				}
 
-				if membership.ID != gid.Nil {
+				if membership.ID != gid.Nil && membership.State == coredata.MembershipStateActive {
 					return NewMembershipAlreadyExistsError(identity.ID, organizationID)
 				}
 			}
@@ -493,6 +493,7 @@ func (s *OrganizationService) CreateOrganization(
 			OrganizationID: organizationID,
 			Role:           coredata.MembershipRoleOwner,
 			Source:         coredata.MembershipSourceManual,
+			State:          coredata.MembershipStateActive,
 			CreatedAt:      now,
 			UpdatedAt:      now,
 		}

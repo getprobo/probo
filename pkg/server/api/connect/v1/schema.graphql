@@ -254,6 +254,13 @@ enum MembershipSource
   SCIM @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipSourceSCIM")
 }
 
+enum MembershipState
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.MembershipState") {
+  ACTIVE @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipStateActive")
+  INACTIVE
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipStateInactive")
+}
+
 type Membership implements Node {
   id: ID!
   createdAt: Datetime!
@@ -262,6 +269,7 @@ type Membership implements Node {
   organization: Organization @goField(forceResolver: true)
   role: MembershipRole!
   source: MembershipSource!
+  state: MembershipState!
 
   lastSession: Session @goField(forceResolver: true) @isViewer
 
