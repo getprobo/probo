@@ -94,7 +94,6 @@ func (s *Service) CreateUser(
 	ctx context.Context,
 	config *coredata.SCIMConfiguration,
 	attributes scim.ResourceAttributes,
-	ipAddress net.IP,
 ) (scim.Resource, error) {
 	email, fullName := ParseUserFromAttributes(attributes)
 	if email == "" {
@@ -183,13 +182,6 @@ func (s *Service) CreateUser(
 			}
 		}
 
-		// Log SCIM event
-		event := s.createEvent(config, "POST", "/Users", membership.ID, ipAddress, 201, nil)
-		err = event.Insert(ctx, tx, scope)
-		if err != nil {
-			s.logger.ErrorCtx(ctx, "cannot log SCIM event", log.Error(err))
-		}
-
 		return nil
 	})
 
@@ -205,7 +197,6 @@ func (s *Service) GetUser(
 	ctx context.Context,
 	config *coredata.SCIMConfiguration,
 	membershipID gid.GID,
-	ipAddress net.IP,
 ) (scim.Resource, error) {
 	scope := coredata.NewScopeFromObjectID(config.OrganizationID)
 
@@ -246,7 +237,6 @@ func (s *Service) ListUsers(
 	filterExpr scimfilter.Expression,
 	startIndex int,
 	count int,
-	ipAddress net.IP,
 ) ([]scim.Resource, int, error) {
 	filter, err := ParseUserFilter(filterExpr)
 	if err != nil {
@@ -297,10 +287,9 @@ func (s *Service) ReplaceUser(
 	config *coredata.SCIMConfiguration,
 	membershipID gid.GID,
 	attributes scim.ResourceAttributes,
-	ipAddress net.IP,
 ) (scim.Resource, error) {
 	fullName, active := ParseUserFromReplaceAttributes(attributes)
-	membership, deactivated, err := s.updateUser(ctx, config, membershipID, fullName, active, "PUT", ipAddress)
+	membership, deactivated, err := s.updateUser(ctx, config, membershipID, fullName, active)
 	if err != nil {
 		return scim.Resource{}, err
 	}
@@ -313,10 +302,9 @@ func (s *Service) PatchUser(
 	config *coredata.SCIMConfiguration,
 	membershipID gid.GID,
 	operations []scim.PatchOperation,
-	ipAddress net.IP,
 ) (scim.Resource, error) {
 	fullName, active := ParseUserFromPatchOperations(operations)
-	membership, deactivated, err := s.updateUser(ctx, config, membershipID, fullName, active, "PATCH", ipAddress)
+	membership, deactivated, err := s.updateUser(ctx, config, membershipID, fullName, active)
 	if err != nil {
 		return scim.Resource{}, err
 	}
@@ -329,8 +317,6 @@ func (s *Service) updateUser(
 	membershipID gid.GID,
 	fullName string,
 	active *bool,
-	method string,
-	ipAddress net.IP,
 ) (*coredata.Membership, bool, error) {
 	scope := coredata.NewScopeFromObjectID(config.OrganizationID)
 	now := time.Now()
@@ -362,13 +348,6 @@ func (s *Service) updateUser(
 
 			deactivated = true
 
-			// Log SCIM event for deactivation
-			event := s.createEvent(config, method, fmt.Sprintf("/Users/%s", membershipID), membershipID, ipAddress, 200, nil)
-			err = event.Insert(ctx, tx, scope)
-			if err != nil {
-				s.logger.ErrorCtx(ctx, "cannot log SCIM event", log.Error(err))
-			}
-
 			return nil
 		}
 
@@ -398,13 +377,6 @@ func (s *Service) updateUser(
 			}
 		}
 
-		// Log SCIM event
-		event := s.createEvent(config, method, fmt.Sprintf("/Users/%s", membershipID), membership.ID, ipAddress, 200, nil)
-		err = event.Insert(ctx, tx, scope)
-		if err != nil {
-			s.logger.ErrorCtx(ctx, "cannot log SCIM event", log.Error(err))
-		}
-
 		return nil
 	})
 
@@ -420,7 +392,6 @@ func (s *Service) DeleteUser(
 	ctx context.Context,
 	config *coredata.SCIMConfiguration,
 	membershipID gid.GID,
-	ipAddress net.IP,
 ) error {
 	scope := coredata.NewScopeFromObjectID(config.OrganizationID)
 
@@ -442,13 +413,6 @@ func (s *Service) DeleteUser(
 		err = membership.Delete(ctx, tx, scope, membershipID)
 		if err != nil {
 			return fmt.Errorf("cannot delete membership: %w", err)
-		}
-
-		// Log SCIM event
-		event := s.createEvent(config, "DELETE", fmt.Sprintf("/Users/%s", membershipID), membershipID, ipAddress, 204, nil)
-		err = event.Insert(ctx, tx, scope)
-		if err != nil {
-			s.logger.ErrorCtx(ctx, "cannot log SCIM event", log.Error(err))
 		}
 
 		return nil

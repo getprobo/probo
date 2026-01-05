@@ -50,16 +50,13 @@ export function SCIMEventList(props: { fKey: SCIMEventListFragment$key }) {
           <Th>{__("Time")}</Th>
           <Th>{__("Method")}</Th>
           <Th>{__("Path")}</Th>
-          <Th>{__("Status")}</Th>
-          <Th>{__("User")}</Th>
-          <Th>{__("IP Address")}</Th>
-          <Th>{__("Error")}</Th>
+          <Th>{__("Result")}</Th>
         </Tr>
       </Thead>
       <Tbody>
         {eventsPagination.data.events.edges.length === 0 ? (
           <Tr>
-            <Td colSpan={7} className="text-center text-txt-secondary">
+            <Td colSpan={4} className="text-center text-txt-secondary">
               {__("No SCIM events recorded yet.")}
             </Td>
           </Tr>
