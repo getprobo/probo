@@ -174,18 +174,7 @@ func (h *scimResourceHandler) GetAll(r *http.Request, params scim.ListRequestPar
 		return scim.Page{}, scimerrors.ScimErrorBadRequest(err.Error())
 	}
 
-	// Parse SCIM filter AST into our filter type
-	filter, err := scimservice.ParseUserFilter(params.FilterValidator.GetFilter())
-	if err != nil {
-		var scimErr scimerrors.ScimError
-		if errors.As(err, &scimErr) {
-			return scim.Page{}, err
-		}
-		h.handler.logger.ErrorCtx(ctx, "cannot parse filter", log.Error(err))
-		return scim.Page{}, scimerrors.ScimErrorInternal
-	}
-
-	resources, totalCount, err := h.handler.iam.SCIMService.ListUsers(ctx, config, filter, params.StartIndex, params.Count, getIPAddress(r))
+	resources, totalCount, err := h.handler.iam.SCIMService.ListUsers(ctx, config, params.FilterValidator.GetFilter(), params.StartIndex, params.Count, getIPAddress(r))
 	if err != nil {
 		var scimErr scimerrors.ScimError
 		if errors.As(err, &scimErr) {

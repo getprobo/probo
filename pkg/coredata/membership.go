@@ -593,6 +593,7 @@ func (m *Memberships) LoadByOrganizationID(
 	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[MembershipOrderField],
+	filter *MembershipFilter,
 ) error {
 	query := `
 WITH membership_with_profile AS (
@@ -615,6 +616,7 @@ WITH membership_with_profile AS (
     WHERE
         m.organization_id = @organization_id
         AND m.%s
+        AND %s
 )
 SELECT
     id,
@@ -632,12 +634,13 @@ WHERE
     %s
 `
 
-	query = fmt.Sprintf(query, scope.SQLFragment(), cursor.SQLFragment())
+	query = fmt.Sprintf(query, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"organization_id": organizationID,
 	}
 	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, query, args)
@@ -659,21 +662,26 @@ func (m *Memberships) CountByOrganizationID(
 	conn pg.Conn,
 	scope Scoper,
 	organizationID gid.GID,
+	filter *MembershipFilter,
 ) (int, error) {
 	query := `
 SELECT
     COUNT(*)
 FROM
-    iam_memberships
+    iam_memberships m
+JOIN
+    identities i ON m.identity_id = i.id
 WHERE
-    organization_id = @organization_id
+    m.organization_id = @organization_id
+    AND m.%s
     AND %s
 `
-	query = fmt.Sprintf(query, scope.SQLFragment())
+	query = fmt.Sprintf(query, scope.SQLFragment(), filter.SQLFragment())
 	args := pgx.StrictNamedArgs{
 		"organization_id": organizationID,
 	}
 	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
 	row := conn.QueryRow(ctx, query, args)
 	var count int
 	if err := row.Scan(&count); err != nil {
