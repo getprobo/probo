@@ -23,6 +23,7 @@ import (
 	"github.com/elimity-com/scim"
 	scimerrors "github.com/elimity-com/scim/errors"
 	"github.com/elimity-com/scim/optional"
+	scimfilter "github.com/scim2/filter-parser/v2"
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/bearertoken"
@@ -222,11 +223,15 @@ func (h *scimResourceHandler) GetAll(r *http.Request, params scim.ListRequestPar
 		handler:   h,
 	}
 
-	if err := params.FilterValidator.Validate(); err != nil {
-		return scim.Page{}, rc.logAndWrapError(scimerrors.ScimErrorBadRequest(err.Error()), "invalid filter")
+	var filterExpr scimfilter.Expression
+	if params.FilterValidator != nil {
+		if err := params.FilterValidator.Validate(); err != nil {
+			return scim.Page{}, rc.logAndWrapError(scimerrors.ScimErrorBadRequest(err.Error()), "invalid filter")
+		}
+		filterExpr = params.FilterValidator.GetFilter()
 	}
 
-	resources, totalCount, err := h.handler.iam.SCIMService.ListUsers(rc.ctx, rc.config, params.FilterValidator.GetFilter(), params.StartIndex, params.Count)
+	resources, totalCount, err := h.handler.iam.SCIMService.ListUsers(rc.ctx, rc.config, filterExpr, params.StartIndex, params.Count)
 	if err != nil {
 		return scim.Page{}, rc.logAndWrapError(err, "cannot list users")
 	}
