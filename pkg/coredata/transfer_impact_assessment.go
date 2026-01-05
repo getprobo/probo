@@ -63,6 +63,7 @@ func (tia *TransferImpactAssessment) AuthorizationAttributes(ctx context.Context
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrResourceNotFound
 		}
+
 		return nil, fmt.Errorf("cannot query transfer impact assessment authorization attributes: %w", err)
 	}
 
