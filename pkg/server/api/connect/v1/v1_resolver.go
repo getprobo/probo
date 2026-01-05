@@ -852,10 +852,14 @@ func (r *mutationResolver) UpdateOrganization(ctx context.Context, input types.U
 
 	return &types.UpdateOrganizationPayload{
 		Organization: &types.Organization{
-			ID:        organization.ID,
-			Name:      organization.Name,
-			CreatedAt: organization.CreatedAt,
-			UpdatedAt: organization.UpdatedAt,
+			ID:                 organization.ID,
+			Name:               organization.Name,
+			Description:        organization.Description,
+			WebsiteURL:         organization.WebsiteURL,
+			Email:              organization.Email,
+			HeadquarterAddress: organization.HeadquarterAddress,
+			CreatedAt:          organization.CreatedAt,
+			UpdatedAt:          organization.UpdatedAt,
 		},
 	}, nil
 }
