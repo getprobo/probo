@@ -41,8 +41,6 @@ import {
 } from "@probo/helpers";
 import z from "zod";
 import type { RightsRequestGraphNodeQuery } from "/__generated__/core/RightsRequestGraphNodeQuery.graphql";
-import { use } from "react";
-import { PermissionsContext } from "/providers/PermissionsContext";
 
 const updateRequestSchema = z.object({
   requestType: z.enum(["ACCESS", "DELETION", "PORTABILITY"]),
@@ -67,7 +65,6 @@ export default function RightsRequestDetailsPage(props: Props) {
   const { __ } = useTranslate();
   const { toast } = useToast();
   const organizationId = useOrganizationId();
-  const { isAuthorized } = use(PermissionsContext);
 
   const updateRequest = useUpdateRightsRequest();
 
@@ -140,7 +137,7 @@ export default function RightsRequestDetailsPage(props: Props) {
             { label: request.dataSubject || request.id! },
           ]}
         />
-        {isAuthorized("RightsRequest", "deleteRightsRequest") && (
+        {request.canDelete && (
           <ActionDropdown>
             <DropdownItem onClick={deleteRequest} variant="danger">
               {__("Delete")}
@@ -269,7 +266,7 @@ export default function RightsRequestDetailsPage(props: Props) {
             </div>
 
             <div className="flex justify-end pt-4">
-              {isAuthorized("RightsRequest", "updateRightsRequest") && (
+              {request.canUpdate && (
                 <Button
                   type="submit"
                   variant="primary"

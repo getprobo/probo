@@ -45,8 +45,6 @@ import type {
   RightsRequestsPageFragment$key,
   RightsRequestsPageFragment$data,
 } from "/__generated__/core/RightsRequestsPageFragment.graphql";
-import { use } from "react";
-import { PermissionsContext } from "/providers/PermissionsContext";
 import type { RightsRequestGraphListQuery } from "/__generated__/core/RightsRequestGraphListQuery.graphql";
 
 interface RightsRequestsPageProps {
@@ -77,6 +75,8 @@ const rightsRequestsPageFragment = graphql`
           actionTaken
           createdAt
           updatedAt
+          canUpdate: permission(action: "core:rights-request:update")
+          canDelete: permission(action: "core:rights-request:delete")
         }
       }
       pageInfo {
@@ -92,11 +92,13 @@ export default function RightsRequestsPage({
 }: RightsRequestsPageProps) {
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
-  const { isAuthorized } = use(PermissionsContext);
 
   usePageTitle(__("Rights Requests"));
 
-  const organization = usePreloadedQuery(rightsRequestsQuery, queryRef);
+  const organization = usePreloadedQuery<RightsRequestGraphListQuery>(
+    rightsRequestsQuery,
+    queryRef,
+  );
 
   const { data, loadNext, hasNext, isLoadingNext } = usePaginationFragment<
     RightsRequestGraphListQuery,
@@ -110,8 +112,8 @@ export default function RightsRequestsPage({
   const requests = data?.rightsRequests?.edges?.map((edge) => edge.node) ?? [];
 
   const hasAnyAction =
-    isAuthorized("RightsRequest", "updateRightsRequest") ||
-    isAuthorized("RightsRequest", "deleteRightsRequest");
+    requests.some(({ canUpdate }) => canUpdate) ||
+    requests.some(({ canDelete }) => canDelete);
 
   return (
     <div className="space-y-6">
@@ -119,7 +121,7 @@ export default function RightsRequestsPage({
         title={__("Rights Requests")}
         description={__("Manage data subject rights requests.")}
       >
-        {isAuthorized("Organization", "createRightsRequest") && (
+        {organization.node.canCreateRightsRequest && (
           <CreateRightsRequestDialog
             organizationId={organizationId}
             connectionId={connectionId}
@@ -197,7 +199,6 @@ function RequestRow({
   const { __ } = useTranslate();
   const [deleteRequest] = useMutation(deleteRightsRequestMutation);
   const confirm = useConfirm();
-  const { isAuthorized } = use(PermissionsContext);
 
   const handleDelete = () => {
     confirm(
@@ -248,7 +249,7 @@ function RequestRow({
       {hasAnyAction && (
         <Td noLink width={50} className="text-end">
           <ActionDropdown>
-            {isAuthorized("RightsRequest", "deleteRightsRequest") && (
+            {request.canDelete && (
               <DropdownItem
                 icon={IconTrashCan}
                 variant="danger"

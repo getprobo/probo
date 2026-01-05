@@ -6005,6 +6005,11 @@ func (r *rightsRequestResolver) Organization(ctx context.Context, obj *types.Rig
 	return types.NewOrganization(organization), nil
 }
 
+// Permission is the resolver for the permission field.
+func (r *rightsRequestResolver) Permission(ctx context.Context, obj *types.RightsRequest, action string) (bool, error) {
+	panic(fmt.Errorf("not implemented: Permission - permission"))
+}
+
 // TotalCount is the resolver for the totalCount field.
 func (r *rightsRequestConnectionResolver) TotalCount(ctx context.Context, obj *types.RightsRequestConnection) (int, error) {
 	r.MustAuthorize(ctx, obj.ParentID, probo.ActionRightsRequesList)

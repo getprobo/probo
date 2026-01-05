@@ -2236,6 +2236,8 @@ type RightsRequest implements Node {
   actionTaken: String
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type ProcessingActivity implements Node {

@@ -1552,6 +1552,7 @@ type RightsRequest struct {
 	ActionTaken  *string                     `json:"actionTaken,omitempty"`
 	CreatedAt    time.Time                   `json:"createdAt"`
 	UpdatedAt    time.Time                   `json:"updatedAt"`
+	Permission   bool                        `json:"permission"`
 }
 
 func (RightsRequest) IsNode()             {}
