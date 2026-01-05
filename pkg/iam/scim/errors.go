@@ -89,3 +89,11 @@ func (e *ErrSCIMUserAlreadyExists) Error() string {
 func NewSCIMUserAlreadyExistsError(email string) *ErrSCIMUserAlreadyExists {
 	return &ErrSCIMUserAlreadyExists{Email: email}
 }
+
+type ErrUnsupportedFilter struct {
+	Reason string
+}
+
+func (e *ErrUnsupportedFilter) Error() string {
+	return fmt.Sprintf("unsupported filter: %s", e.Reason)
+}
