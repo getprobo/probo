@@ -16,9 +16,8 @@ const SCIMEventListFragment = graphql`
     last: { type: "Int", defaultValue: null }
   ) {
     events(first: $first, after: $after, last: $last, before: $before)
-      @connection(key: "SCIMEventListFragment_events")
-      @required(action: THROW) {
-      edges @required(action: THROW) {
+      @connection(key: "SCIMEventListFragment_events") {
+      edges {
         node {
           id
           ...SCIMEventListItemFragment
@@ -54,7 +53,8 @@ export function SCIMEventList(props: { fKey: SCIMEventListFragment$key }) {
         </Tr>
       </Thead>
       <Tbody>
-        {eventsPagination.data.events.edges.length === 0 ? (
+        {!eventsPagination.data.events?.edges ||
+        eventsPagination.data.events.edges.length === 0 ? (
           <Tr>
             <Td colSpan={4} className="text-center text-txt-secondary">
               {__("No SCIM events recorded yet.")}
