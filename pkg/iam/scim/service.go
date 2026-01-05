@@ -51,13 +51,11 @@ func NewService(
 	}
 }
 
-// HashToken creates a FIPS 140 compliant SHA-256 hash of the token
 func HashToken(token string) []byte {
 	hash := sha256.Sum256([]byte(token))
 	return hash[:]
 }
 
-// GenerateToken creates a cryptographically secure random token
 func GenerateToken() (string, error) {
 	bytes := make([]byte, 32)
 	if _, err := rand.Read(bytes); err != nil {
@@ -592,7 +590,6 @@ func ParseUserFromAttributes(attributes scim.ResourceAttributes) *User {
 		Emails: []Email{
 			{
 				Value:   email,
-				Type:    "work",
 				Primary: true,
 			},
 		},
