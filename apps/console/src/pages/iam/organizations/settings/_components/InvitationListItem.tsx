@@ -15,6 +15,8 @@ import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { sprintf } from "@probo/helpers";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import type { InvitationListItemFragment$key } from "/__generated__/iam/InvitationListItemFragment.graphql";
+import { invitationCountFragment } from "../MembersPage";
+import type { MembersPage_invitationsTotalCountFragment$key } from "/__generated__/iam/MembersPage_invitationsTotalCountFragment.graphql";
 
 const fragment = graphql`
   fragment InvitationListItemFragment on Invitation {
@@ -44,9 +46,10 @@ const deleteInvitationMutation = graphql`
 export function InvitationListItem(props: {
   connectionId: string;
   fKey: InvitationListItemFragment$key;
+  totalCountFKey: MembersPage_invitationsTotalCountFragment$key;
   onRefetch: () => void;
 }) {
-  const { connectionId, fKey } = props;
+  const { connectionId, fKey, totalCountFKey } = props;
 
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
@@ -75,6 +78,17 @@ export function InvitationListItem(props: {
               invitationId: invitation.id,
             },
             connections: [connectionId],
+          },
+          updater: (store) => {
+            const { updatableData } =
+              store.readUpdatableFragment<MembersPage_invitationsTotalCountFragment$key>(
+                invitationCountFragment,
+                totalCountFKey,
+              );
+
+            if (typeof updatableData.totalCount === "number") {
+              updatableData.totalCount -= 1;
+            }
           },
         });
       },

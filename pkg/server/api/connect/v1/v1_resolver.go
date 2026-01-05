@@ -1225,10 +1225,13 @@ func (r *organizationResolver) Invitations(ctx context.Context, obj *types.Organ
 		return nil, nil
 	}
 
+	filters := coredata.NewInvitationFilter(nil)
+
 	if gqlutils.OnlyTotalCountSelected(ctx) {
 		return &types.InvitationConnection{
 			Resolver: r,
 			ParentID: obj.ID,
+			Filters:  filters,
 		}, nil
 	}
 
@@ -1243,7 +1246,6 @@ func (r *organizationResolver) Invitations(ctx context.Context, obj *types.Organ
 		}
 	}
 
-	filters := coredata.NewInvitationFilter(nil)
 	if status != nil {
 		filters = coredata.NewInvitationFilter([]coredata.InvitationStatus{*status})
 	}

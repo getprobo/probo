@@ -11,22 +11,16 @@ import {
   useDialogRef,
 } from "@probo/ui";
 import { Controller } from "react-hook-form";
-import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 import z from "zod";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { useOrganizationId } from "/hooks/useOrganizationId";
-import type { PropsWithChildren } from "react";
-import type { InviteUserDialog_currentRoleFragment$key } from "/__generated__/iam/InviteUserDialog_currentRoleFragment.graphql";
-
-const currentRoleFragment = graphql`
-  fragment InviteUserDialog_currentRoleFragment on Organization {
-    viewerMembership @required(action: THROW) {
-      role
-    }
-  }
-`;
+import { use, type PropsWithChildren } from "react";
+import { CurrentUser } from "/providers/CurrentUser";
+import type { InviteUserDialogMutation } from "/__generated__/iam/InviteUserDialogMutation.graphql";
+import { invitationCountFragment } from "../MembersPage";
+import type { MembersPage_invitationsTotalCountFragment$key } from "/__generated__/iam/MembersPage_invitationsTotalCountFragment.graphql";
 
 const inviteMutation = graphql`
   mutation InviteUserDialogMutation(
@@ -50,37 +44,41 @@ const inviteMutation = graphql`
   }
 `;
 
+// const totalCountFragment = graphql`
+//   fragment InviteUserDialog_totalCountFragment on InvitationConnection
+//   @updatable {
+//     totalCount
+//   }
+// `;
+
 const schema = z.object({
   email: z.string().email(),
   fullName: z.string(),
   role: z
-    .enum(["OWNER", "ADMIN", "FULL", "VIEWER", "AUDITOR", "EMPLOYEE"])
+    .enum(["OWNER", "ADMIN", "VIEWER", "AUDITOR", "EMPLOYEE"])
     .default("VIEWER"),
 });
 
 type InviteUserDialogProps = PropsWithChildren<{
   connectionId: string;
-  viewerMembershipFKey: InviteUserDialog_currentRoleFragment$key;
+  fKey: MembersPage_invitationsTotalCountFragment$key;
 }>;
 
 export function InviteUserDialog(props: InviteUserDialogProps) {
-  const { children, connectionId, viewerMembershipFKey } = props;
+  const { children, connectionId, fKey } = props;
 
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
   const dialogRef = useDialogRef();
 
-  const { viewerMembership } =
-    useFragment<InviteUserDialog_currentRoleFragment$key>(
-      currentRoleFragment,
-      viewerMembershipFKey,
-    );
-  const [inviteUser, isInviting] = useMutationWithToasts(inviteMutation, {
-    successMessage: __("Invitation sent successfully"),
-    errorMessage: __("Failed to send invitation"),
-  });
+  const { role } = use(CurrentUser);
+  const [inviteUser, isInviting] =
+    useMutationWithToasts<InviteUserDialogMutation>(inviteMutation, {
+      successMessage: __("Invitation sent successfully"),
+      errorMessage: __("Failed to send invitation"),
+    });
 
-  const assignableRoles = getAssignableRoles(viewerMembership.role);
+  const assignableRoles = getAssignableRoles(role);
 
   const { register, handleSubmit, formState, reset, control } =
     useFormWithSchema(schema, {
@@ -101,6 +99,17 @@ export function InviteUserDialog(props: InviteUserDialogProps) {
       onCompleted: () => {
         reset();
         dialogRef.current?.close();
+      },
+      updater: (store) => {
+        const { updatableData } =
+          store.readUpdatableFragment<MembersPage_invitationsTotalCountFragment$key>(
+            invitationCountFragment,
+            fKey,
+          );
+
+        if (typeof updatableData.totalCount === "number") {
+          updatableData.totalCount += 1;
+        }
       },
     });
   });

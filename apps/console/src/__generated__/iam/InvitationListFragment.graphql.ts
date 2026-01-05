@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<d415b10cc562b5554452cc3ed15bc31e>>
+ * @generated SignedSource<<26877e6a0dc423e87108c5b2ea1b11a3>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -20,7 +20,6 @@ export type InvitationListFragment$data = {
         readonly " $fragmentSpreads": FragmentRefs<"InvitationListItemFragment">;
       };
     }>;
-    readonly totalCount: number | null | undefined;
   };
   readonly " $fragmentType": "InvitationListFragment";
 };
@@ -123,13 +122,6 @@ return {
         "name": "__InvitationListFragment_invitations_connection",
         "plural": false,
         "selections": [
-          {
-            "alias": null,
-            "args": null,
-            "kind": "ScalarField",
-            "name": "totalCount",
-            "storageKey": null
-          },
           {
             "kind": "RequiredField",
             "field": {
@@ -239,6 +231,6 @@ return {
 };
 })();
 
-(node as any).hash = "d6f8750bb89b233418c3a66669c4aa23";
+(node as any).hash = "224d655216572cb18f193cdfcae64172";
 
 export default node;
