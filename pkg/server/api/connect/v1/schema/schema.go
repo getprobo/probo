@@ -2693,6 +2693,14 @@ enum ReauthenticationReason {
 
 enum MembershipOrderField
   @goModel(model: "go.probo.inc/probo/pkg/coredata.MembershipOrderField") {
+  FULL_NAME
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.MembershipOrderFieldFullName"
+    )
+  EMAIL_ADDRESS
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.MembershipOrderFieldEmailAddress"
+    )
   ROLE
     @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipOrderFieldRole")
   CREATED_AT
@@ -2725,6 +2733,10 @@ type MembershipEdge {
 
 enum InvitationOrderField
   @goModel(model: "go.probo.inc/probo/pkg/coredata.InvitationOrderField") {
+  FULL_NAME
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.InvitationOrderFieldFullName"
+    )
   EMAIL
     @goEnum(value: "go.probo.inc/probo/pkg/coredata.InvitationOrderFieldEmail")
   ROLE
@@ -19995,6 +20007,7 @@ func (ec *executionContext) marshalNInvitationOrderField2goᚗproboᚗincᚋprob
 
 var (
 	unmarshalNInvitationOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐInvitationOrderField = map[string]coredata.InvitationOrderField{
+		"FULL_NAME":   coredata.InvitationOrderFieldFullName,
 		"EMAIL":       coredata.InvitationOrderFieldEmail,
 		"ROLE":        coredata.InvitationOrderFieldRole,
 		"CREATED_AT":  coredata.InvitationOrderFieldCreatedAt,
@@ -20002,6 +20015,7 @@ var (
 		"ACCEPTED_AT": coredata.InvitationOrderFieldAcceptedAt,
 	}
 	marshalNInvitationOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐInvitationOrderField = map[coredata.InvitationOrderField]string{
+		coredata.InvitationOrderFieldFullName:   "FULL_NAME",
 		coredata.InvitationOrderFieldEmail:      "EMAIL",
 		coredata.InvitationOrderFieldRole:       "ROLE",
 		coredata.InvitationOrderFieldCreatedAt:  "CREATED_AT",
@@ -20128,12 +20142,16 @@ func (ec *executionContext) marshalNMembershipOrderField2goᚗproboᚗincᚋprob
 
 var (
 	unmarshalNMembershipOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipOrderField = map[string]coredata.MembershipOrderField{
-		"ROLE":       coredata.MembershipOrderFieldRole,
-		"CREATED_AT": coredata.MembershipOrderFieldCreatedAt,
+		"FULL_NAME":     coredata.MembershipOrderFieldFullName,
+		"EMAIL_ADDRESS": coredata.MembershipOrderFieldEmailAddress,
+		"ROLE":          coredata.MembershipOrderFieldRole,
+		"CREATED_AT":    coredata.MembershipOrderFieldCreatedAt,
 	}
 	marshalNMembershipOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐMembershipOrderField = map[coredata.MembershipOrderField]string{
-		coredata.MembershipOrderFieldRole:      "ROLE",
-		coredata.MembershipOrderFieldCreatedAt: "CREATED_AT",
+		coredata.MembershipOrderFieldFullName:     "FULL_NAME",
+		coredata.MembershipOrderFieldEmailAddress: "EMAIL_ADDRESS",
+		coredata.MembershipOrderFieldRole:         "ROLE",
+		coredata.MembershipOrderFieldCreatedAt:    "CREATED_AT",
 	}
 )
 

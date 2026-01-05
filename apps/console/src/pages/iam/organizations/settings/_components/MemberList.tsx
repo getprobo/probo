@@ -5,6 +5,7 @@ import { SortableTable, SortableTh } from "/components/SortableTable";
 import type { MemberListFragment_RefetchQuery } from "/__generated__/iam/MemberListFragment_RefetchQuery.graphql";
 import { MemberListItem } from "./MemberListItem";
 import type { MemberListFragment$key } from "/__generated__/iam/MemberListFragment.graphql";
+import type { ComponentProps } from "react";
 
 const fragment = graphql`
   fragment MemberListFragment on Organization
@@ -55,19 +56,11 @@ export function MemberList(props: { fKey: MemberListFragment$key }) {
   return (
     <SortableTable
       {...membersPagination}
-      refetch={({ order }: { order: { direction: string; field: string } }) => {
-        membersPagination.refetch({
-          order: {
-            direction: order.direction as "ASC" | "DESC",
-            field: order.field as
-              | "CREATED_AT"
-              // FIXME: add those back
-              // | "FULL_NAME"
-              // | "EMAIL_ADDRESS"
-              | "ROLE",
-          },
-        });
-      }}
+      refetch={
+        membersPagination.refetch as ComponentProps<
+          typeof SortableTable
+        >["refetch"]
+      }
       pageSize={20}
     >
       <Thead>

@@ -1221,6 +1221,12 @@ func (r *organizationResolver) Invitations(ctx context.Context, obj *types.Organ
 		Field:     coredata.InvitationOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.InvitationOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
 
 	filters := coredata.NewInvitationFilter(nil)
 	if status != nil {
