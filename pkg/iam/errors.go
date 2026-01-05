@@ -147,6 +147,18 @@ func (e ErrMembershipManagedBySCIM) Error() string {
 	return fmt.Sprintf("membership %q is managed by SCIM and cannot be deleted manually", e.MembershipID)
 }
 
+type ErrLastActiveOwner struct {
+	MembershipID gid.GID
+}
+
+func NewLastActiveOwnerError(membershipID gid.GID) error {
+	return &ErrLastActiveOwner{MembershipID: membershipID}
+}
+
+func (e ErrLastActiveOwner) Error() string {
+	return fmt.Sprintf("cannot remove membership %q: last active owner of the organization", e.MembershipID)
+}
+
 type ErrOrganizationNotFound struct{ OrganizationID gid.GID }
 
 func NewOrganizationNotFoundError(organizationID gid.GID) error {

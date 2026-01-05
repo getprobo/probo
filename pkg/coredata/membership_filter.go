@@ -21,6 +21,8 @@ import (
 
 type MembershipFilter struct {
 	email *mail.Addr
+	role  *MembershipRole
+	state *MembershipState
 }
 
 func NewMembershipFilter() *MembershipFilter {
@@ -36,9 +38,29 @@ func (f *MembershipFilter) Email() *mail.Addr {
 	return f.email
 }
 
+func (f *MembershipFilter) WithRole(role MembershipRole) *MembershipFilter {
+	f.role = &role
+	return f
+}
+
+func (f *MembershipFilter) Role() *MembershipRole {
+	return f.role
+}
+
+func (f *MembershipFilter) WithState(state MembershipState) *MembershipFilter {
+	f.state = &state
+	return f
+}
+
+func (f *MembershipFilter) State() *MembershipState {
+	return f.state
+}
+
 func (f *MembershipFilter) SQLArguments() pgx.StrictNamedArgs {
 	return pgx.StrictNamedArgs{
 		"filter_email": f.email,
+		"filter_role":  f.role,
+		"filter_state": f.state,
 	}
 }
 
@@ -48,6 +70,20 @@ func (f *MembershipFilter) SQLFragment() string {
 	CASE
 		WHEN @filter_email::text IS NOT NULL THEN
 			i.email_address = @filter_email::text
+		ELSE TRUE
+	END
+)
+AND (
+	CASE
+		WHEN @filter_role::text IS NOT NULL THEN
+			m.role = @filter_role::authz_role
+		ELSE TRUE
+	END
+)
+AND (
+	CASE
+		WHEN @filter_state::text IS NOT NULL THEN
+			m.state = @filter_state::membership_state
 		ELSE TRUE
 	END
 )`
