@@ -83,9 +83,3 @@ func ParseUserFilter(expr scimfilter.Expression) (*coredata.MembershipFilter, er
 
 	return filter, nil
 }
-
-type User struct {
-	Email    string
-	FullName string
-	Active   *bool
-}
