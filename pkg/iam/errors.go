@@ -135,6 +135,18 @@ func (e ErrMembershipInactive) Error() string {
 	return fmt.Sprintf("membership %q is inactive", e.MembershipID)
 }
 
+type ErrMembershipManagedBySCIM struct {
+	MembershipID gid.GID
+}
+
+func NewMembershipManagedBySCIMError(membershipID gid.GID) error {
+	return &ErrMembershipManagedBySCIM{MembershipID: membershipID}
+}
+
+func (e ErrMembershipManagedBySCIM) Error() string {
+	return fmt.Sprintf("membership %q is managed by SCIM and cannot be deleted manually", e.MembershipID)
+}
+
 type ErrOrganizationNotFound struct{ OrganizationID gid.GID }
 
 func NewOrganizationNotFoundError(organizationID gid.GID) error {
