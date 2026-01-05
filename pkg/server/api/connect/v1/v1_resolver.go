@@ -1226,6 +1226,9 @@ func (r *organizationResolver) Invitations(ctx context.Context, obj *types.Organ
 	}
 
 	filters := coredata.NewInvitationFilter(nil)
+	if status != nil {
+		filters = coredata.NewInvitationFilter([]coredata.InvitationStatus{*status})
+	}
 
 	if gqlutils.OnlyTotalCountSelected(ctx) {
 		return &types.InvitationConnection{
@@ -1244,10 +1247,6 @@ func (r *organizationResolver) Invitations(ctx context.Context, obj *types.Organ
 			Field:     orderBy.Field,
 			Direction: orderBy.Direction,
 		}
-	}
-
-	if status != nil {
-		filters = coredata.NewInvitationFilter([]coredata.InvitationStatus{*status})
 	}
 
 	cursor := cursor.NewCursor(first, after, last, before, pageOrderBy)
