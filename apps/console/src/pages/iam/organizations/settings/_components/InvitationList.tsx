@@ -5,6 +5,7 @@ import { graphql, usePaginationFragment } from "react-relay";
 import { InvitationListItem } from "./InvitationListItem";
 import type { InvitationListFragment$key } from "/__generated__/iam/InvitationListFragment.graphql";
 import type { InvitationListFragment_RefetchQuery } from "/__generated__/iam/InvitationListFragment_RefetchQuery.graphql";
+import type { ComponentProps } from "react";
 
 const fragment = graphql`
   fragment InvitationListFragment on Organization
@@ -57,23 +58,11 @@ export function InvitationList(props: { fKey: InvitationListFragment$key }) {
   return (
     <SortableTable
       {...invitationsPagination}
-      refetch={({ order }: { order: { direction: string; field: string } }) => {
-        invitationsPagination.refetch({
-          order: {
-            direction: order.direction as "ASC" | "DESC",
-            field: order.field as
-              | "CREATED_AT"
-              | "EXPIRES_AT"
-              // FIXME: put back
-              // | "FULL_NAME"
-              | "EMAIL"
-              | "ROLE"
-              // FIXME: put back
-              // | "STATUS"
-              | "ACCEPTED_AT",
-          },
-        });
-      }}
+      refetch={
+        invitationsPagination.refetch as ComponentProps<
+          typeof SortableTable
+        >["refetch"]
+      }
       pageSize={20}
     >
       <Thead>

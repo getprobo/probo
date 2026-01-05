@@ -23,6 +23,7 @@ require (
 	github.com/pdfcpu/pdfcpu v0.11.1
 	github.com/pires/go-proxyproto v0.8.1
 	github.com/prometheus/client_golang v1.23.2
+	github.com/scim2/filter-parser/v2 v2.2.0
 	github.com/stretchr/testify v1.11.1
 	github.com/vektah/gqlparser/v2 v2.5.31
 	github.com/xuri/excelize/v2 v2.10.0
@@ -98,7 +99,6 @@ require (
 	github.com/richardlehane/mscfb v1.0.4 // indirect
 	github.com/richardlehane/msoleps v1.0.4 // indirect
 	github.com/russellhaering/goxmldsig v1.5.0 // indirect
-	github.com/scim2/filter-parser/v2 v2.2.0 // indirect
 	github.com/sosodev/duration v1.3.1 // indirect
 	github.com/spf13/cobra v1.10.1 // indirect
 	github.com/spf13/pflag v1.0.9 // indirect

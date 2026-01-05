@@ -414,6 +414,14 @@ enum ReauthenticationReason {
 
 enum MembershipOrderField
   @goModel(model: "go.probo.inc/probo/pkg/coredata.MembershipOrderField") {
+  FULL_NAME
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.MembershipOrderFieldFullName"
+    )
+  EMAIL_ADDRESS
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.MembershipOrderFieldEmailAddress"
+    )
   ROLE
     @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipOrderFieldRole")
   CREATED_AT
@@ -446,6 +454,10 @@ type MembershipEdge {
 
 enum InvitationOrderField
   @goModel(model: "go.probo.inc/probo/pkg/coredata.InvitationOrderField") {
+  FULL_NAME
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.InvitationOrderFieldFullName"
+    )
   EMAIL
     @goEnum(value: "go.probo.inc/probo/pkg/coredata.InvitationOrderFieldEmail")
   ROLE
