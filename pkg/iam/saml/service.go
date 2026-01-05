@@ -301,7 +301,7 @@ func (s *Service) HandleAssertion(
 					ID:             gid.New(config.ID.TenantID(), coredata.MembershipEntityType),
 					IdentityID:     identity.ID,
 					OrganizationID: config.OrganizationID,
-					Role:           coredata.MembershipRoleViewer,
+					Role:           coredata.MembershipRoleEmployee,
 					Source:         coredata.MembershipSourceSAML,
 					State:          coredata.MembershipStateActive,
 					CreatedAt:      now,
