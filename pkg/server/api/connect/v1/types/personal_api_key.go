@@ -61,9 +61,10 @@ func NewPersonalAPIKeyEdge(personalAPIKey *coredata.PersonalAPIKey, orderField c
 
 func NewPersonalAPIKey(personalAPIKey *coredata.PersonalAPIKey) *PersonalAPIKey {
 	return &PersonalAPIKey{
-		ID:        personalAPIKey.ID,
-		Name:      personalAPIKey.Name,
-		ExpiresAt: personalAPIKey.ExpiresAt,
-		CreatedAt: personalAPIKey.CreatedAt,
+		ID:         personalAPIKey.ID,
+		Name:       personalAPIKey.Name,
+		ExpiresAt:  personalAPIKey.ExpiresAt,
+		LastUsedAt: personalAPIKey.LastUsedAt,
+		CreatedAt:  personalAPIKey.CreatedAt,
 	}
 }

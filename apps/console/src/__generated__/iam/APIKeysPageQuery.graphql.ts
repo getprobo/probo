@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<76057cc6f78c32b15c6e580c7a0c30da>>
+ * @generated SignedSource<<ee849e769490a70fd3d28e8f809245c2>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -128,6 +128,13 @@ return {
                         "alias": null,
                         "args": null,
                         "kind": "ScalarField",
+                        "name": "lastUsedAt",
+                        "storageKey": null
+                      },
+                      {
+                        "alias": null,
+                        "args": null,
+                        "kind": "ScalarField",
                         "name": "__typename",
                         "storageKey": null
                       }
@@ -187,12 +194,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "cf6f6f621bdcb1bd24a2dd94f856729f",
+    "cacheID": "4db28039c0fc6e587959d14faf5f3045",
     "id": null,
     "metadata": {},
     "name": "APIKeysPageQuery",
     "operationKind": "query",
-    "text": "query APIKeysPageQuery {\n  viewer {\n    ...PersonalAPIKeyListFragment\n    id\n  }\n}\n\nfragment PersonalAPIKeyListFragment on Identity {\n  id\n  personalAPIKeys(first: 1000) {\n    edges {\n      node {\n        id\n        ...PersonalAPIKeyRowFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n\nfragment PersonalAPIKeyRowFragment on PersonalAPIKey {\n  id\n  name\n  createdAt\n  expiresAt\n}\n"
+    "text": "query APIKeysPageQuery {\n  viewer {\n    ...PersonalAPIKeyListFragment\n    id\n  }\n}\n\nfragment PersonalAPIKeyListFragment on Identity {\n  id\n  personalAPIKeys(first: 1000) {\n    edges {\n      node {\n        id\n        ...PersonalAPIKeyRowFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n\nfragment PersonalAPIKeyRowFragment on PersonalAPIKey {\n  id\n  name\n  createdAt\n  expiresAt\n  lastUsedAt\n}\n"
   }
 };
 })();

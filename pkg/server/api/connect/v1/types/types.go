@@ -281,12 +281,13 @@ type PasswordRequired struct {
 func (PasswordRequired) IsAssumeOrganizationSessionResult() {}
 
 type PersonalAPIKey struct {
-	ID         gid.GID   `json:"id"`
-	Name       string    `json:"name"`
-	ExpiresAt  time.Time `json:"expiresAt"`
-	CreatedAt  time.Time `json:"createdAt"`
-	Token      *string   `json:"token,omitempty"`
-	Permission bool      `json:"permission"`
+	ID         gid.GID    `json:"id"`
+	Name       string     `json:"name"`
+	ExpiresAt  time.Time  `json:"expiresAt"`
+	LastUsedAt *time.Time `json:"lastUsedAt,omitempty"`
+	CreatedAt  time.Time  `json:"createdAt"`
+	Token      *string    `json:"token,omitempty"`
+	Permission bool       `json:"permission"`
 }
 
 func (PersonalAPIKey) IsNode()             {}
