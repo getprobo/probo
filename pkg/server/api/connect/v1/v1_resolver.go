@@ -1552,10 +1552,6 @@ func (r *sCIMConfigurationResolver) Organization(ctx context.Context, obj *types
 		return nil, nil
 	}
 
-	if obj.Organization == nil {
-		return nil, nil
-	}
-
 	if gqlutils.OnlyIDSelected(ctx) {
 		return &types.Organization{
 			ID: obj.Organization.ID,
