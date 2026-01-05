@@ -37,6 +37,14 @@ const assumeOrganizationSessionMutation = graphql`
     assumeOrganizationSession(input: $input) {
       result {
         __typename
+        ... on OrganizationSessionCreated {
+          membership {
+            id
+            lastSession {
+              id
+            }
+          }
+        }
         ... on PasswordRequired {
           reason
         }
