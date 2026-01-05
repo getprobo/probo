@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<7c428ee8fa38505a4801a34f66c28489>>
+ * @generated SignedSource<<0f5b99c931df8d47706342b7715260ef>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,8 +12,10 @@ import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type SCIMEventListPaginationQuery$variables = {
   after?: string | null | undefined;
+  before?: string | null | undefined;
   first?: number | null | undefined;
   id: string;
+  last?: number | null | undefined;
 };
 export type SCIMEventListPaginationQuery$data = {
   readonly node: {
@@ -26,31 +28,39 @@ export type SCIMEventListPaginationQuery = {
 };
 
 const node: ConcreteRequest = (function(){
-var v0 = [
-  {
-    "defaultValue": null,
-    "kind": "LocalArgument",
-    "name": "after"
-  },
-  {
-    "defaultValue": 20,
-    "kind": "LocalArgument",
-    "name": "first"
-  },
-  {
-    "defaultValue": null,
-    "kind": "LocalArgument",
-    "name": "id"
-  }
-],
-v1 = [
+var v0 = {
+  "defaultValue": null,
+  "kind": "LocalArgument",
+  "name": "after"
+},
+v1 = {
+  "defaultValue": null,
+  "kind": "LocalArgument",
+  "name": "before"
+},
+v2 = {
+  "defaultValue": 20,
+  "kind": "LocalArgument",
+  "name": "first"
+},
+v3 = {
+  "defaultValue": null,
+  "kind": "LocalArgument",
+  "name": "id"
+},
+v4 = {
+  "defaultValue": null,
+  "kind": "LocalArgument",
+  "name": "last"
+},
+v5 = [
   {
     "kind": "Variable",
     "name": "id",
     "variableName": "id"
   }
 ],
-v2 = [
+v6 = [
   {
     "kind": "Variable",
     "name": "after",
@@ -58,18 +68,28 @@ v2 = [
   },
   {
     "kind": "Variable",
+    "name": "before",
+    "variableName": "before"
+  },
+  {
+    "kind": "Variable",
     "name": "first",
     "variableName": "first"
+  },
+  {
+    "kind": "Variable",
+    "name": "last",
+    "variableName": "last"
   }
 ],
-v3 = {
+v7 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "__typename",
   "storageKey": null
 },
-v4 = {
+v8 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
@@ -78,21 +98,27 @@ v4 = {
 };
 return {
   "fragment": {
-    "argumentDefinitions": (v0/*: any*/),
+    "argumentDefinitions": [
+      (v0/*: any*/),
+      (v1/*: any*/),
+      (v2/*: any*/),
+      (v3/*: any*/),
+      (v4/*: any*/)
+    ],
     "kind": "Fragment",
     "metadata": null,
     "name": "SCIMEventListPaginationQuery",
     "selections": [
       {
         "alias": null,
-        "args": (v1/*: any*/),
+        "args": (v5/*: any*/),
         "concreteType": null,
         "kind": "LinkedField",
         "name": "node",
         "plural": false,
         "selections": [
           {
-            "args": (v2/*: any*/),
+            "args": (v6/*: any*/),
             "kind": "FragmentSpread",
             "name": "SCIMEventListFragment"
           }
@@ -105,26 +131,32 @@ return {
   },
   "kind": "Request",
   "operation": {
-    "argumentDefinitions": (v0/*: any*/),
+    "argumentDefinitions": [
+      (v0/*: any*/),
+      (v1/*: any*/),
+      (v2/*: any*/),
+      (v4/*: any*/),
+      (v3/*: any*/)
+    ],
     "kind": "Operation",
     "name": "SCIMEventListPaginationQuery",
     "selections": [
       {
         "alias": null,
-        "args": (v1/*: any*/),
+        "args": (v5/*: any*/),
         "concreteType": null,
         "kind": "LinkedField",
         "name": "node",
         "plural": false,
         "selections": [
-          (v3/*: any*/),
-          (v4/*: any*/),
+          (v7/*: any*/),
+          (v8/*: any*/),
           {
             "kind": "InlineFragment",
             "selections": [
               {
                 "alias": null,
-                "args": (v2/*: any*/),
+                "args": (v6/*: any*/),
                 "concreteType": "SCIMEventConnection",
                 "kind": "LinkedField",
                 "name": "events",
@@ -146,7 +178,7 @@ return {
                         "name": "node",
                         "plural": false,
                         "selections": [
-                          (v4/*: any*/),
+                          (v8/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -197,7 +229,7 @@ return {
                             "name": "membership",
                             "plural": false,
                             "selections": [
-                              (v4/*: any*/),
+                              (v8/*: any*/),
                               {
                                 "alias": null,
                                 "args": null,
@@ -213,14 +245,14 @@ return {
                                     "name": "fullName",
                                     "storageKey": null
                                   },
-                                  (v4/*: any*/)
+                                  (v8/*: any*/)
                                 ],
                                 "storageKey": null
                               }
                             ],
                             "storageKey": null
                           },
-                          (v3/*: any*/)
+                          (v7/*: any*/)
                         ],
                         "storageKey": null
                       },
@@ -246,6 +278,13 @@ return {
                         "alias": null,
                         "args": null,
                         "kind": "ScalarField",
+                        "name": "endCursor",
+                        "storageKey": null
+                      },
+                      {
+                        "alias": null,
+                        "args": null,
+                        "kind": "ScalarField",
                         "name": "hasNextPage",
                         "storageKey": null
                       },
@@ -253,7 +292,14 @@ return {
                         "alias": null,
                         "args": null,
                         "kind": "ScalarField",
-                        "name": "endCursor",
+                        "name": "hasPreviousPage",
+                        "storageKey": null
+                      },
+                      {
+                        "alias": null,
+                        "args": null,
+                        "kind": "ScalarField",
+                        "name": "startCursor",
                         "storageKey": null
                       }
                     ],
@@ -264,10 +310,10 @@ return {
               },
               {
                 "alias": null,
-                "args": (v2/*: any*/),
+                "args": (v6/*: any*/),
                 "filters": null,
                 "handle": "connection",
-                "key": "SCIMEventList_events",
+                "key": "SCIMEventListFragment_events",
                 "kind": "LinkedHandle",
                 "name": "events"
               }
@@ -281,16 +327,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "17c20db474b492bf36b2e43e0d21f936",
+    "cacheID": "eea534b94a74bce26338555fbb71364e",
     "id": null,
     "metadata": {},
     "name": "SCIMEventListPaginationQuery",
     "operationKind": "query",
-    "text": "query SCIMEventListPaginationQuery(\n  $after: CursorKey\n  $first: Int = 20\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...SCIMEventListFragment_2HEEH6\n    id\n  }\n}\n\nfragment SCIMEventListFragment_2HEEH6 on SCIMConfiguration {\n  events(first: $first, after: $after) {\n    edges {\n      node {\n        id\n        method\n        path\n        statusCode\n        errorMessage\n        ipAddress\n        createdAt\n        membership {\n          id\n          profile {\n            fullName\n            id\n          }\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n  id\n}\n"
+    "text": "query SCIMEventListPaginationQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 20\n  $last: Int = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...SCIMEventListFragment_pbnwq\n    id\n  }\n}\n\nfragment SCIMEventListFragment_pbnwq on SCIMConfiguration {\n  events(first: $first, after: $after, last: $last, before: $before) {\n    edges {\n      node {\n        id\n        ...SCIMEventListItemFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment SCIMEventListItemFragment on SCIMEvent {\n  id\n  method\n  path\n  statusCode\n  errorMessage\n  ipAddress\n  createdAt\n  membership {\n    id\n    profile {\n      fullName\n      id\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "f799f097acb37e7658786e1ffd2161d8";
+(node as any).hash = "64df3764ea01f7a7153983fabb6202ad";
 
 export default node;

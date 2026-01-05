@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<a268c09bcee3b775a28fa9e6cff0bcfd>>
+ * @generated SignedSource<<5507ea6452d9065f29d74bf685ea3777>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -314,6 +314,13 @@ return {
                             "alias": null,
                             "args": null,
                             "kind": "ScalarField",
+                            "name": "endCursor",
+                            "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
                             "name": "hasNextPage",
                             "storageKey": null
                           },
@@ -321,7 +328,14 @@ return {
                             "alias": null,
                             "args": null,
                             "kind": "ScalarField",
-                            "name": "endCursor",
+                            "name": "hasPreviousPage",
+                            "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "startCursor",
                             "storageKey": null
                           }
                         ],
@@ -335,7 +349,7 @@ return {
                     "args": (v6/*: any*/),
                     "filters": null,
                     "handle": "connection",
-                    "key": "SCIMEventList_events",
+                    "key": "SCIMEventListFragment_events",
                     "kind": "LinkedHandle",
                     "name": "events"
                   }
@@ -352,12 +366,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "50eadadbd1c1e6c4cb30157e65002b47",
+    "cacheID": "89bcad16c50ccf4ef4afd0345b02fe4a",
     "id": null,
     "metadata": {},
     "name": "SCIMSettingsPageQuery",
     "operationKind": "query",
-    "text": "query SCIMSettingsPageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      canCreateSCIMConfiguration: permission(action: \"iam:scim-configuration:create\")\n      canDeleteSCIMConfiguration: permission(action: \"iam:scim-configuration:delete\")\n      scimConfiguration {\n        ...SCIMConfigurationFragment\n        ...SCIMEventListFragment\n        id\n      }\n    }\n    id\n  }\n}\n\nfragment SCIMConfigurationFragment on SCIMConfiguration {\n  id\n  endpointUrl\n}\n\nfragment SCIMEventListFragment on SCIMConfiguration {\n  events(first: 20) {\n    edges {\n      node {\n        id\n        method\n        path\n        statusCode\n        errorMessage\n        ipAddress\n        createdAt\n        membership {\n          id\n          profile {\n            fullName\n            id\n          }\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n  id\n}\n"
+    "text": "query SCIMSettingsPageQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      canCreateSCIMConfiguration: permission(action: \"iam:scim-configuration:create\")\n      canDeleteSCIMConfiguration: permission(action: \"iam:scim-configuration:delete\")\n      scimConfiguration {\n        ...SCIMConfigurationFragment\n        ...SCIMEventListFragment\n        id\n      }\n    }\n    id\n  }\n}\n\nfragment SCIMConfigurationFragment on SCIMConfiguration {\n  id\n  endpointUrl\n}\n\nfragment SCIMEventListFragment on SCIMConfiguration {\n  events(first: 20) {\n    edges {\n      node {\n        id\n        ...SCIMEventListItemFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment SCIMEventListItemFragment on SCIMEvent {\n  id\n  method\n  path\n  statusCode\n  errorMessage\n  ipAddress\n  createdAt\n  membership {\n    id\n    profile {\n      fullName\n      id\n    }\n  }\n}\n"
   }
 };
 })();
