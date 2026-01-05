@@ -27,15 +27,6 @@ type UserFilter struct {
 	UserName *string
 }
 
-// ErrUnsupportedFilter is returned when a SCIM filter uses unsupported operators or attributes
-type ErrUnsupportedFilter struct {
-	Reason string
-}
-
-func (e *ErrUnsupportedFilter) Error() string {
-	return fmt.Sprintf("unsupported filter: %s", e.Reason)
-}
-
 // ParseUserFilter converts a SCIM filter AST expression to a UserFilter.
 // Returns (nil, nil) if no filter is provided.
 // Returns an error if the filter uses unsupported operators or attributes.
