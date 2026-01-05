@@ -113,6 +113,7 @@ type (
 		Obligations                       *ObligationService
 		Snapshots                         *SnapshotService
 		ContinualImprovements             *ContinualImprovementService
+		RightsRequests                    *RightsRequestService
 		ProcessingActivities              *ProcessingActivityService
 		DataProtectionImpactAssessments   *DataProtectionImpactAssessmentService
 		TransferImpactAssessments         *TransferImpactAssessmentService
@@ -250,6 +251,7 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 	tenantService.Obligations = &ObligationService{svc: tenantService}
 	tenantService.Snapshots = &SnapshotService{svc: tenantService}
 	tenantService.ContinualImprovements = &ContinualImprovementService{svc: tenantService}
+	tenantService.RightsRequests = &RightsRequestService{svc: tenantService}
 	tenantService.ProcessingActivities = &ProcessingActivityService{svc: tenantService}
 	tenantService.DataProtectionImpactAssessments = &DataProtectionImpactAssessmentService{svc: tenantService}
 	tenantService.TransferImpactAssessments = &TransferImpactAssessmentService{svc: tenantService}

@@ -71,3 +71,14 @@ export {
     getTrustCenterDocumentAccessStatusLabel,
     type TrustCenterDocumentAccessInfo,
 } from "./trustCenterDocumentAccess";
+export {
+    getRightsRequestTypeLabel,
+    getRightsRequestTypeOptions,
+    getRightsRequestStateVariant,
+    getRightsRequestStateLabel,
+    getRightsRequestStateOptions,
+    rightsRequestTypes,
+    rightsRequestStates,
+    type RightsRequestType,
+    type RightsRequestState,
+} from "./rightsRequest";
