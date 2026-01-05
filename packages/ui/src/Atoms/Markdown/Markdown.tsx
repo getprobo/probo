@@ -23,6 +23,19 @@ export function Markdown({ content }: Props) {
                             {children}
                         </a>
                     ),
+                    pre: ({ children, ...props }) => (
+                        <pre
+                            className="border border-border-solid rounded p-4 bg-transparent font-mono text-sm overflow-x-auto text-inherit"
+                            {...props}
+                        >
+                            {children}
+                        </pre>
+                    ),
+                    code: ({ children, ...props }) => (
+                        <code className="font-mono text-sm text-inherit" {...props}>
+                            {children}
+                        </code>
+                    ),
                 }}
             >
                 {content}
