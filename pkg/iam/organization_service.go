@@ -257,6 +257,21 @@ func (s *OrganizationService) RemoveMember(
 				return NewMembershipManagedBySCIMError(membershipID)
 			}
 
+			if membership.Role == coredata.MembershipRoleOwner && membership.State == coredata.MembershipStateActive {
+				memberships := coredata.Memberships{}
+				filter := coredata.NewMembershipFilter().
+					WithRole(coredata.MembershipRoleOwner).
+					WithState(coredata.MembershipStateActive)
+				count, err := memberships.CountByOrganizationID(ctx, tx, scope, organizationID, filter)
+				if err != nil {
+					return fmt.Errorf("cannot count active owners: %w", err)
+				}
+
+				if count <= 1 {
+					return NewLastActiveOwnerError(membershipID)
+				}
+			}
+
 			err := membership.Delete(ctx, tx, scope, membershipID)
 			if err != nil {
 				return fmt.Errorf("cannot delete membership: %w", err)

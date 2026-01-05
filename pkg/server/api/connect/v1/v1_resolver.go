@@ -968,7 +968,13 @@ func (r *mutationResolver) RemoveMember(ctx context.Context, input types.RemoveM
 	err := r.iam.OrganizationService.RemoveMember(ctx, input.OrganizationID, input.MembershipID)
 	if err != nil {
 		var errManagedBySCIM *iam.ErrMembershipManagedBySCIM
+		var errLastActiveOwner *iam.ErrLastActiveOwner
+
 		if errors.As(err, &errManagedBySCIM) {
+			return nil, gqlutils.Conflict(err)
+		}
+
+		if errors.As(err, &errLastActiveOwner) {
 			return nil, gqlutils.Conflict(err)
 		}
 
