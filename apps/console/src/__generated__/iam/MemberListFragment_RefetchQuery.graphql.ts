@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<d9ec1da794fdbe09fbffc7ed32d22707>>
+ * @generated SignedSource<<e01416ecd129c81e31f5da90bf797ff7>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,7 +10,7 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
-export type MembershipOrderField = "CREATED_AT" | "ROLE";
+export type MembershipOrderField = "CREATED_AT" | "EMAIL_ADDRESS" | "FULL_NAME" | "ROLE";
 export type OrderDirection = "ASC" | "DESC";
 export type MembershipOrder = {
   direction: OrderDirection;
