@@ -44,18 +44,6 @@ func NewSCIMConfigurationAlreadyExistsError(organizationID gid.GID) *ErrSCIMConf
 	return &ErrSCIMConfigurationAlreadyExists{OrganizationID: organizationID}
 }
 
-type ErrSCIMUserNotFound struct {
-	ID gid.GID
-}
-
-func (e *ErrSCIMUserNotFound) Error() string {
-	return fmt.Sprintf("SCIM user %s not found", e.ID)
-}
-
-func NewSCIMUserNotFoundError(id gid.GID) *ErrSCIMUserNotFound {
-	return &ErrSCIMUserNotFound{ID: id}
-}
-
 type ErrSCIMInvalidToken struct{}
 
 func (e *ErrSCIMInvalidToken) Error() string {
@@ -64,36 +52,4 @@ func (e *ErrSCIMInvalidToken) Error() string {
 
 func NewSCIMInvalidTokenError() *ErrSCIMInvalidToken {
 	return &ErrSCIMInvalidToken{}
-}
-
-type ErrSCIMInvalidRequest struct {
-	Detail string
-}
-
-func (e *ErrSCIMInvalidRequest) Error() string {
-	return fmt.Sprintf("invalid SCIM request: %s", e.Detail)
-}
-
-func NewSCIMInvalidRequestError(detail string) *ErrSCIMInvalidRequest {
-	return &ErrSCIMInvalidRequest{Detail: detail}
-}
-
-type ErrSCIMUserAlreadyExists struct {
-	Email string
-}
-
-func (e *ErrSCIMUserAlreadyExists) Error() string {
-	return fmt.Sprintf("user with email %s already exists in this organization", e.Email)
-}
-
-func NewSCIMUserAlreadyExistsError(email string) *ErrSCIMUserAlreadyExists {
-	return &ErrSCIMUserAlreadyExists{Email: email}
-}
-
-type ErrUnsupportedFilter struct {
-	Reason string
-}
-
-func (e *ErrUnsupportedFilter) Error() string {
-	return fmt.Sprintf("unsupported filter: %s", e.Reason)
 }
