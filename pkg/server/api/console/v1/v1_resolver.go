@@ -5427,10 +5427,10 @@ func (r *processingActivityResolver) DataProtectionImpactAssessment(ctx context.
 
 	dpia, err := prb.DataProtectionImpactAssessments.GetByProcessingActivityID(ctx, obj.ID)
 	if err != nil {
-		var errNotFound *coredata.ErrDataProtectionImpactAssessmentNotFound
-		if errors.As(err, &errNotFound) {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, nil
 		}
+
 		panic(fmt.Errorf("cannot get processing activity dpia: %w", err))
 	}
 
@@ -5445,10 +5445,10 @@ func (r *processingActivityResolver) TransferImpactAssessment(ctx context.Contex
 
 	tia, err := prb.TransferImpactAssessments.GetByProcessingActivityID(ctx, obj.ID)
 	if err != nil {
-		var errNotFound *coredata.ErrTransferImpactAssessmentNotFound
-		if errors.As(err, &errNotFound) {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, nil
 		}
+
 		panic(fmt.Errorf("cannot get processing activity tia: %w", err))
 	}
 

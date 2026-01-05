@@ -27,14 +27,6 @@ import (
 	"go.probo.inc/probo/pkg/page"
 )
 
-type ErrTransferImpactAssessmentNotFound struct {
-	Identifier string
-}
-
-func (e ErrTransferImpactAssessmentNotFound) Error() string {
-	return fmt.Sprintf("transfer impact assessment not found: %q", e.Identifier)
-}
-
 type (
 	TransferImpactAssessment struct {
 		ID                    gid.GID   `db:"id"`
@@ -206,7 +198,7 @@ LIMIT 1;
 	result, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[TransferImpactAssessment])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrTransferImpactAssessmentNotFound{Identifier: tiaID.String()}
+			return ErrResourceNotFound
 		}
 		return fmt.Errorf("cannot collect transfer impact assessment: %w", err)
 	}
@@ -257,7 +249,7 @@ LIMIT 1;
 	result, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[TransferImpactAssessment])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrTransferImpactAssessmentNotFound{Identifier: processingActivityID.String()}
+			return ErrResourceNotFound
 		}
 		return fmt.Errorf("cannot collect transfer impact assessment: %w", err)
 	}

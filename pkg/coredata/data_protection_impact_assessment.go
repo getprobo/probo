@@ -27,14 +27,6 @@ import (
 	"go.probo.inc/probo/pkg/page"
 )
 
-type ErrDataProtectionImpactAssessmentNotFound struct {
-	Identifier string
-}
-
-func (e ErrDataProtectionImpactAssessmentNotFound) Error() string {
-	return fmt.Sprintf("data protection impact assessment not found: %q", e.Identifier)
-}
-
 type (
 	DataProtectionImpactAssessment struct {
 		ID                          gid.GID                                     `db:"id"`
@@ -207,8 +199,9 @@ LIMIT 1;
 	result, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[DataProtectionImpactAssessment])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrDataProtectionImpactAssessmentNotFound{Identifier: dpiaID.String()}
+			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect data protection impact assessment: %w", err)
 	}
 
@@ -258,8 +251,9 @@ LIMIT 1;
 	result, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[DataProtectionImpactAssessment])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrDataProtectionImpactAssessmentNotFound{Identifier: processingActivityID.String()}
+			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect data protection impact assessment: %w", err)
 	}
 
@@ -444,4 +438,3 @@ WHERE dpia.tenant_id = @tenant_id AND dpia.organization_id = @organization_id AN
 
 	return nil
 }
-
