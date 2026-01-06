@@ -5,6 +5,7 @@ import { useMutation } from "react-relay";
 import { Link } from "react-router";
 import { graphql } from "relay-runtime";
 import type { PasswordSignInPageMutation } from "/__generated__/iam/PasswordSignInPageMutation.graphql";
+import { formatError, type GraphQLError } from "@probo/helpers";
 
 const signInMutation = graphql`
   mutation PasswordSignInPageMutation($input: SignInInput!) {
@@ -39,13 +40,25 @@ export default function PasswordSignInPage() {
           password: passwordValue,
         },
       },
-      onCompleted: () => {
+      onCompleted: (_, error) => {
+        if (error) {
+          toast({
+            title: __("Error"),
+            description: formatError(
+              __("Failed to login"),
+              error as GraphQLError,
+            ),
+            variant: "error",
+          });
+          return;
+        }
+
         window.location.href = "/";
       },
       onError: (e) => {
         toast({
           title: __("Error"),
-          description: e instanceof Error ? e.message : __("Failed to login"),
+          description: e.message,
           variant: "error",
         });
       },
