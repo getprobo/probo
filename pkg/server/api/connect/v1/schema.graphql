@@ -54,7 +54,8 @@ interface Node {
 type Query {
   node(id: ID!): Node @session(required: PRESENT)
   viewer: Identity @session(required: PRESENT)
-  checkSSOAvailability(email: String!): SSOAvailability!
+  ssoLoginURL(email: EmailAddr!): String
+    @goField(forceResolver: true)
     @session(required: NONE)
 }
 
@@ -347,12 +348,6 @@ type SAMLAttributeMappings {
   firstName: String!
   lastName: String!
   role: String!
-}
-
-type SSOAvailability {
-  available: Boolean!
-  samlConfigId: ID
-  organizationId: ID
 }
 
 type SCIMConfiguration implements Node {

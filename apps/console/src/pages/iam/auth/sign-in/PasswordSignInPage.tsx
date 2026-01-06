@@ -1,13 +1,13 @@
 import { useTranslate } from "@probo/i18n";
-import { Button, Field, useToast } from "@probo/ui";
+import { Button, Field, IconChevronLeft, useToast } from "@probo/ui";
 import type { FormEventHandler } from "react";
 import { useMutation } from "react-relay";
 import { Link } from "react-router";
 import { graphql } from "relay-runtime";
-import type { SignInPageMutation } from "/__generated__/iam/SignInPageMutation.graphql";
+import type { PasswordSignInPageMutation } from "/__generated__/iam/PasswordSignInPageMutation.graphql";
 
 const signInMutation = graphql`
-  mutation SignInPageMutation($input: SignInInput!) {
+  mutation PasswordSignInPageMutation($input: SignInInput!) {
     signIn(input: $input) {
       session {
         id
@@ -16,13 +16,13 @@ const signInMutation = graphql`
   }
 `;
 
-// TODO initial screen + SAML login + after sign in URL state
-export default function SignInPage() {
+export default function PasswordSignInPage() {
   const { __ } = useTranslate();
 
   const { toast } = useToast();
 
-  const [signIn, isSigningIn] = useMutation<SignInPageMutation>(signInMutation);
+  const [signIn, isSigningIn] =
+    useMutation<PasswordSignInPageMutation>(signInMutation);
 
   const handlePasswordLogin: FormEventHandler<HTMLFormElement> = (e) => {
     e.preventDefault();
@@ -54,14 +54,13 @@ export default function SignInPage() {
 
   return (
     <form className="space-y-4" onSubmit={handlePasswordLogin}>
-      {/* <button
-        type="button"
-        onClick={handleBack}
+      <Link
+        to="/auth/login"
         className="flex items-center gap-2 text-txt-secondary hover:text-txt-primary transition-colors mb-4"
       >
         <IconChevronLeft size={20} />
         <span className="text-sm">{__("Back")}</span>
-      </button> */}
+      </Link>
 
       <h1 className="text-center text-2xl font-bold">
         {__("Login with Email")}
