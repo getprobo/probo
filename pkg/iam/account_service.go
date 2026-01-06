@@ -856,3 +856,54 @@ func (s AccountService) GetProfileForMembership(ctx context.Context, membershipI
 
 	return profile, nil
 }
+
+func (s AccountService) ListSAMLConfigurationsForEmail(
+	ctx context.Context,
+	email mail.Addr,
+) (coredata.SAMLConfigurations, error) {
+	samlConfigurations := coredata.SAMLConfigurations{}
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			err := samlConfigurations.LoadVerifiedByEmailDomain(ctx, conn, email.Domain())
+			if err != nil {
+				return fmt.Errorf("cannot load saml configurations: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return samlConfigurations, nil
+}
+
+func (s AccountService) CountSAMLConfigurationsForEmail(
+	ctx context.Context,
+	email mail.Addr,
+) (int, error) {
+	var (
+		count              int
+		samlConfigurations coredata.SAMLConfigurations
+	)
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) (err error) {
+			count, err = samlConfigurations.CountVerifiedByEmailDomain(ctx, conn, email.Domain())
+			if err != nil {
+				return fmt.Errorf("cannot count saml configurations: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}

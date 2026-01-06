@@ -294,9 +294,9 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		CheckSSOAvailability func(childComplexity int, email string) int
-		Node                 func(childComplexity int, id gid.GID) int
-		Viewer               func(childComplexity int) int
+		Node        func(childComplexity int, id gid.GID) int
+		SsoLoginURL func(childComplexity int, email mail.Addr) int
+		Viewer      func(childComplexity int) int
 	}
 
 	RegenerateSCIMTokenPayload struct {
@@ -397,12 +397,6 @@ type ComplexityRoot struct {
 	SCIMEventEdge struct {
 		Cursor func(childComplexity int) int
 		Node   func(childComplexity int) int
-	}
-
-	SSOAvailability struct {
-		Available      func(childComplexity int) int
-		OrganizationID func(childComplexity int) int
-		SamlConfigID   func(childComplexity int) int
 	}
 
 	Session struct {
@@ -541,7 +535,7 @@ type PersonalAPIKeyConnectionResolver interface {
 type QueryResolver interface {
 	Node(ctx context.Context, id gid.GID) (types.Node, error)
 	Viewer(ctx context.Context) (*types.Identity, error)
-	CheckSSOAvailability(ctx context.Context, email string) (*types.SSOAvailability, error)
+	SsoLoginURL(ctx context.Context, email mail.Addr) (*string, error)
 }
 type SAMLConfigurationResolver interface {
 	TestLoginURL(ctx context.Context, obj *types.SAMLConfiguration) (string, error)
@@ -1593,17 +1587,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.PersonalAPIKeyEdge.Node(childComplexity), true
 
-	case "Query.checkSSOAvailability":
-		if e.complexity.Query.CheckSSOAvailability == nil {
-			break
-		}
-
-		args, err := ec.field_Query_checkSSOAvailability_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.CheckSSOAvailability(childComplexity, args["email"].(string)), true
 	case "Query.node":
 		if e.complexity.Query.Node == nil {
 			break
@@ -1615,6 +1598,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.Node(childComplexity, args["id"].(gid.GID)), true
+	case "Query.ssoLoginURL":
+		if e.complexity.Query.SsoLoginURL == nil {
+			break
+		}
+
+		args, err := ec.field_Query_ssoLoginURL_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.SsoLoginURL(childComplexity, args["email"].(mail.Addr)), true
 	case "Query.viewer":
 		if e.complexity.Query.Viewer == nil {
 			break
@@ -1987,25 +1981,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.SCIMEventEdge.Node(childComplexity), true
 
-	case "SSOAvailability.available":
-		if e.complexity.SSOAvailability.Available == nil {
-			break
-		}
-
-		return e.complexity.SSOAvailability.Available(childComplexity), true
-	case "SSOAvailability.organizationId":
-		if e.complexity.SSOAvailability.OrganizationID == nil {
-			break
-		}
-
-		return e.complexity.SSOAvailability.OrganizationID(childComplexity), true
-	case "SSOAvailability.samlConfigId":
-		if e.complexity.SSOAvailability.SamlConfigID == nil {
-			break
-		}
-
-		return e.complexity.SSOAvailability.SamlConfigID(childComplexity), true
-
 	case "Session.createdAt":
 		if e.complexity.Session.CreatedAt == nil {
 			break
@@ -2347,7 +2322,8 @@ interface Node {
 type Query {
   node(id: ID!): Node @session(required: PRESENT)
   viewer: Identity @session(required: PRESENT)
-  checkSSOAvailability(email: String!): SSOAvailability!
+  ssoLoginURL(email: EmailAddr!): String
+    @goField(forceResolver: true)
     @session(required: NONE)
 }
 
@@ -2640,12 +2616,6 @@ type SAMLAttributeMappings {
   firstName: String!
   lastName: String!
   role: String!
-}
-
-type SSOAvailability {
-  available: Boolean!
-  samlConfigId: ID
-  organizationId: ID
 }
 
 type SCIMConfiguration implements Node {
@@ -3779,17 +3749,6 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_checkSSOAvailability_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "email", ec.unmarshalNString2string)
-	if err != nil {
-		return nil, err
-	}
-	args["email"] = arg0
-	return args, nil
-}
-
 func (ec *executionContext) field_Query_node_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -3798,6 +3757,17 @@ func (ec *executionContext) field_Query_node_args(ctx context.Context, rawArgs m
 		return nil, err
 	}
 	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_ssoLoginURL_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "email", ec.unmarshalNEmailAddr2goᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr)
+	if err != nil {
+		return nil, err
+	}
+	args["email"] = arg0
 	return args, nil
 }
 
@@ -9531,15 +9501,15 @@ func (ec *executionContext) fieldContext_Query_viewer(_ context.Context, field g
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_checkSSOAvailability(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Query_ssoLoginURL(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_Query_checkSSOAvailability,
+		ec.fieldContext_Query_ssoLoginURL,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().CheckSSOAvailability(ctx, fc.Args["email"].(string))
+			return ec.resolvers.Query().SsoLoginURL(ctx, fc.Args["email"].(mail.Addr))
 		},
 		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
 			directive0 := next
@@ -9547,11 +9517,11 @@ func (ec *executionContext) _Query_checkSSOAvailability(ctx context.Context, fie
 			directive1 := func(ctx context.Context) (any, error) {
 				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSessionRequirement(ctx, "NONE")
 				if err != nil {
-					var zeroVal *types.SSOAvailability
+					var zeroVal *string
 					return zeroVal, err
 				}
 				if ec.directives.Session == nil {
-					var zeroVal *types.SSOAvailability
+					var zeroVal *string
 					return zeroVal, errors.New("directive session is not implemented")
 				}
 				return ec.directives.Session(ctx, nil, directive0, required)
@@ -9560,28 +9530,20 @@ func (ec *executionContext) _Query_checkSSOAvailability(ctx context.Context, fie
 			next = directive1
 			return next
 		},
-		ec.marshalNSSOAvailability2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSSOAvailability,
+		ec.marshalOString2ᚖstring,
 		true,
-		true,
+		false,
 	)
 }
 
-func (ec *executionContext) fieldContext_Query_checkSSOAvailability(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_ssoLoginURL(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "available":
-				return ec.fieldContext_SSOAvailability_available(ctx, field)
-			case "samlConfigId":
-				return ec.fieldContext_SSOAvailability_samlConfigId(ctx, field)
-			case "organizationId":
-				return ec.fieldContext_SSOAvailability_organizationId(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type SSOAvailability", field.Name)
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	defer func() {
@@ -9591,7 +9553,7 @@ func (ec *executionContext) fieldContext_Query_checkSSOAvailability(ctx context.
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_checkSSOAvailability_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Query_ssoLoginURL_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -11574,93 +11536,6 @@ func (ec *executionContext) fieldContext_SCIMEventEdge_cursor(_ context.Context,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type CursorKey does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SSOAvailability_available(ctx context.Context, field graphql.CollectedField, obj *types.SSOAvailability) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_SSOAvailability_available,
-		func(ctx context.Context) (any, error) {
-			return obj.Available, nil
-		},
-		nil,
-		ec.marshalNBoolean2bool,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_SSOAvailability_available(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SSOAvailability",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SSOAvailability_samlConfigId(ctx context.Context, field graphql.CollectedField, obj *types.SSOAvailability) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_SSOAvailability_samlConfigId,
-		func(ctx context.Context) (any, error) {
-			return obj.SamlConfigID, nil
-		},
-		nil,
-		ec.marshalOID2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_SSOAvailability_samlConfigId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SSOAvailability",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SSOAvailability_organizationId(ctx context.Context, field graphql.CollectedField, obj *types.SSOAvailability) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_SSOAvailability_organizationId,
-		func(ctx context.Context) (any, error) {
-			return obj.OrganizationID, nil
-		},
-		nil,
-		ec.marshalOID2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_SSOAvailability_organizationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SSOAvailability",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
 		},
 	}
 	return fc, nil
@@ -17799,19 +17674,16 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "checkSSOAvailability":
+		case "ssoLoginURL":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_checkSSOAvailability(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
+				res = ec._Query_ssoLoginURL(ctx, field)
 				return res
 			}
 
@@ -18894,49 +18766,6 @@ func (ec *executionContext) _SCIMEventEdge(ctx context.Context, sel ast.Selectio
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var sSOAvailabilityImplementors = []string{"SSOAvailability"}
-
-func (ec *executionContext) _SSOAvailability(ctx context.Context, sel ast.SelectionSet, obj *types.SSOAvailability) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, sSOAvailabilityImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("SSOAvailability")
-		case "available":
-			out.Values[i] = ec._SSOAvailability_available(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "samlConfigId":
-			out.Values[i] = ec._SSOAvailability_samlConfigId(ctx, field, obj)
-		case "organizationId":
-			out.Values[i] = ec._SSOAvailability_organizationId(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -20706,20 +20535,6 @@ var (
 	}
 )
 
-func (ec *executionContext) marshalNSSOAvailability2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSSOAvailability(ctx context.Context, sel ast.SelectionSet, v types.SSOAvailability) graphql.Marshaler {
-	return ec._SSOAvailability(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNSSOAvailability2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSSOAvailability(ctx context.Context, sel ast.SelectionSet, v *types.SSOAvailability) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._SSOAvailability(ctx, sel, v)
-}
-
 func (ec *executionContext) marshalNSession2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSession(ctx context.Context, sel ast.SelectionSet, v *types.Session) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -21304,24 +21119,6 @@ func (ec *executionContext) marshalOForgotPasswordPayload2ᚖgoᚗproboᚗincᚋ
 		return graphql.Null
 	}
 	return ec._ForgotPasswordPayload(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalOID2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx context.Context, v any) (*gid.GID, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := gid1.UnmarshalGIDScalar(v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalOID2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx context.Context, sel ast.SelectionSet, v *gid.GID) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	_ = sel
-	_ = ctx
-	res := gid1.MarshalGIDScalar(*v)
-	return res
 }
 
 func (ec *executionContext) marshalOIdentity2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐIdentity(ctx context.Context, sel ast.SelectionSet, v *types.Identity) graphql.Marshaler {

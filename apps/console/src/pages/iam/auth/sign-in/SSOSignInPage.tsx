@@ -1,0 +1,133 @@
+import { useTranslate } from "@probo/i18n";
+import { Button, Field, IconChevronLeft, useToast } from "@probo/ui";
+import { useEffect, useState, type FormEventHandler } from "react";
+import {
+  usePreloadedQuery,
+  useQueryLoader,
+  type PreloadedQuery,
+} from "react-relay";
+import { Link, useNavigate } from "react-router";
+import { graphql } from "relay-runtime";
+import type { SSOSignInPageQuery } from "/__generated__/iam/SSOSignInPageQuery.graphql";
+
+const ssoAvailabilityQuery = graphql`
+  query SSOSignInPageQuery($email: EmailAddr!) {
+    ssoLoginURL(email: $email) @catch(to: RESULT)
+  }
+`;
+
+export default function SSOSignInPage() {
+  const { __ } = useTranslate();
+
+  const [queryRef, loadQuery] =
+    useQueryLoader<SSOSignInPageQuery>(ssoAvailabilityQuery);
+  const [checking, setChecking] = useState(false);
+
+  const handleSSOCheck: FormEventHandler<HTMLFormElement> = (e) => {
+    e.preventDefault();
+    setChecking(true);
+    const formData = new FormData(e.currentTarget);
+    const email = formData.get("email")?.toString();
+
+    if (!email) return;
+
+    loadQuery({ email }, { fetchPolicy: "network-only" });
+  };
+
+  return (
+    <>
+      <form className="space-y-4" onSubmit={handleSSOCheck}>
+        <Link
+          to="/auth/login"
+          className="flex items-center gap-2 text-txt-secondary hover:text-txt-primary transition-colors mb-4"
+        >
+          <IconChevronLeft size={20} />
+          <span className="text-sm">{__("Back")}</span>
+        </Link>
+
+        <h1 className="text-center text-2xl font-bold">
+          {__("Login with SSO")}
+        </h1>
+        <p className="text-center text-txt-tertiary mt-1 mb-6">
+          {__("Enter your work email to continue with SSO")}
+        </p>
+
+        <Field
+          required
+          placeholder={__("Work Email")}
+          name="email"
+          type="email"
+          label={__("Work Email")}
+          autoFocus
+        />
+
+        <Button className="w-full" disabled={checking}>
+          {checking ? __("Checking...") : __("Continue with SSO")}
+        </Button>
+
+        <div className="text-center mt-6 text-sm text-txt-secondary">
+          {__("Don't have an account ?")}{" "}
+          <Link
+            to="/auth/register"
+            className="underline hover:text-txt-primary"
+          >
+            {__("Register")}
+          </Link>
+        </div>
+      </form>
+
+      {queryRef && (
+        <NavigateToSSOLoginURL
+          onSSOAvailabilityCheck={setChecking}
+          queryRef={queryRef}
+        />
+      )}
+    </>
+  );
+}
+
+function NavigateToSSOLoginURL(props: {
+  queryRef: PreloadedQuery<SSOSignInPageQuery>;
+  onSSOAvailabilityCheck: (checking: boolean) => void;
+}) {
+  const { queryRef } = props;
+
+  const { __ } = useTranslate();
+  const { toast } = useToast();
+  const navigate = useNavigate();
+
+  const { ssoLoginURL } = usePreloadedQuery<SSOSignInPageQuery>(
+    ssoAvailabilityQuery,
+    queryRef,
+  );
+
+  useEffect(() => {
+    if (!ssoLoginURL.ok) {
+      console.log(ssoLoginURL);
+      toast({
+        title: __("Error"),
+        description:
+          ssoLoginURL.errors[0] instanceof Error
+            ? ssoLoginURL.errors[0].message
+            : __("SSO not available for this email domain"),
+        variant: "error",
+      });
+
+      navigate("/auth/login");
+      return;
+    }
+
+    if (!ssoLoginURL.value) {
+      toast({
+        title: __("Error"),
+        description: __("SSO not available for this email domain"),
+        variant: "error",
+      });
+      return;
+    }
+
+    window.location.href = ssoLoginURL.value;
+  }, [__, navigate, ssoLoginURL, toast]);
+
+  return null;
+}

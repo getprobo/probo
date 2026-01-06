@@ -11,11 +11,13 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/99designs/gqlgen/graphql"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/schema"
@@ -1532,9 +1534,43 @@ func (r *queryResolver) Viewer(ctx context.Context) (*types.Identity, error) {
 	}, nil
 }
 
-// CheckSSOAvailability is the resolver for the checkSSOAvailability field.
-func (r *queryResolver) CheckSSOAvailability(ctx context.Context, email string) (*types.SSOAvailability, error) {
-	panic(fmt.Errorf("not implemented: CheckSSOAvailability - checkSSOAvailability"))
+// SsoLoginURL is the resolver for the ssoLoginURL field.
+func (r *queryResolver) SsoLoginURL(ctx context.Context, email mail.Addr) (*string, error) {
+	count, err := r.iam.AccountService.CountSAMLConfigurationsForEmail(ctx, email)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot count SAML configurations for email", log.Error(err))
+		return nil, gqlutils.InternalServerError(ctx)
+	}
+
+	if count != 1 {
+		if count == 0 {
+			graphql.AddError(ctx, graphql.ErrorOnPath(
+				ctx,
+				fmt.Errorf("no SAML configuration for email"),
+			))
+
+			return nil, nil
+		}
+
+		graphql.AddError(
+			ctx,
+			graphql.ErrorOnPath(
+				ctx,
+				fmt.Errorf("multiple SSO configurations found for this domain. Please use your organization-specific SSO login URL"),
+			),
+		)
+		return nil, nil
+	}
+
+	samlConfigs, err := r.iam.AccountService.ListSAMLConfigurationsForEmail(ctx, email)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list SAML configurations for email", log.Error(err))
+		return nil, gqlutils.InternalServerError(ctx)
+	}
+
+	samlConfig := samlConfigs[0]
+	loginURL := r.baseURL.WithPath("/api/connect/v1/saml/2.0/" + samlConfig.ID.String()).MustString()
+	return &loginURL, nil
 }
 
 // TestLoginURL is the resolver for the testLoginUrl field.

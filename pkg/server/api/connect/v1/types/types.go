@@ -430,12 +430,6 @@ type SCIMEventEdge struct {
 	Cursor page.CursorKey `json:"cursor"`
 }
 
-type SSOAvailability struct {
-	Available      bool     `json:"available"`
-	SamlConfigID   *gid.GID `json:"samlConfigId,omitempty"`
-	OrganizationID *gid.GID `json:"organizationId,omitempty"`
-}
-
 type Session struct {
 	ID         gid.GID   `json:"id"`
 	Identity   *Identity `json:"identity,omitempty"`
