@@ -3,7 +3,7 @@ import { Button, Card, Field, PageHeader, useToast } from "@probo/ui";
 import { graphql, useMutation } from "react-relay";
 import type { FormEventHandler } from "react";
 import { useNavigate } from "react-router";
-import { formatError, type GraphQLError } from "@probo/helpers";
+import { formatError } from "@probo/helpers";
 import type { NewOrganizationPageMutation } from "/__generated__/iam/NewOrganizationPageMutation.graphql";
 import { IAMRelayProvider } from "/providers/IAMRelayProvider";
 
@@ -45,7 +45,16 @@ function NewOrganizationPage() {
           name,
         },
       },
-      onCompleted: (r) => {
+      onCompleted: (r, e) => {
+        if (e) {
+          toast({
+            title: __("Error"),
+            description: formatError(__("Failed to create organization"), e),
+            variant: "error",
+          });
+          return;
+        }
+
         const org = r.createOrganization!.organization;
         navigate(`/organizations/${org!.id}`);
         toast({
@@ -54,10 +63,10 @@ function NewOrganizationPage() {
           variant: "success",
         });
       },
-      onError: (e: GraphQLError) => {
+      onError: (e) => {
         toast({
           title: __("Error"),
-          description: formatError(__("Failed to create organization"), e),
+          description: e.message,
           variant: "error",
         });
       },

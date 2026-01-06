@@ -13,6 +13,7 @@ import { useOrganizationId } from "/hooks/useOrganizationId";
 import { useFragment, useMutation } from "react-relay";
 import { useTranslate } from "@probo/i18n";
 import type { SessionDropdownFragment$key } from "/__generated__/iam/SessionDropdownFragment.graphql";
+import { formatError } from "@probo/helpers";
 
 export const fragment = graphql`
   fragment SessionDropdownFragment on Organization {
@@ -57,13 +58,21 @@ export function SessionDropdown(props: { fKey: SessionDropdownFragment$key }) {
 
     signOut({
       variables: {},
-      onCompleted: () => {
+      onCompleted: (_, e) => {
+        if (e) {
+          toast({
+            title: __("Request failed"),
+            description: formatError(__("Cannot sign out"), e),
+            variant: "error",
+          });
+          return;
+        }
         window.location.reload();
       },
       onError: (e) => {
         toast({
           title: __("Error"),
-          description: e.message as string,
+          description: e.message,
           variant: "error",
         });
       },

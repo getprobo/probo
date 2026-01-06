@@ -9,6 +9,9 @@ import {
   type SAMLConfigurationFormData,
 } from "./SAMLConfigurationForm";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
+import { formatError } from "@probo/helpers";
+import { useTranslate } from "@probo/i18n";
+import { useToast } from "@probo/ui";
 
 export const samlConfigurationFormQuery = graphql`
   query EditSAMLConfigurationFormQuery($samlConfigurationId: ID!) {
@@ -60,6 +63,8 @@ export function EditSAMLConfigurationForm(props: {
   const { onUpdate, queryRef } = props;
 
   const organizationId = useOrganizationId();
+  const { __ } = useTranslate();
+  const { toast } = useToast();
 
   const { samlConfiguration } =
     usePreloadedQuery<EditSAMLConfigurationFormQuery>(
@@ -94,10 +99,24 @@ export function EditSAMLConfigurationForm(props: {
             attributeMappings: data.attributeMappings,
           },
         },
-        onCompleted: onUpdate,
+        onCompleted: (_, e) => {
+          if (e) {
+            toast({
+              variant: "error",
+              title: __("Error"),
+              description: formatError(
+                __("Failed to update SAML configuration"),
+                e,
+              ),
+            });
+            return;
+          }
+
+          onUpdate();
+        },
       });
     },
-    [onUpdate, organizationId, samlConfiguration.id, update],
+    [onUpdate, organizationId, samlConfiguration.id, update, __, toast],
   );
 
   return (

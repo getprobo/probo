@@ -42,7 +42,6 @@ export function SCIMSettingsPage(props: {
       <div className="space-y-4">
         <h2 className="text-base font-medium">{__("SCIM Provisioning")}</h2>
         <SCIMConfiguration
-          organizationId={organization.id}
           fKey={organization.scimConfiguration ?? null}
           canCreate={organization.canCreateSCIMConfiguration}
           canDelete={organization.canDeleteSCIMConfiguration}

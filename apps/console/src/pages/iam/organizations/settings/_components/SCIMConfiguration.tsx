@@ -15,6 +15,8 @@ import type { SCIMConfigurationCreateMutation } from "/__generated__/iam/SCIMCon
 import type { SCIMConfigurationDeleteMutation } from "/__generated__/iam/SCIMConfigurationDeleteMutation.graphql";
 import type { SCIMConfigurationRegenerateTokenMutation } from "/__generated__/iam/SCIMConfigurationRegenerateTokenMutation.graphql";
 import type { SCIMConfigurationFragment$key } from "/__generated__/iam/SCIMConfigurationFragment.graphql";
+import { useOrganizationId } from "/hooks/useOrganizationId";
+import { formatError } from "@probo/helpers";
 
 const SCIMConfigurationFragment = graphql`
   fragment SCIMConfigurationFragment on SCIMConfiguration {
@@ -72,12 +74,14 @@ const regenerateSCIMTokenMutation = graphql`
 `;
 
 export function SCIMConfiguration(props: {
-  organizationId: string;
   fKey: SCIMConfigurationFragment$key | null;
   canCreate: boolean;
   canDelete: boolean;
 }) {
-  const { organizationId, canCreate, canDelete, fKey } = props;
+  const { canCreate, canDelete, fKey } = props;
+
+  const organizationId = useOrganizationId();
+
   const scimConfiguration = useFragment(SCIMConfigurationFragment, fKey);
   const { __ } = useTranslate();
   const { toast } = useToast();
@@ -88,15 +92,15 @@ export function SCIMConfiguration(props: {
 
   const [createSCIMConfiguration, isCreatingSAMLConfiguration] =
     useMutation<SCIMConfigurationCreateMutation>(
-      createSCIMConfigurationMutation
+      createSCIMConfigurationMutation,
     );
   const [deleteSCIMConfiguration, isDeletingSCIMConfiguration] =
     useMutation<SCIMConfigurationDeleteMutation>(
-      deleteSCIMConfigurationMutation
+      deleteSCIMConfigurationMutation,
     );
   const [regenerateSCIMToken, isRegeneratingSCIMToken] =
     useMutation<SCIMConfigurationRegenerateTokenMutation>(
-      regenerateSCIMTokenMutation
+      regenerateSCIMTokenMutation,
     );
 
   const handleCreate = () => {
@@ -106,14 +110,26 @@ export function SCIMConfiguration(props: {
           organizationId,
         },
       },
-      onCompleted: (response) => {
+      onCompleted: (response, e) => {
+        if (e) {
+          toast({
+            variant: "error",
+            title: __("Error"),
+            description: formatError(
+              __("SCIM configuration creation failed"),
+              e,
+            ),
+          });
+          return;
+        }
+
         if (response.createSCIMConfiguration) {
           setToken(response.createSCIMConfiguration.token);
         }
         toast({
           title: __("SCIM Configuration Created"),
           description: __(
-            "Copy the bearer token now. It will not be shown again."
+            "Copy the bearer token now. It will not be shown again.",
           ),
           variant: "success",
         });
@@ -144,7 +160,7 @@ export function SCIMConfiguration(props: {
         toast({
           title: __("SCIM Configuration Deleted"),
           description: __(
-            "All SCIM-provisioned memberships have been changed to manual source."
+            "All SCIM-provisioned memberships have been changed to manual source.",
           ),
           variant: "success",
         });
@@ -176,7 +192,7 @@ export function SCIMConfiguration(props: {
         toast({
           title: __("Bearer Token Regenerated"),
           description: __(
-            "Copy the new bearer token now. It will not be shown again."
+            "Copy the new bearer token now. It will not be shown again.",
           ),
           variant: "success",
         });
@@ -208,7 +224,7 @@ export function SCIMConfiguration(props: {
             <h3 className="font-medium">{__("SCIM is not configured")}</h3>
             <p className="text-sm text-txt-secondary mt-1">
               {__(
-                "Enable SCIM to automatically provision users from your identity provider."
+                "Enable SCIM to automatically provision users from your identity provider.",
               )}
             </p>
           </div>
@@ -236,7 +252,7 @@ export function SCIMConfiguration(props: {
               <h3 className="font-medium">{__("SCIM Provisioning Active")}</h3>
               <p className="text-sm text-txt-secondary">
                 {__(
-                  "Automatic user provisioning is enabled for this organization."
+                  "Automatic user provisioning is enabled for this organization.",
                 )}
               </p>
             </div>
@@ -256,7 +272,7 @@ export function SCIMConfiguration(props: {
                   onClick={() =>
                     copyToClipboard(
                       scimConfiguration.endpointUrl,
-                      __("SCIM Endpoint URL")
+                      __("SCIM Endpoint URL"),
                     )
                   }
                   icon={IconSquareBehindSquare2}
@@ -318,7 +334,7 @@ export function SCIMConfiguration(props: {
         <div className="p-4 space-y-4">
           <p>
             {__(
-              "Are you sure you want to delete the SCIM configuration? This will:"
+              "Are you sure you want to delete the SCIM configuration? This will:",
             )}
           </p>
           <ul className="list-disc list-inside text-sm space-y-1">
@@ -330,7 +346,7 @@ export function SCIMConfiguration(props: {
           </ul>
           <p className="text-sm text-txt-secondary">
             {__(
-              "Existing users will not be removed, only their membership source will change."
+              "Existing users will not be removed, only their membership source will change.",
             )}
           </p>
           <div className="flex justify-end gap-2">

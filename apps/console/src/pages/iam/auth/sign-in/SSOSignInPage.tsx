@@ -103,7 +103,6 @@ function NavigateToSSOLoginURL(props: {
 
   useEffect(() => {
     if (!ssoLoginURL.ok) {
-      console.log(ssoLoginURL);
       toast({
         title: __("Error"),
         description:
