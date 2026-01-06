@@ -358,8 +358,13 @@ func (r *mutationResolver) SignIn(ctx context.Context, input types.SignInInput) 
 
 	user, session, err := r.iam.AuthService.OpenSessionWithPassword(ctx, input.Email, input.Password)
 	if err != nil {
-		var ErrInvalidCredentials *iam.ErrInvalidCredentials
-		if errors.As(err, &ErrInvalidCredentials) {
+		var errInvalidPassword *iam.ErrInvalidPassword
+		if errors.As(err, &errInvalidPassword) {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+
+		var errInvalidCredentials *iam.ErrInvalidCredentials
+		if errors.As(err, &errInvalidCredentials) {
 			return nil, &gqlerror.Error{
 				Message: err.Error(),
 				Extensions: map[string]any{

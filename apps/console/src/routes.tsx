@@ -78,7 +78,7 @@ const routes = [
       },
       {
         path: "register",
-        Component: lazy(() => import("./pages/iam/auth/SignUpPage")),
+        Component: lazy(() => import("./pages/iam/auth/sign-up/SignUpPage")),
       },
       // {
       //   path: "confirm-email",
@@ -87,7 +87,7 @@ const routes = [
       {
         path: "signup-from-invitation",
         Component: lazy(
-          () => import("./pages/iam/auth/SignUpFromInvitationPage"),
+          () => import("./pages/iam/auth/sign-up/SignUpFromInvitationPage"),
         ),
       },
       {
@@ -96,7 +96,7 @@ const routes = [
       },
       {
         path: "reset-password",
-        Component: lazy(() => import("./pages/auth/ResetPasswordPage")),
+        Component: lazy(() => import("./pages/iam/auth/ResetPasswordPage")),
       },
     ],
   },
