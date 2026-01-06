@@ -429,7 +429,7 @@ func (s AuthService) OpenSessionWithPassword(ctx context.Context, email mail.Add
 
 	err := v.Error()
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, NewInvalidPasswordError("invalid password")
 	}
 
 	var (
