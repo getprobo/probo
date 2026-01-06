@@ -7,6 +7,7 @@ import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { graphql } from "relay-runtime";
 import { useMutation } from "react-relay";
 import type { ResetPasswordPageMutation } from "/__generated__/iam/ResetPasswordPageMutation.graphql";
+import { formatError, type GraphQLError } from "@probo/helpers";
 
 const resetPasswordMutation = graphql`
   mutation ResetPasswordPageMutation($input: ResetPasswordInput!) {
@@ -66,11 +67,22 @@ export default function ResetPasswordPage() {
       onError: (e: Error) => {
         toast({
           title: __("Reset failed"),
-          description: e.message || __("Password reset failed"),
+          description: e.message,
           variant: "error",
         });
       },
-      onCompleted: () => {
+      onCompleted: (_, e) => {
+        if (e) {
+          toast({
+            title: __("Reset failed"),
+            description: formatError(
+              __("Password reset failed"),
+              e as GraphQLError,
+            ),
+            variant: "error",
+          });
+          return;
+        }
         toast({
           title: __("Success"),
           description: __("Password reset successfully"),

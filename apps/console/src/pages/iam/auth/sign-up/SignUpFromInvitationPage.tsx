@@ -6,6 +6,7 @@ import z from "zod";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { graphql } from "relay-runtime";
 import { useMutation } from "react-relay";
+import { formatError } from "@probo/helpers";
 
 const signUpFromIvitationMutation = graphql`
   mutation SignUpFromInvitationPageMutation(
@@ -63,7 +64,16 @@ export default function SignUpFromInvitationPage() {
           fullName: data.fullName,
         },
       },
-      onCompleted: () => {
+      onCompleted: (_, e) => {
+        if (e) {
+          toast({
+            title: __("Signup failed"),
+            description: formatError(__("Signup failed"), e),
+            variant: "error",
+          });
+          return;
+        }
+
         toast({
           title: __("Success"),
           description: __(
@@ -73,10 +83,10 @@ export default function SignUpFromInvitationPage() {
         });
         navigate("/", { replace: true });
       },
-      onError: (errorData) => {
+      onError: (e) => {
         toast({
           title: __("Signup failed"),
-          description: errorData.message || __("Signup failed"),
+          description: e.message,
           variant: "error",
         });
       },
