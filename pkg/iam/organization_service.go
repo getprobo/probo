@@ -506,6 +506,7 @@ func (s *OrganizationService) CreateOrganization(
 			CreatedAt: now,
 			UpdatedAt: now,
 		}
+
 		membership = &coredata.Membership{
 			ID:             gid.New(tenantID, coredata.MembershipEntityType),
 			IdentityID:     identityID,
@@ -516,6 +517,23 @@ func (s *OrganizationService) CreateOrganization(
 			CreatedAt:      now,
 			UpdatedAt:      now,
 		}
+
+		organizationContext = &coredata.OrganizationContext{
+			OrganizationID: organizationID,
+			CreatedAt:      now,
+			UpdatedAt:      now,
+		}
+
+		trustCenter = &coredata.TrustCenter{
+			ID:             gid.New(tenantID, coredata.TrustCenterEntityType),
+			OrganizationID: organization.ID,
+			TenantID:       organization.TenantID,
+			Active:         false,
+			Slug:           organization.ID.String(),
+			CreatedAt:      now,
+			UpdatedAt:      now,
+		}
+
 		logoFile           *coredata.File
 		horizontalLogoFile *coredata.File
 		scope              = coredata.NewScope(tenantID)
@@ -641,14 +659,12 @@ func (s *OrganizationService) CreateOrganization(
 				return fmt.Errorf("cannot insert profile: %w", err)
 			}
 
-			organizationContext := &coredata.OrganizationContext{
-				OrganizationID: organizationID,
-				CreatedAt:      now,
-				UpdatedAt:      now,
-			}
-
 			if err := organizationContext.Insert(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot insert organization context: %w", err)
+			}
+
+			if err := trustCenter.Insert(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot insert trust center: %w", err)
 			}
 
 			return nil
