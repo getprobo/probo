@@ -91,7 +91,7 @@ const routes = [
       },
       {
         path: "forgot-password",
-        Component: lazy(() => import("./pages/auth/ForgotPasswordPage")),
+        Component: lazy(() => import("./pages/iam/auth/ForgotPasswordPage")),
       },
       {
         path: "reset-password",
