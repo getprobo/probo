@@ -1,6 +1,6 @@
-import { formatDate } from "@probo/helpers";
+import { formatDate, formatError } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
-import { Button, Card } from "@probo/ui";
+import { Button, Card, useToast } from "@probo/ui";
 import { graphql } from "relay-runtime";
 import { useFragment, useMutation } from "react-relay";
 import type { InvitationCardFragment$key } from "/__generated__/iam/InvitationCardFragment.graphql";
@@ -39,6 +39,7 @@ export function InvitationCard(props: InvitationCardProps) {
 
   const navigate = useNavigate();
   const { __ } = useTranslate();
+  const { toast } = useToast();
 
   const invitation = useFragment<InvitationCardFragment$key>(fragment, fKey);
 
@@ -51,12 +52,23 @@ export function InvitationCard(props: InvitationCardProps) {
           invitationId: invitation.id,
         },
       },
-      onCompleted: () => {
+      onCompleted: (_, e) => {
+        if (e) {
+          toast({
+            title: __("Request failed"),
+            description: formatError(__("Cannot accept invitation"), e),
+            variant: "error",
+          });
+          return;
+        }
         navigate(`/organizations/${invitation.organization.id}`);
       },
-      onError: (err) => {
-        console.error("Failed to accept invitation:", err);
-        alert(__("Failed to accept invitation"));
+      onError: (e) => {
+        toast({
+          title: __("Request failed"),
+          description: e.message,
+          variant: "error",
+        });
       },
     });
   };

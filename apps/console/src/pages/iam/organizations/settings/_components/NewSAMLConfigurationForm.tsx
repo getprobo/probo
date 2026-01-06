@@ -7,6 +7,9 @@ import {
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { useCallback } from "react";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
+import { useToast } from "@probo/ui";
+import { formatError } from "@probo/helpers";
+import { useTranslate } from "@probo/i18n";
 
 const createSAMLConfigurationMutation = graphql`
   mutation NewSAMLConfigurationForm_createMutation(
@@ -31,6 +34,9 @@ const createSAMLConfigurationMutation = graphql`
 export function NewSAMLConfigurationForm(props: { onCreate: () => void }) {
   const { onCreate } = props;
   const organizationId = useOrganizationId();
+
+  const { __ } = useTranslate();
+  const { toast } = useToast();
 
   const [create, isCreating] =
     useMutationWithToasts<NewSAMLConfigurationForm_createMutation>(
@@ -61,10 +67,24 @@ export function NewSAMLConfigurationForm(props: { onCreate: () => void }) {
           },
           connections: [connectionID],
         },
-        onCompleted: onCreate,
+        onCompleted: (response, e) => {
+          if (e) {
+            toast({
+              variant: "error",
+              title: __("Error"),
+              description: formatError(
+                __("Failed to create SAML configuration"),
+                e,
+              ),
+            });
+            return;
+          }
+
+          onCreate();
+        },
       });
     },
-    [organizationId, create, onCreate],
+    [organizationId, create, onCreate, __, toast],
   );
 
   return (

@@ -8,6 +8,7 @@ import z from "zod";
 import { graphql } from "relay-runtime";
 import { useMutation } from "react-relay";
 import type { ForgotPasswordPageMutation } from "/__generated__/iam/ForgotPasswordPageMutation.graphql";
+import { formatError } from "@probo/helpers";
 
 const sendInstructionsMutation = graphql`
   mutation ForgotPasswordPageMutation($input: ForgotPasswordInput!) {
@@ -46,11 +47,23 @@ export default function ForgotPasswordPage() {
       onError: (e: Error) => {
         toast({
           title: __("Request failed"),
-          description: e.message || __("Failed to send reset instructions"),
+          description: e.message,
           variant: "error",
         });
       },
-      onCompleted: () => {
+      onCompleted: (_, e) => {
+        if (e) {
+          toast({
+            title: __("Request failed"),
+            description: formatError(
+              __("Failed to send reset instructions"),
+              e,
+            ),
+            variant: "error",
+          });
+          return;
+        }
+
         toast({
           title: __("Success"),
           description: __("Password reset instructions sent to your email"),
