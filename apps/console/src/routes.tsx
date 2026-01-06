@@ -81,10 +81,10 @@ const routes = [
         path: "register",
         Component: lazy(() => import("./pages/iam/auth/sign-up/SignUpPage")),
       },
-      // {
-      //   path: "confirm-email",
-      //   Component: lazy(() => import("./pages/auth/ConfirmEmailPage")),
-      // },
+      {
+        path: "verify-email",
+        Component: lazy(() => import("./pages/iam/auth/VerifyEmailPage")),
+      },
       {
         path: "signup-from-invitation",
         Component: lazy(

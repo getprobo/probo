@@ -349,7 +349,7 @@ func (s AuthService) CreateIdentityWithPassword(
 	}
 
 	confirmationUrl, err := base.
-		WithPath("/auth/confirm-email").
+		WithPath("/auth/verify-email").
 		WithQuery("token", confirmationToken).
 		String()
 	if err != nil {
