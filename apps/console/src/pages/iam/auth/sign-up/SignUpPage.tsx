@@ -46,9 +46,11 @@ export default function SignUpPage() {
   const onSubmit = (data: FormData) => {
     signUp({
       variables: {
-        email: data.email,
-        password: data.password,
-        fullName: data.fullName,
+        input: {
+          email: data.email,
+          password: data.password,
+          fullName: data.fullName,
+        },
       },
       onCompleted: (_, e) => {
         if (e) {

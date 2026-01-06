@@ -92,7 +92,7 @@ func (s AccountService) ChangeEmail(ctx context.Context, identityID gid.GID, req
 	}
 
 	confirmationUrl := base.
-		WithPath("/auth/confirm-email").
+		WithPath("/auth/verify-email").
 		WithQuery("token", confirmationToken).
 		MustString()
 

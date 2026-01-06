@@ -67,7 +67,7 @@ export function NewSAMLConfigurationForm(props: { onCreate: () => void }) {
           },
           connections: [connectionID],
         },
-        onCompleted: (response, e) => {
+        onCompleted: (_, e) => {
           if (e) {
             toast({
               variant: "error",
