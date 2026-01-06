@@ -513,6 +513,73 @@ WHERE
 	return count, nil
 }
 
+func (s *SAMLConfigurations) LoadVerifiedByEmailDomain(ctx context.Context, conn pg.Conn, emailDomain string) error {
+	q := `
+SELECT
+    id,
+    organization_id,
+    email_domain,
+    enforcement_policy,
+    idp_entity_id,
+    idp_sso_url,
+    idp_certificate,
+    idp_metadata_url,
+    attribute_email,
+    attribute_firstname,
+    attribute_lastname,
+    attribute_role,
+    auto_signup_enabled,
+    domain_verification_token,
+    domain_verified_at,
+    created_at,
+    updated_at
+FROM
+    iam_saml_configurations
+WHERE
+    email_domain = @email_domain
+    AND domain_verified_at IS NOT NULL
+ORDER BY email_domain ASC;
+`
+
+	rows, err := conn.Query(ctx, q, pgx.StrictNamedArgs{"email_domain": emailDomain})
+	if err != nil {
+		return fmt.Errorf("cannot query iam_saml_configurations: %w", err)
+	}
+
+	samlConfigurations, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[SAMLConfiguration])
+	if err != nil {
+		return fmt.Errorf("cannot collect saml_configurations: %w", err)
+	}
+
+	*s = samlConfigurations
+
+	return nil
+}
+
+func (s *SAMLConfigurations) CountVerifiedByEmailDomain(
+	ctx context.Context,
+	conn pg.Conn,
+	emailDomain string,
+) (int, error) {
+	q := `
+SELECT
+    COUNT(*)
+FROM
+    iam_saml_configurations
+WHERE
+    email_domain = @email_domain
+    AND domain_verified_at IS NOT NULL
+`
+
+	row := conn.QueryRow(ctx, q, pgx.StrictNamedArgs{"email_domain": emailDomain})
+	var count int
+	if err := row.Scan(&count); err != nil {
+		return 0, fmt.Errorf("cannot count SAML configurations: %w", err)
+	}
+
+	return count, nil
+}
+
 func (s *SAMLConfigurations) LoadUnverified(
 	ctx context.Context,
 	conn pg.Conn,
