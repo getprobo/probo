@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<8cb399eb2f38eaf3059531ea4bc3fa30>>
+ * @generated SignedSource<<5d6fc3e9d931dccebc57b68196c98bed>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,15 +9,15 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
-export type SessionDropdownSignOutMutation$variables = Record<PropertyKey, never>;
-export type SessionDropdownSignOutMutation$data = {
+export type ViewerMembershipDropdownSignOutMutation$variables = Record<PropertyKey, never>;
+export type ViewerMembershipDropdownSignOutMutation$data = {
   readonly signOut: {
     readonly success: boolean;
   } | null | undefined;
 };
-export type SessionDropdownSignOutMutation = {
-  response: SessionDropdownSignOutMutation$data;
-  variables: SessionDropdownSignOutMutation$variables;
+export type ViewerMembershipDropdownSignOutMutation = {
+  response: ViewerMembershipDropdownSignOutMutation$data;
+  variables: ViewerMembershipDropdownSignOutMutation$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -46,7 +46,7 @@ return {
     "argumentDefinitions": [],
     "kind": "Fragment",
     "metadata": null,
-    "name": "SessionDropdownSignOutMutation",
+    "name": "ViewerMembershipDropdownSignOutMutation",
     "selections": (v0/*: any*/),
     "type": "Mutation",
     "abstractKey": null
@@ -55,20 +55,20 @@ return {
   "operation": {
     "argumentDefinitions": [],
     "kind": "Operation",
-    "name": "SessionDropdownSignOutMutation",
+    "name": "ViewerMembershipDropdownSignOutMutation",
     "selections": (v0/*: any*/)
   },
   "params": {
-    "cacheID": "a677190a127d7f75d5c629fab236a7a3",
+    "cacheID": "da5fc8d24f8fac6617c4e4de8d9a629d",
     "id": null,
     "metadata": {},
-    "name": "SessionDropdownSignOutMutation",
+    "name": "ViewerMembershipDropdownSignOutMutation",
     "operationKind": "mutation",
-    "text": "mutation SessionDropdownSignOutMutation {\n  signOut {\n    success\n  }\n}\n"
+    "text": "mutation ViewerMembershipDropdownSignOutMutation {\n  signOut {\n    success\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "10c9bdf35ab3961c7488973e052cf978";
+(node as any).hash = "856ff5d4affd9ad27871ab5f4fef3b1e";
 
 export default node;
