@@ -2,14 +2,17 @@ import { useQueryLoader } from "react-relay";
 import { Suspense, useEffect } from "react";
 import { Skeleton } from "@probo/ui";
 import { useOrganizationId } from "/hooks/useOrganizationId";
-import type { MembershipLayoutQuery } from "/__generated__/iam/MembershipLayoutQuery.graphql";
-import { MembershipLayout, membershipLayoutQuery } from "./MembershipLayout";
+import type { ViewerMembershipLayoutQuery } from "/__generated__/iam/ViewerMembershipLayoutQuery.graphql";
+import {
+  ViewerMembershipLayout,
+  viewerMembershipLayoutQuery,
+} from "./ViewerMembershipLayout";
 import { IAMRelayProvider } from "/providers/IAMRelayProvider";
 
 function MembershipLayoutLoader() {
   const organizationId = useOrganizationId();
-  const [queryRef, loadQuery] = useQueryLoader<MembershipLayoutQuery>(
-    membershipLayoutQuery,
+  const [queryRef, loadQuery] = useQueryLoader<ViewerMembershipLayoutQuery>(
+    viewerMembershipLayoutQuery,
   );
 
   useEffect(() => {
@@ -25,7 +28,7 @@ function MembershipLayoutLoader() {
 
   return (
     <Suspense fallback={<Skeleton className="w-full h-screen" />}>
-      <MembershipLayout queryRef={queryRef} />
+      <ViewerMembershipLayout queryRef={queryRef} />
     </Suspense>
   );
 }
