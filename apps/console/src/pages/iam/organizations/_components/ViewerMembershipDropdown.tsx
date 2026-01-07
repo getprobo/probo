@@ -12,15 +12,15 @@ import { graphql } from "relay-runtime";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { useFragment, useMutation } from "react-relay";
 import { useTranslate } from "@probo/i18n";
-import type { SessionDropdownFragment$key } from "/__generated__/iam/SessionDropdownFragment.graphql";
+import type { ViewerMembershipDropdownFragment$key } from "/__generated__/iam/ViewerMembershipDropdownFragment.graphql";
 import { formatError } from "@probo/helpers";
 
 export const fragment = graphql`
-  fragment SessionDropdownFragment on Organization {
-    canDelete: permission(action: "iam:organization:delete")
+  fragment ViewerMembershipDropdownFragment on Organization {
     viewerMembership @required(action: THROW) {
       identity @required(action: THROW) {
         email
+        canListAPIKeys: permission(action: "iam:personal-api-key:list")
       }
       profile @required(action: THROW) {
         fullName
@@ -30,14 +30,16 @@ export const fragment = graphql`
 `;
 
 const signOutMutation = graphql`
-  mutation SessionDropdownSignOutMutation {
+  mutation ViewerMembershipDropdownSignOutMutation {
     signOut {
       success
     }
   }
 `;
 
-export function SessionDropdown(props: { fKey: SessionDropdownFragment$key }) {
+export function ViewerMembershipDropdown(props: {
+  fKey: ViewerMembershipDropdownFragment$key;
+}) {
   const { fKey } = props;
 
   const { __ } = useTranslate();
@@ -45,12 +47,11 @@ export function SessionDropdown(props: { fKey: SessionDropdownFragment$key }) {
   const { toast } = useToast();
 
   const {
-    canDelete,
     viewerMembership: {
-      identity: { email },
+      identity: { canListAPIKeys, email },
       profile: { fullName },
     },
-  } = useFragment<SessionDropdownFragment$key>(fragment, fKey);
+  } = useFragment<ViewerMembershipDropdownFragment$key>(fragment, fKey);
   const [signOut] = useMutation(signOutMutation);
 
   const handleLogout: React.MouseEventHandler<HTMLAnchorElement> = (e) => {
@@ -81,7 +82,7 @@ export function SessionDropdown(props: { fKey: SessionDropdownFragment$key }) {
 
   return (
     <UserDropdown fullName={fullName} email={email}>
-      {canDelete && (
+      {canListAPIKeys && (
         <UserDropdownItem
           to="/me/api-keys"
           icon={IconKey}

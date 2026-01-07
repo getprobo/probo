@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<73d5a0059348fd0c5950ae3a873cc383>>
+ * @generated SignedSource<<a87fd05a4f80d2d7094647468d695967>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,42 +10,29 @@
 
 import { ReaderFragment } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
-export type SessionDropdownFragment$data = {
-  readonly canDelete: boolean;
+export type ViewerMembershipDropdownFragment$data = {
   readonly viewerMembership: {
     readonly identity: {
+      readonly canListAPIKeys: boolean;
       readonly email: string;
     };
     readonly profile: {
       readonly fullName: string;
     };
   };
-  readonly " $fragmentType": "SessionDropdownFragment";
+  readonly " $fragmentType": "ViewerMembershipDropdownFragment";
 };
-export type SessionDropdownFragment$key = {
-  readonly " $data"?: SessionDropdownFragment$data;
-  readonly " $fragmentSpreads": FragmentRefs<"SessionDropdownFragment">;
+export type ViewerMembershipDropdownFragment$key = {
+  readonly " $data"?: ViewerMembershipDropdownFragment$data;
+  readonly " $fragmentSpreads": FragmentRefs<"ViewerMembershipDropdownFragment">;
 };
 
 const node: ReaderFragment = {
   "argumentDefinitions": [],
   "kind": "Fragment",
   "metadata": null,
-  "name": "SessionDropdownFragment",
+  "name": "ViewerMembershipDropdownFragment",
   "selections": [
-    {
-      "alias": "canDelete",
-      "args": [
-        {
-          "kind": "Literal",
-          "name": "action",
-          "value": "iam:organization:delete"
-        }
-      ],
-      "kind": "ScalarField",
-      "name": "permission",
-      "storageKey": "permission(action:\"iam:organization:delete\")"
-    },
     {
       "kind": "RequiredField",
       "field": {
@@ -72,6 +59,19 @@ const node: ReaderFragment = {
                   "kind": "ScalarField",
                   "name": "email",
                   "storageKey": null
+                },
+                {
+                  "alias": "canListAPIKeys",
+                  "args": [
+                    {
+                      "kind": "Literal",
+                      "name": "action",
+                      "value": "iam:personal-api-key:list"
+                    }
+                  ],
+                  "kind": "ScalarField",
+                  "name": "permission",
+                  "storageKey": "permission(action:\"iam:personal-api-key:list\")"
                 }
               ],
               "storageKey": null
@@ -110,6 +110,6 @@ const node: ReaderFragment = {
   "abstractKey": null
 };
 
-(node as any).hash = "51810eafbf165e7b5eeec42cb268ae54";
+(node as any).hash = "82c179a1ec2b90ce5f12c0959f97150f";
 
 export default node;

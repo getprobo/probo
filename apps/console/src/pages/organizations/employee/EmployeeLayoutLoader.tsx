@@ -4,15 +4,15 @@ import { Skeleton } from "@probo/ui";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { IAMRelayProvider } from "/providers/IAMRelayProvider";
 import {
-  MembershipLayout,
-  membershipLayoutQuery,
-} from "/pages/iam/memberships/MembershipLayout";
-import type { MembershipLayoutQuery } from "/__generated__/iam/MembershipLayoutQuery.graphql";
+  ViewerMembershipLayout,
+  viewerMembershipLayoutQuery,
+} from "../../iam/organizations/ViewerMembershipLayout";
+import type { ViewerMembershipLayoutQuery } from "/__generated__/iam/ViewerMembershipLayoutQuery.graphql";
 
 function EmployeeLayoutLoader() {
   const organizationId = useOrganizationId();
-  const [queryRef, loadQuery] = useQueryLoader<MembershipLayoutQuery>(
-    membershipLayoutQuery,
+  const [queryRef, loadQuery] = useQueryLoader<ViewerMembershipLayoutQuery>(
+    viewerMembershipLayoutQuery,
   );
 
   useEffect(() => {
@@ -28,7 +28,7 @@ function EmployeeLayoutLoader() {
 
   return (
     <Suspense fallback={<Skeleton className="w-full h-screen" />}>
-      <MembershipLayout queryRef={queryRef} hideSidebar />
+      <ViewerMembershipLayout queryRef={queryRef} hideSidebar />
     </Suspense>
   );
 }

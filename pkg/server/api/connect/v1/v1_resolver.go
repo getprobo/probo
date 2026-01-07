@@ -1528,14 +1528,15 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 // Viewer is the resolver for the viewer field.
 func (r *queryResolver) Viewer(ctx context.Context) (*types.Identity, error) {
-	user := IdentityFromContext(ctx)
+	identity := IdentityFromContext(ctx)
 
 	return &types.Identity{
-		ID:            user.ID,
-		Email:         user.EmailAddress,
-		EmailVerified: user.EmailAddressVerified,
-		CreatedAt:     user.CreatedAt,
-		UpdatedAt:     user.UpdatedAt,
+		ID:            identity.ID,
+		Email:         identity.EmailAddress,
+		EmailVerified: identity.EmailAddressVerified,
+		FullName:      identity.FullName,
+		CreatedAt:     identity.CreatedAt,
+		UpdatedAt:     identity.UpdatedAt,
 	}, nil
 }
 

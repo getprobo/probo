@@ -13,17 +13,24 @@ import { Toasts } from "../Atoms/Toasts/Toasts.tsx";
 import { createPortal } from "react-dom";
 import clsx from "clsx";
 import { ConfirmDialog } from "../Molecules/Dialog/ConfirmDialog.tsx";
+import { Link } from "react-router";
 
 type Props = PropsWithChildren<{
-  header: ReactNode;
-  sidebar: ReactNode;
+  headerLeading?: ReactNode;
+  headerTrailing: ReactNode;
+  sidebar?: ReactNode;
 }>;
 
 const LayoutContext = createContext({
   setDrawer: (() => {}) as (v: boolean) => void,
 });
 
-export function Layout({ header, sidebar, children }: Props) {
+export function Layout({
+  headerLeading,
+  headerTrailing,
+  sidebar,
+  children,
+}: Props) {
   const [hasDrawer, setDrawer] = useState(false);
   const layoutContext = useMemo(
     () => ({
@@ -35,18 +42,25 @@ export function Layout({ header, sidebar, children }: Props) {
     <LayoutContext value={layoutContext}>
       <div className="text-txt-primary bg-level-0">
         <header className="absolute z-2 left-0 right-0 px-4 flex items-center border-b border-border-solid h-12 bg-level-0">
-          <Logo className="w-12 h-5" />
-          <svg
-            className="mx-3 text-txt-tertiary"
-            width="8"
-            height="18"
-            viewBox="0 0 8 18"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path d="M1 17L7 1" stroke="currentColor" />
-          </svg>
-          {header}
+          <Link to="/">
+            <Logo className="w-12 h-5" />
+          </Link>
+          {headerLeading && (
+            <>
+              <svg
+                className="mx-3 text-txt-tertiary"
+                width="8"
+                height="18"
+                viewBox="0 0 8 18"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path d="M1 17L7 1" stroke="currentColor" />
+              </svg>
+              {headerLeading}
+            </>
+          )}
+          <div className="ml-auto">{headerTrailing}</div>
         </header>
         <div className="flex h-screen" id="main">
           {sidebar && <Sidebar>{sidebar}</Sidebar>}

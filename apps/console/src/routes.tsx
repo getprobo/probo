@@ -4,7 +4,7 @@ import {
   redirect,
   useRouteError,
 } from "react-router";
-import { CenteredLayout, CenteredLayoutSkeleton } from "@probo/ui";
+import { CenteredLayoutSkeleton } from "@probo/ui";
 import { PageSkeleton } from "./components/skeletons/PageSkeleton.tsx";
 import { riskRoutes } from "./routes/riskRoutes.ts";
 import { measureRoutes } from "./routes/measureRoutes.ts";
@@ -103,7 +103,7 @@ const routes = [
   },
   {
     path: "/",
-    Component: CenteredLayout,
+    Component: lazy(() => import("./pages/iam/memberships/ViewerLayoutLoader")),
     Fallback: CenteredLayoutSkeleton,
     ErrorBoundary: ErrorBoundary,
     children: [
@@ -158,7 +158,7 @@ const routes = [
   {
     path: "/organizations/:organizationId",
     Component: lazy(
-      () => import("./pages/iam/memberships/MembershipLayoutLoader"),
+      () => import("./pages/iam/organizations/ViewerMembershipLayoutLoader"),
     ),
     ErrorBoundary: ErrorBoundary,
     children: [
