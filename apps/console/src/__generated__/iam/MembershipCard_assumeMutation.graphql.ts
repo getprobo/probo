@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<1be91c8373db8ffb1155cb6e52beda6c>>
+ * @generated SignedSource<<0f048726f7e7371223919d924fa15d54>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -23,6 +23,7 @@ export type MembershipCard_assumeMutation$data = {
       readonly membership: {
         readonly id: string;
         readonly lastSession: {
+          readonly expiresAt: string;
           readonly id: string;
         } | null | undefined;
       };
@@ -117,7 +118,14 @@ v3 = [
                     "name": "lastSession",
                     "plural": false,
                     "selections": [
-                      (v1/*: any*/)
+                      (v1/*: any*/),
+                      {
+                        "alias": null,
+                        "args": null,
+                        "kind": "ScalarField",
+                        "name": "expiresAt",
+                        "storageKey": null
+                      }
                     ],
                     "storageKey": null
                   }
@@ -176,16 +184,16 @@ return {
     "selections": (v3/*: any*/)
   },
   "params": {
-    "cacheID": "100893dbb5b232a19f4b11bc51598bc8",
+    "cacheID": "d106c9d8a5a2c3256da2f1f83fb8fde7",
     "id": null,
     "metadata": {},
     "name": "MembershipCard_assumeMutation",
     "operationKind": "mutation",
-    "text": "mutation MembershipCard_assumeMutation(\n  $input: AssumeOrganizationSessionInput!\n) {\n  assumeOrganizationSession(input: $input) {\n    result {\n      __typename\n      ... on OrganizationSessionCreated {\n        membership {\n          id\n          lastSession {\n            id\n          }\n        }\n      }\n      ... on PasswordRequired {\n        reason\n      }\n      ... on SAMLAuthenticationRequired {\n        reason\n        redirectUrl\n      }\n    }\n  }\n}\n"
+    "text": "mutation MembershipCard_assumeMutation(\n  $input: AssumeOrganizationSessionInput!\n) {\n  assumeOrganizationSession(input: $input) {\n    result {\n      __typename\n      ... on OrganizationSessionCreated {\n        membership {\n          id\n          lastSession {\n            id\n            expiresAt\n          }\n        }\n      }\n      ... on PasswordRequired {\n        reason\n      }\n      ... on SAMLAuthenticationRequired {\n        reason\n        redirectUrl\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "f44a07beefbecb0a564858272e3cd244";
+(node as any).hash = "7acaa03357731962d7d29eb2c046660a";
 
 export default node;

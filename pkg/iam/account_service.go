@@ -198,17 +198,17 @@ func (s *AccountService) AcceptInvitation(
 	ctx context.Context,
 	identityID gid.GID,
 	invitationID gid.GID,
-) (*coredata.Membership, error) {
+) (*coredata.Invitation, *coredata.Membership, error) {
 	var (
 		now        = time.Now()
 		membership = &coredata.Membership{}
+		invitation = &coredata.Invitation{}
 	)
 
 	err := s.pg.WithTx(
 		ctx,
 		func(tx pg.Conn) error {
 			identity := coredata.Identity{}
-			invitation := coredata.Invitation{}
 
 			err := identity.LoadByID(ctx, tx, identityID)
 			if err != nil {
@@ -306,10 +306,10 @@ func (s *AccountService) AcceptInvitation(
 	)
 
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return membership, nil
+	return invitation, membership, nil
 }
 
 func (s *AccountService) ListPendingInvitations(

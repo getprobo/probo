@@ -1,10 +1,10 @@
 import { formatDate, formatError } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import { Button, Card, useToast } from "@probo/ui";
-import { graphql } from "relay-runtime";
+import { graphql, type DataID } from "relay-runtime";
 import { useFragment, useMutation } from "react-relay";
 import type { InvitationCardFragment$key } from "/__generated__/iam/InvitationCardFragment.graphql";
-import { useNavigate } from "react-router";
+import type { InvitationCardMutation } from "/__generated__/iam/InvitationCardMutation.graphql";
 
 const fragment = graphql`
   fragment InvitationCardFragment on Invitation {
@@ -19,11 +19,22 @@ const fragment = graphql`
 `;
 
 const acceptMutation = graphql`
-  mutation InvitationCardMutation($input: AcceptInvitationInput!) {
+  mutation InvitationCardMutation(
+    $input: AcceptInvitationInput!
+    $membershipConnections: [ID!]!
+    $pendingInvitationConnections: [ID!]!
+  ) {
     acceptInvitation(input: $input) {
-      membershipEdge {
+      invitation {
+        id @deleteEdge(connections: $pendingInvitationConnections)
+      }
+      membershipEdge @prependEdge(connections: $membershipConnections) {
         node {
           id
+          ...MembershipCardFragment
+          organization {
+            name
+          }
         }
       }
     }
@@ -31,19 +42,22 @@ const acceptMutation = graphql`
 `;
 
 interface InvitationCardProps {
+  pendingInvitationsConnectionId: DataID;
+  membershipConnectionId: DataID;
   fKey: InvitationCardFragment$key;
 }
 
 export function InvitationCard(props: InvitationCardProps) {
-  const { fKey } = props;
+  const { pendingInvitationsConnectionId, membershipConnectionId, fKey } =
+    props;
 
-  const navigate = useNavigate();
   const { __ } = useTranslate();
   const { toast } = useToast();
 
   const invitation = useFragment<InvitationCardFragment$key>(fragment, fKey);
 
-  const [acceptInvitation, isAccepting] = useMutation(acceptMutation);
+  const [acceptInvitation, isAccepting] =
+    useMutation<InvitationCardMutation>(acceptMutation);
 
   const handleAccept = () => {
     acceptInvitation({
@@ -51,6 +65,8 @@ export function InvitationCard(props: InvitationCardProps) {
         input: {
           invitationId: invitation.id,
         },
+        pendingInvitationConnections: [pendingInvitationsConnectionId],
+        membershipConnections: [membershipConnectionId],
       },
       onCompleted: (_, e) => {
         if (e) {
@@ -61,7 +77,6 @@ export function InvitationCard(props: InvitationCardProps) {
           });
           return;
         }
-        navigate(`/organizations/${invitation.organization.id}`);
       },
       onError: (e) => {
         toast({

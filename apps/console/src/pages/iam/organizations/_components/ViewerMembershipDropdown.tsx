@@ -68,7 +68,7 @@ export function ViewerMembershipDropdown(props: {
           });
           return;
         }
-        window.location.reload();
+        window.location.href = "/auth/login";
       },
       onError: (e) => {
         toast({

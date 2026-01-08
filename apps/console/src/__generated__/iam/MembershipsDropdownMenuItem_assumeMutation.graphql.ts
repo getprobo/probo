@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<a3cc5c262b8a01f267eb2b549ab95a27>>
+ * @generated SignedSource<<4beff809268fb32711cc02699683b623>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -19,6 +19,15 @@ export type MembershipsDropdownMenuItem_assumeMutation$variables = {
 export type MembershipsDropdownMenuItem_assumeMutation$data = {
   readonly assumeOrganizationSession: {
     readonly result: {
+      readonly __typename: "OrganizationSessionCreated";
+      readonly membership: {
+        readonly id: string;
+        readonly lastSession: {
+          readonly expiresAt: string;
+          readonly id: string;
+        } | null | undefined;
+      };
+    } | {
       readonly __typename: "PasswordRequired";
       readonly reason: ReauthenticationReason;
     } | {
@@ -49,10 +58,17 @@ v1 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
+  "name": "id",
+  "storageKey": null
+},
+v2 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
   "name": "reason",
   "storageKey": null
 },
-v2 = [
+v3 = [
   {
     "alias": null,
     "args": [
@@ -85,7 +101,45 @@ v2 = [
           {
             "kind": "InlineFragment",
             "selections": [
-              (v1/*: any*/)
+              {
+                "alias": null,
+                "args": null,
+                "concreteType": "Membership",
+                "kind": "LinkedField",
+                "name": "membership",
+                "plural": false,
+                "selections": [
+                  (v1/*: any*/),
+                  {
+                    "alias": null,
+                    "args": null,
+                    "concreteType": "Session",
+                    "kind": "LinkedField",
+                    "name": "lastSession",
+                    "plural": false,
+                    "selections": [
+                      (v1/*: any*/),
+                      {
+                        "alias": null,
+                        "args": null,
+                        "kind": "ScalarField",
+                        "name": "expiresAt",
+                        "storageKey": null
+                      }
+                    ],
+                    "storageKey": null
+                  }
+                ],
+                "storageKey": null
+              }
+            ],
+            "type": "OrganizationSessionCreated",
+            "abstractKey": null
+          },
+          {
+            "kind": "InlineFragment",
+            "selections": [
+              (v2/*: any*/)
             ],
             "type": "PasswordRequired",
             "abstractKey": null
@@ -93,7 +147,7 @@ v2 = [
           {
             "kind": "InlineFragment",
             "selections": [
-              (v1/*: any*/),
+              (v2/*: any*/),
               {
                 "alias": null,
                 "args": null,
@@ -118,7 +172,7 @@ return {
     "kind": "Fragment",
     "metadata": null,
     "name": "MembershipsDropdownMenuItem_assumeMutation",
-    "selections": (v2/*: any*/),
+    "selections": (v3/*: any*/),
     "type": "Mutation",
     "abstractKey": null
   },
@@ -127,19 +181,19 @@ return {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
     "name": "MembershipsDropdownMenuItem_assumeMutation",
-    "selections": (v2/*: any*/)
+    "selections": (v3/*: any*/)
   },
   "params": {
-    "cacheID": "21ebf9c598bd39f2abcb0ace0d9c0c4b",
+    "cacheID": "96111606700d6d57e20584324fac44c3",
     "id": null,
     "metadata": {},
     "name": "MembershipsDropdownMenuItem_assumeMutation",
     "operationKind": "mutation",
-    "text": "mutation MembershipsDropdownMenuItem_assumeMutation(\n  $input: AssumeOrganizationSessionInput!\n) {\n  assumeOrganizationSession(input: $input) {\n    result {\n      __typename\n      ... on PasswordRequired {\n        reason\n      }\n      ... on SAMLAuthenticationRequired {\n        reason\n        redirectUrl\n      }\n    }\n  }\n}\n"
+    "text": "mutation MembershipsDropdownMenuItem_assumeMutation(\n  $input: AssumeOrganizationSessionInput!\n) {\n  assumeOrganizationSession(input: $input) {\n    result {\n      __typename\n      ... on OrganizationSessionCreated {\n        membership {\n          id\n          lastSession {\n            id\n            expiresAt\n          }\n        }\n      }\n      ... on PasswordRequired {\n        reason\n      }\n      ... on SAMLAuthenticationRequired {\n        reason\n        redirectUrl\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "416f824d526d3f92797fec0eb9c2e590";
+(node as any).hash = "706b7dd33f09edc34377a52682d85037";
 
 export default node;

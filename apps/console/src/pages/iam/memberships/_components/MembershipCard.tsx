@@ -42,6 +42,7 @@ const assumeOrganizationSessionMutation = graphql`
             id
             lastSession {
               id
+              expiresAt
             }
           }
         }

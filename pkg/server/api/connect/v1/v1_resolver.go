@@ -1006,7 +1006,7 @@ func (r *mutationResolver) AcceptInvitation(ctx context.Context, input types.Acc
 
 	identity := IdentityFromContext(ctx)
 
-	membership, err := r.iam.AccountService.AcceptInvitation(ctx, identity.ID, input.InvitationID)
+	invitation, membership, err := r.iam.AccountService.AcceptInvitation(ctx, identity.ID, input.InvitationID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot accept invitation", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -1014,6 +1014,7 @@ func (r *mutationResolver) AcceptInvitation(ctx context.Context, input types.Acc
 
 	return &types.AcceptInvitationPayload{
 		MembershipEdge: types.NewMembershipEdge(membership, coredata.MembershipOrderFieldCreatedAt),
+		Invitation:     types.NewInvitation(invitation),
 	}, nil
 }
 
