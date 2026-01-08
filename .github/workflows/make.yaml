@@ -24,9 +24,11 @@ jobs:
       - uses: "actions/setup-go@v5"
         with:
           go-version: "1.25.5"
+          cache: true
       - uses: "actions/setup-node@v4"
         with:
           node-version-file: ".nvmrc"
+          cache: "npm"
       - run: "npm ci"
       - uses: "docker/setup-qemu-action@v3"
       - uses: "docker/setup-buildx-action@v3"
@@ -98,9 +100,11 @@ jobs:
       - uses: "actions/setup-go@v5"
         with:
           go-version: "1.25.5"
+          cache: true
       - uses: "actions/setup-node@v4"
         with:
           node-version-file: ".nvmrc"
+          cache: "npm"
       - run: "npm ci"
       - run: "make build"
       - run: "make test"
@@ -135,11 +139,13 @@ jobs:
       - uses: "actions/setup-go@v5"
         with:
           go-version: "1.25.5"
+          cache: true
       - uses: "actions/setup-node@v4"
         with:
           node-version-file: ".nvmrc"
+          cache: "npm"
       - run: "sudo apt-get install -y mkcert"
-      - run: "sudo mkcert -install"
+      - run: "sudo mkcert -install 2>&1 | grep -v 'no Firefox and/or Chrome/Chromium security databases found' || true"
       - uses: "docker/setup-qemu-action@v3"
       - uses: "docker/setup-buildx-action@v3"
       - uses: "docker/setup-compose-action@v1"

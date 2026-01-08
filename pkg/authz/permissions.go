@@ -563,7 +563,6 @@ var Permissions = map[uint16]map[Action][]Role{
 		ActionRequestSignature:            EditRoles,
 		ActionBulkRequestSignatures:       EditRoles,
 		ActionSendSigningNotifications:    EditRoles,
-		ActionCancelSignatureRequest:      EditRoles,
 	},
 	coredata.DocumentVersionEntityType: {
 		ActionSignDocument: AllRoles,
@@ -586,6 +585,8 @@ var Permissions = map[uint16]map[Action][]Role{
 		ActionGet:             NonEmployeeRoles,
 		ActionDocumentVersion: NonEmployeeRoles,
 		ActionSignedBy:        NonEmployeeRoles,
+
+		ActionCancelSignatureRequest: EditRoles,
 	},
 	coredata.RiskEntityType: {
 		ActionGet:             NonEmployeeRoles,
