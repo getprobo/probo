@@ -7,42 +7,83 @@ import {
   useState,
 } from "react";
 
-const defaultValue = {
-  lang: "en" as "en" | "fr",
-  translations: {} as Record<string, string>,
-  translate: (s: string) => s,
+export const SUPPORTED_LANGUAGES = ["en", "fr"] as const;
+export type SupportedLang = (typeof SUPPORTED_LANGUAGES)[number];
+export const DEFAULT_LANG: SupportedLang = "en";
+const STORAGE_KEY = "probo-lang";
+
+type TranslatorContextValue = {
+  lang: SupportedLang;
+  translations: Record<string, string>;
+  translate: (s: string) => string;
+  setLang: (lang: SupportedLang) => void;
 };
 
-type Context = typeof defaultValue;
+const defaultValue: TranslatorContextValue = {
+  lang: DEFAULT_LANG,
+  translations: {},
+  translate: (s: string) => s,
+  setLang: () => {},
+};
 
-const TranslatorContext = createContext(defaultValue);
+const TranslatorContext = createContext<TranslatorContextValue>(defaultValue);
+
+function detectLanguage(): SupportedLang {
+  if (typeof window === "undefined") {
+    return DEFAULT_LANG;
+  }
+
+  const stored = localStorage.getItem(STORAGE_KEY);
+  if (stored && SUPPORTED_LANGUAGES.includes(stored as SupportedLang)) {
+    return stored as SupportedLang;
+  }
+
+  const browserLang = navigator.language.split("-")[0];
+  if (SUPPORTED_LANGUAGES.includes(browserLang as SupportedLang)) {
+    return browserLang as SupportedLang;
+  }
+
+  return DEFAULT_LANG;
+}
 
 type Props = {
-  lang: "en" | "fr";
-  loader: (lang: string) => Promise<Record<string, string>>;
+  loader: (lang: SupportedLang) => Promise<Record<string, string>>;
+  defaultLang?: SupportedLang;
 };
 
 export function TranslatorProvider({
-  lang,
   loader,
+  defaultLang,
   children,
 }: PropsWithChildren<Props>) {
-  const [translations, setTranslations] = useState(
-    {} as Record<string, string>
-  );
-  const translate = useCallback<Context["translate"]>(
-    (s) => {
-      return translations[s] ? translations[s] : s;
+  const [lang, setLangState] = useState<SupportedLang>(() => {
+    return defaultLang ?? detectLanguage();
+  });
+
+  const [translations, setTranslations] = useState<Record<string, string>>({});
+
+  const translate = useCallback(
+    (s: string): string => {
+      return translations[s] ?? s;
     },
     [translations]
   );
 
+  const setLang = useCallback((newLang: SupportedLang) => {
+    if (SUPPORTED_LANGUAGES.includes(newLang)) {
+      setLangState(newLang);
+      if (typeof window !== "undefined") {
+        localStorage.setItem(STORAGE_KEY, newLang);
+      }
+    }
+  }, []);
+
   useEffect(() => {
     loader(lang).then(setTranslations);
-  }, [lang]);
+  }, [lang, loader]);
 
   return (
-    <TranslatorContext.Provider value={{ lang, translations, translate }}>
+    <TranslatorContext.Provider value={{ lang, translations, translate, setLang }}>
       {children}
     </TranslatorContext.Provider>
   );
@@ -67,7 +108,7 @@ const relativeFormat = [
 ] as const;
 
 export function useTranslate() {
-  const { translate, lang } = useContext(TranslatorContext);
+  const { translate, lang, setLang } = useContext(TranslatorContext);
   const dateFormat = (
     date: Date | string | null | undefined,
     options: Intl.DateTimeFormatOptions = {
@@ -110,6 +151,7 @@ export function useTranslate() {
 
   return {
     lang,
+    setLang,
     __: translate,
     dateFormat: dateFormat,
     relativeDateFormat,
