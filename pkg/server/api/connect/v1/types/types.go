@@ -31,6 +31,7 @@ type AcceptInvitationInput struct {
 
 type AcceptInvitationPayload struct {
 	MembershipEdge *MembershipEdge `json:"membershipEdge"`
+	Invitation     *Invitation     `json:"invitation"`
 }
 
 type AssumeOrganizationSessionInput struct {
