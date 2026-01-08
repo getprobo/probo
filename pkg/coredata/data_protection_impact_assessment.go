@@ -35,6 +35,12 @@ func (e ErrDataProtectionImpactAssessmentNotFound) Error() string {
 	return fmt.Sprintf("data protection impact assessment not found: %q", e.Identifier)
 }
 
+type ErrNoDataProtectionImpactAssessmentsFound struct{}
+
+func (e ErrNoDataProtectionImpactAssessmentsFound) Error() string {
+	return "no data protection impact assessments found"
+}
+
 type (
 	DataProtectionImpactAssessment struct {
 		ID                          gid.GID                                     `db:"id"`
@@ -135,6 +141,56 @@ WHERE
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query data protection impact assessments: %w", err)
+	}
+
+	results, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[DataProtectionImpactAssessment])
+	if err != nil {
+		return fmt.Errorf("cannot collect data protection impact assessments: %w", err)
+	}
+
+	*dpias = results
+
+	return nil
+}
+
+func (dpias *DataProtectionImpactAssessments) LoadAllByOrganizationID(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	organizationID gid.GID,
+	filter *DataProtectionImpactAssessmentFilter,
+) error {
+	q := `
+SELECT
+	id,
+	snapshot_id,
+	source_id,
+	organization_id,
+	processing_activity_id,
+	description,
+	necessity_and_proportionality,
+	potential_risk,
+	mitigations,
+	residual_risk,
+	created_at,
+	updated_at
+FROM
+	processing_activity_data_protection_impact_assessments
+WHERE
+	%s
+	AND organization_id = @organization_id
+	AND %s
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"organization_id": organizationID}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -429,4 +485,3 @@ WHERE dpia.tenant_id = @tenant_id AND dpia.organization_id = @organization_id AN
 
 	return nil
 }
-

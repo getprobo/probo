@@ -53,3 +53,9 @@ func (f *DataProtectionImpactAssessmentFilter) SQLFragment() string {
 	}
 }
 
+func (f *DataProtectionImpactAssessmentFilter) SnapshotID() *gid.GID {
+	if f.snapshotID == nil || *f.snapshotID == nil {
+		return nil
+	}
+	return *f.snapshotID
+}

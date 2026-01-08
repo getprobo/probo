@@ -17,17 +17,21 @@ package probo
 import (
 	"context"
 	"fmt"
+	"io"
 	"time"
 
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/docgen"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/html2pdf"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/validator"
 )
 
 type TransferImpactAssessmentService struct {
-	svc *TenantService
+	svc               *TenantService
+	html2pdfConverter *html2pdf.Converter
 }
 
 type (
@@ -298,3 +302,130 @@ func (s *TransferImpactAssessmentService) Delete(
 	return err
 }
 
+func (s *TransferImpactAssessmentService) ExportPDF(
+	ctx context.Context,
+	organizationID gid.GID,
+	filter *coredata.TransferImpactAssessmentFilter,
+) ([]byte, error) {
+	var tableData docgen.TransferImpactAssessmentTableData
+
+	err := s.svc.pg.WithTx(
+		ctx,
+		func(conn pg.Conn) error {
+			var assessments coredata.TransferImpactAssessments
+			if err := assessments.LoadAllByOrganizationID(ctx, conn, s.svc.scope, organizationID, filter); err != nil {
+				return fmt.Errorf("cannot load transfer impact assessments: %w", err)
+			}
+
+			if len(assessments) == 0 {
+				return &coredata.ErrNoTransferImpactAssessmentsFound{}
+			}
+
+			organization := &coredata.Organization{}
+			if err := organization.LoadByID(ctx, conn, s.svc.scope, organizationID); err != nil {
+				return fmt.Errorf("cannot load organization: %w", err)
+			}
+
+			horizontalLogoBase64 := ""
+			if organization.HorizontalLogoFileID != nil {
+				fileRecord := &coredata.File{}
+				fileErr := s.svc.pg.WithConn(ctx, func(conn pg.Conn) error {
+					return fileRecord.LoadByID(ctx, conn, s.svc.scope, *organization.HorizontalLogoFileID)
+				})
+				if fileErr == nil {
+					base64Data, mimeType, logoErr := s.svc.fileManager.GetFileBase64(ctx, fileRecord)
+					if logoErr == nil {
+						horizontalLogoBase64 = fmt.Sprintf("data:%s;base64,%s", mimeType, base64Data)
+					}
+				}
+			}
+
+			var snapshots coredata.Snapshots
+			snapshotType := coredata.SnapshotsTypeProcessingActivities
+
+			var version int
+			var publishedAt time.Time
+
+			if snapshotID := filter.SnapshotID(); snapshotID != nil {
+				snapshot := &coredata.Snapshot{}
+				if err := snapshot.LoadByID(ctx, conn, s.svc.scope, *snapshotID); err != nil {
+					return fmt.Errorf("cannot load snapshot: %w", err)
+				}
+				publishedAt = snapshot.CreatedAt
+				snapshotFilter := coredata.NewSnapshotFilter(&snapshotType).WithBeforeDate(&snapshot.CreatedAt)
+				snapshotCount, err := snapshots.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID, snapshotFilter)
+				if err != nil {
+					return fmt.Errorf("cannot count processing activities snapshots: %w", err)
+				}
+				version = snapshotCount
+			} else {
+				publishedAt = time.Now()
+				snapshotFilter := coredata.NewSnapshotFilter(&snapshotType)
+				snapshotCount, err := snapshots.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID, snapshotFilter)
+				if err != nil {
+					return fmt.Errorf("cannot count processing activities snapshots: %w", err)
+				}
+				version = snapshotCount + 1
+			}
+
+			assessmentRows := make([]docgen.TransferImpactAssessmentRowData, len(assessments))
+			for i, assessment := range assessments {
+				processingActivity := &coredata.ProcessingActivity{}
+				if err := processingActivity.LoadByID(ctx, conn, s.svc.scope, assessment.ProcessingActivityID); err != nil {
+					return fmt.Errorf("cannot load processing activity: %w", err)
+				}
+
+				assessmentRows[i] = docgen.TransferImpactAssessmentRowData{
+					ProcessingActivityName: processingActivity.Name,
+					DataSubjects:           assessment.DataSubjects,
+					LegalMechanism:         assessment.LegalMechanism,
+					Transfer:               assessment.Transfer,
+					LocalLawRisk:           assessment.LocalLawRisk,
+					SupplementaryMeasures:  assessment.SupplementaryMeasures,
+				}
+			}
+
+			tableData = docgen.TransferImpactAssessmentTableData{
+				CompanyName:                 organization.Name,
+				CompanyHorizontalLogoBase64: horizontalLogoBase64,
+				Version:                     version,
+				PublishedAt:                 publishedAt,
+				Assessments:                 assessmentRows,
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	htmlContent, err := docgen.RenderTransferImpactAssessmentsTableHTML(tableData)
+	if err != nil {
+		return nil, fmt.Errorf("cannot render HTML: %w", err)
+	}
+
+	cfg := html2pdf.RenderConfig{
+		PageFormat:      html2pdf.PageFormatA4,
+		Orientation:     html2pdf.OrientationPortrait,
+		MarginTop:       html2pdf.NewMarginInches(0.98),
+		MarginBottom:    html2pdf.NewMarginInches(0.98),
+		MarginLeft:      html2pdf.NewMarginInches(0.98),
+		MarginRight:     html2pdf.NewMarginInches(0.98),
+		PrintBackground: true,
+		Scale:           1.0,
+	}
+
+	pdfReader, err := s.html2pdfConverter.GeneratePDF(ctx, htmlContent, cfg)
+	if err != nil {
+		return nil, fmt.Errorf("cannot generate PDF: %w", err)
+	}
+
+	pdfData, err := io.ReadAll(pdfReader)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read PDF data: %w", err)
+	}
+
+	return pdfData, nil
+}
