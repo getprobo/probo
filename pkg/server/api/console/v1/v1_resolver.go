@@ -28,14 +28,16 @@ import (
 
 // Owner is the resolver for the owner field.
 func (r *assetResolver) Owner(ctx context.Context, obj *types.Asset) (*types.People, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionPeopleGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionPeopleGet); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	owner, err := prb.Peoples.Get(ctx, obj.Owner.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(err)
+			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		panic(fmt.Errorf("cannot get owner: %w", err))
@@ -46,7 +48,9 @@ func (r *assetResolver) Owner(ctx context.Context, obj *types.Asset) (*types.Peo
 
 // Vendors is the resolver for the vendors field.
 func (r *assetResolver) Vendors(ctx context.Context, obj *types.Asset, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorOrderBy) (*types.VendorConnection, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionVendorList)
+	if err := r.authorize(ctx, obj.ID, probo.ActionVendorList); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -73,7 +77,9 @@ func (r *assetResolver) Vendors(ctx context.Context, obj *types.Asset, first *in
 
 // Organization is the resolver for the organization field.
 func (r *assetResolver) Organization(ctx context.Context, obj *types.Asset) (*types.Organization, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionOrganizationGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -86,7 +92,7 @@ func (r *assetResolver) Organization(ctx context.Context, obj *types.Asset) (*ty
 	org, err := prb.Organizations.Get(ctx, asset.OrganizationID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(err)
+			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		panic(fmt.Errorf("cannot get organization: %w", err))
@@ -102,7 +108,9 @@ func (r *assetResolver) Permission(ctx context.Context, obj *types.Asset, action
 
 // TotalCount is the resolver for the totalCount field.
 func (r *assetConnectionResolver) TotalCount(ctx context.Context, obj *types.AssetConnection) (int, error) {
-	r.MustAuthorize(ctx, obj.ParentID, probo.ActionAssetList)
+	if err := r.authorize(ctx, obj.ParentID, probo.ActionAssetList); err != nil {
+		return 0, err
+	}
 
 	prb := r.ProboService(ctx, obj.ParentID.TenantID())
 
@@ -125,14 +133,16 @@ func (r *assetConnectionResolver) TotalCount(ctx context.Context, obj *types.Ass
 
 // Organization is the resolver for the organization field.
 func (r *auditResolver) Organization(ctx context.Context, obj *types.Audit) (*types.Organization, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionOrganizationGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	organization, err := prb.Organizations.Get(ctx, obj.Organization.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(err)
+			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		panic(fmt.Errorf("cannot load organization: %w", err))
@@ -143,14 +153,16 @@ func (r *auditResolver) Organization(ctx context.Context, obj *types.Audit) (*ty
 
 // Framework is the resolver for the framework field.
 func (r *auditResolver) Framework(ctx context.Context, obj *types.Audit) (*types.Framework, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionFrameworkGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionFrameworkGet); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	framework, err := prb.Frameworks.Get(ctx, obj.Framework.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(err)
+			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		panic(fmt.Errorf("cannot load framework: %w", err))
@@ -161,7 +173,9 @@ func (r *auditResolver) Framework(ctx context.Context, obj *types.Audit) (*types
 
 // Report is the resolver for the report field.
 func (r *auditResolver) Report(ctx context.Context, obj *types.Audit) (*types.Report, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionReportGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionReportGet); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -180,7 +194,9 @@ func (r *auditResolver) Report(ctx context.Context, obj *types.Audit) (*types.Re
 
 // ReportURL is the resolver for the reportUrl field.
 func (r *auditResolver) ReportURL(ctx context.Context, obj *types.Audit) (*string, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionReportGetReportUrl)
+	if err := r.authorize(ctx, obj.ID, probo.ActionReportGetReportUrl); err != nil {
+		return nil, err
+	}
 
 	if obj.Report == nil {
 		return nil, nil
@@ -198,7 +214,9 @@ func (r *auditResolver) ReportURL(ctx context.Context, obj *types.Audit) (*strin
 
 // Controls is the resolver for the controls field.
 func (r *auditResolver) Controls(ctx context.Context, obj *types.Audit, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) (*types.ControlConnection, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionControlList)
+	if err := r.authorize(ctx, obj.ID, probo.ActionControlList); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -235,7 +253,9 @@ func (r *auditResolver) Permission(ctx context.Context, obj *types.Audit, action
 
 // TotalCount is the resolver for the totalCount field.
 func (r *auditConnectionResolver) TotalCount(ctx context.Context, obj *types.AuditConnection) (int, error) {
-	r.MustAuthorize(ctx, obj.ParentID, probo.ActionAuditList)
+	if err := r.authorize(ctx, obj.ParentID, probo.ActionAuditList); err != nil {
+		return 0, err
+	}
 
 	// TODO missing switch case
 
@@ -250,14 +270,16 @@ func (r *auditConnectionResolver) TotalCount(ctx context.Context, obj *types.Aud
 
 // Organization is the resolver for the organization field.
 func (r *continualImprovementResolver) Organization(ctx context.Context, obj *types.ContinualImprovement) (*types.Organization, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionOrganizationGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	organization, err := prb.Organizations.Get(ctx, obj.Organization.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(err)
+			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		panic(fmt.Errorf("cannot get continual improvement organization: %w", err))
@@ -268,14 +290,16 @@ func (r *continualImprovementResolver) Organization(ctx context.Context, obj *ty
 
 // Owner is the resolver for the owner field.
 func (r *continualImprovementResolver) Owner(ctx context.Context, obj *types.ContinualImprovement) (*types.People, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionPeopleGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionPeopleGet); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	people, err := prb.Peoples.Get(ctx, obj.Owner.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(err)
+			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		panic(fmt.Errorf("cannot get continual improvement owner: %w", err))
@@ -291,7 +315,9 @@ func (r *continualImprovementResolver) Permission(ctx context.Context, obj *type
 
 // TotalCount is the resolver for the totalCount field.
 func (r *continualImprovementConnectionResolver) TotalCount(ctx context.Context, obj *types.ContinualImprovementConnection) (int, error) {
-	r.MustAuthorize(ctx, obj.ParentID, probo.ActionContinualImprovementList)
+	if err := r.authorize(ctx, obj.ParentID, probo.ActionContinualImprovementList); err != nil {
+		return 0, err
+	}
 
 	prb := r.ProboService(ctx, obj.ParentID.TenantID())
 
@@ -320,14 +346,16 @@ func (r *controlResolver) Organization(ctx context.Context, obj *types.Control) 
 
 // Framework is the resolver for the framework field.
 func (r *controlResolver) Framework(ctx context.Context, obj *types.Control) (*types.Framework, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionFrameworkGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionFrameworkGet); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	framework, err := prb.Frameworks.Get(ctx, obj.Framework.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(err)
+			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		// TODO no panic use gqlutils.InternalError
@@ -339,7 +367,9 @@ func (r *controlResolver) Framework(ctx context.Context, obj *types.Control) (*t
 
 // Measures is the resolver for the measures field.
 func (r *controlResolver) Measures(ctx context.Context, obj *types.Control, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy, filter *types.MeasureFilter) (*types.MeasureConnection, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionMeasureList)
+	if err := r.authorize(ctx, obj.ID, probo.ActionMeasureList); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -372,7 +402,9 @@ func (r *controlResolver) Measures(ctx context.Context, obj *types.Control, firs
 
 // Documents is the resolver for the documents field.
 func (r *controlResolver) Documents(ctx context.Context, obj *types.Control, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy, filter *types.DocumentFilter) (*types.DocumentConnection, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionDocumentList)
+	if err := r.authorize(ctx, obj.ID, probo.ActionDocumentList); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -404,7 +436,9 @@ func (r *controlResolver) Documents(ctx context.Context, obj *types.Control, fir
 
 // Audits is the resolver for the audits field.
 func (r *controlResolver) Audits(ctx context.Context, obj *types.Control, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AuditOrderBy) (*types.AuditConnection, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionAuditList)
+	if err := r.authorize(ctx, obj.ID, probo.ActionAuditList); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -431,7 +465,9 @@ func (r *controlResolver) Audits(ctx context.Context, obj *types.Control, first 
 
 // Snapshots is the resolver for the snapshots field.
 func (r *controlResolver) Snapshots(ctx context.Context, obj *types.Control, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.SnapshotOrderBy) (*types.SnapshotConnection, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionSnapshotList)
+	if err := r.authorize(ctx, obj.ID, probo.ActionSnapshotList); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -464,7 +500,9 @@ func (r *controlResolver) Permission(ctx context.Context, obj *types.Control, ac
 
 // TotalCount is the resolver for the totalCount field.
 func (r *controlConnectionResolver) TotalCount(ctx context.Context, obj *types.ControlConnection) (int, error) {
-	r.MustAuthorize(ctx, obj.ParentID, probo.ActionControlList)
+	if err := r.authorize(ctx, obj.ParentID, probo.ActionControlList); err != nil {
+		return 0, err
+	}
 
 	prb := r.ProboService(ctx, obj.ParentID.TenantID())
 
@@ -511,7 +549,9 @@ func (r *customDomainResolver) Permission(ctx context.Context, obj *types.Custom
 
 // ProcessingActivity is the resolver for the processingActivity field.
 func (r *dataProtectionImpactAssessmentResolver) ProcessingActivity(ctx context.Context, obj *types.DataProtectionImpactAssessment) (*types.ProcessingActivity, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionProcessingActivityList)
+	if err := r.authorize(ctx, obj.ID, probo.ActionProcessingActivityList); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -530,7 +570,9 @@ func (r *dataProtectionImpactAssessmentResolver) ProcessingActivity(ctx context.
 
 // Organization is the resolver for the organization field.
 func (r *dataProtectionImpactAssessmentResolver) Organization(ctx context.Context, obj *types.DataProtectionImpactAssessment) (*types.Organization, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionOrganizationGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -542,7 +584,7 @@ func (r *dataProtectionImpactAssessmentResolver) Organization(ctx context.Contex
 	organization, err := prb.Organizations.Get(ctx, dpia.OrganizationID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(err)
+			return nil, gqlutils.NotFound(ctx, err)
 		}
 		panic(fmt.Errorf("cannot get organization: %w", err))
 	}
@@ -557,7 +599,9 @@ func (r *dataProtectionImpactAssessmentResolver) Permission(ctx context.Context,
 
 // TotalCount is the resolver for the totalCount field.
 func (r *dataProtectionImpactAssessmentConnectionResolver) TotalCount(ctx context.Context, obj *types.DataProtectionImpactAssessmentConnection) (int, error) {
-	r.MustAuthorize(ctx, obj.ParentID, probo.ActionProcessingActivityList)
+	if err := r.authorize(ctx, obj.ParentID, probo.ActionProcessingActivityList); err != nil {
+		return 0, err
+	}
 
 	prb := r.ProboService(ctx, obj.ParentID.TenantID())
 
@@ -575,14 +619,16 @@ func (r *dataProtectionImpactAssessmentConnectionResolver) TotalCount(ctx contex
 
 // Owner is the resolver for the owner field.
 func (r *datumResolver) Owner(ctx context.Context, obj *types.Datum) (*types.People, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionPeopleGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionPeopleGet); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	people, err := prb.Peoples.Get(ctx, obj.Owner.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(err)
+			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		return nil, fmt.Errorf("cannot get owner: %w", err)
@@ -593,7 +639,9 @@ func (r *datumResolver) Owner(ctx context.Context, obj *types.Datum) (*types.Peo
 
 // Vendors is the resolver for the vendors field.
 func (r *datumResolver) Vendors(ctx context.Context, obj *types.Datum, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorOrderBy) (*types.VendorConnection, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionVendorList)
+	if err := r.authorize(ctx, obj.ID, probo.ActionVendorList); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -621,14 +669,16 @@ func (r *datumResolver) Vendors(ctx context.Context, obj *types.Datum, first *in
 
 // Organization is the resolver for the organization field.
 func (r *datumResolver) Organization(ctx context.Context, obj *types.Datum) (*types.Organization, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionOrganizationGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	org, err := prb.Organizations.Get(ctx, obj.OrganizationID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(err)
+			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		// TODO no panic use gqlutils.InternalError
@@ -645,7 +695,9 @@ func (r *datumResolver) Permission(ctx context.Context, obj *types.Datum, action
 
 // TotalCount is the resolver for the totalCount field.
 func (r *datumConnectionResolver) TotalCount(ctx context.Context, obj *types.DatumConnection) (int, error) {
-	r.MustAuthorize(ctx, obj.ParentID, probo.ActionDatumList)
+	if err := r.authorize(ctx, obj.ParentID, probo.ActionDatumList); err != nil {
+		return 0, err
+	}
 
 	prb := r.ProboService(ctx, obj.ParentID.TenantID())
 
@@ -669,7 +721,9 @@ func (r *datumConnectionResolver) TotalCount(ctx context.Context, obj *types.Dat
 
 // Owner is the resolver for the owner field.
 func (r *documentResolver) Owner(ctx context.Context, obj *types.Document) (*types.People, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionPeopleGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionPeopleGet); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -677,7 +731,7 @@ func (r *documentResolver) Owner(ctx context.Context, obj *types.Document) (*typ
 	owner, err := prb.Peoples.Get(ctx, obj.Owner.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(err)
+			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		// TODO no panic use gqlutils.InternalError
@@ -689,14 +743,16 @@ func (r *documentResolver) Owner(ctx context.Context, obj *types.Document) (*typ
 
 // Organization is the resolver for the organization field.
 func (r *documentResolver) Organization(ctx context.Context, obj *types.Document) (*types.Organization, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionOrganizationGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	organization, err := prb.Organizations.Get(ctx, obj.Organization.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(err)
+			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		// TODO no panic use gqlutils.InternalError
@@ -708,7 +764,9 @@ func (r *documentResolver) Organization(ctx context.Context, obj *types.Document
 
 // Versions is the resolver for the versions field.
 func (r *documentResolver) Versions(ctx context.Context, obj *types.Document, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentVersionOrderBy, filter *types.DocumentVersionFilter) (*types.DocumentVersionConnection, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionDocumentVersionList)
+	if err := r.authorize(ctx, obj.ID, probo.ActionDocumentVersionList); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -738,7 +796,9 @@ func (r *documentResolver) Versions(ctx context.Context, obj *types.Document, fi
 
 // Controls is the resolver for the controls field.
 func (r *documentResolver) Controls(ctx context.Context, obj *types.Document, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) (*types.ControlConnection, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionControlList)
+	if err := r.authorize(ctx, obj.ID, probo.ActionControlList); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -776,7 +836,9 @@ func (r *documentResolver) Permission(ctx context.Context, obj *types.Document, 
 
 // TotalCount is the resolver for the totalCount field.
 func (r *documentConnectionResolver) TotalCount(ctx context.Context, obj *types.DocumentConnection) (int, error) {
-	r.MustAuthorize(ctx, obj.ParentID, probo.ActionDocumentList)
+	if err := r.authorize(ctx, obj.ParentID, probo.ActionDocumentList); err != nil {
+		return 0, err
+	}
 
 	prb := r.ProboService(ctx, obj.ParentID.TenantID())
 
@@ -810,14 +872,16 @@ func (r *documentConnectionResolver) TotalCount(ctx context.Context, obj *types.
 
 // Document is the resolver for the document field.
 func (r *documentVersionResolver) Document(ctx context.Context, obj *types.DocumentVersion) (*types.Document, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionDocumentGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionDocumentGet); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	document, err := prb.Documents.Get(ctx, obj.Document.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(err)
+			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		// TODO no panic use gqlutils.InternalError
@@ -829,14 +893,16 @@ func (r *documentVersionResolver) Document(ctx context.Context, obj *types.Docum
 
 // Owner is the resolver for the owner field.
 func (r *documentVersionResolver) Owner(ctx context.Context, obj *types.DocumentVersion) (*types.People, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionPeopleGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionPeopleGet); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	owner, err := prb.Peoples.Get(ctx, obj.Owner.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(err)
+			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		// TODO no panic use gqlutils.InternalError
@@ -848,7 +914,9 @@ func (r *documentVersionResolver) Owner(ctx context.Context, obj *types.Document
 
 // Signatures is the resolver for the signatures field.
 func (r *documentVersionResolver) Signatures(ctx context.Context, obj *types.DocumentVersion, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentVersionSignatureOrder, filter *types.DocumentVersionSignatureFilter) (*types.DocumentVersionSignatureConnection, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionDocumentVersionSignatureList)
+	if err := r.authorize(ctx, obj.ID, probo.ActionDocumentVersionSignatureList); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -882,7 +950,9 @@ func (r *documentVersionResolver) Signatures(ctx context.Context, obj *types.Doc
 
 // Signed is the resolver for the signed field.
 func (r *documentVersionResolver) Signed(ctx context.Context, obj *types.DocumentVersion) (bool, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionDocumentVersionGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionDocumentVersionGet); err != nil {
+		return false, err
+	}
 
 	identity := connect_v1.IdentityFromContext(ctx)
 
@@ -904,7 +974,9 @@ func (r *documentVersionResolver) Permission(ctx context.Context, obj *types.Doc
 
 // DocumentVersion is the resolver for the documentVersion field.
 func (r *documentVersionSignatureResolver) DocumentVersion(ctx context.Context, obj *types.DocumentVersionSignature) (*types.DocumentVersion, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionDocumentVersionGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionDocumentVersionGet); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -919,14 +991,16 @@ func (r *documentVersionSignatureResolver) DocumentVersion(ctx context.Context, 
 
 // SignedBy is the resolver for the signedBy field.
 func (r *documentVersionSignatureResolver) SignedBy(ctx context.Context, obj *types.DocumentVersionSignature) (*types.People, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionPeopleGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionPeopleGet); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	people, err := prb.Peoples.Get(ctx, obj.SignedBy.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(err)
+			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		// TODO no panic use gqlutils.InternalError
@@ -943,7 +1017,9 @@ func (r *documentVersionSignatureResolver) Permission(ctx context.Context, obj *
 
 // File is the resolver for the file field.
 func (r *evidenceResolver) File(ctx context.Context, obj *types.Evidence) (*types.File, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionFileGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionFileGet); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -954,7 +1030,7 @@ func (r *evidenceResolver) File(ctx context.Context, obj *types.Evidence) (*type
 	file, err := prb.Files.Get(ctx, obj.File.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(err)
+			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		panic(fmt.Errorf("cannot load evidence file: %w", err))
@@ -965,7 +1041,9 @@ func (r *evidenceResolver) File(ctx context.Context, obj *types.Evidence) (*type
 
 // Task is the resolver for the task field.
 func (r *evidenceResolver) Task(ctx context.Context, obj *types.Evidence) (*types.Task, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionTaskGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionTaskGet); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -976,7 +1054,7 @@ func (r *evidenceResolver) Task(ctx context.Context, obj *types.Evidence) (*type
 	task, err := prb.Tasks.Get(ctx, obj.Task.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(err)
+			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		// TODO no panic use gqlutils.InternalError
@@ -988,14 +1066,16 @@ func (r *evidenceResolver) Task(ctx context.Context, obj *types.Evidence) (*type
 
 // Measure is the resolver for the measure field.
 func (r *evidenceResolver) Measure(ctx context.Context, obj *types.Evidence) (*types.Measure, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionMeasureGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionMeasureGet); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	measure, err := prb.Measures.Get(ctx, obj.Measure.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(err)
+			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		// TODO no panic use gqlutils.InternalError
@@ -1012,7 +1092,9 @@ func (r *evidenceResolver) Permission(ctx context.Context, obj *types.Evidence, 
 
 // TotalCount is the resolver for the totalCount field.
 func (r *evidenceConnectionResolver) TotalCount(ctx context.Context, obj *types.EvidenceConnection) (int, error) {
-	r.MustAuthorize(ctx, obj.ParentID, probo.ActionEvidenceList)
+	if err := r.authorize(ctx, obj.ParentID, probo.ActionEvidenceList); err != nil {
+		return 0, err
+	}
 
 	prb := r.ProboService(ctx, obj.ParentID.TenantID())
 
@@ -1039,7 +1121,9 @@ func (r *evidenceConnectionResolver) TotalCount(ctx context.Context, obj *types.
 
 // DownloadURL is the resolver for the downloadUrl field.
 func (r *fileResolver) DownloadURL(ctx context.Context, obj *types.File) (string, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionFileDownloadUrl)
+	if err := r.authorize(ctx, obj.ID, probo.ActionFileDownloadUrl); err != nil {
+		return "", err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -1055,14 +1139,16 @@ func (r *fileResolver) DownloadURL(ctx context.Context, obj *types.File) (string
 
 // Organization is the resolver for the organization field.
 func (r *frameworkResolver) Organization(ctx context.Context, obj *types.Framework) (*types.Organization, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionOrganizationGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	organization, err := prb.Organizations.Get(ctx, obj.Organization.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(err)
+			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		// TODO no panic use gqlutils.InternalError
@@ -1074,7 +1160,9 @@ func (r *frameworkResolver) Organization(ctx context.Context, obj *types.Framewo
 
 // Controls is the resolver for the controls field.
 func (r *frameworkResolver) Controls(ctx context.Context, obj *types.Framework, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) (*types.ControlConnection, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionControlList)
+	if err := r.authorize(ctx, obj.ID, probo.ActionControlList); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -1107,7 +1195,9 @@ func (r *frameworkResolver) Controls(ctx context.Context, obj *types.Framework, 
 
 // LightLogoURL is the resolver for the lightLogoURL field.
 func (r *frameworkResolver) LightLogoURL(ctx context.Context, obj *types.Framework) (*string, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionFrameworkGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionFrameworkGet); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -1116,7 +1206,9 @@ func (r *frameworkResolver) LightLogoURL(ctx context.Context, obj *types.Framewo
 
 // DarkLogoURL is the resolver for the darkLogoURL field.
 func (r *frameworkResolver) DarkLogoURL(ctx context.Context, obj *types.Framework) (*string, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionFrameworkGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionFrameworkGet); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -1130,7 +1222,9 @@ func (r *frameworkResolver) Permission(ctx context.Context, obj *types.Framework
 
 // TotalCount is the resolver for the totalCount field.
 func (r *frameworkConnectionResolver) TotalCount(ctx context.Context, obj *types.FrameworkConnection) (int, error) {
-	r.MustAuthorize(ctx, obj.ParentID, probo.ActionFrameworkList)
+	if err := r.authorize(ctx, obj.ParentID, probo.ActionFrameworkList); err != nil {
+		return 0, err
+	}
 
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
@@ -1150,7 +1244,9 @@ func (r *frameworkConnectionResolver) TotalCount(ctx context.Context, obj *types
 
 // Evidences is the resolver for the evidences field.
 func (r *measureResolver) Evidences(ctx context.Context, obj *types.Measure, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.EvidenceOrderBy) (*types.EvidenceConnection, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionEvidenceList)
+	if err := r.authorize(ctx, obj.ID, probo.ActionEvidenceList); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -1178,7 +1274,9 @@ func (r *measureResolver) Evidences(ctx context.Context, obj *types.Measure, fir
 
 // Tasks is the resolver for the tasks field.
 func (r *measureResolver) Tasks(ctx context.Context, obj *types.Measure, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TaskOrderBy) (*types.TaskConnection, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionTaskList)
+	if err := r.authorize(ctx, obj.ID, probo.ActionTaskList); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -1206,7 +1304,9 @@ func (r *measureResolver) Tasks(ctx context.Context, obj *types.Measure, first *
 
 // Risks is the resolver for the risks field.
 func (r *measureResolver) Risks(ctx context.Context, obj *types.Measure, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskOrderBy, filter *types.RiskFilter) (*types.RiskConnection, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionRiskList)
+	if err := r.authorize(ctx, obj.ID, probo.ActionRiskList); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -1239,7 +1339,9 @@ func (r *measureResolver) Risks(ctx context.Context, obj *types.Measure, first *
 
 // Controls is the resolver for the controls field.
 func (r *measureResolver) Controls(ctx context.Context, obj *types.Measure, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) (*types.ControlConnection, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionControlList)
+	if err := r.authorize(ctx, obj.ID, probo.ActionControlList); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -1277,7 +1379,9 @@ func (r *measureResolver) Permission(ctx context.Context, obj *types.Measure, ac
 
 // TotalCount is the resolver for the totalCount field.
 func (r *measureConnectionResolver) TotalCount(ctx context.Context, obj *types.MeasureConnection) (int, error) {
-	r.MustAuthorize(ctx, obj.ParentID, probo.ActionMeasureList)
+	if err := r.authorize(ctx, obj.ParentID, probo.ActionMeasureList); err != nil {
+		return 0, err
+	}
 
 	prb := r.ProboService(ctx, obj.ParentID.TenantID())
 
@@ -1313,7 +1417,9 @@ func (r *measureConnectionResolver) TotalCount(ctx context.Context, obj *types.M
 func (r *meetingResolver) Attendees(ctx context.Context, obj *types.Meeting) ([]*types.People, error) {
 	// TODO bug must be paginated
 
-	r.MustAuthorize(ctx, obj.ID, probo.ActionPeopleList)
+	if err := r.authorize(ctx, obj.ID, probo.ActionPeopleList); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -1337,14 +1443,16 @@ func (r *meetingResolver) Attendees(ctx context.Context, obj *types.Meeting) ([]
 
 // Organization is the resolver for the organization field.
 func (r *meetingResolver) Organization(ctx context.Context, obj *types.Meeting) (*types.Organization, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionOrganizationGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	organization, err := prb.Organizations.Get(ctx, obj.Organization.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(err)
+			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		// TODO no panic use gqlutils.InternalError
@@ -1361,7 +1469,9 @@ func (r *meetingResolver) Permission(ctx context.Context, obj *types.Meeting, ac
 
 // TotalCount is the resolver for the totalCount field.
 func (r *meetingConnectionResolver) TotalCount(ctx context.Context, obj *types.MeetingConnection) (int, error) {
-	r.MustAuthorize(ctx, obj.ParentID, probo.ActionMeetingList)
+	if err := r.authorize(ctx, obj.ParentID, probo.ActionMeetingList); err != nil {
+		return 0, err
+	}
 
 	prb := r.ProboService(ctx, obj.ParentID.TenantID())
 
@@ -1381,7 +1491,9 @@ func (r *meetingConnectionResolver) TotalCount(ctx context.Context, obj *types.M
 
 // UpdateOrganizationContext is the resolver for the updateOrganizationContext field.
 func (r *mutationResolver) UpdateOrganizationContext(ctx context.Context, input types.UpdateOrganizationContextInput) (*types.UpdateOrganizationContextPayload, error) {
-	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionOrganizationContextUpdate)
+	if err := r.authorize(ctx, input.OrganizationID, probo.ActionOrganizationContextUpdate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
@@ -1403,7 +1515,9 @@ func (r *mutationResolver) UpdateOrganizationContext(ctx context.Context, input 
 
 // UpdateTrustCenter is the resolver for the updateTrustCenter field.
 func (r *mutationResolver) UpdateTrustCenter(ctx context.Context, input types.UpdateTrustCenterInput) (*types.UpdateTrustCenterPayload, error) {
-	r.MustAuthorize(ctx, input.TrustCenterID, probo.ActionTrustCenterUpdate)
+	if err := r.authorize(ctx, input.TrustCenterID, probo.ActionTrustCenterUpdate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.TrustCenterID.TenantID())
 
@@ -1426,7 +1540,9 @@ func (r *mutationResolver) UpdateTrustCenter(ctx context.Context, input types.Up
 
 // UploadTrustCenterNda is the resolver for the uploadTrustCenterNDA field.
 func (r *mutationResolver) UploadTrustCenterNda(ctx context.Context, input types.UploadTrustCenterNDAInput) (*types.UploadTrustCenterNDAPayload, error) {
-	r.MustAuthorize(ctx, input.TrustCenterID, probo.ActionTrustCenterNonDisclosureAgreementUpload)
+	if err := r.authorize(ctx, input.TrustCenterID, probo.ActionTrustCenterNonDisclosureAgreementUpload); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.TrustCenterID.TenantID())
 
@@ -1450,7 +1566,9 @@ func (r *mutationResolver) UploadTrustCenterNda(ctx context.Context, input types
 
 // DeleteTrustCenterNda is the resolver for the deleteTrustCenterNDA field.
 func (r *mutationResolver) DeleteTrustCenterNda(ctx context.Context, input types.DeleteTrustCenterNDAInput) (*types.DeleteTrustCenterNDAPayload, error) {
-	r.MustAuthorize(ctx, input.TrustCenterID, probo.ActionTrustCenterNonDisclosureAgreementDelete)
+	if err := r.authorize(ctx, input.TrustCenterID, probo.ActionTrustCenterNonDisclosureAgreementDelete); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.TrustCenterID.TenantID())
 
@@ -1467,7 +1585,9 @@ func (r *mutationResolver) DeleteTrustCenterNda(ctx context.Context, input types
 
 // CreateTrustCenterAccess is the resolver for the createTrustCenterAccess field.
 func (r *mutationResolver) CreateTrustCenterAccess(ctx context.Context, input types.CreateTrustCenterAccessInput) (*types.CreateTrustCenterAccessPayload, error) {
-	r.MustAuthorize(ctx, input.TrustCenterID, probo.ActionTrustCenterAccessCreate)
+	if err := r.authorize(ctx, input.TrustCenterID, probo.ActionTrustCenterAccessCreate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.TrustCenterID.TenantID())
 
@@ -1481,7 +1601,7 @@ func (r *mutationResolver) CreateTrustCenterAccess(ctx context.Context, input ty
 	)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-			return nil, gqlutils.Conflict(err)
+			return nil, gqlutils.Conflict(ctx, err)
 		}
 
 		// TODO no panic use gqlutils.InternalError
@@ -1495,7 +1615,9 @@ func (r *mutationResolver) CreateTrustCenterAccess(ctx context.Context, input ty
 
 // UpdateTrustCenterAccess is the resolver for the updateTrustCenterAccess field.
 func (r *mutationResolver) UpdateTrustCenterAccess(ctx context.Context, input types.UpdateTrustCenterAccessInput) (*types.UpdateTrustCenterAccessPayload, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionTrustCenterAccessUpdate)
+	if err := r.authorize(ctx, input.ID, probo.ActionTrustCenterAccessUpdate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
@@ -1543,7 +1665,9 @@ func (r *mutationResolver) UpdateTrustCenterAccess(ctx context.Context, input ty
 
 // DeleteTrustCenterAccess is the resolver for the deleteTrustCenterAccess field.
 func (r *mutationResolver) DeleteTrustCenterAccess(ctx context.Context, input types.DeleteTrustCenterAccessInput) (*types.DeleteTrustCenterAccessPayload, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionTrustCenterAccessDelete)
+	if err := r.authorize(ctx, input.ID, probo.ActionTrustCenterAccessDelete); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
@@ -1560,7 +1684,9 @@ func (r *mutationResolver) DeleteTrustCenterAccess(ctx context.Context, input ty
 
 // CreateTrustCenterReference is the resolver for the createTrustCenterReference field.
 func (r *mutationResolver) CreateTrustCenterReference(ctx context.Context, input types.CreateTrustCenterReferenceInput) (*types.CreateTrustCenterReferencePayload, error) {
-	r.MustAuthorize(ctx, input.TrustCenterID, probo.ActionTrustCenterReferenceCreate)
+	if err := r.authorize(ctx, input.TrustCenterID, probo.ActionTrustCenterReferenceCreate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.TrustCenterID.TenantID())
 
@@ -1591,7 +1717,9 @@ func (r *mutationResolver) CreateTrustCenterReference(ctx context.Context, input
 
 // UpdateTrustCenterReference is the resolver for the updateTrustCenterReference field.
 func (r *mutationResolver) UpdateTrustCenterReference(ctx context.Context, input types.UpdateTrustCenterReferenceInput) (*types.UpdateTrustCenterReferencePayload, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionTrustCenterReferenceUpdate)
+	if err := r.authorize(ctx, input.ID, probo.ActionTrustCenterReferenceUpdate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
@@ -1625,7 +1753,9 @@ func (r *mutationResolver) UpdateTrustCenterReference(ctx context.Context, input
 
 // DeleteTrustCenterReference is the resolver for the deleteTrustCenterReference field.
 func (r *mutationResolver) DeleteTrustCenterReference(ctx context.Context, input types.DeleteTrustCenterReferenceInput) (*types.DeleteTrustCenterReferencePayload, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionTrustCenterReferenceDelete)
+	if err := r.authorize(ctx, input.ID, probo.ActionTrustCenterReferenceDelete); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
@@ -1642,7 +1772,9 @@ func (r *mutationResolver) DeleteTrustCenterReference(ctx context.Context, input
 
 // CreateTrustCenterFile is the resolver for the createTrustCenterFile field.
 func (r *mutationResolver) CreateTrustCenterFile(ctx context.Context, input types.CreateTrustCenterFileInput) (*types.CreateTrustCenterFilePayload, error) {
-	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionTrustCenterFileCreate)
+	if err := r.authorize(ctx, input.OrganizationID, probo.ActionTrustCenterFileCreate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
@@ -1673,7 +1805,9 @@ func (r *mutationResolver) CreateTrustCenterFile(ctx context.Context, input type
 
 // UpdateTrustCenterFile is the resolver for the updateTrustCenterFile field.
 func (r *mutationResolver) UpdateTrustCenterFile(ctx context.Context, input types.UpdateTrustCenterFileInput) (*types.UpdateTrustCenterFilePayload, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionTrustCenterFileUpdate)
+	if err := r.authorize(ctx, input.ID, probo.ActionTrustCenterFileUpdate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
@@ -1698,7 +1832,9 @@ func (r *mutationResolver) UpdateTrustCenterFile(ctx context.Context, input type
 
 // GetTrustCenterFile is the resolver for the getTrustCenterFile field.
 func (r *mutationResolver) GetTrustCenterFile(ctx context.Context, input types.GetTrustCenterFileInput) (*types.GetTrustCenterFilePayload, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionTrustCenterFileGet)
+	if err := r.authorize(ctx, input.ID, probo.ActionTrustCenterFileGet); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
@@ -1715,7 +1851,9 @@ func (r *mutationResolver) GetTrustCenterFile(ctx context.Context, input types.G
 
 // DeleteTrustCenterFile is the resolver for the deleteTrustCenterFile field.
 func (r *mutationResolver) DeleteTrustCenterFile(ctx context.Context, input types.DeleteTrustCenterFileInput) (*types.DeleteTrustCenterFilePayload, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionTrustCenterFileDelete)
+	if err := r.authorize(ctx, input.ID, probo.ActionTrustCenterFileDelete); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
@@ -1732,7 +1870,9 @@ func (r *mutationResolver) DeleteTrustCenterFile(ctx context.Context, input type
 
 // CreatePeople is the resolver for the createPeople field.
 func (r *mutationResolver) CreatePeople(ctx context.Context, input types.CreatePeopleInput) (*types.CreatePeoplePayload, error) {
-	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionPeopleCreate)
+	if err := r.authorize(ctx, input.OrganizationID, probo.ActionPeopleCreate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
@@ -1752,7 +1892,7 @@ func (r *mutationResolver) CreatePeople(ctx context.Context, input types.CreateP
 
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-			return nil, gqlutils.Conflict(err)
+			return nil, gqlutils.Conflict(ctx, err)
 		}
 
 		// TODO no panic use gqlutils.InternalError
@@ -1766,7 +1906,9 @@ func (r *mutationResolver) CreatePeople(ctx context.Context, input types.CreateP
 
 // UpdatePeople is the resolver for the updatePeople field.
 func (r *mutationResolver) UpdatePeople(ctx context.Context, input types.UpdatePeopleInput) (*types.UpdatePeoplePayload, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionPeopleUpdate)
+	if err := r.authorize(ctx, input.ID, probo.ActionPeopleUpdate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
@@ -1795,14 +1937,16 @@ func (r *mutationResolver) UpdatePeople(ctx context.Context, input types.UpdateP
 
 // DeletePeople is the resolver for the deletePeople field.
 func (r *mutationResolver) DeletePeople(ctx context.Context, input types.DeletePeopleInput) (*types.DeletePeoplePayload, error) {
-	r.MustAuthorize(ctx, input.PeopleID, probo.ActionPeopleDelete)
+	if err := r.authorize(ctx, input.PeopleID, probo.ActionPeopleDelete); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.PeopleID.TenantID())
 
 	err := prb.Peoples.Delete(ctx, input.PeopleID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceInUse) {
-			return nil, gqlutils.Conflict(err)
+			return nil, gqlutils.Conflict(ctx, err)
 		}
 
 		// TODO no panic use gqlutils.InternalError
@@ -1816,7 +1960,9 @@ func (r *mutationResolver) DeletePeople(ctx context.Context, input types.DeleteP
 
 // CreateVendor is the resolver for the createVendor field.
 func (r *mutationResolver) CreateVendor(ctx context.Context, input types.CreateVendorInput) (*types.CreateVendorPayload, error) {
-	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionVendorCreate)
+	if err := r.authorize(ctx, input.OrganizationID, probo.ActionVendorCreate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
@@ -1847,7 +1993,7 @@ func (r *mutationResolver) CreateVendor(ctx context.Context, input types.CreateV
 	)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-			return nil, gqlutils.Conflict(err)
+			return nil, gqlutils.Conflict(ctx, err)
 		}
 
 		// TODO no panic use gqlutils.InternalError
@@ -1860,7 +2006,9 @@ func (r *mutationResolver) CreateVendor(ctx context.Context, input types.CreateV
 
 // UpdateVendor is the resolver for the updateVendor field.
 func (r *mutationResolver) UpdateVendor(ctx context.Context, input types.UpdateVendorInput) (*types.UpdateVendorPayload, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionVendorUpdate)
+	if err := r.authorize(ctx, input.ID, probo.ActionVendorUpdate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
@@ -1902,7 +2050,9 @@ func (r *mutationResolver) UpdateVendor(ctx context.Context, input types.UpdateV
 
 // DeleteVendor is the resolver for the deleteVendor field.
 func (r *mutationResolver) DeleteVendor(ctx context.Context, input types.DeleteVendorInput) (*types.DeleteVendorPayload, error) {
-	r.MustAuthorize(ctx, input.VendorID, probo.ActionVendorDelete)
+	if err := r.authorize(ctx, input.VendorID, probo.ActionVendorDelete); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.VendorID.TenantID())
 
@@ -1919,7 +2069,9 @@ func (r *mutationResolver) DeleteVendor(ctx context.Context, input types.DeleteV
 
 // CreateVendorContact is the resolver for the createVendorContact field.
 func (r *mutationResolver) CreateVendorContact(ctx context.Context, input types.CreateVendorContactInput) (*types.CreateVendorContactPayload, error) {
-	r.MustAuthorize(ctx, input.VendorID, probo.ActionVendorContactCreate)
+	if err := r.authorize(ctx, input.VendorID, probo.ActionVendorContactCreate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.VendorID.TenantID())
 
@@ -1944,7 +2096,9 @@ func (r *mutationResolver) CreateVendorContact(ctx context.Context, input types.
 
 // UpdateVendorContact is the resolver for the updateVendorContact field.
 func (r *mutationResolver) UpdateVendorContact(ctx context.Context, input types.UpdateVendorContactInput) (*types.UpdateVendorContactPayload, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionVendorContactUpdate)
+	if err := r.authorize(ctx, input.ID, probo.ActionVendorContactUpdate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
@@ -1969,7 +2123,9 @@ func (r *mutationResolver) UpdateVendorContact(ctx context.Context, input types.
 
 // DeleteVendorContact is the resolver for the deleteVendorContact field.
 func (r *mutationResolver) DeleteVendorContact(ctx context.Context, input types.DeleteVendorContactInput) (*types.DeleteVendorContactPayload, error) {
-	r.MustAuthorize(ctx, input.VendorContactID, probo.ActionVendorContactDelete)
+	if err := r.authorize(ctx, input.VendorContactID, probo.ActionVendorContactDelete); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.VendorContactID.TenantID())
 
@@ -1986,7 +2142,9 @@ func (r *mutationResolver) DeleteVendorContact(ctx context.Context, input types.
 
 // CreateVendorService is the resolver for the createVendorService field.
 func (r *mutationResolver) CreateVendorService(ctx context.Context, input types.CreateVendorServiceInput) (*types.CreateVendorServicePayload, error) {
-	r.MustAuthorize(ctx, input.VendorID, probo.ActionVendorServiceCreate)
+	if err := r.authorize(ctx, input.VendorID, probo.ActionVendorServiceCreate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.VendorID.TenantID())
 
@@ -2009,7 +2167,9 @@ func (r *mutationResolver) CreateVendorService(ctx context.Context, input types.
 
 // UpdateVendorService is the resolver for the updateVendorService field.
 func (r *mutationResolver) UpdateVendorService(ctx context.Context, input types.UpdateVendorServiceInput) (*types.UpdateVendorServicePayload, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionVendorServiceUpdate)
+	if err := r.authorize(ctx, input.ID, probo.ActionVendorServiceUpdate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
@@ -2032,7 +2192,9 @@ func (r *mutationResolver) UpdateVendorService(ctx context.Context, input types.
 
 // DeleteVendorService is the resolver for the deleteVendorService field.
 func (r *mutationResolver) DeleteVendorService(ctx context.Context, input types.DeleteVendorServiceInput) (*types.DeleteVendorServicePayload, error) {
-	r.MustAuthorize(ctx, input.VendorServiceID, probo.ActionVendorServiceDelete)
+	if err := r.authorize(ctx, input.VendorServiceID, probo.ActionVendorServiceDelete); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.VendorServiceID.TenantID())
 
@@ -2049,7 +2211,9 @@ func (r *mutationResolver) DeleteVendorService(ctx context.Context, input types.
 
 // CreateFramework is the resolver for the createFramework field.
 func (r *mutationResolver) CreateFramework(ctx context.Context, input types.CreateFrameworkInput) (*types.CreateFrameworkPayload, error) {
-	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionFrameworkCreate)
+	if err := r.authorize(ctx, input.OrganizationID, probo.ActionFrameworkCreate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
@@ -2072,7 +2236,9 @@ func (r *mutationResolver) CreateFramework(ctx context.Context, input types.Crea
 
 // UpdateFramework is the resolver for the updateFramework field.
 func (r *mutationResolver) UpdateFramework(ctx context.Context, input types.UpdateFrameworkInput) (*types.UpdateFrameworkPayload, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionFrameworkUpdate)
+	if err := r.authorize(ctx, input.ID, probo.ActionFrameworkUpdate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
@@ -2096,7 +2262,9 @@ func (r *mutationResolver) UpdateFramework(ctx context.Context, input types.Upda
 
 // ImportFramework is the resolver for the importFramework field.
 func (r *mutationResolver) ImportFramework(ctx context.Context, input types.ImportFrameworkInput) (*types.ImportFrameworkPayload, error) {
-	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionFrameworkImport)
+	if err := r.authorize(ctx, input.OrganizationID, probo.ActionFrameworkImport); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
@@ -2108,7 +2276,7 @@ func (r *mutationResolver) ImportFramework(ctx context.Context, input types.Impo
 	framework, err := prb.Frameworks.Import(ctx, input.OrganizationID, req)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-			return nil, gqlutils.Conflict(err)
+			return nil, gqlutils.Conflict(ctx, err)
 		}
 
 		// TODO no panic use gqlutils.InternalError
@@ -2122,7 +2290,9 @@ func (r *mutationResolver) ImportFramework(ctx context.Context, input types.Impo
 
 // DeleteFramework is the resolver for the deleteFramework field.
 func (r *mutationResolver) DeleteFramework(ctx context.Context, input types.DeleteFrameworkInput) (*types.DeleteFrameworkPayload, error) {
-	r.MustAuthorize(ctx, input.FrameworkID, probo.ActionFrameworkDelete)
+	if err := r.authorize(ctx, input.FrameworkID, probo.ActionFrameworkDelete); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.FrameworkID.TenantID())
 
@@ -2139,7 +2309,9 @@ func (r *mutationResolver) DeleteFramework(ctx context.Context, input types.Dele
 
 // GenerateFrameworkStateOfApplicability is the resolver for the generateFrameworkStateOfApplicability field.
 func (r *mutationResolver) GenerateFrameworkStateOfApplicability(ctx context.Context, input types.GenerateFrameworkStateOfApplicabilityInput) (*types.GenerateFrameworkStateOfApplicabilityPayload, error) {
-	r.MustAuthorize(ctx, input.FrameworkID, probo.ActionFrameworkStateOfApplicabilityGenerate)
+	if err := r.authorize(ctx, input.FrameworkID, probo.ActionFrameworkStateOfApplicabilityGenerate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.FrameworkID.TenantID())
 
@@ -2159,7 +2331,9 @@ func (r *mutationResolver) GenerateFrameworkStateOfApplicability(ctx context.Con
 
 // ExportFramework is the resolver for the exportFramework field.
 func (r *mutationResolver) ExportFramework(ctx context.Context, input types.ExportFrameworkInput) (*types.ExportFrameworkPayload, error) {
-	r.MustAuthorize(ctx, input.FrameworkID, probo.ActionFrameworkExport)
+	if err := r.authorize(ctx, input.FrameworkID, probo.ActionFrameworkExport); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.FrameworkID.TenantID())
 	identity := connect_v1.IdentityFromContext(ctx)
@@ -2182,7 +2356,9 @@ func (r *mutationResolver) ExportFramework(ctx context.Context, input types.Expo
 
 // CreateControl is the resolver for the createControl field.
 func (r *mutationResolver) CreateControl(ctx context.Context, input types.CreateControlInput) (*types.CreateControlPayload, error) {
-	r.MustAuthorize(ctx, input.FrameworkID, probo.ActionControlCreate)
+	if err := r.authorize(ctx, input.FrameworkID, probo.ActionControlCreate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.FrameworkID.TenantID())
 
@@ -2199,7 +2375,7 @@ func (r *mutationResolver) CreateControl(ctx context.Context, input types.Create
 	)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-			return nil, gqlutils.Conflict(err)
+			return nil, gqlutils.Conflict(ctx, err)
 		}
 
 		// TODO no panic use gqlutils.InternalError
@@ -2213,7 +2389,9 @@ func (r *mutationResolver) CreateControl(ctx context.Context, input types.Create
 
 // UpdateControl is the resolver for the updateControl field.
 func (r *mutationResolver) UpdateControl(ctx context.Context, input types.UpdateControlInput) (*types.UpdateControlPayload, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionControlUpdate)
+	if err := r.authorize(ctx, input.ID, probo.ActionControlUpdate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
@@ -2231,7 +2409,7 @@ func (r *mutationResolver) UpdateControl(ctx context.Context, input types.Update
 
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-			return nil, gqlutils.Conflict(err)
+			return nil, gqlutils.Conflict(ctx, err)
 		}
 
 		// TODO no panic use gqlutils.InternalError
@@ -2245,7 +2423,9 @@ func (r *mutationResolver) UpdateControl(ctx context.Context, input types.Update
 
 // DeleteControl is the resolver for the deleteControl field.
 func (r *mutationResolver) DeleteControl(ctx context.Context, input types.DeleteControlInput) (*types.DeleteControlPayload, error) {
-	r.MustAuthorize(ctx, input.ControlID, probo.ActionControlDelete)
+	if err := r.authorize(ctx, input.ControlID, probo.ActionControlDelete); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.ControlID.TenantID())
 
@@ -2262,7 +2442,9 @@ func (r *mutationResolver) DeleteControl(ctx context.Context, input types.Delete
 
 // // CreateMeasure is the resolver for the createMeasure field.
 func (r *mutationResolver) CreateMeasure(ctx context.Context, input types.CreateMeasureInput) (*types.CreateMeasurePayload, error) {
-	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionMeasureCreate)
+	if err := r.authorize(ctx, input.OrganizationID, probo.ActionMeasureCreate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
@@ -2277,7 +2459,7 @@ func (r *mutationResolver) CreateMeasure(ctx context.Context, input types.Create
 	)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-			return nil, gqlutils.Conflict(err)
+			return nil, gqlutils.Conflict(ctx, err)
 		}
 
 		panic(fmt.Errorf("cannot create measure: %w", err))
@@ -2290,7 +2472,9 @@ func (r *mutationResolver) CreateMeasure(ctx context.Context, input types.Create
 
 // UpdateMeasure is the resolver for the updateMeasure field.
 func (r *mutationResolver) UpdateMeasure(ctx context.Context, input types.UpdateMeasureInput) (*types.UpdateMeasurePayload, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionMeasureUpdate)
+	if err := r.authorize(ctx, input.ID, probo.ActionMeasureUpdate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
@@ -2316,7 +2500,9 @@ func (r *mutationResolver) UpdateMeasure(ctx context.Context, input types.Update
 
 // ImportMeasure is the resolver for the importMeasure field.
 func (r *mutationResolver) ImportMeasure(ctx context.Context, input types.ImportMeasureInput) (*types.ImportMeasurePayload, error) {
-	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionMeasureImport)
+	if err := r.authorize(ctx, input.OrganizationID, probo.ActionMeasureImport); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
@@ -2344,7 +2530,9 @@ func (r *mutationResolver) ImportMeasure(ctx context.Context, input types.Import
 
 // DeleteMeasure is the resolver for the deleteMeasure field.
 func (r *mutationResolver) DeleteMeasure(ctx context.Context, input types.DeleteMeasureInput) (*types.DeleteMeasurePayload, error) {
-	r.MustAuthorize(ctx, input.MeasureID, probo.ActionMeasureDelete)
+	if err := r.authorize(ctx, input.MeasureID, probo.ActionMeasureDelete); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.MeasureID.TenantID())
 
@@ -2361,7 +2549,9 @@ func (r *mutationResolver) DeleteMeasure(ctx context.Context, input types.Delete
 
 // CreateControlMeasureMapping is the resolver for the createControlMeasureMapping field.
 func (r *mutationResolver) CreateControlMeasureMapping(ctx context.Context, input types.CreateControlMeasureMappingInput) (*types.CreateControlMeasureMappingPayload, error) {
-	r.MustAuthorize(ctx, input.ControlID, probo.ActionControlMeasureMappingCreate)
+	if err := r.authorize(ctx, input.ControlID, probo.ActionControlMeasureMappingCreate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.MeasureID.TenantID())
 
@@ -2379,14 +2569,16 @@ func (r *mutationResolver) CreateControlMeasureMapping(ctx context.Context, inpu
 
 // CreateControlDocumentMapping is the resolver for the createControlDocumentMapping field.
 func (r *mutationResolver) CreateControlDocumentMapping(ctx context.Context, input types.CreateControlDocumentMappingInput) (*types.CreateControlDocumentMappingPayload, error) {
-	r.MustAuthorize(ctx, input.ControlID, probo.ActionControlDocumentMappingCreate)
+	if err := r.authorize(ctx, input.ControlID, probo.ActionControlDocumentMappingCreate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.DocumentID.TenantID())
 
 	control, document, err := prb.Controls.CreateDocumentMapping(ctx, input.ControlID, input.DocumentID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-			return nil, gqlutils.Conflict(err)
+			return nil, gqlutils.Conflict(ctx, err)
 		}
 
 		// TODO no panic use gqlutils.InternalError
@@ -2401,7 +2593,9 @@ func (r *mutationResolver) CreateControlDocumentMapping(ctx context.Context, inp
 
 // DeleteControlMeasureMapping is the resolver for the deleteControlMeasureMapping field.
 func (r *mutationResolver) DeleteControlMeasureMapping(ctx context.Context, input types.DeleteControlMeasureMappingInput) (*types.DeleteControlMeasureMappingPayload, error) {
-	r.MustAuthorize(ctx, input.ControlID, probo.ActionControlMeasureMappingDelete)
+	if err := r.authorize(ctx, input.ControlID, probo.ActionControlMeasureMappingDelete); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.MeasureID.TenantID())
 
@@ -2419,7 +2613,9 @@ func (r *mutationResolver) DeleteControlMeasureMapping(ctx context.Context, inpu
 
 // DeleteControlDocumentMapping is the resolver for the deleteControlDocumentMapping field.
 func (r *mutationResolver) DeleteControlDocumentMapping(ctx context.Context, input types.DeleteControlDocumentMappingInput) (*types.DeleteControlDocumentMappingPayload, error) {
-	r.MustAuthorize(ctx, input.ControlID, probo.ActionControlDocumentMappingDelete)
+	if err := r.authorize(ctx, input.ControlID, probo.ActionControlDocumentMappingDelete); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.DocumentID.TenantID())
 
@@ -2437,7 +2633,9 @@ func (r *mutationResolver) DeleteControlDocumentMapping(ctx context.Context, inp
 
 // CreateControlAuditMapping is the resolver for the createControlAuditMapping field.
 func (r *mutationResolver) CreateControlAuditMapping(ctx context.Context, input types.CreateControlAuditMappingInput) (*types.CreateControlAuditMappingPayload, error) {
-	r.MustAuthorize(ctx, input.ControlID, probo.ActionControlAuditMappingCreate)
+	if err := r.authorize(ctx, input.ControlID, probo.ActionControlAuditMappingCreate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.AuditID.TenantID())
 
@@ -2455,7 +2653,9 @@ func (r *mutationResolver) CreateControlAuditMapping(ctx context.Context, input 
 
 // DeleteControlAuditMapping is the resolver for the deleteControlAuditMapping field.
 func (r *mutationResolver) DeleteControlAuditMapping(ctx context.Context, input types.DeleteControlAuditMappingInput) (*types.DeleteControlAuditMappingPayload, error) {
-	r.MustAuthorize(ctx, input.ControlID, probo.ActionControlAuditMappingDelete)
+	if err := r.authorize(ctx, input.ControlID, probo.ActionControlAuditMappingDelete); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.AuditID.TenantID())
 
@@ -2473,7 +2673,9 @@ func (r *mutationResolver) DeleteControlAuditMapping(ctx context.Context, input 
 
 // CreateControlSnapshotMapping is the resolver for the createControlSnapshotMapping field.
 func (r *mutationResolver) CreateControlSnapshotMapping(ctx context.Context, input types.CreateControlSnapshotMappingInput) (*types.CreateControlSnapshotMappingPayload, error) {
-	r.MustAuthorize(ctx, input.ControlID, probo.ActionControlSnapshotMappingCreate)
+	if err := r.authorize(ctx, input.ControlID, probo.ActionControlSnapshotMappingCreate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.SnapshotID.TenantID())
 
@@ -2491,7 +2693,9 @@ func (r *mutationResolver) CreateControlSnapshotMapping(ctx context.Context, inp
 
 // DeleteControlSnapshotMapping is the resolver for the deleteControlSnapshotMapping field.
 func (r *mutationResolver) DeleteControlSnapshotMapping(ctx context.Context, input types.DeleteControlSnapshotMappingInput) (*types.DeleteControlSnapshotMappingPayload, error) {
-	r.MustAuthorize(ctx, input.ControlID, probo.ActionControlSnapshotMappingDelete)
+	if err := r.authorize(ctx, input.ControlID, probo.ActionControlSnapshotMappingDelete); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.SnapshotID.TenantID())
 
@@ -2509,7 +2713,9 @@ func (r *mutationResolver) DeleteControlSnapshotMapping(ctx context.Context, inp
 
 // CreateTask is the resolver for the createTask field.
 func (r *mutationResolver) CreateTask(ctx context.Context, input types.CreateTaskInput) (*types.CreateTaskPayload, error) {
-	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionTaskCreate)
+	if err := r.authorize(ctx, input.OrganizationID, probo.ActionTaskCreate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
@@ -2526,7 +2732,7 @@ func (r *mutationResolver) CreateTask(ctx context.Context, input types.CreateTas
 	)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-			return nil, gqlutils.Conflict(err)
+			return nil, gqlutils.Conflict(ctx, err)
 		}
 
 		// TODO no panic use gqlutils.InternalError
@@ -2540,7 +2746,9 @@ func (r *mutationResolver) CreateTask(ctx context.Context, input types.CreateTas
 
 // UpdateTask is the resolver for the updateTask field.
 func (r *mutationResolver) UpdateTask(ctx context.Context, input types.UpdateTaskInput) (*types.UpdateTaskPayload, error) {
-	r.MustAuthorize(ctx, input.TaskID, probo.ActionTaskUpdate)
+	if err := r.authorize(ctx, input.TaskID, probo.ActionTaskUpdate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.TaskID.TenantID())
 
@@ -2567,7 +2775,9 @@ func (r *mutationResolver) UpdateTask(ctx context.Context, input types.UpdateTas
 
 // DeleteTask is the resolver for the deleteTask field.
 func (r *mutationResolver) DeleteTask(ctx context.Context, input types.DeleteTaskInput) (*types.DeleteTaskPayload, error) {
-	r.MustAuthorize(ctx, input.TaskID, probo.ActionTaskDelete)
+	if err := r.authorize(ctx, input.TaskID, probo.ActionTaskDelete); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.TaskID.TenantID())
 
@@ -2584,7 +2794,9 @@ func (r *mutationResolver) DeleteTask(ctx context.Context, input types.DeleteTas
 
 // AssignTask is the resolver for the assignTask field.
 func (r *mutationResolver) AssignTask(ctx context.Context, input types.AssignTaskInput) (*types.AssignTaskPayload, error) {
-	r.MustAuthorize(ctx, input.TaskID, probo.ActionTaskAssign)
+	if err := r.authorize(ctx, input.TaskID, probo.ActionTaskAssign); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.TaskID.TenantID())
 
@@ -2601,7 +2813,9 @@ func (r *mutationResolver) AssignTask(ctx context.Context, input types.AssignTas
 
 // UnassignTask is the resolver for the unassignTask field.
 func (r *mutationResolver) UnassignTask(ctx context.Context, input types.UnassignTaskInput) (*types.UnassignTaskPayload, error) {
-	r.MustAuthorize(ctx, input.TaskID, probo.ActionTaskUnassign)
+	if err := r.authorize(ctx, input.TaskID, probo.ActionTaskUnassign); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.TaskID.TenantID())
 
@@ -2618,7 +2832,9 @@ func (r *mutationResolver) UnassignTask(ctx context.Context, input types.Unassig
 
 // CreateRisk is the resolver for the createRisk field.
 func (r *mutationResolver) CreateRisk(ctx context.Context, input types.CreateRiskInput) (*types.CreateRiskPayload, error) {
-	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionRiskCreate)
+	if err := r.authorize(ctx, input.OrganizationID, probo.ActionRiskCreate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
@@ -2640,7 +2856,7 @@ func (r *mutationResolver) CreateRisk(ctx context.Context, input types.CreateRis
 	)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-			return nil, gqlutils.Conflict(err)
+			return nil, gqlutils.Conflict(ctx, err)
 		}
 
 		// TODO no panic use gqlutils.InternalError
@@ -2654,7 +2870,9 @@ func (r *mutationResolver) CreateRisk(ctx context.Context, input types.CreateRis
 
 // UpdateRisk is the resolver for the updateRisk field.
 func (r *mutationResolver) UpdateRisk(ctx context.Context, input types.UpdateRiskInput) (*types.UpdateRiskPayload, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionRiskUpdate)
+	if err := r.authorize(ctx, input.ID, probo.ActionRiskUpdate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
@@ -2686,7 +2904,9 @@ func (r *mutationResolver) UpdateRisk(ctx context.Context, input types.UpdateRis
 
 // DeleteRisk is the resolver for the deleteRisk field.
 func (r *mutationResolver) DeleteRisk(ctx context.Context, input types.DeleteRiskInput) (*types.DeleteRiskPayload, error) {
-	r.MustAuthorize(ctx, input.RiskID, probo.ActionRiskDelete)
+	if err := r.authorize(ctx, input.RiskID, probo.ActionRiskDelete); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.RiskID.TenantID())
 
@@ -2703,7 +2923,9 @@ func (r *mutationResolver) DeleteRisk(ctx context.Context, input types.DeleteRis
 
 // CreateRiskMeasureMapping is the resolver for the createRiskMeasureMapping field.
 func (r *mutationResolver) CreateRiskMeasureMapping(ctx context.Context, input types.CreateRiskMeasureMappingInput) (*types.CreateRiskMeasureMappingPayload, error) {
-	r.MustAuthorize(ctx, input.RiskID, probo.ActionRiskMeasureMappingCreate)
+	if err := r.authorize(ctx, input.RiskID, probo.ActionRiskMeasureMappingCreate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.RiskID.TenantID())
 
@@ -2721,7 +2943,9 @@ func (r *mutationResolver) CreateRiskMeasureMapping(ctx context.Context, input t
 
 // DeleteRiskMeasureMapping is the resolver for the deleteRiskMeasureMapping field.
 func (r *mutationResolver) DeleteRiskMeasureMapping(ctx context.Context, input types.DeleteRiskMeasureMappingInput) (*types.DeleteRiskMeasureMappingPayload, error) {
-	r.MustAuthorize(ctx, input.RiskID, probo.ActionRiskMeasureMappingDelete)
+	if err := r.authorize(ctx, input.RiskID, probo.ActionRiskMeasureMappingDelete); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.RiskID.TenantID())
 
@@ -2739,7 +2963,9 @@ func (r *mutationResolver) DeleteRiskMeasureMapping(ctx context.Context, input t
 
 // CreateRiskDocumentMapping is the resolver for the createRiskDocumentMapping field.
 func (r *mutationResolver) CreateRiskDocumentMapping(ctx context.Context, input types.CreateRiskDocumentMappingInput) (*types.CreateRiskDocumentMappingPayload, error) {
-	r.MustAuthorize(ctx, input.RiskID, probo.ActionRiskDocumentMappingCreate)
+	if err := r.authorize(ctx, input.RiskID, probo.ActionRiskDocumentMappingCreate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.RiskID.TenantID())
 
@@ -2757,7 +2983,9 @@ func (r *mutationResolver) CreateRiskDocumentMapping(ctx context.Context, input 
 
 // DeleteRiskDocumentMapping is the resolver for the deleteRiskDocumentMapping field.
 func (r *mutationResolver) DeleteRiskDocumentMapping(ctx context.Context, input types.DeleteRiskDocumentMappingInput) (*types.DeleteRiskDocumentMappingPayload, error) {
-	r.MustAuthorize(ctx, input.RiskID, probo.ActionRiskDocumentMappingDelete)
+	if err := r.authorize(ctx, input.RiskID, probo.ActionRiskDocumentMappingDelete); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.RiskID.TenantID())
 
@@ -2775,7 +3003,9 @@ func (r *mutationResolver) DeleteRiskDocumentMapping(ctx context.Context, input 
 
 // CreateRiskObligationMapping is the resolver for the createRiskObligationMapping field.
 func (r *mutationResolver) CreateRiskObligationMapping(ctx context.Context, input types.CreateRiskObligationMappingInput) (*types.CreateRiskObligationMappingPayload, error) {
-	r.MustAuthorize(ctx, input.RiskID, probo.ActionRiskObligationMappingCreate)
+	if err := r.authorize(ctx, input.RiskID, probo.ActionRiskObligationMappingCreate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.RiskID.TenantID())
 
@@ -2793,7 +3023,9 @@ func (r *mutationResolver) CreateRiskObligationMapping(ctx context.Context, inpu
 
 // DeleteRiskObligationMapping is the resolver for the deleteRiskObligationMapping field.
 func (r *mutationResolver) DeleteRiskObligationMapping(ctx context.Context, input types.DeleteRiskObligationMappingInput) (*types.DeleteRiskObligationMappingPayload, error) {
-	r.MustAuthorize(ctx, input.RiskID, probo.ActionRiskObligationMappingDelete)
+	if err := r.authorize(ctx, input.RiskID, probo.ActionRiskObligationMappingDelete); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.RiskID.TenantID())
 
@@ -2811,7 +3043,9 @@ func (r *mutationResolver) DeleteRiskObligationMapping(ctx context.Context, inpu
 
 // DeleteEvidence is the resolver for the deleteEvidence field.
 func (r *mutationResolver) DeleteEvidence(ctx context.Context, input types.DeleteEvidenceInput) (*types.DeleteEvidencePayload, error) {
-	r.MustAuthorize(ctx, input.EvidenceID, probo.ActionEvidenceDelete)
+	if err := r.authorize(ctx, input.EvidenceID, probo.ActionEvidenceDelete); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.EvidenceID.TenantID())
 
@@ -2828,7 +3062,9 @@ func (r *mutationResolver) DeleteEvidence(ctx context.Context, input types.Delet
 
 // UploadMeasureEvidence is the resolver for the uploadMeasureEvidence field.
 func (r *mutationResolver) UploadMeasureEvidence(ctx context.Context, input types.UploadMeasureEvidenceInput) (*types.UploadMeasureEvidencePayload, error) {
-	r.MustAuthorize(ctx, input.MeasureID, probo.ActionMeasureEvidenceUpload)
+	if err := r.authorize(ctx, input.MeasureID, probo.ActionMeasureEvidenceUpload); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.MeasureID.TenantID())
 
@@ -2856,7 +3092,9 @@ func (r *mutationResolver) UploadMeasureEvidence(ctx context.Context, input type
 
 // UploadVendorComplianceReport is the resolver for the uploadVendorComplianceReport field.
 func (r *mutationResolver) UploadVendorComplianceReport(ctx context.Context, input types.UploadVendorComplianceReportInput) (*types.UploadVendorComplianceReportPayload, error) {
-	r.MustAuthorize(ctx, input.VendorID, probo.ActionVendorComplianceReportUpload)
+	if err := r.authorize(ctx, input.VendorID, probo.ActionVendorComplianceReportUpload); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.VendorID.TenantID())
 
@@ -2882,7 +3120,9 @@ func (r *mutationResolver) UploadVendorComplianceReport(ctx context.Context, inp
 
 // DeleteVendorComplianceReport is the resolver for the deleteVendorComplianceReport field.
 func (r *mutationResolver) DeleteVendorComplianceReport(ctx context.Context, input types.DeleteVendorComplianceReportInput) (*types.DeleteVendorComplianceReportPayload, error) {
-	r.MustAuthorize(ctx, input.ReportID, probo.ActionVendorComplianceReportDelete)
+	if err := r.authorize(ctx, input.ReportID, probo.ActionVendorComplianceReportDelete); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.ReportID.TenantID())
 
@@ -2899,7 +3139,9 @@ func (r *mutationResolver) DeleteVendorComplianceReport(ctx context.Context, inp
 
 // UploadVendorBusinessAssociateAgreement is the resolver for the uploadVendorBusinessAssociateAgreement field.
 func (r *mutationResolver) UploadVendorBusinessAssociateAgreement(ctx context.Context, input types.UploadVendorBusinessAssociateAgreementInput) (*types.UploadVendorBusinessAssociateAgreementPayload, error) {
-	r.MustAuthorize(ctx, input.VendorID, probo.ActionVendorBusinessAssociateAgreementUpload)
+	if err := r.authorize(ctx, input.VendorID, probo.ActionVendorBusinessAssociateAgreementUpload); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.VendorID.TenantID())
 
@@ -2925,7 +3167,9 @@ func (r *mutationResolver) UploadVendorBusinessAssociateAgreement(ctx context.Co
 
 // UpdateVendorBusinessAssociateAgreement is the resolver for the updateVendorBusinessAssociateAgreement field.
 func (r *mutationResolver) UpdateVendorBusinessAssociateAgreement(ctx context.Context, input types.UpdateVendorBusinessAssociateAgreementInput) (*types.UpdateVendorBusinessAssociateAgreementPayload, error) {
-	r.MustAuthorize(ctx, input.VendorID, probo.ActionVendorBusinessAssociateAgreementUpdate)
+	if err := r.authorize(ctx, input.VendorID, probo.ActionVendorBusinessAssociateAgreementUpdate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.VendorID.TenantID())
 
@@ -2949,7 +3193,9 @@ func (r *mutationResolver) UpdateVendorBusinessAssociateAgreement(ctx context.Co
 
 // DeleteVendorBusinessAssociateAgreement is the resolver for the deleteVendorBusinessAssociateAgreement field.
 func (r *mutationResolver) DeleteVendorBusinessAssociateAgreement(ctx context.Context, input types.DeleteVendorBusinessAssociateAgreementInput) (*types.DeleteVendorBusinessAssociateAgreementPayload, error) {
-	r.MustAuthorize(ctx, input.VendorID, probo.ActionVendorBusinessAssociateAgreementDelete)
+	if err := r.authorize(ctx, input.VendorID, probo.ActionVendorBusinessAssociateAgreementDelete); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.VendorID.TenantID())
 
@@ -2966,7 +3212,9 @@ func (r *mutationResolver) DeleteVendorBusinessAssociateAgreement(ctx context.Co
 
 // UploadVendorDataPrivacyAgreement is the resolver for the uploadVendorDataPrivacyAgreement field.
 func (r *mutationResolver) UploadVendorDataPrivacyAgreement(ctx context.Context, input types.UploadVendorDataPrivacyAgreementInput) (*types.UploadVendorDataPrivacyAgreementPayload, error) {
-	r.MustAuthorize(ctx, input.VendorID, probo.ActionVendorDataPrivacyAgreementUpload)
+	if err := r.authorize(ctx, input.VendorID, probo.ActionVendorDataPrivacyAgreementUpload); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.VendorID.TenantID())
 
@@ -2992,7 +3240,9 @@ func (r *mutationResolver) UploadVendorDataPrivacyAgreement(ctx context.Context,
 
 // UpdateVendorDataPrivacyAgreement is the resolver for the updateVendorDataPrivacyAgreement field.
 func (r *mutationResolver) UpdateVendorDataPrivacyAgreement(ctx context.Context, input types.UpdateVendorDataPrivacyAgreementInput) (*types.UpdateVendorDataPrivacyAgreementPayload, error) {
-	r.MustAuthorize(ctx, input.VendorID, probo.ActionVendorDataPrivacyAgreementUpdate)
+	if err := r.authorize(ctx, input.VendorID, probo.ActionVendorDataPrivacyAgreementUpdate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.VendorID.TenantID())
 
@@ -3016,7 +3266,9 @@ func (r *mutationResolver) UpdateVendorDataPrivacyAgreement(ctx context.Context,
 
 // DeleteVendorDataPrivacyAgreement is the resolver for the deleteVendorDataPrivacyAgreement field.
 func (r *mutationResolver) DeleteVendorDataPrivacyAgreement(ctx context.Context, input types.DeleteVendorDataPrivacyAgreementInput) (*types.DeleteVendorDataPrivacyAgreementPayload, error) {
-	r.MustAuthorize(ctx, input.VendorID, probo.ActionVendorDataPrivacyAgreementDelete)
+	if err := r.authorize(ctx, input.VendorID, probo.ActionVendorDataPrivacyAgreementDelete); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.VendorID.TenantID())
 
@@ -3033,7 +3285,9 @@ func (r *mutationResolver) DeleteVendorDataPrivacyAgreement(ctx context.Context,
 
 // CreateDocument is the resolver for the createDocument field.
 func (r *mutationResolver) CreateDocument(ctx context.Context, input types.CreateDocumentInput) (*types.CreateDocumentPayload, error) {
-	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionDocumentCreate)
+	if err := r.authorize(ctx, input.OrganizationID, probo.ActionDocumentCreate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
@@ -3051,7 +3305,7 @@ func (r *mutationResolver) CreateDocument(ctx context.Context, input types.Creat
 	)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-			return nil, gqlutils.Conflict(err)
+			return nil, gqlutils.Conflict(ctx, err)
 		}
 
 		// TODO no panic use gqlutils.InternalError
@@ -3066,7 +3320,9 @@ func (r *mutationResolver) CreateDocument(ctx context.Context, input types.Creat
 
 // UpdateDocument is the resolver for the updateDocument field.
 func (r *mutationResolver) UpdateDocument(ctx context.Context, input types.UpdateDocumentInput) (*types.UpdateDocumentPayload, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionDocumentUpdate)
+	if err := r.authorize(ctx, input.ID, probo.ActionDocumentUpdate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
@@ -3094,7 +3350,9 @@ func (r *mutationResolver) UpdateDocument(ctx context.Context, input types.Updat
 
 // DeleteDocument is the resolver for the deleteDocument field.
 func (r *mutationResolver) DeleteDocument(ctx context.Context, input types.DeleteDocumentInput) (*types.DeleteDocumentPayload, error) {
-	r.MustAuthorize(ctx, input.DocumentID, probo.ActionDocumentDelete)
+	if err := r.authorize(ctx, input.DocumentID, probo.ActionDocumentDelete); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.DocumentID.TenantID())
 
@@ -3111,7 +3369,9 @@ func (r *mutationResolver) DeleteDocument(ctx context.Context, input types.Delet
 
 // CreateMeeting is the resolver for the createMeeting field.
 func (r *mutationResolver) CreateMeeting(ctx context.Context, input types.CreateMeetingInput) (*types.CreateMeetingPayload, error) {
-	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionMeetingCreate)
+	if err := r.authorize(ctx, input.OrganizationID, probo.ActionMeetingCreate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
@@ -3137,7 +3397,9 @@ func (r *mutationResolver) CreateMeeting(ctx context.Context, input types.Create
 
 // UpdateMeeting is the resolver for the updateMeeting field.
 func (r *mutationResolver) UpdateMeeting(ctx context.Context, input types.UpdateMeetingInput) (*types.UpdateMeetingPayload, error) {
-	r.MustAuthorize(ctx, input.MeetingID, probo.ActionMeetingUpdate)
+	if err := r.authorize(ctx, input.MeetingID, probo.ActionMeetingUpdate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.MeetingID.TenantID())
 
@@ -3168,7 +3430,9 @@ func (r *mutationResolver) UpdateMeeting(ctx context.Context, input types.Update
 
 // DeleteMeeting is the resolver for the deleteMeeting field.
 func (r *mutationResolver) DeleteMeeting(ctx context.Context, input types.DeleteMeetingInput) (*types.DeleteMeetingPayload, error) {
-	r.MustAuthorize(ctx, input.MeetingID, probo.ActionMeetingDelete)
+	if err := r.authorize(ctx, input.MeetingID, probo.ActionMeetingDelete); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.MeetingID.TenantID())
 
@@ -3185,7 +3449,9 @@ func (r *mutationResolver) DeleteMeeting(ctx context.Context, input types.Delete
 
 // PublishDocumentVersion is the resolver for the publishDocumentVersion field.
 func (r *mutationResolver) PublishDocumentVersion(ctx context.Context, input types.PublishDocumentVersionInput) (*types.PublishDocumentVersionPayload, error) {
-	r.MustAuthorize(ctx, input.DocumentID, probo.ActionDocumentVersionPublish)
+	if err := r.authorize(ctx, input.DocumentID, probo.ActionDocumentVersionPublish); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.DocumentID.TenantID())
 
@@ -3195,7 +3461,7 @@ func (r *mutationResolver) PublishDocumentVersion(ctx context.Context, input typ
 	if err != nil {
 		var errNoChanges *probo.ErrDocumentVersionNoChanges
 		if errors.As(err, &errNoChanges) {
-			return nil, gqlutils.Invalid(errNoChanges, nil)
+			return nil, gqlutils.Invalid(ctx, errNoChanges)
 		}
 
 		// TODO no panic use gqlutils.InternalError
@@ -3218,7 +3484,9 @@ func (r *mutationResolver) BulkPublishDocumentVersions(ctx context.Context, inpu
 	}
 
 	for _, documentID := range input.DocumentIds {
-		r.MustAuthorize(ctx, documentID, probo.ActionDocumentVersionPublish)
+		if err := r.authorize(ctx, documentID, probo.ActionDocumentVersionPublish); err != nil {
+			return nil, err
+		}
 	}
 
 	prb := r.ProboService(ctx, input.DocumentIds[0].TenantID())
@@ -3236,7 +3504,7 @@ func (r *mutationResolver) BulkPublishDocumentVersions(ctx context.Context, inpu
 	if err != nil {
 		var errNoChanges *probo.ErrDocumentVersionNoChanges
 		if errors.As(err, &errNoChanges) {
-			return nil, gqlutils.Invalid(errNoChanges, nil)
+			return nil, gqlutils.Invalid(ctx, errNoChanges)
 		}
 
 		// TODO no panic use gqlutils.InternalError
@@ -3258,7 +3526,9 @@ func (r *mutationResolver) BulkDeleteDocuments(ctx context.Context, input types.
 	}
 
 	for _, documentID := range input.DocumentIds {
-		r.MustAuthorize(ctx, documentID, probo.ActionDocumentDelete)
+		if err := r.authorize(ctx, documentID, probo.ActionDocumentDelete); err != nil {
+			return nil, err
+		}
 	}
 
 	prb := r.ProboService(ctx, input.DocumentIds[0].TenantID())
@@ -3281,7 +3551,9 @@ func (r *mutationResolver) BulkExportDocuments(ctx context.Context, input types.
 
 	// TODO have a way to batch authorize for resources
 	for _, documentID := range input.DocumentIds {
-		r.MustAuthorize(ctx, documentID, probo.ActionDocumentVersionExport)
+		if err := r.authorize(ctx, documentID, probo.ActionDocumentVersionExport); err != nil {
+			return nil, err
+		}
 	}
 
 	prb := r.ProboService(ctx, input.DocumentIds[0].TenantID())
@@ -3306,7 +3578,9 @@ func (r *mutationResolver) BulkExportDocuments(ctx context.Context, input types.
 
 // GenerateDocumentChangelog is the resolver for the generateDocumentChangelog field.
 func (r *mutationResolver) GenerateDocumentChangelog(ctx context.Context, input types.GenerateDocumentChangelogInput) (*types.GenerateDocumentChangelogPayload, error) {
-	r.MustAuthorize(ctx, input.DocumentID, probo.ActionDocumentChangelogGenerate)
+	if err := r.authorize(ctx, input.DocumentID, probo.ActionDocumentChangelogGenerate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.DocumentID.TenantID())
 
@@ -3323,7 +3597,9 @@ func (r *mutationResolver) GenerateDocumentChangelog(ctx context.Context, input 
 
 // CreateDraftDocumentVersion is the resolver for the createDraftDocumentVersion field.
 func (r *mutationResolver) CreateDraftDocumentVersion(ctx context.Context, input types.CreateDraftDocumentVersionInput) (*types.CreateDraftDocumentVersionPayload, error) {
-	r.MustAuthorize(ctx, input.DocumentID, probo.ActionDocumentDraftVersionCreate)
+	if err := r.authorize(ctx, input.DocumentID, probo.ActionDocumentDraftVersionCreate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.DocumentID.TenantID())
 
@@ -3340,7 +3616,9 @@ func (r *mutationResolver) CreateDraftDocumentVersion(ctx context.Context, input
 
 // DeleteDraftDocumentVersion is the resolver for the deleteDraftDocumentVersion field.
 func (r *mutationResolver) DeleteDraftDocumentVersion(ctx context.Context, input types.DeleteDraftDocumentVersionInput) (*types.DeleteDraftDocumentVersionPayload, error) {
-	r.MustAuthorize(ctx, input.DocumentVersionID, probo.ActionDocumentVersionDeleteDraft)
+	if err := r.authorize(ctx, input.DocumentVersionID, probo.ActionDocumentVersionDeleteDraft); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.DocumentVersionID.TenantID())
 
@@ -3357,7 +3635,9 @@ func (r *mutationResolver) DeleteDraftDocumentVersion(ctx context.Context, input
 
 // UpdateDocumentVersion is the resolver for the updateDocumentVersion field.
 func (r *mutationResolver) UpdateDocumentVersion(ctx context.Context, input types.UpdateDocumentVersionInput) (*types.UpdateDocumentVersionPayload, error) {
-	r.MustAuthorize(ctx, input.DocumentVersionID, probo.ActionDocumentVersionUpdate)
+	if err := r.authorize(ctx, input.DocumentVersionID, probo.ActionDocumentVersionUpdate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.DocumentVersionID.TenantID())
 
@@ -3380,7 +3660,9 @@ func (r *mutationResolver) UpdateDocumentVersion(ctx context.Context, input type
 
 // RequestSignature is the resolver for the requestSignature field.
 func (r *mutationResolver) RequestSignature(ctx context.Context, input types.RequestSignatureInput) (*types.RequestSignaturePayload, error) {
-	r.MustAuthorize(ctx, input.DocumentVersionID, probo.ActionDocumentVersionSignatureRequest)
+	if err := r.authorize(ctx, input.DocumentVersionID, probo.ActionDocumentVersionSignatureRequest); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.DocumentVersionID.TenantID())
 
@@ -3410,7 +3692,9 @@ func (r *mutationResolver) BulkRequestSignatures(ctx context.Context, input type
 	}
 
 	for _, documentID := range input.DocumentIds {
-		r.MustAuthorize(ctx, documentID, probo.ActionDocumentVersionSignatureRequest)
+		if err := r.authorize(ctx, documentID, probo.ActionDocumentVersionSignatureRequest); err != nil {
+			return nil, err
+		}
 	}
 
 	prb := r.ProboService(ctx, input.DocumentIds[0].TenantID())
@@ -3434,7 +3718,9 @@ func (r *mutationResolver) BulkRequestSignatures(ctx context.Context, input type
 
 // SendSigningNotifications is the resolver for the sendSigningNotifications field.
 func (r *mutationResolver) SendSigningNotifications(ctx context.Context, input types.SendSigningNotificationsInput) (*types.SendSigningNotificationsPayload, error) {
-	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionDocumentSendSigningNotifications)
+	if err := r.authorize(ctx, input.OrganizationID, probo.ActionDocumentSendSigningNotifications); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
@@ -3451,7 +3737,9 @@ func (r *mutationResolver) SendSigningNotifications(ctx context.Context, input t
 
 // CancelSignatureRequest is the resolver for the cancelSignatureRequest field.
 func (r *mutationResolver) CancelSignatureRequest(ctx context.Context, input types.CancelSignatureRequestInput) (*types.CancelSignatureRequestPayload, error) {
-	r.MustAuthorize(ctx, input.DocumentVersionSignatureID, probo.ActionDocumentVersionCancelSignature)
+	if err := r.authorize(ctx, input.DocumentVersionSignatureID, probo.ActionDocumentVersionCancelSignature); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.DocumentVersionSignatureID.TenantID())
 
@@ -3468,7 +3756,9 @@ func (r *mutationResolver) CancelSignatureRequest(ctx context.Context, input typ
 
 // SignDocument is the resolver for the signDocument field.
 func (r *mutationResolver) SignDocument(ctx context.Context, input types.SignDocumentInput) (*types.SignDocumentPayload, error) {
-	r.MustAuthorize(ctx, input.DocumentVersionID, probo.ActionDocumentVersionSign)
+	if err := r.authorize(ctx, input.DocumentVersionID, probo.ActionDocumentVersionSign); err != nil {
+		return nil, err
+	}
 
 	identity := connect_v1.IdentityFromContext(ctx)
 	prb := r.ProboService(ctx, input.DocumentVersionID.TenantID())
@@ -3476,7 +3766,7 @@ func (r *mutationResolver) SignDocument(ctx context.Context, input types.SignDoc
 	documentVersionSignature, err := prb.Documents.SignDocumentVersionByEmail(ctx, input.DocumentVersionID, identity.EmailAddress)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-			return nil, gqlutils.Conflict(err)
+			return nil, gqlutils.Conflict(ctx, err)
 		}
 
 		// TODO no panic use gqlutils.InternalError
@@ -3490,7 +3780,9 @@ func (r *mutationResolver) SignDocument(ctx context.Context, input types.SignDoc
 
 // ExportDocumentVersionPDF is the resolver for the exportDocumentVersionPDF field.
 func (r *mutationResolver) ExportDocumentVersionPDF(ctx context.Context, input types.ExportDocumentVersionPDFInput) (*types.ExportDocumentVersionPDFPayload, error) {
-	r.MustAuthorize(ctx, input.DocumentVersionID, probo.ActionDocumentVersionExportPDF)
+	if err := r.authorize(ctx, input.DocumentVersionID, probo.ActionDocumentVersionExportPDF); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.DocumentVersionID.TenantID())
 
@@ -3513,7 +3805,9 @@ func (r *mutationResolver) ExportDocumentVersionPDF(ctx context.Context, input t
 
 // ExportSignableVersionDocumentPDF is the resolver for the exportSignableVersionDocumentPDF field.
 func (r *mutationResolver) ExportSignableVersionDocumentPDF(ctx context.Context, input types.ExportSignableDocumentVersionPDFInput) (*types.ExportSignableDocumentVersionPDFPayload, error) {
-	r.MustAuthorize(ctx, input.DocumentVersionID, probo.ActionDocumentVersionExportSignable)
+	if err := r.authorize(ctx, input.DocumentVersionID, probo.ActionDocumentVersionExportSignable); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.DocumentVersionID.TenantID())
 
@@ -3529,7 +3823,7 @@ func (r *mutationResolver) ExportSignableVersionDocumentPDF(ctx context.Context,
 	_, err = prb.Documents.GetWithFilter(ctx, documentVersion.DocumentID, documentFilter)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(err)
+			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		// TODO no panic use gqlutils.InternalError
@@ -3555,7 +3849,9 @@ func (r *mutationResolver) ExportSignableVersionDocumentPDF(ctx context.Context,
 
 // CreateVendorRiskAssessment is the resolver for the createVendorRiskAssessment field.
 func (r *mutationResolver) CreateVendorRiskAssessment(ctx context.Context, input types.CreateVendorRiskAssessmentInput) (*types.CreateVendorRiskAssessmentPayload, error) {
-	r.MustAuthorize(ctx, input.VendorID, probo.ActionVendorRiskAssessmentCreate)
+	if err := r.authorize(ctx, input.VendorID, probo.ActionVendorRiskAssessmentCreate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.VendorID.TenantID())
 
@@ -3581,7 +3877,9 @@ func (r *mutationResolver) CreateVendorRiskAssessment(ctx context.Context, input
 
 // AssessVendor is the resolver for the assessVendor field.
 func (r *mutationResolver) AssessVendor(ctx context.Context, input types.AssessVendorInput) (*types.AssessVendorPayload, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionVendorAssess)
+	if err := r.authorize(ctx, input.ID, probo.ActionVendorAssess); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
@@ -3604,7 +3902,9 @@ func (r *mutationResolver) AssessVendor(ctx context.Context, input types.AssessV
 
 // CreateAsset is the resolver for the createAsset field.
 func (r *mutationResolver) CreateAsset(ctx context.Context, input types.CreateAssetInput) (*types.CreateAssetPayload, error) {
-	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionAssetCreate)
+	if err := r.authorize(ctx, input.OrganizationID, probo.ActionAssetCreate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
@@ -3633,7 +3933,9 @@ func (r *mutationResolver) CreateAsset(ctx context.Context, input types.CreateAs
 
 // UpdateAsset is the resolver for the updateAsset field.
 func (r *mutationResolver) UpdateAsset(ctx context.Context, input types.UpdateAssetInput) (*types.UpdateAssetPayload, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionAssetUpdate)
+	if err := r.authorize(ctx, input.ID, probo.ActionAssetUpdate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
@@ -3661,7 +3963,9 @@ func (r *mutationResolver) UpdateAsset(ctx context.Context, input types.UpdateAs
 
 // DeleteAsset is the resolver for the deleteAsset field.
 func (r *mutationResolver) DeleteAsset(ctx context.Context, input types.DeleteAssetInput) (*types.DeleteAssetPayload, error) {
-	r.MustAuthorize(ctx, input.AssetID, probo.ActionAssetDelete)
+	if err := r.authorize(ctx, input.AssetID, probo.ActionAssetDelete); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.AssetID.TenantID())
 
@@ -3678,7 +3982,9 @@ func (r *mutationResolver) DeleteAsset(ctx context.Context, input types.DeleteAs
 
 // CreateDatum is the resolver for the createDatum field.
 func (r *mutationResolver) CreateDatum(ctx context.Context, input types.CreateDatumInput) (*types.CreateDatumPayload, error) {
-	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionDatumCreate)
+	if err := r.authorize(ctx, input.OrganizationID, probo.ActionDatumCreate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
@@ -3705,7 +4011,9 @@ func (r *mutationResolver) CreateDatum(ctx context.Context, input types.CreateDa
 
 // UpdateDatum is the resolver for the updateDatum field.
 func (r *mutationResolver) UpdateDatum(ctx context.Context, input types.UpdateDatumInput) (*types.UpdateDatumPayload, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionDatumUpdate)
+	if err := r.authorize(ctx, input.ID, probo.ActionDatumUpdate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
@@ -3732,7 +4040,9 @@ func (r *mutationResolver) UpdateDatum(ctx context.Context, input types.UpdateDa
 
 // DeleteDatum is the resolver for the deleteDatum field.
 func (r *mutationResolver) DeleteDatum(ctx context.Context, input types.DeleteDatumInput) (*types.DeleteDatumPayload, error) {
-	r.MustAuthorize(ctx, input.DatumID, probo.ActionDatumDelete)
+	if err := r.authorize(ctx, input.DatumID, probo.ActionDatumDelete); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.DatumID.TenantID())
 
@@ -3748,7 +4058,9 @@ func (r *mutationResolver) DeleteDatum(ctx context.Context, input types.DeleteDa
 
 // CreateAudit is the resolver for the createAudit field.
 func (r *mutationResolver) CreateAudit(ctx context.Context, input types.CreateAuditInput) (*types.CreateAuditPayload, error) {
-	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionAuditCreate)
+	if err := r.authorize(ctx, input.OrganizationID, probo.ActionAuditCreate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
@@ -3775,7 +4087,9 @@ func (r *mutationResolver) CreateAudit(ctx context.Context, input types.CreateAu
 
 // UpdateAudit is the resolver for the updateAudit field.
 func (r *mutationResolver) UpdateAudit(ctx context.Context, input types.UpdateAuditInput) (*types.UpdateAuditPayload, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionAuditUpdate)
+	if err := r.authorize(ctx, input.ID, probo.ActionAuditUpdate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
@@ -3801,7 +4115,9 @@ func (r *mutationResolver) UpdateAudit(ctx context.Context, input types.UpdateAu
 
 // DeleteAudit is the resolver for the deleteAudit field.
 func (r *mutationResolver) DeleteAudit(ctx context.Context, input types.DeleteAuditInput) (*types.DeleteAuditPayload, error) {
-	r.MustAuthorize(ctx, input.AuditID, probo.ActionAuditDelete)
+	if err := r.authorize(ctx, input.AuditID, probo.ActionAuditDelete); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.AuditID.TenantID())
 
@@ -3818,7 +4134,9 @@ func (r *mutationResolver) DeleteAudit(ctx context.Context, input types.DeleteAu
 
 // UploadAuditReport is the resolver for the uploadAuditReport field.
 func (r *mutationResolver) UploadAuditReport(ctx context.Context, input types.UploadAuditReportInput) (*types.UploadAuditReportPayload, error) {
-	r.MustAuthorize(ctx, input.AuditID, probo.ActionAuditReportUpload)
+	if err := r.authorize(ctx, input.AuditID, probo.ActionAuditReportUpload); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.AuditID.TenantID())
 
@@ -3845,7 +4163,9 @@ func (r *mutationResolver) UploadAuditReport(ctx context.Context, input types.Up
 
 // DeleteAuditReport is the resolver for the deleteAuditReport field.
 func (r *mutationResolver) DeleteAuditReport(ctx context.Context, input types.DeleteAuditReportInput) (*types.DeleteAuditReportPayload, error) {
-	r.MustAuthorize(ctx, input.AuditID, probo.ActionAuditReportDelete)
+	if err := r.authorize(ctx, input.AuditID, probo.ActionAuditReportDelete); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.AuditID.TenantID())
 
@@ -3862,7 +4182,9 @@ func (r *mutationResolver) DeleteAuditReport(ctx context.Context, input types.De
 
 // CreateNonconformity is the resolver for the createNonconformity field.
 func (r *mutationResolver) CreateNonconformity(ctx context.Context, input types.CreateNonconformityInput) (*types.CreateNonconformityPayload, error) {
-	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionNonconformityCreate)
+	if err := r.authorize(ctx, input.OrganizationID, probo.ActionNonconformityCreate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
@@ -3893,7 +4215,9 @@ func (r *mutationResolver) CreateNonconformity(ctx context.Context, input types.
 
 // UpdateNonconformity is the resolver for the updateNonconformity field.
 func (r *mutationResolver) UpdateNonconformity(ctx context.Context, input types.UpdateNonconformityInput) (*types.UpdateNonconformityPayload, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionNonconformityUpdate)
+	if err := r.authorize(ctx, input.ID, probo.ActionNonconformityUpdate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
@@ -3924,7 +4248,9 @@ func (r *mutationResolver) UpdateNonconformity(ctx context.Context, input types.
 
 // DeleteNonconformity is the resolver for the deleteNonconformity field.
 func (r *mutationResolver) DeleteNonconformity(ctx context.Context, input types.DeleteNonconformityInput) (*types.DeleteNonconformityPayload, error) {
-	r.MustAuthorize(ctx, input.NonconformityID, probo.ActionNonconformityDelete)
+	if err := r.authorize(ctx, input.NonconformityID, probo.ActionNonconformityDelete); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.NonconformityID.TenantID())
 
@@ -3941,7 +4267,9 @@ func (r *mutationResolver) DeleteNonconformity(ctx context.Context, input types.
 
 // CreateObligation is the resolver for the createObligation field.
 func (r *mutationResolver) CreateObligation(ctx context.Context, input types.CreateObligationInput) (*types.CreateObligationPayload, error) {
-	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionObligationCreate)
+	if err := r.authorize(ctx, input.OrganizationID, probo.ActionObligationCreate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
@@ -3971,7 +4299,9 @@ func (r *mutationResolver) CreateObligation(ctx context.Context, input types.Cre
 
 // UpdateObligation is the resolver for the updateObligation field.
 func (r *mutationResolver) UpdateObligation(ctx context.Context, input types.UpdateObligationInput) (*types.UpdateObligationPayload, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionObligationUpdate)
+	if err := r.authorize(ctx, input.ID, probo.ActionObligationUpdate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
@@ -4001,7 +4331,9 @@ func (r *mutationResolver) UpdateObligation(ctx context.Context, input types.Upd
 
 // DeleteObligation is the resolver for the deleteObligation field.
 func (r *mutationResolver) DeleteObligation(ctx context.Context, input types.DeleteObligationInput) (*types.DeleteObligationPayload, error) {
-	r.MustAuthorize(ctx, input.ObligationID, probo.ActionObligationDelete)
+	if err := r.authorize(ctx, input.ObligationID, probo.ActionObligationDelete); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.ObligationID.TenantID())
 
@@ -4018,7 +4350,9 @@ func (r *mutationResolver) DeleteObligation(ctx context.Context, input types.Del
 
 // CreateContinualImprovement is the resolver for the createContinualImprovement field.
 func (r *mutationResolver) CreateContinualImprovement(ctx context.Context, input types.CreateContinualImprovementInput) (*types.CreateContinualImprovementPayload, error) {
-	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionContinualImprovementCreate)
+	if err := r.authorize(ctx, input.OrganizationID, probo.ActionContinualImprovementCreate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
@@ -4046,7 +4380,9 @@ func (r *mutationResolver) CreateContinualImprovement(ctx context.Context, input
 
 // UpdateContinualImprovement is the resolver for the updateContinualImprovement field.
 func (r *mutationResolver) UpdateContinualImprovement(ctx context.Context, input types.UpdateContinualImprovementInput) (*types.UpdateContinualImprovementPayload, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionContinualImprovementUpdate)
+	if err := r.authorize(ctx, input.ID, probo.ActionContinualImprovementUpdate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
@@ -4074,7 +4410,9 @@ func (r *mutationResolver) UpdateContinualImprovement(ctx context.Context, input
 
 // DeleteContinualImprovement is the resolver for the deleteContinualImprovement field.
 func (r *mutationResolver) DeleteContinualImprovement(ctx context.Context, input types.DeleteContinualImprovementInput) (*types.DeleteContinualImprovementPayload, error) {
-	r.MustAuthorize(ctx, input.ContinualImprovementID, probo.ActionContinualImprovementDelete)
+	if err := r.authorize(ctx, input.ContinualImprovementID, probo.ActionContinualImprovementDelete); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.ContinualImprovementID.TenantID())
 
@@ -4091,7 +4429,9 @@ func (r *mutationResolver) DeleteContinualImprovement(ctx context.Context, input
 
 // CreateProcessingActivity is the resolver for the createProcessingActivity field.
 func (r *mutationResolver) CreateProcessingActivity(ctx context.Context, input types.CreateProcessingActivityInput) (*types.CreateProcessingActivityPayload, error) {
-	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionProcessingActivityCreate)
+	if err := r.authorize(ctx, input.OrganizationID, probo.ActionProcessingActivityCreate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
@@ -4131,7 +4471,9 @@ func (r *mutationResolver) CreateProcessingActivity(ctx context.Context, input t
 
 // UpdateProcessingActivity is the resolver for the updateProcessingActivity field.
 func (r *mutationResolver) UpdateProcessingActivity(ctx context.Context, input types.UpdateProcessingActivityInput) (*types.UpdateProcessingActivityPayload, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionProcessingActivityUpdate)
+	if err := r.authorize(ctx, input.ID, probo.ActionProcessingActivityUpdate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
@@ -4169,7 +4511,9 @@ func (r *mutationResolver) UpdateProcessingActivity(ctx context.Context, input t
 
 // DeleteProcessingActivity is the resolver for the deleteProcessingActivity field.
 func (r *mutationResolver) DeleteProcessingActivity(ctx context.Context, input types.DeleteProcessingActivityInput) (*types.DeleteProcessingActivityPayload, error) {
-	r.MustAuthorize(ctx, input.ProcessingActivityID, probo.ActionProcessingActivityDelete)
+	if err := r.authorize(ctx, input.ProcessingActivityID, probo.ActionProcessingActivityDelete); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.ProcessingActivityID.TenantID())
 
@@ -4186,7 +4530,9 @@ func (r *mutationResolver) DeleteProcessingActivity(ctx context.Context, input t
 
 // CreateDataProtectionImpactAssessment is the resolver for the createDataProtectionImpactAssessment field.
 func (r *mutationResolver) CreateDataProtectionImpactAssessment(ctx context.Context, input types.CreateDataProtectionImpactAssessmentInput) (*types.CreateDataProtectionImpactAssessmentPayload, error) {
-	r.MustAuthorize(ctx, input.ProcessingActivityID, probo.ActionDataProtectionImpactAssessmentCreate)
+	if err := r.authorize(ctx, input.ProcessingActivityID, probo.ActionDataProtectionImpactAssessmentCreate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.ProcessingActivityID.TenantID())
 
@@ -4211,7 +4557,9 @@ func (r *mutationResolver) CreateDataProtectionImpactAssessment(ctx context.Cont
 
 // UpdateDataProtectionImpactAssessment is the resolver for the updateDataProtectionImpactAssessment field.
 func (r *mutationResolver) UpdateDataProtectionImpactAssessment(ctx context.Context, input types.UpdateDataProtectionImpactAssessmentInput) (*types.UpdateDataProtectionImpactAssessmentPayload, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionProcessingActivityUpdate)
+	if err := r.authorize(ctx, input.ID, probo.ActionProcessingActivityUpdate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
@@ -4236,7 +4584,9 @@ func (r *mutationResolver) UpdateDataProtectionImpactAssessment(ctx context.Cont
 
 // DeleteDataProtectionImpactAssessment is the resolver for the deleteDataProtectionImpactAssessment field.
 func (r *mutationResolver) DeleteDataProtectionImpactAssessment(ctx context.Context, input types.DeleteDataProtectionImpactAssessmentInput) (*types.DeleteDataProtectionImpactAssessmentPayload, error) {
-	r.MustAuthorize(ctx, input.DataProtectionImpactAssessmentID, probo.ActionDataProtectionImpactAssessmentUpdate)
+	if err := r.authorize(ctx, input.DataProtectionImpactAssessmentID, probo.ActionDataProtectionImpactAssessmentUpdate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.DataProtectionImpactAssessmentID.TenantID())
 
@@ -4252,7 +4602,9 @@ func (r *mutationResolver) DeleteDataProtectionImpactAssessment(ctx context.Cont
 
 // CreateTransferImpactAssessment is the resolver for the createTransferImpactAssessment field.
 func (r *mutationResolver) CreateTransferImpactAssessment(ctx context.Context, input types.CreateTransferImpactAssessmentInput) (*types.CreateTransferImpactAssessmentPayload, error) {
-	r.MustAuthorize(ctx, input.ProcessingActivityID, probo.ActionTransferImpactAssessmentCreate)
+	if err := r.authorize(ctx, input.ProcessingActivityID, probo.ActionTransferImpactAssessmentCreate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.ProcessingActivityID.TenantID())
 
@@ -4277,7 +4629,9 @@ func (r *mutationResolver) CreateTransferImpactAssessment(ctx context.Context, i
 
 // UpdateTransferImpactAssessment is the resolver for the updateTransferImpactAssessment field.
 func (r *mutationResolver) UpdateTransferImpactAssessment(ctx context.Context, input types.UpdateTransferImpactAssessmentInput) (*types.UpdateTransferImpactAssessmentPayload, error) {
-	r.MustAuthorize(ctx, input.ID, probo.ActionTransferImpactAssessmentUpdate)
+	if err := r.authorize(ctx, input.ID, probo.ActionTransferImpactAssessmentUpdate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
@@ -4302,7 +4656,9 @@ func (r *mutationResolver) UpdateTransferImpactAssessment(ctx context.Context, i
 
 // DeleteTransferImpactAssessment is the resolver for the deleteTransferImpactAssessment field.
 func (r *mutationResolver) DeleteTransferImpactAssessment(ctx context.Context, input types.DeleteTransferImpactAssessmentInput) (*types.DeleteTransferImpactAssessmentPayload, error) {
-	r.MustAuthorize(ctx, input.TransferImpactAssessmentID, probo.ActionTransferImpactAssessmentDelete)
+	if err := r.authorize(ctx, input.TransferImpactAssessmentID, probo.ActionTransferImpactAssessmentDelete); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.TransferImpactAssessmentID.TenantID())
 
@@ -4318,7 +4674,9 @@ func (r *mutationResolver) DeleteTransferImpactAssessment(ctx context.Context, i
 
 // CreateSnapshot is the resolver for the createSnapshot field.
 func (r *mutationResolver) CreateSnapshot(ctx context.Context, input types.CreateSnapshotInput) (*types.CreateSnapshotPayload, error) {
-	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionSnapshotCreate)
+	if err := r.authorize(ctx, input.OrganizationID, probo.ActionSnapshotCreate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
@@ -4343,7 +4701,9 @@ func (r *mutationResolver) CreateSnapshot(ctx context.Context, input types.Creat
 
 // DeleteSnapshot is the resolver for the deleteSnapshot field.
 func (r *mutationResolver) DeleteSnapshot(ctx context.Context, input types.DeleteSnapshotInput) (*types.DeleteSnapshotPayload, error) {
-	r.MustAuthorize(ctx, input.SnapshotID, probo.ActionSnapshotDelete)
+	if err := r.authorize(ctx, input.SnapshotID, probo.ActionSnapshotDelete); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.SnapshotID.TenantID())
 
@@ -4360,7 +4720,9 @@ func (r *mutationResolver) DeleteSnapshot(ctx context.Context, input types.Delet
 
 // CreateCustomDomain is the resolver for the createCustomDomain field.
 func (r *mutationResolver) CreateCustomDomain(ctx context.Context, input types.CreateCustomDomainInput) (*types.CreateCustomDomainPayload, error) {
-	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionCustomDomainCreate)
+	if err := r.authorize(ctx, input.OrganizationID, probo.ActionCustomDomainCreate); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
@@ -4383,7 +4745,9 @@ func (r *mutationResolver) CreateCustomDomain(ctx context.Context, input types.C
 
 // DeleteCustomDomain is the resolver for the deleteCustomDomain field.
 func (r *mutationResolver) DeleteCustomDomain(ctx context.Context, input types.DeleteCustomDomainInput) (*types.DeleteCustomDomainPayload, error) {
-	r.MustAuthorize(ctx, input.OrganizationID, probo.ActionCustomDomainDelete)
+	if err := r.authorize(ctx, input.OrganizationID, probo.ActionCustomDomainDelete); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
@@ -4412,14 +4776,16 @@ func (r *mutationResolver) DeleteCustomDomain(ctx context.Context, input types.D
 
 // Organization is the resolver for the organization field.
 func (r *nonconformityResolver) Organization(ctx context.Context, obj *types.Nonconformity) (*types.Organization, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionOrganizationGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	organization, err := prb.Organizations.Get(ctx, obj.Organization.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(err)
+			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		// TODO no panic use gqlutils.InternalError
@@ -4431,7 +4797,9 @@ func (r *nonconformityResolver) Organization(ctx context.Context, obj *types.Non
 
 // Audit is the resolver for the audit field.
 func (r *nonconformityResolver) Audit(ctx context.Context, obj *types.Nonconformity) (*types.Audit, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionAuditGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionAuditGet); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -4442,7 +4810,7 @@ func (r *nonconformityResolver) Audit(ctx context.Context, obj *types.Nonconform
 	audit, err := prb.Audits.Get(ctx, obj.Audit.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(err)
+			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		// TODO no panic use gqlutils.InternalError
@@ -4454,14 +4822,16 @@ func (r *nonconformityResolver) Audit(ctx context.Context, obj *types.Nonconform
 
 // Owner is the resolver for the owner field.
 func (r *nonconformityResolver) Owner(ctx context.Context, obj *types.Nonconformity) (*types.People, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionPeopleGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionPeopleGet); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	people, err := prb.Peoples.Get(ctx, obj.Owner.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(err)
+			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		// TODO no panic use gqlutils.InternalError
@@ -4478,7 +4848,9 @@ func (r *nonconformityResolver) Permission(ctx context.Context, obj *types.Nonco
 
 // TotalCount is the resolver for the totalCount field.
 func (r *nonconformityConnectionResolver) TotalCount(ctx context.Context, obj *types.NonconformityConnection) (int, error) {
-	r.MustAuthorize(ctx, obj.ParentID, probo.ActionNonconformityList)
+	if err := r.authorize(ctx, obj.ParentID, probo.ActionNonconformityList); err != nil {
+		return 0, err
+	}
 
 	prb := r.ProboService(ctx, obj.ParentID.TenantID())
 	switch obj.Resolver.(type) {
@@ -4502,14 +4874,16 @@ func (r *nonconformityConnectionResolver) TotalCount(ctx context.Context, obj *t
 
 // Organization is the resolver for the organization field.
 func (r *obligationResolver) Organization(ctx context.Context, obj *types.Obligation) (*types.Organization, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionOrganizationGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	organization, err := prb.Organizations.Get(ctx, obj.Organization.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(err)
+			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		// TODO no panic use gqlutils.InternalError
@@ -4521,14 +4895,16 @@ func (r *obligationResolver) Organization(ctx context.Context, obj *types.Obliga
 
 // Owner is the resolver for the owner field.
 func (r *obligationResolver) Owner(ctx context.Context, obj *types.Obligation) (*types.People, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionPeopleGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionPeopleGet); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	people, err := prb.Peoples.Get(ctx, obj.Owner.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(err)
+			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		// TODO no panic use gqlutils.InternalError
@@ -4545,7 +4921,9 @@ func (r *obligationResolver) Permission(ctx context.Context, obj *types.Obligati
 
 // TotalCount is the resolver for the totalCount field.
 func (r *obligationConnectionResolver) TotalCount(ctx context.Context, obj *types.ObligationConnection) (int, error) {
-	r.MustAuthorize(ctx, obj.ParentID, probo.ActionObligationList)
+	if err := r.authorize(ctx, obj.ParentID, probo.ActionObligationList); err != nil {
+		return 0, err
+	}
 
 	prb := r.ProboService(ctx, obj.ParentID.TenantID())
 
@@ -4582,7 +4960,9 @@ func (r *obligationConnectionResolver) TotalCount(ctx context.Context, obj *type
 
 // LogoURL is the resolver for the logoUrl field.
 func (r *organizationResolver) LogoURL(ctx context.Context, obj *types.Organization) (*string, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionOrganizationGetLogoUrl)
+	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGetLogoUrl); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -4597,7 +4977,9 @@ func (r *organizationResolver) LogoURL(ctx context.Context, obj *types.Organizat
 
 // HorizontalLogoURL is the resolver for the horizontalLogoUrl field.
 func (r *organizationResolver) HorizontalLogoURL(ctx context.Context, obj *types.Organization) (*string, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionOrganizationGetHorizontalLogoUrl)
+	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGetHorizontalLogoUrl); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -4612,7 +4994,9 @@ func (r *organizationResolver) HorizontalLogoURL(ctx context.Context, obj *types
 
 // Context is the resolver for the context field.
 func (r *organizationResolver) Context(ctx context.Context, obj *types.Organization) (*types.OrganizationContext, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionOrganizationContextGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationContextGet); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -4627,7 +5011,9 @@ func (r *organizationResolver) Context(ctx context.Context, obj *types.Organizat
 
 // SlackConnections is the resolver for the slackConnections field.
 func (r *organizationResolver) SlackConnections(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.SlackConnectionConnection, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionSlackConnectionList)
+	if err := r.authorize(ctx, obj.ID, probo.ActionSlackConnectionList); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -4652,7 +5038,9 @@ func (r *organizationResolver) SlackConnections(ctx context.Context, obj *types.
 
 // Frameworks is the resolver for the frameworks field.
 func (r *organizationResolver) Frameworks(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.FrameworkOrderBy) (*types.FrameworkConnection, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionFrameworkList)
+	if err := r.authorize(ctx, obj.ID, probo.ActionFrameworkList); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -4680,7 +5068,9 @@ func (r *organizationResolver) Frameworks(ctx context.Context, obj *types.Organi
 
 // Controls is the resolver for the controls field.
 func (r *organizationResolver) Controls(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) (*types.ControlConnection, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionControlList)
+	if err := r.authorize(ctx, obj.ID, probo.ActionControlList); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -4713,7 +5103,9 @@ func (r *organizationResolver) Controls(ctx context.Context, obj *types.Organiza
 
 // Vendors is the resolver for the vendors field.
 func (r *organizationResolver) Vendors(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorOrderBy, filter *types.VendorFilter) (*types.VendorConnection, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionVendorList)
+	if err := r.authorize(ctx, obj.ID, probo.ActionVendorList); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -4746,7 +5138,9 @@ func (r *organizationResolver) Vendors(ctx context.Context, obj *types.Organizat
 
 // Peoples is the resolver for the peoples field.
 func (r *organizationResolver) Peoples(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.PeopleOrderBy, filter *types.PeopleFilter) (*types.PeopleConnection, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionPeopleList)
+	if err := r.authorize(ctx, obj.ID, probo.ActionPeopleList); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -4779,7 +5173,9 @@ func (r *organizationResolver) Peoples(ctx context.Context, obj *types.Organizat
 
 // Documents is the resolver for the documents field.
 func (r *organizationResolver) Documents(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy, filter *types.DocumentFilter) (*types.DocumentConnection, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionDocumentList)
+	if err := r.authorize(ctx, obj.ID, probo.ActionDocumentList); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -4812,7 +5208,9 @@ func (r *organizationResolver) Documents(ctx context.Context, obj *types.Organiz
 
 // Meetings is the resolver for the meetings field.
 func (r *organizationResolver) Meetings(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeetingOrderBy) (*types.MeetingConnection, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionMeetingList)
+	if err := r.authorize(ctx, obj.ID, probo.ActionMeetingList); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -4840,7 +5238,9 @@ func (r *organizationResolver) Meetings(ctx context.Context, obj *types.Organiza
 
 // Measures is the resolver for the measures field.
 func (r *organizationResolver) Measures(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy, filter *types.MeasureFilter) (*types.MeasureConnection, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionMeasureList)
+	if err := r.authorize(ctx, obj.ID, probo.ActionMeasureList); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -4873,7 +5273,9 @@ func (r *organizationResolver) Measures(ctx context.Context, obj *types.Organiza
 
 // Risks is the resolver for the risks field.
 func (r *organizationResolver) Risks(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskOrderBy, filter *types.RiskFilter) (*types.RiskConnection, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionRiskList)
+	if err := r.authorize(ctx, obj.ID, probo.ActionRiskList); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -4906,7 +5308,9 @@ func (r *organizationResolver) Risks(ctx context.Context, obj *types.Organizatio
 
 // Tasks is the resolver for the tasks field.
 func (r *organizationResolver) Tasks(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TaskOrderBy) (*types.TaskConnection, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionTaskList)
+	if err := r.authorize(ctx, obj.ID, probo.ActionTaskList); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -4934,7 +5338,9 @@ func (r *organizationResolver) Tasks(ctx context.Context, obj *types.Organizatio
 
 // Assets is the resolver for the assets field.
 func (r *organizationResolver) Assets(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AssetOrderBy, filter *types.AssetFilter) (*types.AssetConnection, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionAssetList)
+	if err := r.authorize(ctx, obj.ID, probo.ActionAssetList); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -4967,7 +5373,9 @@ func (r *organizationResolver) Assets(ctx context.Context, obj *types.Organizati
 
 // Assets is the resolver for the assets field.
 func (r *organizationResolver) Data(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DatumOrderBy, filter *types.DatumFilter) (*types.DatumConnection, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionDatumList)
+	if err := r.authorize(ctx, obj.ID, probo.ActionDatumList); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -5000,7 +5408,9 @@ func (r *organizationResolver) Data(ctx context.Context, obj *types.Organization
 
 // Audits is the resolver for the audits field.
 func (r *organizationResolver) Audits(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AuditOrderBy) (*types.AuditConnection, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionAuditList)
+	if err := r.authorize(ctx, obj.ID, probo.ActionAuditList); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -5028,7 +5438,9 @@ func (r *organizationResolver) Audits(ctx context.Context, obj *types.Organizati
 
 // Nonconformities is the resolver for the nonconformities field.
 func (r *organizationResolver) Nonconformities(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.NonconformityOrderBy, filter *types.NonconformityFilter) (*types.NonconformityConnection, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionNonconformityList)
+	if err := r.authorize(ctx, obj.ID, probo.ActionNonconformityList); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -5062,7 +5474,9 @@ func (r *organizationResolver) Nonconformities(ctx context.Context, obj *types.O
 
 // Obligations is the resolver for the obligations field.
 func (r *organizationResolver) Obligations(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ObligationOrderBy, filter *types.ObligationFilter) (*types.ObligationConnection, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionObligationList)
+	if err := r.authorize(ctx, obj.ID, probo.ActionObligationList); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -5096,7 +5510,9 @@ func (r *organizationResolver) Obligations(ctx context.Context, obj *types.Organ
 
 // ContinualImprovements is the resolver for the continualImprovements field.
 func (r *organizationResolver) ContinualImprovements(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ContinualImprovementOrderBy, filter *types.ContinualImprovementFilter) (*types.ContinualImprovementConnection, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionContinualImprovementList)
+	if err := r.authorize(ctx, obj.ID, probo.ActionContinualImprovementList); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -5130,7 +5546,9 @@ func (r *organizationResolver) ContinualImprovements(ctx context.Context, obj *t
 
 // ProcessingActivities is the resolver for the processingActivities field.
 func (r *organizationResolver) ProcessingActivities(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityOrderBy, filter *types.ProcessingActivityFilter) (*types.ProcessingActivityConnection, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionProcessingActivityList)
+	if err := r.authorize(ctx, obj.ID, probo.ActionProcessingActivityList); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -5164,7 +5582,9 @@ func (r *organizationResolver) ProcessingActivities(ctx context.Context, obj *ty
 
 // DataProtectionImpactAssessments is the resolver for the dataProtectionImpactAssessments field.
 func (r *organizationResolver) DataProtectionImpactAssessments(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DataProtectionImpactAssessmentOrderBy, filter *types.DataProtectionImpactAssessmentFilter) (*types.DataProtectionImpactAssessmentConnection, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionProcessingActivityList)
+	if err := r.authorize(ctx, obj.ID, probo.ActionProcessingActivityList); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -5197,7 +5617,9 @@ func (r *organizationResolver) DataProtectionImpactAssessments(ctx context.Conte
 
 // TransferImpactAssessments is the resolver for the transferImpactAssessments field.
 func (r *organizationResolver) TransferImpactAssessments(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TransferImpactAssessmentOrderBy, filter *types.TransferImpactAssessmentFilter) (*types.TransferImpactAssessmentConnection, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionProcessingActivityList)
+	if err := r.authorize(ctx, obj.ID, probo.ActionProcessingActivityList); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -5230,7 +5652,9 @@ func (r *organizationResolver) TransferImpactAssessments(ctx context.Context, ob
 
 // Snapshots is the resolver for the snapshots field.
 func (r *organizationResolver) Snapshots(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.SnapshotOrderBy) (*types.SnapshotConnection, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionSnapshotList)
+	if err := r.authorize(ctx, obj.ID, probo.ActionSnapshotList); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -5258,7 +5682,9 @@ func (r *organizationResolver) Snapshots(ctx context.Context, obj *types.Organiz
 
 // TrustCenterFiles is the resolver for the trustCenterFiles field.
 func (r *organizationResolver) TrustCenterFiles(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterFileOrderField]) (*types.TrustCenterFileConnection, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionTrustCenterFileList)
+	if err := r.authorize(ctx, obj.ID, probo.ActionTrustCenterFileList); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -5286,7 +5712,9 @@ func (r *organizationResolver) TrustCenterFiles(ctx context.Context, obj *types.
 
 // TrustCenter is the resolver for the trustCenter field.
 func (r *organizationResolver) TrustCenter(ctx context.Context, obj *types.Organization) (*types.TrustCenter, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionTrustCenterGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionTrustCenterGet); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -5301,7 +5729,9 @@ func (r *organizationResolver) TrustCenter(ctx context.Context, obj *types.Organ
 
 // CustomDomain is the resolver for the customDomain field.
 func (r *organizationResolver) CustomDomain(ctx context.Context, obj *types.Organization) (*types.CustomDomain, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionCustomDomainGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionCustomDomainGet); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -5330,7 +5760,9 @@ func (r *peopleResolver) Permission(ctx context.Context, obj *types.People, acti
 
 // TotalCount is the resolver for the totalCount field.
 func (r *peopleConnectionResolver) TotalCount(ctx context.Context, obj *types.PeopleConnection) (int, error) {
-	r.MustAuthorize(ctx, obj.ParentID, probo.ActionPeopleList)
+	if err := r.authorize(ctx, obj.ParentID, probo.ActionPeopleList); err != nil {
+		return 0, err
+	}
 
 	prb := r.ProboService(ctx, obj.ParentID.TenantID())
 
@@ -5351,14 +5783,16 @@ func (r *peopleConnectionResolver) TotalCount(ctx context.Context, obj *types.Pe
 
 // Organization is the resolver for the organization field.
 func (r *processingActivityResolver) Organization(ctx context.Context, obj *types.ProcessingActivity) (*types.Organization, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionOrganizationGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	organization, err := prb.Organizations.Get(ctx, obj.Organization.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(err)
+			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		// TODO no panic use gqlutils.InternalError
@@ -5370,7 +5804,9 @@ func (r *processingActivityResolver) Organization(ctx context.Context, obj *type
 
 // DataProtectionOfficer is the resolver for the dataProtectionOfficer field.
 func (r *processingActivityResolver) DataProtectionOfficer(ctx context.Context, obj *types.ProcessingActivity) (*types.People, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionProcessingActivityList)
+	if err := r.authorize(ctx, obj.ID, probo.ActionProcessingActivityList); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -5393,7 +5829,9 @@ func (r *processingActivityResolver) DataProtectionOfficer(ctx context.Context, 
 
 // Vendors is the resolver for the vendors field.
 func (r *processingActivityResolver) Vendors(ctx context.Context, obj *types.ProcessingActivity, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorOrderBy) (*types.VendorConnection, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionVendorList)
+	if err := r.authorize(ctx, obj.ID, probo.ActionVendorList); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -5421,7 +5859,9 @@ func (r *processingActivityResolver) Vendors(ctx context.Context, obj *types.Pro
 
 // DataProtectionImpactAssessment is the resolver for the dataProtectionImpactAssessment field.
 func (r *processingActivityResolver) DataProtectionImpactAssessment(ctx context.Context, obj *types.ProcessingActivity) (*types.DataProtectionImpactAssessment, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionProcessingActivityList)
+	if err := r.authorize(ctx, obj.ID, probo.ActionProcessingActivityList); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -5439,7 +5879,9 @@ func (r *processingActivityResolver) DataProtectionImpactAssessment(ctx context.
 
 // TransferImpactAssessment is the resolver for the transferImpactAssessment field.
 func (r *processingActivityResolver) TransferImpactAssessment(ctx context.Context, obj *types.ProcessingActivity) (*types.TransferImpactAssessment, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionProcessingActivityList)
+	if err := r.authorize(ctx, obj.ID, probo.ActionProcessingActivityList); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -5462,7 +5904,9 @@ func (r *processingActivityResolver) Permission(ctx context.Context, obj *types.
 
 // TotalCount is the resolver for the totalCount field.
 func (r *processingActivityConnectionResolver) TotalCount(ctx context.Context, obj *types.ProcessingActivityConnection) (int, error) {
-	r.MustAuthorize(ctx, obj.ParentID, probo.ActionProcessingActivityList)
+	if err := r.authorize(ctx, obj.ParentID, probo.ActionProcessingActivityList); err != nil {
+		return 0, err
+	}
 
 	prb := r.ProboService(ctx, obj.ParentID.TenantID())
 
@@ -5760,12 +6204,14 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 	default:
 	}
 
-	r.MustAuthorize(ctx, id, action)
+	if err := r.authorize(ctx, id, action); err != nil {
+		return nil, err
+	}
 
 	node, err := loadNode(ctx, id)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(err)
+			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		panic(fmt.Errorf("cannot load node: %w", err))
@@ -5795,7 +6241,9 @@ func (r *queryResolver) Viewer(ctx context.Context) (*types.Viewer, error) {
 
 // DownloadURL is the resolver for the downloadUrl field.
 func (r *reportResolver) DownloadURL(ctx context.Context, obj *types.Report) (*string, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionReportDownloadUrlGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionReportDownloadUrlGet); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -5810,7 +6258,9 @@ func (r *reportResolver) DownloadURL(ctx context.Context, obj *types.Report) (*s
 
 // Audit is the resolver for the audit field.
 func (r *reportResolver) Audit(ctx context.Context, obj *types.Report) (*types.Audit, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionAuditGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionAuditGet); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -5830,7 +6280,9 @@ func (r *reportResolver) Permission(ctx context.Context, obj *types.Report, acti
 
 // Owner is the resolver for the owner field.
 func (r *riskResolver) Owner(ctx context.Context, obj *types.Risk) (*types.People, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionPeopleGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionPeopleGet); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -5841,7 +6293,7 @@ func (r *riskResolver) Owner(ctx context.Context, obj *types.Risk) (*types.Peopl
 	owner, err := prb.Peoples.Get(ctx, obj.Owner.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(err)
+			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		// TODO no panic use gqlutils.InternalError
@@ -5853,14 +6305,16 @@ func (r *riskResolver) Owner(ctx context.Context, obj *types.Risk) (*types.Peopl
 
 // Organization is the resolver for the organization field.
 func (r *riskResolver) Organization(ctx context.Context, obj *types.Risk) (*types.Organization, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionOrganizationGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	organization, err := prb.Organizations.Get(ctx, obj.Organization.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(err)
+			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		// TODO no panic use gqlutils.InternalError
@@ -5872,7 +6326,9 @@ func (r *riskResolver) Organization(ctx context.Context, obj *types.Risk) (*type
 
 // Measures is the resolver for the measures field.
 func (r *riskResolver) Measures(ctx context.Context, obj *types.Risk, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy, filter *types.MeasureFilter) (*types.MeasureConnection, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionMeasureList)
+	if err := r.authorize(ctx, obj.ID, probo.ActionMeasureList); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -5905,7 +6361,9 @@ func (r *riskResolver) Measures(ctx context.Context, obj *types.Risk, first *int
 
 // Documents is the resolver for the documents field.
 func (r *riskResolver) Documents(ctx context.Context, obj *types.Risk, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy, filter *types.DocumentFilter) (*types.DocumentConnection, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionDocumentList)
+	if err := r.authorize(ctx, obj.ID, probo.ActionDocumentList); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -5938,7 +6396,9 @@ func (r *riskResolver) Documents(ctx context.Context, obj *types.Risk, first *in
 
 // Controls is the resolver for the controls field.
 func (r *riskResolver) Controls(ctx context.Context, obj *types.Risk, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) (*types.ControlConnection, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionControlList)
+	if err := r.authorize(ctx, obj.ID, probo.ActionControlList); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -5970,7 +6430,9 @@ func (r *riskResolver) Controls(ctx context.Context, obj *types.Risk, first *int
 
 // Obligations is the resolver for the obligations field.
 func (r *riskResolver) Obligations(ctx context.Context, obj *types.Risk, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ObligationOrderBy, filter *types.ObligationFilter) (*types.ObligationConnection, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionObligationList)
+	if err := r.authorize(ctx, obj.ID, probo.ActionObligationList); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -6008,7 +6470,9 @@ func (r *riskResolver) Permission(ctx context.Context, obj *types.Risk, action s
 
 // TotalCount is the resolver for the totalCount field.
 func (r *riskConnectionResolver) TotalCount(ctx context.Context, obj *types.RiskConnection) (int, error) {
-	r.MustAuthorize(ctx, obj.ParentID, probo.ActionRiskList)
+	if err := r.authorize(ctx, obj.ParentID, probo.ActionRiskList); err != nil {
+		return 0, err
+	}
 
 	prb := r.ProboService(ctx, obj.ParentID.TenantID())
 
@@ -6035,7 +6499,9 @@ func (r *riskConnectionResolver) TotalCount(ctx context.Context, obj *types.Risk
 
 // Signed is the resolver for the signed field.
 func (r *signableDocumentResolver) Signed(ctx context.Context, obj *types.SignableDocument) (bool, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionDocumentGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionDocumentGet); err != nil {
+		return false, err
+	}
 
 	identity := connect_v1.IdentityFromContext(ctx)
 
@@ -6051,7 +6517,9 @@ func (r *signableDocumentResolver) Signed(ctx context.Context, obj *types.Signab
 
 // Versions is the resolver for the versions field.
 func (r *signableDocumentResolver) Versions(ctx context.Context, obj *types.SignableDocument, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentVersionOrderBy, filter *types.DocumentVersionFilter) (*types.DocumentVersionConnection, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionDocumentVersionList)
+	if err := r.authorize(ctx, obj.ID, probo.ActionDocumentVersionList); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -6082,7 +6550,9 @@ func (r *signableDocumentResolver) Versions(ctx context.Context, obj *types.Sign
 
 // Organization is the resolver for the organization field.
 func (r *snapshotResolver) Organization(ctx context.Context, obj *types.Snapshot) (*types.Organization, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionOrganizationGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -6094,7 +6564,7 @@ func (r *snapshotResolver) Organization(ctx context.Context, obj *types.Snapshot
 	organization, err := prb.Organizations.Get(ctx, snapshot.OrganizationID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(err)
+			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		panic(fmt.Errorf("cannot get organization: %w", err))
@@ -6105,7 +6575,9 @@ func (r *snapshotResolver) Organization(ctx context.Context, obj *types.Snapshot
 
 // Controls is the resolver for the controls field.
 func (r *snapshotResolver) Controls(ctx context.Context, obj *types.Snapshot, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) (*types.ControlConnection, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionControlList)
+	if err := r.authorize(ctx, obj.ID, probo.ActionControlList); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -6142,7 +6614,9 @@ func (r *snapshotResolver) Permission(ctx context.Context, obj *types.Snapshot, 
 
 // TotalCount is the resolver for the totalCount field.
 func (r *snapshotConnectionResolver) TotalCount(ctx context.Context, obj *types.SnapshotConnection) (int, error) {
-	r.MustAuthorize(ctx, obj.ParentID, probo.ActionSnapshotList)
+	if err := r.authorize(ctx, obj.ParentID, probo.ActionSnapshotList); err != nil {
+		return 0, err
+	}
 
 	prb := r.ProboService(ctx, obj.ParentID.TenantID())
 
@@ -6160,7 +6634,9 @@ func (r *snapshotConnectionResolver) TotalCount(ctx context.Context, obj *types.
 
 // AssignedTo is the resolver for the assignedTo field.
 func (r *taskResolver) AssignedTo(ctx context.Context, obj *types.Task) (*types.People, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionPeopleGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionPeopleGet); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -6171,7 +6647,7 @@ func (r *taskResolver) AssignedTo(ctx context.Context, obj *types.Task) (*types.
 	people, err := prb.Peoples.Get(ctx, obj.AssignedTo.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(err)
+			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		panic(fmt.Errorf("cannot get assigned to: %w", err))
@@ -6182,14 +6658,16 @@ func (r *taskResolver) AssignedTo(ctx context.Context, obj *types.Task) (*types.
 
 // Organization is the resolver for the organization field.
 func (r *taskResolver) Organization(ctx context.Context, obj *types.Task) (*types.Organization, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionOrganizationGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	organization, err := prb.Organizations.Get(ctx, obj.Organization.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(err)
+			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		panic(fmt.Errorf("cannot get organization: %w", err))
@@ -6200,14 +6678,16 @@ func (r *taskResolver) Organization(ctx context.Context, obj *types.Task) (*type
 
 // Measure is the resolver for the measure field.
 func (r *taskResolver) Measure(ctx context.Context, obj *types.Task) (*types.Measure, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionMeasureGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionMeasureGet); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	measure, err := prb.Measures.Get(ctx, obj.Measure.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(err)
+			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		panic(fmt.Errorf("cannot get measure: %w", err))
@@ -6218,7 +6698,9 @@ func (r *taskResolver) Measure(ctx context.Context, obj *types.Task) (*types.Mea
 
 // Evidences is the resolver for the evidences field.
 func (r *taskResolver) Evidences(ctx context.Context, obj *types.Task, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.EvidenceOrderBy) (*types.EvidenceConnection, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionEvidenceList)
+	if err := r.authorize(ctx, obj.ID, probo.ActionEvidenceList); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -6249,7 +6731,9 @@ func (r *taskResolver) Permission(ctx context.Context, obj *types.Task, action s
 
 // TotalCount is the resolver for the totalCount field.
 func (r *taskConnectionResolver) TotalCount(ctx context.Context, obj *types.TaskConnection) (int, error) {
-	r.MustAuthorize(ctx, obj.ParentID, probo.ActionTaskList)
+	if err := r.authorize(ctx, obj.ParentID, probo.ActionTaskList); err != nil {
+		return 0, err
+	}
 
 	prb := r.ProboService(ctx, obj.ParentID.TenantID())
 
@@ -6273,7 +6757,9 @@ func (r *taskConnectionResolver) TotalCount(ctx context.Context, obj *types.Task
 
 // ProcessingActivity is the resolver for the processingActivity field.
 func (r *transferImpactAssessmentResolver) ProcessingActivity(ctx context.Context, obj *types.TransferImpactAssessment) (*types.ProcessingActivity, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionProcessingActivityGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionProcessingActivityGet); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -6287,14 +6773,16 @@ func (r *transferImpactAssessmentResolver) ProcessingActivity(ctx context.Contex
 
 // Organization is the resolver for the organization field.
 func (r *transferImpactAssessmentResolver) Organization(ctx context.Context, obj *types.TransferImpactAssessment) (*types.Organization, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionOrganizationGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	organization, err := prb.Organizations.Get(ctx, obj.Organization.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(err)
+			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		panic(fmt.Errorf("cannot get organization: %w", err))
@@ -6310,7 +6798,9 @@ func (r *transferImpactAssessmentResolver) Permission(ctx context.Context, obj *
 
 // TotalCount is the resolver for the totalCount field.
 func (r *transferImpactAssessmentConnectionResolver) TotalCount(ctx context.Context, obj *types.TransferImpactAssessmentConnection) (int, error) {
-	r.MustAuthorize(ctx, obj.ParentID, probo.ActionTransferImpactAssessmentList)
+	if err := r.authorize(ctx, obj.ParentID, probo.ActionTransferImpactAssessmentList); err != nil {
+		return 0, err
+	}
 
 	prb := r.ProboService(ctx, obj.ParentID.TenantID())
 
@@ -6328,17 +6818,13 @@ func (r *transferImpactAssessmentConnectionResolver) TotalCount(ctx context.Cont
 
 // NdaFileURL is the resolver for the ndaFileUrl field.
 func (r *trustCenterResolver) NdaFileURL(ctx context.Context, obj *types.TrustCenter) (*string, error) {
-	if err := r.iam.Authorizer.Authorize(ctx, iam.AuthorizeParams{
-		Principal: connect_v1.IdentityFromContext(ctx).ID,
-		Resource:  obj.ID,
-		Action:    "core:trust-center:get-nda-file-url",
-	}); err != nil {
-		var errInsufficientPermissions *iam.ErrInsufficientPermissions
-		if errors.As(err, &errInsufficientPermissions) {
-			return nil, nil
-		}
-
+	hasPermission, err := r.Permission(ctx, obj, probo.ActionTrustCenterGetNda)
+	if err != nil {
 		panic(fmt.Errorf("cannot authorize: %w", err))
+	}
+
+	if !hasPermission {
+		return nil, nil
 	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
@@ -6353,7 +6839,9 @@ func (r *trustCenterResolver) NdaFileURL(ctx context.Context, obj *types.TrustCe
 
 // Organization is the resolver for the organization field.
 func (r *trustCenterResolver) Organization(ctx context.Context, obj *types.TrustCenter) (*types.Organization, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionOrganizationGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -6365,7 +6853,7 @@ func (r *trustCenterResolver) Organization(ctx context.Context, obj *types.Trust
 	organization, err := prb.Organizations.Get(ctx, trustCenter.OrganizationID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(err)
+			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		panic(fmt.Errorf("cannot get organization: %w", err))
@@ -6376,7 +6864,9 @@ func (r *trustCenterResolver) Organization(ctx context.Context, obj *types.Trust
 
 // Accesses is the resolver for the accesses field.
 func (r *trustCenterResolver) Accesses(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterAccessOrderField]) (*types.TrustCenterAccessConnection, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionTrustCenterAccessList)
+	if err := r.authorize(ctx, obj.ID, probo.ActionTrustCenterAccessList); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -6403,7 +6893,9 @@ func (r *trustCenterResolver) Accesses(ctx context.Context, obj *types.TrustCent
 
 // References is the resolver for the references field.
 func (r *trustCenterResolver) References(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterReferenceOrderField]) (*types.TrustCenterReferenceConnection, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionTrustCenterReferenceList)
+	if err := r.authorize(ctx, obj.ID, probo.ActionTrustCenterReferenceList); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -6435,7 +6927,9 @@ func (r *trustCenterResolver) Permission(ctx context.Context, obj *types.TrustCe
 
 // PendingRequestCount is the resolver for the pendingRequestCount field.
 func (r *trustCenterAccessResolver) PendingRequestCount(ctx context.Context, obj *types.TrustCenterAccess) (int, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionTrustCenterAccessGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionTrustCenterAccessGet); err != nil {
+		return 0, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -6449,7 +6943,9 @@ func (r *trustCenterAccessResolver) PendingRequestCount(ctx context.Context, obj
 
 // ActiveCount is the resolver for the activeCount field.
 func (r *trustCenterAccessResolver) ActiveCount(ctx context.Context, obj *types.TrustCenterAccess) (int, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionTrustCenterAccessGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionTrustCenterAccessGet); err != nil {
+		return 0, err
+	}
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	count, err := prb.TrustCenterAccesses.CountActiveDocumentAccesses(ctx, obj.ID)
@@ -6462,7 +6958,9 @@ func (r *trustCenterAccessResolver) ActiveCount(ctx context.Context, obj *types.
 
 // AvailableDocumentAccesses is the resolver for the availableDocumentAccesses field.
 func (r *trustCenterAccessResolver) AvailableDocumentAccesses(ctx context.Context, obj *types.TrustCenterAccess, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterDocumentAccessOrderField]) (*types.TrustCenterDocumentAccessConnection, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionTrustCenterAccessGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionTrustCenterAccessGet); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -6494,7 +6992,9 @@ func (r *trustCenterAccessResolver) Permission(ctx context.Context, obj *types.T
 
 // Document is the resolver for the document field.
 func (r *trustCenterDocumentAccessResolver) Document(ctx context.Context, obj *types.TrustCenterDocumentAccess) (*types.Document, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionDocumentGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionDocumentGet); err != nil {
+		return nil, err
+	}
 
 	if obj.DocumentID == nil {
 		return nil, nil
@@ -6505,7 +7005,7 @@ func (r *trustCenterDocumentAccessResolver) Document(ctx context.Context, obj *t
 	document, err := prb.Documents.Get(ctx, *obj.DocumentID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(err)
+			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		panic(fmt.Errorf("cannot load document: %w", err))
@@ -6516,7 +7016,9 @@ func (r *trustCenterDocumentAccessResolver) Document(ctx context.Context, obj *t
 
 // Report is the resolver for the report field.
 func (r *trustCenterDocumentAccessResolver) Report(ctx context.Context, obj *types.TrustCenterDocumentAccess) (*types.Report, error) {
-	r.MustAuthorize(ctx, obj.TrustCenterAccessID, probo.ActionReportGet)
+	if err := r.authorize(ctx, obj.TrustCenterAccessID, probo.ActionReportGet); err != nil {
+		return nil, err
+	}
 
 	if obj.ReportID == nil {
 		return nil, nil
@@ -6534,7 +7036,9 @@ func (r *trustCenterDocumentAccessResolver) Report(ctx context.Context, obj *typ
 
 // TrustCenterFile is the resolver for the trustCenterFile field.
 func (r *trustCenterDocumentAccessResolver) TrustCenterFile(ctx context.Context, obj *types.TrustCenterDocumentAccess) (*types.TrustCenterFile, error) {
-	r.MustAuthorize(ctx, obj.TrustCenterAccessID, probo.ActionTrustCenterFileGet)
+	if err := r.authorize(ctx, obj.TrustCenterAccessID, probo.ActionTrustCenterFileGet); err != nil {
+		return nil, err
+	}
 
 	if obj.TrustCenterFileID == nil {
 		return nil, nil
@@ -6552,7 +7056,9 @@ func (r *trustCenterDocumentAccessResolver) TrustCenterFile(ctx context.Context,
 
 // TotalCount is the resolver for the totalCount field.
 func (r *trustCenterDocumentAccessConnectionResolver) TotalCount(ctx context.Context, obj *types.TrustCenterDocumentAccessConnection) (int, error) {
-	r.MustAuthorize(ctx, obj.ParentID, probo.ActionTrustCenterDocumentAccessList)
+	if err := r.authorize(ctx, obj.ParentID, probo.ActionTrustCenterDocumentAccessList); err != nil {
+		return 0, err
+	}
 
 	prb := r.ProboService(ctx, obj.ParentID.TenantID())
 
@@ -6566,7 +7072,9 @@ func (r *trustCenterDocumentAccessConnectionResolver) TotalCount(ctx context.Con
 
 // FileURL is the resolver for the fileUrl field.
 func (r *trustCenterFileResolver) FileURL(ctx context.Context, obj *types.TrustCenterFile) (string, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionTrustCenterFileGetFileUrl)
+	if err := r.authorize(ctx, obj.ID, probo.ActionTrustCenterFileGetFileUrl); err != nil {
+		return "", err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -6580,7 +7088,9 @@ func (r *trustCenterFileResolver) FileURL(ctx context.Context, obj *types.TrustC
 
 // Organization is the resolver for the organization field.
 func (r *trustCenterFileResolver) Organization(ctx context.Context, obj *types.TrustCenterFile) (*types.Organization, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionOrganizationGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -6592,7 +7102,7 @@ func (r *trustCenterFileResolver) Organization(ctx context.Context, obj *types.T
 	organization, err := prb.Organizations.Get(ctx, trustCenterFile.OrganizationID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(err)
+			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		panic(fmt.Errorf("cannot get organization: %w", err))
@@ -6608,7 +7118,9 @@ func (r *trustCenterFileResolver) Permission(ctx context.Context, obj *types.Tru
 
 // TotalCount is the resolver for the totalCount field.
 func (r *trustCenterFileConnectionResolver) TotalCount(ctx context.Context, obj *types.TrustCenterFileConnection) (int, error) {
-	r.MustAuthorize(ctx, obj.ParentID, probo.ActionTrustCenterFileList)
+	if err := r.authorize(ctx, obj.ParentID, probo.ActionTrustCenterFileList); err != nil {
+		return 0, err
+	}
 
 	prb := r.ProboService(ctx, obj.ParentID.TenantID())
 
@@ -6621,7 +7133,9 @@ func (r *trustCenterFileConnectionResolver) TotalCount(ctx context.Context, obj 
 
 // LogoURL is the resolver for the logoUrl field.
 func (r *trustCenterReferenceResolver) LogoURL(ctx context.Context, obj *types.TrustCenterReference) (string, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionTrustCenterReferenceGetLogoUrl)
+	if err := r.authorize(ctx, obj.ID, probo.ActionTrustCenterReferenceGetLogoUrl); err != nil {
+		return "", err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -6640,7 +7154,9 @@ func (r *trustCenterReferenceResolver) Permission(ctx context.Context, obj *type
 
 // TotalCount is the resolver for the totalCount field.
 func (r *trustCenterReferenceConnectionResolver) TotalCount(ctx context.Context, obj *types.TrustCenterReferenceConnection) (int, error) {
-	r.MustAuthorize(ctx, obj.ParentID, probo.ActionTrustCenterReferenceList)
+	if err := r.authorize(ctx, obj.ParentID, probo.ActionTrustCenterReferenceList); err != nil {
+		return 0, err
+	}
 
 	prb := r.ProboService(ctx, obj.ParentID.TenantID())
 
@@ -6654,14 +7170,16 @@ func (r *trustCenterReferenceConnectionResolver) TotalCount(ctx context.Context,
 
 // Organization is the resolver for the organization field.
 func (r *vendorResolver) Organization(ctx context.Context, obj *types.Vendor) (*types.Organization, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionOrganizationGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	organization, err := prb.Organizations.Get(ctx, obj.Organization.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(err)
+			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		panic(fmt.Errorf("cannot get organization: %w", err))
@@ -6672,7 +7190,9 @@ func (r *vendorResolver) Organization(ctx context.Context, obj *types.Vendor) (*
 
 // ComplianceReports is the resolver for the complianceReports field.
 func (r *vendorResolver) ComplianceReports(ctx context.Context, obj *types.Vendor, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorComplianceReportOrderBy) (*types.VendorComplianceReportConnection, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionVendorComplianceReportList)
+	if err := r.authorize(ctx, obj.ID, probo.ActionVendorComplianceReportList); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -6699,7 +7219,9 @@ func (r *vendorResolver) ComplianceReports(ctx context.Context, obj *types.Vendo
 
 // BusinessAssociateAgreement is the resolver for the businessAssociateAgreement field.
 func (r *vendorResolver) BusinessAssociateAgreement(ctx context.Context, obj *types.Vendor) (*types.VendorBusinessAssociateAgreement, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionVendorBusinessAssociateAgreementGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionVendorBusinessAssociateAgreementGet); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -6717,7 +7239,9 @@ func (r *vendorResolver) BusinessAssociateAgreement(ctx context.Context, obj *ty
 
 // DataPrivacyAgreement is the resolver for the dataPrivacyAgreement field.
 func (r *vendorResolver) DataPrivacyAgreement(ctx context.Context, obj *types.Vendor) (*types.VendorDataPrivacyAgreement, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionVendorDataPrivacyAgreementGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionVendorDataPrivacyAgreementGet); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -6735,7 +7259,9 @@ func (r *vendorResolver) DataPrivacyAgreement(ctx context.Context, obj *types.Ve
 
 // Contacts is the resolver for the contacts field.
 func (r *vendorResolver) Contacts(ctx context.Context, obj *types.Vendor, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorContactOrderBy) (*types.VendorContactConnection, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionVendorContactList)
+	if err := r.authorize(ctx, obj.ID, probo.ActionVendorContactList); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -6762,7 +7288,9 @@ func (r *vendorResolver) Contacts(ctx context.Context, obj *types.Vendor, first 
 
 // Services is the resolver for the services field.
 func (r *vendorResolver) Services(ctx context.Context, obj *types.Vendor, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorServiceOrderBy) (*types.VendorServiceConnection, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionVendorServiceList)
+	if err := r.authorize(ctx, obj.ID, probo.ActionVendorServiceList); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -6789,7 +7317,9 @@ func (r *vendorResolver) Services(ctx context.Context, obj *types.Vendor, first 
 
 // RiskAssessments is the resolver for the riskAssessments field.
 func (r *vendorResolver) RiskAssessments(ctx context.Context, obj *types.Vendor, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorRiskAssessmentOrder) (*types.VendorRiskAssessmentConnection, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionVendorRiskAssessmentList)
+	if err := r.authorize(ctx, obj.ID, probo.ActionVendorRiskAssessmentList); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -6816,14 +7346,16 @@ func (r *vendorResolver) RiskAssessments(ctx context.Context, obj *types.Vendor,
 
 // BusinessOwner is the resolver for the businessOwner field.
 func (r *vendorResolver) BusinessOwner(ctx context.Context, obj *types.Vendor) (*types.People, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionPeopleGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionPeopleGet); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	vendor, err := prb.Vendors.Get(ctx, obj.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(err)
+			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		panic(fmt.Errorf("cannot get vendor: %w", err))
@@ -6836,7 +7368,7 @@ func (r *vendorResolver) BusinessOwner(ctx context.Context, obj *types.Vendor) (
 	people, err := prb.Peoples.Get(ctx, *vendor.BusinessOwnerID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(err)
+			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		panic(fmt.Errorf("cannot get business owner: %w", err))
@@ -6847,14 +7379,16 @@ func (r *vendorResolver) BusinessOwner(ctx context.Context, obj *types.Vendor) (
 
 // SecurityOwner is the resolver for the securityOwner field.
 func (r *vendorResolver) SecurityOwner(ctx context.Context, obj *types.Vendor) (*types.People, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionPeopleGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionPeopleGet); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	vendor, err := prb.Vendors.Get(ctx, obj.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(err)
+			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		panic(fmt.Errorf("cannot get vendor: %w", err))
@@ -6867,7 +7401,7 @@ func (r *vendorResolver) SecurityOwner(ctx context.Context, obj *types.Vendor) (
 	people, err := prb.Peoples.Get(ctx, *vendor.SecurityOwnerID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(err)
+			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		panic(fmt.Errorf("cannot get security owner: %w", err))
@@ -6883,14 +7417,16 @@ func (r *vendorResolver) Permission(ctx context.Context, obj *types.Vendor, acti
 
 // Vendor is the resolver for the vendor field.
 func (r *vendorBusinessAssociateAgreementResolver) Vendor(ctx context.Context, obj *types.VendorBusinessAssociateAgreement) (*types.Vendor, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionVendorGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionVendorGet); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	vendor, err := prb.Vendors.Get(ctx, obj.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(err)
+			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		return nil, fmt.Errorf("cannot get vendor: %w", err)
@@ -6901,7 +7437,9 @@ func (r *vendorBusinessAssociateAgreementResolver) Vendor(ctx context.Context, o
 
 // FileURL is the resolver for the fileUrl field.
 func (r *vendorBusinessAssociateAgreementResolver) FileURL(ctx context.Context, obj *types.VendorBusinessAssociateAgreement) (string, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionFileDownloadUrl)
+	if err := r.authorize(ctx, obj.ID, probo.ActionFileDownloadUrl); err != nil {
+		return "", err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -6920,14 +7458,16 @@ func (r *vendorBusinessAssociateAgreementResolver) Permission(ctx context.Contex
 
 // Vendor is the resolver for the vendor field.
 func (r *vendorComplianceReportResolver) Vendor(ctx context.Context, obj *types.VendorComplianceReport) (*types.Vendor, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionVendorGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionVendorGet); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	vendor, err := prb.Vendors.Get(ctx, obj.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(err)
+			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		panic(fmt.Errorf("cannot get vendor: %w", err))
@@ -6938,7 +7478,9 @@ func (r *vendorComplianceReportResolver) Vendor(ctx context.Context, obj *types.
 
 // File is the resolver for the file field.
 func (r *vendorComplianceReportResolver) File(ctx context.Context, obj *types.VendorComplianceReport) (*types.File, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionFileGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionFileGet); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -6954,7 +7496,7 @@ func (r *vendorComplianceReportResolver) File(ctx context.Context, obj *types.Ve
 	file, err := prb.Files.Get(ctx, *evidence.ReportFileId)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(err)
+			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		panic(fmt.Errorf("cannot load evidence file: %w", err))
@@ -6970,7 +7512,9 @@ func (r *vendorComplianceReportResolver) Permission(ctx context.Context, obj *ty
 
 // TotalCount is the resolver for the totalCount field.
 func (r *vendorConnectionResolver) TotalCount(ctx context.Context, obj *types.VendorConnection) (int, error) {
-	r.MustAuthorize(ctx, obj.ParentID, probo.ActionVendorList)
+	if err := r.authorize(ctx, obj.ParentID, probo.ActionVendorList); err != nil {
+		return 0, err
+	}
 
 	prb := r.ProboService(ctx, obj.ParentID.TenantID())
 
@@ -7000,7 +7544,9 @@ func (r *vendorConnectionResolver) TotalCount(ctx context.Context, obj *types.Ve
 
 // Vendor is the resolver for the vendor field.
 func (r *vendorContactResolver) Vendor(ctx context.Context, obj *types.VendorContact) (*types.Vendor, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionVendorGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionVendorGet); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -7013,7 +7559,7 @@ func (r *vendorContactResolver) Vendor(ctx context.Context, obj *types.VendorCon
 	vendor, err := prb.Vendors.Get(ctx, vendorContact.VendorID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(err)
+			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		panic(fmt.Errorf("cannot get vendor: %w", err))
@@ -7029,14 +7575,16 @@ func (r *vendorContactResolver) Permission(ctx context.Context, obj *types.Vendo
 
 // Vendor is the resolver for the vendor field.
 func (r *vendorDataPrivacyAgreementResolver) Vendor(ctx context.Context, obj *types.VendorDataPrivacyAgreement) (*types.Vendor, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionVendorGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionVendorGet); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	vendor, err := prb.Vendors.Get(ctx, obj.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(err)
+			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		panic(fmt.Errorf("cannot get vendor: %w", err))
@@ -7047,7 +7595,9 @@ func (r *vendorDataPrivacyAgreementResolver) Vendor(ctx context.Context, obj *ty
 
 // FileURL is the resolver for the fileUrl field.
 func (r *vendorDataPrivacyAgreementResolver) FileURL(ctx context.Context, obj *types.VendorDataPrivacyAgreement) (string, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionFileDownloadUrl)
+	if err := r.authorize(ctx, obj.ID, probo.ActionFileDownloadUrl); err != nil {
+		return "", err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -7066,14 +7616,16 @@ func (r *vendorDataPrivacyAgreementResolver) Permission(ctx context.Context, obj
 
 // Vendor is the resolver for the vendor field.
 func (r *vendorRiskAssessmentResolver) Vendor(ctx context.Context, obj *types.VendorRiskAssessment) (*types.Vendor, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionVendorGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionVendorGet); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	vendor, err := prb.Vendors.GetByRiskAssessmentID(ctx, obj.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(err)
+			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		panic(fmt.Errorf("cannot get vendor: %w", err))
@@ -7089,14 +7641,16 @@ func (r *vendorRiskAssessmentResolver) Permission(ctx context.Context, obj *type
 
 // Vendor is the resolver for the vendor field.
 func (r *vendorServiceResolver) Vendor(ctx context.Context, obj *types.VendorService) (*types.Vendor, error) {
-	r.MustAuthorize(ctx, obj.ID, probo.ActionVendorGet)
+	if err := r.authorize(ctx, obj.ID, probo.ActionVendorGet); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	vendor, err := prb.Vendors.Get(ctx, obj.Vendor.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(err)
+			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		panic(fmt.Errorf("cannot get vendor: %w", err))
@@ -7112,7 +7666,9 @@ func (r *vendorServiceResolver) Permission(ctx context.Context, obj *types.Vendo
 
 // SignableDocuments is the resolver for the signableDocuments field.
 func (r *viewerResolver) SignableDocuments(ctx context.Context, obj *types.Viewer, organizationID gid.GID, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy) (*types.SignableDocumentConnection, error) {
-	r.MustAuthorize(ctx, organizationID, probo.ActionDocumentList)
+	if err := r.authorize(ctx, organizationID, probo.ActionDocumentList); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, organizationID.TenantID())
 
@@ -7157,7 +7713,9 @@ func (r *viewerResolver) SignableDocuments(ctx context.Context, obj *types.Viewe
 
 // SignableDocument is the resolver for the signableDocument field.
 func (r *viewerResolver) SignableDocument(ctx context.Context, obj *types.Viewer, id gid.GID) (*types.SignableDocument, error) {
-	r.MustAuthorize(ctx, id, probo.ActionDocumentGet)
+	if err := r.authorize(ctx, id, probo.ActionDocumentGet); err != nil {
+		return nil, err
+	}
 
 	prb := r.ProboService(ctx, id.TenantID())
 
@@ -7167,7 +7725,7 @@ func (r *viewerResolver) SignableDocument(ctx context.Context, obj *types.Viewer
 	document, err := prb.Documents.GetWithFilter(ctx, id, documentFilter)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(err)
+			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		panic(fmt.Errorf("cannot get signable document: %w", err))

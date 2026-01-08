@@ -16,8 +16,10 @@ package iam
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"maps"
+	"time"
 
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
@@ -35,6 +37,7 @@ type AuthorizationAttributer interface {
 type AuthorizeParams struct {
 	Principal          gid.GID
 	Resource           gid.GID
+	Session            *gid.GID
 	Action             string
 	ResourceAttributes map[string]string
 }
@@ -70,29 +73,52 @@ func (a *Authorizer) Authorize(ctx context.Context, params AuthorizeParams) erro
 }
 
 func (a *Authorizer) authorize(ctx context.Context, conn pg.Conn, params AuthorizeParams) error {
-	memberships, err := a.loadMemberships(ctx, conn, params.Principal)
-	if err != nil {
-		return err
-	}
-
 	resourceAttrs, err := a.buildResourceAttributes(ctx, conn, params)
 	if err != nil {
-		return err
+		return fmt.Errorf("cannot build resource attributes: %w", err)
 	}
 
-	// Find role for resource's organization
 	resourceOrgID := resourceAttrs["organization_id"]
-	role := findRoleForOrg(memberships, resourceOrgID)
+
+	// Find role for resource's organization
+	memberships, err := a.loadMemberships(ctx, conn, params.Principal)
+	if err != nil {
+		return fmt.Errorf("cannot load memberships for principal: %w", err)
+	}
+	membership := findMembershipForOrg(memberships, resourceOrgID)
+
+	if membership != nil && params.Session != nil {
+		if _, err := a.getActiveChildSessionForMembership(
+			ctx,
+			conn,
+			*params.Session,
+			membership.ID,
+		); err != nil {
+			var errSessionNotFound *ErrSessionNotFound
+			var errSessionExpired *ErrSessionExpired
+
+			if errors.As(err, &errSessionNotFound) || errors.As(err, &errSessionExpired) {
+				return NewInsufficientPermissionsError(params.Principal, params.Resource, params.Action)
+			}
+
+			return fmt.Errorf("cannot get active child session for membership: %w", err)
+		}
+	}
+
+	var role string
+	if membership != nil {
+		role = membership.Role.String()
+	}
 
 	// Only set principal.organization_id if they have a role in this org
 	var principalOrgID string
-	if role != "" {
-		principalOrgID = resourceOrgID
+	if membership != nil && role != "" {
+		principalOrgID = membership.OrganizationID.String()
 	}
 
 	principalAttrs, err := a.buildPrincipalAttributes(ctx, conn, params.Principal, principalOrgID)
 	if err != nil {
-		return err
+		return fmt.Errorf("cannot build principal attributes: %w", err)
 	}
 
 	policies := a.buildPoliciesForRole(role)
@@ -120,6 +146,29 @@ func (a *Authorizer) loadMemberships(ctx context.Context, conn pg.Conn, principa
 		return nil, fmt.Errorf("cannot load memberships: %w", err)
 	}
 	return memberships, nil
+}
+
+func (a *Authorizer) getActiveChildSessionForMembership(
+	ctx context.Context,
+	conn pg.Conn,
+	rootSessionID gid.GID,
+	membershipID gid.GID,
+) (*coredata.Session, error) {
+	childSession := &coredata.Session{}
+
+	if err := childSession.LoadByRootSessionIDAndMembershipID(ctx, conn, rootSessionID, membershipID); err != nil {
+		if err == coredata.ErrResourceNotFound {
+			return nil, NewSessionNotFoundError(gid.Nil)
+		}
+
+		return nil, fmt.Errorf("cannot load child session: %w", err)
+	}
+
+	if childSession.ExpireReason != nil || time.Now().After(childSession.ExpiredAt) {
+		return nil, NewSessionExpiredError(childSession.ID)
+	}
+
+	return childSession, nil
 }
 
 func (a *Authorizer) buildPrincipalAttributes(
@@ -188,11 +237,12 @@ func (a *Authorizer) buildPoliciesForRole(role string) []*policy.Policy {
 	return policies
 }
 
-func findRoleForOrg(memberships coredata.Memberships, orgID string) string {
+func findMembershipForOrg(memberships coredata.Memberships, orgID string) *coredata.Membership {
 	for _, m := range memberships {
 		if m.OrganizationID.String() == orgID && m.State == coredata.MembershipStateActive {
-			return string(m.Role)
+			return m
 		}
 	}
-	return ""
+
+	return nil
 }

@@ -19,7 +19,6 @@ import (
 	"net/http"
 
 	"github.com/99designs/gqlgen/graphql"
-	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/iam"
@@ -27,29 +26,6 @@ import (
 	"go.probo.inc/probo/pkg/server/api/connect/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
-)
-
-var (
-	ErrForbidden = &gqlerror.Error{
-		Message: "You are not authorized to access this resource",
-		Extensions: map[string]any{
-			"code": "FORBIDDEN",
-		},
-	}
-
-	ErrUnauthenticated = &gqlerror.Error{
-		Message: "You must be authenticated to access this resouce",
-		Extensions: map[string]any{
-			"code": "UNAUTHENTICATED",
-		},
-	}
-
-	ErrAlreadyAuthenticated = &gqlerror.Error{
-		Message: "authentication not allowed for this resource/action",
-		Extensions: map[string]any{
-			"code": "ALREADY_AUTHENTICATED",
-		},
-	}
 )
 
 func SessionDirective(ctx context.Context, obj any, next graphql.Resolver, required types.SessionRequirement) (any, error) {
@@ -60,34 +36,18 @@ func SessionDirective(ctx context.Context, obj any, next graphql.Resolver, requi
 	case types.SessionRequirementOptional:
 	case types.SessionRequirementPresent:
 		if session == nil && apiKey == nil {
-			return nil, ErrUnauthenticated
+			return nil, gqlutils.Unauthenticatedf(
+				ctx,
+				"authentication is required to access this resouce",
+			)
 		}
 	case types.SessionRequirementNone:
 		if session != nil && apiKey != nil {
-			return nil, ErrAlreadyAuthenticated
+			return nil, gqlutils.Invalidf(
+				ctx,
+				"authentication not allowed for this resource/action",
+			)
 		}
-	}
-
-	return next(ctx)
-}
-
-func IsViewerDirective(ctx context.Context, obj any, next graphql.Resolver) (any, error) {
-	identity := IdentityFromContext(ctx)
-
-	switch node := obj.(type) {
-	case *types.Identity:
-		if identity.ID != node.ID {
-			return nil, ErrForbidden
-		}
-	case *types.Membership:
-		if identity.ID != node.Identity.ID {
-			return nil, ErrForbidden
-		}
-	case *types.Session:
-		if identity.ID != node.Identity.ID {
-			return nil, ErrForbidden
-		}
-	default:
 	}
 
 	return next(ctx)
@@ -96,14 +56,14 @@ func IsViewerDirective(ctx context.Context, obj any, next graphql.Resolver) (any
 func NewGraphQLHandler(svc *iam.Service, logger *log.Logger, baseURL *baseurl.BaseURL, cookieConfig securecookie.Config) http.Handler {
 	config := schema.Config{
 		Resolvers: &Resolver{
+			authorize:    NewAuthorizeFunc(svc, logger),
 			logger:       logger,
 			iam:          svc,
 			baseURL:      baseURL,
 			cookieConfig: cookieConfig,
 		},
 		Directives: schema.DirectiveRoot{
-			Session:  SessionDirective,
-			IsViewer: IsViewerDirective,
+			Session: SessionDirective,
 		},
 	}
 

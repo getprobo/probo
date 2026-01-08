@@ -18,23 +18,20 @@ package connect_v1
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"time"
 
-	"github.com/99designs/gqlgen/graphql"
 	"github.com/go-chi/chi/v5"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/baseurl"
-	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
 )
 
 type (
 	Resolver struct {
+		authorize    AuthorizeFunc
 		logger       *log.Logger
 		iam          *iam.Service
 		baseURL      *baseurl.BaseURL
@@ -81,54 +78,5 @@ func NewMux(logger *log.Logger, svc *iam.Service, cookieConfig securecookie.Conf
 }
 
 func (r *Resolver) Permission(ctx context.Context, obj types.Node, action string) (bool, error) {
-	identity := IdentityFromContext(ctx)
-
-	err := r.iam.Authorizer.Authorize(
-		ctx,
-		iam.AuthorizeParams{
-			Principal: identity.ID,
-			Resource:  obj.GetID(),
-			Action:    action,
-		},
-	)
-
-	if err != nil {
-		var errInsufficientPermissions *iam.ErrInsufficientPermissions
-		if errors.As(err, &errInsufficientPermissions) {
-			return false, nil
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot authorize", log.Error(err))
-		return false, gqlutils.InternalServerError(ctx)
-	}
-
-	return true, nil
-}
-
-func (r *Resolver) Authorize(ctx context.Context, objectID gid.GID, action string, attrs map[string]string) bool {
-	identity := IdentityFromContext(ctx)
-
-	err := r.iam.Authorizer.Authorize(
-		ctx,
-		iam.AuthorizeParams{
-			Principal:          identity.ID,
-			Resource:           objectID,
-			Action:             action,
-			ResourceAttributes: attrs,
-		},
-	)
-
-	if err != nil {
-		var errInsufficientPermissions *iam.ErrInsufficientPermissions
-		if errors.As(err, &errInsufficientPermissions) {
-			graphql.AddError(ctx, err)
-			return false
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot authorize", log.Error(err))
-		graphql.AddError(ctx, gqlutils.InternalServerError(ctx))
-		return false
-	}
-
-	return true
+	return r.authorize(ctx, obj.GetID(), action) == nil, nil
 }

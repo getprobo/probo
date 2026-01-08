@@ -31,26 +31,6 @@ func RecoverFunc(ctx context.Context, err any) error {
 		return gqlErr
 	}
 
-	// TODO: multi session here
-	// var errSAMLRequired iam.ErrSAMLAuthRequired
-	// if errors.As(asError(err), &errSAMLRequired) {
-	// 	return AuthenticationRequired(map[string]any{
-	// 		"requiresSaml":   true,
-	// 		"redirectUrl":    errSAMLRequired.RedirectURL,
-	// 		"samlConfigId":   errSAMLRequired.ConfigID.String(),
-	// 		"organizationId": errSAMLRequired.OrganizationID.String(),
-	// 	})
-	// }
-
-	// var errPasswordRequired iam.ErrPasswordAuthRequired
-	// if errors.As(asError(err), &errPasswordRequired) {
-	// 	return AuthenticationRequired(map[string]any{
-	// 		"requiresSaml":   false,
-	// 		"redirectUrl":    errPasswordRequired.RedirectURL,
-	// 		"organizationId": errPasswordRequired.OrganizationID.String(),
-	// 	})
-	// }
-
 	var errValidations validator.ValidationErrors
 	if errors.As(asError(err), &errValidations) {
 		gqlErrors := gqlerror.List{}
@@ -59,12 +39,8 @@ func RecoverFunc(ctx context.Context, err any) error {
 			gqlErrors = append(
 				gqlErrors,
 				Invalid(
+					ctx,
 					err,
-					map[string]any{
-						"cause": err.Code,
-						"field": err.Field,
-						"value": err.Value,
-					},
 				),
 			)
 		}
@@ -72,14 +48,9 @@ func RecoverFunc(ctx context.Context, err any) error {
 		return gqlErrors
 	}
 
-	var tenantAccessErr *iam.TenantAccessError
-	if errTyped, ok := err.(error); ok && errors.As(errTyped, &tenantAccessErr) {
-		return Unauthorized()
-	}
-
 	var permissionDeniedErr *iam.ErrInsufficientPermissions
 	if errTyped, ok := err.(error); ok && errors.As(errTyped, &permissionDeniedErr) {
-		return Forbidden(permissionDeniedErr)
+		return Forbidden(ctx, permissionDeniedErr)
 	}
 
 	logger := httpserver.LoggerFromContext(ctx)
