@@ -37,7 +37,7 @@ func (h *SAMLHandler) MetadataHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/samlmetadata+xml")
 	w.WriteHeader(http.StatusOK)
-	w.Write(metadataXML)
+	_, _ = w.Write(metadataXML)
 }
 
 func (h *SAMLHandler) ConsumeHandler(w http.ResponseWriter, r *http.Request) {
@@ -97,7 +97,11 @@ func (h *SAMLHandler) ConsumeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	securecookie.Set(w, h.cookieConfig, rootSession.ID.String())
+	if err := securecookie.Set(w, h.cookieConfig, rootSession.ID.String()); err != nil {
+		h.logger.ErrorCtx(ctx, "cannot set cookie", log.Error(err))
+		h.renderInternalServerError(w, r)
+		return
+	}
 	redirectURL := h.baseURL.WithPath("/organizations/" + membership.OrganizationID.String()).MustString()
 	http.Redirect(w, r, redirectURL, http.StatusFound)
 }

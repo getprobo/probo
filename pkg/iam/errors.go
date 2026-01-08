@@ -190,6 +190,10 @@ func NewSessionNotFoundError(sessionID gid.GID) error {
 }
 
 func (e ErrSessionNotFound) Error() string {
+	if e.SessionID == gid.Nil {
+		return "session not found"
+	}
+
 	return fmt.Sprintf("session %q not found", e.SessionID)
 }
 
@@ -352,19 +356,4 @@ func NewNoSCIMConfigurationFoundError(organizationID gid.GID) error {
 
 func (e ErrNoSCIMConfigurationFound) Error() string {
 	return fmt.Sprintf("SCIM configuration not found for organization %q", e.OrganizationID)
-}
-
-// TenantAccessError is used by API recovery middleware to translate authorization/tenant failures
-// into a consistent client-facing error response.
-//
-// NOTE: This is intentionally generic to avoid leaking resource existence.
-type TenantAccessError struct {
-	Message string
-}
-
-func (e *TenantAccessError) Error() string {
-	if e == nil || e.Message == "" {
-		return "tenant access denied"
-	}
-	return e.Message
 }

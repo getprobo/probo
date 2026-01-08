@@ -47,11 +47,6 @@ func convertPanicToError(ctx context.Context, logger *log.Logger, panicValue any
 		return fmt.Errorf("internal server error")
 	}
 
-	var tenantAccessErr *iam.TenantAccessError
-	if errTyped, ok := panicValue.(error); ok && errors.As(errTyped, &tenantAccessErr) {
-		return fmt.Errorf("not authorized: %s", tenantAccessErr.Message)
-	}
-
 	var permissionDeniedErr *iam.ErrInsufficientPermissions
 	if errTyped, ok := panicValue.(error); ok && errors.As(errTyped, &permissionDeniedErr) {
 		return fmt.Errorf("permission denied: %s", permissionDeniedErr.Error())

@@ -297,9 +297,6 @@ const (
 	// TrustCenterDocumentAccess actions
 	ActionTrustCenterDocumentAccessList = "core:trust-center-document-access:list"
 
-	// DataProtectionOfficer actions
-	ActionDataProtectionOfficerList = "core:data-protection-officer:list"
-
 	// RightsRequest actions
 	ActionRightsRequestList   = "core:rights-request:list"
 	ActionRightsRequestGet    = "core:rights-request:get"

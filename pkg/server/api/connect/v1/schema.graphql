@@ -13,8 +13,6 @@ directive @goEnum(value: String) on ENUM_VALUE
 
 directive @session(required: SessionRequirement!) on FIELD_DEFINITION
 
-directive @isViewer on FIELD_DEFINITION
-
 scalar CursorKey
 scalar Datetime
 scalar Upload
@@ -150,7 +148,7 @@ type Identity implements Node {
     last: Int
     before: CursorKey
     orderBy: MembershipOrder
-  ): MembershipConnection @goField(forceResolver: true) @isViewer
+  ): MembershipConnection @goField(forceResolver: true)
 
   pendingInvitations(
     first: Int
@@ -158,7 +156,7 @@ type Identity implements Node {
     last: Int
     before: CursorKey
     orderBy: InvitationOrder
-  ): InvitationConnection @goField(forceResolver: true) @isViewer
+  ): InvitationConnection @goField(forceResolver: true)
 
   sessions(
     first: Int
@@ -166,14 +164,14 @@ type Identity implements Node {
     last: Int
     before: CursorKey
     orderBy: SessionOrder
-  ): SessionConnection @goField(forceResolver: true) @isViewer
+  ): SessionConnection @goField(forceResolver: true)
 
   personalAPIKeys(
     first: Int
     after: CursorKey
     last: Int
     before: CursorKey
-  ): PersonalAPIKeyConnection @goField(forceResolver: true) @isViewer
+  ): PersonalAPIKeyConnection @goField(forceResolver: true)
 
   permission(action: String!): Boolean!
     @goField(forceResolver: true)
@@ -272,7 +270,7 @@ type Membership implements Node {
   source: MembershipSource!
   state: MembershipState!
 
-  lastSession: Session @goField(forceResolver: true) @isViewer
+  lastSession: Session @goField(forceResolver: true)
 
   permission(action: String!): Boolean!
     @goField(forceResolver: true)
@@ -297,7 +295,7 @@ type Invitation implements Node {
 
 type Session implements Node {
   id: ID!
-  identity: Identity @goField(forceResolver: true) @isViewer
+  identity: Identity @goField(forceResolver: true)
   ipAddress: String!
   userAgent: String!
   updatedAt: Datetime!
