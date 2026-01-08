@@ -471,6 +471,24 @@ func (s *Service) DeleteUser(
 				return fmt.Errorf("cannot delete membership: %w", err)
 			}
 
+			// Expire all pending invitations for email in organization
+			identity := &coredata.Identity{}
+			if err := identity.LoadByID(ctx, tx, membership.IdentityID); err != nil {
+				return fmt.Errorf("cannot load identity: %w", err)
+			}
+			invitations := &coredata.Invitations{}
+			onlyPending := coredata.NewInvitationFilter([]coredata.InvitationStatus{coredata.InvitationStatusPending})
+			if err := invitations.ExpireByEmailAndOrganization(
+				ctx,
+				tx,
+				coredata.NewScopeFromObjectID(config.OrganizationID),
+				identity.EmailAddress,
+				config.OrganizationID,
+				onlyPending,
+			); err != nil {
+				return fmt.Errorf("cannot expire pending invitations: %w", err)
+			}
+
 			return nil
 		},
 	)
