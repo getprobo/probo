@@ -17,9 +17,11 @@ export const membershipsPageQuery = graphql`
   query MembershipsPageQuery {
     viewer @required(action: THROW) {
       memberships(first: 1000, orderBy: { direction: DESC, field: CREATED_AT })
+        @connection(key: "MembershipsPage_memberships")
         @required(action: THROW) {
+        __id
         edges @required(action: THROW) {
-          node @required(action: THROW) {
+          node {
             id
             ...MembershipCardFragment
             organization @required(action: THROW) {
@@ -31,9 +33,12 @@ export const membershipsPageQuery = graphql`
       pendingInvitations(
         first: 1000
         orderBy: { direction: DESC, field: CREATED_AT }
-      ) @required(action: THROW) {
+      )
+        @connection(key: "MembershipsPage_pendingInvitations")
+        @required(action: THROW) {
+        __id
         edges @required(action: THROW) {
-          node @required(action: THROW) {
+          node {
             id
             ...InvitationCardFragment
           }
@@ -54,8 +59,11 @@ export function MembershipsPage(props: {
   const { queryRef } = props;
   const {
     viewer: {
-      memberships: { edges: initialMemberships },
-      pendingInvitations: { edges: invitations },
+      memberships: { __id: membershipConnectionId, edges: initialMemberships },
+      pendingInvitations: {
+        __id: pendingInvitationsConnectionId,
+        edges: invitations,
+      },
     },
   } = usePreloadedQuery<MembershipsPageQuery>(membershipsPageQuery, queryRef);
 
@@ -81,7 +89,14 @@ export function MembershipsPage(props: {
                 {__("Pending invitations")}
               </h2>
               {invitations.map(({ node }) => (
-                <InvitationCard key={node.id} fKey={node} />
+                <InvitationCard
+                  pendingInvitationsConnectionId={
+                    pendingInvitationsConnectionId
+                  }
+                  membershipConnectionId={membershipConnectionId}
+                  key={node.id}
+                  fKey={node}
+                />
               ))}
             </div>
           )}

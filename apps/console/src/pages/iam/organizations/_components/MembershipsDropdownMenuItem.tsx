@@ -35,6 +35,15 @@ const assumeOrganizationSessionMutation = graphql`
     assumeOrganizationSession(input: $input) {
       result {
         __typename
+        ... on OrganizationSessionCreated {
+          membership {
+            id
+            lastSession {
+              id
+              expiresAt
+            }
+          }
+        }
         ... on PasswordRequired {
           reason
         }
@@ -67,32 +76,36 @@ export function MembershipsDropdownMenuItem(props: {
     );
 
   const handleAssumeOrganizationSession = useCallback(() => {
-    assumeOrganizationSession({
-      variables: {
-        input: {
-          organizationId: organization.id,
+    if (isAuthenticated) {
+      navigate(`/organizations/${organization.id}`);
+    } else {
+      assumeOrganizationSession({
+        variables: {
+          input: {
+            organizationId: organization.id,
+          },
         },
-      },
-      onCompleted: ({ assumeOrganizationSession }) => {
-        if (!assumeOrganizationSession) {
-          throw new Error("complete mutation result is empty");
-        }
+        onCompleted: ({ assumeOrganizationSession }) => {
+          if (!assumeOrganizationSession) {
+            throw new Error("complete mutation result is empty");
+          }
 
-        const { result } = assumeOrganizationSession;
+          const { result } = assumeOrganizationSession;
 
-        switch (result.__typename) {
-          case "PasswordRequired":
-            navigate("auth/login");
-            break;
-          case "SAMLAuthenticationRequired":
-            window.location.href = result.redirectUrl;
-            break;
-          default:
-            navigate(`/organizations/${organization.id}`);
-        }
-      },
-    });
-  }, [assumeOrganizationSession, navigate, organization.id]);
+          switch (result.__typename) {
+            case "PasswordRequired":
+              navigate("/auth/login");
+              break;
+            case "SAMLAuthenticationRequired":
+              window.location.href = result.redirectUrl;
+              break;
+            default:
+              navigate(`/organizations/${organization.id}`);
+          }
+        },
+      });
+    }
+  }, [assumeOrganizationSession, navigate, organization.id, isAuthenticated]);
 
   return (
     <DropdownItem key={id} onClick={handleAssumeOrganizationSession}>

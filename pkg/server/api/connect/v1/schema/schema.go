@@ -72,6 +72,7 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	AcceptInvitationPayload struct {
+		Invitation     func(childComplexity int) int
 		MembershipEdge func(childComplexity int) int
 	}
 
@@ -587,6 +588,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 	_ = ec
 	switch typeName + "." + field {
 
+	case "AcceptInvitationPayload.invitation":
+		if e.complexity.AcceptInvitationPayload.Invitation == nil {
+			break
+		}
+
+		return e.complexity.AcceptInvitationPayload.Invitation(childComplexity), true
 	case "AcceptInvitationPayload.membershipEdge":
 		if e.complexity.AcceptInvitationPayload.MembershipEdge == nil {
 			break
@@ -3096,6 +3103,7 @@ type RemoveMemberPayload {
 
 type AcceptInvitationPayload {
   membershipEdge: MembershipEdge!
+  invitation: Invitation!
 }
 
 type DeleteInvitationPayload {
@@ -3925,6 +3933,57 @@ func (ec *executionContext) fieldContext_AcceptInvitationPayload_membershipEdge(
 				return ec.fieldContext_MembershipEdge_cursor(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type MembershipEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AcceptInvitationPayload_invitation(ctx context.Context, field graphql.CollectedField, obj *types.AcceptInvitationPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AcceptInvitationPayload_invitation,
+		func(ctx context.Context) (any, error) {
+			return obj.Invitation, nil
+		},
+		nil,
+		ec.marshalNInvitation2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐInvitation,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AcceptInvitationPayload_invitation(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AcceptInvitationPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Invitation_id(ctx, field)
+			case "email":
+				return ec.fieldContext_Invitation_email(ctx, field)
+			case "fullName":
+				return ec.fieldContext_Invitation_fullName(ctx, field)
+			case "role":
+				return ec.fieldContext_Invitation_role(ctx, field)
+			case "expiresAt":
+				return ec.fieldContext_Invitation_expiresAt(ctx, field)
+			case "acceptedAt":
+				return ec.fieldContext_Invitation_acceptedAt(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Invitation_createdAt(ctx, field)
+			case "status":
+				return ec.fieldContext_Invitation_status(ctx, field)
+			case "organization":
+				return ec.fieldContext_Invitation_organization(ctx, field)
+			case "permission":
+				return ec.fieldContext_Invitation_permission(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Invitation", field.Name)
 		},
 	}
 	return fc, nil
@@ -7658,6 +7717,8 @@ func (ec *executionContext) fieldContext_Mutation_acceptInvitation(ctx context.C
 			switch field.Name {
 			case "membershipEdge":
 				return ec.fieldContext_AcceptInvitationPayload_membershipEdge(ctx, field)
+			case "invitation":
+				return ec.fieldContext_AcceptInvitationPayload_invitation(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type AcceptInvitationPayload", field.Name)
 		},
@@ -15151,6 +15212,11 @@ func (ec *executionContext) _AcceptInvitationPayload(ctx context.Context, sel as
 			out.Values[i] = graphql.MarshalString("AcceptInvitationPayload")
 		case "membershipEdge":
 			out.Values[i] = ec._AcceptInvitationPayload_membershipEdge(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "invitation":
+			out.Values[i] = ec._AcceptInvitationPayload_invitation(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
