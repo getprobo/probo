@@ -21,11 +21,14 @@ import (
 	"net"
 	"net/http"
 
+	"github.com/99designs/gqlgen/graphql"
+	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.gearno.de/kit/httpserver"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/securecookie"
+	"go.probo.inc/probo/pkg/server/gqlutils"
 )
 
 var (
@@ -64,7 +67,15 @@ func NewSessionMiddleware(svc *iam.Service, cookieConfig securecookie.Config) fu
 
 				apiKey := APIKeyFromContext(ctx)
 				if sessionID != gid.Nil && apiKey != nil {
-					httpserver.RenderError(w, http.StatusBadRequest, errors.New("session authentication cannot be used with API key authentication"))
+					httpserver.RenderJSON(
+						w,
+						http.StatusUnauthorized,
+						&graphql.Response{
+							Errors: gqlerror.List{
+								gqlutils.Conflictf(ctx, "session authentication cannot be used with API key authentication"),
+							},
+						},
+					)
 					return
 				}
 

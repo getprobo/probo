@@ -16,76 +16,106 @@ package gqlutils
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"maps"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/vektah/gqlparser/v2/gqlerror"
+	"go.probo.inc/probo/pkg/validator"
 )
 
-func Unauthorized() *gqlerror.Error {
+func Unauthenticated(ctx context.Context, err error) *gqlerror.Error {
 	return &gqlerror.Error{
-		Message: "not authorized",
+		Message: err.Error(),
+		Path:    graphql.GetPath(ctx),
 		Extensions: map[string]any{
-			"code": "UNAUTHORIZED",
+			"code": "UNAUTHENTICATED",
 		},
 	}
 }
 
-func Forbidden(err error) *gqlerror.Error {
+func Unauthenticatedf(ctx context.Context, format string, a ...any) *gqlerror.Error {
+	return Unauthenticated(ctx, fmt.Errorf(format, a...))
+}
+
+func AlreadyUnauthenticated(ctx context.Context, err error) *gqlerror.Error {
+	return &gqlerror.Error{
+		Message: "Authentication not allowed for this resource/action",
+		Extensions: map[string]any{
+			"code": "ALREADY_AUTHENTICATED",
+		},
+	}
+}
+
+func Forbidden(ctx context.Context, err error) *gqlerror.Error {
 	return &gqlerror.Error{
 		Message: err.Error(),
+		Path:    graphql.GetPath(ctx),
 		Extensions: map[string]any{
 			"code": "FORBIDDEN",
 		},
 	}
 }
 
-func AuthenticationRequired(details map[string]any) *gqlerror.Error {
-	extensions := map[string]any{"code": "AUTHENTICATION_REQUIRED"}
-	maps.Copy(extensions, details)
-
-	return &gqlerror.Error{
-		Message:    "Additional authentication required to access this organization",
-		Extensions: extensions,
-	}
-}
-
-func NotFound(err error) *gqlerror.Error {
+func NotFound(ctx context.Context, err error) *gqlerror.Error {
 	return &gqlerror.Error{
 		Message: err.Error(),
+		Path:    graphql.GetPath(ctx),
 		Extensions: map[string]any{
 			"code": "NOT_FOUND",
 		},
 	}
 }
 
-func Conflict(err error) *gqlerror.Error {
+func Conflict(ctx context.Context, err error) *gqlerror.Error {
 	return &gqlerror.Error{
 		Message: err.Error(),
+		Path:    graphql.GetPath(ctx),
 		Extensions: map[string]any{
 			"code": "CONFLICT",
 		},
 	}
 }
 
-func Invalid(err error, details map[string]any) *gqlerror.Error {
-	extensions := map[string]any{"code": "INVALID_REQUEST"}
+func Conflictf(ctx context.Context, format string, a ...any) *gqlerror.Error {
+	return Conflict(ctx, fmt.Errorf(format, a...))
+}
+
+func Invalid(ctx context.Context, err error) *gqlerror.Error {
+	var errValidation *validator.ValidationError
+
+	var details map[string]any
+
+	if errors.As(err, &errValidation) {
+		details = map[string]any{
+			"cause": errValidation.Code,
+			"field": errValidation.Field,
+			"value": errValidation.Value,
+		}
+	}
+	extensions := map[string]any{"code": "INVALID"}
 	if details != nil {
 		maps.Copy(extensions, details)
 	}
 
 	return &gqlerror.Error{
 		Message:    err.Error(),
+		Path:       graphql.GetPath(ctx),
 		Extensions: extensions,
 	}
 }
 
-func InternalServerError(ctx context.Context) *gqlerror.Error {
+func Invalidf(ctx context.Context, format string, a ...any) *gqlerror.Error {
+	return Invalid(ctx, fmt.Errorf(format, a...))
+}
+
+func Internal(ctx context.Context) *gqlerror.Error {
 	return &gqlerror.Error{
 		Message: "An internal server error occurred. Please try again later.",
 		Path:    graphql.GetPath(ctx),
 		Extensions: map[string]any{
-			"code": "INTERNAL_SERVER_ERROR",
+			"code": "INTERNAL",
 		},
 	}
 }

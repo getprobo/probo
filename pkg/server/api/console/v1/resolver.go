@@ -19,14 +19,11 @@ package console_v1
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"strings"
 
-	"github.com/99designs/gqlgen/graphql"
 	"github.com/go-chi/chi/v5"
-	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
@@ -39,35 +36,18 @@ import (
 	"go.probo.inc/probo/pkg/saferedirect"
 	"go.probo.inc/probo/pkg/securecookie"
 	connect_v1 "go.probo.inc/probo/pkg/server/api/connect/v1"
-	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
 	"go.probo.inc/probo/pkg/statelesstoken"
 )
 
 type (
 	Resolver struct {
+		authorize         connect_v1.AuthorizeFunc
 		probo             *probo.Service
 		iam               *iam.Service
 		customDomainCname string
 	}
 )
-
-func ensureAuthenticated(ctx context.Context, next graphql.OperationHandler) graphql.ResponseHandler {
-	identity := connect_v1.IdentityFromContext(ctx)
-
-	if identity == nil {
-		return func(ctx context.Context) *graphql.Response {
-			return &graphql.Response{
-				Errors: gqlerror.List{
-					gqlutils.Unauthorized(),
-				},
-			}
-		}
-	}
-
-	return next(ctx)
-}
 
 func NewMux(
 	logger *log.Logger,
@@ -85,19 +65,11 @@ func NewMux(
 
 	r.Use(connect_v1.NewSessionMiddleware(iamSvc, cookieConfig))
 	r.Use(connect_v1.NewAPIKeyMiddleware(iamSvc, tokenSecret))
+	r.Use(connect_v1.NewIdentityPresenceMiddleware())
 
-	config := schema.Config{
-		Resolvers: &Resolver{
-			probo:             proboSvc,
-			iam:               iamSvc,
-			customDomainCname: customDomainCname,
-		},
-	}
-	es := schema.NewExecutableSchema(config)
-	h := gqlutils.NewHandler(es, logger)
-	h.AroundOperations(ensureAuthenticated)
+	graphqlHandler := NewGraphQLHandler(iamSvc, proboSvc, customDomainCname, logger)
 
-	r.Handle("/graphql", h)
+	r.Handle("/graphql", graphqlHandler)
 
 	r.Get(
 		"/documents/signing-requests",
@@ -238,10 +210,16 @@ func NewMux(
 			httpserver.RenderError(w, http.StatusUnauthorized, fmt.Errorf("authentication required"))
 			return
 		}
+		session := connect_v1.SessionFromContext(r.Context())
+		if session == nil {
+			httpserver.RenderError(w, http.StatusUnauthorized, fmt.Errorf("authentication required"))
+			return
+		}
 
 		if err := iamSvc.Authorizer.Authorize(r.Context(), iam.AuthorizeParams{
 			Principal: identity.ID,
 			Resource:  organizationID,
+			Session:   &session.ID,
 			Action:    probo.ActionConnectorInitiate,
 		}); err != nil {
 			httpserver.RenderError(w, http.StatusForbidden, err)
@@ -317,42 +295,6 @@ func (r *Resolver) ProboService(ctx context.Context, tenantID gid.TenantID) *pro
 	return r.probo.WithTenant(tenantID)
 }
 
-func (r *Resolver) MustAuthorize(ctx context.Context, entityID gid.GID, action iam.Action) {
-	identity := connect_v1.IdentityFromContext(ctx)
-
-	err := r.iam.Authorizer.Authorize(
-		ctx,
-		iam.AuthorizeParams{
-			Principal: identity.ID,
-			Resource:  entityID,
-			Action:    action,
-		},
-	)
-	if err != nil {
-		panic(err)
-	}
-}
-
 func (r *Resolver) Permission(ctx context.Context, obj types.Node, action string) (bool, error) {
-	identity := connect_v1.IdentityFromContext(ctx)
-
-	err := r.iam.Authorizer.Authorize(
-		ctx,
-		iam.AuthorizeParams{
-			Principal: identity.ID,
-			Resource:  obj.GetID(),
-			Action:    action,
-		},
-	)
-
-	if err != nil {
-		var errInsufficientPermissions *iam.ErrInsufficientPermissions
-		if errors.As(err, &errInsufficientPermissions) {
-			return false, nil
-		}
-
-		panic(fmt.Errorf("cannot authorize: %w", err))
-	}
-
-	return true, nil
+	return r.authorize(ctx, obj.GetID(), action) == nil, nil
 }

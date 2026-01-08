@@ -67,8 +67,7 @@ type ResolverRoot interface {
 }
 
 type DirectiveRoot struct {
-	IsViewer func(ctx context.Context, obj any, next graphql.Resolver) (res any, err error)
-	Session  func(ctx context.Context, obj any, next graphql.Resolver, required types.SessionRequirement) (res any, err error)
+	Session func(ctx context.Context, obj any, next graphql.Resolver, required types.SessionRequirement) (res any, err error)
 }
 
 type ComplexityRoot struct {
@@ -2281,8 +2280,6 @@ directive @goEnum(value: String) on ENUM_VALUE
 
 directive @session(required: SessionRequirement!) on FIELD_DEFINITION
 
-directive @isViewer on FIELD_DEFINITION
-
 scalar CursorKey
 scalar Datetime
 scalar Upload
@@ -2418,7 +2415,7 @@ type Identity implements Node {
     last: Int
     before: CursorKey
     orderBy: MembershipOrder
-  ): MembershipConnection @goField(forceResolver: true) @isViewer
+  ): MembershipConnection @goField(forceResolver: true)
 
   pendingInvitations(
     first: Int
@@ -2426,7 +2423,7 @@ type Identity implements Node {
     last: Int
     before: CursorKey
     orderBy: InvitationOrder
-  ): InvitationConnection @goField(forceResolver: true) @isViewer
+  ): InvitationConnection @goField(forceResolver: true)
 
   sessions(
     first: Int
@@ -2434,14 +2431,14 @@ type Identity implements Node {
     last: Int
     before: CursorKey
     orderBy: SessionOrder
-  ): SessionConnection @goField(forceResolver: true) @isViewer
+  ): SessionConnection @goField(forceResolver: true)
 
   personalAPIKeys(
     first: Int
     after: CursorKey
     last: Int
     before: CursorKey
-  ): PersonalAPIKeyConnection @goField(forceResolver: true) @isViewer
+  ): PersonalAPIKeyConnection @goField(forceResolver: true)
 
   permission(action: String!): Boolean!
     @goField(forceResolver: true)
@@ -2540,7 +2537,7 @@ type Membership implements Node {
   source: MembershipSource!
   state: MembershipState!
 
-  lastSession: Session @goField(forceResolver: true) @isViewer
+  lastSession: Session @goField(forceResolver: true)
 
   permission(action: String!): Boolean!
     @goField(forceResolver: true)
@@ -2565,7 +2562,7 @@ type Invitation implements Node {
 
 type Session implements Node {
   id: ID!
-  identity: Identity @goField(forceResolver: true) @isViewer
+  identity: Identity @goField(forceResolver: true)
   ipAddress: String!
   userAgent: String!
   updatedAt: Datetime!
@@ -4683,20 +4680,7 @@ func (ec *executionContext) _Identity_memberships(ctx context.Context, field gra
 			fc := graphql.GetFieldContext(ctx)
 			return ec.resolvers.Identity().Memberships(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.MembershipOrderBy))
 		},
-		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
-			directive0 := next
-
-			directive1 := func(ctx context.Context) (any, error) {
-				if ec.directives.IsViewer == nil {
-					var zeroVal *types.MembershipConnection
-					return zeroVal, errors.New("directive isViewer is not implemented")
-				}
-				return ec.directives.IsViewer(ctx, obj, directive0)
-			}
-
-			next = directive1
-			return next
-		},
+		nil,
 		ec.marshalOMembershipConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐMembershipConnection,
 		true,
 		false,
@@ -4745,20 +4729,7 @@ func (ec *executionContext) _Identity_pendingInvitations(ctx context.Context, fi
 			fc := graphql.GetFieldContext(ctx)
 			return ec.resolvers.Identity().PendingInvitations(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.InvitationOrderBy))
 		},
-		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
-			directive0 := next
-
-			directive1 := func(ctx context.Context) (any, error) {
-				if ec.directives.IsViewer == nil {
-					var zeroVal *types.InvitationConnection
-					return zeroVal, errors.New("directive isViewer is not implemented")
-				}
-				return ec.directives.IsViewer(ctx, obj, directive0)
-			}
-
-			next = directive1
-			return next
-		},
+		nil,
 		ec.marshalOInvitationConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐInvitationConnection,
 		true,
 		false,
@@ -4807,20 +4778,7 @@ func (ec *executionContext) _Identity_sessions(ctx context.Context, field graphq
 			fc := graphql.GetFieldContext(ctx)
 			return ec.resolvers.Identity().Sessions(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.SessionOrder))
 		},
-		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
-			directive0 := next
-
-			directive1 := func(ctx context.Context) (any, error) {
-				if ec.directives.IsViewer == nil {
-					var zeroVal *types.SessionConnection
-					return zeroVal, errors.New("directive isViewer is not implemented")
-				}
-				return ec.directives.IsViewer(ctx, obj, directive0)
-			}
-
-			next = directive1
-			return next
-		},
+		nil,
 		ec.marshalOSessionConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSessionConnection,
 		true,
 		false,
@@ -4869,20 +4827,7 @@ func (ec *executionContext) _Identity_personalAPIKeys(ctx context.Context, field
 			fc := graphql.GetFieldContext(ctx)
 			return ec.resolvers.Identity().PersonalAPIKeys(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey))
 		},
-		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
-			directive0 := next
-
-			directive1 := func(ctx context.Context) (any, error) {
-				if ec.directives.IsViewer == nil {
-					var zeroVal *types.PersonalAPIKeyConnection
-					return zeroVal, errors.New("directive isViewer is not implemented")
-				}
-				return ec.directives.IsViewer(ctx, obj, directive0)
-			}
-
-			next = directive1
-			return next
-		},
+		nil,
 		ec.marshalOPersonalAPIKeyConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐPersonalAPIKeyConnection,
 		true,
 		false,
@@ -5863,20 +5808,7 @@ func (ec *executionContext) _Membership_lastSession(ctx context.Context, field g
 		func(ctx context.Context) (any, error) {
 			return ec.resolvers.Membership().LastSession(ctx, obj)
 		},
-		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
-			directive0 := next
-
-			directive1 := func(ctx context.Context) (any, error) {
-				if ec.directives.IsViewer == nil {
-					var zeroVal *types.Session
-					return zeroVal, errors.New("directive isViewer is not implemented")
-				}
-				return ec.directives.IsViewer(ctx, obj, directive0)
-			}
-
-			next = directive1
-			return next
-		},
+		nil,
 		ec.marshalOSession2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐSession,
 		true,
 		false,
@@ -11579,20 +11511,7 @@ func (ec *executionContext) _Session_identity(ctx context.Context, field graphql
 		func(ctx context.Context) (any, error) {
 			return ec.resolvers.Session().Identity(ctx, obj)
 		},
-		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
-			directive0 := next
-
-			directive1 := func(ctx context.Context) (any, error) {
-				if ec.directives.IsViewer == nil {
-					var zeroVal *types.Identity
-					return zeroVal, errors.New("directive isViewer is not implemented")
-				}
-				return ec.directives.IsViewer(ctx, obj, directive0)
-			}
-
-			next = directive1
-			return next
-		},
+		nil,
 		ec.marshalOIdentity2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconnectᚋv1ᚋtypesᚐIdentity,
 		true,
 		false,
