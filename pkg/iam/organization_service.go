@@ -31,6 +31,7 @@ import (
 	"go.probo.inc/probo/pkg/iam/scim"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
+	"go.probo.inc/probo/pkg/slug"
 	"go.probo.inc/probo/pkg/statelesstoken"
 	"go.probo.inc/probo/pkg/validator"
 )
@@ -529,7 +530,7 @@ func (s *OrganizationService) CreateOrganization(
 			OrganizationID: organization.ID,
 			TenantID:       organization.TenantID,
 			Active:         false,
-			Slug:           organization.ID.String(),
+			Slug:           slug.Make(organization.Name),
 			CreatedAt:      now,
 			UpdatedAt:      now,
 		}
