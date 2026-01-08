@@ -325,6 +325,20 @@ func (s *Service) HandleAssertion(
 				if err != nil {
 					return fmt.Errorf("cannot insert membership profile: %w", err)
 				}
+
+				// Accept all pending invitations for email in organization
+				invitations := &coredata.Invitations{}
+				onlyPending := coredata.NewInvitationFilter([]coredata.InvitationStatus{coredata.InvitationStatusPending})
+				if err := invitations.AcceptByEmailAndOrganization(
+					ctx,
+					tx,
+					coredata.NewScopeFromObjectID(config.OrganizationID),
+					email,
+					config.OrganizationID,
+					onlyPending,
+				); err != nil {
+					return fmt.Errorf("cannot accept pending invitations by email: %w", err)
+				}
 			}
 
 			if membership.Source != coredata.MembershipSourceSCIM {

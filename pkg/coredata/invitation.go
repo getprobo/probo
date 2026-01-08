@@ -164,6 +164,72 @@ WHERE
 	return nil
 }
 
+func (i *Invitations) AcceptByEmailAndOrganization(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	email mail.Addr,
+	organizationID gid.GID,
+	filter *InvitationFilter,
+) error {
+	q := `
+UPDATE iam_invitations SET accepted_at = NOW()
+WHERE
+    email = @email
+    AND organization_id = @organization_id
+    AND %s
+    AND %s
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"email":           email,
+		"organization_id": organizationID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
+
+	if _, err := conn.Exec(ctx, q, args); err != nil {
+		return fmt.Errorf("cannot accept invitations: %w", err)
+	}
+
+	return nil
+}
+
+func (i *Invitations) ExpireByEmailAndOrganization(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	email mail.Addr,
+	organizationID gid.GID,
+	filter *InvitationFilter,
+) error {
+	q := `
+UPDATE iam_invitations SET expires_at = NOW()
+WHERE
+    email = @email
+    AND organization_id = @organization_id
+    AND %s
+    AND %s
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"email":           email,
+		"organization_id": organizationID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
+
+	if _, err := conn.Exec(ctx, q, args); err != nil {
+		return fmt.Errorf("cannot expire invitations: %w", err)
+	}
+
+	return nil
+}
+
 // AuthorizationAttributes loads the minimal authorization attributes for policy condition evaluation.
 // It is intentionally lightweight and does not populate the Invitation struct.
 func (i *Invitation) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
@@ -230,7 +296,7 @@ DELETE FROM
     iam_invitations
 WHERE
     %s
-	AND id = @invitation_id
+    AND id = @invitation_id
 `
 
 	query = fmt.Sprintf(query, scope.SQLFragment())
@@ -369,11 +435,11 @@ func (i *Invitations) CountByOrganizationID(
 ) (int, error) {
 	q := `
 SELECT
-	COUNT(*)
+    COUNT(*)
 FROM
-	iam_invitations
+    iam_invitations
 WHERE
-	organization_id = @organization_id AND %s AND %s
+    organization_id = @organization_id AND %s AND %s
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
@@ -405,12 +471,12 @@ func (i *Invitations) CountByEmail(
 ) (int, error) {
 	q := `
 SELECT
-	COUNT(*)
+    COUNT(*)
 FROM
-	iam_invitations
+    iam_invitations
 WHERE
-	email = @email
-	AND %s
+    email = @email
+    AND %s
 `
 
 	q = fmt.Sprintf(q, filter.SQLFragment())

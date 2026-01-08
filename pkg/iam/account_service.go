@@ -210,8 +210,7 @@ func (s *AccountService) AcceptInvitation(
 		func(tx pg.Conn) error {
 			identity := coredata.Identity{}
 
-			err := identity.LoadByID(ctx, tx, identityID)
-			if err != nil {
+			if err := identity.LoadByID(ctx, tx, identityID); err != nil {
 				if err == coredata.ErrResourceNotFound {
 					return NewIdentityNotFoundError(identityID)
 				}
@@ -219,8 +218,7 @@ func (s *AccountService) AcceptInvitation(
 				return fmt.Errorf("cannot load identity: %w", err)
 			}
 
-			err = invitation.LoadByID(ctx, tx, coredata.NewNoScope(), invitationID)
-			if err != nil {
+			if err := invitation.LoadByID(ctx, tx, coredata.NewNoScope(), invitationID); err != nil {
 				if err == coredata.ErrResourceNotFound {
 					return NewInvitationNotFoundError(invitationID)
 				}
@@ -244,8 +242,13 @@ func (s *AccountService) AcceptInvitation(
 			scope := coredata.NewScope(invitation.OrganizationID.TenantID())
 
 			existingMembership := &coredata.Membership{}
-			err = existingMembership.LoadByIdentityAndOrg(ctx, tx, scope, identityID, invitation.OrganizationID)
-			if err != nil && err != coredata.ErrResourceNotFound {
+			if err := existingMembership.LoadByIdentityAndOrg(
+				ctx,
+				tx,
+				scope,
+				identityID,
+				invitation.OrganizationID,
+			); err != nil && err != coredata.ErrResourceNotFound {
 				return fmt.Errorf("cannot load existing membership: %w", err)
 			}
 
@@ -254,8 +257,7 @@ func (s *AccountService) AcceptInvitation(
 				existingMembership.Role = invitation.Role
 				existingMembership.UpdatedAt = now
 
-				err = existingMembership.Update(ctx, tx, scope)
-				if err != nil {
+				if err := existingMembership.Update(ctx, tx, scope); err != nil {
 					return fmt.Errorf("cannot reactivate membership: %w", err)
 				}
 
@@ -272,8 +274,7 @@ func (s *AccountService) AcceptInvitation(
 					UpdatedAt:      now,
 				}
 
-				err = membership.Insert(ctx, tx, scope)
-				if err != nil {
+				if err := membership.Insert(ctx, tx, scope); err != nil {
 					return fmt.Errorf("cannot create membership: %w", err)
 				}
 
@@ -285,20 +286,32 @@ func (s *AccountService) AcceptInvitation(
 					UpdatedAt:    now,
 				}
 
-				err = profile.Insert(ctx, tx)
-				if err != nil {
+				if err := profile.Insert(ctx, tx); err != nil {
 					return fmt.Errorf("cannot insert profile: %w", err)
 				}
 			}
 
 			invitation.AcceptedAt = &now
-			err = invitation.Update(ctx, tx, scope)
-			if err != nil {
+			if err := invitation.Update(ctx, tx, scope); err != nil {
 				if err == coredata.ErrResourceNotFound {
 					return NewInvitationNotFoundError(invitationID)
 				}
 
 				return fmt.Errorf("cannot update invitation: %w", err)
+			}
+
+			// Accept other pending invitations for email in organization
+			invitations := &coredata.Invitations{}
+			onlyPending := coredata.NewInvitationFilter([]coredata.InvitationStatus{coredata.InvitationStatusPending})
+			if err := invitations.AcceptByEmailAndOrganization(
+				ctx,
+				tx,
+				coredata.NewScopeFromObjectID(invitation.OrganizationID),
+				invitation.Email,
+				invitation.OrganizationID,
+				onlyPending,
+			); err != nil {
+				return fmt.Errorf("cannot accept pending invitations by email: %w", err)
 			}
 
 			return nil
