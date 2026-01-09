@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<5344ac5d6a506485d45e399361b92299>>
+ * @generated SignedSource<<5113feef2c7f7b13a2d6348202086916>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,8 +11,8 @@
 import { ConcreteRequest } from 'relay-runtime';
 export type RequestDocumentAccessInput = {
   documentId: string;
-  email?: any | null | undefined;
-  name?: string | null | undefined;
+  email: any;
+  fullName: string;
   trustCenterId: string;
 };
 export type RequestAccessDialogDocumentMutation$variables = {

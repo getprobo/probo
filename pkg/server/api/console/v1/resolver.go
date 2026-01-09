@@ -46,6 +46,7 @@ type (
 		authorize         authz.AuthorizeFunc
 		probo             *probo.Service
 		iam               *iam.Service
+		logger            *log.Logger
 		customDomainCname string
 	}
 )
@@ -97,7 +98,10 @@ func NewMux(
 			}
 
 			w.WriteHeader(http.StatusOK)
-			json.NewEncoder(w).Encode(requests)
+			if err := json.NewEncoder(w).Encode(requests); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
 		},
 	)
 
@@ -151,7 +155,7 @@ func NewMux(
 			w.Header().Set("Content-Type", "application/pdf")
 			w.Header().Set("Content-Disposition", fmt.Sprintf("inline; filename=\"%s.pdf\"", uuid.String()))
 			w.WriteHeader(http.StatusOK)
-			w.Write(pdfData)
+			_, _ = w.Write(pdfData)
 		},
 	)
 

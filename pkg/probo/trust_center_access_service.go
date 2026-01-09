@@ -40,7 +40,7 @@ type (
 	CreateTrustCenterAccessRequest struct {
 		TrustCenterID gid.GID
 		Email         mail.Addr
-		Name          string
+		FullName      string
 	}
 
 	UpdateTrustCenterDocumentAccessRequest struct {
@@ -69,7 +69,7 @@ func (ctcar *CreateTrustCenterAccessRequest) Validate() error {
 	v.Check(ctcar.TrustCenterID, "trust_center_id", validator.Required(), validator.GID(coredata.TrustCenterEntityType))
 	v.Check(ctcar.Email, "email", validator.Required(), validator.NotEmpty())
 	v.Check(ctcar.Email.Domain(), "email", validator.NotBlacklisted())
-	v.Check(ctcar.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
+	v.Check(ctcar.FullName, "name", validator.SafeTextNoNewLine(TitleMaxLength))
 
 	return v.Error()
 }
@@ -244,7 +244,7 @@ func (s TrustCenterAccessService) Create(
 				TenantID:                          s.svc.scope.GetTenantID(),
 				TrustCenterID:                     req.TrustCenterID,
 				Email:                             req.Email,
-				Name:                              req.Name,
+				Name:                              req.FullName,
 				Active:                            false,
 				HasAcceptedNonDisclosureAgreement: false,
 				CreatedAt:                         now,

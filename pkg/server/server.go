@@ -15,7 +15,6 @@
 package server
 
 import (
-	"context"
 	"errors"
 	"net/http"
 	"strings"
@@ -193,7 +192,7 @@ func (s *Server) loadTrustCenterBySlugOrID(next http.Handler) http.Handler {
 			)
 		}
 
-		ctx = s.addTrustCenterToContext(ctx, trustCenter.ID.TenantID(), trustCenter.OrganizationID)
+		ctx = trust_v1.ContextWithTrustCenter(ctx, *trustCenter)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
@@ -235,14 +234,18 @@ func (s *Server) loadTrustCenterByDomain(next http.Handler) http.Handler {
 			log.String("organization_id", organizationID.String()),
 		)
 
-		ctx = s.addTrustCenterToContext(ctx, organizationID.TenantID(), organizationID)
+		trustCenter, err := s.proboService.LoadTrustCenterByOrganizationID(ctx, organizationID)
+		if err != nil {
+			s.logger.WarnCtx(ctx, "trust center not found",
+				log.Error(err),
+			)
+			http.Error(w, "Trust center not found", http.StatusNotFound)
+			return
+		}
+
+		ctx = trust_v1.ContextWithTrustCenter(ctx, *trustCenter)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
-}
-
-func (s *Server) addTrustCenterToContext(ctx context.Context, tenantID, organizationID interface{}) context.Context {
-	ctx = context.WithValue(ctx, trust_v1.CustomDomainOrganizationIDKey, organizationID)
-	return ctx
 }
 
 func (s *Server) stripTrustPrefix(next http.Handler) http.Handler {

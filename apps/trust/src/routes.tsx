@@ -56,7 +56,7 @@ const routes = [
   {
     path: "/overview",
     loader: loaderFromQueryLoader(() =>
-      loadQuery(consoleEnvironment, currentTrustGraphQuery, {})
+      loadQuery(consoleEnvironment, currentTrustGraphQuery, {}),
     ),
     Component: withQueryRef(MainLayout),
     Fallback: MainSkeleton,
@@ -72,7 +72,7 @@ const routes = [
   {
     path: "/documents",
     loader: loaderFromQueryLoader(() =>
-      loadQuery(consoleEnvironment, currentTrustGraphQuery, {})
+      loadQuery(consoleEnvironment, currentTrustGraphQuery, {}),
     ),
     Component: withQueryRef(MainLayout),
     Fallback: MainSkeleton,
@@ -81,7 +81,7 @@ const routes = [
       {
         path: "",
         loader: loaderFromQueryLoader(() =>
-          loadQuery(consoleEnvironment, currentTrustDocumentsQuery, {})
+          loadQuery(consoleEnvironment, currentTrustDocumentsQuery, {}),
         ),
         Fallback: TabSkeleton,
         Component: withQueryRef(DocumentsPage),
@@ -91,7 +91,7 @@ const routes = [
   {
     path: "/subprocessors",
     loader: loaderFromQueryLoader(() =>
-      loadQuery(consoleEnvironment, currentTrustGraphQuery, {})
+      loadQuery(consoleEnvironment, currentTrustGraphQuery, {}),
     ),
     Component: withQueryRef(MainLayout),
     Fallback: MainSkeleton,
@@ -100,7 +100,7 @@ const routes = [
       {
         path: "",
         loader: loaderFromQueryLoader(() =>
-          loadQuery(consoleEnvironment, currentTrustVendorsQuery, {})
+          loadQuery(consoleEnvironment, currentTrustVendorsQuery, {}),
         ),
         Fallback: TabSkeleton,
         Component: withQueryRef(SubprocessorsPage),

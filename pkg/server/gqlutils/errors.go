@@ -58,6 +58,10 @@ func Forbidden(ctx context.Context, err error) *gqlerror.Error {
 	}
 }
 
+func Forbiddenf(ctx context.Context, format string, a ...any) *gqlerror.Error {
+	return Forbidden(ctx, fmt.Errorf(format, a...))
+}
+
 func NotFound(ctx context.Context, err error) *gqlerror.Error {
 	return &gqlerror.Error{
 		Message: err.Error(),
@@ -66,6 +70,10 @@ func NotFound(ctx context.Context, err error) *gqlerror.Error {
 			"code": "NOT_FOUND",
 		},
 	}
+}
+
+func NotFoundf(ctx context.Context, format string, a ...any) *gqlerror.Error {
+	return NotFound(ctx, fmt.Errorf(format, a...))
 }
 
 func Conflict(ctx context.Context, err error) *gqlerror.Error {

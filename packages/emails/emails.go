@@ -196,6 +196,23 @@ func RenderTrustCenterDocumentAccessRejected(
 	return fmt.Sprintf(subjectTrustCenterDocumentAccessRejected, organizationName), textBody, htmlBody, err
 }
 
+func RenderMagicLink(baseURL, fullName, magicLinkUrl string, tokenDuration time.Duration) (subject string, textBody string, htmlBody *string, err error) {
+	data := struct {
+		FullName          string
+		MagicLinkUrl      string
+		LogoURL           string
+		DurationInMinutes int
+	}{
+		FullName:          fullName,
+		MagicLinkUrl:      magicLinkUrl,
+		LogoURL:           baseURL + logoURLPath,
+		DurationInMinutes: int(tokenDuration.Minutes()),
+	}
+
+	textBody, htmlBody, err = renderEmail(trustCenterAccessTextTemplate, trustCenterAccessHTMLTemplate, data)
+	return subjectTrustCenterAccess, textBody, htmlBody, err
+}
+
 func renderEmail(textTemplate *texttemplate.Template, htmlTemplate *htmltemplate.Template, data any) (textBody string, htmlBody *string, err error) {
 	var textBuf bytes.Buffer
 	if err := textTemplate.Execute(&textBuf, data); err != nil {

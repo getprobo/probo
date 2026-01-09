@@ -28,6 +28,7 @@ var (
 	identityContextKey = &ctxKey{name: "identity"}
 	sessionContextKey  = &ctxKey{name: "session"}
 	apiKeyContextKey   = &ctxKey{name: "api_key"}
+	TrustCenterKey     = &ctxKey{name: "trust_center"}
 )
 
 func SessionFromContext(ctx context.Context) *coredata.Session {

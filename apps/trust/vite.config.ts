@@ -17,13 +17,17 @@ export default defineConfig({
         target: "http://localhost:8080",
         changeOrigin: true,
       },
+      "/trust/YJwjPEJCAAEAFgAAAZsTYtQt-FLmpawO/api": {
+        target: "http://localhost:8080",
+        changeOrigin: true,
+      },
     },
   },
   resolve: {
     alias: {
       "/type": fileURLToPath(new URL("./src/type.ts", import.meta.url)),
       "/components": fileURLToPath(
-        new URL("./src/components", import.meta.url)
+        new URL("./src/components", import.meta.url),
       ),
       "/queries": fileURLToPath(new URL("./src/queries", import.meta.url)),
       "/helpers": fileURLToPath(new URL("./src/helpers", import.meta.url)),

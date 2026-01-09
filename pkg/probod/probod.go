@@ -125,6 +125,7 @@ func New() *Implm {
 				DisableSignup:                       false,
 				InvitationConfirmationTokenValidity: 3600,
 				PasswordResetTokenValidity:          3600,
+				MagicLinkTokenValidity:              3600,
 				SAML: samlConfig{
 					SessionDuration:                   604800,
 					CleanupIntervalSeconds:            86400,
@@ -318,6 +319,7 @@ func (impl *Implm) Run(
 			DisableSignup:                  impl.cfg.Auth.DisableSignup,
 			InvitationTokenValidity:        time.Duration(impl.cfg.Auth.InvitationConfirmationTokenValidity) * time.Second,
 			PasswordResetTokenValidity:     time.Duration(impl.cfg.Auth.PasswordResetTokenValidity) * time.Second,
+			MagicLinkTokenValidity:         time.Duration(impl.cfg.Auth.MagicLinkTokenValidity) * time.Second,
 			SessionDuration:                time.Duration(impl.cfg.Auth.Cookie.Duration) * time.Hour,
 			Bucket:                         impl.cfg.AWS.Bucket,
 			TokenSecret:                    impl.cfg.Auth.Cookie.Secret,
