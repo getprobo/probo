@@ -19,7 +19,6 @@ import (
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
-	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/authz"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/schema"
@@ -382,11 +381,7 @@ func (r *mutationResolver) SignIn(ctx context.Context, input types.SignInInput) 
 	}
 
 	w := gqlutils.HTTPResponseWriterFromContext(ctx)
-	securecookie.Set(
-		w,
-		r.sessionCookieConfig(time.Until(session.ExpiredAt)),
-		session.ID.String(),
-	)
+	r.sessionCookie.Set(w, session)
 
 	return &types.SignInPayload{
 		Identity: types.NewIdentity(user),
@@ -415,11 +410,7 @@ func (r *mutationResolver) SignUp(ctx context.Context, input types.SignUpInput) 
 	}
 
 	w := gqlutils.HTTPResponseWriterFromContext(ctx)
-	securecookie.Set(
-		w,
-		r.sessionCookieConfig(time.Until(session.ExpiredAt)),
-		session.ID.String(),
-	)
+	r.sessionCookie.Set(w, session)
 
 	return &types.SignUpPayload{
 		Identity: types.NewIdentity(identity),
@@ -481,11 +472,7 @@ func (r *mutationResolver) SignUpFromInvitation(ctx context.Context, input types
 	}
 
 	w := gqlutils.HTTPResponseWriterFromContext(ctx)
-	securecookie.Set(
-		w,
-		r.sessionCookieConfig(time.Until(session.ExpiredAt)),
-		session.ID.String(),
-	)
+	r.sessionCookie.Set(w, session)
 
 	return &types.SignUpFromInvitationPayload{
 		Identity: &types.Identity{

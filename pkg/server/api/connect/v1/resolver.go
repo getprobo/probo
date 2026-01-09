@@ -19,7 +19,6 @@ package connect_v1
 import (
 	"context"
 	"net/http"
-	"time"
 
 	"github.com/go-chi/chi/v5"
 	"go.gearno.de/kit/log"
@@ -34,26 +33,13 @@ import (
 
 type (
 	Resolver struct {
-		authorize    authz.AuthorizeFunc
-		logger       *log.Logger
-		iam          *iam.Service
-		baseURL      *baseurl.BaseURL
-		cookieConfig securecookie.Config
+		authorize     authz.AuthorizeFunc
+		logger        *log.Logger
+		iam           *iam.Service
+		baseURL       *baseurl.BaseURL
+		sessionCookie *authn.Cookie
 	}
 )
-
-func (r *Resolver) sessionCookieConfig(maxAge time.Duration) securecookie.Config {
-	return securecookie.Config{
-		Name:     r.cookieConfig.Name,
-		Secret:   r.cookieConfig.Secret,
-		Secure:   r.cookieConfig.Secure,
-		HTTPOnly: r.cookieConfig.HTTPOnly,
-		SameSite: r.cookieConfig.SameSite,
-		Path:     r.cookieConfig.Path,
-		Domain:   r.cookieConfig.Domain,
-		MaxAge:   int(maxAge.Seconds()),
-	}
-}
 
 func NewMux(logger *log.Logger, svc *iam.Service, cookieConfig securecookie.Config, tokenSecret string, baseURL *baseurl.BaseURL) *chi.Mux {
 	r := chi.NewMux()
