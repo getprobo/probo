@@ -12,7 +12,6 @@ import {
   IconPencil,
   IconTrashCan,
   IconWarning,
-
   Option,
   PageHeader,
   PropertyRow,
@@ -31,8 +30,8 @@ import {
   useLazyLoadQuery,
   usePreloadedQuery,
 } from "react-relay";
-import type { MeasureGraphNodeQuery } from "/hooks/graph/__generated__/MeasureGraphNodeQuery.graphql";
-import type { MeasureDetailPageTasksCountQuery } from "./__generated__/MeasureDetailPageTasksCountQuery.graphql";
+import type { MeasureGraphNodeQuery } from "/__generated__/core/MeasureGraphNodeQuery.graphql";
+import type { MeasureDetailPageTasksCountQuery } from "/__generated__/core/MeasureDetailPageTasksCountQuery.graphql";
 import {
   MeasureConnectionKey,
   measureNodeQuery,
@@ -46,8 +45,7 @@ import {
   sprintf,
 } from "@probo/helpers";
 import MeasureFormDialog from "./dialog/MeasureFormDialog";
-import { Suspense, use } from "react";
-import { PermissionsContext } from "/providers/PermissionsContext";
+import { Suspense } from "react";
 
 const tasksCountQuery = graphql`
   query MeasureDetailPageTasksCountQuery($measureId: ID!) {
@@ -64,7 +62,7 @@ const tasksCountQuery = graphql`
 function TasksCountBadge({ measureId }: { measureId: string }) {
   const data = useLazyLoadQuery<MeasureDetailPageTasksCountQuery>(
     tasksCountQuery,
-    { measureId }
+    { measureId },
   );
   const count = data.node?.tasks?.totalCount ?? 0;
   return <TabBadge>{count}</TabBadge>;
@@ -84,14 +82,12 @@ export default function MeasureDetailPage(props: Props) {
   const navigate = useNavigate();
   const confirm = useConfirm();
   const [updateMeasure, isUpdating] = useUpdateMeasure();
-  const { isAuthorized } = use(PermissionsContext);
   if (!measureId) {
     throw new Error(
       "Cannot load measure detail page without measureId parameter",
     );
   }
 
-  const canViewTasks = isAuthorized("Measure", "listTasks");
   const evidencesCount = measure.evidencesInfos?.totalCount ?? 0;
   const controlsCount = measure.controlsInfos?.totalCount ?? 0;
   const risksCount = measure.risksInfos?.totalCount ?? 0;
@@ -161,7 +157,7 @@ export default function MeasureDetailPage(props: Props) {
       />
 
       <PageHeader title={measure.name} description={measure.description}>
-        {isAuthorized("Measure", "updateMeasure") && (
+        {measure.canUpdate && (
           <>
             <MeasureFormDialog measure={measure}>
               <Button variant="secondary" icon={IconPencil}>
@@ -184,9 +180,13 @@ export default function MeasureDetailPage(props: Props) {
             </Select>
           </>
         )}
-        {isAuthorized("Measure", "deleteMeasure") && (
+        {measure.canDelete && (
           <ActionDropdown variant="secondary">
-            <DropdownItem variant="danger" icon={IconTrashCan} onClick={onDelete}>
+            <DropdownItem
+              variant="danger"
+              icon={IconTrashCan}
+              onClick={onDelete}
+            >
               {__("Delete")}
             </DropdownItem>
           </ActionDropdown>
@@ -201,7 +201,7 @@ export default function MeasureDetailPage(props: Props) {
           {__("Evidences")}
           <TabBadge>{evidencesCount}</TabBadge>
         </TabLink>
-        {canViewTasks && (
+        {measure.canListTasks && (
           <TabLink
             to={`/organizations/${organizationId}/measures/${measureId}/tasks`}
           >

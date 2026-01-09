@@ -1,4 +1,7 @@
-import { getAssetTypeVariant, validateSnapshotConsistency } from "@probo/helpers";
+import {
+  getAssetTypeVariant,
+  validateSnapshotConsistency,
+} from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
@@ -26,11 +29,9 @@ import { SnapshotBanner } from "/components/SnapshotBanner";
 import { ControlledField } from "/components/form/ControlledField";
 import { PeopleSelectField } from "/components/form/PeopleSelectField";
 import { VendorsMultiSelectField } from "/components/form/VendorsMultiSelectField";
-import type { AssetGraphNodeQuery } from "/hooks/graph/__generated__/AssetGraphNodeQuery.graphql";
+import type { AssetGraphNodeQuery } from "/__generated__/core/AssetGraphNodeQuery.graphql";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { useOrganizationId } from "/hooks/useOrganizationId";
-import { use } from "react";
-import { PermissionsContext } from "/providers/PermissionsContext";
 
 const updateAssetSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -46,36 +47,39 @@ type Props = {
 };
 
 export default function AssetDetailsPage(props: Props) {
-  const asset = usePreloadedQuery<AssetGraphNodeQuery>(assetNodeQuery, props.queryRef);
+  const asset = usePreloadedQuery<AssetGraphNodeQuery>(
+    assetNodeQuery,
+    props.queryRef,
+  );
   const assetEntry = asset.node;
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
   const { snapshotId } = useParams<{ snapshotId?: string }>();
   const isSnapshotMode = Boolean(snapshotId);
-  const { isAuthorized } = use(PermissionsContext);
 
   validateSnapshotConsistency(assetEntry, snapshotId);
 
   const connectionId = ConnectionHandler.getConnectionID(
     organizationId,
     "AssetsPage_assets",
-    { filter: { snapshotId: snapshotId || null } }
+    { filter: { snapshotId: snapshotId || null } },
   );
   const deleteAsset = useDeleteAsset(assetEntry, connectionId);
 
   const vendors = assetEntry.vendors?.edges.map((edge) => edge.node) ?? [];
   const vendorIds = vendors.map((vendor) => vendor.id);
 
-  const { control, formState, handleSubmit, register, reset } = useFormWithSchema(updateAssetSchema, {
-    defaultValues: {
-      name: assetEntry.name || "",
-      amount: assetEntry.amount || 0,
-      assetType: assetEntry.assetType || "VIRTUAL",
-      dataTypesStored: assetEntry.dataTypesStored || "",
-      ownerId: assetEntry.owner?.id || "",
-      vendorIds: vendorIds,
-    },
-  });
+  const { control, formState, handleSubmit, register, reset } =
+    useFormWithSchema(updateAssetSchema, {
+      defaultValues: {
+        name: assetEntry.name || "",
+        amount: assetEntry.amount || 0,
+        assetType: assetEntry.assetType || "VIRTUAL",
+        dataTypesStored: assetEntry.dataTypesStored || "",
+        ownerId: assetEntry.owner?.id || "",
+        vendorIds: vendorIds,
+      },
+    });
 
   const updateAsset = useUpdateAsset();
 
@@ -87,9 +91,10 @@ export default function AssetDetailsPage(props: Props) {
     reset(formData);
   });
 
-  const breadcrumbAssetsUrl = isSnapshotMode && snapshotId
-    ? `/organizations/${organizationId}/snapshots/${snapshotId}/assets`
-    : `/organizations/${organizationId}/assets`;
+  const breadcrumbAssetsUrl =
+    isSnapshotMode && snapshotId
+      ? `/organizations/${organizationId}/snapshots/${snapshotId}/assets`
+      : `/organizations/${organizationId}/assets`;
 
   return (
     <div className="space-y-6">
@@ -109,22 +114,24 @@ export default function AssetDetailsPage(props: Props) {
       <div className="flex justify-between items-start">
         <div className="flex items-center gap-4">
           <div className="text-2xl">{assetEntry?.name}</div>
-          <Badge variant={getAssetTypeVariant(assetEntry?.assetType ?? "VIRTUAL")}>
-            {assetEntry?.assetType === "PHYSICAL" ? __("Physical") : __("Virtual")}
+          <Badge
+            variant={getAssetTypeVariant(assetEntry?.assetType ?? "VIRTUAL")}
+          >
+            {assetEntry?.assetType === "PHYSICAL"
+              ? __("Physical")
+              : __("Virtual")}
           </Badge>
         </div>
-        {!isSnapshotMode && (
-          isAuthorized("Asset", "deleteAsset") && (
-            <ActionDropdown variant="secondary">
-              <DropdownItem
-                variant="danger"
-                icon={IconTrashCan}
-                onClick={deleteAsset}
-              >
-                {__("Delete")}
-              </DropdownItem>
-            </ActionDropdown>
-          )
+        {!isSnapshotMode && asset.node.canDelete && (
+          <ActionDropdown variant="secondary">
+            <DropdownItem
+              variant="danger"
+              icon={IconTrashCan}
+              onClick={deleteAsset}
+            >
+              {__("Delete")}
+            </DropdownItem>
+          </ActionDropdown>
         )}
       </div>
 
@@ -179,12 +186,10 @@ export default function AssetDetailsPage(props: Props) {
         />
 
         <div className="flex justify-end">
-          {formState.isDirty && !isSnapshotMode && (
-            isAuthorized("Asset", "updateAsset") && (
-              <Button type="submit" disabled={formState.isSubmitting}>
-                {formState.isSubmitting ? __("Updating...") : __("Update")}
-              </Button>
-            )
+          {formState.isDirty && !isSnapshotMode && asset.node.canUpdate && (
+            <Button type="submit" disabled={formState.isSubmitting}>
+              {formState.isSubmitting ? __("Updating...") : __("Update")}
+            </Button>
           )}
         </div>
       </form>

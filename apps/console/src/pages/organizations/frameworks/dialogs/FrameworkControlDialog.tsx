@@ -13,7 +13,7 @@ import type { ReactNode } from "react";
 import { useTranslate } from "@probo/i18n";
 import { graphql } from "relay-runtime";
 import { useFragment } from "react-relay";
-import type { FrameworkControlDialogFragment$key } from "./__generated__/FrameworkControlDialogFragment.graphql";
+import type { FrameworkControlDialogFragment$key } from "/__generated__/core/FrameworkControlDialogFragment.graphql";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { z } from "zod";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
@@ -63,42 +63,63 @@ const updateMutation = graphql`
   }
 `;
 
-const schema = z.object({
-  name: z.string(),
-  description: z.string().optional().nullable(),
-  sectionTitle: z.string(),
-  status: z.enum(["INCLUDED", "EXCLUDED"]),
-  exclusionJustification: z.string().optional(),
-}).refine((data) => {
-  if (data.status === "EXCLUDED") {
-    return data.exclusionJustification && data.exclusionJustification.trim().length > 0;
-  }
-  return true;
-}, {
-  message: "Exclusion justification is required when status is excluded",
-  path: ["exclusionJustification"],
-});
+const schema = z
+  .object({
+    name: z.string(),
+    description: z.string().optional().nullable(),
+    sectionTitle: z.string(),
+    status: z.enum(["INCLUDED", "EXCLUDED"]),
+    exclusionJustification: z.string().optional(),
+  })
+  .refine(
+    (data) => {
+      if (data.status === "EXCLUDED") {
+        return (
+          data.exclusionJustification &&
+          data.exclusionJustification.trim().length > 0
+        );
+      }
+      return true;
+    },
+    {
+      message: "Exclusion justification is required when status is excluded",
+      path: ["exclusionJustification"],
+    },
+  );
 
 export function FrameworkControlDialog(props: Props) {
   const { __ } = useTranslate();
   const frameworkControl = useFragment(controlFragment, props.control);
   const dialogRef = useDialogRef();
-  const [mutate, isMutating] = useMutationWithToasts(props.control ? updateMutation : createMutation, {
-    successMessage: __(`Control ${props.control ? "updated" : "created"} successfully.`),
-    errorMessage: __(`Failed to ${props.control ? "update" : "create"} control`),
-  });
+  const [mutate, isMutating] = useMutationWithToasts(
+    props.control ? updateMutation : createMutation,
+    {
+      successMessage: __(
+        `Control ${props.control ? "updated" : "created"} successfully.`,
+      ),
+      errorMessage: __(
+        `Failed to ${props.control ? "update" : "create"} control`,
+      ),
+    },
+  );
 
-  const defaultValues = useMemo(() => ({
-    name: frameworkControl?.name ?? "",
-    description: frameworkControl?.description ?? "",
-    sectionTitle: frameworkControl?.sectionTitle ?? "",
-    status: frameworkControl?.status ?? "INCLUDED",
-    exclusionJustification: frameworkControl?.exclusionJustification ?? "",
-  }), [frameworkControl]);
+  const defaultValues = useMemo(
+    () => ({
+      name: frameworkControl?.name ?? "",
+      description: frameworkControl?.description ?? "",
+      sectionTitle: frameworkControl?.sectionTitle ?? "",
+      status: frameworkControl?.status ?? "INCLUDED",
+      exclusionJustification: frameworkControl?.exclusionJustification ?? "",
+    }),
+    [frameworkControl],
+  );
 
-  const { control, handleSubmit, register, reset, watch } = useFormWithSchema(schema, {
-    defaultValues,
-  });
+  const { control, handleSubmit, register, reset, watch } = useFormWithSchema(
+    schema,
+    {
+      defaultValues,
+    },
+  );
 
   useEffect(() => {
     reset(defaultValues);
@@ -118,7 +139,8 @@ export function FrameworkControlDialog(props: Props) {
             description: data.description || null,
             sectionTitle: data.sectionTitle,
             status: data.status,
-            exclusionJustification: data.status === "EXCLUDED" ? data.exclusionJustification : null,
+            exclusionJustification:
+              data.status === "EXCLUDED" ? data.exclusionJustification : null,
           },
         },
       });
@@ -132,7 +154,8 @@ export function FrameworkControlDialog(props: Props) {
             description: data.description || null,
             sectionTitle: data.sectionTitle,
             status: data.status,
-            exclusionJustification: data.status === "EXCLUDED" ? data.exclusionJustification : null,
+            exclusionJustification:
+              data.status === "EXCLUDED" ? data.exclusionJustification : null,
           },
           connections: [props.connectionId!],
         },

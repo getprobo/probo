@@ -1,7 +1,7 @@
 import { graphql } from "relay-runtime";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { useTranslate } from "@probo/i18n";
-import type { TrustCenterVendorGraphUpdateMutation } from "./__generated__/TrustCenterVendorGraphUpdateMutation.graphql";
+import type { TrustCenterVendorGraphUpdateMutation } from "/__generated__/core/TrustCenterVendorGraphUpdateMutation.graphql";
 
 export const trustCenterVendorUpdateMutation = graphql`
   mutation TrustCenterVendorGraphUpdateMutation($input: UpdateVendorInput!) {
@@ -23,6 +23,6 @@ export function useTrustCenterVendorUpdate() {
     {
       successMessage: __("Vendor visibility updated successfully."),
       errorMessage: __("Failed to update vendor visibility"),
-    }
+    },
   );
 }

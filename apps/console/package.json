@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "relay": "find src -type d -name \"__generated__\" -exec rm -rf {} + && npx relay-compiler ./relay.config.json",
+    "relay-clean": "find src -type d -name \"__generated__\" -exec rm -rf {} +",
+    "relay-compile": "npx relay-compiler",
+    "relay": "npm run relay-clean && npm run relay-compile",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "check": "tsc --noEmit -p tsconfig.app.json",
@@ -18,6 +20,7 @@
     "@probo/hooks": "1.0.0",
     "@probo/i18n": "1.0.0",
     "@probo/react-lazy": "1.0.0",
+    "@probo/relay": "^1.0.0",
     "@probo/routes": "^1.0.0",
     "@probo/ui": "1.0.0",
     "@probo/vendors": "0.0.1",

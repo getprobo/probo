@@ -32,39 +32,23 @@ import (
 
 type (
 	TrustCenterAccess struct {
-		ID                                        gid.GID                   `db:"id"`
-		OrganizationID                            gid.GID                   `db:"organization_id"`
-		TenantID                                  gid.TenantID              `db:"tenant_id"`
-		TrustCenterID                             gid.GID                   `db:"trust_center_id"`
-		Email                                     mail.Addr `db:"email"`
-		Name                                      string                    `db:"name"`
-		Active                                    bool                      `db:"active"`
-		HasAcceptedNonDisclosureAgreement         bool                      `db:"has_accepted_non_disclosure_agreement"`
-		HasAcceptedNonDisclosureAgreementMetadata json.RawMessage           `db:"has_accepted_non_disclosure_agreement_metadata"`
-		NDAFileID                                 *gid.GID                  `db:"nda_file_id"`
-		CreatedAt                                 time.Time                 `db:"created_at"`
-		UpdatedAt                                 time.Time                 `db:"updated_at"`
-		LastTokenExpiresAt                        *time.Time                `db:"last_token_expires_at"`
+		ID                                        gid.GID         `db:"id"`
+		OrganizationID                            gid.GID         `db:"organization_id"`
+		TenantID                                  gid.TenantID    `db:"tenant_id"`
+		TrustCenterID                             gid.GID         `db:"trust_center_id"`
+		Email                                     mail.Addr       `db:"email"`
+		Name                                      string          `db:"name"`
+		Active                                    bool            `db:"active"`
+		HasAcceptedNonDisclosureAgreement         bool            `db:"has_accepted_non_disclosure_agreement"`
+		HasAcceptedNonDisclosureAgreementMetadata json.RawMessage `db:"has_accepted_non_disclosure_agreement_metadata"`
+		NDAFileID                                 *gid.GID        `db:"nda_file_id"`
+		CreatedAt                                 time.Time       `db:"created_at"`
+		UpdatedAt                                 time.Time       `db:"updated_at"`
+		LastTokenExpiresAt                        *time.Time      `db:"last_token_expires_at"`
 	}
 
 	TrustCenterAccesses []*TrustCenterAccess
-
-	ErrTrustCenterAccessNotFound struct {
-		Identifier string
-	}
-
-	ErrTrustCenterAccessAlreadyExists struct {
-		message string
-	}
 )
-
-func (e ErrTrustCenterAccessNotFound) Error() string {
-	return fmt.Sprintf("trust center access not found: %s", e.Identifier)
-}
-
-func (e ErrTrustCenterAccessAlreadyExists) Error() string {
-	return e.message
-}
 
 func (tca *TrustCenterAccess) CursorKey(orderBy TrustCenterAccessOrderField) page.CursorKey {
 	switch orderBy {
@@ -73,6 +57,20 @@ func (tca *TrustCenterAccess) CursorKey(orderBy TrustCenterAccessOrderField) pag
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
+}
+
+func (tca *TrustCenterAccess) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+	q := `SELECT organization_id FROM trust_center_accesses WHERE id = $1 LIMIT 1;`
+
+	var organizationID gid.GID
+	if err := conn.QueryRow(ctx, q, tca.ID).Scan(&organizationID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrResourceNotFound
+		}
+		return nil, fmt.Errorf("cannot query trust center access authorization attributes: %w", err)
+	}
+
+	return map[string]string{"organization_id": organizationID.String()}, nil
 }
 
 func (tca *TrustCenterAccess) LoadByID(
@@ -117,7 +115,7 @@ LIMIT 1;
 	access, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[TrustCenterAccess])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrTrustCenterAccessNotFound{Identifier: accessID.String()}
+			return ErrResourceNotFound
 		}
 
 		return fmt.Errorf("cannot collect trust center access: %w", err)
@@ -175,7 +173,7 @@ LIMIT 1;
 	access, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[TrustCenterAccess])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrTrustCenterAccessNotFound{Identifier: fmt.Sprintf("trust_center_id=%s, email=%s", trustCenterID, email)}
+			return ErrResourceNotFound
 		}
 
 		return fmt.Errorf("cannot collect trust center access: %w", err)
@@ -235,9 +233,7 @@ INSERT INTO trust_center_accesses (
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
 			if pgErr.Code == "23505" && pgErr.ConstraintName == "trust_center_accesses_trust_center_id_email_key" {
-				return &ErrTrustCenterAccessAlreadyExists{
-					message: "trust center access already exists",
-				}
+				return ErrResourceAlreadyExists
 			}
 		}
 		return fmt.Errorf("cannot insert trust center access: %w", err)

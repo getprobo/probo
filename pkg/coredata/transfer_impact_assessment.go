@@ -27,14 +27,6 @@ import (
 	"go.probo.inc/probo/pkg/page"
 )
 
-type ErrTransferImpactAssessmentNotFound struct {
-	Identifier string
-}
-
-func (e ErrTransferImpactAssessmentNotFound) Error() string {
-	return fmt.Sprintf("transfer impact assessment not found: %q", e.Identifier)
-}
-
 type (
 	TransferImpactAssessment struct {
 		ID                    gid.GID   `db:"id"`
@@ -61,6 +53,21 @@ func (tia *TransferImpactAssessment) CursorKey(field TransferImpactAssessmentOrd
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", field))
+}
+
+func (tia *TransferImpactAssessment) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+	q := `SELECT organization_id FROM processing_activity_transfer_impact_assessments WHERE id = $1 LIMIT 1;`
+
+	var organizationID gid.GID
+	if err := conn.QueryRow(ctx, q, tia.ID).Scan(&organizationID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrResourceNotFound
+		}
+
+		return nil, fmt.Errorf("cannot query transfer impact assessment authorization attributes: %w", err)
+	}
+
+	return map[string]string{"organization_id": organizationID.String()}, nil
 }
 
 func (tias *TransferImpactAssessments) CountByOrganizationID(
@@ -192,7 +199,7 @@ LIMIT 1;
 	result, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[TransferImpactAssessment])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrTransferImpactAssessmentNotFound{Identifier: tiaID.String()}
+			return ErrResourceNotFound
 		}
 		return fmt.Errorf("cannot collect transfer impact assessment: %w", err)
 	}
@@ -243,7 +250,7 @@ LIMIT 1;
 	result, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[TransferImpactAssessment])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrTransferImpactAssessmentNotFound{Identifier: processingActivityID.String()}
+			return ErrResourceNotFound
 		}
 		return fmt.Errorf("cannot collect transfer impact assessment: %w", err)
 	}
@@ -429,4 +436,3 @@ WHERE tia.tenant_id = @tenant_id AND tia.organization_id = @organization_id AND 
 
 	return nil
 }
-

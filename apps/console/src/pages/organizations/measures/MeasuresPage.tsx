@@ -1,4 +1,4 @@
-import type { MeasureGraphListQuery } from "/hooks/graph/__generated__/MeasureGraphListQuery.graphql";
+import type { MeasureGraphListQuery } from "/__generated__/core/MeasureGraphListQuery.graphql";
 import {
   useFragment,
   usePreloadedQuery,
@@ -17,7 +17,6 @@ import {
   IconPencil,
   IconPlusLarge,
   IconTrashCan,
-
   MeasureImplementation,
   PageHeader,
   Table,
@@ -38,17 +37,16 @@ import { graphql } from "relay-runtime";
 import type {
   MeasuresPageFragment$data,
   MeasuresPageFragment$key,
-} from "./__generated__/MeasuresPageFragment.graphql";
+} from "/__generated__/core/MeasuresPageFragment.graphql";
 import { groupBy, objectKeys, slugify, sprintf } from "@probo/helpers";
-import { useMemo, useRef, useState, type ChangeEventHandler, use } from "react";
+import { useMemo, useRef, useState, type ChangeEventHandler } from "react";
 import type { NodeOf } from "/types";
-import type { MeasuresPageImportMutation } from "./__generated__/MeasuresPageImportMutation.graphql";
+import type { MeasuresPageImportMutation } from "/__generated__/core/MeasuresPageImportMutation.graphql";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { Link, useParams } from "react-router";
 import MeasureFormDialog from "./dialog/MeasureFormDialog";
 import { usePageTitle } from "@probo/hooks";
-import { PermissionsContext } from "/providers/PermissionsContext";
 
 type Props = {
   queryRef: PreloadedQuery<MeasureGraphListQuery>;
@@ -64,6 +62,8 @@ const measuresFragment = graphql`
           name
           category
           state
+          canUpdate: permission(action: "core:measure:update")
+          canDelete: permission(action: "core:measure:delete")
           ...MeasureFormDialogMeasureFragment
         }
       }
@@ -91,14 +91,16 @@ const importMeasuresMutation = graphql`
 
 export default function MeasuresPage(props: Props) {
   const { __ } = useTranslate();
-  const { isAuthorized } = use(PermissionsContext);
   const organization = usePreloadedQuery(
     measuresQuery,
-    props.queryRef
+    props.queryRef,
   ).organization;
+  if (organization.__typename !== "Organization") {
+    throw new Error("invalid node type");
+  }
   const data = useFragment<MeasuresPageFragment$key>(
     measuresFragment,
-    organization
+    organization,
   );
   const connectionId = data.measures.__id;
   const measures = data.measures.edges.map((edge) => edge.node);
@@ -110,13 +112,10 @@ export default function MeasuresPage(props: Props) {
     {
       successMessage: __("Measures imported successfully."),
       errorMessage: __("Failed to import measures"),
-    }
+    },
   );
   const importFileRef = useRef<HTMLInputElement>(null);
   usePageTitle(__("Measures"));
-
-  const hasAnyAction = isAuthorized("Measure", "updateMeasure") ||
-    isAuthorized("Measure", "deleteMeasure");
 
   const handleImport: ChangeEventHandler<HTMLInputElement> = (event) => {
     const file = event.target.files?.[0];
@@ -145,10 +144,10 @@ export default function MeasuresPage(props: Props) {
       <PageHeader
         title={__("Measures")}
         description={__(
-          "Measures are actions taken to reduce the risk. Add them to track their implementation status."
+          "Measures are actions taken to reduce the risk. Add them to track their implementation status.",
         )}
       >
-        {isAuthorized("Organization", "createMeasure") && (
+        {organization.canCreateMeasure && (
           <>
             <FileButton
               ref={importFileRef}
@@ -175,7 +174,6 @@ export default function MeasuresPage(props: Props) {
             category={category}
             measures={measuresPerCategory[category]}
             connectionId={connectionId}
-            hasAnyAction={hasAnyAction}
           />
         ))}
     </div>
@@ -186,7 +184,6 @@ type CategoryProps = {
   category: string;
   measures: NodeOf<MeasuresPageFragment$data["measures"]>[];
   connectionId: string;
-  hasAnyAction: boolean;
 };
 
 function Category(props: CategoryProps) {
@@ -202,7 +199,7 @@ function Category(props: CategoryProps) {
   const isExpanded = categoryId === params.categoryId;
   const ExpandComponent = isExpanded ? IconChevronUp : IconChevronDown;
   const completedMeasures = props.measures.filter(
-    (m) => m.state === "IMPLEMENTED"
+    (m) => m.state === "IMPLEMENTED",
   );
 
   return (
@@ -230,7 +227,9 @@ function Category(props: CategoryProps) {
               <Tr>
                 <Th>{__("Measure")}</Th>
                 <Th>{__("State")}</Th>
-                {props.hasAnyAction && <Th></Th>}
+                {measures.some(
+                  ({ canUpdate, canDelete }) => canUpdate || canDelete,
+                ) && <Th></Th>}
               </Tr>
             </Thead>
             <Tbody>
@@ -239,7 +238,7 @@ function Category(props: CategoryProps) {
                   key={measure.id}
                   measure={measure}
                   connectionId={props.connectionId}
-                  hasAnyAction={props.hasAnyAction}
+                  hasAnyAction={measure.canUpdate || measure.canDelete}
                 />
               ))}
             </Tbody>
@@ -271,7 +270,6 @@ function MeasureRow(props: MeasureRowProps) {
   const [deleteMeasure, isDeleting] = useDeleteMeasureMutation();
   const confirm = useConfirm();
   const organizationId = useOrganizationId();
-  const { isAuthorized } = use(PermissionsContext);
 
   const onDelete = () => {
     confirm(
@@ -288,11 +286,11 @@ function MeasureRow(props: MeasureRowProps) {
       {
         message: sprintf(
           __(
-            'This will permanently delete the measure "%s". This action cannot be undone.'
+            'This will permanently delete the measure "%s". This action cannot be undone.',
           ),
-          props.measure.name
+          props.measure.name,
         ),
-      }
+      },
     );
   };
 
@@ -306,10 +304,10 @@ function MeasureRow(props: MeasureRowProps) {
         <Td width={120}>
           <MeasureBadge state={props.measure.state} />
         </Td>
-        {props.hasAnyAction && (
+        {(props.measure.canUpdate || props.measure.canDelete) && (
           <Td noLink width={50} className="text-end">
             <ActionDropdown>
-              {isAuthorized("Measure", "updateMeasure") && (
+              {props.measure.canUpdate && (
                 <DropdownItem
                   icon={IconPencil}
                   onClick={() => dialogRef.current?.open()}
@@ -317,7 +315,7 @@ function MeasureRow(props: MeasureRowProps) {
                   {__("Edit")}
                 </DropdownItem>
               )}
-              {isAuthorized("Measure", "deleteMeasure") && (
+              {props.measure.canDelete && (
                 <DropdownItem
                   onClick={onDelete}
                   disabled={isDeleting}

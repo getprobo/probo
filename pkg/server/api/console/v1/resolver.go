@@ -22,84 +22,55 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	"time"
 
-	"github.com/99designs/gqlgen/graphql"
-	"github.com/99designs/gqlgen/graphql/handler"
-	"github.com/99designs/gqlgen/graphql/handler/extension"
-	"github.com/99designs/gqlgen/graphql/handler/transport"
-	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/go-chi/chi/v5"
-	"github.com/vektah/gqlparser/v2/ast"
-	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/auth"
-	"go.probo.inc/probo/pkg/authz"
+	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/saferedirect"
-	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
-	serverauth "go.probo.inc/probo/pkg/server/auth"
-	"go.probo.inc/probo/pkg/server/gqlutils"
-	"go.probo.inc/probo/pkg/server/session"
+	"go.probo.inc/probo/pkg/securecookie"
+	"go.probo.inc/probo/pkg/server/api/authn"
+	"go.probo.inc/probo/pkg/server/api/authz"
+	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/statelesstoken"
 )
 
 type (
-	AuthConfig struct {
-		CookieName      string
-		CookieDomain    string
-		SessionDuration time.Duration
-		CookieSecret    string
-		CookieSecure    bool
-	}
-
 	Resolver struct {
-		proboSvc          *probo.Service
-		authSvc           *auth.Service
-		authzSvc          *authz.Service
-		samlSvc           *auth.SAMLService
-		authCfg           AuthConfig
+		authorize         authz.AuthorizeFunc
+		probo             *probo.Service
+		iam               *iam.Service
 		customDomainCname string
-		schema            *ast.Schema
 	}
-
-	ctxKey struct{ name string }
 )
-
-var (
-	sessionContextKey = &ctxKey{name: "session"}
-)
-
-func SessionFromContext(ctx context.Context) *coredata.Session {
-	session, _ := ctx.Value(sessionContextKey).(*coredata.Session)
-	return session
-}
-
-func UserFromContext(ctx context.Context) *coredata.User {
-	return serverauth.UserFromContext(ctx)
-}
-
-func UserAPIKeyFromContext(ctx context.Context) *coredata.UserAPIKey {
-	return serverauth.UserAPIKeyFromContext(ctx)
-}
 
 func NewMux(
 	logger *log.Logger,
 	proboSvc *probo.Service,
-	authSvc *auth.Service,
-	authzSvc *authz.Service,
-	authCfg AuthConfig,
+	iamSvc *iam.Service,
+	cookieConfig securecookie.Config,
+	tokenSecret string,
 	connectorRegistry *connector.ConnectorRegistry,
-	safeRedirect *saferedirect.SafeRedirect,
+	baseURL *baseurl.BaseURL,
 	customDomainCname string,
-	samlSvc *auth.SAMLService,
 ) *chi.Mux {
 	r := chi.NewMux()
+
+	safeRedirect := &saferedirect.SafeRedirect{AllowedHost: baseURL.Host()}
+
+	r.Use(authn.NewSessionMiddleware(iamSvc, cookieConfig))
+	r.Use(authn.NewAPIKeyMiddleware(iamSvc, tokenSecret))
+	r.Use(authn.NewIdentityPresenceMiddleware())
+
+	graphqlHandler := NewGraphQLHandler(iamSvc, proboSvc, customDomainCname, logger)
+
+	r.Handle("/graphql", graphqlHandler)
 
 	r.Get(
 		"/documents/signing-requests",
@@ -111,7 +82,7 @@ func NewMux(
 			}
 
 			token = strings.TrimPrefix(token, "Bearer ")
-			data, err := statelesstoken.ValidateToken[probo.SigningRequestData](authCfg.CookieSecret, probo.TokenTypeSigningRequest, token)
+			data, err := statelesstoken.ValidateToken[probo.SigningRequestData](tokenSecret, probo.TokenTypeSigningRequest, token)
 			if err != nil {
 				http.Error(w, "invalid token", http.StatusUnauthorized)
 				return
@@ -139,7 +110,7 @@ func NewMux(
 				return
 			}
 
-			data, err := statelesstoken.ValidateToken[probo.SigningRequestData](authCfg.CookieSecret, probo.TokenTypeSigningRequest, token)
+			data, err := statelesstoken.ValidateToken[probo.SigningRequestData](tokenSecret, probo.TokenTypeSigningRequest, token)
 			if err != nil {
 				http.Error(w, "invalid token", http.StatusUnauthorized)
 				return
@@ -194,7 +165,7 @@ func NewMux(
 			}
 
 			token = strings.TrimPrefix(token, "Bearer ")
-			data, err := statelesstoken.ValidateToken[probo.SigningRequestData](authCfg.CookieSecret, probo.TokenTypeSigningRequest, token)
+			data, err := statelesstoken.ValidateToken[probo.SigningRequestData](tokenSecret, probo.TokenTypeSigningRequest, token)
 			if err != nil {
 				http.Error(w, "invalid token", http.StatusUnauthorized)
 				return
@@ -217,7 +188,7 @@ func NewMux(
 		},
 	)
 
-	r.Get("/connectors/initiate", WithSession(authSvc, authzSvc, authCfg, func(w http.ResponseWriter, r *http.Request) {
+	r.Get("/connectors/initiate", func(w http.ResponseWriter, r *http.Request) {
 		provider := r.URL.Query().Get("provider")
 		if provider != "SLACK" {
 			httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("unsupported provider"))
@@ -229,7 +200,32 @@ func NewMux(
 			panic(fmt.Errorf("cannot parse organization id: %w", err))
 		}
 
-		_ = GetTenantService(r.Context(), proboSvc, organizationID.TenantID())
+		apiKey := authn.APIKeyFromContext(r.Context())
+		if apiKey != nil {
+			httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("api key authentication cannot be used for this endpoint"))
+			return
+		}
+
+		identity := authn.IdentityFromContext(r.Context())
+		if identity == nil {
+			httpserver.RenderError(w, http.StatusUnauthorized, fmt.Errorf("authentication required"))
+			return
+		}
+		session := authn.SessionFromContext(r.Context())
+		if session == nil {
+			httpserver.RenderError(w, http.StatusUnauthorized, fmt.Errorf("authentication required"))
+			return
+		}
+
+		if err := iamSvc.Authorizer.Authorize(r.Context(), iam.AuthorizeParams{
+			Principal: identity.ID,
+			Resource:  organizationID,
+			Session:   &session.ID,
+			Action:    probo.ActionConnectorInitiate,
+		}); err != nil {
+			httpserver.RenderError(w, http.StatusForbidden, err)
+			return
+		}
 
 		redirectURL, err := connectorRegistry.Initiate(r.Context(), provider, organizationID, r)
 		if err != nil {
@@ -239,7 +235,7 @@ func NewMux(
 		// Allow external redirects for Slack OAuth only for now
 		slackSafeRedirect := &saferedirect.SafeRedirect{AllowedHost: "slack.com"}
 		slackSafeRedirect.Redirect(w, r, redirectURL, "/", http.StatusSeeOther)
-	}))
+	})
 
 	r.Get("/connectors/complete", func(w http.ResponseWriter, r *http.Request) {
 		provider := r.URL.Query().Get("provider")
@@ -288,178 +284,18 @@ func NewMux(
 		if continueURL != "" {
 			safeRedirect.Redirect(w, r, continueURL, "/", http.StatusSeeOther)
 		} else {
-			redirectURL := fmt.Sprintf("/organizations/%s", organizationID.String())
+			redirectURL := baseURL.WithPath("/organizations/" + organizationID.String()).MustString()
 			safeRedirect.Redirect(w, r, redirectURL, "/", http.StatusSeeOther)
 		}
 	})
 
-	r.Get("/", playground.Handler("GraphQL", "/api/console/v1/query"))
-	r.Post("/query", graphqlHandler(logger, proboSvc, authSvc, authzSvc, samlSvc, authCfg, customDomainCname))
-
 	return r
 }
 
-// GetSchema returns the parsed GraphQL schema for the console API
-// This is used by other services like authz to extract permissions from @mustBeAuthorized directives
-func GetSchema() *ast.Schema {
-	execSchema := schema.NewExecutableSchema(schema.Config{})
-	return execSchema.Schema()
-}
-
-func graphqlHandler(logger *log.Logger, proboSvc *probo.Service, authSvc *auth.Service, authzSvc *authz.Service, samlSvc *auth.SAMLService, authCfg AuthConfig, customDomainCname string) http.HandlerFunc {
-	var mb int64 = 1 << 20
-
-	// Parse the schema first to make it available to resolvers
-	execSchema := schema.NewExecutableSchema(schema.Config{})
-
-	cfg := schema.Config{
-		Resolvers: &Resolver{
-			proboSvc:          proboSvc,
-			authSvc:           authSvc,
-			authzSvc:          authzSvc,
-			samlSvc:           samlSvc,
-			authCfg:           authCfg,
-			customDomainCname: customDomainCname,
-			schema:            execSchema.Schema(),
-		},
-	}
-
-	es := schema.NewExecutableSchema(cfg)
-	srv := handler.New(es)
-	srv.AddTransport(transport.POST{})
-	srv.AddTransport(
-		transport.MultipartForm{
-			MaxMemory:     32 * mb,
-			MaxUploadSize: 50 * mb,
-		},
-	)
-	srv.Use(extension.Introspection{})
-	srv.Use(gqlutils.NewTracingExtension(logger))
-	srv.SetRecoverFunc(gqlutils.RecoverFunc)
-
-	srv.AroundOperations(
-		func(ctx context.Context, next graphql.OperationHandler) graphql.ResponseHandler {
-			user := UserFromContext(ctx)
-
-			if user == nil {
-				return func(ctx context.Context) *graphql.Response {
-					return &graphql.Response{
-						Errors: gqlerror.List{
-							&gqlerror.Error{
-								Message: "authentication required",
-								Extensions: map[string]any{
-									"code": "UNAUTHENTICATED",
-								},
-							},
-						},
-					}
-				}
-			}
-
-			return next(ctx)
-		},
-	)
-
-	return WithSession(authSvc, authzSvc, authCfg, srv.ServeHTTP)
-}
-
-func WithSession(authSvc *auth.Service, authzSvc *authz.Service, authCfg AuthConfig, next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-
-		if authCtx := serverauth.AuthenticateWithAPIKey(ctx, r, authSvc, authzSvc); authCtx != nil {
-			next(w, r.WithContext(authCtx))
-			return
-		}
-
-		sessionAuthCfg := session.AuthConfig{
-			CookieName:   authCfg.CookieName,
-			CookieSecret: authCfg.CookieSecret,
-			CookieSecure: authCfg.CookieSecure,
-		}
-
-		errorHandler := session.ErrorHandler{
-			OnCookieError: func(err error) {
-				panic(fmt.Errorf("cannot get session: %w", err))
-			},
-			OnParseError: func(w http.ResponseWriter, authCfg session.AuthConfig) {
-				session.ClearCookie(w, authCfg)
-			},
-			OnSessionError: func(w http.ResponseWriter, authCfg session.AuthConfig) {
-				session.ClearCookie(w, authCfg)
-			},
-			OnUserError: func(w http.ResponseWriter, authCfg session.AuthConfig) {
-				session.ClearCookie(w, authCfg)
-			},
-			OnTenantError: func(err error) {
-				panic(fmt.Errorf("cannot list tenants for user: %w", err))
-			},
-		}
-
-		authResult := session.TryAuth(ctx, w, r, authSvc, authzSvc, sessionAuthCfg, errorHandler)
-		if authResult == nil {
-			next(w, r)
-			return
-		}
-
-		ctx = context.WithValue(ctx, sessionContextKey, authResult.Session)
-		ctx = context.WithValue(ctx, serverauth.UserContextKey, authResult.User)
-		ctx = context.WithValue(ctx, serverauth.UserTenantContextKey, &serverauth.UserTenantAccess{
-			TenantIDs:  authResult.TenantIDs,
-			AuthErrors: authResult.AuthErrors,
-		})
-
-		next(w, r.WithContext(ctx))
-
-		// Update session after the handler completes
-		if _, err := authSvc.UpdateSession(ctx, authResult.Session.ID); err != nil {
-			panic(fmt.Errorf("cannot update session: %w", err))
-		}
-	}
-}
-
 func (r *Resolver) ProboService(ctx context.Context, tenantID gid.TenantID) *probo.TenantService {
-	return GetTenantService(ctx, r.proboSvc, tenantID)
+	return r.probo.WithTenant(tenantID)
 }
 
-func (r *Resolver) AuthzService(ctx context.Context, tenantID gid.TenantID) *authz.TenantAuthzService {
-	return GetTenantAuthzService(ctx, r.authzSvc, tenantID)
-}
-
-func (r *Resolver) AuthService(ctx context.Context, tenantID gid.TenantID) *auth.TenantAuthService {
-	return GetTenantAuthService(ctx, r.authSvc, tenantID)
-}
-
-func UnwrapOmittable[T any](field graphql.Omittable[T]) *T {
-	if !field.IsSet() {
-		return nil
-	}
-	value := field.Value()
-	return &value
-}
-
-func GetTenantService(ctx context.Context, proboSvc *probo.Service, tenantID gid.TenantID) *probo.TenantService {
-	serverauth.RequireTenantAccess(ctx, tenantID)
-	return proboSvc.WithTenant(tenantID)
-}
-
-func GetTenantAuthzService(ctx context.Context, authzSvc *authz.Service, tenantID gid.TenantID) *authz.TenantAuthzService {
-	serverauth.RequireTenantAccess(ctx, tenantID)
-	return authzSvc.WithTenant(tenantID)
-}
-
-func GetTenantAuthService(ctx context.Context, authSvc *auth.Service, tenantID gid.TenantID) *auth.TenantAuthService {
-	serverauth.RequireTenantAccess(ctx, tenantID)
-	return authSvc.WithTenant(tenantID)
-}
-
-func (r *Resolver) MustBeAuthorized(ctx context.Context, entityID gid.GID, action authz.Action) {
-	user := UserFromContext(ctx)
-	apiKey := UserAPIKeyFromContext(ctx)
-
-	authzSvc := r.AuthzService(ctx, entityID.TenantID())
-	err := authzSvc.Authorize(ctx, user, apiKey, entityID, action)
-	if err != nil {
-		panic(err)
-	}
+func (r *Resolver) Permission(ctx context.Context, obj types.Node, action string) (bool, error) {
+	return r.authorize(ctx, obj.GetID(), action) == nil, nil
 }

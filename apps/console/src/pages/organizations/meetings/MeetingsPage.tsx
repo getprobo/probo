@@ -27,23 +27,21 @@ import {
   type PreloadedQuery,
 } from "react-relay";
 import { graphql } from "relay-runtime";
-import type { MeetingGraphListQuery } from "/hooks/graph/__generated__/MeetingGraphListQuery.graphql";
+import type { MeetingGraphListQuery } from "/__generated__/core/MeetingGraphListQuery.graphql";
 import {
   meetingsQuery,
   useDeleteMeetingMutation,
 } from "/hooks/graph/MeetingGraph";
-import type { MeetingsPageListFragment$key } from "./__generated__/MeetingsPageListFragment.graphql";
+import type { MeetingsPageListFragment$key } from "/__generated__/core/MeetingsPageListFragment.graphql";
 import { usePageTitle } from "@probo/hooks";
 import { formatDate, sprintf } from "@probo/helpers";
 import { CreateMeetingDialog } from "./dialogs/CreateMeetingDialog";
-import type { MeetingsPageRowFragment$key } from "./__generated__/MeetingsPageRowFragment.graphql";
+import type { MeetingsPageRowFragment$key } from "/__generated__/core/MeetingsPageRowFragment.graphql";
 import { SortableTable, SortableTh } from "/components/SortableTable";
 import { Link } from "react-router";
 import { useState, useEffect, useRef } from "react";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
-import type { MeetingsPage_UpdateSummaryMutation } from "./__generated__/MeetingsPage_UpdateSummaryMutation.graphql";
-import { use } from "react";
-import { PermissionsContext } from "/providers/PermissionsContext";
+import type { MeetingsPage_UpdateSummaryMutation } from "/__generated__/core/MeetingsPage_UpdateSummaryMutation.graphql";
 
 const meetingsFragment = graphql`
   fragment MeetingsPageListFragment on Organization
@@ -86,15 +84,14 @@ type Props = {
 
 export default function MeetingsPage(props: Props) {
   const { __ } = useTranslate();
-  const { isAuthorized } = use(PermissionsContext);
   const organization = usePreloadedQuery(
     meetingsQuery,
-    props.queryRef
+    props.queryRef,
   ).organization;
 
   const pagination = usePaginationFragment(
     meetingsFragment,
-    organization as MeetingsPageListFragment$key
+    organization as MeetingsPageListFragment$key,
   );
 
   const meetingNodes = pagination.data.meetings.edges
@@ -144,7 +141,7 @@ export default function MeetingsPage(props: Props) {
       {
         successMessage: __("Summary updated successfully"),
         errorMessage: __("Failed to update summary"),
-      }
+      },
     );
 
   const handleSave = () => {
@@ -219,7 +216,7 @@ export default function MeetingsPage(props: Props) {
               <h3 className="text-sm font-semibold text-txt-secondary">
                 {__("Summary")}
               </h3>
-              {isAuthorized("Meeting", "updateMeeting") && (
+              {organization.canCreateMeeting && (
                 <Button
                   variant="quaternary"
                   icon={IconPencil}
@@ -246,10 +243,10 @@ export default function MeetingsPage(props: Props) {
       <PageHeader
         title={__("Meetings")}
         description={__(
-          "Track and manage your organization's meetings and their minutes."
+          "Track and manage your organization's meetings and their minutes.",
         )}
       >
-        {isAuthorized("Organization", "createMeeting") && (
+        {organization.canCreateMeeting && (
           <CreateMeetingDialog connectionId={connectionId}>
             <Button icon={IconPlusLarge}>{__("Add meeting")}</Button>
           </CreateMeetingDialog>
@@ -304,6 +301,7 @@ const rowFragment = graphql`
       id
       fullName
     }
+    canDelete: permission(action: "core:meeting:delete")
   }
 `;
 
@@ -316,12 +314,11 @@ function MeetingRow({
 }) {
   const meeting = useFragment<MeetingsPageRowFragment$key>(
     rowFragment,
-    meetingKey
+    meetingKey,
   );
   const { __ } = useTranslate();
   const [deleteMeeting] = useDeleteMeetingMutation();
   const confirm = useConfirm();
-  const { isAuthorized } = use(PermissionsContext);
   const handleDelete = () => {
     confirm(
       () =>
@@ -333,11 +330,11 @@ function MeetingRow({
       {
         message: sprintf(
           __(
-            'This will permanently delete the meeting "%s". This action cannot be undone.'
+            'This will permanently delete the meeting "%s". This action cannot be undone.',
           ),
-          meeting.name
+          meeting.name,
         ),
-      }
+      },
     );
   };
 
@@ -371,7 +368,7 @@ function MeetingRow({
           </span>
         )}
       </Td>
-      {isAuthorized("Meeting", "deleteMeeting") && (
+      {meeting.canDelete && (
         <Td noLink width={50} className="text-end w-18">
           <ActionDropdown>
             <DropdownItem

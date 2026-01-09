@@ -1,6 +1,6 @@
 import { useOutletContext, useParams } from "react-router";
 import { graphql } from "relay-runtime";
-import type { VendorComplianceTabFragment$key } from "./__generated__/VendorComplianceTabFragment.graphql";
+import type { VendorComplianceTabFragment$key } from "/__generated__/core/VendorComplianceTabFragment.graphql";
 import { useTranslate } from "@probo/i18n";
 import { usePageTitle } from "@probo/hooks";
 import {
@@ -16,12 +16,13 @@ import {
   useConfirm,
 } from "@probo/ui";
 import { useFragment, useMutation, useRefetchableFragment } from "react-relay";
-import type { VendorComplianceTabFragment_report$key } from "./__generated__/VendorComplianceTabFragment_report.graphql";
+import type { VendorComplianceTabFragment_report$key } from "/__generated__/core/VendorComplianceTabFragment_report.graphql";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { sprintf, fileSize, formatDate } from "@probo/helpers";
 import { SortableTable, SortableTh } from "/components/SortableTable";
-import { use } from "react";
-import { PermissionsContext } from "/providers/PermissionsContext";
+import type { VendorGraphNodeQuery$data } from "/__generated__/core/VendorGraphNodeQuery.graphql";
+import type { ComplianceReportListQuery } from "/__generated__/core/ComplianceReportListQuery.graphql";
+import type { ComponentProps } from "react";
 
 export const complianceReportsFragment = graphql`
   fragment VendorComplianceTabFragment on Vendor
@@ -44,6 +45,7 @@ export const complianceReportsFragment = graphql`
       edges {
         node {
           id
+          canDelete: permission(action: "core:vendor-compliance-report:delete")
           ...VendorComplianceTabFragment_report
         }
       }
@@ -58,10 +60,11 @@ const complianceReportFragment = graphql`
     validUntil
     reportName
     file {
-          fileName
-          mimeType
-          size
+      fileName
+      mimeType
+      size
     }
+    canDelete: permission(action: "core:vendor-compliance-report:delete")
   }
 `;
 
@@ -94,20 +97,18 @@ const deleteReportMutation = graphql`
 
 export default function VendorComplianceTab() {
   const { vendor } = useOutletContext<{
-    vendor: VendorComplianceTabFragment$key & { name: string; id: string };
+    vendor: VendorGraphNodeQuery$data["node"];
   }>();
-  const [data, refetch] = useRefetchableFragment(
-    complianceReportsFragment,
-    vendor
-  );
+  const [data, refetch] = useRefetchableFragment<
+    ComplianceReportListQuery,
+    VendorComplianceTabFragment$key
+  >(complianceReportsFragment, vendor);
   const connectionId = data.complianceReports.__id;
   const reports = data.complianceReports.edges.map((edge) => edge.node);
   const { __ } = useTranslate();
   const { snapshotId } = useParams<{ snapshotId?: string }>();
   const isSnapshotMode = Boolean(snapshotId);
-  const { isAuthorized } = use(PermissionsContext);
-  const canUploadReport = isAuthorized("Vendor", "uploadVendorComplianceReport");
-  const canDeleteReport = isAuthorized("VendorComplianceReport", "deleteVendorComplianceReport");
+  const canDeleteSomeReport = reports.some(({ canDelete }) => canDelete);
 
   usePageTitle(vendor.name + " - " + __("Compliance reports"));
 
@@ -135,7 +136,7 @@ export default function VendorComplianceTab() {
 
   return (
     <div className="space-y-6">
-      {!isSnapshotMode && canUploadReport && (
+      {!isSnapshotMode && vendor.canUploadComplianceReport && (
         <Dropzone
           description={__("Only PDF files up to 10MB are allowed")}
           isUploading={isMutating}
@@ -146,14 +147,16 @@ export default function VendorComplianceTab() {
           maxSize={10}
         />
       )}
-      <SortableTable refetch={refetch}>
+      <SortableTable
+        refetch={refetch as ComponentProps<typeof SortableTable>["refetch"]}
+      >
         <Thead>
           <Tr>
             <Th>{__("Report name")}</Th>
             <SortableTh field="REPORT_DATE">{__("Report date")}</SortableTh>
             <Th>{__("Valid until")}</Th>
             <Th>{__("File size")}</Th>
-            {!isSnapshotMode && canDeleteReport && <Th>{__("Actions")}</Th>}
+            {!isSnapshotMode && canDeleteSomeReport && <Th>{__("Actions")}</Th>}
           </Tr>
         </Thead>
         <Tbody>
@@ -163,7 +166,6 @@ export default function VendorComplianceTab() {
               reportKey={report}
               connectionId={connectionId}
               isSnapshotMode={isSnapshotMode}
-              canDelete={canDeleteReport}
             />
           ))}
         </Tbody>
@@ -176,14 +178,13 @@ type ReportRowProps = {
   reportKey: VendorComplianceTabFragment_report$key;
   connectionId: string;
   isSnapshotMode: boolean;
-  canDelete?: boolean;
 };
 
 function ReportRow(props: ReportRowProps) {
   const { __ } = useTranslate();
   const report = useFragment<VendorComplianceTabFragment_report$key>(
     complianceReportFragment,
-    props.reportKey
+    props.reportKey,
   );
   const confirm = useConfirm();
   const [deleteReport] = useMutationWithToasts(deleteReportMutation, {
@@ -205,11 +206,11 @@ function ReportRow(props: ReportRowProps) {
       {
         message: sprintf(
           __(
-            'This will permanently delete the report "%s". This action cannot be undone.'
+            'This will permanently delete the report "%s". This action cannot be undone.',
           ),
-          report.reportName
+          report.reportName,
         ),
-      }
+      },
     );
   };
 
@@ -218,8 +219,8 @@ function ReportRow(props: ReportRowProps) {
       <Td>{report.reportName}</Td>
       <Td>{formatDate(report.reportDate)}</Td>
       <Td>{formatDate(report.validUntil)}</Td>
-      <Td>{fileSize(__, report.file?.size)}</Td>
-      {!props.isSnapshotMode && props.canDelete && (
+      <Td>{fileSize(__, report.file?.size ?? 0)}</Td>
+      {!props.isSnapshotMode && report.canDelete && (
         <Td width={50} className="text-end">
           <ActionDropdown>
             <DropdownItem

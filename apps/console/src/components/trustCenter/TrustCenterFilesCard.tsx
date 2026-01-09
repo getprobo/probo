@@ -16,12 +16,14 @@ import {
   IconArrowLink,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
-import type { TrustCenterFilesCardFragment$key, TrustCenterFilesCardFragment$data } from "./__generated__/TrustCenterFilesCardFragment.graphql";
+import type {
+  TrustCenterFilesCardFragment$key,
+  TrustCenterFilesCardFragment$data,
+} from "/__generated__/core/TrustCenterFilesCardFragment.graphql";
 import { useFragment } from "react-relay";
-import { useMemo, useState, useCallback, useEffect, use } from "react";
+import { useMemo, useState, useCallback, useEffect } from "react";
 import { sprintf, getTrustCenterVisibilityOptions } from "@probo/helpers";
 import { formatDate } from "@probo/helpers";
-import { PermissionsContext } from "/providers/PermissionsContext";
 
 const trustCenterFileFragment = graphql`
   fragment TrustCenterFilesCardFragment on TrustCenterFile {
@@ -32,6 +34,8 @@ const trustCenterFileFragment = graphql`
     trustCenterVisibility
     createdAt
     updatedAt
+    canUpdate: permission(action: "core:trust-center-file:update")
+    canDelete: permission(action: "core:trust-center-file:delete")
   }
 `;
 
@@ -51,6 +55,7 @@ type Props<Params> = {
   onChangeVisibility: Mutation<Params>;
   onEdit: (file: { id: string; name: string; category: string }) => void;
   onDelete: (id: string) => void;
+  canUpdate: boolean;
 };
 
 export function TrustCenterFilesCard<Params>(props: Props<Params>) {
@@ -61,7 +66,10 @@ export function TrustCenterFilesCard<Params>(props: Props<Params>) {
   }, [props.files, limit]);
   const showMoreButton = limit !== null && props.files.length > limit;
 
-  const onChangeVisibility = (fileId: string, trustCenterVisibility: "NONE" | "PRIVATE" | "PUBLIC") => {
+  const onChangeVisibility = (
+    fileId: string,
+    trustCenterVisibility: "NONE" | "PRIVATE" | "PUBLIC",
+  ) => {
     props.onChangeVisibility({
       variables: {
         input: {
@@ -101,6 +109,7 @@ export function TrustCenterFilesCard<Params>(props: Props<Params>) {
               onEdit={props.onEdit}
               onDelete={props.onDelete}
               disabled={props.disabled}
+              canUpdate={props.canUpdate}
             />
           ))}
         </Tbody>
@@ -121,10 +130,14 @@ export function TrustCenterFilesCard<Params>(props: Props<Params>) {
 
 function FileRowWrapper(props: {
   fileFragmentRef: TrustCenterFilesCardFragment$key;
-  onChangeVisibility: (fileId: string, trustCenterVisibility: "NONE" | "PRIVATE" | "PUBLIC") => void;
+  onChangeVisibility: (
+    fileId: string,
+    trustCenterVisibility: "NONE" | "PRIVATE" | "PUBLIC",
+  ) => void;
   onEdit: (file: { id: string; name: string; category: string }) => void;
   onDelete: (id: string) => void;
   disabled?: boolean;
+  canUpdate: boolean;
 }) {
   const file = useFragment(trustCenterFileFragment, props.fileFragmentRef);
   return (
@@ -134,29 +147,36 @@ function FileRowWrapper(props: {
       onEdit={props.onEdit}
       onDelete={props.onDelete}
       disabled={props.disabled}
+      canUpdate={props.canUpdate}
     />
   );
 }
 
 function FileRow(props: {
   file: TrustCenterFilesCardFragment$data;
-  onChangeVisibility: (fileId: string, trustCenterVisibility: "NONE" | "PRIVATE" | "PUBLIC") => void;
+  onChangeVisibility: (
+    fileId: string,
+    trustCenterVisibility: "NONE" | "PRIVATE" | "PUBLIC",
+  ) => void;
   onEdit: (file: { id: string; name: string; category: string }) => void;
   onDelete: (id: string) => void;
   disabled?: boolean;
+  canUpdate: boolean;
 }) {
-  const { file, onChangeVisibility, onEdit, onDelete, disabled } = props;
+  const { file, onChangeVisibility, onEdit, onDelete, disabled, canUpdate } =
+    props;
   const { __ } = useTranslate();
   const [optimisticValue, setOptimisticValue] = useState<string | null>(null);
-  const { isAuthorized } = use(PermissionsContext);
-  const canUpdate = isAuthorized("TrustCenter", "updateTrustCenter");
 
-  const handleValueChange = useCallback((value: string) => {
-    const stringValue = typeof value === 'string' ? value : '';
-    const typedValue = stringValue as "NONE" | "PRIVATE" | "PUBLIC";
-    setOptimisticValue(typedValue);
-    onChangeVisibility(file.id, typedValue);
-  }, [file.id, onChangeVisibility]);
+  const handleValueChange = useCallback(
+    (value: string) => {
+      const stringValue = typeof value === "string" ? value : "";
+      const typedValue = stringValue as "NONE" | "PRIVATE" | "PUBLIC";
+      setOptimisticValue(typedValue);
+      onChangeVisibility(file.id, typedValue);
+    },
+    [file.id, onChangeVisibility],
+  );
 
   useEffect(() => {
     if (optimisticValue && file.trustCenterVisibility === optimisticValue) {
@@ -171,9 +191,7 @@ function FileRow(props: {
   return (
     <Tr>
       <Td>
-        <div className="flex gap-4 items-center">
-          {file.name}
-        </div>
+        <div className="flex gap-4 items-center">{file.name}</div>
       </Td>
       <Td>{file.category}</Td>
       <Td>{formatDate(file.createdAt)}</Td>
@@ -188,9 +206,7 @@ function FileRow(props: {
           {visibilityOptions.map((option) => (
             <Option key={option.value} value={option.value}>
               <div className="flex items-center justify-between w-full">
-                <Badge variant={option.variant}>
-                  {option.label}
-                </Badge>
+                <Badge variant={option.variant}>{option.label}</Badge>
               </div>
             </Option>
           ))}
@@ -201,19 +217,27 @@ function FileRow(props: {
           <Button
             variant="secondary"
             icon={IconArrowLink}
-            onClick={() => window.open(file.fileUrl, '_blank', 'noopener,noreferrer')}
+            onClick={() =>
+              window.open(file.fileUrl, "_blank", "noopener,noreferrer")
+            }
             title={__("Download")}
           />
-          {isAuthorized("TrustCenterFile", "updateTrustCenterFile") && (
+          {file.canUpdate && (
             <Button
               variant="secondary"
               icon={IconPencil}
-              onClick={() => onEdit({ id: file.id, name: file.name, category: file.category })}
+              onClick={() =>
+                onEdit({
+                  id: file.id,
+                  name: file.name,
+                  category: file.category,
+                })
+              }
               disabled={disabled}
               title={__("Edit")}
             />
           )}
-          {isAuthorized("TrustCenterFile", "deleteTrustCenterFile") && (
+          {file.canDelete && (
             <Button
               variant="danger"
               icon={IconTrashCan}

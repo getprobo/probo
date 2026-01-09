@@ -16,7 +16,7 @@ import { useTranslate } from "@probo/i18n";
 import { Suspense, useMemo, useState, type ReactNode } from "react";
 import { graphql } from "relay-runtime";
 import { useLazyLoadQuery } from "react-relay";
-import type { LinkedRisksDialogQuery } from "./__generated__/LinkedRisksDialogQuery.graphql";
+import type { LinkedRisksDialogQuery } from "/__generated__/core/LinkedRisksDialogQuery.graphql";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 
 const risksQuery = graphql`
@@ -73,7 +73,10 @@ function LinkedRisksDialogContent(props: Omit<Props, "children">) {
   const { __ } = useTranslate();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<string | null>(null);
-  const risks = useMemo(() => data.organization?.risks?.edges?.map((edge) => edge.node) ?? [], [data.organization?.risks]);
+  const risks = useMemo(
+    () => data.organization?.risks?.edges?.map((edge) => edge.node) ?? [],
+    [data.organization?.risks],
+  );
   const linkedIds = useMemo(() => {
     return new Set(props.linkedRisks?.map((r) => r.id) ?? []);
   }, [props.linkedRisks]);
@@ -83,13 +86,13 @@ function LinkedRisksDialogContent(props: Omit<Props, "children">) {
       (risk) =>
         (category === null || risk.category === category) &&
         (risk.name.toLowerCase().includes(search.toLowerCase()) ||
-          risk.description?.toLowerCase().includes(search.toLowerCase()))
+          risk.description?.toLowerCase().includes(search.toLowerCase())),
     );
   }, [risks, search, category]);
 
   const categories = useMemo(
     () => Array.from(new Set(risks.map((r) => r.category))),
-    [risks]
+    [risks],
   );
 
   return (

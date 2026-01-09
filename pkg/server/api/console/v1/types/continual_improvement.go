@@ -55,10 +55,23 @@ func NewContinualImprovementConnection(
 	}
 }
 
+func NewContinualImprovementEdge(ci *coredata.ContinualImprovement, orderField coredata.ContinualImprovementOrderField) *ContinualImprovementEdge {
+	return &ContinualImprovementEdge{
+		Node:   NewContinualImprovement(ci),
+		Cursor: ci.CursorKey(orderField),
+	}
+}
+
 func NewContinualImprovement(ci *coredata.ContinualImprovement) *ContinualImprovement {
 	return &ContinualImprovement{
-		ID:          ci.ID,
-		SnapshotID:  ci.SnapshotID,
+		ID:         ci.ID,
+		SnapshotID: ci.SnapshotID,
+		Organization: &Organization{
+			ID: ci.OrganizationID,
+		},
+		Owner: &People{
+			ID: ci.OwnerID,
+		},
 		SourceID:    ci.SourceID,
 		ReferenceID: ci.ReferenceID,
 		Description: ci.Description,
@@ -68,12 +81,5 @@ func NewContinualImprovement(ci *coredata.ContinualImprovement) *ContinualImprov
 		Priority:    ci.Priority,
 		CreatedAt:   ci.CreatedAt,
 		UpdatedAt:   ci.UpdatedAt,
-	}
-}
-
-func NewContinualImprovementEdge(ci *coredata.ContinualImprovement, orderField coredata.ContinualImprovementOrderField) *ContinualImprovementEdge {
-	return &ContinualImprovementEdge{
-		Node:   NewContinualImprovement(ci),
-		Cursor: ci.CursorKey(orderField),
 	}
 }

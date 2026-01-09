@@ -8,19 +8,18 @@ import {
   Spinner,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
-import { Suspense, useState, useEffect, useRef, use } from "react";
+import { Suspense, useState, useEffect, useRef } from "react";
 import type { ItemOf, NodeOf } from "/types";
 import { graphql, useFragment, useRefetchableFragment } from "react-relay";
 import { usePeople } from "/hooks/graph/PeopleGraph.ts";
 import { useOrganizationId } from "/hooks/useOrganizationId.ts";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts.ts";
 import { sprintf } from "@probo/helpers";
-import type { DocumentDetailPageDocumentFragment$data } from "../__generated__/DocumentDetailPageDocumentFragment.graphql";
+import type { DocumentDetailPageDocumentFragment$data } from "/__generated__/core/DocumentDetailPageDocumentFragment.graphql";
 import { useOutletContext } from "react-router";
-import type { DocumentSignaturesTab_signature$key } from "/pages/organizations/documents/tabs/__generated__/DocumentSignaturesTab_signature.graphql.ts";
-import type { DocumentSignaturesTab_version$key } from "/pages/organizations/documents/tabs/__generated__/DocumentSignaturesTab_version.graphql.ts";
-import type { DocumentSignaturesTabRefetchQuery } from "./__generated__/DocumentSignaturesTabRefetchQuery.graphql";
-import { PermissionsContext } from "/providers/PermissionsContext";
+import type { DocumentSignaturesTab_signature$key } from "/__generated__/core/DocumentSignaturesTab_signature.graphql.ts";
+import type { DocumentSignaturesTab_version$key } from "/__generated__/core/DocumentSignaturesTab_version.graphql.ts";
+import type { DocumentSignaturesTabRefetchQuery } from "/__generated__/core/DocumentSignaturesTabRefetchQuery.graphql";
 
 type Version = NodeOf<DocumentDetailPageDocumentFragment$data["versions"]>;
 
@@ -34,6 +33,9 @@ const versionFragment = graphql`
   ) {
     id
     status
+    canRequestSignature: permission(
+      action: "core:document-version:request-signature"
+    )
     signatures(first: $count, after: $cursor, filter: $signatureFilter)
       @connection(
         key: "DocumentSignaturesTab_signatures"
@@ -71,7 +73,7 @@ export default function DocumentSignaturesTab() {
 
   const toggleState = (state: SignatureState) => {
     setSelectedStates((prev) =>
-      prev.includes(state) ? prev.filter((s) => s !== state) : [...prev, state]
+      prev.includes(state) ? prev.filter((s) => s !== state) : [...prev, state],
     );
   };
 
@@ -186,6 +188,7 @@ function SignatureList(props: {
           people={p}
           connectionId={version.signatures.__id}
           signable={signable}
+          canRequestSignature={version.canRequestSignature}
         />
       ))}
     </div>
@@ -202,6 +205,7 @@ const signatureFragment = graphql`
       fullName
       primaryEmailAddress
     }
+    canCancel: permission(action: "core:document-version:request-signature")
   }
 `;
 
@@ -244,23 +248,23 @@ function SignatureItem(props: {
   people: ItemOf<ReturnType<typeof usePeople>>;
   connectionId: string;
   signable: boolean;
+  canRequestSignature: boolean;
 }) {
   const signature = useFragment(signatureFragment, props.signature);
   const { __, dateTimeFormat } = useTranslate();
-  const { isAuthorized } = use(PermissionsContext);
   const [requestSignature, isSendingRequest] = useMutationWithToasts(
     requestSignatureMutation,
     {
       successMessage: __("Signature request sent successfully"),
       errorMessage: __("Failed to send signature request"),
-    }
+    },
   );
   const [cancelSignature, isCancellingSignature] = useMutationWithToasts(
     cancelSignatureMutation,
     {
       successMessage: __("Request cancelled successfully"),
       errorMessage: __("Failed to cancel signature request"),
-    }
+    },
   );
 
   // No signature request for this user
@@ -276,27 +280,25 @@ function SignatureItem(props: {
             {props.people.primaryEmailAddress}
           </div>
         </div>
-        {props.signable && (
-          isAuthorized("Document", "requestSignature") && (
-            <Button
-              variant="secondary"
-              className="ml-auto"
-              disabled={isSendingRequest}
-              onClick={() => {
-                requestSignature({
-                  variables: {
-                    input: {
-                      documentVersionId: props.versionId,
-                      signatoryId: props.people.id,
-                    },
-                    connections: [props.connectionId],
+        {props.signable && props.canRequestSignature && (
+          <Button
+            variant="secondary"
+            className="ml-auto"
+            disabled={isSendingRequest}
+            onClick={() => {
+              requestSignature({
+                variables: {
+                  input: {
+                    documentVersionId: props.versionId,
+                    signatoryId: props.people.id,
                   },
-                });
-              }}
-            >
-              {__("Request signature")}
-            </Button>
-          )
+                  connections: [props.connectionId],
+                },
+              });
+            }}
+          >
+            {__("Request signature")}
+          </Button>
         )}
       </div>
     );
@@ -322,8 +324,8 @@ function SignatureItem(props: {
             {sprintf(
               label,
               dateTimeFormat(
-                isSigned ? signature.signedAt : signature.requestedAt
-              )
+                isSigned ? signature.signedAt : signature.requestedAt,
+              ),
             )}
           </span>
         </div>
@@ -333,7 +335,7 @@ function SignatureItem(props: {
           {__("Signed")}
         </Badge>
       ) : (
-        isAuthorized("DocumentVersionSignature", "cancelSignatureRequest") && (
+        signature.canCancel && (
           <Button
             variant="danger"
             className="ml-auto"

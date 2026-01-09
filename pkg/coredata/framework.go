@@ -42,32 +42,7 @@ type (
 	}
 
 	Frameworks []*Framework
-
-	ErrFrameworkNotFound struct {
-		Identifier string
-	}
-
-	ErrFrameworkAlreadyExists struct {
-		message string
-	}
-
-	ErrFrameworkReferenceIDAlreadyExists struct {
-		ReferenceID    string
-		OrganizationID gid.GID
-	}
 )
-
-func (e ErrFrameworkNotFound) Error() string {
-	return fmt.Sprintf("framework not found: %q", e.Identifier)
-}
-
-func (e ErrFrameworkAlreadyExists) Error() string {
-	return e.message
-}
-
-func (e ErrFrameworkReferenceIDAlreadyExists) Error() string {
-	return fmt.Sprintf("framework with reference ID %q already exists for organization %s", e.ReferenceID, e.OrganizationID)
-}
 
 func (f *Framework) CursorKey(orderBy FrameworkOrderField) page.CursorKey {
 	switch orderBy {
@@ -76,6 +51,21 @@ func (f *Framework) CursorKey(orderBy FrameworkOrderField) page.CursorKey {
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
+}
+
+// AuthorizationAttributes returns the authorization attributes for policy evaluation.
+func (f *Framework) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+	q := `SELECT organization_id FROM frameworks WHERE id = $1 LIMIT 1;`
+
+	var organizationID gid.GID
+	if err := conn.QueryRow(ctx, q, f.ID).Scan(&organizationID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrResourceNotFound
+		}
+		return nil, fmt.Errorf("cannot query framework authorization attributes: %w", err)
+	}
+
+	return map[string]string{"organization_id": organizationID.String()}, nil
 }
 
 func (f *Frameworks) CountByOrganizationID(
@@ -192,7 +182,7 @@ LIMIT 1;
 	framework, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Framework])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrFrameworkNotFound{Identifier: referenceID}
+			return ErrResourceNotFound
 		}
 
 		return fmt.Errorf("cannot collect framework: %w", err)
@@ -240,7 +230,7 @@ LIMIT 1;
 	framework, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Framework])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrFrameworkNotFound{Identifier: frameworkID.String()}
+			return ErrResourceNotFound
 		}
 
 		return fmt.Errorf("cannot collect framework: %w", err)
@@ -302,10 +292,7 @@ VALUES (
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
 			if pgErr.Code == "23505" && pgErr.ConstraintName == "frameworks_org_ref_unique" {
-				return &ErrFrameworkReferenceIDAlreadyExists{
-					ReferenceID:    f.ReferenceID,
-					OrganizationID: f.OrganizationID,
-				}
+				return ErrResourceAlreadyExists
 			}
 		}
 

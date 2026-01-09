@@ -24,8 +24,6 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/agents"
-	"go.probo.inc/probo/pkg/auth"
-	"go.probo.inc/probo/pkg/authz"
 	"go.probo.inc/probo/pkg/certmanager"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
@@ -33,6 +31,7 @@ import (
 	"go.probo.inc/probo/pkg/filevalidation"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/html2pdf"
+	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/slack"
 )
@@ -67,8 +66,6 @@ type (
 		html2pdfConverter *html2pdf.Converter
 		acmeService       *certmanager.ACMEService
 		fileManager       *filemanager.Service
-		auth              *auth.Service
-		authz             *authz.Service
 		logger            *log.Logger
 		slack             *slack.Service
 	}
@@ -135,14 +132,15 @@ func NewService(
 	html2pdfConverter *html2pdf.Converter,
 	acmeService *certmanager.ACMEService,
 	fileManagerService *filemanager.Service,
-	authService *auth.Service,
-	authzService *authz.Service,
 	logger *log.Logger,
 	slackService *slack.Service,
+	iamService *iam.Service,
 ) (*Service, error) {
 	if bucket == "" {
 		return nil, fmt.Errorf("bucket is required")
 	}
+
+	iamService.Authorizer.RegisterPolicySet(ProboPolicySet())
 
 	svc := &Service{
 		pg:                pgClient,
@@ -156,8 +154,6 @@ func NewService(
 		html2pdfConverter: html2pdfConverter,
 		acmeService:       acmeService,
 		fileManager:       fileManagerService,
-		auth:              authService,
-		authz:             authzService,
 		logger:            logger,
 		slack:             slackService,
 	}

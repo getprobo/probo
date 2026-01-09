@@ -21,11 +21,11 @@ import (
 	"maps"
 	"time"
 
-	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/page"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 )
 
 type (
@@ -43,23 +43,7 @@ type (
 	}
 
 	VendorBusinessAssociateAgreements []*VendorBusinessAssociateAgreement
-
-	ErrVendorBusinessAssociateAgreementNotFound struct {
-		Identifier string
-	}
-
-	ErrVendorBusinessAssociateAgreementAlreadyExists struct {
-		message string
-	}
 )
-
-func (e ErrVendorBusinessAssociateAgreementNotFound) Error() string {
-	return fmt.Sprintf("vendor business associate agreement not found: %q", e.Identifier)
-}
-
-func (e ErrVendorBusinessAssociateAgreementAlreadyExists) Error() string {
-	return e.message
-}
 
 func (v VendorBusinessAssociateAgreement) CursorKey(orderBy VendorBusinessAssociateAgreementOrderField) page.CursorKey {
 	switch orderBy {
@@ -70,6 +54,20 @@ func (v VendorBusinessAssociateAgreement) CursorKey(orderBy VendorBusinessAssoci
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
+}
+
+func (vbaa *VendorBusinessAssociateAgreement) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+	q := `SELECT organization_id FROM vendor_business_associate_agreements WHERE id = $1 LIMIT 1;`
+
+	var organizationID gid.GID
+	if err := conn.QueryRow(ctx, q, vbaa.ID).Scan(&organizationID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrResourceNotFound
+		}
+		return nil, fmt.Errorf("cannot query vendor business associate agreement authorization attributes: %w", err)
+	}
+
+	return map[string]string{"organization_id": organizationID.String()}, nil
 }
 
 func (vbaa *VendorBusinessAssociateAgreement) LoadByVendorID(
@@ -263,9 +261,7 @@ ON CONFLICT (organization_id, vendor_id) DO UPDATE SET
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
 			if pgErr.Code == "23505" && pgErr.ConstraintName == "vendor_business_associate_agreements_source_id_snapshot_id_key" {
-				return &ErrVendorBusinessAssociateAgreementAlreadyExists{
-					message: fmt.Sprintf("vendor business associate agreement with source_id %s and snapshot_id %s already exists", vbaa.SourceID, vbaa.SnapshotID),
-				}
+				return ErrResourceAlreadyExists
 			}
 		}
 		return fmt.Errorf("cannot upsert vendor business associate agreement: %w", err)

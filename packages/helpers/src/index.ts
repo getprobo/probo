@@ -61,7 +61,7 @@ export {
 } from "./trustCenterVisibility";
 export { promisifyMutation } from "./relay";
 export { fileType, fileSize } from "./file";
-export { formatDatetime, formatDate, toDateInput } from "./date";
+export { formatDatetime, formatDate, toDateInput, parseDate } from "./date";
 export { getTrustCenterUrl } from "./trustCenter";
 export { formatError, type GraphQLError } from "./error";
 export { Role, getAssignableRoles } from "./roles";
@@ -71,3 +71,7 @@ export {
     getTrustCenterDocumentAccessStatusLabel,
     type TrustCenterDocumentAccessInfo,
 } from "./trustCenterDocumentAccess";
+export {
+    getCustomDomainStatusBadgeVariant,
+    getCustomDomainStatusBadgeLabel
+} from "./customDomain"

@@ -43,23 +43,7 @@ type (
 	}
 
 	Documents []*Document
-
-	ErrDocumentNotFound struct {
-		Identifier string
-	}
-
-	ErrDocumentAlreadyExists struct {
-		message string
-	}
 )
-
-func (e ErrDocumentNotFound) Error() string {
-	return fmt.Sprintf("document not found: %q", e.Identifier)
-}
-
-func (e ErrDocumentAlreadyExists) Error() string {
-	return e.message
-}
 
 func (p Document) CursorKey(orderBy DocumentOrderField) page.CursorKey {
 	switch orderBy {
@@ -72,6 +56,21 @@ func (p Document) CursorKey(orderBy DocumentOrderField) page.CursorKey {
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
+}
+
+// AuthorizationAttributes returns the authorization attributes for policy evaluation.
+func (d *Document) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+	q := `SELECT organization_id FROM documents WHERE id = $1 LIMIT 1;`
+
+	var organizationID gid.GID
+	if err := conn.QueryRow(ctx, q, d.ID).Scan(&organizationID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrResourceNotFound
+		}
+		return nil, fmt.Errorf("cannot query document authorization attributes: %w", err)
+	}
+
+	return map[string]string{"organization_id": organizationID.String()}, nil
 }
 
 func (p *Document) LoadByID(
@@ -114,7 +113,7 @@ LIMIT 1;
 	document, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Document])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrDocumentNotFound{Identifier: documentID.String()}
+			return ErrResourceNotFound
 		}
 
 		return fmt.Errorf("cannot collect document: %w", err)
@@ -168,7 +167,7 @@ LIMIT 1;
 	document, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Document])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrDocumentNotFound{Identifier: documentID.String()}
+			return ErrResourceNotFound
 		}
 
 		return fmt.Errorf("cannot collect document: %w", err)

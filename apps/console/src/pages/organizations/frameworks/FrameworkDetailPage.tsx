@@ -24,15 +24,13 @@ import {
 import { useTranslate } from "@probo/i18n";
 import { Navigate, Outlet, useNavigate, useParams } from "react-router";
 import { useOrganizationId } from "/hooks/useOrganizationId";
-import type { FrameworkGraphNodeQuery } from "/hooks/graph/__generated__/FrameworkGraphNodeQuery.graphql";
-import type { FrameworkDetailPageFragment$key } from "./__generated__/FrameworkDetailPageFragment.graphql";
-import type { FrameworkDetailPageGenerateFrameworkStateOfApplicabilityMutation } from "./__generated__/FrameworkDetailPageGenerateFrameworkStateOfApplicabilityMutation.graphql";
-import type { FrameworkDetailPageExportFrameworkMutation } from "./__generated__/FrameworkDetailPageExportFrameworkMutation.graphql";
+import type { FrameworkGraphNodeQuery } from "/__generated__/core/FrameworkGraphNodeQuery.graphql";
+import type { FrameworkDetailPageFragment$key } from "/__generated__/core/FrameworkDetailPageFragment.graphql";
+import type { FrameworkDetailPageGenerateFrameworkStateOfApplicabilityMutation } from "/__generated__/core/FrameworkDetailPageGenerateFrameworkStateOfApplicabilityMutation.graphql";
+import type { FrameworkDetailPageExportFrameworkMutation } from "/__generated__/core/FrameworkDetailPageExportFrameworkMutation.graphql";
 import { FrameworkFormDialog } from "./dialogs/FrameworkFormDialog";
 import { FrameworkControlDialog } from "./dialogs/FrameworkControlDialog";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
-import { use } from "react";
-import { PermissionsContext } from "/providers/PermissionsContext";
 
 const frameworkDetailFragment = graphql`
   fragment FrameworkDetailPageFragment on Framework {
@@ -41,6 +39,10 @@ const frameworkDetailFragment = graphql`
     description
     lightLogoURL
     darkLogoURL
+    canExport: permission(action: "core:franework:export")
+    canUpdate: permission(action: "core:framework:update")
+    canDelete: permission(action: "core:framework:delete")
+    canCreateControl: permission(action: "core:control:create")
     organization {
       name
     }
@@ -90,7 +92,7 @@ export default function FrameworkDetailPage(props: Props) {
   const data = usePreloadedQuery(frameworkNodeQuery, props.queryRef);
   const framework = useFragment<FrameworkDetailPageFragment$key>(
     frameworkDetailFragment,
-    data.node
+    data.node,
   );
   const navigate = useNavigate();
   const controls = framework.controls.edges.map((edge) => edge.node);
@@ -100,9 +102,8 @@ export default function FrameworkDetailPage(props: Props) {
   const connectionId = framework.controls.__id;
   const deleteFramework = useDeleteFrameworkMutation(
     framework,
-    ConnectionHandler.getConnectionID(organizationId, connectionListKey)!
+    ConnectionHandler.getConnectionID(organizationId, connectionListKey)!,
   );
-  const { isAuthorized } = use(PermissionsContext);
   const [generateFrameworkStateOfApplicability] =
     useMutationWithToasts<FrameworkDetailPageGenerateFrameworkStateOfApplicabilityMutation>(
       generateFrameworkStateOfApplicabilityMutation,
@@ -110,7 +111,7 @@ export default function FrameworkDetailPage(props: Props) {
         errorMessage: "Failed to generate framework state of applicability",
         successMessage:
           "Framework state of applicability generated successfully",
-      }
+      },
     );
 
   const [exportFramework] =
@@ -120,7 +121,7 @@ export default function FrameworkDetailPage(props: Props) {
         errorMessage: "Failed to export framework",
         successMessage:
           "Framework export started successfully. You will receive an email when the export is ready.",
-      }
+      },
     );
 
   usePageTitle(`${framework.name} | ${selectedControl?.sectionTitle}`);
@@ -150,7 +151,7 @@ export default function FrameworkDetailPage(props: Props) {
           </>
         }
       >
-        {isAuthorized("Framework", "updateFramework") && (
+        {framework.canUpdate && (
           <FrameworkFormDialog
             organizationId={organizationId}
             framework={framework}
@@ -181,17 +182,19 @@ export default function FrameworkDetailPage(props: Props) {
           >
             {__("Download SOA")}
           </DropdownItem>
-          <DropdownItem
-            variant="primary"
-            onClick={() => {
-              exportFramework({
-                variables: { frameworkId: framework.id },
-              });
-            }}
-          >
-            {__("Export Framework")}
-          </DropdownItem>
-          {isAuthorized("Framework", "deleteFramework") && (
+          {framework.canExport && (
+            <DropdownItem
+              variant="primary"
+              onClick={() => {
+                exportFramework({
+                  variables: { frameworkId: framework.id },
+                });
+              }}
+            >
+              {__("Export Framework")}
+            </DropdownItem>
+          )}
+          {framework.canDelete && (
             <DropdownItem
               icon={IconTrashCan}
               variant="danger"
@@ -220,7 +223,7 @@ export default function FrameworkDetailPage(props: Props) {
               active={selectedControl?.id === control.id}
             />
           ))}
-          {isAuthorized("Organization", "createControl") && (
+          {framework.canCreateControl && (
             <FrameworkControlDialog
               frameworkId={framework.id}
               connectionId={connectionId}

@@ -24,11 +24,9 @@ import { LinkedAuditsCard } from "/components/audits/LinkedAuditsCard";
 import { LinkedSnapshotsCard } from "/components/snapshots/LinkedSnapshotsCard";
 import { FrameworkControlDialog } from "./dialogs/FrameworkControlDialog";
 import { promisifyMutation } from "@probo/helpers";
-import type { FrameworkGraphControlNodeQuery } from "/hooks/graph/__generated__/FrameworkGraphControlNodeQuery.graphql";
+import type { FrameworkGraphControlNodeQuery } from "/__generated__/core/FrameworkGraphControlNodeQuery.graphql";
 import { frameworkControlNodeQuery } from "/hooks/graph/FrameworkGraph";
-import type { FrameworkDetailPageFragment$data } from "./__generated__/FrameworkDetailPageFragment.graphql";
-import { use } from "react";
-import { PermissionsContext } from "/providers/PermissionsContext";
+import type { FrameworkDetailPageFragment$data } from "/__generated__/core/FrameworkDetailPageFragment.graphql";
 
 const attachMeasureMutation = graphql`
   mutation FrameworkControlPageAttachMutation(
@@ -167,59 +165,72 @@ export default function FrameworkControlPage({ queryRef }: Props) {
   const organizationId = useOrganizationId();
   const confirm = useConfirm();
   const navigate = useNavigate();
-  const { isAuthorized } = use(PermissionsContext);
-  const [detachMeasure, isDetachingMeasure] = useMutation(detachMeasureMutation);
-  const [attachMeasure, isAttachingMeasure] = useMutation(attachMeasureMutation);
-  const [detachDocument, isDetachingDocument] = useMutation(detachDocumentMutation);
-  const [attachDocument, isAttachingDocument] = useMutation(attachDocumentMutation);
+  const [detachMeasure, isDetachingMeasure] = useMutation(
+    detachMeasureMutation,
+  );
+  const [attachMeasure, isAttachingMeasure] = useMutation(
+    attachMeasureMutation,
+  );
+  const [detachDocument, isDetachingDocument] = useMutation(
+    detachDocumentMutation,
+  );
+  const [attachDocument, isAttachingDocument] = useMutation(
+    attachDocumentMutation,
+  );
   const [detachAudit, isDetachingAudit] = useMutation(detachAuditMutation);
   const [attachAudit, isAttachingAudit] = useMutation(attachAuditMutation);
-  const [detachSnapshot, isDetachingSnapshot] = useMutation(detachSnapshotMutation);
-  const [attachSnapshot, isAttachingSnapshot] = useMutation(attachSnapshotMutation);
+  const [detachSnapshot, isDetachingSnapshot] = useMutation(
+    detachSnapshotMutation,
+  );
+  const [attachSnapshot, isAttachingSnapshot] = useMutation(
+    attachSnapshotMutation,
+  );
   const [deleteControl] = useMutation(deleteControlMutation);
 
-  const canLinkMeasure = isAuthorized("Control", "createControlMeasureMapping");
-  const canUnlinkMeasure = isAuthorized("Control", "deleteControlMeasureMapping");
+  const canLinkMeasure = control.canCreateMeasureMapping;
+  const canUnlinkMeasure = control.canDeleteMeasureMapping;
   const measuresReadOnly = !canLinkMeasure && !canUnlinkMeasure;
 
-  const canLinkDocument = isAuthorized("Control", "createControlDocumentMapping");
-  const canUnlinkDocument = isAuthorized("Control", "deleteControlDocumentMapping");
+  const canLinkDocument = control.canCreateDocumentMapping;
+  const canUnlinkDocument = control.canDeleteDocumentMapping;
   const documentsReadOnly = !canLinkDocument && !canUnlinkDocument;
 
-  const canLinkAudit = isAuthorized("Control", "createControlAuditMapping");
-  const canUnlinkAudit = isAuthorized("Control", "deleteControlAuditMapping");
+  const canLinkAudit = control.canCreateAuditMapping;
+  const canUnlinkAudit = control.canDeleteAuditMapping;
   const auditsReadOnly = !canLinkAudit && !canUnlinkAudit;
 
-  const canLinkSnapshot = isAuthorized("Control", "createControlSnapshotMapping");
-  const canUnlinkSnapshot = isAuthorized("Control", "deleteControlSnapshotMapping");
+  const canLinkSnapshot = control.canCreateSnapshotMapping;
+  const canUnlinkSnapshot = control.canDeleteSnapshotMapping;
   const snapshotsReadOnly = !canLinkSnapshot && !canUnlinkSnapshot;
 
-  const withErrorHandling = <T extends MutationParameters>(
-    mutationFn: (config: UseMutationConfig<T>) => void,
-    errorMessage: string
-  ) => (options: UseMutationConfig<T>) => {
-    mutationFn({
-      ...options,
-      onCompleted: (response, error) => {
-        if (error) {
+  const withErrorHandling =
+    <T extends MutationParameters>(
+      mutationFn: (config: UseMutationConfig<T>) => void,
+      errorMessage: string,
+    ) =>
+    (options: UseMutationConfig<T>) => {
+      mutationFn({
+        ...options,
+        onCompleted: (response, error) => {
+          if (error) {
+            toast({
+              title: __("Error"),
+              description: formatError(errorMessage, error as GraphQLError),
+              variant: "error",
+            });
+          }
+          options.onCompleted?.(response, error);
+        },
+        onError: (error) => {
           toast({
             title: __("Error"),
             description: formatError(errorMessage, error as GraphQLError),
             variant: "error",
           });
-        }
-        options.onCompleted?.(response, error);
-      },
-      onError: (error) => {
-        toast({
-          title: __("Error"),
-          description: formatError(errorMessage, error as GraphQLError),
-          variant: "error",
-        });
-        options.onError?.(error);
-      },
-    });
-  };
+          options.onError?.(error);
+        },
+      });
+    };
 
   const onDelete = () => {
     confirm(
@@ -233,14 +244,14 @@ export default function FrameworkControlPage({ queryRef }: Props) {
           },
           onCompleted: () => {
             navigate(
-              `/organizations/${organizationId}/frameworks/${framework.id}`
+              `/organizations/${organizationId}/frameworks/${framework.id}`,
             );
           },
         });
       },
       {
         message: __("Are you sure you want to delete this control?"),
-      }
+      },
     );
   };
 
@@ -253,7 +264,7 @@ export default function FrameworkControlPage({ queryRef }: Props) {
           </div>
         </div>
         <div className="flex gap-2">
-          {isAuthorized("Control", "updateControl") && (
+          {control.canUpdate && (
             <FrameworkControlDialog
               frameworkId={framework.id}
               connectionId={connectionId}
@@ -264,7 +275,7 @@ export default function FrameworkControlPage({ queryRef }: Props) {
               </Button>
             </FrameworkControlDialog>
           )}
-          {isAuthorized("Control", "deleteControl") && (
+          {control.canDelete && (
             <ActionDropdown variant="secondary">
               <DropdownItem
                 icon={IconTrashCan}
@@ -286,7 +297,8 @@ export default function FrameworkControlPage({ queryRef }: Props) {
             </div>
           </div>
           <div className="text-sm">
-            <strong>{__("Justification:")}</strong> {control.exclusionJustification || __("No justification provided")}
+            <strong>{__("Justification:")}</strong>{" "}
+            {control.exclusionJustification || __("No justification provided")}
           </div>
         </div>
       )}
@@ -298,8 +310,14 @@ export default function FrameworkControlPage({ queryRef }: Props) {
             measures={control.measures?.edges.map((edge) => edge.node) ?? []}
             params={{ controlId: control.id }}
             connectionId={control.measures?.__id ?? ""}
-            onAttach={withErrorHandling(attachMeasure, __("Failed to link measure"))}
-            onDetach={withErrorHandling(detachMeasure, __("Failed to unlink measure"))}
+            onAttach={withErrorHandling(
+              attachMeasure,
+              __("Failed to link measure"),
+            )}
+            onDetach={withErrorHandling(
+              detachMeasure,
+              __("Failed to unlink measure"),
+            )}
             disabled={isAttachingMeasure || isDetachingMeasure}
             readOnly={measuresReadOnly}
           />
@@ -310,8 +328,14 @@ export default function FrameworkControlPage({ queryRef }: Props) {
             documents={control.documents?.edges.map((edge) => edge.node) ?? []}
             params={{ controlId: control.id }}
             connectionId={control.documents?.__id ?? ""}
-            onAttach={withErrorHandling(attachDocument, __("Failed to link document"))}
-            onDetach={withErrorHandling(detachDocument, __("Failed to unlink document"))}
+            onAttach={withErrorHandling(
+              attachDocument,
+              __("Failed to link document"),
+            )}
+            onDetach={withErrorHandling(
+              detachDocument,
+              __("Failed to unlink document"),
+            )}
             disabled={isAttachingDocument || isDetachingDocument}
             readOnly={documentsReadOnly}
           />
@@ -322,8 +346,14 @@ export default function FrameworkControlPage({ queryRef }: Props) {
             audits={control.audits?.edges.map((edge) => edge.node) ?? []}
             params={{ controlId: control.id }}
             connectionId={control.audits?.__id ?? ""}
-            onAttach={withErrorHandling(attachAudit, __("Failed to link audit"))}
-            onDetach={withErrorHandling(detachAudit, __("Failed to unlink audit"))}
+            onAttach={withErrorHandling(
+              attachAudit,
+              __("Failed to link audit"),
+            )}
+            onDetach={withErrorHandling(
+              detachAudit,
+              __("Failed to unlink audit"),
+            )}
             disabled={isAttachingAudit || isDetachingAudit}
             readOnly={auditsReadOnly}
           />
@@ -334,8 +364,14 @@ export default function FrameworkControlPage({ queryRef }: Props) {
             snapshots={control.snapshots?.edges.map((edge) => edge.node) ?? []}
             params={{ controlId: control.id }}
             connectionId={control.snapshots?.__id ?? ""}
-            onAttach={withErrorHandling(attachSnapshot, __("Failed to link snapshot"))}
-            onDetach={withErrorHandling(detachSnapshot, __("Failed to unlink snapshot"))}
+            onAttach={withErrorHandling(
+              attachSnapshot,
+              __("Failed to link snapshot"),
+            )}
+            onDetach={withErrorHandling(
+              detachSnapshot,
+              __("Failed to unlink snapshot"),
+            )}
             disabled={isAttachingSnapshot || isDetachingSnapshot}
             readOnly={snapshotsReadOnly}
           />

@@ -1,6 +1,6 @@
 import { useOutletContext, useParams } from "react-router";
 import { graphql } from "relay-runtime";
-import type { VendorServicesTabFragment$key } from "./__generated__/VendorServicesTabFragment.graphql";
+import type { VendorServicesTabFragment$key } from "/__generated__/core/VendorServicesTabFragment.graphql";
 import { useTranslate } from "@probo/i18n";
 import { usePageTitle } from "@probo/hooks";
 import {
@@ -19,14 +19,18 @@ import {
   useConfirm,
 } from "@probo/ui";
 import { useFragment, useRefetchableFragment } from "react-relay";
-import type { VendorServicesTabFragment_service$key } from "./__generated__/VendorServicesTabFragment_service.graphql";
+import type {
+  VendorServicesTabFragment_service$data,
+  VendorServicesTabFragment_service$key,
+} from "/__generated__/core/VendorServicesTabFragment_service.graphql";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { sprintf } from "@probo/helpers";
 import { SortableTable, SortableTh } from "/components/SortableTable";
 import { CreateServiceDialog } from "../dialogs/CreateServiceDialog";
 import { EditServiceDialog } from "../dialogs/EditServiceDialog";
-import { use, useState } from "react";
-import { PermissionsContext } from "/providers/PermissionsContext";
+import { useState, type ComponentProps } from "react";
+import type { VendorGraphNodeQuery$data } from "/__generated__/core/VendorGraphNodeQuery.graphql";
+import type { VendorServicesListQuery } from "/__generated__/core/VendorServicesListQuery.graphql";
 
 export const vendorServicesFragment = graphql`
   fragment VendorServicesTabFragment on Vendor
@@ -49,6 +53,8 @@ export const vendorServicesFragment = graphql`
       edges {
         node {
           id
+          canUpdate: permission(action: "core:vendor-service:update")
+          canDelete: permission(action: "core:vendor-service:delete")
           ...VendorServicesTabFragment_service
         }
       }
@@ -63,6 +69,8 @@ const serviceFragment = graphql`
     description
     createdAt
     updatedAt
+    canUpdate: permission(action: "core:vendor-service:update")
+    canDelete: permission(action: "core:vendor-service:delete")
   }
 `;
 
@@ -79,27 +87,22 @@ const deleteServiceMutation = graphql`
 
 export default function VendorServicesTab() {
   const { vendor } = useOutletContext<{
-    vendor: VendorServicesTabFragment$key & { name: string; id: string };
+    vendor: VendorGraphNodeQuery$data["node"];
   }>();
-  const [data, refetch] = useRefetchableFragment(
-    vendorServicesFragment,
-    vendor
-  );
+  const [data, refetch] = useRefetchableFragment<
+    VendorServicesListQuery,
+    VendorServicesTabFragment$key
+  >(vendorServicesFragment, vendor);
   const connectionId = data.services.__id;
   const services = data.services.edges.map((edge) => edge.node);
   const { __ } = useTranslate();
   const { snapshotId } = useParams<{ snapshotId?: string }>();
   const isSnapshotMode = Boolean(snapshotId);
-  const [editingService, setEditingService] = useState<{
-    id: string;
-    name: string;
-    description?: string | null;
-  } | null>(null);
-  const { isAuthorized } = use(PermissionsContext);
-  const canCreateService = isAuthorized("Vendor", "createVendorService");
-  const canUpdateService = isAuthorized("VendorService", "updateVendorService");
-  const canDeleteService = isAuthorized("VendorService", "deleteVendorService");
-  const hasAnyAction = canUpdateService || canDeleteService;
+  const [editingService, setEditingService] =
+    useState<VendorServicesTabFragment_service$data | null>(null);
+  const hasAnyAction = services.some(
+    ({ canUpdate, canDelete }) => canUpdate || canDelete,
+  );
 
   usePageTitle(vendor.name + " - " + __("Services"));
 
@@ -109,17 +112,16 @@ export default function VendorServicesTab() {
         title={__("Services")}
         description={__("Manage services provided by this vendor.")}
       >
-        {!isSnapshotMode && canCreateService && (
-          <CreateServiceDialog
-            vendorId={vendor.id}
-            connectionId={connectionId}
-          >
+        {!isSnapshotMode && vendor.canCreateService && (
+          <CreateServiceDialog vendorId={vendor.id} connectionId={connectionId}>
             <Button icon={IconPlusLarge}>{__("Add service")}</Button>
           </CreateServiceDialog>
         )}
       </PageHeader>
 
-      <SortableTable refetch={refetch}>
+      <SortableTable
+        refetch={refetch as ComponentProps<typeof SortableTable>["refetch"]}
+      >
         <Thead>
           <Tr>
             <SortableTh field="NAME">{__("Name")}</SortableTh>
@@ -135,14 +137,12 @@ export default function VendorServicesTab() {
               connectionId={connectionId}
               onEdit={setEditingService}
               isSnapshotMode={isSnapshotMode}
-              canUpdate={canUpdateService}
-              canDelete={canDeleteService}
             />
           ))}
         </Tbody>
       </SortableTable>
 
-      {editingService && !isSnapshotMode && canUpdateService && (
+      {editingService && !isSnapshotMode && editingService.canUpdate && (
         <EditServiceDialog
           serviceId={editingService.id}
           service={editingService}
@@ -156,28 +156,22 @@ export default function VendorServicesTab() {
 type ServiceRowProps = {
   serviceKey: VendorServicesTabFragment_service$key;
   connectionId: string;
-  onEdit: (service: {
-    id: string;
-    name: string;
-    description?: string | null;
-  }) => void;
+  onEdit: (service: VendorServicesTabFragment_service$data) => void;
   isSnapshotMode: boolean;
-  canUpdate?: boolean;
-  canDelete?: boolean;
 };
 
 function ServiceRow(props: ServiceRowProps) {
   const { __ } = useTranslate();
   const service = useFragment<VendorServicesTabFragment_service$key>(
     serviceFragment,
-    props.serviceKey
+    props.serviceKey,
   );
   const confirm = useConfirm();
   const [deleteService] = useMutationWithToasts(deleteServiceMutation, {
     successMessage: __("Service deleted successfully"),
     errorMessage: __("Failed to delete service"),
   });
-  const hasAnyAction = props.canUpdate || props.canDelete;
+  const hasAnyAction = service.canUpdate || service.canDelete;
 
   const handleDelete = () => {
     confirm(
@@ -193,11 +187,11 @@ function ServiceRow(props: ServiceRowProps) {
       {
         message: sprintf(
           __(
-            'This will permanently delete the service "%s". This action cannot be undone.'
+            'This will permanently delete the service "%s". This action cannot be undone.',
           ),
-          service.name
+          service.name,
         ),
-      }
+      },
     );
   };
 
@@ -208,19 +202,15 @@ function ServiceRow(props: ServiceRowProps) {
       {!props.isSnapshotMode && hasAnyAction && (
         <Td width={50} className="text-end">
           <ActionDropdown>
-            {props.canUpdate && (
+            {service.canUpdate && (
               <DropdownItem
                 icon={IconPencil}
-                onClick={() => props.onEdit({
-                  id: service.id,
-                  name: service.name,
-                  description: service.description,
-                })}
+                onClick={() => props.onEdit(service)}
               >
                 {__("Edit")}
               </DropdownItem>
             )}
-            {props.canDelete && (
+            {service.canDelete && (
               <DropdownItem
                 icon={IconTrashCan}
                 onClick={handleDelete}

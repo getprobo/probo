@@ -7,7 +7,7 @@ type Vendor = {
   name: string;
   websiteUrl: string | null | undefined;
 };
-import type { VendorGraphSelectQuery } from "/hooks/graph/__generated__/VendorGraphSelectQuery.graphql.ts";
+import type { VendorGraphSelectQuery } from "/__generated__/core/VendorGraphSelectQuery.graphql.ts";
 
 type Props = {
   name: string;

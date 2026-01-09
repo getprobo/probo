@@ -1,16 +1,19 @@
 import { useTranslate } from "@probo/i18n";
 import { graphql } from "relay-runtime";
 import { useMutationWithToasts } from "../useMutationWithToasts";
-import type { DocumentGraphDeleteMutation } from "./__generated__/DocumentGraphDeleteMutation.graphql";
-import type { DocumentGraphSendSigningNotificationsMutation } from "./__generated__/DocumentGraphSendSigningNotificationsMutation.graphql";
-import type { DocumentGraphDeleteDraftMutation } from "./__generated__/DocumentGraphDeleteDraftMutation.graphql";
-import type { DocumentGraphBulkExportDocumentsMutation } from "./__generated__/DocumentGraphBulkExportDocumentsMutation.graphql";
+import type { DocumentGraphDeleteMutation } from "/__generated__/core/DocumentGraphDeleteMutation.graphql";
+import type { DocumentGraphSendSigningNotificationsMutation } from "/__generated__/core/DocumentGraphSendSigningNotificationsMutation.graphql";
+import type { DocumentGraphDeleteDraftMutation } from "/__generated__/core/DocumentGraphDeleteDraftMutation.graphql";
+import type { DocumentGraphBulkExportDocumentsMutation } from "/__generated__/core/DocumentGraphBulkExportDocumentsMutation.graphql";
 
 export const documentsQuery = graphql`
   query DocumentGraphListQuery($organizationId: ID!) {
     organization: node(id: $organizationId) {
       id
-      ...DocumentsPageListFragment
+      ... on Organization {
+        canCreateDocument: permission(action: "core:document:create")
+        ...DocumentsPageListFragment
+      }
     }
   }
 `;
@@ -18,9 +21,7 @@ export const documentsQuery = graphql`
 export const DocumentsConnectionKey = "DocumentsListQuery_documents";
 
 const deleteDocumentMutation = graphql`
-  mutation DocumentGraphDeleteMutation(
-    $input: DeleteDocumentInput!
-  ) {
+  mutation DocumentGraphDeleteMutation($input: DeleteDocumentInput!) {
     deleteDocument(input: $input) {
       deletedDocumentId @deleteRecord
     }
@@ -35,7 +36,7 @@ export function useDeleteDocumentMutation() {
     {
       successMessage: __("Document deleted successfully."),
       errorMessage: __("Failed to delete document"),
-    }
+    },
   );
 }
 
@@ -58,7 +59,7 @@ export function useDeleteDraftDocumentVersionMutation() {
     {
       successMessage: __("Draft deleted successfully."),
       errorMessage: __("Failed to delete draft"),
-    }
+    },
   );
 }
 
@@ -75,13 +76,10 @@ const bulkDeleteDocumentsMutation = graphql`
 export function useBulkDeleteDocumentsMutation() {
   const { __ } = useTranslate();
 
-  return useMutationWithToasts(
-    bulkDeleteDocumentsMutation,
-    {
-      successMessage: __("Documents deleted successfully."),
-      errorMessage: __("Failed to delete documents"),
-    }
-  );
+  return useMutationWithToasts(bulkDeleteDocumentsMutation, {
+    successMessage: __("Documents deleted successfully."),
+    errorMessage: __("Failed to delete documents"),
+  });
 }
 
 const sendSigningNotificationsMutation = graphql`
@@ -102,7 +100,7 @@ export function useSendSigningNotificationsMutation() {
     {
       successMessage: __("Signing notifications sent successfully."),
       errorMessage: __("Failed to send signing notifications"),
-    }
+    },
   );
 }
 
@@ -122,9 +120,11 @@ export function useBulkExportDocumentsMutation() {
   return useMutationWithToasts<DocumentGraphBulkExportDocumentsMutation>(
     bulkExportDocumentsMutation,
     {
-      successMessage: __("Document export started successfully. You will receive an email when the export is ready."),
+      successMessage: __(
+        "Document export started successfully. You will receive an email when the export is ready.",
+      ),
       errorMessage: __("Failed to start document export"),
-    }
+    },
   );
 }
 

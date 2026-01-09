@@ -1,10 +1,8 @@
 import { graphql, useRefetchableFragment } from "react-relay";
 import { useOutletContext } from "react-router";
 import { LinkedControlsCard } from "/components/controls/LinkedControlsCard";
-import type { MeasureControlsTabFragment$key } from "./__generated__/MeasureControlsTabFragment.graphql";
+import type { MeasureControlsTabFragment$key } from "/__generated__/core/MeasureControlsTabFragment.graphql";
 import { useMutationWithIncrement } from "/hooks/useMutationWithIncrement";
-import { use } from "react";
-import { PermissionsContext } from "/providers/PermissionsContext";
 
 export const controlsFragment = graphql`
   fragment MeasureControlsTabFragment on Measure
@@ -30,6 +28,12 @@ export const controlsFragment = graphql`
       edges {
         node {
           id
+          canCreateMeasureMapping: permission(
+            action: "core:control:create-measure-mapping"
+          )
+          canDeleteMeasureMapping: permission(
+            action: "core:control:delete-measure-mapping"
+          )
           ...LinkedControlsCardFragment
         }
       }
@@ -71,10 +75,13 @@ export default function MeasureControlsTab() {
   const [data, refetch] = useRefetchableFragment(controlsFragment, measure);
   const connectionId = data.controls.__id;
   const controls = data.controls?.edges?.map((edge) => edge.node) ?? [];
-  const { isAuthorized } = use(PermissionsContext);
 
-  const canLinkControl = isAuthorized("Control", "createControlMeasureMapping");
-  const canUnlinkControl = isAuthorized("Control", "deleteControlMeasureMapping");
+  const canLinkControl = controls.some(
+    ({ canCreateMeasureMapping }) => canCreateMeasureMapping,
+  );
+  const canUnlinkControl = controls.some(
+    ({ canDeleteMeasureMapping }) => canDeleteMeasureMapping,
+  );
   const readOnly = !canLinkControl && !canUnlinkControl;
 
   const incrementOptions = {

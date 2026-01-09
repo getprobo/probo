@@ -21,11 +21,11 @@ import (
 	"maps"
 	"time"
 
-	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/page"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 )
 
 type (
@@ -41,23 +41,7 @@ type (
 	}
 
 	TrustCenters []*TrustCenter
-
-	ErrTrustCenterNotFound struct {
-		Identifier string
-	}
-
-	ErrTrustCenterAlreadyExists struct {
-		message string
-	}
 )
-
-func (e ErrTrustCenterNotFound) Error() string {
-	return fmt.Sprintf("trust center not found: %q", e.Identifier)
-}
-
-func (e ErrTrustCenterAlreadyExists) Error() string {
-	return e.message
-}
 
 func (tc *TrustCenter) CursorKey(orderBy TrustCenterOrderField) page.CursorKey {
 	switch orderBy {
@@ -66,6 +50,20 @@ func (tc *TrustCenter) CursorKey(orderBy TrustCenterOrderField) page.CursorKey {
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
+}
+
+func (tc *TrustCenter) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+	q := `SELECT organization_id FROM trust_centers WHERE id = $1 LIMIT 1;`
+
+	var organizationID gid.GID
+	if err := conn.QueryRow(ctx, q, tc.ID).Scan(&organizationID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrResourceNotFound
+		}
+		return nil, fmt.Errorf("cannot query trust center authorization attributes: %w", err)
+	}
+
+	return map[string]string{"organization_id": organizationID.String()}, nil
 }
 
 func (tc *TrustCenter) LoadByID(
@@ -239,9 +237,7 @@ INSERT INTO trust_centers (
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
 			if pgErr.Code == "23505" && pgErr.ConstraintName == "trust_centers_slug_key" {
-				return &ErrTrustCenterAlreadyExists{
-					message: fmt.Sprintf("trust center with slug %q already exists", tc.Slug),
-				}
+				return ErrResourceAlreadyExists
 			}
 		}
 		return fmt.Errorf("cannot insert trust center: %w", err)

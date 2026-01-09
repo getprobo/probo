@@ -14,7 +14,6 @@ directive @goEnum(value: String) on ENUM_VALUE
 
 # Scalars
 scalar CursorKey
-scalar Void
 scalar Datetime
 scalar Upload
 scalar Duration
@@ -32,15 +31,6 @@ type PageInfo {
   hasPreviousPage: Boolean!
   startCursor: CursorKey
   endCursor: CursorKey
-}
-
-# Roles
-enum Role {
-  OWNER
-  ADMIN
-  VIEWER
-  AUDITOR
-  FULL
 }
 
 # Enums
@@ -83,31 +73,6 @@ enum PeopleKind @goModel(model: "go.probo.inc/probo/pkg/coredata.PeopleKind") {
     @goEnum(value: "go.probo.inc/probo/pkg/coredata.PeopleKindServiceAccount")
 }
 
-enum InvitationStatus
-  @goModel(model: "go.probo.inc/probo/pkg/coredata.InvitationStatus") {
-  PENDING
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.InvitationStatusPending")
-  ACCEPTED
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.InvitationStatusAccepted")
-  EXPIRED
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.InvitationStatusExpired")
-}
-
-enum MembershipRole
-  @goModel(model: "go.probo.inc/probo/pkg/coredata.MembershipRole") {
-  OWNER @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleOwner")
-  ADMIN @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleAdmin")
-  EMPLOYEE
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleEmployee")
-  VIEWER @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleViewer")
-  AUDITOR
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipRoleAuditor")
-}
-
-enum APIRole @goModel(model: "go.probo.inc/probo/pkg/coredata.APIRole") {
-  FULL @goEnum(value: "go.probo.inc/probo/pkg/coredata.APIRoleFull")
-}
-
 enum DocumentStatus
   @goModel(model: "go.probo.inc/probo/pkg/coredata.DocumentStatus") {
   DRAFT @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentStatusDraft")
@@ -141,26 +106,6 @@ enum AuditState @goModel(model: "go.probo.inc/probo/pkg/coredata.AuditState") {
     @goEnum(value: "go.probo.inc/probo/pkg/coredata.AuditStateCompleted")
   REJECTED @goEnum(value: "go.probo.inc/probo/pkg/coredata.AuditStateRejected")
   OUTDATED @goEnum(value: "go.probo.inc/probo/pkg/coredata.AuditStateOutdated")
-}
-
-enum SAMLEnforcementPolicy
-  @goModel(model: "go.probo.inc/probo/pkg/coredata.SAMLEnforcementPolicy") {
-  OFF @goEnum(value: "go.probo.inc/probo/pkg/coredata.SAMLEnforcementPolicyOff")
-  OPTIONAL
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.SAMLEnforcementPolicyOptional"
-    )
-  REQUIRED
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.SAMLEnforcementPolicyRequired"
-    )
-}
-
-enum UserAuthMethod
-  @goModel(model: "go.probo.inc/probo/pkg/coredata.UserAuthMethod") {
-  PASSWORD
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.UserAuthMethodPassword")
-  SAML @goEnum(value: "go.probo.inc/probo/pkg/coredata.UserAuthMethodSAML")
 }
 
 enum TrustCenterVisibility
@@ -385,9 +330,7 @@ enum DataProtectionImpactAssessmentResidualRisk
 }
 
 enum ProcessingActivityRole
-  @goModel(
-    model: "go.probo.inc/probo/pkg/coredata.ProcessingActivityRole"
-  ) {
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.ProcessingActivityRole") {
   CONTROLLER
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityRoleController"
@@ -399,12 +342,6 @@ enum ProcessingActivityRole
 }
 
 # Order Field Enums
-enum UserOrderField
-  @goModel(model: "go.probo.inc/probo/pkg/coredata.UserOrderField") {
-  CREATED_AT
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.UserOrderFieldCreatedAt")
-}
-
 enum PeopleOrderField
   @goModel(model: "go.probo.inc/probo/pkg/coredata.PeopleOrderField") {
   FULL_NAME
@@ -544,20 +481,6 @@ enum VendorServiceOrderField
   NAME
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.VendorServiceOrderFieldName"
-    )
-}
-
-enum OrganizationOrderField
-  @goModel(model: "go.probo.inc/probo/pkg/coredata.OrganizationOrderField") {
-  NAME
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.OrganizationOrderFieldName")
-  CREATED_AT
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.OrganizationOrderFieldCreatedAt"
-    )
-  UPDATED_AT
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.OrganizationOrderFieldUpdatedAt"
     )
 }
 
@@ -1189,57 +1112,7 @@ enum SnapshotOrderField
   TYPE @goEnum(value: "go.probo.inc/probo/pkg/coredata.SnapshotOrderFieldType")
 }
 
-enum MembershipOrderField
-  @goModel(model: "go.probo.inc/probo/pkg/coredata.MembershipOrderField") {
-  FULL_NAME
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.MembershipOrderFieldFullName"
-    )
-  EMAIL_ADDRESS
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.MembershipOrderFieldEmailAddress"
-    )
-  ROLE
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipOrderFieldRole")
-  CREATED_AT
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.MembershipOrderFieldCreatedAt"
-    )
-}
-
-enum InvitationOrderField
-  @goModel(model: "go.probo.inc/probo/pkg/coredata.InvitationOrderField") {
-  FULL_NAME
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.InvitationOrderFieldFullName"
-    )
-  EMAIL
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.InvitationOrderFieldEmail")
-  ROLE
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.InvitationOrderFieldRole")
-  CREATED_AT
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.InvitationOrderFieldCreatedAt"
-    )
-  EXPIRES_AT
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.InvitationOrderFieldExpiresAt"
-    )
-  ACCEPTED_AT
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.InvitationOrderFieldAcceptedAt"
-    )
-}
-
 # Input Types
-input UserOrder
-  @goModel(
-    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.UserOrderBy"
-  ) {
-  direction: OrderDirection!
-  field: UserOrderField!
-}
-
 input PeopleOrder
   @goModel(
     model: "go.probo.inc/probo/pkg/server/api/console/v1/types.PeopleOrderBy"
@@ -1432,11 +1305,6 @@ input VendorServiceOrder
   field: VendorServiceOrderField!
 }
 
-input OrganizationOrder {
-  direction: OrderDirection!
-  field: OrganizationOrderField!
-}
-
 input DocumentVersionOrder
   @goModel(
     model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DocumentVersionOrderBy"
@@ -1451,23 +1319,6 @@ input SnapshotOrder
   ) {
   direction: OrderDirection!
   field: SnapshotOrderField!
-}
-
-input MembershipOrder
-  @goModel(
-    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.MembershipOrderBy"
-  ) {
-  direction: OrderDirection!
-  field: MembershipOrderField!
-}
-
-input InvitationOrder {
-  direction: OrderDirection!
-  field: InvitationOrderField!
-}
-
-input InvitationFilter {
-  statuses: [InvitationStatus!]
 }
 
 input DocumentVersionFilter {
@@ -1558,6 +1409,8 @@ type TrustCenter implements Node {
     before: CursorKey
     orderBy: TrustCenterReferenceOrder
   ): TrustCenterReferenceConnection! @goField(forceResolver: true)
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type Organization implements Node {
@@ -1571,23 +1424,6 @@ type Organization implements Node {
   email: String
   headquarterAddress: String
   context: OrganizationContext @goField(forceResolver: true)
-
-  memberships(
-    first: Int
-    after: CursorKey
-    last: Int
-    before: CursorKey
-    orderBy: MembershipOrder
-  ): MembershipConnection! @goField(forceResolver: true)
-
-  invitations(
-    first: Int
-    after: CursorKey
-    last: Int
-    before: CursorKey
-    orderBy: InvitationOrder
-    filter: InvitationFilter
-  ): InvitationConnection! @goField(forceResolver: true)
 
   slackConnections(
     first: Int
@@ -1774,42 +1610,10 @@ type Organization implements Node {
 
   customDomain: CustomDomain @goField(forceResolver: true)
 
-  samlConfigurations: [SAMLConfiguration!]! @goField(forceResolver: true)
-
   createdAt: Datetime!
   updatedAt: Datetime!
-}
 
-type User implements Node {
-  id: ID!
-  fullName: String!
-  email: EmailAddr!
-  createdAt: Datetime!
-  updatedAt: Datetime!
-}
-
-type Membership implements Node {
-  id: ID!
-  userID: ID!
-  organizationID: ID!
-  role: MembershipRole!
-  fullName: String!
-  emailAddress: EmailAddr!
-  authMethod: UserAuthMethod! @goField(forceResolver: true)
-  createdAt: Datetime!
-  updatedAt: Datetime!
-}
-
-type Invitation implements Node {
-  id: ID!
-  email: EmailAddr!
-  fullName: String!
-  role: MembershipRole!
-  status: InvitationStatus!
-  expiresAt: Datetime!
-  acceptedAt: Datetime
-  createdAt: Datetime!
-  organization: Organization! @goField(forceResolver: true)
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type SlackConnection {
@@ -1841,6 +1645,8 @@ type People implements Node {
   contractEndDate: Datetime
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type Vendor implements Node {
@@ -1908,6 +1714,8 @@ type Vendor implements Node {
   showOnTrustCenter: Boolean!
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type VendorComplianceReport implements Node {
@@ -1919,6 +1727,8 @@ type VendorComplianceReport implements Node {
   file: File @goField(forceResolver: true)
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type VendorBusinessAssociateAgreement implements Node {
@@ -1931,6 +1741,8 @@ type VendorBusinessAssociateAgreement implements Node {
   fileSize: BigInt!
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type VendorContact implements Node {
@@ -1942,6 +1754,8 @@ type VendorContact implements Node {
   role: String
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type VendorService implements Node {
@@ -1951,6 +1765,8 @@ type VendorService implements Node {
   description: String
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type VendorDataPrivacyAgreement implements Node {
@@ -1963,6 +1779,8 @@ type VendorDataPrivacyAgreement implements Node {
   fileSize: BigInt!
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type Framework implements Node {
@@ -1985,13 +1803,13 @@ type Framework implements Node {
 
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
-type Control implements Node
-  @goModel(
-    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.Control"
-  ) {
+type Control implements Node {
   id: ID!
+  organization: Organization @goField(forceResolver: true)
   sectionTitle: String!
   name: String!
   description: String
@@ -2036,6 +1854,8 @@ type Control implements Node
 
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type Measure implements Node {
@@ -2081,6 +1901,8 @@ type Measure implements Node {
 
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type Task implements Node {
@@ -2105,6 +1927,8 @@ type Task implements Node {
 
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type Evidence implements Node {
@@ -2121,6 +1945,8 @@ type Evidence implements Node {
 
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type Document implements Node {
@@ -2154,6 +1980,8 @@ type Document implements Node {
 
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type SignableDocument
@@ -2189,6 +2017,8 @@ type Meeting implements Node {
   organization: Organization! @goField(forceResolver: true)
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type Risk implements Node {
@@ -2247,6 +2077,8 @@ type Risk implements Node {
 
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type Audit implements Node {
@@ -2272,6 +2104,8 @@ type Audit implements Node {
   trustCenterVisibility: TrustCenterVisibility!
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type Nonconformity implements Node {
@@ -2290,6 +2124,8 @@ type Nonconformity implements Node {
   effectivenessCheck: String
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type Obligation implements Node {
@@ -2308,6 +2144,8 @@ type Obligation implements Node {
   status: ObligationStatus!
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type ContinualImprovement implements Node {
@@ -2324,6 +2162,8 @@ type ContinualImprovement implements Node {
   priority: ContinualImprovementPriority!
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type ProcessingActivity implements Node {
@@ -2357,10 +2197,14 @@ type ProcessingActivity implements Node {
     before: CursorKey
     orderBy: VendorOrder
   ): VendorConnection! @goField(forceResolver: true)
-  dataProtectionImpactAssessment: DataProtectionImpactAssessment @goField(forceResolver: true)
-  transferImpactAssessment: TransferImpactAssessment @goField(forceResolver: true)
+  dataProtectionImpactAssessment: DataProtectionImpactAssessment
+    @goField(forceResolver: true)
+  transferImpactAssessment: TransferImpactAssessment
+    @goField(forceResolver: true)
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type DataProtectionImpactAssessment implements Node {
@@ -2374,6 +2218,8 @@ type DataProtectionImpactAssessment implements Node {
   residualRisk: DataProtectionImpactAssessmentResidualRisk
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type TransferImpactAssessment implements Node {
@@ -2387,6 +2233,8 @@ type TransferImpactAssessment implements Node {
   supplementaryMeasures: String
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type Snapshot implements Node {
@@ -2406,6 +2254,8 @@ type Snapshot implements Node {
   ): ControlConnection! @goField(forceResolver: true)
 
   createdAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type Report implements Node {
@@ -2418,24 +2268,12 @@ type Report implements Node {
   createdAt: Datetime!
   updatedAt: Datetime!
   audit: Audit @goField(forceResolver: true)
-}
 
-type Session {
-  id: ID!
-  expiresAt: Datetime!
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type Viewer {
   id: ID!
-  user: User!
-
-  organizations(
-    first: Int
-    after: CursorKey
-    last: Int
-    before: CursorKey
-    orderBy: OrganizationOrder
-  ): OrganizationConnection! @goField(forceResolver: true)
 
   signableDocuments(
     organizationId: ID!
@@ -2447,17 +2285,6 @@ type Viewer {
   ): SignableDocumentConnection! @goField(forceResolver: true)
 
   signableDocument(id: ID!): SignableDocument @goField(forceResolver: true)
-}
-
-# Connection Types
-type OrganizationConnection {
-  edges: [OrganizationEdge!]!
-  pageInfo: PageInfo!
-}
-
-type OrganizationEdge {
-  cursor: CursorKey!
-  node: Organization!
 }
 
 type TrustCenterConnection {
@@ -2489,6 +2316,8 @@ type TrustCenterAccess implements Node {
     before: CursorKey
     orderBy: TrustCenterDocumentAccessOrder
   ): TrustCenterDocumentAccessConnection! @goField(forceResolver: true)
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type TrustCenterDocumentAccess
@@ -2535,6 +2364,8 @@ type TrustCenterReference implements Node {
   rank: Int!
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type TrustCenterReferenceConnection
@@ -2551,7 +2382,7 @@ type TrustCenterReferenceEdge {
   node: TrustCenterReference!
 }
 
-type TrustCenterFile {
+type TrustCenterFile implements Node {
   id: ID!
   name: String!
   category: String!
@@ -2560,6 +2391,8 @@ type TrustCenterFile {
   createdAt: Datetime!
   updatedAt: Datetime!
   organization: Organization! @goField(forceResolver: true)
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type TrustCenterFileConnection
@@ -2574,34 +2407,6 @@ type TrustCenterFileConnection
 type TrustCenterFileEdge {
   cursor: CursorKey!
   node: TrustCenterFile!
-}
-
-type UserConnection
-  @goModel(
-    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.UserConnection"
-  ) {
-  totalCount: Int! @goField(forceResolver: true)
-  edges: [UserEdge!]!
-  pageInfo: PageInfo!
-}
-
-type MembershipConnection
-  @goModel(
-    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.MembershipConnection"
-  ) {
-  totalCount: Int! @goField(forceResolver: true)
-  edges: [MembershipEdge!]!
-  pageInfo: PageInfo!
-}
-
-type MembershipEdge {
-  cursor: CursorKey!
-  node: Membership!
-}
-
-type UserEdge {
-  cursor: CursorKey!
-  node: User!
 }
 
 type PeopleConnection
@@ -2945,20 +2750,6 @@ type File {
   updatedAt: Datetime!
 }
 
-type InvitationConnection
-  @goModel(
-    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.InvitationConnection"
-  ) {
-  totalCount: Int! @goField(forceResolver: true)
-  edges: [InvitationEdge!]!
-  pageInfo: PageInfo!
-}
-
-type InvitationEdge {
-  cursor: CursorKey!
-  node: Invitation!
-}
-
 # Root Types
 type Query {
   node(id: ID!): Node!
@@ -2966,22 +2757,9 @@ type Query {
 }
 
 type Mutation {
-  # Organization mutations
-  createOrganization(
-    input: CreateOrganizationInput!
-  ): CreateOrganizationPayload!
-  updateOrganization(
-    input: UpdateOrganizationInput!
-  ): UpdateOrganizationPayload!
   updateOrganizationContext(
     input: UpdateOrganizationContextInput!
   ): UpdateOrganizationContextPayload!
-  deleteOrganizationHorizontalLogo(
-    input: DeleteOrganizationHorizontalLogoInput!
-  ): DeleteOrganizationHorizontalLogoPayload!
-  deleteOrganization(
-    input: DeleteOrganizationInput!
-  ): DeleteOrganizationPayload!
   updateTrustCenter(input: UpdateTrustCenterInput!): UpdateTrustCenterPayload!
   uploadTrustCenterNDA(
     input: UploadTrustCenterNDAInput!
@@ -3022,13 +2800,7 @@ type Mutation {
   deleteTrustCenterFile(
     input: DeleteTrustCenterFileInput!
   ): DeleteTrustCenterFilePayload!
-  # User mutations
-  confirmEmail(input: ConfirmEmailInput!): ConfirmEmailPayload!
-  inviteUser(input: InviteUserInput!): InviteUserPayload!
-  acceptInvitation(input: AcceptInvitationInput!): AcceptInvitationPayload!
-  deleteInvitation(input: DeleteInvitationInput!): DeleteInvitationPayload!
-  removeMember(input: RemoveMemberInput!): RemoveMemberPayload!
-  updateMembership(input: UpdateMembershipInput!): UpdateMembershipPayload!
+
   # People mutations
   createPeople(input: CreatePeopleInput!): CreatePeoplePayload!
   updatePeople(input: UpdatePeopleInput!): UpdatePeoplePayload!
@@ -3203,6 +2975,7 @@ type Mutation {
     input: CancelSignatureRequestInput!
   ): CancelSignatureRequestPayload!
   signDocument(input: SignDocumentInput!): SignDocumentPayload!
+
   exportDocumentVersionPDF(
     input: ExportDocumentVersionPDFInput!
   ): ExportDocumentVersionPDFPayload!
@@ -3288,25 +3061,6 @@ type Mutation {
   deleteCustomDomain(
     input: DeleteCustomDomainInput!
   ): DeleteCustomDomainPayload!
-  # SAML Configuration mutations (OWNER/ADMIN only)
-  # Step 1: Initiate domain verification (creates SAML config with unverified domain)
-  initiateDomainVerification(
-    input: InitiateDomainVerificationInput!
-  ): InitiateDomainVerificationPayload!
-  # Step 2: Verify domain ownership via DNS TXT record
-  verifyDomain(input: VerifyDomainInput!): VerifyDomainPayload!
-  # Step 3: Configure SAML (only allowed after domain is verified)
-  createSAMLConfiguration(
-    input: CreateSAMLConfigurationInput!
-  ): CreateSAMLConfigurationPayload!
-  updateSAMLConfiguration(
-    input: UpdateSAMLConfigurationInput!
-  ): UpdateSAMLConfigurationPayload!
-  deleteSAMLConfiguration(
-    input: DeleteSAMLConfigurationInput!
-  ): DeleteSAMLConfigurationPayload!
-  enableSAML(input: EnableSAMLInput!): EnableSAMLPayload!
-  disableSAML(input: DisableSAMLInput!): DisableSAMLPayload!
 }
 
 # Input Types
@@ -3318,32 +3072,9 @@ type GenerateFrameworkStateOfApplicabilityPayload {
   data: String!
 }
 
-input CreateOrganizationInput {
-  name: String!
-}
-
-input UpdateOrganizationInput {
-  organizationId: ID!
-  name: String
-  description: String @goField(omittable: true)
-  websiteUrl: String @goField(omittable: true)
-  email: String @goField(omittable: true)
-  headquarterAddress: String @goField(omittable: true)
-  logoFile: Upload
-  horizontalLogoFile: Upload
-}
-
 input UpdateOrganizationContextInput {
   organizationId: ID!
   summary: String @goField(omittable: true)
-}
-
-input DeleteOrganizationHorizontalLogoInput {
-  organizationId: ID!
-}
-
-input DeleteOrganizationInput {
-  organizationId: ID!
 }
 
 input UpdateTrustCenterInput {
@@ -3536,7 +3267,7 @@ input UpdatePeopleInput {
   id: ID!
   fullName: String
   primaryEmailAddress: EmailAddr
-  additionalEmailAddresses: [EmailAddr!]
+  additionalEmailAddresses: [EmailAddr!] @goField(omittable: true)
   kind: PeopleKind
   position: String @goField(omittable: true)
   contractStartDate: Datetime @goField(omittable: true)
@@ -3726,29 +3457,6 @@ input DeleteRiskObligationMappingInput {
   obligationId: ID!
 }
 
-input RequestEvidenceInput {
-  taskId: ID!
-  name: String!
-  type: EvidenceType!
-  description: String
-}
-
-input FulfillEvidenceInput {
-  evidenceId: ID!
-  name: String
-  file: Upload
-  url: String
-}
-
-input CreateEvidenceInput {
-  taskId: ID!
-  name: String!
-  type: EvidenceType!
-  url: String
-  file: Upload
-  description: String
-}
-
 input DeleteEvidenceInput {
   evidenceId: ID!
 }
@@ -3854,37 +3562,6 @@ input UpdateMeetingInput {
 
 input DeleteMeetingInput {
   meetingId: ID!
-}
-
-input ConfirmEmailInput {
-  token: String!
-}
-
-input InviteUserInput {
-  organizationId: ID!
-  email: EmailAddr!
-  fullName: String!
-  role: MembershipRole!
-  createPeople: Boolean!
-}
-
-input AcceptInvitationInput {
-  invitationId: ID!
-}
-
-input DeleteInvitationInput {
-  invitationId: ID!
-}
-
-input RemoveMemberInput {
-  organizationId: ID!
-  memberId: ID!
-}
-
-input UpdateMembershipInput {
-  organizationId: ID!
-  memberId: ID!
-  role: MembershipRole!
 }
 
 input CreateControlInput {
@@ -4140,13 +3817,6 @@ input DeleteSnapshotInput {
 }
 
 # Payload Types
-type CreateOrganizationPayload {
-  organizationEdge: OrganizationEdge!
-}
-
-type UpdateOrganizationPayload {
-  organization: Organization!
-}
 
 type UpdateOrganizationContextPayload {
   context: OrganizationContext!
@@ -4155,14 +3825,6 @@ type UpdateOrganizationContextPayload {
 type OrganizationContext {
   organizationId: ID!
   summary: String
-}
-
-type DeleteOrganizationHorizontalLogoPayload {
-  organization: Organization!
-}
-
-type DeleteOrganizationPayload {
-  deletedOrganizationId: ID!
 }
 
 type UpdateTrustCenterPayload {
@@ -4411,18 +4073,6 @@ type DeleteRiskObligationMappingPayload {
   deletedObligationId: ID!
 }
 
-type RequestEvidencePayload {
-  evidenceEdge: EvidenceEdge!
-}
-
-type FulfillEvidencePayload {
-  evidenceEdge: EvidenceEdge!
-}
-
-type CreateEvidencePayload {
-  evidenceEdge: EvidenceEdge!
-}
-
 type DeleteEvidencePayload {
   deletedEvidenceId: ID!
 }
@@ -4492,30 +4142,6 @@ type DeleteMeetingPayload {
   deletedMeetingId: ID!
 }
 
-type ConfirmEmailPayload {
-  success: Boolean!
-}
-
-type InviteUserPayload {
-  invitationEdge: InvitationEdge!
-}
-
-type AcceptInvitationPayload {
-  invitation: Invitation!
-}
-
-type DeleteInvitationPayload {
-  deletedInvitationId: ID!
-}
-
-type RemoveMemberPayload {
-  deletedMemberId: ID!
-}
-
-type UpdateMembershipPayload {
-  membership: Membership!
-}
-
 input VendorRiskAssessmentOrder {
   field: VendorRiskAssessmentOrderField!
   direction: OrderDirection!
@@ -4530,6 +4156,8 @@ type VendorRiskAssessment implements Node {
   notes: String
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 enum VendorRiskAssessmentOrderField
@@ -4594,6 +4222,8 @@ type DocumentVersion implements Node
   publishedAt: Datetime
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type DocumentVersionSignatureConnection {
@@ -4652,6 +4282,8 @@ type DocumentVersionSignature implements Node {
   requestedAt: Datetime!
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 input RequestSignatureInput {
@@ -4799,11 +4431,13 @@ type Asset implements Node {
     before: CursorKey
     orderBy: VendorOrder
   ): VendorConnection! @goField(forceResolver: true)
-  assetType: AssetType! @goField(forceResolver: true)
+  assetType: AssetType!
   dataTypesStored: String!
   organization: Organization! @goField(forceResolver: true)
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type AssetConnection
@@ -4881,6 +4515,8 @@ type Datum implements Node
   organization: Organization! @goField(forceResolver: true)
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 input DatumOrder
@@ -5061,6 +4697,8 @@ type CustomDomain implements Node {
   dnsRecords: [DNSRecordInstruction!]!
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
 type DNSRecordInstruction {
@@ -5086,163 +4724,4 @@ type CreateCustomDomainPayload {
 
 type DeleteCustomDomainPayload {
   deletedCustomDomainId: ID!
-}
-
-# ============================================
-# SAML Configuration Types
-# ============================================
-
-type SAMLConfiguration implements Node {
-  id: ID!
-  organization: Organization! @goField(forceResolver: true)
-  emailDomain: String!
-  enabled: Boolean!
-  enforcementPolicy: SAMLEnforcementPolicy!
-
-  # Domain verification (required before SAML can be configured)
-  domainVerified: Boolean!
-  domainVerificationToken: String
-  domainVerifiedAt: Datetime
-
-  # Service Provider metadata (read-only, auto-generated)
-  spEntityId: String!
-  spAcsUrl: String!
-  spMetadataUrl: String! @goField(forceResolver: true)
-
-  # Identity Provider configuration
-  idpEntityId: String!
-  idpSsoUrl: String!
-  idpCertificate: String!
-  idpMetadataUrl: String
-
-  # Attribute mapping
-  attributeEmail: String!
-  attributeFirstname: String!
-  attributeLastname: String!
-  attributeRole: String!
-
-  # Auto-signup
-  autoSignupEnabled: Boolean!
-
-  # Test login URL for this configuration
-  testLoginUrl: String! @goField(forceResolver: true)
-
-  createdAt: Datetime!
-  updatedAt: Datetime!
-}
-
-# ============================================
-# SAML Configuration Inputs
-# ============================================
-
-input CreateSAMLConfigurationInput {
-  organizationId: ID!
-
-  # Email domain this config applies to
-  emailDomain: String!
-
-  # Enforcement policy for this SAML configuration
-  enforcementPolicy: SAMLEnforcementPolicy!
-
-  # SP configuration (optional - auto-generated if not provided)
-  spCertificate: String
-  spPrivateKey: String
-
-  # IdP configuration - Option 1: Provide metadata XML (recommended for Google Workspace)
-  # This will automatically extract entityId, ssoUrl, and certificate from the metadata
-  idpMetadataXml: String
-
-  # IdP configuration - Option 2: Provide individual fields manually
-  # Required if idpMetadataXml is not provided
-  idpEntityId: String
-  idpSsoUrl: String
-  idpCertificate: String
-  idpMetadataUrl: String
-
-  # Attribute mapping (optional, defaults provided)
-  attributeEmail: String
-  attributeFirstname: String
-  attributeLastname: String
-  attributeRole: String
-
-  autoSignupEnabled: Boolean
-}
-
-input UpdateSAMLConfigurationInput {
-  id: ID!
-
-  enabled: Boolean
-  enforcementPolicy: SAMLEnforcementPolicy
-  spCertificate: String
-  spPrivateKey: String
-  idpEntityId: String
-  idpSsoUrl: String
-  idpCertificate: String
-  idpMetadataUrl: String
-  attributeEmail: String
-  attributeFirstname: String
-  attributeLastname: String
-  attributeRole: String
-  autoSignupEnabled: Boolean
-}
-
-# ============================================
-# Domain Verification Inputs
-# ============================================
-
-input InitiateDomainVerificationInput {
-  organizationId: ID!
-  emailDomain: String!
-}
-
-input VerifyDomainInput {
-  id: ID!
-}
-
-input DeleteSAMLConfigurationInput {
-  id: ID!
-}
-
-input EnableSAMLInput {
-  id: ID!
-}
-
-input DisableSAMLInput {
-  id: ID!
-}
-
-# ============================================
-# SAML Configuration Payloads
-# ============================================
-
-type InitiateDomainVerificationPayload {
-  samlConfiguration: SAMLConfiguration!
-  # The TXT record value that needs to be added to DNS
-  # Format: probo-verification={token}
-  dnsRecord: String!
-}
-
-type VerifyDomainPayload {
-  samlConfiguration: SAMLConfiguration!
-  verified: Boolean!
-}
-
-type CreateSAMLConfigurationPayload {
-  samlConfiguration: SAMLConfiguration!
-}
-
-type UpdateSAMLConfigurationPayload {
-  samlConfiguration: SAMLConfiguration!
-}
-
-type DeleteSAMLConfigurationPayload {
-  deletedSAMLConfigurationId: ID!
-}
-
-type EnableSAMLPayload {
-  samlConfiguration: SAMLConfiguration!
-}
-
-type DisableSAMLPayload {
-  samlConfiguration: SAMLConfiguration!
 }

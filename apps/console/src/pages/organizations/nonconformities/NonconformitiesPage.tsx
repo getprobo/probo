@@ -27,19 +27,28 @@ import {
 } from "react-relay";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { CreateNonconformityDialog } from "./dialogs/CreateNonconformityDialog";
-import { deleteNonconformityMutation, NonconformitiesConnectionKey, nonconformitiesQuery } from "../../../hooks/graph/NonconformityGraph";
-import { sprintf, promisifyMutation, getStatusVariant, getStatusLabel, formatDate } from "@probo/helpers";
+import {
+  deleteNonconformityMutation,
+  NonconformitiesConnectionKey,
+  nonconformitiesQuery,
+} from "../../../hooks/graph/NonconformityGraph";
+import {
+  sprintf,
+  promisifyMutation,
+  getStatusVariant,
+  getStatusLabel,
+  formatDate,
+} from "@probo/helpers";
 import { SnapshotBanner } from "/components/SnapshotBanner";
 import { useParams } from "react-router";
 import type {
   NonconformitiesPageFragment$key,
   NonconformitiesPageFragment$data,
-} from "./__generated__/NonconformitiesPageFragment.graphql";
-import { use } from "react";
-import { PermissionsContext } from "/providers/PermissionsContext";
-import type { NonconformityGraphListQuery } from "/hooks/graph/__generated__/NonconformityGraphListQuery.graphql";
+} from "/__generated__/core/NonconformitiesPageFragment.graphql";
+import type { NonconformityGraphListQuery } from "/__generated__/core/NonconformityGraphListQuery.graphql";
 
-type Nonconformity = NonconformitiesPageFragment$data['nonconformities']['edges'][number]['node'];
+type Nonconformity =
+  NonconformitiesPageFragment$data["nonconformities"]["edges"][number]["node"];
 
 interface NonconformitiesPageProps {
   queryRef: PreloadedQuery<NonconformityGraphListQuery>;
@@ -59,7 +68,10 @@ const nonconformitiesPageFragment = graphql`
       after: $after
       filter: { snapshotId: $snapshotId }
     )
-      @connection(key: "NonconformitiesPage_nonconformities", filters: ["filter"]) {
+      @connection(
+        key: "NonconformitiesPage_nonconformities"
+        filters: ["filter"]
+      ) {
       __id
       totalCount
       edges {
@@ -88,6 +100,8 @@ const nonconformitiesPageFragment = graphql`
           }
           createdAt
           updatedAt
+          canUpdate: permission(action: "core:nonconformity:update")
+          canDelete: permission(action: "core:nonconformity:delete")
         }
       }
       pageInfo {
@@ -98,54 +112,53 @@ const nonconformitiesPageFragment = graphql`
   }
 `;
 
-export default function NonconformitiesPage({ queryRef }: NonconformitiesPageProps) {
+export default function NonconformitiesPage({
+  queryRef,
+}: NonconformitiesPageProps) {
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
   const { snapshotId } = useParams<{ snapshotId?: string }>();
   const isSnapshotMode = Boolean(snapshotId);
-  const { isAuthorized } = use(PermissionsContext);
 
   usePageTitle(__("Nonconformities"));
 
-  const organization = usePreloadedQuery(
-    nonconformitiesQuery,
-    queryRef
-  );
+  const organization = usePreloadedQuery(nonconformitiesQuery, queryRef);
 
-  const { data: nonconformitiesData, loadNext, hasNext } = usePaginationFragment(
+  const {
+    data: nonconformitiesData,
+    loadNext,
+    hasNext,
+  } = usePaginationFragment(
     nonconformitiesPageFragment,
-    organization.node as NonconformitiesPageFragment$key
+    organization.node as NonconformitiesPageFragment$key,
   );
 
   const connectionId = ConnectionHandler.getConnectionID(
     organizationId,
     NonconformitiesConnectionKey,
-    { filter: { snapshotId: snapshotId || null } }
+    { filter: { snapshotId: snapshotId || null } },
   );
-  const nonconformities: Nonconformity[] = nonconformitiesData?.nonconformities?.edges?.map((edge) => edge.node) ?? [];
+  const nonconformities: Nonconformity[] =
+    nonconformitiesData?.nonconformities?.edges?.map((edge) => edge.node) ?? [];
 
-  const hasAnyAction = !isSnapshotMode && (
-    isAuthorized("Nonconformity", "updateNonconformity") ||
-    isAuthorized("Nonconformity", "deleteNonconformity")
-  );
+  const hasAnyAction =
+    !isSnapshotMode &&
+    nonconformities.some(({ canDelete, canUpdate }) => canDelete || canUpdate);
 
   return (
     <div className="space-y-6">
-      {isSnapshotMode && (
-        <SnapshotBanner snapshotId={snapshotId!} />
-      )}
+      {isSnapshotMode && <SnapshotBanner snapshotId={snapshotId!} />}
       <PageHeader
         title={__("Nonconformities")}
-        description={__(
-          "Manage your organization's non conformities."
-        )}
+        description={__("Manage your organization's non conformities.")}
       >
-        {!isSnapshotMode && (
-          isAuthorized("Organization", "createNonconformity") && (
-            <CreateNonconformityDialog organizationId={organizationId} connection={connectionId}>
-              <Button icon={IconPlusLarge}>{__("Add nonconformity")}</Button>
-            </CreateNonconformityDialog>
-          )
+        {!isSnapshotMode && organization.node.canCreateNonconformity && (
+          <CreateNonconformityDialog
+            organizationId={organizationId}
+            connection={connectionId}
+          >
+            <Button icon={IconPlusLarge}>{__("Add nonconformity")}</Button>
+          </CreateNonconformityDialog>
         )}
       </PageHeader>
 
@@ -201,8 +214,6 @@ export default function NonconformitiesPage({ queryRef }: NonconformitiesPagePro
           )}
         </Card>
       )}
-
-
     </div>
   );
 }
@@ -224,7 +235,6 @@ function NonconformityRow({
   const { __ } = useTranslate();
   const confirm = useConfirm();
   const [deleteNonconformity] = useMutation(deleteNonconformityMutation);
-  const { isAuthorized } = use(PermissionsContext);
 
   const nonconformityDetailUrl = isSnapshotMode
     ? `/organizations/${organizationId}/snapshots/${snapshotId}/nonconformities/${nonconformity.id}`
@@ -247,11 +257,11 @@ function NonconformityRow({
       {
         message: sprintf(
           __(
-            "This will permanently delete the nonconformity %s. This action cannot be undone."
+            "This will permanently delete the nonconformity %s. This action cannot be undone.",
           ),
-          nonconformity.referenceId
+          nonconformity.referenceId,
         ),
-      }
+      },
     );
   };
 
@@ -273,12 +283,15 @@ function NonconformityRow({
         </Badge>
       </Td>
       <Td>
-        {nonconformity.audit
-          ? nonconformity.audit.name
-            ? `${nonconformity.audit.framework?.name} - ${nonconformity.audit.name}`
-            : nonconformity.audit.framework?.name
-          : <span className="text-txt-tertiary">{__("No audit")}</span>
-        }
+        {nonconformity.audit ? (
+          nonconformity.audit.name ? (
+            `${nonconformity.audit.framework?.name} - ${nonconformity.audit.name}`
+          ) : (
+            nonconformity.audit.framework?.name
+          )
+        ) : (
+          <span className="text-txt-tertiary">{__("No audit")}</span>
+        )}
       </Td>
       <Td>{nonconformity.owner.fullName}</Td>
       <Td>
@@ -293,7 +306,7 @@ function NonconformityRow({
       {hasAnyAction && (
         <Td noLink width={50} className="text-end">
           <ActionDropdown>
-            {isAuthorized("Nonconformity", "deleteNonconformity") && (
+            {nonconformity.canDelete && (
               <DropdownItem
                 icon={IconTrashCan}
                 variant="danger"

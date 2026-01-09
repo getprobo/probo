@@ -25,18 +25,16 @@ import { useParams } from "react-router";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { CreateDatumDialog } from "./dialogs/CreateDatumDialog";
 import { useDeleteDatum, dataQuery } from "../../../hooks/graph/DatumGraph";
-import type { DatumGraphListQuery } from "/hooks/graph/__generated__/DatumGraphListQuery.graphql";
+import type { DatumGraphListQuery } from "/__generated__/core/DatumGraphListQuery.graphql";
 import { faviconUrl } from "@probo/helpers";
 import type { NodeOf } from "/types";
 import type {
   DataPageFragment$key,
-  DataPageFragment$data
-} from "./__generated__/DataPageFragment.graphql";
-import type { DataListQuery } from "./__generated__/DataListQuery.graphql";
+  DataPageFragment$data,
+} from "/__generated__/core/DataPageFragment.graphql";
+import type { DataListQuery } from "/__generated__/core/DataListQuery.graphql";
 import { SortableTable } from "/components/SortableTable";
 import { SnapshotBanner } from "/components/SnapshotBanner";
-import { use } from "react";
-import { PermissionsContext } from "/providers/PermissionsContext";
 
 const paginatedDataFragment = graphql`
   fragment DataPageFragment on Organization
@@ -76,6 +74,8 @@ const paginatedDataFragment = graphql`
             }
           }
           createdAt
+          canUpdate: permission(action: "core:datum:update")
+          canDelete: permission(action: "core:datum:delete")
         }
       }
     }
@@ -93,39 +93,39 @@ export default function DataPage(props: Props) {
   const organizationId = useOrganizationId();
   const { snapshotId } = useParams<{ snapshotId?: string }>();
   const isSnapshotMode = Boolean(snapshotId);
-  const { isAuthorized } = use(PermissionsContext);
 
-  const queryData = usePreloadedQuery<DatumGraphListQuery>(
+  const { node: data } = usePreloadedQuery<DatumGraphListQuery>(
     dataQuery,
-    props.queryRef
+    props.queryRef,
   );
-
-  const data = queryData.node;
 
   const pagination = usePaginationFragment<DataListQuery, DataPageFragment$key>(
     paginatedDataFragment,
-    data
+    data,
   );
 
   const dataEntries = pagination.data.data.edges.map((edge) => edge.node);
   const connectionId = pagination.data.data.__id;
 
-  const refetch = ({ order }: { order: { direction: string; field: string } }) => {
+  const refetch = ({
+    order,
+  }: {
+    order: { direction: string; field: string };
+  }) => {
     pagination.refetch({
       snapshotId,
       order: {
         direction: order.direction as "ASC" | "DESC",
-        field: order.field as "CREATED_AT" | "DATA_CLASSIFICATION" | "NAME"
-      }
+        field: order.field as "CREATED_AT" | "DATA_CLASSIFICATION" | "NAME",
+      },
     });
   };
 
   usePageTitle(__("Data"));
 
-  const hasAnyAction = !isSnapshotMode && (
-    isAuthorized("Datum", "updateDatum") ||
-    isAuthorized("Datum", "deleteDatum")
-  );
+  const hasAnyAction =
+    !isSnapshotMode &&
+    dataEntries.some(({ canDelete, canUpdate }) => canUpdate || canDelete);
 
   return (
     <div className="space-y-6">
@@ -135,26 +135,20 @@ export default function DataPage(props: Props) {
       <PageHeader
         title={__("Data")}
         description={__(
-          "Manage your organization's data assets and their classifications."
+          "Manage your organization's data assets and their classifications.",
         )}
       >
-        {!snapshotId && (
-          isAuthorized("Organization", "createDatum") && (
-            <CreateDatumDialog
-              connection={connectionId}
-              organizationId={organizationId}
-              onCreated={() => pagination.refetch({ snapshotId })}
-            >
-              <Button icon={IconPlusLarge}>{__("Add data")}</Button>
-            </CreateDatumDialog>
-          )
+        {!snapshotId && data.canCreateDatum && (
+          <CreateDatumDialog
+            connection={connectionId}
+            organizationId={organizationId}
+            onCreated={() => pagination.refetch({ snapshotId })}
+          >
+            <Button icon={IconPlusLarge}>{__("Add data")}</Button>
+          </CreateDatumDialog>
         )}
       </PageHeader>
-      <SortableTable
-        {...pagination}
-        refetch={refetch}
-        pageSize={10}
-      >
+      <SortableTable {...pagination} refetch={refetch} pageSize={10}>
         <Thead>
           <Tr>
             <Th>{__("Name")}</Th>
@@ -166,7 +160,13 @@ export default function DataPage(props: Props) {
         </Thead>
         <Tbody>
           {dataEntries.map((entry) => (
-            <DataRow key={entry.id} entry={entry} connectionId={connectionId} snapshotId={snapshotId} hasAnyAction={hasAnyAction} />
+            <DataRow
+              key={entry.id}
+              entry={entry}
+              connectionId={connectionId}
+              snapshotId={snapshotId}
+              hasAnyAction={hasAnyAction}
+            />
           ))}
         </Tbody>
       </SortableTable>
@@ -189,7 +189,6 @@ function DataRow({
   const { __ } = useTranslate();
   const deleteDatum = useDeleteDatum(entry, connectionId);
   const vendors = entry.vendors?.edges.map((edge) => edge.node) ?? [];
-  const { isAuthorized } = use(PermissionsContext);
   const detailUrl = snapshotId
     ? `/organizations/${organizationId}/snapshots/${snapshotId}/data/${entry.id}`
     : `/organizations/${organizationId}/data/${entry.id}`;
@@ -231,7 +230,7 @@ function DataRow({
       {hasAnyAction && (
         <Td noLink width={50} className="text-end">
           <ActionDropdown>
-            {isAuthorized("Datum", "deleteDatum") && (
+            {entry.canDelete && (
               <DropdownItem
                 onClick={deleteDatum}
                 variant="danger"

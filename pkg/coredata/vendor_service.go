@@ -41,15 +41,7 @@ type (
 	}
 
 	VendorServices []*VendorService
-
-	ErrVendorServiceNotFound struct {
-		Identifier string
-	}
 )
-
-func (e ErrVendorServiceNotFound) Error() string {
-	return fmt.Sprintf("vendor service not found: %s", e.Identifier)
-}
 
 func (vs VendorService) CursorKey(orderBy VendorServiceOrderField) page.CursorKey {
 	switch orderBy {
@@ -60,6 +52,20 @@ func (vs VendorService) CursorKey(orderBy VendorServiceOrderField) page.CursorKe
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
+}
+
+func (vs *VendorService) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+	q := `SELECT organization_id FROM vendor_services WHERE id = $1 LIMIT 1;`
+
+	var organizationID gid.GID
+	if err := conn.QueryRow(ctx, q, vs.ID).Scan(&organizationID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrResourceNotFound
+		}
+		return nil, fmt.Errorf("cannot query vendor service authorization attributes: %w", err)
+	}
+
+	return map[string]string{"organization_id": organizationID.String()}, nil
 }
 
 func (vs *VendorService) LoadByID(
@@ -101,7 +107,7 @@ LIMIT 1;
 	vendorService, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[VendorService])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrVendorServiceNotFound{Identifier: vendorServiceID.String()}
+			return ErrResourceNotFound
 		}
 
 		return fmt.Errorf("cannot collect vendor service: %w", err)

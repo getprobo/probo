@@ -42,23 +42,7 @@ type (
 	}
 
 	Invitations []*Invitation
-
-	InvitationData struct {
-		InvitationID   gid.GID        `json:"invitation_id"`
-		OrganizationID gid.GID        `json:"organization_id"`
-		Email          mail.Addr      `json:"email"`
-		FullName       string         `json:"full_name"`
-		Role           MembershipRole `json:"role"`
-	}
-
-	ErrInvitationNotFound struct {
-		ID string
-	}
 )
-
-func (e ErrInvitationNotFound) Error() string {
-	return fmt.Sprintf("invitation not found: %s", e.ID)
-}
 
 func (i Invitation) CursorKey(orderBy InvitationOrderField) page.CursorKey {
 	switch orderBy {
@@ -83,10 +67,10 @@ func (i Invitation) CursorKey(orderBy InvitationOrderField) page.CursorKey {
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (i *Invitation) Create(ctx context.Context, conn pg.Conn, scope Scoper) error {
+func (i *Invitation) Insert(ctx context.Context, conn pg.Conn, scope Scoper) error {
 	query := `
 INSERT INTO
-    authz_invitations (
+    iam_invitations (
         tenant_id,
         id,
         organization_id,
@@ -149,7 +133,7 @@ SELECT
     accepted_at,
     created_at
 FROM
-    authz_invitations
+    iam_invitations
 WHERE
     id = @id
     AND %s
@@ -170,8 +154,9 @@ WHERE
 	invitation, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Invitation])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return ErrInvitationNotFound{ID: id.String()}
+			return ErrResourceNotFound
 		}
+
 		return fmt.Errorf("cannot collect invitation: %w", err)
 	}
 
@@ -179,10 +164,75 @@ WHERE
 	return nil
 }
 
+func (i *Invitations) ExpireByEmailAndOrganization(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	email mail.Addr,
+	organizationID gid.GID,
+	filter *InvitationFilter,
+) error {
+	q := `
+UPDATE
+    iam_invitations
+SET
+    expires_at = NOW()
+WHERE
+    email = @email
+    AND organization_id = @organization_id
+    AND %s
+    AND %s
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"email":           email,
+		"organization_id": organizationID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
+
+	if _, err := conn.Exec(ctx, q, args); err != nil {
+		return fmt.Errorf("cannot expire invitations: %w", err)
+	}
+
+	return nil
+}
+
+// AuthorizationAttributes loads the minimal authorization attributes for policy condition evaluation.
+// It is intentionally lightweight and does not populate the Invitation struct.
+func (i *Invitation) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+	q := `
+SELECT
+    email
+    , organization_id
+FROM
+    iam_invitations
+WHERE
+    id = $1
+LIMIT 1;
+`
+
+	var email string
+	var organizationID gid.GID
+	if err := conn.QueryRow(ctx, q, i.ID).Scan(&email, &organizationID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrResourceNotFound
+		}
+		return nil, fmt.Errorf("cannot query invitation iam attributes: %w", err)
+	}
+
+	return map[string]string{
+		"email":           email,
+		"organization_id": organizationID.String(),
+	}, nil
+}
+
 func (i *Invitation) Update(ctx context.Context, conn pg.Conn, scope Scoper) error {
 	query := `
 UPDATE
-    authz_invitations
+    iam_invitations
 SET
     accepted_at = @accepted_at
 WHERE
@@ -204,25 +254,25 @@ WHERE
 	}
 
 	if result.RowsAffected() == 0 {
-		return ErrInvitationNotFound{ID: i.ID.String()}
+		return ErrResourceNotFound
 	}
 
 	return nil
 }
 
-func (i *Invitation) Delete(ctx context.Context, conn pg.Conn, scope Scoper) error {
+func (i *Invitation) Delete(ctx context.Context, conn pg.Conn, scope Scoper, invitationID gid.GID) error {
 	query := `
 DELETE FROM
-    authz_invitations
+    iam_invitations
 WHERE
-    id = @id
-    AND %s
+    %s
+    AND id = @invitation_id
 `
 
 	query = fmt.Sprintf(query, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"id": i.ID,
+		"invitation_id": invitationID,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -232,13 +282,13 @@ WHERE
 	}
 
 	if result.RowsAffected() == 0 {
-		return ErrInvitationNotFound{ID: i.ID.String()}
+		return ErrResourceNotFound
 	}
 
 	return nil
 }
 
-func (i *Invitations) LoadByEmail(
+func (i *Invitations) LoadByIdentityID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
@@ -262,7 +312,7 @@ SELECT
     accepted_at,
     created_at
 FROM
-    authz_invitations
+    iam_invitations
 WHERE
     email = @email
     AND %s
@@ -315,7 +365,7 @@ SELECT
     accepted_at,
     created_at
 FROM
-    authz_invitations
+    iam_invitations
 WHERE
     organization_id = @organization_id
     AND %s
@@ -355,11 +405,11 @@ func (i *Invitations) CountByOrganizationID(
 ) (int, error) {
 	q := `
 SELECT
-	COUNT(*)
+    COUNT(*)
 FROM
-	authz_invitations
+    iam_invitations
 WHERE
-	organization_id = @organization_id AND %s AND %s
+    organization_id = @organization_id AND %s AND %s
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
@@ -386,17 +436,17 @@ WHERE
 func (i *Invitations) CountByEmail(
 	ctx context.Context,
 	conn pg.Conn,
-	email string,
+	email mail.Addr,
 	filter *InvitationFilter,
 ) (int, error) {
 	q := `
 SELECT
-	COUNT(*)
+    COUNT(*)
 FROM
-	authz_invitations
+    iam_invitations
 WHERE
-	email = @email
-	AND %s
+    email = @email
+    AND %s
 `
 
 	q = fmt.Sprintf(q, filter.SQLFragment())

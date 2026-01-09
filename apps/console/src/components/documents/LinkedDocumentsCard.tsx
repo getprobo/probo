@@ -16,7 +16,7 @@ import {
   TrButton,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
-import type { LinkedDocumentsCardFragment$key } from "./__generated__/LinkedDocumentsCardFragment.graphql";
+import type { LinkedDocumentsCardFragment$key } from "/__generated__/core/LinkedDocumentsCardFragment.graphql";
 import { useFragment } from "react-relay";
 import { useMemo, useState } from "react";
 import { sprintf } from "@probo/helpers";
@@ -137,7 +137,10 @@ export function LinkedDocumentsCard<Params>(props: Props<Params>) {
         <Tbody>
           {documents.length === 0 && (
             <Tr>
-              <Td colSpan={props.readOnly ? 3 : 4} className="text-center text-txt-secondary">
+              <Td
+                colSpan={props.readOnly ? 3 : 4}
+                className="text-center text-txt-secondary"
+              >
                 {__("No documents linked")}
               </Td>
             </Tr>

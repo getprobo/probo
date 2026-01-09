@@ -13,12 +13,12 @@ import {
 import { type RefObject } from "react";
 import { graphql } from "relay-runtime";
 import { useMutation } from "react-relay";
-import type { UpdateVersionDialogCreateMutation } from "./__generated__/UpdateVersionDialogCreateMutation.graphql";
-import type { UpdateVersionDialogUpdateMutation } from "./__generated__/UpdateVersionDialogUpdateMutation.graphql";
+import type { UpdateVersionDialogCreateMutation } from "/__generated__/core/UpdateVersionDialogCreateMutation.graphql";
+import type { UpdateVersionDialogUpdateMutation } from "/__generated__/core/UpdateVersionDialogUpdateMutation.graphql";
 import { z } from "zod";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
-import type { DocumentDetailPageDocumentFragment$data } from "../__generated__/DocumentDetailPageDocumentFragment.graphql";
+import type { DocumentDetailPageDocumentFragment$data } from "/__generated__/core/DocumentDetailPageDocumentFragment.graphql";
 
 const createDraftDocument = graphql`
   mutation UpdateVersionDialogCreateMutation(
@@ -90,7 +90,7 @@ export default function UpdateVersionDialog({
       {
         successMessage: __("Document updated successfully."),
         errorMessage: __("Failed to update document"),
-      }
+      },
     );
   const { handleSubmit, register } = useFormWithSchema(versionSchema, {
     defaultValues: {
@@ -140,7 +140,9 @@ export default function UpdateVersionDialog({
             return;
           }
 
-          const newVersionId = createResponse?.createDraftDocumentVersion?.documentVersionEdge?.node?.id;
+          const newVersionId =
+            createResponse?.createDraftDocumentVersion?.documentVersionEdge
+              ?.node?.id;
           if (newVersionId && data.content !== version.content) {
             updateDocumentVersion({
               variables: {

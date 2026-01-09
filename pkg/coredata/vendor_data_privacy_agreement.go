@@ -21,11 +21,11 @@ import (
 	"maps"
 	"time"
 
-	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/page"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 )
 
 type (
@@ -43,23 +43,7 @@ type (
 	}
 
 	VendorDataPrivacyAgreements []*VendorDataPrivacyAgreement
-
-	ErrVendorDataPrivacyAgreementNotFound struct {
-		Identifier string
-	}
-
-	ErrVendorDataPrivacyAgreementAlreadyExists struct {
-		message string
-	}
 )
-
-func (e ErrVendorDataPrivacyAgreementNotFound) Error() string {
-	return fmt.Sprintf("vendor data privacy agreement not found: %q", e.Identifier)
-}
-
-func (e ErrVendorDataPrivacyAgreementAlreadyExists) Error() string {
-	return e.message
-}
 
 func (v VendorDataPrivacyAgreement) CursorKey(orderBy VendorDataPrivacyAgreementOrderField) page.CursorKey {
 	switch orderBy {
@@ -70,6 +54,20 @@ func (v VendorDataPrivacyAgreement) CursorKey(orderBy VendorDataPrivacyAgreement
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
+}
+
+func (vdpa *VendorDataPrivacyAgreement) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+	q := `SELECT organization_id FROM vendor_data_privacy_agreements WHERE id = $1 LIMIT 1;`
+
+	var organizationID gid.GID
+	if err := conn.QueryRow(ctx, q, vdpa.ID).Scan(&organizationID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrResourceNotFound
+		}
+		return nil, fmt.Errorf("cannot query vendor data privacy agreement authorization attributes: %w", err)
+	}
+
+	return map[string]string{"organization_id": organizationID.String()}, nil
 }
 
 func (vdpa *VendorDataPrivacyAgreement) LoadByVendorID(
@@ -263,9 +261,7 @@ ON CONFLICT (organization_id, vendor_id) DO UPDATE SET
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
 			if pgErr.Code == "23505" && pgErr.ConstraintName == "vendor_data_privacy_agreements_source_id_snapshot_id_key" {
-				return &ErrVendorDataPrivacyAgreementAlreadyExists{
-					message: fmt.Sprintf("vendor data privacy agreement with source_id %s and snapshot_id %s already exists", vdpa.SourceID, vdpa.SnapshotID),
-				}
+				return ErrResourceAlreadyExists
 			}
 		}
 		return fmt.Errorf("cannot upsert vendor data privacy agreement: %w", err)

@@ -43,23 +43,7 @@ type (
 	}
 
 	Controls []*Control
-
-	ErrControlNotFound struct {
-		Identifier string
-	}
-
-	ErrControlAlreadyExists struct {
-		message string
-	}
 )
-
-func (e ErrControlNotFound) Error() string {
-	return fmt.Sprintf("control not found: %q", e.Identifier)
-}
-
-func (e ErrControlAlreadyExists) Error() string {
-	return e.message
-}
 
 func (c Control) CursorKey(orderBy ControlOrderField) page.CursorKey {
 	switch orderBy {
@@ -70,6 +54,21 @@ func (c Control) CursorKey(orderBy ControlOrderField) page.CursorKey {
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
+}
+
+// AuthorizationAttributes returns the authorization attributes for policy evaluation.
+func (c *Control) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+	q := `SELECT organization_id FROM controls WHERE id = $1 LIMIT 1;`
+
+	var organizationID gid.GID
+	if err := conn.QueryRow(ctx, q, c.ID).Scan(&organizationID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrResourceNotFound
+		}
+		return nil, fmt.Errorf("cannot query control authorization attributes: %w", err)
+	}
+
+	return map[string]string{"organization_id": organizationID.String()}, nil
 }
 
 func (c *Controls) CountByDocumentID(
@@ -650,7 +649,7 @@ LIMIT 1;
 	control, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Control])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrControlNotFound{Identifier: fmt.Sprintf("%s:%s", frameworkID, sectionTitle)}
+			return ErrResourceNotFound
 		}
 
 		return fmt.Errorf("cannot collect control: %w", err)
@@ -698,7 +697,7 @@ LIMIT 1;
 	control, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Control])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrControlNotFound{Identifier: controlID.String()}
+			return ErrResourceNotFound
 		}
 
 		return fmt.Errorf("cannot collect control: %w", err)
@@ -763,9 +762,7 @@ VALUES (
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
 			if pgErr.Code == "23505" && pgErr.ConstraintName == "controls_framework_ref_unique" {
-				return &ErrControlAlreadyExists{
-					message: fmt.Sprintf("control with framework_id %s and section_title %q already exists", c.FrameworkID, c.SectionTitle),
-				}
+				return ErrResourceAlreadyExists
 			}
 		}
 		return fmt.Errorf("cannot insert control: %w", err)
@@ -831,9 +828,7 @@ WHERE %s
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
 			if pgErr.Code == "23505" && pgErr.ConstraintName == "controls_framework_ref_unique" {
-				return &ErrControlAlreadyExists{
-					message: fmt.Sprintf("control with section_title %q already exists", c.SectionTitle),
-				}
+				return ErrResourceAlreadyExists
 			}
 		}
 		return fmt.Errorf("cannot update control: %w", err)

@@ -43,23 +43,7 @@ type (
 	}
 
 	TrustCenterReferences []*TrustCenterReference
-
-	ErrTrustCenterReferenceNotFound struct {
-		Identifier string
-	}
-
-	ErrTrustCenterReferenceAlreadyExists struct {
-		message string
-	}
 )
-
-func (e ErrTrustCenterReferenceNotFound) Error() string {
-	return fmt.Sprintf("trust center reference not found: %q", e.Identifier)
-}
-
-func (e ErrTrustCenterReferenceAlreadyExists) Error() string {
-	return e.message
-}
 
 func (t TrustCenterReference) CursorKey(orderBy TrustCenterReferenceOrderField) page.CursorKey {
 	switch orderBy {
@@ -73,6 +57,20 @@ func (t TrustCenterReference) CursorKey(orderBy TrustCenterReferenceOrderField) 
 		return page.NewCursorKey(t.ID, t.UpdatedAt)
 	}
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
+}
+
+func (t *TrustCenterReference) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+	q := `SELECT organization_id FROM trust_center_references WHERE id = $1 LIMIT 1;`
+
+	var organizationID gid.GID
+	if err := conn.QueryRow(ctx, q, t.ID).Scan(&organizationID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrResourceNotFound
+		}
+		return nil, fmt.Errorf("cannot query trust center reference authorization attributes: %w", err)
+	}
+
+	return map[string]string{"organization_id": organizationID.String()}, nil
 }
 
 func (t *TrustCenterReference) LoadByID(
@@ -174,9 +172,7 @@ RETURNING rank;
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
 			if pgErr.Code == "23505" && pgErr.ConstraintName == "trust_center_references_trust_center_id_rank_key" {
-				return &ErrTrustCenterReferenceAlreadyExists{
-					message: fmt.Sprintf("trust center reference with trust_center_id %s and rank already exists", t.TrustCenterID),
-				}
+				return ErrResourceAlreadyExists
 			}
 		}
 		return fmt.Errorf("cannot insert trust center reference: %w", err)
@@ -221,7 +217,7 @@ WHERE
 	}
 
 	if result.RowsAffected() == 0 {
-		return ErrTrustCenterReferenceNotFound{Identifier: t.ID.String()}
+		return ErrResourceNotFound
 	}
 
 	return nil

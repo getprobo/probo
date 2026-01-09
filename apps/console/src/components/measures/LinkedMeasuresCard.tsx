@@ -10,13 +10,12 @@ import {
   Tbody,
   Th,
   IconChevronDown,
-
   IconTrashCan,
   TrButton,
 } from "@probo/ui";
 import { MeasureBadge } from "@probo/ui/src/Molecules/Badge/MeasureBadge";
 import { useTranslate } from "@probo/i18n";
-import type { LinkedMeasuresCardFragment$key } from "./__generated__/LinkedMeasuresCardFragment.graphql";
+import type { LinkedMeasuresCardFragment$key } from "/__generated__/core/LinkedMeasuresCardFragment.graphql";
 import { useFragment } from "react-relay";
 import { useMemo, useState } from "react";
 import { sprintf } from "@probo/helpers";
@@ -64,7 +63,7 @@ type Props<Params> = {
 export function LinkedMeasuresCard<Params>(props: Props<Params>) {
   const { __ } = useTranslate();
   const [limit, setLimit] = useState<number | null>(
-    props.variant === "card" ? 4 : null
+    props.variant === "card" ? 4 : null,
   );
   const measures = useMemo(() => {
     return limit ? props.measures.slice(0, limit) : props.measures;
@@ -129,13 +128,21 @@ export function LinkedMeasuresCard<Params>(props: Props<Params>) {
         <Tbody>
           {measures.length === 0 && (
             <Tr>
-              <Td colSpan={props.readOnly ? 2 : 3} className="text-center text-txt-secondary">
+              <Td
+                colSpan={props.readOnly ? 2 : 3}
+                className="text-center text-txt-secondary"
+              >
                 {__("No measures linked")}
               </Td>
             </Tr>
           )}
           {measures.map((measure) => (
-            <MeasureRow key={measure.id} measure={measure} onClick={onDetach} readOnly={props.readOnly} />
+            <MeasureRow
+              key={measure.id}
+              measure={measure}
+              onClick={onDetach}
+              readOnly={props.readOnly}
+            />
           ))}
           {variant === "table" && !props.readOnly && (
             <LinkedMeasureDialog

@@ -1,8 +1,8 @@
 import type { PreloadedQuery } from "react-relay";
 import { graphql, useFragment, usePreloadedQuery } from "react-relay";
-import type { MeetingGraphNodeQuery } from "/hooks/graph/__generated__/MeetingGraphNodeQuery.graphql";
+import type { MeetingGraphNodeQuery } from "/__generated__/core/MeetingGraphNodeQuery.graphql";
 import { usePageTitle } from "@probo/hooks";
-import type { MeetingDetailPageMeetingFragment$key } from "./__generated__/MeetingDetailPageMeetingFragment.graphql";
+import type { MeetingDetailPageMeetingFragment$key } from "/__generated__/core/MeetingDetailPageMeetingFragment.graphql";
 import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
@@ -21,12 +21,11 @@ import {
   UpdateMeetingMinutesDialog,
   type UpdateMeetingMinutesDialogRef,
 } from "./dialogs/UpdateMeetingMinutesDialog";
-import { useRef, useState, useEffect, use } from "react";
+import { useRef } from "react";
 import {
   meetingNodeQuery,
   useDeleteMeetingMutation,
 } from "/hooks/graph/MeetingGraph";
-import { PermissionsContext } from "/providers/PermissionsContext";
 
 const meetingFragment = graphql`
   fragment MeetingDetailPageMeetingFragment on Meeting {
@@ -34,6 +33,8 @@ const meetingFragment = graphql`
     name
     date
     minutes
+    canUpdate: permission(action: "core:meeting:update")
+    canDelete: permission(action: "core:meeting:delete")
     attendees {
       id
       fullName
@@ -49,75 +50,19 @@ export default function MeetingDetailPage(props: Props) {
   const node = usePreloadedQuery(meetingNodeQuery, props.queryRef).node;
   const meeting = useFragment<MeetingDetailPageMeetingFragment$key>(
     meetingFragment,
-    node
+    node,
   );
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
   const navigate = useNavigate();
-  const { isAuthorized } = use(PermissionsContext);
 
   const [deleteMeeting, isDeleting] = useDeleteMeetingMutation();
   const confirm = useConfirm();
   const updateMinutesDialogRef = useRef<UpdateMeetingMinutesDialogRef>(null);
 
-  const [canUpdate, setCanUpdate] = useState<boolean>(false);
-  const [canDelete, setCanDelete] = useState<boolean>(false);
-
-  useEffect(() => {
-    if (!organizationId) {
-      setCanUpdate(false);
-      setCanDelete(false);
-      return;
-    }
-
-    try {
-      const updateAuth = isAuthorized("Meeting", "updateMeeting");
-      setCanUpdate(updateAuth);
-    } catch (promise) {
-      if (promise instanceof Promise) {
-        promise
-          .then(() => {
-            try {
-              const updateAuth = isAuthorized("Meeting", "updateMeeting");
-              setCanUpdate(updateAuth);
-            } catch {
-              setCanUpdate(false);
-            }
-          })
-          .catch(() => {
-            setCanUpdate(false);
-          });
-      } else {
-        setCanUpdate(false);
-      }
-    }
-
-    try {
-      const deleteAuth = isAuthorized("Meeting", "deleteMeeting");
-      setCanDelete(deleteAuth);
-    } catch (promise) {
-      if (promise instanceof Promise) {
-        promise
-          .then(() => {
-            try {
-              const deleteAuth = isAuthorized("Meeting", "deleteMeeting");
-              setCanDelete(deleteAuth);
-            } catch {
-              setCanDelete(false);
-            }
-          })
-          .catch(() => {
-            setCanDelete(false);
-          });
-      } else {
-        setCanDelete(false);
-      }
-    }
-  }, [organizationId, isAuthorized]);
-
   usePageTitle(meeting.name);
 
-  const hasAnyAction = canUpdate || canDelete;
+  const hasAnyAction = meeting.canUpdate || meeting.canDelete;
 
   const handleDelete = () => {
     confirm(
@@ -133,11 +78,11 @@ export default function MeetingDetailPage(props: Props) {
       {
         message: sprintf(
           __(
-            'This will permanently delete the meeting "%s". This action cannot be undone.'
+            'This will permanently delete the meeting "%s". This action cannot be undone.',
           ),
-          meeting.name
+          meeting.name,
         ),
-      }
+      },
     );
   };
 
@@ -162,7 +107,7 @@ export default function MeetingDetailPage(props: Props) {
           />
           {hasAnyAction && (
             <ActionDropdown variant="secondary">
-              {canUpdate && (
+              {meeting.canUpdate && (
                 <DropdownItem
                   onClick={() => updateMinutesDialogRef.current?.open()}
                   icon={IconPencil}
@@ -170,7 +115,7 @@ export default function MeetingDetailPage(props: Props) {
                   {__("Edit minutes")}
                 </DropdownItem>
               )}
-              {canDelete && (
+              {meeting.canDelete && (
                 <DropdownItem
                   variant="danger"
                   icon={IconTrashCan}

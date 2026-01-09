@@ -25,12 +25,10 @@ import type { NodeOf } from "/types";
 import { useDeleteRiskMutation, useRisksQuery } from "/hooks/graph/RiskGraph";
 import { SortableTable, SortableTh } from "/components/SortableTable";
 import type { PreloadedQuery } from "react-relay";
-import type { RiskGraphListQuery } from "/hooks/graph/__generated__/RiskGraphListQuery.graphql";
-import type { RiskGraphFragment$data } from "/hooks/graph/__generated__/RiskGraphFragment.graphql";
+import type { RiskGraphListQuery } from "/__generated__/core/RiskGraphListQuery.graphql";
+import type { RiskGraphFragment$data } from "/__generated__/core/RiskGraphFragment.graphql";
 import { useParams } from "react-router";
 import { SnapshotBanner } from "/components/SnapshotBanner";
-import { use } from "react";
-import { PermissionsContext } from "/providers/PermissionsContext";
 
 type Props = {
   queryRef: PreloadedQuery<RiskGraphListQuery>;
@@ -41,26 +39,43 @@ export default function RisksPage(props: Props) {
   const organizationId = useOrganizationId();
   const { snapshotId } = useParams<{ snapshotId?: string }>();
   const isSnapshotMode = Boolean(snapshotId);
-  const { isAuthorized } = use(PermissionsContext);
 
-  const { connectionId, risks, ...pagination } = useRisksQuery(props.queryRef);
+  const {
+    data: { canCreateRisk },
+    connectionId,
+    risks,
+    ...pagination
+  } = useRisksQuery(props.queryRef);
 
-  const refetch = ({ order }: { order: { direction: string; field: string } }) => {
-    pagination.refetch({
-      snapshotId,
-      order: {
-        direction: order.direction as "ASC" | "DESC",
-        field: order.field as "NAME" | "CATEGORY" | "TREATMENT" | "INHERENT_RISK_SCORE" | "RESIDUAL_RISK_SCORE" | "OWNER_FULL_NAME" | "CREATED_AT"
-      }
-    }, { fetchPolicy: 'network-only' });
+  const refetch = ({
+    order,
+  }: {
+    order: { direction: string; field: string };
+  }) => {
+    pagination.refetch(
+      {
+        snapshotId,
+        order: {
+          direction: order.direction as "ASC" | "DESC",
+          field: order.field as
+            | "NAME"
+            | "CATEGORY"
+            | "TREATMENT"
+            | "INHERENT_RISK_SCORE"
+            | "RESIDUAL_RISK_SCORE"
+            | "OWNER_FULL_NAME"
+            | "CREATED_AT",
+        },
+      },
+      { fetchPolicy: "network-only" },
+    );
   };
 
   usePageTitle(__("Risks"));
 
-  const hasAnyAction = !isSnapshotMode && (
-    isAuthorized("Risk", "updateRisk") ||
-    isAuthorized("Risk", "deleteRisk")
-  );
+  const hasAnyAction =
+    !isSnapshotMode &&
+    risks.some(({ canDelete, canUpdate }) => canUpdate || canDelete);
 
   return (
     <div className="space-y-6">
@@ -68,19 +83,17 @@ export default function RisksPage(props: Props) {
       <PageHeader
         title={__("Risks")}
         description={__(
-          "Risks are potential threats to your organization. Manage them by identifying, assessing, and implementing mitigation measures."
+          "Risks are potential threats to your organization. Manage them by identifying, assessing, and implementing mitigation measures.",
         )}
       >
-        {!isSnapshotMode && (
-          isAuthorized("Organization", "createRisk") && (
-            <FormRiskDialog
-              connection={connectionId}
-              onSuccess={() => {
-                pagination.refetch({ snapshotId });
-              }}
-              trigger={<Button icon={IconPlusLarge}>{__("New Risk")}</Button>}
-            />
-          )
+        {!isSnapshotMode && canCreateRisk && (
+          <FormRiskDialog
+            connection={connectionId}
+            onSuccess={() => {
+              pagination.refetch({ snapshotId });
+            }}
+            trigger={<Button icon={IconPlusLarge}>{__("New Risk")}</Button>}
+          />
         )}
       </PageHeader>
 
@@ -108,9 +121,7 @@ export default function RisksPage(props: Props) {
             <SortableTh field="RESIDUAL_RISK_SCORE">
               {__("Residual Risk")}
             </SortableTh>
-            <SortableTh field="OWNER_FULL_NAME">
-              {__("Owner")}
-            </SortableTh>
+            <SortableTh field="OWNER_FULL_NAME">{__("Owner")}</SortableTh>
             {hasAnyAction && <Th></Th>}
           </Tr>
         </Thead>
@@ -144,7 +155,6 @@ function RiskRow(props: RowProps) {
   const isSnapshotMode = Boolean(snapshotId);
   const [deleteRisk] = useDeleteRiskMutation();
   const confirm = useConfirm();
-  const { isAuthorized } = use(PermissionsContext);
   const onDelete = () => {
     confirm(
       () =>
@@ -160,18 +170,19 @@ function RiskRow(props: RowProps) {
       {
         message: sprintf(
           __(
-            'This will permanently delete the risk "%s". This action cannot be undone.'
+            'This will permanently delete the risk "%s". This action cannot be undone.',
           ),
-          risk.name
+          risk.name,
         ),
-      }
+      },
     );
   };
   const formDialogRef = useDialogRef();
 
-  const riskUrl = isSnapshotMode && snapshotId
-    ? `/organizations/${organizationId}/snapshots/${snapshotId}/risks/${risk.id}/overview`
-    : `/organizations/${organizationId}/risks/${risk.id}/overview`;
+  const riskUrl =
+    isSnapshotMode && snapshotId
+      ? `/organizations/${organizationId}/snapshots/${snapshotId}/risks/${risk.id}/overview`
+      : `/organizations/${organizationId}/risks/${risk.id}/overview`;
 
   return (
     <>
@@ -196,7 +207,7 @@ function RiskRow(props: RowProps) {
         {props.hasAnyAction && (
           <Td noLink className="text-end">
             <ActionDropdown>
-              {isAuthorized("Risk", "updateRisk") && (
+              {risk.canUpdate && (
                 <DropdownItem
                   icon={IconPencil}
                   onClick={() => formDialogRef.current?.open()}
@@ -205,7 +216,7 @@ function RiskRow(props: RowProps) {
                 </DropdownItem>
               )}
 
-              {isAuthorized("Risk", "deleteRisk") && (
+              {risk.canDelete && (
                 <DropdownItem
                   variant="danger"
                   icon={IconTrashCan}

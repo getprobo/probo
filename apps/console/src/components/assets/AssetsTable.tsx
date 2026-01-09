@@ -1,6 +1,19 @@
-import { getAssetTypeVariant, promisifyMutation, sprintf } from "@probo/helpers";
+import {
+  getAssetTypeVariant,
+  promisifyMutation,
+  sprintf,
+} from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
-import { ActionDropdown, Badge, DropdownItem, IconPencil, IconTrashCan, SelectCell, TextCell, useConfirm } from "@probo/ui";
+import {
+  ActionDropdown,
+  Badge,
+  DropdownItem,
+  IconPencil,
+  IconTrashCan,
+  SelectCell,
+  TextCell,
+  useConfirm,
+} from "@probo/ui";
 import { useMutation } from "react-relay";
 import type { usePaginationFragmentHookType } from "react-relay/relay-hooks/usePaginationFragment";
 import { Link } from "react-router";
@@ -8,9 +21,16 @@ import { z } from "zod";
 import { EditableTable } from "../table/EditableTable";
 import { PeopleCell } from "../table/PeopleCell";
 import { VendorsCell } from "../table/VendorsCell";
-import { createAssetMutation, deleteAssetMutation, updateAssetMutation } from "/hooks/graph/AssetGraph";
-import type { AssetGraphDeleteMutation } from "/hooks/graph/__generated__/AssetGraphDeleteMutation.graphql";
-import type { AssetsPageFragment$data, AssetsPageFragment$key } from "/pages/organizations/assets/__generated__/AssetsPageFragment.graphql";
+import {
+  createAssetMutation,
+  deleteAssetMutation,
+  updateAssetMutation,
+} from "/hooks/graph/AssetGraph";
+import type { AssetGraphDeleteMutation } from "/__generated__/core/AssetGraphDeleteMutation.graphql";
+import type {
+  AssetsPageFragment$data,
+  AssetsPageFragment$key,
+} from "/__generated__/core/AssetsPageFragment.graphql";
 import type { OperationType } from "relay-runtime";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 
@@ -73,7 +93,7 @@ export function AssetsTable(props: Props) {
         ...defaultValue,
         organizationId,
       }}
-      action={({ item }) =>
+      action={({ item }) => (
         <ActionDropdown>
           <DropdownItem asChild>
             <Link to={`/organizations/${organizationId}/assets/${item.id}`}>
@@ -89,7 +109,7 @@ export function AssetsTable(props: Props) {
             {__("Delete")}
           </DropdownItem>
         </ActionDropdown>
-      }
+      )}
       row={({ item }) => (
         <>
           <TextCell name="name" defaultValue={item?.name ?? ""} required />
@@ -105,9 +125,7 @@ export function AssetsTable(props: Props) {
           />
           <TextCell
             name="dataTypesStored"
-            defaultValue={
-              item?.dataTypesStored ?? defaultValue.dataTypesStored
-            }
+            defaultValue={item?.dataTypesStored ?? defaultValue.dataTypesStored}
             required
           />
           <TextCell
@@ -123,9 +141,7 @@ export function AssetsTable(props: Props) {
           <VendorsCell
             name="vendorIds"
             organizationId={organizationId}
-            defaultValue={
-              item?.vendors?.edges?.map((edge) => edge.node) ?? []
-            }
+            defaultValue={item?.vendors?.edges?.map((edge) => edge.node) ?? []}
           />
         </>
       )}

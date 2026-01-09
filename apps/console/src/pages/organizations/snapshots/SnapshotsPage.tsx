@@ -1,11 +1,15 @@
-import type { SnapshotGraphListQuery } from "/hooks/graph/__generated__/SnapshotGraphListQuery.graphql";
+import type { SnapshotGraphListQuery } from "/__generated__/core/SnapshotGraphListQuery.graphql";
 import {
   useFragment,
   usePreloadedQuery,
   type PreloadedQuery,
 } from "react-relay";
 import { useTranslate } from "@probo/i18n";
-import { getSnapshotTypeLabel, getSnapshotTypeUrlPath, formatDate } from "@probo/helpers";
+import {
+  getSnapshotTypeLabel,
+  getSnapshotTypeUrlPath,
+  formatDate,
+} from "@probo/helpers";
 import {
   ActionDropdown,
   Badge,
@@ -21,21 +25,16 @@ import {
   Thead,
   Tr,
 } from "@probo/ui";
-import {
-  snapshotsQuery,
-  useDeleteSnapshot,
-} from "/hooks/graph/SnapshotGraph";
+import { snapshotsQuery, useDeleteSnapshot } from "/hooks/graph/SnapshotGraph";
 import { graphql } from "relay-runtime";
 import type {
   SnapshotsPageFragment$data,
   SnapshotsPageFragment$key,
-} from "./__generated__/SnapshotsPageFragment.graphql";
+} from "/__generated__/core/SnapshotsPageFragment.graphql";
 import type { NodeOf } from "/types";
 import SnapshotFormDialog from "./dialog/SnapshotFormDialog";
 import { usePageTitle } from "@probo/hooks";
 import { useOrganizationId } from "/hooks/useOrganizationId";
-import { PermissionsContext } from "/providers/PermissionsContext";
-import { use } from "react";
 
 type Props = {
   queryRef: PreloadedQuery<SnapshotGraphListQuery>;
@@ -43,7 +42,8 @@ type Props = {
 
 const snapshotsFragment = graphql`
   fragment SnapshotsPageFragment on Organization {
-    snapshots(first: 100) @connection(key: "SnapshotsGraphListQuery__snapshots") {
+    snapshots(first: 100)
+      @connection(key: "SnapshotsGraphListQuery__snapshots") {
       __id
       edges {
         node {
@@ -52,6 +52,7 @@ const snapshotsFragment = graphql`
           description
           type
           createdAt
+          canDelete: permission(action: "core:snapshot:delete")
         }
       }
     }
@@ -63,28 +64,27 @@ export default function SnapshotsPage(props: Props) {
   const organizationId = useOrganizationId();
   const organization = usePreloadedQuery(
     snapshotsQuery,
-    props.queryRef
+    props.queryRef,
   ).organization;
   const data = useFragment<SnapshotsPageFragment$key>(
     snapshotsFragment,
-    organization
+    organization,
   );
   const connectionId = data.snapshots.__id;
   const snapshots = data.snapshots.edges.map((edge) => edge.node);
-  const { isAuthorized } = use(PermissionsContext);
   usePageTitle(__("Snapshots"));
 
-  const hasAnyAction = isAuthorized("Snapshot", "deleteSnapshot");
+  const hasAnyAction = snapshots.some(({ canDelete }) => canDelete);
 
   return (
     <div className="space-y-6">
       <PageHeader
         title={__("Snapshots")}
         description={__(
-          "Snapshots capture point-in-time views of your organization's compliance state. Create snapshots to track progress over time."
+          "Snapshots capture point-in-time views of your organization's compliance state. Create snapshots to track progress over time.",
         )}
       >
-        {isAuthorized("Organization", "createSnapshot") && (
+        {organization.canCreateSnapshot && (
           <SnapshotFormDialog connection={connectionId}>
             <Button variant="primary" icon={IconPlusLarge}>
               {__("New snapshot")}
@@ -140,11 +140,12 @@ type SnapshotRowProps = {
 function SnapshotRow(props: SnapshotRowProps) {
   const { __ } = useTranslate();
   const deleteSnapshot = useDeleteSnapshot(props.snapshot, props.connectionId);
-  const { isAuthorized } = use(PermissionsContext);
   const typePath = getSnapshotTypeUrlPath(props.snapshot.type);
 
   return (
-    <Tr to={`/organizations/${props.organizationId}/snapshots/${props.snapshot.id}${typePath}`}>
+    <Tr
+      to={`/organizations/${props.organizationId}/snapshots/${props.snapshot.id}${typePath}`}
+    >
       <Td className="font-medium">{props.snapshot.name}</Td>
       <Td>
         <Badge variant="neutral">
@@ -160,7 +161,7 @@ function SnapshotRow(props: SnapshotRowProps) {
       {props.hasAnyAction && (
         <Td noLink width={50} className="text-end">
           <ActionDropdown>
-            {isAuthorized("Snapshot", "deleteSnapshot") && (
+            {props.snapshot.canDelete && (
               <DropdownItem
                 onClick={deleteSnapshot}
                 variant="danger"

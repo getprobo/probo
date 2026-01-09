@@ -52,23 +52,7 @@ type (
 	}
 
 	CustomDomains []*CustomDomain
-
-	ErrCustomDomainNotFound struct {
-		Identifier string
-	}
-
-	ErrCustomDomainAlreadyExists struct {
-		message string
-	}
 )
-
-func (e ErrCustomDomainNotFound) Error() string {
-	return fmt.Sprintf("custom domain not found: %q", e.Identifier)
-}
-
-func (e ErrCustomDomainAlreadyExists) Error() string {
-	return e.message
-}
 
 func NewCustomDomain(tenantID gid.TenantID, domain string) *CustomDomain {
 	now := time.Now()
@@ -79,6 +63,21 @@ func NewCustomDomain(tenantID gid.TenantID, domain string) *CustomDomain {
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
+}
+
+// AuthorizationAttributes returns the authorization attributes for policy evaluation.
+func (cd *CustomDomain) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+	q := `SELECT organization_id FROM custom_domains WHERE id = $1 LIMIT 1;`
+
+	var organizationID gid.GID
+	if err := conn.QueryRow(ctx, q, cd.ID).Scan(&organizationID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrResourceNotFound
+		}
+		return nil, fmt.Errorf("cannot query custom domain authorization attributes: %w", err)
+	}
+
+	return map[string]string{"organization_id": organizationID.String()}, nil
 }
 
 func (cd *CustomDomain) CursorKey(field CustomDomainOrderField) page.CursorKey {
@@ -385,9 +384,7 @@ INSERT INTO custom_domains (
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
 			if pgErr.Code == "23505" && pgErr.ConstraintName == "custom_domains_domain_key" {
-				return &ErrCustomDomainAlreadyExists{
-					message: fmt.Sprintf("custom domain with domain %q already exists", cd.Domain),
-				}
+				return ErrResourceAlreadyExists
 			}
 		}
 		return fmt.Errorf("cannot insert custom domain: %w", err)

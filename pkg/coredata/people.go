@@ -45,31 +45,7 @@ type (
 	}
 
 	Peoples []*People
-
-	ErrPeopleNotFound struct {
-		Identifier string
-	}
-
-	ErrPeopleAlreadyExists struct {
-		message string
-	}
-
-	ErrPeopleReferenced struct {
-		message string
-	}
 )
-
-func (e ErrPeopleNotFound) Error() string {
-	return fmt.Sprintf("people not found: %s", e.Identifier)
-}
-
-func (e ErrPeopleAlreadyExists) Error() string {
-	return e.message
-}
-
-func (e ErrPeopleReferenced) Error() string {
-	return e.message
-}
 
 func (p People) CursorKey(orderBy PeopleOrderField) page.CursorKey {
 	switch orderBy {
@@ -82,6 +58,20 @@ func (p People) CursorKey(orderBy PeopleOrderField) page.CursorKey {
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
+}
+
+func (p *People) AuthorizationAttributes(ctx context.Context, conn pg.Conn) (map[string]string, error) {
+	q := `SELECT organization_id FROM peoples WHERE id = $1 LIMIT 1;`
+
+	var organizationID gid.GID
+	if err := conn.QueryRow(ctx, q, p.ID).Scan(&organizationID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrResourceNotFound
+		}
+		return nil, fmt.Errorf("cannot query people authorization attributes: %w", err)
+	}
+
+	return map[string]string{"organization_id": organizationID.String()}, nil
 }
 
 func (p *People) LoadByID(
@@ -124,7 +114,7 @@ LIMIT 1;
 	people, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[People])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrPeopleNotFound{Identifier: peopleID.String()}
+			return ErrResourceNotFound
 		}
 
 		return fmt.Errorf("cannot collect people: %w", err)
@@ -175,7 +165,7 @@ LIMIT 1;
 	people, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[People])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrPeopleNotFound{Identifier: primaryEmailAddress}
+			return ErrResourceNotFound
 		}
 
 		return fmt.Errorf("cannot collect people: %w", err)
@@ -231,7 +221,7 @@ LIMIT 1;
 	people, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[People])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrPeopleNotFound{Identifier: primaryEmailAddress.String()}
+			return ErrResourceNotFound
 		}
 
 		return fmt.Errorf("cannot collect people: %w", err)
@@ -362,9 +352,7 @@ DELETE FROM peoples WHERE %s AND id = @people_id
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
 			if pgErr.Code == "23503" {
-				return &ErrPeopleReferenced{
-					message: fmt.Sprintf("person with id %s cannot be deleted because it is referenced by other records", p.ID),
-				}
+				return ErrResourceInUse
 			}
 		}
 		return fmt.Errorf("cannot delete person: %w", err)
