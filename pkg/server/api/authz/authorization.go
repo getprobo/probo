@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package connect_v1
+package authz
 
 import (
 	"context"
@@ -21,6 +21,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 )
 
@@ -51,8 +52,8 @@ func NewAuthorizeFunc(
 		action string,
 		options ...AuthorizeFuncOption,
 	) error {
-		identity := IdentityFromContext(ctx)
-		session := SessionFromContext(ctx)
+		identity := authn.IdentityFromContext(ctx)
+		session := authn.SessionFromContext(ctx)
 
 		params := iam.AuthorizeParams{
 			Principal:          identity.ID,
