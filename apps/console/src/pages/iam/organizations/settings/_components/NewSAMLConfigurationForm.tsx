@@ -25,6 +25,8 @@ const createSAMLConfigurationMutation = graphql`
           domainVerificationToken
           domainVerifiedAt
           testLoginUrl
+          canUpdate: permission(action: "iam:saml-configuration:update")
+          canDelete: permission(action: "iam:saml-configuration:delete")
         }
       }
     }

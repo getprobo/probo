@@ -303,7 +303,7 @@ func (s *AccountService) AcceptInvitation(
 			// Accept other pending invitations for email in organization
 			invitations := &coredata.Invitations{}
 			onlyPending := coredata.NewInvitationFilter([]coredata.InvitationStatus{coredata.InvitationStatusPending})
-			if err := invitations.AcceptByEmailAndOrganization(
+			if err := invitations.ExpireByEmailAndOrganization(
 				ctx,
 				tx,
 				coredata.NewScopeFromObjectID(invitation.OrganizationID),
@@ -311,7 +311,7 @@ func (s *AccountService) AcceptInvitation(
 				invitation.OrganizationID,
 				onlyPending,
 			); err != nil {
-				return fmt.Errorf("cannot accept pending invitations by email: %w", err)
+				return fmt.Errorf("cannot expire pending invitations by email: %w", err)
 			}
 
 			return nil
