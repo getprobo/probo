@@ -359,11 +359,11 @@ func (r *membershipProfileResolver) Permission(ctx context.Context, obj *types.M
 func (r *mutationResolver) SignIn(ctx context.Context, input types.SignInInput) (*types.SignInPayload, error) {
 	// TODO: handle existing session to only open child session and chnage root session auth method to PASSWORD
 
-	user, session, err := r.iam.AuthService.OpenSessionWithPassword(ctx, input.Email, input.Password)
+	identity, session, err := r.iam.AuthService.OpenSessionWithPassword(ctx, input.Email, input.Password)
 	if err != nil {
 		var errInvalidPassword *iam.ErrInvalidPassword
 		if errors.As(err, &errInvalidPassword) {
-			return nil, graphql.ErrorOnPath(ctx, err)
+			return nil, gqlutils.Invalid(ctx, err)
 		}
 
 		var errInvalidCredentials *iam.ErrInvalidCredentials
@@ -384,7 +384,7 @@ func (r *mutationResolver) SignIn(ctx context.Context, input types.SignInInput) 
 	r.sessionCookie.Set(w, session)
 
 	return &types.SignInPayload{
-		Identity: types.NewIdentity(user),
+		Identity: types.NewIdentity(identity),
 		Session:  types.NewSession(session),
 	}, nil
 }

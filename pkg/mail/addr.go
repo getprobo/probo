@@ -16,6 +16,19 @@ func (a Addr) String() string {
 	return string(a)
 }
 
+func (a *Addr) Username() string {
+	if a == nil || *a == Nil {
+		return ""
+	}
+
+	parts := strings.Split(a.String(), "@")
+	if len(parts) != 2 {
+		return ""
+	}
+
+	return parts[0]
+}
+
 func (a *Addr) Domain() string {
 	if a == nil || *a == Nil {
 		return ""

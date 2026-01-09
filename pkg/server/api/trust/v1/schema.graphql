@@ -34,6 +34,15 @@ type PageInfo {
   endCursor: CursorKey
 }
 
+type Identity implements Node {
+  id: ID!
+  email: EmailAddr!
+  fullName: String!
+  emailVerified: Boolean!
+  createdAt: Datetime!
+  updatedAt: Datetime!
+}
+
 type Organization implements Node {
   id: ID!
   name: String!
@@ -535,10 +544,18 @@ type TrustCenterAccess implements Node {
   updatedAt: Datetime!
 }
 
+input SignInWithTokenInput {
+  token: String!
+}
+
+type SignInWithTokenPayload {
+  success: Boolean!
+}
+
 input RequestAllAccessesInput {
   trustCenterId: ID!
-  email: EmailAddr
-  name: String
+  email: EmailAddr!
+  fullName: String!
 }
 
 type RequestAccessesPayload {
@@ -560,22 +577,22 @@ input AcceptNonDisclosureAgreementInput {
 input RequestDocumentAccessInput {
   trustCenterId: ID!
   documentId: ID!
-  email: EmailAddr
-  name: String
+  email: EmailAddr!
+  fullName: String!
 }
 
 input RequestReportAccessInput {
   trustCenterId: ID!
   reportId: ID!
-  email: EmailAddr
-  name: String
+  email: EmailAddr!
+  fullName: String!
 }
 
 input RequestTrustCenterFileAccessInput {
   trustCenterId: ID!
   trustCenterFileId: ID!
-  email: EmailAddr
-  name: String
+  email: EmailAddr!
+  fullName: String!
 }
 
 input ExportTrustCenterFileInput {
@@ -599,12 +616,15 @@ type AcceptNonDisclosureAgreementPayload {
 }
 
 type Query {
+  viewer: Identity
   node(id: ID!): Node!
   trustCenterBySlug(slug: String!): TrustCenter @mustBeAuthenticated(role: NONE)
   currentTrustCenter: TrustCenter @mustBeAuthenticated(role: NONE)
 }
 
 type Mutation {
+  signInWithToken(input: SignInWithTokenInput!): SignInWithTokenPayload!
+
   requestAllAccesses(input: RequestAllAccessesInput!): RequestAccessesPayload!
     @mustBeAuthenticated(role: NONE)
 

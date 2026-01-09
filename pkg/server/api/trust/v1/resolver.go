@@ -20,13 +20,16 @@ import (
 	"context"
 	"time"
 
+	"github.com/99designs/gqlgen/graphql"
 	"github.com/go-chi/chi/v5"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/trust/v1/schema"
+	"go.probo.inc/probo/pkg/server/api/trust/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 	"go.probo.inc/probo/pkg/trust"
 )
@@ -45,9 +48,27 @@ type (
 	}
 
 	Resolver struct {
-		trust *trust.Service
+		trust         *trust.Service
+		logger        *log.Logger
+		iam           *iam.Service
+		sessionCookie *authn.Cookie
 	}
 )
+
+type ctxKey struct{ name string }
+
+var (
+	TrustCenterKey = &ctxKey{name: "trust_center"}
+)
+
+func TrustCenterFromContext(ctx context.Context) probo.TrustCenterInfo {
+	trustCenter, _ := ctx.Value(TrustCenterKey).(probo.TrustCenterInfo)
+	return trustCenter
+}
+
+func ContextWithTrustCenter(ctx context.Context, trustCenter probo.TrustCenterInfo) context.Context {
+	return context.WithValue(ctx, TrustCenterKey, trustCenter)
+}
 
 func NewMux(
 	logger *log.Logger,
@@ -60,7 +81,25 @@ func NewMux(
 	sessionMiddleware := authn.NewSessionMiddleware(iamSvc, cookieConfig)
 	r.Use(sessionMiddleware)
 
-	config := schema.Config{Resolvers: &Resolver{trust: trustSvc}}
+	config := schema.Config{
+		Resolvers: &Resolver{
+			iam:           iamSvc,
+			trust:         trustSvc,
+			logger:        logger,
+			sessionCookie: authn.NewCookie(&cookieConfig),
+		},
+		Directives: schema.DirectiveRoot{
+			MustBeAuthenticated: func(ctx context.Context, obj any, next graphql.Resolver, role *types.Role) (any, error) {
+				identity := authn.IdentityFromContext(ctx)
+
+				if identity == nil {
+					return nil, gqlutils.Unauthenticatedf(ctx, "authentication required")
+				}
+
+				return next(ctx)
+			},
+		},
+	}
 	es := schema.NewExecutableSchema(config)
 	graphqlHandler := gqlutils.NewHandler(es, logger)
 
@@ -73,14 +112,6 @@ func (r *Resolver) RootTrustService(ctx context.Context) *trust.TenantService {
 	return r.trust.WithTenant(gid.NewTenantID())
 }
 
-func (r *Resolver) PublicTrustService(ctx context.Context, tenantID gid.TenantID) *trust.TenantService {
+func (r *Resolver) TrustService(ctx context.Context, tenantID gid.TenantID) *trust.TenantService {
 	return r.trust.WithTenant(tenantID)
-}
-
-func (r *Resolver) PrivateTrustService(ctx context.Context, tenantID gid.TenantID) (*trust.TenantService, error) {
-	// if err := trustauth.ValidateTenantAccess(ctx, r, userTenantContextKey, tenantID); err != nil {
-	// 	return nil, fmt.Errorf("cannot access trust center: %w", err)
-	// }
-
-	return r.trust.WithTenant(tenantID), nil
 }

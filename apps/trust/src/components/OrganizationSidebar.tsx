@@ -1,11 +1,11 @@
 import { useTranslate } from "@probo/i18n";
 import { Button, Card, IconBlock, IconLock, IconMedal } from "@probo/ui";
 import type { TrustGraphQuery$data } from "/queries/__generated__/TrustGraphQuery.graphql";
-import type { PropsWithChildren } from "react";
+import { use, type PropsWithChildren } from "react";
 import { domain } from "@probo/helpers";
 import { AuditRowAvatar } from "./AuditRow";
 import { RequestAccessDialog } from "./RequestAccessDialog";
-import { useIsAuthenticated } from "/hooks/useIsAuthenticated";
+import { Viewer } from "/providers/Viewer";
 
 export function OrganizationSidebar({
   trustCenter,
@@ -13,7 +13,7 @@ export function OrganizationSidebar({
   trustCenter: TrustGraphQuery$data["trustCenterBySlug"];
 }) {
   const { __ } = useTranslate();
-  const isAuthenticated = useIsAuthenticated();
+  const isAuthenticated = !!use(Viewer);
 
   if (!trustCenter) {
     return null;

@@ -31,6 +31,7 @@ type (
 		disableSignup              bool
 		invitationTokenValidity    time.Duration
 		passwordResetTokenValidity time.Duration
+		magicLinkTokenValidity     time.Duration
 		sessionDuration            time.Duration
 		bucket                     string
 		certificate                *x509.Certificate
@@ -53,6 +54,7 @@ type (
 		DisableSignup                  bool
 		InvitationTokenValidity        time.Duration
 		PasswordResetTokenValidity     time.Duration
+		MagicLinkTokenValidity         time.Duration
 		SessionDuration                time.Duration
 		Bucket                         string
 		TokenSecret                    string
@@ -99,6 +101,7 @@ func NewService(
 		disableSignup:              cfg.DisableSignup,
 		invitationTokenValidity:    cfg.InvitationTokenValidity,
 		passwordResetTokenValidity: cfg.PasswordResetTokenValidity,
+		magicLinkTokenValidity:     cfg.MagicLinkTokenValidity,
 		sessionDuration:            cfg.SessionDuration,
 		bucket:                     cfg.Bucket,
 		certificate:                cfg.Certificate,

@@ -60,7 +60,7 @@ func NewAuditEdge(a *coredata.Audit, orderField coredata.AuditOrderField) *Audit
 }
 
 func NewAudit(a *coredata.Audit) *Audit {
-	return &Audit{
+	node := &Audit{
 		ID: a.ID,
 		Organization: &Organization{
 			ID: a.OrganizationID,
@@ -76,4 +76,12 @@ func NewAudit(a *coredata.Audit) *Audit {
 		CreatedAt:             a.CreatedAt,
 		UpdatedAt:             a.UpdatedAt,
 	}
+
+	if a.ReportID != nil {
+		node.Report = &Report{
+			ID: *a.ReportID,
+		}
+	}
+
+	return node
 }

@@ -15,9 +15,9 @@ import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { graphql } from "relay-runtime";
 import { useMutationWithToasts } from "/hooks/useMutationWithToast";
 import { useTrustCenter } from "/hooks/useTrustCenter";
-import { type FormEventHandler, type PropsWithChildren } from "react";
-import { useIsAuthenticated } from "/hooks/useIsAuthenticated.ts";
+import { use, type FormEventHandler, type PropsWithChildren } from "react";
 import { InvalidError } from "/providers/RelayProviders";
+import { Viewer } from "/providers/Viewer";
 
 type Props = PropsWithChildren<{
   documentId?: string;
@@ -27,7 +27,7 @@ type Props = PropsWithChildren<{
 }>;
 
 const schema = z.object({
-  name: z.string(),
+  fullName: z.string(),
   email: z.string().email(),
 });
 
@@ -41,18 +41,28 @@ export function RequestAccessDialog({
   const trustCenter = useTrustCenter();
   const { toast } = useToast();
   const { __ } = useTranslate();
-  const { handleSubmit, register, setError, formState } = useFormWithSchema(schema, {
-    defaultValues: {
-      name: "",
-      email: "",
+  const viewer = use(Viewer);
+  const { handleSubmit, register, setError, formState } = useFormWithSchema(
+    schema,
+    {
+      defaultValues: {
+        fullName: "",
+        email: "",
+      },
     },
-  });
-  const isAuthenticated = useIsAuthenticated();
+  );
   const dialogRef = useDialogRef();
-  const [commitMutation, isMutating] = useMutation({ documentId, reportId, trustCenterFileId });
+  const [commitMutation, isMutating] = useMutation({
+    documentId,
+    reportId,
+    trustCenterFileId,
+  });
 
   const submitCallback = (data: z.infer<typeof schema> | null) => {
-    commitMutation(data)
+    commitMutation({
+      email: data?.email ?? viewer?.email ?? "",
+      fullName: data?.fullName ?? viewer?.fullName ?? "",
+    })
       .then(() => {
         onSuccess?.();
         toast({
@@ -65,7 +75,7 @@ export function RequestAccessDialog({
       .catch((error) => {
         if (error instanceof InvalidError) {
           if (error.field === "email") {
-            setError(error.field, {message: error.message})
+            setError(error.field, { message: error.message });
           }
           return;
         }
@@ -77,7 +87,7 @@ export function RequestAccessDialog({
       });
   };
 
-  const onSubmit: FormEventHandler<HTMLFormElement> = isAuthenticated
+  const onSubmit: FormEventHandler<HTMLFormElement> = viewer
     ? (e) => {
         e.preventDefault();
         submitCallback(null);
@@ -102,12 +112,12 @@ export function RequestAccessDialog({
               trustCenter.organization.name,
             )}
           </p>
-          {!isAuthenticated && (
+          {!viewer && (
             <div className="space-y-4">
               <Field
                 label={__("Full name")}
                 placeholder="John Doe"
-                {...register("name")}
+                {...register("fullName")}
                 type="text"
               />
               <Field
@@ -195,8 +205,10 @@ function useMutation({
     useMutationWithToasts(requestDocumentAccessMutation);
   const [commitRequestReportAccess, isRequestingReportAccess] =
     useMutationWithToasts(requestReportAccessMutation);
-  const [commitRequestTrustCenterFileAccess, isRequestingTrustCenterFileAccess] =
-    useMutationWithToasts(requestTrustCenterFileAccessMutation);
+  const [
+    commitRequestTrustCenterFileAccess,
+    isRequestingTrustCenterFileAccess,
+  ] = useMutationWithToasts(requestTrustCenterFileAccessMutation);
 
   if (trustCenterFileId) {
     return [

@@ -102,6 +102,18 @@ type Framework struct {
 func (Framework) IsNode()             {}
 func (this Framework) GetID() gid.GID { return this.ID }
 
+type Identity struct {
+	ID            gid.GID   `json:"id"`
+	Email         mail.Addr `json:"email"`
+	FullName      string    `json:"fullName"`
+	EmailVerified bool      `json:"emailVerified"`
+	CreatedAt     time.Time `json:"createdAt"`
+	UpdatedAt     time.Time `json:"updatedAt"`
+}
+
+func (Identity) IsNode()             {}
+func (this Identity) GetID() gid.GID { return this.ID }
+
 type Mutation struct {
 }
 
@@ -143,30 +155,38 @@ type RequestAccessesPayload struct {
 }
 
 type RequestAllAccessesInput struct {
-	TrustCenterID gid.GID    `json:"trustCenterId"`
-	Email         *mail.Addr `json:"email,omitempty"`
-	Name          *string    `json:"name,omitempty"`
+	TrustCenterID gid.GID   `json:"trustCenterId"`
+	Email         mail.Addr `json:"email"`
+	FullName      string    `json:"fullName"`
 }
 
 type RequestDocumentAccessInput struct {
-	TrustCenterID gid.GID    `json:"trustCenterId"`
-	DocumentID    gid.GID    `json:"documentId"`
-	Email         *mail.Addr `json:"email,omitempty"`
-	Name          *string    `json:"name,omitempty"`
+	TrustCenterID gid.GID   `json:"trustCenterId"`
+	DocumentID    gid.GID   `json:"documentId"`
+	Email         mail.Addr `json:"email"`
+	FullName      string    `json:"fullName"`
 }
 
 type RequestReportAccessInput struct {
-	TrustCenterID gid.GID    `json:"trustCenterId"`
-	ReportID      gid.GID    `json:"reportId"`
-	Email         *mail.Addr `json:"email,omitempty"`
-	Name          *string    `json:"name,omitempty"`
+	TrustCenterID gid.GID   `json:"trustCenterId"`
+	ReportID      gid.GID   `json:"reportId"`
+	Email         mail.Addr `json:"email"`
+	FullName      string    `json:"fullName"`
 }
 
 type RequestTrustCenterFileAccessInput struct {
-	TrustCenterID     gid.GID    `json:"trustCenterId"`
-	TrustCenterFileID gid.GID    `json:"trustCenterFileId"`
-	Email             *mail.Addr `json:"email,omitempty"`
-	Name              *string    `json:"name,omitempty"`
+	TrustCenterID     gid.GID   `json:"trustCenterId"`
+	TrustCenterFileID gid.GID   `json:"trustCenterFileId"`
+	Email             mail.Addr `json:"email"`
+	FullName          string    `json:"fullName"`
+}
+
+type SignInWithTokenInput struct {
+	Token string `json:"token"`
+}
+
+type SignInWithTokenPayload struct {
+	Success bool `json:"success"`
 }
 
 type TrustCenter struct {

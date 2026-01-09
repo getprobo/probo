@@ -14,6 +14,7 @@ import (
 	"time"
 
 	pgx "github.com/jackc/pgx/v5"
+	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
@@ -1674,12 +1675,28 @@ func (r *mutationResolver) CreateTrustCenterAccess(ctx context.Context, input ty
 
 	prb := r.ProboService(ctx, input.TrustCenterID.TenantID())
 
+	// TODO: when admin/owner creates trust center access, we should have an invite for it instead of directly creating the identity
+	identity := authn.IdentityFromContext(ctx)
+	if identity == nil {
+		var err error
+		identity, err = r.iam.AuthService.LoadOrCreateIdentity(
+			ctx,
+			&iam.LoadOrCreateIdentityRequest{
+				Email: input.Email,
+			},
+		)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot load or create identity", log.Error(err))
+			return nil, gqlutils.Internal(ctx)
+		}
+	}
+
 	access, err := prb.TrustCenterAccesses.Create(
 		ctx,
 		&probo.CreateTrustCenterAccessRequest{
 			TrustCenterID: input.TrustCenterID,
-			Email:         input.Email,
-			Name:          input.Name,
+			Email:         identity.EmailAddress,
+			FullName:      identity.FullName,
 		},
 	)
 	if err != nil {
@@ -1687,8 +1704,8 @@ func (r *mutationResolver) CreateTrustCenterAccess(ctx context.Context, input ty
 			return nil, gqlutils.Conflict(ctx, err)
 		}
 
-		// TODO no panic use gqlutils.InternalError
-		panic(fmt.Errorf("cannot create trust center access: %w", err))
+		r.logger.ErrorCtx(ctx, "cannot create trust center access", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	return &types.CreateTrustCenterAccessPayload{
