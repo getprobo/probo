@@ -1,0 +1,11 @@
+Probo
+
+Hi {{.FullName}},
+
+Please use this link to connect to Probo:
+
+{{.MagicLinkURL}}
+
+This link will expire in {{.DurationInMinutes}} minutes.
+
+Probo Inc, 490 Post St, STE 640, San Francisco, CA, 94102, US

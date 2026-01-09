@@ -120,6 +120,15 @@ type ComplexityRoot struct {
 		Name         func(childComplexity int) int
 	}
 
+	Identity struct {
+		CreatedAt     func(childComplexity int) int
+		Email         func(childComplexity int) int
+		EmailVerified func(childComplexity int) int
+		FullName      func(childComplexity int) int
+		ID            func(childComplexity int) int
+		UpdatedAt     func(childComplexity int) int
+	}
+
 	Mutation struct {
 		AcceptNonDisclosureAgreement func(childComplexity int, input types.AcceptNonDisclosureAgreementInput) int
 		ExportDocumentPDF            func(childComplexity int, input types.ExportDocumentPDFInput) int
@@ -129,6 +138,7 @@ type ComplexityRoot struct {
 		RequestDocumentAccess        func(childComplexity int, input types.RequestDocumentAccessInput) int
 		RequestReportAccess          func(childComplexity int, input types.RequestReportAccessInput) int
 		RequestTrustCenterFileAccess func(childComplexity int, input types.RequestTrustCenterFileAccessInput) int
+		SignInWithToken              func(childComplexity int, input types.SignInWithTokenInput) int
 	}
 
 	Organization struct {
@@ -152,6 +162,7 @@ type ComplexityRoot struct {
 		CurrentTrustCenter func(childComplexity int) int
 		Node               func(childComplexity int, id gid.GID) int
 		TrustCenterBySlug  func(childComplexity int, slug string) int
+		Viewer             func(childComplexity int) int
 	}
 
 	Report struct {
@@ -163,6 +174,10 @@ type ComplexityRoot struct {
 
 	RequestAccessesPayload struct {
 		TrustCenterAccess func(childComplexity int) int
+	}
+
+	SignInWithTokenPayload struct {
+		Success func(childComplexity int) int
 	}
 
 	TrustCenter struct {
@@ -258,6 +273,7 @@ type FrameworkResolver interface {
 	DarkLogoURL(ctx context.Context, obj *types.Framework) (*string, error)
 }
 type MutationResolver interface {
+	SignInWithToken(ctx context.Context, input types.SignInWithTokenInput) (*types.SignInWithTokenPayload, error)
 	RequestAllAccesses(ctx context.Context, input types.RequestAllAccessesInput) (*types.RequestAccessesPayload, error)
 	ExportDocumentPDF(ctx context.Context, input types.ExportDocumentPDFInput) (*types.ExportDocumentPDFPayload, error)
 	ExportReportPDF(ctx context.Context, input types.ExportReportPDFInput) (*types.ExportReportPDFPayload, error)
@@ -271,6 +287,7 @@ type OrganizationResolver interface {
 	LogoURL(ctx context.Context, obj *types.Organization) (*string, error)
 }
 type QueryResolver interface {
+	Viewer(ctx context.Context) (*types.Identity, error)
 	Node(ctx context.Context, id gid.GID) (types.Node, error)
 	TrustCenterBySlug(ctx context.Context, slug string) (*types.TrustCenter, error)
 	CurrentTrustCenter(ctx context.Context) (*types.TrustCenter, error)
@@ -472,6 +489,43 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Framework.Name(childComplexity), true
 
+	case "Identity.createdAt":
+		if e.complexity.Identity.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.Identity.CreatedAt(childComplexity), true
+	case "Identity.email":
+		if e.complexity.Identity.Email == nil {
+			break
+		}
+
+		return e.complexity.Identity.Email(childComplexity), true
+	case "Identity.emailVerified":
+		if e.complexity.Identity.EmailVerified == nil {
+			break
+		}
+
+		return e.complexity.Identity.EmailVerified(childComplexity), true
+	case "Identity.fullName":
+		if e.complexity.Identity.FullName == nil {
+			break
+		}
+
+		return e.complexity.Identity.FullName(childComplexity), true
+	case "Identity.id":
+		if e.complexity.Identity.ID == nil {
+			break
+		}
+
+		return e.complexity.Identity.ID(childComplexity), true
+	case "Identity.updatedAt":
+		if e.complexity.Identity.UpdatedAt == nil {
+			break
+		}
+
+		return e.complexity.Identity.UpdatedAt(childComplexity), true
+
 	case "Mutation.acceptNonDisclosureAgreement":
 		if e.complexity.Mutation.AcceptNonDisclosureAgreement == nil {
 			break
@@ -560,6 +614,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.RequestTrustCenterFileAccess(childComplexity, args["input"].(types.RequestTrustCenterFileAccessInput)), true
+	case "Mutation.signInWithToken":
+		if e.complexity.Mutation.SignInWithToken == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_signInWithToken_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.SignInWithToken(childComplexity, args["input"].(types.SignInWithTokenInput)), true
 
 	case "Organization.description":
 		if e.complexity.Organization.Description == nil {
@@ -657,6 +722,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.TrustCenterBySlug(childComplexity, args["slug"].(string)), true
+	case "Query.viewer":
+		if e.complexity.Query.Viewer == nil {
+			break
+		}
+
+		return e.complexity.Query.Viewer(childComplexity), true
 
 	case "Report.filename":
 		if e.complexity.Report.Filename == nil {
@@ -689,6 +760,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.RequestAccessesPayload.TrustCenterAccess(childComplexity), true
+
+	case "SignInWithTokenPayload.success":
+		if e.complexity.SignInWithTokenPayload.Success == nil {
+			break
+		}
+
+		return e.complexity.SignInWithTokenPayload.Success(childComplexity), true
 
 	case "TrustCenter.active":
 		if e.complexity.TrustCenter.Active == nil {
@@ -1018,6 +1096,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputRequestDocumentAccessInput,
 		ec.unmarshalInputRequestReportAccessInput,
 		ec.unmarshalInputRequestTrustCenterFileAccessInput,
+		ec.unmarshalInputSignInWithTokenInput,
 	)
 	first := true
 
@@ -1149,6 +1228,15 @@ type PageInfo {
   hasPreviousPage: Boolean!
   startCursor: CursorKey
   endCursor: CursorKey
+}
+
+type Identity implements Node {
+  id: ID!
+  email: EmailAddr!
+  fullName: String!
+  emailVerified: Boolean!
+  createdAt: Datetime!
+  updatedAt: Datetime!
 }
 
 type Organization implements Node {
@@ -1652,10 +1740,18 @@ type TrustCenterAccess implements Node {
   updatedAt: Datetime!
 }
 
+input SignInWithTokenInput {
+  token: String!
+}
+
+type SignInWithTokenPayload {
+  success: Boolean!
+}
+
 input RequestAllAccessesInput {
   trustCenterId: ID!
-  email: EmailAddr
-  name: String
+  email: EmailAddr!
+  fullName: String!
 }
 
 type RequestAccessesPayload {
@@ -1677,22 +1773,22 @@ input AcceptNonDisclosureAgreementInput {
 input RequestDocumentAccessInput {
   trustCenterId: ID!
   documentId: ID!
-  email: EmailAddr
-  name: String
+  email: EmailAddr!
+  fullName: String!
 }
 
 input RequestReportAccessInput {
   trustCenterId: ID!
   reportId: ID!
-  email: EmailAddr
-  name: String
+  email: EmailAddr!
+  fullName: String!
 }
 
 input RequestTrustCenterFileAccessInput {
   trustCenterId: ID!
   trustCenterFileId: ID!
-  email: EmailAddr
-  name: String
+  email: EmailAddr!
+  fullName: String!
 }
 
 input ExportTrustCenterFileInput {
@@ -1716,12 +1812,15 @@ type AcceptNonDisclosureAgreementPayload {
 }
 
 type Query {
+  viewer: Identity
   node(id: ID!): Node!
   trustCenterBySlug(slug: String!): TrustCenter @mustBeAuthenticated(role: NONE)
   currentTrustCenter: TrustCenter @mustBeAuthenticated(role: NONE)
 }
 
 type Mutation {
+  signInWithToken(input: SignInWithTokenInput!): SignInWithTokenPayload!
+
   requestAllAccesses(input: RequestAllAccessesInput!): RequestAccessesPayload!
     @mustBeAuthenticated(role: NONE)
 
@@ -1851,6 +1950,17 @@ func (ec *executionContext) field_Mutation_requestTrustCenterFileAccess_args(ctx
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNRequestTrustCenterFileAccessInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRequestTrustCenterFileAccessInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_signInWithToken_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNSignInWithTokenInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐSignInWithTokenInput)
 	if err != nil {
 		return nil, err
 	}
@@ -2841,6 +2951,225 @@ func (ec *executionContext) fieldContext_Framework_darkLogoURL(_ context.Context
 	return fc, nil
 }
 
+func (ec *executionContext) _Identity_id(ctx context.Context, field graphql.CollectedField, obj *types.Identity) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Identity_id,
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Identity_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Identity",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Identity_email(ctx context.Context, field graphql.CollectedField, obj *types.Identity) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Identity_email,
+		func(ctx context.Context) (any, error) {
+			return obj.Email, nil
+		},
+		nil,
+		ec.marshalNEmailAddr2goᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Identity_email(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Identity",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type EmailAddr does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Identity_fullName(ctx context.Context, field graphql.CollectedField, obj *types.Identity) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Identity_fullName,
+		func(ctx context.Context) (any, error) {
+			return obj.FullName, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Identity_fullName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Identity",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Identity_emailVerified(ctx context.Context, field graphql.CollectedField, obj *types.Identity) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Identity_emailVerified,
+		func(ctx context.Context) (any, error) {
+			return obj.EmailVerified, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Identity_emailVerified(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Identity",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Identity_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.Identity) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Identity_createdAt,
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		ec.marshalNDatetime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Identity_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Identity",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Identity_updatedAt(ctx context.Context, field graphql.CollectedField, obj *types.Identity) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Identity_updatedAt,
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		ec.marshalNDatetime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Identity_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Identity",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_signInWithToken(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_signInWithToken,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().SignInWithToken(ctx, fc.Args["input"].(types.SignInWithTokenInput))
+		},
+		nil,
+		ec.marshalNSignInWithTokenPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐSignInWithTokenPayload,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_signInWithToken(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "success":
+				return ec.fieldContext_SignInWithTokenPayload_success(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type SignInWithTokenPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_signInWithToken_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_requestAllAccesses(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -3664,6 +3993,49 @@ func (ec *executionContext) fieldContext_PageInfo_endCursor(_ context.Context, f
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_viewer(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_viewer,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.Query().Viewer(ctx)
+		},
+		nil,
+		ec.marshalOIdentity2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐIdentity,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_viewer(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Identity_id(ctx, field)
+			case "email":
+				return ec.fieldContext_Identity_email(ctx, field)
+			case "fullName":
+				return ec.fieldContext_Identity_fullName(ctx, field)
+			case "emailVerified":
+				return ec.fieldContext_Identity_emailVerified(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Identity_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Identity_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Identity", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_node(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -4127,6 +4499,35 @@ func (ec *executionContext) fieldContext_RequestAccessesPayload_trustCenterAcces
 				return ec.fieldContext_TrustCenterAccess_updatedAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type TrustCenterAccess", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SignInWithTokenPayload_success(ctx context.Context, field graphql.CollectedField, obj *types.SignInWithTokenPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_SignInWithTokenPayload_success,
+		func(ctx context.Context) (any, error) {
+			return obj.Success, nil
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_SignInWithTokenPayload_success(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SignInWithTokenPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	return fc, nil
@@ -7219,7 +7620,7 @@ func (ec *executionContext) unmarshalInputRequestAllAccessesInput(ctx context.Co
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"trustCenterId", "email", "name"}
+	fieldsInOrder := [...]string{"trustCenterId", "email", "fullName"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -7235,18 +7636,18 @@ func (ec *executionContext) unmarshalInputRequestAllAccessesInput(ctx context.Co
 			it.TrustCenterID = data
 		case "email":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
-			data, err := ec.unmarshalOEmailAddr2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr(ctx, v)
+			data, err := ec.unmarshalNEmailAddr2goᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.Email = data
-		case "name":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+		case "fullName":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fullName"))
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.Name = data
+			it.FullName = data
 		}
 	}
 
@@ -7260,7 +7661,7 @@ func (ec *executionContext) unmarshalInputRequestDocumentAccessInput(ctx context
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"trustCenterId", "documentId", "email", "name"}
+	fieldsInOrder := [...]string{"trustCenterId", "documentId", "email", "fullName"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -7283,18 +7684,18 @@ func (ec *executionContext) unmarshalInputRequestDocumentAccessInput(ctx context
 			it.DocumentID = data
 		case "email":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
-			data, err := ec.unmarshalOEmailAddr2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr(ctx, v)
+			data, err := ec.unmarshalNEmailAddr2goᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.Email = data
-		case "name":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+		case "fullName":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fullName"))
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.Name = data
+			it.FullName = data
 		}
 	}
 
@@ -7308,7 +7709,7 @@ func (ec *executionContext) unmarshalInputRequestReportAccessInput(ctx context.C
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"trustCenterId", "reportId", "email", "name"}
+	fieldsInOrder := [...]string{"trustCenterId", "reportId", "email", "fullName"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -7331,18 +7732,18 @@ func (ec *executionContext) unmarshalInputRequestReportAccessInput(ctx context.C
 			it.ReportID = data
 		case "email":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
-			data, err := ec.unmarshalOEmailAddr2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr(ctx, v)
+			data, err := ec.unmarshalNEmailAddr2goᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.Email = data
-		case "name":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+		case "fullName":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fullName"))
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.Name = data
+			it.FullName = data
 		}
 	}
 
@@ -7356,7 +7757,7 @@ func (ec *executionContext) unmarshalInputRequestTrustCenterFileAccessInput(ctx 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"trustCenterId", "trustCenterFileId", "email", "name"}
+	fieldsInOrder := [...]string{"trustCenterId", "trustCenterFileId", "email", "fullName"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -7379,18 +7780,45 @@ func (ec *executionContext) unmarshalInputRequestTrustCenterFileAccessInput(ctx 
 			it.TrustCenterFileID = data
 		case "email":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
-			data, err := ec.unmarshalOEmailAddr2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr(ctx, v)
+			data, err := ec.unmarshalNEmailAddr2goᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.Email = data
-		case "name":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+		case "fullName":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fullName"))
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.Name = data
+			it.FullName = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputSignInWithTokenInput(ctx context.Context, obj any) (types.SignInWithTokenInput, error) {
+	var it types.SignInWithTokenInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"token"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "token":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("token"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Token = data
 		}
 	}
 
@@ -7454,6 +7882,13 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._Organization(ctx, sel, obj)
+	case types.Identity:
+		return ec._Identity(ctx, sel, &obj)
+	case *types.Identity:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._Identity(ctx, sel, obj)
 	case types.Framework:
 		return ec._Framework(ctx, sel, &obj)
 	case *types.Framework:
@@ -8155,6 +8590,70 @@ func (ec *executionContext) _Framework(ctx context.Context, sel ast.SelectionSet
 	return out
 }
 
+var identityImplementors = []string{"Identity", "Node"}
+
+func (ec *executionContext) _Identity(ctx context.Context, sel ast.SelectionSet, obj *types.Identity) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, identityImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Identity")
+		case "id":
+			out.Values[i] = ec._Identity_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "email":
+			out.Values[i] = ec._Identity_email(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "fullName":
+			out.Values[i] = ec._Identity_fullName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "emailVerified":
+			out.Values[i] = ec._Identity_emailVerified(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdAt":
+			out.Values[i] = ec._Identity_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updatedAt":
+			out.Values[i] = ec._Identity_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var mutationImplementors = []string{"Mutation"}
 
 func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
@@ -8174,6 +8673,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Mutation")
+		case "signInWithToken":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_signInWithToken(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "requestAllAccesses":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_requestAllAccesses(ctx, field)
@@ -8405,6 +8911,25 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Query")
+		case "viewer":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_viewer(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "node":
 			field := field
 
@@ -8625,6 +9150,45 @@ func (ec *executionContext) _RequestAccessesPayload(ctx context.Context, sel ast
 			out.Values[i] = graphql.MarshalString("RequestAccessesPayload")
 		case "trustCenterAccess":
 			out.Values[i] = ec._RequestAccessesPayload_trustCenterAccess(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var signInWithTokenPayloadImplementors = []string{"SignInWithTokenPayload"}
+
+func (ec *executionContext) _SignInWithTokenPayload(ctx context.Context, sel ast.SelectionSet, obj *types.SignInWithTokenPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, signInWithTokenPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SignInWithTokenPayload")
+		case "success":
+			out.Values[i] = ec._SignInWithTokenPayload_success(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -10954,6 +11518,25 @@ func (ec *executionContext) unmarshalNRequestTrustCenterFileAccessInput2goᚗpro
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalNSignInWithTokenInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐSignInWithTokenInput(ctx context.Context, v any) (types.SignInWithTokenInput, error) {
+	res, err := ec.unmarshalInputSignInWithTokenInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNSignInWithTokenPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐSignInWithTokenPayload(ctx context.Context, sel ast.SelectionSet, v types.SignInWithTokenPayload) graphql.Marshaler {
+	return ec._SignInWithTokenPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNSignInWithTokenPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐSignInWithTokenPayload(ctx context.Context, sel ast.SelectionSet, v *types.SignInWithTokenPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._SignInWithTokenPayload(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v any) (string, error) {
 	res, err := graphql.UnmarshalString(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -11583,22 +12166,11 @@ func (ec *executionContext) marshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkg�
 	return res
 }
 
-func (ec *executionContext) unmarshalOEmailAddr2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr(ctx context.Context, v any) (*mail.Addr, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := mail1.UnmarshalAddrScalar(v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalOEmailAddr2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr(ctx context.Context, sel ast.SelectionSet, v *mail.Addr) graphql.Marshaler {
+func (ec *executionContext) marshalOIdentity2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐIdentity(ctx context.Context, sel ast.SelectionSet, v *types.Identity) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	_ = sel
-	_ = ctx
-	res := mail1.MarshalAddrScalar(*v)
-	return res
+	return ec._Identity(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v any) (*int, error) {

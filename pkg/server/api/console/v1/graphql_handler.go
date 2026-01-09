@@ -32,6 +32,7 @@ func NewGraphQLHandler(iamSvc *iam.Service, proboSvc *probo.Service, customDomai
 			probo:             proboSvc,
 			iam:               iamSvc,
 			customDomainCname: customDomainCname,
+			logger:            logger,
 		},
 	}
 

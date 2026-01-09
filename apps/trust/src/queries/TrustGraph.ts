@@ -82,6 +82,10 @@ export const trustVendorsQuery = graphql`
 // Queries for custom domain (subdomain) approach
 export const currentTrustGraphQuery = graphql`
   query TrustGraphCurrentQuery {
+    viewer {
+      email
+      fullName
+    }
     currentTrustCenter {
       id
       slug

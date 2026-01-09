@@ -44,7 +44,7 @@ type (
 	TrustCenterAccessRequest struct {
 		TrustCenterID      gid.GID
 		Email              mail.Addr
-		Name               string
+		FullName           string
 		DocumentIDs        []gid.GID
 		ReportIDs          []gid.GID
 		TrustCenterFileIDs []gid.GID
@@ -61,26 +61,6 @@ func (tcar *TrustCenterAccessRequest) Validate() error {
 	v.Check(tcar.Email.Domain(), "email", validator.NotBlacklisted())
 
 	return v.Error()
-}
-
-func (s TrustCenterAccessService) ValidateToken(
-	ctx context.Context,
-	trustCenterID gid.GID,
-	email mail.Addr,
-) error {
-	return s.svc.pg.WithConn(ctx, func(conn pg.Conn) error {
-		access := &coredata.TrustCenterAccess{}
-		err := access.LoadByTrustCenterIDAndEmail(ctx, conn, s.svc.scope, trustCenterID, email)
-		if err != nil {
-			return fmt.Errorf("cannot load trust center access: %w", err)
-		}
-
-		if !access.Active {
-			return fmt.Errorf("trust center access is not active")
-		}
-
-		return nil
-	})
 }
 
 func (s TrustCenterAccessService) Request(
@@ -170,7 +150,7 @@ func (s TrustCenterAccessService) Request(
 					TenantID:                          s.svc.scope.GetTenantID(),
 					TrustCenterID:                     req.TrustCenterID,
 					Email:                             req.Email,
-					Name:                              req.Name,
+					Name:                              req.FullName,
 					Active:                            false,
 					HasAcceptedNonDisclosureAgreement: false,
 					CreatedAt:                         now,
