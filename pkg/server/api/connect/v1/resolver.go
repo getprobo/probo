@@ -26,12 +26,15 @@ import (
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/securecookie"
+	"go.probo.inc/probo/pkg/server/api/authn"
+	"go.probo.inc/probo/pkg/server/api/authz"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/types"
+	"go.probo.inc/probo/pkg/server/gqlutils"
 )
 
 type (
 	Resolver struct {
-		authorize    AuthorizeFunc
+		authorize    authz.AuthorizeFunc
 		logger       *log.Logger
 		iam          *iam.Service
 		baseURL      *baseurl.BaseURL
@@ -55,10 +58,10 @@ func (r *Resolver) sessionCookieConfig(maxAge time.Duration) securecookie.Config
 func NewMux(logger *log.Logger, svc *iam.Service, cookieConfig securecookie.Config, tokenSecret string, baseURL *baseurl.BaseURL) *chi.Mux {
 	r := chi.NewMux()
 
-	r.Use(HTTPContextMiddleware)
+	r.Use(gqlutils.HTTPContextMiddleware)
 
-	sessionMiddleware := NewSessionMiddleware(svc, cookieConfig)
-	apiKeyMiddleware := NewAPIKeyMiddleware(svc, tokenSecret)
+	sessionMiddleware := authn.NewSessionMiddleware(svc, cookieConfig)
+	apiKeyMiddleware := authn.NewAPIKeyMiddleware(svc, tokenSecret)
 	graphqlHandler := NewGraphQLHandler(svc, logger, baseURL, cookieConfig)
 	samlHandler := NewSAMLHandler(svc, cookieConfig, baseURL, logger)
 	scimHandler := NewSCIMHandler(svc, logger.Named("scim"))

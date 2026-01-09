@@ -25,7 +25,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/securecookie"
-	connect_v1 "go.probo.inc/probo/pkg/server/api/connect/v1"
+	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/trust/v1/schema"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 	"go.probo.inc/probo/pkg/trust"
@@ -57,7 +57,7 @@ func NewMux(
 ) *chi.Mux {
 	r := chi.NewMux()
 
-	sessionMiddleware := connect_v1.NewSessionMiddleware(iamSvc, cookieConfig)
+	sessionMiddleware := authn.NewSessionMiddleware(iamSvc, cookieConfig)
 	r.Use(sessionMiddleware)
 
 	config := schema.Config{Resolvers: &Resolver{trust: trustSvc}}

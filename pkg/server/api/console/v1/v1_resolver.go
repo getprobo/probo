@@ -19,7 +19,7 @@ import (
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
-	connect_v1 "go.probo.inc/probo/pkg/server/api/connect/v1"
+	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
@@ -1037,7 +1037,7 @@ func (r *documentVersionResolver) Signed(ctx context.Context, obj *types.Documen
 		return false, err
 	}
 
-	identity := connect_v1.IdentityFromContext(ctx)
+	identity := authn.IdentityFromContext(ctx)
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -2419,7 +2419,7 @@ func (r *mutationResolver) ExportFramework(ctx context.Context, input types.Expo
 	}
 
 	prb := r.ProboService(ctx, input.FrameworkID.TenantID())
-	identity := connect_v1.IdentityFromContext(ctx)
+	identity := authn.IdentityFromContext(ctx)
 
 	exportErr, exportJobID := prb.Frameworks.RequestExport(
 		ctx,
@@ -3681,7 +3681,7 @@ func (r *mutationResolver) PublishDocumentVersion(ctx context.Context, input typ
 
 	prb := r.ProboService(ctx, input.DocumentID.TenantID())
 
-	identity := connect_v1.IdentityFromContext(ctx)
+	identity := authn.IdentityFromContext(ctx)
 
 	document, documentVersion, err := prb.Documents.PublishVersion(ctx, input.DocumentID, identity.ID, input.Changelog)
 	if err != nil {
@@ -3717,7 +3717,7 @@ func (r *mutationResolver) BulkPublishDocumentVersions(ctx context.Context, inpu
 
 	prb := r.ProboService(ctx, input.DocumentIds[0].TenantID())
 
-	identity := connect_v1.IdentityFromContext(ctx)
+	identity := authn.IdentityFromContext(ctx)
 
 	documentVersions, documents, err := prb.Documents.BulkPublishVersions(
 		ctx,
@@ -3784,7 +3784,7 @@ func (r *mutationResolver) BulkExportDocuments(ctx context.Context, input types.
 
 	prb := r.ProboService(ctx, input.DocumentIds[0].TenantID())
 
-	identity := connect_v1.IdentityFromContext(ctx)
+	identity := authn.IdentityFromContext(ctx)
 
 	options := probo.ExportPDFOptions{
 		WithWatermark:  input.WithWatermark,
@@ -3986,7 +3986,7 @@ func (r *mutationResolver) SignDocument(ctx context.Context, input types.SignDoc
 		return nil, err
 	}
 
-	identity := connect_v1.IdentityFromContext(ctx)
+	identity := authn.IdentityFromContext(ctx)
 	prb := r.ProboService(ctx, input.DocumentVersionID.TenantID())
 
 	documentVersionSignature, err := prb.Documents.SignDocumentVersionByEmail(ctx, input.DocumentVersionID, identity.EmailAddress)
@@ -4043,7 +4043,7 @@ func (r *mutationResolver) ExportSignableVersionDocumentPDF(ctx context.Context,
 		panic(fmt.Errorf("cannot get document version: %w", err))
 	}
 
-	identity := connect_v1.IdentityFromContext(ctx)
+	identity := authn.IdentityFromContext(ctx)
 	documentFilter := coredata.NewDocumentFilter(nil).WithUserEmail(&identity.EmailAddress)
 
 	_, err = prb.Documents.GetWithFilter(ctx, documentVersion.DocumentID, documentFilter)
@@ -6689,10 +6689,10 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 // Viewer is the resolver for the viewer field.
 func (r *queryResolver) Viewer(ctx context.Context) (*types.Viewer, error) {
-	identity := connect_v1.IdentityFromContext(ctx)
+	identity := authn.IdentityFromContext(ctx)
 
-	session := connect_v1.SessionFromContext(ctx)
-	apiKey := connect_v1.APIKeyFromContext(ctx)
+	session := authn.SessionFromContext(ctx)
+	apiKey := authn.APIKeyFromContext(ctx)
 
 	var viewerID gid.GID
 	if session != nil {
@@ -7020,7 +7020,7 @@ func (r *signableDocumentResolver) Signed(ctx context.Context, obj *types.Signab
 		return false, err
 	}
 
-	identity := connect_v1.IdentityFromContext(ctx)
+	identity := authn.IdentityFromContext(ctx)
 
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
@@ -7053,7 +7053,7 @@ func (r *signableDocumentResolver) Versions(ctx context.Context, obj *types.Sign
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	user := connect_v1.IdentityFromContext(ctx)
+	user := authn.IdentityFromContext(ctx)
 
 	versionFilter := coredata.NewDocumentVersionFilter().WithUserEmail(&user.EmailAddress)
 
@@ -8350,7 +8350,7 @@ func (r *viewerResolver) SignableDocuments(ctx context.Context, obj *types.Viewe
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	identity := connect_v1.IdentityFromContext(ctx)
+	identity := authn.IdentityFromContext(ctx)
 
 	documentFilter := coredata.NewDocumentFilter(nil).WithUserEmail(&identity.EmailAddress)
 
@@ -8384,7 +8384,7 @@ func (r *viewerResolver) SignableDocument(ctx context.Context, obj *types.Viewer
 
 	prb := r.ProboService(ctx, id.TenantID())
 
-	identity := connect_v1.IdentityFromContext(ctx)
+	identity := authn.IdentityFromContext(ctx)
 
 	documentFilter := coredata.NewDocumentFilter(nil).WithUserEmail(&identity.EmailAddress)
 	document, err := prb.Documents.GetWithFilter(ctx, id, documentFilter)

@@ -20,6 +20,8 @@ import (
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/securecookie"
+	"go.probo.inc/probo/pkg/server/api/authn"
+	"go.probo.inc/probo/pkg/server/api/authz"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
@@ -223,7 +225,7 @@ func (r *membershipResolver) Identity(ctx context.Context, obj *types.Membership
 		ctx,
 		obj.Identity.ID,
 		iam.ActionIdentityGet,
-		WithAttr("organization_id", obj.Organization.ID.String()),
+		authz.WithAttr("organization_id", obj.Organization.ID.String()),
 	); err != nil {
 		return nil, err
 	}
@@ -271,7 +273,7 @@ func (r *membershipResolver) Profile(ctx context.Context, obj *types.Membership)
 
 // Organization is the resolver for the organization field.
 func (r *membershipResolver) Organization(ctx context.Context, obj *types.Membership) (*types.Organization, error) {
-	if err := r.authorize(ctx, obj.Organization.ID, iam.ActionOrganizationGet, WithSession(nil)); err != nil {
+	if err := r.authorize(ctx, obj.Organization.ID, iam.ActionOrganizationGet, authz.WithSession(nil)); err != nil {
 		return nil, err
 	}
 
@@ -292,11 +294,11 @@ func (r *membershipResolver) Organization(ctx context.Context, obj *types.Member
 
 // LastSession is the resolver for the lastSession field.
 func (r *membershipResolver) LastSession(ctx context.Context, obj *types.Membership) (*types.Session, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipGet, WithSession(nil)); err != nil {
+	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipGet, authz.WithSession(nil)); err != nil {
 		return nil, err
 	}
 
-	session := SessionFromContext(ctx)
+	session := authn.SessionFromContext(ctx)
 	if session == nil {
 		return nil, nil
 	}
@@ -379,7 +381,7 @@ func (r *mutationResolver) SignIn(ctx context.Context, input types.SignInInput) 
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	w := HTTPResponseWriterFromContext(ctx)
+	w := gqlutils.HTTPResponseWriterFromContext(ctx)
 	securecookie.Set(
 		w,
 		r.sessionCookieConfig(time.Until(session.ExpiredAt)),
@@ -412,7 +414,7 @@ func (r *mutationResolver) SignUp(ctx context.Context, input types.SignUpInput) 
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	w := HTTPResponseWriterFromContext(ctx)
+	w := gqlutils.HTTPResponseWriterFromContext(ctx)
 	securecookie.Set(
 		w,
 		r.sessionCookieConfig(time.Until(session.ExpiredAt)),
@@ -426,7 +428,7 @@ func (r *mutationResolver) SignUp(ctx context.Context, input types.SignUpInput) 
 
 // SignOut is the resolver for the signOut field.
 func (r *mutationResolver) SignOut(ctx context.Context) (*types.SignOutPayload, error) {
-	session := SessionFromContext(ctx)
+	session := authn.SessionFromContext(ctx)
 
 	err := r.iam.SessionService.CloseSession(ctx, session.ID)
 	if err != nil {
@@ -478,7 +480,7 @@ func (r *mutationResolver) SignUpFromInvitation(ctx context.Context, input types
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	w := HTTPResponseWriterFromContext(ctx)
+	w := gqlutils.HTTPResponseWriterFromContext(ctx)
 	securecookie.Set(
 		w,
 		r.sessionCookieConfig(time.Until(session.ExpiredAt)),
@@ -573,7 +575,7 @@ func (r *mutationResolver) VerifyEmail(ctx context.Context, input types.VerifyEm
 
 // ChangePassword is the resolver for the changePassword field.
 func (r *mutationResolver) ChangePassword(ctx context.Context, input types.ChangePasswordInput) (*types.ChangePasswordPayload, error) {
-	identity := IdentityFromContext(ctx)
+	identity := authn.IdentityFromContext(ctx)
 
 	err := r.iam.AccountService.ChangePassword(
 		ctx,
@@ -608,7 +610,7 @@ func (r *mutationResolver) ChangePassword(ctx context.Context, input types.Chang
 
 // ChangeEmail is the resolver for the changeEmail field.
 func (r *mutationResolver) ChangeEmail(ctx context.Context, input types.ChangeEmailInput) (*types.ChangeEmailPayload, error) {
-	identity := IdentityFromContext(ctx)
+	identity := authn.IdentityFromContext(ctx)
 
 	err := r.iam.AccountService.ChangeEmail(
 		ctx,
@@ -643,7 +645,7 @@ func (r *mutationResolver) ChangeEmail(ctx context.Context, input types.ChangeEm
 
 // AssumeOrganizationSession is the resolver for the assumeOrganizationSession field.
 func (r *mutationResolver) AssumeOrganizationSession(ctx context.Context, input types.AssumeOrganizationSessionInput) (*types.AssumeOrganizationSessionPayload, error) {
-	rootSession := SessionFromContext(ctx)
+	rootSession := authn.SessionFromContext(ctx)
 
 	childSession, membership, err := r.iam.SessionService.AssumeOrganizationSession(ctx, rootSession.ID, input.OrganizationID)
 	if err != nil {
@@ -692,7 +694,7 @@ func (r *mutationResolver) RevokeSession(ctx context.Context, input types.Revoke
 		return nil, err
 	}
 
-	identity := IdentityFromContext(ctx)
+	identity := authn.IdentityFromContext(ctx)
 
 	err := r.iam.SessionService.RevokeSession(ctx, identity.ID, input.SessionID)
 	if err != nil {
@@ -710,11 +712,11 @@ func (r *mutationResolver) RevokeSession(ctx context.Context, input types.Revoke
 
 // RevokeAllSessions is the resolver for the revokeAllSessions field.
 func (r *mutationResolver) RevokeAllSessions(ctx context.Context) (*types.RevokeAllSessionsPayload, error) {
-	if err := r.authorize(ctx, SessionFromContext(ctx).ID, iam.ActionSessionRevokeAll); err != nil {
+	if err := r.authorize(ctx, authn.SessionFromContext(ctx).ID, iam.ActionSessionRevokeAll); err != nil {
 		return nil, err
 	}
 
-	session := SessionFromContext(ctx)
+	session := authn.SessionFromContext(ctx)
 
 	revokedCount, err := r.iam.SessionService.RevokeAllSessions(ctx, session.ID)
 	if err != nil {
@@ -727,7 +729,7 @@ func (r *mutationResolver) RevokeAllSessions(ctx context.Context) (*types.Revoke
 
 // CreatePersonalAPIKey is the resolver for the createPersonalAPIKey field.
 func (r *mutationResolver) CreatePersonalAPIKey(ctx context.Context, input types.CreatePersonalAPIKeyInput) (*types.CreatePersonalAPIKeyPayload, error) {
-	identity := IdentityFromContext(ctx)
+	identity := authn.IdentityFromContext(ctx)
 
 	if err := r.authorize(ctx, identity.ID, iam.ActionPersonalAPIKeyCreate); err != nil {
 		return nil, err
@@ -756,7 +758,7 @@ func (r *mutationResolver) RevokePersonalAPIKey(ctx context.Context, input types
 		return nil, err
 	}
 
-	identity := IdentityFromContext(ctx)
+	identity := authn.IdentityFromContext(ctx)
 
 	err := r.iam.AccountService.DeletePersonalAPIKey(ctx, identity.ID, input.PersonalAPIKeyID)
 	if err != nil {
@@ -769,7 +771,7 @@ func (r *mutationResolver) RevokePersonalAPIKey(ctx context.Context, input types
 
 // CreateOrganization is the resolver for the createOrganization field.
 func (r *mutationResolver) CreateOrganization(ctx context.Context, input types.CreateOrganizationInput) (*types.CreateOrganizationPayload, error) {
-	identity := IdentityFromContext(ctx)
+	identity := authn.IdentityFromContext(ctx)
 
 	// FIXME check email domain and related IDP config
 	// if ok := r.authorize(ctx, identity.ID, iam.ActionOrganizationCreate); !ok {
@@ -1004,7 +1006,7 @@ func (r *mutationResolver) AcceptInvitation(ctx context.Context, input types.Acc
 		return nil, err
 	}
 
-	identity := IdentityFromContext(ctx)
+	identity := authn.IdentityFromContext(ctx)
 
 	invitation, membership, err := r.iam.AccountService.AcceptInvitation(ctx, identity.ID, input.InvitationID)
 	if err != nil {
@@ -1168,7 +1170,7 @@ func (r *mutationResolver) RegenerateSCIMToken(ctx context.Context, input types.
 
 // LogoURL is the resolver for the logoUrl field.
 func (r *organizationResolver) LogoURL(ctx context.Context, obj *types.Organization) (*string, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionOrganizationGet, WithSession(nil)); err != nil {
+	if err := r.authorize(ctx, obj.ID, iam.ActionOrganizationGet, authz.WithSession(nil)); err != nil {
 		return nil, err
 	}
 
@@ -1321,11 +1323,11 @@ func (r *organizationResolver) ScimConfiguration(ctx context.Context, obj *types
 
 // ViewerMembership is the resolver for the viewerMembership field.
 func (r *organizationResolver) ViewerMembership(ctx context.Context, obj *types.Organization) (*types.Membership, error) {
-	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipGet, WithSession(nil)); err != nil {
+	if err := r.authorize(ctx, obj.ID, iam.ActionMembershipGet, authz.WithSession(nil)); err != nil {
 		return nil, err
 	}
 
-	identity := IdentityFromContext(ctx)
+	identity := authn.IdentityFromContext(ctx)
 
 	membership, err := r.iam.AccountService.GetMembershipForOrganization(ctx, identity.ID, obj.ID)
 	if err != nil {
@@ -1347,7 +1349,7 @@ func (r *personalAPIKeyResolver) Token(ctx context.Context, obj *types.PersonalA
 		return nil, err
 	}
 
-	identity := IdentityFromContext(ctx)
+	identity := authn.IdentityFromContext(ctx)
 
 	token, err := r.iam.AccountService.RevealPersonalAPIKeyToken(ctx, identity.ID, obj.ID)
 	if err != nil {
@@ -1515,7 +1517,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 // Viewer is the resolver for the viewer field.
 func (r *queryResolver) Viewer(ctx context.Context) (*types.Identity, error) {
-	identity := IdentityFromContext(ctx)
+	identity := authn.IdentityFromContext(ctx)
 
 	return &types.Identity{
 		ID:            identity.ID,

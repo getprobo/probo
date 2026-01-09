@@ -12,6 +12,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/securecookie"
+	"go.probo.inc/probo/pkg/server/api/authn"
 )
 
 type SAMLHandler struct {
@@ -64,7 +65,7 @@ func (h *SAMLHandler) ConsumeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rootSession := SessionFromContext(ctx)
+	rootSession := authn.SessionFromContext(ctx)
 
 	switch {
 	case rootSession == nil:

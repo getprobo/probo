@@ -12,10 +12,9 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package connect_v1
+package authn
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -23,21 +22,11 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.gearno.de/kit/httpserver"
-	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/securetoken"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 )
-
-var (
-	apiKeyContextKey = &ctxKey{name: "api_key"}
-)
-
-func APIKeyFromContext(ctx context.Context) *coredata.PersonalAPIKey {
-	apiKey, _ := ctx.Value(apiKeyContextKey).(*coredata.PersonalAPIKey)
-	return apiKey
-}
 
 func NewAPIKeyMiddleware(svc *iam.Service, tokenSecret string) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
@@ -95,8 +84,8 @@ func NewAPIKeyMiddleware(svc *iam.Service, tokenSecret string) func(next http.Ha
 					panic(fmt.Errorf("cannot get identity: %w", err))
 				}
 
-				ctx = context.WithValue(ctx, apiKeyContextKey, apiKey)
-				ctx = context.WithValue(ctx, identityContextKey, identity)
+				ctx = ContextWithAPIKey(ctx, apiKey)
+				ctx = ContextWithIdentity(ctx, identity)
 
 				next.ServeHTTP(w, r.WithContext(ctx))
 			},

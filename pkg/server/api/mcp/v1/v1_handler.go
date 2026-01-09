@@ -11,7 +11,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/probo"
-	connect_v1 "go.probo.inc/probo/pkg/server/api/connect/v1"
+	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/mcp/mcputils"
 	"go.probo.inc/probo/pkg/server/api/mcp/v1/server"
 )
@@ -52,7 +52,7 @@ func NewMux(logger *log.Logger, proboSvc *probo.Service, iamSvc *iam.Service, to
 	)
 
 	r := chi.NewMux()
-	r.Use(connect_v1.NewAPIKeyMiddleware(iamSvc, tokenSecret))
+	r.Use(authn.NewAPIKeyMiddleware(iamSvc, tokenSecret))
 	r.Handle("/", RequireAPIKeyHandler(logger, handler))
 
 	logger.Info("MCP server initialized successfully")

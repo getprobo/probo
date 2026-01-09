@@ -9,7 +9,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/probo"
-	connect_v1 "go.probo.inc/probo/pkg/server/api/connect/v1"
+	"go.probo.inc/probo/pkg/server/api/authn"
 )
 
 type Resolver struct {
@@ -19,7 +19,7 @@ type Resolver struct {
 }
 
 func (r *Resolver) MustAuthorize(ctx context.Context, entityID gid.GID, action iam.Action) {
-	identity := connect_v1.IdentityFromContext(ctx)
+	identity := authn.IdentityFromContext(ctx)
 
 	err := r.iamSvc.Authorizer.Authorize(
 		ctx,

@@ -35,14 +35,15 @@ import (
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/saferedirect"
 	"go.probo.inc/probo/pkg/securecookie"
-	connect_v1 "go.probo.inc/probo/pkg/server/api/connect/v1"
+	"go.probo.inc/probo/pkg/server/api/authn"
+	"go.probo.inc/probo/pkg/server/api/authz"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/statelesstoken"
 )
 
 type (
 	Resolver struct {
-		authorize         connect_v1.AuthorizeFunc
+		authorize         authz.AuthorizeFunc
 		probo             *probo.Service
 		iam               *iam.Service
 		customDomainCname string
@@ -63,9 +64,9 @@ func NewMux(
 
 	safeRedirect := &saferedirect.SafeRedirect{AllowedHost: baseURL.Host()}
 
-	r.Use(connect_v1.NewSessionMiddleware(iamSvc, cookieConfig))
-	r.Use(connect_v1.NewAPIKeyMiddleware(iamSvc, tokenSecret))
-	r.Use(connect_v1.NewIdentityPresenceMiddleware())
+	r.Use(authn.NewSessionMiddleware(iamSvc, cookieConfig))
+	r.Use(authn.NewAPIKeyMiddleware(iamSvc, tokenSecret))
+	r.Use(authn.NewIdentityPresenceMiddleware())
 
 	graphqlHandler := NewGraphQLHandler(iamSvc, proboSvc, customDomainCname, logger)
 
@@ -199,18 +200,18 @@ func NewMux(
 			panic(fmt.Errorf("cannot parse organization id: %w", err))
 		}
 
-		apiKey := connect_v1.APIKeyFromContext(r.Context())
+		apiKey := authn.APIKeyFromContext(r.Context())
 		if apiKey != nil {
 			httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("api key authentication cannot be used for this endpoint"))
 			return
 		}
 
-		identity := connect_v1.IdentityFromContext(r.Context())
+		identity := authn.IdentityFromContext(r.Context())
 		if identity == nil {
 			httpserver.RenderError(w, http.StatusUnauthorized, fmt.Errorf("authentication required"))
 			return
 		}
-		session := connect_v1.SessionFromContext(r.Context())
+		session := authn.SessionFromContext(r.Context())
 		if session == nil {
 			httpserver.RenderError(w, http.StatusUnauthorized, fmt.Errorf("authentication required"))
 			return
