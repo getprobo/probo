@@ -12,10 +12,9 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package connect_v1
+package authn
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"net"
@@ -24,27 +23,11 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.gearno.de/kit/httpserver"
-	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 )
-
-var (
-	identityContextKey = &ctxKey{name: "identity"}
-	sessionContextKey  = &ctxKey{name: "session"}
-)
-
-func SessionFromContext(ctx context.Context) *coredata.Session {
-	session, _ := ctx.Value(sessionContextKey).(*coredata.Session)
-	return session
-}
-
-func IdentityFromContext(ctx context.Context) *coredata.Identity {
-	identity, _ := ctx.Value(identityContextKey).(*coredata.Identity)
-	return identity
-}
 
 func NewSessionMiddleware(svc *iam.Service, cookieConfig securecookie.Config) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
@@ -119,8 +102,8 @@ func NewSessionMiddleware(svc *iam.Service, cookieConfig securecookie.Config) fu
 					panic(fmt.Errorf("cannot update session info: %w", err))
 				}
 
-				ctx = context.WithValue(ctx, sessionContextKey, session)
-				ctx = context.WithValue(ctx, identityContextKey, identity)
+				ctx = ContextWithSession(ctx, session)
+				ctx = ContextWithIdentity(ctx, identity)
 
 				next.ServeHTTP(w, r.WithContext(ctx))
 

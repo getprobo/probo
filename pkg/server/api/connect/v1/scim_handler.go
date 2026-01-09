@@ -34,6 +34,8 @@ import (
 )
 
 type (
+	ctxKey struct{ name string }
+
 	SCIMHandler struct {
 		iam    *iam.Service
 		logger *log.Logger

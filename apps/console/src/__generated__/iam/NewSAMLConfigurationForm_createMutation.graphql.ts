@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<f88cc717a937f85bb376bd359d7ca722>>
+ * @generated SignedSource<<a937feef611acb8880f7bf6314f58d07>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -33,6 +33,8 @@ export type NewSAMLConfigurationForm_createMutation$data = {
   readonly createSAMLConfiguration: {
     readonly samlConfigurationEdge: {
       readonly node: {
+        readonly canDelete: boolean;
+        readonly canUpdate: boolean;
         readonly domainVerificationToken: string | null | undefined;
         readonly domainVerifiedAt: string | null | undefined;
         readonly emailDomain: string;
@@ -123,6 +125,32 @@ v3 = {
           "kind": "ScalarField",
           "name": "testLoginUrl",
           "storageKey": null
+        },
+        {
+          "alias": "canUpdate",
+          "args": [
+            {
+              "kind": "Literal",
+              "name": "action",
+              "value": "iam:saml-configuration:update"
+            }
+          ],
+          "kind": "ScalarField",
+          "name": "permission",
+          "storageKey": "permission(action:\"iam:saml-configuration:update\")"
+        },
+        {
+          "alias": "canDelete",
+          "args": [
+            {
+              "kind": "Literal",
+              "name": "action",
+              "value": "iam:saml-configuration:delete"
+            }
+          ],
+          "kind": "ScalarField",
+          "name": "permission",
+          "storageKey": "permission(action:\"iam:saml-configuration:delete\")"
         }
       ],
       "storageKey": null
@@ -196,16 +224,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "969d5fb34995f5cce359c792cbe1ff49",
+    "cacheID": "6ea275ac351f162aeeff7d75d7a3974d",
     "id": null,
     "metadata": {},
     "name": "NewSAMLConfigurationForm_createMutation",
     "operationKind": "mutation",
-    "text": "mutation NewSAMLConfigurationForm_createMutation(\n  $input: CreateSAMLConfigurationInput!\n) {\n  createSAMLConfiguration(input: $input) {\n    samlConfigurationEdge {\n      node {\n        id\n        emailDomain\n        enforcementPolicy\n        domainVerificationToken\n        domainVerifiedAt\n        testLoginUrl\n      }\n    }\n  }\n}\n"
+    "text": "mutation NewSAMLConfigurationForm_createMutation(\n  $input: CreateSAMLConfigurationInput!\n) {\n  createSAMLConfiguration(input: $input) {\n    samlConfigurationEdge {\n      node {\n        id\n        emailDomain\n        enforcementPolicy\n        domainVerificationToken\n        domainVerifiedAt\n        testLoginUrl\n        canUpdate: permission(action: \"iam:saml-configuration:update\")\n        canDelete: permission(action: \"iam:saml-configuration:delete\")\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "5a3b2e5d219b40ca096eece75d7b63b3";
+(node as any).hash = "af2894da24b742843908a60a7e4629f1";
 
 export default node;

@@ -21,7 +21,7 @@ import (
 
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
-	connect_v1 "go.probo.inc/probo/pkg/server/api/connect/v1"
+	"go.probo.inc/probo/pkg/server/api/authn"
 )
 
 func RequireAPIKeyHandler(
@@ -40,8 +40,8 @@ func RequireAPIKeyHandler(
 			log.String("path", r.URL.Path),
 		)
 
-		apiKey := connect_v1.APIKeyFromContext(ctx)
-		identity := connect_v1.IdentityFromContext(ctx)
+		apiKey := authn.APIKeyFromContext(ctx)
+		identity := authn.IdentityFromContext(ctx)
 		if identity == nil {
 			httpserver.RenderError(w, http.StatusUnauthorized, errors.New("authentication required"))
 			return

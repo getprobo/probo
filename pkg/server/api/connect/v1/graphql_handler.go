@@ -23,14 +23,16 @@ import (
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/securecookie"
+	"go.probo.inc/probo/pkg/server/api/authn"
+	"go.probo.inc/probo/pkg/server/api/authz"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 )
 
 func SessionDirective(ctx context.Context, obj any, next graphql.Resolver, required types.SessionRequirement) (any, error) {
-	session := SessionFromContext(ctx)
-	apiKey := APIKeyFromContext(ctx)
+	session := authn.SessionFromContext(ctx)
+	apiKey := authn.APIKeyFromContext(ctx)
 
 	switch required {
 	case types.SessionRequirementOptional:
@@ -56,7 +58,7 @@ func SessionDirective(ctx context.Context, obj any, next graphql.Resolver, requi
 func NewGraphQLHandler(svc *iam.Service, logger *log.Logger, baseURL *baseurl.BaseURL, cookieConfig securecookie.Config) http.Handler {
 	config := schema.Config{
 		Resolvers: &Resolver{
-			authorize:    NewAuthorizeFunc(svc, logger),
+			authorize:    authz.NewAuthorizeFunc(svc, logger),
 			logger:       logger,
 			iam:          svc,
 			baseURL:      baseURL,
