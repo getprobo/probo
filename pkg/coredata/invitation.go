@@ -164,39 +164,6 @@ WHERE
 	return nil
 }
 
-func (i *Invitations) AcceptByEmailAndOrganization(
-	ctx context.Context,
-	conn pg.Conn,
-	scope Scoper,
-	email mail.Addr,
-	organizationID gid.GID,
-	filter *InvitationFilter,
-) error {
-	q := `
-UPDATE iam_invitations SET accepted_at = NOW()
-WHERE
-    email = @email
-    AND organization_id = @organization_id
-    AND %s
-    AND %s
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
-
-	args := pgx.StrictNamedArgs{
-		"email":           email,
-		"organization_id": organizationID,
-	}
-	maps.Copy(args, scope.SQLArguments())
-	maps.Copy(args, filter.SQLArguments())
-
-	if _, err := conn.Exec(ctx, q, args); err != nil {
-		return fmt.Errorf("cannot accept invitations: %w", err)
-	}
-
-	return nil
-}
-
 func (i *Invitations) ExpireByEmailAndOrganization(
 	ctx context.Context,
 	conn pg.Conn,
@@ -206,7 +173,10 @@ func (i *Invitations) ExpireByEmailAndOrganization(
 	filter *InvitationFilter,
 ) error {
 	q := `
-UPDATE iam_invitations SET expires_at = NOW()
+UPDATE
+    iam_invitations
+SET
+    expires_at = NOW()
 WHERE
     email = @email
     AND organization_id = @organization_id

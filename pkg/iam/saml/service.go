@@ -326,10 +326,10 @@ func (s *Service) HandleAssertion(
 					return fmt.Errorf("cannot insert membership profile: %w", err)
 				}
 
-				// Accept all pending invitations for email in organization
+				// Expire all pending invitations for email in organization
 				invitations := &coredata.Invitations{}
 				onlyPending := coredata.NewInvitationFilter([]coredata.InvitationStatus{coredata.InvitationStatusPending})
-				if err := invitations.AcceptByEmailAndOrganization(
+				if err := invitations.ExpireByEmailAndOrganization(
 					ctx,
 					tx,
 					coredata.NewScopeFromObjectID(config.OrganizationID),
@@ -337,7 +337,7 @@ func (s *Service) HandleAssertion(
 					config.OrganizationID,
 					onlyPending,
 				); err != nil {
-					return fmt.Errorf("cannot accept pending invitations by email: %w", err)
+					return fmt.Errorf("cannot expire pending invitations by email: %w", err)
 				}
 			}
 
