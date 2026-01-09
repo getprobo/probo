@@ -58,11 +58,11 @@ func SessionDirective(ctx context.Context, obj any, next graphql.Resolver, requi
 func NewGraphQLHandler(svc *iam.Service, logger *log.Logger, baseURL *baseurl.BaseURL, cookieConfig securecookie.Config) http.Handler {
 	config := schema.Config{
 		Resolvers: &Resolver{
-			authorize:    authz.NewAuthorizeFunc(svc, logger),
-			logger:       logger,
-			iam:          svc,
-			baseURL:      baseURL,
-			cookieConfig: cookieConfig,
+			authorize:     authz.NewAuthorizeFunc(svc, logger),
+			logger:        logger,
+			iam:           svc,
+			baseURL:       baseURL,
+			sessionCookie: authn.NewCookie(&cookieConfig),
 		},
 		Directives: schema.DirectiveRoot{
 			Session: SessionDirective,
