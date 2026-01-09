@@ -93,6 +93,8 @@ type ResolverRoot interface {
 	SignableDocument() SignableDocumentResolver
 	Snapshot() SnapshotResolver
 	SnapshotConnection() SnapshotConnectionResolver
+	StateOfApplicability() StateOfApplicabilityResolver
+	StateOfApplicabilityConnection() StateOfApplicabilityConnectionResolver
 	Task() TaskResolver
 	TaskConnection() TaskConnectionResolver
 	TransferImpactAssessment() TransferImpactAssessmentResolver
@@ -183,6 +185,18 @@ type ComplexityRoot struct {
 	AuditEdge struct {
 		Cursor func(childComplexity int) int
 		Node   func(childComplexity int) int
+	}
+
+	AvailableControlForStateOfApplicability struct {
+		ControlID              func(childComplexity int) int
+		ExclusionJustification func(childComplexity int) int
+		FrameworkID            func(childComplexity int) int
+		FrameworkName          func(childComplexity int) int
+		Name                   func(childComplexity int) int
+		OrganizationID         func(childComplexity int) int
+		SectionTitle           func(childComplexity int) int
+		State                  func(childComplexity int) int
+		StateOfApplicabilityID func(childComplexity int) int
 	}
 
 	BulkDeleteDocumentsPayload struct {
@@ -382,6 +396,10 @@ type ComplexityRoot struct {
 
 	CreateSnapshotPayload struct {
 		SnapshotEdge func(childComplexity int) int
+	}
+
+	CreateStateOfApplicabilityPayload struct {
+		StateOfApplicabilityEdge func(childComplexity int) int
 	}
 
 	CreateTaskPayload struct {
@@ -617,6 +635,10 @@ type ComplexityRoot struct {
 		DeletedSnapshotID func(childComplexity int) int
 	}
 
+	DeleteStateOfApplicabilityPayload struct {
+		DeletedStateOfApplicabilityID func(childComplexity int) int
+	}
+
 	DeleteTaskPayload struct {
 		DeletedTaskID func(childComplexity int) int
 	}
@@ -785,6 +807,10 @@ type ComplexityRoot struct {
 		Data func(childComplexity int) int
 	}
 
+	ExportStateOfApplicabilityPDFPayload struct {
+		Data func(childComplexity int) int
+	}
+
 	File struct {
 		CreatedAt   func(childComplexity int) int
 		DownloadURL func(childComplexity int) int
@@ -872,6 +898,10 @@ type ComplexityRoot struct {
 
 	InviteUserPayload struct {
 		InvitationEdge func(childComplexity int) int
+	}
+
+	LinkStateOfApplicabilityControlPayload struct {
+		StateOfApplicabilityControl func(childComplexity int) int
 	}
 
 	Measure struct {
@@ -981,6 +1011,7 @@ type ComplexityRoot struct {
 		CreateRiskObligationMapping            func(childComplexity int, input types.CreateRiskObligationMappingInput) int
 		CreateSAMLConfiguration                func(childComplexity int, input types.CreateSAMLConfigurationInput) int
 		CreateSnapshot                         func(childComplexity int, input types.CreateSnapshotInput) int
+		CreateStateOfApplicability             func(childComplexity int, input types.CreateStateOfApplicabilityInput) int
 		CreateTask                             func(childComplexity int, input types.CreateTaskInput) int
 		CreateTransferImpactAssessment         func(childComplexity int, input types.CreateTransferImpactAssessmentInput) int
 		CreateTrustCenterAccess                func(childComplexity int, input types.CreateTrustCenterAccessInput) int
@@ -1021,6 +1052,7 @@ type ComplexityRoot struct {
 		DeleteRiskObligationMapping            func(childComplexity int, input types.DeleteRiskObligationMappingInput) int
 		DeleteSAMLConfiguration                func(childComplexity int, input types.DeleteSAMLConfigurationInput) int
 		DeleteSnapshot                         func(childComplexity int, input types.DeleteSnapshotInput) int
+		DeleteStateOfApplicability             func(childComplexity int, input types.DeleteStateOfApplicabilityInput) int
 		DeleteTask                             func(childComplexity int, input types.DeleteTaskInput) int
 		DeleteTransferImpactAssessment         func(childComplexity int, input types.DeleteTransferImpactAssessmentInput) int
 		DeleteTrustCenterAccess                func(childComplexity int, input types.DeleteTrustCenterAccessInput) int
@@ -1038,6 +1070,7 @@ type ComplexityRoot struct {
 		ExportDocumentVersionPDF               func(childComplexity int, input types.ExportDocumentVersionPDFInput) int
 		ExportFramework                        func(childComplexity int, input types.ExportFrameworkInput) int
 		ExportSignableVersionDocumentPDF       func(childComplexity int, input types.ExportSignableDocumentVersionPDFInput) int
+		ExportStateOfApplicabilityPDF          func(childComplexity int, input types.ExportStateOfApplicabilityPDFInput) int
 		GenerateDocumentChangelog              func(childComplexity int, input types.GenerateDocumentChangelogInput) int
 		GenerateFrameworkStateOfApplicability  func(childComplexity int, input types.GenerateFrameworkStateOfApplicabilityInput) int
 		GetTrustCenterFile                     func(childComplexity int, input types.GetTrustCenterFileInput) int
@@ -1045,12 +1078,14 @@ type ComplexityRoot struct {
 		ImportMeasure                          func(childComplexity int, input types.ImportMeasureInput) int
 		InitiateDomainVerification             func(childComplexity int, input types.InitiateDomainVerificationInput) int
 		InviteUser                             func(childComplexity int, input types.InviteUserInput) int
+		LinkStateOfApplicabilityControl        func(childComplexity int, input types.LinkStateOfApplicabilityControlInput) int
 		PublishDocumentVersion                 func(childComplexity int, input types.PublishDocumentVersionInput) int
 		RemoveMember                           func(childComplexity int, input types.RemoveMemberInput) int
 		RequestSignature                       func(childComplexity int, input types.RequestSignatureInput) int
 		SendSigningNotifications               func(childComplexity int, input types.SendSigningNotificationsInput) int
 		SignDocument                           func(childComplexity int, input types.SignDocumentInput) int
 		UnassignTask                           func(childComplexity int, input types.UnassignTaskInput) int
+		UnlinkStateOfApplicabilityControl      func(childComplexity int, input types.UnlinkStateOfApplicabilityControlInput) int
 		UpdateAsset                            func(childComplexity int, input types.UpdateAssetInput) int
 		UpdateAudit                            func(childComplexity int, input types.UpdateAuditInput) int
 		UpdateContinualImprovement             func(childComplexity int, input types.UpdateContinualImprovementInput) int
@@ -1071,6 +1106,7 @@ type ComplexityRoot struct {
 		UpdateProcessingActivity               func(childComplexity int, input types.UpdateProcessingActivityInput) int
 		UpdateRisk                             func(childComplexity int, input types.UpdateRiskInput) int
 		UpdateSAMLConfiguration                func(childComplexity int, input types.UpdateSAMLConfigurationInput) int
+		UpdateStateOfApplicability             func(childComplexity int, input types.UpdateStateOfApplicabilityInput) int
 		UpdateTask                             func(childComplexity int, input types.UpdateTaskInput) int
 		UpdateTransferImpactAssessment         func(childComplexity int, input types.UpdateTransferImpactAssessmentInput) int
 		UpdateTrustCenter                      func(childComplexity int, input types.UpdateTrustCenterInput) int
@@ -1180,6 +1216,7 @@ type ComplexityRoot struct {
 		SamlConfigurations              func(childComplexity int) int
 		SlackConnections                func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
 		Snapshots                       func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.SnapshotOrderBy) int
+		StateOfApplicabilities          func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.StateOfApplicabilityOrderBy, filter *types.StateOfApplicabilityFilter) int
 		Tasks                           func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TaskOrderBy) int
 		TransferImpactAssessments       func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TransferImpactAssessmentOrderBy, filter *types.TransferImpactAssessmentFilter) int
 		TrustCenter                     func(childComplexity int) int
@@ -1446,6 +1483,37 @@ type ComplexityRoot struct {
 		Node   func(childComplexity int) int
 	}
 
+	StateOfApplicability struct {
+		AvailableControls func(childComplexity int) int
+		Controls          func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) int
+		CreatedAt         func(childComplexity int) int
+		Description       func(childComplexity int) int
+		ID                func(childComplexity int) int
+		Name              func(childComplexity int) int
+		Organization      func(childComplexity int) int
+		SnapshotID        func(childComplexity int) int
+		SourceID          func(childComplexity int) int
+		UpdatedAt         func(childComplexity int) int
+	}
+
+	StateOfApplicabilityConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	StateOfApplicabilityControl struct {
+		ControlID              func(childComplexity int) int
+		ExclusionJustification func(childComplexity int) int
+		State                  func(childComplexity int) int
+		StateOfApplicabilityID func(childComplexity int) int
+	}
+
+	StateOfApplicabilityEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
 	Task struct {
 		AssignedTo   func(childComplexity int) int
 		CreatedAt    func(childComplexity int) int
@@ -1609,6 +1677,10 @@ type ComplexityRoot struct {
 		Task func(childComplexity int) int
 	}
 
+	UnlinkStateOfApplicabilityControlPayload struct {
+		DeletedControlID func(childComplexity int) int
+	}
+
 	UpdateAssetPayload struct {
 		Asset func(childComplexity int) int
 	}
@@ -1687,6 +1759,10 @@ type ComplexityRoot struct {
 
 	UpdateSAMLConfigurationPayload struct {
 		SamlConfiguration func(childComplexity int) int
+	}
+
+	UpdateStateOfApplicabilityPayload struct {
+		StateOfApplicability func(childComplexity int) int
 	}
 
 	UpdateTaskPayload struct {
@@ -2154,6 +2230,12 @@ type MutationResolver interface {
 	CreateMeeting(ctx context.Context, input types.CreateMeetingInput) (*types.CreateMeetingPayload, error)
 	UpdateMeeting(ctx context.Context, input types.UpdateMeetingInput) (*types.UpdateMeetingPayload, error)
 	DeleteMeeting(ctx context.Context, input types.DeleteMeetingInput) (*types.DeleteMeetingPayload, error)
+	CreateStateOfApplicability(ctx context.Context, input types.CreateStateOfApplicabilityInput) (*types.CreateStateOfApplicabilityPayload, error)
+	UpdateStateOfApplicability(ctx context.Context, input types.UpdateStateOfApplicabilityInput) (*types.UpdateStateOfApplicabilityPayload, error)
+	DeleteStateOfApplicability(ctx context.Context, input types.DeleteStateOfApplicabilityInput) (*types.DeleteStateOfApplicabilityPayload, error)
+	LinkStateOfApplicabilityControl(ctx context.Context, input types.LinkStateOfApplicabilityControlInput) (*types.LinkStateOfApplicabilityControlPayload, error)
+	UnlinkStateOfApplicabilityControl(ctx context.Context, input types.UnlinkStateOfApplicabilityControlInput) (*types.UnlinkStateOfApplicabilityControlPayload, error)
+	ExportStateOfApplicabilityPDF(ctx context.Context, input types.ExportStateOfApplicabilityPDFInput) (*types.ExportStateOfApplicabilityPDFPayload, error)
 	PublishDocumentVersion(ctx context.Context, input types.PublishDocumentVersionInput) (*types.PublishDocumentVersionPayload, error)
 	BulkPublishDocumentVersions(ctx context.Context, input types.BulkPublishDocumentVersionsInput) (*types.BulkPublishDocumentVersionsPayload, error)
 	BulkDeleteDocuments(ctx context.Context, input types.BulkDeleteDocumentsInput) (*types.BulkDeleteDocumentsPayload, error)
@@ -2244,6 +2326,7 @@ type OrganizationResolver interface {
 	Peoples(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.PeopleOrderBy, filter *types.PeopleFilter) (*types.PeopleConnection, error)
 	Documents(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy, filter *types.DocumentFilter) (*types.DocumentConnection, error)
 	Meetings(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeetingOrderBy) (*types.MeetingConnection, error)
+	StateOfApplicabilities(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.StateOfApplicabilityOrderBy, filter *types.StateOfApplicabilityFilter) (*types.StateOfApplicabilityConnection, error)
 	Measures(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy, filter *types.MeasureFilter) (*types.MeasureConnection, error)
 	Risks(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskOrderBy, filter *types.RiskFilter) (*types.RiskConnection, error)
 	Tasks(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TaskOrderBy) (*types.TaskConnection, error)
@@ -2314,6 +2397,14 @@ type SnapshotResolver interface {
 }
 type SnapshotConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.SnapshotConnection) (int, error)
+}
+type StateOfApplicabilityResolver interface {
+	Organization(ctx context.Context, obj *types.StateOfApplicability) (*types.Organization, error)
+	Controls(ctx context.Context, obj *types.StateOfApplicability, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) (*types.ControlConnection, error)
+	AvailableControls(ctx context.Context, obj *types.StateOfApplicability) ([]*types.AvailableControlForStateOfApplicability, error)
+}
+type StateOfApplicabilityConnectionResolver interface {
+	TotalCount(ctx context.Context, obj *types.StateOfApplicabilityConnection) (int, error)
 }
 type TaskResolver interface {
 	AssignedTo(ctx context.Context, obj *types.Task) (*types.People, error)
@@ -2671,6 +2762,61 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.AuditEdge.Node(childComplexity), true
+
+	case "AvailableControlForStateOfApplicability.controlId":
+		if e.complexity.AvailableControlForStateOfApplicability.ControlID == nil {
+			break
+		}
+
+		return e.complexity.AvailableControlForStateOfApplicability.ControlID(childComplexity), true
+	case "AvailableControlForStateOfApplicability.exclusionJustification":
+		if e.complexity.AvailableControlForStateOfApplicability.ExclusionJustification == nil {
+			break
+		}
+
+		return e.complexity.AvailableControlForStateOfApplicability.ExclusionJustification(childComplexity), true
+	case "AvailableControlForStateOfApplicability.frameworkId":
+		if e.complexity.AvailableControlForStateOfApplicability.FrameworkID == nil {
+			break
+		}
+
+		return e.complexity.AvailableControlForStateOfApplicability.FrameworkID(childComplexity), true
+	case "AvailableControlForStateOfApplicability.frameworkName":
+		if e.complexity.AvailableControlForStateOfApplicability.FrameworkName == nil {
+			break
+		}
+
+		return e.complexity.AvailableControlForStateOfApplicability.FrameworkName(childComplexity), true
+	case "AvailableControlForStateOfApplicability.name":
+		if e.complexity.AvailableControlForStateOfApplicability.Name == nil {
+			break
+		}
+
+		return e.complexity.AvailableControlForStateOfApplicability.Name(childComplexity), true
+	case "AvailableControlForStateOfApplicability.organizationId":
+		if e.complexity.AvailableControlForStateOfApplicability.OrganizationID == nil {
+			break
+		}
+
+		return e.complexity.AvailableControlForStateOfApplicability.OrganizationID(childComplexity), true
+	case "AvailableControlForStateOfApplicability.sectionTitle":
+		if e.complexity.AvailableControlForStateOfApplicability.SectionTitle == nil {
+			break
+		}
+
+		return e.complexity.AvailableControlForStateOfApplicability.SectionTitle(childComplexity), true
+	case "AvailableControlForStateOfApplicability.state":
+		if e.complexity.AvailableControlForStateOfApplicability.State == nil {
+			break
+		}
+
+		return e.complexity.AvailableControlForStateOfApplicability.State(childComplexity), true
+	case "AvailableControlForStateOfApplicability.stateOfApplicabilityId":
+		if e.complexity.AvailableControlForStateOfApplicability.StateOfApplicabilityID == nil {
+			break
+		}
+
+		return e.complexity.AvailableControlForStateOfApplicability.StateOfApplicabilityID(childComplexity), true
 
 	case "BulkDeleteDocumentsPayload.deletedDocumentIds":
 		if e.complexity.BulkDeleteDocumentsPayload.DeletedDocumentIds == nil {
@@ -3205,6 +3351,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.CreateSnapshotPayload.SnapshotEdge(childComplexity), true
+
+	case "CreateStateOfApplicabilityPayload.stateOfApplicabilityEdge":
+		if e.complexity.CreateStateOfApplicabilityPayload.StateOfApplicabilityEdge == nil {
+			break
+		}
+
+		return e.complexity.CreateStateOfApplicabilityPayload.StateOfApplicabilityEdge(childComplexity), true
 
 	case "CreateTaskPayload.taskEdge":
 		if e.complexity.CreateTaskPayload.TaskEdge == nil {
@@ -3793,6 +3946,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.DeleteSnapshotPayload.DeletedSnapshotID(childComplexity), true
 
+	case "DeleteStateOfApplicabilityPayload.deletedStateOfApplicabilityId":
+		if e.complexity.DeleteStateOfApplicabilityPayload.DeletedStateOfApplicabilityID == nil {
+			break
+		}
+
+		return e.complexity.DeleteStateOfApplicabilityPayload.DeletedStateOfApplicabilityID(childComplexity), true
+
 	case "DeleteTaskPayload.deletedTaskId":
 		if e.complexity.DeleteTaskPayload.DeletedTaskID == nil {
 			break
@@ -4323,6 +4483,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.ExportSignableDocumentVersionPDFPayload.Data(childComplexity), true
 
+	case "ExportStateOfApplicabilityPDFPayload.data":
+		if e.complexity.ExportStateOfApplicabilityPDFPayload.Data == nil {
+			break
+		}
+
+		return e.complexity.ExportStateOfApplicabilityPDFPayload.Data(childComplexity), true
+
 	case "File.createdAt":
 		if e.complexity.File.CreatedAt == nil {
 			break
@@ -4606,6 +4773,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.InviteUserPayload.InvitationEdge(childComplexity), true
+
+	case "LinkStateOfApplicabilityControlPayload.stateOfApplicabilityControl":
+		if e.complexity.LinkStateOfApplicabilityControlPayload.StateOfApplicabilityControl == nil {
+			break
+		}
+
+		return e.complexity.LinkStateOfApplicabilityControlPayload.StateOfApplicabilityControl(childComplexity), true
 
 	case "Measure.category":
 		if e.complexity.Measure.Category == nil {
@@ -5290,6 +5464,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.CreateSnapshot(childComplexity, args["input"].(types.CreateSnapshotInput)), true
+	case "Mutation.createStateOfApplicability":
+		if e.complexity.Mutation.CreateStateOfApplicability == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createStateOfApplicability_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateStateOfApplicability(childComplexity, args["input"].(types.CreateStateOfApplicabilityInput)), true
 	case "Mutation.createTask":
 		if e.complexity.Mutation.CreateTask == nil {
 			break
@@ -5730,6 +5915,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.DeleteSnapshot(childComplexity, args["input"].(types.DeleteSnapshotInput)), true
+	case "Mutation.deleteStateOfApplicability":
+		if e.complexity.Mutation.DeleteStateOfApplicability == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteStateOfApplicability_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteStateOfApplicability(childComplexity, args["input"].(types.DeleteStateOfApplicabilityInput)), true
 	case "Mutation.deleteTask":
 		if e.complexity.Mutation.DeleteTask == nil {
 			break
@@ -5917,6 +6113,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.ExportSignableVersionDocumentPDF(childComplexity, args["input"].(types.ExportSignableDocumentVersionPDFInput)), true
+	case "Mutation.exportStateOfApplicabilityPDF":
+		if e.complexity.Mutation.ExportStateOfApplicabilityPDF == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_exportStateOfApplicabilityPDF_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.ExportStateOfApplicabilityPDF(childComplexity, args["input"].(types.ExportStateOfApplicabilityPDFInput)), true
 	case "Mutation.generateDocumentChangelog":
 		if e.complexity.Mutation.GenerateDocumentChangelog == nil {
 			break
@@ -5994,6 +6201,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.InviteUser(childComplexity, args["input"].(types.InviteUserInput)), true
+	case "Mutation.linkStateOfApplicabilityControl":
+		if e.complexity.Mutation.LinkStateOfApplicabilityControl == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_linkStateOfApplicabilityControl_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.LinkStateOfApplicabilityControl(childComplexity, args["input"].(types.LinkStateOfApplicabilityControlInput)), true
 	case "Mutation.publishDocumentVersion":
 		if e.complexity.Mutation.PublishDocumentVersion == nil {
 			break
@@ -6060,6 +6278,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.UnassignTask(childComplexity, args["input"].(types.UnassignTaskInput)), true
+	case "Mutation.unlinkStateOfApplicabilityControl":
+		if e.complexity.Mutation.UnlinkStateOfApplicabilityControl == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_unlinkStateOfApplicabilityControl_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UnlinkStateOfApplicabilityControl(childComplexity, args["input"].(types.UnlinkStateOfApplicabilityControlInput)), true
 	case "Mutation.updateAsset":
 		if e.complexity.Mutation.UpdateAsset == nil {
 			break
@@ -6280,6 +6509,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.UpdateSAMLConfiguration(childComplexity, args["input"].(types.UpdateSAMLConfigurationInput)), true
+	case "Mutation.updateStateOfApplicability":
+		if e.complexity.Mutation.UpdateStateOfApplicability == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateStateOfApplicability_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateStateOfApplicability(childComplexity, args["input"].(types.UpdateStateOfApplicabilityInput)), true
 	case "Mutation.updateTask":
 		if e.complexity.Mutation.UpdateTask == nil {
 			break
@@ -7000,6 +7240,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Organization.Snapshots(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.SnapshotOrderBy)), true
+	case "Organization.stateOfApplicabilities":
+		if e.complexity.Organization.StateOfApplicabilities == nil {
+			break
+		}
+
+		args, err := ec.field_Organization_stateOfApplicabilities_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Organization.StateOfApplicabilities(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.StateOfApplicabilityOrderBy), args["filter"].(*types.StateOfApplicabilityFilter)), true
 	case "Organization.tasks":
 		if e.complexity.Organization.Tasks == nil {
 			break
@@ -8101,6 +8352,129 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.SnapshotEdge.Node(childComplexity), true
 
+	case "StateOfApplicability.availableControls":
+		if e.complexity.StateOfApplicability.AvailableControls == nil {
+			break
+		}
+
+		return e.complexity.StateOfApplicability.AvailableControls(childComplexity), true
+	case "StateOfApplicability.controls":
+		if e.complexity.StateOfApplicability.Controls == nil {
+			break
+		}
+
+		args, err := ec.field_StateOfApplicability_controls_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.StateOfApplicability.Controls(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.ControlOrderBy), args["filter"].(*types.ControlFilter)), true
+	case "StateOfApplicability.createdAt":
+		if e.complexity.StateOfApplicability.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.StateOfApplicability.CreatedAt(childComplexity), true
+	case "StateOfApplicability.description":
+		if e.complexity.StateOfApplicability.Description == nil {
+			break
+		}
+
+		return e.complexity.StateOfApplicability.Description(childComplexity), true
+	case "StateOfApplicability.id":
+		if e.complexity.StateOfApplicability.ID == nil {
+			break
+		}
+
+		return e.complexity.StateOfApplicability.ID(childComplexity), true
+	case "StateOfApplicability.name":
+		if e.complexity.StateOfApplicability.Name == nil {
+			break
+		}
+
+		return e.complexity.StateOfApplicability.Name(childComplexity), true
+	case "StateOfApplicability.organization":
+		if e.complexity.StateOfApplicability.Organization == nil {
+			break
+		}
+
+		return e.complexity.StateOfApplicability.Organization(childComplexity), true
+	case "StateOfApplicability.snapshotId":
+		if e.complexity.StateOfApplicability.SnapshotID == nil {
+			break
+		}
+
+		return e.complexity.StateOfApplicability.SnapshotID(childComplexity), true
+	case "StateOfApplicability.sourceId":
+		if e.complexity.StateOfApplicability.SourceID == nil {
+			break
+		}
+
+		return e.complexity.StateOfApplicability.SourceID(childComplexity), true
+	case "StateOfApplicability.updatedAt":
+		if e.complexity.StateOfApplicability.UpdatedAt == nil {
+			break
+		}
+
+		return e.complexity.StateOfApplicability.UpdatedAt(childComplexity), true
+
+	case "StateOfApplicabilityConnection.edges":
+		if e.complexity.StateOfApplicabilityConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.StateOfApplicabilityConnection.Edges(childComplexity), true
+	case "StateOfApplicabilityConnection.pageInfo":
+		if e.complexity.StateOfApplicabilityConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.StateOfApplicabilityConnection.PageInfo(childComplexity), true
+	case "StateOfApplicabilityConnection.totalCount":
+		if e.complexity.StateOfApplicabilityConnection.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.StateOfApplicabilityConnection.TotalCount(childComplexity), true
+
+	case "StateOfApplicabilityControl.controlId":
+		if e.complexity.StateOfApplicabilityControl.ControlID == nil {
+			break
+		}
+
+		return e.complexity.StateOfApplicabilityControl.ControlID(childComplexity), true
+	case "StateOfApplicabilityControl.exclusionJustification":
+		if e.complexity.StateOfApplicabilityControl.ExclusionJustification == nil {
+			break
+		}
+
+		return e.complexity.StateOfApplicabilityControl.ExclusionJustification(childComplexity), true
+	case "StateOfApplicabilityControl.state":
+		if e.complexity.StateOfApplicabilityControl.State == nil {
+			break
+		}
+
+		return e.complexity.StateOfApplicabilityControl.State(childComplexity), true
+	case "StateOfApplicabilityControl.stateOfApplicabilityId":
+		if e.complexity.StateOfApplicabilityControl.StateOfApplicabilityID == nil {
+			break
+		}
+
+		return e.complexity.StateOfApplicabilityControl.StateOfApplicabilityID(childComplexity), true
+
+	case "StateOfApplicabilityEdge.cursor":
+		if e.complexity.StateOfApplicabilityEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.StateOfApplicabilityEdge.Cursor(childComplexity), true
+	case "StateOfApplicabilityEdge.node":
+		if e.complexity.StateOfApplicabilityEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.StateOfApplicabilityEdge.Node(childComplexity), true
+
 	case "Task.assignedTo":
 		if e.complexity.Task.AssignedTo == nil {
 			break
@@ -8725,6 +9099,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.UnassignTaskPayload.Task(childComplexity), true
 
+	case "UnlinkStateOfApplicabilityControlPayload.deletedControlId":
+		if e.complexity.UnlinkStateOfApplicabilityControlPayload.DeletedControlID == nil {
+			break
+		}
+
+		return e.complexity.UnlinkStateOfApplicabilityControlPayload.DeletedControlID(childComplexity), true
+
 	case "UpdateAssetPayload.asset":
 		if e.complexity.UpdateAssetPayload.Asset == nil {
 			break
@@ -8864,6 +9245,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.UpdateSAMLConfigurationPayload.SamlConfiguration(childComplexity), true
+
+	case "UpdateStateOfApplicabilityPayload.stateOfApplicability":
+		if e.complexity.UpdateStateOfApplicabilityPayload.StateOfApplicability == nil {
+			break
+		}
+
+		return e.complexity.UpdateStateOfApplicabilityPayload.StateOfApplicability(childComplexity), true
 
 	case "UpdateTaskPayload.task":
 		if e.complexity.UpdateTaskPayload.Task == nil {
@@ -9795,6 +10183,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputCreateRiskObligationMappingInput,
 		ec.unmarshalInputCreateSAMLConfigurationInput,
 		ec.unmarshalInputCreateSnapshotInput,
+		ec.unmarshalInputCreateStateOfApplicabilityInput,
 		ec.unmarshalInputCreateTaskInput,
 		ec.unmarshalInputCreateTransferImpactAssessmentInput,
 		ec.unmarshalInputCreateTrustCenterAccessInput,
@@ -9839,6 +10228,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputDeleteRiskObligationMappingInput,
 		ec.unmarshalInputDeleteSAMLConfigurationInput,
 		ec.unmarshalInputDeleteSnapshotInput,
+		ec.unmarshalInputDeleteStateOfApplicabilityInput,
 		ec.unmarshalInputDeleteTaskInput,
 		ec.unmarshalInputDeleteTransferImpactAssessmentInput,
 		ec.unmarshalInputDeleteTrustCenterAccessInput,
@@ -9863,6 +10253,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputExportDocumentVersionPDFInput,
 		ec.unmarshalInputExportFrameworkInput,
 		ec.unmarshalInputExportSignableDocumentVersionPDFInput,
+		ec.unmarshalInputExportStateOfApplicabilityPDFInput,
 		ec.unmarshalInputFrameworkOrder,
 		ec.unmarshalInputFulfillEvidenceInput,
 		ec.unmarshalInputGenerateDocumentChangelogInput,
@@ -9874,6 +10265,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputInvitationFilter,
 		ec.unmarshalInputInvitationOrder,
 		ec.unmarshalInputInviteUserInput,
+		ec.unmarshalInputLinkStateOfApplicabilityControlInput,
 		ec.unmarshalInputMeasureFilter,
 		ec.unmarshalInputMeasureOrder,
 		ec.unmarshalInputMeetingOrder,
@@ -9896,6 +10288,9 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputSendSigningNotificationsInput,
 		ec.unmarshalInputSignDocumentInput,
 		ec.unmarshalInputSnapshotOrder,
+		ec.unmarshalInputStateOfApplicabilityControlInput,
+		ec.unmarshalInputStateOfApplicabilityFilter,
+		ec.unmarshalInputStateOfApplicabilityOrder,
 		ec.unmarshalInputTaskOrder,
 		ec.unmarshalInputTransferImpactAssessmentFilter,
 		ec.unmarshalInputTransferImpactAssessmentOrder,
@@ -9905,6 +10300,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputTrustCenterFileOrder,
 		ec.unmarshalInputTrustCenterReferenceOrder,
 		ec.unmarshalInputUnassignTaskInput,
+		ec.unmarshalInputUnlinkStateOfApplicabilityControlInput,
 		ec.unmarshalInputUpdateAssetInput,
 		ec.unmarshalInputUpdateAuditInput,
 		ec.unmarshalInputUpdateContinualImprovementInput,
@@ -9925,6 +10321,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputUpdateProcessingActivityInput,
 		ec.unmarshalInputUpdateRiskInput,
 		ec.unmarshalInputUpdateSAMLConfigurationInput,
+		ec.unmarshalInputUpdateStateOfApplicabilityInput,
 		ec.unmarshalInputUpdateTaskInput,
 		ec.unmarshalInputUpdateTransferImpactAssessmentInput,
 		ec.unmarshalInputUpdateTrustCenterAccessInput,
@@ -11226,6 +11623,10 @@ enum SnapshotsType
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.SnapshotsTypeProcessingActivities"
     )
+  STATES_OF_APPLICABILITY
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.SnapshotsTypeStatesOfApplicability"
+    )
 }
 
 enum SnapshotOrderField
@@ -11550,6 +11951,10 @@ input DatumFilter {
   snapshotId: ID
 }
 
+input StateOfApplicabilityFilter {
+  snapshotId: ID
+}
+
 input NonconformityFilter {
   snapshotId: ID
 }
@@ -11696,6 +12101,15 @@ type Organization implements Node {
     before: CursorKey
     orderBy: MeetingOrder
   ): MeetingConnection! @goField(forceResolver: true)
+
+  stateOfApplicabilities(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: StateOfApplicabilityOrder
+    filter: StateOfApplicabilityFilter = { snapshotId: null }
+  ): StateOfApplicabilityConnection! @goField(forceResolver: true)
 
   measures(
     first: Int
@@ -12236,6 +12650,26 @@ type Meeting implements Node {
   minutes: String
   attendees: [People!]! @goField(forceResolver: true)
   organization: Organization! @goField(forceResolver: true)
+  createdAt: Datetime!
+  updatedAt: Datetime!
+}
+
+type StateOfApplicability implements Node {
+  id: ID!
+  name: String!
+  description: String
+  sourceId: ID
+  snapshotId: ID
+  organization: Organization @goField(forceResolver: true)
+  controls(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: ControlOrder
+    filter: ControlFilter
+  ): ControlConnection! @goField(forceResolver: true)
+  availableControls: [AvailableControlForStateOfApplicability!]! @goField(forceResolver: true)
   createdAt: Datetime!
   updatedAt: Datetime!
 }
@@ -12795,6 +13229,20 @@ type MeetingEdge {
   node: Meeting!
 }
 
+type StateOfApplicabilityConnection
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.StateOfApplicabilityConnection"
+  ) {
+  totalCount: Int! @goField(forceResolver: true)
+  edges: [StateOfApplicabilityEdge!]!
+  pageInfo: PageInfo!
+}
+
+type StateOfApplicabilityEdge {
+  cursor: CursorKey!
+  node: StateOfApplicability!
+}
+
 type RiskConnection
   @goModel(
     model: "go.probo.inc/probo/pkg/server/api/console/v1/types.RiskConnection"
@@ -13217,6 +13665,25 @@ type Mutation {
   createMeeting(input: CreateMeetingInput!): CreateMeetingPayload!
   updateMeeting(input: UpdateMeetingInput!): UpdateMeetingPayload!
   deleteMeeting(input: DeleteMeetingInput!): DeleteMeetingPayload!
+  # StateOfApplicability mutations
+  createStateOfApplicability(
+    input: CreateStateOfApplicabilityInput!
+  ): CreateStateOfApplicabilityPayload!
+  updateStateOfApplicability(
+    input: UpdateStateOfApplicabilityInput!
+  ): UpdateStateOfApplicabilityPayload!
+  deleteStateOfApplicability(
+    input: DeleteStateOfApplicabilityInput!
+  ): DeleteStateOfApplicabilityPayload!
+  linkStateOfApplicabilityControl(
+    input: LinkStateOfApplicabilityControlInput!
+  ): LinkStateOfApplicabilityControlPayload!
+  unlinkStateOfApplicabilityControl(
+    input: UnlinkStateOfApplicabilityControlInput!
+  ): UnlinkStateOfApplicabilityControlPayload!
+  exportStateOfApplicabilityPDF(
+    input: ExportStateOfApplicabilityPDFInput!
+  ): ExportStateOfApplicabilityPDFPayload!
   publishDocumentVersion(
     input: PublishDocumentVersionInput!
   ): PublishDocumentVersionPayload!
@@ -13905,6 +14372,103 @@ input DeleteMeetingInput {
   meetingId: ID!
 }
 
+input CreateStateOfApplicabilityInput {
+  organizationId: ID!
+  name: String!
+  description: String
+}
+
+input UpdateStateOfApplicabilityInput {
+  id: ID!
+  name: String
+  description: String
+}
+
+input StateOfApplicabilityControlInput {
+  controlId: ID!
+  state: StateOfApplicabilityControlState!
+  exclusionJustification: String
+}
+
+enum StateOfApplicabilityControlState {
+  EXCLUDED
+  IMPLEMENTED
+  NOT_IMPLEMENTED
+}
+
+type AvailableControlForStateOfApplicability {
+  controlId: ID!
+  sectionTitle: String!
+  name: String!
+  frameworkId: ID!
+  frameworkName: String!
+  organizationId: ID!
+  stateOfApplicabilityId: ID
+  state: StateOfApplicabilityControlState
+  exclusionJustification: String
+}
+
+input DeleteStateOfApplicabilityInput {
+  stateOfApplicabilityId: ID!
+}
+
+input LinkStateOfApplicabilityControlInput {
+  stateOfApplicabilityId: ID!
+  controlId: ID!
+  state: StateOfApplicabilityControlState!
+  exclusionJustification: String
+}
+
+input UnlinkStateOfApplicabilityControlInput {
+  stateOfApplicabilityId: ID!
+  controlId: ID!
+}
+
+type LinkStateOfApplicabilityControlPayload {
+  stateOfApplicabilityControl: StateOfApplicabilityControl!
+}
+
+type UnlinkStateOfApplicabilityControlPayload {
+  deletedControlId: ID!
+}
+
+type StateOfApplicabilityControl {
+  stateOfApplicabilityId: ID!
+  controlId: ID!
+  state: StateOfApplicabilityControlState!
+  exclusionJustification: String
+}
+
+input ExportStateOfApplicabilityPDFInput {
+  stateOfApplicabilityId: ID!
+}
+
+type ExportStateOfApplicabilityPDFPayload {
+  data: String!
+}
+
+input StateOfApplicabilityOrder
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.StateOfApplicabilityOrderBy"
+  ) {
+  direction: OrderDirection!
+  field: StateOfApplicabilityOrderField!
+}
+
+enum StateOfApplicabilityOrderField
+  @goModel(
+    model: "go.probo.inc/probo/pkg/coredata.StateOfApplicabilityOrderField"
+  ) {
+  NAME
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.StateOfApplicabilityOrderFieldName"
+    )
+  CREATED_AT
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.StateOfApplicabilityOrderFieldCreatedAt"
+    )
+}
+
 input ConfirmEmailInput {
   token: String!
 }
@@ -14539,6 +15103,18 @@ type UpdateMeetingPayload {
 
 type DeleteMeetingPayload {
   deletedMeetingId: ID!
+}
+
+type CreateStateOfApplicabilityPayload {
+  stateOfApplicabilityEdge: StateOfApplicabilityEdge!
+}
+
+type UpdateStateOfApplicabilityPayload {
+  stateOfApplicability: StateOfApplicability!
+}
+
+type DeleteStateOfApplicabilityPayload {
+  deletedStateOfApplicabilityId: ID!
 }
 
 type ConfirmEmailPayload {
@@ -16209,6 +16785,17 @@ func (ec *executionContext) field_Mutation_createSnapshot_args(ctx context.Conte
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_createStateOfApplicability_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateStateOfApplicabilityInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateStateOfApplicabilityInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_createTask_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -16649,6 +17236,17 @@ func (ec *executionContext) field_Mutation_deleteSnapshot_args(ctx context.Conte
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_deleteStateOfApplicability_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNDeleteStateOfApplicabilityInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteStateOfApplicabilityInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_deleteTask_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -16836,6 +17434,17 @@ func (ec *executionContext) field_Mutation_exportSignableVersionDocumentPDF_args
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_exportStateOfApplicabilityPDF_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNExportStateOfApplicabilityPDFInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐExportStateOfApplicabilityPDFInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_generateDocumentChangelog_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -16913,6 +17522,17 @@ func (ec *executionContext) field_Mutation_inviteUser_args(ctx context.Context, 
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_linkStateOfApplicabilityControl_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNLinkStateOfApplicabilityControlInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐLinkStateOfApplicabilityControlInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_publishDocumentVersion_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -16972,6 +17592,17 @@ func (ec *executionContext) field_Mutation_unassignTask_args(ctx context.Context
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUnassignTaskInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUnassignTaskInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_unlinkStateOfApplicabilityControl_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUnlinkStateOfApplicabilityControlInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUnlinkStateOfApplicabilityControlInput)
 	if err != nil {
 		return nil, err
 	}
@@ -17192,6 +17823,17 @@ func (ec *executionContext) field_Mutation_updateSAMLConfiguration_args(ctx cont
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateSAMLConfigurationInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateSAMLConfigurationInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateStateOfApplicability_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateStateOfApplicabilityInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateStateOfApplicabilityInput)
 	if err != nil {
 		return nil, err
 	}
@@ -18046,6 +18688,42 @@ func (ec *executionContext) field_Organization_snapshots_args(ctx context.Contex
 	return args, nil
 }
 
+func (ec *executionContext) field_Organization_stateOfApplicabilities_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "first", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "after", ec.unmarshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey)
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "last", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["last"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "before", ec.unmarshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey)
+	if err != nil {
+		return nil, err
+	}
+	args["before"] = arg3
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "orderBy", ec.unmarshalOStateOfApplicabilityOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐStateOfApplicabilityOrderBy)
+	if err != nil {
+		return nil, err
+	}
+	args["orderBy"] = arg4
+	arg5, err := graphql.ProcessArgField(ctx, rawArgs, "filter", ec.unmarshalOStateOfApplicabilityFilter2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐStateOfApplicabilityFilter)
+	if err != nil {
+		return nil, err
+	}
+	args["filter"] = arg5
+	return args, nil
+}
+
 func (ec *executionContext) field_Organization_tasks_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -18414,6 +19092,42 @@ func (ec *executionContext) field_SignableDocument_versions_args(ctx context.Con
 }
 
 func (ec *executionContext) field_Snapshot_controls_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "first", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "after", ec.unmarshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey)
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "last", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["last"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "before", ec.unmarshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey)
+	if err != nil {
+		return nil, err
+	}
+	args["before"] = arg3
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "orderBy", ec.unmarshalOControlOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐControlOrderBy)
+	if err != nil {
+		return nil, err
+	}
+	args["orderBy"] = arg4
+	arg5, err := graphql.ProcessArgField(ctx, rawArgs, "filter", ec.unmarshalOControlFilter2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐControlFilter)
+	if err != nil {
+		return nil, err
+	}
+	args["filter"] = arg5
+	return args, nil
+}
+
+func (ec *executionContext) field_StateOfApplicability_controls_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "first", ec.unmarshalOInt2ᚖint)
@@ -19303,6 +20017,8 @@ func (ec *executionContext) fieldContext_Asset_organization(_ context.Context, f
 				return ec.fieldContext_Organization_documents(ctx, field)
 			case "meetings":
 				return ec.fieldContext_Organization_meetings(ctx, field)
+			case "stateOfApplicabilities":
+				return ec.fieldContext_Organization_stateOfApplicabilities(ctx, field)
 			case "measures":
 				return ec.fieldContext_Organization_measures(ctx, field)
 			case "risks":
@@ -19764,6 +20480,8 @@ func (ec *executionContext) fieldContext_Audit_organization(_ context.Context, f
 				return ec.fieldContext_Organization_documents(ctx, field)
 			case "meetings":
 				return ec.fieldContext_Organization_meetings(ctx, field)
+			case "stateOfApplicabilities":
+				return ec.fieldContext_Organization_stateOfApplicabilities(ctx, field)
 			case "measures":
 				return ec.fieldContext_Organization_measures(ctx, field)
 			case "risks":
@@ -20348,6 +21066,267 @@ func (ec *executionContext) fieldContext_AuditEdge_node(_ context.Context, field
 	return fc, nil
 }
 
+func (ec *executionContext) _AvailableControlForStateOfApplicability_controlId(ctx context.Context, field graphql.CollectedField, obj *types.AvailableControlForStateOfApplicability) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AvailableControlForStateOfApplicability_controlId,
+		func(ctx context.Context) (any, error) {
+			return obj.ControlID, nil
+		},
+		nil,
+		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AvailableControlForStateOfApplicability_controlId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AvailableControlForStateOfApplicability",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AvailableControlForStateOfApplicability_sectionTitle(ctx context.Context, field graphql.CollectedField, obj *types.AvailableControlForStateOfApplicability) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AvailableControlForStateOfApplicability_sectionTitle,
+		func(ctx context.Context) (any, error) {
+			return obj.SectionTitle, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AvailableControlForStateOfApplicability_sectionTitle(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AvailableControlForStateOfApplicability",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AvailableControlForStateOfApplicability_name(ctx context.Context, field graphql.CollectedField, obj *types.AvailableControlForStateOfApplicability) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AvailableControlForStateOfApplicability_name,
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AvailableControlForStateOfApplicability_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AvailableControlForStateOfApplicability",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AvailableControlForStateOfApplicability_frameworkId(ctx context.Context, field graphql.CollectedField, obj *types.AvailableControlForStateOfApplicability) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AvailableControlForStateOfApplicability_frameworkId,
+		func(ctx context.Context) (any, error) {
+			return obj.FrameworkID, nil
+		},
+		nil,
+		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AvailableControlForStateOfApplicability_frameworkId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AvailableControlForStateOfApplicability",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AvailableControlForStateOfApplicability_frameworkName(ctx context.Context, field graphql.CollectedField, obj *types.AvailableControlForStateOfApplicability) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AvailableControlForStateOfApplicability_frameworkName,
+		func(ctx context.Context) (any, error) {
+			return obj.FrameworkName, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AvailableControlForStateOfApplicability_frameworkName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AvailableControlForStateOfApplicability",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AvailableControlForStateOfApplicability_organizationId(ctx context.Context, field graphql.CollectedField, obj *types.AvailableControlForStateOfApplicability) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AvailableControlForStateOfApplicability_organizationId,
+		func(ctx context.Context) (any, error) {
+			return obj.OrganizationID, nil
+		},
+		nil,
+		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_AvailableControlForStateOfApplicability_organizationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AvailableControlForStateOfApplicability",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AvailableControlForStateOfApplicability_stateOfApplicabilityId(ctx context.Context, field graphql.CollectedField, obj *types.AvailableControlForStateOfApplicability) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AvailableControlForStateOfApplicability_stateOfApplicabilityId,
+		func(ctx context.Context) (any, error) {
+			return obj.StateOfApplicabilityID, nil
+		},
+		nil,
+		ec.marshalOID2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_AvailableControlForStateOfApplicability_stateOfApplicabilityId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AvailableControlForStateOfApplicability",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AvailableControlForStateOfApplicability_state(ctx context.Context, field graphql.CollectedField, obj *types.AvailableControlForStateOfApplicability) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AvailableControlForStateOfApplicability_state,
+		func(ctx context.Context) (any, error) {
+			return obj.State, nil
+		},
+		nil,
+		ec.marshalOStateOfApplicabilityControlState2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐStateOfApplicabilityControlState,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_AvailableControlForStateOfApplicability_state(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AvailableControlForStateOfApplicability",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type StateOfApplicabilityControlState does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AvailableControlForStateOfApplicability_exclusionJustification(ctx context.Context, field graphql.CollectedField, obj *types.AvailableControlForStateOfApplicability) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AvailableControlForStateOfApplicability_exclusionJustification,
+		func(ctx context.Context) (any, error) {
+			return obj.ExclusionJustification, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_AvailableControlForStateOfApplicability_exclusionJustification(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AvailableControlForStateOfApplicability",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _BulkDeleteDocumentsPayload_deletedDocumentIds(ctx context.Context, field graphql.CollectedField, obj *types.BulkDeleteDocumentsPayload) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -20716,6 +21695,8 @@ func (ec *executionContext) fieldContext_ContinualImprovement_organization(_ con
 				return ec.fieldContext_Organization_documents(ctx, field)
 			case "meetings":
 				return ec.fieldContext_Organization_meetings(ctx, field)
+			case "stateOfApplicabilities":
+				return ec.fieldContext_Organization_stateOfApplicabilities(ctx, field)
 			case "measures":
 				return ec.fieldContext_Organization_measures(ctx, field)
 			case "risks":
@@ -23229,6 +24210,41 @@ func (ec *executionContext) fieldContext_CreateSnapshotPayload_snapshotEdge(_ co
 	return fc, nil
 }
 
+func (ec *executionContext) _CreateStateOfApplicabilityPayload_stateOfApplicabilityEdge(ctx context.Context, field graphql.CollectedField, obj *types.CreateStateOfApplicabilityPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_CreateStateOfApplicabilityPayload_stateOfApplicabilityEdge,
+		func(ctx context.Context) (any, error) {
+			return obj.StateOfApplicabilityEdge, nil
+		},
+		nil,
+		ec.marshalNStateOfApplicabilityEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐStateOfApplicabilityEdge,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_CreateStateOfApplicabilityPayload_stateOfApplicabilityEdge(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CreateStateOfApplicabilityPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cursor":
+				return ec.fieldContext_StateOfApplicabilityEdge_cursor(ctx, field)
+			case "node":
+				return ec.fieldContext_StateOfApplicabilityEdge_node(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type StateOfApplicabilityEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _CreateTaskPayload_taskEdge(ctx context.Context, field graphql.CollectedField, obj *types.CreateTaskPayload) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -23649,6 +24665,8 @@ func (ec *executionContext) fieldContext_CustomDomain_organization(_ context.Con
 				return ec.fieldContext_Organization_documents(ctx, field)
 			case "meetings":
 				return ec.fieldContext_Organization_meetings(ctx, field)
+			case "stateOfApplicabilities":
+				return ec.fieldContext_Organization_stateOfApplicabilities(ctx, field)
 			case "measures":
 				return ec.fieldContext_Organization_measures(ctx, field)
 			case "risks":
@@ -24201,6 +25219,8 @@ func (ec *executionContext) fieldContext_DataProtectionImpactAssessment_organiza
 				return ec.fieldContext_Organization_documents(ctx, field)
 			case "meetings":
 				return ec.fieldContext_Organization_meetings(ctx, field)
+			case "stateOfApplicabilities":
+				return ec.fieldContext_Organization_stateOfApplicabilities(ctx, field)
 			case "measures":
 				return ec.fieldContext_Organization_measures(ctx, field)
 			case "risks":
@@ -24908,6 +25928,8 @@ func (ec *executionContext) fieldContext_Datum_organization(_ context.Context, f
 				return ec.fieldContext_Organization_documents(ctx, field)
 			case "meetings":
 				return ec.fieldContext_Organization_meetings(ctx, field)
+			case "stateOfApplicabilities":
+				return ec.fieldContext_Organization_stateOfApplicabilities(ctx, field)
 			case "measures":
 				return ec.fieldContext_Organization_measures(ctx, field)
 			case "risks":
@@ -26005,6 +27027,8 @@ func (ec *executionContext) fieldContext_DeleteOrganizationHorizontalLogoPayload
 				return ec.fieldContext_Organization_documents(ctx, field)
 			case "meetings":
 				return ec.fieldContext_Organization_meetings(ctx, field)
+			case "stateOfApplicabilities":
+				return ec.fieldContext_Organization_stateOfApplicabilities(ctx, field)
 			case "measures":
 				return ec.fieldContext_Organization_measures(ctx, field)
 			case "risks":
@@ -26388,6 +27412,35 @@ func (ec *executionContext) _DeleteSnapshotPayload_deletedSnapshotId(ctx context
 func (ec *executionContext) fieldContext_DeleteSnapshotPayload_deletedSnapshotId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "DeleteSnapshotPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DeleteStateOfApplicabilityPayload_deletedStateOfApplicabilityId(ctx context.Context, field graphql.CollectedField, obj *types.DeleteStateOfApplicabilityPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_DeleteStateOfApplicabilityPayload_deletedStateOfApplicabilityId,
+		func(ctx context.Context) (any, error) {
+			return obj.DeletedStateOfApplicabilityID, nil
+		},
+		nil,
+		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_DeleteStateOfApplicabilityPayload_deletedStateOfApplicabilityId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DeleteStateOfApplicabilityPayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -27157,6 +28210,8 @@ func (ec *executionContext) fieldContext_Document_organization(_ context.Context
 				return ec.fieldContext_Organization_documents(ctx, field)
 			case "meetings":
 				return ec.fieldContext_Organization_meetings(ctx, field)
+			case "stateOfApplicabilities":
+				return ec.fieldContext_Organization_stateOfApplicabilities(ctx, field)
 			case "measures":
 				return ec.fieldContext_Organization_measures(ctx, field)
 			case "risks":
@@ -29349,6 +30404,35 @@ func (ec *executionContext) fieldContext_ExportSignableDocumentVersionPDFPayload
 	return fc, nil
 }
 
+func (ec *executionContext) _ExportStateOfApplicabilityPDFPayload_data(ctx context.Context, field graphql.CollectedField, obj *types.ExportStateOfApplicabilityPDFPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ExportStateOfApplicabilityPDFPayload_data,
+		func(ctx context.Context) (any, error) {
+			return obj.Data, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ExportStateOfApplicabilityPDFPayload_data(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ExportStateOfApplicabilityPDFPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _File_id(ctx context.Context, field graphql.CollectedField, obj *types.File) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -29699,6 +30783,8 @@ func (ec *executionContext) fieldContext_Framework_organization(_ context.Contex
 				return ec.fieldContext_Organization_documents(ctx, field)
 			case "meetings":
 				return ec.fieldContext_Organization_meetings(ctx, field)
+			case "stateOfApplicabilities":
+				return ec.fieldContext_Organization_stateOfApplicabilities(ctx, field)
 			case "measures":
 				return ec.fieldContext_Organization_measures(ctx, field)
 			case "risks":
@@ -30698,6 +31784,8 @@ func (ec *executionContext) fieldContext_Invitation_organization(_ context.Conte
 				return ec.fieldContext_Organization_documents(ctx, field)
 			case "meetings":
 				return ec.fieldContext_Organization_meetings(ctx, field)
+			case "stateOfApplicabilities":
+				return ec.fieldContext_Organization_stateOfApplicabilities(ctx, field)
 			case "measures":
 				return ec.fieldContext_Organization_measures(ctx, field)
 			case "risks":
@@ -30954,6 +32042,45 @@ func (ec *executionContext) fieldContext_InviteUserPayload_invitationEdge(_ cont
 				return ec.fieldContext_InvitationEdge_node(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type InvitationEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _LinkStateOfApplicabilityControlPayload_stateOfApplicabilityControl(ctx context.Context, field graphql.CollectedField, obj *types.LinkStateOfApplicabilityControlPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_LinkStateOfApplicabilityControlPayload_stateOfApplicabilityControl,
+		func(ctx context.Context) (any, error) {
+			return obj.StateOfApplicabilityControl, nil
+		},
+		nil,
+		ec.marshalNStateOfApplicabilityControl2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐStateOfApplicabilityControl,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_LinkStateOfApplicabilityControlPayload_stateOfApplicabilityControl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LinkStateOfApplicabilityControlPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "stateOfApplicabilityId":
+				return ec.fieldContext_StateOfApplicabilityControl_stateOfApplicabilityId(ctx, field)
+			case "controlId":
+				return ec.fieldContext_StateOfApplicabilityControl_controlId(ctx, field)
+			case "state":
+				return ec.fieldContext_StateOfApplicabilityControl_state(ctx, field)
+			case "exclusionJustification":
+				return ec.fieldContext_StateOfApplicabilityControl_exclusionJustification(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type StateOfApplicabilityControl", field.Name)
 		},
 	}
 	return fc, nil
@@ -31770,6 +32897,8 @@ func (ec *executionContext) fieldContext_Meeting_organization(_ context.Context,
 				return ec.fieldContext_Organization_documents(ctx, field)
 			case "meetings":
 				return ec.fieldContext_Organization_meetings(ctx, field)
+			case "stateOfApplicabilities":
+				return ec.fieldContext_Organization_stateOfApplicabilities(ctx, field)
 			case "measures":
 				return ec.fieldContext_Organization_measures(ctx, field)
 			case "risks":
@@ -36439,6 +37568,276 @@ func (ec *executionContext) fieldContext_Mutation_deleteMeeting(ctx context.Cont
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_createStateOfApplicability(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_createStateOfApplicability,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().CreateStateOfApplicability(ctx, fc.Args["input"].(types.CreateStateOfApplicabilityInput))
+		},
+		nil,
+		ec.marshalNCreateStateOfApplicabilityPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateStateOfApplicabilityPayload,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_createStateOfApplicability(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "stateOfApplicabilityEdge":
+				return ec.fieldContext_CreateStateOfApplicabilityPayload_stateOfApplicabilityEdge(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CreateStateOfApplicabilityPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createStateOfApplicability_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateStateOfApplicability(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_updateStateOfApplicability,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().UpdateStateOfApplicability(ctx, fc.Args["input"].(types.UpdateStateOfApplicabilityInput))
+		},
+		nil,
+		ec.marshalNUpdateStateOfApplicabilityPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateStateOfApplicabilityPayload,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updateStateOfApplicability(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "stateOfApplicability":
+				return ec.fieldContext_UpdateStateOfApplicabilityPayload_stateOfApplicability(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type UpdateStateOfApplicabilityPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateStateOfApplicability_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteStateOfApplicability(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_deleteStateOfApplicability,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().DeleteStateOfApplicability(ctx, fc.Args["input"].(types.DeleteStateOfApplicabilityInput))
+		},
+		nil,
+		ec.marshalNDeleteStateOfApplicabilityPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteStateOfApplicabilityPayload,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteStateOfApplicability(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "deletedStateOfApplicabilityId":
+				return ec.fieldContext_DeleteStateOfApplicabilityPayload_deletedStateOfApplicabilityId(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DeleteStateOfApplicabilityPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteStateOfApplicability_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_linkStateOfApplicabilityControl(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_linkStateOfApplicabilityControl,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().LinkStateOfApplicabilityControl(ctx, fc.Args["input"].(types.LinkStateOfApplicabilityControlInput))
+		},
+		nil,
+		ec.marshalNLinkStateOfApplicabilityControlPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐLinkStateOfApplicabilityControlPayload,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_linkStateOfApplicabilityControl(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "stateOfApplicabilityControl":
+				return ec.fieldContext_LinkStateOfApplicabilityControlPayload_stateOfApplicabilityControl(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type LinkStateOfApplicabilityControlPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_linkStateOfApplicabilityControl_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_unlinkStateOfApplicabilityControl(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_unlinkStateOfApplicabilityControl,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().UnlinkStateOfApplicabilityControl(ctx, fc.Args["input"].(types.UnlinkStateOfApplicabilityControlInput))
+		},
+		nil,
+		ec.marshalNUnlinkStateOfApplicabilityControlPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUnlinkStateOfApplicabilityControlPayload,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_unlinkStateOfApplicabilityControl(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "deletedControlId":
+				return ec.fieldContext_UnlinkStateOfApplicabilityControlPayload_deletedControlId(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type UnlinkStateOfApplicabilityControlPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_unlinkStateOfApplicabilityControl_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_exportStateOfApplicabilityPDF(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_exportStateOfApplicabilityPDF,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().ExportStateOfApplicabilityPDF(ctx, fc.Args["input"].(types.ExportStateOfApplicabilityPDFInput))
+		},
+		nil,
+		ec.marshalNExportStateOfApplicabilityPDFPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐExportStateOfApplicabilityPDFPayload,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_exportStateOfApplicabilityPDF(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "data":
+				return ec.fieldContext_ExportStateOfApplicabilityPDFPayload_data(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ExportStateOfApplicabilityPDFPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_exportStateOfApplicabilityPDF_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_publishDocumentVersion(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -39130,6 +40529,8 @@ func (ec *executionContext) fieldContext_Nonconformity_organization(_ context.Co
 				return ec.fieldContext_Organization_documents(ctx, field)
 			case "meetings":
 				return ec.fieldContext_Organization_meetings(ctx, field)
+			case "stateOfApplicabilities":
+				return ec.fieldContext_Organization_stateOfApplicabilities(ctx, field)
 			case "measures":
 				return ec.fieldContext_Organization_measures(ctx, field)
 			case "risks":
@@ -39913,6 +41314,8 @@ func (ec *executionContext) fieldContext_Obligation_organization(_ context.Conte
 				return ec.fieldContext_Organization_documents(ctx, field)
 			case "meetings":
 				return ec.fieldContext_Organization_meetings(ctx, field)
+			case "stateOfApplicabilities":
+				return ec.fieldContext_Organization_stateOfApplicabilities(ctx, field)
 			case "measures":
 				return ec.fieldContext_Organization_measures(ctx, field)
 			case "risks":
@@ -41198,6 +42601,55 @@ func (ec *executionContext) fieldContext_Organization_meetings(ctx context.Conte
 	return fc, nil
 }
 
+func (ec *executionContext) _Organization_stateOfApplicabilities(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Organization_stateOfApplicabilities,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Organization().StateOfApplicabilities(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.StateOfApplicabilityOrderBy), fc.Args["filter"].(*types.StateOfApplicabilityFilter))
+		},
+		nil,
+		ec.marshalNStateOfApplicabilityConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐStateOfApplicabilityConnection,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Organization_stateOfApplicabilities(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Organization",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "totalCount":
+				return ec.fieldContext_StateOfApplicabilityConnection_totalCount(ctx, field)
+			case "edges":
+				return ec.fieldContext_StateOfApplicabilityConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_StateOfApplicabilityConnection_pageInfo(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type StateOfApplicabilityConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Organization_stateOfApplicabilities_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Organization_measures(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -42336,6 +43788,8 @@ func (ec *executionContext) fieldContext_OrganizationEdge_node(_ context.Context
 				return ec.fieldContext_Organization_documents(ctx, field)
 			case "meetings":
 				return ec.fieldContext_Organization_meetings(ctx, field)
+			case "stateOfApplicabilities":
+				return ec.fieldContext_Organization_stateOfApplicabilities(ctx, field)
 			case "measures":
 				return ec.fieldContext_Organization_measures(ctx, field)
 			case "risks":
@@ -43117,6 +44571,8 @@ func (ec *executionContext) fieldContext_ProcessingActivity_organization(_ conte
 				return ec.fieldContext_Organization_documents(ctx, field)
 			case "meetings":
 				return ec.fieldContext_Organization_meetings(ctx, field)
+			case "stateOfApplicabilities":
+				return ec.fieldContext_Organization_stateOfApplicabilities(ctx, field)
 			case "measures":
 				return ec.fieldContext_Organization_measures(ctx, field)
 			case "risks":
@@ -45345,6 +46801,8 @@ func (ec *executionContext) fieldContext_Risk_organization(_ context.Context, fi
 				return ec.fieldContext_Organization_documents(ctx, field)
 			case "meetings":
 				return ec.fieldContext_Organization_meetings(ctx, field)
+			case "stateOfApplicabilities":
+				return ec.fieldContext_Organization_stateOfApplicabilities(ctx, field)
 			case "measures":
 				return ec.fieldContext_Organization_measures(ctx, field)
 			case "risks":
@@ -45938,6 +47396,8 @@ func (ec *executionContext) fieldContext_SAMLConfiguration_organization(_ contex
 				return ec.fieldContext_Organization_documents(ctx, field)
 			case "meetings":
 				return ec.fieldContext_Organization_meetings(ctx, field)
+			case "stateOfApplicabilities":
+				return ec.fieldContext_Organization_stateOfApplicabilities(ctx, field)
 			case "measures":
 				return ec.fieldContext_Organization_measures(ctx, field)
 			case "risks":
@@ -47535,6 +48995,8 @@ func (ec *executionContext) fieldContext_Snapshot_organization(_ context.Context
 				return ec.fieldContext_Organization_documents(ctx, field)
 			case "meetings":
 				return ec.fieldContext_Organization_meetings(ctx, field)
+			case "stateOfApplicabilities":
+				return ec.fieldContext_Organization_stateOfApplicabilities(ctx, field)
 			case "measures":
 				return ec.fieldContext_Organization_measures(ctx, field)
 			case "risks":
@@ -47922,6 +49384,713 @@ func (ec *executionContext) fieldContext_SnapshotEdge_node(_ context.Context, fi
 	return fc, nil
 }
 
+func (ec *executionContext) _StateOfApplicability_id(ctx context.Context, field graphql.CollectedField, obj *types.StateOfApplicability) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_StateOfApplicability_id,
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_StateOfApplicability_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "StateOfApplicability",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _StateOfApplicability_name(ctx context.Context, field graphql.CollectedField, obj *types.StateOfApplicability) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_StateOfApplicability_name,
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_StateOfApplicability_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "StateOfApplicability",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _StateOfApplicability_description(ctx context.Context, field graphql.CollectedField, obj *types.StateOfApplicability) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_StateOfApplicability_description,
+		func(ctx context.Context) (any, error) {
+			return obj.Description, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_StateOfApplicability_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "StateOfApplicability",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _StateOfApplicability_sourceId(ctx context.Context, field graphql.CollectedField, obj *types.StateOfApplicability) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_StateOfApplicability_sourceId,
+		func(ctx context.Context) (any, error) {
+			return obj.SourceID, nil
+		},
+		nil,
+		ec.marshalOID2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_StateOfApplicability_sourceId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "StateOfApplicability",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _StateOfApplicability_snapshotId(ctx context.Context, field graphql.CollectedField, obj *types.StateOfApplicability) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_StateOfApplicability_snapshotId,
+		func(ctx context.Context) (any, error) {
+			return obj.SnapshotID, nil
+		},
+		nil,
+		ec.marshalOID2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_StateOfApplicability_snapshotId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "StateOfApplicability",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _StateOfApplicability_organization(ctx context.Context, field graphql.CollectedField, obj *types.StateOfApplicability) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_StateOfApplicability_organization,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.StateOfApplicability().Organization(ctx, obj)
+		},
+		nil,
+		ec.marshalOOrganization2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐOrganization,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_StateOfApplicability_organization(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "StateOfApplicability",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Organization_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Organization_name(ctx, field)
+			case "logoUrl":
+				return ec.fieldContext_Organization_logoUrl(ctx, field)
+			case "horizontalLogoUrl":
+				return ec.fieldContext_Organization_horizontalLogoUrl(ctx, field)
+			case "description":
+				return ec.fieldContext_Organization_description(ctx, field)
+			case "websiteUrl":
+				return ec.fieldContext_Organization_websiteUrl(ctx, field)
+			case "email":
+				return ec.fieldContext_Organization_email(ctx, field)
+			case "headquarterAddress":
+				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
+			case "context":
+				return ec.fieldContext_Organization_context(ctx, field)
+			case "memberships":
+				return ec.fieldContext_Organization_memberships(ctx, field)
+			case "invitations":
+				return ec.fieldContext_Organization_invitations(ctx, field)
+			case "slackConnections":
+				return ec.fieldContext_Organization_slackConnections(ctx, field)
+			case "frameworks":
+				return ec.fieldContext_Organization_frameworks(ctx, field)
+			case "controls":
+				return ec.fieldContext_Organization_controls(ctx, field)
+			case "vendors":
+				return ec.fieldContext_Organization_vendors(ctx, field)
+			case "peoples":
+				return ec.fieldContext_Organization_peoples(ctx, field)
+			case "documents":
+				return ec.fieldContext_Organization_documents(ctx, field)
+			case "meetings":
+				return ec.fieldContext_Organization_meetings(ctx, field)
+			case "stateOfApplicabilities":
+				return ec.fieldContext_Organization_stateOfApplicabilities(ctx, field)
+			case "measures":
+				return ec.fieldContext_Organization_measures(ctx, field)
+			case "risks":
+				return ec.fieldContext_Organization_risks(ctx, field)
+			case "tasks":
+				return ec.fieldContext_Organization_tasks(ctx, field)
+			case "assets":
+				return ec.fieldContext_Organization_assets(ctx, field)
+			case "data":
+				return ec.fieldContext_Organization_data(ctx, field)
+			case "audits":
+				return ec.fieldContext_Organization_audits(ctx, field)
+			case "nonconformities":
+				return ec.fieldContext_Organization_nonconformities(ctx, field)
+			case "obligations":
+				return ec.fieldContext_Organization_obligations(ctx, field)
+			case "continualImprovements":
+				return ec.fieldContext_Organization_continualImprovements(ctx, field)
+			case "processingActivities":
+				return ec.fieldContext_Organization_processingActivities(ctx, field)
+			case "dataProtectionImpactAssessments":
+				return ec.fieldContext_Organization_dataProtectionImpactAssessments(ctx, field)
+			case "transferImpactAssessments":
+				return ec.fieldContext_Organization_transferImpactAssessments(ctx, field)
+			case "snapshots":
+				return ec.fieldContext_Organization_snapshots(ctx, field)
+			case "trustCenterFiles":
+				return ec.fieldContext_Organization_trustCenterFiles(ctx, field)
+			case "trustCenter":
+				return ec.fieldContext_Organization_trustCenter(ctx, field)
+			case "customDomain":
+				return ec.fieldContext_Organization_customDomain(ctx, field)
+			case "samlConfigurations":
+				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Organization_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Organization_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _StateOfApplicability_controls(ctx context.Context, field graphql.CollectedField, obj *types.StateOfApplicability) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_StateOfApplicability_controls,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.StateOfApplicability().Controls(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.ControlOrderBy), fc.Args["filter"].(*types.ControlFilter))
+		},
+		nil,
+		ec.marshalNControlConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐControlConnection,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_StateOfApplicability_controls(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "StateOfApplicability",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "totalCount":
+				return ec.fieldContext_ControlConnection_totalCount(ctx, field)
+			case "edges":
+				return ec.fieldContext_ControlConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_ControlConnection_pageInfo(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ControlConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_StateOfApplicability_controls_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _StateOfApplicability_availableControls(ctx context.Context, field graphql.CollectedField, obj *types.StateOfApplicability) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_StateOfApplicability_availableControls,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.StateOfApplicability().AvailableControls(ctx, obj)
+		},
+		nil,
+		ec.marshalNAvailableControlForStateOfApplicability2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAvailableControlForStateOfApplicabilityᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_StateOfApplicability_availableControls(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "StateOfApplicability",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "controlId":
+				return ec.fieldContext_AvailableControlForStateOfApplicability_controlId(ctx, field)
+			case "sectionTitle":
+				return ec.fieldContext_AvailableControlForStateOfApplicability_sectionTitle(ctx, field)
+			case "name":
+				return ec.fieldContext_AvailableControlForStateOfApplicability_name(ctx, field)
+			case "frameworkId":
+				return ec.fieldContext_AvailableControlForStateOfApplicability_frameworkId(ctx, field)
+			case "frameworkName":
+				return ec.fieldContext_AvailableControlForStateOfApplicability_frameworkName(ctx, field)
+			case "organizationId":
+				return ec.fieldContext_AvailableControlForStateOfApplicability_organizationId(ctx, field)
+			case "stateOfApplicabilityId":
+				return ec.fieldContext_AvailableControlForStateOfApplicability_stateOfApplicabilityId(ctx, field)
+			case "state":
+				return ec.fieldContext_AvailableControlForStateOfApplicability_state(ctx, field)
+			case "exclusionJustification":
+				return ec.fieldContext_AvailableControlForStateOfApplicability_exclusionJustification(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AvailableControlForStateOfApplicability", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _StateOfApplicability_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.StateOfApplicability) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_StateOfApplicability_createdAt,
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		ec.marshalNDatetime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_StateOfApplicability_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "StateOfApplicability",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _StateOfApplicability_updatedAt(ctx context.Context, field graphql.CollectedField, obj *types.StateOfApplicability) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_StateOfApplicability_updatedAt,
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		ec.marshalNDatetime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_StateOfApplicability_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "StateOfApplicability",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _StateOfApplicabilityConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *types.StateOfApplicabilityConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_StateOfApplicabilityConnection_totalCount,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.StateOfApplicabilityConnection().TotalCount(ctx, obj)
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_StateOfApplicabilityConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "StateOfApplicabilityConnection",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _StateOfApplicabilityConnection_edges(ctx context.Context, field graphql.CollectedField, obj *types.StateOfApplicabilityConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_StateOfApplicabilityConnection_edges,
+		func(ctx context.Context) (any, error) {
+			return obj.Edges, nil
+		},
+		nil,
+		ec.marshalNStateOfApplicabilityEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐStateOfApplicabilityEdgeᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_StateOfApplicabilityConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "StateOfApplicabilityConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cursor":
+				return ec.fieldContext_StateOfApplicabilityEdge_cursor(ctx, field)
+			case "node":
+				return ec.fieldContext_StateOfApplicabilityEdge_node(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type StateOfApplicabilityEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _StateOfApplicabilityConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *types.StateOfApplicabilityConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_StateOfApplicabilityConnection_pageInfo,
+		func(ctx context.Context) (any, error) {
+			return obj.PageInfo, nil
+		},
+		nil,
+		ec.marshalNPageInfo2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPageInfo,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_StateOfApplicabilityConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "StateOfApplicabilityConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _StateOfApplicabilityControl_stateOfApplicabilityId(ctx context.Context, field graphql.CollectedField, obj *types.StateOfApplicabilityControl) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_StateOfApplicabilityControl_stateOfApplicabilityId,
+		func(ctx context.Context) (any, error) {
+			return obj.StateOfApplicabilityID, nil
+		},
+		nil,
+		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_StateOfApplicabilityControl_stateOfApplicabilityId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "StateOfApplicabilityControl",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _StateOfApplicabilityControl_controlId(ctx context.Context, field graphql.CollectedField, obj *types.StateOfApplicabilityControl) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_StateOfApplicabilityControl_controlId,
+		func(ctx context.Context) (any, error) {
+			return obj.ControlID, nil
+		},
+		nil,
+		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_StateOfApplicabilityControl_controlId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "StateOfApplicabilityControl",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _StateOfApplicabilityControl_state(ctx context.Context, field graphql.CollectedField, obj *types.StateOfApplicabilityControl) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_StateOfApplicabilityControl_state,
+		func(ctx context.Context) (any, error) {
+			return obj.State, nil
+		},
+		nil,
+		ec.marshalNStateOfApplicabilityControlState2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐStateOfApplicabilityControlState,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_StateOfApplicabilityControl_state(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "StateOfApplicabilityControl",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type StateOfApplicabilityControlState does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _StateOfApplicabilityControl_exclusionJustification(ctx context.Context, field graphql.CollectedField, obj *types.StateOfApplicabilityControl) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_StateOfApplicabilityControl_exclusionJustification,
+		func(ctx context.Context) (any, error) {
+			return obj.ExclusionJustification, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_StateOfApplicabilityControl_exclusionJustification(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "StateOfApplicabilityControl",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _StateOfApplicabilityEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *types.StateOfApplicabilityEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_StateOfApplicabilityEdge_cursor,
+		func(ctx context.Context) (any, error) {
+			return obj.Cursor, nil
+		},
+		nil,
+		ec.marshalNCursorKey2goᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_StateOfApplicabilityEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "StateOfApplicabilityEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type CursorKey does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _StateOfApplicabilityEdge_node(ctx context.Context, field graphql.CollectedField, obj *types.StateOfApplicabilityEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_StateOfApplicabilityEdge_node,
+		func(ctx context.Context) (any, error) {
+			return obj.Node, nil
+		},
+		nil,
+		ec.marshalNStateOfApplicability2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐStateOfApplicability,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_StateOfApplicabilityEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "StateOfApplicabilityEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_StateOfApplicability_id(ctx, field)
+			case "name":
+				return ec.fieldContext_StateOfApplicability_name(ctx, field)
+			case "description":
+				return ec.fieldContext_StateOfApplicability_description(ctx, field)
+			case "sourceId":
+				return ec.fieldContext_StateOfApplicability_sourceId(ctx, field)
+			case "snapshotId":
+				return ec.fieldContext_StateOfApplicability_snapshotId(ctx, field)
+			case "organization":
+				return ec.fieldContext_StateOfApplicability_organization(ctx, field)
+			case "controls":
+				return ec.fieldContext_StateOfApplicability_controls(ctx, field)
+			case "availableControls":
+				return ec.fieldContext_StateOfApplicability_availableControls(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_StateOfApplicability_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_StateOfApplicability_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type StateOfApplicability", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Task_id(ctx context.Context, field graphql.CollectedField, obj *types.Task) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -48207,6 +50376,8 @@ func (ec *executionContext) fieldContext_Task_organization(_ context.Context, fi
 				return ec.fieldContext_Organization_documents(ctx, field)
 			case "meetings":
 				return ec.fieldContext_Organization_meetings(ctx, field)
+			case "stateOfApplicabilities":
+				return ec.fieldContext_Organization_stateOfApplicabilities(ctx, field)
 			case "measures":
 				return ec.fieldContext_Organization_measures(ctx, field)
 			case "risks":
@@ -48775,6 +50946,8 @@ func (ec *executionContext) fieldContext_TransferImpactAssessment_organization(_
 				return ec.fieldContext_Organization_documents(ctx, field)
 			case "meetings":
 				return ec.fieldContext_Organization_meetings(ctx, field)
+			case "stateOfApplicabilities":
+				return ec.fieldContext_Organization_stateOfApplicabilities(ctx, field)
 			case "measures":
 				return ec.fieldContext_Organization_measures(ctx, field)
 			case "risks":
@@ -49440,6 +51613,8 @@ func (ec *executionContext) fieldContext_TrustCenter_organization(_ context.Cont
 				return ec.fieldContext_Organization_documents(ctx, field)
 			case "meetings":
 				return ec.fieldContext_Organization_meetings(ctx, field)
+			case "stateOfApplicabilities":
+				return ec.fieldContext_Organization_stateOfApplicabilities(ctx, field)
 			case "measures":
 				return ec.fieldContext_Organization_measures(ctx, field)
 			case "risks":
@@ -50875,6 +53050,8 @@ func (ec *executionContext) fieldContext_TrustCenterFile_organization(_ context.
 				return ec.fieldContext_Organization_documents(ctx, field)
 			case "meetings":
 				return ec.fieldContext_Organization_meetings(ctx, field)
+			case "stateOfApplicabilities":
+				return ec.fieldContext_Organization_stateOfApplicabilities(ctx, field)
 			case "measures":
 				return ec.fieldContext_Organization_measures(ctx, field)
 			case "risks":
@@ -51560,6 +53737,35 @@ func (ec *executionContext) fieldContext_UnassignTaskPayload_task(_ context.Cont
 				return ec.fieldContext_Task_updatedAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Task", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UnlinkStateOfApplicabilityControlPayload_deletedControlId(ctx context.Context, field graphql.CollectedField, obj *types.UnlinkStateOfApplicabilityControlPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_UnlinkStateOfApplicabilityControlPayload_deletedControlId,
+		func(ctx context.Context) (any, error) {
+			return obj.DeletedControlID, nil
+		},
+		nil,
+		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_UnlinkStateOfApplicabilityControlPayload_deletedControlId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UnlinkStateOfApplicabilityControlPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
 		},
 	}
 	return fc, nil
@@ -52420,6 +54626,8 @@ func (ec *executionContext) fieldContext_UpdateOrganizationPayload_organization(
 				return ec.fieldContext_Organization_documents(ctx, field)
 			case "meetings":
 				return ec.fieldContext_Organization_meetings(ctx, field)
+			case "stateOfApplicabilities":
+				return ec.fieldContext_Organization_stateOfApplicabilities(ctx, field)
 			case "measures":
 				return ec.fieldContext_Organization_measures(ctx, field)
 			case "risks":
@@ -52748,6 +54956,57 @@ func (ec *executionContext) fieldContext_UpdateSAMLConfigurationPayload_samlConf
 				return ec.fieldContext_SAMLConfiguration_updatedAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type SAMLConfiguration", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UpdateStateOfApplicabilityPayload_stateOfApplicability(ctx context.Context, field graphql.CollectedField, obj *types.UpdateStateOfApplicabilityPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_UpdateStateOfApplicabilityPayload_stateOfApplicability,
+		func(ctx context.Context) (any, error) {
+			return obj.StateOfApplicability, nil
+		},
+		nil,
+		ec.marshalNStateOfApplicability2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐStateOfApplicability,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_UpdateStateOfApplicabilityPayload_stateOfApplicability(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UpdateStateOfApplicabilityPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_StateOfApplicability_id(ctx, field)
+			case "name":
+				return ec.fieldContext_StateOfApplicability_name(ctx, field)
+			case "description":
+				return ec.fieldContext_StateOfApplicability_description(ctx, field)
+			case "sourceId":
+				return ec.fieldContext_StateOfApplicability_sourceId(ctx, field)
+			case "snapshotId":
+				return ec.fieldContext_StateOfApplicability_snapshotId(ctx, field)
+			case "organization":
+				return ec.fieldContext_StateOfApplicability_organization(ctx, field)
+			case "controls":
+				return ec.fieldContext_StateOfApplicability_controls(ctx, field)
+			case "availableControls":
+				return ec.fieldContext_StateOfApplicability_availableControls(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_StateOfApplicability_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_StateOfApplicability_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type StateOfApplicability", field.Name)
 		},
 	}
 	return fc, nil
@@ -54133,6 +56392,8 @@ func (ec *executionContext) fieldContext_Vendor_organization(_ context.Context, 
 				return ec.fieldContext_Organization_documents(ctx, field)
 			case "meetings":
 				return ec.fieldContext_Organization_meetings(ctx, field)
+			case "stateOfApplicabilities":
+				return ec.fieldContext_Organization_stateOfApplicabilities(ctx, field)
 			case "measures":
 				return ec.fieldContext_Organization_measures(ctx, field)
 			case "risks":
@@ -61652,6 +63913,47 @@ func (ec *executionContext) unmarshalInputCreateSnapshotInput(ctx context.Contex
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputCreateStateOfApplicabilityInput(ctx context.Context, obj any) (types.CreateStateOfApplicabilityInput, error) {
+	var it types.CreateStateOfApplicabilityInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"organizationId", "name", "description"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "organizationId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("organizationId"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OrganizationID = data
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputCreateTaskInput(ctx context.Context, obj any) (types.CreateTaskInput, error) {
 	var it types.CreateTaskInput
 	asMap := map[string]any{}
@@ -63274,6 +65576,33 @@ func (ec *executionContext) unmarshalInputDeleteSnapshotInput(ctx context.Contex
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputDeleteStateOfApplicabilityInput(ctx context.Context, obj any) (types.DeleteStateOfApplicabilityInput, error) {
+	var it types.DeleteStateOfApplicabilityInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"stateOfApplicabilityId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "stateOfApplicabilityId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("stateOfApplicabilityId"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.StateOfApplicabilityID = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputDeleteTaskInput(ctx context.Context, obj any) (types.DeleteTaskInput, error) {
 	var it types.DeleteTaskInput
 	asMap := map[string]any{}
@@ -63971,6 +66300,33 @@ func (ec *executionContext) unmarshalInputExportSignableDocumentVersionPDFInput(
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputExportStateOfApplicabilityPDFInput(ctx context.Context, obj any) (types.ExportStateOfApplicabilityPDFInput, error) {
+	var it types.ExportStateOfApplicabilityPDFInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"stateOfApplicabilityId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "stateOfApplicabilityId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("stateOfApplicabilityId"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.StateOfApplicabilityID = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputFrameworkOrder(ctx context.Context, obj any) (types.FrameworkOrderBy, error) {
 	var it types.FrameworkOrderBy
 	asMap := map[string]any{}
@@ -64346,6 +66702,54 @@ func (ec *executionContext) unmarshalInputInviteUserInput(ctx context.Context, o
 				return it, err
 			}
 			it.CreatePeople = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputLinkStateOfApplicabilityControlInput(ctx context.Context, obj any) (types.LinkStateOfApplicabilityControlInput, error) {
+	var it types.LinkStateOfApplicabilityControlInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"stateOfApplicabilityId", "controlId", "state", "exclusionJustification"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "stateOfApplicabilityId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("stateOfApplicabilityId"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.StateOfApplicabilityID = data
+		case "controlId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("controlId"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ControlID = data
+		case "state":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("state"))
+			data, err := ec.unmarshalNStateOfApplicabilityControlState2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐStateOfApplicabilityControlState(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.State = data
+		case "exclusionJustification":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("exclusionJustification"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ExclusionJustification = data
 		}
 	}
 
@@ -65072,6 +67476,108 @@ func (ec *executionContext) unmarshalInputSnapshotOrder(ctx context.Context, obj
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputStateOfApplicabilityControlInput(ctx context.Context, obj any) (types.StateOfApplicabilityControlInput, error) {
+	var it types.StateOfApplicabilityControlInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"controlId", "state", "exclusionJustification"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "controlId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("controlId"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ControlID = data
+		case "state":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("state"))
+			data, err := ec.unmarshalNStateOfApplicabilityControlState2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐStateOfApplicabilityControlState(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.State = data
+		case "exclusionJustification":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("exclusionJustification"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ExclusionJustification = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputStateOfApplicabilityFilter(ctx context.Context, obj any) (types.StateOfApplicabilityFilter, error) {
+	var it types.StateOfApplicabilityFilter
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"snapshotId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "snapshotId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("snapshotId"))
+			data, err := ec.unmarshalOID2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SnapshotID = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputStateOfApplicabilityOrder(ctx context.Context, obj any) (types.StateOfApplicabilityOrderBy, error) {
+	var it types.StateOfApplicabilityOrderBy
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"direction", "field"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "direction":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("direction"))
+			data, err := ec.unmarshalNOrderDirection2goᚗproboᚗincᚋproboᚋpkgᚋpageᚐOrderDirection(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Direction = data
+		case "field":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
+			data, err := ec.unmarshalNStateOfApplicabilityOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐStateOfApplicabilityOrderField(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Field = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputTaskOrder(ctx context.Context, obj any) (types.TaskOrderBy, error) {
 	var it types.TaskOrderBy
 	asMap := map[string]any{}
@@ -65358,6 +67864,40 @@ func (ec *executionContext) unmarshalInputUnassignTaskInput(ctx context.Context,
 				return it, err
 			}
 			it.TaskID = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputUnlinkStateOfApplicabilityControlInput(ctx context.Context, obj any) (types.UnlinkStateOfApplicabilityControlInput, error) {
+	var it types.UnlinkStateOfApplicabilityControlInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"stateOfApplicabilityId", "controlId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "stateOfApplicabilityId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("stateOfApplicabilityId"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.StateOfApplicabilityID = data
+		case "controlId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("controlId"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ControlID = data
 		}
 	}
 
@@ -66800,6 +69340,47 @@ func (ec *executionContext) unmarshalInputUpdateSAMLConfigurationInput(ctx conte
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputUpdateStateOfApplicabilityInput(ctx context.Context, obj any) (types.UpdateStateOfApplicabilityInput, error) {
+	var it types.UpdateStateOfApplicabilityInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"id", "name", "description"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ID = data
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputUpdateTaskInput(ctx context.Context, obj any) (types.UpdateTaskInput, error) {
 	var it types.UpdateTaskInput
 	asMap := map[string]any{}
@@ -68120,6 +70701,13 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._Task(ctx, sel, obj)
+	case types.StateOfApplicability:
+		return ec._StateOfApplicability(ctx, sel, &obj)
+	case *types.StateOfApplicability:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._StateOfApplicability(ctx, sel, obj)
 	case types.Snapshot:
 		return ec._Snapshot(ctx, sel, &obj)
 	case *types.Snapshot:
@@ -69095,6 +71683,76 @@ func (ec *executionContext) _AuditEdge(ctx context.Context, sel ast.SelectionSet
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var availableControlForStateOfApplicabilityImplementors = []string{"AvailableControlForStateOfApplicability"}
+
+func (ec *executionContext) _AvailableControlForStateOfApplicability(ctx context.Context, sel ast.SelectionSet, obj *types.AvailableControlForStateOfApplicability) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, availableControlForStateOfApplicabilityImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AvailableControlForStateOfApplicability")
+		case "controlId":
+			out.Values[i] = ec._AvailableControlForStateOfApplicability_controlId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "sectionTitle":
+			out.Values[i] = ec._AvailableControlForStateOfApplicability_sectionTitle(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "name":
+			out.Values[i] = ec._AvailableControlForStateOfApplicability_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "frameworkId":
+			out.Values[i] = ec._AvailableControlForStateOfApplicability_frameworkId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "frameworkName":
+			out.Values[i] = ec._AvailableControlForStateOfApplicability_frameworkName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "organizationId":
+			out.Values[i] = ec._AvailableControlForStateOfApplicability_organizationId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "stateOfApplicabilityId":
+			out.Values[i] = ec._AvailableControlForStateOfApplicability_stateOfApplicabilityId(ctx, field, obj)
+		case "state":
+			out.Values[i] = ec._AvailableControlForStateOfApplicability_state(ctx, field, obj)
+		case "exclusionJustification":
+			out.Values[i] = ec._AvailableControlForStateOfApplicability_exclusionJustification(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -71105,6 +73763,45 @@ func (ec *executionContext) _CreateSnapshotPayload(ctx context.Context, sel ast.
 			out.Values[i] = graphql.MarshalString("CreateSnapshotPayload")
 		case "snapshotEdge":
 			out.Values[i] = ec._CreateSnapshotPayload_snapshotEdge(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var createStateOfApplicabilityPayloadImplementors = []string{"CreateStateOfApplicabilityPayload"}
+
+func (ec *executionContext) _CreateStateOfApplicabilityPayload(ctx context.Context, sel ast.SelectionSet, obj *types.CreateStateOfApplicabilityPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, createStateOfApplicabilityPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CreateStateOfApplicabilityPayload")
+		case "stateOfApplicabilityEdge":
+			out.Values[i] = ec._CreateStateOfApplicabilityPayload_stateOfApplicabilityEdge(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -73404,6 +76101,45 @@ func (ec *executionContext) _DeleteSnapshotPayload(ctx context.Context, sel ast.
 	return out
 }
 
+var deleteStateOfApplicabilityPayloadImplementors = []string{"DeleteStateOfApplicabilityPayload"}
+
+func (ec *executionContext) _DeleteStateOfApplicabilityPayload(ctx context.Context, sel ast.SelectionSet, obj *types.DeleteStateOfApplicabilityPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, deleteStateOfApplicabilityPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DeleteStateOfApplicabilityPayload")
+		case "deletedStateOfApplicabilityId":
+			out.Values[i] = ec._DeleteStateOfApplicabilityPayload_deletedStateOfApplicabilityId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var deleteTaskPayloadImplementors = []string{"DeleteTaskPayload"}
 
 func (ec *executionContext) _DeleteTaskPayload(ctx context.Context, sel ast.SelectionSet, obj *types.DeleteTaskPayload) graphql.Marshaler {
@@ -75236,6 +77972,45 @@ func (ec *executionContext) _ExportSignableDocumentVersionPDFPayload(ctx context
 	return out
 }
 
+var exportStateOfApplicabilityPDFPayloadImplementors = []string{"ExportStateOfApplicabilityPDFPayload"}
+
+func (ec *executionContext) _ExportStateOfApplicabilityPDFPayload(ctx context.Context, sel ast.SelectionSet, obj *types.ExportStateOfApplicabilityPDFPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, exportStateOfApplicabilityPDFPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ExportStateOfApplicabilityPDFPayload")
+		case "data":
+			out.Values[i] = ec._ExportStateOfApplicabilityPDFPayload_data(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var fileImplementors = []string{"File"}
 
 func (ec *executionContext) _File(ctx context.Context, sel ast.SelectionSet, obj *types.File) graphql.Marshaler {
@@ -76176,6 +78951,45 @@ func (ec *executionContext) _InviteUserPayload(ctx context.Context, sel ast.Sele
 			out.Values[i] = graphql.MarshalString("InviteUserPayload")
 		case "invitationEdge":
 			out.Values[i] = ec._InviteUserPayload_invitationEdge(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var linkStateOfApplicabilityControlPayloadImplementors = []string{"LinkStateOfApplicabilityControlPayload"}
+
+func (ec *executionContext) _LinkStateOfApplicabilityControlPayload(ctx context.Context, sel ast.SelectionSet, obj *types.LinkStateOfApplicabilityControlPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, linkStateOfApplicabilityControlPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("LinkStateOfApplicabilityControlPayload")
+		case "stateOfApplicabilityControl":
+			out.Values[i] = ec._LinkStateOfApplicabilityControlPayload_stateOfApplicabilityControl(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -77655,6 +80469,48 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "createStateOfApplicability":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createStateOfApplicability(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updateStateOfApplicability":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateStateOfApplicability(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deleteStateOfApplicability":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteStateOfApplicability(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "linkStateOfApplicabilityControl":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_linkStateOfApplicabilityControl(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "unlinkStateOfApplicabilityControl":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_unlinkStateOfApplicabilityControl(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "exportStateOfApplicabilityPDF":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_exportStateOfApplicabilityPDF(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "publishDocumentVersion":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_publishDocumentVersion(ctx, field)
@@ -79076,6 +81932,42 @@ func (ec *executionContext) _Organization(ctx context.Context, sel ast.Selection
 					}
 				}()
 				res = ec._Organization_meetings(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "stateOfApplicabilities":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Organization_stateOfApplicabilities(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -82326,6 +85218,346 @@ func (ec *executionContext) _SnapshotEdge(ctx context.Context, sel ast.Selection
 	return out
 }
 
+var stateOfApplicabilityImplementors = []string{"StateOfApplicability", "Node"}
+
+func (ec *executionContext) _StateOfApplicability(ctx context.Context, sel ast.SelectionSet, obj *types.StateOfApplicability) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, stateOfApplicabilityImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("StateOfApplicability")
+		case "id":
+			out.Values[i] = ec._StateOfApplicability_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "name":
+			out.Values[i] = ec._StateOfApplicability_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "description":
+			out.Values[i] = ec._StateOfApplicability_description(ctx, field, obj)
+		case "sourceId":
+			out.Values[i] = ec._StateOfApplicability_sourceId(ctx, field, obj)
+		case "snapshotId":
+			out.Values[i] = ec._StateOfApplicability_snapshotId(ctx, field, obj)
+		case "organization":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._StateOfApplicability_organization(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "controls":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._StateOfApplicability_controls(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "availableControls":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._StateOfApplicability_availableControls(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "createdAt":
+			out.Values[i] = ec._StateOfApplicability_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "updatedAt":
+			out.Values[i] = ec._StateOfApplicability_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var stateOfApplicabilityConnectionImplementors = []string{"StateOfApplicabilityConnection"}
+
+func (ec *executionContext) _StateOfApplicabilityConnection(ctx context.Context, sel ast.SelectionSet, obj *types.StateOfApplicabilityConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, stateOfApplicabilityConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("StateOfApplicabilityConnection")
+		case "totalCount":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._StateOfApplicabilityConnection_totalCount(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "edges":
+			out.Values[i] = ec._StateOfApplicabilityConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "pageInfo":
+			out.Values[i] = ec._StateOfApplicabilityConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var stateOfApplicabilityControlImplementors = []string{"StateOfApplicabilityControl"}
+
+func (ec *executionContext) _StateOfApplicabilityControl(ctx context.Context, sel ast.SelectionSet, obj *types.StateOfApplicabilityControl) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, stateOfApplicabilityControlImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("StateOfApplicabilityControl")
+		case "stateOfApplicabilityId":
+			out.Values[i] = ec._StateOfApplicabilityControl_stateOfApplicabilityId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "controlId":
+			out.Values[i] = ec._StateOfApplicabilityControl_controlId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "state":
+			out.Values[i] = ec._StateOfApplicabilityControl_state(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "exclusionJustification":
+			out.Values[i] = ec._StateOfApplicabilityControl_exclusionJustification(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var stateOfApplicabilityEdgeImplementors = []string{"StateOfApplicabilityEdge"}
+
+func (ec *executionContext) _StateOfApplicabilityEdge(ctx context.Context, sel ast.SelectionSet, obj *types.StateOfApplicabilityEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, stateOfApplicabilityEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("StateOfApplicabilityEdge")
+		case "cursor":
+			out.Values[i] = ec._StateOfApplicabilityEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "node":
+			out.Values[i] = ec._StateOfApplicabilityEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var taskImplementors = []string{"Task", "Node"}
 
 func (ec *executionContext) _Task(ctx context.Context, sel ast.SelectionSet, obj *types.Task) graphql.Marshaler {
@@ -84252,6 +87484,45 @@ func (ec *executionContext) _UnassignTaskPayload(ctx context.Context, sel ast.Se
 	return out
 }
 
+var unlinkStateOfApplicabilityControlPayloadImplementors = []string{"UnlinkStateOfApplicabilityControlPayload"}
+
+func (ec *executionContext) _UnlinkStateOfApplicabilityControlPayload(ctx context.Context, sel ast.SelectionSet, obj *types.UnlinkStateOfApplicabilityControlPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, unlinkStateOfApplicabilityControlPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UnlinkStateOfApplicabilityControlPayload")
+		case "deletedControlId":
+			out.Values[i] = ec._UnlinkStateOfApplicabilityControlPayload_deletedControlId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var updateAssetPayloadImplementors = []string{"UpdateAssetPayload"}
 
 func (ec *executionContext) _UpdateAssetPayload(ctx context.Context, sel ast.SelectionSet, obj *types.UpdateAssetPayload) graphql.Marshaler {
@@ -85006,6 +88277,45 @@ func (ec *executionContext) _UpdateSAMLConfigurationPayload(ctx context.Context,
 			out.Values[i] = graphql.MarshalString("UpdateSAMLConfigurationPayload")
 		case "samlConfiguration":
 			out.Values[i] = ec._UpdateSAMLConfigurationPayload_samlConfiguration(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var updateStateOfApplicabilityPayloadImplementors = []string{"UpdateStateOfApplicabilityPayload"}
+
+func (ec *executionContext) _UpdateStateOfApplicabilityPayload(ctx context.Context, sel ast.SelectionSet, obj *types.UpdateStateOfApplicabilityPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, updateStateOfApplicabilityPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UpdateStateOfApplicabilityPayload")
+		case "stateOfApplicability":
+			out.Values[i] = ec._UpdateStateOfApplicabilityPayload_stateOfApplicability(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -88318,6 +91628,60 @@ var (
 	}
 )
 
+func (ec *executionContext) marshalNAvailableControlForStateOfApplicability2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAvailableControlForStateOfApplicabilityᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.AvailableControlForStateOfApplicability) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNAvailableControlForStateOfApplicability2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAvailableControlForStateOfApplicability(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNAvailableControlForStateOfApplicability2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAvailableControlForStateOfApplicability(ctx context.Context, sel ast.SelectionSet, v *types.AvailableControlForStateOfApplicability) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._AvailableControlForStateOfApplicability(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNBigInt2int64(ctx context.Context, v any) (int64, error) {
 	res, err := bigint.UnmarshalBigIntScalar(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -89896,6 +93260,25 @@ func (ec *executionContext) marshalNCreateSnapshotPayload2ᚖgoᚗproboᚗincᚋ
 	return ec._CreateSnapshotPayload(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNCreateStateOfApplicabilityInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateStateOfApplicabilityInput(ctx context.Context, v any) (types.CreateStateOfApplicabilityInput, error) {
+	res, err := ec.unmarshalInputCreateStateOfApplicabilityInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNCreateStateOfApplicabilityPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateStateOfApplicabilityPayload(ctx context.Context, sel ast.SelectionSet, v types.CreateStateOfApplicabilityPayload) graphql.Marshaler {
+	return ec._CreateStateOfApplicabilityPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNCreateStateOfApplicabilityPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateStateOfApplicabilityPayload(ctx context.Context, sel ast.SelectionSet, v *types.CreateStateOfApplicabilityPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._CreateStateOfApplicabilityPayload(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNCreateTaskInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateTaskInput(ctx context.Context, v any) (types.CreateTaskInput, error) {
 	res, err := ec.unmarshalInputCreateTaskInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -91030,6 +94413,25 @@ func (ec *executionContext) marshalNDeleteSnapshotPayload2ᚖgoᚗproboᚗincᚋ
 	return ec._DeleteSnapshotPayload(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNDeleteStateOfApplicabilityInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteStateOfApplicabilityInput(ctx context.Context, v any) (types.DeleteStateOfApplicabilityInput, error) {
+	res, err := ec.unmarshalInputDeleteStateOfApplicabilityInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDeleteStateOfApplicabilityPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteStateOfApplicabilityPayload(ctx context.Context, sel ast.SelectionSet, v types.DeleteStateOfApplicabilityPayload) graphql.Marshaler {
+	return ec._DeleteStateOfApplicabilityPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDeleteStateOfApplicabilityPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteStateOfApplicabilityPayload(ctx context.Context, sel ast.SelectionSet, v *types.DeleteStateOfApplicabilityPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DeleteStateOfApplicabilityPayload(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNDeleteTaskInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteTaskInput(ctx context.Context, v any) (types.DeleteTaskInput, error) {
 	res, err := ec.unmarshalInputDeleteTaskInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -91996,6 +95398,25 @@ func (ec *executionContext) marshalNExportSignableDocumentVersionPDFPayload2ᚖg
 	return ec._ExportSignableDocumentVersionPDFPayload(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNExportStateOfApplicabilityPDFInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐExportStateOfApplicabilityPDFInput(ctx context.Context, v any) (types.ExportStateOfApplicabilityPDFInput, error) {
+	res, err := ec.unmarshalInputExportStateOfApplicabilityPDFInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNExportStateOfApplicabilityPDFPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐExportStateOfApplicabilityPDFPayload(ctx context.Context, sel ast.SelectionSet, v types.ExportStateOfApplicabilityPDFPayload) graphql.Marshaler {
+	return ec._ExportStateOfApplicabilityPDFPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNExportStateOfApplicabilityPDFPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐExportStateOfApplicabilityPDFPayload(ctx context.Context, sel ast.SelectionSet, v *types.ExportStateOfApplicabilityPDFPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ExportStateOfApplicabilityPDFPayload(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNFramework2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐFramework(ctx context.Context, sel ast.SelectionSet, v types.Framework) graphql.Marshaler {
 	return ec._Framework(ctx, sel, &v)
 }
@@ -92441,6 +95862,25 @@ func (ec *executionContext) marshalNInviteUserPayload2ᚖgoᚗproboᚗincᚋprob
 		return graphql.Null
 	}
 	return ec._InviteUserPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNLinkStateOfApplicabilityControlInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐLinkStateOfApplicabilityControlInput(ctx context.Context, v any) (types.LinkStateOfApplicabilityControlInput, error) {
+	res, err := ec.unmarshalInputLinkStateOfApplicabilityControlInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNLinkStateOfApplicabilityControlPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐLinkStateOfApplicabilityControlPayload(ctx context.Context, sel ast.SelectionSet, v types.LinkStateOfApplicabilityControlPayload) graphql.Marshaler {
+	return ec._LinkStateOfApplicabilityControlPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNLinkStateOfApplicabilityControlPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐLinkStateOfApplicabilityControlPayload(ctx context.Context, sel ast.SelectionSet, v *types.LinkStateOfApplicabilityControlPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._LinkStateOfApplicabilityControlPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNMeasure2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐMeasure(ctx context.Context, sel ast.SelectionSet, v types.Measure) graphql.Marshaler {
@@ -94387,14 +97827,15 @@ func (ec *executionContext) marshalNSnapshotsType2goᚗproboᚗincᚋproboᚋpkg
 
 var (
 	unmarshalNSnapshotsType2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐSnapshotsType = map[string]coredata.SnapshotsType{
-		"RISKS":                  coredata.SnapshotsTypeRisks,
-		"VENDORS":                coredata.SnapshotsTypeVendors,
-		"ASSETS":                 coredata.SnapshotsTypeAssets,
-		"DATA":                   coredata.SnapshotsTypeData,
-		"NONCONFORMITIES":        coredata.SnapshotsTypeNonconformities,
-		"OBLIGATIONS":            coredata.SnapshotsTypeObligations,
-		"CONTINUAL_IMPROVEMENTS": coredata.SnapshotsTypeContinualImprovements,
-		"PROCESSING_ACTIVITIES":  coredata.SnapshotsTypeProcessingActivities,
+		"RISKS":                   coredata.SnapshotsTypeRisks,
+		"VENDORS":                 coredata.SnapshotsTypeVendors,
+		"ASSETS":                  coredata.SnapshotsTypeAssets,
+		"DATA":                    coredata.SnapshotsTypeData,
+		"NONCONFORMITIES":         coredata.SnapshotsTypeNonconformities,
+		"OBLIGATIONS":             coredata.SnapshotsTypeObligations,
+		"CONTINUAL_IMPROVEMENTS":  coredata.SnapshotsTypeContinualImprovements,
+		"PROCESSING_ACTIVITIES":   coredata.SnapshotsTypeProcessingActivities,
+		"STATES_OF_APPLICABILITY": coredata.SnapshotsTypeStatesOfApplicability,
 	}
 	marshalNSnapshotsType2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐSnapshotsType = map[coredata.SnapshotsType]string{
 		coredata.SnapshotsTypeRisks:                 "RISKS",
@@ -94405,6 +97846,133 @@ var (
 		coredata.SnapshotsTypeObligations:           "OBLIGATIONS",
 		coredata.SnapshotsTypeContinualImprovements: "CONTINUAL_IMPROVEMENTS",
 		coredata.SnapshotsTypeProcessingActivities:  "PROCESSING_ACTIVITIES",
+		coredata.SnapshotsTypeStatesOfApplicability: "STATES_OF_APPLICABILITY",
+	}
+)
+
+func (ec *executionContext) marshalNStateOfApplicability2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐStateOfApplicability(ctx context.Context, sel ast.SelectionSet, v *types.StateOfApplicability) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._StateOfApplicability(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNStateOfApplicabilityConnection2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐStateOfApplicabilityConnection(ctx context.Context, sel ast.SelectionSet, v types.StateOfApplicabilityConnection) graphql.Marshaler {
+	return ec._StateOfApplicabilityConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNStateOfApplicabilityConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐStateOfApplicabilityConnection(ctx context.Context, sel ast.SelectionSet, v *types.StateOfApplicabilityConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._StateOfApplicabilityConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNStateOfApplicabilityControl2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐStateOfApplicabilityControl(ctx context.Context, sel ast.SelectionSet, v *types.StateOfApplicabilityControl) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._StateOfApplicabilityControl(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNStateOfApplicabilityControlState2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐStateOfApplicabilityControlState(ctx context.Context, v any) (types.StateOfApplicabilityControlState, error) {
+	var res types.StateOfApplicabilityControlState
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNStateOfApplicabilityControlState2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐStateOfApplicabilityControlState(ctx context.Context, sel ast.SelectionSet, v types.StateOfApplicabilityControlState) graphql.Marshaler {
+	return v
+}
+
+func (ec *executionContext) marshalNStateOfApplicabilityEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐStateOfApplicabilityEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.StateOfApplicabilityEdge) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNStateOfApplicabilityEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐStateOfApplicabilityEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNStateOfApplicabilityEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐStateOfApplicabilityEdge(ctx context.Context, sel ast.SelectionSet, v *types.StateOfApplicabilityEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._StateOfApplicabilityEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNStateOfApplicabilityOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐStateOfApplicabilityOrderField(ctx context.Context, v any) (coredata.StateOfApplicabilityOrderField, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNStateOfApplicabilityOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐStateOfApplicabilityOrderField[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNStateOfApplicabilityOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐStateOfApplicabilityOrderField(ctx context.Context, sel ast.SelectionSet, v coredata.StateOfApplicabilityOrderField) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNStateOfApplicabilityOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐStateOfApplicabilityOrderField[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNStateOfApplicabilityOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐStateOfApplicabilityOrderField = map[string]coredata.StateOfApplicabilityOrderField{
+		"NAME":       coredata.StateOfApplicabilityOrderFieldName,
+		"CREATED_AT": coredata.StateOfApplicabilityOrderFieldCreatedAt,
+	}
+	marshalNStateOfApplicabilityOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐStateOfApplicabilityOrderField = map[coredata.StateOfApplicabilityOrderField]string{
+		coredata.StateOfApplicabilityOrderFieldName:      "NAME",
+		coredata.StateOfApplicabilityOrderFieldCreatedAt: "CREATED_AT",
 	}
 )
 
@@ -95257,6 +98825,25 @@ func (ec *executionContext) marshalNUnassignTaskPayload2ᚖgoᚗproboᚗincᚋpr
 	return ec._UnassignTaskPayload(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNUnlinkStateOfApplicabilityControlInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUnlinkStateOfApplicabilityControlInput(ctx context.Context, v any) (types.UnlinkStateOfApplicabilityControlInput, error) {
+	res, err := ec.unmarshalInputUnlinkStateOfApplicabilityControlInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNUnlinkStateOfApplicabilityControlPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUnlinkStateOfApplicabilityControlPayload(ctx context.Context, sel ast.SelectionSet, v types.UnlinkStateOfApplicabilityControlPayload) graphql.Marshaler {
+	return ec._UnlinkStateOfApplicabilityControlPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNUnlinkStateOfApplicabilityControlPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUnlinkStateOfApplicabilityControlPayload(ctx context.Context, sel ast.SelectionSet, v *types.UnlinkStateOfApplicabilityControlPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._UnlinkStateOfApplicabilityControlPayload(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNUpdateAssetInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateAssetInput(ctx context.Context, v any) (types.UpdateAssetInput, error) {
 	res, err := ec.unmarshalInputUpdateAssetInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -95635,6 +99222,25 @@ func (ec *executionContext) marshalNUpdateSAMLConfigurationPayload2ᚖgoᚗprobo
 		return graphql.Null
 	}
 	return ec._UpdateSAMLConfigurationPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNUpdateStateOfApplicabilityInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateStateOfApplicabilityInput(ctx context.Context, v any) (types.UpdateStateOfApplicabilityInput, error) {
+	res, err := ec.unmarshalInputUpdateStateOfApplicabilityInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNUpdateStateOfApplicabilityPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateStateOfApplicabilityPayload(ctx context.Context, sel ast.SelectionSet, v types.UpdateStateOfApplicabilityPayload) graphql.Marshaler {
+	return ec._UpdateStateOfApplicabilityPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNUpdateStateOfApplicabilityPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateStateOfApplicabilityPayload(ctx context.Context, sel ast.SelectionSet, v *types.UpdateStateOfApplicabilityPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._UpdateStateOfApplicabilityPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNUpdateTaskInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateTaskInput(ctx context.Context, v any) (types.UpdateTaskInput, error) {
@@ -98107,6 +101713,13 @@ var (
 	}
 )
 
+func (ec *executionContext) marshalOOrganization2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐOrganization(ctx context.Context, sel ast.SelectionSet, v *types.Organization) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Organization(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalOOrganizationContext2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐOrganizationContext(ctx context.Context, sel ast.SelectionSet, v *types.OrganizationContext) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -98492,6 +102105,38 @@ func (ec *executionContext) unmarshalOSnapshotOrder2ᚖgoᚗproboᚗincᚋprobo�
 		return nil, nil
 	}
 	res, err := ec.unmarshalInputSnapshotOrder(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOStateOfApplicabilityControlState2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐStateOfApplicabilityControlState(ctx context.Context, v any) (*types.StateOfApplicabilityControlState, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var res = new(types.StateOfApplicabilityControlState)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOStateOfApplicabilityControlState2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐStateOfApplicabilityControlState(ctx context.Context, sel ast.SelectionSet, v *types.StateOfApplicabilityControlState) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return v
+}
+
+func (ec *executionContext) unmarshalOStateOfApplicabilityFilter2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐStateOfApplicabilityFilter(ctx context.Context, v any) (*types.StateOfApplicabilityFilter, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputStateOfApplicabilityFilter(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOStateOfApplicabilityOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐStateOfApplicabilityOrderBy(ctx context.Context, v any) (*types.StateOfApplicabilityOrderBy, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputStateOfApplicabilityOrder(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 

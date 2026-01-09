@@ -3134,6 +3134,7 @@ components:
         - OBLIGATIONS
         - CONTINUAL_IMPROVEMENTS
         - PROCESSING_ACTIVITIES
+        - STATES_OF_APPLICABILITY
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.SnapshotsType
 
     SnapshotOrderField:

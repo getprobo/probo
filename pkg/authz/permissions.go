@@ -102,6 +102,7 @@ const (
 	ActionListMeetings                Action = "listMeetings"
 	ActionListMembers                 Action = "listMembers"
 	ActionListNonconformities         Action = "listNonconformities"
+	ActionListStateOfApplicabilities  Action = "listStateOfApplicabilities"
 	ActionListObligations             Action = "listObligations"
 	ActionListPeople                  Action = "listPeople"
 	ActionListProcessingActivities    Action = "listProcessingActivities"
@@ -138,6 +139,7 @@ const (
 	ActionCreateObligation                     Action = "createObligation"
 	ActionCreatePeople                         Action = "createPeople"
 	ActionCreateProcessingActivity             Action = "createProcessingActivity"
+	ActionCreateStateOfApplicability           Action = "createStateOfApplicability"
 	ActionCreateDataProtectionImpactAssessment Action = "createDataProtectionImpactAssessment"
 	ActionCreateTransferImpactAssessment       Action = "createTransferImpactAssessment"
 	ActionCreateRisk                           Action = "createRisk"
@@ -172,6 +174,7 @@ const (
 	ActionUpdateOrganization                     Action = "updateOrganization"
 	ActionUpdatePeople                           Action = "updatePeople"
 	ActionUpdateProcessingActivity               Action = "updateProcessingActivity"
+	ActionUpdateStateOfApplicability             Action = "updateStateOfApplicability"
 	ActionUpdateDataProtectionImpactAssessment   Action = "updateDataProtectionImpactAssessment"
 	ActionUpdateTransferImpactAssessment         Action = "updateTransferImpactAssessment"
 	ActionUpdateRisk                             Action = "updateRisk"
@@ -211,6 +214,7 @@ const (
 	ActionDeleteOrganizationHorizontalLogo       Action = "deleteOrganizationHorizontalLogo"
 	ActionDeletePeople                           Action = "deletePeople"
 	ActionDeleteProcessingActivity               Action = "deleteProcessingActivity"
+	ActionDeleteStateOfApplicability             Action = "deleteStateOfApplicability"
 	ActionDeleteDataProtectionImpactAssessment   Action = "deleteDataProtectionImpactAssessment"
 	ActionDeleteTransferImpactAssessment         Action = "deleteTransferImpactAssessment"
 	ActionDeleteRisk                             Action = "deleteRisk"
@@ -304,16 +308,17 @@ var Permissions = map[uint16]map[Action][]Role{
 		ActionConfirmEmail:              NonEmployeeRoles,
 		ActionAcceptInvitation:          NonEmployeeRoles,
 
-		ActionListTrustCenterFiles:   CoreRoles,
-		ActionGetTrustCenter:         CoreRoles,
-		ActionMemberships:            CoreRoles,
-		ActionListMembers:            CoreRoles,
-		ActionListInvitations:        CoreRoles,
-		ActionListSlackConnections:   CoreRoles,
-		ActionGetCustomDomain:        CoreRoles,
-		ActionListSAMLConfigurations: CoreRoles,
-		ActionListMeetings:           CoreRoles,
-		ActionListTasks:              CoreRoles,
+		ActionListTrustCenterFiles:       CoreRoles,
+		ActionGetTrustCenter:             CoreRoles,
+		ActionMemberships:                CoreRoles,
+		ActionListMembers:                CoreRoles,
+		ActionListInvitations:            CoreRoles,
+		ActionListSlackConnections:       CoreRoles,
+		ActionGetCustomDomain:            CoreRoles,
+		ActionListSAMLConfigurations:     CoreRoles,
+		ActionListMeetings:               CoreRoles,
+		ActionListStateOfApplicabilities: NonEmployeeRoles,
+		ActionListTasks:                  CoreRoles,
 
 		ActionUpdateOrganization:               EditRoles,
 		ActionDeleteOrganizationHorizontalLogo: EditRoles,
@@ -328,6 +333,7 @@ var Permissions = map[uint16]map[Action][]Role{
 		ActionCreateMeasure:                    EditRoles,
 		ActionImportMeasure:                    EditRoles,
 		ActionCreateMeeting:                    EditRoles,
+		ActionCreateStateOfApplicability:       EditRoles,
 		ActionCreateTask:                       EditRoles,
 		ActionCreateRisk:                       EditRoles,
 		ActionCreateDocument:                   EditRoles,
@@ -742,6 +748,15 @@ var Permissions = map[uint16]map[Action][]Role{
 
 		ActionUpdateMeeting: EditRoles,
 		ActionDeleteMeeting: EditRoles,
+	},
+	coredata.StateOfApplicabilityEntityType: {
+		ActionGet:             NonEmployeeRoles,
+		ActionGetOrganization: NonEmployeeRoles,
+		ActionListControls:    NonEmployeeRoles,
+		ActionTotalCount:      NonEmployeeRoles,
+
+		ActionUpdateStateOfApplicability: EditRoles,
+		ActionDeleteStateOfApplicability: EditRoles,
 	},
 }
 
