@@ -27,6 +27,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	proxyproto "github.com/pires/go-proxyproto"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.gearno.de/kit/httpclient"
 	"go.gearno.de/kit/httpserver"
@@ -81,8 +82,9 @@ type (
 	}
 
 	trustCenterConfig struct {
-		HTTPAddr  string `json:"http-addr"`
-		HTTPSAddr string `json:"https-addr"`
+		HTTPAddr      string              `json:"http-addr"`
+		HTTPSAddr     string              `json:"https-addr"`
+		ProxyProtocol proxyProtocolConfig `json:"proxy-protocol"`
 	}
 )
 
@@ -578,6 +580,18 @@ func (impl *Implm) runApiServer(
 		span.RecordError(err)
 		return fmt.Errorf("cannot listen on %q: %w", apiServer.Addr, err)
 	}
+
+	if len(impl.cfg.Api.ProxyProtocol.TrustedProxies) > 0 {
+		policy := rejectProxyHeaderFrom(impl.cfg.Api.ProxyProtocol.TrustedProxies...)
+
+		listener = &proxyproto.Listener{
+			Listener:          listener,
+			ReadHeaderTimeout: 10 * time.Second,
+			ConnPolicy:        policy,
+		}
+
+		l.Info("using proxy protocol", log.Any("trusted-proxies", impl.cfg.Api.ProxyProtocol.TrustedProxies))
+	}
 	defer listener.Close()
 
 	serverErrCh := make(chan error, 1)
@@ -732,6 +746,18 @@ func (impl *Implm) runTrustCenterServer(
 			}
 			defer listener.Close()
 
+			if len(impl.cfg.TrustCenter.ProxyProtocol.TrustedProxies) > 0 {
+				policy := rejectProxyHeaderFrom(impl.cfg.TrustCenter.ProxyProtocol.TrustedProxies...)
+
+				listener = &proxyproto.Listener{
+					Listener:          listener,
+					ReadHeaderTimeout: 10 * time.Second,
+					ConnPolicy:        policy,
+				}
+
+				l.Info("using proxy protocol for trust center HTTP server", log.Any("trusted-proxies", impl.cfg.TrustCenter.ProxyProtocol.TrustedProxies))
+			}
+
 			if err := httpServer.Serve(listener); err != nil && err != http.ErrServerClosed {
 				return fmt.Errorf("cannot serve http requests: %w", err)
 			}
@@ -789,6 +815,18 @@ func (impl *Implm) runTrustCenterServer(
 			}
 			defer listener.Close()
 
+			if len(impl.cfg.TrustCenter.ProxyProtocol.TrustedProxies) > 0 {
+				policy := rejectProxyHeaderFrom(impl.cfg.TrustCenter.ProxyProtocol.TrustedProxies...)
+
+				listener = &proxyproto.Listener{
+					Listener:          listener,
+					ReadHeaderTimeout: 10 * time.Second,
+					ConnPolicy:        policy,
+				}
+
+				l.Info("using proxy protocol for trust center HTTPS server", log.Any("trusted-proxies", impl.cfg.TrustCenter.ProxyProtocol.TrustedProxies))
+			}
+
 			if err := httpsServer.ServeTLS(listener, "", ""); err != nil && err != http.ErrServerClosed {
 				return fmt.Errorf("cannot serve https requests: %w", err)
 			}
@@ -828,4 +866,35 @@ func (impl *Implm) runTrustCenterServer(
 	}
 
 	return ctx.Err()
+}
+
+func rejectProxyHeaderFrom(trustedIPs ...net.IP) proxyproto.ConnPolicyFunc {
+	return func(connOpts proxyproto.ConnPolicyOptions) (proxyproto.Policy, error) {
+		ip, err := ipFromAddr(connOpts.Upstream)
+		if err != nil {
+			return proxyproto.REJECT, err
+		}
+
+		for _, trustedIP := range trustedIPs {
+			if trustedIP.Equal(ip) {
+				return proxyproto.USE, nil
+			}
+		}
+
+		return proxyproto.REJECT, nil
+	}
+}
+
+func ipFromAddr(upstream net.Addr) (net.IP, error) {
+	upstreamString, _, err := net.SplitHostPort(upstream.String())
+	if err != nil {
+		return nil, err
+	}
+
+	upstreamIP := net.ParseIP(upstreamString)
+	if nil == upstreamIP {
+		return nil, fmt.Errorf("proxyproto: invalid IP address")
+	}
+
+	return upstreamIP, nil
 }
