@@ -173,10 +173,10 @@ func (s *Service) CreateUser(
 				return fmt.Errorf("cannot insert membership profile: %w", err)
 			}
 
-			// Accept all pending invitations for email in organization
+			// Expire all pending invitations for email in organization
 			invitations := &coredata.Invitations{}
 			onlyPending := coredata.NewInvitationFilter([]coredata.InvitationStatus{coredata.InvitationStatusPending})
-			err := invitations.AcceptByEmailAndOrganization(
+			err := invitations.ExpireByEmailAndOrganization(
 				ctx,
 				tx,
 				coredata.NewScopeFromObjectID(config.OrganizationID),
@@ -186,7 +186,7 @@ func (s *Service) CreateUser(
 			)
 
 			if err != nil {
-				return fmt.Errorf("cannot accept pending invitations by email")
+				return fmt.Errorf("cannot expire pending invitations by email")
 			}
 		} else if err != nil {
 			return fmt.Errorf("cannot load membership: %w", err)
@@ -375,10 +375,10 @@ func (s *Service) updateUser(
 					membership.Role = coredata.MembershipRoleEmployee
 					needsUpdate = true
 
-					// Accept all pending invitations for email in organization
+					// Expire all pending invitations for email in organization
 					invitations := &coredata.Invitations{}
 					onlyPending := coredata.NewInvitationFilter([]coredata.InvitationStatus{coredata.InvitationStatusPending})
-					if err := invitations.AcceptByEmailAndOrganization(
+					if err := invitations.ExpireByEmailAndOrganization(
 						ctx,
 						tx,
 						coredata.NewScopeFromObjectID(config.OrganizationID),
@@ -386,7 +386,7 @@ func (s *Service) updateUser(
 						config.OrganizationID,
 						onlyPending,
 					); err != nil {
-						return fmt.Errorf("cannot accept pending invitations by email: %w", err)
+						return fmt.Errorf("cannot expire pending invitations by email: %w", err)
 					}
 				} else if !*active && membership.State == coredata.MembershipStateActive {
 					membership.State = coredata.MembershipStateInactive
