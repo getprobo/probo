@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Fixed
+
+- Fix people in mcp
+- Fix task display
+
 ## [0.112.3] - 2026-01-05
 
 ### Fixed
