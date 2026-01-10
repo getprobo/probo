@@ -92,6 +92,18 @@ func (a Attrs) getBool(key string, defaultVal bool) bool {
 	return defaultVal
 }
 
+func (a Attrs) getSlice(key string, defaultVal []string) []string {
+	if a == nil {
+		return defaultVal
+	}
+	if v, ok := a[key]; ok {
+		if slice, ok := v.([]string); ok {
+			return slice
+		}
+	}
+	return defaultVal
+}
+
 func CreateVendor(c *testutil.Client, attrs ...Attrs) string {
 	c.T.Helper()
 
@@ -375,10 +387,11 @@ func CreatePeople(c *testutil.Client, attrs ...Attrs) string {
 	`
 
 	input := map[string]any{
-		"organizationId":      c.GetOrganizationID().String(),
-		"fullName":            a.getString("fullName", SafeName("Person")),
-		"primaryEmailAddress": a.getString("primaryEmailAddress", SafeEmail()),
-		"kind":                a.getString("kind", "EMPLOYEE"),
+		"organizationId":          c.GetOrganizationID().String(),
+		"fullName":                 a.getString("fullName", SafeName("Person")),
+		"primaryEmailAddress":     a.getString("primaryEmailAddress", SafeEmail()),
+		"additionalEmailAddresses": a.getSlice("additionalEmailAddresses", []string{}),
+		"kind":                     a.getString("kind", "EMPLOYEE"),
 	}
 
 	var result struct {

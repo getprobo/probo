@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<8bba8d318de0f4b0d28a8fba8b8e0bdf>>
+ * @generated SignedSource<<f6e71f80c25925eb372e360c1b9ec122>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -21,6 +21,7 @@ export type TasksPageFragment$data = {
           readonly fullName: string;
           readonly id: string;
         } | null | undefined;
+        readonly deadline: any | null | undefined;
         readonly description: string | null | undefined;
         readonly id: string;
         readonly measure: {
@@ -29,6 +30,7 @@ export type TasksPageFragment$data = {
         } | null | undefined;
         readonly name: string;
         readonly state: TaskState;
+        readonly timeEstimate: any | null | undefined;
         readonly " $fragmentSpreads": FragmentRefs<"TaskFormDialogFragment">;
       };
     }>;
@@ -169,6 +171,20 @@ return {
                   "storageKey": null
                 },
                 {
+                  "alias": null,
+                  "args": null,
+                  "kind": "ScalarField",
+                  "name": "timeEstimate",
+                  "storageKey": null
+                },
+                {
+                  "alias": null,
+                  "args": null,
+                  "kind": "ScalarField",
+                  "name": "deadline",
+                  "storageKey": null
+                },
+                {
                   "args": null,
                   "kind": "FragmentSpread",
                   "name": "TaskFormDialogFragment"
@@ -286,6 +302,6 @@ return {
 };
 })();
 
-(node as any).hash = "84864638db9ddf53e9ae7da7952803af";
+(node as any).hash = "466d3b82119334991a0714bb0b7cd6d0";
 
 export default node;

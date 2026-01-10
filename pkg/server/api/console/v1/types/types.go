@@ -64,15 +64,6 @@ type AssetFilter struct {
 	SnapshotID *gid.GID `json:"snapshotId,omitempty"`
 }
 
-type AssignTaskInput struct {
-	TaskID       gid.GID `json:"taskId"`
-	AssignedToID gid.GID `json:"assignedToId"`
-}
-
-type AssignTaskPayload struct {
-	Task *Task `json:"task"`
-}
-
 type Audit struct {
 	ID                    gid.GID                        `json:"id"`
 	Name                  *string                        `json:"name,omitempty"`
@@ -434,7 +425,7 @@ type CreatePeopleInput struct {
 	OrganizationID           gid.GID             `json:"organizationId"`
 	FullName                 string              `json:"fullName"`
 	PrimaryEmailAddress      mail.Addr           `json:"primaryEmailAddress"`
-	AdditionalEmailAddresses []mail.Addr         `json:"additionalEmailAddresses,omitempty"`
+	AdditionalEmailAddresses []mail.Addr         `json:"additionalEmailAddresses"`
 	Kind                     coredata.PeopleKind `json:"kind"`
 	Position                 *string             `json:"position,omitempty"`
 	ContractStartDate        *time.Time          `json:"contractStartDate,omitempty"`
@@ -1959,14 +1950,6 @@ type TrustCenterReferenceEdge struct {
 	Node   *TrustCenterReference `json:"node"`
 }
 
-type UnassignTaskInput struct {
-	TaskID gid.GID `json:"taskId"`
-}
-
-type UnassignTaskPayload struct {
-	Task *Task `json:"task"`
-}
-
 type UpdateAssetInput struct {
 	ID              gid.GID             `json:"id"`
 	Name            *string             `json:"name,omitempty"`
@@ -2262,6 +2245,7 @@ type UpdateTaskInput struct {
 	State        *coredata.TaskState               `json:"state,omitempty"`
 	TimeEstimate graphql.Omittable[*time.Duration] `json:"timeEstimate,omitempty"`
 	Deadline     graphql.Omittable[*time.Time]     `json:"deadline,omitempty"`
+	AssignedToID graphql.Omittable[*gid.GID]       `json:"assignedToId,omitempty"`
 }
 
 type UpdateTaskPayload struct {

@@ -1,9 +1,8 @@
-import { promisifyMutation } from "@probo/helpers";
+import { promisifyMutation, formatDate, formatDuration } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
-  Avatar,
   Card,
   DropdownItem,
   IconArrowCornerDownLeft,
@@ -40,6 +39,8 @@ type Props = {
     name: string;
     state: "TODO" | "DONE";
     description?: string | null;
+    timeEstimate?: string | null;
+    deadline?: string | null;
     measure?: {
       id: string;
       name: string;
@@ -128,7 +129,7 @@ export default function TasksCard({ tasks, connectionId }: Props) {
 }
 
 type TaskRowProps = {
-  task: ItemOf<Props["tasks"]> & TaskFormDialogFragment$key;
+  task: ItemOf<Props["tasks"]>;
   connectionId: string;
   hasAnyAction: boolean;
 };
@@ -207,30 +208,48 @@ function TaskRow(props: TaskRowProps) {
               <TaskStateIcon state={props.task.state} />
             </button>
           </div>
-          <div className="text-sm space-y-1">
+          <div className="text-sm space-y-1 flex-1">
             <h2 className="font-medium">{props.task.name}</h2>
-            {props.task.measure && (
-              <p className="text-txt-secondary flex items-center gap-2">
-                <IconArrowCornerDownLeft className="scale-x-[-1]" size={16} />
-                <Link
-                  className="hover:underline"
-                  to={`/organizations/${organizationId}/measures/${props.task.measure?.id}`}
-                >
-                  {props.task.measure?.name}
-                </Link>
+            {props.task.description && (
+              <p className="text-txt-secondary whitespace-pre-wrap break-words">
+                {props.task.description}
               </p>
             )}
+            <div className="flex flex-wrap items-center gap-3 text-txt-secondary text-xs">
+              {props.task.measure && (
+                <span className="flex items-center gap-1">
+                  <IconArrowCornerDownLeft className="scale-x-[-1]" size={14} />
+                  <Link
+                    className="hover:underline"
+                    to={`/organizations/${organizationId}/measures/${props.task.measure?.id}`}
+                  >
+                    {props.task.measure?.name}
+                  </Link>
+                </span>
+              )}
+              {props.task.timeEstimate && (
+                <span>{formatDuration(props.task.timeEstimate, __)}</span>
+              )}
+              {props.task.deadline && (
+                <time dateTime={props.task.deadline}>
+                  {formatDate(props.task.deadline)}
+                </time>
+              )}
+            </div>
           </div>
         </div>
+        {props.task.assignedTo?.fullName && (
+          <div className="text-sm text-txt-secondary ml-auto mr-8">
+            <Link
+              className="hover:underline"
+              to={`/organizations/${organizationId}/people/${props.task.assignedTo.id}`}
+            >
+              {props.task.assignedTo.fullName}
+            </Link>
+          </div>
+        )}
         <div className="flex gap-2 items-center">
           {isUpdating && <Spinner size={16} />}
-          {props.task.assignedTo && (
-            <Link
-              to={`/organizations/${organizationId}/people/${props.task.assignedTo?.id}`}
-            >
-              <Avatar name={props.task.assignedTo?.fullName ?? ""} />
-            </Link>
-          )}
           {props.hasAnyAction && (
             <ActionDropdown>
               {isAuthorized("Task", "updateTask") && (

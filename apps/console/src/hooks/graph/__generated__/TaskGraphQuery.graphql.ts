@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<cff26152bf46e7734e8ae5f5671b47b6>>
+ * @generated SignedSource<<40ebf241dc89f4b4b1705e4a2fabb935>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -296,12 +296,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "a0b3367a3288c70f0bbcde73ec237bee",
+    "cacheID": "72cbeaa7667c477f85e5c3ecb09b7bf4",
     "id": null,
     "metadata": {},
     "name": "TaskGraphQuery",
     "operationKind": "query",
-    "text": "query TaskGraphQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      ...TasksPageFragment\n    }\n    id\n  }\n}\n\nfragment TaskFormDialogFragment on Task {\n  id\n  description\n  name\n  state\n  timeEstimate\n  deadline\n  assignedTo {\n    id\n  }\n  measure {\n    id\n  }\n}\n\nfragment TasksPageFragment on Organization {\n  tasks(first: 500) {\n    edges {\n      node {\n        id\n        name\n        state\n        description\n        ...TaskFormDialogFragment\n        measure {\n          id\n          name\n        }\n        assignedTo {\n          id\n          fullName\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
+    "text": "query TaskGraphQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      ...TasksPageFragment\n    }\n    id\n  }\n}\n\nfragment TaskFormDialogFragment on Task {\n  id\n  description\n  name\n  state\n  timeEstimate\n  deadline\n  assignedTo {\n    id\n  }\n  measure {\n    id\n  }\n}\n\nfragment TasksPageFragment on Organization {\n  tasks(first: 500) {\n    edges {\n      node {\n        id\n        name\n        state\n        description\n        timeEstimate\n        deadline\n        ...TaskFormDialogFragment\n        measure {\n          id\n          name\n        }\n        assignedTo {\n          id\n          fullName\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
   }
 };
 })();

@@ -39,6 +39,8 @@ const tasksFragment = graphql`
           name
           state
           description
+          timeEstimate
+          deadline
           ...TaskFormDialogFragment
           measure {
             id
