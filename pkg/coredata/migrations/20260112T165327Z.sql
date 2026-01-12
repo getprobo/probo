@@ -1,0 +1,1 @@
+ALTER TABLE tasks ALTER COLUMN measure_id DROP NOT NULL;

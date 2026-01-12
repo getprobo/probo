@@ -1349,6 +1349,7 @@ func (r *Resolver) AddTaskTool(ctx context.Context, req *mcp.CallToolRequest, in
 		ctx,
 		probo.CreateTaskRequest{
 			OrganizationID: input.OrganizationID,
+			MeasureID:      input.MeasureID,
 			Name:           input.Name,
 			Description:    input.Description,
 			TimeEstimate:   input.TimeEstimate,
