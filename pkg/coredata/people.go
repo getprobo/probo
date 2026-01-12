@@ -31,17 +31,17 @@ import (
 
 type (
 	People struct {
-		ID                       gid.GID     `db:"id"`
-		OrganizationID           gid.GID     `db:"organization_id"`
-		Kind                     PeopleKind  `db:"kind"`
-		FullName                 string      `db:"full_name"`
-		PrimaryEmailAddress      mail.Addr   `db:"primary_email_address"`
-		AdditionalEmailAddresses []mail.Addr `db:"additional_email_addresses"`
-		Position                 *string     `db:"position"`
-		ContractStartDate        *time.Time  `db:"contract_start_date"`
-		ContractEndDate          *time.Time  `db:"contract_end_date"`
-		CreatedAt                time.Time   `db:"created_at"`
-		UpdatedAt                time.Time   `db:"updated_at"`
+		ID                       gid.GID    `db:"id"`
+		OrganizationID           gid.GID    `db:"organization_id"`
+		Kind                     PeopleKind `db:"kind"`
+		FullName                 string     `db:"full_name"`
+		PrimaryEmailAddress      mail.Addr  `db:"primary_email_address"`
+		AdditionalEmailAddresses mail.Addrs `db:"additional_email_addresses"`
+		Position                 *string    `db:"position"`
+		ContractStartDate        *time.Time `db:"contract_start_date"`
+		ContractEndDate          *time.Time `db:"contract_end_date"`
+		CreatedAt                time.Time  `db:"created_at"`
+		UpdatedAt                time.Time  `db:"updated_at"`
 	}
 
 	Peoples []*People
