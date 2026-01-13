@@ -15,6 +15,8 @@
 package trust
 
 import (
+	"context"
+	"fmt"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -146,6 +148,84 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 	return tenantService
 }
 
-func (s *Service) GetTokenSecret() string {
-	return s.tokenSecret
+func (s *Service) Get(
+	ctx context.Context,
+	id gid.GID,
+) (*coredata.TrustCenter, error) {
+	trustCenter := &coredata.TrustCenter{}
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			err := trustCenter.LoadByID(ctx, conn, coredata.NewNoScope(), id)
+			if err != nil {
+				return fmt.Errorf("cannot load trust center: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return trustCenter, nil
+}
+
+func (s *Service) GetBySlug(
+	ctx context.Context,
+	slug string,
+) (*coredata.TrustCenter, error) {
+	trustCenter := &coredata.TrustCenter{}
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			err := trustCenter.LoadBySlug(ctx, conn, slug)
+			if err != nil {
+				return fmt.Errorf("cannot load trust center: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return trustCenter, nil
+}
+
+func (s *Service) GetByDomainName(ctx context.Context, domain string) (*coredata.TrustCenter, error) {
+	trustCenter := &coredata.TrustCenter{}
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			var customDomain coredata.CustomDomain
+			if err := customDomain.LoadByDomain(ctx, conn, coredata.NewNoScope(), s.encryptionKey, domain); err != nil {
+				return fmt.Errorf("cannot load custom domain: %w", err)
+			}
+
+			var org coredata.Organization
+			if err := org.LoadByCustomDomainID(ctx, conn, coredata.NewNoScope(), customDomain.ID); err != nil {
+				return fmt.Errorf("cannot load organization: %w", err)
+			}
+
+			trustCenter = &coredata.TrustCenter{}
+			if err := trustCenter.LoadByOrganizationID(ctx, conn, coredata.NewNoScope(), org.ID); err != nil {
+				return fmt.Errorf("cannot load trust center: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return trustCenter, err
 }

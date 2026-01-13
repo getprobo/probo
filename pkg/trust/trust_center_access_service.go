@@ -246,22 +246,28 @@ func (s TrustCenterAccessService) HasAcceptedNonDisclosureAgreement(ctx context.
 	return access.HasAcceptedNonDisclosureAgreement, nil
 }
 
-func (s TrustCenterAccessService) AcceptNonDisclosureAgreement(ctx context.Context, trustCenterID gid.GID, email mail.Addr) error {
+type AcceptNDARequest struct {
+	TrustCenterID gid.GID
+	Email         mail.Addr
+	IPAddr        string
+}
+
+func (s TrustCenterAccessService) AcceptNonDisclosureAgreement(ctx context.Context, req *AcceptNDARequest) error {
 	return s.svc.pg.WithTx(ctx, func(tx pg.Conn) error {
 		access := &coredata.TrustCenterAccess{}
-		if err := access.LoadByTrustCenterIDAndEmail(ctx, tx, s.svc.scope, trustCenterID, email); err != nil {
+		if err := access.LoadByTrustCenterIDAndEmail(ctx, tx, s.svc.scope, req.TrustCenterID, req.Email); err != nil {
 			return fmt.Errorf("cannot load trust center access: %w", err)
 		}
 
 		trustCenter := &coredata.TrustCenter{}
-		if err := trustCenter.LoadByID(ctx, tx, s.svc.scope, trustCenterID); err != nil {
+		if err := trustCenter.LoadByID(ctx, tx, s.svc.scope, req.TrustCenterID); err != nil {
 			return fmt.Errorf("cannot load trust center: %w", err)
 		}
 
 		acceptationLogs, err := json.Marshal(map[string]string{
-			"email":     email.String(),
+			"email":     req.Email.String(),
 			"timestamp": time.Now().Format(time.RFC3339),
-			"ip":        ctx.Value(coredata.ContextKeyIPAddress).(string),
+			"ip":        req.IPAddr,
 		})
 		if err != nil {
 			return fmt.Errorf("cannot marshal non disclosure agreement acceptation logs: %w", err)

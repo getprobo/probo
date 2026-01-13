@@ -68,7 +68,7 @@ const overviewFragment = graphql`
 export function OverviewPage() {
   const { trustCenter } = useOutletContext<{
     trustCenter: OverviewPageFragment$key &
-      TrustGraphQuery$data["trustCenterBySlug"];
+      TrustGraphQuery$data["currentTrustCenter"];
   }>();
   const fragment = useFragment(overviewFragment, trustCenter);
   return (
@@ -100,18 +100,18 @@ function Documents({
   documents: OverviewPageFragment$data["documents"]["edges"];
   files: OverviewPageFragment$data["trustCenterFiles"]["edges"];
   audits: NonNullable<
-    TrustGraphQuery$data["trustCenterBySlug"]
+    TrustGraphQuery$data["currentTrustCenter"]
   >["audits"]["edges"];
   url: string;
 }) {
   const { __ } = useTranslate();
   const documentsPerType = groupBy(
     documents.map((edge) => edge.node),
-    (node) => documentTypeLabel(node.documentType, __)
+    (node) => documentTypeLabel(node.documentType, __),
   );
   const filesPerCategory = groupBy(
     files.map((edge) => edge.node),
-    (node) => node.category
+    (node) => node.category,
   );
   const hasAudits = audits.length > 0;
   const hasDocuments = hasAudits || documents.length > 0 || files.length > 0;
@@ -185,7 +185,7 @@ function Subprocessors({
       <p className="text-sm text-txt-secondary mb-4">
         {sprintf(
           __("Third-party subprocessors %s work with:"),
-          organizationName
+          organizationName,
         )}
       </p>
       <Rows className="mb-8 *:py-5">

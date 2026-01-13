@@ -553,7 +553,6 @@ type SignInWithTokenPayload {
 }
 
 input RequestAllAccessesInput {
-  trustCenterId: ID!
   email: EmailAddr!
   fullName: String!
 }
@@ -570,26 +569,19 @@ input ExportReportPDFInput {
   reportId: ID!
 }
 
-input AcceptNonDisclosureAgreementInput {
-  trustCenterId: ID!
-}
-
 input RequestDocumentAccessInput {
-  trustCenterId: ID!
   documentId: ID!
   email: EmailAddr!
   fullName: String!
 }
 
 input RequestReportAccessInput {
-  trustCenterId: ID!
   reportId: ID!
   email: EmailAddr!
   fullName: String!
 }
 
 input RequestTrustCenterFileAccessInput {
-  trustCenterId: ID!
   trustCenterFileId: ID!
   email: EmailAddr!
   fullName: String!
@@ -618,7 +610,6 @@ type AcceptNonDisclosureAgreementPayload {
 type Query {
   viewer: Identity
   node(id: ID!): Node!
-  trustCenterBySlug(slug: String!): TrustCenter @mustBeAuthenticated(role: NONE)
   currentTrustCenter: TrustCenter @mustBeAuthenticated(role: NONE)
 }
 
@@ -634,9 +625,8 @@ type Mutation {
   exportReportPDF(input: ExportReportPDFInput!): ExportReportPDFPayload!
     @mustBeAuthenticated(role: NONE)
 
-  acceptNonDisclosureAgreement(
-    input: AcceptNonDisclosureAgreementInput!
-  ): AcceptNonDisclosureAgreementPayload! @mustBeAuthenticated(role: USER)
+  acceptNonDisclosureAgreement: AcceptNonDisclosureAgreementPayload!
+    @mustBeAuthenticated(role: USER)
 
   requestDocumentAccess(
     input: RequestDocumentAccessInput!

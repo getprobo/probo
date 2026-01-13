@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<1e744bd11b2d5dd4d982bf1ce8b2a721>>
+ * @generated SignedSource<<7c329901bcf9bbf05b1899356016b151>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -13,7 +13,6 @@ export type RequestTrustCenterFileAccessInput = {
   email: any;
   fullName: string;
   trustCenterFileId: string;
-  trustCenterId: string;
 };
 export type RequestAccessDialogTrustCenterFileMutation$variables = {
   input: RequestTrustCenterFileAccessInput;

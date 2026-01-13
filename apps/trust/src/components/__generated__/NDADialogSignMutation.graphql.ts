@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<febdedca828f8b6dc384f0d4f08e02f8>>
+ * @generated SignedSource<<3ef589b34a5cb80406c517d6e5eb938c>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,12 +9,7 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
-export type AcceptNonDisclosureAgreementInput = {
-  trustCenterId: string;
-};
-export type NDADialogSignMutation$variables = {
-  input: AcceptNonDisclosureAgreementInput;
-};
+export type NDADialogSignMutation$variables = Record<PropertyKey, never>;
 export type NDADialogSignMutation$data = {
   readonly acceptNonDisclosureAgreement: {
     readonly success: boolean;
@@ -28,21 +23,8 @@ export type NDADialogSignMutation = {
 const node: ConcreteRequest = (function(){
 var v0 = [
   {
-    "defaultValue": null,
-    "kind": "LocalArgument",
-    "name": "input"
-  }
-],
-v1 = [
-  {
     "alias": null,
-    "args": [
-      {
-        "kind": "Variable",
-        "name": "input",
-        "variableName": "input"
-      }
-    ],
+    "args": null,
     "concreteType": "AcceptNonDisclosureAgreementPayload",
     "kind": "LinkedField",
     "name": "acceptNonDisclosureAgreement",
@@ -61,32 +43,32 @@ v1 = [
 ];
 return {
   "fragment": {
-    "argumentDefinitions": (v0/*: any*/),
+    "argumentDefinitions": [],
     "kind": "Fragment",
     "metadata": null,
     "name": "NDADialogSignMutation",
-    "selections": (v1/*: any*/),
+    "selections": (v0/*: any*/),
     "type": "Mutation",
     "abstractKey": null
   },
   "kind": "Request",
   "operation": {
-    "argumentDefinitions": (v0/*: any*/),
+    "argumentDefinitions": [],
     "kind": "Operation",
     "name": "NDADialogSignMutation",
-    "selections": (v1/*: any*/)
+    "selections": (v0/*: any*/)
   },
   "params": {
-    "cacheID": "130cfc307dca0525194e0103a0548bd0",
+    "cacheID": "bca0dcb3f227c89d8339b0238aa2e42a",
     "id": null,
     "metadata": {},
     "name": "NDADialogSignMutation",
     "operationKind": "mutation",
-    "text": "mutation NDADialogSignMutation(\n  $input: AcceptNonDisclosureAgreementInput!\n) {\n  acceptNonDisclosureAgreement(input: $input) {\n    success\n  }\n}\n"
+    "text": "mutation NDADialogSignMutation {\n  acceptNonDisclosureAgreement {\n    success\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "1b9447e5cbb2ec7dce4f3f9c68493555";
+(node as any).hash = "814a623444a446730f260e6b7bbf0083";
 
 export default node;

@@ -130,7 +130,7 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		AcceptNonDisclosureAgreement func(childComplexity int, input types.AcceptNonDisclosureAgreementInput) int
+		AcceptNonDisclosureAgreement func(childComplexity int) int
 		ExportDocumentPDF            func(childComplexity int, input types.ExportDocumentPDFInput) int
 		ExportReportPDF              func(childComplexity int, input types.ExportReportPDFInput) int
 		ExportTrustCenterFile        func(childComplexity int, input types.ExportTrustCenterFileInput) int
@@ -161,7 +161,6 @@ type ComplexityRoot struct {
 	Query struct {
 		CurrentTrustCenter func(childComplexity int) int
 		Node               func(childComplexity int, id gid.GID) int
-		TrustCenterBySlug  func(childComplexity int, slug string) int
 		Viewer             func(childComplexity int) int
 	}
 
@@ -277,7 +276,7 @@ type MutationResolver interface {
 	RequestAllAccesses(ctx context.Context, input types.RequestAllAccessesInput) (*types.RequestAccessesPayload, error)
 	ExportDocumentPDF(ctx context.Context, input types.ExportDocumentPDFInput) (*types.ExportDocumentPDFPayload, error)
 	ExportReportPDF(ctx context.Context, input types.ExportReportPDFInput) (*types.ExportReportPDFPayload, error)
-	AcceptNonDisclosureAgreement(ctx context.Context, input types.AcceptNonDisclosureAgreementInput) (*types.AcceptNonDisclosureAgreementPayload, error)
+	AcceptNonDisclosureAgreement(ctx context.Context) (*types.AcceptNonDisclosureAgreementPayload, error)
 	RequestDocumentAccess(ctx context.Context, input types.RequestDocumentAccessInput) (*types.RequestAccessesPayload, error)
 	RequestReportAccess(ctx context.Context, input types.RequestReportAccessInput) (*types.RequestAccessesPayload, error)
 	RequestTrustCenterFileAccess(ctx context.Context, input types.RequestTrustCenterFileAccessInput) (*types.RequestAccessesPayload, error)
@@ -289,7 +288,6 @@ type OrganizationResolver interface {
 type QueryResolver interface {
 	Viewer(ctx context.Context) (*types.Identity, error)
 	Node(ctx context.Context, id gid.GID) (types.Node, error)
-	TrustCenterBySlug(ctx context.Context, slug string) (*types.TrustCenter, error)
 	CurrentTrustCenter(ctx context.Context) (*types.TrustCenter, error)
 }
 type ReportResolver interface {
@@ -531,12 +529,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			break
 		}
 
-		args, err := ec.field_Mutation_acceptNonDisclosureAgreement_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.AcceptNonDisclosureAgreement(childComplexity, args["input"].(types.AcceptNonDisclosureAgreementInput)), true
+		return e.complexity.Mutation.AcceptNonDisclosureAgreement(childComplexity), true
 	case "Mutation.exportDocumentPDF":
 		if e.complexity.Mutation.ExportDocumentPDF == nil {
 			break
@@ -711,17 +704,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.Node(childComplexity, args["id"].(gid.GID)), true
-	case "Query.trustCenterBySlug":
-		if e.complexity.Query.TrustCenterBySlug == nil {
-			break
-		}
-
-		args, err := ec.field_Query_trustCenterBySlug_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.TrustCenterBySlug(childComplexity, args["slug"].(string)), true
 	case "Query.viewer":
 		if e.complexity.Query.Viewer == nil {
 			break
@@ -1088,7 +1070,6 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	opCtx := graphql.GetOperationContext(ctx)
 	ec := executionContext{opCtx, e, 0, 0, make(chan graphql.DeferredResult)}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
-		ec.unmarshalInputAcceptNonDisclosureAgreementInput,
 		ec.unmarshalInputExportDocumentPDFInput,
 		ec.unmarshalInputExportReportPDFInput,
 		ec.unmarshalInputExportTrustCenterFileInput,
@@ -1749,7 +1730,6 @@ type SignInWithTokenPayload {
 }
 
 input RequestAllAccessesInput {
-  trustCenterId: ID!
   email: EmailAddr!
   fullName: String!
 }
@@ -1766,26 +1746,19 @@ input ExportReportPDFInput {
   reportId: ID!
 }
 
-input AcceptNonDisclosureAgreementInput {
-  trustCenterId: ID!
-}
-
 input RequestDocumentAccessInput {
-  trustCenterId: ID!
   documentId: ID!
   email: EmailAddr!
   fullName: String!
 }
 
 input RequestReportAccessInput {
-  trustCenterId: ID!
   reportId: ID!
   email: EmailAddr!
   fullName: String!
 }
 
 input RequestTrustCenterFileAccessInput {
-  trustCenterId: ID!
   trustCenterFileId: ID!
   email: EmailAddr!
   fullName: String!
@@ -1814,7 +1787,6 @@ type AcceptNonDisclosureAgreementPayload {
 type Query {
   viewer: Identity
   node(id: ID!): Node!
-  trustCenterBySlug(slug: String!): TrustCenter @mustBeAuthenticated(role: NONE)
   currentTrustCenter: TrustCenter @mustBeAuthenticated(role: NONE)
 }
 
@@ -1830,9 +1802,8 @@ type Mutation {
   exportReportPDF(input: ExportReportPDFInput!): ExportReportPDFPayload!
     @mustBeAuthenticated(role: NONE)
 
-  acceptNonDisclosureAgreement(
-    input: AcceptNonDisclosureAgreementInput!
-  ): AcceptNonDisclosureAgreementPayload! @mustBeAuthenticated(role: USER)
+  acceptNonDisclosureAgreement: AcceptNonDisclosureAgreementPayload!
+    @mustBeAuthenticated(role: USER)
 
   requestDocumentAccess(
     input: RequestDocumentAccessInput!
@@ -1866,17 +1837,6 @@ func (ec *executionContext) dir_mustBeAuthenticated_args(ctx context.Context, ra
 		return nil, err
 	}
 	args["role"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_acceptNonDisclosureAgreement_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNAcceptNonDisclosureAgreementInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐAcceptNonDisclosureAgreementInput)
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg0
 	return args, nil
 }
 
@@ -1987,17 +1947,6 @@ func (ec *executionContext) field_Query_node_args(ctx context.Context, rawArgs m
 		return nil, err
 	}
 	args["id"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Query_trustCenterBySlug_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "slug", ec.unmarshalNString2string)
-	if err != nil {
-		return nil, err
-	}
-	args["slug"] = arg0
 	return args, nil
 }
 
@@ -3366,8 +3315,7 @@ func (ec *executionContext) _Mutation_acceptNonDisclosureAgreement(ctx context.C
 		field,
 		ec.fieldContext_Mutation_acceptNonDisclosureAgreement,
 		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().AcceptNonDisclosureAgreement(ctx, fc.Args["input"].(types.AcceptNonDisclosureAgreementInput))
+			return ec.resolvers.Mutation().AcceptNonDisclosureAgreement(ctx)
 		},
 		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
 			directive0 := next
@@ -3394,7 +3342,7 @@ func (ec *executionContext) _Mutation_acceptNonDisclosureAgreement(ctx context.C
 	)
 }
 
-func (ec *executionContext) fieldContext_Mutation_acceptNonDisclosureAgreement(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_acceptNonDisclosureAgreement(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -3407,17 +3355,6 @@ func (ec *executionContext) fieldContext_Mutation_acceptNonDisclosureAgreement(c
 			}
 			return nil, fmt.Errorf("no field named %q was found under type AcceptNonDisclosureAgreementPayload", field.Name)
 		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_acceptNonDisclosureAgreement_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
 	}
 	return fc, nil
 }
@@ -4071,93 +4008,6 @@ func (ec *executionContext) fieldContext_Query_node(ctx context.Context, field g
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_node_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Query_trustCenterBySlug(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Query_trustCenterBySlug,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().TrustCenterBySlug(ctx, fc.Args["slug"].(string))
-		},
-		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
-			directive0 := next
-
-			directive1 := func(ctx context.Context) (any, error) {
-				role, err := ec.unmarshalORole2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRole(ctx, "NONE")
-				if err != nil {
-					var zeroVal *types.TrustCenter
-					return zeroVal, err
-				}
-				if ec.directives.MustBeAuthenticated == nil {
-					var zeroVal *types.TrustCenter
-					return zeroVal, errors.New("directive mustBeAuthenticated is not implemented")
-				}
-				return ec.directives.MustBeAuthenticated(ctx, nil, directive0, role)
-			}
-
-			next = directive1
-			return next
-		},
-		ec.marshalOTrustCenter2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenter,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_Query_trustCenterBySlug(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_TrustCenter_id(ctx, field)
-			case "active":
-				return ec.fieldContext_TrustCenter_active(ctx, field)
-			case "slug":
-				return ec.fieldContext_TrustCenter_slug(ctx, field)
-			case "ndaFileName":
-				return ec.fieldContext_TrustCenter_ndaFileName(ctx, field)
-			case "ndaFileUrl":
-				return ec.fieldContext_TrustCenter_ndaFileUrl(ctx, field)
-			case "organization":
-				return ec.fieldContext_TrustCenter_organization(ctx, field)
-			case "isUserAuthenticated":
-				return ec.fieldContext_TrustCenter_isUserAuthenticated(ctx, field)
-			case "hasAcceptedNonDisclosureAgreement":
-				return ec.fieldContext_TrustCenter_hasAcceptedNonDisclosureAgreement(ctx, field)
-			case "documents":
-				return ec.fieldContext_TrustCenter_documents(ctx, field)
-			case "audits":
-				return ec.fieldContext_TrustCenter_audits(ctx, field)
-			case "vendors":
-				return ec.fieldContext_TrustCenter_vendors(ctx, field)
-			case "references":
-				return ec.fieldContext_TrustCenter_references(ctx, field)
-			case "trustCenterFiles":
-				return ec.fieldContext_TrustCenter_trustCenterFiles(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type TrustCenter", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_trustCenterBySlug_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -7505,33 +7355,6 @@ func (ec *executionContext) fieldContext___Type_isOneOf(_ context.Context, field
 
 // region    **************************** input.gotpl *****************************
 
-func (ec *executionContext) unmarshalInputAcceptNonDisclosureAgreementInput(ctx context.Context, obj any) (types.AcceptNonDisclosureAgreementInput, error) {
-	var it types.AcceptNonDisclosureAgreementInput
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"trustCenterId"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "trustCenterId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("trustCenterId"))
-			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.TrustCenterID = data
-		}
-	}
-
-	return it, nil
-}
-
 func (ec *executionContext) unmarshalInputExportDocumentPDFInput(ctx context.Context, obj any) (types.ExportDocumentPDFInput, error) {
 	var it types.ExportDocumentPDFInput
 	asMap := map[string]any{}
@@ -7620,20 +7443,13 @@ func (ec *executionContext) unmarshalInputRequestAllAccessesInput(ctx context.Co
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"trustCenterId", "email", "fullName"}
+	fieldsInOrder := [...]string{"email", "fullName"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "trustCenterId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("trustCenterId"))
-			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.TrustCenterID = data
 		case "email":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
 			data, err := ec.unmarshalNEmailAddr2goᚗproboᚗincᚋproboᚋpkgᚋmailᚐAddr(ctx, v)
@@ -7661,20 +7477,13 @@ func (ec *executionContext) unmarshalInputRequestDocumentAccessInput(ctx context
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"trustCenterId", "documentId", "email", "fullName"}
+	fieldsInOrder := [...]string{"documentId", "email", "fullName"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "trustCenterId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("trustCenterId"))
-			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.TrustCenterID = data
 		case "documentId":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("documentId"))
 			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
@@ -7709,20 +7518,13 @@ func (ec *executionContext) unmarshalInputRequestReportAccessInput(ctx context.C
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"trustCenterId", "reportId", "email", "fullName"}
+	fieldsInOrder := [...]string{"reportId", "email", "fullName"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "trustCenterId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("trustCenterId"))
-			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.TrustCenterID = data
 		case "reportId":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("reportId"))
 			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
@@ -7757,20 +7559,13 @@ func (ec *executionContext) unmarshalInputRequestTrustCenterFileAccessInput(ctx 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"trustCenterId", "trustCenterFileId", "email", "fullName"}
+	fieldsInOrder := [...]string{"trustCenterFileId", "email", "fullName"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "trustCenterId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("trustCenterId"))
-			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.TrustCenterID = data
 		case "trustCenterFileId":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("trustCenterFileId"))
 			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
@@ -8943,25 +8738,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx,
-					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "trustCenterBySlug":
-			field := field
-
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_trustCenterBySlug(ctx, field)
 				return res
 			}
 
@@ -10510,11 +10286,6 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 // endregion **************************** object.gotpl ****************************
 
 // region    ***************************** type.gotpl *****************************
-
-func (ec *executionContext) unmarshalNAcceptNonDisclosureAgreementInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐAcceptNonDisclosureAgreementInput(ctx context.Context, v any) (types.AcceptNonDisclosureAgreementInput, error) {
-	res, err := ec.unmarshalInputAcceptNonDisclosureAgreementInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
 
 func (ec *executionContext) marshalNAcceptNonDisclosureAgreementPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐAcceptNonDisclosureAgreementPayload(ctx context.Context, sel ast.SelectionSet, v types.AcceptNonDisclosureAgreementPayload) graphql.Marshaler {
 	return ec._AcceptNonDisclosureAgreementPayload(ctx, sel, &v)

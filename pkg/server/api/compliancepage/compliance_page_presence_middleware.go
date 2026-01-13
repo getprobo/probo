@@ -12,34 +12,41 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package gqlutils
+package compliancepage
 
 import (
-	"context"
 	"net/http"
+
+	"github.com/99designs/gqlgen/graphql"
+	"github.com/vektah/gqlparser/v2/gqlerror"
+	"go.gearno.de/kit/httpserver"
+	"go.probo.inc/probo/pkg/server/gqlutils"
 )
 
-type (
-	ctxKey struct{ name string }
-)
+func NewCompliancePagePresenceMiddleware() func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(
+			func(w http.ResponseWriter, r *http.Request) {
+				compliancePage := CompliancePageFromContext(r.Context())
 
-var (
-	httpResponseWriterKey = &ctxKey{name: "http_response_writer"}
-	httpRequestKey        = &ctxKey{name: "http_request"}
-)
+				if compliancePage == nil {
+					httpserver.RenderJSON(
+						w,
+						http.StatusNotFound,
+						&graphql.Response{
+							Errors: gqlerror.List{
+								gqlutils.NotFoundf(
+									r.Context(),
+									"compliance page not found",
+								),
+							},
+						},
+					)
+					return
+				}
 
-func WithHTTPContext(ctx context.Context, w http.ResponseWriter, r *http.Request) context.Context {
-
-	ctx = context.WithValue(ctx, httpResponseWriterKey, w)
-	ctx = context.WithValue(ctx, httpRequestKey, r)
-
-	return ctx
-}
-
-func HTTPResponseWriterFromContext(ctx context.Context) http.ResponseWriter {
-	return ctx.Value(httpResponseWriterKey).(http.ResponseWriter)
-}
-
-func HTTPRequestFromContext(ctx context.Context) *http.Request {
-	return ctx.Value(httpRequestKey).(*http.Request)
+				next.ServeHTTP(w, r)
+			},
+		)
+	}
 }

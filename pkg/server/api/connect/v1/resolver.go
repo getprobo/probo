@@ -28,7 +28,6 @@ import (
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/authz"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
 )
 
 type (
@@ -43,8 +42,6 @@ type (
 
 func NewMux(logger *log.Logger, svc *iam.Service, cookieConfig securecookie.Config, tokenSecret string, baseURL *baseurl.BaseURL) *chi.Mux {
 	r := chi.NewMux()
-
-	r.Use(gqlutils.HTTPContextMiddleware)
 
 	sessionMiddleware := authn.NewSessionMiddleware(svc, cookieConfig)
 	apiKeyMiddleware := authn.NewAPIKeyMiddleware(svc, tokenSecret)

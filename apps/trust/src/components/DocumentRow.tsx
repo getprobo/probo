@@ -53,7 +53,7 @@ export function DocumentRow(props: { document: DocumentRowFragment$key }) {
     document.hasUserRequestedAccess,
   );
   return (
-    <div className="text-sm border-1 border-border-solid -mt-[1px] flex gap-3 flex-col md:flex-row md:justify-between px-6 py-3">
+    <div className="text-sm border border-border-solid -mt-px flex gap-3 flex-col md:flex-row md:justify-between px-6 py-3">
       <div className="flex items-center gap-2">
         <IconPageTextLine size={16} className=" flex-none text-txt-tertiary" />
         {document.title}

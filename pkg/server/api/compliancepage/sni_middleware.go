@@ -12,34 +12,33 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package gqlutils
+package compliancepage
 
 import (
 	"context"
 	"net/http"
+
+	"go.probo.inc/probo/pkg/trust"
 )
 
-type (
-	ctxKey struct{ name string }
-)
+func NewSNIMiddleware(trustSvc *trust.Service) func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ctx := r.Context()
 
-var (
-	httpResponseWriterKey = &ctxKey{name: "http_response_writer"}
-	httpRequestKey        = &ctxKey{name: "http_request"}
-)
+			if r.TLS == nil {
+				next.ServeHTTP(w, r)
+				return
+			}
 
-func WithHTTPContext(ctx context.Context, w http.ResponseWriter, r *http.Request) context.Context {
+			compliancePage, err := trustSvc.GetByDomainName(ctx, r.TLS.ServerName)
+			if err != nil || !compliancePage.Active {
+				next.ServeHTTP(w, r)
+				return
+			}
 
-	ctx = context.WithValue(ctx, httpResponseWriterKey, w)
-	ctx = context.WithValue(ctx, httpRequestKey, r)
-
-	return ctx
-}
-
-func HTTPResponseWriterFromContext(ctx context.Context) http.ResponseWriter {
-	return ctx.Value(httpResponseWriterKey).(http.ResponseWriter)
-}
-
-func HTTPRequestFromContext(ctx context.Context) *http.Request {
-	return ctx.Value(httpRequestKey).(*http.Request)
+			ctx = context.WithValue(ctx, compliancePageKey, compliancePage)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
+	}
 }
