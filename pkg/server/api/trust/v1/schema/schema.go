@@ -21,6 +21,7 @@ import (
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/server/api/trust/v1/types"
+	"go.probo.inc/probo/pkg/server/gqlutils/directives/session"
 	"go.probo.inc/probo/pkg/server/gqlutils/types/cursor"
 	gid1 "go.probo.inc/probo/pkg/server/gqlutils/types/gid"
 	mail1 "go.probo.inc/probo/pkg/server/gqlutils/types/mail"
@@ -59,7 +60,7 @@ type ResolverRoot interface {
 }
 
 type DirectiveRoot struct {
-	MustBeAuthenticated func(ctx context.Context, obj any, next graphql.Resolver, role *types.Role) (res any, err error)
+	Session func(ctx context.Context, obj any, next graphql.Resolver, required session.SessionRequirement) (res any, err error)
 }
 
 type ComplexityRoot struct {
@@ -1189,8 +1190,6 @@ directive @goModel(
 
 directive @goEnum(value: String) on ENUM_VALUE
 
-directive @mustBeAuthenticated(role: Role = NONE) on FIELD_DEFINITION | OBJECT
-
 enum Role {
   NONE
   USER
@@ -1787,39 +1786,78 @@ type AcceptNonDisclosureAgreementPayload {
 type Query {
   viewer: Identity
   node(id: ID!): Node!
-  currentTrustCenter: TrustCenter @mustBeAuthenticated(role: NONE)
+  currentTrustCenter: TrustCenter @session(required: NONE)
 }
 
 type Mutation {
   signInWithToken(input: SignInWithTokenInput!): SignInWithTokenPayload!
 
   requestAllAccesses(input: RequestAllAccessesInput!): RequestAccessesPayload!
-    @mustBeAuthenticated(role: NONE)
+    @session(required: NONE)
 
   exportDocumentPDF(input: ExportDocumentPDFInput!): ExportDocumentPDFPayload!
-    @mustBeAuthenticated(role: NONE)
+    @session(required: NONE)
 
   exportReportPDF(input: ExportReportPDFInput!): ExportReportPDFPayload!
-    @mustBeAuthenticated(role: NONE)
+    @session(required: NONE)
 
   acceptNonDisclosureAgreement: AcceptNonDisclosureAgreementPayload!
-    @mustBeAuthenticated(role: USER)
+    @session(required: PRESENT)
 
   requestDocumentAccess(
     input: RequestDocumentAccessInput!
-  ): RequestAccessesPayload! @mustBeAuthenticated(role: NONE)
+  ): RequestAccessesPayload! @session(required: NONE)
 
   requestReportAccess(
     input: RequestReportAccessInput!
-  ): RequestAccessesPayload! @mustBeAuthenticated(role: NONE)
+  ): RequestAccessesPayload! @session(required: NONE)
 
   requestTrustCenterFileAccess(
     input: RequestTrustCenterFileAccessInput!
-  ): RequestAccessesPayload! @mustBeAuthenticated(role: NONE)
+  ): RequestAccessesPayload! @session(required: NONE)
 
   exportTrustCenterFile(
     input: ExportTrustCenterFileInput!
-  ): ExportTrustCenterFilePayload! @mustBeAuthenticated(role: NONE)
+  ): ExportTrustCenterFilePayload! @session(required: NONE)
+}
+`, BuiltIn: false},
+	{Name: "../../../../gqlutils/directives/session/schema.graphql", Input: `# Session directive for GraphQL APIs
+# Include this schema in your gqlgen configuration to enable session-based access control.
+#
+# Usage in your schema.graphql:
+#   type Query {
+#     viewer: User @session(required: PRESENT)
+#     publicData: Data @session(required: OPTIONAL)
+#     signup(input: SignUpInput!): SignUpPayload @session(required: NONE)
+#   }
+
+directive @session(required: SessionRequirement!) on FIELD_DEFINITION
+
+enum SessionRequirement
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/gqlutils/directives/session.SessionRequirement"
+  ) {
+  """
+  Requires an authenticated session or API key.
+  """
+  PRESENT
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/server/gqlutils/directives/session.SessionRequirementPresent"
+    )
+  """
+  Forbids authenticated access (e.g., for login/signup endpoints).
+  """
+  NONE
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/server/gqlutils/directives/session.SessionRequirementNone"
+    )
+  """
+  Allows both authenticated and unauthenticated access.
+  """
+  OPTIONAL
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/server/gqlutils/directives/session.SessionRequirementOptional"
+    )
 }
 `, BuiltIn: false},
 }
@@ -1829,14 +1867,14 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
 // region    ***************************** args.gotpl *****************************
 
-func (ec *executionContext) dir_mustBeAuthenticated_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+func (ec *executionContext) dir_session_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "role", ec.unmarshalORole2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRole)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "required", ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement)
 	if err != nil {
 		return nil, err
 	}
-	args["role"] = arg0
+	args["required"] = arg0
 	return args, nil
 }
 
@@ -3133,16 +3171,16 @@ func (ec *executionContext) _Mutation_requestAllAccesses(ctx context.Context, fi
 			directive0 := next
 
 			directive1 := func(ctx context.Context) (any, error) {
-				role, err := ec.unmarshalORole2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRole(ctx, "NONE")
+				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement(ctx, "NONE")
 				if err != nil {
 					var zeroVal *types.RequestAccessesPayload
 					return zeroVal, err
 				}
-				if ec.directives.MustBeAuthenticated == nil {
+				if ec.directives.Session == nil {
 					var zeroVal *types.RequestAccessesPayload
-					return zeroVal, errors.New("directive mustBeAuthenticated is not implemented")
+					return zeroVal, errors.New("directive session is not implemented")
 				}
-				return ec.directives.MustBeAuthenticated(ctx, nil, directive0, role)
+				return ec.directives.Session(ctx, nil, directive0, required)
 			}
 
 			next = directive1
@@ -3196,16 +3234,16 @@ func (ec *executionContext) _Mutation_exportDocumentPDF(ctx context.Context, fie
 			directive0 := next
 
 			directive1 := func(ctx context.Context) (any, error) {
-				role, err := ec.unmarshalORole2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRole(ctx, "NONE")
+				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement(ctx, "NONE")
 				if err != nil {
 					var zeroVal *types.ExportDocumentPDFPayload
 					return zeroVal, err
 				}
-				if ec.directives.MustBeAuthenticated == nil {
+				if ec.directives.Session == nil {
 					var zeroVal *types.ExportDocumentPDFPayload
-					return zeroVal, errors.New("directive mustBeAuthenticated is not implemented")
+					return zeroVal, errors.New("directive session is not implemented")
 				}
-				return ec.directives.MustBeAuthenticated(ctx, nil, directive0, role)
+				return ec.directives.Session(ctx, nil, directive0, required)
 			}
 
 			next = directive1
@@ -3259,16 +3297,16 @@ func (ec *executionContext) _Mutation_exportReportPDF(ctx context.Context, field
 			directive0 := next
 
 			directive1 := func(ctx context.Context) (any, error) {
-				role, err := ec.unmarshalORole2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRole(ctx, "NONE")
+				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement(ctx, "NONE")
 				if err != nil {
 					var zeroVal *types.ExportReportPDFPayload
 					return zeroVal, err
 				}
-				if ec.directives.MustBeAuthenticated == nil {
+				if ec.directives.Session == nil {
 					var zeroVal *types.ExportReportPDFPayload
-					return zeroVal, errors.New("directive mustBeAuthenticated is not implemented")
+					return zeroVal, errors.New("directive session is not implemented")
 				}
-				return ec.directives.MustBeAuthenticated(ctx, nil, directive0, role)
+				return ec.directives.Session(ctx, nil, directive0, required)
 			}
 
 			next = directive1
@@ -3321,16 +3359,16 @@ func (ec *executionContext) _Mutation_acceptNonDisclosureAgreement(ctx context.C
 			directive0 := next
 
 			directive1 := func(ctx context.Context) (any, error) {
-				role, err := ec.unmarshalORole2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRole(ctx, "USER")
+				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement(ctx, "PRESENT")
 				if err != nil {
 					var zeroVal *types.AcceptNonDisclosureAgreementPayload
 					return zeroVal, err
 				}
-				if ec.directives.MustBeAuthenticated == nil {
+				if ec.directives.Session == nil {
 					var zeroVal *types.AcceptNonDisclosureAgreementPayload
-					return zeroVal, errors.New("directive mustBeAuthenticated is not implemented")
+					return zeroVal, errors.New("directive session is not implemented")
 				}
-				return ec.directives.MustBeAuthenticated(ctx, nil, directive0, role)
+				return ec.directives.Session(ctx, nil, directive0, required)
 			}
 
 			next = directive1
@@ -3373,16 +3411,16 @@ func (ec *executionContext) _Mutation_requestDocumentAccess(ctx context.Context,
 			directive0 := next
 
 			directive1 := func(ctx context.Context) (any, error) {
-				role, err := ec.unmarshalORole2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRole(ctx, "NONE")
+				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement(ctx, "NONE")
 				if err != nil {
 					var zeroVal *types.RequestAccessesPayload
 					return zeroVal, err
 				}
-				if ec.directives.MustBeAuthenticated == nil {
+				if ec.directives.Session == nil {
 					var zeroVal *types.RequestAccessesPayload
-					return zeroVal, errors.New("directive mustBeAuthenticated is not implemented")
+					return zeroVal, errors.New("directive session is not implemented")
 				}
-				return ec.directives.MustBeAuthenticated(ctx, nil, directive0, role)
+				return ec.directives.Session(ctx, nil, directive0, required)
 			}
 
 			next = directive1
@@ -3436,16 +3474,16 @@ func (ec *executionContext) _Mutation_requestReportAccess(ctx context.Context, f
 			directive0 := next
 
 			directive1 := func(ctx context.Context) (any, error) {
-				role, err := ec.unmarshalORole2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRole(ctx, "NONE")
+				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement(ctx, "NONE")
 				if err != nil {
 					var zeroVal *types.RequestAccessesPayload
 					return zeroVal, err
 				}
-				if ec.directives.MustBeAuthenticated == nil {
+				if ec.directives.Session == nil {
 					var zeroVal *types.RequestAccessesPayload
-					return zeroVal, errors.New("directive mustBeAuthenticated is not implemented")
+					return zeroVal, errors.New("directive session is not implemented")
 				}
-				return ec.directives.MustBeAuthenticated(ctx, nil, directive0, role)
+				return ec.directives.Session(ctx, nil, directive0, required)
 			}
 
 			next = directive1
@@ -3499,16 +3537,16 @@ func (ec *executionContext) _Mutation_requestTrustCenterFileAccess(ctx context.C
 			directive0 := next
 
 			directive1 := func(ctx context.Context) (any, error) {
-				role, err := ec.unmarshalORole2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRole(ctx, "NONE")
+				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement(ctx, "NONE")
 				if err != nil {
 					var zeroVal *types.RequestAccessesPayload
 					return zeroVal, err
 				}
-				if ec.directives.MustBeAuthenticated == nil {
+				if ec.directives.Session == nil {
 					var zeroVal *types.RequestAccessesPayload
-					return zeroVal, errors.New("directive mustBeAuthenticated is not implemented")
+					return zeroVal, errors.New("directive session is not implemented")
 				}
-				return ec.directives.MustBeAuthenticated(ctx, nil, directive0, role)
+				return ec.directives.Session(ctx, nil, directive0, required)
 			}
 
 			next = directive1
@@ -3562,16 +3600,16 @@ func (ec *executionContext) _Mutation_exportTrustCenterFile(ctx context.Context,
 			directive0 := next
 
 			directive1 := func(ctx context.Context) (any, error) {
-				role, err := ec.unmarshalORole2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRole(ctx, "NONE")
+				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement(ctx, "NONE")
 				if err != nil {
 					var zeroVal *types.ExportTrustCenterFilePayload
 					return zeroVal, err
 				}
-				if ec.directives.MustBeAuthenticated == nil {
+				if ec.directives.Session == nil {
 					var zeroVal *types.ExportTrustCenterFilePayload
-					return zeroVal, errors.New("directive mustBeAuthenticated is not implemented")
+					return zeroVal, errors.New("directive session is not implemented")
 				}
-				return ec.directives.MustBeAuthenticated(ctx, nil, directive0, role)
+				return ec.directives.Session(ctx, nil, directive0, required)
 			}
 
 			next = directive1
@@ -4027,16 +4065,16 @@ func (ec *executionContext) _Query_currentTrustCenter(ctx context.Context, field
 			directive0 := next
 
 			directive1 := func(ctx context.Context) (any, error) {
-				role, err := ec.unmarshalORole2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRole(ctx, "NONE")
+				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement(ctx, "NONE")
 				if err != nil {
 					var zeroVal *types.TrustCenter
 					return zeroVal, err
 				}
-				if ec.directives.MustBeAuthenticated == nil {
+				if ec.directives.Session == nil {
 					var zeroVal *types.TrustCenter
-					return zeroVal, errors.New("directive mustBeAuthenticated is not implemented")
+					return zeroVal, errors.New("directive session is not implemented")
 				}
-				return ec.directives.MustBeAuthenticated(ctx, nil, directive0, role)
+				return ec.directives.Session(ctx, nil, directive0, required)
 			}
 
 			next = directive1
@@ -11289,6 +11327,36 @@ func (ec *executionContext) unmarshalNRequestTrustCenterFileAccessInput2goᚗpro
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement(ctx context.Context, v any) (session.SessionRequirement, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement(ctx context.Context, sel ast.SelectionSet, v session.SessionRequirement) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement = map[string]session.SessionRequirement{
+		"PRESENT":  session.SessionRequirementPresent,
+		"NONE":     session.SessionRequirementNone,
+		"OPTIONAL": session.SessionRequirementOptional,
+	}
+	marshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement = map[session.SessionRequirement]string{
+		session.SessionRequirementPresent:  "PRESENT",
+		session.SessionRequirementNone:     "NONE",
+		session.SessionRequirementOptional: "OPTIONAL",
+	}
+)
+
 func (ec *executionContext) unmarshalNSignInWithTokenInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐSignInWithTokenInput(ctx context.Context, v any) (types.SignInWithTokenInput, error) {
 	res, err := ec.unmarshalInputSignInWithTokenInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -11967,22 +12035,6 @@ func (ec *executionContext) marshalOReport2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋs
 		return graphql.Null
 	}
 	return ec._Report(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalORole2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRole(ctx context.Context, v any) (*types.Role, error) {
-	if v == nil {
-		return nil, nil
-	}
-	var res = new(types.Role)
-	err := res.UnmarshalGQL(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalORole2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRole(ctx context.Context, sel ast.SelectionSet, v *types.Role) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return v
 }
 
 func (ec *executionContext) unmarshalOString2ᚕstringᚄ(ctx context.Context, v any) ([]string, error) {

@@ -12,8 +12,6 @@ directive @goModel(
 
 directive @goEnum(value: String) on ENUM_VALUE
 
-directive @mustBeAuthenticated(role: Role = NONE) on FIELD_DEFINITION | OBJECT
-
 enum Role {
   NONE
   USER
@@ -610,37 +608,37 @@ type AcceptNonDisclosureAgreementPayload {
 type Query {
   viewer: Identity
   node(id: ID!): Node!
-  currentTrustCenter: TrustCenter @mustBeAuthenticated(role: NONE)
+  currentTrustCenter: TrustCenter @session(required: NONE)
 }
 
 type Mutation {
   signInWithToken(input: SignInWithTokenInput!): SignInWithTokenPayload!
 
   requestAllAccesses(input: RequestAllAccessesInput!): RequestAccessesPayload!
-    @mustBeAuthenticated(role: NONE)
+    @session(required: NONE)
 
   exportDocumentPDF(input: ExportDocumentPDFInput!): ExportDocumentPDFPayload!
-    @mustBeAuthenticated(role: NONE)
+    @session(required: NONE)
 
   exportReportPDF(input: ExportReportPDFInput!): ExportReportPDFPayload!
-    @mustBeAuthenticated(role: NONE)
+    @session(required: NONE)
 
   acceptNonDisclosureAgreement: AcceptNonDisclosureAgreementPayload!
-    @mustBeAuthenticated(role: USER)
+    @session(required: PRESENT)
 
   requestDocumentAccess(
     input: RequestDocumentAccessInput!
-  ): RequestAccessesPayload! @mustBeAuthenticated(role: NONE)
+  ): RequestAccessesPayload! @session(required: NONE)
 
   requestReportAccess(
     input: RequestReportAccessInput!
-  ): RequestAccessesPayload! @mustBeAuthenticated(role: NONE)
+  ): RequestAccessesPayload! @session(required: NONE)
 
   requestTrustCenterFileAccess(
     input: RequestTrustCenterFileAccessInput!
-  ): RequestAccessesPayload! @mustBeAuthenticated(role: NONE)
+  ): RequestAccessesPayload! @session(required: NONE)
 
   exportTrustCenterFile(
     input: ExportTrustCenterFileInput!
-  ): ExportTrustCenterFilePayload! @mustBeAuthenticated(role: NONE)
+  ): ExportTrustCenterFilePayload! @session(required: NONE)
 }
