@@ -1,4 +1,4 @@
-schema: ["schema.graphql"]
+schema: ["schema.graphql", "../../gqlutils/directives/session/schema.graphql"]
 
 exec:
   filename: "schema/schema.go"
@@ -19,6 +19,8 @@ call_argument_directives_with_null: true
 
 directives:
   mustBeAuthorized:
+    skip_runtime: false
+  session:
     skip_runtime: false
 
 models:

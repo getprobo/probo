@@ -15,10 +15,8 @@
 package connect_v1
 
 import (
-	"context"
 	"net/http"
 
-	"github.com/99designs/gqlgen/graphql"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/iam"
@@ -26,34 +24,9 @@ import (
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/authz"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/schema"
-	"go.probo.inc/probo/pkg/server/api/connect/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlutils/directives/session"
 )
-
-func SessionDirective(ctx context.Context, obj any, next graphql.Resolver, required types.SessionRequirement) (any, error) {
-	session := authn.SessionFromContext(ctx)
-	apiKey := authn.APIKeyFromContext(ctx)
-
-	switch required {
-	case types.SessionRequirementOptional:
-	case types.SessionRequirementPresent:
-		if session == nil && apiKey == nil {
-			return nil, gqlutils.Unauthenticatedf(
-				ctx,
-				"authentication is required to access this resouce",
-			)
-		}
-	case types.SessionRequirementNone:
-		if session != nil && apiKey != nil {
-			return nil, gqlutils.Invalidf(
-				ctx,
-				"authentication not allowed for this resource/action",
-			)
-		}
-	}
-
-	return next(ctx)
-}
 
 func NewGraphQLHandler(svc *iam.Service, logger *log.Logger, baseURL *baseurl.BaseURL, cookieConfig securecookie.Config) http.Handler {
 	config := schema.Config{
@@ -65,7 +38,7 @@ func NewGraphQLHandler(svc *iam.Service, logger *log.Logger, baseURL *baseurl.Ba
 			sessionCookie: authn.NewCookie(&cookieConfig),
 		},
 		Directives: schema.DirectiveRoot{
-			Session: SessionDirective,
+			Session: session.Directive,
 		},
 	}
 
