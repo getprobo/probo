@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<0faaebe3baf4c750825599985210137d>>
+ * @generated SignedSource<<7b9033da420b208f17d993bee5023358>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,11 +11,9 @@
 import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type DocumentType = "ISMS" | "OTHER" | "POLICY" | "PROCEDURE";
-export type TrustGraphDocumentsQuery$variables = {
-  slug: string;
-};
+export type TrustGraphDocumentsQuery$variables = Record<PropertyKey, never>;
 export type TrustGraphDocumentsQuery$data = {
-  readonly trustCenterBySlug: {
+  readonly currentTrustCenter: {
     readonly documents: {
       readonly edges: ReadonlyArray<{
         readonly node: {
@@ -46,63 +44,49 @@ export type TrustGraphDocumentsQuery = {
 };
 
 const node: ConcreteRequest = (function(){
-var v0 = [
-  {
-    "defaultValue": null,
-    "kind": "LocalArgument",
-    "name": "slug"
-  }
-],
-v1 = [
-  {
-    "kind": "Variable",
-    "name": "slug",
-    "variableName": "slug"
-  }
-],
-v2 = {
+var v0 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "id",
   "storageKey": null
 },
-v3 = {
+v1 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "name",
   "storageKey": null
 },
-v4 = [
+v2 = [
   {
     "kind": "Literal",
     "name": "first",
     "value": 50
   }
 ],
-v5 = {
+v3 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "documentType",
   "storageKey": null
 },
-v6 = {
+v4 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "category",
   "storageKey": null
 },
-v7 = {
+v5 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "isUserAuthorized",
   "storageKey": null
 },
-v8 = {
+v6 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
@@ -111,20 +95,20 @@ v8 = {
 };
 return {
   "fragment": {
-    "argumentDefinitions": (v0/*: any*/),
+    "argumentDefinitions": [],
     "kind": "Fragment",
     "metadata": null,
     "name": "TrustGraphDocumentsQuery",
     "selections": [
       {
         "alias": null,
-        "args": (v1/*: any*/),
+        "args": null,
         "concreteType": "TrustCenter",
         "kind": "LinkedField",
-        "name": "trustCenterBySlug",
+        "name": "currentTrustCenter",
         "plural": false,
         "selections": [
-          (v2/*: any*/),
+          (v0/*: any*/),
           {
             "alias": null,
             "args": null,
@@ -133,13 +117,13 @@ return {
             "name": "organization",
             "plural": false,
             "selections": [
-              (v3/*: any*/)
+              (v1/*: any*/)
             ],
             "storageKey": null
           },
           {
             "alias": null,
-            "args": (v4/*: any*/),
+            "args": (v2/*: any*/),
             "concreteType": "DocumentConnection",
             "kind": "LinkedField",
             "name": "documents",
@@ -161,8 +145,8 @@ return {
                     "name": "node",
                     "plural": false,
                     "selections": [
-                      (v2/*: any*/),
-                      (v5/*: any*/),
+                      (v0/*: any*/),
+                      (v3/*: any*/),
                       {
                         "args": null,
                         "kind": "FragmentSpread",
@@ -179,7 +163,7 @@ return {
           },
           {
             "alias": null,
-            "args": (v4/*: any*/),
+            "args": (v2/*: any*/),
             "concreteType": "TrustCenterFileConnection",
             "kind": "LinkedField",
             "name": "trustCenterFiles",
@@ -201,8 +185,8 @@ return {
                     "name": "node",
                     "plural": false,
                     "selections": [
-                      (v2/*: any*/),
-                      (v6/*: any*/),
+                      (v0/*: any*/),
+                      (v4/*: any*/),
                       {
                         "args": null,
                         "kind": "FragmentSpread",
@@ -226,19 +210,19 @@ return {
   },
   "kind": "Request",
   "operation": {
-    "argumentDefinitions": (v0/*: any*/),
+    "argumentDefinitions": [],
     "kind": "Operation",
     "name": "TrustGraphDocumentsQuery",
     "selections": [
       {
         "alias": null,
-        "args": (v1/*: any*/),
+        "args": null,
         "concreteType": "TrustCenter",
         "kind": "LinkedField",
-        "name": "trustCenterBySlug",
+        "name": "currentTrustCenter",
         "plural": false,
         "selections": [
-          (v2/*: any*/),
+          (v0/*: any*/),
           {
             "alias": null,
             "args": null,
@@ -247,14 +231,14 @@ return {
             "name": "organization",
             "plural": false,
             "selections": [
-              (v3/*: any*/),
-              (v2/*: any*/)
+              (v1/*: any*/),
+              (v0/*: any*/)
             ],
             "storageKey": null
           },
           {
             "alias": null,
-            "args": (v4/*: any*/),
+            "args": (v2/*: any*/),
             "concreteType": "DocumentConnection",
             "kind": "LinkedField",
             "name": "documents",
@@ -276,8 +260,8 @@ return {
                     "name": "node",
                     "plural": false,
                     "selections": [
-                      (v2/*: any*/),
-                      (v5/*: any*/),
+                      (v0/*: any*/),
+                      (v3/*: any*/),
                       {
                         "alias": null,
                         "args": null,
@@ -285,8 +269,8 @@ return {
                         "name": "title",
                         "storageKey": null
                       },
-                      (v7/*: any*/),
-                      (v8/*: any*/)
+                      (v5/*: any*/),
+                      (v6/*: any*/)
                     ],
                     "storageKey": null
                   }
@@ -298,7 +282,7 @@ return {
           },
           {
             "alias": null,
-            "args": (v4/*: any*/),
+            "args": (v2/*: any*/),
             "concreteType": "TrustCenterFileConnection",
             "kind": "LinkedField",
             "name": "trustCenterFiles",
@@ -320,11 +304,11 @@ return {
                     "name": "node",
                     "plural": false,
                     "selections": [
-                      (v2/*: any*/),
-                      (v6/*: any*/),
-                      (v3/*: any*/),
-                      (v7/*: any*/),
-                      (v8/*: any*/)
+                      (v0/*: any*/),
+                      (v4/*: any*/),
+                      (v1/*: any*/),
+                      (v5/*: any*/),
+                      (v6/*: any*/)
                     ],
                     "storageKey": null
                   }
@@ -340,16 +324,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "151fc8b1cf3becb2a69d87ce978fb71b",
+    "cacheID": "cf917e2efd7c2f644d222385443fd923",
     "id": null,
     "metadata": {},
     "name": "TrustGraphDocumentsQuery",
     "operationKind": "query",
-    "text": "query TrustGraphDocumentsQuery(\n  $slug: String!\n) {\n  trustCenterBySlug(slug: $slug) {\n    id\n    organization {\n      name\n      id\n    }\n    documents(first: 50) {\n      edges {\n        node {\n          id\n          documentType\n          ...DocumentRowFragment\n        }\n      }\n    }\n    trustCenterFiles(first: 50) {\n      edges {\n        node {\n          id\n          category\n          ...TrustCenterFileRowFragment\n        }\n      }\n    }\n  }\n}\n\nfragment DocumentRowFragment on Document {\n  id\n  title\n  isUserAuthorized\n  hasUserRequestedAccess\n}\n\nfragment TrustCenterFileRowFragment on TrustCenterFile {\n  id\n  name\n  isUserAuthorized\n  hasUserRequestedAccess\n}\n"
+    "text": "query TrustGraphDocumentsQuery {\n  currentTrustCenter {\n    id\n    organization {\n      name\n      id\n    }\n    documents(first: 50) {\n      edges {\n        node {\n          id\n          documentType\n          ...DocumentRowFragment\n        }\n      }\n    }\n    trustCenterFiles(first: 50) {\n      edges {\n        node {\n          id\n          category\n          ...TrustCenterFileRowFragment\n        }\n      }\n    }\n  }\n}\n\nfragment DocumentRowFragment on Document {\n  id\n  title\n  isUserAuthorized\n  hasUserRequestedAccess\n}\n\nfragment TrustCenterFileRowFragment on TrustCenterFile {\n  id\n  name\n  isUserAuthorized\n  hasUserRequestedAccess\n}\n"
   }
 };
 })();
 
-(node as any).hash = "79e21d586ec18a0977c37df27aa9bdea";
+(node as any).hash = "32ee5adbf1a5cf44f836f45990a95732";
 
 export default node;

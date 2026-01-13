@@ -25,9 +25,9 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
-	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api/authn"
+	"go.probo.inc/probo/pkg/server/api/compliancepage"
 	"go.probo.inc/probo/pkg/server/api/trust/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/trust/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
@@ -58,16 +58,19 @@ type (
 type ctxKey struct{ name string }
 
 var (
-	TrustCenterKey = &ctxKey{name: "trust_center"}
+	trustCenterIDKey = &ctxKey{name: "trust_center_id"}
 )
 
-func TrustCenterFromContext(ctx context.Context) probo.TrustCenterInfo {
-	trustCenter, _ := ctx.Value(TrustCenterKey).(probo.TrustCenterInfo)
-	return trustCenter
+func TrustCenterIDFromContext(ctx context.Context) gid.GID {
+	if trustCenterID, ok := ctx.Value(trustCenterIDKey).(gid.GID); ok {
+		return trustCenterID
+	}
+
+	return gid.Nil
 }
 
-func ContextWithTrustCenter(ctx context.Context, trustCenter probo.TrustCenterInfo) context.Context {
-	return context.WithValue(ctx, TrustCenterKey, trustCenter)
+func ContextWithTrustCenterID(ctx context.Context, trustCenterID gid.GID) context.Context {
+	return context.WithValue(ctx, trustCenterIDKey, trustCenterID)
 }
 
 func NewMux(
@@ -78,8 +81,8 @@ func NewMux(
 ) *chi.Mux {
 	r := chi.NewMux()
 
-	sessionMiddleware := authn.NewSessionMiddleware(iamSvc, cookieConfig)
-	r.Use(sessionMiddleware)
+	r.Use(compliancepage.NewCompliancePagePresenceMiddleware())
+	r.Use(authn.NewSessionMiddleware(iamSvc, cookieConfig))
 
 	config := schema.Config{
 		Resolvers: &Resolver{

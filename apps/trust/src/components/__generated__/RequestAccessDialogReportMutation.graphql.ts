@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<d3209530c326da3c7db6535cef428ded>>
+ * @generated SignedSource<<6fde198cd3eaa998d665639c48f5e630>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -13,7 +13,6 @@ export type RequestReportAccessInput = {
   email: any;
   fullName: string;
   reportId: string;
-  trustCenterId: string;
 };
 export type RequestAccessDialogReportMutation$variables = {
   input: RequestReportAccessInput;

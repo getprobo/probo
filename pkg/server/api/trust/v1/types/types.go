@@ -20,10 +20,6 @@ type Node interface {
 	GetID() gid.GID
 }
 
-type AcceptNonDisclosureAgreementInput struct {
-	TrustCenterID gid.GID `json:"trustCenterId"`
-}
-
 type AcceptNonDisclosureAgreementPayload struct {
 	Success bool `json:"success"`
 }
@@ -155,27 +151,23 @@ type RequestAccessesPayload struct {
 }
 
 type RequestAllAccessesInput struct {
-	TrustCenterID gid.GID   `json:"trustCenterId"`
-	Email         mail.Addr `json:"email"`
-	FullName      string    `json:"fullName"`
+	Email    mail.Addr `json:"email"`
+	FullName string    `json:"fullName"`
 }
 
 type RequestDocumentAccessInput struct {
-	TrustCenterID gid.GID   `json:"trustCenterId"`
-	DocumentID    gid.GID   `json:"documentId"`
-	Email         mail.Addr `json:"email"`
-	FullName      string    `json:"fullName"`
+	DocumentID gid.GID   `json:"documentId"`
+	Email      mail.Addr `json:"email"`
+	FullName   string    `json:"fullName"`
 }
 
 type RequestReportAccessInput struct {
-	TrustCenterID gid.GID   `json:"trustCenterId"`
-	ReportID      gid.GID   `json:"reportId"`
-	Email         mail.Addr `json:"email"`
-	FullName      string    `json:"fullName"`
+	ReportID gid.GID   `json:"reportId"`
+	Email    mail.Addr `json:"email"`
+	FullName string    `json:"fullName"`
 }
 
 type RequestTrustCenterFileAccessInput struct {
-	TrustCenterID     gid.GID   `json:"trustCenterId"`
 	TrustCenterFileID gid.GID   `json:"trustCenterFileId"`
 	Email             mail.Addr `json:"email"`
 	FullName          string    `json:"fullName"`

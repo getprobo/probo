@@ -25,12 +25,11 @@ import (
 	"go.probo.inc/probo/pkg/agents"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/connector"
-	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api"
-	trust_v1 "go.probo.inc/probo/pkg/server/api/trust/v1"
+	"go.probo.inc/probo/pkg/server/api/compliancepage"
 	trust_web "go.probo.inc/probo/pkg/server/trust"
 	console_web "go.probo.inc/probo/pkg/server/web"
 	"go.probo.inc/probo/pkg/slack"
@@ -60,6 +59,7 @@ type Server struct {
 	router            *chi.Mux
 	extraHeaderFields map[string]string
 	proboService      *probo.Service
+	trustService      *trust.Service
 	logger            *log.Logger
 }
 
@@ -102,6 +102,7 @@ func NewServer(cfg Config) (*Server, error) {
 		router:            router,
 		extraHeaderFields: cfg.ExtraHeaderFields,
 		proboService:      cfg.Probo,
+		trustService:      cfg.Trust,
 		logger:            cfg.Logger,
 	}
 
@@ -114,7 +115,7 @@ func (s *Server) setupRoutes() {
 	s.router.Mount("/api", http.StripPrefix("/api", s.apiServer))
 
 	s.router.Route("/trust/{slugOrId}", func(r chi.Router) {
-		r.Use(s.loadTrustCenterBySlugOrID)
+		r.Use(compliancepage.NewIDMiddleware(s.trustService))
 		r.Use(s.stripTrustPrefix)
 		r.Mount("/", s.trustCenterRouter())
 	})
@@ -135,117 +136,6 @@ func (s *Server) setExtraHeaders(w http.ResponseWriter) {
 
 func (s *Server) handleCustomDomain404(w http.ResponseWriter, r *http.Request) {
 	httpserver.RenderError(w, http.StatusNotFound, errors.New("not found"))
-}
-
-func (s *Server) loadTrustCenterBySlugOrID(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-		slugOrId := chi.URLParam(r, "slugOrId")
-
-		// Try to parse as GID first
-		var trustCenter *probo.TrustCenterInfo
-		var err error
-
-		if id, parseErr := gid.ParseGID(slugOrId); parseErr == nil {
-			// It's a valid ID, load by ID
-			s.logger.InfoCtx(ctx, "loading trust center by ID",
-				log.String("id", id.String()),
-				log.String("path", r.URL.Path),
-			)
-
-			trustCenter, err = s.proboService.LoadTrustCenterByID(ctx, id)
-			if err != nil {
-				s.logger.WarnCtx(ctx, "trust center not found",
-					log.String("id", id.String()),
-					log.Error(err),
-				)
-				http.Error(w, "Trust center not found", http.StatusNotFound)
-				return
-			}
-
-			s.logger.InfoCtx(ctx, "trust center loaded by ID",
-				log.String("id", id.String()),
-				log.String("trust_center_id", trustCenter.ID.String()),
-				log.String("organization_id", trustCenter.OrganizationID.String()),
-			)
-		} else {
-			// Not a valid ID, treat as slug
-			s.logger.InfoCtx(ctx, "loading trust center by slug",
-				log.String("slug", slugOrId),
-				log.String("path", r.URL.Path),
-			)
-
-			trustCenter, err = s.proboService.LoadTrustCenterBySlug(ctx, slugOrId)
-			if err != nil {
-				s.logger.WarnCtx(ctx, "trust center not found",
-					log.String("slug", slugOrId),
-					log.Error(err),
-				)
-				http.Error(w, "Trust center not found", http.StatusNotFound)
-				return
-			}
-
-			s.logger.InfoCtx(ctx, "trust center loaded by slug",
-				log.String("slug", slugOrId),
-				log.String("trust_center_id", trustCenter.ID.String()),
-				log.String("organization_id", trustCenter.OrganizationID.String()),
-			)
-		}
-
-		ctx = trust_v1.ContextWithTrustCenter(ctx, *trustCenter)
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
-}
-
-func (s *Server) loadTrustCenterByDomain(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-
-		// For HTTP requests, use r.Host; for HTTPS requests, use r.TLS.ServerName
-		var domain string
-		if r.TLS != nil && r.TLS.ServerName != "" {
-			domain = r.TLS.ServerName
-		} else {
-			domain = r.Host
-		}
-
-		if domain == "" {
-			next.ServeHTTP(w, r)
-			return
-		}
-
-		s.logger.InfoCtx(ctx, "loading organization by custom domain",
-			log.String("domain", domain),
-			log.String("path", r.URL.Path),
-		)
-
-		organizationID, err := s.proboService.LoadOrganizationByDomain(ctx, domain)
-		if err != nil {
-			s.logger.WarnCtx(ctx, "organization not found for domain",
-				log.String("domain", domain),
-				log.Error(err),
-			)
-			next.ServeHTTP(w, r)
-			return
-		}
-
-		s.logger.InfoCtx(ctx, "organization loaded",
-			log.String("domain", domain),
-			log.String("organization_id", organizationID.String()),
-		)
-
-		trustCenter, err := s.proboService.LoadTrustCenterByOrganizationID(ctx, organizationID)
-		if err != nil {
-			s.logger.WarnCtx(ctx, "trust center not found",
-				log.Error(err),
-			)
-			http.Error(w, "Trust center not found", http.StatusNotFound)
-			return
-		}
-
-		ctx = trust_v1.ContextWithTrustCenter(ctx, *trustCenter)
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
 }
 
 func (s *Server) stripTrustPrefix(next http.Handler) http.Handler {
@@ -279,6 +169,7 @@ func (s *Server) trustCenterRouter() chi.Router {
 func (s *Server) TrustCenterHandler() http.Handler {
 	r := chi.NewRouter()
 
+	r.Use(compliancepage.NewSNIMiddleware(s.trustService))
 	r.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Strict-Transport-Security", "max-age=31536000; preload")
@@ -287,7 +178,6 @@ func (s *Server) TrustCenterHandler() http.Handler {
 		})
 	})
 
-	r.Use(s.loadTrustCenterByDomain)
 	r.NotFound(s.handleCustomDomain404)
 
 	r.Mount("/", s.trustCenterRouter())

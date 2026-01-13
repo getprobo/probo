@@ -22,38 +22,13 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
-	"go.gearno.de/kit/pg"
 )
 
 type TrustCenterService struct {
 	svc *TenantService
-}
-
-func (s TrustCenterService) GetBySlug(
-	ctx context.Context,
-	slug string,
-) (*coredata.TrustCenter, error) {
-	trustCenter := &coredata.TrustCenter{}
-
-	err := s.svc.pg.WithConn(
-		ctx,
-		func(conn pg.Conn) error {
-			err := trustCenter.LoadBySlug(ctx, conn, slug)
-			if err != nil {
-				return fmt.Errorf("cannot load trust center: %w", err)
-			}
-
-			return nil
-		},
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return trustCenter, nil
 }
 
 func (s TrustCenterService) Get(

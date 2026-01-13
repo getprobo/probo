@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<5113feef2c7f7b13a2d6348202086916>>
+ * @generated SignedSource<<9f01a480ccc5fa00e310296e9aed1020>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -13,7 +13,6 @@ export type RequestDocumentAccessInput = {
   documentId: string;
   email: any;
   fullName: string;
-  trustCenterId: string;
 };
 export type RequestAccessDialogDocumentMutation$variables = {
   input: RequestDocumentAccessInput;

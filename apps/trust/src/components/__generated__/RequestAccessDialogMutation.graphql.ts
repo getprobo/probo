@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<294b6a25a178cf3bd9269591ef61381f>>
+ * @generated SignedSource<<0777fa7e6e3d0c75eedfc8380d9965a4>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,7 +12,6 @@ import { ConcreteRequest } from 'relay-runtime';
 export type RequestAllAccessesInput = {
   email: any;
   fullName: string;
-  trustCenterId: string;
 };
 export type RequestAccessDialogMutation$variables = {
   input: RequestAllAccessesInput;

@@ -9,8 +9,8 @@ import { graphql } from "relay-runtime";
 import { useMutationWithToasts } from "/hooks/useMutationWithToast";
 
 const signMutation = graphql`
-  mutation NDADialogSignMutation($input: AcceptNonDisclosureAgreementInput!) {
-    acceptNonDisclosureAgreement(input: $input) {
+  mutation NDADialogSignMutation {
+    acceptNonDisclosureAgreement {
       success
     }
   }
@@ -20,12 +20,10 @@ export function NDADialog({
   name,
   url,
   fileName,
-  trustCenterId,
 }: {
   name: string;
   url?: string | null;
   fileName?: string | null;
-  trustCenterId: string;
 }) {
   const { __ } = useTranslate();
   useEffect(() => {
@@ -42,16 +40,6 @@ export function NDADialog({
       window.location.reload();
     },
   });
-
-  const handleSign = () => {
-    commitSigning({
-      variables: {
-        input: {
-          trustCenterId,
-        },
-      },
-    });
-  };
 
   return (
     <div className="fixed inset-0 bg-level-2 z-100 flex flex-col lg:h-screen">
@@ -82,7 +70,7 @@ export function NDADialog({
             </Card>
           )}
           <Button
-            onClick={handleSign}
+            onClick={() => commitSigning({ variables: {} })}
             className="h-10 w-full my-8"
             disabled={isSigning}
             icon={isSigning ? Spinner : undefined}

@@ -18,6 +18,7 @@ import (
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/server/api/authn"
+	"go.probo.inc/probo/pkg/server/api/compliancepage"
 	"go.probo.inc/probo/pkg/server/api/trust/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/trust/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
@@ -69,6 +70,7 @@ func (r *auditResolver) Report(ctx context.Context, obj *types.Audit) (*types.Re
 // IsUserAuthorized is the resolver for the isUserAuthorized field.
 func (r *documentResolver) IsUserAuthorized(ctx context.Context, obj *types.Document) (bool, error) {
 	trustService := r.TrustService(ctx, obj.ID.TenantID())
+	trustCenter := compliancepage.CompliancePageFromContext(ctx)
 
 	document, err := trustService.Documents.Get(ctx, obj.ID)
 	if err != nil {
@@ -85,7 +87,6 @@ func (r *documentResolver) IsUserAuthorized(ctx context.Context, obj *types.Docu
 		return false, gqlutils.Unauthenticatedf(ctx, "unauthenticated")
 	}
 
-	trustCenter := TrustCenterFromContext(ctx)
 	documentAccess, err := trustService.TrustCenterAccesses.LoadDocumentAccess(
 		ctx,
 		trustCenter.ID,
@@ -105,13 +106,13 @@ func (r *documentResolver) IsUserAuthorized(ctx context.Context, obj *types.Docu
 // HasUserRequestedAccess is the resolver for the hasUserRequestedAccess field.
 func (r *documentResolver) HasUserRequestedAccess(ctx context.Context, obj *types.Document) (bool, error) {
 	trustService := r.TrustService(ctx, obj.ID.TenantID())
+	trustCenter := compliancepage.CompliancePageFromContext(ctx)
 
 	identity := authn.IdentityFromContext(ctx)
 	if identity == nil {
 		return false, nil // User is not authenticated, so no access requested
 	}
 
-	trustCenter := TrustCenterFromContext(ctx)
 	// Try to load document access - if it exists (regardless of active status), user has requested it
 	_, err := trustService.TrustCenterAccesses.LoadDocumentAccess(
 		ctx,
@@ -166,7 +167,8 @@ func (r *mutationResolver) SignInWithToken(ctx context.Context, input types.Sign
 
 // RequestAllAccesses is the resolver for the requestAllAccesses field.
 func (r *mutationResolver) RequestAllAccesses(ctx context.Context, input types.RequestAllAccessesInput) (*types.RequestAccessesPayload, error) {
-	trustService := r.TrustService(ctx, input.TrustCenterID.TenantID())
+	trustCenter := compliancepage.CompliancePageFromContext(ctx)
+	trustService := r.TrustService(ctx, trustCenter.ID.TenantID())
 
 	identity := authn.IdentityFromContext(ctx)
 	if identity == nil {
@@ -186,7 +188,7 @@ func (r *mutationResolver) RequestAllAccesses(ctx context.Context, input types.R
 	access, err := trustService.TrustCenterAccesses.Request(
 		ctx,
 		&trust.TrustCenterAccessRequest{
-			TrustCenterID: input.TrustCenterID,
+			TrustCenterID: trustCenter.ID,
 			Email:         identity.EmailAddress,
 			FullName:      identity.FullName,
 			DocumentIDs:   nil,
@@ -212,8 +214,7 @@ func (r *mutationResolver) RequestAllAccesses(ctx context.Context, input types.R
 // ExportDocumentPDF is the resolver for the exportDocumentPDF field.
 func (r *mutationResolver) ExportDocumentPDF(ctx context.Context, input types.ExportDocumentPDFInput) (*types.ExportDocumentPDFPayload, error) {
 	trustService := r.TrustService(ctx, input.DocumentID.TenantID())
-
-	trustCenterInfo := TrustCenterFromContext(ctx)
+	trustCenter := compliancepage.CompliancePageFromContext(ctx)
 
 	document, err := trustService.Documents.Get(ctx, input.DocumentID)
 	if err != nil {
@@ -241,10 +242,6 @@ func (r *mutationResolver) ExportDocumentPDF(ctx context.Context, input types.Ex
 	ndaExists := true
 	hasAcceptedNDA := false
 
-	trustCenter, _, err := trustService.TrustCenters.Get(
-		ctx,
-		trustCenterInfo.ID,
-	)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get trust center", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -256,7 +253,7 @@ func (r *mutationResolver) ExportDocumentPDF(ctx context.Context, input types.Ex
 	if ndaExists {
 		hasAcceptedNDA, err = trustService.TrustCenterAccesses.HasAcceptedNonDisclosureAgreement(
 			ctx,
-			trustCenterInfo.ID,
+			trustCenter.ID,
 			identity.EmailAddress,
 		)
 		if err != nil {
@@ -267,7 +264,7 @@ func (r *mutationResolver) ExportDocumentPDF(ctx context.Context, input types.Ex
 
 	documentAccess, err := trustService.TrustCenterAccesses.LoadDocumentAccess(
 		ctx,
-		trustCenterInfo.ID,
+		trustCenter.ID,
 		identity.EmailAddress,
 		input.DocumentID,
 	)
@@ -301,7 +298,7 @@ func (r *mutationResolver) ExportDocumentPDF(ctx context.Context, input types.Ex
 func (r *mutationResolver) ExportReportPDF(ctx context.Context, input types.ExportReportPDFInput) (*types.ExportReportPDFPayload, error) {
 	trustService := r.TrustService(ctx, input.ReportID.TenantID())
 
-	trustCenterInfo := TrustCenterFromContext(ctx)
+	trustCenter := compliancepage.CompliancePageFromContext(ctx)
 
 	audit, err := trustService.Audits.GetByReportID(ctx, input.ReportID)
 	if err != nil {
@@ -329,10 +326,6 @@ func (r *mutationResolver) ExportReportPDF(ctx context.Context, input types.Expo
 	ndaExists := true
 	hasAcceptedNDA := false
 
-	trustCenter, _, err := trustService.TrustCenters.Get(
-		ctx,
-		trustCenterInfo.ID,
-	)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get trust center", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
@@ -344,7 +337,7 @@ func (r *mutationResolver) ExportReportPDF(ctx context.Context, input types.Expo
 	if ndaExists {
 		hasAcceptedNDA, err = trustService.TrustCenterAccesses.HasAcceptedNonDisclosureAgreement(
 			ctx,
-			trustCenterInfo.ID,
+			trustCenter.ID,
 			identity.EmailAddress,
 		)
 		if err != nil {
@@ -355,7 +348,7 @@ func (r *mutationResolver) ExportReportPDF(ctx context.Context, input types.Expo
 
 	reportAccess, err := trustService.TrustCenterAccesses.LoadReportAccess(
 		ctx,
-		trustCenterInfo.ID,
+		trustCenter.ID,
 		identity.EmailAddress,
 		input.ReportID,
 	)
@@ -386,15 +379,25 @@ func (r *mutationResolver) ExportReportPDF(ctx context.Context, input types.Expo
 }
 
 // AcceptNonDisclosureAgreement is the resolver for the acceptNonDisclosureAgreement field.
-func (r *mutationResolver) AcceptNonDisclosureAgreement(ctx context.Context, input types.AcceptNonDisclosureAgreementInput) (*types.AcceptNonDisclosureAgreementPayload, error) {
-	trustService := r.TrustService(ctx, input.TrustCenterID.TenantID())
+func (r *mutationResolver) AcceptNonDisclosureAgreement(ctx context.Context) (*types.AcceptNonDisclosureAgreementPayload, error) {
+	trustCenter := compliancepage.CompliancePageFromContext(ctx)
+	trustService := r.TrustService(ctx, trustCenter.ID.TenantID())
 
 	identity := authn.IdentityFromContext(ctx)
 	if identity == nil {
 		return nil, gqlutils.Unauthenticatedf(ctx, "unauthenticated")
 	}
 
-	if err := trustService.TrustCenterAccesses.AcceptNonDisclosureAgreement(ctx, input.TrustCenterID, identity.EmailAddress); err != nil {
+	httpReq := gqlutils.HTTPRequestFromContext(ctx)
+
+	if err := trustService.TrustCenterAccesses.AcceptNonDisclosureAgreement(
+		ctx,
+		&trust.AcceptNDARequest{
+			TrustCenterID: trustCenter.ID,
+			Email:         identity.EmailAddress,
+			IPAddr:        httpReq.RemoteAddr,
+		},
+	); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot accept NDA", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -404,7 +407,8 @@ func (r *mutationResolver) AcceptNonDisclosureAgreement(ctx context.Context, inp
 
 // RequestDocumentAccess is the resolver for the requestDocumentAccess field.
 func (r *mutationResolver) RequestDocumentAccess(ctx context.Context, input types.RequestDocumentAccessInput) (*types.RequestAccessesPayload, error) {
-	trustService := r.TrustService(ctx, input.TrustCenterID.TenantID())
+	trustCenter := compliancepage.CompliancePageFromContext(ctx)
+	trustService := r.TrustService(ctx, trustCenter.ID.TenantID())
 
 	document, err := trustService.Documents.Get(ctx, input.DocumentID)
 	if err != nil {
@@ -436,7 +440,7 @@ func (r *mutationResolver) RequestDocumentAccess(ctx context.Context, input type
 	access, err := trustService.TrustCenterAccesses.Request(
 		ctx,
 		&trust.TrustCenterAccessRequest{
-			TrustCenterID: input.TrustCenterID,
+			TrustCenterID: trustCenter.ID,
 			Email:         identity.EmailAddress,
 			FullName:      identity.FullName,
 			DocumentIDs:   []gid.GID{input.DocumentID},
@@ -461,7 +465,8 @@ func (r *mutationResolver) RequestDocumentAccess(ctx context.Context, input type
 
 // RequestReportAccess is the resolver for the requestReportAccess field.
 func (r *mutationResolver) RequestReportAccess(ctx context.Context, input types.RequestReportAccessInput) (*types.RequestAccessesPayload, error) {
-	trustService := r.TrustService(ctx, input.TrustCenterID.TenantID())
+	trustCenter := compliancepage.CompliancePageFromContext(ctx)
+	trustService := r.TrustService(ctx, trustCenter.ID.TenantID())
 
 	audit, err := trustService.Audits.GetByReportID(ctx, input.ReportID)
 	if err != nil {
@@ -494,7 +499,7 @@ func (r *mutationResolver) RequestReportAccess(ctx context.Context, input types.
 	access, err := trustService.TrustCenterAccesses.Request(
 		ctx,
 		&trust.TrustCenterAccessRequest{
-			TrustCenterID: input.TrustCenterID,
+			TrustCenterID: trustCenter.ID,
 			Email:         identity.EmailAddress,
 			FullName:      identity.FullName,
 			DocumentIDs:   []gid.GID{},
@@ -519,7 +524,8 @@ func (r *mutationResolver) RequestReportAccess(ctx context.Context, input types.
 
 // RequestTrustCenterFileAccess is the resolver for the requestTrustCenterFileAccess field.
 func (r *mutationResolver) RequestTrustCenterFileAccess(ctx context.Context, input types.RequestTrustCenterFileAccessInput) (*types.RequestAccessesPayload, error) {
-	trustService := r.TrustService(ctx, input.TrustCenterID.TenantID())
+	trustCenter := compliancepage.CompliancePageFromContext(ctx)
+	trustService := r.TrustService(ctx, trustCenter.ID.TenantID())
 
 	trustCenterFile, err := trustService.TrustCenterFiles.Get(ctx, input.TrustCenterFileID)
 	if err != nil {
@@ -552,7 +558,7 @@ func (r *mutationResolver) RequestTrustCenterFileAccess(ctx context.Context, inp
 	access, err := trustService.TrustCenterAccesses.Request(
 		ctx,
 		&trust.TrustCenterAccessRequest{
-			TrustCenterID:      input.TrustCenterID,
+			TrustCenterID:      trustCenter.ID,
 			Email:              identity.EmailAddress,
 			FullName:           identity.FullName,
 			DocumentIDs:        []gid.GID{},
@@ -578,9 +584,8 @@ func (r *mutationResolver) RequestTrustCenterFileAccess(ctx context.Context, inp
 
 // ExportTrustCenterFile is the resolver for the exportTrustCenterFile field.
 func (r *mutationResolver) ExportTrustCenterFile(ctx context.Context, input types.ExportTrustCenterFileInput) (*types.ExportTrustCenterFilePayload, error) {
-	trustService := r.TrustService(ctx, input.TrustCenterFileID.TenantID())
-
-	trustCenterInfo := TrustCenterFromContext(ctx)
+	trustCenter := compliancepage.CompliancePageFromContext(ctx)
+	trustService := r.TrustService(ctx, trustCenter.ID.TenantID())
 
 	trustCenterFile, err := trustService.TrustCenterFiles.Get(ctx, input.TrustCenterFileID)
 	if err != nil {
@@ -608,21 +613,13 @@ func (r *mutationResolver) ExportTrustCenterFile(ctx context.Context, input type
 	ndaExists := true
 	hasAcceptedNDA := false
 
-	trustCenter, _, err := trustService.TrustCenters.Get(
-		ctx,
-		trustCenterInfo.ID,
-	)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot get trust center", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
 	if trustCenter.NonDisclosureAgreementFileID == nil {
 		ndaExists = false
 	}
 
 	if ndaExists {
 		hasAcceptedNDA, err = trustService.TrustCenterAccesses.HasAcceptedNonDisclosureAgreement(ctx,
-			trustCenterInfo.ID,
+			trustCenter.ID,
 			identity.EmailAddress,
 		)
 		if err != nil {
@@ -632,7 +629,7 @@ func (r *mutationResolver) ExportTrustCenterFile(ctx context.Context, input type
 	}
 
 	fileAccess, err := trustService.TrustCenterAccesses.LoadTrustCenterFileAccess(ctx,
-		trustCenterInfo.ID,
+		trustCenter.ID,
 		identity.EmailAddress,
 		input.TrustCenterFileID,
 	)
@@ -761,47 +758,18 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 	}
 }
 
-// TrustCenterBySlug is the resolver for the trustCenterBySlug field.
-func (r *queryResolver) TrustCenterBySlug(ctx context.Context, slug string) (*types.TrustCenter, error) {
-	rootTrustService := r.RootTrustService(ctx)
+// CurrentTrustCenter is the resolver for the currentTrustCenter field.
+func (r *queryResolver) CurrentTrustCenter(ctx context.Context) (*types.TrustCenter, error) {
+	trustCenter := compliancepage.CompliancePageFromContext(ctx)
 
-	trustCenter, err := rootTrustService.TrustCenters.GetBySlug(ctx, slug)
-	if err != nil {
-		return nil, nil
-	}
-
-	if !trustCenter.Active {
-		return nil, nil
-	}
-
-	trustService := r.TrustService(ctx, trustCenter.TenantID)
-	trustCenter, file, err := trustService.TrustCenters.Get(ctx, trustCenter.ID)
-	if err != nil {
-		panic(fmt.Errorf("cannot get trust center: %w", err))
-	}
+	trustService := r.TrustService(ctx, trustCenter.ID.TenantID())
 
 	org, err := trustService.Organizations.Get(ctx, trustCenter.OrganizationID)
 	if err != nil {
 		panic(fmt.Errorf("cannot get organization: %w", err))
 	}
-	response := types.NewTrustCenter(trustCenter, file)
-	response.Organization = types.NewOrganization(org)
 
-	return response, nil
-}
-
-// CurrentTrustCenter is the resolver for the currentTrustCenter field.
-func (r *queryResolver) CurrentTrustCenter(ctx context.Context) (*types.TrustCenter, error) {
-	trustCenterInfo := TrustCenterFromContext(ctx)
-
-	trustService := r.TrustService(ctx, trustCenterInfo.ID.TenantID())
-
-	org, err := trustService.Organizations.Get(ctx, trustCenterInfo.OrganizationID)
-	if err != nil {
-		panic(fmt.Errorf("cannot get organization: %w", err))
-	}
-
-	trustCenter, file, err := trustService.TrustCenters.Get(ctx, trustCenterInfo.ID)
+	trustCenter, file, err := trustService.TrustCenters.Get(ctx, trustCenter.ID)
 	if err != nil {
 		panic(fmt.Errorf("cannot get trust center: %w", err))
 	}
@@ -816,7 +784,7 @@ func (r *queryResolver) CurrentTrustCenter(ctx context.Context) (*types.TrustCen
 func (r *reportResolver) IsUserAuthorized(ctx context.Context, obj *types.Report) (bool, error) {
 	trustService := r.TrustService(ctx, obj.ID.TenantID())
 
-	trustCenterInfo := TrustCenterFromContext(ctx)
+	trustCenter := compliancepage.CompliancePageFromContext(ctx)
 
 	audit, err := trustService.Audits.GetByReportID(ctx, obj.ID)
 	if err != nil {
@@ -834,7 +802,7 @@ func (r *reportResolver) IsUserAuthorized(ctx context.Context, obj *types.Report
 	}
 
 	reportAccess, err := trustService.TrustCenterAccesses.LoadReportAccess(ctx,
-		trustCenterInfo.ID,
+		trustCenter.ID,
 		identity.EmailAddress,
 		obj.ID,
 	)
@@ -852,7 +820,7 @@ func (r *reportResolver) IsUserAuthorized(ctx context.Context, obj *types.Report
 func (r *reportResolver) HasUserRequestedAccess(ctx context.Context, obj *types.Report) (bool, error) {
 	trustService := r.TrustService(ctx, obj.ID.TenantID())
 
-	trustCenterInfo := TrustCenterFromContext(ctx)
+	trustCenter := compliancepage.CompliancePageFromContext(ctx)
 
 	identity := authn.IdentityFromContext(ctx)
 	if identity == nil {
@@ -860,7 +828,7 @@ func (r *reportResolver) HasUserRequestedAccess(ctx context.Context, obj *types.
 	}
 
 	_, err := trustService.TrustCenterAccesses.LoadReportAccess(ctx,
-		trustCenterInfo.ID,
+		trustCenter.ID,
 		identity.EmailAddress,
 		obj.ID,
 	)
@@ -1018,7 +986,7 @@ func (r *trustCenterResolver) TrustCenterFiles(ctx context.Context, obj *types.T
 func (r *trustCenterFileResolver) IsUserAuthorized(ctx context.Context, obj *types.TrustCenterFile) (bool, error) {
 	trustService := r.TrustService(ctx, obj.ID.TenantID())
 
-	trustCenterInfo := TrustCenterFromContext(ctx)
+	trustCenter := compliancepage.CompliancePageFromContext(ctx)
 
 	trustCenterFile, err := trustService.TrustCenterFiles.Get(ctx, obj.ID)
 	if err != nil {
@@ -1036,7 +1004,7 @@ func (r *trustCenterFileResolver) IsUserAuthorized(ctx context.Context, obj *typ
 	}
 
 	fileAccess, err := trustService.TrustCenterAccesses.LoadTrustCenterFileAccess(ctx,
-		trustCenterInfo.ID,
+		trustCenter.ID,
 		identity.EmailAddress,
 		obj.ID,
 	)
@@ -1054,7 +1022,7 @@ func (r *trustCenterFileResolver) IsUserAuthorized(ctx context.Context, obj *typ
 func (r *trustCenterFileResolver) HasUserRequestedAccess(ctx context.Context, obj *types.TrustCenterFile) (bool, error) {
 	trustService := r.TrustService(ctx, obj.ID.TenantID())
 
-	trustCenterInfo := TrustCenterFromContext(ctx)
+	trustCenter := compliancepage.CompliancePageFromContext(ctx)
 
 	identity := authn.IdentityFromContext(ctx)
 	if identity == nil {
@@ -1062,7 +1030,7 @@ func (r *trustCenterFileResolver) HasUserRequestedAccess(ctx context.Context, ob
 	}
 
 	_, err := trustService.TrustCenterAccesses.LoadTrustCenterFileAccess(ctx,
-		trustCenterInfo.ID,
+		trustCenter.ID,
 		identity.EmailAddress,
 		obj.ID,
 	)

@@ -1,8 +1,8 @@
 import { graphql } from "relay-runtime";
 
 export const trustGraphQuery = graphql`
-  query TrustGraphQuery($slug: String!) {
-    trustCenterBySlug(slug: $slug) {
+  query TrustGraphQuery {
+    currentTrustCenter {
       id
       slug
       isUserAuthenticated
@@ -31,8 +31,8 @@ export const trustGraphQuery = graphql`
 `;
 
 export const trustDocumentsQuery = graphql`
-  query TrustGraphDocumentsQuery($slug: String!) {
-    trustCenterBySlug(slug: $slug) {
+  query TrustGraphDocumentsQuery {
+    currentTrustCenter {
       id
       organization {
         name
@@ -60,8 +60,8 @@ export const trustDocumentsQuery = graphql`
 `;
 
 export const trustVendorsQuery = graphql`
-  query TrustGraphVendorsQuery($slug: String!) {
-    trustCenterBySlug(slug: $slug) {
+  query TrustGraphVendorsQuery {
+    currentTrustCenter {
       id
       organization {
         name

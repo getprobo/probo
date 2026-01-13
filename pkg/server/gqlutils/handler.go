@@ -59,7 +59,9 @@ func NewHandler[S graphql.ExecutableSchema](executableSchema S, logger *log.Logg
 }
 
 func (gqlh *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	gqlh.gqlhandler.ServeHTTP(w, r)
+	ctx := WithHTTPContext(r.Context(), w, r)
+
+	gqlh.gqlhandler.ServeHTTP(w, r.WithContext(ctx))
 }
 
 func (gqlh *Handler) Use(extension graphql.HandlerExtension) {

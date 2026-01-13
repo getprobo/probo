@@ -12,34 +12,21 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package gqlutils
+package compliancepage
 
 import (
 	"context"
-	"net/http"
+
+	"go.probo.inc/probo/pkg/coredata"
 )
 
-type (
-	ctxKey struct{ name string }
-)
+type ctxKey struct{ name string }
 
 var (
-	httpResponseWriterKey = &ctxKey{name: "http_response_writer"}
-	httpRequestKey        = &ctxKey{name: "http_request"}
+	compliancePageKey = &ctxKey{name: "compliance_page"}
 )
 
-func WithHTTPContext(ctx context.Context, w http.ResponseWriter, r *http.Request) context.Context {
-
-	ctx = context.WithValue(ctx, httpResponseWriterKey, w)
-	ctx = context.WithValue(ctx, httpRequestKey, r)
-
-	return ctx
-}
-
-func HTTPResponseWriterFromContext(ctx context.Context) http.ResponseWriter {
-	return ctx.Value(httpResponseWriterKey).(http.ResponseWriter)
-}
-
-func HTTPRequestFromContext(ctx context.Context) *http.Request {
-	return ctx.Value(httpRequestKey).(*http.Request)
+func CompliancePageFromContext(ctx context.Context) *coredata.TrustCenter {
+	trustCenter, _ := ctx.Value(compliancePageKey).(*coredata.TrustCenter)
+	return trustCenter
 }

@@ -17,6 +17,7 @@ export default defineConfig({
         target: "http://localhost:8080",
         changeOrigin: true,
       },
+      // FIXME: remove
       "/trust/YJwjPEJCAAEAFgAAAZsTYtQt-FLmpawO/api": {
         target: "http://localhost:8080",
         changeOrigin: true,

@@ -10,7 +10,7 @@ import { Viewer } from "/providers/Viewer";
 export function OrganizationSidebar({
   trustCenter,
 }: {
-  trustCenter: TrustGraphQuery$data["trustCenterBySlug"];
+  trustCenter: TrustGraphQuery$data["currentTrustCenter"];
 }) {
   const { __ } = useTranslate();
   const isAuthenticated = !!use(Viewer);
