@@ -1,0 +1,38 @@
+# Session directive for GraphQL APIs
+# Include this schema in your gqlgen configuration to enable session-based access control.
+#
+# Usage in your schema.graphql:
+#   type Query {
+#     viewer: User @session(required: PRESENT)
+#     publicData: Data @session(required: OPTIONAL)
+#     signup(input: SignUpInput!): SignUpPayload @session(required: NONE)
+#   }
+
+directive @session(required: SessionRequirement!) on FIELD_DEFINITION
+
+enum SessionRequirement
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/gqlutils/directives/session.SessionRequirement"
+  ) {
+  """
+  Requires an authenticated session or API key.
+  """
+  PRESENT
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/server/gqlutils/directives/session.SessionRequirementPresent"
+    )
+  """
+  Forbids authenticated access (e.g., for login/signup endpoints).
+  """
+  NONE
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/server/gqlutils/directives/session.SessionRequirementNone"
+    )
+  """
+  Allows both authenticated and unauthenticated access.
+  """
+  OPTIONAL
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/server/gqlutils/directives/session.SessionRequirementOptional"
+    )
+}
