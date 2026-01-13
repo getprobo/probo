@@ -20,7 +20,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/99designs/gqlgen/graphql"
 	"github.com/go-chi/chi/v5"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/gid"
@@ -29,8 +28,8 @@ import (
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/compliancepage"
 	"go.probo.inc/probo/pkg/server/api/trust/v1/schema"
-	"go.probo.inc/probo/pkg/server/api/trust/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlutils/directives/session"
 	"go.probo.inc/probo/pkg/trust"
 )
 
@@ -92,15 +91,7 @@ func NewMux(
 			sessionCookie: authn.NewCookie(&cookieConfig),
 		},
 		Directives: schema.DirectiveRoot{
-			MustBeAuthenticated: func(ctx context.Context, obj any, next graphql.Resolver, role *types.Role) (any, error) {
-				identity := authn.IdentityFromContext(ctx)
-
-				if identity == nil {
-					return nil, gqlutils.Unauthenticatedf(ctx, "authentication required")
-				}
-
-				return next(ctx)
-			},
+			Session: session.Directive,
 		},
 	}
 	es := schema.NewExecutableSchema(config)

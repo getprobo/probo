@@ -11,18 +11,10 @@ directive @goModel(
 
 directive @goEnum(value: String) on ENUM_VALUE
 
-directive @session(required: SessionRequirement!) on FIELD_DEFINITION
-
 scalar CursorKey
 scalar Datetime
 scalar Upload
 scalar EmailAddr
-
-enum SessionRequirement {
-  PRESENT
-  NONE
-  OPTIONAL
-}
 
 enum OrderDirection
   @goModel(model: "go.probo.inc/probo/pkg/page.OrderDirection") {
