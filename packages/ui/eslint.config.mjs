@@ -1,28 +1,14 @@
-// @ts-check
+import { browser } from "@probo/eslint-config";
 
-import js from "@eslint/js";
-import { defineConfig } from "eslint/config";
-import globals from "globals";
-import reactHooks from "eslint-plugin-react-hooks";
-import tseslint from "typescript-eslint";
-
-export default defineConfig(
-    { ignores: ["dist"] },
+export default [
     {
-        extends: [js.configs.recommended, ...tseslint.configs.recommended],
-        files: ["**/*.{ts,tsx}"],
-        languageOptions: {
-            ecmaVersion: 2020,
-            globals: globals.browser,
-            parserOptions: {
-                tsconfigRootDir: import.meta.dirname,
-            },
-        },
-        plugins: {
-            "react-hooks": reactHooks,
-        },
-        rules: {
-            ...reactHooks.configs.recommended.rules,
-        },
+        ignores: [
+            "dist",
+            "eslint.config.mjs",
+            "*.config.{js,mjs,ts}",
+            ".storybook/**",
+            "src/Atoms/Icons/**/*.tsx", // Icon files have parsing issues, likely auto-generated
+        ],
     },
-);
+    ...browser(["./tsconfig.app.json", "./tsconfig.node.json"], import.meta.dirname),
+];

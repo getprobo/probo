@@ -17,8 +17,10 @@
     "relay": "turbo run relay"
   },
   "devDependencies": {
+    "prettier": "^3.5.3",
     "turbo": "^2.5.3"
   },
+  "prettier": "@probo/prettier",
   "graphql": {
     "schema": "./pkg/server/api/console/v1/schema.graphql"
   },
@@ -29,5 +31,8 @@
   "packageManager": "npm@11.1.0",
   "volta": {
     "node": "24.4.0"
+  },
+  "dependencies": {
+    "react-dom": "^19.2.1"
   }
 }
