@@ -57,9 +57,17 @@ func NewRenewer(
 func (r *Renewer) Run(ctx context.Context) error {
 	r.logger.InfoCtx(ctx, "certificate renewer starting")
 
-	if err := r.checkAndRenew(ctx); err != nil {
-		r.logger.ErrorCtx(ctx, "cannot perform initial renewal check", log.Error(err))
-	}
+	func() {
+		defer func() {
+			if rec := recover(); rec != nil {
+				r.logger.ErrorCtx(ctx, "panic recovered in initial renewal check",
+					log.String("panic", fmt.Sprintf("%v", rec)))
+			}
+		}()
+		if err := r.checkAndRenew(ctx); err != nil {
+			r.logger.ErrorCtx(ctx, "cannot perform initial renewal check", log.Error(err))
+		}
+	}()
 
 	for {
 		select {
@@ -67,9 +75,17 @@ func (r *Renewer) Run(ctx context.Context) error {
 			r.logger.InfoCtx(ctx, "certificate renewer shutting down")
 			return ctx.Err()
 		case <-time.After(r.interval):
-			if err := r.checkAndRenew(ctx); err != nil {
-				r.logger.ErrorCtx(ctx, "cannot perform renewal check", log.Error(err))
-			}
+			func() {
+				defer func() {
+					if rec := recover(); rec != nil {
+						r.logger.ErrorCtx(ctx, "panic recovered in certificate renewer",
+							log.String("panic", fmt.Sprintf("%v", rec)))
+					}
+				}()
+				if err := r.checkAndRenew(ctx); err != nil {
+					r.logger.ErrorCtx(ctx, "cannot perform renewal check", log.Error(err))
+				}
+			}()
 		}
 	}
 }
