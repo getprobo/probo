@@ -77,6 +77,7 @@ export function CreatePeopleDialog({ children, connectionId }: Props) {
         input: {
           ...data,
           organizationId,
+          additionalEmailAddresses: data.additionalEmailAddresses ?? [],
         },
         connections: [connectionId],
       },

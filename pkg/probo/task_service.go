@@ -49,6 +49,7 @@ type (
 		State        *coredata.TaskState
 		TimeEstimate **time.Duration
 		Deadline     **time.Time
+		AssignedToID **gid.GID
 	}
 )
 
@@ -73,6 +74,7 @@ func (utr *UpdateTaskRequest) Validate() error {
 	v.Check(utr.Description, "description", validator.SafeText(ContentMaxLength))
 	v.Check(utr.TimeEstimate, "time_estimate", validator.RangeDuration(0, 1000*time.Hour))
 	v.Check(utr.State, "state", validator.OneOfSlice(coredata.TaskStates()))
+	v.Check(utr.AssignedToID, "assigned_to_id", validator.GID(coredata.PeopleEntityType))
 
 	return v.Error()
 }
@@ -259,6 +261,18 @@ func (s TaskService) Update(
 
 			if req.Deadline != nil {
 				task.Deadline = *req.Deadline
+			}
+
+			if req.AssignedToID != nil {
+				if *req.AssignedToID == nil {
+					task.AssignedToID = nil
+				} else {
+					people := &coredata.People{}
+					if err := people.LoadByID(ctx, conn, s.svc.scope, **req.AssignedToID); err != nil {
+						return fmt.Errorf("cannot load assignee: %w", err)
+					}
+					task.AssignedToID = *req.AssignedToID
+				}
 			}
 
 			task.UpdatedAt = time.Now()

@@ -3104,8 +3104,6 @@ type Mutation {
   createTask(input: CreateTaskInput!): CreateTaskPayload!
   updateTask(input: UpdateTaskInput!): UpdateTaskPayload!
   deleteTask(input: DeleteTaskInput!): DeleteTaskPayload!
-  assignTask(input: AssignTaskInput!): AssignTaskPayload!
-  unassignTask(input: UnassignTaskInput!): UnassignTaskPayload!
   # Risk mutations
   createRisk(input: CreateRiskInput!): CreateRiskPayload!
   updateRisk(input: UpdateRiskInput!): UpdateRiskPayload!
@@ -3525,7 +3523,7 @@ input CreatePeopleInput {
   organizationId: ID!
   fullName: String!
   primaryEmailAddress: EmailAddr!
-  additionalEmailAddresses: [EmailAddr!]
+  additionalEmailAddresses: [EmailAddr!]!
   kind: PeopleKind!
   position: String
   contractStartDate: Datetime
@@ -3609,20 +3607,13 @@ input UpdateTaskInput {
   state: TaskState
   timeEstimate: Duration @goField(omittable: true)
   deadline: Datetime @goField(omittable: true)
+  assignedToId: ID @goField(omittable: true)
 }
 
 input DeleteTaskInput {
   taskId: ID!
 }
 
-input AssignTaskInput {
-  taskId: ID!
-  assignedToId: ID!
-}
-
-input UnassignTaskInput {
-  taskId: ID!
-}
 
 input CreateControlMeasureMappingInput {
   controlId: ID!
@@ -4321,13 +4312,6 @@ type DeleteTaskPayload {
   deletedTaskId: ID!
 }
 
-type AssignTaskPayload {
-  task: Task!
-}
-
-type UnassignTaskPayload {
-  task: Task!
-}
 
 type CreateControlMeasureMappingPayload {
   controlEdge: ControlEdge!

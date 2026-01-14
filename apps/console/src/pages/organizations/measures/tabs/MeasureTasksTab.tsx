@@ -20,6 +20,8 @@ const tasksQuery = graphql`
               name
               state
               description
+              timeEstimate
+              deadline
               ...TaskFormDialogFragment
               assignedTo {
                 id
