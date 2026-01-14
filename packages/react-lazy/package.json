@@ -9,10 +9,5 @@
     "prettier": "@probo/prettier",
     "peerDependencies": {
         "react": ">18.0.0"
-    },
-    "eslintConfig": {
-        "extends": [
-            "plugin:storybook/recommended"
-        ]
     }
 }

@@ -1,28 +1,6 @@
-// @ts-check
+import { browser } from "@probo/eslint-config";
 
-import js from "@eslint/js";
-import { defineConfig } from "eslint/config";
-import globals from "globals";
-import reactHooks from "eslint-plugin-react-hooks";
-import tseslint from "typescript-eslint";
-
-export default defineConfig([
-  { ignores: ["dist"] },
-  {
-    extends: [js.configs.recommended, ...tseslint.configs.recommended],
-    files: ["**/*.{ts,tsx}"],
-    languageOptions: {
-      ecmaVersion: 2020,
-      globals: globals.browser,
-      parserOptions: {
-        tsconfigRootDir: import.meta.dirname,
-      },
-    },
-    plugins: {
-      "react-hooks": reactHooks,
-    },
-    rules: {
-      ...reactHooks.configs.recommended.rules,
-    },
-  },
-]);
+export default [
+    { ignores: ["dist", "eslint.config.mjs", "*.config.{js,mjs,ts}"] },
+    ...browser(["./tsconfig.app.json", "./tsconfig.node.json"], import.meta.dirname),
+];
