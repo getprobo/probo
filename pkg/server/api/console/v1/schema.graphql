@@ -260,6 +260,42 @@ enum ContinualImprovementPriority
     )
 }
 
+enum RightsRequestType
+  @goModel(
+    model: "go.probo.inc/probo/pkg/coredata.RightsRequestType"
+  ) {
+  ACCESS
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.RightsRequestTypeAccess"
+    )
+  DELETION
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.RightsRequestTypeDeletion"
+    )
+  PORTABILITY
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.RightsRequestTypePortability"
+    )
+}
+
+enum RightsRequestState
+  @goModel(
+    model: "go.probo.inc/probo/pkg/coredata.RightsRequestState"
+  ) {
+  TODO
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.RightsRequestStateTodo"
+    )
+  IN_PROGRESS
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.RightsRequestStateInProgress"
+    )
+  DONE
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.RightsRequestStateDone"
+    )
+}
+
 enum ProcessingActivitySpecialOrCriminalDatum
   @goModel(
     model: "go.probo.inc/probo/pkg/coredata.ProcessingActivitySpecialOrCriminalDatum"
@@ -1065,6 +1101,28 @@ enum ContinualImprovementOrderField
     )
 }
 
+enum RightsRequestOrderField
+  @goModel(
+    model: "go.probo.inc/probo/pkg/coredata.RightsRequestOrderField"
+  ) {
+  CREATED_AT
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.RightsRequestOrderFieldCreatedAt"
+    )
+  DEADLINE
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.RightsRequestOrderFieldDeadline"
+    )
+  STATE
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.RightsRequestOrderFieldState"
+    )
+  TYPE
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.RightsRequestOrderFieldType"
+    )
+}
+
 enum ProcessingActivityOrderField
   @goModel(
     model: "go.probo.inc/probo/pkg/coredata.ProcessingActivityOrderField"
@@ -1344,6 +1402,14 @@ input ContinualImprovementOrder
   field: ContinualImprovementOrderField!
 }
 
+input RightsRequestOrder
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.RightsRequestOrderBy"
+  ) {
+  direction: OrderDirection!
+  field: RightsRequestOrderField!
+}
+
 input ProcessingActivityOrder
   @goModel(
     model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ProcessingActivityOrderBy"
@@ -1512,6 +1578,7 @@ input ObligationFilter {
 input ContinualImprovementFilter {
   snapshotId: ID
 }
+
 
 input ProcessingActivityFilter {
   snapshotId: ID
@@ -1726,6 +1793,14 @@ type Organization implements Node {
     orderBy: ContinualImprovementOrder
     filter: ContinualImprovementFilter = { snapshotId: null }
   ): ContinualImprovementConnection! @goField(forceResolver: true)
+
+  rightsRequests(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: RightsRequestOrder
+  ): RightsRequestConnection! @goField(forceResolver: true)
 
   processingActivities(
     first: Int
@@ -2326,6 +2401,20 @@ type ContinualImprovement implements Node {
   updatedAt: Datetime!
 }
 
+type RightsRequest implements Node {
+  id: ID!
+  organization: Organization! @goField(forceResolver: true)
+  requestType: RightsRequestType!
+  requestState: RightsRequestState!
+  dataSubject: String
+  contact: String
+  details: String
+  deadline: Datetime
+  actionTaken: String
+  createdAt: Datetime!
+  updatedAt: Datetime!
+}
+
 type ProcessingActivity implements Node {
   id: ID!
   snapshotId: ID
@@ -2879,6 +2968,20 @@ type ContinualImprovementEdge {
   node: ContinualImprovement!
 }
 
+type RightsRequestConnection
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.RightsRequestConnection"
+  ) {
+  totalCount: Int! @goField(forceResolver: true)
+  edges: [RightsRequestEdge!]!
+  pageInfo: PageInfo!
+}
+
+type RightsRequestEdge {
+  cursor: CursorKey!
+  node: RightsRequest!
+}
+
 type ProcessingActivityConnection
   @goModel(
     model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ProcessingActivityConnection"
@@ -3246,6 +3349,20 @@ type Mutation {
   deleteContinualImprovement(
     input: DeleteContinualImprovementInput!
   ): DeleteContinualImprovementPayload!
+
+  # Rights Request mutations
+  createRightsRequest(
+    input: CreateRightsRequestInput!
+  ): CreateRightsRequestPayload!
+
+  updateRightsRequest(
+    input: UpdateRightsRequestInput!
+  ): UpdateRightsRequestPayload!
+
+  deleteRightsRequest(
+    input: DeleteRightsRequestInput!
+  ): DeleteRightsRequestPayload!
+
   # Processing Activity mutations
   createProcessingActivity(
     input: CreateProcessingActivityInput!
@@ -3608,6 +3725,7 @@ input UpdateTaskInput {
   timeEstimate: Duration @goField(omittable: true)
   deadline: Datetime @goField(omittable: true)
   assignedToId: ID @goField(omittable: true)
+  measureId: ID @goField(omittable: true)
 }
 
 input DeleteTaskInput {
@@ -4020,6 +4138,32 @@ input UpdateContinualImprovementInput {
 
 input DeleteContinualImprovementInput {
   continualImprovementId: ID!
+}
+
+input CreateRightsRequestInput {
+  organizationId: ID!
+  requestType: RightsRequestType!
+  requestState: RightsRequestState!
+  dataSubject: String
+  contact: String
+  details: String
+  deadline: Datetime
+  actionTaken: String
+}
+
+input UpdateRightsRequestInput {
+  id: ID!
+  requestType: RightsRequestType
+  requestState: RightsRequestState
+  dataSubject: String @goField(omittable: true)
+  contact: String @goField(omittable: true)
+  details: String @goField(omittable: true)
+  deadline: Datetime @goField(omittable: true)
+  actionTaken: String @goField(omittable: true)
+}
+
+input DeleteRightsRequestInput {
+  rightsRequestId: ID!
 }
 
 input CreateProcessingActivityInput {
@@ -4962,6 +5106,18 @@ type UpdateContinualImprovementPayload {
 
 type DeleteContinualImprovementPayload {
   deletedContinualImprovementId: ID!
+}
+
+type CreateRightsRequestPayload {
+  rightsRequestEdge: RightsRequestEdge!
+}
+
+type UpdateRightsRequestPayload {
+  rightsRequest: RightsRequest!
+}
+
+type DeleteRightsRequestPayload {
+  deletedRightsRequestId: ID!
 }
 
 type CreateProcessingActivityPayload {

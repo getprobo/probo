@@ -92,3 +92,75 @@ func (a *Addr) UnmarshalJSON(data []byte) error {
 func (a Addr) MarshalJSON() ([]byte, error) {
 	return json.Marshal(a.String())
 }
+
+type Addrs []Addr
+
+func (a Addrs) Value() (driver.Value, error) {
+	if a == nil {
+		return nil, nil
+	}
+	if len(a) == 0 {
+		return "{}", nil
+	}
+	strs := make([]string, len(a))
+	for i, addr := range a {
+		strs[i] = addr.String()
+	}
+	return "{" + strings.Join(strs, ",") + "}", nil
+}
+
+func (a *Addrs) Scan(value any) error {
+	if value == nil {
+		*a = nil
+		return nil
+	}
+
+	var strs []string
+	switch v := value.(type) {
+	case []string:
+		strs = v
+	case []byte:
+		s := strings.Trim(string(v), "{}")
+		if s == "" {
+			strs = []string{}
+		} else {
+			strs = strings.Split(s, ",")
+		}
+	case string:
+		s := strings.Trim(v, "{}")
+		if s == "" {
+			strs = []string{}
+		} else {
+			strs = strings.Split(s, ",")
+		}
+	case []any:
+		strs = make([]string, len(v))
+		for i, elem := range v {
+			if elem == nil {
+				strs[i] = ""
+				continue
+			}
+			str, ok := elem.(string)
+			if !ok {
+				return fmt.Errorf("array element is not a string: %T", elem)
+			}
+			strs[i] = str
+		}
+	default:
+		return fmt.Errorf("cannot scan %T into Addrs", value)
+	}
+
+	*a = make([]Addr, len(strs))
+	for i, str := range strs {
+		if str == "" {
+			(*a)[i] = Nil
+			continue
+		}
+		parsed, err := ParseAddr(str)
+		if err != nil {
+			return fmt.Errorf("invalid email at index %d: %w", i, err)
+		}
+		(*a)[i] = parsed
+	}
+	return nil
+}

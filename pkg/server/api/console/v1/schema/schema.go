@@ -87,6 +87,8 @@ type ResolverRoot interface {
 	ProcessingActivityConnection() ProcessingActivityConnectionResolver
 	Query() QueryResolver
 	Report() ReportResolver
+	RightsRequest() RightsRequestResolver
+	RightsRequestConnection() RightsRequestConnectionResolver
 	Risk() RiskResolver
 	RiskConnection() RiskConnectionResolver
 	SAMLConfiguration() SAMLConfigurationResolver
@@ -353,6 +355,10 @@ type ComplexityRoot struct {
 		ProcessingActivityEdge func(childComplexity int) int
 	}
 
+	CreateRightsRequestPayload struct {
+		RightsRequestEdge func(childComplexity int) int
+	}
+
 	CreateRiskDocumentMappingPayload struct {
 		DocumentEdge func(childComplexity int) int
 		RiskEdge     func(childComplexity int) int
@@ -584,6 +590,10 @@ type ComplexityRoot struct {
 
 	DeleteProcessingActivityPayload struct {
 		DeletedProcessingActivityID func(childComplexity int) int
+	}
+
+	DeleteRightsRequestPayload struct {
+		DeletedRightsRequestID func(childComplexity int) int
 	}
 
 	DeleteRiskDocumentMappingPayload struct {
@@ -970,6 +980,7 @@ type ComplexityRoot struct {
 		CreateOrganization                     func(childComplexity int, input types.CreateOrganizationInput) int
 		CreatePeople                           func(childComplexity int, input types.CreatePeopleInput) int
 		CreateProcessingActivity               func(childComplexity int, input types.CreateProcessingActivityInput) int
+		CreateRightsRequest                    func(childComplexity int, input types.CreateRightsRequestInput) int
 		CreateRisk                             func(childComplexity int, input types.CreateRiskInput) int
 		CreateRiskDocumentMapping              func(childComplexity int, input types.CreateRiskDocumentMappingInput) int
 		CreateRiskMeasureMapping               func(childComplexity int, input types.CreateRiskMeasureMappingInput) int
@@ -1010,6 +1021,7 @@ type ComplexityRoot struct {
 		DeleteOrganizationHorizontalLogo       func(childComplexity int, input types.DeleteOrganizationHorizontalLogoInput) int
 		DeletePeople                           func(childComplexity int, input types.DeletePeopleInput) int
 		DeleteProcessingActivity               func(childComplexity int, input types.DeleteProcessingActivityInput) int
+		DeleteRightsRequest                    func(childComplexity int, input types.DeleteRightsRequestInput) int
 		DeleteRisk                             func(childComplexity int, input types.DeleteRiskInput) int
 		DeleteRiskDocumentMapping              func(childComplexity int, input types.DeleteRiskDocumentMappingInput) int
 		DeleteRiskMeasureMapping               func(childComplexity int, input types.DeleteRiskMeasureMappingInput) int
@@ -1063,6 +1075,7 @@ type ComplexityRoot struct {
 		UpdateOrganizationContext              func(childComplexity int, input types.UpdateOrganizationContextInput) int
 		UpdatePeople                           func(childComplexity int, input types.UpdatePeopleInput) int
 		UpdateProcessingActivity               func(childComplexity int, input types.UpdateProcessingActivityInput) int
+		UpdateRightsRequest                    func(childComplexity int, input types.UpdateRightsRequestInput) int
 		UpdateRisk                             func(childComplexity int, input types.UpdateRiskInput) int
 		UpdateSAMLConfiguration                func(childComplexity int, input types.UpdateSAMLConfigurationInput) int
 		UpdateTask                             func(childComplexity int, input types.UpdateTaskInput) int
@@ -1170,6 +1183,7 @@ type ComplexityRoot struct {
 		Obligations                     func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ObligationOrderBy, filter *types.ObligationFilter) int
 		Peoples                         func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.PeopleOrderBy, filter *types.PeopleFilter) int
 		ProcessingActivities            func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityOrderBy, filter *types.ProcessingActivityFilter) int
+		RightsRequests                  func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RightsRequestOrderBy) int
 		Risks                           func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskOrderBy, filter *types.RiskFilter) int
 		SamlConfigurations              func(childComplexity int) int
 		SlackConnections                func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
@@ -1303,6 +1317,31 @@ type ComplexityRoot struct {
 
 	RequestSignaturePayload struct {
 		DocumentVersionSignatureEdge func(childComplexity int) int
+	}
+
+	RightsRequest struct {
+		ActionTaken  func(childComplexity int) int
+		Contact      func(childComplexity int) int
+		CreatedAt    func(childComplexity int) int
+		DataSubject  func(childComplexity int) int
+		Deadline     func(childComplexity int) int
+		Details      func(childComplexity int) int
+		ID           func(childComplexity int) int
+		Organization func(childComplexity int) int
+		RequestState func(childComplexity int) int
+		RequestType  func(childComplexity int) int
+		UpdatedAt    func(childComplexity int) int
+	}
+
+	RightsRequestConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	RightsRequestEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
 	}
 
 	Risk struct {
@@ -1669,6 +1708,10 @@ type ComplexityRoot struct {
 
 	UpdateProcessingActivityPayload struct {
 		ProcessingActivity func(childComplexity int) int
+	}
+
+	UpdateRightsRequestPayload struct {
+		RightsRequest func(childComplexity int) int
 	}
 
 	UpdateRiskPayload struct {
@@ -2179,6 +2222,9 @@ type MutationResolver interface {
 	CreateContinualImprovement(ctx context.Context, input types.CreateContinualImprovementInput) (*types.CreateContinualImprovementPayload, error)
 	UpdateContinualImprovement(ctx context.Context, input types.UpdateContinualImprovementInput) (*types.UpdateContinualImprovementPayload, error)
 	DeleteContinualImprovement(ctx context.Context, input types.DeleteContinualImprovementInput) (*types.DeleteContinualImprovementPayload, error)
+	CreateRightsRequest(ctx context.Context, input types.CreateRightsRequestInput) (*types.CreateRightsRequestPayload, error)
+	UpdateRightsRequest(ctx context.Context, input types.UpdateRightsRequestInput) (*types.UpdateRightsRequestPayload, error)
+	DeleteRightsRequest(ctx context.Context, input types.DeleteRightsRequestInput) (*types.DeleteRightsRequestPayload, error)
 	CreateProcessingActivity(ctx context.Context, input types.CreateProcessingActivityInput) (*types.CreateProcessingActivityPayload, error)
 	UpdateProcessingActivity(ctx context.Context, input types.UpdateProcessingActivityInput) (*types.UpdateProcessingActivityPayload, error)
 	DeleteProcessingActivity(ctx context.Context, input types.DeleteProcessingActivityInput) (*types.DeleteProcessingActivityPayload, error)
@@ -2241,6 +2287,7 @@ type OrganizationResolver interface {
 	Nonconformities(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.NonconformityOrderBy, filter *types.NonconformityFilter) (*types.NonconformityConnection, error)
 	Obligations(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ObligationOrderBy, filter *types.ObligationFilter) (*types.ObligationConnection, error)
 	ContinualImprovements(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ContinualImprovementOrderBy, filter *types.ContinualImprovementFilter) (*types.ContinualImprovementConnection, error)
+	RightsRequests(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RightsRequestOrderBy) (*types.RightsRequestConnection, error)
 	ProcessingActivities(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityOrderBy, filter *types.ProcessingActivityFilter) (*types.ProcessingActivityConnection, error)
 	DataProtectionImpactAssessments(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DataProtectionImpactAssessmentOrderBy, filter *types.DataProtectionImpactAssessmentFilter) (*types.DataProtectionImpactAssessmentConnection, error)
 	TransferImpactAssessments(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TransferImpactAssessmentOrderBy, filter *types.TransferImpactAssessmentFilter) (*types.TransferImpactAssessmentConnection, error)
@@ -2272,6 +2319,12 @@ type ReportResolver interface {
 	DownloadURL(ctx context.Context, obj *types.Report) (*string, error)
 
 	Audit(ctx context.Context, obj *types.Report) (*types.Audit, error)
+}
+type RightsRequestResolver interface {
+	Organization(ctx context.Context, obj *types.RightsRequest) (*types.Organization, error)
+}
+type RightsRequestConnectionResolver interface {
+	TotalCount(ctx context.Context, obj *types.RightsRequestConnection) (int, error)
 }
 type RiskResolver interface {
 	Owner(ctx context.Context, obj *types.Risk) (*types.People, error)
@@ -3127,6 +3180,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.CreateProcessingActivityPayload.ProcessingActivityEdge(childComplexity), true
 
+	case "CreateRightsRequestPayload.rightsRequestEdge":
+		if e.complexity.CreateRightsRequestPayload.RightsRequestEdge == nil {
+			break
+		}
+
+		return e.complexity.CreateRightsRequestPayload.RightsRequestEdge(childComplexity), true
+
 	case "CreateRiskDocumentMappingPayload.documentEdge":
 		if e.complexity.CreateRiskDocumentMappingPayload.DocumentEdge == nil {
 			break
@@ -3713,6 +3773,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.DeleteProcessingActivityPayload.DeletedProcessingActivityID(childComplexity), true
+
+	case "DeleteRightsRequestPayload.deletedRightsRequestId":
+		if e.complexity.DeleteRightsRequestPayload.DeletedRightsRequestID == nil {
+			break
+		}
+
+		return e.complexity.DeleteRightsRequestPayload.DeletedRightsRequestID(childComplexity), true
 
 	case "DeleteRiskDocumentMappingPayload.deletedDocumentId":
 		if e.complexity.DeleteRiskDocumentMappingPayload.DeletedDocumentID == nil {
@@ -5194,6 +5261,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.CreateProcessingActivity(childComplexity, args["input"].(types.CreateProcessingActivityInput)), true
+	case "Mutation.createRightsRequest":
+		if e.complexity.Mutation.CreateRightsRequest == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createRightsRequest_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateRightsRequest(childComplexity, args["input"].(types.CreateRightsRequestInput)), true
 	case "Mutation.createRisk":
 		if e.complexity.Mutation.CreateRisk == nil {
 			break
@@ -5634,6 +5712,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.DeleteProcessingActivity(childComplexity, args["input"].(types.DeleteProcessingActivityInput)), true
+	case "Mutation.deleteRightsRequest":
+		if e.complexity.Mutation.DeleteRightsRequest == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteRightsRequest_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteRightsRequest(childComplexity, args["input"].(types.DeleteRightsRequestInput)), true
 	case "Mutation.deleteRisk":
 		if e.complexity.Mutation.DeleteRisk == nil {
 			break
@@ -6217,6 +6306,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.UpdateProcessingActivity(childComplexity, args["input"].(types.UpdateProcessingActivityInput)), true
+	case "Mutation.updateRightsRequest":
+		if e.complexity.Mutation.UpdateRightsRequest == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateRightsRequest_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateRightsRequest(childComplexity, args["input"].(types.UpdateRightsRequestInput)), true
 	case "Mutation.updateRisk":
 		if e.complexity.Mutation.UpdateRisk == nil {
 			break
@@ -6920,6 +7020,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Organization.ProcessingActivities(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.ProcessingActivityOrderBy), args["filter"].(*types.ProcessingActivityFilter)), true
+	case "Organization.rightsRequests":
+		if e.complexity.Organization.RightsRequests == nil {
+			break
+		}
+
+		args, err := ec.field_Organization_rightsRequests_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Organization.RightsRequests(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.RightsRequestOrderBy)), true
 	case "Organization.risks":
 		if e.complexity.Organization.Risks == nil {
 			break
@@ -7491,6 +7602,105 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.RequestSignaturePayload.DocumentVersionSignatureEdge(childComplexity), true
+
+	case "RightsRequest.actionTaken":
+		if e.complexity.RightsRequest.ActionTaken == nil {
+			break
+		}
+
+		return e.complexity.RightsRequest.ActionTaken(childComplexity), true
+	case "RightsRequest.contact":
+		if e.complexity.RightsRequest.Contact == nil {
+			break
+		}
+
+		return e.complexity.RightsRequest.Contact(childComplexity), true
+	case "RightsRequest.createdAt":
+		if e.complexity.RightsRequest.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.RightsRequest.CreatedAt(childComplexity), true
+	case "RightsRequest.dataSubject":
+		if e.complexity.RightsRequest.DataSubject == nil {
+			break
+		}
+
+		return e.complexity.RightsRequest.DataSubject(childComplexity), true
+	case "RightsRequest.deadline":
+		if e.complexity.RightsRequest.Deadline == nil {
+			break
+		}
+
+		return e.complexity.RightsRequest.Deadline(childComplexity), true
+	case "RightsRequest.details":
+		if e.complexity.RightsRequest.Details == nil {
+			break
+		}
+
+		return e.complexity.RightsRequest.Details(childComplexity), true
+	case "RightsRequest.id":
+		if e.complexity.RightsRequest.ID == nil {
+			break
+		}
+
+		return e.complexity.RightsRequest.ID(childComplexity), true
+	case "RightsRequest.organization":
+		if e.complexity.RightsRequest.Organization == nil {
+			break
+		}
+
+		return e.complexity.RightsRequest.Organization(childComplexity), true
+	case "RightsRequest.requestState":
+		if e.complexity.RightsRequest.RequestState == nil {
+			break
+		}
+
+		return e.complexity.RightsRequest.RequestState(childComplexity), true
+	case "RightsRequest.requestType":
+		if e.complexity.RightsRequest.RequestType == nil {
+			break
+		}
+
+		return e.complexity.RightsRequest.RequestType(childComplexity), true
+	case "RightsRequest.updatedAt":
+		if e.complexity.RightsRequest.UpdatedAt == nil {
+			break
+		}
+
+		return e.complexity.RightsRequest.UpdatedAt(childComplexity), true
+
+	case "RightsRequestConnection.edges":
+		if e.complexity.RightsRequestConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.RightsRequestConnection.Edges(childComplexity), true
+	case "RightsRequestConnection.pageInfo":
+		if e.complexity.RightsRequestConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.RightsRequestConnection.PageInfo(childComplexity), true
+	case "RightsRequestConnection.totalCount":
+		if e.complexity.RightsRequestConnection.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.RightsRequestConnection.TotalCount(childComplexity), true
+
+	case "RightsRequestEdge.cursor":
+		if e.complexity.RightsRequestEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.RightsRequestEdge.Cursor(childComplexity), true
+	case "RightsRequestEdge.node":
+		if e.complexity.RightsRequestEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.RightsRequestEdge.Node(childComplexity), true
 
 	case "Risk.category":
 		if e.complexity.Risk.Category == nil {
@@ -8803,6 +9013,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.UpdateProcessingActivityPayload.ProcessingActivity(childComplexity), true
 
+	case "UpdateRightsRequestPayload.rightsRequest":
+		if e.complexity.UpdateRightsRequestPayload.RightsRequest == nil {
+			break
+		}
+
+		return e.complexity.UpdateRightsRequestPayload.RightsRequest(childComplexity), true
+
 	case "UpdateRiskPayload.risk":
 		if e.complexity.UpdateRiskPayload.Risk == nil {
 			break
@@ -9740,6 +9957,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputCreateOrganizationInput,
 		ec.unmarshalInputCreatePeopleInput,
 		ec.unmarshalInputCreateProcessingActivityInput,
+		ec.unmarshalInputCreateRightsRequestInput,
 		ec.unmarshalInputCreateRiskDocumentMappingInput,
 		ec.unmarshalInputCreateRiskInput,
 		ec.unmarshalInputCreateRiskMeasureMappingInput,
@@ -9784,6 +10002,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputDeleteOrganizationInput,
 		ec.unmarshalInputDeletePeopleInput,
 		ec.unmarshalInputDeleteProcessingActivityInput,
+		ec.unmarshalInputDeleteRightsRequestInput,
 		ec.unmarshalInputDeleteRiskDocumentMappingInput,
 		ec.unmarshalInputDeleteRiskInput,
 		ec.unmarshalInputDeleteRiskMeasureMappingInput,
@@ -9842,6 +10061,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputRemoveMemberInput,
 		ec.unmarshalInputRequestEvidenceInput,
 		ec.unmarshalInputRequestSignatureInput,
+		ec.unmarshalInputRightsRequestOrder,
 		ec.unmarshalInputRiskFilter,
 		ec.unmarshalInputRiskOrder,
 		ec.unmarshalInputSendSigningNotificationsInput,
@@ -9873,6 +10093,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputUpdateOrganizationInput,
 		ec.unmarshalInputUpdatePeopleInput,
 		ec.unmarshalInputUpdateProcessingActivityInput,
+		ec.unmarshalInputUpdateRightsRequestInput,
 		ec.unmarshalInputUpdateRiskInput,
 		ec.unmarshalInputUpdateSAMLConfigurationInput,
 		ec.unmarshalInputUpdateTaskInput,
@@ -10256,6 +10477,42 @@ enum ContinualImprovementPriority
   HIGH
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.ContinualImprovementPriorityHigh"
+    )
+}
+
+enum RightsRequestType
+  @goModel(
+    model: "go.probo.inc/probo/pkg/coredata.RightsRequestType"
+  ) {
+  ACCESS
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.RightsRequestTypeAccess"
+    )
+  DELETION
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.RightsRequestTypeDeletion"
+    )
+  PORTABILITY
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.RightsRequestTypePortability"
+    )
+}
+
+enum RightsRequestState
+  @goModel(
+    model: "go.probo.inc/probo/pkg/coredata.RightsRequestState"
+  ) {
+  TODO
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.RightsRequestStateTodo"
+    )
+  IN_PROGRESS
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.RightsRequestStateInProgress"
+    )
+  DONE
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.RightsRequestStateDone"
     )
 }
 
@@ -11064,6 +11321,28 @@ enum ContinualImprovementOrderField
     )
 }
 
+enum RightsRequestOrderField
+  @goModel(
+    model: "go.probo.inc/probo/pkg/coredata.RightsRequestOrderField"
+  ) {
+  CREATED_AT
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.RightsRequestOrderFieldCreatedAt"
+    )
+  DEADLINE
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.RightsRequestOrderFieldDeadline"
+    )
+  STATE
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.RightsRequestOrderFieldState"
+    )
+  TYPE
+    @goEnum(
+      value: "go.probo.inc/probo/pkg/coredata.RightsRequestOrderFieldType"
+    )
+}
+
 enum ProcessingActivityOrderField
   @goModel(
     model: "go.probo.inc/probo/pkg/coredata.ProcessingActivityOrderField"
@@ -11343,6 +11622,14 @@ input ContinualImprovementOrder
   field: ContinualImprovementOrderField!
 }
 
+input RightsRequestOrder
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.RightsRequestOrderBy"
+  ) {
+  direction: OrderDirection!
+  field: RightsRequestOrderField!
+}
+
 input ProcessingActivityOrder
   @goModel(
     model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ProcessingActivityOrderBy"
@@ -11511,6 +11798,7 @@ input ObligationFilter {
 input ContinualImprovementFilter {
   snapshotId: ID
 }
+
 
 input ProcessingActivityFilter {
   snapshotId: ID
@@ -11725,6 +12013,14 @@ type Organization implements Node {
     orderBy: ContinualImprovementOrder
     filter: ContinualImprovementFilter = { snapshotId: null }
   ): ContinualImprovementConnection! @goField(forceResolver: true)
+
+  rightsRequests(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: RightsRequestOrder
+  ): RightsRequestConnection! @goField(forceResolver: true)
 
   processingActivities(
     first: Int
@@ -12325,6 +12621,20 @@ type ContinualImprovement implements Node {
   updatedAt: Datetime!
 }
 
+type RightsRequest implements Node {
+  id: ID!
+  organization: Organization! @goField(forceResolver: true)
+  requestType: RightsRequestType!
+  requestState: RightsRequestState!
+  dataSubject: String
+  contact: String
+  details: String
+  deadline: Datetime
+  actionTaken: String
+  createdAt: Datetime!
+  updatedAt: Datetime!
+}
+
 type ProcessingActivity implements Node {
   id: ID!
   snapshotId: ID
@@ -12878,6 +13188,20 @@ type ContinualImprovementEdge {
   node: ContinualImprovement!
 }
 
+type RightsRequestConnection
+  @goModel(
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.RightsRequestConnection"
+  ) {
+  totalCount: Int! @goField(forceResolver: true)
+  edges: [RightsRequestEdge!]!
+  pageInfo: PageInfo!
+}
+
+type RightsRequestEdge {
+  cursor: CursorKey!
+  node: RightsRequest!
+}
+
 type ProcessingActivityConnection
   @goModel(
     model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ProcessingActivityConnection"
@@ -13245,6 +13569,20 @@ type Mutation {
   deleteContinualImprovement(
     input: DeleteContinualImprovementInput!
   ): DeleteContinualImprovementPayload!
+
+  # Rights Request mutations
+  createRightsRequest(
+    input: CreateRightsRequestInput!
+  ): CreateRightsRequestPayload!
+
+  updateRightsRequest(
+    input: UpdateRightsRequestInput!
+  ): UpdateRightsRequestPayload!
+
+  deleteRightsRequest(
+    input: DeleteRightsRequestInput!
+  ): DeleteRightsRequestPayload!
+
   # Processing Activity mutations
   createProcessingActivity(
     input: CreateProcessingActivityInput!
@@ -13607,6 +13945,7 @@ input UpdateTaskInput {
   timeEstimate: Duration @goField(omittable: true)
   deadline: Datetime @goField(omittable: true)
   assignedToId: ID @goField(omittable: true)
+  measureId: ID @goField(omittable: true)
 }
 
 input DeleteTaskInput {
@@ -14019,6 +14358,32 @@ input UpdateContinualImprovementInput {
 
 input DeleteContinualImprovementInput {
   continualImprovementId: ID!
+}
+
+input CreateRightsRequestInput {
+  organizationId: ID!
+  requestType: RightsRequestType!
+  requestState: RightsRequestState!
+  dataSubject: String
+  contact: String
+  details: String
+  deadline: Datetime
+  actionTaken: String
+}
+
+input UpdateRightsRequestInput {
+  id: ID!
+  requestType: RightsRequestType
+  requestState: RightsRequestState
+  dataSubject: String @goField(omittable: true)
+  contact: String @goField(omittable: true)
+  details: String @goField(omittable: true)
+  deadline: Datetime @goField(omittable: true)
+  actionTaken: String @goField(omittable: true)
+}
+
+input DeleteRightsRequestInput {
+  rightsRequestId: ID!
 }
 
 input CreateProcessingActivityInput {
@@ -14961,6 +15326,18 @@ type UpdateContinualImprovementPayload {
 
 type DeleteContinualImprovementPayload {
   deletedContinualImprovementId: ID!
+}
+
+type CreateRightsRequestPayload {
+  rightsRequestEdge: RightsRequestEdge!
+}
+
+type UpdateRightsRequestPayload {
+  rightsRequest: RightsRequest!
+}
+
+type DeleteRightsRequestPayload {
+  deletedRightsRequestId: ID!
 }
 
 type CreateProcessingActivityPayload {
@@ -16066,6 +16443,17 @@ func (ec *executionContext) field_Mutation_createProcessingActivity_args(ctx con
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_createRightsRequest_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateRightsRequestInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateRightsRequestInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_createRiskDocumentMapping_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -16499,6 +16887,17 @@ func (ec *executionContext) field_Mutation_deleteProcessingActivity_args(ctx con
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNDeleteProcessingActivityInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteProcessingActivityInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_deleteRightsRequest_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNDeleteRightsRequestInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteRightsRequestInput)
 	if err != nil {
 		return nil, err
 	}
@@ -17082,6 +17481,17 @@ func (ec *executionContext) field_Mutation_updateProcessingActivity_args(ctx con
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateProcessingActivityInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateProcessingActivityInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateRightsRequest_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateRightsRequestInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateRightsRequestInput)
 	if err != nil {
 		return nil, err
 	}
@@ -17862,6 +18272,37 @@ func (ec *executionContext) field_Organization_processingActivities_args(ctx con
 		return nil, err
 	}
 	args["filter"] = arg5
+	return args, nil
+}
+
+func (ec *executionContext) field_Organization_rightsRequests_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "first", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "after", ec.unmarshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey)
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "last", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["last"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "before", ec.unmarshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey)
+	if err != nil {
+		return nil, err
+	}
+	args["before"] = arg3
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "orderBy", ec.unmarshalORightsRequestOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐRightsRequestOrderBy)
+	if err != nil {
+		return nil, err
+	}
+	args["orderBy"] = arg4
 	return args, nil
 }
 
@@ -19233,6 +19674,8 @@ func (ec *executionContext) fieldContext_Asset_organization(_ context.Context, f
 				return ec.fieldContext_Organization_obligations(ctx, field)
 			case "continualImprovements":
 				return ec.fieldContext_Organization_continualImprovements(ctx, field)
+			case "rightsRequests":
+				return ec.fieldContext_Organization_rightsRequests(ctx, field)
 			case "processingActivities":
 				return ec.fieldContext_Organization_processingActivities(ctx, field)
 			case "dataProtectionImpactAssessments":
@@ -19639,6 +20082,8 @@ func (ec *executionContext) fieldContext_Audit_organization(_ context.Context, f
 				return ec.fieldContext_Organization_obligations(ctx, field)
 			case "continualImprovements":
 				return ec.fieldContext_Organization_continualImprovements(ctx, field)
+			case "rightsRequests":
+				return ec.fieldContext_Organization_rightsRequests(ctx, field)
 			case "processingActivities":
 				return ec.fieldContext_Organization_processingActivities(ctx, field)
 			case "dataProtectionImpactAssessments":
@@ -20591,6 +21036,8 @@ func (ec *executionContext) fieldContext_ContinualImprovement_organization(_ con
 				return ec.fieldContext_Organization_obligations(ctx, field)
 			case "continualImprovements":
 				return ec.fieldContext_Organization_continualImprovements(ctx, field)
+			case "rightsRequests":
+				return ec.fieldContext_Organization_rightsRequests(ctx, field)
 			case "processingActivities":
 				return ec.fieldContext_Organization_processingActivities(ctx, field)
 			case "dataProtectionImpactAssessments":
@@ -22729,6 +23176,41 @@ func (ec *executionContext) fieldContext_CreateProcessingActivityPayload_process
 	return fc, nil
 }
 
+func (ec *executionContext) _CreateRightsRequestPayload_rightsRequestEdge(ctx context.Context, field graphql.CollectedField, obj *types.CreateRightsRequestPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_CreateRightsRequestPayload_rightsRequestEdge,
+		func(ctx context.Context) (any, error) {
+			return obj.RightsRequestEdge, nil
+		},
+		nil,
+		ec.marshalNRightsRequestEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐRightsRequestEdge,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_CreateRightsRequestPayload_rightsRequestEdge(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CreateRightsRequestPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cursor":
+				return ec.fieldContext_RightsRequestEdge_cursor(ctx, field)
+			case "node":
+				return ec.fieldContext_RightsRequestEdge_node(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type RightsRequestEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _CreateRiskDocumentMappingPayload_riskEdge(ctx context.Context, field graphql.CollectedField, obj *types.CreateRiskDocumentMappingPayload) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -23524,6 +24006,8 @@ func (ec *executionContext) fieldContext_CustomDomain_organization(_ context.Con
 				return ec.fieldContext_Organization_obligations(ctx, field)
 			case "continualImprovements":
 				return ec.fieldContext_Organization_continualImprovements(ctx, field)
+			case "rightsRequests":
+				return ec.fieldContext_Organization_rightsRequests(ctx, field)
 			case "processingActivities":
 				return ec.fieldContext_Organization_processingActivities(ctx, field)
 			case "dataProtectionImpactAssessments":
@@ -24076,6 +24560,8 @@ func (ec *executionContext) fieldContext_DataProtectionImpactAssessment_organiza
 				return ec.fieldContext_Organization_obligations(ctx, field)
 			case "continualImprovements":
 				return ec.fieldContext_Organization_continualImprovements(ctx, field)
+			case "rightsRequests":
+				return ec.fieldContext_Organization_rightsRequests(ctx, field)
 			case "processingActivities":
 				return ec.fieldContext_Organization_processingActivities(ctx, field)
 			case "dataProtectionImpactAssessments":
@@ -24783,6 +25269,8 @@ func (ec *executionContext) fieldContext_Datum_organization(_ context.Context, f
 				return ec.fieldContext_Organization_obligations(ctx, field)
 			case "continualImprovements":
 				return ec.fieldContext_Organization_continualImprovements(ctx, field)
+			case "rightsRequests":
+				return ec.fieldContext_Organization_rightsRequests(ctx, field)
 			case "processingActivities":
 				return ec.fieldContext_Organization_processingActivities(ctx, field)
 			case "dataProtectionImpactAssessments":
@@ -25880,6 +26368,8 @@ func (ec *executionContext) fieldContext_DeleteOrganizationHorizontalLogoPayload
 				return ec.fieldContext_Organization_obligations(ctx, field)
 			case "continualImprovements":
 				return ec.fieldContext_Organization_continualImprovements(ctx, field)
+			case "rightsRequests":
+				return ec.fieldContext_Organization_rightsRequests(ctx, field)
 			case "processingActivities":
 				return ec.fieldContext_Organization_processingActivities(ctx, field)
 			case "dataProtectionImpactAssessments":
@@ -25984,6 +26474,35 @@ func (ec *executionContext) _DeleteProcessingActivityPayload_deletedProcessingAc
 func (ec *executionContext) fieldContext_DeleteProcessingActivityPayload_deletedProcessingActivityId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "DeleteProcessingActivityPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DeleteRightsRequestPayload_deletedRightsRequestId(ctx context.Context, field graphql.CollectedField, obj *types.DeleteRightsRequestPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_DeleteRightsRequestPayload_deletedRightsRequestId,
+		func(ctx context.Context) (any, error) {
+			return obj.DeletedRightsRequestID, nil
+		},
+		nil,
+		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_DeleteRightsRequestPayload_deletedRightsRequestId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DeleteRightsRequestPayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -27032,6 +27551,8 @@ func (ec *executionContext) fieldContext_Document_organization(_ context.Context
 				return ec.fieldContext_Organization_obligations(ctx, field)
 			case "continualImprovements":
 				return ec.fieldContext_Organization_continualImprovements(ctx, field)
+			case "rightsRequests":
+				return ec.fieldContext_Organization_rightsRequests(ctx, field)
 			case "processingActivities":
 				return ec.fieldContext_Organization_processingActivities(ctx, field)
 			case "dataProtectionImpactAssessments":
@@ -29574,6 +30095,8 @@ func (ec *executionContext) fieldContext_Framework_organization(_ context.Contex
 				return ec.fieldContext_Organization_obligations(ctx, field)
 			case "continualImprovements":
 				return ec.fieldContext_Organization_continualImprovements(ctx, field)
+			case "rightsRequests":
+				return ec.fieldContext_Organization_rightsRequests(ctx, field)
 			case "processingActivities":
 				return ec.fieldContext_Organization_processingActivities(ctx, field)
 			case "dataProtectionImpactAssessments":
@@ -30573,6 +31096,8 @@ func (ec *executionContext) fieldContext_Invitation_organization(_ context.Conte
 				return ec.fieldContext_Organization_obligations(ctx, field)
 			case "continualImprovements":
 				return ec.fieldContext_Organization_continualImprovements(ctx, field)
+			case "rightsRequests":
+				return ec.fieldContext_Organization_rightsRequests(ctx, field)
 			case "processingActivities":
 				return ec.fieldContext_Organization_processingActivities(ctx, field)
 			case "dataProtectionImpactAssessments":
@@ -31645,6 +32170,8 @@ func (ec *executionContext) fieldContext_Meeting_organization(_ context.Context,
 				return ec.fieldContext_Organization_obligations(ctx, field)
 			case "continualImprovements":
 				return ec.fieldContext_Organization_continualImprovements(ctx, field)
+			case "rightsRequests":
+				return ec.fieldContext_Organization_rightsRequests(ctx, field)
 			case "processingActivities":
 				return ec.fieldContext_Organization_processingActivities(ctx, field)
 			case "dataProtectionImpactAssessments":
@@ -37875,6 +38402,141 @@ func (ec *executionContext) fieldContext_Mutation_deleteContinualImprovement(ctx
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_createRightsRequest(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_createRightsRequest,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().CreateRightsRequest(ctx, fc.Args["input"].(types.CreateRightsRequestInput))
+		},
+		nil,
+		ec.marshalNCreateRightsRequestPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateRightsRequestPayload,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_createRightsRequest(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "rightsRequestEdge":
+				return ec.fieldContext_CreateRightsRequestPayload_rightsRequestEdge(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CreateRightsRequestPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createRightsRequest_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateRightsRequest(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_updateRightsRequest,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().UpdateRightsRequest(ctx, fc.Args["input"].(types.UpdateRightsRequestInput))
+		},
+		nil,
+		ec.marshalNUpdateRightsRequestPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateRightsRequestPayload,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updateRightsRequest(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "rightsRequest":
+				return ec.fieldContext_UpdateRightsRequestPayload_rightsRequest(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type UpdateRightsRequestPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateRightsRequest_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteRightsRequest(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_deleteRightsRequest,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().DeleteRightsRequest(ctx, fc.Args["input"].(types.DeleteRightsRequestInput))
+		},
+		nil,
+		ec.marshalNDeleteRightsRequestPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteRightsRequestPayload,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteRightsRequest(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "deletedRightsRequestId":
+				return ec.fieldContext_DeleteRightsRequestPayload_deletedRightsRequestId(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DeleteRightsRequestPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteRightsRequest_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_createProcessingActivity(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -38915,6 +39577,8 @@ func (ec *executionContext) fieldContext_Nonconformity_organization(_ context.Co
 				return ec.fieldContext_Organization_obligations(ctx, field)
 			case "continualImprovements":
 				return ec.fieldContext_Organization_continualImprovements(ctx, field)
+			case "rightsRequests":
+				return ec.fieldContext_Organization_rightsRequests(ctx, field)
 			case "processingActivities":
 				return ec.fieldContext_Organization_processingActivities(ctx, field)
 			case "dataProtectionImpactAssessments":
@@ -39698,6 +40362,8 @@ func (ec *executionContext) fieldContext_Obligation_organization(_ context.Conte
 				return ec.fieldContext_Organization_obligations(ctx, field)
 			case "continualImprovements":
 				return ec.fieldContext_Organization_continualImprovements(ctx, field)
+			case "rightsRequests":
+				return ec.fieldContext_Organization_rightsRequests(ctx, field)
 			case "processingActivities":
 				return ec.fieldContext_Organization_processingActivities(ctx, field)
 			case "dataProtectionImpactAssessments":
@@ -41406,6 +42072,55 @@ func (ec *executionContext) fieldContext_Organization_continualImprovements(ctx 
 	return fc, nil
 }
 
+func (ec *executionContext) _Organization_rightsRequests(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Organization_rightsRequests,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Organization().RightsRequests(ctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.RightsRequestOrderBy))
+		},
+		nil,
+		ec.marshalNRightsRequestConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐRightsRequestConnection,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Organization_rightsRequests(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Organization",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "totalCount":
+				return ec.fieldContext_RightsRequestConnection_totalCount(ctx, field)
+			case "edges":
+				return ec.fieldContext_RightsRequestConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_RightsRequestConnection_pageInfo(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type RightsRequestConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Organization_rightsRequests_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Organization_processingActivities(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -42121,6 +42836,8 @@ func (ec *executionContext) fieldContext_OrganizationEdge_node(_ context.Context
 				return ec.fieldContext_Organization_obligations(ctx, field)
 			case "continualImprovements":
 				return ec.fieldContext_Organization_continualImprovements(ctx, field)
+			case "rightsRequests":
+				return ec.fieldContext_Organization_rightsRequests(ctx, field)
 			case "processingActivities":
 				return ec.fieldContext_Organization_processingActivities(ctx, field)
 			case "dataProtectionImpactAssessments":
@@ -42902,6 +43619,8 @@ func (ec *executionContext) fieldContext_ProcessingActivity_organization(_ conte
 				return ec.fieldContext_Organization_obligations(ctx, field)
 			case "continualImprovements":
 				return ec.fieldContext_Organization_continualImprovements(ctx, field)
+			case "rightsRequests":
+				return ec.fieldContext_Organization_rightsRequests(ctx, field)
 			case "processingActivities":
 				return ec.fieldContext_Organization_processingActivities(ctx, field)
 			case "dataProtectionImpactAssessments":
@@ -44624,6 +45343,588 @@ func (ec *executionContext) fieldContext_RequestSignaturePayload_documentVersion
 	return fc, nil
 }
 
+func (ec *executionContext) _RightsRequest_id(ctx context.Context, field graphql.CollectedField, obj *types.RightsRequest) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_RightsRequest_id,
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_RightsRequest_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RightsRequest",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RightsRequest_organization(ctx context.Context, field graphql.CollectedField, obj *types.RightsRequest) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_RightsRequest_organization,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.RightsRequest().Organization(ctx, obj)
+		},
+		nil,
+		ec.marshalNOrganization2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐOrganization,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_RightsRequest_organization(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RightsRequest",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Organization_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Organization_name(ctx, field)
+			case "logoUrl":
+				return ec.fieldContext_Organization_logoUrl(ctx, field)
+			case "horizontalLogoUrl":
+				return ec.fieldContext_Organization_horizontalLogoUrl(ctx, field)
+			case "description":
+				return ec.fieldContext_Organization_description(ctx, field)
+			case "websiteUrl":
+				return ec.fieldContext_Organization_websiteUrl(ctx, field)
+			case "email":
+				return ec.fieldContext_Organization_email(ctx, field)
+			case "headquarterAddress":
+				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
+			case "context":
+				return ec.fieldContext_Organization_context(ctx, field)
+			case "memberships":
+				return ec.fieldContext_Organization_memberships(ctx, field)
+			case "invitations":
+				return ec.fieldContext_Organization_invitations(ctx, field)
+			case "slackConnections":
+				return ec.fieldContext_Organization_slackConnections(ctx, field)
+			case "frameworks":
+				return ec.fieldContext_Organization_frameworks(ctx, field)
+			case "controls":
+				return ec.fieldContext_Organization_controls(ctx, field)
+			case "vendors":
+				return ec.fieldContext_Organization_vendors(ctx, field)
+			case "peoples":
+				return ec.fieldContext_Organization_peoples(ctx, field)
+			case "documents":
+				return ec.fieldContext_Organization_documents(ctx, field)
+			case "meetings":
+				return ec.fieldContext_Organization_meetings(ctx, field)
+			case "measures":
+				return ec.fieldContext_Organization_measures(ctx, field)
+			case "risks":
+				return ec.fieldContext_Organization_risks(ctx, field)
+			case "tasks":
+				return ec.fieldContext_Organization_tasks(ctx, field)
+			case "assets":
+				return ec.fieldContext_Organization_assets(ctx, field)
+			case "data":
+				return ec.fieldContext_Organization_data(ctx, field)
+			case "audits":
+				return ec.fieldContext_Organization_audits(ctx, field)
+			case "nonconformities":
+				return ec.fieldContext_Organization_nonconformities(ctx, field)
+			case "obligations":
+				return ec.fieldContext_Organization_obligations(ctx, field)
+			case "continualImprovements":
+				return ec.fieldContext_Organization_continualImprovements(ctx, field)
+			case "rightsRequests":
+				return ec.fieldContext_Organization_rightsRequests(ctx, field)
+			case "processingActivities":
+				return ec.fieldContext_Organization_processingActivities(ctx, field)
+			case "dataProtectionImpactAssessments":
+				return ec.fieldContext_Organization_dataProtectionImpactAssessments(ctx, field)
+			case "transferImpactAssessments":
+				return ec.fieldContext_Organization_transferImpactAssessments(ctx, field)
+			case "snapshots":
+				return ec.fieldContext_Organization_snapshots(ctx, field)
+			case "trustCenterFiles":
+				return ec.fieldContext_Organization_trustCenterFiles(ctx, field)
+			case "trustCenter":
+				return ec.fieldContext_Organization_trustCenter(ctx, field)
+			case "customDomain":
+				return ec.fieldContext_Organization_customDomain(ctx, field)
+			case "samlConfigurations":
+				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Organization_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Organization_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RightsRequest_requestType(ctx context.Context, field graphql.CollectedField, obj *types.RightsRequest) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_RightsRequest_requestType,
+		func(ctx context.Context) (any, error) {
+			return obj.RequestType, nil
+		},
+		nil,
+		ec.marshalNRightsRequestType2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐRightsRequestType,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_RightsRequest_requestType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RightsRequest",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type RightsRequestType does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RightsRequest_requestState(ctx context.Context, field graphql.CollectedField, obj *types.RightsRequest) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_RightsRequest_requestState,
+		func(ctx context.Context) (any, error) {
+			return obj.RequestState, nil
+		},
+		nil,
+		ec.marshalNRightsRequestState2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐRightsRequestState,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_RightsRequest_requestState(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RightsRequest",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type RightsRequestState does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RightsRequest_dataSubject(ctx context.Context, field graphql.CollectedField, obj *types.RightsRequest) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_RightsRequest_dataSubject,
+		func(ctx context.Context) (any, error) {
+			return obj.DataSubject, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_RightsRequest_dataSubject(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RightsRequest",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RightsRequest_contact(ctx context.Context, field graphql.CollectedField, obj *types.RightsRequest) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_RightsRequest_contact,
+		func(ctx context.Context) (any, error) {
+			return obj.Contact, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_RightsRequest_contact(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RightsRequest",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RightsRequest_details(ctx context.Context, field graphql.CollectedField, obj *types.RightsRequest) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_RightsRequest_details,
+		func(ctx context.Context) (any, error) {
+			return obj.Details, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_RightsRequest_details(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RightsRequest",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RightsRequest_deadline(ctx context.Context, field graphql.CollectedField, obj *types.RightsRequest) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_RightsRequest_deadline,
+		func(ctx context.Context) (any, error) {
+			return obj.Deadline, nil
+		},
+		nil,
+		ec.marshalODatetime2ᚖtimeᚐTime,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_RightsRequest_deadline(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RightsRequest",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RightsRequest_actionTaken(ctx context.Context, field graphql.CollectedField, obj *types.RightsRequest) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_RightsRequest_actionTaken,
+		func(ctx context.Context) (any, error) {
+			return obj.ActionTaken, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_RightsRequest_actionTaken(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RightsRequest",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RightsRequest_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.RightsRequest) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_RightsRequest_createdAt,
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		ec.marshalNDatetime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_RightsRequest_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RightsRequest",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RightsRequest_updatedAt(ctx context.Context, field graphql.CollectedField, obj *types.RightsRequest) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_RightsRequest_updatedAt,
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		ec.marshalNDatetime2timeᚐTime,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_RightsRequest_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RightsRequest",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RightsRequestConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *types.RightsRequestConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_RightsRequestConnection_totalCount,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.RightsRequestConnection().TotalCount(ctx, obj)
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_RightsRequestConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RightsRequestConnection",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RightsRequestConnection_edges(ctx context.Context, field graphql.CollectedField, obj *types.RightsRequestConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_RightsRequestConnection_edges,
+		func(ctx context.Context) (any, error) {
+			return obj.Edges, nil
+		},
+		nil,
+		ec.marshalNRightsRequestEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐRightsRequestEdgeᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_RightsRequestConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RightsRequestConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cursor":
+				return ec.fieldContext_RightsRequestEdge_cursor(ctx, field)
+			case "node":
+				return ec.fieldContext_RightsRequestEdge_node(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type RightsRequestEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RightsRequestConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *types.RightsRequestConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_RightsRequestConnection_pageInfo,
+		func(ctx context.Context) (any, error) {
+			return obj.PageInfo, nil
+		},
+		nil,
+		ec.marshalNPageInfo2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPageInfo,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_RightsRequestConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RightsRequestConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RightsRequestEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *types.RightsRequestEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_RightsRequestEdge_cursor,
+		func(ctx context.Context) (any, error) {
+			return obj.Cursor, nil
+		},
+		nil,
+		ec.marshalNCursorKey2goᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_RightsRequestEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RightsRequestEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type CursorKey does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RightsRequestEdge_node(ctx context.Context, field graphql.CollectedField, obj *types.RightsRequestEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_RightsRequestEdge_node,
+		func(ctx context.Context) (any, error) {
+			return obj.Node, nil
+		},
+		nil,
+		ec.marshalNRightsRequest2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐRightsRequest,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_RightsRequestEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RightsRequestEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_RightsRequest_id(ctx, field)
+			case "organization":
+				return ec.fieldContext_RightsRequest_organization(ctx, field)
+			case "requestType":
+				return ec.fieldContext_RightsRequest_requestType(ctx, field)
+			case "requestState":
+				return ec.fieldContext_RightsRequest_requestState(ctx, field)
+			case "dataSubject":
+				return ec.fieldContext_RightsRequest_dataSubject(ctx, field)
+			case "contact":
+				return ec.fieldContext_RightsRequest_contact(ctx, field)
+			case "details":
+				return ec.fieldContext_RightsRequest_details(ctx, field)
+			case "deadline":
+				return ec.fieldContext_RightsRequest_deadline(ctx, field)
+			case "actionTaken":
+				return ec.fieldContext_RightsRequest_actionTaken(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_RightsRequest_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_RightsRequest_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type RightsRequest", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Risk_id(ctx context.Context, field graphql.CollectedField, obj *types.Risk) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -45130,6 +46431,8 @@ func (ec *executionContext) fieldContext_Risk_organization(_ context.Context, fi
 				return ec.fieldContext_Organization_obligations(ctx, field)
 			case "continualImprovements":
 				return ec.fieldContext_Organization_continualImprovements(ctx, field)
+			case "rightsRequests":
+				return ec.fieldContext_Organization_rightsRequests(ctx, field)
 			case "processingActivities":
 				return ec.fieldContext_Organization_processingActivities(ctx, field)
 			case "dataProtectionImpactAssessments":
@@ -45723,6 +47026,8 @@ func (ec *executionContext) fieldContext_SAMLConfiguration_organization(_ contex
 				return ec.fieldContext_Organization_obligations(ctx, field)
 			case "continualImprovements":
 				return ec.fieldContext_Organization_continualImprovements(ctx, field)
+			case "rightsRequests":
+				return ec.fieldContext_Organization_rightsRequests(ctx, field)
 			case "processingActivities":
 				return ec.fieldContext_Organization_processingActivities(ctx, field)
 			case "dataProtectionImpactAssessments":
@@ -47320,6 +48625,8 @@ func (ec *executionContext) fieldContext_Snapshot_organization(_ context.Context
 				return ec.fieldContext_Organization_obligations(ctx, field)
 			case "continualImprovements":
 				return ec.fieldContext_Organization_continualImprovements(ctx, field)
+			case "rightsRequests":
+				return ec.fieldContext_Organization_rightsRequests(ctx, field)
 			case "processingActivities":
 				return ec.fieldContext_Organization_processingActivities(ctx, field)
 			case "dataProtectionImpactAssessments":
@@ -47992,6 +49299,8 @@ func (ec *executionContext) fieldContext_Task_organization(_ context.Context, fi
 				return ec.fieldContext_Organization_obligations(ctx, field)
 			case "continualImprovements":
 				return ec.fieldContext_Organization_continualImprovements(ctx, field)
+			case "rightsRequests":
+				return ec.fieldContext_Organization_rightsRequests(ctx, field)
 			case "processingActivities":
 				return ec.fieldContext_Organization_processingActivities(ctx, field)
 			case "dataProtectionImpactAssessments":
@@ -48560,6 +49869,8 @@ func (ec *executionContext) fieldContext_TransferImpactAssessment_organization(_
 				return ec.fieldContext_Organization_obligations(ctx, field)
 			case "continualImprovements":
 				return ec.fieldContext_Organization_continualImprovements(ctx, field)
+			case "rightsRequests":
+				return ec.fieldContext_Organization_rightsRequests(ctx, field)
 			case "processingActivities":
 				return ec.fieldContext_Organization_processingActivities(ctx, field)
 			case "dataProtectionImpactAssessments":
@@ -49225,6 +50536,8 @@ func (ec *executionContext) fieldContext_TrustCenter_organization(_ context.Cont
 				return ec.fieldContext_Organization_obligations(ctx, field)
 			case "continualImprovements":
 				return ec.fieldContext_Organization_continualImprovements(ctx, field)
+			case "rightsRequests":
+				return ec.fieldContext_Organization_rightsRequests(ctx, field)
 			case "processingActivities":
 				return ec.fieldContext_Organization_processingActivities(ctx, field)
 			case "dataProtectionImpactAssessments":
@@ -50660,6 +51973,8 @@ func (ec *executionContext) fieldContext_TrustCenterFile_organization(_ context.
 				return ec.fieldContext_Organization_obligations(ctx, field)
 			case "continualImprovements":
 				return ec.fieldContext_Organization_continualImprovements(ctx, field)
+			case "rightsRequests":
+				return ec.fieldContext_Organization_rightsRequests(ctx, field)
 			case "processingActivities":
 				return ec.fieldContext_Organization_processingActivities(ctx, field)
 			case "dataProtectionImpactAssessments":
@@ -52150,6 +53465,8 @@ func (ec *executionContext) fieldContext_UpdateOrganizationPayload_organization(
 				return ec.fieldContext_Organization_obligations(ctx, field)
 			case "continualImprovements":
 				return ec.fieldContext_Organization_continualImprovements(ctx, field)
+			case "rightsRequests":
+				return ec.fieldContext_Organization_rightsRequests(ctx, field)
 			case "processingActivities":
 				return ec.fieldContext_Organization_processingActivities(ctx, field)
 			case "dataProtectionImpactAssessments":
@@ -52310,6 +53627,59 @@ func (ec *executionContext) fieldContext_UpdateProcessingActivityPayload_process
 				return ec.fieldContext_ProcessingActivity_updatedAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type ProcessingActivity", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UpdateRightsRequestPayload_rightsRequest(ctx context.Context, field graphql.CollectedField, obj *types.UpdateRightsRequestPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_UpdateRightsRequestPayload_rightsRequest,
+		func(ctx context.Context) (any, error) {
+			return obj.RightsRequest, nil
+		},
+		nil,
+		ec.marshalNRightsRequest2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐRightsRequest,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_UpdateRightsRequestPayload_rightsRequest(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UpdateRightsRequestPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_RightsRequest_id(ctx, field)
+			case "organization":
+				return ec.fieldContext_RightsRequest_organization(ctx, field)
+			case "requestType":
+				return ec.fieldContext_RightsRequest_requestType(ctx, field)
+			case "requestState":
+				return ec.fieldContext_RightsRequest_requestState(ctx, field)
+			case "dataSubject":
+				return ec.fieldContext_RightsRequest_dataSubject(ctx, field)
+			case "contact":
+				return ec.fieldContext_RightsRequest_contact(ctx, field)
+			case "details":
+				return ec.fieldContext_RightsRequest_details(ctx, field)
+			case "deadline":
+				return ec.fieldContext_RightsRequest_deadline(ctx, field)
+			case "actionTaken":
+				return ec.fieldContext_RightsRequest_actionTaken(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_RightsRequest_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_RightsRequest_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type RightsRequest", field.Name)
 		},
 	}
 	return fc, nil
@@ -53863,6 +55233,8 @@ func (ec *executionContext) fieldContext_Vendor_organization(_ context.Context, 
 				return ec.fieldContext_Organization_obligations(ctx, field)
 			case "continualImprovements":
 				return ec.fieldContext_Organization_continualImprovements(ctx, field)
+			case "rightsRequests":
+				return ec.fieldContext_Organization_rightsRequests(ctx, field)
 			case "processingActivities":
 				return ec.fieldContext_Organization_processingActivities(ctx, field)
 			case "dataProtectionImpactAssessments":
@@ -60958,6 +62330,82 @@ func (ec *executionContext) unmarshalInputCreateProcessingActivityInput(ctx cont
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputCreateRightsRequestInput(ctx context.Context, obj any) (types.CreateRightsRequestInput, error) {
+	var it types.CreateRightsRequestInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"organizationId", "requestType", "requestState", "dataSubject", "contact", "details", "deadline", "actionTaken"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "organizationId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("organizationId"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OrganizationID = data
+		case "requestType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("requestType"))
+			data, err := ec.unmarshalNRightsRequestType2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐRightsRequestType(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.RequestType = data
+		case "requestState":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("requestState"))
+			data, err := ec.unmarshalNRightsRequestState2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐRightsRequestState(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.RequestState = data
+		case "dataSubject":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataSubject"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataSubject = data
+		case "contact":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("contact"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Contact = data
+		case "details":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("details"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Details = data
+		case "deadline":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deadline"))
+			data, err := ec.unmarshalODatetime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Deadline = data
+		case "actionTaken":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("actionTaken"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ActionTaken = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputCreateRiskDocumentMappingInput(ctx context.Context, obj any) (types.CreateRiskDocumentMappingInput, error) {
 	var it types.CreateRiskDocumentMappingInput
 	asMap := map[string]any{}
@@ -62763,6 +64211,33 @@ func (ec *executionContext) unmarshalInputDeleteProcessingActivityInput(ctx cont
 				return it, err
 			}
 			it.ProcessingActivityID = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputDeleteRightsRequestInput(ctx context.Context, obj any) (types.DeleteRightsRequestInput, error) {
+	var it types.DeleteRightsRequestInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"rightsRequestId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "rightsRequestId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("rightsRequestId"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.RightsRequestID = data
 		}
 	}
 
@@ -64594,6 +66069,40 @@ func (ec *executionContext) unmarshalInputRequestSignatureInput(ctx context.Cont
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputRightsRequestOrder(ctx context.Context, obj any) (types.RightsRequestOrderBy, error) {
+	var it types.RightsRequestOrderBy
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"direction", "field"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "direction":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("direction"))
+			data, err := ec.unmarshalNOrderDirection2goᚗproboᚗincᚋproboᚋpkgᚋpageᚐOrderDirection(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Direction = data
+		case "field":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
+			data, err := ec.unmarshalNRightsRequestOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐRightsRequestOrderField(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Field = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputRiskFilter(ctx context.Context, obj any) (types.RiskFilter, error) {
 	var it types.RiskFilter
 	asMap := map[string]any{}
@@ -66236,6 +67745,82 @@ func (ec *executionContext) unmarshalInputUpdateProcessingActivityInput(ctx cont
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputUpdateRightsRequestInput(ctx context.Context, obj any) (types.UpdateRightsRequestInput, error) {
+	var it types.UpdateRightsRequestInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"id", "requestType", "requestState", "dataSubject", "contact", "details", "deadline", "actionTaken"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ID = data
+		case "requestType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("requestType"))
+			data, err := ec.unmarshalORightsRequestType2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐRightsRequestType(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.RequestType = data
+		case "requestState":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("requestState"))
+			data, err := ec.unmarshalORightsRequestState2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐRightsRequestState(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.RequestState = data
+		case "dataSubject":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataSubject"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataSubject = graphql.OmittableOf(data)
+		case "contact":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("contact"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Contact = graphql.OmittableOf(data)
+		case "details":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("details"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Details = graphql.OmittableOf(data)
+		case "deadline":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deadline"))
+			data, err := ec.unmarshalODatetime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Deadline = graphql.OmittableOf(data)
+		case "actionTaken":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("actionTaken"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ActionTaken = graphql.OmittableOf(data)
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputUpdateRiskInput(ctx context.Context, obj any) (types.UpdateRiskInput, error) {
 	var it types.UpdateRiskInput
 	asMap := map[string]any{}
@@ -66458,7 +68043,7 @@ func (ec *executionContext) unmarshalInputUpdateTaskInput(ctx context.Context, o
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"taskId", "name", "description", "state", "timeEstimate", "deadline", "assignedToId"}
+	fieldsInOrder := [...]string{"taskId", "name", "description", "state", "timeEstimate", "deadline", "assignedToId", "measureId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -66514,6 +68099,13 @@ func (ec *executionContext) unmarshalInputUpdateTaskInput(ctx context.Context, o
 				return it, err
 			}
 			it.AssignedToID = graphql.OmittableOf(data)
+		case "measureId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("measureId"))
+			data, err := ec.unmarshalOID2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MeasureID = graphql.OmittableOf(data)
 		}
 	}
 
@@ -67799,6 +69391,13 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._Risk(ctx, sel, obj)
+	case types.RightsRequest:
+		return ec._RightsRequest(ctx, sel, &obj)
+	case *types.RightsRequest:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._RightsRequest(ctx, sel, obj)
 	case types.Report:
 		return ec._Report(ctx, sel, &obj)
 	case *types.Report:
@@ -70501,6 +72100,45 @@ func (ec *executionContext) _CreateProcessingActivityPayload(ctx context.Context
 	return out
 }
 
+var createRightsRequestPayloadImplementors = []string{"CreateRightsRequestPayload"}
+
+func (ec *executionContext) _CreateRightsRequestPayload(ctx context.Context, sel ast.SelectionSet, obj *types.CreateRightsRequestPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, createRightsRequestPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CreateRightsRequestPayload")
+		case "rightsRequestEdge":
+			out.Values[i] = ec._CreateRightsRequestPayload_rightsRequestEdge(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var createRiskDocumentMappingPayloadImplementors = []string{"CreateRiskDocumentMappingPayload"}
 
 func (ec *executionContext) _CreateRiskDocumentMappingPayload(ctx context.Context, sel ast.SelectionSet, obj *types.CreateRiskDocumentMappingPayload) graphql.Marshaler {
@@ -72748,6 +74386,45 @@ func (ec *executionContext) _DeleteProcessingActivityPayload(ctx context.Context
 			out.Values[i] = graphql.MarshalString("DeleteProcessingActivityPayload")
 		case "deletedProcessingActivityId":
 			out.Values[i] = ec._DeleteProcessingActivityPayload_deletedProcessingActivityId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var deleteRightsRequestPayloadImplementors = []string{"DeleteRightsRequestPayload"}
+
+func (ec *executionContext) _DeleteRightsRequestPayload(ctx context.Context, sel ast.SelectionSet, obj *types.DeleteRightsRequestPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, deleteRightsRequestPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DeleteRightsRequestPayload")
+		case "deletedRightsRequestId":
+			out.Values[i] = ec._DeleteRightsRequestPayload_deletedRightsRequestId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -77519,6 +79196,27 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "createRightsRequest":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createRightsRequest(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updateRightsRequest":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateRightsRequest(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deleteRightsRequest":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteRightsRequest(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "createProcessingActivity":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_createProcessingActivity(ctx, field)
@@ -79031,6 +80729,42 @@ func (ec *executionContext) _Organization(ctx context.Context, sel ast.Selection
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "rightsRequests":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Organization_rightsRequests(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "processingActivities":
 			field := field
 
@@ -80491,6 +82225,235 @@ func (ec *executionContext) _RequestSignaturePayload(ctx context.Context, sel as
 			out.Values[i] = graphql.MarshalString("RequestSignaturePayload")
 		case "documentVersionSignatureEdge":
 			out.Values[i] = ec._RequestSignaturePayload_documentVersionSignatureEdge(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var rightsRequestImplementors = []string{"RightsRequest", "Node"}
+
+func (ec *executionContext) _RightsRequest(ctx context.Context, sel ast.SelectionSet, obj *types.RightsRequest) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, rightsRequestImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("RightsRequest")
+		case "id":
+			out.Values[i] = ec._RightsRequest_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "organization":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._RightsRequest_organization(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "requestType":
+			out.Values[i] = ec._RightsRequest_requestType(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "requestState":
+			out.Values[i] = ec._RightsRequest_requestState(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "dataSubject":
+			out.Values[i] = ec._RightsRequest_dataSubject(ctx, field, obj)
+		case "contact":
+			out.Values[i] = ec._RightsRequest_contact(ctx, field, obj)
+		case "details":
+			out.Values[i] = ec._RightsRequest_details(ctx, field, obj)
+		case "deadline":
+			out.Values[i] = ec._RightsRequest_deadline(ctx, field, obj)
+		case "actionTaken":
+			out.Values[i] = ec._RightsRequest_actionTaken(ctx, field, obj)
+		case "createdAt":
+			out.Values[i] = ec._RightsRequest_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "updatedAt":
+			out.Values[i] = ec._RightsRequest_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var rightsRequestConnectionImplementors = []string{"RightsRequestConnection"}
+
+func (ec *executionContext) _RightsRequestConnection(ctx context.Context, sel ast.SelectionSet, obj *types.RightsRequestConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, rightsRequestConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("RightsRequestConnection")
+		case "totalCount":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._RightsRequestConnection_totalCount(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "edges":
+			out.Values[i] = ec._RightsRequestConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "pageInfo":
+			out.Values[i] = ec._RightsRequestConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var rightsRequestEdgeImplementors = []string{"RightsRequestEdge"}
+
+func (ec *executionContext) _RightsRequestEdge(ctx context.Context, sel ast.SelectionSet, obj *types.RightsRequestEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, rightsRequestEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("RightsRequestEdge")
+		case "cursor":
+			out.Values[i] = ec._RightsRequestEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "node":
+			out.Values[i] = ec._RightsRequestEdge_node(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -84494,6 +86457,45 @@ func (ec *executionContext) _UpdateProcessingActivityPayload(ctx context.Context
 			out.Values[i] = graphql.MarshalString("UpdateProcessingActivityPayload")
 		case "processingActivity":
 			out.Values[i] = ec._UpdateProcessingActivityPayload_processingActivity(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var updateRightsRequestPayloadImplementors = []string{"UpdateRightsRequestPayload"}
+
+func (ec *executionContext) _UpdateRightsRequestPayload(ctx context.Context, sel ast.SelectionSet, obj *types.UpdateRightsRequestPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, updateRightsRequestPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UpdateRightsRequestPayload")
+		case "rightsRequest":
+			out.Values[i] = ec._UpdateRightsRequestPayload_rightsRequest(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -89329,6 +91331,25 @@ func (ec *executionContext) marshalNCreateProcessingActivityPayload2ᚖgoᚗprob
 	return ec._CreateProcessingActivityPayload(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNCreateRightsRequestInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateRightsRequestInput(ctx context.Context, v any) (types.CreateRightsRequestInput, error) {
+	res, err := ec.unmarshalInputCreateRightsRequestInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNCreateRightsRequestPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateRightsRequestPayload(ctx context.Context, sel ast.SelectionSet, v types.CreateRightsRequestPayload) graphql.Marshaler {
+	return ec._CreateRightsRequestPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNCreateRightsRequestPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateRightsRequestPayload(ctx context.Context, sel ast.SelectionSet, v *types.CreateRightsRequestPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._CreateRightsRequestPayload(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNCreateRiskDocumentMappingInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateRiskDocumentMappingInput(ctx context.Context, v any) (types.CreateRiskDocumentMappingInput, error) {
 	res, err := ec.unmarshalInputCreateRiskDocumentMappingInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -90461,6 +92482,25 @@ func (ec *executionContext) marshalNDeleteProcessingActivityPayload2ᚖgoᚗprob
 		return graphql.Null
 	}
 	return ec._DeleteProcessingActivityPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNDeleteRightsRequestInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteRightsRequestInput(ctx context.Context, v any) (types.DeleteRightsRequestInput, error) {
+	res, err := ec.unmarshalInputDeleteRightsRequestInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDeleteRightsRequestPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteRightsRequestPayload(ctx context.Context, sel ast.SelectionSet, v types.DeleteRightsRequestPayload) graphql.Marshaler {
+	return ec._DeleteRightsRequestPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDeleteRightsRequestPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteRightsRequestPayload(ctx context.Context, sel ast.SelectionSet, v *types.DeleteRightsRequestPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DeleteRightsRequestPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNDeleteRiskDocumentMappingInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteRiskDocumentMappingInput(ctx context.Context, v any) (types.DeleteRiskDocumentMappingInput, error) {
@@ -93343,6 +95383,176 @@ func (ec *executionContext) marshalNRequestSignaturePayload2ᚖgoᚗproboᚗinc�
 	return ec._RequestSignaturePayload(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNRightsRequest2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐRightsRequest(ctx context.Context, sel ast.SelectionSet, v *types.RightsRequest) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._RightsRequest(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNRightsRequestConnection2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐRightsRequestConnection(ctx context.Context, sel ast.SelectionSet, v types.RightsRequestConnection) graphql.Marshaler {
+	return ec._RightsRequestConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNRightsRequestConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐRightsRequestConnection(ctx context.Context, sel ast.SelectionSet, v *types.RightsRequestConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._RightsRequestConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNRightsRequestEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐRightsRequestEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.RightsRequestEdge) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNRightsRequestEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐRightsRequestEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNRightsRequestEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐRightsRequestEdge(ctx context.Context, sel ast.SelectionSet, v *types.RightsRequestEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._RightsRequestEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNRightsRequestOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐRightsRequestOrderField(ctx context.Context, v any) (coredata.RightsRequestOrderField, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNRightsRequestOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐRightsRequestOrderField[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNRightsRequestOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐRightsRequestOrderField(ctx context.Context, sel ast.SelectionSet, v coredata.RightsRequestOrderField) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNRightsRequestOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐRightsRequestOrderField[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNRightsRequestOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐRightsRequestOrderField = map[string]coredata.RightsRequestOrderField{
+		"CREATED_AT": coredata.RightsRequestOrderFieldCreatedAt,
+		"DEADLINE":   coredata.RightsRequestOrderFieldDeadline,
+		"STATE":      coredata.RightsRequestOrderFieldState,
+		"TYPE":       coredata.RightsRequestOrderFieldType,
+	}
+	marshalNRightsRequestOrderField2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐRightsRequestOrderField = map[coredata.RightsRequestOrderField]string{
+		coredata.RightsRequestOrderFieldCreatedAt: "CREATED_AT",
+		coredata.RightsRequestOrderFieldDeadline:  "DEADLINE",
+		coredata.RightsRequestOrderFieldState:     "STATE",
+		coredata.RightsRequestOrderFieldType:      "TYPE",
+	}
+)
+
+func (ec *executionContext) unmarshalNRightsRequestState2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐRightsRequestState(ctx context.Context, v any) (coredata.RightsRequestState, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNRightsRequestState2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐRightsRequestState[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNRightsRequestState2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐRightsRequestState(ctx context.Context, sel ast.SelectionSet, v coredata.RightsRequestState) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNRightsRequestState2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐRightsRequestState[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNRightsRequestState2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐRightsRequestState = map[string]coredata.RightsRequestState{
+		"TODO":        coredata.RightsRequestStateTodo,
+		"IN_PROGRESS": coredata.RightsRequestStateInProgress,
+		"DONE":        coredata.RightsRequestStateDone,
+	}
+	marshalNRightsRequestState2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐRightsRequestState = map[coredata.RightsRequestState]string{
+		coredata.RightsRequestStateTodo:       "TODO",
+		coredata.RightsRequestStateInProgress: "IN_PROGRESS",
+		coredata.RightsRequestStateDone:       "DONE",
+	}
+)
+
+func (ec *executionContext) unmarshalNRightsRequestType2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐRightsRequestType(ctx context.Context, v any) (coredata.RightsRequestType, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNRightsRequestType2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐRightsRequestType[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNRightsRequestType2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐRightsRequestType(ctx context.Context, sel ast.SelectionSet, v coredata.RightsRequestType) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNRightsRequestType2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐRightsRequestType[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNRightsRequestType2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐRightsRequestType = map[string]coredata.RightsRequestType{
+		"ACCESS":      coredata.RightsRequestTypeAccess,
+		"DELETION":    coredata.RightsRequestTypeDeletion,
+		"PORTABILITY": coredata.RightsRequestTypePortability,
+	}
+	marshalNRightsRequestType2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐRightsRequestType = map[coredata.RightsRequestType]string{
+		coredata.RightsRequestTypeAccess:      "ACCESS",
+		coredata.RightsRequestTypeDeletion:    "DELETION",
+		coredata.RightsRequestTypePortability: "PORTABILITY",
+	}
+)
+
 func (ec *executionContext) marshalNRisk2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐRisk(ctx context.Context, sel ast.SelectionSet, v *types.Risk) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -95125,6 +97335,25 @@ func (ec *executionContext) marshalNUpdateProcessingActivityPayload2ᚖgoᚗprob
 		return graphql.Null
 	}
 	return ec._UpdateProcessingActivityPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNUpdateRightsRequestInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateRightsRequestInput(ctx context.Context, v any) (types.UpdateRightsRequestInput, error) {
+	res, err := ec.unmarshalInputUpdateRightsRequestInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNUpdateRightsRequestPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateRightsRequestPayload(ctx context.Context, sel ast.SelectionSet, v types.UpdateRightsRequestPayload) graphql.Marshaler {
+	return ec._UpdateRightsRequestPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNUpdateRightsRequestPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateRightsRequestPayload(ctx context.Context, sel ast.SelectionSet, v *types.UpdateRightsRequestPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._UpdateRightsRequestPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNUpdateRiskInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateRiskInput(ctx context.Context, v any) (types.UpdateRiskInput, error) {
@@ -97925,6 +100154,78 @@ func (ec *executionContext) marshalOReport2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋs
 	}
 	return ec._Report(ctx, sel, v)
 }
+
+func (ec *executionContext) unmarshalORightsRequestOrder2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐRightsRequestOrderBy(ctx context.Context, v any) (*types.RightsRequestOrderBy, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputRightsRequestOrder(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalORightsRequestState2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐRightsRequestState(ctx context.Context, v any) (*coredata.RightsRequestState, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalORightsRequestState2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐRightsRequestState[tmp]
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalORightsRequestState2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐRightsRequestState(ctx context.Context, sel ast.SelectionSet, v *coredata.RightsRequestState) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(marshalORightsRequestState2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐRightsRequestState[*v])
+	return res
+}
+
+var (
+	unmarshalORightsRequestState2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐRightsRequestState = map[string]coredata.RightsRequestState{
+		"TODO":        coredata.RightsRequestStateTodo,
+		"IN_PROGRESS": coredata.RightsRequestStateInProgress,
+		"DONE":        coredata.RightsRequestStateDone,
+	}
+	marshalORightsRequestState2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐRightsRequestState = map[coredata.RightsRequestState]string{
+		coredata.RightsRequestStateTodo:       "TODO",
+		coredata.RightsRequestStateInProgress: "IN_PROGRESS",
+		coredata.RightsRequestStateDone:       "DONE",
+	}
+)
+
+func (ec *executionContext) unmarshalORightsRequestType2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐRightsRequestType(ctx context.Context, v any) (*coredata.RightsRequestType, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalORightsRequestType2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐRightsRequestType[tmp]
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalORightsRequestType2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐRightsRequestType(ctx context.Context, sel ast.SelectionSet, v *coredata.RightsRequestType) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(marshalORightsRequestType2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐRightsRequestType[*v])
+	return res
+}
+
+var (
+	unmarshalORightsRequestType2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐRightsRequestType = map[string]coredata.RightsRequestType{
+		"ACCESS":      coredata.RightsRequestTypeAccess,
+		"DELETION":    coredata.RightsRequestTypeDeletion,
+		"PORTABILITY": coredata.RightsRequestTypePortability,
+	}
+	marshalORightsRequestType2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐRightsRequestType = map[coredata.RightsRequestType]string{
+		coredata.RightsRequestTypeAccess:      "ACCESS",
+		coredata.RightsRequestTypeDeletion:    "DELETION",
+		coredata.RightsRequestTypePortability: "PORTABILITY",
+	}
+)
 
 func (ec *executionContext) unmarshalORiskFilter2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐRiskFilter(ctx context.Context, v any) (*types.RiskFilter, error) {
 	if v == nil {

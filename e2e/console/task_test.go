@@ -67,6 +67,55 @@ func TestTask_Create(t *testing.T) {
 	assert.Equal(t, "Owner Task", task.Name)
 }
 
+func TestTask_CreateWithoutMeasure(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	query := `
+		mutation CreateTask($input: CreateTaskInput!) {
+			createTask(input: $input) {
+				taskEdge {
+					node {
+						id
+						name
+						measure {
+							id
+						}
+					}
+				}
+			}
+		}
+	`
+
+	var result struct {
+		CreateTask struct {
+			TaskEdge struct {
+				Node struct {
+					ID      string `json:"id"`
+					Name    string `json:"name"`
+					Measure *struct {
+						ID string `json:"id"`
+					} `json:"measure"`
+				} `json:"node"`
+			} `json:"taskEdge"`
+		} `json:"createTask"`
+	}
+
+	err := owner.Execute(query, map[string]any{
+		"input": map[string]any{
+			"organizationId": owner.GetOrganizationID().String(),
+			"name":           "Task without measure",
+			"description":    "Created without a measure",
+		},
+	}, &result)
+	require.NoError(t, err)
+
+	task := result.CreateTask.TaskEdge.Node
+	assert.NotEmpty(t, task.ID)
+	assert.Equal(t, "Task without measure", task.Name)
+	assert.Nil(t, task.Measure)
+}
+
 func TestTask_Update(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)

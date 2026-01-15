@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<1d9eed2918f5f58de18ef4ea5f0058b7>>
+ * @generated SignedSource<<8efad26dafbead83a13b59703edc7493>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -15,6 +15,7 @@ export type UpdateTaskInput = {
   assignedToId?: string | null | undefined;
   deadline?: any | null | undefined;
   description?: string | null | undefined;
+  measureId?: string | null | undefined;
   name?: string | null | undefined;
   state?: TaskState | null | undefined;
   taskId: string;

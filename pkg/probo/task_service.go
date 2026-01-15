@@ -50,6 +50,7 @@ type (
 		TimeEstimate **time.Duration
 		Deadline     **time.Time
 		AssignedToID **gid.GID
+		MeasureID    **gid.GID
 	}
 )
 
@@ -75,6 +76,7 @@ func (utr *UpdateTaskRequest) Validate() error {
 	v.Check(utr.TimeEstimate, "time_estimate", validator.RangeDuration(0, 1000*time.Hour))
 	v.Check(utr.State, "state", validator.OneOfSlice(coredata.TaskStates()))
 	v.Check(utr.AssignedToID, "assigned_to_id", validator.GID(coredata.PeopleEntityType))
+	v.Check(utr.MeasureID, "measure_id", validator.GID(coredata.MeasureEntityType))
 
 	return v.Error()
 }
@@ -272,6 +274,18 @@ func (s TaskService) Update(
 						return fmt.Errorf("cannot load assignee: %w", err)
 					}
 					task.AssignedToID = *req.AssignedToID
+				}
+			}
+
+			if req.MeasureID != nil {
+				if *req.MeasureID == nil {
+					task.MeasureID = nil
+				} else {
+					measure := &coredata.Measure{}
+					if err := measure.LoadByID(ctx, conn, s.svc.scope, **req.MeasureID); err != nil {
+						return fmt.Errorf("cannot load measure: %w", err)
+					}
+					task.MeasureID = *req.MeasureID
 				}
 			}
 

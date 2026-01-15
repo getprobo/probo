@@ -1349,6 +1349,7 @@ func (r *Resolver) AddTaskTool(ctx context.Context, req *mcp.CallToolRequest, in
 		ctx,
 		probo.CreateTaskRequest{
 			OrganizationID: input.OrganizationID,
+			MeasureID:      input.MeasureID,
 			Name:           input.Name,
 			Description:    input.Description,
 			TimeEstimate:   input.TimeEstimate,
@@ -1378,6 +1379,8 @@ func (r *Resolver) UpdateTaskTool(ctx context.Context, req *mcp.CallToolRequest,
 			State:        input.State,
 			TimeEstimate: UnwrapOmittable(input.TimeEstimate),
 			Deadline:     UnwrapOmittable(input.Deadline),
+			AssignedToID: UnwrapOmittable(input.AssignedToID),
+			MeasureID:    UnwrapOmittable(input.MeasureID),
 		},
 	)
 	if err != nil {
