@@ -30,7 +30,7 @@ export function MainLayout(props: Props) {
       <TrustCenterProvider trustCenter={trustCenter}>
         {showNDADialog && (
           <NDADialog
-            name={trustCenter.organization.name}
+            organizationName={trustCenter.organization.name}
             url={trustCenter.ndaFileUrl}
             fileName={trustCenter.ndaFileName}
           />

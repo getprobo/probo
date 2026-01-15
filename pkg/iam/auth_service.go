@@ -653,3 +653,35 @@ func (s AuthService) OpenSessionWithMagicLink(ctx context.Context, token string)
 
 	return identity, session, err
 }
+
+func (s *AuthService) UpdateIdentity(ctx context.Context, identityID gid.GID, fullName string) (*coredata.Identity, error) {
+	identity := &coredata.Identity{}
+
+	err := s.pg.WithTx(
+		ctx,
+		func(tx pg.Conn) error {
+			if err := identity.LoadByID(ctx, tx, identityID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return NewIdentityNotFoundError(identityID)
+				}
+
+				return fmt.Errorf("cannot load identity: %w", err)
+			}
+
+			identity.FullName = fullName
+			identity.UpdatedAt = time.Now()
+
+			if err := identity.Update(ctx, tx); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return NewIdentityNotFoundError(identityID)
+				}
+
+				return fmt.Errorf("cannot update identity: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	return identity, err
+}

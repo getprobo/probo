@@ -423,7 +423,7 @@ func (r *mutationResolver) ExportReportPDF(ctx context.Context, input types.Expo
 }
 
 // AcceptNonDisclosureAgreement is the resolver for the acceptNonDisclosureAgreement field.
-func (r *mutationResolver) AcceptNonDisclosureAgreement(ctx context.Context) (*types.AcceptNonDisclosureAgreementPayload, error) {
+func (r *mutationResolver) AcceptNonDisclosureAgreement(ctx context.Context, input types.AcceptNonDisclosureAgreementInput) (*types.AcceptNonDisclosureAgreementPayload, error) {
 	identity := authn.IdentityFromContext(ctx)
 	if identity == nil {
 		return nil, gqlutils.Unauthenticatedf(ctx, "unauthenticated")
@@ -432,6 +432,16 @@ func (r *mutationResolver) AcceptNonDisclosureAgreement(ctx context.Context) (*t
 	trustService := r.TrustService(ctx, trustCenter.ID.TenantID())
 
 	httpReq := gqlutils.HTTPRequestFromContext(ctx)
+
+	if _, err := r.iam.AuthService.UpdateIdentity(ctx, identity.ID, input.FullName); err != nil {
+		var errNotFound *iam.ErrIdentityNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot update identity", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
 
 	if err := trustService.TrustCenterAccesses.AcceptNonDisclosureAgreement(
 		ctx,
