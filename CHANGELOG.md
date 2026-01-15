@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.114.0] - 2026-01-15
+
 ### Added
 
 - Add proxy protocol v2 support.
