@@ -172,6 +172,7 @@ func (s *Server) TrustCenterHandler() http.Handler {
 	r := chi.NewRouter()
 
 	r.Use(compliancepage.NewSNIMiddleware(s.trustService))
+	r.Use(s.stripTrustPrefix)
 	r.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Strict-Transport-Security", "max-age=31536000; preload")
