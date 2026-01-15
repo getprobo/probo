@@ -1,84 +1,5 @@
 import { graphql } from "relay-runtime";
 
-export const trustGraphQuery = graphql`
-  query TrustGraphQuery {
-    currentTrustCenter {
-      id
-      slug
-      isUserAuthenticated
-      hasAcceptedNonDisclosureAgreement
-      ndaFileName
-      ndaFileUrl
-      organization {
-        name
-        description
-        websiteUrl
-        logoUrl
-        email
-        headquarterAddress
-      }
-      ...OverviewPageFragment
-      audits(first: 50) {
-        edges {
-          node {
-            id
-            ...AuditRowFragment
-          }
-        }
-      }
-    }
-  }
-`;
-
-export const trustDocumentsQuery = graphql`
-  query TrustGraphDocumentsQuery {
-    currentTrustCenter {
-      id
-      organization {
-        name
-      }
-      documents(first: 50) {
-        edges {
-          node {
-            id
-            documentType
-            ...DocumentRowFragment
-          }
-        }
-      }
-      trustCenterFiles(first: 50) {
-        edges {
-          node {
-            id
-            category
-            ...TrustCenterFileRowFragment
-          }
-        }
-      }
-    }
-  }
-`;
-
-export const trustVendorsQuery = graphql`
-  query TrustGraphVendorsQuery {
-    currentTrustCenter {
-      id
-      organization {
-        name
-      }
-      vendors(first: 50) {
-        edges {
-          node {
-            id
-            countries
-            ...VendorRowFragment
-          }
-        }
-      }
-    }
-  }
-`;
-
 // Queries for custom domain (subdomain) approach
 export const currentTrustGraphQuery = graphql`
   query TrustGraphCurrentQuery {
@@ -89,7 +10,7 @@ export const currentTrustGraphQuery = graphql`
     currentTrustCenter {
       id
       slug
-      isUserAuthenticated
+      isViewerMember
       hasAcceptedNonDisclosureAgreement
       ndaFileName
       ndaFileUrl

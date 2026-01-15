@@ -12,6 +12,8 @@ directive @goModel(
 
 directive @goEnum(value: String) on ENUM_VALUE
 
+directive @membersOnly on FIELD_DEFINITION
+
 enum Role {
   NONE
   USER
@@ -495,7 +497,7 @@ type TrustCenter implements Node {
   ndaFileName: String
   ndaFileUrl: String @goField(forceResolver: true)
   organization: Organization! @goField(forceResolver: true)
-  isUserAuthenticated: Boolean! @goField(forceResolver: true)
+  isViewerMember: Boolean! @goField(forceResolver: true)
   hasAcceptedNonDisclosureAgreement: Boolean! @goField(forceResolver: true)
 
   documents(
@@ -610,30 +612,37 @@ type Query {
 
 type Mutation {
   sendMagicLink(input: SendMagicLinkInput!): SendMagicLinkPayload
+    @session(required: OPTIONAL)
   verifyMagicLink(input: VerifyMagicLinkInput!): VerifyMagicLinkPayload
+    @session(required: OPTIONAL)
 
-  requestAllAccesses: RequestAccessesPayload!
+  requestAllAccesses: RequestAccessesPayload! @session(required: PRESENT)
 
   exportDocumentPDF(input: ExportDocumentPDFInput!): ExportDocumentPDFPayload!
-    @session(required: NONE)
+    @session(required: PRESENT)
+    @membersOnly
 
   exportReportPDF(input: ExportReportPDFInput!): ExportReportPDFPayload!
-    @session(required: NONE)
+    @session(required: PRESENT)
+    @membersOnly
 
   acceptNonDisclosureAgreement: AcceptNonDisclosureAgreementPayload!
     @session(required: PRESENT)
+    @membersOnly
 
   requestDocumentAccess(
     input: RequestDocumentAccessInput!
-  ): RequestAccessesPayload!
+  ): RequestAccessesPayload! @session(required: PRESENT)
 
-  requestReportAccess(input: RequestReportAccessInput!): RequestAccessesPayload!
+  requestReportAccess(
+    input: RequestReportAccessInput!
+  ): RequestAccessesPayload! @session(required: PRESENT)
 
   requestTrustCenterFileAccess(
     input: RequestTrustCenterFileAccessInput!
-  ): RequestAccessesPayload!
+  ): RequestAccessesPayload! @session(required: PRESENT)
 
   exportTrustCenterFile(
     input: ExportTrustCenterFileInput!
-  ): ExportTrustCenterFilePayload!
+  ): ExportTrustCenterFilePayload! @session(required: PRESENT) @membersOnly
 }

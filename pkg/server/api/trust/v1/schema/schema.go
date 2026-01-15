@@ -60,7 +60,8 @@ type ResolverRoot interface {
 }
 
 type DirectiveRoot struct {
-	Session func(ctx context.Context, obj any, next graphql.Resolver, required session.SessionRequirement) (res any, err error)
+	MembersOnly func(ctx context.Context, obj any, next graphql.Resolver) (res any, err error)
+	Session     func(ctx context.Context, obj any, next graphql.Resolver, required session.SessionRequirement) (res any, err error)
 }
 
 type ComplexityRoot struct {
@@ -187,7 +188,7 @@ type ComplexityRoot struct {
 		Documents                         func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
 		HasAcceptedNonDisclosureAgreement func(childComplexity int) int
 		ID                                func(childComplexity int) int
-		IsUserAuthenticated               func(childComplexity int) int
+		IsViewerMember                    func(childComplexity int) int
 		NdaFileName                       func(childComplexity int) int
 		NdaFileURL                        func(childComplexity int) int
 		Organization                      func(childComplexity int) int
@@ -304,7 +305,7 @@ type ReportResolver interface {
 type TrustCenterResolver interface {
 	NdaFileURL(ctx context.Context, obj *types.TrustCenter) (*string, error)
 	Organization(ctx context.Context, obj *types.TrustCenter) (*types.Organization, error)
-	IsUserAuthenticated(ctx context.Context, obj *types.TrustCenter) (bool, error)
+	IsViewerMember(ctx context.Context, obj *types.TrustCenter) (bool, error)
 	HasAcceptedNonDisclosureAgreement(ctx context.Context, obj *types.TrustCenter) (bool, error)
 	Documents(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.DocumentConnection, error)
 	Audits(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.AuditConnection, error)
@@ -803,12 +804,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.TrustCenter.ID(childComplexity), true
-	case "TrustCenter.isUserAuthenticated":
-		if e.complexity.TrustCenter.IsUserAuthenticated == nil {
+	case "TrustCenter.isViewerMember":
+		if e.complexity.TrustCenter.IsViewerMember == nil {
 			break
 		}
 
-		return e.complexity.TrustCenter.IsUserAuthenticated(childComplexity), true
+		return e.complexity.TrustCenter.IsViewerMember(childComplexity), true
 	case "TrustCenter.ndaFileName":
 		if e.complexity.TrustCenter.NdaFileName == nil {
 			break
@@ -1208,6 +1209,8 @@ directive @goModel(
 ) on OBJECT | INPUT_OBJECT | SCALAR | ENUM | INTERFACE | UNION
 
 directive @goEnum(value: String) on ENUM_VALUE
+
+directive @membersOnly on FIELD_DEFINITION
 
 enum Role {
   NONE
@@ -1692,7 +1695,7 @@ type TrustCenter implements Node {
   ndaFileName: String
   ndaFileUrl: String @goField(forceResolver: true)
   organization: Organization! @goField(forceResolver: true)
-  isUserAuthenticated: Boolean! @goField(forceResolver: true)
+  isViewerMember: Boolean! @goField(forceResolver: true)
   hasAcceptedNonDisclosureAgreement: Boolean! @goField(forceResolver: true)
 
   documents(
@@ -1807,32 +1810,39 @@ type Query {
 
 type Mutation {
   sendMagicLink(input: SendMagicLinkInput!): SendMagicLinkPayload
+    @session(required: OPTIONAL)
   verifyMagicLink(input: VerifyMagicLinkInput!): VerifyMagicLinkPayload
+    @session(required: OPTIONAL)
 
-  requestAllAccesses: RequestAccessesPayload!
+  requestAllAccesses: RequestAccessesPayload! @session(required: PRESENT)
 
   exportDocumentPDF(input: ExportDocumentPDFInput!): ExportDocumentPDFPayload!
-    @session(required: NONE)
+    @session(required: PRESENT)
+    @membersOnly
 
   exportReportPDF(input: ExportReportPDFInput!): ExportReportPDFPayload!
-    @session(required: NONE)
+    @session(required: PRESENT)
+    @membersOnly
 
   acceptNonDisclosureAgreement: AcceptNonDisclosureAgreementPayload!
     @session(required: PRESENT)
+    @membersOnly
 
   requestDocumentAccess(
     input: RequestDocumentAccessInput!
-  ): RequestAccessesPayload!
+  ): RequestAccessesPayload! @session(required: PRESENT)
 
-  requestReportAccess(input: RequestReportAccessInput!): RequestAccessesPayload!
+  requestReportAccess(
+    input: RequestReportAccessInput!
+  ): RequestAccessesPayload! @session(required: PRESENT)
 
   requestTrustCenterFileAccess(
     input: RequestTrustCenterFileAccessInput!
-  ): RequestAccessesPayload!
+  ): RequestAccessesPayload! @session(required: PRESENT)
 
   exportTrustCenterFile(
     input: ExportTrustCenterFileInput!
-  ): ExportTrustCenterFilePayload!
+  ): ExportTrustCenterFilePayload! @session(required: PRESENT) @membersOnly
 }
 `, BuiltIn: false},
 	{Name: "../../../../gqlutils/directives/session/schema.graphql", Input: `# Session directive for GraphQL APIs
@@ -3136,7 +3146,25 @@ func (ec *executionContext) _Mutation_sendMagicLink(ctx context.Context, field g
 			fc := graphql.GetFieldContext(ctx)
 			return ec.resolvers.Mutation().SendMagicLink(ctx, fc.Args["input"].(types.SendMagicLinkInput))
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement(ctx, "OPTIONAL")
+				if err != nil {
+					var zeroVal *types.SendMagicLinkPayload
+					return zeroVal, err
+				}
+				if ec.directives.Session == nil {
+					var zeroVal *types.SendMagicLinkPayload
+					return zeroVal, errors.New("directive session is not implemented")
+				}
+				return ec.directives.Session(ctx, nil, directive0, required)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalOSendMagicLinkPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐSendMagicLinkPayload,
 		true,
 		false,
@@ -3181,7 +3209,25 @@ func (ec *executionContext) _Mutation_verifyMagicLink(ctx context.Context, field
 			fc := graphql.GetFieldContext(ctx)
 			return ec.resolvers.Mutation().VerifyMagicLink(ctx, fc.Args["input"].(types.VerifyMagicLinkInput))
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement(ctx, "OPTIONAL")
+				if err != nil {
+					var zeroVal *types.VerifyMagicLinkPayload
+					return zeroVal, err
+				}
+				if ec.directives.Session == nil {
+					var zeroVal *types.VerifyMagicLinkPayload
+					return zeroVal, errors.New("directive session is not implemented")
+				}
+				return ec.directives.Session(ctx, nil, directive0, required)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalOVerifyMagicLinkPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐVerifyMagicLinkPayload,
 		true,
 		false,
@@ -3225,7 +3271,25 @@ func (ec *executionContext) _Mutation_requestAllAccesses(ctx context.Context, fi
 		func(ctx context.Context) (any, error) {
 			return ec.resolvers.Mutation().RequestAllAccesses(ctx)
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement(ctx, "PRESENT")
+				if err != nil {
+					var zeroVal *types.RequestAccessesPayload
+					return zeroVal, err
+				}
+				if ec.directives.Session == nil {
+					var zeroVal *types.RequestAccessesPayload
+					return zeroVal, errors.New("directive session is not implemented")
+				}
+				return ec.directives.Session(ctx, nil, directive0, required)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalNRequestAccessesPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRequestAccessesPayload,
 		true,
 		true,
@@ -3263,7 +3327,7 @@ func (ec *executionContext) _Mutation_exportDocumentPDF(ctx context.Context, fie
 			directive0 := next
 
 			directive1 := func(ctx context.Context) (any, error) {
-				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement(ctx, "NONE")
+				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement(ctx, "PRESENT")
 				if err != nil {
 					var zeroVal *types.ExportDocumentPDFPayload
 					return zeroVal, err
@@ -3274,8 +3338,15 @@ func (ec *executionContext) _Mutation_exportDocumentPDF(ctx context.Context, fie
 				}
 				return ec.directives.Session(ctx, nil, directive0, required)
 			}
+			directive2 := func(ctx context.Context) (any, error) {
+				if ec.directives.MembersOnly == nil {
+					var zeroVal *types.ExportDocumentPDFPayload
+					return zeroVal, errors.New("directive membersOnly is not implemented")
+				}
+				return ec.directives.MembersOnly(ctx, nil, directive1)
+			}
 
-			next = directive1
+			next = directive2
 			return next
 		},
 		ec.marshalNExportDocumentPDFPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐExportDocumentPDFPayload,
@@ -3326,7 +3397,7 @@ func (ec *executionContext) _Mutation_exportReportPDF(ctx context.Context, field
 			directive0 := next
 
 			directive1 := func(ctx context.Context) (any, error) {
-				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement(ctx, "NONE")
+				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement(ctx, "PRESENT")
 				if err != nil {
 					var zeroVal *types.ExportReportPDFPayload
 					return zeroVal, err
@@ -3337,8 +3408,15 @@ func (ec *executionContext) _Mutation_exportReportPDF(ctx context.Context, field
 				}
 				return ec.directives.Session(ctx, nil, directive0, required)
 			}
+			directive2 := func(ctx context.Context) (any, error) {
+				if ec.directives.MembersOnly == nil {
+					var zeroVal *types.ExportReportPDFPayload
+					return zeroVal, errors.New("directive membersOnly is not implemented")
+				}
+				return ec.directives.MembersOnly(ctx, nil, directive1)
+			}
 
-			next = directive1
+			next = directive2
 			return next
 		},
 		ec.marshalNExportReportPDFPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐExportReportPDFPayload,
@@ -3399,8 +3477,15 @@ func (ec *executionContext) _Mutation_acceptNonDisclosureAgreement(ctx context.C
 				}
 				return ec.directives.Session(ctx, nil, directive0, required)
 			}
+			directive2 := func(ctx context.Context) (any, error) {
+				if ec.directives.MembersOnly == nil {
+					var zeroVal *types.AcceptNonDisclosureAgreementPayload
+					return zeroVal, errors.New("directive membersOnly is not implemented")
+				}
+				return ec.directives.MembersOnly(ctx, nil, directive1)
+			}
 
-			next = directive1
+			next = directive2
 			return next
 		},
 		ec.marshalNAcceptNonDisclosureAgreementPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐAcceptNonDisclosureAgreementPayload,
@@ -3436,7 +3521,25 @@ func (ec *executionContext) _Mutation_requestDocumentAccess(ctx context.Context,
 			fc := graphql.GetFieldContext(ctx)
 			return ec.resolvers.Mutation().RequestDocumentAccess(ctx, fc.Args["input"].(types.RequestDocumentAccessInput))
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement(ctx, "PRESENT")
+				if err != nil {
+					var zeroVal *types.RequestAccessesPayload
+					return zeroVal, err
+				}
+				if ec.directives.Session == nil {
+					var zeroVal *types.RequestAccessesPayload
+					return zeroVal, errors.New("directive session is not implemented")
+				}
+				return ec.directives.Session(ctx, nil, directive0, required)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalNRequestAccessesPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRequestAccessesPayload,
 		true,
 		true,
@@ -3481,7 +3584,25 @@ func (ec *executionContext) _Mutation_requestReportAccess(ctx context.Context, f
 			fc := graphql.GetFieldContext(ctx)
 			return ec.resolvers.Mutation().RequestReportAccess(ctx, fc.Args["input"].(types.RequestReportAccessInput))
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement(ctx, "PRESENT")
+				if err != nil {
+					var zeroVal *types.RequestAccessesPayload
+					return zeroVal, err
+				}
+				if ec.directives.Session == nil {
+					var zeroVal *types.RequestAccessesPayload
+					return zeroVal, errors.New("directive session is not implemented")
+				}
+				return ec.directives.Session(ctx, nil, directive0, required)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalNRequestAccessesPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRequestAccessesPayload,
 		true,
 		true,
@@ -3526,7 +3647,25 @@ func (ec *executionContext) _Mutation_requestTrustCenterFileAccess(ctx context.C
 			fc := graphql.GetFieldContext(ctx)
 			return ec.resolvers.Mutation().RequestTrustCenterFileAccess(ctx, fc.Args["input"].(types.RequestTrustCenterFileAccessInput))
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement(ctx, "PRESENT")
+				if err != nil {
+					var zeroVal *types.RequestAccessesPayload
+					return zeroVal, err
+				}
+				if ec.directives.Session == nil {
+					var zeroVal *types.RequestAccessesPayload
+					return zeroVal, errors.New("directive session is not implemented")
+				}
+				return ec.directives.Session(ctx, nil, directive0, required)
+			}
+
+			next = directive1
+			return next
+		},
 		ec.marshalNRequestAccessesPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRequestAccessesPayload,
 		true,
 		true,
@@ -3571,7 +3710,32 @@ func (ec *executionContext) _Mutation_exportTrustCenterFile(ctx context.Context,
 			fc := graphql.GetFieldContext(ctx)
 			return ec.resolvers.Mutation().ExportTrustCenterFile(ctx, fc.Args["input"].(types.ExportTrustCenterFileInput))
 		},
-		nil,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement(ctx, "PRESENT")
+				if err != nil {
+					var zeroVal *types.ExportTrustCenterFilePayload
+					return zeroVal, err
+				}
+				if ec.directives.Session == nil {
+					var zeroVal *types.ExportTrustCenterFilePayload
+					return zeroVal, errors.New("directive session is not implemented")
+				}
+				return ec.directives.Session(ctx, nil, directive0, required)
+			}
+			directive2 := func(ctx context.Context) (any, error) {
+				if ec.directives.MembersOnly == nil {
+					var zeroVal *types.ExportTrustCenterFilePayload
+					return zeroVal, errors.New("directive membersOnly is not implemented")
+				}
+				return ec.directives.MembersOnly(ctx, nil, directive1)
+			}
+
+			next = directive2
+			return next
+		},
 		ec.marshalNExportTrustCenterFilePayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐExportTrustCenterFilePayload,
 		true,
 		true,
@@ -4045,8 +4209,8 @@ func (ec *executionContext) fieldContext_Query_currentTrustCenter(_ context.Cont
 				return ec.fieldContext_TrustCenter_ndaFileUrl(ctx, field)
 			case "organization":
 				return ec.fieldContext_TrustCenter_organization(ctx, field)
-			case "isUserAuthenticated":
-				return ec.fieldContext_TrustCenter_isUserAuthenticated(ctx, field)
+			case "isViewerMember":
+				return ec.fieldContext_TrustCenter_isViewerMember(ctx, field)
 			case "hasAcceptedNonDisclosureAgreement":
 				return ec.fieldContext_TrustCenter_hasAcceptedNonDisclosureAgreement(ctx, field)
 			case "documents":
@@ -4550,14 +4714,14 @@ func (ec *executionContext) fieldContext_TrustCenter_organization(_ context.Cont
 	return fc, nil
 }
 
-func (ec *executionContext) _TrustCenter_isUserAuthenticated(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenter) (ret graphql.Marshaler) {
+func (ec *executionContext) _TrustCenter_isViewerMember(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenter) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
-		ec.fieldContext_TrustCenter_isUserAuthenticated,
+		ec.fieldContext_TrustCenter_isViewerMember,
 		func(ctx context.Context) (any, error) {
-			return ec.resolvers.TrustCenter().IsUserAuthenticated(ctx, obj)
+			return ec.resolvers.TrustCenter().IsViewerMember(ctx, obj)
 		},
 		nil,
 		ec.marshalNBoolean2bool,
@@ -4566,7 +4730,7 @@ func (ec *executionContext) _TrustCenter_isUserAuthenticated(ctx context.Context
 	)
 }
 
-func (ec *executionContext) fieldContext_TrustCenter_isUserAuthenticated(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_TrustCenter_isViewerMember(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "TrustCenter",
 		Field:      field,
@@ -9046,7 +9210,7 @@ func (ec *executionContext) _TrustCenter(ctx context.Context, sel ast.SelectionS
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "isUserAuthenticated":
+		case "isViewerMember":
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
@@ -9055,7 +9219,7 @@ func (ec *executionContext) _TrustCenter(ctx context.Context, sel ast.SelectionS
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._TrustCenter_isUserAuthenticated(ctx, field, obj)
+				res = ec._TrustCenter_isViewerMember(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}

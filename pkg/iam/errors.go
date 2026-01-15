@@ -24,7 +24,7 @@ import (
 type ErrInvalidToken struct{ message string }
 
 func NewInvalidTokenError() error {
-	return &ErrInvalidToken{"invalid invitation token"}
+	return &ErrInvalidToken{"invalid token"}
 }
 
 func (e ErrInvalidToken) Error() string {

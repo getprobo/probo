@@ -16,8 +16,13 @@ package compliancepage
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
+	"github.com/99designs/gqlgen/graphql"
+	"github.com/vektah/gqlparser/v2/gqlerror"
+	"go.gearno.de/kit/httpserver"
+	"go.probo.inc/probo/pkg/server/gqlutils"
 	"go.probo.inc/probo/pkg/trust"
 )
 
@@ -32,13 +37,31 @@ func NewSNIMiddleware(trustSvc *trust.Service) func(next http.Handler) http.Hand
 			}
 
 			compliancePage, err := trustSvc.GetByDomainName(ctx, r.TLS.ServerName)
-			if err != nil || !compliancePage.Active {
-				next.ServeHTTP(w, r)
+			if err != nil {
+				if errors.Is(err, trust.ErrPageNotFound) {
+					next.ServeHTTP(w, r)
+					return
+				}
+
+				httpserver.RenderJSON(
+					w,
+					http.StatusInternalServerError,
+					&graphql.Response{
+						Errors: gqlerror.List{
+							gqlutils.Internal(ctx),
+						},
+					},
+				)
 				return
 			}
 
-			ctx = context.WithValue(ctx, compliancePageKey, compliancePage)
-			next.ServeHTTP(w, r.WithContext(ctx))
+			if compliancePage.Active {
+				ctx = context.WithValue(ctx, compliancePageKey, compliancePage)
+				next.ServeHTTP(w, r.WithContext(ctx))
+				return
+			}
+
+			next.ServeHTTP(w, r)
 		})
 	}
 }

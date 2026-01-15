@@ -28,9 +28,6 @@ import (
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/compliancepage"
-	"go.probo.inc/probo/pkg/server/api/trust/v1/schema"
-	"go.probo.inc/probo/pkg/server/gqlutils"
-	"go.probo.inc/probo/pkg/server/gqlutils/directives/session"
 	"go.probo.inc/probo/pkg/trust"
 )
 
@@ -85,21 +82,9 @@ func NewMux(
 
 	r.Use(compliancepage.NewCompliancePagePresenceMiddleware())
 	r.Use(authn.NewSessionMiddleware(iamSvc, cookieConfig))
+	r.Use(compliancepage.NewMembershipMiddleware(trustSvc, logger))
 
-	config := schema.Config{
-		Resolvers: &Resolver{
-			iam:           iamSvc,
-			trust:         trustSvc,
-			logger:        logger,
-			sessionCookie: authn.NewCookie(&cookieConfig),
-			baseURL:       baseURL,
-		},
-		Directives: schema.DirectiveRoot{
-			Session: session.Directive,
-		},
-	}
-	es := schema.NewExecutableSchema(config)
-	graphqlHandler := gqlutils.NewHandler(es, logger)
+	graphqlHandler := NewGraphQLHandler(iamSvc, trustSvc, logger, baseURL, cookieConfig)
 
 	r.Handle("/graphql", graphqlHandler)
 

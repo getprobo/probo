@@ -6169,7 +6169,7 @@ func (r *organizationResolver) TrustCenterFiles(ctx context.Context, obj *types.
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	pageResult, err := prb.TrustCenterFiles.ListForOrganizationID(ctx, obj.ID, cursor)
+	pageResult, err := prb.TrustCenterFiles.ListForOrganizationID(ctx, obj.ID, cursor, &coredata.TrustCenterFileFilter{})
 	if err != nil {
 		// TODO no panic use gqlutils.InternalError
 		panic(fmt.Errorf("cannot list organization trust center files: %w", err))

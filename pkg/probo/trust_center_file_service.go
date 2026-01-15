@@ -83,13 +83,14 @@ func (s TrustCenterFileService) ListForOrganizationID(
 	ctx context.Context,
 	organizationID gid.GID,
 	cursor *page.Cursor[coredata.TrustCenterFileOrderField],
+	filter *coredata.TrustCenterFileFilter,
 ) (*page.Page[*coredata.TrustCenterFile, coredata.TrustCenterFileOrderField], error) {
 	var files coredata.TrustCenterFiles
 
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			if err := files.LoadByOrganizationID(ctx, conn, s.svc.scope, organizationID, cursor); err != nil {
+			if err := files.LoadByOrganizationID(ctx, conn, s.svc.scope, organizationID, cursor, filter); err != nil {
 				return fmt.Errorf("cannot load trust center files: %w", err)
 			}
 

@@ -24,9 +24,9 @@ type (
 	}
 )
 
-type TrustCenterFileOption func(f *TrustCenterFileFilter)
+type TrustCenterFileFilterOption func(f *TrustCenterFileFilter)
 
-func NewTrustCenterFileFilter(opts ...TrustCenterFileOption) *TrustCenterFileFilter {
+func NewTrustCenterFileFilter(opts ...TrustCenterFileFilterOption) *TrustCenterFileFilter {
 	f := &TrustCenterFileFilter{}
 
 	for _, opt := range opts {
@@ -36,7 +36,7 @@ func NewTrustCenterFileFilter(opts ...TrustCenterFileOption) *TrustCenterFileFil
 	return f
 }
 
-func WithTrustCenterFileVisibilities(visibilities ...TrustCenterVisibility) TrustCenterFileOption {
+func WithTrustCenterFileVisibilities(visibilities ...TrustCenterVisibility) TrustCenterFileFilterOption {
 	return func(f *TrustCenterFileFilter) {
 		f.trustCenterVisibilities = visibilities
 	}

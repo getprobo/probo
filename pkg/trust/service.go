@@ -16,6 +16,7 @@ package trust
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -28,6 +29,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/html2pdf"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/slack"
 )
@@ -159,6 +161,9 @@ func (s *Service) Get(
 		func(conn pg.Conn) error {
 			err := trustCenter.LoadByID(ctx, conn, coredata.NewNoScope(), id)
 			if err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrPageNotFound
+				}
 				return fmt.Errorf("cannot load trust center: %w", err)
 			}
 
@@ -184,6 +189,9 @@ func (s *Service) GetBySlug(
 		func(conn pg.Conn) error {
 			err := trustCenter.LoadBySlug(ctx, conn, slug)
 			if err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrPageNotFound
+				}
 				return fmt.Errorf("cannot load trust center: %w", err)
 			}
 
@@ -206,16 +214,28 @@ func (s *Service) GetByDomainName(ctx context.Context, domain string) (*coredata
 		func(conn pg.Conn) error {
 			var customDomain coredata.CustomDomain
 			if err := customDomain.LoadByDomain(ctx, conn, coredata.NewNoScope(), s.encryptionKey, domain); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrPageNotFound
+				}
+
 				return fmt.Errorf("cannot load custom domain: %w", err)
 			}
 
 			var org coredata.Organization
 			if err := org.LoadByCustomDomainID(ctx, conn, coredata.NewNoScope(), customDomain.ID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrPageNotFound
+				}
+
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
 			trustCenter = &coredata.TrustCenter{}
 			if err := trustCenter.LoadByOrganizationID(ctx, conn, coredata.NewNoScope(), org.ID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrPageNotFound
+				}
+
 				return fmt.Errorf("cannot load trust center: %w", err)
 			}
 
@@ -239,6 +259,39 @@ func (s *Service) GetCustomDomainByOrganizationID(ctx context.Context, organizat
 			return customDomain.LoadByOrganizationID(ctx, conn, coredata.NewNoScope(), s.encryptionKey, organizationID)
 		},
 	)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, ErrCustomDomainNotFound
+		}
+
+		return nil, err
+	}
 
 	return customDomain, err
+}
+
+func (s *Service) GetMembershipByCompliancePageIDAndEmail(ctx context.Context, compliancePageID gid.GID, email mail.Addr) (*coredata.TrustCenterAccess, error) {
+	membership := &coredata.TrustCenterAccess{}
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			return membership.LoadByTrustCenterIDAndEmail(
+				ctx,
+				conn,
+				coredata.NewScopeFromObjectID(compliancePageID),
+				compliancePageID,
+				email,
+			)
+		},
+	)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, ErrMembershipNotFound
+		}
+
+		return nil, err
+	}
+
+	return membership, nil
 }

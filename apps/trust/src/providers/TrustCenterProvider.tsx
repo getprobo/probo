@@ -1,8 +1,8 @@
 import { createContext, type ReactNode } from "react";
-import type { TrustGraphQuery$data } from "/queries/__generated__/TrustGraphQuery.graphql";
+import type { TrustGraphCurrentQuery$data } from "/queries/__generated__/TrustGraphCurrentQuery.graphql";
 
 export const TrustCenterContext = createContext<
-  TrustGraphQuery$data["currentTrustCenter"] | null
+  TrustGraphCurrentQuery$data["currentTrustCenter"] | null
 >(null);
 
 export const TrustCenterProvider = ({
@@ -10,7 +10,7 @@ export const TrustCenterProvider = ({
   trustCenter,
 }: {
   children: ReactNode;
-  trustCenter: TrustGraphQuery$data["currentTrustCenter"];
+  trustCenter: TrustGraphCurrentQuery$data["currentTrustCenter"];
 }) => {
   return (
     <TrustCenterContext.Provider value={trustCenter}>

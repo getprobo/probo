@@ -166,11 +166,12 @@ func (r *mutationResolver) SendMagicLink(ctx context.Context, input types.SendMa
 
 	customDomain, err := r.trust.GetCustomDomainByOrganizationID(ctx, organization.ID)
 	if err != nil {
-		var errNotFound *iam.ErrOrganizationNotFound
-		if !errors.As(err, &errNotFound) {
-			r.logger.ErrorCtx(ctx, "cannot get custom domain", log.Error(err))
-			return nil, gqlutils.Internal(ctx)
+		if errors.Is(err, trust.ErrCustomDomainNotFound) {
+			return nil, gqlutils.NotFoundf(ctx, "custom domain not found")
 		}
+
+		r.logger.ErrorCtx(ctx, "cannot get custom domain", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
 	}
 
 	req := &iam.SendMagicLinkRequest{
@@ -874,11 +875,11 @@ func (r *trustCenterResolver) Organization(ctx context.Context, obj *types.Trust
 	return obj.Organization, nil
 }
 
-// IsUserAuthenticated is the resolver for the isUserAuthenticated field.
-func (r *trustCenterResolver) IsUserAuthenticated(ctx context.Context, obj *types.TrustCenter) (bool, error) {
-	identity := authn.IdentityFromContext(ctx)
+// IsViewerMember is the resolver for the isViewerMember field.
+func (r *trustCenterResolver) IsViewerMember(ctx context.Context, obj *types.TrustCenter) (bool, error) {
+	membership := compliancepage.ComplianceMembershipFromContext(ctx)
 
-	return identity != nil, nil
+	return membership != nil, nil
 }
 
 // HasAcceptedNonDisclosureAgreement is the resolver for the hasAcceptedNonDisclosureAgreement field.
@@ -985,7 +986,13 @@ func (r *trustCenterResolver) TrustCenterFiles(ctx context.Context, obj *types.T
 	}
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	trustCenterFilePage, err := trustService.TrustCenterFiles.ListForOrganizationId(ctx, obj.Organization.ID, cursor)
+	filter := coredata.NewTrustCenterFileFilter(
+		coredata.WithTrustCenterFileVisibilities(
+			coredata.TrustCenterVisibilityPublic,
+			coredata.TrustCenterVisibilityPrivate,
+		),
+	)
+	trustCenterFilePage, err := trustService.TrustCenterFiles.ListForOrganizationId(ctx, obj.Organization.ID, cursor, filter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list public trust center files", log.Error(err))
 		return nil, gqlutils.Internal(ctx)

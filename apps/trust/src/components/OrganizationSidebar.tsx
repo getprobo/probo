@@ -7,7 +7,6 @@ import {
   IconMedal,
   useToast,
 } from "@probo/ui";
-import type { TrustGraphQuery$data } from "/queries/__generated__/TrustGraphQuery.graphql";
 import { use, type PropsWithChildren } from "react";
 import { domain, formatError } from "@probo/helpers";
 import { AuditRowAvatar } from "./AuditRow";
@@ -16,6 +15,7 @@ import { MagicLinkDialog } from "./MagicLinkDialog";
 import { graphql } from "relay-runtime";
 import { useMutation } from "react-relay";
 import type { OrganizationSidebar_requestAllAccessesMutation } from "./__generated__/OrganizationSidebar_requestAllAccessesMutation.graphql";
+import type { TrustGraphCurrentQuery$data } from "/queries/__generated__/TrustGraphCurrentQuery.graphql";
 
 const requestAllAccessesMutation = graphql`
   mutation OrganizationSidebar_requestAllAccessesMutation {
@@ -30,7 +30,7 @@ const requestAllAccessesMutation = graphql`
 export function OrganizationSidebar({
   trustCenter,
 }: {
-  trustCenter: TrustGraphQuery$data["currentTrustCenter"];
+  trustCenter: TrustGraphCurrentQuery$data["currentTrustCenter"];
 }) {
   const { __ } = useTranslate();
   const isAuthenticated = !!use(Viewer);

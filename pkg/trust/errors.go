@@ -12,27 +12,12 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package compliancepage
+package trust
 
-import (
-	"context"
-
-	"go.probo.inc/probo/pkg/coredata"
-)
-
-type ctxKey struct{ name string }
+import "errors"
 
 var (
-	compliancePageKey       = &ctxKey{name: "compliance_page"}
-	complianceMembershipKey = &ctxKey{name: "compliance_membership"}
+	ErrCustomDomainNotFound = errors.New("custom domain not found")
+	ErrPageNotFound         = errors.New("page not found")
+	ErrMembershipNotFound   = errors.New("membership not found")
 )
-
-func CompliancePageFromContext(ctx context.Context) *coredata.TrustCenter {
-	trustCenter, _ := ctx.Value(compliancePageKey).(*coredata.TrustCenter)
-	return trustCenter
-}
-
-func ComplianceMembershipFromContext(ctx context.Context) *coredata.TrustCenterAccess {
-	membership, _ := ctx.Value(complianceMembershipKey).(*coredata.TrustCenterAccess)
-	return membership
-}
