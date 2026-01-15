@@ -12,6 +12,7 @@ import Invitation from "../src/Invitation";
 import PasswordReset from "../src/PasswordReset";
 import TrustCenterAccess from "../src/TrustCenterAccess";
 import TrustCenterDocumentAccessRejected from "../src/TrustCenterDocumentAccessRejected";
+import MagicLink from "../src/MagicLink";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -56,7 +57,7 @@ const templates: TemplateConfig[] = [
   },
   {
     name: "magic-link",
-    render: () => TrustCenterAccess(),
+    render: () => MagicLink(),
   },
 ];
 

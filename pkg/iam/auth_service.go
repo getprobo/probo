@@ -62,6 +62,11 @@ type (
 		FullName string
 	}
 
+	SendMagicLinkRequest struct {
+		Email   mail.Addr
+		BaseURL *baseurl.BaseURL
+	}
+
 	PasswordResetData struct {
 		Email mail.Addr `json:"email"`
 	}
@@ -541,36 +546,31 @@ func (s AuthService) OpenSessionWithPassword(ctx context.Context, email mail.Add
 	return identity, session, err
 }
 
-func (s AuthService) SendMagicLink(ctx context.Context, email mail.Addr) error {
+func (s AuthService) SendMagicLink(ctx context.Context, req *SendMagicLinkRequest) error {
 	token, err := statelesstoken.NewToken(
 		s.tokenSecret,
 		TokenTypeMagicLink,
 		s.magicLinkTokenValidity,
 		MagicLinkData{
-			Email: email,
+			Email: req.Email,
 		},
 	)
 	if err != nil {
 		return fmt.Errorf("cannot generate magic link token: %w", err)
 	}
 
-	base, err := baseurl.Parse(s.baseURL)
-	if err != nil {
-		return fmt.Errorf("cannot parse base URL: %w", err)
-	}
-
-	magicLinkURL := base.
-		WithPath("/auth/magic-link").
+	magicLinkURL := req.BaseURL.
+		WithPath("/auth/verify-magic-link").
 		WithQuery("token", token).
 		MustString()
 
 	return s.pg.WithTx(
 		ctx,
 		func(tx pg.Conn) error {
-			fullName := email.Username()
+			fullName := req.Email.Username()
 			identity := &coredata.Identity{}
 
-			err := identity.LoadByEmail(ctx, tx, email)
+			err := identity.LoadByEmail(ctx, tx, req.Email)
 			if err == nil {
 				fullName = identity.FullName
 			} else {
@@ -591,7 +591,7 @@ func (s AuthService) SendMagicLink(ctx context.Context, email mail.Addr) error {
 
 			magicLinkEmail := coredata.NewEmail(
 				fullName,
-				email,
+				req.Email,
 				subject,
 				textBody,
 				htmlBody,
@@ -609,6 +609,7 @@ func (s AuthService) SendMagicLink(ctx context.Context, email mail.Addr) error {
 
 func (s AuthService) OpenSessionWithMagicLink(ctx context.Context, token string) (*coredata.Identity, *coredata.Session, error) {
 	var (
+		now      = time.Now()
 		identity = &coredata.Identity{}
 		session  = &coredata.Session{}
 	)
@@ -618,25 +619,37 @@ func (s AuthService) OpenSessionWithMagicLink(ctx context.Context, token string)
 		return nil, nil, NewInvalidTokenError()
 	}
 
-	if err := s.pg.WithTx(
+	err = s.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
-			err := identity.LoadByEmail(ctx, conn, payload.Data.Email)
+		func(tx pg.Conn) error {
+			err := identity.LoadByEmail(ctx, tx, payload.Data.Email)
 			if err != nil {
-				return fmt.Errorf("cannot load identity by email: %w", err)
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					identity = &coredata.Identity{
+						ID:                   gid.New(gid.NilTenant, coredata.IdentityEntityType),
+						EmailAddress:         payload.Data.Email,
+						EmailAddressVerified: true,
+						CreatedAt:            now,
+						UpdatedAt:            now,
+					}
+
+					if err := identity.Insert(ctx, tx); err != nil {
+						return fmt.Errorf("cannot create identity: %w", err)
+					}
+				} else {
+					return fmt.Errorf("cannot load identity by email: %w", err)
+				}
 			}
 
-			session = coredata.NewRootSession(identity.ID, coredata.AuthMethodPassword, s.sessionDuration)
-			err = session.Insert(ctx, conn)
+			session = coredata.NewRootSession(identity.ID, coredata.AuthMethodMagicLink, s.sessionDuration)
+			err = session.Insert(ctx, tx)
 			if err != nil {
 				return fmt.Errorf("cannot insert session: %w", err)
 			}
 
 			return nil
 		},
-	); err != nil {
-		return nil, nil, err
-	}
+	)
 
 	return identity, session, err
 }

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<9f01a480ccc5fa00e310296e9aed1020>>
+ * @generated SignedSource<<2ea33498f7101d861d940b9c52ed3283>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,8 +11,6 @@
 import { ConcreteRequest } from 'relay-runtime';
 export type RequestDocumentAccessInput = {
   documentId: string;
-  email: any;
-  fullName: string;
 };
 export type RequestAccessDialogDocumentMutation$variables = {
   input: RequestDocumentAccessInput;

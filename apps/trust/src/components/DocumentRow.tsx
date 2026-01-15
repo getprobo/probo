@@ -1,19 +1,34 @@
 import { graphql } from "relay-runtime";
 import type { DocumentRowFragment$key } from "./__generated__/DocumentRowFragment.graphql";
-import { useFragment } from "react-relay";
+import { useFragment, useMutation } from "react-relay";
 import {
   Button,
   IconArrowInbox,
   IconLock,
   IconPageTextLine,
   Spinner,
+  useToast,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import type { DocumentRowDownloadMutation } from "./__generated__/DocumentRowDownloadMutation.graphql";
 import { useMutationWithToasts } from "/hooks/useMutationWithToast";
-import { downloadFile } from "@probo/helpers";
-import { RequestAccessDialog } from "/components/RequestAccessDialog.tsx";
-import { useState } from "react";
+import { downloadFile, formatError } from "@probo/helpers";
+import { use, useState } from "react";
+import { MagicLinkDialog } from "./MagicLinkDialog";
+import { Viewer } from "/providers/Viewer";
+import type { DocumentRow_requestAccessMutation } from "./__generated__/DocumentRow_requestAccessMutation.graphql";
+
+const requestAccessMutation = graphql`
+  mutation DocumentRow_requestAccessMutation(
+    $input: RequestDocumentAccessInput!
+  ) {
+    requestDocumentAccess(input: $input) {
+      trustCenterAccess {
+        id
+      }
+    }
+  }
+`;
 
 const downloadMutation = graphql`
   mutation DocumentRowDownloadMutation($input: ExportDocumentPDFInput!) {
@@ -33,10 +48,53 @@ const documentRowFragment = graphql`
 `;
 
 export function DocumentRow(props: { document: DocumentRowFragment$key }) {
-  const document = useFragment(documentRowFragment, props.document);
   const { __ } = useTranslate();
+  const viewer = use(Viewer);
+  const { toast } = useToast();
+
+  const document = useFragment(documentRowFragment, props.document);
+  const [hasRequested, setHasRequested] = useState(
+    document.hasUserRequestedAccess,
+  );
+
+  const [requestAccess, isRequestingAccess] =
+    useMutation<DocumentRow_requestAccessMutation>(requestAccessMutation);
   const [commitDownload, downloading] =
     useMutationWithToasts<DocumentRowDownloadMutation>(downloadMutation);
+
+  const handleRequestAccess = () => {
+    requestAccess({
+      variables: {
+        input: {
+          documentId: document.id,
+        },
+      },
+      onCompleted: (_, errors) => {
+        if (errors?.length) {
+          toast({
+            title: __("Error"),
+            description: formatError(__("Cannot request access"), errors),
+            variant: "error",
+          });
+          return;
+        }
+        setHasRequested(true);
+        toast({
+          title: __("Success"),
+          description: __("Access request submitted successfully."),
+          variant: "success",
+        });
+      },
+      onError: (error) => {
+        toast({
+          title: __("Error"),
+          description: error.message ?? __("Cannot request access"),
+          variant: "error",
+        });
+      },
+    });
+  };
+
   const handleDownload = () => {
     commitDownload({
       variables: {
@@ -49,40 +107,46 @@ export function DocumentRow(props: { document: DocumentRowFragment$key }) {
       },
     });
   };
-  const [hasRequested, setHasRequested] = useState(
-    document.hasUserRequestedAccess,
-  );
+
   return (
     <div className="text-sm border border-border-solid -mt-px flex gap-3 flex-col md:flex-row md:justify-between px-6 py-3">
       <div className="flex items-center gap-2">
         <IconPageTextLine size={16} className=" flex-none text-txt-tertiary" />
         {document.title}
       </div>
-      {document.isUserAuthorized ? (
-        <Button
-          className="w-full md:w-max"
-          variant="secondary"
-          disabled={downloading}
-          icon={downloading ? Spinner : IconArrowInbox}
-          onClick={handleDownload}
-        >
-          {__("Download")}
-        </Button>
-      ) : (
-        <RequestAccessDialog
-          documentId={document.id}
-          onSuccess={() => setHasRequested(true)}
-        >
+      {!viewer && (
+        <MagicLinkDialog>
           <Button
-            disabled={hasRequested}
             className="w-full md:w-max"
             variant="secondary"
             icon={IconLock}
           >
             {hasRequested ? __("Access requested") : __("Request access")}
           </Button>
-        </RequestAccessDialog>
+        </MagicLinkDialog>
       )}
+      {viewer &&
+        (document.isUserAuthorized ? (
+          <Button
+            className="w-full md:w-max"
+            variant="secondary"
+            disabled={downloading}
+            icon={downloading ? Spinner : IconArrowInbox}
+            onClick={handleDownload}
+          >
+            {__("Download")}
+          </Button>
+        ) : (
+          <Button
+            disabled={hasRequested || isRequestingAccess}
+            className="w-full md:w-max"
+            variant="secondary"
+            icon={IconLock}
+            onClick={handleRequestAccess}
+          >
+            {hasRequested ? __("Access requested") : __("Request access")}
+          </Button>
+        ))}
     </div>
   );
 }

@@ -37,6 +37,7 @@ export default defineConfig({
       "/pages": fileURLToPath(new URL("./src/pages", import.meta.url)),
       "/routes": fileURLToPath(new URL("./src/routes", import.meta.url)),
       "/providers": fileURLToPath(new URL("./src/providers", import.meta.url)),
+      "/utils": fileURLToPath(new URL("./src/utils", import.meta.url)),
     },
   },
 });

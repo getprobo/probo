@@ -25,6 +25,19 @@ import (
 	"go.probo.inc/probo/pkg/validator"
 )
 
+func AlreadyAuthenticated(ctx context.Context, err error) *gqlerror.Error {
+	return &gqlerror.Error{
+		Message: "Authentication not allowed for this resource/action",
+		Extensions: map[string]any{
+			"code": "ALREADY_AUTHENTICATED",
+		},
+	}
+}
+
+func AlreadyAuthenticatedf(ctx context.Context, format string, a ...any) *gqlerror.Error {
+	return AlreadyAuthenticated(ctx, fmt.Errorf(format, a...))
+}
+
 func Unauthenticated(ctx context.Context, err error) *gqlerror.Error {
 	return &gqlerror.Error{
 		Message: err.Error(),
@@ -37,15 +50,6 @@ func Unauthenticated(ctx context.Context, err error) *gqlerror.Error {
 
 func Unauthenticatedf(ctx context.Context, format string, a ...any) *gqlerror.Error {
 	return Unauthenticated(ctx, fmt.Errorf(format, a...))
-}
-
-func AlreadyUnauthenticated(ctx context.Context, err error) *gqlerror.Error {
-	return &gqlerror.Error{
-		Message: "Authentication not allowed for this resource/action",
-		Extensions: map[string]any{
-			"code": "ALREADY_AUTHENTICATED",
-		},
-	}
 }
 
 func Forbidden(ctx context.Context, err error) *gqlerror.Error {

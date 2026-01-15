@@ -150,34 +150,23 @@ type RequestAccessesPayload struct {
 	TrustCenterAccess *TrustCenterAccess `json:"trustCenterAccess"`
 }
 
-type RequestAllAccessesInput struct {
-	Email    mail.Addr `json:"email"`
-	FullName string    `json:"fullName"`
-}
-
 type RequestDocumentAccessInput struct {
-	DocumentID gid.GID   `json:"documentId"`
-	Email      mail.Addr `json:"email"`
-	FullName   string    `json:"fullName"`
+	DocumentID gid.GID `json:"documentId"`
 }
 
 type RequestReportAccessInput struct {
-	ReportID gid.GID   `json:"reportId"`
-	Email    mail.Addr `json:"email"`
-	FullName string    `json:"fullName"`
+	ReportID gid.GID `json:"reportId"`
 }
 
 type RequestTrustCenterFileAccessInput struct {
-	TrustCenterFileID gid.GID   `json:"trustCenterFileId"`
-	Email             mail.Addr `json:"email"`
-	FullName          string    `json:"fullName"`
+	TrustCenterFileID gid.GID `json:"trustCenterFileId"`
 }
 
-type SignInWithTokenInput struct {
-	Token string `json:"token"`
+type SendMagicLinkInput struct {
+	Email mail.Addr `json:"email"`
 }
 
-type SignInWithTokenPayload struct {
+type SendMagicLinkPayload struct {
 	Success bool `json:"success"`
 }
 
@@ -273,6 +262,14 @@ type VendorConnection struct {
 type VendorEdge struct {
 	Cursor page.CursorKey `json:"cursor"`
 	Node   *Vendor        `json:"node"`
+}
+
+type VerifyMagicLinkInput struct {
+	Token string `json:"token"`
+}
+
+type VerifyMagicLinkPayload struct {
+	Success bool `json:"success"`
 }
 
 type Role string

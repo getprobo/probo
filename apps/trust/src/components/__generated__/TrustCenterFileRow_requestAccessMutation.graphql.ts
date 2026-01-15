@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<447bd664ebefbd6a672ccde86c63c028>>
+ * @generated SignedSource<<a8da5aa24d8696b55231f44d861f347c>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,19 +12,19 @@ import { ConcreteRequest } from 'relay-runtime';
 export type RequestTrustCenterFileAccessInput = {
   trustCenterFileId: string;
 };
-export type RequestAccessDialogTrustCenterFileMutation$variables = {
+export type TrustCenterFileRow_requestAccessMutation$variables = {
   input: RequestTrustCenterFileAccessInput;
 };
-export type RequestAccessDialogTrustCenterFileMutation$data = {
+export type TrustCenterFileRow_requestAccessMutation$data = {
   readonly requestTrustCenterFileAccess: {
     readonly trustCenterAccess: {
       readonly id: string;
     };
   };
 };
-export type RequestAccessDialogTrustCenterFileMutation = {
-  response: RequestAccessDialogTrustCenterFileMutation$data;
-  variables: RequestAccessDialogTrustCenterFileMutation$variables;
+export type TrustCenterFileRow_requestAccessMutation = {
+  response: TrustCenterFileRow_requestAccessMutation$data;
+  variables: TrustCenterFileRow_requestAccessMutation$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -77,7 +77,7 @@ return {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Fragment",
     "metadata": null,
-    "name": "RequestAccessDialogTrustCenterFileMutation",
+    "name": "TrustCenterFileRow_requestAccessMutation",
     "selections": (v1/*: any*/),
     "type": "Mutation",
     "abstractKey": null
@@ -86,20 +86,20 @@ return {
   "operation": {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
-    "name": "RequestAccessDialogTrustCenterFileMutation",
+    "name": "TrustCenterFileRow_requestAccessMutation",
     "selections": (v1/*: any*/)
   },
   "params": {
-    "cacheID": "73b3007ef1a45f6dc6d31be0c627e482",
+    "cacheID": "77a09810aa9c3ddf3a3baddf709f9a42",
     "id": null,
     "metadata": {},
-    "name": "RequestAccessDialogTrustCenterFileMutation",
+    "name": "TrustCenterFileRow_requestAccessMutation",
     "operationKind": "mutation",
-    "text": "mutation RequestAccessDialogTrustCenterFileMutation(\n  $input: RequestTrustCenterFileAccessInput!\n) {\n  requestTrustCenterFileAccess(input: $input) {\n    trustCenterAccess {\n      id\n    }\n  }\n}\n"
+    "text": "mutation TrustCenterFileRow_requestAccessMutation(\n  $input: RequestTrustCenterFileAccessInput!\n) {\n  requestTrustCenterFileAccess(input: $input) {\n    trustCenterAccess {\n      id\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "a97eb6c4ec94c79a293d1cc51bf18e66";
+(node as any).hash = "eba04489de9ec18ab9816328a481ef33";
 
 export default node;

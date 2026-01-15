@@ -229,3 +229,16 @@ func (s *Service) GetByDomainName(ctx context.Context, domain string) (*coredata
 
 	return trustCenter, err
 }
+
+func (s *Service) GetCustomDomainByOrganizationID(ctx context.Context, organizationID gid.GID) (*coredata.CustomDomain, error) {
+	customDomain := &coredata.CustomDomain{}
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			return customDomain.LoadByOrganizationID(ctx, conn, coredata.NewNoScope(), s.encryptionKey, organizationID)
+		},
+	)
+
+	return customDomain, err
+}

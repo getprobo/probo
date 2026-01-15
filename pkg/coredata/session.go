@@ -54,8 +54,9 @@ type (
 )
 
 const (
-	AuthMethodPassword AuthMethod = "PASSWORD"
-	AuthMethodSAML     AuthMethod = "SAML"
+	AuthMethodMagicLink AuthMethod = "MAGIC_LINK"
+	AuthMethodPassword  AuthMethod = "PASSWORD"
+	AuthMethodSAML      AuthMethod = "SAML"
 )
 
 func NewRootSession(identityID gid.GID, method AuthMethod, duration time.Duration) *Session {

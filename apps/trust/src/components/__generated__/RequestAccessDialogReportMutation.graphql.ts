@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<6fde198cd3eaa998d665639c48f5e630>>
+ * @generated SignedSource<<3e5433cc33d54bff9511d01eb4c65b00>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,8 +10,6 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 export type RequestReportAccessInput = {
-  email: any;
-  fullName: string;
   reportId: string;
 };
 export type RequestAccessDialogReportMutation$variables = {
