@@ -102,6 +102,10 @@ LIMIT 1;
 
 	trustCenter, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[TrustCenter])
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
 		return fmt.Errorf("cannot collect trust center: %w", err)
 	}
 
@@ -146,6 +150,10 @@ LIMIT 1;
 
 	trustCenter, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[TrustCenter])
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
 		return fmt.Errorf("cannot collect trust center: %w", err)
 	}
 
@@ -186,6 +194,10 @@ LIMIT 1;
 
 	trustCenter, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[TrustCenter])
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
 		return fmt.Errorf("cannot collect trust center: %w", err)
 	}
 

@@ -11,7 +11,6 @@ import {
   sprintf,
   getTrustCenterUrl,
 } from "@probo/helpers";
-import type { TrustGraphQuery$data } from "/queries/__generated__/TrustGraphQuery.graphql";
 import { useTranslate } from "@probo/i18n";
 import { Card, IconChevronRight } from "@probo/ui";
 import { AuditRow } from "/components/AuditRow";
@@ -22,6 +21,7 @@ import { TrustCenterFileRow } from "/components/TrustCenterFileRow";
 import { VendorRow } from "/components/VendorRow";
 import { RowHeader } from "/components/RowHeader.tsx";
 import { Rows } from "/components/Rows.tsx";
+import type { TrustGraphCurrentQuery$data } from "/queries/__generated__/TrustGraphCurrentQuery.graphql";
 
 const overviewFragment = graphql`
   fragment OverviewPageFragment on TrustCenter {
@@ -68,7 +68,7 @@ const overviewFragment = graphql`
 export function OverviewPage() {
   const { trustCenter } = useOutletContext<{
     trustCenter: OverviewPageFragment$key &
-      TrustGraphQuery$data["currentTrustCenter"];
+      TrustGraphCurrentQuery$data["currentTrustCenter"];
   }>();
   const fragment = useFragment(overviewFragment, trustCenter);
   return (
@@ -100,7 +100,7 @@ function Documents({
   documents: OverviewPageFragment$data["documents"]["edges"];
   files: OverviewPageFragment$data["trustCenterFiles"]["edges"];
   audits: NonNullable<
-    TrustGraphQuery$data["currentTrustCenter"]
+    TrustGraphCurrentQuery$data["currentTrustCenter"]
   >["audits"]["edges"];
   url: string;
 }) {

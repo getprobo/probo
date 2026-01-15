@@ -22,7 +22,7 @@ export function MainLayout(props: Props) {
     return null;
   }
   const showNDADialog =
-    trustCenter.isUserAuthenticated &&
+    trustCenter.isViewerMember &&
     !trustCenter.hasAcceptedNonDisclosureAgreement &&
     trustCenter.ndaFileUrl;
   return (

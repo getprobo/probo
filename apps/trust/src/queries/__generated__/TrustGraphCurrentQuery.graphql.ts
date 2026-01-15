@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<1f5a4da3a77a893daebeceb249612a72>>
+ * @generated SignedSource<<c77a16a1b448cd1630bdf025193ad94f>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -23,7 +23,7 @@ export type TrustGraphCurrentQuery$data = {
     };
     readonly hasAcceptedNonDisclosureAgreement: boolean;
     readonly id: string;
-    readonly isUserAuthenticated: boolean;
+    readonly isViewerMember: boolean;
     readonly ndaFileName: string | null | undefined;
     readonly ndaFileUrl: string | null | undefined;
     readonly organization: {
@@ -80,7 +80,7 @@ v4 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "isUserAuthenticated",
+  "name": "isViewerMember",
   "storageKey": null
 },
 v5 = {
@@ -604,16 +604,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "9d22288e0159409cf43bece191e3dc47",
+    "cacheID": "c76b7662b00ed20e82ed9333792e396b",
     "id": null,
     "metadata": {},
     "name": "TrustGraphCurrentQuery",
     "operationKind": "query",
-    "text": "query TrustGraphCurrentQuery {\n  viewer {\n    email\n    fullName\n    id\n  }\n  currentTrustCenter {\n    id\n    slug\n    isUserAuthenticated\n    hasAcceptedNonDisclosureAgreement\n    ndaFileName\n    ndaFileUrl\n    organization {\n      name\n      description\n      websiteUrl\n      logoUrl\n      email\n      headquarterAddress\n      id\n    }\n    ...OverviewPageFragment\n    audits(first: 50) {\n      edges {\n        node {\n          id\n          ...AuditRowFragment\n        }\n      }\n    }\n  }\n}\n\nfragment AuditRowFragment on Audit {\n  report {\n    id\n    filename\n    isUserAuthorized\n    hasUserRequestedAccess\n  }\n  framework {\n    id\n    name\n    lightLogoURL\n    darkLogoURL\n  }\n}\n\nfragment DocumentRowFragment on Document {\n  id\n  title\n  isUserAuthorized\n  hasUserRequestedAccess\n}\n\nfragment OverviewPageFragment on TrustCenter {\n  references(first: 14) {\n    edges {\n      node {\n        id\n        name\n        logoUrl\n        websiteUrl\n      }\n    }\n  }\n  vendors(first: 3) {\n    edges {\n      node {\n        id\n        countries\n        ...VendorRowFragment\n      }\n    }\n  }\n  documents(first: 5) {\n    edges {\n      node {\n        id\n        ...DocumentRowFragment\n        documentType\n      }\n    }\n  }\n  trustCenterFiles(first: 5) {\n    edges {\n      node {\n        id\n        category\n        ...TrustCenterFileRowFragment\n      }\n    }\n  }\n}\n\nfragment TrustCenterFileRowFragment on TrustCenterFile {\n  id\n  name\n  isUserAuthorized\n  hasUserRequestedAccess\n}\n\nfragment VendorRowFragment on Vendor {\n  id\n  name\n  category\n  websiteUrl\n  privacyPolicyUrl\n  countries\n}\n"
+    "text": "query TrustGraphCurrentQuery {\n  viewer {\n    email\n    fullName\n    id\n  }\n  currentTrustCenter {\n    id\n    slug\n    isViewerMember\n    hasAcceptedNonDisclosureAgreement\n    ndaFileName\n    ndaFileUrl\n    organization {\n      name\n      description\n      websiteUrl\n      logoUrl\n      email\n      headquarterAddress\n      id\n    }\n    ...OverviewPageFragment\n    audits(first: 50) {\n      edges {\n        node {\n          id\n          ...AuditRowFragment\n        }\n      }\n    }\n  }\n}\n\nfragment AuditRowFragment on Audit {\n  report {\n    id\n    filename\n    isUserAuthorized\n    hasUserRequestedAccess\n  }\n  framework {\n    id\n    name\n    lightLogoURL\n    darkLogoURL\n  }\n}\n\nfragment DocumentRowFragment on Document {\n  id\n  title\n  isUserAuthorized\n  hasUserRequestedAccess\n}\n\nfragment OverviewPageFragment on TrustCenter {\n  references(first: 14) {\n    edges {\n      node {\n        id\n        name\n        logoUrl\n        websiteUrl\n      }\n    }\n  }\n  vendors(first: 3) {\n    edges {\n      node {\n        id\n        countries\n        ...VendorRowFragment\n      }\n    }\n  }\n  documents(first: 5) {\n    edges {\n      node {\n        id\n        ...DocumentRowFragment\n        documentType\n      }\n    }\n  }\n  trustCenterFiles(first: 5) {\n    edges {\n      node {\n        id\n        category\n        ...TrustCenterFileRowFragment\n      }\n    }\n  }\n}\n\nfragment TrustCenterFileRowFragment on TrustCenterFile {\n  id\n  name\n  isUserAuthorized\n  hasUserRequestedAccess\n}\n\nfragment VendorRowFragment on Vendor {\n  id\n  name\n  category\n  websiteUrl\n  privacyPolicyUrl\n  countries\n}\n"
   }
 };
 })();
 
-(node as any).hash = "dd2040667d5cc7b9af9659e993ba6a5b";
+(node as any).hash = "e8ad7c480c3fac7346ea7d2be6ea5c9f";
 
 export default node;

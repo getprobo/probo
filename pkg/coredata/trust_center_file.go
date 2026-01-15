@@ -290,6 +290,7 @@ func (t *TrustCenterFiles) LoadByOrganizationID(
 	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[TrustCenterFileOrderField],
+	filter *TrustCenterFileFilter,
 ) error {
 	q := `
 SELECT
@@ -307,12 +308,14 @@ WHERE
     %s
     AND organization_id = @organization_id
     AND %s
+    AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)

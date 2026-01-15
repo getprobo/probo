@@ -29,8 +29,6 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/mail"
-	"go.probo.inc/probo/pkg/probo"
-	"go.probo.inc/probo/pkg/statelesstoken"
 	"go.probo.inc/probo/pkg/validator"
 )
 
@@ -445,28 +443,14 @@ func (s *TrustCenterAccessService) GrantByIDs(
 }
 
 func (s *TrustCenterAccessService) sendAccessEmail(ctx context.Context, tx pg.Conn, access *coredata.TrustCenterAccess) error {
-	accessToken, err := statelesstoken.NewToken(
-		s.svc.trustConfig.TokenSecret,
-		s.svc.trustConfig.TokenType,
-		s.svc.trustConfig.TokenDuration,
-		probo.TrustCenterAccessData{
-			TrustCenterID: access.TrustCenterID,
-			Email:         access.Email,
-		},
-	)
-	if err != nil {
-		return fmt.Errorf("cannot generate access token: %w", err)
-	}
-
 	trustCenter := &coredata.TrustCenter{}
-	err = trustCenter.LoadByID(ctx, tx, s.svc.scope, access.TrustCenterID)
-	if err != nil {
+
+	if err := trustCenter.LoadByID(ctx, tx, s.svc.scope, access.TrustCenterID); err != nil {
 		return fmt.Errorf("cannot load trust center: %w", err)
 	}
 
 	organization := &coredata.Organization{}
-	err = organization.LoadByID(ctx, tx, s.svc.scope, trustCenter.OrganizationID)
-	if err != nil {
+	if err := organization.LoadByID(ctx, tx, s.svc.scope, trustCenter.OrganizationID); err != nil {
 		return fmt.Errorf("cannot load organization: %w", err)
 	}
 
@@ -477,7 +461,7 @@ func (s *TrustCenterAccessService) sendAccessEmail(ctx context.Context, tx pg.Co
 
 	hostname := baseURLParsed.Host
 	scheme := baseURLParsed.Scheme
-	path := "/trust/" + trustCenter.Slug + "/access"
+	path := "/trust/" + trustCenter.Slug
 
 	if organization.CustomDomainID != nil {
 		customDomain, err := s.svc.Organizations.GetOrganizationCustomDomain(ctx, organization.ID)
@@ -491,16 +475,13 @@ func (s *TrustCenterAccessService) sendAccessEmail(ctx context.Context, tx pg.Co
 
 		hostname = customDomain.Domain
 		scheme = "https"
-		path = "/access"
+		path = ""
 	}
 
 	accessURL := url.URL{
 		Scheme: scheme,
 		Host:   hostname,
 		Path:   path,
-		RawQuery: url.Values{
-			"token": []string{accessToken},
-		}.Encode(),
 	}
 
 	now := time.Now()

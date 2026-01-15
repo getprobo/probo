@@ -23,10 +23,6 @@ export const TrustCenterAccess = () => {
           Access Trust Center
         </Button>
       </Section>
-
-      <Text style={footerText}>
-        This link will expire in {"{{.DurationInDays}}"} days.
-      </Text>
     </EmailLayout>
   );
 };

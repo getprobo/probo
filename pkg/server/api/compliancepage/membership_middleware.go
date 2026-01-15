@@ -20,59 +20,35 @@ import (
 	"net/http"
 
 	"github.com/99designs/gqlgen/graphql"
-	"github.com/go-chi/chi/v5"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.gearno.de/kit/httpserver"
-	"go.probo.inc/probo/pkg/gid"
+	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 	"go.probo.inc/probo/pkg/trust"
 )
 
-func NewIDMiddleware(trustSvc *trust.Service) func(next http.Handler) http.Handler {
+func NewMembershipMiddleware(trustSvc *trust.Service, logger *log.Logger) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(
 			func(w http.ResponseWriter, r *http.Request) {
 				ctx := r.Context()
-				// TODO: remove slug support
-				value := chi.URLParam(r, "slugOrId")
 
-				if id, err := gid.ParseGID(value); err == nil {
-					compliancePage, err := trustSvc.Get(ctx, id)
-					if err != nil {
-						if errors.Is(err, trust.ErrPageNotFound) {
-							next.ServeHTTP(w, r)
-							return
-						}
-
-						httpserver.RenderJSON(
-							w,
-							http.StatusInternalServerError,
-							&graphql.Response{
-								Errors: gqlerror.List{
-									gqlutils.Internal(ctx),
-								},
-							},
-						)
-						return
-					}
-
-					if !compliancePage.Active {
-						next.ServeHTTP(w, r)
-						return
-					}
-
-					ctx = context.WithValue(ctx, compliancePageKey, compliancePage)
-					next.ServeHTTP(w, r.WithContext(ctx))
+				identity := authn.IdentityFromContext(r.Context())
+				if identity == nil {
+					next.ServeHTTP(w, r)
 					return
 				}
+				compliancePage := CompliancePageFromContext(ctx)
 
-				compliancePage, err := trustSvc.GetBySlug(ctx, value)
+				membership, err := trustSvc.GetMembershipByCompliancePageIDAndEmail(ctx, compliancePage.ID, identity.EmailAddress)
 				if err != nil {
-					if errors.Is(err, trust.ErrPageNotFound) {
+					if errors.Is(err, trust.ErrMembershipNotFound) {
 						next.ServeHTTP(w, r)
 						return
 					}
 
+					logger.ErrorCtx(ctx, "cannot get membership by page id and email", log.Error(err))
 					httpserver.RenderJSON(
 						w,
 						http.StatusInternalServerError,
@@ -85,8 +61,8 @@ func NewIDMiddleware(trustSvc *trust.Service) func(next http.Handler) http.Handl
 					return
 				}
 
-				if compliancePage.Active {
-					ctx = context.WithValue(ctx, compliancePageKey, compliancePage)
+				if membership.Active {
+					ctx = context.WithValue(ctx, complianceMembershipKey, membership)
 					next.ServeHTTP(w, r.WithContext(ctx))
 					return
 				}

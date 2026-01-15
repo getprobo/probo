@@ -177,7 +177,7 @@ type TrustCenter struct {
 	NdaFileName                       *string                         `json:"ndaFileName,omitempty"`
 	NdaFileURL                        *string                         `json:"ndaFileUrl,omitempty"`
 	Organization                      *Organization                   `json:"organization"`
-	IsUserAuthenticated               bool                            `json:"isUserAuthenticated"`
+	IsViewerMember                    bool                            `json:"isViewerMember"`
 	HasAcceptedNonDisclosureAgreement bool                            `json:"hasAcceptedNonDisclosureAgreement"`
 	Documents                         *DocumentConnection             `json:"documents"`
 	Audits                            *AuditConnection                `json:"audits"`
