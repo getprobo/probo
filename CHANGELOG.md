@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.113.0] - 2026-01-15
+
+### Added
+
+- Add right requests
+
 ## [0.112.4] - 2026-01-12
 
 ### Fixed
