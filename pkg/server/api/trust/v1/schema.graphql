@@ -600,6 +600,10 @@ type ExportTrustCenterFilePayload {
   data: String!
 }
 
+input AcceptNonDisclosureAgreementInput {
+  fullName: String!
+}
+
 type AcceptNonDisclosureAgreementPayload {
   success: Boolean!
 }
@@ -626,7 +630,9 @@ type Mutation {
     @session(required: PRESENT)
     @membersOnly
 
-  acceptNonDisclosureAgreement: AcceptNonDisclosureAgreementPayload!
+  acceptNonDisclosureAgreement(
+    input: AcceptNonDisclosureAgreementInput!
+  ): AcceptNonDisclosureAgreementPayload
     @session(required: PRESENT)
     @membersOnly
 

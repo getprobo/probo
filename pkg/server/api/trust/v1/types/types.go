@@ -20,6 +20,10 @@ type Node interface {
 	GetID() gid.GID
 }
 
+type AcceptNonDisclosureAgreementInput struct {
+	FullName string `json:"fullName"`
+}
+
 type AcceptNonDisclosureAgreementPayload struct {
 	Success bool `json:"success"`
 }
