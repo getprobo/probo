@@ -12,13 +12,6 @@ directive @goModel(
 
 directive @goEnum(value: String) on ENUM_VALUE
 
-directive @membersOnly on FIELD_DEFINITION
-
-enum Role {
-  NONE
-  USER
-}
-
 scalar CursorKey
 scalar Datetime
 scalar EmailAddr
@@ -623,18 +616,18 @@ type Mutation {
   requestAllAccesses: RequestAccessesPayload! @session(required: PRESENT)
 
   exportDocumentPDF(input: ExportDocumentPDFInput!): ExportDocumentPDFPayload!
-    @session(required: PRESENT)
-    @membersOnly
+    @session(required: OPTIONAL)
 
   exportReportPDF(input: ExportReportPDFInput!): ExportReportPDFPayload!
-    @session(required: PRESENT)
-    @membersOnly
+    @session(required: OPTIONAL)
+
+  exportTrustCenterFile(
+    input: ExportTrustCenterFileInput!
+  ): ExportTrustCenterFilePayload! @session(required: OPTIONAL)
 
   acceptNonDisclosureAgreement(
     input: AcceptNonDisclosureAgreementInput!
-  ): AcceptNonDisclosureAgreementPayload
-    @session(required: PRESENT)
-    @membersOnly
+  ): AcceptNonDisclosureAgreementPayload @session(required: PRESENT)
 
   requestDocumentAccess(
     input: RequestDocumentAccessInput!
@@ -647,8 +640,4 @@ type Mutation {
   requestTrustCenterFileAccess(
     input: RequestTrustCenterFileAccessInput!
   ): RequestAccessesPayload! @session(required: PRESENT)
-
-  exportTrustCenterFile(
-    input: ExportTrustCenterFileInput!
-  ): ExportTrustCenterFilePayload! @session(required: PRESENT) @membersOnly
 }

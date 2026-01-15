@@ -3,10 +3,6 @@
 package types
 
 import (
-	"bytes"
-	"fmt"
-	"io"
-	"strconv"
 	"time"
 
 	"go.probo.inc/probo/pkg/coredata"
@@ -274,59 +270,4 @@ type VerifyMagicLinkInput struct {
 
 type VerifyMagicLinkPayload struct {
 	Success bool `json:"success"`
-}
-
-type Role string
-
-const (
-	RoleNone Role = "NONE"
-	RoleUser Role = "USER"
-)
-
-var AllRole = []Role{
-	RoleNone,
-	RoleUser,
-}
-
-func (e Role) IsValid() bool {
-	switch e {
-	case RoleNone, RoleUser:
-		return true
-	}
-	return false
-}
-
-func (e Role) String() string {
-	return string(e)
-}
-
-func (e *Role) UnmarshalGQL(v any) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = Role(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid Role", str)
-	}
-	return nil
-}
-
-func (e Role) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
-func (e *Role) UnmarshalJSON(b []byte) error {
-	s, err := strconv.Unquote(string(b))
-	if err != nil {
-		return err
-	}
-	return e.UnmarshalGQL(s)
-}
-
-func (e Role) MarshalJSON() ([]byte, error) {
-	var buf bytes.Buffer
-	e.MarshalGQL(&buf)
-	return buf.Bytes(), nil
 }

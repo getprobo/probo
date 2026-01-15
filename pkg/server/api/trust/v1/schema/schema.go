@@ -60,8 +60,7 @@ type ResolverRoot interface {
 }
 
 type DirectiveRoot struct {
-	MembersOnly func(ctx context.Context, obj any, next graphql.Resolver) (res any, err error)
-	Session     func(ctx context.Context, obj any, next graphql.Resolver, required session.SessionRequirement) (res any, err error)
+	Session func(ctx context.Context, obj any, next graphql.Resolver, required session.SessionRequirement) (res any, err error)
 }
 
 type ComplexityRoot struct {
@@ -284,11 +283,11 @@ type MutationResolver interface {
 	RequestAllAccesses(ctx context.Context) (*types.RequestAccessesPayload, error)
 	ExportDocumentPDF(ctx context.Context, input types.ExportDocumentPDFInput) (*types.ExportDocumentPDFPayload, error)
 	ExportReportPDF(ctx context.Context, input types.ExportReportPDFInput) (*types.ExportReportPDFPayload, error)
+	ExportTrustCenterFile(ctx context.Context, input types.ExportTrustCenterFileInput) (*types.ExportTrustCenterFilePayload, error)
 	AcceptNonDisclosureAgreement(ctx context.Context, input types.AcceptNonDisclosureAgreementInput) (*types.AcceptNonDisclosureAgreementPayload, error)
 	RequestDocumentAccess(ctx context.Context, input types.RequestDocumentAccessInput) (*types.RequestAccessesPayload, error)
 	RequestReportAccess(ctx context.Context, input types.RequestReportAccessInput) (*types.RequestAccessesPayload, error)
 	RequestTrustCenterFileAccess(ctx context.Context, input types.RequestTrustCenterFileAccessInput) (*types.RequestAccessesPayload, error)
-	ExportTrustCenterFile(ctx context.Context, input types.ExportTrustCenterFileInput) (*types.ExportTrustCenterFilePayload, error)
 }
 type OrganizationResolver interface {
 	LogoURL(ctx context.Context, obj *types.Organization) (*string, error)
@@ -1216,13 +1215,6 @@ directive @goModel(
 
 directive @goEnum(value: String) on ENUM_VALUE
 
-directive @membersOnly on FIELD_DEFINITION
-
-enum Role {
-  NONE
-  USER
-}
-
 scalar CursorKey
 scalar Datetime
 scalar EmailAddr
@@ -1827,18 +1819,18 @@ type Mutation {
   requestAllAccesses: RequestAccessesPayload! @session(required: PRESENT)
 
   exportDocumentPDF(input: ExportDocumentPDFInput!): ExportDocumentPDFPayload!
-    @session(required: PRESENT)
-    @membersOnly
+    @session(required: OPTIONAL)
 
   exportReportPDF(input: ExportReportPDFInput!): ExportReportPDFPayload!
-    @session(required: PRESENT)
-    @membersOnly
+    @session(required: OPTIONAL)
+
+  exportTrustCenterFile(
+    input: ExportTrustCenterFileInput!
+  ): ExportTrustCenterFilePayload! @session(required: OPTIONAL)
 
   acceptNonDisclosureAgreement(
     input: AcceptNonDisclosureAgreementInput!
-  ): AcceptNonDisclosureAgreementPayload
-    @session(required: PRESENT)
-    @membersOnly
+  ): AcceptNonDisclosureAgreementPayload @session(required: PRESENT)
 
   requestDocumentAccess(
     input: RequestDocumentAccessInput!
@@ -1851,10 +1843,6 @@ type Mutation {
   requestTrustCenterFileAccess(
     input: RequestTrustCenterFileAccessInput!
   ): RequestAccessesPayload! @session(required: PRESENT)
-
-  exportTrustCenterFile(
-    input: ExportTrustCenterFileInput!
-  ): ExportTrustCenterFilePayload! @session(required: PRESENT) @membersOnly
 }
 `, BuiltIn: false},
 	{Name: "../../../../gqlutils/directives/session/schema.graphql", Input: `# Session directive for GraphQL APIs
@@ -3350,7 +3338,7 @@ func (ec *executionContext) _Mutation_exportDocumentPDF(ctx context.Context, fie
 			directive0 := next
 
 			directive1 := func(ctx context.Context) (any, error) {
-				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement(ctx, "PRESENT")
+				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement(ctx, "OPTIONAL")
 				if err != nil {
 					var zeroVal *types.ExportDocumentPDFPayload
 					return zeroVal, err
@@ -3361,15 +3349,8 @@ func (ec *executionContext) _Mutation_exportDocumentPDF(ctx context.Context, fie
 				}
 				return ec.directives.Session(ctx, nil, directive0, required)
 			}
-			directive2 := func(ctx context.Context) (any, error) {
-				if ec.directives.MembersOnly == nil {
-					var zeroVal *types.ExportDocumentPDFPayload
-					return zeroVal, errors.New("directive membersOnly is not implemented")
-				}
-				return ec.directives.MembersOnly(ctx, nil, directive1)
-			}
 
-			next = directive2
+			next = directive1
 			return next
 		},
 		ec.marshalNExportDocumentPDFPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐExportDocumentPDFPayload,
@@ -3420,7 +3401,7 @@ func (ec *executionContext) _Mutation_exportReportPDF(ctx context.Context, field
 			directive0 := next
 
 			directive1 := func(ctx context.Context) (any, error) {
-				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement(ctx, "PRESENT")
+				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement(ctx, "OPTIONAL")
 				if err != nil {
 					var zeroVal *types.ExportReportPDFPayload
 					return zeroVal, err
@@ -3431,15 +3412,8 @@ func (ec *executionContext) _Mutation_exportReportPDF(ctx context.Context, field
 				}
 				return ec.directives.Session(ctx, nil, directive0, required)
 			}
-			directive2 := func(ctx context.Context) (any, error) {
-				if ec.directives.MembersOnly == nil {
-					var zeroVal *types.ExportReportPDFPayload
-					return zeroVal, errors.New("directive membersOnly is not implemented")
-				}
-				return ec.directives.MembersOnly(ctx, nil, directive1)
-			}
 
-			next = directive2
+			next = directive1
 			return next
 		},
 		ec.marshalNExportReportPDFPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐExportReportPDFPayload,
@@ -3476,6 +3450,69 @@ func (ec *executionContext) fieldContext_Mutation_exportReportPDF(ctx context.Co
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_exportTrustCenterFile(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_exportTrustCenterFile,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().ExportTrustCenterFile(ctx, fc.Args["input"].(types.ExportTrustCenterFileInput))
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement(ctx, "OPTIONAL")
+				if err != nil {
+					var zeroVal *types.ExportTrustCenterFilePayload
+					return zeroVal, err
+				}
+				if ec.directives.Session == nil {
+					var zeroVal *types.ExportTrustCenterFilePayload
+					return zeroVal, errors.New("directive session is not implemented")
+				}
+				return ec.directives.Session(ctx, nil, directive0, required)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalNExportTrustCenterFilePayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐExportTrustCenterFilePayload,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_exportTrustCenterFile(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "data":
+				return ec.fieldContext_ExportTrustCenterFilePayload_data(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ExportTrustCenterFilePayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_exportTrustCenterFile_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_acceptNonDisclosureAgreement(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -3501,15 +3538,8 @@ func (ec *executionContext) _Mutation_acceptNonDisclosureAgreement(ctx context.C
 				}
 				return ec.directives.Session(ctx, nil, directive0, required)
 			}
-			directive2 := func(ctx context.Context) (any, error) {
-				if ec.directives.MembersOnly == nil {
-					var zeroVal *types.AcceptNonDisclosureAgreementPayload
-					return zeroVal, errors.New("directive membersOnly is not implemented")
-				}
-				return ec.directives.MembersOnly(ctx, nil, directive1)
-			}
 
-			next = directive2
+			next = directive1
 			return next
 		},
 		ec.marshalOAcceptNonDisclosureAgreementPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐAcceptNonDisclosureAgreementPayload,
@@ -3729,76 +3759,6 @@ func (ec *executionContext) fieldContext_Mutation_requestTrustCenterFileAccess(c
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_requestTrustCenterFileAccess_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_exportTrustCenterFile(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Mutation_exportTrustCenterFile,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Mutation().ExportTrustCenterFile(ctx, fc.Args["input"].(types.ExportTrustCenterFileInput))
-		},
-		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
-			directive0 := next
-
-			directive1 := func(ctx context.Context) (any, error) {
-				required, err := ec.unmarshalNSessionRequirement2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋgqlutilsᚋdirectivesᚋsessionᚐSessionRequirement(ctx, "PRESENT")
-				if err != nil {
-					var zeroVal *types.ExportTrustCenterFilePayload
-					return zeroVal, err
-				}
-				if ec.directives.Session == nil {
-					var zeroVal *types.ExportTrustCenterFilePayload
-					return zeroVal, errors.New("directive session is not implemented")
-				}
-				return ec.directives.Session(ctx, nil, directive0, required)
-			}
-			directive2 := func(ctx context.Context) (any, error) {
-				if ec.directives.MembersOnly == nil {
-					var zeroVal *types.ExportTrustCenterFilePayload
-					return zeroVal, errors.New("directive membersOnly is not implemented")
-				}
-				return ec.directives.MembersOnly(ctx, nil, directive1)
-			}
-
-			next = directive2
-			return next
-		},
-		ec.marshalNExportTrustCenterFilePayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐExportTrustCenterFilePayload,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Mutation_exportTrustCenterFile(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "data":
-				return ec.fieldContext_ExportTrustCenterFilePayload_data(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type ExportTrustCenterFilePayload", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_exportTrustCenterFile_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -8680,6 +8640,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "exportTrustCenterFile":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_exportTrustCenterFile(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "acceptNonDisclosureAgreement":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_acceptNonDisclosureAgreement(ctx, field)
@@ -8701,13 +8668,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "requestTrustCenterFileAccess":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_requestTrustCenterFileAccess(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "exportTrustCenterFile":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_exportTrustCenterFile(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
