@@ -343,11 +343,6 @@ func (r *mutationResolver) ExportDocumentPDF(ctx context.Context, input types.Ex
 
 // ExportReportPDF is the resolver for the exportReportPDF field.
 func (r *mutationResolver) ExportReportPDF(ctx context.Context, input types.ExportReportPDFInput) (*types.ExportReportPDFPayload, error) {
-	identity := authn.IdentityFromContext(ctx)
-	if identity == nil {
-		return nil, gqlutils.Unauthenticatedf(ctx, "unauthenticated")
-	}
-
 	trustService := r.TrustService(ctx, input.ReportID.TenantID())
 
 	trustCenter := compliancepage.CompliancePageFromContext(ctx)
@@ -368,6 +363,11 @@ func (r *mutationResolver) ExportReportPDF(ctx context.Context, input types.Expo
 		return &types.ExportReportPDFPayload{
 			Data: fmt.Sprintf("data:application/pdf;base64,%s", base64.StdEncoding.EncodeToString(pdf)),
 		}, nil
+	}
+
+	identity := authn.IdentityFromContext(ctx)
+	if identity == nil {
+		return nil, gqlutils.Unauthenticatedf(ctx, "unauthenticated")
 	}
 
 	ndaExists := true
@@ -418,6 +418,83 @@ func (r *mutationResolver) ExportReportPDF(ctx context.Context, input types.Expo
 
 	return &types.ExportReportPDFPayload{
 		Data: fmt.Sprintf("data:application/pdf;base64,%s", base64.StdEncoding.EncodeToString(pdf)),
+	}, nil
+}
+
+// ExportTrustCenterFile is the resolver for the exportTrustCenterFile field.
+func (r *mutationResolver) ExportTrustCenterFile(ctx context.Context, input types.ExportTrustCenterFileInput) (*types.ExportTrustCenterFilePayload, error) {
+	trustCenter := compliancepage.CompliancePageFromContext(ctx)
+	trustService := r.TrustService(ctx, trustCenter.ID.TenantID())
+
+	trustCenterFile, err := trustService.TrustCenterFiles.Get(ctx, input.TrustCenterFileID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load trust center file", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	if trustCenterFile.TrustCenterVisibility == coredata.TrustCenterVisibilityPublic {
+		fileData, err := trustService.TrustCenterFiles.ExportFileWithoutWatermark(ctx, input.TrustCenterFileID)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot export trust center file", log.Error(err))
+			return nil, gqlutils.Internal(ctx)
+		}
+
+		return &types.ExportTrustCenterFilePayload{
+			Data: fmt.Sprintf("data:application/pdf;base64,%s", base64.StdEncoding.EncodeToString(fileData)),
+		}, nil
+	}
+
+	identity := authn.IdentityFromContext(ctx)
+	if identity == nil {
+		return nil, gqlutils.Unauthenticatedf(ctx, "unauthenticated")
+	}
+
+	ndaExists := true
+	hasAcceptedNDA := false
+
+	if trustCenter.NonDisclosureAgreementFileID == nil {
+		ndaExists = false
+	}
+
+	if ndaExists {
+		hasAcceptedNDA, err = trustService.TrustCenterAccesses.HasAcceptedNonDisclosureAgreement(ctx,
+			trustCenter.ID,
+			identity.EmailAddress,
+		)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot check if user has accepted NDA", log.Error(err))
+			return nil, gqlutils.Internal(ctx)
+		}
+	}
+
+	fileAccess, err := trustService.TrustCenterAccesses.LoadTrustCenterFileAccess(ctx,
+		trustCenter.ID,
+		identity.EmailAddress,
+		input.TrustCenterFileID,
+	)
+	if err != nil {
+		// FIXME check for not found and return without error in this case
+		// r.logger.ErrorCtx(ctx, "cannot check trust center file access", log.Error(err))
+		// return false, gqlutils.Internal(ctx)
+		return nil, nil
+	}
+
+	if fileAccess.Status != coredata.TrustCenterDocumentAccessStatusGranted {
+		return nil, gqlutils.Forbiddenf(ctx, "access denied: no permission to access this file")
+	}
+
+	if ndaExists && !hasAcceptedNDA {
+		return nil, gqlutils.Forbiddenf(ctx, "user has not accepted NDA")
+	}
+
+	fileData, err := trustService.TrustCenterFiles.ExportFile(ctx, input.TrustCenterFileID, identity.EmailAddress)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot export trust center file", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.ExportTrustCenterFilePayload{
+		Data: fmt.Sprintf("data:application/pdf;base64,%s", base64.StdEncoding.EncodeToString(fileData)),
 	}, nil
 }
 
@@ -601,83 +678,6 @@ func (r *mutationResolver) RequestTrustCenterFileAccess(ctx context.Context, inp
 			CreatedAt: access.CreatedAt,
 			UpdatedAt: access.UpdatedAt,
 		},
-	}, nil
-}
-
-// ExportTrustCenterFile is the resolver for the exportTrustCenterFile field.
-func (r *mutationResolver) ExportTrustCenterFile(ctx context.Context, input types.ExportTrustCenterFileInput) (*types.ExportTrustCenterFilePayload, error) {
-	identity := authn.IdentityFromContext(ctx)
-	if identity == nil {
-		return nil, gqlutils.Unauthenticatedf(ctx, "unauthenticated")
-	}
-
-	trustCenter := compliancepage.CompliancePageFromContext(ctx)
-	trustService := r.TrustService(ctx, trustCenter.ID.TenantID())
-
-	trustCenterFile, err := trustService.TrustCenterFiles.Get(ctx, input.TrustCenterFileID)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot load trust center file", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	if trustCenterFile.TrustCenterVisibility == coredata.TrustCenterVisibilityPublic {
-		fileData, err := trustService.TrustCenterFiles.ExportFileWithoutWatermark(ctx, input.TrustCenterFileID)
-		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot export trust center file", log.Error(err))
-			return nil, gqlutils.Internal(ctx)
-		}
-
-		return &types.ExportTrustCenterFilePayload{
-			Data: fmt.Sprintf("data:application/pdf;base64,%s", base64.StdEncoding.EncodeToString(fileData)),
-		}, nil
-	}
-
-	ndaExists := true
-	hasAcceptedNDA := false
-
-	if trustCenter.NonDisclosureAgreementFileID == nil {
-		ndaExists = false
-	}
-
-	if ndaExists {
-		hasAcceptedNDA, err = trustService.TrustCenterAccesses.HasAcceptedNonDisclosureAgreement(ctx,
-			trustCenter.ID,
-			identity.EmailAddress,
-		)
-		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot check if user has accepted NDA", log.Error(err))
-			return nil, gqlutils.Internal(ctx)
-		}
-	}
-
-	fileAccess, err := trustService.TrustCenterAccesses.LoadTrustCenterFileAccess(ctx,
-		trustCenter.ID,
-		identity.EmailAddress,
-		input.TrustCenterFileID,
-	)
-	if err != nil {
-		// FIXME check for not found and return without error in this case
-		// r.logger.ErrorCtx(ctx, "cannot check trust center file access", log.Error(err))
-		// return false, gqlutils.Internal(ctx)
-		return nil, nil
-	}
-
-	if fileAccess.Status != coredata.TrustCenterDocumentAccessStatusGranted {
-		return nil, gqlutils.Forbiddenf(ctx, "access denied: no permission to access this file")
-	}
-
-	if ndaExists && !hasAcceptedNDA {
-		return nil, gqlutils.Forbiddenf(ctx, "user has not accepted NDA")
-	}
-
-	fileData, err := trustService.TrustCenterFiles.ExportFile(ctx, input.TrustCenterFileID, identity.EmailAddress)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot export trust center file", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return &types.ExportTrustCenterFilePayload{
-		Data: fmt.Sprintf("data:application/pdf;base64,%s", base64.StdEncoding.EncodeToString(fileData)),
 	}, nil
 }
 

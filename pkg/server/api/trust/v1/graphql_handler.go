@@ -15,31 +15,18 @@
 package trust_v1
 
 import (
-	"context"
 	"net/http"
 
-	"github.com/99designs/gqlgen/graphql"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api/authn"
-	"go.probo.inc/probo/pkg/server/api/compliancepage"
 	"go.probo.inc/probo/pkg/server/api/trust/v1/schema"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 	"go.probo.inc/probo/pkg/server/gqlutils/directives/session"
 	"go.probo.inc/probo/pkg/trust"
 )
-
-func MembersOnlyDirective(ctx context.Context, obj any, next graphql.Resolver) (any, error) {
-	membership := compliancepage.ComplianceMembershipFromContext(ctx)
-
-	if membership == nil {
-		return nil, gqlutils.Forbiddenf(ctx, "insufficient permission to access this resource")
-	}
-
-	return next(ctx)
-}
 
 func NewGraphQLHandler(iamSvc *iam.Service, trustSvc *trust.Service, logger *log.Logger, baseURL *baseurl.BaseURL, cookieConfig securecookie.Config) http.Handler {
 	config := schema.Config{
@@ -51,8 +38,7 @@ func NewGraphQLHandler(iamSvc *iam.Service, trustSvc *trust.Service, logger *log
 			sessionCookie: authn.NewCookie(&cookieConfig),
 		},
 		Directives: schema.DirectiveRoot{
-			Session:     session.Directive,
-			MembersOnly: MembersOnlyDirective,
+			Session: session.Directive,
 		},
 	}
 

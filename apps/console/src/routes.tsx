@@ -131,7 +131,6 @@ const routes = [
   },
   {
     path: "/organizations/:organizationId/employee",
-    Fallback: () => "fallback employee...",
     Component: lazy(
       () => import("./pages/organizations/employee/EmployeeLayoutLoader"),
     ),
