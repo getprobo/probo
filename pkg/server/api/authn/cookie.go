@@ -27,7 +27,7 @@ type Cookie struct {
 }
 
 func (c *Cookie) Set(w http.ResponseWriter, session *coredata.Session) {
-	securecookie.Set(
+	_ = securecookie.Set(
 		w,
 		c.sessionCookieConfig(time.Until(session.ExpiredAt)),
 		session.ID.String(),
@@ -46,7 +46,6 @@ func (c *Cookie) sessionCookieConfig(maxAge time.Duration) securecookie.Config {
 		HTTPOnly: c.config.HTTPOnly,
 		SameSite: c.config.SameSite,
 		Path:     c.config.Path,
-		Domain:   c.config.Domain,
 		MaxAge:   int(maxAge.Seconds()),
 	}
 }

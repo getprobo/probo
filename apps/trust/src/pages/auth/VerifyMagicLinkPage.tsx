@@ -63,7 +63,8 @@ export default function VerifyMagicLinkPagePageMutation() {
           description: __("Your have successfully signed in"),
           variant: "success",
         });
-        window.location.href = getPathPrefix();
+        const pathPrefix = getPathPrefix();
+        window.location.href = pathPrefix ? getPathPrefix() : "/";
       },
       onError: (err) => {
         toast({

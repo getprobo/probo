@@ -28,8 +28,8 @@ var (
 )
 
 func CompliancePageFromContext(ctx context.Context) *coredata.TrustCenter {
-	trustCenter, _ := ctx.Value(compliancePageKey).(*coredata.TrustCenter)
-	return trustCenter
+	page, _ := ctx.Value(compliancePageKey).(*coredata.TrustCenter)
+	return page
 }
 
 func ComplianceMembershipFromContext(ctx context.Context) *coredata.TrustCenterAccess {

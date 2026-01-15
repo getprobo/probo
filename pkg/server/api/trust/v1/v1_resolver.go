@@ -178,8 +178,7 @@ func (r *mutationResolver) SendMagicLink(ctx context.Context, input types.SendMa
 		Email: input.Email,
 	}
 
-	if false {
-		// if customDomain != nil {
+	if customDomain != nil {
 		baseURL, err := baseurl.Parse(fmt.Sprintf("https://%s", customDomain.Domain))
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot parse custom domain url", log.Error(err))
