@@ -12,7 +12,8 @@
     "prepublishOnly": "npm run build && npm run lint"
   },
   "author": {
-    "name": "Probo Inc"
+    "name": "Probo Inc",
+    "email": "hello@getprobo.com"
   },
   "files": [
     "dist"
