@@ -2307,6 +2307,7 @@ type UpdateTaskInput struct {
 	TimeEstimate graphql.Omittable[*time.Duration] `json:"timeEstimate,omitempty"`
 	Deadline     graphql.Omittable[*time.Time]     `json:"deadline,omitempty"`
 	AssignedToID graphql.Omittable[*gid.GID]       `json:"assignedToId,omitempty"`
+	MeasureID    graphql.Omittable[*gid.GID]       `json:"measureId,omitempty"`
 }
 
 type UpdateTaskPayload struct {

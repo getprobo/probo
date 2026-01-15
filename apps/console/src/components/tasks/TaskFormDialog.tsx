@@ -75,8 +75,8 @@ const createTaskSchema = z.object({
   timeEstimate: z.string().optional().nullable(),
   assignedToId: z.string().optional().nullable(),
   measureId: z.preprocess(
-    (val) => (val === "" || val == null ? undefined : val),
-    z.string({ required_error: "Measure is required" }).min(1, "Measure is required")
+    (val) => (val === "" || val == null ? null : val),
+    z.string().nullable().optional()
   ),
   deadline: z.string().optional().nullable(),
 });
@@ -85,8 +85,14 @@ const updateTaskSchema = z.object({
   name: z.string().min(1),
   description: z.string().optional().nullable(),
   timeEstimate: z.string().optional().nullable(),
-  assignedToId: z.string().optional().nullable(),
-  measureId: z.string().optional(),
+  assignedToId: z.preprocess(
+    (val) => (val === "" || val == null ? null : val),
+    z.string().nullable().optional()
+  ),
+  measureId: z.preprocess(
+    (val) => (val === "" || val == null ? null : val),
+    z.string().nullable().optional()
+  ),
   deadline: z.string().optional().nullable(),
 });
 
@@ -135,6 +141,7 @@ export default function TaskFormDialog(props: Props) {
             timeEstimate: data.timeEstimate || null,
             deadline: formatDatetime(data.deadline) ?? null,
             assignedToId: data.assignedToId ?? null,
+            measureId: data.measureId || null,
           },
         },
       });
@@ -148,7 +155,7 @@ export default function TaskFormDialog(props: Props) {
             timeEstimate: data.timeEstimate || null,
             deadline: formatDatetime(data.deadline) ?? null,
             assignedToId: data.assignedToId || null,
-            measureId: data.measureId,
+            measureId: data.measureId || null,
           },
           connections: [props.connection!],
         },
@@ -162,7 +169,7 @@ export default function TaskFormDialog(props: Props) {
     }
     dialogRef.current?.close();
   });
-  const showMeasure = !props.measureId && !isUpdating;
+  const showMeasure = !props.measureId;
 
   return (
     <Dialog
@@ -215,6 +222,7 @@ export default function TaskFormDialog(props: Props) {
                   name="measureId"
                   control={control}
                   organizationId={organizationId}
+                  optional={true}
                 />
               </PropertyRow>
             )}

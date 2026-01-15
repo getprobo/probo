@@ -279,7 +279,7 @@ func CreateMeasure(c *testutil.Client, attrs ...Attrs) string {
 	return result.CreateMeasure.MeasureEdge.Node.ID
 }
 
-func CreateTask(c *testutil.Client, measureID string, attrs ...Attrs) string {
+func CreateTask(c *testutil.Client, measureID *string, attrs ...Attrs) string {
 	c.T.Helper()
 
 	var a Attrs
@@ -299,8 +299,10 @@ func CreateTask(c *testutil.Client, measureID string, attrs ...Attrs) string {
 
 	input := map[string]any{
 		"organizationId": c.GetOrganizationID().String(),
-		"measureId":      measureID,
 		"name":           a.getString("name", SafeName("Task")),
+	}
+	if measureID != nil {
+		input["measureId"] = *measureID
 	}
 	if desc := a.getStringPtr("description"); desc != nil {
 		input["description"] = *desc
@@ -530,12 +532,16 @@ func (b *MeasureBuilder) Create() string {
 
 type TaskBuilder struct {
 	client    *testutil.Client
-	measureID string
+	measureID *string
 	attrs     Attrs
 }
 
 func NewTask(c *testutil.Client, measureID string) *TaskBuilder {
-	return &TaskBuilder{client: c, measureID: measureID, attrs: Attrs{}}
+	return &TaskBuilder{client: c, measureID: &measureID, attrs: Attrs{}}
+}
+
+func NewTaskWithoutMeasure(c *testutil.Client) *TaskBuilder {
+	return &TaskBuilder{client: c, measureID: nil, attrs: Attrs{}}
 }
 
 func (b *TaskBuilder) WithName(name string) *TaskBuilder {

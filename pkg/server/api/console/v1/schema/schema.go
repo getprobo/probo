@@ -13945,6 +13945,7 @@ input UpdateTaskInput {
   timeEstimate: Duration @goField(omittable: true)
   deadline: Datetime @goField(omittable: true)
   assignedToId: ID @goField(omittable: true)
+  measureId: ID @goField(omittable: true)
 }
 
 input DeleteTaskInput {
@@ -68042,7 +68043,7 @@ func (ec *executionContext) unmarshalInputUpdateTaskInput(ctx context.Context, o
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"taskId", "name", "description", "state", "timeEstimate", "deadline", "assignedToId"}
+	fieldsInOrder := [...]string{"taskId", "name", "description", "state", "timeEstimate", "deadline", "assignedToId", "measureId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -68098,6 +68099,13 @@ func (ec *executionContext) unmarshalInputUpdateTaskInput(ctx context.Context, o
 				return it, err
 			}
 			it.AssignedToID = graphql.OmittableOf(data)
+		case "measureId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("measureId"))
+			data, err := ec.unmarshalOID2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MeasureID = graphql.OmittableOf(data)
 		}
 	}
 

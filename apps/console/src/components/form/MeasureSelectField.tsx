@@ -11,12 +11,14 @@ type Props<TFieldValues extends FieldValues = FieldValues, TName extends FieldPa
   label?: string;
   error?: string;
   disabled?: boolean;
+  optional?: boolean;
 } & ComponentProps<typeof Field>;
 
 export function MeasureSelectField<TFieldValues extends FieldValues = FieldValues>({
   organizationId,
   control,
   disabled,
+  optional,
   ...props
 }: Props<TFieldValues>) {
   return (
@@ -29,6 +31,7 @@ export function MeasureSelectField<TFieldValues extends FieldValues = FieldValue
           control={control}
           name={props.name}
           disabled={disabled}
+          optional={optional}
         />
       </Suspense>
     </Field>
@@ -36,10 +39,10 @@ export function MeasureSelectField<TFieldValues extends FieldValues = FieldValue
 }
 
 function MeasureSelectWithQuery<TFieldValues extends FieldValues = FieldValues>(
-  props: Pick<Props<TFieldValues>, "organizationId" | "control" | "name" | "disabled">
+  props: Pick<Props<TFieldValues>, "organizationId" | "control" | "name" | "disabled" | "optional">
 ) {
   const { __ } = useTranslate();
-  const { name, organizationId, control, disabled } = props;
+  const { name, organizationId, control, disabled, optional } = props;
   const { data } = usePaginatedMeasures(organizationId);
   const [search, setSearch] = useState("");
   const measures = useMemo(() => {
@@ -54,20 +57,36 @@ function MeasureSelectWithQuery<TFieldValues extends FieldValues = FieldValues>(
     );
   }, [data?.measures.edges, search]);
 
+  const allMeasures = useMemo(() => {
+    return data?.measures.edges?.map((edge) => edge.node) ?? [];
+  }, [data?.measures.edges]);
+
   return (
     <div>
       <Controller
         control={control}
         name={name}
         render={({ field }) => {
+          const selectedMeasure = field.value ? allMeasures?.find((m) => m.id === field.value) : null;
+
           return (
             <Combobox
               id={name}
               placeholder={__("Select a measure")}
-              value={search}
+              value={selectedMeasure ? selectedMeasure.name : search}
               onSearch={setSearch}
               disabled={disabled}
             >
+              {optional && (
+                <ComboboxItem
+                  onClick={() => {
+                    field.onChange(null);
+                    setSearch("");
+                  }}
+                >
+                  {__("None")}
+                </ComboboxItem>
+              )}
               {measures?.map((m) => (
                 <ComboboxItem
                   key={m.id}

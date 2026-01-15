@@ -3076,6 +3076,22 @@ components:
               description: No deadline
           description: Deadline
           go.probo.inc/mcpgen/omittable: true
+        assigned_to_id:
+          anyOf:
+            - $ref: "#/components/schemas/GID"
+              description: Assigned to person ID
+            - type: "null"
+              description: Not assigned
+          description: Assigned to person ID
+          go.probo.inc/mcpgen/omittable: true
+        measure_id:
+          anyOf:
+            - $ref: "#/components/schemas/GID"
+              description: Measure ID
+            - type: "null"
+              description: No measure
+          description: Measure ID
+          go.probo.inc/mcpgen/omittable: true
 
     UpdateTaskOutput:
       type: object

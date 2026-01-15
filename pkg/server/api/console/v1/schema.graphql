@@ -3725,6 +3725,7 @@ input UpdateTaskInput {
   timeEstimate: Duration @goField(omittable: true)
   deadline: Datetime @goField(omittable: true)
   assignedToId: ID @goField(omittable: true)
+  measureId: ID @goField(omittable: true)
 }
 
 input DeleteTaskInput {

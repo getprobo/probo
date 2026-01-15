@@ -2790,7 +2790,7 @@ func (r *mutationResolver) DeleteControlSnapshotMapping(ctx context.Context, inp
 func (r *mutationResolver) CreateTask(ctx context.Context, input types.CreateTaskInput) (*types.CreateTaskPayload, error) {
 	r.MustBeAuthorized(ctx, input.OrganizationID, authz.ActionCreateTask)
 
-	prb := r.ProboService(ctx, input.MeasureID.TenantID())
+	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
 	task, err := prb.Tasks.Create(ctx, probo.CreateTaskRequest{
 		MeasureID:      input.MeasureID,
@@ -2828,6 +2828,7 @@ func (r *mutationResolver) UpdateTask(ctx context.Context, input types.UpdateTas
 		TimeEstimate: UnwrapOmittable(input.TimeEstimate),
 		Deadline:     UnwrapOmittable(input.Deadline),
 		AssignedToID: UnwrapOmittable(input.AssignedToID),
+		MeasureID:    UnwrapOmittable(input.MeasureID),
 	})
 	if err != nil {
 		panic(fmt.Errorf("cannot update task: %w", err))
@@ -6796,6 +6797,10 @@ func (r *taskResolver) Measure(ctx context.Context, obj *types.Task) (*types.Mea
 			return nil, gqlutils.NotFound(errNotFound)
 		}
 		panic(fmt.Errorf("cannot get task: %w", err))
+	}
+
+	if task.MeasureID == nil {
+		return nil, nil
 	}
 
 	measure, err := prb.Measures.Get(ctx, *task.MeasureID)

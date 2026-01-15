@@ -1379,6 +1379,8 @@ func (r *Resolver) UpdateTaskTool(ctx context.Context, req *mcp.CallToolRequest,
 			State:        input.State,
 			TimeEstimate: UnwrapOmittable(input.TimeEstimate),
 			Deadline:     UnwrapOmittable(input.Deadline),
+			AssignedToID: UnwrapOmittable(input.AssignedToID),
+			MeasureID:    UnwrapOmittable(input.MeasureID),
 		},
 	)
 	if err != nil {
