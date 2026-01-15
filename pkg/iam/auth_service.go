@@ -560,7 +560,7 @@ func (s AuthService) SendMagicLink(ctx context.Context, req *SendMagicLinkReques
 	}
 
 	magicLinkURL := req.BaseURL.
-		WithPath("/auth/verify-magic-link").
+		WithPath("/verify-magic-link").
 		WithQuery("token", token).
 		MustString()
 

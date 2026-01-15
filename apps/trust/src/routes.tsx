@@ -32,14 +32,8 @@ function ErrorBoundary({ error: propsError }: { error?: string }) {
 
 const routes = [
   {
-    path: "/auth",
-    Component: lazy(() => import("./pages/auth/AuthLayout")),
-    children: [
-      {
-        path: "verify-magic-link",
-        Component: lazy(() => import("./pages/auth/VerifyMagicLinkPage.tsx")),
-      },
-    ],
+    path: "/verify-magic-link",
+    Component: lazy(() => import("./pages/auth/VerifyMagicLinkPage.tsx")),
   },
   {
     path: "/",
